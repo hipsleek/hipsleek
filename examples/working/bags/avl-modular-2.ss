@@ -22,6 +22,7 @@ avl<"m":m, "n":n, "S":S> ==
     "m" : m = 1+m1+m2 ; 
     "n" : -1 <= n1 - n2 <= 1 & n = 1 + max(n1, n2) ;
     "S" : S = union(S1, S2, {v}) & forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))]
+
   inv true & [
     "m" : m >= 0;
     "n" : n >= 0];
@@ -273,7 +274,8 @@ node insert(node x, int a)
 node remove_min_add(node x, ref myint a)
   requires x::avl<m,n,S> * a::myint<vv> & x != null
   ensures res::avl<m,n,Sn> * a'::myint<r> /*'*/ & 
-    ["S" : union(S, {vv}) = union(Sn, {r}) & r <= vv & forall (xx : (xx notin Sn | r <= xx))];
+    ["S" : union(S, {vv}) = union(Sn, {r}) & r <= vv 
+    & forall (xx : (xx notin Sn | r <= xx))];
 {
   int ti;
   node tn;
@@ -307,10 +309,10 @@ node remove_min_add(node x, ref myint a)
         ti = x.val;
         tr = x.right.left;
         // assert tr' = null assume tr' = null; //'
-        //assume tr' = null or tr'!=null;
+        assume tr' = null or tr'!=null;
         tr = x.right.right; 
         // fails! assert tr' = null assume tr' = null; //'
-        //assume tr' = null or tr'!=null;
+        assume tr' = null or tr'!=null;
         x.val = x.right.val;
         x.right.val = a.val;
         a.val = ti;
@@ -321,9 +323,11 @@ node remove_min_add(node x, ref myint a)
     if (a.val >= x.val) {
       if (x.right == null) {
         tr = x.left.left;
-        //assert tr' = null assume tr' = null; //'
+	assume tr'=null or tr'!=null;
+         //assert tr' = null assume tr' = null; //'
         //assume tr' = null or tr'!=null;
-        tr = x.left.right;
+       tr = x.left.right;
+ 	assume tr'=null or tr'!=null;
         //assert tr' = null assume tr' = null; //'
         //assume tr' = null or tr'!=null;
         ti = x.left.val;
@@ -350,8 +354,9 @@ node remove_min_add(node x, ref myint a)
 
 node remove_max_add(node x, ref myint a)
   requires x::avl<m,n,S> * a::myint<vv> & x != null
-  ensures res::avl<m,n,Sn> * a'::myint<r> & ["S" : union(S, {vv}) = union(Sn, {r}) & r >= vv & //'
-    forall (xx : (xx notin Sn | r >= xx))];
+  ensures res::avl<m,n,Sn> * a'::myint<r> 
+    & ["S" : union(S, {vv}) = union(Sn, {r}) & r >= vv //'
+    & forall (xx : (xx notin Sn | r >= xx))];
 {
   int ti;
   myint ti2 = new myint(0);
@@ -542,7 +547,20 @@ node delete(node x, int a)
       if (diff_h_by_2(x.right,x.left)) {
         tmp = x.right;
         //assert tmp'!=null; //'
+        //assert tmp'=null; //'
+          //assert false; 
+        assert tmp'::avl<mm,nn,_> & nn>0;//'
+		assert tmp'::avl<mm,nn,_> & mm>0;//'
+		assert tmp'::avl<mm,nn,_> & nn=0;//'
+		assume tmp'=null or tmp'!=null;
+		dprint;
+        //assert tmp'::avl<mm,nn,_> & mm>0;//'
+           //dprint;
         assume tmp'=null or tmp'!=null;
+        dprint;
+        //assert tmp'!=null;//'
+        node tmpr = tmp.right;
+        node tmpl = tmp.left;
         if (diff_h_by_1(x.right.right,x.right.left)) {
            x = rotate_left(x.left, x.right.left, x.right.right, x.val, x.right.val); // SRR
           return x;

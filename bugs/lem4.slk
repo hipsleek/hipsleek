@@ -1,0 +1,64 @@
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0
+         or (exists r2: self::node<next = r2> * r2::lseg<n - 1, p>)
+         inv n >= 0.
+pred lseg2<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] self::lseg<next = r2> * r2::lseg2<n - 1, p> ;
+          }
+         inv n >= 0.
+
+//lemma self::lseg<n,p> <- self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2.
+
+/*
+
+pred lseg<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] self::node<next = r2> * r2::lseg<n - 1, p> ;
+          }
+         inv n >= 0.
+
+
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma self::lseg<n,p> <-> self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2.
+
+lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
+*/
+
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+//checkentail x::lseg<n,t> & n=0 |- x::lseg<m,s>.
+
+checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
+
+//checkentail x::node<_,null> |- x::lseg<m,null>.
+
+//checkentail x::node<_,null> |- x::lseg<m,p>.
+
+//checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::node<_,null>.
+
+//checkentail x::lseg2<n,t> * t::node<_,null> & n=0 |- x::lseg2<m,null>.
+
+//checkentail x::lseg2<n,t> * t::node<_,null> & n=0 |- x::lseg2<m,q>.
+
+//checkentail x::lseg2<n,t> * t::node<_,null> & n=0  |- x::lseg2<m,q>.
+
+//checkentail  t::node<_,null> & x=null & x=t  |- x::lseg2<m,q>.
+// false detected above
+
+//checkentail x::lseg2<n,t> * t::node<_,null> & x=null  |- x::lseg2<m,q>.
+// works but false not detected when non-case used?
+// false only detected with case?
+
+//checkentail x::lseg<n,t> * t::node<_,null> & n=0  |- x::lseg<m,q>.
+
+//checkentail x::lseg<n,t> * t::node<_,null> & x=null  |- x::lseg<m,q>.
+
+
+print residue.

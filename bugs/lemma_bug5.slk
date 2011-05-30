@@ -1,0 +1,24 @@
+        EXISTS(tx_788: x'::lseg<flted_28_771,tx_788,sm1_683,lg1>@M#O[ll_tail2lseg] * 
+        y_86'::ll_tail<n_676,ty_87',sm1_749,lg1_750>@M * 
+        tx_788::node<lg1_684,y_86'>@M & flted_28_771+1=n_638 & 
+        flted_28_770=null & lg1<=lg1_684 & flted_24_508+1=n & sm<=d_509 & 
+        d_509<=lg & p_510!=null & t_505=tx & sm_506=sm & lg_507=lg & 0<n & 
+        x!=null & !(v_bool_38_357') & x!=null & !(v_bool_38_357') & 
+        p_510!=null & !(v_bool_39_356') & p_510!=null & !(v_bool_39_356') & 
+        tmp1_88'=null & temp_89'=d_509 & d_591=d_509 & p_592=p_510 & 
+        d_591<=lg_507 & sm_506<=d_591 & flted_24_508+1=n_577 & 
+        sm_578<=d_591 & d_591<=lg_579 & sm_506=sm_578 & lg_507=lg_579 & 
+        exists1(tx_590:t_505=tx_590) & tx=t_505 & n_577=n2_645+n1_646 & 
+        0<=n_577 & x_685!=null & v_bool_54_338' & x_685!=null & 
+        v_bool_54_338' & n_638=n1_646 & sm_639=sm_578 & lg_640=d_509 & 
+        sm_639<=sm1_683 & lg1_684<=lg_640 & 0<=n_638 & y_751!=null & 
+        v_bool_57_339' & y_751!=null & v_bool_57_339' & n_676=n2_645 & 
+        sm_677=d_509 & lg_678=lg_579 & sm_677<=sm1_749 & lg1_750<=lg_678 & 
+        0<=n_676 & x'!=null & !(v_bool_60_355') & x'!=null & 
+        !(v_bool_60_355') & y_86'!=null & v_bool_66_354' & y_86'!=null & 
+        v_bool_66_354' & tx'=ty_87' & {FLOW,(29,30)=__norm,})
+
+|-
+
+	ensures x'::ll_tail<m, tx', sm1, lg1> & sm <= sm1 & lg1 <= lg & m = n ;
+

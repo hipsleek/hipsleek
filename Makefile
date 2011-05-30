@@ -36,11 +36,14 @@ opt: hip sleek prover
 lexer.ml: lexer.mll token.ml
 	$(OCAMLLEX) lexer.mll
  
-parser.cmo: lexer.ml
+# dependencies of parser.ml needs to be manually specified
+parser.cmo: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
 	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
-parser.cmx : lexer.ml
+parser.cmx : lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml	
 	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
+
+parser.cmi: lexer.cmi iast.cmi sleekcommons.cmi globals.cmi error.cmi cast.cmi
 
 ocparser.cmo ocparser.ml: ocparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) ocparser.mly
@@ -60,7 +63,7 @@ rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLLEX) rllexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
 
-MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
+MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
@@ -70,7 +73,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo 
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo\
-  sleekcommons.cmo token.cmo lexer.cmo parser.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo\
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -87,7 +90,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo 
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
-GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
+GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iastUtil.cmo \
 	iprinter.cmo \
@@ -96,7 +99,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo procu
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  sleekcommons.cmo token.cmo lexer.cmo parser.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -110,7 +113,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo procu
 
 
 
-SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
+SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
@@ -120,7 +123,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
 	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  sleekcommons.cmo token.cmo lexer.cmo parser.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -137,7 +140,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
 
 
-PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
+PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
@@ -147,7 +150,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo\
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  sleekcommons.cmo token.cmo lexer.cmo parser.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -160,7 +163,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo
 
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
-WEB_FILES=globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
+WEB_FILES=globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
@@ -170,7 +173,7 @@ WEB_FILES=globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  sleekcommons.cmo token.cmo lexer.cmo parser.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -236,7 +239,7 @@ sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT)
 JAVA_FILES=debug.cmo globals.cmo error.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iprinter.cmo \
-  sleekcommons.cmo token.cmo lexer.cmo parser.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
 	iparser.cmo ilexer.cmo \
 	iastUtil.cmo \
 	java.cmo

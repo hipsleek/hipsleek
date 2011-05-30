@@ -1,0 +1,20 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+
+//checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> & n1 = 3.
+//print residue.
+// valid but fail
+
+checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4
+|- x::lseg<n, p> & n = 7.
+
+checkentail x::lseg<n1, r1> * r1::lseg<n2, p> |- x::lseg<n3, p3>.
+print residue.
+

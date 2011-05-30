@@ -24,13 +24,29 @@ and primed =
   | Primed
   | Unprimed
 
-and prim_type = 
+(* and prim_type =  *)
+(*   | TVar of int *)
+(*   | Bool *)
+(*   | Float *)
+(*   | Int *)
+(*   | Void *)
+(*   | BagT of prim_type *)
+(*   | List *)
+
+(* TODO : move typ here in future *)
+type typ =
+  | UNK 
+  | TVar of int
   | Bool
   | Float
   | Int
+  | NUM
   | Void
-  | Bag
-  | List
+  | List of typ
+  | BagT of typ
+  (* | Prim of prim_type *)
+  | Named of ident (* named type, could be enumerated or object *)
+  | Array of (typ * int option) (* base type and optional dimension *)
 
 (*
   Data types for code gen
@@ -40,13 +56,75 @@ type mode =
   | ModeIn
   | ModeOut
 
-let string_of_prim_type = function 
+(* let rec string_of_prim_type = function  *)
+(*   | Bool          -> "boolean" *)
+(*   | Float         -> "float" *)
+(*   | Int           -> "int" *)
+(*   | Void          -> "void" *)
+(*   | TVar i       -> "TVar["^(string_of_int i)^"]" *)
+(*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
+(*   | List          -> "list" *)
+
+(* pretty printing for types *)
+let rec string_of_typ = function 
+   (* may be based on types used !! *)
+  | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
-  | Bag           -> "multiset"
-  | List          -> "list"
+  | NUM          -> "NUM"
+  | BagT t        -> "bag("^(string_of_typ t)^")"
+  | TVar t        -> "TVar["^(string_of_int t)^"]"
+  | List t        -> "list("^(string_of_typ t)^")"
+  (* | Prim t -> string_of_prim_type t  *)
+  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
+;;
+
+let subs_tvar_in_typ t (i:int) nt =
+  let rec helper t = match t with
+    | TVar j -> if i==j then nt else t
+    | BagT et -> BagT (helper et)
+    | List et -> List (helper et)
+    | Array (et,d) -> Array (helper et,d)
+    | _ -> t
+  in helper t
+;;
+
+let null_type = Named ""
+;;
+
+let dim_subtype d1 d2 =
+  match d1,d2 with
+    | _, None -> true
+    | None, Some _ -> false
+    | Some i1, Some i2 -> i1==i2
+;;
+
+let rec sub_type (t1 : typ) (t2 : typ) = 
+  match t1,t2 with
+    | UNK, _ -> true
+    | Named c1, Named c2 ->
+          if c1=c2 then true
+          else c1=""
+    | Array (et1,d1), Array (et2,d2) ->
+          if dim_subtype d1 d2 then sub_type et1 et2
+          else false
+    | BagT et1, BagT et2 -> sub_type et1 et2
+    | List et1, List et2 -> sub_type et1 et2
+    | Int, NUM        -> true
+    | Float, NUM        -> true
+    | p1, p2 -> p1=p2
+;;
+
+
+let rec s_i_list l c = match l with 
+  | [] -> ""
+  | h::[] -> h 
+  | h::t -> h ^ c ^ (s_i_list t c)
+;;
+let string_of_ident_list l = "["^(s_i_list l ",")^"]"
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
@@ -77,6 +155,12 @@ let no_pos =
 				   Lexing.pos_bol = 0; 
 				   Lexing.pos_cnum = 0 } in
 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
+
+let post_pos = ref no_pos
+let set_post_pos p = post_pos := p
+
+let entail_pos = ref no_pos
+let set_entail_pos p = entail_pos := p
 
 let flow = "flow"
 let top_flow = "__flow"
@@ -131,7 +215,7 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 
-let lemma_heuristic = ref false
+(* let lemma_heuristic = ref false *)
 
 let elim_exists = ref true
 
@@ -367,7 +451,11 @@ let fresh_trailer () =
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
-		
+
+let fresh_any_name (any:string) = 
+  let str = string_of_int (fresh_int ()) in
+    any ^"_"^ str
+
 let fresh_name () = 
   let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str

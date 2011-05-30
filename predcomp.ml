@@ -73,8 +73,8 @@ let rec formula_to_disjuncts (f0 : formula) : formula list = match f0 with
 		 formula_or_f2 = f2}) -> begin
 	  let l1 = formula_to_disjuncts f1 in
 	  let l2 = formula_to_disjuncts f2 in
-		l1 @ l2
-	end
+	  l1 @ l2
+  end
   | _ -> [f0]
 
 (*
@@ -85,8 +85,8 @@ and heap_to_nodes (h0 : h_formula) : h_formula list = match h0 with
 		   h_formula_star_h2 = h2}) -> begin
 	  let l1 = heap_to_nodes h1 in
 	  let l2 = heap_to_nodes h2 in
-		l1 @ l2
-	end
+	  l1 @ l2
+  end
   | _ -> [h0]
 
 and class_name_of_view (c : ident) : ident = c ^ "_Checker"
@@ -95,25 +95,30 @@ and is_in_vars (e : CP.exp) (vars : ident list) : bool =
   if CP.is_var e then
 	let tmp = CP.to_var e in
 	let sv = CP.name_of_spec_var tmp in
-	  List.mem sv vars
+	List.mem sv vars
   else false
 
 and is_in_svars (e : CP.exp) (svars : CP.spec_var list) : bool = 
   if CP.is_var e then
 	let tmp = CP.to_var e in
-	  CP.mem tmp svars
+	CP.mem tmp svars
   else
 	false
 
-and aug_class_name (t : CP.typ) = match t with
-  | CP.OType c -> c ^ "Aug"
-  | CP.Prim Int -> "IntAug"
-  | CP.Prim Bool -> "BoolAug"
-  | CP.Prim Float -> "FloatAug"
-  | CP.Prim Void -> "void"
-  | CP.Prim Bag -> "Set"
-  | CP.Prim List -> "List"
-	| CP.Array et -> aug_class_name et ^ "[]" (* An Hoa *)
+and aug_class_name (t : typ) = match t with
+  | UNK  -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
+  | Named c -> c ^ "Aug"
+  | Int -> "IntAug"
+  | Bool -> "BoolAug"
+  | Float -> "FloatAug"
+  | NUM -> "NUMAug"
+  | Void -> "void"
+  | (BagT t) -> "Set("^(aug_class_name t)^")"
+  | (TVar i) -> "TVar["^(string_of_int i)^"]"
+  | List t -> "List("^(aug_class_name t)^")"
+  | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
 
 (*
   split view parameters according to their modes:
@@ -122,9 +127,9 @@ and aug_class_name (t : CP.typ) = match t with
 and split_params_mode (view_vars : CP.spec_var list) (modes : mode list) : (CP.spec_var list * CP.spec_var list) = match view_vars, modes with
   | (var :: rest1, m :: rest2) -> begin
 	  let tmp1, tmp2 = split_params_mode rest1 rest2 in
-		if m = ModeIn then (var :: tmp1, tmp2)
-		else (tmp1, var :: tmp2)
-	end
+	  if m = ModeIn then (var :: tmp1, tmp2)
+	  else (tmp1, var :: tmp2)
+  end
   | ([], []) -> ([], [])
   | _ -> failwith ("split_params_mode: two input lists must be of the same length.")
 
@@ -141,24 +146,24 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 		let rest_result = helper rest1 in
 		(* An Hoa MARKED *)
 		let rec ityp_of_ctyp ct = match ct with
-			| CP.Prim p -> Prim p
-			| CP.OType c -> Named c
-			| CP.Array et -> ityp_of_ctyp et in
+		  | Named c -> Named c
+		  | Array (et, _) -> ityp_of_ctyp et 
+		  | p -> p in
 		let t = ityp_of_ctyp (CP.type_of_spec_var var) in
 		(* An Hoa END *)
 		let fld = ((t, CP.name_of_spec_var var), pos) in
-		  fld :: rest_result
-	  end
+		fld :: rest_result
+	end
 	| [] -> [] in
-	(* generator for partially bound out parameters *)
+  (* generator for partially bound out parameters *)
   let rec helper2 (CP.SpecVar (t, v, p)) =
 	let cls_name = aug_class_name t in
 	let atype = Named cls_name in
-	  ((atype, v), pos) in
+	((atype, v), pos) in
   let pb_fields = List.map helper2 pbvars in
   let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
-	pb_fields @ normal_fields
+  pb_fields @ normal_fields
 
 (*
   Compilation of a formula will generate a class/data declaration
@@ -1559,7 +1564,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 	| [], [], [] -> [] 
 	| _ -> failwith ("gen_heap: params and modes are supposed to be lists with the same length.") in
 	(* gen inputs *)
-      let self_var = CP.SpecVar (CP.OType vdef.C.view_data_name, self, Unprimed) in
+      let self_var = CP.SpecVar (Named vdef.C.view_data_name, self, Unprimed) in
       let tmp1 = helper (self_var :: vdef.C.view_vars) (p :: vs) (ModeIn :: vdef.C.view_modes) in
       let helper2 e1 e2 = mkSeq e2 e1 pos in
       let init_inputs = List.fold_left helper2 call_cond tmp1 in
@@ -1679,7 +1684,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 					proc_data_decl = None; (* the class containing the method *)
 					proc_constructor = false;
 					proc_args = [cur_color pos; new_color pos];
-					proc_return = Prim Bool;
+					proc_return = Bool;
 					proc_static_specs = [];
 					proc_dynamic_specs = [];
 					proc_exceptions = [];
@@ -1707,10 +1712,10 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
 								  exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 								  exp_call_nrecv_pos = pos}) in
-	  let undo_call = VarDecl {exp_var_decl_type = Prim Bool;
+	  let undo_call = VarDecl {exp_var_decl_type = Bool;
 							   exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
 							   exp_var_decl_pos = pos } in
-	  let call_disj = VarDecl {exp_var_decl_type = Prim Bool;
+	  let call_disj = VarDecl {exp_var_decl_type = Bool;
 							   exp_var_decl_decls = [(bvar_name, Some call, pos)];
 							   exp_var_decl_pos = pos } in
 		(*
@@ -1792,7 +1797,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
 					 proc_data_decl = None;
 					 proc_constructor = false;
 					 proc_args = [cur_color pos; new_color pos];
-					 proc_return = Prim Bool;
+					 proc_return = Bool;
 					 proc_static_specs = [];
 					 proc_dynamic_specs = [];
 					 proc_body = Some combined_exp;
@@ -1902,9 +1907,9 @@ and gen_partially_bound_types (pbvars : CP.spec_var list) pos : data_decl list =
 	tmp2
 	  
 and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_decl list = match t with
-  | CP.OType c ->
+  | Named c ->
 	  let cls_aug = c ^ "Aug" in
-	  let fields = [((Prim Bool, "bound"), pos); ((Named (Cprinter.string_of_typ t), "val"), pos)] in
+	  let fields = [((Bool, "bound"), pos); ((Named (string_of_typ t), "val"), pos)] in
 	  let ddef = { data_name = cls_aug;
 				   data_fields = fields;
 				   data_parent_name = "Object";

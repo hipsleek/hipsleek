@@ -1,0 +1,17 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- x::lseg<n1, r1> * r1::lseg<n2, p> * t1::lseg<x2, y2>  & n1 = n2 & n1>2.
+// valid ==> goes into a loop??
+
+
+//checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- t1::lseg<x2, y2> * x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
+// valid ==> goes into a loop??
+
+

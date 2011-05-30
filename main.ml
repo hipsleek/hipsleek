@@ -52,7 +52,7 @@ let process_source_full source =
     let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
     output_string jfile java_str;
     close_out jfile;
-    print_string (" done.\n"); flush stdout;
+    (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
   if (!Scriptarguments.parse_only) then 
@@ -65,8 +65,7 @@ let process_source_full source =
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 
     let intermediate_prog =IastUtil.pre_process_of_iprog prog in
-		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in *) 
-
+		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
 		(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
@@ -79,8 +78,8 @@ let process_source_full source =
     (* let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in *)
     let cprog = Astsimp.trans_prog intermediate_prog in
 		(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
-		let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
-    let _ = print_string (" done\n"); flush stdout in
+	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
+    (* let _ = print_string (" done-2\n"); flush stdout in *)
 		(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
     let _ = 
@@ -107,7 +106,7 @@ let process_source_full source =
 	    ()
 	in
 	ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-	print_string ("\nDone.\n"); flush stdout;
+	print_string ("\nDone-3.\n"); flush stdout;
 	exit 0
       end 
     in
@@ -118,7 +117,9 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
-    (try
+    if (!Scriptarguments.typecheck_only) 
+    then print_string (Cprinter.string_of_program cprog)
+    else (try
     ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
@@ -178,7 +179,7 @@ let main1 () =
       ()
 
 (* let main1 () = *)
-(*   Gen.Debug.loop_1 "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
+(*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()
@@ -191,6 +192,7 @@ let _ =
     ()
   with _ as e -> begin
     finalize ();
+    print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError(s) detected at main \n");
   end

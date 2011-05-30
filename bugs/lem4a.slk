@@ -1,0 +1,47 @@
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0
+         or (exists r2: self::node<next = r2> * r2::lseg<n - 1, p>)
+         inv n >= 0.
+pred lseg2<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] (exists r2:self::node<next = r2> * r2::lseg2<n - 1, p>) ;
+          }
+         inv n >= 0.
+
+pred ll<n> == 
+   case { self=null -> [] self = null & n = 0 ;
+          self!=null -> [] (exists r2:self::node<next = r2> * r2::ll<n - 1>) ;
+          }
+         inv n >= 0.
+
+
+//checkentail x::lseg<n,t> & n=0 |- x::lseg<m,s>.
+
+//checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
+
+//checkentail x::node<_,null> |- x::lseg<m,null>.
+
+//checkentail x::node<_,null> |- x::lseg<m,p>.
+
+//checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::node<_,null>.
+
+//checkentail x::lseg2<n,t> * t::node<_,null> & n=0 |- x::lseg2<m,null>.
+
+//checkentail x::lseg2<n,t> * t::node<_,null> & n=0 & m=1 |- x::lseg2<m,q>.
+
+//checkentail x::lseg2<n,t> * t::node<_,null> & n=0  |- x::lseg2<m,null>.
+
+//checkentail x::node<_,x2> & x2=null  |- x::lseg2<m,q>.
+
+//checkentail x::node<_,x2> & x2=null  |- x::ll<m>.
+
+// checkentail x::lseg2<n,t> * t::node<_,null> & x=null  |- x::lseg2<m,q>.
+// works!
+
+//checkentail x::lseg<n,t> * t::node<_,null> & n=0  |- x::lseg<m,q>.
+
+//checkentail x::lseg<n,t> * t::node<_,null> & x=null  |- x::lseg<m,q>.
+
+
+print residue.

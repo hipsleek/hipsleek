@@ -214,14 +214,17 @@ let extract_name sv =
  *)
 let rec smt_of_typ t = 
 	match t with
-		| CP.Prim pt -> begin match pt with
-			| Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
-		  | Float -> "Real"
-		  | Int -> "Int"
-		  | Void | Bag | List -> "" (* Fail! *)
-		end
-		| CP.OType _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ CP.name_of_type t) *)
-		| CP.Array et -> "(Array Int " ^ smt_of_typ et ^ ")"
+	  | Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
+	  | Float -> "Real"
+	  | Int -> "Int"
+      | UNK           -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
+	  | NUM | Void | (BagT _) | (TVar _) | List _ -> 
+          Error.report_error {Error.error_loc = no_pos; 
+                              Error.error_text = "spec not supported for SMT"} (* Fail! *)
+      | Named _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ string_of_typ t) *)
+      | Array (et, _) -> "(Array Int " ^ smt_of_typ et ^ ")"
 
 (**
  * smt of spec_var
@@ -546,7 +549,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3
 
-(* let is_sat f sat_no = Gen.Debug.loop_2 "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
+(* let is_sat f sat_no = Gen.Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
 
 
 (**

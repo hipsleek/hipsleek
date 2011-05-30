@@ -24,22 +24,30 @@ let test_number = ref 0
 
 
 (* pretty printing for primitive types *)
-let isabelle_of_prim_type = function
+let rec isabelle_of_typ = function
   | Bool          -> "int"
   | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | Bag		  ->
-      if !bag_flag then "int multiset"
-      else "int set"
-  | List           -> "list"	(* lists are not supported *)
+  | BagT	t	  ->
+      if !bag_flag then "("^(isabelle_of_typ t) ^") multiset"
+      else "("^(isabelle_of_typ t) ^") set"
+  | UNK           -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
+  | List _          -> 	(* lists are not supported *)
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "list not supported for Isabelle"}
+  | NUM | TVar _ | Named _ | Array _ ->
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "type var, array and named type not supported for Isabelle"}
 ;;
 
 (* pretty printing for spec_vars *)
 let isabelle_of_spec_var (sv : CP.spec_var) = match sv with
-  | CP.SpecVar (CP.Prim(t), v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_prim_type t ^ ")"
-  | CP.SpecVar (CP.OType(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
-	| CP.SpecVar (CP.Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
+  | CP.SpecVar (Named(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+  | CP.SpecVar (Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
+  | CP.SpecVar (t, v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_typ t ^ ")"
 
 (* pretty printing for spec_vars without types *)
 (*let isabelle_of_spec_var_no_type (sv : CP.spec_var) = match sv with
@@ -367,7 +375,7 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
         print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
         restart ("Timeout!");
         is_sat_b in
-      let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in
+      let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () timeout fail_with_timeout in
       answ
   end
 
