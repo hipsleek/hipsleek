@@ -4229,12 +4229,6 @@ and gather_type_info_exp_x a0 stab et =
           let el_t = fresh_tvar stab in
           let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
           BagT t
-	      let ts = List.map (fun e -> gather_type_info_exp_x e stab new_et) es in
-          List.fold_left (fun e a -> must_unify a e stab pos) new_et ts
-    | IP.Bag (es,pos) ->
-          let el_t = fresh_tvar stab in
-          let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
-          BagT t
     | IP.ArrayAt ((a,p),i,pos) -> (* t[] -> int -> t *)
           (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array*)
 		  (* and hence, accessing the element at position i, we get the value of expected_type*)
@@ -4538,8 +4532,6 @@ and gather_type_info_b_formula_x prog b0 stab =
           let new_et = fresh_tvar stab in
 	      let t1 = gather_type_info_exp a1 stab new_et in (* tvar, Int, Float *)
 	      let t2 = gather_type_info_exp a2 stab new_et in
-          let t = must_unify t1 t2 stab pos  in (* UNK, Int, Float, TVar *) 
-          ()
           let _ = must_unify t1 t2 stab pos  in (* UNK, Int, Float, TVar *) 
           ()
     | IP.BagMax ((v1, p1), (v2, p2), pos) 
@@ -4548,6 +4540,7 @@ and gather_type_info_b_formula_x prog b0 stab =
 	      let t1 = gather_type_info_var v1 stab et pos in
           let t = must_unify t1 NUM stab pos  in
 	      let _ = gather_type_info_var v2 stab (BagT t) pos in
+          ()
     | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos)  | IP.ListAllN (e1, e2, pos) ->
           let new_et = fresh_tvar stab in
           let t1 = gather_type_info_exp e2 stab (List new_et) in
