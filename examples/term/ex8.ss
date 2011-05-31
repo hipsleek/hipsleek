@@ -42,11 +42,13 @@ case {
                     ensures "r8":x'<0;
    }
 }
+/* needs -tp redlog */
 {
 	if (x >= 0) {
-		x = -2*x + 10;
+		//x = -2*x + 10;
+		x = -(x+x) + 10;
         assert "r2":x-x'>0;
-        assert "r2":x'>=0; //not well-founded!
+        assert "r2":x'>=0; //not well-founded! // fails
         assert "r2":x'<0;  //going to base case
         assert "r3":x'>5; //going to another base case
         assert "r8":x'<=2; //going to another base case
