@@ -59,8 +59,8 @@ node get_next(node x)
 /* function to set null the tail of a list */
 void set_null(node x)
 
-	requires x::ll<L1> & len(L1) > 0
-	ensures x::ll<L2> & L2 = [|head(L1)|];
+	requires x::ll<L5> & len(L5) > 0
+	ensures x::ll<L6> & L6 = [|head(L5)|];
 
 {
 	x.next = null;
