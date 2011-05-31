@@ -13,16 +13,16 @@ data node {
 
 
 /* view for red-black trees */
-rb<n, cl, bh> == self = null & n = 0 & bh = 1 & cl = 1
+//rb<n, cl, bh> == self = null & n = 0 & bh = 1 & cl = 1
 	// self is red, both child must be black
-	or self::node<v, 0, l, r> * l::rb<ln, 1, lbh> * r::rb<rn, 1, rbh>
-	   & cl = 0 & n = 1 + ln + rn & lbh = bh & rbh = bh
+//	or self::node<v, 0, l, r> * l::rb<ln, 1, lbh> * r::rb<rn, 1, rbh>
+//	   & cl = 0 & n = 1 + ln + rn & lbh = bh & rbh = bh
 	// if left is black, right must be black due to left-leaning!
-	or self::node<v, 1, l, r> * l::rb<ln, 1, lbh> * r::rb<rn, 1, rbh>
-       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh
-	or self::node<v, 1, l, r> * l::rb<ln, 0, lbh> * r::rb<rn, _, rbh>
-       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh
-	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
+//	or self::node<v, 1, l, r> * l::rb<ln, 1, lbh> * r::rb<rn, 1, rbh>
+//      & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh
+//	or self::node<v, 1, l, r> * l::rb<ln, 0, lbh> * r::rb<rn, _, rbh>
+//       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh
+//	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
 
 
 /* Red black tree with case analysis */
@@ -33,19 +33,18 @@ rbc<n, cl, bh, c> == self = null & n = 0 & bh = 1 & cl = 1 & c = 0
 	or self::node<v, 1, l, r> * l::rbc<ln, 1, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 1
 	// c = 2:   B
 	//        R   B
-    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 2
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, 4> * r::rbc<rn, 1, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 2
 	// c = 3:   B
 	//        R   R
-    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 0, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 3
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, 4> * r::rbc<rn, 0, bh - 1, 4> & cl = 1 & n = 1 + ln + rn & c = 3
 	// c = 4:   R
 	//        B   B
 	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _> & cl = 0 & n = 1 + ln + rn & c = 4
 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4;
 
-// Special case         R
+// Special case         R   
 //                    R   B
-// that usually occurs.
-rbs<n, bh> == self::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,_> & ln + rn + 1 = n
+rbs<n, bh> == self::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,c> & ln + rn + 1 = n
 	inv n >= 1 & bh >= 1 & self!=null;
 
 //////////////////////////////////////////
@@ -55,6 +54,16 @@ rbs<n, bh> == self::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,_> & ln +
 // h : main node
 // lt : left tree; rt : right tree
 // llt : lt's left tree; rlt : rt's left tree; ...
+
+void goo(node x)
+  requires x::rbc<_,_,_,c>@I
+  case {
+     c<=0 -> ensures true;
+     c=1 -> ensures true;
+     c=2 -> ensures true;
+     c=3 -> ensures true;
+     c>=4 -> ensures true;
+   }
 
 
 bool is_red(node h)
@@ -76,6 +85,7 @@ void color_flip(node h)
 	requires h::node<v,c,l,r> * l::node<lv,lc,ll,lr> * r::node<rv,rc,rl,rr>
 	ensures h::node<v,1-c,l,r> * l::node<lv,1-lc,ll,lr> * r::node<rv,1-rc,rl,rr>;
 {
+	assert h != null;
 	h.color        = 1 - h.color;
 	h.left.color   = 1 - h.left.color;
 	h.right.color  = 1 - h.right.color;
@@ -107,23 +117,20 @@ node rotate_right(node h)
 	return x;
 }
 
-/*
 // compute the black height of a red black tree
 int black_height(node h)
-	requires h::rb<_,_,bh>
+	requires h::rbc<_,_,bh,_>
 	ensures res = bh;
 {
 	if (h == null)
 		return 1;
-	
+
 	if (is_red(h))
 		return black_height(h.left);
 	else
 		return 1 + black_height(h.left);
 }
-*/
 
-/*
 //////////////////////////////////////////
 //              INSERTION               //
 //////////////////////////////////////////
@@ -131,36 +138,24 @@ int black_height(node h)
 // Insert a value v to the ROOT node of a red-black tree
 // Remark: POSSIBLE to have height increment.
 node insert(node h, int v)
-	//requires h::rb<n,_,bh>
-	//ensures res::rb<n+1,1,bh> or res::rb<n+1,1,bh+1>;
-	requires h::rbc<n,_,bh,_>
-	ensures res::rbc<n+1,1,bh,_> or res::rbc<n+1,1,bh+1,_>;
+	requires h::rbc<n,_,bh,c>
+	//PROBLEM DETECTED: THIS POST-CONDITION CANNOT BE VERIFIED SIMPLY BECAUSE THE SYSTEM DOES NOT KNOW
+	//THAT IT NEEDS TO PERFORM A CASE SWITCH ON c!
+	//ensures res::rbc<n+1,1,bh,_> or res::rbc<n+1,1,bh+1,_>;
+	case {
+		c = 0 -> ensures res::rbc<1,1,2,1>;
+		c = 1 -> ensures res::rbc<n+1,1,bh,_>;
+		c = 2 -> ensures res::rbc<n+1,1,bh,_>;
+		(c < 0 | c >=3) -> ensures res::rbc<n+1,1,bh,_> or res::rbc<n+1,1,bh+1,_>;
+		//(c < 00| c > 4) -> ensures false;
+	}
 {
 	node r = insert_internal(h,v);
-	
-	//assert r != null;	
-	assert     r::node<_,0,null,null>
-	        or r::rbc<n+1,_,bh,_>
-	        //or r::rbc<n+1,0,bh,4>
-			or r::node<_,0,l1,r1> * l1::rbc<ln,0,bh,4> * r1::rbc<rn,1,bh,_> & n = ln + rn;
-	
-//	assert r::rbc<n+1,_,bh,_> & r != null
-//	       or r::node<_,0,l1,r1> * l1::rbc<ln,0,bh,4> * r1::rbc<rn,1,bh,_> & ln + rn = n;
-	
-	r.color = 1;
-	return r;
-}
 
-node testcm(node h)
-	requires h::node<_,0,null,null> ensures res::rbc<1,1,2,1>;
-	requires h::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,_> ensures res::rbc<ln+rn+1,1,bh+1,2>;
-	requires h::rbc<n,0,bh,4> ensures res::rbc<n,1,bh+1,1>;
-	requires h::rbc<n,1,bh,c> ensures res::rbc<n,1,bh,c>;
-{
-	if (h != null) {
-		h.color = 1;
-	}
-	return h;
+	if (is_red(r))
+		r.color = 1;
+
+	return r;
 }
 
 // Insert a value v to an INTERNAL node of a red-black tree.
@@ -170,22 +165,41 @@ node insert_internal(node h, int v)
 	//requires h::rb<n,c,bh> ensures res::rb<n+1,0,bh> or res::node<_,0,l,r> * l::rb<ln,0,bh> * r::rb<rn,1,bh> & ln + rn = n;
 	requires h::rbc<n,_,bh,c>
 	case {
-		c = 0 -> ensures res::node<v,0,null,null>;
-		c = 1 -> ensures res::rbc<n+1,1,bh,1> or res::rbc<n+1,1,bh,2>;
-		c = 2 -> ensures res::rbc<n+1,1,bh,2> or res::rbc<n+1,1,bh,3>;
-		(c = 3 | c = 4) -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>;
-		(c < 0 | c > 4) -> ensures false;
+		c = 0 -> ensures res::node<v,0,null,null>; //res::rbc<1,0,1,4>;// verified in 2s
+		c = 1 -> ensures res::rbc<n+1,1,bh,1> or res::rbc<n+1,1,bh,2>; // verified in 150s
+		c = 2 -> ensures res::rbc<n+1,1,bh,2> or res::rbc<n+1,1,bh,3>; // verified in 60s
+		c = 3 -> ensures res::rbc<n+1,0,bh,4>; // verfied with additional assumption
+		c = 4 -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>; 
+		(c < 0 | c > 4) -> ensures false; // ensure false as this case cannot happen. F -> F
 	}
 {
+	assume c = 3;
+	
 	if (h == null)
 		return new node(v, 0, null, null); // RED node
 	
-	if (is_red(h.left) && is_red(h.right)) {
-		h.color        = 0;
-		h.left.color   = 1;
-		h.right.color  = 1;
-	}	
+	node l = h.left;
+	node r = h.right;
+	assert l'!=null & r'!=null; // must succeed when c = 3
 	
+	if (is_red(h.left) && is_red(h.right))
+		color_flip(h);
+
+	assert h'::rbc<_,_,_,_>; // fail assertion!
+	// Case c = 3 : verified with this assert and assume
+	//assert h'::node<_,0,l',r'> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
+	//assume h'::node<_,0,ll,rr> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
+    //assert false;
+    //foo(h,l,r);
+
+	// Additional helper assumes for case c = 4
+	//assert l'::rbc<_,1,bh,lc> * r'::rbc<_,1,bh,rc>;
+	// Fail case: 1-1
+	//assume l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,2>;
+	//assume lc = 0 or lc = 1 or lc = 2 or lc = 3 or lc = 4;
+	//assume rc = 0 or rc = 1 or rc = 2 or rc = 3 or rc = 4;
+	//dprint;
+
 	if (v <= h.val) { // accept duplicates!
 		h.left = insert_internal(h.left, v);
 		if (is_red(h.left))
@@ -196,45 +210,24 @@ node insert_internal(node h, int v)
 		if (is_red(h.right) && !is_red(h.left))
 			h = rotate_left(h);
 	}
-	
+
 	return h;
 }
-*/
+
 
 //////////////////////////////////////////
 //         HELPER FUNCTIONS II          //
 //////////////////////////////////////////
-
-// Fix the invariant
-/*node fix_up(node h)
-	requires h::node<v,c,l,r> * l::rb<ln,lc,lh> * rt::rb<rn,rc,rh> & 0 <= c <= 1
-	ensures res::rb<1+ln+rn,c1,lh> & 0 <= c1 <= 1;
-{
-	// ensure left-leaning property
-	if (h != null) {
-	
-		if (is_red(h.right))
-			h = rotate_left(h);
-		
-		// eliminate two reds in a row
-		if (h.left != null) {
-			if (is_red(h.left) && is_red(h.left.left))
-				h = rotate_right(h);
-		}
-	
-		// push the red upward
-		if (is_red(h.left) && is_red(h.right))
-			color_flip(h);
-	}
-	return h;
-}*/
 
 // Assuming that h is red and both h.left and h.left.left
 // are black, make h.left or one of its children red.
 node move_red_left(node h)
 	requires h::node<_,0,l,r> * l::rbc<ln,1,bh,1> * r::rbc<rn,1,bh,_>
 	ensures res::rbc<n,1,bh,3>
-            or res::node<_,0,resl,resr> * resl::rbc<resln,1,bh,2> * resr::rbc<resrn,1,bh,_> & resln + resrn = ln + rn;
+            or res::node<_,0,resl,resr> * 
+               resl::rbc<resln,1,bh,2> * 
+               resr::rbc<resrn,1,bh,_> & 
+               resln + resrn = ln + rn;
 {
 	color_flip(h);
 
@@ -250,6 +243,12 @@ node move_red_left(node h)
 
 	return h;
 }
+
+void foo(node h, node l, node r)
+  requires h::node<_,0,l,r>@I * l::rbc<_,1,bh,1>@I * r::rbc<_,1,bh,1>@I
+  ensures true;
+  //h::node<_,0,l,r> * l::rbc<_,1,bh,1> * r::rbc<_,1,bh,1>;
+
 
 //////////////////////////////////////////
 //           DELETE MINIMUM             //
@@ -280,37 +279,67 @@ node delete_min(node h)
 node delete_min_internal(node h, ref int min_value)
 	requires h::rbc<n,_,bh,c> & c >= 2 & n >= 1
 	case {
-		n = 1 -> ensures res = null;
-		n > 1 -> // ensures res::rbc<n-1,_,bh,c> or res::rbc<n-1,_,bh,c-1>;
-		case {
-			c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>;
-			c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>;
-			c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3>;
-			(c < 2 | c > 4) -> ensures false;
-		}
-		n < 1 -> ensures false;
+		c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>; // verified in 46s!
+		c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>; // verified in 35s
+		c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3> 
+												or res::rbc<n-1,1,bh,0>;
+		(c < 2 | c > 4) -> ensures false; // verified in 2s
 	}
 {
+	assume c = 4;
+	
 	if (h.left == null) {
 		min_value = h.val;
 		return null;
 	}
 
-	assert n > 1;
-	assume n > 1;
-	
+	node l = h.left;
+    goo(l);
+    dprint;
+	//assert l'::rbc<_,_,_,lc>;// & 1 <= lc <= 3;
+	//assume lc < 1 or lc = 1 or lc = 2 or lc = 3 or lc > 3;
+	// CASE BY CASE CAN BE VERIFIED!
+	//assume l'::rbc<_,_,_,1>; // verified in 3s
+	//assume l'::rbc<_,_,_,2>; // verified in 3s
+	//assume l'::rbc<_,_,_,3>; // verified in 3s
+
 	if (!is_red(h.left) && !is_red(h.left.left))
 		h = move_red_left(h);
+
 	h.left = delete_min_internal(h.left, min_value);
+
 	if (is_red(h.right) && !is_red(h.left))
 		h = rotate_left(h);
+
 	return h;
 }
 
-/*
+
 //////////////////////////////////////////
 //              DELETION                //
 //////////////////////////////////////////
+
+// Fix the invariant
+node fix_up(node h)
+{
+	// ensure left-leaning property
+	if (h != null) {
+	
+		if (is_red(h.right))
+			h = rotate_left(h);
+		
+		// eliminate two reds in a row
+		if (h.left != null) {
+			if (is_red(h.left) && is_red(h.left.left))
+				h = rotate_right(h);
+		}
+	
+		// push the red upward
+		if (is_red(h.left) && is_red(h.right))
+			color_flip(h);
+	}
+	return h;
+}
 
 // Assuming that h is red and both h.right and h.right.left
 // are black, make h.right or one of its children red.
@@ -318,35 +347,44 @@ void move_red_right(node h)
 {
 	color_flip(h);
 	if (is_red(h.left.left)) { 
-		rotate_right(h);
+		h = rotate_right(h);
 		color_flip(h);
 	}
 }
 
-void delete(node h, int v)
-	requires h::rb<n, cl, bh> & 0 <= cl <= 1
-	ensures  h::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1
-		     or h::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 
-		     or h::rb<n, cl, bh>;
+node delete(node h, int v)
+	requires h::rbc<n,_,bh,c>
+	ensures false;
+{
+	h = delete_internal(h, v);
+	if (is_red(h)) h.color = 1;
+	return h;
+}
+
+node delete_internal(node h, int v)
+	requires h::rbc<n,_,bh,c>
+	ensures false;
 {
 	if (v < h.val) {
 		if (!is_red(h.left) && !is_red(h.left.left))
 			move_red_left(h);
-		delete(h.left, v);
+		delete_internal(h.left, v);
 	} else {
 		if (is_red(h.left))
 			rotate_right(h);
-			
+
 		if (v == h.val && (h.right == null))
 			h = null;
 		if (!is_red(h.right) && !is_red(h.right.left))
 			move_red_right(h); 
 		
 		if (v == h.val)
-			h.val = delete_min(h.right);
+			delete_min(h.right);
 		else 
-			delete(h.right, v);
+			delete_internal(h.right, v);
 	}
 	
 	fix_up(h);
-}*/
+	
+	return h;
+}

@@ -3281,6 +3281,96 @@ let rec transform_formula f (e:formula):formula =
                 formula_exists_branches = 
                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
 
+
+let rec trans2_formula f (e:formula):formula =
+	let (f_h_f, f_p_t) = f in
+    match e with	 
+		| Base b -> 
+      Base{b with 
+              formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
+              formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure;
+              formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;}
+		| Or o -> Or {o with 
+                    formula_or_f1 = trans2_formula f o.formula_or_f1;
+                    formula_or_f2 = trans2_formula f o.formula_or_f2;}
+		| Exists e -> 
+      Exists {e with
+                formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
+                formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;
+                formula_exists_branches = 
+                  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
+
+(* let rec trans3_formula (e:formula) (arg:'a) f  (f_args:'a->formula->'a)(f_comb:'b list -> 'b) :(formula * 'b) = *)
+(* 	let (f_h_f, f_p_t) = f in *)
+(*     let new_args = f_args arg e in *)
+(*     match e with	  *)
+(* 		| Base b ->  *)
+(*       Base{b with  *)
+(*               formula_base_heap = transform_h_formula f_h_f b.formula_base_heap; *)
+(*               formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure; *)
+(*               formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;} *)
+(* 		| Or o -> Or {o with  *)
+(*                     formula_or_f1 = trans3_formula f o.formula_or_f1; *)
+(*                     formula_or_f2 = trans3_formula f o.formula_or_f2;} *)
+(* 		| Exists e ->  *)
+(*       Exists {e with *)
+(*                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap; *)
+(*                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure; *)
+(*                 formula_exists_branches =  *)
+(*                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;} *)
+
+
+let foldheap_formula (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:formula) : 'a =
+  let rec helper e =
+    match e with
+      | Base {formula_base_heap = e} -> h e
+      | Or { formula_or_f1 = e1; formula_or_f2 = e2} -> f_comb [helper e1;helper e2]
+      | Exists {formula_exists_heap = e} -> h e
+  in helper e
+
+
+let foldheap_struc_formula (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:struc_formula): 'a =
+  let rec helper (e:struc_formula) =
+    let rs = List.map (helper_ext) e in
+    f_comb rs
+  and helper_ext  (e:ext_formula) : 'a =
+    match e with
+      | ECase {formula_case_branches = brs} -> 
+            let rs = List.map (fun (_,e) -> helper e) brs in
+            f_comb rs
+      | EBase { formula_ext_base = b;
+        formula_ext_continuation = c;
+        } -> 
+            let rs1 = foldheap_formula h f_comb b in
+            let rs2 = helper c in
+            f_comb [rs1;rs2]
+      | EAssume (_,e,_) -> foldheap_formula h f_comb e
+      | _ -> f_comb []
+  in helper e
+
+
+(* let trans_formula_2 f (e:formula) (arg:a) f (f_args: 'a->formula->'a) (f_comb:'b list -> 'b) : formula * 'b = *)
+(* 	let (_, f_f, f_h_f, f_p_t) = f in *)
+(* 	let r =  f_f e in  *)
+(* 	match r with *)
+(* 	| Some e1 -> e1 *)
+(* 	| None  -> match e with	  *)
+(* 		| Base b ->  *)
+(*       Base{b with  *)
+(*               formula_base_heap = transform_h_formula f_h_f b.formula_base_heap; *)
+(*               formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure; *)
+(*               formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;} *)
+(* 		| Or o -> Or {o with  *)
+(*                     formula_or_f1 = transform_formula f o.formula_or_f1; *)
+(*                     formula_or_f2 = transform_formula f o.formula_or_f2;} *)
+(* 		| Exists e ->  *)
+(*       Exists {e with *)
+(*                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap; *)
+(*                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure; *)
+(*                 formula_exists_branches =  *)
+(*                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;} *)
+
+
 let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   let f_ext_f, f_f, f_heap_f, f_pure, f_memo = f in
   let f_ext_f_arg, f_f_arg, f_heap_f_arg, f_pure_arg, f_memo_arg = f_arg in
