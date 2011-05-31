@@ -140,15 +140,19 @@ let cexp_to_pure1 fct f = match f with
 let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct c f2, None)) explist
-                               in let res = List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                               in let len =  List.length tmp
+                               in let res =  if (len > 0) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                                             else  P.BForm (fct f1 f2, None)
                                in Pure_f(res) 
                              | _ -> (match f2 with
                                     | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct f1 c, None)) explist
-                                      in let res = List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                                      in let len = List.length tmp
+                                      in let res = if ( len > 0 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                                                   else P.BForm (fct f1 f2, None)
                                       in Pure_f(res) 
                                     | _ -> Pure_f (P.BForm(fct f1 f2,None)))
                              )
-  | Pure_f f1 , Pure_c f2 -> (match f1  with 
+  | Pure_f f1 , Pure_c f2 ->(match f1  with 
 						    | P.BForm(b,oe) -> (match b with 
                                                | P.Lt (a1, a2, _) 
                                                | P.Lte (a1, a2, _) 
@@ -157,8 +161,8 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                                | P.Eq (a1, a2, _) 
                                                | P.Neq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
                                                  Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                              | _ -> report_error (get_pos 1) "error should be an equality exp" )
-                            |  _ -> report_error (get_pos 1) "error should be a binary exp" )
+                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
+                            | _ -> report_error (get_pos 1) "error should be a binary exp" )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
 
 
@@ -285,7 +289,6 @@ SHGram.Entry.of_parser "peek_print"
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
-             | [IDENTIFIER id,_;OPAREN,_;_] -> ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
@@ -633,7 +636,7 @@ general_h_args:
               
 opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
-and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr -> t]];
+and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr ->t]];
     
 (* (formula option , expr option )   *)
     
@@ -662,7 +665,7 @@ cexp_w :
      | lc=SELF; `EQ;   cl=SELF  -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
      
     ]  
-  | "bconstr"
+  | "bconstr" 
     [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl *)
      (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl  *)
      (* |  *)lc=SELF; `LTE;    cl=SELF       ->  cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
@@ -686,7 +689,7 @@ cexp_w :
 
    
 (* constraint expressions *)
-   | "gen"
+   | "gen" 
    [ `OBRACE; c= opt_cexp_list; `CBRACE                            -> Pure_c (P.Bag (c, get_pos_camlp4 _loc 1)) 
    | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos_camlp4 _loc 1))
    | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos_camlp4 _loc 1)) 
@@ -697,12 +700,13 @@ cexp_w :
    |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
    | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
    | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
+   | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
+   | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> (* print_string("herel"); *)apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
    | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1 
    (* | t=cexp_w LEVEL "addit" -> t *) ]
  
-   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
+   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c]
 
-]
    | "addit"
      [ c1=SELF ; `PLUS; c2=SELF       -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos_camlp4 _loc 2)) c1 c2  
      | c1=SELF ; `MINUS; c2=SELF      -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos_camlp4 _loc 2)) c1 c2
@@ -736,8 +740,7 @@ cexp_w :
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
      | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
-     | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
-     | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c ]
+]
  
    | "pure_base"
      [ `TRUE                             -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
@@ -748,7 +751,7 @@ cexp_w :
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
      | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 1), None ))
      | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 2), None )) None (get_pos_camlp4 _loc 1))
-     | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1)) 
+     | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
     
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
