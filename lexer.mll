@@ -151,7 +151,7 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
    ("join", JOIN);
 	 ("lemma", LEMMA);
-   ("length", LENGTH);
+   ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);
 	 ("min", MIN);
