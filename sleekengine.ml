@@ -130,8 +130,9 @@ let process_pred_def pdef =
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
-		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
-		(*let tmp_views = order_views iprog.I.prog_view_decls in*)
+		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
+		iprog.I.prog_view_decls <- List.rev tmp_views;
+(* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
 		let cpdef = AS.trans_view iprog new_pdef in
 		let old_vdec = cprog.C.prog_view_decls in

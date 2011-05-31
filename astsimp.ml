@@ -57,6 +57,17 @@ type trans_exp_type =
   and spec_var_kind = typ
   (* | Known of typ | Unknown *)
 
+(* list of scc views that are in mutual-recursion *)
+let view_scc : (ident list) list ref = ref []
+
+(* list of views that are recursive *)
+let view_rec : (ident list) ref = ref []
+
+(* if no processed, conservatively assume a view is recursive *)
+let is_view_recursive (n:ident) = 
+  if (!view_scc)==[] then (report_warning no_pos "view_scc is empty : not processed yet?";true)
+  else List.mem n !view_rec 
+
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
   
 (* let op_map = Hashtbl.create 19 *)
@@ -623,9 +634,12 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
     let mr = List.filter (fun l -> (List.length l)>1) scclist in
     let str = pr_list (pr_list pr_id) mr in
     let mutrec = List.concat mr in
-    let selfstr = pr_list pr_id (Gen.BList.difference_eq (=) selfrec mutrec) in
+    let selfrec = (Gen.BList.difference_eq (=) selfrec mutrec) in
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
-    if not(mr==[]) then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
+    view_rec := selfrec@mutrec ;
+    view_scc := scclist ;
+    if not(mr==[]) 
+     then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
     g
     (* if DfsNG.has_cycle g *)
     (* then failwith "View definitions are mutually recursive" *)
@@ -1259,7 +1273,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
             | Some f1  -> Some (CF.mkOr f1 fc no_pos)
             | None -> Some fc) None n_un_str in
       (* TODO : This has to be generalised to mutual-recursion *)
-      let ir = Cast.is_self_rec_rhs vdef.I.view_name cf in
+      (* let ir = Cast.is_self_rec_rhs vdef.I.view_name cf in *)
+      let ir = is_view_recursive vdef.I.view_name in
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
