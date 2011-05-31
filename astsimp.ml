@@ -28,6 +28,8 @@ module TP = Tpdispatcher
   
 module Chk = Checks
 
+
+
 (* module VG = View_generator *)
 
 (*
@@ -54,6 +56,17 @@ type trans_exp_type =
 
   and spec_var_kind = typ
   (* | Known of typ | Unknown *)
+
+(* list of scc views that are in mutual-recursion *)
+let view_scc : (ident list) list ref = ref []
+
+(* list of views that are recursive *)
+let view_rec : (ident list) ref = ref []
+
+(* if no processed, conservatively assume a view is recursive *)
+let is_view_recursive (n:ident) = 
+  if (!view_scc)==[] then (report_warning no_pos "view_scc is empty : not processed yet?";true)
+  else List.mem n !view_rec 
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
   
@@ -352,7 +365,7 @@ module DfsNG = Graph.Traverse.Dfs(NG)
 
 module NGComponents = Graph.Components.Make(NG)
   
-  
+
 (***********************************************)
 (* 17.04.2008 *)
 (* add existential quantifiers for the anonymous vars - those that start with "Anon_" *)
@@ -563,76 +576,99 @@ and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula =
 	List.map (convert_ext2 prog ) f0 
 	  
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
-	(* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
-	(* vdef                                                                  *)
+  (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
+  (* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
     match h with
-    | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
-        (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
-    | IF.HeapNode { IF.h_formula_heap_name = c } ->
-        if c = vname
-        then []
-        else
-          (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
-           with | Not_found -> [])
-    | _ -> [] in
+      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
+            (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
+      | IF.HeapNode { IF.h_formula_heap_name = c } ->
+            (* if c = vname *)
+            (* then [] *)
+            (* else *)
+              (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
+              with | Not_found -> [])
+      | _ -> [] in
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
     match f with
-    | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
-        (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
-    | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } ->
-        gen_name_pairs_heap vname h
-    | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
-        gen_name_pairs_heap vname h in
-				
-	let rec gen_name_pairs_ext vname (f:Iformula.ext_formula): (ident * ident) list = match f with
-		| Iformula.EAssume (b,_)-> (gen_name_pairs vname b)
-		| Iformula.ECase {Iformula.formula_case_branches = b}-> 
-			List.fold_left (fun d (e1,e2) -> List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c)) d e2) [] b 
-		| Iformula.EBase {Iformula.formula_ext_base =fb;
-		 				 Iformula.formula_ext_continuation = cont}-> List.fold_left 
-									(fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
-		| Iformula.EVariance b -> List.fold_left 
-									(fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
-		 in
-	 	
-	let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
-		List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c) ) [] f 
-		in
-  let tmp =
-    List.map
-      (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
-      view_decls0 in
-  let edges = List.concat tmp in
-  let g = NG.create ()
+      | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
+            (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
+      | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } ->
+            gen_name_pairs_heap vname h
+      | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
+            gen_name_pairs_heap vname h in
+  
+  let rec gen_name_pairs_ext vname (f:Iformula.ext_formula): (ident * ident) list = match f with
+	| Iformula.EAssume (b,_)-> (gen_name_pairs vname b)
+	| Iformula.ECase {Iformula.formula_case_branches = b}-> 
+		  List.fold_left (fun d (e1,e2) -> List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c)) d e2) [] b 
+	| Iformula.EBase {Iformula.formula_ext_base =fb;
+	  Iformula.formula_ext_continuation = cont}-> List.fold_left 
+		  (fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
+	| Iformula.EVariance b -> List.fold_left 
+		  (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
   in
-    (ignore
-       (List.map
-          (fun (v1, v2) -> NG.add_edge g (NG.V.create v1) (NG.V.create v2))
-          edges);
-     if DfsNG.has_cycle g
-     then failwith "View definitions are mutually recursive"
-     else ();
-		(* take out the view names in reverse order *)
-     let view_names = ref ([] : ident list) in
-     let store_name n = view_names := n :: !view_names
-     in
-       (TopoNG.iter store_name g;
-				(* now reorder the views *)
-        let rec
-          reorder_views (view_decls : I.view_decl list)
-                        (ordered_names : ident list) =
-          match ordered_names with
-          | n :: rest ->
-              let (n_view, rest_decls) =
-                List.partition (fun v -> v.I.view_name = n) view_decls in
-              let (rest_views, new_rest_decls) =
-                reorder_views rest_decls rest
-              in
-								(* n_view should contain only one views *)
-                ((n_view @ rest_views), new_rest_decls)
-          | [] -> ([], view_decls) in
-        let (r1, r2) = reorder_views view_decls0 !view_names in r1 @ r2))
+  
+  let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
+	List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c) ) [] f 
+  in
+
+  let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
+    Gen.Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id)) 
+        (fun _ -> gen_name_pairs_struc vname f) vname in
+
+  let build_graph vdefs =
+    let tmp =
+      List.map
+          (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
+          vdefs in
+    let selfrec = List.filter (fun l -> List.exists (fun (x,y) -> x=y) l) tmp in
+    let selfrec = List.map (fun l -> fst (List.hd l)) selfrec in
+
+    let edges = List.concat tmp in
+    let g = NG.create () in
+    let _ = (List.map
+        (fun (v1, v2) -> NG.add_edge g (NG.V.create v1) (NG.V.create v2))
+        edges) in
+    let scclist = NGComponents.scc_list g in
+    let mr = List.filter (fun l -> (List.length l)>1) scclist in
+    let str = pr_list (pr_list pr_id) mr in
+    let mutrec = List.concat mr in
+    let selfrec = (Gen.BList.difference_eq (=) selfrec mutrec) in
+    (* let _ = print_endline ("Self Rec :"^selfstr) in *)
+    view_rec := selfrec@mutrec ;
+    view_scc := scclist ;
+    if not(mr==[]) 
+     then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
+    g
+    (* if DfsNG.has_cycle g *)
+    (* then failwith "View definitions are mutually recursive" *)
+    (* else g *)
+  in
+
+  let g = build_graph view_decls0 in
+
+  (* take out the view names in reverse order *)
+  let view_names = ref ([] : ident list) in
+  let store_name n = view_names := n :: !view_names in
+  let _ = (TopoNG.iter store_name g) in
+
+  (* now reorder the views *)
+  let rec
+        reorder_views (view_decls : I.view_decl list)
+        (ordered_names : ident list) =
+    match ordered_names with
+      | n :: rest ->
+            let (n_view, rest_decls) =
+              List.partition (fun v -> v.I.view_name = n) view_decls in
+            let (rest_views, new_rest_decls) =
+              reorder_views rest_decls rest
+            in
+			(* n_view should contain only one views *)
+            ((n_view @ rest_views), new_rest_decls)
+      | [] -> ([], view_decls) in
+  let (r1, r2) = reorder_views view_decls0 !view_names 
+  in r1 @ r2
 
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in 
@@ -1193,7 +1229,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   else vdef.I.view_data_name in
    (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
-  let cf = transf_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+  let cf = trans_I2C_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let (inv, inv_b) = vdef.I.view_invariant in
   let pf = trans_pure_formula inv stab in
     let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
@@ -1236,6 +1272,9 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           else match a with 
             | Some f1  -> Some (CF.mkOr f1 fc no_pos)
             | None -> Some fc) None n_un_str in
+      (* TODO : This has to be generalised to mutual-recursion *)
+      (* let ir = Cast.is_self_rec_rhs vdef.I.view_name cf in *)
+      let ir = is_view_recursive vdef.I.view_name in
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -1252,6 +1291,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
           C.view_un_struc_formula = n_un_str;
                C.view_base_case = None;
+               C.view_is_rec = ir;
           C.view_case_vars = Gen.BList.intersect_eq (=) view_sv_vars (Cformula.guard_vars cf);
           C.view_raw_base_case = rbc;
           C.view_prune_branches = [];
@@ -1819,8 +1859,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let _ = H.add stab res { sv_info_kind = cret_type;id = fresh_int () } in
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
-	let static_specs_list = set_pre_flow (transf_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
-	let dynamic_specs_list = set_pre_flow (transf_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
+	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
 	let exc_list = (List.map Gen.ExcNumbering.get_hash_of_exc proc.I.proc_exceptions) in
 	let r_int = Gen.ExcNumbering.get_hash_of_exc abnormal_flow in
 	(if (List.exists CF.is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
@@ -2080,7 +2120,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   all_names);
           let assert_cf_o =
             (match assert_f_o with
-              | Some f -> Some (transf_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Void) [])*) )
+              | Some f -> Some (trans_I2C_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Void) [])*) )
               | None -> None) in
           let assume_cf_o =
             (match assume_f_o with
@@ -3490,15 +3530,15 @@ and add_pre_debug prog f =
   let _ = print_string ("add_pre output: "^(Cprinter.string_of_struc_formula r)^"\n") in  
   r
       
-and transf_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.no_eff_5 "transf_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
-      (fun _ _ _ _ _ -> transf_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+  Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+      (fun _ _ _ _ _ -> trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
 
       
-and transf_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
     (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
@@ -4175,7 +4215,7 @@ and get_type_entire stab t =
     | Array (et,d) -> Array (helper et,d)
     | _ -> t
   in helper t
-
+                             
 and get_type stab i = 
   let key = "TVar__"^(string_of_int i) in
   ( try 
@@ -5115,7 +5155,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                Err.report_error
 			                    {
 			                        Err.error_loc = pos;
-			                        Err.error_text = c ^ " is neither a data nor view name";
+			                        Err.error_text = c ^ " is neither 2 a data nor view name";
 			                    })) in
 	      let check_ie ie t =
             (match t with

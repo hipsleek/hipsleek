@@ -36,6 +36,8 @@ struct
 
   let pr_no x = "?"
 
+  let pr_unit x = "()"
+
   let pr_option f x = match x with
     | None -> "None"
     | Some v -> "Some("^(f v)^")"
@@ -109,6 +111,12 @@ struct
   let rec repeat (v : 'a) (n : int) : 'a list =
     if n <= 0 then []
     else v :: (repeat v (n-1))
+
+  let report_error pos msg = Error.report_error
+     { Error.error_loc = pos; Error.error_text = msg}
+
+  let report_warning pos msg = Error.report_warning
+     { Error.error_loc = pos; Error.error_text = msg}
 
 end;;
 

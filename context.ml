@@ -413,7 +413,12 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in
-                  let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] else [] in
+                  let l2 = 
+                    if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] 
+                    else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
+                    else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
+                    else []
+                  in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin
                     let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in

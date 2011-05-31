@@ -4,6 +4,7 @@
 *)
 
 open Globals
+open Gen.Basic
 module CP = Cpure
 module MCP = Mcpure
 

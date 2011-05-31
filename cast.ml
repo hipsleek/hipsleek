@@ -61,6 +61,7 @@ and view_decl = {
     view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
     view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
     view_prune_branches: formula_label list; (* all the branches of a view *)
+    view_is_rec : bool;
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
@@ -687,10 +688,41 @@ let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs w
 
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> 
-	  if d.view_name = name then d 
-	  else look_up_view_def pos rest name
+	    if d.view_name = name then d 
+	    else look_up_view_def pos rest name
   | [] -> Error.report_error {Error.error_loc = pos;
-							  Error.error_text = name ^ " is not a view definition"}
+	Error.error_text = name ^ " is not a view definition"}
+
+let look_up_view_def_num i (pos : loc) (defs : view_decl list) (name : ident) = 
+  Gen.Debug.no_1_num i "look_up_view_def" pr_id pr_no 
+      (fun _ -> look_up_view_def pos defs name) name
+
+let collect_rhs_view (n:ident) (e:F.struc_formula) : (ident * ident list) =
+  let f_comb = List.concat in
+  let f e = match e with 
+    | F.ViewNode {F.h_formula_view_name = n} -> Some [n] 
+    | _ -> None in
+  let f_heap e = F.fold_h_formula e f f_comb in
+   (n, F.foldheap_struc_formula f_heap f_comb e)
+
+let collect_rhs_view (n:ident) (f:F.struc_formula) : (ident * ident list) =
+  let id x = x in
+  let pr1 x = x in
+  let pr2 = pr_pair id (pr_list id) in 
+  Gen.Debug.no_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
+
+let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
+  let  (_,ns) = collect_rhs_view lhs rhs in
+  List.mem lhs ns
+
+let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
+  Gen.Debug.no_1 "is_self_rec_rhs" (fun x -> x) (string_of_bool) (fun _ -> is_self_rec_rhs lhs rhs) lhs
+
+(* pre: name exists as a view in prog *)
+let is_rec_view_def prog (name : ident) : bool = 
+   let vdef = look_up_view_def_num 2 no_pos prog.prog_view_decls name in
+   (* let _ = collect_rhs_view vdef in *)
+   vdef.view_is_rec
 
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
@@ -700,7 +732,7 @@ let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
-let look_up_view_baga_debug  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
       Gen.Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
       (fun r a ->  look_up_view_baga prog c r a) root args
 
@@ -1241,7 +1273,7 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
 	  F.h_formula_view_name = c;
 	  F.h_formula_view_remaining_branches = rm_br;
 	  F.h_formula_view_pos = pos}) ->      
-          let vdef = look_up_view_def pos prog.prog_view_decls c in
+          let vdef = look_up_view_def_num 1 pos prog.prog_view_decls c in
           (match get_xpure_one vdef rm_br with
             | None -> Some false
             | Some r -> Some true (* check against vdef for complex_inv *)

@@ -352,8 +352,8 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_lab
     let a, b, c = xpure_mem_enum prog f0 in
     (a, b, [], c)
 
-and xpure_heap (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
-      = Gen.Debug.no_2 "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) 
+and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
+      = Gen.Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) 
   (fun _ _ -> xpure_heap_x prog h0 which_xpure) h0 which_xpure
 
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
@@ -2028,13 +2028,13 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 	      let nf2,nf2n = find_unsat prog f2 in
 	      (nf1@nf2,nf1n@nf2n)
 
-and is_unsat_with_branches_debug xpure_f qvars hf mix br pos sat_subno=
+and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
   Gen.Debug.no_2 "is_unsat_with_branches" 
       (fun h -> (Cprinter.string_of_h_formula h)^"\n"^Cprinter.string_of_mix_formula(fst( xpure_f hf)))
       Cprinter.string_of_mix_formula string_of_bool
-      (fun hf mix -> is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno) hf mix
+      (fun hf mix -> is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno) hf mix
 
-and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
+and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno=
   (* let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in*)
   let (ph, phb) = xpure_f hf in
   let phb = CP.merge_branches phb br in    
@@ -2055,13 +2055,13 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	  formula_base_pure = p;
 	  formula_base_branches = br;
 	  formula_base_pos = pos}) ->
-          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap prog f 1 in (a,b)) [] h p br pos sat_subno
+          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) [] h p br pos sat_subno
     | Exists ({ formula_exists_qvars = qvars;
       formula_exists_heap = qh;
       formula_exists_pure = qp;
       formula_exists_branches = br;
       formula_exists_pos = pos}) ->
-          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap prog f 1 in (a,b)) qvars qh qp br pos sat_subno
+          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) qvars qh qp br pos sat_subno
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
@@ -2073,7 +2073,7 @@ and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool =
 and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Gen.Debug.no_1 "elim_unsat_es_x" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
+  Gen.Debug.no_1 "elim_unsat_es" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
       
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
@@ -3655,8 +3655,8 @@ and heap_entail_split_lhs_phases_x
 			            List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
 		              else
 			            (* else drop the read phase (don't add back the frame) *)
-			            let xpure_rd_0, _, _, memset_rd = xpure_heap prog h1 0 in
-			            let xpure_rd_1, _, _, memset_rd = xpure_heap prog h1 1 in
+			            let xpure_rd_0, _, _, memset_rd = xpure_heap 2 prog h1 0 in
+			            let xpure_rd_1, _, _, memset_rd = xpure_heap 2 prog h1 1 in
 			            (* add the pure info for the dropped reading phase *)
 			            List.map 
 			                (Cformula.transform_context 
@@ -3748,8 +3748,8 @@ and heap_entail_split_lhs_phases_x
 			                  List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
 			                else
 			                  (* drop read phase *)
-			                  let xpure_rd_0, _, _, memset_rd = xpure_heap prog h1 0 in
-			                  let xpure_rd_1, _, _, memset_rd = xpure_heap prog h1 1 in
+			                  let xpure_rd_0, _, _, memset_rd = xpure_heap 3 prog h1 0 in
+			                  let xpure_rd_1, _, _, memset_rd = xpure_heap 3 prog h1 1 in
 			                  (* add the pure info corresponding to the dropped reading phase *)
 			                  List.map 
 			                      (Cformula.transform_context 
@@ -4027,7 +4027,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
   let lhs_p = r.formula_base_pure in
   let lhs_b = r.formula_base_branches in
   let _ = reset_int2 () in
-  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
+  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog (mkStarH lhs_h estate.es_heap pos) 1 in
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
@@ -4073,8 +4073,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let lhs_b = lhs.formula_base_branches in
   let _ = reset_int2 () in
   let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
-  let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap prog curr_lhs_h 0 in
-  let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap prog curr_lhs_h 1 in
+  let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap 5 prog curr_lhs_h 0 in
+  let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap 5 prog curr_lhs_h 1 in
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in

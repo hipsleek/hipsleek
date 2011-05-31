@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open Gen.Basic
 
 module F = Iformula
 module P = Ipure
@@ -380,6 +381,7 @@ let bool_type = Bool
 (* utility functions *)
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
+let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
  
 (* apply substitution to an id *)
 let apply_subs_to_id (subs:(ident *ident) list) (id:ident) : ident
@@ -919,7 +921,9 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
   rl
 
 and fixpt_data_name (view_ans)  =
-  let pr x = "?" in 
+  let pr1 vd = vd.view_name in
+  let pr2 = pr_list (fun x -> x) in
+  let pr = pr_list (pr_triple pr1 pr2 pr2)  in 
   Gen.Debug.no_1 "fixpt_data_name" pr pr fixpt_data_name_x view_ans
 
 (* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
@@ -933,9 +937,9 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
     if d1==d2 then c
     else if d2>1 then report_error no_pos ("self of "^(v.view_name)^"indirectly points to different data node types")
     else true in
-  let check a1 a2 c = 
-    let pr (_,a,_) = string_of_ident_list a in
-    Gen.Debug.no_2 "check_fixpt_data_name" pr pr string_of_bool (fun _ _ -> check a1 a2 c) a1 a2 in 
+  (* let check a1 a2 c =  *)
+  (*   let pr (_,a,_) = string_of_ident_list a in *)
+  (*   Gen.Debug.no_2 "check_fixpt_data_name" pr pr string_of_bool (fun _ _ -> check a1 a2 c) a1 a2 in  *)
   let change = List.fold_right2 check r view_ans false in 
   if change then fixpt_data_name_x r
   else r
