@@ -1,3 +1,5 @@
+// requires redlog
+
 void loop(ref int x, ref int y, ref int z, bool b)
 case {
 	x<y -> ensures "l1":true;
@@ -51,7 +53,7 @@ D,[-x] |- variance [-var_0] ==> [var_0=1] D2 * R
 
 			assert "l4":(-x1')-(-x')<0;
 			assert "l4":(-x')>=-1;
-			assert "l4":x1'=1;
+			assert "l4":x1'=1; // fails? //'
 			
 			loop(x1, y1, z1, randBool());
 		} else {

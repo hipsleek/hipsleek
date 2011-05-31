@@ -37,8 +37,8 @@ int ret_first(node x)
 /* return the tail of a singly linked list */
 node get_next(node x)
 
-	requires x::ll<L> & len(L) > 0
-	ensures x::ll<L1> * res::ll<L2> & L1 = [|head(L)|] & L2 = tail(L);
+//	requires x::ll<L> & len(L) > 0
+//	ensures x::ll<L1> * res::ll<L2> & L1 = [|head(L)|] & L2 = tail(L);
 	
 {
 	node tmp = x.next;

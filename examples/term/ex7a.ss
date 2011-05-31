@@ -20,7 +20,7 @@ case {
          ensures "dr":x'=x+y & y'=y+z;
        x+y>0  -> case {
          y+z>=0 -> 
-           term_loop 
+           //term_loop 
            ensures "tm2a":false; // loop
          y+z<0  -> ensures "tm2b":x'<x & y'>y; //true; //may not terminate
        }

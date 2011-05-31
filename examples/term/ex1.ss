@@ -9,8 +9,9 @@ ll<n> == self = null & n = 0
 	inv n >= 0;
 
 node app2(node x, node y)
- requires x::ll<n> * y::ll<m> & n>=0
+ requires x::ll<n> * y::ll<m> & n  >= 0
  variance [n@1]
+// variance [-n@0]
  ensures res::ll<n+m>;
 {
  if (x==null) return y;
