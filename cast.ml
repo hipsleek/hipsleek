@@ -693,6 +693,10 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
   | [] -> Error.report_error {Error.error_loc = pos;
 	Error.error_text = name ^ " is not a view definition"}
 
+let look_up_view_def_num i (pos : loc) (defs : view_decl list) (name : ident) = 
+  Gen.Debug.ho_1_num i "look_up_view_def" pr_id pr_no 
+      (fun _ -> look_up_view_def pos defs name) name
+
 let collect_rhs_view (n:ident) (e:F.struc_formula) : (ident * ident list) =
   let f_comb = List.concat in
   let f e = match e with 
@@ -716,12 +720,12 @@ let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
 
 (* pre: name exists as a view in prog *)
 let is_rec_view_def prog (name : ident) : bool = 
-   let vdef = look_up_view_def no_pos prog.prog_view_decls name in
+   let vdef = look_up_view_def_num 2 no_pos prog.prog_view_decls name in
    (* let _ = collect_rhs_view vdef in *)
    vdef.view_is_rec
 
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-  let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+  let vdef = look_up_view_def_num 3 no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
   (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
   let from_svs = P.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
@@ -1269,7 +1273,7 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
 	  F.h_formula_view_name = c;
 	  F.h_formula_view_remaining_branches = rm_br;
 	  F.h_formula_view_pos = pos}) ->      
-          let vdef = look_up_view_def pos prog.prog_view_decls c in
+          let vdef = look_up_view_def_num 1 pos prog.prog_view_decls c in
           (match get_xpure_one vdef rm_br with
             | None -> Some false
             | Some r -> Some true (* check against vdef for complex_inv *)

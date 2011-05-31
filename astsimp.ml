@@ -614,7 +614,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   in
 
   let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
-    Gen.Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id)) 
+    Gen.Debug.ho_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id)) 
         (fun _ -> gen_name_pairs_struc vname f) vname in
 
   let build_graph vdefs =
@@ -672,7 +672,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in 
-  Gen.Debug.no_1 "order_views" pr pr order_views  view_decls0
+  Gen.Debug.ho_1 "order_views" pr pr order_views  view_decls0
   
 let loop_procs : (C.proc_decl list) ref = ref []
    
@@ -5155,7 +5155,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                Err.report_error
 			                    {
 			                        Err.error_loc = pos;
-			                        Err.error_text = c ^ " is neither a data nor view name";
+			                        Err.error_text = c ^ " is neither 2 a data nor view name";
 			                    })) in
 	      let check_ie ie t =
             (match t with

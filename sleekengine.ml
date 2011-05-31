@@ -166,6 +166,56 @@ let process_pred_def pdef =
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
+let process_pred_def_4_iast pdef = 
+  if check_data_pred_name pdef.I.view_name then
+	let tmp = iprog.I.prog_view_decls in
+	  try
+		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
+		let new_pdef = {pdef with Iast.view_formula = wf} in
+		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
+	  with
+		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
+  else
+	print_string (pdef.I.view_name ^ " is already defined.\n")
+
+let process_one_cview (new_pdef : I.view_decl) : unit =
+		let cpdef = AS.trans_view iprog new_pdef in
+		let old_vdec = cprog.C.prog_view_decls in
+		cprog.C.prog_view_decls <- (cpdef :: cprog.C.prog_view_decls);
+(* added 07.04.2008	*)	
+		(*ignore (print_string ("init: "^(Iprinter.string_of_struc_formula "" pdef.Iast.view_formula )^"\n normalized: "^
+							 (Iprinter.string_of_struc_formula "" wf )^"\n translated: "^
+							 (Cprinter.string_of_struc_formula cpdef.Cast.view_formula)
+							 ^"\n"
+							 )
+				)*)
+		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
+		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
+		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
+        ignore (AS.set_materialized_prop cpdef);
+	let cpdef = AS.fill_one_base_case cprog cpdef in 
+    let cpdef = 
+      if !Globals.enable_case_inference then 
+        AS.view_case_inference cprog iprog.I.prog_view_decls cpdef else cpdef in
+		let n_cpdef = AS.view_prune_inv_inference cprog cpdef in
+    cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
+    let n_cpdef = {n_cpdef with 
+        C.view_formula =  Solver.prune_pred_struc cprog true n_cpdef.C.view_formula ;
+        C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
+		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
+		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
+
+let process_one_cview (new_pdef : I.view_decl) : unit =
+  Gen.Debug.ho_1 "process_one_cview" Iprinter.string_of_view_decl pr_unit process_one_cview new_pdef 
+
+let convert_pred_to_cast () = 
+		let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
+		let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+		iprog.I.prog_view_decls <- tmp_views;
+        List.iter (process_one_cview) (tmp_views)
+
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =
   if check_data_pred_name rdef.I.rel_name then

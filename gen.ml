@@ -36,6 +36,8 @@ struct
 
   let pr_no x = "?"
 
+  let pr_unit x = "()"
+
   let pr_option f x = match x with
     | None -> "None"
     | Some v -> "Some("^(f v)^")"
