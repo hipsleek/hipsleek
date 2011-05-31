@@ -694,7 +694,7 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
 	Error.error_text = name ^ " is not a view definition"}
 
 let look_up_view_def_num i (pos : loc) (defs : view_decl list) (name : ident) = 
-  Gen.Debug.ho_1_num i "look_up_view_def" pr_id pr_no 
+  Gen.Debug.no_1_num i "look_up_view_def" pr_id pr_no 
       (fun _ -> look_up_view_def pos defs name) name
 
 let collect_rhs_view (n:ident) (e:F.struc_formula) : (ident * ident list) =
@@ -725,14 +725,14 @@ let is_rec_view_def prog (name : ident) : bool =
    vdef.view_is_rec
 
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-  let vdef = look_up_view_def_num 3 no_pos prog.prog_view_decls c in
+  let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
   (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
   let from_svs = P.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
-let look_up_view_baga_debug  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
       Gen.Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
       (fun r a ->  look_up_view_baga prog c r a) root args
 

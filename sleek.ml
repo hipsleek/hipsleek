@@ -122,14 +122,10 @@ let parse_file (parse) (source_file : string) =
 	  | LemmaDef _
 	  | EmptyCmd -> () in
   let cmds = parse_first [] in
-  let _ = print_endline "1" in
-  List.iter proc_one_def cmds;
-  let _ = print_endline "2" in
+   List.iter proc_one_def cmds;
   convert_pred_to_cast ();
-  let _ = print_endline "3" in
   List.iter proc_one_lemma cmds;
-  let _ = print_endline "4" in
-  List.iter proc_one_cmd cmds 
+   List.iter proc_one_cmd cmds 
 
 
 let main () = 
