@@ -71,9 +71,24 @@ bool is_red(node h)
 		h  = null -> requires true 
 		             ensures !res;
 		h != null -> requires h::node<v,c,l,r>
-		             ensures h::node<v,c,l,r> & c != 0 & !res 
-		                     or h::node<v,c,l,r> & c = 0 & res;
-	}
+       case {
+          c!=0 ->  ensures h::node<v,c,l,r> & !res;
+          c=0 -> ensures h::node<v,c,l,r> & res;
+	   }
+   }
+{
+	if (h==null)
+		return false;
+	else
+		return (h.color==0);
+}
+
+bool is_red_sp(node h)
+  requires h::rbc<n,cl,bh,c>
+  case {
+    cl=0 -> ensures h::rbc<n,cl,bh,c> & res;
+    cl!=0 -> ensures h::rbc<n,cl,bh,c> & !res;
+  }
 {
 	if (h==null)
 		return false;
@@ -277,16 +292,20 @@ node delete_min(node h)
 // and return that minimum value.
 // NOTE: NO CHANGE IN HEIGHT
 node delete_min_internal(node h, ref int min_value)
-	requires h::rbc<n,_,bh,c> & c >= 2 & n >= 1
+	requires h::rbc<n,_,bh,c> & n >= 1 & c>=2
 	case {
-		c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>; // verified in 46s!
-		c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>; // verified in 35s
+        // verified in 4s!
+		c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>; 
+        // verified in 3s
+ 		c = 3 -> ensures res::rbc<n-1,1,bh,3> & n>1 or res::rbc<n-1,1,bh,2> & n>1; 
+        // fails ..
 		c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3> 
 												or res::rbc<n-1,1,bh,0>;
-		(c < 2 | c > 4) -> ensures false; // verified in 2s
+		(c < 2 | c > 4) -> ensures false; // verified in 1s
 	}
 {
-	assume c = 4;
+   //assume true & (c <2 | c>4);
+   assume c = 2;
 	
 	if (h.left == null) {
 		min_value = h.val;
@@ -294,8 +313,10 @@ node delete_min_internal(node h, ref int min_value)
 	}
 
 	node l = h.left;
-    goo(l);
-    dprint;
+	node r = h.right;
+    //assert r'!=null; //'
+    //goo(l);
+    //dprint;
 	//assert l'::rbc<_,_,_,lc>;// & 1 <= lc <= 3;
 	//assume lc < 1 or lc = 1 or lc = 2 or lc = 3 or lc > 3;
 	// CASE BY CASE CAN BE VERIFIED!
@@ -303,13 +324,26 @@ node delete_min_internal(node h, ref int min_value)
 	//assume l'::rbc<_,_,_,2>; // verified in 3s
 	//assume l'::rbc<_,_,_,3>; // verified in 3s
 
-	if (!is_red(h.left) && !is_red(h.left.left))
-		h = move_red_left(h);
+    if (!is_red(h.left)) {
+        //assume false;
+        if (!is_red_sp(h.left.left)) {
+		  h = move_red_left(h);
+          assume false;
+        }
+    } else {
+      assert false; // false for c=4
+       //assume false;
+    }
 
 	h.left = delete_min_internal(h.left, min_value);
 
-	if (is_red(h.right) && !is_red(h.left))
+	if (is_red(h.right) && !is_red(h.left)) {
 		h = rotate_left(h);
+        //assume false;
+    } else {
+        assume true;
+        //assume false;
+   }
 
 	return h;
 }

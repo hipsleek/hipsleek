@@ -35,7 +35,7 @@ and ext_base_formula =
   
 and ext_variance_formula =
 	{
-	    formula_var_label : int;
+	    formula_var_label : int option;
 		formula_var_measures : (P.exp * (P.exp option)) list;
 		formula_var_escape_clauses : P.formula list;
 		formula_var_continuation : struc_formula;

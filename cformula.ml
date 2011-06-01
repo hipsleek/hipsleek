@@ -66,7 +66,7 @@ and ext_base_formula =
 
 and ext_variance_formula =
 	{
-		formula_var_label : int;
+		formula_var_label : int option;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
 		formula_var_escape_clauses : Cpure.formula list;
 	    formula_var_continuation : struc_formula;
@@ -1959,7 +1959,10 @@ type entail_state = {
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
   es_var_measures : CP.exp list;
-  es_var_label : int;
+  es_var_label : int option;
+  es_var_ctx_lhs : CP.formula;
+  es_var_ctx_rhs : CP.formula;
+  es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
   (* for immutability *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
@@ -2105,7 +2108,10 @@ let rec empty_es flowt pos =
   es_path_label  =[];
   es_prior_steps  = [];
   es_var_measures = [];
-  es_var_label = 0;
+  es_var_label = None;
+  es_var_ctx_lhs = CP.mkTrue pos;
+  es_var_ctx_rhs = CP.mkTrue pos;
+  es_var_subst = [];
   (*es_cache_no_list = [];*)
   es_cont = [];
   es_crt_holes = [];
@@ -3776,8 +3782,7 @@ let normalize_max_renaming_s f pos b ctx =
 *)
 let clear_entailment_history_es (es :entail_state) :context = 
   Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula =
-      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;es_var_measures = es.es_var_measures; es_var_label = es.es_var_label} 
- 
+      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;es_var_measures = es.es_var_measures; es_var_label = es.es_var_label;es_var_ctx_lhs = es.es_var_ctx_lhs;es_var_ctx_rhs = es.es_var_ctx_rhs} 
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
   

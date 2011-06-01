@@ -142,13 +142,13 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct c f2, None)) explist
                                in let len =  List.length tmp
-                               in let res =  if (len > 0) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                               in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                              else  P.BForm (fct f1 f2, None)
                                in Pure_f(res) 
                              | _ -> (match f2 with
                                     | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct f1 c, None)) explist
                                       in let len = List.length tmp
-                                      in let res = if ( len > 0 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                                      in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                                    else P.BForm (fct f1 f2, None)
                                       in Pure_f(res) 
                                     | _ -> Pure_f (P.BForm(fct f1 f2,None)))
@@ -191,6 +191,7 @@ let peek_try =
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
+         | [GT,_;VARIANCE,_] -> raise Stream.Failure 
          | [GT,_;_] -> ()
          | [SEMICOLON,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
@@ -1077,13 +1078,18 @@ spec:
 			Iformula.ECase {
 						Iformula.formula_case_branches = bl; 
 						Iformula.formula_case_pos = get_pos_camlp4 _loc 1; }
-	 | `VARIANCE; `OPAREN; il=integer_literal; `CPAREN; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
+	 | `VARIANCE; il=opt_var_label; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
 			Iformula.EVariance {
 					Iformula.formula_var_label = il;
 					Iformula.formula_var_measures = m;
 					Iformula.formula_var_escape_clauses = ec;
 					Iformula.formula_var_continuation = [s];
-					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];	
+					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];
+
+opt_var_label: [[t=OPT var_label -> t]];
+
+var_label: [[ `OPAREN; vl=integer_literal; `CPAREN -> vl
+|`OPAREN ; `MINUS; vl=integer_literal; `CPAREN -> -vl]];	
           
 opt_measures: [[t=OPT measures -> un_option t []]];
 
