@@ -1,0 +1,35 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll_tail<n, t> ==
+  self::node< _, null> & t=self & n=0  //empty list
+  or self::node<sm, r> * r::ll_tail<n-1, t> & r!=null  
+  inv n>=0 & self!=null & t!=null.
+
+pred ll_ht<n, h, t> == self::node<_, r> * r::ll_tail<n, t> & self=h
+  inv n>=0 & self!=null.
+
+
+//lemma "ht2tail" self::ll_ht<n, h, t> <-> self::ll_tail<n+1,t>.
+
+
+checkentail x::ll_ht<n, h, t> |- x::node<sm, r> *r::ll_tail<n,t>.
+
+checkentail x::node<sm, r> *r::ll_tail<n,t> |- x::ll_tail<n+1,t>.
+
+checkentail x::ll_ht<n, h, t> |- x::ll_tail<n+1,t>.
+
+
+
+
+/*
+
+checkentail x::ll_tail<n+1,t> & n>=0 |- x::node<sm, r> *r::ll_tail<n,t>.
+
+checkentail x::node<_, r> *r::ll_tail<n,t> |-  x::ll_ht<n, h, t>.
+
+checkentail x::ll_tail<n+1,t> & n>=0 |- x::ll_ht<n, h, t>.
+
+*/

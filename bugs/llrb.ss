@@ -297,7 +297,7 @@ node delete_min_internal(node h, ref int min_value)
         // verified in 4s!
 		c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>; 
         // verified in 3s
- 		c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>; 
+ 		c = 3 -> ensures res::rbc<n-1,1,bh,3> & n>1 or res::rbc<n-1,1,bh,2> & n>1; 
         // fails ..
 		c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3> 
 												or res::rbc<n-1,1,bh,0>;
@@ -305,7 +305,7 @@ node delete_min_internal(node h, ref int min_value)
 	}
 {
    //assume true & (c <2 | c>4);
-   assume c = 4;
+   assume c = 2;
 	
 	if (h.left == null) {
 		min_value = h.val;

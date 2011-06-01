@@ -142,13 +142,13 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct c f2, None)) explist
                                in let len =  List.length tmp
-                               in let res =  if (len > 0) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                               in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                              else  P.BForm (fct f1 f2, None)
                                in Pure_f(res) 
                              | _ -> (match f2 with
                                     | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct f1 c, None)) explist
                                       in let len = List.length tmp
-                                      in let res = if ( len > 0 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                                      in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                                    else P.BForm (fct f1 f2, None)
                                       in Pure_f(res) 
                                     | _ -> Pure_f (P.BForm(fct f1 f2,None)))
@@ -191,6 +191,7 @@ let peek_try =
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
+         | [GT,_;VARIANCE,_] -> raise Stream.Failure 
          | [GT,_;_] -> ()
          | [SEMICOLON,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
