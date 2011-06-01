@@ -1409,13 +1409,14 @@ let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
   let r = imply_sub_no ante0 conseq0 imp_no do_cache in
   let _ = Gen.Profiling.pop_time prof_lbl in
   r
-let imply_msg_no_no_debug ante0 conseq0 imp_no prof_lbl do_cache process =
-Gen.Debug.no_6 "imply_msg_no_no " 
+
+(* is below called by pruning *)
+let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache process =
+Gen.Debug.ho_2 "imply_msg_no_no " 
   Cprinter.string_of_pure_formula 
   Cprinter.string_of_pure_formula
- (fun c-> c) (fun _ -> "?") string_of_bool (fun _ -> "?")
  (fun (x,_,_)-> string_of_bool x) 
- imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache process
+ (fun _ _ -> imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache process) ante0 conseq0
   
 let print_stats () =
   print_string ("\nTP statistics:\n");
