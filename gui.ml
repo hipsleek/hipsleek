@@ -472,7 +472,7 @@ end
    	 let v_prim = CP.SpecVar (v_t, v, Primed) in
    	 let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
    	 let p = CP.fresh_spec_var v_prim in
-   	 let c = CP.name_of_type v_t in
+   	 let c = string_of_typ v_t in
    	   (* let vdatanode = CF.DataNode ({CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim); *)
    	   (* 			       CF.h_formula_data_name = c; *)
    	   (* 			       CF.h_formula_data_arguments =  vs_prim; *)

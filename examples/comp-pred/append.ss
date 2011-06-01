@@ -3,48 +3,50 @@ data node[t] {
 	node next;
 }
 
-pred ll_shape[t]<a:t2>[Base,Rec,I] = Base(a,self)
-  or self::node[t]<v,q> * q::ll_shape[t]<aq> & Rec(a,aq,v,self,q) 
+ho_pred ll_shape[t]<a:t2>[Base,Rec,I] == Base(a,self)
+  or self::node[t]<v,q> * q::ll_shape[t]<aq> * Rec(a,aq,v,self,q) 
      inv I(self,a);
 
      
-pred ll_gshape[t]<a:t2>[Base,Rec,I] = 
+ho_pred ll_gshape[t]<a:t2>[Base,Rec,I] == 
      Base(a,self)
-  or self::node[t]<v,q> * q::ll-gshape[t]<aq> & Rec(a,aq,v,self,q) 
+  or self::node[t]<v,q> * q::ll_gshape[t]<aq>
+ * Rec(a,aq,v,self,q) 
      inv I(self,a); 
 
-pred ll_acyclic[t]<a:t2> extends ll-gshape[t]<a>
-     with { Base(_,self) = self=null; }
+ho_pred ll_acyclic[t]<a:t2> extends 
+ll_gshape[t]<a>
+     with { Base(_,self) = self=null }
 
-pred ll_acyclic[t]<a:t2>[Base,Rec,I] =
-       ll-gshape[t]<a>[\ (a,self)-> self=null & Base(a,self), Rec, I];
+ho_pred ll_acyclic[t]<a:t2>[Base,Rec,I] ==
+       ll_gshape[t]<a>[\ (a,self)-> self=null & Base(a,self), Rec, I];
 
-pred ll_seg[t]<(p:node[t],a:t2)> extends ll-gshape[t]<(p,a)>
+ho-pred ll_seg[t]<(p:node[t],a:t2)> extends ll_gshape[t]<(p,a)>
        with { Base((p,_),self) = self=p; }
 
-pred ll_seg[t]<(p:node[t],a:t2)>[Base,Rec,I] =
-  ll-gshape[t]<(p:node[t],a:t2)>[\ ((p,a),self)-> self=p & Base((p,a),self), Rec, I];
+ho_pred ll_seg[t]<(p:node[t],a:t2)>[Base,Rec,I] ==
+  ll_gshape[t]<(p:node[t],a:t2)>[\ ((p,a),self)-> self=p & Base((p,a),self), Rec, I];
 
 
-pred ll_seg_size[t]<(p:node[t],a:int)> extends ll_seg[t]<(p,a)>
+ho_pred ll_seg_size[t]<(p:node[t],a:int)> extends ll_seg[t]<(p,a)>
        with { Base((p,a),self) = a=0;
                Rec((p,a),(_,a1),..) = a=a1+1; }
 
-pred ll_seg_size[t]<(p:node[t],a:int)>[Base,Rec,I]
+ho_pred ll_seg_size[t]<(p:node[t],a:int)>[Base,Rec,I]
   ll-seg[t]<a>[\ ((p,a),self)-> a=0 & Base((p,a),self), 
                \ ((p,a),(p1,a1),..) as args = a=a1+1 & Rec(ars),I ]
 Rec, I];
        with { Base((p,a),self) = a=0;
                Rec((p,a),(_,a1),..) = a=a1+1; }
 
-pred ll_seg_size[t]<(p:node[t],a:t2)>[Base,Rec,I] =
-  ll-gshape[t]<(p:node[t],a:t2)>[\((p,a),self)-> self=p & Base((p,a),self), Rec, I];
+ho_pred ll_seg_size[t]<(p:node[t],a:t2)>[Base,Rec,I] ==
+  ll_gshape[t]<(p:node[t],a:t2)>[\((p,a),self)-> self=p & Base((p,a),self), Rec, I];
 
-pred ll[t]<n> = self::ll-shape[t]<n>
+ho_pred ll[t]<n> == self::ll-shape[t]<n>
   [\(n,_)-> n=0, \(n,n1,..)->n=1+n1, \(n,_)->n>=0];
 
 
-pred lseg<n,p> = ll-shape<> [llsBase,llsRec,llsInv : n] [Base=lsegBase, Rec=lsegRec: p];
+ho_pred lseg<n,p> == ll-shape<> [llsBase,llsRec,llsInv : n] [Base=lsegBase, Rec=lsegRec: p];
     
     // ll-part<n> = ll-shape<> [llsBase,llsRec,llsInv : n]
     // ll<n> = ll-part<n> [Base = llBase :]

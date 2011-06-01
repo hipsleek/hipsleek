@@ -222,10 +222,10 @@ var_list_rec: cid { ([$1]) : spec_var list }
 /* identifiers appearing in constraints */
 cid: ID { 
         match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !omega_subst_lst) with 
-					|  [] -> SpecVar(Prim Int,$1, Unprimed)
+					|  [] -> SpecVar(Int,$1, Unprimed)
 					| (a,b,t)::h-> SpecVar(t, b,Unprimed) }
 | IDPRIMED { 
         match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !omega_subst_lst) with 
-					|  [] -> SpecVar(Prim Int,$1, Primed)
+					|  [] -> SpecVar(Int,$1, Primed)
 					| (a,b,t)::h-> SpecVar(t, b,Primed) }
 ;

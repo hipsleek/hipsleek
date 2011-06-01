@@ -55,6 +55,7 @@ type proof =
   | PEBase of base_step
   | PEAssume of assume_step
   | PEEx of eex_step
+  | Search of proof list
   | Unknown 
 
 and ex_step = { ex_step_ante : CF.context;
@@ -103,7 +104,7 @@ and pure_step = { pure_step_estate : CF.entail_state;
 				  pure_step_conseq : CP.formula;
 				  pure_step_success : bool;
 				  pure_step_gist : CP.formula option }
-
+ 
 and coercion_step = { coercion_step_name : ident;
 					  coercion_step_ante : CF.context;
 					  coercion_step_conseq : CF.formula;
@@ -183,6 +184,11 @@ let mkPure estate ante conseq success gformula = Pure { pure_step_estate = estat
 
 let mkUnfold ctx conseq node prf = Unfold { unfold_step_ante = ctx;
 											unfold_step_conseq = conseq;
+											unfold_step_node = node;
+											unfold_step_proof = prf }
+
+let mkUnfold_no_conseq ctx node prf = Unfold { unfold_step_ante = ctx;
+											unfold_step_conseq = CF.mkTrue_nf no_pos;
 											unfold_step_node = node;
 											unfold_step_proof = prf }
 

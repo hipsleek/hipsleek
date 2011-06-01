@@ -1,3 +1,4 @@
+(* *)
 module type INC_TYPE =
     sig
       type t
@@ -24,6 +25,41 @@ struct
 
   let string_of_pair (p1:'a->string) (p2:'b->string) ((a,b):'a * 'b) : string = 
     "("^(p1 a)^","^(p2 b)^")"
+
+  let rec remove_dups n = 
+    match n with
+        [] -> []
+      | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
+
+  let pr_id x = x
+
+  let print_flush s = print_string (s^"\n"); flush stdout
+
+  let pr_no x = "?"
+
+  let pr_unit x = "()"
+
+  let pr_option f x = match x with
+    | None -> "None"
+    | Some v -> "Some("^(f v)^")"
+
+  let pr_opt_int = pr_option string_of_int
+
+  let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
+
+  let pr_triple f1 f2 f3 (x,y,z) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^")"
+
+  let pr_lst f xs = String.concat "," (List.map f xs)
+
+ let pr_list f xs = "["^(pr_lst f xs)^"]"
+
+  let opt_to_list o = match o with
+    | None -> []
+    | Some a -> [a]
+
+  let opt_list_to_list o = match o with
+    | None -> []
+    | Some a -> a
 
   let fnone (c:'a):'a option = None
 
@@ -78,6 +114,12 @@ struct
   let rec repeat (v : 'a) (n : int) : 'a list =
     if n <= 0 then []
     else v :: (repeat v (n-1))
+
+  let report_error pos msg = Error.report_error
+     { Error.error_loc = pos; Error.error_text = msg}
+
+  let report_warning pos msg = Error.report_warning
+     { Error.error_loc = pos; Error.error_text = msg}
 
 end;;
 
@@ -233,9 +275,21 @@ struct
   let difference_eq eq l1 l2 =
     List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
-  let list_equal_eq eq l1 l2 = 
-    let l = (List.length (intersect_eq eq l1 l2)) in
-    ((List.length l1) =  l) && (l = (List.length l2))
+  let diff_split_eq eq l1 l2 = 
+    List.partition (fun x -> not (List.exists (eq x) l2)) l1
+    
+  let list_subset_eq eq l1 l2 = 
+    let l = (List.length (difference_eq eq l1 l2)) in
+    l==0
+
+  (* change name to setequal *)
+  let list_setequal_eq eq l1 l2 = 
+    (list_subset_eq eq l1 l2) && (list_subset_eq eq l2 l1) 
+
+  let list_equiv_eq eq l1 l2 = 
+    try
+      List.for_all2 eq l1 l2
+    with _ -> false
 
   let rec list_find (f:'a -> 'b option) l = match l with 
     | [] -> None
@@ -260,10 +314,6 @@ struct
   let string_of (ls:'a list) : string 
         = string_of_f string_of_elem ls
 
-  let rec remove_dups n = 
-    match n with
-        [] -> []
-      | q::qs -> if (mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let rec check_dups n = 
     match n with
@@ -718,9 +768,9 @@ struct
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_ho (f:'a->'b) (e:'a) : 'b =
-    let r = try 
-      f e
-    with exc -> stk#pop; raise exc
+    let r = (try 
+      (f e)
+    with exc -> (stk#pop; raise exc))
     in stk#pop; r
 
   (* string representation of call stack of ho_debug *)
@@ -776,21 +826,23 @@ struct
       helper xs in
     let s,h = push s in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
-    let r = try
+    flush stdout;
+    let r = (try
       pop_ho f e
     with ex -> 
-        let _ = print_string (h^"\n") in
+        (let _ = print_string ("\n"^h^"\n") in
         let _ = pr_args args in
         let _ = pr_lazy_res lz in
         let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
-        raise ex in
-    if not(test r) then r else
-      let _ = print_string (s^"\n") in
+        flush stdout;
+        raise ex)) in
+    (if not(test r) then r else
+      let _ = print_string ("\n"^h^"\n") in
       let _ = pr_args args in
       let _ = pr_lazy_res lz in
       let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
-      r
-
+      flush stdout;
+      r)
 
   let choose bs xs = 
     let rec hp bs xs = match bs,xs with
@@ -848,7 +900,7 @@ struct
 
 
   let ho_6_opt_aux (flags:bool list) (loop_d:bool) (test:'z->bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
-        (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+        (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) 
         (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
     let a1 = pr1 e1 in
     let a2 = pr2 e2 in
@@ -888,6 +940,14 @@ struct
   let loop_5 s = ho_5_opt_aux [] true (fun _ -> true) s
   let loop_6 s = ho_6_opt_aux [] true (fun _ -> true) s
 
+  let loop_1_no _ _ _ s = s
+  let loop_2_no _ _ _ _ s = s
+  let loop_3_no _ _ _ _ _ s = s
+  let loop_4_no _ _ _ _ _ _ s = s
+  let loop_5_no _ _ _ _ _ _ _ s = s
+  let loop_6_no _ _ _ _ _ _ _ _ s = s
+
+  
   let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str
   let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str
   let ho_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_3 str

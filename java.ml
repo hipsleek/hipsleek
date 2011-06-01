@@ -75,7 +75,7 @@ and java_of_data_defs (ddefs : data_decl list) : string =
 and java_of_partially_bound_params (pbvars : CP.spec_var list) : unit = match pbvars with
   | (CP.SpecVar (t, v, p)) :: rest -> begin
 	  match t with
-		| CP.OType c ->
+		| Named c ->
 			Buffer.add_string java_code ("\n\n");
 			(* class header and fields *)
 			Buffer.add_string java_code ("final class " ^ c  ^ "Aug {\n");
@@ -167,7 +167,7 @@ and build_constructor (ddef : data_decl) : unit =
   let typs, fnames = List.split (fst (List.split ddef.data_fields)) in
   let pnames = fresh_names n in
   let formals = List.map2 (fun t -> fun name -> 
-							 (Iprinter.string_of_typ t) ^ " " ^ name) typs pnames in
+							 (string_of_typ t) ^ " " ^ name) typs pnames in
   let assignments = List.map2 (fun f -> fun p -> (f ^ " = " ^ p ^ ";")) fnames pnames in
 	Buffer.add_string java_code "\n\n";
 	Buffer.add_string java_code ddef.data_name;
@@ -186,7 +186,7 @@ and build_constructor (ddef : data_decl) : unit =
 
 
 and convert_field ((t, v), l) =
-  Buffer.add_string java_code (Iprinter.string_of_typ t);
+  Buffer.add_string java_code (string_of_typ t);
   Buffer.add_string java_code (" " ^ v ^ ";\n")
 
 (*
@@ -224,11 +224,11 @@ and java_of_proc_decl p =
 	| None     -> ""
 	| Some e   -> "{\n" ^ (java_of_exp e) ^ "\n}" 
   in	
-    (if p.proc_constructor then "" else (Iprinter.string_of_typ p.proc_return) ^ " ")
+    (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
 	^ p.proc_name 
 	^ "(" 
 	^ (String.concat ", " (List.map 
-							 (fun pr -> (Iprinter.string_of_typ pr.param_type) 
+							 (fun pr -> (string_of_typ pr.param_type) 
 								^ " " ^ pr.param_name) p.proc_args)) 
 	^ ") "^
 	"throws "^(String.concat "," p.proc_exceptions)
@@ -249,7 +249,7 @@ and java_of_exp = function
 		"{ " ^ str2 ^ " }"
   | Break _ -> "break;"
   | Cast e -> 
-	  "(" ^ (Iprinter.string_of_typ e.exp_cast_target_type) ^ ")" 
+	  "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" 
 	  ^ (java_of_exp e.exp_cast_body)
   | Continue _ -> "continue;"
   | Empty l -> ""
@@ -324,10 +324,10 @@ and java_of_exp = function
 		else (add_semicolon e1str) ^ "\n" ^ (add_semicolon e2str) ^ "\n"
   | VarDecl ({exp_var_decl_type = t;
 			  exp_var_decl_decls = l}) -> 
-	  (Iprinter.string_of_typ t) ^ " " ^ (Iprinter.string_of_assigning_list l) ^ ";";
+	  (string_of_typ t) ^ " " ^ (Iprinter.string_of_assigning_list l) ^ ";";
   | ConstDecl ({exp_const_decl_type = t;
 				exp_const_decl_decls = l}) -> 
-	  "const " ^ (Iprinter.string_of_typ t) ^ " " ^ (Iprinter.string_of_cassigning_list l) ^ ";"
+	  "const " ^ (string_of_typ t) ^ " " ^ (Iprinter.string_of_cassigning_list l) ^ ";"
   | BoolLit ({exp_bool_lit_val = b})
                                    -> string_of_bool b 
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i

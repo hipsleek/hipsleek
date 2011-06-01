@@ -16,7 +16,7 @@ lseg<n, p, sm, lg> == self=p & n=0 & sm<=lg
 // sorted list with tail
 ll_tail<n, t, sm, lg> == self::node<sm, null> & t=self & n=1 & sm=lg
 		or self::node<sm, r> * r::ll_tail<n-1, t, sm1, lg> & r!=null & sm<=sm1
-	inv n>=0;
+	inv n>=0 & self!=null;
 
 // bounded list with tail
 bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
@@ -27,7 +27,12 @@ inv n >= 0;
 
 coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg;
 
-coercion "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2;
+/*
+coercion "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2; 
+*/
+
+coercion "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & lg1<=sm2;
+
 
 void qsort(ref node x, ref node tx)
 	requires x::bnd_tail<n, tx, sm, lg> & n>0
@@ -35,6 +40,7 @@ void qsort(ref node x, ref node tx)
 {
 	if (x == null) return; // not needed
 	else if (x.next == null) {
+      //assume false;
 		return;
 	}
 	else {
@@ -55,13 +61,18 @@ void qsort(ref node x, ref node tx)
 			qsort(y, ty);
 
 		if (x == null) {
+          //assume false;
 			x = y;
 			tx = ty;
+            assert x'::ll_tail<n,tx', _, _>;
 			return;
 		}
 		else if (y != null) {
 			tx.next = y;
 			tx = ty;
+            //dprint;
+            assert x'::ll_tail<_, _, _, _>; //'
+              //assume false;
 			return;
 		}
 	}

@@ -2,6 +2,7 @@
 (******************************************)
 (* command line processing                *)
 (******************************************)
+module M = Lexer.Make(Token.Token)
 
 let to_java = ref false
 
@@ -18,15 +19,14 @@ let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_fil
 
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
-  let input = Lexing.from_channel org_in_chnl in
     try
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-		print_string "Parsing...\n"; flush stdout;
-        let _ = Gen.Profiling.push_time "Parsing" in
-        Globals.input_file_name := file_name;
-		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
+      print_string "Parsing...\n"; flush stdout;
+      let _ = Gen.Profiling.push_time "Parsing" in
+      Globals.input_file_name:= file_name;
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
@@ -34,7 +34,10 @@ let parse_file_full file_name =
 			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
 			prog 
     with
-		End_of_file -> exit 0	  
+		End_of_file -> exit 0	 
+    | M.Loc.Exc_located (l,t)-> 
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      raise t) 
 
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n"); flush stdout;
@@ -49,7 +52,7 @@ let process_source_full source =
     let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
     output_string jfile java_str;
     close_out jfile;
-    print_string (" done.\n"); flush stdout;
+    (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
   if (!Scriptarguments.parse_only) then 
@@ -62,8 +65,7 @@ let process_source_full source =
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 
     let intermediate_prog =IastUtil.pre_process_of_iprog prog in
-		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in *) 
-
+		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
 		(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
@@ -73,11 +75,11 @@ let process_source_full source =
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
     let _ = print_string ("Translating to core language...\n"); flush stdout in
-    (*let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in*)
+    (* let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in *)
     let cprog = Astsimp.trans_prog intermediate_prog in
 		(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
-		let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
-    let _ = print_string (" done\n"); flush stdout in
+	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
+    (* let _ = print_string (" done-2\n"); flush stdout in *)
 		(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
     let _ = 
@@ -104,7 +106,7 @@ let process_source_full source =
 	    ()
 	in
 	ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-	print_string ("\nDone.\n"); flush stdout;
+	print_string ("\nDone-3.\n"); flush stdout;
 	exit 0
       end 
     in
@@ -115,7 +117,9 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
-    (try
+    if (!Scriptarguments.typecheck_only) 
+    then print_string (Cprinter.string_of_program cprog)
+    else (try
     ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
@@ -173,6 +177,9 @@ let main1 () =
     let _ = Gen.Profiling.pop_time "Overall" in
       (* Tpdispatcher.print_stats (); *)
       ()
+
+(* let main1 () = *)
+(*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()
@@ -185,6 +192,7 @@ let _ =
     ()
   with _ as e -> begin
     finalize ();
+    print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError(s) detected at main \n");
   end

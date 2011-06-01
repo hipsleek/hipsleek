@@ -1,0 +1,66 @@
+/**
+ Left-leaning Red Black Tree
+ Entailment testing.
+ @author: Vu An Hoa
+ */
+
+data node {
+	int val;
+	int color; /* 0 for red, 1 for black */
+	node left;
+	node right;
+}.
+
+/* Red black tree with case analysis */
+pred rbc<n, cl, bh, c> == self = null & n = 0 & bh = 1 & cl = 1 & c = 0
+	or self::node<v, 1, l, r> * l::rbc<ln, 1, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> 
+       & cl = 1 & n = 1 + ln + rn & c = 1
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 1, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 2
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 0, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 3
+	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _>
+	   & cl = 0 & n = 1 + ln + rn & c = 4
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4.
+
+//checkentail h::node<_,0,l,r> * l::rbc<_,1,bh,1> * r::rbc<_,1,bh,1> |- h::rbc<_,0,bh,4>.
+
+//checkentail x::node<a,b,c,d> * x::node<m,n,p,q>  |- a = m & b = n & c = p & d = q.
+
+//checkentail x::node<a,b,c,d> * y::node<m,n,p,q> & x=y  |- a = m & b = n & c = p & d = q.
+
+checkentail x::rbc<_,c,_,0> |- c=1 .
+checkentail x::rbc<_,c,_,1> |- c=1 .
+checkentail x::rbc<_,c,_,2> |- c=1 .
+checkentail x::rbc<_,c,_,3> |- c=1 .
+checkentail x::rbc<_,c,_,4> |- c=0 .
+
+checkentail x::rbc<_,0,_,d> |- d=4 .
+
+checkentail x::rbc<_,1,_,d> |- 0<=d<=3 .
+
+checkentail x::rbc<n,cl,bh,d> & n=0 |- cl=1 & d=0 & bh=1 .
+
+checkentail x::rbc<n,cl,bh,d> & x=null |- cl=1 & d=0 & bh=1 .
+
+// fail but should be valid
+checkentail x::rbc<n,cl,bh,d> & bh>2 & n=1 |- false .
+
+checkentail x::rbc<n,cl,bh,d> & bh=1 & n=1 |- cl=0 .
+
+
+
+// fail but should be valid
+checkentail x::node<_,c,l,r>*l::rbc<n,cl,bh,d> & bh>2 & n=1 |- false .
+
+// fail for all cases but d=0
+checkentail x::rbc<n,cl,bh,d> & bh>2 & n=1 |- 
+            case { 
+                d=0 -> [] false;
+                d=1 -> [] true;
+                d=2 -> [] true;
+                d=3 -> [] true;
+                d=4 -> [] true;
+                d<0 | d>4 -> [] false; }.
+
+checkentail x::rbc<n,cl,bh,d> & bh>2 & n=1 & cl=0 |- false .
