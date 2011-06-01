@@ -65,6 +65,16 @@ type mode =
 (*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
 (*   | List          -> "list" *)
 
+let proving_loc : (loc option) ref = ref None
+
+let set_proving_loc p =
+  proving_loc := Some p
+
+let clear_proving_loc () =
+  proving_loc := None
+
+
+
 (* pretty printing for types *)
 let rec string_of_typ = function 
    (* may be based on types used !! *)

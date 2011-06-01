@@ -1078,13 +1078,18 @@ spec:
 			Iformula.ECase {
 						Iformula.formula_case_branches = bl; 
 						Iformula.formula_case_pos = get_pos_camlp4 _loc 1; }
-	 | `VARIANCE; `OPAREN; il=integer_literal; `CPAREN; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
+	 | `VARIANCE; il=opt_var_label; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
 			Iformula.EVariance {
 					Iformula.formula_var_label = il;
 					Iformula.formula_var_measures = m;
 					Iformula.formula_var_escape_clauses = ec;
 					Iformula.formula_var_continuation = [s];
-					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];	
+					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];
+
+opt_var_label: [[t=OPT var_label -> t]];
+
+var_label: [[ `OPAREN; vl=integer_literal; `CPAREN -> vl
+|`OPAREN ; `MINUS; vl=integer_literal; `CPAREN -> -vl]];	
           
 opt_measures: [[t=OPT measures -> un_option t []]];
 

@@ -844,7 +844,7 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inter")then begin
+  if(check_prover_existence "mona_inter1")then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end
@@ -897,7 +897,7 @@ let check_answer (answ: string) (is_sat_b: bool)=
       | _ -> 
           try
               let _ = Str.search_forward (Str.regexp "Error in file") answ 0 in
-              (print_string "MONA translation failure!";
+              (print_string "MONA transmkdlation failure!";
                Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^answ)})
           with
             | Not_found ->

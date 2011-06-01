@@ -18,6 +18,13 @@ let add_error e = all_errors := e :: !all_errors
 *)
 
 let report_error e =
+  (match !proving_loc with
+    | Some p ->
+          Printf.printf "\nLast Proving Location: File \"%s\", line %d, col %d "
+               p.start_pos.Lexing.pos_fname
+               p.start_pos.Lexing.pos_lnum
+              (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol)
+    | None -> ());
   Printf.printf "\nERROR: File \"%s\", line %d, col %d : %s \n"
       e.error_loc.start_pos.Lexing.pos_fname
       e.error_loc.start_pos.Lexing.pos_lnum
