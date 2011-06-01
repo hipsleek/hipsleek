@@ -544,11 +544,12 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
     Err.report_error {
       Err.error_loc = pos;
       Err.error_text = Printf.sprintf
-        "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s."
-        (Cprinter.string_of_formula post)
+				(* "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s." *)
+        "Post condition cannot be derived by the system."
+        (*(Cprinter.string_of_formula post)
         (Cprinter.string_of_list_partial_context final_state)
         (Cprinter.string_of_list_partial_context rs)
-        (string_of_loc_list locs_of_failures)
+        (string_of_loc_list locs_of_failures)*)
     }
   end
 
