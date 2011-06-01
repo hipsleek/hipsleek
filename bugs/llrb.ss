@@ -228,13 +228,14 @@ node insert_internal(node h, int v)
 	requires h::rbc<n,_,bh,c>
 	case {
 		c = 0 -> ensures res::node<v,0,null,null>; //res::rbc<1,0,1,4>;// verified in 2s
-		c = 1 -> ensures res::rbc<n+1,1,bh,resc> & 1 <= resc <= 2;
-		c = 2 -> ensures res::rbc<n+1,1,bh,resc> & 2 <= resc <= 3; //or res::rbc<n+1,1,bh,3>;
-		c = 3 -> ensures res::rbc<n+1,0,bh,4>; // FOLD FAILED!
-		(c < 0 | c >= 4) -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>; // CASE ANALYSIS FAILED IN SLEEK 
+		c = 1 -> ensures res::rbc<n+1,1,bh,resc> & 1 <= resc <= 2; // 46s
+		c = 2 -> ensures res::rbc<n+1,1,bh,resc> & 2 <= resc <= 3; //or res::rbc<n+1,1,bh,3>; 70sec
+		c = 3 -> ensures res::rbc<n+1,0,bh,4>; // FOLD FAILED! //4s
+		(c < 0 | c >= 4) -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>; // 68s // CASE ANALYSIS FAILED IN SLEEK 
 	}
 {
-	assume (c < 0 | c >= 4);
+   //assume (c < 0 | c >= 4);
+    assume c=4;
 	
 	if (h == null)
 		return new node(v, 0, null, null); // RED node
@@ -261,13 +262,31 @@ node insert_internal(node h, int v)
 	}
 	
 	// case c = 3 ==> folding error here!
-//	assert h'::node<_,0,lx,rx> * lx::rbc<ln,1,bh,_> * rx::rbc<rn,1,bh,_> & ln + rn = n; 
-
+ 	//assert h'::node<_,0,lx,rx> * lx::rbc<ln,1,bh,_> * rx::rbc<rn,1,bh,_> & ln + rn = n; //' ok
+    //assert h'::node<_,0,lx,rx> * lx::rbc<ln,0,bh,_> * rx::rbc<rn,0,bh,_> & ln + rn = n; //' failed
+    //assert h'::node<_,1,lx,rx> * lx::rbc<ln,1,bh,_> * rx::rbc<rn,1,bh,_> & ln + rn = n; //' failed
+ 	//assert h'::rbc<_,_,_,_>;
 	// case c = 4 ==> folding error + case analysis fail detected in sleek
-	assert h'::node<_,0,lx,rx> * lx::rbc<ln,_,bh,_> * rx::rbc<rn,1,bh,_> & ln + rn = n;
-	
+	//assert h'::node<_,0,lx,rx> * lx::rbc<ln,_,bh,_> * rx::rbc<rn,1,bh,_> & ln + rn = n; //'
+    //assume false;
+	foo(h);
 	return h;
 }
+
+void foo(node h)
+  requires h::node<_,0,lx,rx> * lx::rbc<ln,1,bh,_> * rx::rbc<rn,1,bh,_>
+  ensures h::rbc<ln+rn+1,0,bh,4>;
+  requires h::node<_,1,lx,rx> * lx::rbc<ln,0,bh,_> * rx::rbc<rn,0,bh,_>
+  ensures h::rbc<ln+rn+1,0,1+bh,3>;
+  requires h::node<_,1,lx,rx> * lx::rbc<ln,0,bh,_> * rx::rbc<rn,1,bh,_>
+  ensures h::rbc<ln+rn+1,0,1+bh,2>;
+  requires h::node<_,1,lx,rx> * lx::rbc<ln,1,bh,_> * rx::rbc<rn,1,bh,_>
+  ensures h::rbc<ln+rn+1,0,1+bh,1>;
+  requires h=null
+  ensures h::rbc<0,1,1,0>;
+  requires h::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,_> 
+  ensures h::rbs<ln+rn+1,bh>;
+
 
 //////////////////////////////////////////
 //           DELETE MINIMUM             //
