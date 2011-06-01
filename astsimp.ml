@@ -1231,6 +1231,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
    H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   let cf = trans_I2C_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let (inv, inv_b) = vdef.I.view_invariant in
+  let _ = gather_type_info_pure prog inv stab in
+  let _ = List.iter (fun (_,f) -> gather_type_info_pure prog f stab) inv_b in
   let pf = trans_pure_formula inv stab in
     let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
   let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
@@ -4332,21 +4334,33 @@ and gather_type_info_exp_x a0 stab et =
           let _ = gather_type_info_exp_x a stab new_et in
           r
               
-and gather_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
+and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
     | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
-          (gather_type_info_pure prog p1 stab; gather_type_info_pure prog p2 stab)
-    | IP.Not (p1, _, pos) -> gather_type_info_pure prog p1 stab 
+          (gather_type_info_pure_x prog p1 stab; gather_type_info_pure_x prog p2 stab)
+    | IP.Not (p1, _, pos) -> gather_type_info_pure_x prog p1 stab 
     | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
-	      if (H.mem stab qv) && !check_shallow_var
-	      then
+	      if (H.mem stab qv) then
+            if !check_shallow_var
+	        then
             Err.report_error
                 {
                     Err.error_loc = pos;
                     Err.error_text = qv ^ " shadows outer name";
                 }
-	      else gather_type_info_pure prog qf stab
+            else gather_type_info_pure_x prog qf stab
+	      else 
+            begin
+              let new_et = fresh_tvar stab in
+              let vk = fresh_proc_var_kind stab new_et in
+              H.add stab qv vk; gather_type_info_pure_x prog qf stab
+            end
+
+and gather_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
+  Gen.Debug.no_eff_2 "gather_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_stab (fun _ -> "()")
+      (gather_type_info_pure_x prog) p0 stab
+
 
 (* An Hoa : add argument prog *)
 and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
