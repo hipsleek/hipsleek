@@ -16,6 +16,9 @@ let num_para = ref (1)
 let sort_input = ref false
 let webserver = ref false
 
+
+
+
 let parallelize num =
   num_para := num
 
@@ -176,6 +179,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
 
 (* Debug.devel_pprint ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n") pos; *)
+	        let _ = set_proving_loc pos in
 	        let field_types, vs = List.split lvars in
 	        let v_prim = CP.SpecVar (v_t, v, Primed) in
 	        let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
@@ -353,6 +357,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				  exp_scall_is_rec = ir;
                   exp_scall_path_id = pid;
                   exp_scall_pos = pos}) -> begin (* mn is mingled name of the method *)
+	        let _ = set_proving_loc pos in
 	        let proc = look_up_proc_def pos prog.prog_proc_decls mn in
 	        let farg_types, farg_names = List.split proc.proc_args in
 	        let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
