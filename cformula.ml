@@ -1206,7 +1206,9 @@ and subst_struc sst (f : struc_formula) = match sst with
   | s :: rest -> subst_struc rest (apply_one_struc s f)
   | [] -> f 
         
-and subst_struc_pre sst (f : struc_formula) = match sst with
+and subst_struc_pre sst (f : struc_formula) = 
+  (* apply_par_struc_pre s f *)
+  match sst with
   | s :: rest -> subst_struc_pre rest (apply_one_struc_pre s f)
   | [] -> f 
 

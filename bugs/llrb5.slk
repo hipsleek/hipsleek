@@ -35,11 +35,12 @@ pred rbs<n, bh> ==
 
 checkentail x::rbc<ln,cl,bh,d> & 0<=d<=3 |- cl=1 .
 
+// below failed name to name clash!
 checkentail x::rbc<ln,c,bh,d> & c=1 |- 0<=d<=3  .
 
-checkentail x::rbc<ln,e,bh,d> & e=1 |- 0<=d<=3  .
+//checkentail x::rbc<ln,e,bh,d> & e=1 |- 0<=d<=3  .
 
-checkentail x::rbc<ln,0,bh,d>  |- d=4 .
+//checkentail x::rbc<ln,0,bh,d>  |- d=4 .
 
-checkentail x::rbc<ln,c,bh,d>  |- 0<=d<=4.
+//checkentail x::rbc<ln,c,bh,d>  |- 0<=d<=4.
 

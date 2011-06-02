@@ -201,7 +201,8 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
     
 and memo_cons_subst sst (f_l : memoised_constraint list): memoised_constraint list = 
   List.map (fun c-> 
-	      let nf = List.fold_left (fun a c-> b_apply_one c a) c.memo_formula sst in
+	      (* let nf = List.fold_left (fun a c-> b_apply_one c a) c.memo_formula sst in *)
+      let nf = b_apply_subs sst c.memo_formula in
 		{c with memo_formula = nf }) f_l
 
 and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) = 
@@ -210,19 +211,30 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
     | [] -> f_l in
     regroup_memo_group (helper sst f_l)
       
-and m_apply_one (s:spec_var * spec_var) f = 
+and m_apply_one (s:spec_var * spec_var) f = m_apply_par [s] f
+  (* let r1 = List.map (fun c ->  *)
+  (*   	       let r = EMapSV.subs_eset(\*_debug !print_sv_f*\) s c.memo_group_aset in *)
+  (*   		 {memo_group_fv = Gen.BList.remove_dups_eq (=) (List.map (fun v-> subst_var s v) c.memo_group_fv); *)
+  (*   		  memo_group_changed = c.memo_group_changed; *)
+  (*   		  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one s d.memo_formula;}) c.memo_group_cons; *)
+  (*   		  memo_group_slice = List.map (apply_one s) c.memo_group_slice;  *)
+  (*   		  memo_group_aset = r }) f in   *)
+  (* let r = filter_mem_triv r1 in *)
+  (*   r *)
+
+and m_apply_par (sst:(spec_var * spec_var) list) f = 
   let r1 = List.map (fun c -> 
-		       let r = EMapSV.subs_eset(*_debug !print_sv_f*) s c.memo_group_aset in
-			 {memo_group_fv = Gen.BList.remove_dups_eq (=) (List.map (fun v-> subst_var s v) c.memo_group_fv);
+		       let r = EMapSV.subs_eset_par(*_debug !print_sv_f*) sst c.memo_group_aset in
+			 {memo_group_fv = Gen.BList.remove_dups_eq (=) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv);
 			  memo_group_changed = c.memo_group_changed;
-			  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one s d.memo_formula;}) c.memo_group_cons;
-			  memo_group_slice = List.map (apply_one s) c.memo_group_slice; 
+			  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs sst d.memo_formula;}) c.memo_group_cons;
+			  memo_group_slice = List.map (apply_subs sst) c.memo_group_slice; 
 			  memo_group_aset = r }) f in  
   let r = filter_mem_triv r1 in
     r
 
-and h_apply_one_m_constr_lst s l = 
-  List.map (fun (c,c2)-> ({c with memo_formula = b_apply_one s c.memo_formula},c2)) l
+(* and h_apply_one_m_constr_lst s l =  *)
+(*   List.map (fun (c,c2)-> ({c with memo_formula = b_apply_par [s] c.memo_formula},c2)) l *)
 
 and b_f_ptr_equations f =  match f with
   | Eq (e1, e2, _) -> 
@@ -1300,8 +1312,12 @@ let isConstMTrue mx = match mx with
   
 let m_apply_one s qp = match qp with
   | MemoF f -> MemoF (m_apply_one s f)
-  | OnePF f -> OnePF (apply_one s f)
+  | OnePF f -> OnePF (apply_subs [s] f)
   
+let m_apply_par sst qp = match qp with
+  | MemoF f -> MemoF (m_apply_par sst f)
+  | OnePF f -> OnePF (apply_subs sst f)
+
 let memo_apply_one_exp s qp = match qp with
   | MemoF mf -> MemoF (memo_apply_one_exp s mf)
   | OnePF f -> OnePF (apply_one_exp s f)

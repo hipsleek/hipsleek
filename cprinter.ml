@@ -1771,6 +1771,7 @@ Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
+Cpure.print_sv := string_of_spec_var;;
 Cformula.print_formula := string_of_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
 Cformula.print_svl := string_of_spec_var_list;;

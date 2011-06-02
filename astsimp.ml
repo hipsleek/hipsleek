@@ -6187,7 +6187,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     else List.map (fun c-> CP.mkAnd c neq no_pos) r in
 
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-    Gen.Debug.ho_2 "simplify_pures " Cprinter.string_of_pure_formula 
+    Gen.Debug.no_2 "simplify_pures " Cprinter.string_of_pure_formula 
         Cprinter.string_of_spec_var_list
         (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
         simplify_pures f v_l in
@@ -6262,7 +6262,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   
   (* let propagate_constraints (p_c:CP.b_formula list) (nl:CP.b_formula list): CP.b_formula list =  *)
   (*   let pr = pr_list (Cprinter.string_of_b_formula) in *)
-  (*   Gen.Debug.ho_2 "propagate_constraints" pr pr pr propagate_constraints p_c nl in *)
+  (*   Gen.Debug.no_2 "propagate_constraints" pr pr pr propagate_constraints p_c nl in *)
 
   let compute_invariants v_l (pure_list:(formula_label * (CP.baga_sv * CP.b_formula list)) list) : (formula_label list * (CP.baga_sv * CP.b_formula list)) list= 
     let combine_pures (l1:CP.b_formula list) (l2:CP.b_formula list) :CP.b_formula list = 
@@ -6347,7 +6347,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
   let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list = 
     let pr = pr_list Cprinter.string_of_b_formula in
-    Gen.Debug.ho_2 "imply_by_all" Cprinter.string_of_pure_formula pr pr imply_by_all all_r uinvl
+    Gen.Debug.no_2 "imply_by_all" Cprinter.string_of_pure_formula pr pr imply_by_all all_r uinvl
   in
 
 (*
@@ -6423,7 +6423,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let pr = Cprinter.string_of_formula_label_only in
     let pr1 = pr_pair (Cprinter.string_of_formula) pr in
     let pr2 = pr_pair (Cprinter.string_of_pure_formula) (pr_triple pr Cprinter.string_of_spec_var_list (pr_list Cprinter.string_of_b_formula)) in
-     Gen.Debug.ho_1 "split_one_branch" pr1 pr2 (fun _ -> split_one_branch vl uinvl p2) p2
+     Gen.Debug.no_1 "split_one_branch" pr1 pr2 (fun _ -> split_one_branch vl uinvl p2) p2
   in
 
   (* this computes negated b_formula for possible use by other branches *)
@@ -6454,7 +6454,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         ((f:CP.formula),((lbl:formula_label),(ba:CP.spec_var list),(pl:CP.b_formula list)))  
           : (formula_label * (CP.spec_var list * CP.b_formula list)) =  
       let n_c = List.fold_left (fun a (l,c)  ->  
-          if ((fst l)=(fst lbl)) then a else 
+          if (eq_formula_label l lbl) then a else 
             let (b,_,_) = TP.imply f (CP.BForm (c,None)) "" false None in
           if b then c::a  else
           a) [] neg_br in
@@ -6466,7 +6466,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
           : (formula_label * (CP.spec_var list * CP.b_formula list)) =
     let pr1 (f,(_,ba,pl)) = pr_pair Cprinter.string_of_pure_formula (pr_list Cprinter.string_of_b_formula) (f,pl) in
     let pr2 (l,(svl,pl)) = pr_pair Cprinter.string_of_spec_var_list (pr_list Cprinter.string_of_b_formula) (svl,pl) in
-     Gen.Debug.ho_1 "collect_constr" pr1 pr2 (fun _ -> collect_constr split_br x) x
+     Gen.Debug.no_1 "collect_constr" pr1 pr2 (fun _ -> collect_constr split_br x) x
   in
 
   (* this picks a candidate set of pruning conditions for each branch *)
@@ -6477,7 +6477,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 	(*let _ = print_string ("init inv:" ^(pr_list Cprinter.string_of_b_formula uinvl)) in*)
    (* let split_one_branch (i:(CF.formula * Globals.formula_label))  *)
     (*       : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) = *)
-    (*   Gen.Debug.ho_1 "split_one_branch" split_one_branch i in *)
+    (*   Gen.Debug.no_1 "split_one_branch" split_one_branch i in *)
 
     let split_br = List.map (split_one_branch vl uinvl) lst  in 
     let neg_br = List.concat (List.map (fun (_,(lbl,_,bl)) -> neg_b_list lbl bl) split_br) in
@@ -6494,7 +6494,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     in Gen.BList.string_of_f (Gen.string_of_pair pr_fl pr ) l in
 	let pr2 x= Cprinter.string_of_mix_formula (MCP.MemoF x) in
     let pr3 = pr_list (pr_pair Cprinter.string_of_formula pr_fl) in
-	Gen.Debug.ho_3 "pick_pures" pr3 pr0 pr2 pr1 (fun _ _ _ -> pick_pures lst vl uinv) lst vl uinv in
+	Gen.Debug.no_3 "pick_pures" pr3 pr0 pr2 pr1 (fun _ _ _ -> pick_pures lst vl uinv) lst vl uinv in
 
   let sel_prune_conds (ugl:(formula_label * CP.b_formula) list) : ((CP.b_formula * formula_label list) list) =
     let prune_conds = List.fold_left (fun a (f_lbl, constr)->
@@ -6509,7 +6509,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let pr_fl x = Cprinter.string_of_formula_label x "" in
     let pr1 = pr_list (pr_pair pr_fl (Cprinter.string_of_b_formula)) in
     let pr2 = pr_list (pr_pair (Cprinter.string_of_b_formula) (pr_list pr_fl)) in
-    Gen.Debug.ho_1 "sel_prune_conds" pr1 pr2 sel_prune_conds ugl
+    Gen.Debug.no_1 "sel_prune_conds" pr1 pr2 sel_prune_conds ugl
   in
   
   (* let _ = pick_pures init_form_lst v_l u_inv in *)

@@ -1,3 +1,15 @@
+-- revised eps
+Total number of errors: 5 in files:
+  sleek10.slkerror at: avl-orig-2.ss insert
+error at: avl-orig3.ss insert
+error at: qsort.ss qsort
+error at: qsort-tail.ss qsort
+
+
+use propagation and simplication for pruning conditions?
+
+xform has redundancy (e.g. bugs/llrb5.slk)
+
 A node with Derived became Original after lemma folding! which example?
 
 view_unfold_num should be made into a verifier option
