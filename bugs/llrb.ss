@@ -235,7 +235,7 @@ node insert_internal(node h, int v)
 	}
 {
    //assume (c < 0 | c >= 4);
-    assume c=4;
+  // assume c=4;
 	
 	if (h == null)
 		return new node(v, 0, null, null); // RED node

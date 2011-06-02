@@ -5056,3 +5056,21 @@ let mkNot_norm f lbl1 pos0 :formula= match f with
 		| Some bf -> BForm((norm_bform_aux bf),lbl)
 	end
   | _ -> Not (f, lbl1,pos0)
+
+
+let mkNot_b_norm (bf : b_formula) : b_formula option = 
+      let r = match bf with
+        | BConst (b, pos) -> Some (BConst ((not b), pos))
+        | Lt (e1, e2, pos) -> Some (Gte (e1, e2, pos))
+        | Lte (e1, e2, pos) -> Some(Gt (e1, e2, pos))
+        | Gt (e1, e2, pos) -> Some(Lte (e1, e2, pos))
+        | Gte (e1, e2, pos) -> Some(Lt (e1, e2, pos))
+        | Eq (e1, e2, pos) -> Some(Neq (e1, e2, pos))
+        | Neq (e1, e2, pos) -> Some(Eq (e1, e2, pos))
+		| BagIn e -> Some(BagNotIn e)
+		| BagNotIn e -> Some(BagIn e)
+        | _ -> None in
+	match r with 
+		| None -> None
+		| Some bf -> Some (norm_bform_aux bf)
+

@@ -410,6 +410,8 @@ let fresh_formula_label (s:string) :formula_label =
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
+let eq_formula_label (l1:formula_label) (l2:formula_label) : formula_label = fst(l1)=fst(l2)
+
 let tmp_files_path = ref ""
 
 (*path for the temporary files used by the prover. If you change this path here it is 
