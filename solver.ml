@@ -794,7 +794,7 @@ and prune_ctx_failesc_list prog ctx = List.map (fun (c1,c2,c3)->
 
 and prune_pred_struc prog (simp_b:bool) f = 
   let pr = Cprinter.string_of_struc_formula in
-  Gen.Debug.no_1 "prune_pred_struc" pr pr (fun _ -> prune_pred_struc_x prog simp_b f) f 
+  Gen.Debug.no_2 "prune_pred_struc" pr string_of_bool pr (fun _ _ -> prune_pred_struc_x prog simp_b f) f simp_b
 
 and prune_pred_struc_x prog (simp_b:bool) f = 
   let rec helper f =
@@ -3859,6 +3859,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 		          (*--- 09.05.2008 *)
 		          (*let _ = (print_string ("\n[solver.ml, line 1183]: fresh name = " ^ (Cprinter.string_of_spec_var_list ws) ^ "!!!!!!!!!!!\n")) in*)
 		          (*09.05.2008 ---*)
+                  (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
 		          let st = List.combine qvars ws in
 		          let baref = mkBase qh qp qt qfl qb pos in
 		          let new_baref = subst st baref in

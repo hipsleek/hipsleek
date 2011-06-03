@@ -1,4 +1,5 @@
 open Globals
+open Gen.Basic
 
 open Cpure
 (*
@@ -56,8 +57,31 @@ let print_exp_f = ref(fun (c:exp) -> "exp_printing")
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
 
 let print_alias_set aset = EMapSV.string_of aset
-    
+
+let fv_memoised_constraint ({memo_formula = bf}:memoised_constraint) : spec_var list 
+      = bfv bf
+
+let fv_memoised_group (m:memoised_group) : spec_var list =
+  match m with
+      {memo_group_cons = mc_ls;
+       memo_group_slice = f_ls;
+       memo_group_aset = eq_set}  ->  
+          let v1 = List.concat (List.map fv_memoised_constraint mc_ls) in
+          let v2 = List.concat (List.map fv f_ls) in
+          let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset eq_set) in
+          v1@v2@v3
+
+(* v2 must be a subset of v1 *)
+let consistent_memoised_group (m:memoised_group) : bool =
+  let v1 = m.memo_group_fv in
+  let v2 = fv_memoised_group m in
+  Gen.BList.list_subset_eq eq_spec_var v2 v1
+
+let consistent_memo_pure (m:memo_pure) : bool =
+  List.for_all consistent_memoised_group m
+
 let rec mfv (m: memo_pure) : spec_var list = Gen.BList.remove_dups_eq eq_spec_var (List.concat (List.map (fun c-> c.memo_group_fv) m))
+
 
 and pcond_fv (p:memoised_constraint) : spec_var list = bfv p.memo_formula
 
@@ -488,6 +512,21 @@ and combine_memo_branch b (f, l) =
 	memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
+  let b1 = consistent_memo_pure l1 in
+  let b2 = consistent_memo_pure l2 in
+  let f l = "FREEVARS: "^(!print_svl (mfv l))^"\n" in 
+  let s1 = if b1 then "" else (f l1)^(!print_mp_f l1) in
+  let s2 = if b2 then "" else (f l2)^(!print_mp_f l2) in
+  if b1 && b2 then
+    let r = merge_mems_nx l1 l2 slice_check_dups in
+    if (consistent_memo_pure r) then r
+    else report_error no_pos "merge_mems : inconsistent memo_pure after merging"
+  else 
+    let _ = print_endline s1 in
+    let _ = print_endline s2 in
+    report_error no_pos ("merge_mems : inconsistent memo_pure before merging")
+
+and merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
   let r=  if (isConstMFalse l1)||(isConstMTrue l2) then l1
   else if (isConstMFalse l2)||(isConstMTrue l1) then l2
   else
@@ -570,7 +609,7 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
 and memoise_add_failed_memo (l:memo_pure) (p:b_formula) : memo_pure = 
   merge_mems l (create_memo_group_wrapper [p] Implied_R) false
     
-and memoise_add_pure_aux (l: memo_pure) (p:formula) status : memo_pure = 
+and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure = 
   if (isConstTrue p)||(isConstMFalse l) then l 
   else if (isConstFalse p) then mkMFalse no_pos
   else 
@@ -583,8 +622,10 @@ and memoise_add_pure_aux (l: memo_pure) (p:formula) status : memo_pure =
        (*let r = List.concat (List.map split_mem_grp r) in*)
        Gen.Profiling.pop_time "add_pure"; r)
     
-and memoise_add_pure_aux_debug l p status : memo_pure = 
-  Gen.Debug.no_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
+and memoise_add_pure_aux l p status : memo_pure = 
+  let pr1 = !print_mp_f in
+  let pr2 = !print_p_f_f in
+  Gen.Debug.no_2 "memoise_add_pure_aux " pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
 
   
 and memoise_add_pure_N l p = memoise_add_pure_aux(*_debug*) l p Implied_N
@@ -600,7 +641,7 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 		 ) ([],[]) l1
     
 (*add both imply and fail*)
-and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) status :memo_pure = 
+and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) (status:prune_status) :memo_pure = 
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
@@ -1284,6 +1325,11 @@ type mix_formula =
   | OnePF of formula
   
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
+
+let consistent_mix_formula (m:mix_formula) : bool =
+  match m with
+    | MemoF mp -> consistent_memo_pure mp
+    | OnePF _ -> true
   
 let mix_of_pure f = 
     if (!Globals.allow_pred_spec) then  MemoF (memoise_add_pure_N (mkMTrue ()) f)

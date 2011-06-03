@@ -1996,6 +1996,9 @@ type baga_sv = BagaSV.baga
 
 type var_aset = EMapSV.emap
 
+(* need to remove constants and null *)
+let fv_var_aset (e:var_aset) = EMapSV.get_elems e
+
 let eq_spec_var_aset (aset: EMapSV.emap ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> EMapSV.is_equiv aset sv1 sv2 
         

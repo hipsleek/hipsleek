@@ -717,16 +717,16 @@ let pr_mem_slice_aux slc = fmt_string "[";
 let pr_memoise_group_vb m_gr = 
   (*if !pr_mem then *)
   fmt_cut();
-  wrap_box ("B",1)
+  wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "[";pr_list_of_spec_var c.MP.memo_group_fv ; fmt_string "]:") () ; 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE[";pr_list_of_spec_var c.MP.memo_group_fv ; fmt_string "]:") () ; 
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_mem_slice c.MP.memo_group_slice;
               fmt_cut ();fmt_string "  alias set:";
               wrap_box ("B",1) fmt_string (P.EMapSV.string_of c.MP.memo_group_aset);
-              fmt_cut();
+              (* fmt_cut(); *)
           ) m_gr; fmt_string ")") m_gr
   (*else ()*)
   

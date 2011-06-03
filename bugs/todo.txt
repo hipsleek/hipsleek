@@ -1,10 +1,18 @@
--- revised eps
-Total number of errors: 5 in files:
-  sleek10.slkerror at: avl-orig-2.ss insert
-error at: avl-orig3.ss insert
-error at: qsort.ss qsort
-error at: qsort-tail.ss qsort
 
+vars of memo-table not updated during 
+implicit instantiation:
+   [xs',tmp_62']:  [tmp_62'!=null(IP)]  [true]
+     alias set:[@{null, tmp_905, tmp_977} 
+
+
+has assert been specialised?
+  --> specialised on the fly
+
+qsort
+=====
+ q is existential.. 
+ prune baga conditions: (self,q)-163,(self)-162
+ 
 
 use propagation and simplication for pruning conditions?
 

@@ -1100,7 +1100,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 	      let c = (mark_recursive_call prog cprog5) in 
-		  let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
+		  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 		  c)))
 	  end)
   else   failwith "Error detected"
@@ -6543,7 +6543,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let get_safe_prune_conds (pc:(CP.b_formula * formula_label list) list) (orig_pf:(formula_label * CP.formula) list)
         : (CP.b_formula * formula_label list) list = 
     let pr = pr_list (pr_pair Cprinter.string_of_b_formula (pr_list Cprinter.string_of_formula_label_only)) in
-    Gen.Debug.ho_1 "get_safe_prune_conds" pr pr (fun _ -> get_safe_prune_conds pc orig_pf) pc
+    Gen.Debug.no_1 "get_safe_prune_conds" pr pr (fun _ -> get_safe_prune_conds pc orig_pf) pc
   in
 
   (* let _ = pick_pures init_form_lst v_l u_inv in *)
@@ -6702,7 +6702,9 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
             C.view_un_struc_formula = unstruc;}) preds in
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
     let proc_spec f = 
-      (*let _ = print_string ("\n prunning procedure: "^(f.C.proc_name)^"\n") in*)
+      (*let _ = print_string (module  = struct
+        
+        end"\n prunning procedure: "^(f.C.proc_name)^"\n") in*)
       let simp_b = not ((String.compare f.C.proc_file "primitives")==0 or (f.C.proc_file="")) in
       {f with 
           C.proc_static_specs= Solver.prune_pred_struc prog_views_pruned simp_b f.C.proc_static_specs;
