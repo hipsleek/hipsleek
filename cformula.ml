@@ -1781,7 +1781,7 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
 and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let pr1 = !print_formula in
   let pr3 = !print_svl in
-   Gen.Debug.ho_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_x delta phi x flow_tr pos) delta phi x
+   Gen.Debug.no_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_x delta phi x flow_tr pos) delta phi x
 	  
 and view_node_types (f:formula):ident list = 
   let rec helper (f:h_formula):ident list =  match f with
@@ -2677,7 +2677,7 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
   let pr1 = !print_context_short in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
-  Gen.Debug.ho_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
+  Gen.Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
 
 (*TODO: expand simplify_context to normalize by flow type *)
 and simplify_context (ctx:context):context = 

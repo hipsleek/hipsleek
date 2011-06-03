@@ -6032,7 +6032,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let pr x = (string_of_int(List.length x))^"length" in
-  Gen.Debug.loop_2 "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
+  Gen.Debug.loop_2_no "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
       (fun _ _ -> heap_entail_list_partial_context_init prog is_folding  cl conseq pos pid) cl conseq
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)

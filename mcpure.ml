@@ -71,6 +71,13 @@ let fv_memoised_group (m:memoised_group) : spec_var list =
           let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset eq_set) in
           v1@v2@v3
 
+let repatch_memoised_group (m:memoised_group) : memoised_group =
+  let new_vars = fv_memoised_group m in
+  {m with memo_group_fv = new_vars} 
+
+let repatch_memo_pure (ms:memo_pure) : memo_pure =
+  List.map repatch_memoised_group ms
+
 (* v2 must be a subset of v1 *)
 let consistent_memoised_group (m:memoised_group) : bool =
   let v1 = m.memo_group_fv in
@@ -90,6 +97,13 @@ let consistent_memoised_group (m:memoised_group) : bool =
 
 let consistent_memo_pure (m:memo_pure) : bool =
   List.for_all consistent_memoised_group m 
+
+
+let check_repatch_memo_pure l s =
+  if consistent_memo_pure l then l
+  else 
+    let _ = report_warning no_pos ("repatching memo_pure"^s) in
+    repatch_memo_pure l
 
 let rec mfv (m: memo_pure) : spec_var list = Gen.BList.remove_dups_eq eq_spec_var (List.concat (List.map (fun c-> c.memo_group_fv) m))
 
@@ -523,21 +537,29 @@ and combine_memo_branch b (f, l) =
 	    memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
-  merge_mems_nx l1 l2 slice_check_dups
-    (* let b1 = consistent_memo_pure l1 in *)
-    (* let b2 = consistent_memo_pure l2 in *)
-    (* let f l = "" in  *)
-    (* (\* "FREEVARS: "^(!print_svl (mfv l))^"\n" in  *\) *)
-    (* let s1 = if b1 then "" else (f l1)^(!print_mp_f l1) in *)
-    (* let s2 = if b2 then "" else (f l2)^(!print_mp_f l2) in *)
-    (* if b1 && b2 then *)
-    (*   let r = merge_mems_nx l1 l2 slice_check_dups in *)
-    (*   if (consistent_memo_pure r) then r *)
-    (*   else report_error no_pos "merge_mems : inconsistent memo_pure after merging" *)
-    (* else  *)
-    (*   let _ = print_endline s1 in *)
-    (*   let _ = print_endline s2 in *)
-    (*   report_error no_pos ("merge_mems : inconsistent memo_pure before merging") *)
+  merge_mems_repatch l1 l2 slice_check_dups
+
+
+and merge_mems_check (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
+    let b1 = consistent_memo_pure l1 in
+    let b2 = consistent_memo_pure l2 in
+    let f l = "" in
+    (* "FREEVARS: "^(!print_svl (mfv l))^"\n" in  *)
+    let s1 = if b1 then "" else (f l1)^(!print_mp_f l1) in
+    let s2 = if b2 then "" else (f l2)^(!print_mp_f l2) in
+    if b1 && b2 then
+      let r = merge_mems_nx l1 l2 slice_check_dups in
+      if (consistent_memo_pure r) then r
+      else report_error no_pos "merge_mems : inconsistent memo_pure after merging"
+    else
+      let _ = print_endline s1 in
+      let _ = print_endline s2 in
+      report_error no_pos ("merge_mems : inconsistent memo_pure before merging")
+
+and merge_mems_repatch (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
+  let r = merge_mems_nx l1 l2 slice_check_dups in
+  if (consistent_memo_pure r) then r
+  else check_repatch_memo_pure r "@ merge_mems"
 
 and merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
   let r=  if (isConstMFalse l1)||(isConstMTrue l2) then l1
