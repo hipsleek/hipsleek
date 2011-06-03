@@ -18,10 +18,9 @@ sll_tb<n, t, sm, lg, S> ==
 // linked list with dummy tail
 ll_tb<n, t, S> ==
   self::node< _, null> & t=self & S ={} & n=0  //empty list
-  or self::node<sm, r> * r::ll_tb<n-1, t, S1> & S= union(S1,{sm}) & r!=null  
+  or self::node<sm, r> * r::ll_tb<n-1, t, S1> & S= union(S1,{sm}) & r!=null
+  & forall(x:(x notin S1 | sm<=x)) 
   inv n>=0 & self!=null & t!=null;
-
-
 
 /*
  * Get the first node of a linked list with dummy tail node
@@ -153,21 +152,19 @@ node delete(node x, int v)
   requires x::ll_tb<n, t, S>
   case{
   n<=0 -> ensures res::ll_tb<n,t,S>;
-  /* n>0 -> ensures res::ll_tb<m,t,S1> & n-1<=m<=n & (v notin S & S = S1 | S = union(S1, {v})); */
-
- // NOTE: this also captures the notion that multiple v might still exist in S1
-
-   n>0 -> ensures res::ll_tb<m,t,S1> /*& n-1<=m<=n*/ & (m=n & v notin S & S = S1 | m=n-1 & S = union(S1, {v}));
+  n>0 -> case {
+    v in S -> ensures res::ll_tb<m,t,S1> & S=union(S1,{v}) & m=n-1;
+    v notin S -> ensures res::ll_tb<n,t,S>;
   }
-
+}
 {
   //return x;
 	node tmp;
 	if (x.next != null){
-      //assume false;
-		if (v < x.val)
+        //assume false;
+		if (v < x.val) {
 			return x;
-		else{
+		} else{
           //assume false;
 		  if (v == x.val){
             //assume false;
