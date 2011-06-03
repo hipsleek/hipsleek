@@ -2257,7 +2257,7 @@ and elim_exists (f0 : formula) : formula = match f0 with
         let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
         let r = if List.length st = 1 then
           let tmp = mkBase h pp1 t fl b pos in
-          let new_baref = subst st tmp in
+          let new_baref = subst_one_by_one st tmp in
           let tmp2 = add_quantifiers rest_qvars new_baref in
           let tmp3 = elim_exists tmp2 in
           tmp3
@@ -3350,7 +3350,7 @@ and heap_entail_split_rhs_phases_x
 	                  let ws = CP.fresh_spec_vars qvars in
 	                  let st = List.combine qvars ws in
 	                  let baref = mkBase qh qp qt qfl qb pos in
-	                  let new_baref = subst st baref in
+	                  let new_baref = subst_one_by_one st baref in
 	                  let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
 	                  let tmp_rs, tmp_prf = heap_entail_split_rhs_phases prog is_folding  new_ctx new_baref drop_read_phase pos
 	                  in
@@ -3375,7 +3375,7 @@ and eliminate_exist_from_LHS qvars qh qp qt qfl qb pos estate =
   let ws = CP.fresh_spec_vars qvars in
   let st = List.combine qvars ws in
   let baref = mkBase qh qp qt qfl qb pos in
-  let new_baref = subst st baref in
+  let new_baref = subst_one_by_one st baref in
   (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
   let new_ctx = Ctx {estate with
       es_formula = new_baref;
@@ -3923,7 +3923,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                   (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
 		          let st = List.combine qvars ws in
 		          let baref = mkBase qh qp qt qfl qb pos in
-		          let new_baref = subst st baref in
+		          let new_baref = subst_one_by_one st baref in
 		          (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
 		          let new_ctx = Ctx {estate with
 				      es_formula = new_baref;
@@ -3955,7 +3955,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 		                let ws = CP.fresh_spec_vars qvars in
 		                let st = List.combine qvars ws in
 		                let baref = mkBase qh qp qt qfl qb pos in
-		                let new_baref = subst st baref in
+		                let new_baref = subst_one_by_one st baref in
 		                let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
 		                let tmp_rs, tmp_prf = heap_entail_conjunct_helper prog is_folding  new_ctx new_baref pos in
 			            (match tmp_rs with
@@ -5369,15 +5369,15 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
     *)
     (*let _ = print_string ("[do_univ]: rename the univ boudn vars: " ^ (String.concat ", " (List.map CP.name_of_spec_var f_univ_vars)) ^ "\n") in	*)
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
-    let coer_lhs = CF.subst tmp_rho coer.coercion_head in
-    let coer_rhs = CF.subst tmp_rho coer.coercion_body in
+    let coer_lhs = CF.subst_one_by_one tmp_rho coer.coercion_head in
+    let coer_rhs = CF.subst_one_by_one tmp_rho coer.coercion_body in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)
     let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
     let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
     let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
-    let coer_lhs = CF.subst tmp_rho coer_lhs in
-    let coer_rhs = CF.subst tmp_rho coer_rhs in
+    let coer_lhs = CF.subst_one_by_one tmp_rho coer_lhs in
+    let coer_rhs = CF.subst_one_by_one tmp_rho coer_rhs in
     let lhs_heap, lhs_guard,lhs_fl, lhs_branches, _  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     match node, lhs_heap with

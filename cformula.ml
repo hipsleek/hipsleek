@@ -205,6 +205,21 @@ and string_of_spec_var = function
     | Unprimed -> "")
 (*09.05.2000 ---*)
 
+let consistent_formula f : bool = 
+  let rec helper f = match f with
+    | Base {formula_base_pure = mf}
+    | Exists {formula_exists_pure = mf} ->
+          MCP.consistent_mix_formula mf
+    | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
+          (helper f1) && (helper f2)
+  in helper f
+
+let must_consistent_formula (s:string) (l:formula) : unit =
+  if !consistency_checking then
+    let b = consistent_formula l in
+    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    else report_error no_pos ("ERROR at "^s^": formula inconsistent")
+
 let extr_formula_base e = match e with
       {formula_base_heap = h;
       formula_base_pure = p; 
@@ -1181,8 +1196,8 @@ and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : fo
   (*09.05.2000 ---*)
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
-  let f1 = subst st1 f in
-  let f2 = subst st2 f1 in
+  let f1 = subst_one_by_one st1 f in
+  let f2 = subst_one_by_one st2 f1 in
   f2
       
 
@@ -1261,9 +1276,14 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 	  })
   in	
   List.map helper f
-	  
-and subst sst (f : formula) = match sst with
-  | s :: rest -> subst rest (apply_one s f)
+
+and subst_one_by_one sst (f : formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula in
+  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_x sst f 
+
+and subst_one_by_one_x sst (f : formula) = match sst with
+  | s :: rest -> subst_one_by_one_x rest (apply_one s f)
   | [] -> f 
         
 and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
@@ -1651,7 +1671,7 @@ and rename_bound_vars_x (f : formula) = match f with
 		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2000 ---*)
 	    let rho = List.combine qvars new_qvars in
-	    let new_base_f = subst rho base_f in
+	    let new_base_f = subst_one_by_one rho base_f in
 	    let resform = add_quantifiers new_qvars new_base_f in
 		resform
 
@@ -1722,7 +1742,7 @@ and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_fo
 		  let rho_exp = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2)))  new_exp) in
 		  let rho_exs = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2)))  new_exs) in
 		  let rho = rho_imp@rho_exp@rho_exs in
-		  let new_base_f = subst rho new_base_f in
+		  let new_base_f = subst_one_by_one rho new_base_f in
 		  let new_cont_f = subst_struc rho b.formula_ext_continuation in
 		  let new_cont_f = rename_struc_clash_bound_vars new_cont_f f2 in
 		  EBase {b with 
@@ -1751,7 +1771,7 @@ and rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_v
 	    (* fresh_qvars contains only the freshly generated names *)
 	    let fresh_qvars = (List.filter (fun v1 -> (not (List.exists (fun v2 -> CP.eq_spec_var v1 v2) qvars)))  new_qvars) in
 	    let rho = List.combine qvars new_qvars in
-	    let new_base_f = subst rho base_f in
+	    let new_base_f = subst_one_by_one rho base_f in
 	    let resform = add_quantifiers new_qvars new_base_f in
 		(resform, fresh_qvars)
 
@@ -1765,6 +1785,8 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 (* the * operator, as the & operator is just a special case when one of *)
 (* the term is pure                                                     *)
 
+(* x+x' o[x'->fx] x'=x+1 --> x+fx & x'=fx+1 *)
+ 
 and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
@@ -1772,10 +1794,13 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
-  let new_delta = subst rho2 delta in
-  let new_phi = subst rho1 phi in
+  let new_delta = subst_one_by_one rho2 delta in
+  let new_phi = subst_one_by_one rho1 phi in
+  let _ = must_consistent_formula "compose_formula 0" new_delta in
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
+  let _ = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
+  let _ = must_consistent_formula "compose_formula 2" resform in
   resform
 
 and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
@@ -2042,14 +2067,6 @@ let print_context_list_short = ref(fun (c:context list) -> "printer not initiali
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
-let consistent_formula f = 
-  let rec helper f = match f with
-    | Base {formula_base_pure = mf}
-    | Exists {formula_exists_pure = mf} ->
-          MCP.consistent_mix_formula mf
-    | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
-          (helper f1) && (helper f2)
-  in helper f
 
 let consistent_entail_state (es:entail_state) : bool = consistent_formula es.es_formula
 

@@ -1,9 +1,6 @@
 
-vars of memo-table not updated during 
-implicit instantiation:
-   [xs',tmp_62']:  [tmp_62'!=null(IP)]  [true]
-     alias set:[@{null, tmp_905, tmp_977} 
-
+added memo_Pure re-patch;
+      should do it more selectively
 
 has assert been specialised?
   --> specialised on the fly

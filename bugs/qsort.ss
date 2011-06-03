@@ -81,7 +81,7 @@ void qsort(ref node xs)
         b = (xs.next == null);
 		if (tmp != null)
         {
-            assume false;
+            //assume false;
 			qsort(tmp);
         }
         else {
@@ -98,12 +98,12 @@ void qsort(ref node xs)
 			}
             node tmp2=xs.next;
 			//dprint;
-            assume false;
+            //assume false;
 			xs = append_bll(tmp2, tmp);
 		}
-        dprint;
+        //dprint;
         //assert xs'::node<_,_> ; //& n3=1;//'
-        assert xs'::node<_,null> ; //& n3=1;//'
+        //assert xs'::node<_,null> ; //& n3=1;//'
           //assert xs'::sll<nn,_,_> & nn=1 ; //& n3=1;//'
           //assert xs'!=null;
           //assert xs'=null;

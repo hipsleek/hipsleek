@@ -271,16 +271,21 @@ and m_apply_one (s:spec_var * spec_var) f = m_apply_par [s] f
   (* let r = filter_mem_triv r1 in *)
   (*   r *)
 
-and m_apply_par (sst:(spec_var * spec_var) list) f = 
+and m_apply_par_x (sst:(spec_var * spec_var) list) f = 
   let r1 = List.map (fun c -> 
 	  let r = EMapSV.subs_eset_par(*_debug !print_sv_f*) sst c.memo_group_aset in
-	  {memo_group_fv = Gen.BList.remove_dups_eq (=) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv);
+	  {memo_group_fv = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv);
 	  memo_group_changed = c.memo_group_changed;
 	  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs sst d.memo_formula;}) c.memo_group_cons;
 	  memo_group_slice = List.map (apply_subs sst) c.memo_group_slice; 
 	  memo_group_aset = r }) f in  
   let r = filter_mem_triv r1 in
   r
+
+and m_apply_par (sst:(spec_var * spec_var) list) f = 
+  let pr1 = pr_list (pr_pair !print_sv_f !print_sv_f ) in
+  let pr2 = !print_mp_f in
+  Gen.Debug.no_2 "m_apply_par" pr1 pr2 pr2 m_apply_par_x sst f
 
 (* and h_apply_one_m_constr_lst s l =  *)
 (*   List.map (fun (c,c2)-> ({c with memo_formula = b_apply_par [s] c.memo_formula},c2)) l *)
@@ -537,10 +542,15 @@ and combine_memo_branch b (f, l) =
 	    memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
-  merge_mems_repatch l1 l2 slice_check_dups
+  merge_mems_check l1 l2 slice_check_dups
 
 
 and merge_mems_check (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
+      let r = merge_mems_nx l1 l2 slice_check_dups in
+      if (consistent_memo_pure r) then r
+      else report_error no_pos "merge_mems : inconsistent memo_pure here"
+
+and merge_mems_full_check (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
     let b1 = consistent_memo_pure l1 in
     let b2 = consistent_memo_pure l2 in
     let f l = "" in
