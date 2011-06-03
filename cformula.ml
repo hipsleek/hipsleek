@@ -1261,11 +1261,121 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 	  })
   in	
   List.map helper f
-	  
-and subst sst (f : formula) = match sst with
+
+(*and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
-  | [] -> f 
-        
+  | [] -> f*)
+	
+(** An Hoa : replace the function subst above by substituting f in parallel **)
+and subst sst (f : formula) =
+	match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+    Or ({formula_or_f1 = subst sst f1; formula_or_f2 =  subst sst f2; formula_or_pos = pos})
+  | Base ({formula_base_heap = h; 
+					formula_base_pure = p; 
+					formula_base_type = t;
+					(* formula_base_imm = imm; *)
+					formula_base_flow = fl;
+					formula_base_branches = b;
+					formula_base_label = lbl;
+					formula_base_pos = pos}) -> 
+		Base ({formula_base_heap = h_subst sst h; 
+					formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst p); 
+					formula_base_type = t;
+					(* formula_base_imm = imm; *)
+					formula_base_flow = fl;
+					formula_base_label = lbl;
+					formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+					formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv; 
+						formula_exists_heap = qh; 
+						formula_exists_pure = qp; 
+						formula_exists_type = tconstr;
+						(* formula_exists_imm = imm; *)
+						formula_exists_flow = fl;
+						formula_exists_branches = b;
+						formula_exists_label = lbl;
+						formula_exists_pos = pos}) -> 
+		(* Variable under this existential quantification should NOT be substituted! *)
+		(* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in qsv *)
+		let qsvnames = (List.map CP.name_of_spec_var qsv) in
+		let sst = List.filter (fun (fr,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
+		if sst = [] then f
+		else Exists ({formula_exists_qvars = qsv; 
+									formula_exists_heap =  h_subst sst qh; 
+									formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
+									formula_exists_type = tconstr;
+									(* formula_exists_imm = imm; *)
+									formula_exists_flow = fl;
+									formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+									formula_exists_label = lbl;
+									formula_exists_pos = pos})
+(** An Hoa : End of formula substitution **)
+
+(** An Hoa: Function to substitute variables in a heap formula in parallel **)
+and h_subst sst (f : h_formula) = 
+	match f with
+  | Star ({h_formula_star_h1 = f1; 
+					h_formula_star_h2 = f2; 
+					h_formula_star_pos = pos}) -> 
+		Star ({h_formula_star_h1 = h_subst sst f1; 
+		h_formula_star_h2 = h_subst sst f2; 
+		h_formula_star_pos = pos})
+  | Phase ({h_formula_phase_rd = f1; 
+						h_formula_phase_rw = f2; 
+						h_formula_phase_pos = pos}) -> 
+		Phase ({h_formula_phase_rd = h_subst sst f1; 
+		h_formula_phase_rw = h_subst sst f2; 
+		h_formula_phase_pos = pos})
+  | Conj ({h_formula_conj_h1 = f1; 
+					h_formula_conj_h2 = f2; 
+					h_formula_conj_pos = pos}) -> 
+		Conj ({h_formula_conj_h1 = h_subst sst f1; 
+		h_formula_conj_h2 = h_subst sst f2; 
+		h_formula_conj_pos = pos})
+  | ViewNode ({h_formula_view_node = x; 
+							h_formula_view_name = c; 
+							h_formula_view_imm = imm; 
+							h_formula_view_arguments = svs; 
+							h_formula_view_modes = modes;
+							h_formula_view_coercible = coble;
+							h_formula_view_origins = orgs;
+							h_formula_view_original = original;
+							h_formula_view_unfold_num = i;
+							h_formula_view_label = lbl;
+							h_formula_view_remaining_branches = ann;
+							h_formula_view_pruning_conditions = pcond;
+							h_formula_view_pos = pos} as g) -> 
+		ViewNode { g with 
+							h_formula_view_node = subst_var_par sst x; 
+							h_formula_view_arguments = List.map (subst_var_par sst) svs;
+							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
+		}
+  | DataNode ({h_formula_data_node = x; 
+							h_formula_data_name = c; 
+							h_formula_data_imm = imm; 
+							h_formula_data_arguments = svs; 
+							h_formula_data_label = lbl;
+							h_formula_data_remaining_branches = ann;
+							h_formula_data_pruning_conditions = pcond;
+							h_formula_data_pos = pos}) -> 
+		DataNode ({h_formula_data_node = subst_var_par sst x; 
+							h_formula_data_name = c; 
+							h_formula_data_imm = imm;  
+							h_formula_data_arguments = List.map (subst_var_par sst) svs;
+							h_formula_data_label = lbl;
+							h_formula_data_remaining_branches = ann;
+							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
+							h_formula_data_pos = pos})
+  | HTrue -> f
+  | HFalse -> f
+  | Hole _ -> f
+(** An Hoa : End of heap formula substitution **) 
+
+and subst_var_par sst v = try
+			List.assoc v sst
+	with Not_found -> v
+	
 and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
 
 and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
