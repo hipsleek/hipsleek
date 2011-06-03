@@ -20,7 +20,8 @@ GetOptions( "stop"  => \$stop,
             "log-timings" => \$timings,
             "log-string=s" => \$str_log,
             "bags" => \$bags,
-            "term" => \$term
+            "term" => \$term,
+            "lists" => \$lists
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
@@ -540,6 +541,36 @@ $output_file = "log";
         ["ex9.ss", 1, "", "loop", "SUCCESS"],
         ["ex9a.ss", 1, "", "loop", "SUCCESS"],
         ["mutual.ss", 2, "", "g", "SUCCESS", "f", "SUCCESS"]
+    ],
+    "lists" => [
+        # ["allz1.ss", 0, ""],
+        # ["allz2.ss", 0, ""],
+        # ["allz3.ss", 0, ""],
+        # ["allz4.ss", 0, ""],
+        ["demo.ss", 11, "",, "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["demo2.ss", 3, "", "app_rev", "SUCCESS", "reverse", "SUCCESS", "append", "SUCCESS"],
+        ["err-coq.ss", 2, "", "ret_first2", "SUCCESS", "ret_first", "SUCCESS"],
+        ["ll.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_bak.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_bak2.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_bak3.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_nolists.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_test1.ss", 1, "", "reverse", "SUCCESS"],
+        ["ll_test2.ss", 1, "", "delete", "SUCCESS"],
+        # ["ll_test3.ss", , "", ],
+        ["ll_test4.ss", 1, "", "test", "SUCCESS"],
+        ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
+        ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
+        ["lrev.ss", 1, "", "lrev", "SUCCESS"],
+        # ["lz_bak.ss", 0, ""],
+        # ["lz_bak2.ss", 0, ""],
+        ["merge.ss", 1, "", "merge", "SUCCESS"],
+        ["merge1.ss", 1, "", "merge", "SUCCESS"],
+        ["merge2.ss", 1, "", "merge", "SUCCESS"],
+        ["merge3.ss", 1, "", "merge", "SUCCESS"],
+        ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
+        ["perm.ss", 1, "", "append", "SUCCESS"]
     ]
     );
 
@@ -650,6 +681,9 @@ sub hip_process_file {
             print "Starting bags tests:\n";
         }elsif ("$param" =~ "term") {
             $exempl_path_full = "$exempl_path/term";
+            print "Starting term tests:\n";
+        }elsif ("$param" =~ "lists") {
+            $exempl_path_full = "$exempl_path/list_examples";
             print "Starting term tests:\n";
         }
 		$t_list = $hip_files{$param};

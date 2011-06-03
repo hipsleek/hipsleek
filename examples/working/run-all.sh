@@ -12,6 +12,8 @@ echo -e "\n##################### bags tests (runs with -tp mona) ###############
 
 echo -e "\n##################### term tests #####################"
 ./run-fast-tests.pl term $@
-#./run-fast-tests.pl lists $@
+
+echo -e "\n##################### lists tests #####################"
+./run-fast-tests.pl lists $@ -tp coq
 
 
