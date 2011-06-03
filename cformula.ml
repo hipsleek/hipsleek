@@ -1765,7 +1765,7 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 (* the * operator, as the & operator is just a special case when one of *)
 (* the term is pure                                                     *)
 
-and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
+and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
   (*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
@@ -1777,6 +1777,11 @@ and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flo
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
   let resform = push_exists rs new_f in
   resform
+
+and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
+  let pr1 = !print_formula in
+  let pr3 = !print_svl in
+   Gen.Debug.ho_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_x delta phi x flow_tr pos) delta phi x
 	  
 and view_node_types (f:formula):ident list = 
   let rec helper (f:h_formula):ident list =  match f with
@@ -2023,11 +2028,56 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
+let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
+  let rec helper a c = match c with
+    | Ctx es -> f a es
+    | OCtx (c1,c2) -> helper (helper a c1) c2 in
+  helper a c
+
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
+let consistent_formula f = 
+  let rec helper f = match f with
+    | Base {formula_base_pure = mf}
+    | Exists {formula_exists_pure = mf} ->
+          MCP.consistent_mix_formula mf
+    | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
+          (helper f1) && (helper f2)
+  in helper f
+
+let consistent_entail_state (es:entail_state) : bool = consistent_formula es.es_formula
+
+let consistent_context (c:context) : bool = 
+  fold_context (fun a es -> (consistent_entail_state es) && a) true c
+
+let must_consistent_context (s:string) l : unit =
+  if !consistency_checking then
+    let b = consistent_context l in
+    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    else report_error no_pos ("ERROR at "^s^": context inconsistent")
+
+let consistent_branch_ctx ((_,c):branch_ctx) : bool = consistent_context c
+
+
+let consistent_esc_stack (ls:esc_stack) : bool = 
+  List.for_all (fun (_,b_ls) -> List.for_all consistent_branch_ctx b_ls) ls
+ 
+let consistent_failesc_context ((_,es,b_ls):failesc_context) : bool =
+  let b1 = List.for_all (consistent_branch_ctx) b_ls in
+  let b2 = consistent_esc_stack es in
+  b1 && b2
+
+let consistent_list_failesc_context (l:list_failesc_context) : bool =
+   List.for_all (consistent_failesc_context) l
+
+let must_consistent_list_failesc_context (s:string) l : unit =
+  if !consistency_checking then
+    let b = consistent_list_failesc_context l in
+    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    else report_error no_pos ("ERROR: "^s^" list_failesc context inconsistent")
 
 let es_simplify (e1:entail_state):entail_state = 
   let hfv0 = h_fv e1.es_heap in
@@ -2607,21 +2657,28 @@ and change_flow_ctx from_fl to_fl ctx_list =
 	
 (*23.10.2008*)
 
-and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
+and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
   | Ctx es -> begin
 	  match phi with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-			let new_c1 = compose_context_formula ctx phi1 x flow_tr pos in
-			let new_c2 = compose_context_formula ctx phi2 x flow_tr pos in
+			let new_c1 = compose_context_formula_x ctx phi1 x flow_tr pos in
+			let new_c2 = compose_context_formula_x ctx phi2 x flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
 		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag =false;}
 	end
   | OCtx (c1, c2) -> 
-	  let new_c1 = compose_context_formula c1 phi x flow_tr pos in
-	  let new_c2 = compose_context_formula c2 phi x flow_tr pos in
+	  let new_c1 = compose_context_formula_x c1 phi x flow_tr pos in
+	  let new_c2 = compose_context_formula_x c2 phi x flow_tr pos in
 	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
+
+and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = 
+  let pr1 = !print_context_short in
+  let pr2 = !print_formula in
+  let pr3 = !print_svl in
+  Gen.Debug.ho_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
+
 (*TODO: expand simplify_context to normalize by flow type *)
 and simplify_context (ctx:context):context = 
 	if (allFalseCtx ctx) then (false_ctx (mkFalseFlow) no_pos)

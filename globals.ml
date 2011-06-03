@@ -249,6 +249,8 @@ let case_split = ref false
 
 let use_set = ref true
 
+let consistency_checking = ref true
+
 let wrap_exist = ref false
 
 let move_exist_to_LHS = ref false

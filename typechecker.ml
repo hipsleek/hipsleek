@@ -146,17 +146,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) -> begin
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
+            let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
 	        let fct c1 = 
 	          if (CF.subsume_flow_f !n_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
 	            let t = Gen.unsome (type_of_exp rhs) in
 	            let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
 	            let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in
-	            let tmp_ctx1 = CF.compose_context_formula (CF.Ctx c1) link [vsv] CF.Flow_combine pos in
+                let ctx1 = (CF.Ctx c1) in
+                let _ = CF.must_consistent_context "assign 1a" ctx1  in
+                (* TODO : eps bug below *)
+	            let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] CF.Flow_combine pos in
+                let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in
 	            let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
+                let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in
 	            let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
+                let _ = CF.must_consistent_context "assign 4" resctx  in
 		        resctx 
 	          else (CF.Ctx c1) in
-	        CF.transform_list_failesc_context (idf,idf,fct) ctx1
+	        let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
+            let _ = CF.must_consistent_list_failesc_context "assign final" res  in
+            res
 	      end
         | BConst ({exp_bconst_val = b;
           exp_bconst_pos = pos}) -> begin
@@ -194,8 +203,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          if !Globals.large_bind then
 	            CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
 	          else ctx in
+            let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
 	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
 	        (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
+            let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_pprint ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n") pos in
 	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
@@ -218,8 +229,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			if (Gen.is_empty unfolded) then unfolded
 			else 
 	          let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap pos pid in
+              let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	          let _ = PTracer.log_proof prf in
 	          let rs = CF.clear_entailment_history_failesc_list rs_prim in
+              let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
 	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
                 begin
 		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
@@ -229,6 +242,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               else 
                 begin
                   let tmp_res1 = check_exp prog proc rs body post_start_label in 
+                  let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
 		          (* let _ = print_string ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1) *)
                   (*   ^ "\n") in *)
                   let tmp_res2 = 
@@ -236,12 +250,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
 		            else tmp_res1
 		          in
+                  let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
 		          (* let _ = print_string ("bind: tmp_res2:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res2) *)
                   (* ^ "\n") in  *)
                   let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
+                   let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                   (* let _ = print_string ("bind: tmp_res3:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res3) *)
                   (*     ^ "\n") in *)
-		          if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 
+		           let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+                   let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
+                   res
 	                
                 end
           end;
