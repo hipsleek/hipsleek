@@ -4,7 +4,9 @@ module Ts = Tree_shares
 
 type share = Ts.stree
 
-type frac_perm = P.spec_var option * share
+type frac_perm = 
+	| PConst of perm_modifier
+	| PVar of P.spec_var
 
 (*perm_modifier*)
 

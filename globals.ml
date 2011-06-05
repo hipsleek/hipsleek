@@ -205,6 +205,8 @@ let self = "self"
 
 let this = "this"
 
+let perm = "perm"
+
 (*in case the option of saving provers temp files to a different directory is enabled, the value of 
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)

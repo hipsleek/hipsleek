@@ -64,7 +64,7 @@ rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLOPT) $(OCAMLFLAGS) -c -g rllexer.ml
 
 MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo iperm.cmo\
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
 	iastUtil.cmo \
@@ -91,7 +91,7 @@ MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
 GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
 	iformula.cmo iast.cmo iastUtil.cmo \
 	iprinter.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
@@ -114,7 +114,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.c
 
 
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
@@ -141,7 +141,7 @@ SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
 
 
 PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
@@ -164,7 +164,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
 WEB_FILES=globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
@@ -237,7 +237,7 @@ sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT)
 
 
 JAVA_FILES=debug.cmo globals.cmo error.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
 	iformula.cmo iast.cmo iprinter.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
 	iparser.cmo ilexer.cmo \
