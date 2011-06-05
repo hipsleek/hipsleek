@@ -18,6 +18,7 @@ type typed_ident = (typ * ident)
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
+				  (* mutable prog_barrier_decls : barrier_decl list;*)
                    mutable prog_view_decls : view_decl list;
                    mutable prog_rel_decls : rel_decl list; 
                    mutable prog_hopred_decls : hopred_decl list;
@@ -67,6 +68,13 @@ and hopred_decl = { hopred_name : ident;
           hopred_shape    : Iformula.struc_formula list;
           hopred_invariant :(P.formula * (branch_label * P.formula) list)
 }
+
+and barrier_decl = {
+	barrier_stc : int;
+	barrier_thc : int;
+	barrier_name : ident;
+	barrier_tr_list : Iformula.struc_formula list list ;
+	}
 
 and enum_decl = { enum_name : ident;
 		  enum_fields : (ident * int option) list } 

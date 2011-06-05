@@ -6,6 +6,7 @@
 
 open Globals
 module P = Ipure
+module IP = Iperm
 
 
 type struc_formula = ext_formula list
@@ -50,6 +51,7 @@ and formula =
 and formula_base = { formula_base_heap : h_formula;
                      formula_base_pure : P.formula;
                      formula_base_flow : flow_formula;
+					 formula_base_perm : IP.perm_formula;
                      formula_base_branches : (branch_label * P.formula) list;
                      formula_base_pos : loc }
 
@@ -57,6 +59,7 @@ and formula_exists = { formula_exists_qvars : (ident * primed) list;
                        formula_exists_heap : h_formula;
                        formula_exists_pure : P.formula;
                        formula_exists_flow : flow_formula;
+					   formula_exists_perm : IP.perm_formula;
                        formula_exists_branches : (branch_label * P.formula) list;
                        formula_exists_pos : loc }
 
@@ -149,6 +152,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_arguments : P.exp list;
 		       h_formula_heap_pseudo_data : bool;
 		       h_formula_heap_label : formula_label option;
+			   h_formula_heap_perm : IP.frac_perm;
 		       h_formula_heap_pos : loc }
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
@@ -159,7 +163,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_arguments : (ident * P.exp) list;
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
+			h_formula_heap2_perm : IP.frac_perm;
 			h_formula_heap2_pos : loc }
+			
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 
@@ -188,29 +194,29 @@ and string_of_spec_var = function
 	
 (* constructors *)
 
-let rec formula_of_heap_1 h pos = mkBase h (P.mkTrue pos) top_flow [] pos
+let rec formula_of_heap_1 h pos = mkBase h (P.mkTrue pos) top_flow (IP.mkTrue pos) [] pos
 
-and formula_of_pure_1 p pos = mkBase HTrue p top_flow [] pos
+and formula_of_pure_1 p pos = mkBase HTrue p top_flow (IP.mkTrue pos) [] pos
 
-and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f [] pos
+and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f (IP.mkTrue pos)  [] pos
 
-and formula_of_pure_with_flow p f pos = mkBase HTrue p f [] pos
+and formula_of_pure_with_flow p f fpc pos = mkBase HTrue p f fpc [] pos
 
 
 and isConstFalse f0 = match f0 with
   | Base f -> begin
-	  let h, p = f.formula_base_heap, f.formula_base_pure in
+	  let h, p, pr = f.formula_base_heap, f.formula_base_pure,f.formula_base_perm in
 		match h with
 		  | HFalse -> true
-		  | _ -> (P.isConstFalse p)
+		  | _ -> ((P.isConstFalse p)|| (IP.isConstFalse pr))
 	end
   | _ -> false
 
 and isConstTrue f0 = match f0 with
   | Base f -> begin
-	  let h, p = f.formula_base_heap, f.formula_base_pure in
+	  let h, p, pr = f.formula_base_heap, f.formula_base_pure, f.formula_base_perm in
 		match h with
-		  | HTrue -> (P.isConstTrue p)
+		  | HTrue -> (P.isConstTrue p)&&(IP.isConstTrue pr)
 		  | _ -> false
 	end
   | _ -> false
@@ -227,12 +233,14 @@ and mkTrue flow pos = Base { formula_base_heap = HTrue;
 						formula_base_pure = P.mkTrue pos;
 						formula_base_flow = flow;
                         formula_base_branches = [];
+						formula_base_perm = IP.mkTrue pos;
 						formula_base_pos = pos }
 
 and mkFalse flow pos = Base { formula_base_heap = HFalse;
 						 formula_base_pure = P.mkFalse pos;
 						 formula_base_flow = flow;
                          formula_base_branches = [];
+						 formula_base_perm = IP.mkFalse pos;
 						 formula_base_pos = pos }
 
 and mkETrue flow pos = [EBase {
@@ -275,28 +283,32 @@ and mkOr f1 f2 pos =
 			formula_or_f2 = f2;
 			formula_or_pos = pos }
 
-and mkBase (h : h_formula) (p : P.formula) flow br pos = match h with
+and mkBase (h : h_formula) (p : P.formula) flow (perm:IP.perm_formula) br pos = match h with
   | HFalse -> mkFalse flow pos
   | _ -> 
 	  if P.isConstFalse p then 
 		mkFalse flow pos 
-	  else 
+	  else if IP.isConstFalse perm then mkFalse flow pos
+	  else
 		Base { formula_base_heap = h;
 			   formula_base_pure = p;
 			   formula_base_flow = flow;
+			   formula_base_perm = perm;
                formula_base_branches = br;
 			   formula_base_pos = pos }
 
-and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow br pos = match h with
+and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow perm br pos = match h with
   | HFalse -> mkFalse flow pos
   | _ ->
 	  if P.isConstFalse p then
 		mkFalse flow pos
-	  else
+	  else if IP.isConstFalse perm then mkFalse flow pos
+	  else 
 		Exists { formula_exists_qvars = qvars;
              formula_exists_heap = h;
              formula_exists_pure = p;
              formula_exists_flow = flow;
+			 formula_exists_perm = perm;
              formula_exists_branches = br;
              formula_exists_pos = pos }
 
@@ -335,9 +347,10 @@ and mkPhase f1 f2 pos =
 					h_formula_phase_rw = f2;
 					h_formula_phase_pos = pos }
 
-and mkHeapNode c id i f inv pd hl ofl l= HeapNode { 
+and mkHeapNode c id perm i f inv pd hl ofl l= HeapNode { 
                    h_formula_heap_node = c;
                    h_formula_heap_name = id;
+				   h_formula_heap_perm = perm;
                    h_formula_heap_imm = i;
                    h_formula_heap_full = f;
                    h_formula_heap_with_inv = inv;
@@ -346,9 +359,10 @@ and mkHeapNode c id i f inv pd hl ofl l= HeapNode {
                    h_formula_heap_label = ofl;
                    h_formula_heap_pos = l }
           
-and mkHeapNode2 c id i f inv pd ohl ofl l = HeapNode2 { 
+and mkHeapNode2 c id perm i f inv pd ohl ofl l = HeapNode2 { 
                     h_formula_heap2_node = c;
                     h_formula_heap2_name = id;
+					h_formula_heap2_perm = perm;
                     h_formula_heap2_imm = i;
                     h_formula_heap2_full = f;
                     h_formula_heap2_with_inv = inv;
@@ -391,9 +405,11 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
 	   h_formula_star_h2 = h2; 
 	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
   | HeapNode {h_formula_heap_node = name ; 
-	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map Ipure.afv b)))
+		  h_formula_heap_perm = p;
+	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) (name:: ((List.concat (List.map Ipure.afv b))@(IP.frac_fv p)))
   | HeapNode2 { h_formula_heap2_node = name ;
-		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
+		h_formula_heap2_perm = p;
+		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) (name:: ((List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )@(IP.frac_fv p)))
   | HTrue -> [] 
   | HFalse -> [] 
 ;;
@@ -505,10 +521,10 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
 
 and all_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> Gen.BList.remove_dups_eq (=) 
-			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure))
+			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure)@(IP.fv b.formula_base_perm))
 							b.formula_base_branches )
 	| Exists b-> 
-		let r = List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure))
+		let r = List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure)@(IP.fv b.formula_exists_perm))
 							b.formula_exists_branches in
 		Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) r) b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((all_fv b.formula_or_f1)@(all_fv b.formula_or_f2))
@@ -518,15 +534,17 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
             formula_base_pure = p; 
             formula_base_branches = b;
            formula_base_flow = f;
-           formula_base_pos = pos}) -> mkExists qvars h p f b pos
+		   formula_base_perm = perm;
+           formula_base_pos = pos}) -> mkExists qvars h p f perm b pos
   | Exists ({formula_exists_qvars = qvs; 
              formula_exists_heap = h; 
              formula_exists_pure = p; 
              formula_exists_flow = f;
              formula_exists_branches = b;
+			 formula_exists_perm = perm;
              formula_exists_pos = pos}) -> 
 	  let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
-		mkExists new_qvars h p f b pos
+		mkExists new_qvars h p f perm b pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 	
 and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
@@ -564,8 +582,9 @@ let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match
 			 formula_exists_pure = p; 
 			 formula_exists_flow = f;
 			 formula_exists_branches = br; 
+			 formula_exists_perm = perm;
 			 formula_exists_pos = pos}) -> 
-      (qvars, mkBase h p f br pos)
+      (qvars, mkBase h p f perm br pos)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
 
@@ -585,10 +604,12 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
   | Base ({formula_base_heap = h;
 					 formula_base_pure = p;
 					 formula_base_flow = fl;
+					 formula_base_perm = perm;
 					 formula_base_branches = br;
 					 formula_base_pos = pos }) -> 
       Base ({formula_base_heap = h_apply_one s h; 
 			 formula_base_pure = Ipure.apply_one s p;
+			 formula_base_perm = IP.apply_one s perm;
 			 formula_base_flow = fl;
 			 formula_base_branches = List.map (fun (c1,c2)-> (c1,(Ipure.apply_one s c2))) br;
 			 formula_base_pos = pos})
@@ -596,6 +617,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
 			 formula_exists_heap = qh; 
 			 formula_exists_pure = qp; 
 			 formula_exists_flow = fl;
+			 formula_exists_perm = perm;
 			 formula_exists_branches = br;
 			 formula_exists_pos = pos}) -> 
 	  if List.mem (fst fr) (List.map fst qsv) then f 
@@ -603,6 +625,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
 					formula_exists_heap =  h_apply_one s qh; 
 					formula_exists_pure = Ipure.apply_one s qp; 
 					formula_exists_flow = fl;
+					formula_exists_perm = IP.apply_one s perm;
 					formula_exists_branches = List.map (fun (c1,c2)-> (c1,(Ipure.apply_one s c2))) br;
 					formula_exists_pos = pos})		
 
@@ -630,6 +653,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	       h_formula_heap_imm = imm; 
 	       h_formula_heap_full = full; 
 	       h_formula_heap_with_inv = winv;
+		   h_formula_heap_perm = perm;
 	       h_formula_heap_arguments = args;
 	       h_formula_heap_pseudo_data = ps_data;
 	       h_formula_heap_label = l;
@@ -638,6 +662,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		 h_formula_heap_name = c;
 		 h_formula_heap_imm = imm; 
 		 h_formula_heap_full = full;
+		 h_formula_heap_perm = IP.subst_perm s perm;
 		 h_formula_heap_with_inv = winv;
 		 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		 h_formula_heap_pseudo_data = ps_data;
@@ -648,6 +673,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		 h_formula_heap2_name = c;
 		 h_formula_heap2_imm = imm;
 		 h_formula_heap2_full = full;
+		 h_formula_heap2_perm = perm;
 		 h_formula_heap2_with_inv = winv;
 		 h_formula_heap2_arguments = args;
 		 h_formula_heap2_pseudo_data = ps_data;
@@ -658,6 +684,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		   h_formula_heap2_name =c;
 		   h_formula_heap2_imm = imm;
 		   h_formula_heap2_full =full;
+		   h_formula_heap2_perm = IP.subst_perm s perm;
 		   h_formula_heap2_with_inv = winv;
 		   h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 		   h_formula_heap2_pseudo_data =ps_data;
@@ -671,17 +698,19 @@ and rename_bound_vars (f : formula) =
 	let add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p;
+		   formula_base_perm = perm;
 		   formula_base_flow = fl;
 		   formula_base_branches = br;  
-		   formula_base_pos = pos}) -> mkExists qvars h p fl br pos
+		   formula_base_pos = pos}) -> mkExists qvars h p fl perm br pos
   | Exists ({formula_exists_qvars = qvs; 
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p;
+			 formula_exists_perm = perm;
 			 formula_exists_flow = fl;
 			 formula_exists_branches = br;  
 			 formula_exists_pos = pos}) -> 
 	  let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
-		mkExists new_qvars h p fl br pos
+		mkExists new_qvars h p fl perm br pos
   | _ -> failwith ("add_quantifiers: invalid argument") in		
 	match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -813,7 +842,8 @@ and float_out_exps_from_heap (f:formula ):formula =
 		      formula_exists_flow = b.formula_base_flow;
 		      formula_exists_pure = Ipure.mkAnd r2 b.formula_base_pure b.formula_base_pos;
 		      formula_exists_branches = List.map (fun (c1,c2)-> (c1,(Ipure.mkAnd r2 c2 b.formula_base_pos)))b.formula_base_branches;
-		      formula_exists_pos = b.formula_base_pos
+		      formula_exists_pos = b.formula_base_pos;
+			  formula_exists_perm = b.formula_base_perm;
 		    })			
     | Exists b->
 	let rh,rl = float_out_exps b.formula_exists_heap in
@@ -827,7 +857,8 @@ and float_out_exps_from_heap (f:formula ):formula =
 			formula_exists_pure = Ipure.mkAnd r2 b.formula_exists_pure b.formula_exists_pos;
 			formula_exists_flow = b.formula_exists_flow;
 			formula_exists_branches = List.map (fun (c1,c2)-> (c1,(Ipure.mkAnd r2 c2 b.formula_exists_pos)))b.formula_exists_branches;
-			formula_exists_pos = b.formula_exists_pos
+			formula_exists_pos = b.formula_exists_pos;
+			formula_exists_perm = b.formula_exists_perm;
 		      })	
     | Or b-> Or ({
 		   formula_or_f1 = float_out_exps_from_heap b.formula_or_f1;
@@ -836,7 +867,90 @@ and float_out_exps_from_heap (f:formula ):formula =
 		 })		
   in helper f
 
-       
+  
+
+and float_out_perm_from_heap (f:formula ):formula = 
+	
+  let rec float_out_perm (f:h_formula):(h_formula * (ident*primed) list * IP.perm_formula) = match f with
+    | Star b-> 
+	let r11,r12,r13 = float_out_perm b.h_formula_star_h1 in
+	let r21,r22,r23 = float_out_perm b.h_formula_star_h2 in
+	  (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), (r12@r22),(IP.mkAnd r13 r23 no_pos))
+    | Conj b-> 
+	let r11,r12,r13 = float_out_perm b.h_formula_conj_h1 in
+	let r21,r22,r23 = float_out_perm b.h_formula_conj_h2 in
+	  (Conj ({h_formula_conj_h1  =r11; h_formula_conj_h2=r21;h_formula_conj_pos = b.h_formula_conj_pos}), (r12@r22),(IP.mkAnd r13 r23 no_pos))
+    | Phase b-> 
+	let r11,r12,r13 = float_out_perm b.h_formula_phase_rd in
+	let r21,r22,r23 = float_out_perm b.h_formula_phase_rw in
+	  (Phase ({h_formula_phase_rd = r11; h_formula_phase_rw=r21;h_formula_phase_pos = b.h_formula_phase_pos}),(r12@r22),(IP.mkAnd r13 r23 no_pos))
+    | HeapNode b-> 
+		let na,lv,pf = 
+			if IP.isConstFrac b.h_formula_heap_perm then (b.h_formula_heap_perm,[],IP.mkTrue no_pos)
+			else 
+				let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				let npv = IP.mkVPerm nn in
+				let npf = IP.mkEq npv b.h_formula_heap_perm b.h_formula_heap_pos in
+				(npv,[nn],npf) in		  
+	  (HeapNode ({b with h_formula_heap_perm = na}),lv,pf)
+    | HeapNode2 b ->	 
+		let na,lv,pf = 
+			if IP.isConstFrac b.h_formula_heap2_perm then (b.h_formula_heap2_perm,[],IP.mkTrue no_pos)
+			else 
+				let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				let npv = IP.mkVPerm nn in
+				let npf = IP.mkEq npv b.h_formula_heap2_perm b.h_formula_heap2_pos in
+				(npv,[nn],npf) in		  
+	  (HeapNode2 ({b with h_formula_heap2_perm = na}),lv,pf)
+    | HTrue -> (f,[],IP.mkTrue no_pos)
+    | HFalse -> (f,[],IP.mkTrue no_pos) in
+    
+  let rec helper (f:formula):formula =	match f with
+    | Base b-> let rh,rl,rpf = float_out_perm b.formula_base_heap in
+	if (List.length rl)== 0 then f
+	else 
+	    Exists ({
+		      formula_exists_qvars = rl;
+		      formula_exists_heap = rh;
+		      formula_exists_flow = b.formula_base_flow;
+		      formula_exists_pure = b.formula_base_pure;
+			  formula_exists_perm = IP.mkAnd rpf b.formula_base_perm b.formula_base_pos;
+		      formula_exists_branches = b.formula_base_branches;
+		      formula_exists_pos = b.formula_base_pos  })			
+    | Exists b->
+	let rh,rl,rpf = float_out_perm b.formula_exists_heap in
+	  if (List.length rl)== 0 then f
+	  else 
+	      Exists ({ b with
+			formula_exists_qvars = rl@b.formula_exists_qvars;
+			formula_exists_heap = rh;
+			formula_exists_perm = IP.mkAnd rpf b.formula_exists_perm b.formula_exists_pos; })	
+    | Or b-> Or ({
+		   formula_or_f1 = float_out_perm_from_heap b.formula_or_f1;
+		   formula_or_f2 = float_out_perm_from_heap b.formula_or_f2;
+		   formula_or_pos = b.formula_or_pos
+		 })		
+  in helper f
+
+  
+  
+  
+and float_out_perm_from_heap_struc (f:struc_formula):struc_formula =
+    let rec helper (f:ext_formula):ext_formula = match f with
+    | EAssume (b,tag) -> EAssume ((float_out_perm_from_heap b),tag)
+    | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_perm_from_heap_struc c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
+    | EBase b-> EBase ({b with
+				 formula_ext_base = float_out_perm_from_heap b.formula_ext_base;
+				 formula_ext_continuation = float_out_perm_from_heap_struc b.formula_ext_continuation;
+				 })
+		| EVariance b -> EVariance ({ b with
+										formula_var_continuation = float_out_perm_from_heap_struc b.formula_var_continuation;
+									})
+	in	
+    List.map helper f
+  
+	   
+	   
 and float_out_exps_from_heap_struc (f:struc_formula):struc_formula = 
   let rec helper (f:ext_formula):ext_formula = match f with
     | EAssume (b,tag) -> EAssume ((float_out_exps_from_heap b),tag)
@@ -863,7 +977,8 @@ and float_out_min_max (f :  formula) :  formula =
          formula_base_heap = h0;
 		 formula_base_flow = fl;
          formula_base_branches = br;
-         formula_base_pure = p0
+         formula_base_pure = p0;
+		 formula_base_perm = perm;
       } ->
       let (nh, nhpf) = float_out_heap_min_max h0 in
       let np = float_out_pure_min_max p0 in
@@ -877,6 +992,7 @@ and float_out_min_max (f :  formula) :  formula =
               (match nhpf with
                | None -> np
                | Some e1 -> Ipure.And (np, e1, l));
+			formula_base_perm = perm;
           }
   |  Exists
       {
@@ -885,6 +1001,7 @@ and float_out_min_max (f :  formula) :  formula =
          formula_exists_pure = p0;
 		 formula_exists_flow = fl;
          formula_exists_branches = br;
+		 formula_exists_perm = perm;
          formula_exists_pos = l
       } ->
       let (nh, nhpf) = float_out_heap_min_max h0 in
@@ -893,7 +1010,8 @@ and float_out_min_max (f :  formula) :  formula =
           {
              formula_exists_qvars = qv;
              formula_exists_heap = nh;
-			 formula_exists_flow =fl;
+			 formula_exists_flow = fl;
+			 formula_exists_perm = perm;
              formula_exists_pure =
               (match nhpf with
                | None -> np

@@ -28,6 +28,8 @@ module TP = Tpdispatcher
   
 module Chk = Checks
 
+module Ipr = Iperm
+
 
 
 (* module VG = View_generator *)
@@ -382,10 +384,14 @@ let rec
   | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
       let tmp1 = look_for_anonymous_h_formula h1 in
       let tmp2 = look_for_anonymous_h_formula h2 in List.append tmp1 tmp2
-  | IF.HeapNode { IF.h_formula_heap_arguments = args } ->
-      let tmp1 = look_for_anonymous_exp_list args in tmp1
+  | IF.HeapNode { IF.h_formula_heap_arguments = args; IF.h_formula_heap_perm = pr } ->
+      let tmp1 = look_for_anonymous_exp_list args in tmp1@(look_for_annonymous_f_perm pr)
   | _ -> []
 
+and look_for_annonymous_f_perm f = List.concat (List.map anon_var (Ipr.frac_fv f))
+	 
+and look_for_annonymous_perm_formula f = List.concat (List.map anon_var (Ipr.fv f))
+  
 and look_for_anonymous_exp_list (args : IP.exp list) :
   (ident * primed) list =
   match args with
@@ -427,12 +433,12 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
       {
         IF.formula_base_heap = h0;
         IF.formula_base_pure = p0;
+		IF.formula_base_perm = pr0;
         IF.formula_base_branches = br0;
 		IF.formula_base_flow = fl0;
         IF.formula_base_pos = l0
       } -> (*as f*)
-      let tmp1 = look_for_anonymous_h_formula h0
-      in
+      let tmp1 = (look_for_anonymous_h_formula h0)@(look_for_annonymous_perm_formula pr0) in
         if ( != ) (List.length tmp1) 0
         then
           IF.Exists
@@ -440,16 +446,16 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_heap = h0;
               IF.formula_exists_qvars = tmp1;
               IF.formula_exists_pure = p0;
+			  IF.formula_exists_perm = pr0;
               IF.formula_exists_flow = fl0;
               IF.formula_exists_branches = br0;
               IF.formula_exists_pos = l0;
             }
         else f0
   | IF.Exists
-      (({ IF.formula_exists_heap = h0; IF.formula_exists_qvars = q0 } as f))
+      (({ IF.formula_exists_heap = h0; IF.formula_exists_qvars = q0;IF.formula_exists_perm = pr0 } as f))
       ->
-      let tmp1 = look_for_anonymous_h_formula h0
-      in
+      let tmp1 = (look_for_anonymous_h_formula h0)@(look_for_annonymous_perm_formula pr0) in
         if ( != ) (List.length tmp1) 0
         then
           (let rec append_no_duplicates (l1 : (ident * primed) list)
@@ -501,7 +507,8 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
         {
           IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
           IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
-	  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+		  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+		  IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
           IF.h_formula_heap_arguments = hargs;
@@ -521,7 +528,8 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
           {
             IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
             IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
-	    IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+			IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
+	        IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
             IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
             IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
             IF.h_formula_heap_arguments = hargs;
@@ -593,9 +601,9 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
     match f with
       | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
             (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
-      | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } ->
+      | IF.Base { IF.formula_base_heap = h } ->
             gen_name_pairs_heap vname h
-      | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
+      | IF.Exists { IF.formula_exists_heap = h } ->
             gen_name_pairs_heap vname h in
   
   let rec gen_name_pairs_ext vname (f:Iformula.ext_formula): (ident * ident) list = match f with
@@ -3644,6 +3652,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_qvars = qvars;
             IF.formula_exists_heap = h;
             IF.formula_exists_pure = p;
+			IF.formula_exists_perm = perm;
             IF.formula_exists_flow = fl;
             IF.formula_exists_branches = br;
             IF.formula_exists_pos = pos} -> (
@@ -3653,6 +3662,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let f1 = IF.Base {
                 IF.formula_base_heap = h;
                 IF.formula_base_pure = p;
+				IF.formula_base_perm = perm;
                 IF.formula_base_flow = fl;
                 IF.formula_base_branches = br;
                 IF.formula_base_pos = pos; } in
@@ -3807,12 +3817,14 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
           IF.formula_exists_pure = p;
           IF.formula_exists_branches = br;
           IF.formula_exists_flow = fl;
+		  IF.formula_exists_perm = perm;
           IF.formula_exists_qvars = qvars;
           IF.formula_exists_pos = pos} ->
           let base ={
               IF.formula_base_heap = h;
               IF.formula_base_pure = p;
               IF.formula_base_flow = fl;
+			  IF.formula_base_perm = perm;
               IF.formula_base_branches = br;
               IF.formula_base_pos = pos;
           } in 
@@ -5321,6 +5333,20 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
             (rest_used_names, hvars, evars, (link_f, link_f_br))
       | [] -> (used_names, [], [], ((IP.mkTrue pos), [])) in
 
+    let perm_match_exp (used_names : (ident*primed) list) e pos :(((ident*primed) list) * Ipr.frac_perm * ((ident*primed) list) * Ipr.perm_formula) =  match e with
+        | Ipr.PVar v ->
+            (try
+				if (List.mem v avail_vars) || (List.mem v used_names) then(*existential wrapping and liniarization*)
+					(let fresh_v = (Ipure.fresh_old_name (fst v)),Unprimed in
+					 let fpv = Ipr.mkVPerm fresh_v in
+					 let link_f = Ipr.mkEq e fpv pos in
+						(used_names, fpv, [ fresh_v ], link_f ))
+                else (v :: used_names , e , [], Ipr.mkTrue pos)
+            with
+              | Not_found -> Err.report_error{ Err.error_loc = pos; Err.error_text = (fst v) ^ " is undefined"; })
+        | _ -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f); Err.error_text = "malfunction with float out exp in normalizing"; } in
+	  
+	  
   let rec flatten f = match f with
     | IF.HTrue ->  []
     | IF.Conj
@@ -5364,7 +5390,8 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
   in
   
   let rec linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
-        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
+        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list) * 
+		 Ipr.perm_formula) =
     match f with
       | IF.HeapNode2 b -> Error.report_error {Error.error_loc = b.Iformula.h_formula_heap2_pos; Error.error_text = "malfunction: heap node 2 still present"}  
       | IF.HeapNode b ->
@@ -5377,25 +5404,24 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 	        let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
 	          Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
 	        in
-	        let (new_used_names, hvars, evars, (link_f, link_f_br)) =
-	          match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
+	        let (new_used_names, hvars, evars, (link_f, link_f_br)) = match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
+			let new_used_names, phvars, pevars, pr_f = perm_match_exp new_used_names b.IF.h_formula_heap_perm pos in
 	        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-	        let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars}
-	        in (new_used_names, evars, new_h, (link_f, link_f_br))
+	        let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars; IF.h_formula_heap_perm = phvars} in
+	        (new_used_names, evars@pevars, new_h, (link_f, link_f_br),pr_f)
       | IF.Star
 	          {
 	              IF.h_formula_star_h1 = f1;
 	              IF.h_formula_star_h2 = f2;
 	              IF.h_formula_star_pos = pos
 	          } ->
-	        let (new_used_names1, qv1, lf1, (link1, link1_br)) =
-	          linearize_heap used_names f1 in
-	        let (new_used_names2, qv2, lf2, (link2, link2_br)) =
-	          linearize_heap new_used_names1 f2 in
+	        let (new_used_names1, qv1, lf1, (link1, link1_br), pr1) = linearize_heap used_names f1 in
+	        let (new_used_names2, qv2, lf2, (link2, link2_br), pr2) = linearize_heap new_used_names1 f2 in
 	        let tmp_h = IF.mkStar lf1 lf2 pos in
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        let tmp_link_br = IP.merge_branches link1_br link2_br in
-	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+			let pr = Ipr.mkAnd pr1 pr2 pos in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br), pr)
 
       | IF.Conj
 	          {
@@ -5403,54 +5429,54 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 	              IF.h_formula_conj_h2 = f2;
 	              IF.h_formula_conj_pos = pos
 	          } ->
-	        let (new_used_names1, qv1, lf1, (link1, link1_br)) =
-	          linearize_heap used_names f1 in
-	        let (new_used_names2, qv2, lf2, (link2, link2_br)) =
-	          linearize_heap new_used_names1 f2 in
+	        let (new_used_names1, qv1, lf1, (link1, link1_br), pr1) = linearize_heap used_names f1 in
+	        let (new_used_names2, qv2, lf2, (link2, link2_br), pr2) = linearize_heap new_used_names1 f2 in
 	        let tmp_h = IF.mkConj lf1 lf2 pos in
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        let tmp_link_br = IP.merge_branches link1_br link2_br in
-	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+			let pr = Ipr.mkAnd pr1 pr2 pos in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br), pr)
       | IF.Phase
 	          {
 	              IF.h_formula_phase_rd = f1;
 	              IF.h_formula_phase_rw = f2;
 	              IF.h_formula_phase_pos = pos
 	          } ->
-	        let (new_used_names1, qv1, lf1, (link1, link1_br)) =
-	          linearize_heap used_names f1 in
-	        let (new_used_names2, qv2, lf2, (link2, link2_br)) =
-	          linearize_heap new_used_names1 f2 in
+	        let (new_used_names1, qv1, lf1, (link1, link1_br),pr1) = linearize_heap used_names f1 in
+	        let (new_used_names2, qv2, lf2, (link2, link2_br),pr2) = linearize_heap new_used_names1 f2 in
 	        let tmp_h = IF.mkPhase lf1 lf2 pos in
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        let tmp_link_br = IP.merge_branches link1_br link2_br in
-	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
-      | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []))
-      | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
+			let pr = Ipr.mkAnd pr1 pr2 pos in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br), pr)
+      | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []), Ipr.mkTrue no_pos)
+      | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, []), Ipr.mkTrue no_pos) in
+	  
   let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
-        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
-    let (a,b,h,r) = linearize_heap used_names f in
-    (a,b,imm_heap h,r)
+        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list) * Ipr.perm_formula) =
+    let (a,b,h,r,p) = linearize_heap used_names f in
+    (a,b,imm_heap h,r,p)
   in
   let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
-        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
+        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list) * Ipr.perm_formula) =
     let pr1 = Iprinter.string_of_h_formula in
-    let pr2 (_,_,h,(p,_)) = (Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
+    let pr2 (_,_,h,(p,_),_) = (Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
     Gen.Debug.no_1 "linearize_heap" pr1 pr2 
         (fun _ -> linearize_heap used_names f) f  in
-  let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
+  let normalize_base heap cp fl perm new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
     let heap = Iformula.normalize_h_formula heap in 
     (* let _ = print_string("normalized heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in   *)
-    let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
+    let (nu, h_evars, new_h, (link_f, link_f_br), new_perm) = linearize_heap [] heap in
     let new_p = Ipure.mkAnd cp link_f pos in
     let new_br = IP.merge_branches new_br link_f_br in
+	let new_pr = Ipr.mkAnd new_perm perm pos in
     let tmp_evars, to_expl =
       (let init_evars = (h_evars@evs) in
       let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
       let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in       
       (to_evars,to_expl))in
-    let result = Iformula.mkExists tmp_evars new_h new_p fl new_br pos in
+    let result = Iformula.mkExists tmp_evars new_h new_p fl new_pr new_br pos in
     let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
     if not (Gen.is_empty tmp_evars)  then 
       Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos
@@ -5466,12 +5492,14 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     | Iformula.Base b -> normalize_base   b.Iformula.formula_base_heap 
           b.Iformula.formula_base_pure 
               b.Iformula.formula_base_flow
+			  b.Iformula.formula_base_perm
               b.Iformula.formula_base_branches 
               []
               b.Iformula.formula_base_pos
     | Iformula.Exists b-> normalize_base b.Iformula.formula_exists_heap 
           b.Iformula.formula_exists_pure
               b.Iformula.formula_exists_flow
+			  b.Iformula.formula_exists_perm
               b.Iformula.formula_exists_branches 
               b.Iformula.formula_exists_qvars 
               b.Iformula.formula_exists_pos in
@@ -5483,6 +5511,7 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Ifor
   (* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let f = Iformula.float_out_perm_from_heap f in
   let f = Iformula.float_out_exps_from_heap f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = Iformula.float_out_min_max f in
@@ -5511,6 +5540,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
     Iformula.push_exists need_quant f in
   let nf = convert_struc2 prog f in
   let nf = Iformula.float_out_exps_from_heap_struc nf in
+  let nf = Iformula.float_out_perm_from_heap_struc nf in
   let nf = Iformula.float_out_struc_min_max nf in
   (*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
   let nf = Iformula.rename_bound_var_struc_formula nf in

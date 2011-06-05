@@ -5,6 +5,11 @@ type constant_flow = ident
 
 type nflow = (int*int)(*numeric representation of flow*)
 
+type perm_split = 
+  | PLeft
+  | PRight 
+
+and perm_modifier = perm_split list
 	
 	
 and branch_label = string	(*formula branches*)

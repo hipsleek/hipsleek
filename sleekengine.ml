@@ -415,3 +415,5 @@ let get_residue () =
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 
+	
+let process_barrier_def bd = ()

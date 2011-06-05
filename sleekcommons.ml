@@ -44,6 +44,7 @@ type command =
   | PrintCmd of print_cmd
   | Time of (bool*string*loc)
   | EmptyCmd 
+  | CheckBarrierCmd of I.barrier_decl
 
 and print_cmd =
   | PVar of ident
@@ -80,6 +81,8 @@ let string_of_command c = match c with
   | PrintCmd _ -> "PrintCmd"  
   | Time _ -> "Time"
   | EmptyCmd -> "EmptyCmd"
+  | CheckBarrierCmd _ -> "CheckBarrierCmd"
+  
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
 

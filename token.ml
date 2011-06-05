@@ -11,8 +11,8 @@ type sleek_token =
   | JAVA          of string
   (*keywords*)
   | ASSERT | ASSUME | ALLN | APPEND
-  | BIND | BOOL | BREAK | BAGMAX | BAGMIN
-  | CASE | CHECKENTAIL | CAPTURERESIDUE | CLASS | COERCION | COMPOSE | CONST | CONTINUE
+  | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BARRIER
+  | CASE | CHECKENTAIL | CAPTURERESIDUE | CLASS | COERCION | COMPOSE | CONST | CONTINUE 
 	| DATA | DDEBUG | DIFF | DYNAMIC 
   | DTIME
   | ELSE_TT
@@ -57,7 +57,8 @@ module Token = struct
     (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
     | JAVA s-> s
-    | ASSERT -> "assert" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin"
+    | ASSERT -> "assert" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" 
+	| BARRIER -> "barrier"
     | CASE ->"case" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | COERCION ->"coercion"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
     | DTIME ->"time" | ELSE_TT ->"else" | ENSURES ->"ensures" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"

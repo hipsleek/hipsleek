@@ -9,6 +9,7 @@ open Gen.Basic
   module P = Ipure
   module E1 = Error
   module I = Iast
+  module Pr = Iperm
   
   module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
   
@@ -380,7 +381,8 @@ non_empty_command:
       | t=checkentail_cmd     -> EntailCheck t
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
-      | t=time_cmd            -> t]];
+      | t=time_cmd            -> t
+	  | t=check_barrier_cmd	  -> CheckBarrierCmd t ]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -542,21 +544,38 @@ disjunctive_constr:
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
-               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos_camlp4 _loc 1)
+			   F.formula_base_perm = pr;
+               F.formula_base_branches = b}) -> F.mkExists ocl h p fl pr b (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
   
    ]
   ];
       
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos_camlp4 _loc 1))
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos_camlp4 _loc 2)
+  [[ pc= pure_constr    ; fc= opt_flow_constraints; fpc=opt_perm_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc fpc (get_pos_camlp4 _loc 1))
+   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fpc=opt_perm_constraints; fb= opt_branches   -> F.mkBase hc pc fc fpc fb (get_pos_camlp4 _loc 2)
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
 flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]]; 
 
+opt_perm_constraints: [[ t = OPT br_permission_constraints -> Pr.mkPFormula t]];
+
+br_permission_constraints : [[`OSQUARE;t=LIST1 one_p_const SEP `AND; `CSQUARE -> List.fold_left (fun a c-> Pr.mkAnd a c no_pos) (List.hd t) (List.tl t) ]];
+  
+one_p_const : [[t1=perm; `EQ ; t2=perm -> Pr.mkEq t1 t2 no_pos
+	| `JOIN ; `OPAREN; t1=perm; `COMMA;  t2=perm; `COMMA; t3=perm; `CPAREN -> Pr.mkJoin t1 t2 t3 no_pos]];
+
+perm : [[ `OSQUARE; t = LIST0 one_perm SEP `COMMA ;`CSQUARE -> Pr.mkCPerm t
+		| t=cid -> Pr.mkVPerm t]];
+
+one_perm :[[ `IDENTIFIER id -> if id ="L" then PLeft else if id="R" then PRight else report_error (get_pos_camlp4 _loc 1) "only L or R as permission splits are allowed"]];
+
+perm_annot : [[`AT; t=perm -> t]];
+ 
+opt_perm_annot : [[t = OPT perm_annot -> Pr.mkPAnnot t]];
+ 
 opt_formula_label: [[t=OPT formula_label -> un_option t None]];		
 
 opt_label: [[t= OPT label->un_option t ""]]; 
@@ -607,20 +626,20 @@ simple2:  [[ t= opt_type_var_list; `LT -> ()]];
 simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
      match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2)]];
+        | ([],t) -> F.mkHeapNode2 c id (Pr.mkPFull ()) true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id (Pr.mkPFull ()) true false false false t ofl (get_pos_camlp4 _loc 2)]];
 
 simple_heap_constr:
   [[ 
-    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; pa = opt_perm_annot; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
     (match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
+        | ([],t) -> F.mkHeapNode2 c id pa true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id pa true false false false t ofl (get_pos_camlp4 _loc 2))
+  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; pa = opt_perm_annot; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)]];
+      | ([],t) -> F.mkHeapNode2 c id pa false false false false t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id pa false false false false t ofl (get_pos_camlp4 _loc 2))
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" (Pr.mkPFull ()) false false false false [] None  (get_pos_camlp4 _loc 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
@@ -796,6 +815,14 @@ time_cmd:
 
 let_decl:
   [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc)]];
+  
+check_barrier_cmd:
+	[[ `BARRIER; `IDENTIFIER n; `COMMA; sc=integer_literal; `COMMA; thc=integer_literal;`COMMA; bc=barrier_constr -> 
+		{barrier_stc = sc; barrier_thc = thc; barrier_name = n; barrier_tr_list =bc;}]];
+  
+barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
+  
+b_trans : [[`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE -> t]];
   
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
