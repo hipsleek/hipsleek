@@ -51,35 +51,12 @@ open Globals
   let rec neg_tree = function
     | Leaf b -> Leaf (not b)
     | Node (l, r) -> mkNode (neg_tree l) (neg_tree r)
-        
-  let rec multiply t1 t2= match t1 with
-      | Leaf b -> if b then t2 else t1
-      | Node (l, r) -> mkNode (multiply l t2) (multiply r t2)
-      
-  let split x =(multiply x leftTree),(multiply x rightTree)
 
   let rec string_of_tree_share ts = match ts with
     | Leaf true -> "T"
     | Leaf false -> ""
     | Node (t1,t2) -> "("^(string_of_tree_share t1)^","^(string_of_tree_share t2)^")"
-         
-  let rec can_divide x y = 
-    if stree_eq x y then true
-    else match x with
-      | Leaf _ -> false
-      | Node (l,r) -> (can_divide l y)&&(can_divide r y)
-    
-  let rec divide x y = 
-    if (empty x) || (empty y) then bot
-    else if stree_eq x y then top
-    else match x with
-        | Leaf _ -> report_error no_pos "perm division by non subtree"
-        | Node (l,r) -> mkNode (divide l y) (divide r y)
-  
-  let safe_divide x y = 
-    if can_divide x y then (true,divide x y)
-    else if can_divide y x then (false, divide y x)
-    else (true,bot)
+       
   
   (*can_subtract*)
   let rec contains x y = match x,y with
@@ -93,8 +70,8 @@ open Globals
     let rec helper x y = match x,y with
       | Leaf true, _ -> neg_tree y
       | Leaf false, Leaf false -> y
-      | Leaf false, _ -> report_error no_pos "missmatch in contains"
+      | Leaf false, _ -> Gen.report_error no_pos "missmatch in contains"
       | Node(l1,r1), Node(l2,r2) -> mkNode (helper l1 l2) (helper r1 r2) 
       | Node _ , Leaf false -> x
-      | Node _ , Leaf true -> report_error no_pos "missmatch in contains" in      
+      | Node _ , Leaf true -> Gen.report_error no_pos "missmatch in contains" in      
    if contains x y then helper x y else bot

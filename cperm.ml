@@ -5,7 +5,7 @@ module Ts = Tree_shares
 type share = Ts.stree
 
 type frac_perm = 
-	| PConst of perm_modifier
+	| PConst of share
 	| PVar of P.spec_var
 
 (*perm_modifier*)
@@ -22,17 +22,14 @@ type perm_formula =
 let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
 let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
   
-let fresh_perm_var () = P.SpecVar (P.OType perm,fresh_name(),Unprimed)
+let fresh_perm_var () = P.SpecVar (Named perm,fresh_name(),Unprimed)
 
 let top_share = Ts.top
 
-let split = Ts.split
-
-let frac_of_var v :frac_perm = (Some v,top_share)
+let mkCPerm s : frac_perm = PConst s
+let mkVPerm v :frac_perm = PVar v
   
-let mkPFull () :frac_perm = (None,top_share)
-
-let mkPerm posib_var splint :frac_perm = (posib_var,splint)
+let mkPFull () :frac_perm = mkCPerm top_share
 
 let mkTrue pos = PTrue pos
 let mkFalse pos = PFalse pos
@@ -59,25 +56,24 @@ let is_full_frac t = Ts.stree_eq t Ts.top
 
 let mkFullVar () : (P.spec_var * perm_formula) = 
   let nv = fresh_perm_var() in
-  (nv,mkEq (frac_of_var nv) (mkPFull ()) no_pos)
+  (nv,mkEq (mkVPerm nv) (mkPFull ()) no_pos)
 
 let mkJoin v1 v2 v3 pos = Join (v1,v2,v3,pos)
 
 let isConstFalse f = match f with PFalse _ -> true | _ -> false
 let isConstTrue  f = match f with PTrue _ -> true | _ -> false
 
-let frac_fv f= match (fst f) with | Some v -> [v] | _ -> []
+let frac_fv f= match f with | PVar v -> [v] | PConst _ -> []
 
 let rec fv f = match f with
-  | And (f1,f2,_) -> P.remove_dups_svl ((fv f1)@(fv f2))
-  | Or (f1,f2,_) -> P.remove_dups_svl ((fv f1)@(fv f2))
-  | Join (f1,f2,f3,_) -> P.remove_dups_svl ((frac_fv f1)@(frac_fv f2)@(frac_fv f3))
-  | Eq (f1,f2,_) -> P.remove_dups_svl ((frac_fv f1)@(frac_fv f2))
-  | Exists (l1,f1,_) -> Util.difference_f P.eq_spec_var (fv f1) l1
+  | And (f1,f2,_) -> Gen.BList.remove_dups_eq P.eq_spec_var ((fv f1)@(fv f2))
+  | Or (f1,f2,_) -> Gen.BList.remove_dups_eq P.eq_spec_var ((fv f1)@(fv f2))
+  | Join (f1,f2,f3,_) -> Gen.BList.remove_dups_eq P.eq_spec_var ((frac_fv f1)@(frac_fv f2)@(frac_fv f3))
+  | Eq (f1,f2,_) -> Gen.BList.remove_dups_eq P.eq_spec_var ((frac_fv f1)@(frac_fv f2))
+  | Exists (l1,f1,_) -> Gen.BList.difference_eq P.eq_spec_var (fv f1) l1
   | PTrue _ | PFalse _ -> [] 
     
-    
-
+(*
 let to_cnf f = 
  let rec merge_f l g1 g2 = match g1 with
     | Or (f1,f2,l)-> mkOr (merge_f l f1 g2) (merge_f l f2 g2) l
@@ -94,21 +90,22 @@ let to_cnf f =
     | Or (f1,f2,l) -> mkOr (cnf_d f1, cnf_d f2, l)
     | _ -> cnf_c f in
  cnf_d f
-    
+ *)
+ 
 let mkExists vl f pos =  match f with
   | PFalse _
   | PTrue _ -> f
   | _ ->
-    let nl = Util.intersect_fct P.eq_spec_var vl (fv f) in
+    let nl = Gen.BList.intersect_eq P.eq_spec_var vl (fv f) in
     if nl==[] then f else Exists (nl,f,pos)
     
-and subst_perm (fr, t) (o1,o2) = match o1 with
-  | Some s -> (Some (P.subst_var (fr,t) s) , o2)
-  | _ -> (o1,o2)
+and subst_perm (fr, t) o = match o with
+  | PVar s -> PVar (P.subst_var (fr,t) s)
+  | PConst _  -> o
   
-and subst_perm_expr (fr, (t,v)) (o1,o2) = match o1 with
-  | Some s -> if (P.eq_spec_var s fr) then ( t , Ts.multiply v o2) else (o1,o2)
-  | _ -> (o1,o2)
+and subst_perm_expr (fr, t) o = match o with
+  | PVar s -> if (P.eq_spec_var s fr) then t else o
+  | PConst _ -> o
   
 let rec apply_one_gen (fr,t) f f_s= match f with
   | And (f1,f2,p) -> mkAnd (apply_one_gen (fr,t) f1 f_s) (apply_one_gen (fr,t) f2 f_s ) p
@@ -116,7 +113,7 @@ let rec apply_one_gen (fr,t) f f_s= match f with
   | Join (f1,f2,f3,p) -> Join (f_s (fr,t) f1, f_s (fr,t) f2, f_s (fr,t) f3, p)
   | Eq (f1,f2,p) -> Eq (f_s (fr,t) f1, f_s (fr,t) f2, p)
   | Exists (qsv,f1,p) ->  
-      if Util.mem_eq P.eq_spec_var fr qsv then f 
+      if Gen.BList.mem_eq P.eq_spec_var fr qsv then f 
       else Exists (qsv, apply_one_gen (fr,t) f1 f_s , p)
   | _ -> f
 
@@ -133,8 +130,8 @@ and subst_avoid_capture (fr : P.spec_var list) (t : P.spec_var list) (f : perm_f
   f2
   
 and apply_subs_frac sst f = match f with
-  | (Some v, x) -> (Some (P.subs_one sst v),x)
-  | _ -> f
+  | PVar v -> PVar (P.subs_one sst v)
+  | PConst _ -> f
   
 and apply_subs (sst : (P.spec_var * 'b) list) (f : perm_formula) : perm_formula = match f with
   | And (f1,f2,p) -> And (apply_subs sst f1,apply_subs sst f2, p)
@@ -151,13 +148,11 @@ and apply_subs (sst : (P.spec_var * 'b) list) (f : perm_formula) : perm_formula 
       Exists (nv,nf,p)
   | _ -> f 
   
-let eq_fperm_var v1 v2  = match v1,v2 with
-  | Some v1,Some v2 -> P.eq_spec_var v1 v2 
-  | None,None -> true
+let eq_fperm v1 v2  = match v1,v2 with
+  | PVar v1,PVar v2 -> P.eq_spec_var v1 v2 
+  | PConst c1,PConst c2 -> Ts.stree_eq c1 c2
   | _ -> false
- 
-let eq_fperm (v1,f1) (v2,f2) =(eq_fperm_var v1 v2)&& (Ts.stree_eq f1 f2)
- 
+  
 let rec eq_perm_formula (f1 : perm_formula) (f2 : perm_formula) : bool = match (f1,f2) with
   | And (f11,f12,_), And (f21,f22,_)
   | Or  (f11,f12,_), Or (f21,f22,_) -> 
@@ -196,21 +191,22 @@ let rec factor_comm f = match f with
   | _ -> f
   
 let var_get_subst f1 f2 v pos = match f1,f2 with 
-  | (Some v1,r1) , (Some v2, r2) -> 
-      if P.eq_spec_var v v1 then ([(v,(r1,f2))],mkTrue pos)
-      else if P.eq_spec_var v v2 then ([(v,(r2,f1))],mkTrue pos)
+  | PVar v1 , PVar v2 -> 
+	  if P.eq_spec_var v1 v2 then ([],mkTrue pos)
+      else if P.eq_spec_var v v1 then ([(v,f2)],mkTrue pos)
+      else if P.eq_spec_var v v2 then ([(v,f1)],mkTrue pos)
       else ([],mkEq f1 f2 pos)
-  | (Some v1,r1), _ -> if P.eq_spec_var v v1 then ([(v,(r1,f2))],mkTrue pos) else ([],mkEq f1 f2 pos)
-  | _ ,(Some v2,r2) -> if P.eq_spec_var v v2 then ([(v,(r2,f1))],mkTrue pos) else ([],mkEq f1 f2 pos)
-  | ((None,_),(None,_)) -> ([],mkEq f1 f2 pos)
+  | PVar v1, _ -> if P.eq_spec_var v v1 then ([(v,f2)],mkTrue pos) else ([],mkEq f1 f2 pos)
+  | _ ,PVar v2 -> if P.eq_spec_var v v2 then ([(v,f1)],mkTrue pos) else ([],mkEq f1 f2 pos)
+  | PConst _ ,PConst _ -> ([],mkEq f1 f2 pos)
   
 let rec get_subst_eq_f f v = match f with
   | And (f1,f2,p) -> 
     let st1, rf1 = get_subst_eq_f f1 v in
-		if not (Util.empty st1) then  (st1, mkAnd rf1 f2 p)
+		if (List.length st1)>0 then  (st1, mkAnd rf1 f2 p)
 		else
 		  let st2, rf2 = get_subst_eq_f f2 v in
-		  (st2, mkAnd f1 rf2 p)
+		  (st2, mkAnd rf1 rf2 p)
   | Eq(f1,f2,p)-> var_get_subst f1 f2 v p
   | _ -> [],f
   
@@ -236,101 +232,8 @@ let match_imply l_v r_v l_f r_f l_node e_vars :(bool * P.spec_var * P.spec_var *
 
 (*sat*)(*TODO*)
 
-let subst_2 ((vl,fl),(vr,fr)) = 
-    let (d1,d2) = Ts.safe_divide fl fr in
-    match d2 with
-      | Ts.Bot -> (false,None)
-      | top_share -> 
-        (match (vl,vr) with
-          | Some l,Some r -> 
-              if (P.eq_spec_var l r) then (true, None)
-              else (true, Some (l,(Some r,d2)))
-          | Some l, None 
-          | None, Some l -> (true, Some (l,(None,d2)))
-          | _ -> (true, None))
-      | _ -> match (vl,vr) with
-        | Some l, Some r -> 
-           if (P.eq_spec_var l r) then (false, None)
-           else if d1 then (true, Some (r,(Some l, d2)))
-           else (true, Some (l,(Some r, d2)))
-        | None, Some r -> 
-           if d1 then (true, Some (r,(None,d2)))
-           else (false, None)
-        | Some l, None ->
-           if d1 then (false,None)
-           else (true, Some (l,(None,d2))) in
+let is_sat f = true
   
-let sat_3 ((_,f1),(_,f2),(_,f3)) = 
-  let f1 = 
-    if Ts.can_join f1 f2 then 
-      let r = Ts.join f1 f2 in
-      (Ts.can_divide r f3)||(Ts.can_divide f2 r) 
-    else false in
-  f1 || (((Ts.can_divide f1 f3) || (Ts.can_divide f3 f1))&&((Ts.can_divide f2 f3) || (Ts.can_divide f3 f2))) in
-
-let is_sat f = 
-  let rec lin f = match f with
-    | Or (f1,f2,_) -> (lin f1)@(lin f2)
-    | _ -> 
-      let rec lin_and f= match f with
-        | And (f1,f2,_)-> (lin_and f1)@(lin_and f2)
-        | _ -> [f1] in
-      [(lin_and f)] in
-  let f_lists = lin (to_cnf (transform_perm ((fun f -> match f with  | Exists (_,f,_)-> Some f),(fun _ -> None)) f)) in
-  let f_lists = List.filter (fun f-> not (List.exists isConstFalse f)) f_lists in 
-  if (List.length f_lists == 0) then false
-  else
-    let f_lists = List.map (fun f-> List.filter (fun f-> not (isConstTrue f)) f) f_lists in
-    if (List.exists (fun f-> List.length f ==0)f_lists) then true
-    else 
-      let one_sat f_l = 
-          let ls,lt = List.fold_left (fun (a1,a2) h-> 
-            match h with
-             | Eq (v1,v2,_) -> ((v1,v2)::a1,a2)
-             | Join (v1,v2,v3,_) -> (a1,(v1,v2,v3)::a2)
-             | _ ->Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: expecting only eq and join assertions"} ) ([],[]) l in
-          let rec substs l1 l2 = match l1 with
-            | [] -> Some l2
-            | h::t-> 
-              let r1,r2 = subst_2 h in
-              if r1 then None
-              else 
-                match r2 with
-                  | Some r2->
-                    let new_t = List.map (fun (a1,a2)-> ((subst_perm_expr r2 a1),(subst_perm_expr r2 a2))) t in
-                    let new_l2 = List.map (fun (a1,a2,a3)-> ((subst_perm_expr r2 a1),(subst_perm_expr r2 a2),(subst_perm_expr r2 a3))) l2 in
-                    let r = 
-                      if (fst(snd r2))==None then 
-                        List.fold_left (fun a c-> match a with
-                          | None -> None
-                          | Some (a1,a2) -> match c with  
-                            | ((Some v1,f1),(Some v2,f2),(Some v3,f3))
-                            | ((None,f1),(Some v2,f2),(Some v3,f3))
-                            | ((Some v1,f1),(None,f2),(Some v3,f3))
-                            | ((Some v1,f1),(Some v2,f2),(None,f3)) -> Some (a1,c::a2)
-                            | ((Some v,f),(None,s),(None,r))  
-                            | ((None,s),(Some v,f),(None,r)) ->
-                              if (Ts.contains r s) then Some (((Some v,f),(None,Ts.subtract r s))::a1,a2)
-                              else None
-                            | ((None,f1),(None,f2),(Some v3,f3)) ->
-                              if (Ts.can_join f1 f2) then Some (((Some v3,f3),(None,Ts.join f1 f2))::a1,a2)
-                              else None    
-                        ) (Some (new_t,[])) new_l2
-                      else (new_t,new_l2) in
-                    (match r with
-                     | None -> false
-                     | Some (l1,l2) -> substs l1 l2)
-                  | _ -> substs t l2 in
-          let r_2 = substs ls lt in
-          match r_2 with
-            | None -> false
-            | Some l -> 
-             if not (List.forall sat_3 l) then false
-             else true
-              (*here need to handle sat for sets of : v1*c1+v2*c2=v3*c3 where at most one v is a None*) in
-      let _ = print_string ((!print_perm_f f)^"\n") in
-      List.exists one_sat f_lists
-          
     
 let does_match p = match p with
   | Some _ -> true
@@ -347,7 +250,7 @@ let heap_partial_imply l_h l_pr perm_imply mkStarH h_apply_one pos = match perm_
       let s2 = fresh_perm_var () in
       let l_node' = h_apply_one (l_v,s1) l_node in
       let l_h' = mkStarH l_node' l_h pos in
-      let pr_eq = mkJoin (frac_of_var l_v) (frac_of_var s1) (frac_of_var s2) pos in
+      let pr_eq = mkJoin (mkVPerm l_v) (mkVPerm s1) (mkVPerm s2) pos in
       let l_pr'= mkAnd l_pr pr_eq pos in
       (l_h',l_pr',[s1;s2],(r_v,s2))
     else (l_h,l_pr,[],(r_v,l_v))
@@ -359,8 +262,8 @@ let heap_partial_imply l_h l_pr perm_imply mkStarH h_apply_one pos = match perm_
 and get_eqns_free ((fr,t) : P.spec_var * P.spec_var) (evars : P.spec_var list) (expl_inst : P.spec_var list) 
       (struc_expl_inst : P.spec_var list) pos : perm_formula*perm_formula * (P.spec_var * P.spec_var) list = 
 	if (P.mem fr evars) || (P.mem fr expl_inst) then (mkTrue pos, mkTrue pos,[(fr, t)])
-  else if (P.mem fr struc_expl_inst) then (mkTrue pos, mkEq (frac_of_var fr) (frac_of_var t) pos,[])
-  else (mkEq (frac_of_var fr) (frac_of_var t) pos, mkTrue pos, [])
+  else if (P.mem fr struc_expl_inst) then (mkTrue pos, mkEq (mkVPerm fr) (mkVPerm t) pos,[])
+  else (mkEq (mkVPerm fr) (mkVPerm t) pos, mkTrue pos, [])
 
 
 (*transformers*)
@@ -489,10 +392,10 @@ let find_rel_constraints (f:perm_formula) desired :perm_formula =
    let lf_pair = List.map (fun c-> ((fv c),c)) lf in
    let var_list = fst (List.split lf_pair) in
    let rec helper (fl:P.spec_var list) : P.spec_var list = 
-    let nl = List.filter (fun c-> (Util.intersect_fct P.eq_spec_var c fl)!=[]) var_list in
+    let nl = List.filter (fun c-> (Gen.BList.intersect_eq P.eq_spec_var c fl)!=[]) var_list in
     let nl = List.concat nl in
     if (List.length fl)=(List.length nl) then fl
     else helper nl in
    let fixp = helper desired in
-   let pairs = List.filter (fun (c,_) -> (List.length (Util.intersect_fct P.eq_spec_var c fixp))>0) lf_pair in
+   let pairs = List.filter (fun (c,_) -> (List.length (Gen.BList.intersect_eq P.eq_spec_var c fixp))>0) lf_pair in
    conj_of_list (snd (List.split pairs))
