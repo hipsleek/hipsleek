@@ -1277,6 +1277,120 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
   in	
   List.map helper f
 
+(*and subst sst (f : formula) = match sst with
+  | s :: rest -> subst rest (apply_one s f)
+  | [] -> f*)
+	
+(** An Hoa : replace the function subst above by substituting f in parallel **)
+and subst sst (f : formula) =
+	match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+    Or ({formula_or_f1 = subst sst f1; formula_or_f2 =  subst sst f2; formula_or_pos = pos})
+  | Base ({formula_base_heap = h; 
+					formula_base_pure = p; 
+					formula_base_type = t;
+					(* formula_base_imm = imm; *)
+					formula_base_flow = fl;
+					formula_base_branches = b;
+					formula_base_label = lbl;
+					formula_base_pos = pos}) -> 
+		Base ({formula_base_heap = h_subst sst h; 
+					formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst p); 
+					formula_base_type = t;
+					(* formula_base_imm = imm; *)
+					formula_base_flow = fl;
+					formula_base_label = lbl;
+					formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+					formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv; 
+						formula_exists_heap = qh; 
+						formula_exists_pure = qp; 
+						formula_exists_type = tconstr;
+						(* formula_exists_imm = imm; *)
+						formula_exists_flow = fl;
+						formula_exists_branches = b;
+						formula_exists_label = lbl;
+						formula_exists_pos = pos}) -> 
+		(* Variable under this existential quantification should NOT be substituted! *)
+		(* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in qsv *)
+		let qsvnames = (List.map CP.name_of_spec_var qsv) in
+		let sst = List.filter (fun (fr,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
+		if sst = [] then f
+		else Exists ({formula_exists_qvars = qsv; 
+									formula_exists_heap =  h_subst sst qh; 
+									formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
+									formula_exists_type = tconstr;
+									(* formula_exists_imm = imm; *)
+									formula_exists_flow = fl;
+									formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+									formula_exists_label = lbl;
+									formula_exists_pos = pos})
+(** An Hoa : End of formula substitution **)
+
+(** An Hoa: Function to substitute variables in a heap formula in parallel **)
+and h_subst sst (f : h_formula) = 
+	match f with
+  | Star ({h_formula_star_h1 = f1; 
+					h_formula_star_h2 = f2; 
+					h_formula_star_pos = pos}) -> 
+		Star ({h_formula_star_h1 = h_subst sst f1; 
+		h_formula_star_h2 = h_subst sst f2; 
+		h_formula_star_pos = pos})
+  | Phase ({h_formula_phase_rd = f1; 
+						h_formula_phase_rw = f2; 
+						h_formula_phase_pos = pos}) -> 
+		Phase ({h_formula_phase_rd = h_subst sst f1; 
+		h_formula_phase_rw = h_subst sst f2; 
+		h_formula_phase_pos = pos})
+  | Conj ({h_formula_conj_h1 = f1; 
+					h_formula_conj_h2 = f2; 
+					h_formula_conj_pos = pos}) -> 
+		Conj ({h_formula_conj_h1 = h_subst sst f1; 
+		h_formula_conj_h2 = h_subst sst f2; 
+		h_formula_conj_pos = pos})
+  | ViewNode ({h_formula_view_node = x; 
+							h_formula_view_name = c; 
+							h_formula_view_imm = imm; 
+							h_formula_view_arguments = svs; 
+							h_formula_view_modes = modes;
+							h_formula_view_coercible = coble;
+							h_formula_view_origins = orgs;
+							h_formula_view_original = original;
+							h_formula_view_unfold_num = i;
+							h_formula_view_label = lbl;
+							h_formula_view_remaining_branches = ann;
+							h_formula_view_pruning_conditions = pcond;
+							h_formula_view_pos = pos} as g) -> 
+		ViewNode { g with 
+							h_formula_view_node = subst_var_par sst x; 
+							h_formula_view_arguments = List.map (subst_var_par sst) svs;
+							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
+		}
+  | DataNode ({h_formula_data_node = x; 
+							h_formula_data_name = c; 
+							h_formula_data_imm = imm; 
+							h_formula_data_arguments = svs; 
+							h_formula_data_label = lbl;
+							h_formula_data_remaining_branches = ann;
+							h_formula_data_pruning_conditions = pcond;
+							h_formula_data_pos = pos}) -> 
+		DataNode ({h_formula_data_node = subst_var_par sst x; 
+							h_formula_data_name = c; 
+							h_formula_data_imm = imm;  
+							h_formula_data_arguments = List.map (subst_var_par sst) svs;
+							h_formula_data_label = lbl;
+							h_formula_data_remaining_branches = ann;
+							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
+							h_formula_data_pos = pos})
+  | HTrue -> f
+  | HFalse -> f
+  | Hole _ -> f
+(** An Hoa : End of heap formula substitution **) 
+
+and subst_var_par sst v = try
+			List.assoc v sst
+	with Not_found -> v
+        
 and subst_one_by_one sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
@@ -1284,8 +1398,8 @@ and subst_one_by_one sst (f : formula) =
 
 and subst_one_by_one_x sst (f : formula) = match sst with
   | s :: rest -> subst_one_by_one_x rest (apply_one s f)
-  | [] -> f 
-        
+  | [] -> f
+
 and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
 
 and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
@@ -1671,7 +1785,7 @@ and rename_bound_vars_x (f : formula) = match f with
 		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2000 ---*)
 	    let rho = List.combine qvars new_qvars in
-	    let new_base_f = subst_one_by_one rho base_f in
+	    let new_base_f = subst rho base_f in
 	    let resform = add_quantifiers new_qvars new_base_f in
 		resform
 
@@ -1742,7 +1856,7 @@ and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_fo
 		  let rho_exp = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2)))  new_exp) in
 		  let rho_exs = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2)))  new_exs) in
 		  let rho = rho_imp@rho_exp@rho_exs in
-		  let new_base_f = subst_one_by_one rho new_base_f in
+		  let new_base_f = subst rho new_base_f in
 		  let new_cont_f = subst_struc rho b.formula_ext_continuation in
 		  let new_cont_f = rename_struc_clash_bound_vars new_cont_f f2 in
 		  EBase {b with 
@@ -1771,7 +1885,7 @@ and rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_v
 	    (* fresh_qvars contains only the freshly generated names *)
 	    let fresh_qvars = (List.filter (fun v1 -> (not (List.exists (fun v2 -> CP.eq_spec_var v1 v2) qvars)))  new_qvars) in
 	    let rho = List.combine qvars new_qvars in
-	    let new_base_f = subst_one_by_one rho base_f in
+	    let new_base_f = subst rho base_f in
 	    let resform = add_quantifiers new_qvars new_base_f in
 		(resform, fresh_qvars)
 
@@ -1794,9 +1908,8 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
-  let new_delta = subst_one_by_one rho2 delta in
-  let new_phi = subst_one_by_one rho1 phi in
-  let _ = must_consistent_formula "compose_formula 0" new_delta in
+  let new_delta = subst rho2 delta in
+  let new_phi = subst rho1 phi in
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
   let _ = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in

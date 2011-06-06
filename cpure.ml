@@ -1237,7 +1237,6 @@ and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
 and b_apply_one s bf = b_apply_subs [s] bf
 and apply_one s f = apply_subs [s] f 
 (* and e_apply_one s f = apply_subs [s] f  *)
-
 (* and apply_one (fr, t) f = match f with *)
 (*   | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf , lbl) *)
 (*   | And (p1, p2, pos) -> And (apply_one (fr, t) p1, *)
