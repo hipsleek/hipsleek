@@ -574,7 +574,7 @@ one_perm :[[ `IDENTIFIER id -> if id ="L" then PLeft else if id="R" then PRight 
 
 perm_annot : [[`AT; t=perm -> t]];
  
-opt_perm_annot : [[t = OPT perm_annot -> Pr.mkPAnnot t]];
+opt_perm_annot : [[t = OPT perm_annot -> (*Pr.mkPAnnot*) t]];
  
 opt_formula_label: [[t=OPT formula_label -> un_option t None]];		
 
@@ -626,8 +626,8 @@ simple2:  [[ t= opt_type_var_list; `LT -> ()]];
 simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
      match hl with
-        | ([],t) -> F.mkHeapNode2 c id (Pr.mkPFull ()) true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id (Pr.mkPFull ()) true false false false t ofl (get_pos_camlp4 _loc 2)]];
+        | ([],t) -> F.mkHeapNode2 c id None true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id None true false false false t ofl (get_pos_camlp4 _loc 2)]];
 
 simple_heap_constr:
   [[ 
@@ -639,7 +639,7 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id pa false false false false t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c id pa false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" (Pr.mkPFull ()) false false false false [] None  (get_pos_camlp4 _loc 1)]];
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" None false false false false [] None  (get_pos_camlp4 _loc 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         

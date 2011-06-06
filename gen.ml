@@ -1529,7 +1529,15 @@ let is_some : 'a option -> bool =
 	| Some x -> true
 	| None -> false
 
-
+let some2list : 'a option -> 'a list = function 
+	| Some x-> [x]
+	| None -> []
+	 
+let trans_some f (x:'a option) : 'b option= match x with
+	| Some x-> Some (f x)
+	| None -> None
+	
+	
 (** Read the given file into a string. *)
 let string_of_file (fname : string) =
   if Sys.file_exists fname then

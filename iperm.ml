@@ -31,9 +31,9 @@ let mkCPerm l : frac_perm = PConst l
  
 let mkPFull () :frac_perm = mkCPerm []
 
-let mkPAnnot t = match t with
+(*let mkPAnnot t = match t with
 	| None -> mkPFull ()
-	| Some a ->  a
+	| Some a ->  a*)
 	 
 
 let name_of_frac s f = match f with

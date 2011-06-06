@@ -152,7 +152,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_arguments : P.exp list;
 		       h_formula_heap_pseudo_data : bool;
 		       h_formula_heap_label : formula_label option;
-			   h_formula_heap_perm : IP.frac_perm;
+			   h_formula_heap_perm : IP.frac_perm option;
 		       h_formula_heap_pos : loc }
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
@@ -163,7 +163,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_arguments : (ident * P.exp) list;
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
-			h_formula_heap2_perm : IP.frac_perm;
+			h_formula_heap2_perm : IP.frac_perm option;
 			h_formula_heap2_pos : loc }
 			
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
@@ -406,10 +406,10 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
 	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
   | HeapNode {h_formula_heap_node = name ; 
 		  h_formula_heap_perm = p;
-	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) (name:: ((List.concat (List.map Ipure.afv b))@(IP.frac_fv p)))
+	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) (name:: (List.concat ((List.map Ipure.afv b)@(List.map IP.frac_fv (Gen.some2list p)))))
   | HeapNode2 { h_formula_heap2_node = name ;
 		h_formula_heap2_perm = p;
-		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) (name:: ((List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )@(IP.frac_fv p)))
+		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) (name:: (List.concat ((List.map (fun c-> (Ipure.afv (snd c))) b)@(List.map IP.frac_fv (Gen.some2list p)))))
   | HTrue -> [] 
   | HFalse -> [] 
 ;;
@@ -662,7 +662,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		 h_formula_heap_name = c;
 		 h_formula_heap_imm = imm; 
 		 h_formula_heap_full = full;
-		 h_formula_heap_perm = IP.subst_perm s perm;
+		 h_formula_heap_perm = Gen.trans_some (IP.subst_perm s) perm;
 		 h_formula_heap_with_inv = winv;
 		 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		 h_formula_heap_pseudo_data = ps_data;
@@ -684,7 +684,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		   h_formula_heap2_name =c;
 		   h_formula_heap2_imm = imm;
 		   h_formula_heap2_full =full;
-		   h_formula_heap2_perm = IP.subst_perm s perm;
+		   h_formula_heap2_perm = Gen.trans_some (IP.subst_perm s) perm;
 		   h_formula_heap2_with_inv = winv;
 		   h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 		   h_formula_heap2_pseudo_data =ps_data;
@@ -885,22 +885,26 @@ and float_out_perm_from_heap (f:formula ):formula =
 	let r21,r22,r23 = float_out_perm b.h_formula_phase_rw in
 	  (Phase ({h_formula_phase_rd = r11; h_formula_phase_rw=r21;h_formula_phase_pos = b.h_formula_phase_pos}),(r12@r22),(IP.mkAnd r13 r23 no_pos))
     | HeapNode b-> 
-		let na,lv,pf = 
-			if IP.isConstFrac b.h_formula_heap_perm then (b.h_formula_heap_perm,[],IP.mkTrue no_pos)
-			else 
+		let na,lv,pf = match  b.h_formula_heap_perm with 
+			| None -> (b.h_formula_heap_perm,[],IP.mkTrue no_pos)
+			| Some v->
+			  if IP.isConstFrac v then (b.h_formula_heap_perm,[],IP.mkTrue no_pos)
+			  else 
 				let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 				let npv = IP.mkVPerm nn in
-				let npf = IP.mkEq npv b.h_formula_heap_perm b.h_formula_heap_pos in
-				(npv,[nn],npf) in		  
+				let npf = IP.mkEq npv v b.h_formula_heap_pos in
+				(Some npv,[nn],npf) in		  
 	  (HeapNode ({b with h_formula_heap_perm = na}),lv,pf)
     | HeapNode2 b ->	 
-		let na,lv,pf = 
-			if IP.isConstFrac b.h_formula_heap2_perm then (b.h_formula_heap2_perm,[],IP.mkTrue no_pos)
-			else 
+		let na,lv,pf = match  b.h_formula_heap2_perm with 
+			| None -> (b.h_formula_heap2_perm,[],IP.mkTrue no_pos)
+			| Some v->
+			  if IP.isConstFrac v then (b.h_formula_heap2_perm,[],IP.mkTrue no_pos)
+			  else 
 				let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 				let npv = IP.mkVPerm nn in
-				let npf = IP.mkEq npv b.h_formula_heap2_perm b.h_formula_heap2_pos in
-				(npv,[nn],npf) in		  
+				let npf = IP.mkEq npv v b.h_formula_heap2_pos in
+				(Some npv,[nn],npf) in		  
 	  (HeapNode2 ({b with h_formula_heap2_perm = na}),lv,pf)
     | HTrue -> (f,[],IP.mkTrue no_pos)
     | HFalse -> (f,[],IP.mkTrue no_pos) in

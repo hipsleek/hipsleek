@@ -211,8 +211,12 @@ let rec get_subst_eq_f f v = match f with
   | _ -> [],f
   
 (*elim exists*)(*TODO*) 
-(*try and eliminate vars from w, what can not be done, push as existentials*)
-let elim_exists_perm w f1 pos = f1
+(*try and eliminate vars from w, what can not be done return*)
+let elim_exists_perm w f1 = (w,f1)
+(*try and eliminate vars from w, what can not be done, push as existentials-eliminate them*)
+let elim_exists w f1 = f1 (*loop*)
+
+
   (*let f = factor_comm f1 in
   List.fold_left (fun (a1,a2) c->
     let s,nf = get_subst_eq_f a2 c in
@@ -304,25 +308,25 @@ let rec transform_perm (f:(perm_formula->perm_formula option)* (frac_perm -> fra
       let nfr = transform_perm f fr in
       mkExists qv nfr p 
       
-let fold_frac_perm (e:frac_perm) (arg: 'a) f f_arg (f_comb: frac_perm -> 'b list -> 'b) :(frac_perm * 'b) =
+let fold_frac_perm (e:frac_perm) (arg: 'a) f f_arg (f_comb: (*frac_perm ->*) 'b list -> 'b) :(frac_perm * 'b) =
   let r = f arg e in
   match r with
   | Some s -> s
-  | None -> (e, f_comb e [])
+  | None -> (e, f_comb  [])
       
 let trans_perm (e:perm_formula) (arg: 'a) f f_arg f_comb_a : (perm_formula * 'b) =
  let f_perm, f_frac = f in
  let f_perm_arg, f_frac_arg = f_arg in
- let f_perm_comb, f_frac_comb = f_comb_a in
- let foldr_frac (arg: 'a) (e: frac_perm): (frac_perm * 'b) = fold_frac_perm e arg f_frac f_frac_arg f_frac_comb in   
+ (*let f_perm_comb, f_frac_comb = f_comb_a in*)
+ let foldr_frac (arg: 'a) (e: frac_perm): (frac_perm * 'b) = fold_frac_perm e arg f_frac f_frac_arg f_comb_a in   
     
  let rec foldr_f (arg: 'a) (e:perm_formula) :(perm_formula * 'b) = 
-   let r = f_perm e in
+   let r = f_perm arg e in
    match r with
    | Some e -> e
    | None ->
       let new_arg = f_perm_arg arg e in
-      let f_comb = f_perm_comb e in
+      let f_comb = f_comb_a  in
       match e with
       | Or (f1,f2,p) ->
         let nf1, r1 = foldr_f new_arg f1 in
