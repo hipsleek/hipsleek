@@ -1220,11 +1220,10 @@ let sub_type t1 t2 = Globals.sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
-let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
-  (* build the class hierarchy *)
-    
+let inbuilt_build_exc_hierarchy () =
   let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
   let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
+  let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
   let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
   let _ = (Gen.ExcNumbering.add_edge abnormal_flow c_flow) in
   let _ = (Gen.ExcNumbering.add_edge raisable_class abnormal_flow) in
@@ -1233,12 +1232,19 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
   let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
   let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
-  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) prog.prog_data_decls in
+  ()
+
+let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
+  (* build the class hierarchy *)
+  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
   let _ = if clean then (Gen.ExcNumbering.clean_duplicates ()) in
 	if (Gen.ExcNumbering.has_cycles ()) then begin
 	  print_string ("Error: Exception hierarchy has cycles\n");
 	  failwith ("Exception hierarchy has cycles\n");
 	end 
+
+let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
+  Gen.Debug.ho_1 "build_exc_hierarchy" string_of_bool pr_unit (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
   let rec helper e = match e with

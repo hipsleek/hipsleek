@@ -973,7 +973,7 @@ hprogn:
 					data_methods = [] } in
     let string_def = { data_name = "String";
 					   data_fields = [];
-					   data_parent_name = "";
+					   data_parent_name = "Object";
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
     { prog_data_decls = obj_def :: string_def :: !data_defs;

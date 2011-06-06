@@ -100,13 +100,17 @@ let process_source_full source =
 
     (* Append all primitives in list into one only *)
      let iprims_list = process_intermediate_prims prims_list in
+     let _ = print_endline "1" in
      let iprims = Iast.append_iprims_list_head iprims_list in
+     let _ = print_endline "2" in
      let intermediate_prog = Globalvars.trans_global_to_param prog in
-
-    let intermediate_prog =IastUtil.pre_process_of_iprog intermediate_prog in
+     let _ = print_endline "3" in
+    let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
 	(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
+     let _ = print_endline "4" in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
 		(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
+     let _ = print_endline "5" in
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)

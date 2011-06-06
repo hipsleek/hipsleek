@@ -1597,6 +1597,8 @@ end;;
 module ExcNumbering =
 struct
 
+  open Basic
+
   (*hairy stuff for exception numbering*)
 
   let exc_list = ref ([]:(string * string * Globals.nflow ) list)
@@ -1665,6 +1667,9 @@ struct
   let add_edge(n1:string)(n2:string):bool =
 	let _ =  exc_list := !exc_list@ [(n1,n2,Globals.false_flow_int)] in
 	true
+
+  let add_edge(n1:string)(n2:string):bool =
+    Debug.ho_2 "add_edge" pr_id pr_id string_of_bool add_edge n1 n2
 
   let clean_duplicates ()= 
 	exc_list := remove_dups1 !exc_list

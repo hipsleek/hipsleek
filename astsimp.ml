@@ -887,17 +887,20 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
 
 let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
-  let _ = I.build_exc_hierarchy false prog4 in  (* Exceptions - defined by users *)
+  let _ = (Gen.ExcNumbering.add_edge "Object" "") in
+  let _ = (Gen.ExcNumbering.add_edge "String" "Object") in
   let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
-  let _ = I.build_exc_hierarchy false iprims in (* Errors - defined in prelude.ss*)
-  let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in
-  let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in
-  let prog3 =
-          { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls;
-                       I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls;
-          }
-  in
-  let prog2 = { prog3 with I.prog_data_decls =
+  let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+  (* let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in *)
+  (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
+  let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
+  (* let prog3 = *)
+  (*         { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls; *)
+  (*                      I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls; *)
+  (*         } *)
+  (* in *)
+  let prog3 = prog4 in
+  let prog2 = { prog4 with I.prog_data_decls =
       ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
       ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
       :: prog3.I.prog_data_decls;} in
@@ -1662,7 +1665,7 @@ and set_pre_flow f =
   in
   List.map helper f
       
-and check_valid_flows f = 
+and check_valid_flows (f:Iformula.struc_formula) = 
   let rec check_valid_flows_f f = match f with
     | Iformula.Base b -> if ((Cformula.is_false_flow (Gen.ExcNumbering.get_hash_of_exc b.Iformula.formula_base_flow))&&
 		                            ((String.compare b.Iformula.formula_base_flow false_flow)<>0))then 

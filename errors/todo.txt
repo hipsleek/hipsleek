@@ -1,0 +1,3 @@
+why is flow of div2 __Error rather __DivByZeroErr?
+
+Why no must error for above flow type?
