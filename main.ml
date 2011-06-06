@@ -99,20 +99,15 @@ let process_source_full source =
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 
     (* Append all primitives in list into one only *)
-     let iprims_list = process_intermediate_prims prims_list in
-     let _ = print_endline "1" in
-     let iprims = Iast.append_iprims_list_head iprims_list in
-     let _ = print_endline "2" in
-     let intermediate_prog = Globalvars.trans_global_to_param prog in
-     let _ = print_endline "3" in
+    let iprims_list = process_intermediate_prims prims_list in
+    let iprims = Iast.append_iprims_list_head iprims_list in
+    let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-     let _ = Iast.find_empty_static_specs intermediate_prog in
+    (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
 	(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
-     let _ = print_endline "4" in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
-		(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
-      let _ = Iast.find_empty_static_specs intermediate_prog in
-    let _ = print_endline "5" in
+	(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
+    (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
@@ -122,15 +117,15 @@ let process_source_full source =
     let _ = print_string ("Translating to core language...\n"); flush stdout in
     (* let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in *)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
-		(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
+	(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
 	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
-		(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
+	(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string ("START"^(Cprinter.string_of_program cprog)^"STARTEND") else () in
     let _ = 
       if !Globals.verify_callees then begin
-	let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
-	Globals.procs_verified := tmp
+	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
+	    Globals.procs_verified := tmp
       end in
     let _ = Gen.Profiling.pop_time "Translating to Core" in
     (* let ptime2 = Unix.times () in
@@ -138,34 +133,34 @@ let process_source_full source =
        let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
     let _ =
       if !Scriptarguments.comp_pred then begin
-	let _ = print_string ("Compiling predicates to Java..."); flush stdout in
-	let compile_one_view vdef = 
-	  if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
-	    let data_def, pbvars = Predcomp.gen_view cprog vdef in
-	    let java_str = Java.java_of_data data_def pbvars in
-	    let jfile = open_out (vdef.Cast.view_name ^ ".java") in
-	    print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
-	    output_string jfile java_str;
-	    close_out jfile
-	  else
-	    ()
-	in
-	ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-	print_string ("\nDone-3.\n"); flush stdout;
-	exit 0
+	    let _ = print_string ("Compiling predicates to Java..."); flush stdout in
+	    let compile_one_view vdef = 
+	      if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
+	        let data_def, pbvars = Predcomp.gen_view cprog vdef in
+	        let java_str = Java.java_of_data data_def pbvars in
+	        let jfile = open_out (vdef.Cast.view_name ^ ".java") in
+	        print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
+	        output_string jfile java_str;
+	        close_out jfile
+	      else
+	        ()
+	    in
+	    ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
+	    print_string ("\nDone-3.\n"); flush stdout;
+	    exit 0
       end 
     in
     let _ =
       if !Scriptarguments.rtc then begin
-	Rtc.compile_prog cprog source;
-	exit 0
+	    Rtc.compile_prog cprog source;
+	    exit 0
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-    ignore (Typechecker.check_prog cprog);
+      ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -173,21 +168,21 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
- 
+    
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
-		    (List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
-		                       ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
+		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
     print_string ("\nTotal verification time: " 
-		  ^ (string_of_float t4) ^ " second(s)\n"
-		  ^ "\tTime spent in main process: " 
-		  ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
-		  ^ "\tTime spent in child processes: " 
-		  ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	^ (string_of_float t4) ^ " second(s)\n"
+	^ "\tTime spent in main process: " 
+	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+	^ "\tTime spent in child processes: " 
+	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 	  
 let main1 () =

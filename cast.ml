@@ -565,6 +565,7 @@ let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 	}]*)
 let stub_branch_point_id s = (-1,s)
 let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""))]
+let mkEAssume_norm pos = [Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""))]
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2

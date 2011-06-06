@@ -899,29 +899,29 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   (*                      I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls; *)
   (*         } *)
   (* in *)
-  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in *)
   let prog3 = prog4 in
   let prog2 = { prog4 with I.prog_data_decls =
       ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
       ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
       :: prog3.I.prog_data_decls;} in
-  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (2)) in
-  let _ = I.find_empty_static_specs prog2 in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (2)) in *)
+  (* let _ = I.find_empty_static_specs prog2 in *)
 
   let prog1 = { prog2 with
 		  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
 		  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
-  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (3)) in
-  let _ = I.find_empty_static_specs prog1 in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (3)) in *)
+  (* let _ = I.find_empty_static_specs prog1 in *)
   let prog0 = { prog1 with
                   I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
 
   (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
-  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (4)) in
-  let _ = I.find_empty_static_specs prog0 in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (4)) in *)
+  (* let _ = I.find_empty_static_specs prog0 in *)
   let _ = I.build_hierarchy prog0 in
   (* let _ = print_string "trans_prog :: I.build_hierarchy PASSED\n" in *)
-  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (5)) in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (5)) in *)
   let check_overridding = Chk.overridding_correct prog0 in
   let check_field_dup = Chk.no_field_duplication prog0 in
   let check_method_dup = Chk.no_method_duplication prog0 in
@@ -929,9 +929,9 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
-        let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (10)) in
+        (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	    Gen.ExcNumbering.c_h ();
-        let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (11)) in
+        (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (11)) in *)
 	    let prims = gen_primitives prog0 in
 	    let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
       (set_mingled_name prog;
@@ -939,13 +939,13 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
         ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
             (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
       let dups = Gen.BList.find_dups_eq (=) all_names in
-      let _ = I.find_empty_static_specs prog in
+      (* let _ = I.find_empty_static_specs prog in *)
       if not (Gen.is_empty dups) then
 		(print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
       else (
 		  let prog = case_normalize_program prog in
-          let _ =  print_endline " after case normalize" in
-          let _ = I.find_empty_static_specs prog in
+          (* let _ =  print_endline " after case normalize" in *)
+          (* let _ = I.find_empty_static_specs prog in *)
 		  let tmp_views = order_views prog.I.prog_view_decls in
 		   let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 		  let cviews = List.map (trans_view prog) tmp_views in
@@ -978,7 +978,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 	      let c = (mark_recursive_call prog cprog5) in 
-          let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (12)) in
+          (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (12)) in *)
 		  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 		  c)))
 	  end)
@@ -1764,7 +1764,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let static_specs_list  = Cformula.plug_ref_vars static_specs_list by_names in
 	let dynamic_specs_list = Cformula.plug_ref_vars dynamic_specs_list by_names in
 	let final_static_specs_list =
-	  if Gen.is_empty static_specs_list then Cast.mkEAssume proc.I.proc_loc
+	  if Gen.is_empty static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc
 	  else static_specs_list in
 	let final_dynamic_specs_list = dynamic_specs_list in
        let _ = 
