@@ -52,7 +52,7 @@ let print_sv_l_f = ref (fun (c:spec_var list)-> "spec var list printing not init
 let print_bf_f = ref (fun (c:b_formula)-> "b formula printing not initialized")
 let print_p_f_f = ref (fun (c:formula)-> " formula printing not initialized")
 let print_exp_f = ref(fun (c:exp) -> "exp_printing") 
-(* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
+(*let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized")*)
 
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
 

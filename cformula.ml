@@ -4415,3 +4415,109 @@ and extr_lhs_b (es:entail_state) =
   formula_base_label = None;
   formula_base_pos = no_pos } in
   b1
+	
+(** An Hoa : simplify a list failesc context **)
+let rec simplify_list_failesc_context ctx = 
+	List.map simplify_failesc_context ctx
+	
+(** An Hoa : simplify a failesc context **)
+and simplify_failesc_context (ctx : failesc_context) = 
+	match ctx with
+		| (brfaillist,escstk,brctxlist) -> 
+			let newbrctxlist = List.map simplify_branch_context brctxlist in
+				(brfaillist,escstk,newbrctxlist)
+			
+(** An Hoa : simplify a branch context **)
+and simplify_branch_context (brctx : branch_ctx) =
+	match brctx with
+		| (pathtrc, ctx) ->
+			let newctx = simplify_context ctx in
+				(pathtrc, newctx)
+
+(** An Hoa : simplify a context **)
+and simplify_context (ctx : context) = 
+	match ctx with
+		| Ctx ({ es_formula = esformula;
+				  es_heap = esheap;
+				  es_pure = espure;
+				  es_evars = esevars;
+				  es_ivars = esivars;
+				  es_ante_evars = esanteevars;
+				  es_gen_expl_vars = esgenexplvars; 
+				  es_gen_impl_vars = esgenimplvars; 
+				  es_unsat_flag = esunsatflag;
+				  es_pp_subst = esppsubst;
+				  es_arith_subst = esarithsubst;
+				  es_success_pts = essuccesspts;
+				  es_residue_pts = esresiduepts;
+				  es_id = esid;
+				  es_orig_ante   = esorigante; 
+				  es_orig_conseq = esorigconseq;
+				  es_path_label = espathlabel;
+				  es_prior_steps = espriorsteps;
+				  es_var_measures = esvarmeasures;
+				  es_var_label = esvarlabel;
+				  es_var_ctx_lhs = esvarctxlhs;
+				  es_var_ctx_rhs = esvarctxrhs;
+				  es_var_subst = esvarsubst;
+				  es_rhs_eqset = esrhseqset;
+				  es_cont = escont;
+				  es_crt_holes = escrtholes;
+				  es_hole_stk = esholestk;
+				  es_aux_xpure_1 = esauxxpure1;
+				  es_subst = essubst; 
+				  es_aux_conseq = esauxconseq;
+					} as es) -> 
+						let sesfml = simplify_es_formula esformula in
+							Ctx { es with es_formula = sesfml }
+		| OCtx (ctx1, ctx2) -> 
+					OCtx (simplify_context ctx1, simplify_context ctx2)
+
+(** An Hoa : simplify a general formula **)
+and simplify_es_formula (f : formula) = 
+	(* Print the mix formula for testing purpose *)
+	let print_mix_f (f : MCP.mix_formula) = match f with
+		| MCP.MemoF mf -> (!MCP.print_mp_f mf)
+		| MCP.OnePF pf -> (!CP.print_formula pf)
+	in
+	match f with
+		| Base ({formula_base_heap = heap;
+						formula_base_pure = pure;
+						formula_base_type = fftype;
+	          formula_base_flow = flow;
+	          formula_base_branches = branches;
+	          formula_base_label = label;
+	          formula_base_pos = pos}) -> 
+			let _ = print_endline (!print_h_formula heap) in
+			let _ = print_endline (print_mix_f pure) in
+			Base ({formula_base_heap = heap;
+						formula_base_pure = pure;
+						formula_base_type = fftype;
+	          formula_base_flow = flow;
+	          formula_base_branches = branches;
+	          formula_base_label = label;
+	          formula_base_pos = pos})
+		| Or ({formula_or_f1 = f1;
+	        formula_or_f2 = f2;
+	        formula_or_pos = pos}) -> 
+			Or ({formula_or_f1 = simplify_es_formula f1;
+					formula_or_f2 = simplify_es_formula f2;
+					formula_or_pos = pos})
+		| Exists ({formula_exists_qvars = qvars;
+	            formula_exists_heap = heap;
+	            formula_exists_pure = pure;
+	            formula_exists_type = ftype;
+	            formula_exists_flow = flow;
+	            formula_exists_branches = branches;
+	            formula_exists_label = label;
+	            formula_exists_pos = pos}) ->
+			let _ = print_endline (!print_h_formula heap) in
+			let _ = print_endline (print_mix_f pure) in
+			Exists ({formula_exists_qvars = qvars;
+	            formula_exists_heap = heap;
+	            formula_exists_pure = pure;
+	            formula_exists_type = ftype;
+	            formula_exists_flow = flow;
+	            formula_exists_branches = branches;
+	            formula_exists_label = label;
+	            formula_exists_pos = pos})

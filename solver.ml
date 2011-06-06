@@ -6111,4 +6111,3 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
     Gen.Profiling.pop_time "entail_prune";
     heap_entail_failesc_prefix_init prog is_folding  false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)
   end
-
