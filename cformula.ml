@@ -1282,10 +1282,17 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
   | [] -> f*)
 	
 (** An Hoa : replace the function subst above by substituting f in parallel **)
-and subst sst (f : formula) =
+
+and subst sst (f : formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula in
+  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
+
+and subst_x sst (f : formula) =
+  let rec helper f =
 	match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
-    Or ({formula_or_f1 = subst sst f1; formula_or_f2 =  subst sst f2; formula_or_pos = pos})
+    Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
   | Base ({formula_base_heap = h; 
 					formula_base_pure = p; 
 					formula_base_type = t;
@@ -1325,6 +1332,7 @@ and subst sst (f : formula) =
 									formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
 									formula_exists_label = lbl;
 									formula_exists_pos = pos})
+  in helper f
 (** An Hoa : End of formula substitution **)
 
 (** An Hoa: Function to substitute variables in a heap formula in parallel **)
@@ -1362,8 +1370,8 @@ and h_subst sst (f : h_formula) =
 							h_formula_view_pruning_conditions = pcond;
 							h_formula_view_pos = pos} as g) -> 
 		ViewNode { g with 
-							h_formula_view_node = subst_var_par sst x; 
-							h_formula_view_arguments = List.map (subst_var_par sst) svs;
+							h_formula_view_node = CP.subst_var_par sst x; 
+							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
 		}
   | DataNode ({h_formula_data_node = x; 
@@ -1374,10 +1382,10 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = pcond;
 							h_formula_data_pos = pos}) -> 
-		DataNode ({h_formula_data_node = subst_var_par sst x; 
+		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm;  
-							h_formula_data_arguments = List.map (subst_var_par sst) svs;
+							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
@@ -1387,10 +1395,10 @@ and h_subst sst (f : h_formula) =
   | Hole _ -> f
 (** An Hoa : End of heap formula substitution **) 
 
-and subst_var_par sst v = try
-			List.assoc v sst
-	with Not_found -> v
-        
+(* and subst_var_par sst v = try *)
+(* 			List.assoc v sst *)
+(* 	with Not_found -> v *)
+
 and subst_one_by_one sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
