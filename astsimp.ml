@@ -75,8 +75,6 @@ let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
 (************************************************************
 Primitives handling stuff
 ************************************************************)
-
-
 (* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
 let string_of_stab stab = Hashtbl.fold
 		(fun c1 c2 a ->
