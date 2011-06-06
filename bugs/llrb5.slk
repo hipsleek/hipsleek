@@ -33,22 +33,14 @@ pred rbs<n, bh> ==
 
 //checkentail h::node<_,0,lx,rx> * lx::rbc<rn,1,bh,_> * rx::rbc<ln,1,bh,_> & rn + ln + 1 = n - 1 & n >= 1 |- h::rbc<_,_,_,_>.
 
-checkentail h::node<_,0,l,r> * l::rbc<ln,1,bh,1> * r::rbc<rn,1,bh,c> |- 1 <= c <= 3.
+checkentail x::rbc<ln,cl,bh,d> & 0<=d<=3 |- cl=1 .
 
-checkentail h::node<_,0,l,r> * l::rbc<ln,1,bh,1> * r::rbc<rn,1,bh,c> |- l != null & r != null.
+// below failed name to name clash!
+checkentail x::rbc<ln,c,bh,d> & c=1 |- 0<=d<=3  .
 
-checkentail h::node<_,0,lx,rx> * lx::rbc<ln,1,bh,_> * rx::rbc<rn,1,bh,1> & ln + rn = n
-|- h::rbc<n+1,0,bh,4>.
+//checkentail x::rbc<ln,e,bh,d> & e=1 |- 0<=d<=3  .
 
-checkentail h::node<_,0,lx,rx> * lx::rbc<ln,1,bh,_> * rx::rbc<rn,1,bh,_> & ln + rn = n |- h::rbc<n+1,0,bh,4>.
+//checkentail x::rbc<ln,0,bh,d>  |- d=4 .
 
-checkentail h::node<_,0,lx,rx> * lx::rbc<ln,lc,bh,_> * rx::rbc<rn,1,bh,_> 
-            & lc != 0 & ln + rn = n |- h::rbc<n+1,0,bh,4> or h::rbs<n+1,bh>.
- 
-checkentail h::node<_,0,lx,rx> * lx::rbc<ln,lc,bh,_> * rx::rbc<rn,1,bh,_>
-            & lc != 1 & ln + rn = n |- h::rbs<n+1,bh> or h::rbs<n+1,bh>.
+//checkentail x::rbc<ln,c,bh,d>  |- 0<=d<=4.
 
-// TO CHECK THIS ENTAILMENT, SLEEK MUST KNOW THAT IT NEED TO FORK THE PROBLEM
-// INTO THE PREVIOUS TWO ENTAILMENT CHECKING!
-checkentail h::node<_,0,lx,rx> * lx::rbc<ln,_,bh,_> * rx::rbc<rn,1,bh,_> 
-            & ln + rn = n |- h::rbc<n+1,0,bh,4> or h::rbs<n+1,bh>. 

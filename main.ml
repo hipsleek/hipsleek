@@ -81,7 +81,7 @@ let process_source_full source =
 	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
 		(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
-    let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
+    let _ = if (!Globals.print_core) then print_string ("START"^(Cprinter.string_of_program cprog)^"STARTEND") else () in
     let _ = 
       if !Globals.verify_callees then begin
 	let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in

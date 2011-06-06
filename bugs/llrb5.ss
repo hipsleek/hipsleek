@@ -344,7 +344,7 @@ void move_red_right(node h)
 		color_flip(h);
 	}
 }
-
+/*
 void delete(node h, int v)
 	requires h::rb<n, cl, bh> & 0 <= cl <= 1
 	ensures  h::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1
@@ -371,5 +371,5 @@ void delete(node h, int v)
 	}
 	
 	fix_up(h);
-}
+}*/
 

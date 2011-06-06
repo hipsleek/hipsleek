@@ -1,0 +1,25 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred bnd<n, sm, bg> == self = null & n = 0 or 
+      self::node<d, p> * p::bnd<n-1, sm, bg> & sm <= d < bg 
+      inv n >= 0.
+
+pred sll<n, sm, lg> == 
+     self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 
+  or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
+      inv n >= 1 & sm <= lg & self!=null .
+
+checkentail y::node<v,null> & y=x |- x::sll<_,sm,lg>.
+
+//checkentail x::sll<n,s1,l1> * y::sll<n2,s2,l2> & sm<=s1&l1<=c & c<=s2 & l2<=bg & lg=l1 & sm2=s2 |- x::sll<a,sm,lg> * y::sll<b,sm2,lg2> & lg<=sm2 .
+
+//checkentail x::node<v1,q>*q::node<v2,null> & v1<=v2 |- x::sll<n,sm,lg>.
+
+checkentail y::node<v,null> & y=x |- x::node<_,null>.
+
+checkentail (exists f: y::node<v,f> & y=x & f=null) |- x::node<_,r> & r=null.
+
+print residue.

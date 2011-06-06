@@ -205,6 +205,21 @@ and string_of_spec_var = function
     | Unprimed -> "")
 (*09.05.2000 ---*)
 
+let consistent_formula f : bool = 
+  let rec helper f = match f with
+    | Base {formula_base_pure = mf}
+    | Exists {formula_exists_pure = mf} ->
+          MCP.consistent_mix_formula mf
+    | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
+          (helper f1) && (helper f2)
+  in helper f
+
+let must_consistent_formula (s:string) (l:formula) : unit =
+  if !consistency_checking then
+    let b = consistent_formula l in
+    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    else report_error no_pos ("ERROR at "^s^": formula inconsistent")
+
 let extr_formula_base e = match e with
       {formula_base_heap = h;
       formula_base_pure = p; 
@@ -1181,8 +1196,8 @@ and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : fo
   (*09.05.2000 ---*)
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
-  let f1 = subst st1 f in
-  let f2 = subst st2 f1 in
+  let f1 = subst_one_by_one st1 f in
+  let f2 = subst_one_by_one st2 f1 in
   f2
       
 
@@ -1206,7 +1221,9 @@ and subst_struc sst (f : struc_formula) = match sst with
   | s :: rest -> subst_struc rest (apply_one_struc s f)
   | [] -> f 
         
-and subst_struc_pre sst (f : struc_formula) = match sst with
+and subst_struc_pre sst (f : struc_formula) = 
+  (* apply_par_struc_pre s f *)
+  match sst with
   | s :: rest -> subst_struc_pre rest (apply_one_struc_pre s f)
   | [] -> f 
 
@@ -1259,11 +1276,138 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 	  })
   in	
   List.map helper f
-	  
-and subst sst (f : formula) = match sst with
+
+(*and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
-  | [] -> f 
-        
+  | [] -> f*)
+	
+(** An Hoa : replace the function subst above by substituting f in parallel **)
+
+and subst sst (f : formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula in
+  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
+
+and subst_x sst (f : formula) =
+  let rec helper f =
+	match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+    Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
+  | Base ({formula_base_heap = h; 
+					formula_base_pure = p; 
+					formula_base_type = t;
+					(* formula_base_imm = imm; *)
+					formula_base_flow = fl;
+					formula_base_branches = b;
+					formula_base_label = lbl;
+					formula_base_pos = pos}) -> 
+		Base ({formula_base_heap = h_subst sst h; 
+					formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst p); 
+					formula_base_type = t;
+					(* formula_base_imm = imm; *)
+					formula_base_flow = fl;
+					formula_base_label = lbl;
+					formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+					formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv; 
+						formula_exists_heap = qh; 
+						formula_exists_pure = qp; 
+						formula_exists_type = tconstr;
+						(* formula_exists_imm = imm; *)
+						formula_exists_flow = fl;
+						formula_exists_branches = b;
+						formula_exists_label = lbl;
+						formula_exists_pos = pos}) -> 
+		(* Variable under this existential quantification should NOT be substituted! *)
+		(* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in qsv *)
+		let qsvnames = (List.map CP.name_of_spec_var qsv) in
+		let sst = List.filter (fun (fr,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
+		if sst = [] then f
+		else Exists ({formula_exists_qvars = qsv; 
+									formula_exists_heap =  h_subst sst qh; 
+									formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
+									formula_exists_type = tconstr;
+									(* formula_exists_imm = imm; *)
+									formula_exists_flow = fl;
+									formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+									formula_exists_label = lbl;
+									formula_exists_pos = pos})
+  in helper f
+(** An Hoa : End of formula substitution **)
+
+(** An Hoa: Function to substitute variables in a heap formula in parallel **)
+and h_subst sst (f : h_formula) = 
+	match f with
+  | Star ({h_formula_star_h1 = f1; 
+					h_formula_star_h2 = f2; 
+					h_formula_star_pos = pos}) -> 
+		Star ({h_formula_star_h1 = h_subst sst f1; 
+		h_formula_star_h2 = h_subst sst f2; 
+		h_formula_star_pos = pos})
+  | Phase ({h_formula_phase_rd = f1; 
+						h_formula_phase_rw = f2; 
+						h_formula_phase_pos = pos}) -> 
+		Phase ({h_formula_phase_rd = h_subst sst f1; 
+		h_formula_phase_rw = h_subst sst f2; 
+		h_formula_phase_pos = pos})
+  | Conj ({h_formula_conj_h1 = f1; 
+					h_formula_conj_h2 = f2; 
+					h_formula_conj_pos = pos}) -> 
+		Conj ({h_formula_conj_h1 = h_subst sst f1; 
+		h_formula_conj_h2 = h_subst sst f2; 
+		h_formula_conj_pos = pos})
+  | ViewNode ({h_formula_view_node = x; 
+							h_formula_view_name = c; 
+							h_formula_view_imm = imm; 
+							h_formula_view_arguments = svs; 
+							h_formula_view_modes = modes;
+							h_formula_view_coercible = coble;
+							h_formula_view_origins = orgs;
+							h_formula_view_original = original;
+							h_formula_view_unfold_num = i;
+							h_formula_view_label = lbl;
+							h_formula_view_remaining_branches = ann;
+							h_formula_view_pruning_conditions = pcond;
+							h_formula_view_pos = pos} as g) -> 
+		ViewNode { g with 
+							h_formula_view_node = CP.subst_var_par sst x; 
+							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
+							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
+		}
+  | DataNode ({h_formula_data_node = x; 
+							h_formula_data_name = c; 
+							h_formula_data_imm = imm; 
+							h_formula_data_arguments = svs; 
+							h_formula_data_label = lbl;
+							h_formula_data_remaining_branches = ann;
+							h_formula_data_pruning_conditions = pcond;
+							h_formula_data_pos = pos}) -> 
+		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
+							h_formula_data_name = c; 
+							h_formula_data_imm = imm;  
+							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
+							h_formula_data_label = lbl;
+							h_formula_data_remaining_branches = ann;
+							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
+							h_formula_data_pos = pos})
+  | HTrue -> f
+  | HFalse -> f
+  | Hole _ -> f
+(** An Hoa : End of heap formula substitution **) 
+
+(* and subst_var_par sst v = try *)
+(* 			List.assoc v sst *)
+(* 	with Not_found -> v *)
+
+and subst_one_by_one sst (f : formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula in
+  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_x sst f 
+
+and subst_one_by_one_x sst (f : formula) = match sst with
+  | s :: rest -> subst_one_by_one_x rest (apply_one s f)
+  | [] -> f
+
 and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
 
 and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
@@ -1763,7 +1907,9 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 (* the * operator, as the & operator is just a special case when one of *)
 (* the term is pure                                                     *)
 
-and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
+(* x+x' o[x'->fx] x'=x+1 --> x+fx & x'=fx+1 *)
+ 
+and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
   (*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
@@ -1773,8 +1919,15 @@ and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flo
   let new_delta = subst rho2 delta in
   let new_phi = subst rho1 phi in
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
+  let _ = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
+  let _ = must_consistent_formula "compose_formula 2" resform in
   resform
+
+and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
+  let pr1 = !print_formula in
+  let pr3 = !print_svl in
+   Gen.Debug.no_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_x delta phi x flow_tr pos) delta phi x
 	  
 and view_node_types (f:formula):ident list = 
   let rec helper (f:h_formula):ident list =  match f with
@@ -2024,11 +2177,48 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
+let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
+  let rec helper a c = match c with
+    | Ctx es -> f a es
+    | OCtx (c1,c2) -> helper (helper a c1) c2 in
+  helper a c
+
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
+
+let consistent_entail_state (es:entail_state) : bool = consistent_formula es.es_formula
+
+let consistent_context (c:context) : bool = 
+  fold_context (fun a es -> (consistent_entail_state es) && a) true c
+
+let must_consistent_context (s:string) l : unit =
+  if !consistency_checking then
+    let b = consistent_context l in
+    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    else report_error no_pos ("ERROR at "^s^": context inconsistent")
+
+let consistent_branch_ctx ((_,c):branch_ctx) : bool = consistent_context c
+
+
+let consistent_esc_stack (ls:esc_stack) : bool = 
+  List.for_all (fun (_,b_ls) -> List.for_all consistent_branch_ctx b_ls) ls
+ 
+let consistent_failesc_context ((_,es,b_ls):failesc_context) : bool =
+  let b1 = List.for_all (consistent_branch_ctx) b_ls in
+  let b2 = consistent_esc_stack es in
+  b1 && b2
+
+let consistent_list_failesc_context (l:list_failesc_context) : bool =
+   List.for_all (consistent_failesc_context) l
+
+let must_consistent_list_failesc_context (s:string) l : unit =
+  if !consistency_checking then
+    let b = consistent_list_failesc_context l in
+    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    else report_error no_pos ("ERROR: "^s^" list_failesc context inconsistent")
 
 let es_simplify (e1:entail_state):entail_state = 
   let hfv0 = h_fv e1.es_heap in
@@ -2611,21 +2801,28 @@ and change_flow_ctx from_fl to_fl ctx_list =
 	
 (*23.10.2008*)
 
-and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
+and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
   | Ctx es -> begin
 	  match phi with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-			let new_c1 = compose_context_formula ctx phi1 x flow_tr pos in
-			let new_c2 = compose_context_formula ctx phi2 x flow_tr pos in
+			let new_c1 = compose_context_formula_x ctx phi1 x flow_tr pos in
+			let new_c2 = compose_context_formula_x ctx phi2 x flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
 		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag =false;}
 	end
   | OCtx (c1, c2) -> 
-	  let new_c1 = compose_context_formula c1 phi x flow_tr pos in
-	  let new_c2 = compose_context_formula c2 phi x flow_tr pos in
+	  let new_c1 = compose_context_formula_x c1 phi x flow_tr pos in
+	  let new_c2 = compose_context_formula_x c2 phi x flow_tr pos in
 	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
+
+and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = 
+  let pr1 = !print_context_short in
+  let pr2 = !print_formula in
+  let pr3 = !print_svl in
+  Gen.Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
+
 (*TODO: expand simplify_context to normalize by flow type *)
 and simplify_context (ctx:context):context = 
 	if (allFalseCtx ctx) then (false_ctx (mkFalseFlow) no_pos)

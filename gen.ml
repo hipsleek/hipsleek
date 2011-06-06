@@ -1,4 +1,4 @@
-(* *)
+
 module type INC_TYPE =
     sig
       type t
@@ -668,6 +668,10 @@ struct
       else 
         let ns = add_equiv s fv tv in
         elim_elems_one ns fv
+
+  (* TODO : will below suffer name-calsh *)
+  let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap = 
+    List.fold_left (fun e p -> subs_eset p e) s f_t_ls
 
 
   (* returns true if s contains no duplicates *)

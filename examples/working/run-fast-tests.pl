@@ -19,7 +19,9 @@ GetOptions( "stop"  => \$stop,
 			"copy-to-home21" => \$home21,
             "log-timings" => \$timings,
             "log-string=s" => \$str_log,
-            "bags" => \$bags
+            "bags" => \$bags,
+            "term" => \$term,
+            "lists" => \$lists
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
@@ -513,9 +515,64 @@ $output_file = "log";
          "is_black", "SUCCESS", "is_red_1", "SUCCESS", "is_red", "SUCCESS", "case_2r_1", "SUCCESS", "case_2r", "SUCCESS", "rotate_case_3r_1", "SUCCESS", 
          "rotate_case_3r", "SUCCESS", "case_2_1", "SUCCESS", "case_2", "SUCCESS", "rotate_case_3_1", "SUCCESS", "rotate_case_3", "SUCCESS"],
         ["selection.ss", 3, "", "selection_sort", "SUCCESS", "delete_min", "SUCCESS", "find_min", "SUCCESS"],
-        ["trees.ss", 5, "", "delete1", "SUCCESS", "remove_min1", "SUCCESS", "insert1", "SUCCESS", "flatten1", "SUCCESS", "append1", "SUCCESS"]]
-
-              );
+        ["trees.ss", 5, "", "delete1", "SUCCESS", "remove_min1", "SUCCESS", "insert1", "SUCCESS", "flatten1", "SUCCESS", "append1", "SUCCESS"]],
+    "term" => [
+        ["e1.ss", 1, "", "loop", "SUCCESS"],
+        ["ex1.ss", 2, "", "length", "SUCCESS", "app2", "SUCCESS"],
+        ["ex10.ss", 1, "", "loop", "SUCCESS"],
+        ["ex11.ss", 1, "", "bsearch", "SUCCESS"],
+        ["ex12.ss", 1, "", "loop", "SUCCESS"],
+        ["ex12a.ss", 1, "", "loop", "SUCCESS"],
+        ["ex12b.ss", 1, "", "loop", "SUCCESS"],
+        ["ex12c.ss", 1, "", "loop", "SUCCESS"],
+        ["ex13.ss", 1, "", "loop", "SUCCESS"],
+        ["ex14.ss", 1, "", "loop", "SUCCESS"],
+        ["ex14a.ss", 1, "", "loop", "SUCCESS"],
+        ["ex15.ss", 2, "", "loop", "SUCCESS", "f", "SUCCESS"],
+        ["ex16.ss", 1, "", "loop", "SUCCESS"],
+        ["ex2.ss", 1, "", "loop", "SUCCESS"],
+        ["ex3.ss", 1, "", "loop", "SUCCESS"],
+        ["ex4.ss", 1, "", "inc_loop", "SUCCESS"],
+        ["ex5.ss", 1, "", "foo", "SUCCESS"],
+        ["ex6.ss", 1, "", "Ack", "SUCCESS"],
+        ["ex7.ss", 3, "", "loop_aux1", "SUCCESS", "loop_aux", "SUCCESS", "loop", "SUCCESS"],
+        ["ex7a.ss", 1, "", "loop", "SUCCESS"],
+        ["ex8.ss", 2, "", "loop2", "SUCCESS", "loop", "SUCCESS"],
+        ["ex9.ss", 1, "", "loop", "SUCCESS"],
+        ["ex9a.ss", 1, "", "loop", "SUCCESS"],
+        ["mutual.ss", 2, "", "g", "SUCCESS", "f", "SUCCESS"]
+    ],
+    "lists" => [
+        # ["allz1.ss", 0, ""],
+        # ["allz2.ss", 0, ""],
+        # ["allz3.ss", 0, ""],
+        # ["allz4.ss", 0, ""],
+        ["demo.ss", 11, "",, "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["demo2.ss", 3, "", "app_rev", "SUCCESS", "reverse", "SUCCESS", "append", "SUCCESS"],
+        ["err-coq.ss", 2, "", "ret_first2", "SUCCESS", "ret_first", "SUCCESS"],
+        ["ll.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_bak.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_bak2.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_bak3.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_nolists.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
+        ["ll_test1.ss", 1, "", "reverse", "SUCCESS"],
+        ["ll_test2.ss", 1, "", "delete", "SUCCESS"],
+        # ["ll_test3.ss", , "", ],
+        ["ll_test4.ss", 1, "", "test", "SUCCESS"],
+        ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
+        ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
+        ["lrev.ss", 1, "", "lrev", "SUCCESS"],
+        # ["lz_bak.ss", 0, ""],
+        # ["lz_bak2.ss", 0, ""],
+        ["merge.ss", 1, "", "merge", "SUCCESS"],
+        ["merge1.ss", 1, "", "merge", "SUCCESS"],
+        ["merge2.ss", 1, "", "merge", "SUCCESS"],
+        ["merge3.ss", 1, "", "merge", "SUCCESS"],
+        ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
+        ["perm.ss", 1, "", "append", "SUCCESS"]
+    ]
+    );
 
 # list of file, string with result of each entailment....
 %sleek_files=(
@@ -546,9 +603,7 @@ if($timings){
 }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
-print "Starting sleek tests:\n";
 sleek_process_file();
-print "Starting hip tests:\n";
 hip_process_file();
 close(LOGFILE);
 
@@ -620,8 +675,16 @@ sub hip_process_file {
     {
         if ("$param" =~ "hip") {
             $exempl_path_full = "$exempl_path/hip";
+            print "Starting hip tests:\n";
         }elsif("$param" =~ "bags") {
             $exempl_path_full = "$exempl_path/bags";
+            print "Starting bags tests:\n";
+        }elsif ("$param" =~ "term") {
+            $exempl_path_full = "$exempl_path/term";
+            print "Starting term tests:\n";
+        }elsif ("$param" =~ "lists") {
+            $exempl_path_full = "$exempl_path/list_examples";
+            print "Starting term tests:\n";
         }
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
@@ -659,11 +722,15 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-		$t_list = $sleek_files{$param};	
-		foreach $test (@{$t_list})
+      if ("$param" =~ "sleek") {
+          print "Starting sleek tests:\n";
+          $exempl_path_full = "$exempl_path/sleek";
+      }
+      $t_list = $sleek_files{$param};	
+      foreach $test (@{$t_list})
 			{
 			print "Checking $test->[0]\n";
-			$output = `$sleek $script_arguments $exempl_path/sleek/$test->[0] 2>&1`;
+			$output = `$sleek $script_arguments $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
 			$pos = 0;

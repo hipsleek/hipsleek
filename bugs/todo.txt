@@ -1,3 +1,20 @@
+
+added memo_Pure re-patch;
+      should do it more selectively
+
+has assert been specialised?
+  --> specialised on the fly
+
+qsort
+=====
+ q is existential.. 
+ prune baga conditions: (self,q)-163,(self)-162
+ 
+
+use propagation and simplication for pruning conditions?
+
+xform has redundancy (e.g. bugs/llrb5.slk)
+
 A node with Derived became Original after lemma folding! which example?
 
 view_unfold_num should be made into a verifier option

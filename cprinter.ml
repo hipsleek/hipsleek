@@ -645,6 +645,7 @@ let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
+let string_of_formula_label_only x :string = string_of_formula_label x ""
 
 let string_of_iast_label_table table =
   let string_of_row row =
@@ -716,16 +717,16 @@ let pr_mem_slice_aux slc = fmt_string "[";
 let pr_memoise_group_vb m_gr = 
   (*if !pr_mem then *)
   fmt_cut();
-  wrap_box ("B",1)
+  wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "[";pr_list_of_spec_var c.MP.memo_group_fv ; fmt_string "]:") () ; 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE[";pr_list_of_spec_var c.MP.memo_group_fv ; fmt_string "]:") () ; 
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_mem_slice c.MP.memo_group_slice;
               fmt_cut ();fmt_string "  alias set:";
               wrap_box ("B",1) fmt_string (P.EMapSV.string_of c.MP.memo_group_aset);
-              fmt_cut();
+              (* fmt_cut(); *)
           ) m_gr; fmt_string ")") m_gr
   (*else ()*)
   
@@ -1775,6 +1776,7 @@ Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
+Cpure.print_sv := string_of_spec_var;;
 Cformula.print_formula := string_of_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
 Cformula.print_svl := string_of_spec_var_list;;
