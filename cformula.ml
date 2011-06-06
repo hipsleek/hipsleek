@@ -220,6 +220,11 @@ let must_consistent_formula (s:string) (l:formula) : unit =
     if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR at "^s^": formula inconsistent")
 
+
+let check_nonempty_spec (f:struc_formula) : bool = 
+  if f==[] then false
+  else true
+
 let extr_formula_base e = match e with
       {formula_base_heap = h;
       formula_base_pure = p; 
@@ -375,7 +380,7 @@ and isConstETrueSpecs f =
 	| _ -> false
 
           
-and isStrictConstTrue f = match f with
+and isStrictConstTrue_x f = match f with
   | Exists ({ formula_exists_heap = HTrue;
     formula_exists_pure = p;
     formula_exists_branches = br; 
@@ -387,7 +392,10 @@ and isStrictConstTrue f = match f with
         MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])&&(is_true_flow fl.formula_flow_interval)
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
-        
+
+and isStrictConstTrue (f:formula) = 
+  Gen.Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
+
 and isAnyConstTrue f = match f with
   | Exists ({formula_exists_heap = HTrue;
     formula_exists_pure = p;
@@ -481,7 +489,7 @@ and overlapping n p : bool = not(non_overlapping n p)
 and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
 
 and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
-and is_true_flow p :bool = (equal_flow_interval !Globals.n_flow_int p)
+and is_true_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
   
 and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
 
@@ -559,7 +567,10 @@ and flow_formula_of_formula (f:formula) (*pos*) : flow_formula = match f with
 		else Err.report_error { Err.error_loc = no_pos;
 		Err.error_text = "flow_formula_of_formula: disjunctive formula"}
 
-and substitute_flow_in_f to_flow from_flow (f:formula):formula = match f with
+and substitute_flow_in_f to_flow from_flow (f:formula):formula = 
+  Gen.Debug.no_1 "substitute_flow_in_f" !print_formula !print_formula (fun _ -> substitute_flow_in_f_x to_flow from_flow f) f
+
+and substitute_flow_in_f_x to_flow from_flow (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
 		    if (equal_flow_interval from_flow b.formula_base_flow.formula_flow_interval) then 
 		      {formula_flow_interval = to_flow; formula_flow_link = b.formula_base_flow.formula_flow_link}
@@ -568,8 +579,8 @@ and substitute_flow_in_f to_flow from_flow (f:formula):formula = match f with
 		    if (equal_flow_interval from_flow b.formula_exists_flow.formula_flow_interval) then 
 		      {formula_flow_interval = to_flow; formula_flow_link = b.formula_exists_flow.formula_flow_link}
 		    else b.formula_exists_flow;}	
-  | Or b-> Or {formula_or_f1 = substitute_flow_in_f to_flow from_flow b.formula_or_f1;
-	formula_or_f2 = substitute_flow_in_f to_flow from_flow b.formula_or_f2;
+  | Or b-> Or {formula_or_f1 = substitute_flow_in_f_x to_flow from_flow b.formula_or_f1;
+	formula_or_f2 = substitute_flow_in_f_x to_flow from_flow b.formula_or_f2;
 	formula_or_pos = b.formula_or_pos}
 
 and substitute_flow_into_f to_flow (f:formula):formula = match f with

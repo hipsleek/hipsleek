@@ -1,3 +1,5 @@
-why is flow of div2 __Error rather __DivByZeroErr?
+# FIXED : why is flow of div2 __Error rather __DivByZeroErr?
 
+# trans_proc added __flow instead of __norm
 Why no must error for above flow type?
+-- due to ensures __flow for default

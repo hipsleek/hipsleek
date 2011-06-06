@@ -176,6 +176,8 @@ and assign_op =
   | OpDivAssign
   | OpModAssign
 
+
+
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 and exp_arrayat = { exp_arrayat_array_name : ident;
 	     exp_arrayat_index : exp;
@@ -382,6 +384,13 @@ let bool_type = Bool
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
+
+
+let find_empty_static_specs iprog = 
+  let r = iprog.prog_proc_decls in
+  let er = List.filter (fun pd -> pd.proc_static_specs ==[]) r in
+  let s = "Empty Specs: " ^ (pr_list pr_id (List.map (fun x -> x.proc_name) er)) in
+  report_warning no_pos s
  
 (* apply substitution to an id *)
 let apply_subs_to_id (subs:(ident *ident) list) (id:ident) : ident
@@ -1244,7 +1253,7 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
 	end 
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
-  Gen.Debug.ho_1 "build_exc_hierarchy" string_of_bool pr_unit (fun _ -> build_exc_hierarchy clean prog) clean
+  Gen.Debug.no_1 "build_exc_hierarchy" string_of_bool pr_unit (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
   let rec helper e = match e with

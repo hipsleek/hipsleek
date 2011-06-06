@@ -30,7 +30,8 @@ int div___(int a, int b)
 
 
 // why is flow of div2 __Error rather __DivByZeroErr?
-int div2(int a, int b) 
+int div2(int a, int b)
+ requires true 
  case {
   b != 0 -> ensures true;
   b = 0 -> ensures true & flow __DivByZeroErr; 

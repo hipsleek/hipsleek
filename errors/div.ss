@@ -8,3 +8,12 @@ int foo(int a, int b)
   //x = div3(a,0);
   return x;
 }
+
+int foo2(int a, int b)
+  requires true
+  ensures true;
+{
+  int x = div2(a,0);
+  return x;
+}
+
