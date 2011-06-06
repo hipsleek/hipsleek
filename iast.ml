@@ -1516,3 +1516,50 @@ let label_procs_prog prog = {prog with
 	prog_data_decls = List.map (fun c->{ c with data_methods = List.map label_proc c.data_methods}) prog.prog_data_decls;	
 	prog_proc_decls = List.map label_proc prog.prog_proc_decls;
 	}
+(************************************************************************************
+ * Use to support pragma declaration in system
+ *   - Remove duplicated Obj/Class, such as Object and String which are
+ *   automatically generated when translating Iast to Cast.
+ *   - Append all primitives in many seperated prelude files.
+ ************************************************************************************)
+
+(* Use to remove to duplicated Obj/Class when translating many header files along with source program *)
+let rec remove_dup_obj (defs : data_decl list) : data_decl list=
+        match defs with
+        | [] -> []
+        | head::tail ->
+                if (List.mem head tail && (head.data_name = "Object" ||
+                head.data_name = "String")) then
+                        remove_dup_obj tail
+                else head::remove_dup_obj tail
+
+(* Append two prog_decl list *)
+let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) : prog_decl =
+  match iprims_list with
+  | [] -> iprims
+  | hd::tl ->
+        let new_iprims = {
+                prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
+                prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
+                prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
+                prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
+                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls;
+                prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
+                prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
+                prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;} in
+             append_iprims_list new_iprims tl
+
+let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
+  match iprims_list with
+  | [] ->
+        let new_prims = {
+                prog_data_decls = [];
+                prog_global_var_decls = [];
+                prog_enum_decls = [];
+                prog_view_decls = [];
+                prog_rel_decls = [];
+                prog_hopred_decls = [];
+                prog_proc_decls = [];
+                prog_coercion_decls = [];}
+        in new_prims
+  | hd::tl -> append_iprims_list hd tl

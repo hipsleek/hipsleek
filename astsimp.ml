@@ -69,170 +69,24 @@ let is_view_recursive (n:ident) =
   else List.mem n !view_rec 
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
-  
+
 (* let op_map = Hashtbl.create 19 *)
 
 (************************************************************
 Primitives handling stuff
 ************************************************************)
-let prim_str_0 =
-  "int add___(int a, int b) requires true ensures res = a + b;
-int minus___(int a, int b) requires true ensures res = a - b;
 
 
-float add___(float a, float b) requires true ensures res = a + b;
-float minus___(float a, float b) requires true ensures res = a - b;
-bool eq___(int a, int b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(bool a, bool b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(float a, float b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool neq___(int a, int b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(bool a, bool b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(float a, float b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool lt___(int a, int b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lt___(float a, float b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lte___(int a, int b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool lte___(float a, float b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool gt___(int a, int b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gt___(float a, float b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gte___(int a, int b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool gte___(float a, float b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool land___(bool a, bool b) case {
-  a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}
-  !a -> requires true ensures !res;}
-bool lor___(bool a, bool b) case {
-  a -> requires true ensures res;
-  !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
-bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
-int pow___(int a, int b) requires true ensures true;
-"
 (* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
-
-let prim_str =
-  "int add___(int a, int b) requires true ensures res = a + b;
-int minus___(int a, int b) requires true ensures res = a - b;
-int mult___(int a, int b) requires true ensures res = a * b;
-
-int div___(int a, int b) case {
-  a >= 0 -> case {
-    b >= 1 -> requires true ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
-    b <= -1 -> requires true ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-    }
-  a < 0 -> case {
-    b >= 1 -> requires true ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1);
-    b <= -1 -> requires true ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-    }
-}
-
-int mod___(int a, int b) case {
-  a >= 0 -> case {
-    b >= 1 -> requires true ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
-    b <= -1 -> requires true ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-  }
-  a < 0 -> case {
-    b >= 1 -> requires true ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1);
-    b <= -1 -> requires true ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-  }
-}
-
-float add___(float a, float b) requires true ensures res = a + b;
-float minus___(float a, float b) requires true ensures res = a - b;
-float mult___(float a, float b) requires true ensures res = a * b;
-float div___(float a, float b) requires b != 0.0 ensures res = a / b;
-bool eq___(int a, int b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(bool a, bool b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(float a, float b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool neq___(int a, int b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(bool a, bool b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(float a, float b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool lt___(int a, int b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lt___(float a, float b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lte___(int a, int b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool lte___(float a, float b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool gt___(int a, int b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gt___(float a, float b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gte___(int a, int b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool gte___(float a, float b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool land___(bool a, bool b) case {
-  a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}
-  !a -> requires true ensures !res;}
-bool lor___(bool a, bool b) case {
-  a -> requires true ensures res;
-  !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
-bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
-int pow___(int a, int b) requires true ensures true;
-relation update_array(int[] a, int i, int v, int[] r) == true. 
-int array_get_elm_at___(int[] a, int i) requires true ensures res = a[i];
-int[] update___(int[] a, int i, int v) requires true ensures update_array(a,i,v,res);
-"
-and string_of_stab stab = Hashtbl.fold 
-		(fun c1 c2 a -> 
+let string_of_stab stab = Hashtbl.fold
+		(fun c1 c2 a ->
 			a^"; ("^c1^" "^
 			(
                 (* match c2.sv_info_kind with  *)
 				(* | Unknown -> "unknown"  *)
 				(* | Known d->  *)
 			string_of_typ c2.sv_info_kind )^")") stab ""
-	
+
 and string_of_var_kind k = string_of_typ k
   (* (match k with  *)
   (*   	| Unknown -> "unknown"  *)
@@ -240,7 +94,7 @@ and string_of_var_kind k = string_of_typ k
   (*   ("known "^(string_of_typ d)) ) *)
 
 let prim_buffer = Buffer.create 1024
-	  
+
 (* search prog and generate all eq, neq for all the data declaration,      *)
 (* along with the ones in prim_str                                         *)
 let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
@@ -279,8 +133,6 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
   in
     (
      (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
-
-     Buffer.add_string prim_buffer prim_str;
 
      helper prog.I.prog_data_decls;
 
@@ -1035,17 +887,29 @@ and prepare_labels (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
 and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
-	
 
-let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
-  let _ = I.build_exc_hierarchy false prog3 in
+let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
+  let _ = I.build_exc_hierarchy false prog4 in  (* Exceptions - defined by users *)
   let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
-  let prog2 = { prog3 with I.prog_data_decls = 
-          ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
-                      ::prog3.I.prog_data_decls;} in  
-  let prog0 = { prog2 with			
-	  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
-	  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+  let _ = I.build_exc_hierarchy false iprims in (* Errors - defined in prelude.ss*)
+  let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in
+  let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in
+  let prog3 =
+          { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls;
+                       I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls;
+          }
+  in
+  let prog2 = { prog3 with I.prog_data_decls =
+      ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+      ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+      :: prog3.I.prog_data_decls;} in
+
+  let prog1 = { prog2 with
+		  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
+		  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+  let prog0 = { prog1 with
+                  I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
+
   (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
   let _ = I.build_hierarchy prog0 in
   (* let _ = print_string "trans_prog :: I.build_hierarchy PASSED\n" in *)
@@ -1056,7 +920,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
-	    Gen.ExcNumbering.c_h (); 
+	    Gen.ExcNumbering.c_h ();
 	    let prims = gen_primitives prog0 in
 	    let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
       (set_mingled_name prog;
