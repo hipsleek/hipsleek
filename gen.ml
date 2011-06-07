@@ -1665,12 +1665,13 @@ struct
     let r,_ = (lrr Globals.top_flow "") in
     let _ = exc_list := r in
     Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
-    Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);	
-    Globals.spec_flow_int := (get_hash_of_exc Globals.spec_flow);	
+    Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
+    Globals.spec_flow_int := (get_hash_of_exc Globals.spec_flow);
     Globals.top_flow_int := (get_hash_of_exc Globals.top_flow);
     Globals.exc_flow_int := (get_hash_of_exc Globals.abnormal_flow);
-    Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow)
-	    (*let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in*)
+    Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow);
+    Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow)
+    (* let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
 
   let add_edge(n1:string)(n2:string):bool =
 	let _ =  exc_list := !exc_list@ [(n1,n2,Globals.false_flow_int)] in

@@ -1242,6 +1242,7 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
   let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
   let _ = (Gen.ExcNumbering.add_edge sleek_mustbug_flow error_flow) in
+  let _ = (Gen.ExcNumbering.add_edge sleek_maybug_flow error_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
