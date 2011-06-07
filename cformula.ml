@@ -4480,6 +4480,8 @@ and simplify_es_formula (f : formula) =
 		| MCP.MemoF mf -> (!MCP.print_mp_f mf)
 		| MCP.OnePF pf -> (!CP.print_formula pf)
 	in
+(*	let freevars = fv f in                        *)
+(*	let _ = print_endline (!print_svl freevars) in*)
 	match f with
 		| Base ({formula_base_heap = heap;
 						formula_base_pure = pure;
@@ -4488,10 +4490,11 @@ and simplify_es_formula (f : formula) =
 	          formula_base_branches = branches;
 	          formula_base_label = label;
 	          formula_base_pos = pos}) -> 
-			let _ = print_endline (!print_h_formula heap) in
-			let _ = print_endline (print_mix_f pure) in
-			Base ({formula_base_heap = heap;
-						formula_base_pure = pure;
+(*			let _ = print_endline (!print_h_formula heap) in*)
+(*			let _ = print_endline (print_mix_f pure) in     *)
+			let newheap,newpure = simplify_heap_pure heap pure [] in
+			Base ({formula_base_heap = newheap;
+						formula_base_pure = newpure;
 						formula_base_type = fftype;
 	          formula_base_flow = flow;
 	          formula_base_branches = branches;
@@ -4511,13 +4514,48 @@ and simplify_es_formula (f : formula) =
 	            formula_exists_branches = branches;
 	            formula_exists_label = label;
 	            formula_exists_pos = pos}) ->
-			let _ = print_endline (!print_h_formula heap) in
-			let _ = print_endline (print_mix_f pure) in
+(*			let _ = print_endline (!print_h_formula heap) in*)
+(*			let _ = print_endline (print_mix_f pure) in     *)
+			let newheap,newpure = simplify_heap_pure heap pure qvars in
 			Exists ({formula_exists_qvars = qvars;
-	            formula_exists_heap = heap;
-	            formula_exists_pure = pure;
+	            formula_exists_heap = newheap;
+	            formula_exists_pure = newpure;
 	            formula_exists_type = ftype;
 	            formula_exists_flow = flow;
 	            formula_exists_branches = branches;
 	            formula_exists_label = label;
 	            formula_exists_pos = pos})
+
+(** An Hoa : simplify a heap formula with the constraints, bv stores the base variables **)
+and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) bv =
+	(* Free variables in heap part *)
+	let heapfv = h_fv h in
+	let _ = print_string "Heap free variables = " in
+	let _ = print_endline (!print_svl heapfv) in
+	(* Free variables in pure constraints *) 
+	let purefv = MCP.mfv p in
+	let _ = print_string "Pure free variables = " in
+	let _ = print_endline (!print_svl purefv) in
+	(* Intermediate variables = all constraining variables subtract away the essential ones in heap *)
+	let intfv = Gen.BList.difference_eq CP.eq_spec_var purefv heapfv in
+	let _ = print_string "Intermediate variables = " in
+	let _ = print_endline (!print_svl intfv) in
+	
+	(* Internal function to process individual memoised group *)
+	let process_memoised_group mg =
+		let mgas = mg.MCP.memo_group_aset in 
+		(* Removing intermediate variables : for each intermediate one, find the equality constraints and replace their instances in the heap *)
+		let _ = print_string "@vars : " in
+		let _ = print_endline (Cpure.EMapSV.string_of mgas) in
+		(* spl stores a list of equal variables , including special vars for constants *)
+		let spl = Cpure.EMapSV.get_elems mgas in
+		let _ = print_endline (!print_svl spl) in
+		(* construct the replacement list *)
+			mg
+	in
+	(* Now, construct a more compact pure & heap *)
+	match p with
+		| MCP.MemoF fm -> 
+				let nfm = List.map process_memoised_group fm in 
+					(h,MCP.MemoF nfm)
+  	| MCP.OnePF f1 -> (h,p) (* One piece ==> no change *)

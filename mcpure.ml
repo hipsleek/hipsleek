@@ -24,9 +24,9 @@ type memo_pure = memoised_group list
 and memoised_group = {
     memo_group_fv : spec_var list;
     memo_group_changed: bool;
-    memo_group_cons : memoised_constraint list;(*used for pruning*)
+    memo_group_cons : memoised_constraint list;(*used for pruning*) (* var = formula *)
     memo_group_slice: formula list; (*constraints that can not be used for pruning but belong to the current slice non-the less*)
-    memo_group_aset : var_aset;
+    memo_group_aset : var_aset; (* equality constraints *)
     }
 
 and memoised_constraint = {

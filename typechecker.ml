@@ -317,8 +317,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				print_endline ("Visible variables : " ^ (pr_list (fun x->x) visib_names));
 		    let ctx = prune_ctx_failesc_list prog ctx in
             let ctx = list_failesc_context_and_unsat_now prog ctx in
-						(** An Hoa : Add context simplification by removing redundant (atomic) 
-								formulas & variables (from equality) **)
+						(** An Hoa : Add context simplification by removing 
+								redundant (atomic) formulas & variables (from equality) **)
 						let ctx = CF.simplify_list_failesc_context ctx in
             if str = "" then begin
               let str1 = (Cprinter.string_of_list_failesc_context ctx)  in

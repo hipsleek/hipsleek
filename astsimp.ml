@@ -2541,8 +2541,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
     | I.Time (b,s,p) -> (C.Time (b,s,p), C. void_type)
     | I.Dprint { I.exp_dprint_string = str; I.exp_dprint_pos = pos } ->
           let tmp_visib_names = E.visible_names () in
+					(*let _ = print_endline "trans_exp dprint 1" in
+					let _ = List.map print_endline (List.map snd tmp_visib_names) in *)(* An Hoa *)
           let tmp_visib_names = List.filter (fun v -> I.is_named_type (fst v)) tmp_visib_names in
           let visib_names = List.map snd tmp_visib_names in
+					(*let _ = print_endline "trans_exp dprint 2" in
+					let _ = List.map print_endline visib_names in (* An Hoa *)*)
           let ce = C.Dprint {
               C.exp_dprint_string = str;
               C.exp_dprint_visible_names = visib_names;
