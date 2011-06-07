@@ -1,5 +1,4 @@
 class __DivByZeroErr  extends __Error {}
-class __SleekMustErr  extends __Error {}
 
 int add___(int a, int b) 
   requires true 
