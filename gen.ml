@@ -1615,10 +1615,10 @@ struct
 
   let string_of_exc_list (i:int) =
     let x = !exc_list in
-    let el = pr_list (pr_triple pr_id string_of_int string_of_int) (List.map (fun (a,_,(b,c)) -> (a,b,c)) x) in
+    let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int)) (List.map (fun (a,e,p) -> (a,e,p)) x) in
     "Exception List "^(string_of_int i)^":\n"^el
 
-  let remove_dups1 (n:flow_entry list) = BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=b) n
+  let remove_dups1 (n:flow_entry list) = BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
 
   let get_hash_of_exc (f:string): Globals.nflow = 
     if ((String.compare f Globals.stub_flow)==0) then 
@@ -1653,6 +1653,13 @@ struct
 	    else (a,(c,d)) in
     let r,_ = (get !exc_list) in r
 
+  let add_edge(n1:string)(n2:string):bool =
+	let _ =  exc_list := !exc_list@ [(n1,n2,Globals.false_flow_int)] in
+	true
+
+  let add_edge(n1:string)(n2:string):bool =
+    Debug.no_2 "add_edge" pr_id pr_id string_of_bool add_edge n1 n2
+
   (*constructs the mapping between class/data def names and interval types*) 
   let c_h () =
     let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
@@ -1662,7 +1669,9 @@ struct
 	  (temp_l@t,((if ((o_min== -1)||(n_min<o_min)) then n_min else o_min),(if (o_max<n_max) then n_max else o_max)))			
 	  ) ([],(-1,-1)) l1 in
 	  ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
-    let r,_ = (lrr Globals.top_flow "") in
+	let _  = add_edge Globals.top_flow "" in
+    (* let r,_ = (lrr Globals.top_flow "") in *)
+    let r,_ = (lrr "" "") in
     let _ = exc_list := r in
     Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
     Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
@@ -1673,12 +1682,6 @@ struct
     Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow)
     (* let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
 
-  let add_edge(n1:string)(n2:string):bool =
-	let _ =  exc_list := !exc_list@ [(n1,n2,Globals.false_flow_int)] in
-	true
-
-  let add_edge(n1:string)(n2:string):bool =
-    Debug.no_2 "add_edge" pr_id pr_id string_of_bool add_edge n1 n2
 
   let clean_duplicates ()= 
 	exc_list := remove_dups1 !exc_list
