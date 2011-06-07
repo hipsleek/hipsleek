@@ -1662,23 +1662,26 @@ and check_return (proc : I.proc_decl) : bool =
               (not (all_paths_return e))
 	    then false
 	    else true
-
 and set_pre_flow f = 
+  let pr = Cprinter.string_of_struc_formula in
+  Gen.Debug.no_1 "set_pre_flow" pr pr set_pre_flow_x f
+
+and set_pre_flow_x f = 
   let nf = {	Cformula.formula_flow_interval = !n_flow_int;
                 Cformula.formula_flow_link =None} in
   let helper f0 = match f0 with
     | Cformula.EBase b-> Cformula.EBase {b with
 		Cformula.formula_ext_base = Cformula.set_flow_in_formula_override nf b.Cformula.formula_ext_base;
-		Cformula.formula_ext_continuation = set_pre_flow b.Cformula.formula_ext_continuation}
+		Cformula.formula_ext_continuation = set_pre_flow_x b.Cformula.formula_ext_continuation}
     | Cformula.ECase b-> Cformula.ECase {b with 
-        Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow c2))) b.Cformula.formula_case_branches;}
-    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2),b3)
+        Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow_x c2))) b.Cformula.formula_case_branches;}
+    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,((* Cformula.substitute_flow_in_f !n_flow_int !top_flow_int  *)b2),b3)
 	| Cformula.EVariance b -> Cformula.EVariance {b with
-		  Cformula.formula_var_continuation = set_pre_flow b.Cformula.formula_var_continuation
+		  Cformula.formula_var_continuation = set_pre_flow_x b.Cformula.formula_var_continuation
 	  }
   in
   List.map helper f
-      
+
 and check_valid_flows (f:Iformula.struc_formula) = 
   let rec check_valid_flows_f f = match f with
     | Iformula.Base b -> if ((Cformula.is_false_flow (Gen.ExcNumbering.get_hash_of_exc b.Iformula.formula_base_flow))&&

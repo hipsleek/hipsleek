@@ -101,25 +101,25 @@ let check_data_pred_name name :bool =
   let pr2 = string_of_bool in 
   Gen.Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
     
-let process_data_def ddef =
-  print_endline (Iprinter.string_of_data_decl ddef);
-  flush stdout;
-  if check_data_pred_name ddef.I.data_name then
-    let tmp = iprog.I.prog_data_decls in
-    try
-      iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
-      Iast.build_exc_hierarchy true iprog;
-      Gen.ExcNumbering.c_h ();
-      let cddef = AS.trans_data iprog ddef in
-      if !Globals.print_core then 
-        print_string (Cprinter.string_of_data_decl cddef ^"\n");
-      !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls
-    with
-    | _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
-  else begin
-    dummy_exception() ;
-    print_string (ddef.I.data_name ^ " is already defined.\n")
-  end
+(* let process_data_def ddef = *)
+(*   print_endline (Iprinter.string_of_data_decl ddef); *)
+(*   flush stdout; *)
+(*   if check_data_pred_name ddef.I.data_name then *)
+(*     let tmp = iprog.I.prog_data_decls in *)
+(*     try *)
+(*       iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls; *)
+(*       Iast.build_exc_hierarchy true iprog; *)
+(*       Gen.ExcNumbering.c_h (); *)
+(*       let cddef = AS.trans_data iprog ddef in *)
+(*       if !Globals.print_core then  *)
+(*         print_string (Cprinter.string_of_data_decl cddef ^"\n"); *)
+(*       !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls *)
+(*     with *)
+(*     | _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp *)
+(*   else begin *)
+(*     dummy_exception() ; *)
+(*     print_string (ddef.I.data_name ^ " is already defined.\n") *)
+(*   end *)
 
 let process_pred_def pdef = 
     

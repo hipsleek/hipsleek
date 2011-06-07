@@ -3,3 +3,10 @@
 # trans_proc added __flow instead of __norm
 Why no must error for above flow type?
 -- due to ensures __flow for default
+
+disabled __flow --> __norm
+==========================
+Total number of errors: 16 in files:
+  sleek.slk sleek1.slk sleek10.slk sleek2.slk sleek3.slk sleek7.slk sleek8.slk sleek9.slk imm/imm1.slk imm/imm2.slk imm/imm3.slk imm/imm4.slk imm/imm-hard.slkerror at: global5.ss decrease
+
+
