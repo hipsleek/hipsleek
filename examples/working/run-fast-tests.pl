@@ -561,14 +561,13 @@ $output_file = "log";
         ["ll_test4.ss", 1, "", "test", "SUCCESS"],
         ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
         ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
-        ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
         ["lrev.ss", 1, "", "lrev", "SUCCESS"],
         # ["lz_bak.ss", 0, ""],
         # ["lz_bak2.ss", 0, ""],
         ["merge.ss", 1, "", "merge", "SUCCESS"],
         ["merge1.ss", 1, "", "merge", "SUCCESS"],
         ["merge2.ss", 1, "", "merge", "SUCCESS"],
-        ["merge3.ss", 1, "", "merge", "SUCCESS"],
+        ["merge3.ss", 2, "", "merge", "SUCCESS", "merge_fail", "FAIL"],
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ]

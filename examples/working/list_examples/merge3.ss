@@ -14,7 +14,7 @@ sort<L> == self=null & L=[||]
 node merge(node x, node y)
 
 	requires x::sort<L1> * y::sort<L2>
-	ensures res::sort<L> & ( L1 != [||] & L2 != [||] & head(L) = max(head(L1), head(L2))
+  ensures res::sort<L> & ( L1 != [||] & L2 != [||] &  head(L) = min(head(L1), head(L2))
                           | L1 != [||] & L2 = [||] & L = L1
 	                        | L1 = [||] & L2 != [||] & L = L2
                           | L1 = [||] & L2 = [||] & L = [||] );
@@ -33,6 +33,36 @@ node merge(node x, node y)
 				return x;
 			} else {
 				r = merge(x, y.next);
+				y.next = r;
+				return y;
+			}
+		}
+	}
+}
+
+/* append two singly linked lists */
+node merge_fail(node x, node y)
+
+	requires x::sort<L1> * y::sort<L2>
+  ensures res::sort<L> & ( L1 != [||] & L2 != [||] &  head(L) = max(head(L1), head(L2))
+                          | L1 != [||] & L2 = [||] & L = L1
+	                        | L1 = [||] & L2 != [||] & L = L2
+                          | L1 = [||] & L2 = [||] & L = [||] );
+
+{
+	if (x == null) {
+		return y;
+	} else {
+		if (y == null) {
+			return x;
+		} else {
+			node r = null;
+			if (x.val < y.val) {
+				r = merge_fail(x.next, y);
+				x.next = r;
+				return x;
+			} else {
+				r = merge_fail(x, y.next);
 				y.next = r;
 				return y;
 			}
