@@ -185,12 +185,14 @@ let false_flow = "__false"
 let abnormal_flow = "__abnormal"
 let stub_flow = "__stub"
 let error_flow = "__Error"
+let sleek_mustbug_flow = "__SleekMustErr"
 
 let n_flow_int = ref ((-1,-1):nflow)
 let ret_flow_int = ref ((-1,-1):nflow)
 let spec_flow_int = ref ((-1,-1):nflow)
 let top_flow_int = ref ((-2,-2):nflow)
 let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
+let sleek_mustbug_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let false_flow_int = (0,0)
 (*let stub_flow_int = (-3,-3)*)
 

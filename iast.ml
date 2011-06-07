@@ -1232,7 +1232,6 @@ let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 let inbuilt_build_exc_hierarchy () =
   let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
   let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
   let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
   let _ = (Gen.ExcNumbering.add_edge abnormal_flow c_flow) in
   let _ = (Gen.ExcNumbering.add_edge raisable_class abnormal_flow) in
@@ -1241,6 +1240,8 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
   let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
   let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
+  let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
+  let _ = (Gen.ExcNumbering.add_edge sleek_mustbug_flow error_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
