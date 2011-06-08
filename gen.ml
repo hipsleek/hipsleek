@@ -1613,8 +1613,15 @@ struct
     Globals.exc_flow_int := (-2,-2);
     exc_list := []
 
+  let remove_dups1 (n:flow_entry list) = BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
+
+  let clean_duplicates ()= 
+	exc_list := remove_dups1 !exc_list
+
   let reset_exc_hierarchy () =
-    let el = List.map (fun (a,b,_) -> (a,b,(0,0))) !exc_list in
+    let _ = clean_duplicates () in
+    let el = List.fold_left (fun acc (a,b,_) -> 
+        if a="" then acc else (a,b,(0,0))::acc) [] !exc_list in
     exc_list := el
 
   let string_of_exc_list (i:int) =
@@ -1622,7 +1629,6 @@ struct
     let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int)) (List.map (fun (a,e,p) -> (a,e,p)) x) in
     "Exception List "^(string_of_int i)^":\n"^el
 
-  let remove_dups1 (n:flow_entry list) = BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
 
   let get_hash_of_exc (f:string): Globals.nflow = 
     if ((String.compare f Globals.stub_flow)==0) then 
@@ -1674,7 +1680,6 @@ struct
 	  (temp_l@t,((if ((o_min== -1)||(n_min<o_min)) then n_min else o_min),(if (o_max<n_max) then n_max else o_max)))			
 	  ) ([],(-1,-1)) l1 in
 	  ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
-	let _  = add_edge Globals.top_flow "" in
     (* let r,_ = (lrr Globals.top_flow "") in *)
     (* why did below cause segmentation problem for sleek? *)
     let _ = reset_exc_hierarchy () in
@@ -1693,10 +1698,8 @@ struct
 
   let compute_hierarchy i () =
     let pr () = string_of_exc_list 0 in
-     Debug.loop_1 (*_num i*) "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
+     Debug.ho_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
 
-  let clean_duplicates ()= 
-	exc_list := remove_dups1 !exc_list
 
   (* TODO : use a graph module here! *)
   let has_cycles ():bool =

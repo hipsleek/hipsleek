@@ -1230,6 +1230,7 @@ let sub_type t1 t2 = Globals.sub_type t1 t2
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
 let inbuilt_build_exc_hierarchy () =
+  let _  = Gen.ExcNumbering.add_edge top_flow "" in
   let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
   let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
   let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
@@ -1256,7 +1257,7 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let pr _ = Gen.ExcNumbering.string_of_exc_list 33 in
-  Gen.Debug.ho_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
+  Gen.Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
   let rec helper e = match e with
