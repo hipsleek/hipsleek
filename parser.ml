@@ -1073,7 +1073,7 @@ spec:
 	    	 Iformula.formula_ext_pos = (get_pos_camlp4 _loc 1)}
        
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      Iformula.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
+      Iformula.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol),[])
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
 			Iformula.ECase {
 						Iformula.formula_case_branches = bl; 

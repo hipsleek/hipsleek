@@ -879,7 +879,7 @@ and look_up_all_fields (prog : prog_decl) (c : data_decl) : (typed_ident * loc) 
 and collect_struc (f:Iformula.struc_formula):ident list =  List.concat (List.map collect_ext f)
 
 and collect_ext (f:Iformula.ext_formula):ident list = match f with
-  | Iformula.EAssume (b,_) -> collect_formula b
+  | Iformula.EAssume (b,_,_) -> collect_formula b
   | Iformula.ECase b-> List.concat (List.map (fun (c1,c2) -> collect_struc c2) b.Iformula.formula_case_branches)
   | Iformula.EBase b-> (collect_formula b.Iformula.formula_ext_base)@ (collect_struc b.Iformula.formula_ext_continuation)
   | Iformula.EVariance b -> collect_struc b.F.formula_var_continuation
@@ -987,7 +987,7 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formu
 	  else "" in
   
   let rec data_name_in_ext (f:Iformula.ext_formula):ident = match f with
-	| Iformula.EAssume (b,_) -> data_name_of_view1 view_decls b
+	| Iformula.EAssume (b,_,_) -> data_name_of_view1 view_decls b
 	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view_x  view_decls c2) b.Iformula.formula_case_branches)
 	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
 		  [(data_name_of_view_x view_decls b.Iformula.formula_ext_continuation)])

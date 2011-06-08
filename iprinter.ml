@@ -356,7 +356,7 @@ let rec string_of_ext_formula = function
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"["^l1^"]["^l2^"]"^b^" "^c
-	| Iformula.EAssume (b,(n1,n2))-> "EAssume "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+	| Iformula.EAssume (b,(n1,n2),_)-> "EAssume "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
     | Iformula.EVariance {
 			Iformula.formula_var_label = label;
 			Iformula.formula_var_measures = measures;

@@ -52,6 +52,7 @@ type typ =
   Data types for code gen
 *)
 
+
 type mode = 
   | ModeIn
   | ModeOut
@@ -66,6 +67,10 @@ type mode =
 (*   | List          -> "list" *)
 
 let proving_loc : (loc option) ref = ref None
+
+let string_of_sv_pair ((i,p):(ident * primed)) = 
+  let ps = match p with Primed -> "'" | _ -> "" 
+  in "("^i^","^ps^")"
 
 let set_proving_loc p =
   proving_loc := Some p

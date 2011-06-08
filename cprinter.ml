@@ -1023,7 +1023,7 @@ and pr_ext_formula  (e:ext_formula) =
 	          wrap_box ("B",0) pr_struc_formula cont;
             end;
           fmt_close();
-    | EAssume (x,b,(y1,y2))->
+    | EAssume ((x,_),b,(y1,y2))->
           wrap_box ("V",2)
               (fun b ->
 	              fmt_string "EAssume ";
