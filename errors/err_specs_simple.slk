@@ -4,12 +4,12 @@ data node { int val ; node next }.
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
-
+*/
 
 //1. must failure  PASSED
 checkentail n = 1 |- n > 5 & flow __SleekMustErr.
 print residue.
-
+/*
 //2. may failure
 checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
 print residue.
