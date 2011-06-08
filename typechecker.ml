@@ -73,9 +73,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			  Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
-	  | Cformula.EAssume (x,b,y) ->
-            let visible_vars = x in
-            let _ = print_endline ("\nSpec Assume Vars "^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in
+	  | Cformula.EAssume ((x,vs),b,y) ->
+            let visible_vars = vs in
+            let _ = print_endline ("\nSpec Assume Visible Vars "^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in
 
             let _ = set_post_pos (CF.pos_of_formula b) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
@@ -661,7 +661,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		  (* Add es_var_measures *)
 		  (*let init_ctx = CF.add_es_var_measures init_ctx2 proc.proc_static_specs in*)
           let visible_vars = List.fold_left (fun acc (t,i) -> (CP.SpecVar (t,i,Primed))::(CP.SpecVar (t,i,Unprimed)):: acc) [] proc.proc_args in
-          let _ = print_endline ("\nProc "^proc.proc_name^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in
+          let _ = print_endline ("\nProc Visible Vars "^proc.proc_name^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in
 	      let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
 	      let result =
 	        if pp then begin

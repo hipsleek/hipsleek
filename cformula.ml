@@ -36,7 +36,8 @@ and struc_formula = ext_formula list
 and ext_formula = 
   | ECase of ext_case_formula
   | EBase of ext_base_formula
-  | EAssume of ((Cpure.spec_var list) *formula* formula_label)
+             (* ref parameters & straddling variables *)
+  | EAssume of (((Cpure.spec_var list) * (Cpure.spec_var list)) *formula* formula_label)
   | EVariance of ext_variance_formula
         (*  struct_formula *)
  (*
@@ -1241,8 +1242,10 @@ and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc
 			  formula_ext_continuation = apply_one_struc_pre s b.formula_ext_continuation;
 			  formula_ext_pos = b.formula_ext_pos	
 		  })
-	| EAssume (x,b,y)-> if (List.mem fr x) then f
-	  else EAssume (x, (apply_one s b),y)
+	| EAssume (x,b,y)-> 
+          (* FISHY HERE since x is not binding vars *)
+          (* if (List.mem fr x) then f *)
+	      (* else *) EAssume (x, (apply_one s b),y)
 	| EVariance b -> EVariance ({ b with
 		  formula_var_measures = List.map (fun (expr, bound) -> match bound with
 			| None -> ((CP.e_apply_one s expr), None)
@@ -1266,7 +1269,7 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 			  formula_ext_continuation = apply_one_struc s b.formula_ext_continuation;
 			  formula_ext_pos = b.formula_ext_pos	
 		  })
-	| EAssume (x,b,y)-> EAssume((subst_var_list [s] x),(apply_one s b),y)
+	| EAssume ((x1,x2),b,y)-> EAssume(((subst_var_list [s] x1,subst_var_list [s] x2)),(apply_one s b),y)
 	| EVariance b -> EVariance ({ b with
 		  formula_var_measures = List.map (fun (expr, bound) -> match bound with
 			| None -> ((CP.e_apply_one s expr), None)
@@ -3158,7 +3161,7 @@ and plug_ref_vars (f0:struc_formula) (w:Cpure.spec_var list):struc_formula =
 						formula_or_f1 = filter_quantifiers w b.formula_or_f1;
 						formula_or_f2 = filter_quantifiers w b.formula_or_f2;}in
 	let rec helper (f0:ext_formula):ext_formula = match f0 with
-	| EAssume (_,b,t)->  EAssume (w,(filter_quantifiers  w b),t)
+	| EAssume ((_,vs),b,t)->  EAssume ((w,vs),((* FISHY *) filter_quantifiers  w b),t)
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(plug_ref_vars c2 w))) b.formula_case_branches;}
 	| EBase b -> EBase {b with formula_ext_continuation = plug_ref_vars b.formula_ext_continuation w}
 	| EVariance b -> EVariance {b with formula_var_continuation = plug_ref_vars b.formula_var_continuation w}

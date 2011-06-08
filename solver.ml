@@ -2667,7 +2667,7 @@ and heap_entail_conjunct_lhs_struc_x
 		              (*let _ = print_string ("\nresidue: "^(Cprinter.string_of_context_list res)^"\n  "^(string_of_bool (isFalseCtx (List.hd res)))^"\n") in*)
 		              (res,prf)
             )
-        | EAssume (ref_vars, post,(i,y)) -> if not has_post then report_error pos ("malfunction: this formula "^y^" can not have a post condition!")
+        | EAssume ((ref_vars,_), post,(i,y)) -> if not has_post then report_error pos ("malfunction: this formula "^y^" can not have a post condition!")
 	      else
 	        let rs = clear_entailment_history ctx11 in
 	        (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
@@ -5977,10 +5977,10 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	    | EAssume _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
 		| EVariance _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
 	  in r																												  
-    | EAssume (x1,b, (y1',y2') )-> let r = match f2 with
+    | EAssume ((x1,vs1),b, (y1',y2') )-> let r = match f2 with
 	    | ECase d -> combine_ext_struc f2 f1
 	    | EBase d -> combine_ext_struc f2 f1 
-	    | EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
+	    | EAssume ((x2,vs2),d,(y1,y2)) -> EAssume (((x1@x2),vs1@vs2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
 		| EVariance e -> combine_ext_struc f2 f1
 	  in r
 	| EVariance e -> let r = match f2 with
