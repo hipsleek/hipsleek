@@ -91,7 +91,7 @@ and rel_decl = {
 and proc_decl = { 
     proc_name : ident;
     proc_args : typed_ident list;
-				  proc_return : typ;
+	proc_return : typ;
     proc_static_specs : Cformula.struc_formula;
     proc_static_specs_with_pre : Cformula.struc_formula;
     proc_dynamic_specs : Cformula.struc_formula;
