@@ -553,7 +553,7 @@ let formula_wo_paren (e:formula) =
 let ft_assoc_op (e:fail_type) : (string * fail_type list) option = 
   match e with
     | Or_Reason (f1,f2) -> Some (op_or_short,[f1;f2])
-    | And_Reason (f1,f2) -> Some (op_and_short,[f1;f2])
+    | And_Reason (f1,f2, _) -> Some (op_and_short,[f1;f2])
     | Or_Continuation (f1,f2) -> Some (op_or_short,[f1;f2])
     | _ -> None
 
@@ -1123,6 +1123,18 @@ let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_p
 
 let string_of_entail_state  =  string_of_estate
 
+and string_of_failure_kind e_kind=
+match e_kind with
+  | Failure_May -> "MAY"
+  | Failure_Must -> "MUST"
+  | Failure_None -> "None"
+
+let string_of_fail_explaining fe=
+  fmt_open_vbox 1;
+  pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
+(*  fe_sugg = struc_formula *)
+  fmt_close ()
+
 let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 1; fmt_string "{";
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)
@@ -1167,7 +1179,8 @@ let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
-    | Basic_Reason br ->  pr_fail_estate br
+    | Basic_Reason (br,fe) -> (string_of_fail_explaining fe);
+          if fe.fe_kind=Failure_None then () else (pr_fail_estate br)
     | Continuation br ->  pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
@@ -1189,7 +1202,12 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
+    | FailCtx ft -> fmt_cut ();fmt_string "Bad Context: "; 
+        (match ft with
+            | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (*useful: MUST - OK*)
+            | And_Reason (_, _, fe) -> (string_of_fail_explaining fe)
+            | _ -> fmt_string "");
+        pr_fail_type ft; fmt_cut ()
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 

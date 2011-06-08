@@ -1,3 +1,4 @@
+/*
 int foo(int a, int b)
 //requires b!=0
 //ensures true;
@@ -28,4 +29,26 @@ int goo(int a, bool flag)
   else x=a/0;
   return x;
 }
-
+*/
+/*
+int hoo(int a)
+requires true & flow __Error
+ensures true & flow __DivByZeroErr;
+// requires true
+//ensures true & flow __norm;
+{
+  int x;
+  x = a/0;
+  return x;
+}
+*/
+int hoo1(int a)
+requires true
+ensures true & flow __Error;
+// requires true
+//ensures true & flow __norm;
+{
+  int x;
+  x = a/0;
+  return x;
+}

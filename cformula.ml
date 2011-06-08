@@ -2148,6 +2148,16 @@ and context =
 
 and steps = string list
 
+and failure_kind =
+  | Failure_May
+  | Failure_Must
+  | Failure_None
+
+and fail_explaining = {
+  fe_kind: failure_kind (*may/must*)
+(*  fe_sugg = struc_formula *)
+}
+
 and fail_context = {
   fc_prior_steps : steps; (* prior steps in reverse order *)
   fc_message : string;          (* error message *)
@@ -2158,10 +2168,10 @@ and fail_context = {
 }  
     
 and fail_type =
-  | Basic_Reason of fail_context
+  | Basic_Reason of (fail_context * fail_explaining)
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
-  | And_Reason of (fail_type * fail_type)
+  | And_Reason of (fail_type * fail_type * fail_explaining)
   | Continuation of fail_context    
   | Or_Continuation of (fail_type * fail_type)
 
@@ -2322,6 +2332,20 @@ let rec empty_es flowt pos =
   es_aux_conseq = CP.mkTrue pos;
 
 }
+
+let mk_none_fail_type=
+  Basic_Reason ({
+      fc_prior_steps = [];
+      fc_message = "Sucess";
+      fc_current_lhs =  empty_es (mkTrueFlow ()) no_pos;
+      fc_orig_conseq =  [mkETrue  (mkTrueFlow ()) no_pos];
+      fc_failure_pts = [];
+      fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
+  }, {
+      fe_kind = Failure_None
+  }
+)
+
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
@@ -2526,18 +2550,81 @@ let rec union_context_left c_l = match (List.length c_l) with
 
 and fold_context_left_x c_l = union_context_left c_l 
 
+ (*list_context or*)
+and get_explaining t =
+  match t with
+  | Basic_Reason (f, fe) -> Some fe
+  | Trivial_Reason _ -> None
+  | Or_Reason _ -> None
+  | And_Reason (f1, f2, fe) -> Some fe
+  | Continuation _ -> None
+  | Or_Continuation _ -> None
+
+and or_list_failure_explaining fc1 fc2 =
+match (get_explaining fc1, get_explaining fc2) with
+  | None, None ->
+    {
+      fe_kind = Failure_None
+    }
+  | None, Some fe -> fe
+  | Some fe, None -> fe
+  | Some fe1, Some fe2 ->
+      begin
+        match fe1.fe_kind, fe2.fe_kind with
+          | Failure_May, Failure_Must -> (*C1*)
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_Must, Failure_May ->
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_May, Failure_None ->  (*C2*)
+            {
+              fe_kind = Failure_May
+            }
+           | Failure_None, Failure_May ->
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_May, Failure_May -> (*C3*)
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_Must, Failure_Must -> (*C4*)
+            {
+              fe_kind = Failure_Must
+            }
+          | Failure_Must, Failure_None -> (*C5*)
+            {
+              fe_kind = Failure_May
+            }
+           | Failure_None, Failure_Must ->
+            {
+              fe_kind = Failure_May
+            }
+          | _ ->
+            {
+              fe_kind = Failure_None
+            }
+      end
+
 and fold_context_left c_l = 
   let pr = !print_list_context_short in
   let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
   Gen.Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
-  
+ 
   (*list_context or*)
 and or_list_context_x c1 c2 = match c1,c2 with
-     | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
-     | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
-     | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
+     | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2, or_list_failure_explaining t1 t2))
+     | FailCtx t1 ,SuccCtx t2 ->
+         let t21 = mk_none_fail_type in
+        FailCtx (And_Reason (t1,t21, or_list_failure_explaining t1 t21))
+     | SuccCtx t1 ,FailCtx t2 ->
+         let t11 = mk_none_fail_type in
+        FailCtx (And_Reason (t11,t2, or_list_failure_explaining t11 t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
-     
+
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
   Gen.Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
@@ -2654,7 +2741,8 @@ let rec merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail li
     | (l1,b1)::z1,(l2,b2)::z2 -> 
 	if path_trace_eq l1 l2 then 
 	  let res,pt = merge_fail z1 z2 in
-	    ((l1,And_Reason (b1,b2))::res, l1::pt)
+      let fe = {fe_kind = Failure_None} in
+	  ((l1,And_Reason (b1,b2,fe))::res, l1::pt)
 	else if path_trace_lt l1 l2 then 
 	  let res,pt = merge_fail z1 f2 in
 	    ((l1,b1)::res, l1::pt)
@@ -3763,12 +3851,12 @@ let trans_context (c: context) (arg: 'a)
 let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
     | Trivial_Reason s -> c
-    | Basic_Reason br -> Basic_Reason (f br)
+    | Basic_Reason (br,fe) -> Basic_Reason ((f br), fe)
     | Continuation br -> Continuation (f br)
     | Or_Reason (ft1,ft2) -> Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | Or_Continuation (ft1,ft2) -> Or_Continuation ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
-    | And_Reason (ft1,ft2) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
-  
+    | And_Reason (ft1,ft2, fe) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2),fe)
+
 let transform_list_context f (c:list_context):list_context = 
   let f_c,f_f = f in
   match c with
@@ -3806,7 +3894,7 @@ let rec fold_fail_context f (c:fail_type) =
     | Continuation br -> f c []
     | Or_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
     | Or_Continuation (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
-    | And_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
+    | And_Reason (ft1,ft2, _) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
     
 (*let rec fold_list_context f (c:list_context) = 
   let f_f,f_c = f in

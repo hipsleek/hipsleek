@@ -4,7 +4,7 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-
+/*
 // may failure
 checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
 print residue.
@@ -40,12 +40,12 @@ print residue.
 // valid
 checkentail n > 1 or n > 3 |- n > 1.
 //print residue.
-
+*/
 // must failure
-checkentail n > 1 |- n > 3 or n < 1.
+checkentail n = 1 |- n > 5 & flow __Error.
 print residue.
-
+/*
 // may failure
-checkentail n > 1 |- n > 2 or n > 3.
+checkentail n > 1 |- n > 2.
 print residue.
-
+*/
