@@ -2150,12 +2150,14 @@ and steps = string list
 
 and failure_kind =
   | Failure_May
-  | Failure_Must
+  | Failure_Must of string
   | Failure_None
 
 and fail_explaining = {
-  fe_kind: failure_kind (*may/must*)
-(*  fe_sugg = struc_formula *)
+  fe_kind: failure_kind; (*may/must*)
+  (* fe_explain: string;  *)
+    (* string explaining must failure *)
+  (*  fe_sugg = struc_formula *)
 }
 
 and fail_context = {
@@ -2198,10 +2200,17 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
+let mk_failure_must_raw msg = Failure_Must msg
+ 
+let mk_failure_may = {fe_kind = Failure_May;}
+
+let mk_failure_must msg = {fe_kind = mk_failure_must_raw msg;}
+
+let comb_must m1 m2 = "["^m1^","^m2^"]"
 
 let is_must_failure_fe (f:fail_explaining) =
   match f.fe_kind with
-    | Failure_Must -> true 
+    | Failure_Must _ -> true 
     | _ -> false
 
 let is_must_failure_ft (f:fail_type) =
@@ -2352,13 +2361,13 @@ let rec empty_es flowt pos =
 let mk_none_fail_type=
   Basic_Reason ({
       fc_prior_steps = [];
-      fc_message = "Sucess";
+      fc_message = "Success";
       fc_current_lhs =  empty_es (mkTrueFlow ()) no_pos;
       fc_orig_conseq =  [mkETrue  (mkTrueFlow ()) no_pos];
       fc_failure_pts = [];
       fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
   }, {
-      fe_kind = Failure_None
+      fe_kind = Failure_None;
   }
 )
 
@@ -2587,11 +2596,11 @@ match (get_explaining fc1, get_explaining fc2) with
   | Some fe1, Some fe2 ->
       begin
         match fe1.fe_kind, fe2.fe_kind with
-          | Failure_May, Failure_Must -> (*C1*)
+          | Failure_May, Failure_Must _ -> (*C1*)
             {
               fe_kind = Failure_May
             }
-          | Failure_Must, Failure_May ->
+          | Failure_Must _, Failure_May ->
             {
               fe_kind = Failure_May
             }
@@ -2607,15 +2616,15 @@ match (get_explaining fc1, get_explaining fc2) with
             {
               fe_kind = Failure_May
             }
-          | Failure_Must, Failure_Must -> (*C4*)
+          | Failure_Must m1, Failure_Must m2 -> (*C4*)
             {
-              fe_kind = Failure_Must
+              fe_kind = Failure_Must (comb_must m1 m2)
             }
-          | Failure_Must, Failure_None -> (*C5*)
+          | Failure_Must _, Failure_None -> (*C5*)
             {
               fe_kind = Failure_May
             }
-           | Failure_None, Failure_Must ->
+           | Failure_None, Failure_Must _ ->
             {
               fe_kind = Failure_May
             }

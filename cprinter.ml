@@ -1126,7 +1126,7 @@ let string_of_entail_state  =  string_of_estate
 and string_of_failure_kind e_kind=
 match e_kind with
   | Failure_May -> "MAY"
-  | Failure_Must -> "MUST"
+  | Failure_Must _ -> "MUST"
   | Failure_None -> "None"
 
 let string_of_fail_explaining fe=
