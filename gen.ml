@@ -33,7 +33,7 @@ struct
 
   let pr_id x = x
 
-  let print_flush s = print_string (s^"\n"); flush stdout
+  let print_flush s = print_endline (s); flush stdout
 
   let pr_no x = "?"
 
@@ -1661,7 +1661,8 @@ struct
     Debug.no_2 "add_edge" pr_id pr_id string_of_bool add_edge n1 n2
 
   (*constructs the mapping between class/data def names and interval types*) 
-  let c_h () =
+ (* FISHY : cannot be called multiple times, lead to segmentation problem *)
+  let compute_hierarchy () =
     let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
 	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
 	  if ((List.length l1)==0) then let i = (Globals.fresh_int()) in let j = (Globals.fresh_int()) in ([(f1,f2,(i,i))],(i,j))
@@ -1670,8 +1671,9 @@ struct
 	  ) ([],(-1,-1)) l1 in
 	  ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
 	let _  = add_edge Globals.top_flow "" in
-    let r,_ = (lrr Globals.top_flow "") in
-    (* let r,_ = (lrr "" "") in *)
+    (* let r,_ = (lrr Globals.top_flow "") in *)
+    (* why did below cause segmentation problem for sleek? *)
+    let r,_ = (lrr "" "") in
     let _ = exc_list := r in
     Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
     Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
@@ -1682,6 +1684,9 @@ struct
     Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow)
     (* let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
 
+  let compute_hierarchy i () =
+    let pr () = string_of_exc_list 0 in
+     Debug.ho_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
 
   let clean_duplicates ()= 
 	exc_list := remove_dups1 !exc_list
