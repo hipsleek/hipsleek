@@ -9,11 +9,6 @@ int foo(int a, int b)
 {
 
   int x = a / b;
-  //  x = div2(a,2);
-  //x = div2(a,0);
-  //int x = a / 2;
-  //int x = div2(a,0);
-  //x = div3(a,0);
   return x;
 }
 
@@ -21,8 +16,12 @@ int foo(int a, int b)
 int goo(int a, bool flag)
 //requires true
 //  ensures true & flow __flow;
-  requires true
-  ensures true & flow __norm;
+//  requires true
+//  ensures true & flow __norm;
+ case {
+   flag -> ensures res=a & flow __norm;
+   !flag -> ensures true & flow __Error;
+ }
 {
   int x;
   if (flag) x = a/1;

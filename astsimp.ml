@@ -931,7 +931,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
     ( begin
         (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	    Gen.ExcNumbering.c_h ();
-        (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (11)) in *)
+        let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (11)) in
 	    let prims = gen_primitives prog0 in
 	    let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
       (set_mingled_name prog;
