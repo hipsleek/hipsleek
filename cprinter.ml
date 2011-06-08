@@ -1139,6 +1139,8 @@ let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 1; fmt_string "{";
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
+  pr_vwrap "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
+                                                   (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
   (* pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; *)
   (* pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; *)
   (* pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)

@@ -490,7 +490,10 @@ and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if
 
 and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
 and is_true_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
-  
+
+and is_sleek_mustbug_flow p: bool = (equal_flow_interval !Globals.sleek_mustbug_flow_int p)
+and is_sleek_mustbug_flow_ff ff: bool = (equal_flow_interval !Globals.sleek_mustbug_flow_int ff.formula_flow_interval)
+
 and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
 
 (*first subsumes the second*)
@@ -2559,6 +2562,38 @@ and get_explaining t =
   | And_Reason (f1, f2, fe) -> Some fe
   | Continuation _ -> None
   | Or_Continuation _ -> None
+
+and isMustFail fc =
+  begin
+      match get_explaining fc with
+        | Some { fe_kind = fk} ->
+            (
+                match fk with
+                  | Failure_Must -> true
+                  | _ -> false
+            )
+        | None -> false
+  end
+
+and isMayFail fc =
+  begin
+      match get_explaining fc with
+        | Some { fe_kind = fk} ->
+            (
+                match fk with
+                  | Failure_May -> true
+                  | _ -> false
+            )
+        | None -> false
+  end
+ 
+and isMustFailCtx cl = match cl with
+  | FailCtx fc -> isMustFail fc
+  | SuccCtx _ -> false
+
+and isMayFailCtx cl = match cl with
+  | FailCtx fc -> isMayFail fc
+  | SuccCtx _ -> false
 
 and or_list_failure_explaining fc1 fc2 =
 match (get_explaining fc1, get_explaining fc2) with
