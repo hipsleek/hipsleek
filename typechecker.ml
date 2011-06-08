@@ -23,14 +23,19 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list 
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
-      
+
 (* assumes the pre, and starts the symbolic execution*)
 and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = 
   let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
-    (*let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
+(*    let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
+		(** An Hoa : Print the specification variables **)
+(*		let svars = Cformula.struc_fv [spec] in                          *)
+(*		let _ = print_string "Specification variables : " in             *)
+(*		let _ = print_endline (Cprinter.string_of_spec_var_list svars) in*)
+		(** An Hoa : End **)
     let pos_spec = CF.pos_of_struc_formula [spec] in
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
@@ -322,7 +327,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let ctx = list_failesc_context_and_unsat_now prog ctx in
 						(** An Hoa : Add context simplification by removing 
 								redundant (atomic) formulas & variables (from equality) **)
-						let ctx = CF.simplify_list_failesc_context ctx in
+						let ctx = CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars in
             if str = "" then begin
               let str1 = (Cprinter.string_of_list_failesc_context ctx)  in
 	          (if (Gen.is_empty ctx) then
@@ -663,7 +668,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
           let visible_vars = List.fold_left (fun acc (t,i) -> (CP.SpecVar (t,i,Primed))::(CP.SpecVar (t,i,Unprimed)):: acc) [] proc.proc_args in
           let _ = print_endline ("\nProc Visible Vars "^proc.proc_name^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in
 	      let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
-	      let result =
+				let result =
 	        if pp then begin
 		      print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
 		      true

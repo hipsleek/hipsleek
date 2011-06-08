@@ -1304,7 +1304,7 @@ and subst_x sst (f : formula) =
 					formula_base_branches = b;
 					formula_base_label = lbl;
 					formula_base_pos = pos}) -> 
-		Base ({formula_base_heap = h_subst sst h; 
+		Base ({formula_base_heap = subst_heap sst h; 
 					formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst p); 
 					formula_base_type = t;
 					(* formula_base_imm = imm; *)
@@ -1327,7 +1327,7 @@ and subst_x sst (f : formula) =
 		let sst = List.filter (fun (fr,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
 		if sst = [] then f
 		else Exists ({formula_exists_qvars = qsv; 
-									formula_exists_heap =  h_subst sst qh; 
+									formula_exists_heap =  subst_heap sst qh; 
 									formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
 									formula_exists_type = tconstr;
 									(* formula_exists_imm = imm; *)
@@ -1339,25 +1339,25 @@ and subst_x sst (f : formula) =
 (** An Hoa : End of formula substitution **)
 
 (** An Hoa: Function to substitute variables in a heap formula in parallel **)
-and h_subst sst (f : h_formula) = 
+and subst_heap sst (f : h_formula) = 
 	match f with
   | Star ({h_formula_star_h1 = f1; 
 					h_formula_star_h2 = f2; 
 					h_formula_star_pos = pos}) -> 
-		Star ({h_formula_star_h1 = h_subst sst f1; 
-		h_formula_star_h2 = h_subst sst f2; 
+		Star ({h_formula_star_h1 = subst_heap sst f1; 
+		h_formula_star_h2 = subst_heap sst f2; 
 		h_formula_star_pos = pos})
   | Phase ({h_formula_phase_rd = f1; 
 						h_formula_phase_rw = f2; 
 						h_formula_phase_pos = pos}) -> 
-		Phase ({h_formula_phase_rd = h_subst sst f1; 
-		h_formula_phase_rw = h_subst sst f2; 
+		Phase ({h_formula_phase_rd = subst_heap sst f1; 
+		h_formula_phase_rw = subst_heap sst f2; 
 		h_formula_phase_pos = pos})
   | Conj ({h_formula_conj_h1 = f1; 
 					h_formula_conj_h2 = f2; 
 					h_formula_conj_pos = pos}) -> 
-		Conj ({h_formula_conj_h1 = h_subst sst f1; 
-		h_formula_conj_h2 = h_subst sst f2; 
+		Conj ({h_formula_conj_h1 = subst_heap sst f1; 
+		h_formula_conj_h2 = subst_heap sst f2; 
 		h_formula_conj_pos = pos})
   | ViewNode ({h_formula_view_node = x; 
 							h_formula_view_name = c; 
@@ -4420,25 +4420,25 @@ and extr_lhs_b (es:entail_state) =
   b1
 	
 (** An Hoa : simplify a list failesc context **)
-let rec simplify_list_failesc_context ctx = 
-	List.map simplify_failesc_context ctx
+let rec simplify_list_failesc_context (ctx : list_failesc_context) (bv : CP.spec_var list) = 
+	List.map (fun x -> simplify_failesc_context x bv) ctx
 	
 (** An Hoa : simplify a failesc context **)
-and simplify_failesc_context (ctx : failesc_context) = 
+and simplify_failesc_context (ctx : failesc_context) (bv : CP.spec_var list) = 
 	match ctx with
 		| (brfaillist,escstk,brctxlist) -> 
-			let newbrctxlist = List.map simplify_branch_context brctxlist in
+			let newbrctxlist = List.map (fun x -> simplify_branch_context x bv) brctxlist in
 				(brfaillist,escstk,newbrctxlist)
 			
 (** An Hoa : simplify a branch context **)
-and simplify_branch_context (brctx : branch_ctx) =
+and simplify_branch_context (brctx : branch_ctx) (bv : CP.spec_var list) =
 	match brctx with
 		| (pathtrc, ctx) ->
-			let newctx = simplify_context ctx in
+			let newctx = simplify_context ctx bv in
 				(pathtrc, newctx)
 
 (** An Hoa : simplify a context **)
-and simplify_context (ctx : context) = 
+and simplify_context (ctx : context) (bv : CP.spec_var list) = 
 	match ctx with
 		| Ctx ({ es_formula = esformula;
 				  es_heap = esheap;
@@ -4471,13 +4471,13 @@ and simplify_context (ctx : context) =
 				  es_subst = essubst; 
 				  es_aux_conseq = esauxconseq;
 					} as es) -> 
-						let sesfml = simplify_es_formula esformula in
+						let sesfml = simplify_es_formula esformula bv in
 							Ctx { es with es_formula = sesfml }
 		| OCtx (ctx1, ctx2) -> 
-					OCtx (simplify_context ctx1, simplify_context ctx2)
+					OCtx (simplify_context ctx1 bv, simplify_context ctx2 bv)
 
 (** An Hoa : simplify a general formula **)
-and simplify_es_formula (f : formula) = 
+and simplify_es_formula (f : formula) (bv : CP.spec_var list) = 
 	(* Print the mix formula for testing purpose *)
 	let print_mix_f (f : MCP.mix_formula) = match f with
 		| MCP.MemoF mf -> (!MCP.print_mp_f mf)
@@ -4495,7 +4495,7 @@ and simplify_es_formula (f : formula) =
 	          formula_base_pos = pos}) -> 
 (*			let _ = print_endline (!print_h_formula heap) in*)
 (*			let _ = print_endline (print_mix_f pure) in     *)
-			let newheap,newpure = simplify_heap_pure heap pure [] in
+			let newheap,newpure = simplify_heap_pure heap pure bv in
 			Base ({formula_base_heap = newheap;
 						formula_base_pure = newpure;
 						formula_base_type = fftype;
@@ -4506,8 +4506,8 @@ and simplify_es_formula (f : formula) =
 		| Or ({formula_or_f1 = f1;
 	        formula_or_f2 = f2;
 	        formula_or_pos = pos}) -> 
-			Or ({formula_or_f1 = simplify_es_formula f1;
-					formula_or_f2 = simplify_es_formula f2;
+			Or ({formula_or_f1 = simplify_es_formula f1 bv;
+					formula_or_f2 = simplify_es_formula f2 bv;
 					formula_or_pos = pos})
 		| Exists ({formula_exists_qvars = qvars;
 	            formula_exists_heap = heap;
@@ -4519,7 +4519,7 @@ and simplify_es_formula (f : formula) =
 	            formula_exists_pos = pos}) ->
 (*			let _ = print_endline (!print_h_formula heap) in*)
 (*			let _ = print_endline (print_mix_f pure) in     *)
-			let newheap,newpure = simplify_heap_pure heap pure qvars in
+			let newheap,newpure = simplify_heap_pure heap pure bv(*qvars*) in
 			Exists ({formula_exists_qvars = qvars;
 	            formula_exists_heap = newheap;
 	            formula_exists_pure = newpure;
@@ -4530,35 +4530,73 @@ and simplify_es_formula (f : formula) =
 	            formula_exists_pos = pos})
 
 (** An Hoa : simplify a heap formula with the constraints, bv stores the base variables **)
-and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) bv =
+and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var list) =
+	(* Print the base variables *)
+(*	let _ = print_string "Specification & procedure base variables = " in*)
+(*	let _ = print_endline (!print_svl bv) in                             *)
 	(* Free variables in heap part *)
 	let heapfv = h_fv h in
-	let _ = print_string "Heap free variables = " in
-	let _ = print_endline (!print_svl heapfv) in
+(*	let _ = print_string "Heap free variables = " in*)
+(*	let _ = print_endline (!print_svl heapfv) in    *)
 	(* Free variables in pure constraints *) 
 	let purefv = MCP.mfv p in
-	let _ = print_string "Pure free variables = " in
-	let _ = print_endline (!print_svl purefv) in
+(*	let _ = print_string "Pure free variables = " in*)
+(*	let _ = print_endline (!print_svl purefv) in    *)
 	(* Intermediate variables = all constraining variables subtract away the essential ones in heap *)
 	let intfv = Gen.BList.difference_eq CP.eq_spec_var purefv heapfv in
-	let _ = print_string "Intermediate variables = " in
-	let _ = print_endline (!print_svl intfv) in
+(*	let _ = print_string "Intermediate variables = " in*)
+(*	let _ = print_endline (!print_svl intfv) in        *)
+	let nh = ref h in
 	
 	(* Internal function to process individual memoised group *)
 	let process_memoised_group mg =
+		let mgfv = mg.MCP.memo_group_fv in 
 		let mgas = mg.MCP.memo_group_aset in 
+		let mggs = mg.MCP.memo_group_slice in
+		let mggc = mg.MCP.memo_group_cons in
 		(* Removing intermediate variables : for each intermediate one, find the equality constraints and replace their instances in the heap *)
-		let _ = print_string "@vars : " in
-		let _ = print_endline (Cpure.EMapSV.string_of mgas) in
-		(* spl stores a list of equal variables , including special vars for constants *)
-		let spl = Cpure.EMapSV.get_elems mgas in
-		let _ = print_endline (!print_svl spl) in
-		(* construct the replacement list *)
-			mg
+		(*let _ = print_string "@vars : " in
+		let _ = print_endline (Cpure.EMapSV.string_of mgas) in*)
+		(* spl stores a list of equal variables, including special vars for constants *)
+		let spl = CP.EMapSV.get_elems mgas in
+(*		let _ = print_endline (!print_svl spl) in*)
+			if (CP.EMapSV.overlap spl bv) then
+				let subv = List.fold_left (fun x y ->
+					let r = CP.EMapSV.find mgas y in
+					let r = if (r != []) then [y] else [] in
+					List.append x r) [] bv in
+				let subv = List.hd subv in
+				let tobereplaced = CP.EMapSV.find_equiv_all subv mgas in
+				(* Remove subv *)
+				let tobereplaced = List.filter (fun x -> not (CP.eq_spec_var x subv)) tobereplaced in
+				(* Primed variables cannot be replaced! *)
+				let tobereplaced = List.filter CP.is_unprimed tobereplaced in
+				let sst = List.map (fun x -> (x,subv)) tobereplaced in
+				(* Replaced variables which we can find the equivalent one in the set of logical variables *)
+					nh := subst_heap sst !nh;
+				(* We also have to replace the ones in this mg *)
+				if (tobereplaced != []) then
+(*				let _ = print_string ("==> reducible :: replace variables in " ^ (!print_svl tobereplaced) ^ " by " ^ (!print_sv subv)) in*)
+(*				let _ = print_string (!print_h_formula !nh) in       *)
+					(** Wrong! Only remove the ones that are replaced! 
+                     Also, have to do substitution in the formulas as well.
+										 Change the list of free variables. **)
+(*					let _ = print_string "group slice = " in                                                  *)
+(*					let _ = List.map (fun f -> print_endline (!CP.print_formula f)) mggs in                   *)
+(*					let _ = print_string "group constraints = " in                                            *)
+(*					let _ = List.map (fun c -> print_endline (!CP.print_b_formula c.MCP.memo_formula)) mggc in*)
+					{ mg with 
+						MCP.memo_group_fv = mgfv;
+						MCP.memo_group_aset = CP.EMapSV.mkEmpty;
+						MCP.memo_group_slice = List.map (fun f -> CP.subst sst f) mggs;
+						MCP.memo_group_cons = List.map (fun c -> let f = CP.b_apply_subs sst c.MCP.memo_formula in
+																											{ c with MCP.memo_formula = f }) mggc }
+				else (* let _ = print_string "==> irreducible.\n" in *) mg
+			else (* let _ = print_string "==> irreducible.\n" in *) mg
 	in
 	(* Now, construct a more compact pure & heap *)
 	match p with
 		| MCP.MemoF fm -> 
 				let nfm = List.map process_memoised_group fm in 
-					(h,MCP.MemoF nfm)
+					(!nh, MCP.MemoF nfm)
   	| MCP.OnePF f1 -> (h,p) (* One piece ==> no change *)
