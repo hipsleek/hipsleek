@@ -1600,6 +1600,7 @@ struct
   open Basic
 
   (*hairy stuff for exception numbering*)
+  (* TODO : should be changed to use Ocaml graph *)
 
   type flow_entry = string * string * Globals.nflow 
 
@@ -1681,11 +1682,11 @@ struct
 	  ) ([],(-1,-1)) l1 in
 	  ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
     (* let r,_ = (lrr Globals.top_flow "") in *)
-    (* why did below cause segmentation problem for sleek? *)
+    (* why did lrr below cause segmentation problem for sleek? *)
     let _ = reset_exc_hierarchy () in
-    let _ = print_flush "c-h 1" in
+    (* let _ = print_flush "c-h 1" in *)
     let r,_ = (lrr "" "") in
-    let _ = print_flush "c-h 2" in
+    (* let _ = print_flush "c-h 2" in *)
     let _ = exc_list := r in
     Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
     Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
@@ -1698,7 +1699,7 @@ struct
 
   let compute_hierarchy i () =
     let pr () = string_of_exc_list 0 in
-     Debug.ho_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
+     Debug.no_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
 
 
   (* TODO : use a graph module here! *)

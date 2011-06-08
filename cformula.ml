@@ -2198,6 +2198,22 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
+
+let is_must_failure_fe (f:fail_explaining) =
+  match f.fe_kind with
+    | Failure_Must -> true 
+    | _ -> false
+
+let is_must_failure_ft (f:fail_type) =
+  match f with
+    | Basic_Reason (_,fe) | And_Reason (_,_,fe) -> is_must_failure_fe fe
+    | _ -> false
+
+let is_must_failure (f:list_context) =
+  match f with
+    | FailCtx f -> is_must_failure_ft f
+    | _ -> false
+
 let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
   let rec helper a c = match c with
     | Ctx es -> f a es
