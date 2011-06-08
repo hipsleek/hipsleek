@@ -1670,8 +1670,8 @@ struct
 	  ) ([],(-1,-1)) l1 in
 	  ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
 	let _  = add_edge Globals.top_flow "" in
-    (* let r,_ = (lrr Globals.top_flow "") in *)
-    let r,_ = (lrr "" "") in
+    let r,_ = (lrr Globals.top_flow "") in
+    (* let r,_ = (lrr "" "") in *)
     let _ = exc_list := r in
     Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
     Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
