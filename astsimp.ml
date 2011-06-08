@@ -1823,6 +1823,9 @@ and check_valid_flows f =
       
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
+	(** An Hoa : print the procedure name **)
+(*	let _ = print_endline ("Translating procedure " ^ proc.I.proc_mingled_name ^ "...") in*)
+	(** An Hoa : end **)
   let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
   if not (Gen.is_empty dup_names) then
     (let p = List.hd dup_names in
@@ -1876,6 +1879,13 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	  | Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
 	(* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
 	let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+	(** An Hoa : compute the important variables **)
+	let ftypes, fnames = List.split args in
+	(* fsvars are the spec vars corresponding to the parameters *)
+	let imp_vars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+(*	let _ = print_string "Function parameters : " in                    *)
+(*	let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
+	(** An Hoa : end **)
 	let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
 	let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
 	let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
@@ -1884,6 +1894,14 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let final_static_specs_list =
 	  if Gen.is_empty static_specs_list then Cast.mkEAssume proc.I.proc_loc
 	  else static_specs_list in
+	(** An Hoa : print out final_static_specs_list for inspection **)
+(*	let _ = print_string "Static spec list : " in                                      *)
+(*	let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in*)
+	let imp_spec_vars = collect_important_vars_in_spec final_static_specs_list in
+	let imp_vars = List.append imp_vars imp_spec_vars in
+(*	let _ = print_string "Important variables found: " in               *)
+(*	let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
+	(** An Hoa : end **)
 	let final_dynamic_specs_list = dynamic_specs_list in
        let _ = 
          let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
@@ -1896,15 +1914,55 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
              C.proc_name = proc.I.proc_mingled_name;
              C.proc_args = args;
              C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
+						 C.proc_important_vars = imp_vars; (* An Hoa *)
              C.proc_static_specs = final_static_specs_list;
              C.proc_dynamic_specs = final_dynamic_specs_list;
-             C.proc_static_specs_with_pre =  [];
+             C.proc_static_specs_with_pre = [];
              C.proc_by_name_params = by_names;
              C.proc_body = body;
              C.proc_file = proc.I.proc_file;
              C.proc_loc = proc.I.proc_loc;} in 
 	     (E.pop_scope (); cproc))))
 
+(** An Hoa : collect important variables in the specification
+							Important variables are the ones that appears in the
+							post-condition. Those variables are necessary in order
+							to prove the final correctness. **)
+and collect_important_vars_in_spec (spec : Cformula.struc_formula) : (CP.spec_var list) =
+	(** An Hoa : Internal function to collect important variables in the an ext_formula **)	
+	let helper f =
+		match f with
+			| CF.ECase ({CF.formula_case_branches = branches;
+								CF.formula_case_exists = vars;
+								CF.formula_case_pos = pos }) -> 
+(*									let _ = print_endline "collect_important_vars_in_spec ==> ECase" in *)
+(*									let _ = print_endline (Cprinter.string_of_spec_var_list vars) in    *)
+										List.fold_left (fun x y -> List.append x (collect_important_vars_in_spec (snd y))) [] branches 
+			| CF.EBase (	{CF.formula_ext_explicit_inst = evars;
+								CF.formula_ext_implicit_inst = ivars;
+								CF.formula_ext_exists = qvars;
+								CF.formula_ext_base = base;
+								CF.formula_ext_continuation = cont;
+								CF.formula_ext_pos = pos }) ->
+(*									let _ = print_endline "collect_important_vars_in_spec ==> EBase" in                           *)
+(*									let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in              *)
+(*									let _ = print_endline ("ivars = " ^ (Cprinter.string_of_spec_var_list ivars)) in              *)
+(*									let _ = print_endline ("qvars = " ^ (Cprinter.string_of_spec_var_list qvars)) in              *)
+(*									let _ = print_endline ("formula = " ^ (Cprinter.string_of_formula base)) in                   *)
+(*									let _ = print_endline ("continuation formula = " ^ (Cprinter.string_of_struc_formula cont)) in*)
+(*									let _ = collect_important_vars_in_spec cont in                                                *)
+										ivars
+  		| CF.EAssume (vars,fa,_) -> []
+(*									let _ = print_endline "collect_important_vars_in_spec ==> EAssume" in         *)
+(*									let _ = print_endline ("vars = " ^ (Cprinter.string_of_spec_var_list vars)) in*)
+(*									let _ = print_endline ("formula = " ^ (Cprinter.string_of_formula fa)) in     *)
+(*										vars*)
+  		| CF.EVariance _ -> []
+	(** An Hoa : end helper **)
+	in
+		List.fold_left (fun x y -> List.append x (helper y)) [] spec 
+(** An Hoa : end collect_important_vars_in_spec **)
+	
 (* transform coercion lemma from iast to cast *)
 and trans_coercions (prog : I.prog_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =

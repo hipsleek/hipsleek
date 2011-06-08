@@ -91,7 +91,16 @@ and rel_decl = {
 and proc_decl = { 
     proc_name : ident;
     proc_args : typed_ident list;
-				  proc_return : typ;
+		proc_return : typ;
+		(** An Hoa : pre-computed list of important variables; 
+								namely the program parameters & logical variables 
+								in the specification that need to be retained 
+								during the process of verification i.e. such 
+								variables should not be removed when we perform
+								simplification. **)
+		(** An Hoa : remark - all prime variables are important. **)
+		proc_important_vars : P.spec_var list;
+		(** An Hoa : end **)
     proc_static_specs : Cformula.struc_formula;
     proc_static_specs_with_pre : Cformula.struc_formula;
     proc_dynamic_specs : Cformula.struc_formula;
