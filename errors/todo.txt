@@ -1,12 +1,83 @@
 # FIXED : why is flow of div2 __Error rather __DivByZeroErr?
 
-# trans_proc added __flow instead of __norm
-Why no must error for above flow type?
--- due to ensures __flow for default
+# FIXED : trans_proc added __flow instead of __norm
 
-disabled __flow --> __norm
-==========================
-Total number of errors: 16 in files:
-  sleek.slk sleek1.slk sleek10.slk sleek2.slk sleek3.slk sleek7.slk sleek8.slk sleek9.slk imm/imm1.slk imm/imm2.slk imm/imm3.slk imm/imm4.slk imm/imm-hard.slkerror at: global5.ss decrease
+Is below correct?
+==================
 
+ -----------------------
+ x=0 |- x>5 * Fail_Must
+
+ -----------------------
+ x>0 |- x>5 * Fail_May
+
+
+ -----------------------
+ true |- x>1 * Fail_May
+
+
+ ----------------------------------
+ x=null |- x::node<_,_> * Fail_Must
+
+
+ ----------------------------------
+ x::node<...> |- x=null * Fail_Must
+
+
+ ----------------------------------
+ x::ll<x> |- x::sll<x>  * Fail_May
+
+ ----------------------------------
+ x::sll<x> |- x::ll<x>  * Valid
+
+
+  (needs a lemma)
+ ---------------------------------------------------------------
+ x::pos_list_nonempty<x> |- x::neg_list_nonempty<x>  * Fail_Must
+
+
+ x::node<5,null> |- x::node<6,null> * Fail_Must
+
+ x::node<_,null> |- x::node<6,null> * Fail_May
+
+
+  pos_ll<> = self=null
+        or self::node<v,q>*q::pos_ll<> & v>0
+
+
+  neg_ll<> = self=null
+        or self::node<v,q>*q::neg_ll<> & v<0
+
+
+  x::pos_ll<> & x!=null |- x::neg_ll<> * Fail_Must
+
+
+  x::pos_ll<> |- x::neg_ll<> * Fail_May
+
+
+  x::ll<n> |- x::ll<n-1> * Fail_Must?
+
+  (Fail lhs --> rhs)
+
+  What is the difference between may and must fail?
+
+  What is the difference between normal and failure?
+
+          ok <: may_fail
+   must_fail <: may_fail
+
+  What is the cause of failure?
+
+           D1 |- D3 * residue
+           D2 |- failure (cause of failure)
+        -------------------------
+         D1 * D2 |- D3 * failure * residue 
+
+ Body hugging entailment..
+
+ It is always safe to fail..
+
+  false |- anything
+
+  anything |- true
 
