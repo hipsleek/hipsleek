@@ -6174,80 +6174,80 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
   (* let pick_pures (f:CP.formula list) v_l :(CP.b_formula list) =  *)
 
-  let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-    let l1,l2 = get_pure_conj_list f in
-    let l = filter_pure_conj_list l1 in      
-    let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
-    let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
-    let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) l2 (*(CP.mkTrue no_pos)*) eq in
-    let ev = (Gen.BList.difference_eq (=) (CP.fv n_f) v_l) in
-    let to_s = CP.mkExists ev n_f None no_pos in
-    (*let _ = print_string ("\n to_s:: "^(Cprinter.string_of_pure_formula to_s)^"\n") in*)
-    let from_s =  TP.simplify_omega to_s in
-    (*let _ = print_string ("\n from_s:: "^(Cprinter.string_of_pure_formula from_s)^"\n") in*)
-    let r = hull_invs v_l from_s in   
-    (*let r = TP.hull r in*)
-    if r=[] then [neq] 
-    else List.map (fun c-> CP.mkAnd c neq no_pos) r in
+  (* let simplify_pures (f:CP.formula) v_l :(CP.formula list) =  *)
+  (*   let l1,l2 = get_pure_conj_list f in *)
+  (*   let l = filter_pure_conj_list l1 in       *)
+  (*   let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in *)
+  (*   let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in *)
+  (*   let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) l2 (\*(CP.mkTrue no_pos)*\) eq in *)
+  (*   let ev = (Gen.BList.difference_eq (=) (CP.fv n_f) v_l) in *)
+  (*   let to_s = CP.mkExists ev n_f None no_pos in *)
+  (*   (\*let _ = print_string ("\n to_s:: "^(Cprinter.string_of_pure_formula to_s)^"\n") in*\) *)
+  (*   let from_s =  TP.simplify_omega to_s in *)
+  (*   (\*let _ = print_string ("\n from_s:: "^(Cprinter.string_of_pure_formula from_s)^"\n") in*\) *)
+  (*   let r = hull_invs v_l from_s in    *)
+  (*   (\*let r = TP.hull r in*\) *)
+  (*   if r=[] then [neq]  *)
+  (*   else List.map (fun c-> CP.mkAnd c neq no_pos) r in *)
 
-  let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-    Gen.Debug.no_2 "simplify_pures " Cprinter.string_of_pure_formula 
-        Cprinter.string_of_spec_var_list
-        (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
-        simplify_pures f v_l in
+  (* let simplify_pures (f:CP.formula) v_l :(CP.formula list) =  *)
+  (*   Gen.Debug.no_2 "simplify_pures " Cprinter.string_of_pure_formula  *)
+  (*       Cprinter.string_of_spec_var_list *)
+  (*       (Cprinter.string_of_list_f Cprinter.string_of_pure_formula) *)
+  (*       simplify_pures f v_l in *)
 
-  let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list=     
-    match f1 with    
-      | CP.Lt (e1,e2,l)  -> 
-            ( match f2 with
-              | CP.Lt(d1,d2,l) 
-              | CP.Lte(d1,d2,l) ->  if (CP.eq_exp_no_aset e2 d1) then [CP.Lt (e1, d2,l)] else []
-              | _ -> []) 
-      | CP.Lte (e1,e2,_) -> 
-            ( match f2 with
-              | CP.Lt(d1,d2,l) -> if (CP.eq_exp_no_aset e2 d1) then [CP.Lt (e1, d2,l)] else []
-              | CP.Lte(d1,d2,l) ->  if (CP.eq_exp_no_aset e2 d1) then [CP.Lte (e1, d2,l)] else []
-              | _ -> []) 
-      | CP.Eq (e1,e2,_)  -> 
-            let spec_eq c d = if (CP.eq_exp_no_aset c d) then (match c with | CP.IConst _ | CP.FConst _ -> false | _-> true) else false in
-            let pick_three e1 e2 d1 d2 fct l= 
-              if (spec_eq d1 e1) then [fct (e2,d2,l)]
-              else if (spec_eq d1 e2) then [fct (e1,d2,l)]
-              else if (spec_eq d2 e1) then [fct (d1,e2,l)]
-              else if (spec_eq d2 e2) then [fct (d1,e1,l)]
-              else [] in
-            ( (match f2 with
-              | CP.Lt (d1,d2,l) -> pick_three e1 e2 d1 d2 ( fun a-> CP.Lt a) l                 
-              | CP.Lte (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.Lte a) l
-              | CP.Gt (d1,d2,l) -> pick_three e1 e2 d1 d2 ( fun a-> CP.Gt a) l
-              | CP.Gte (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.Gte a) l
-              | CP.Eq (d1,d2,l) -> pick_three e1 e2 d1 d2 ( fun a-> CP.Eq a) l
-              | CP.Neq (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.Neq a) l
-              | CP.BagIn (sv,d,l)-> 
-                    (( match (e1,e2) with 
-                      | CP.Var (v1,_), CP.Var (v2,_) -> 
-                            if (CP.eq_spec_var v1 sv) then [CP.BagIn (v2,d,l)]
-                            else if (CP.eq_spec_var v2 sv) then [CP.BagIn (v1,d,l)]
-                            else []
-                      | _ -> []
-                    )@(if(CP.eq_exp_no_aset d e1) then [CP.BagIn (sv,e2,l)]
-                    else if (CP.eq_exp_no_aset d e2) then [CP.BagIn (sv,e1,l)]
-                    else []))
-              | CP.BagNotIn (sv,d,l) -> 
-                    (( match (e1,e2) with 
-                      | CP.Var (v1,_), CP.Var (v2,_) -> 
-                            if (CP.eq_spec_var v1 sv) then [CP.BagNotIn (v2,d,l)]
-                            else if (CP.eq_spec_var v2 sv) then [CP.BagNotIn (v1,d,l)]
-                            else []
-                      | _ -> []
-                    )@(if(CP.eq_exp_no_aset d e1) then [CP.BagNotIn (sv,e2,l)]
-                    else if (CP.eq_exp_no_aset d e2) then [CP.BagNotIn (sv,e1,l)] else []))
-              | CP.ListIn (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.ListIn a) l
-              | CP.ListNotIn (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.ListNotIn a) l
-              | _ -> []
-            )
-            )
-      | _ -> [] in
+  (* let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list=      *)
+  (*   match f1 with     *)
+  (*     | CP.Lt (e1,e2,l)  ->  *)
+  (*           ( match f2 with *)
+  (*             | CP.Lt(d1,d2,l)  *)
+  (*             | CP.Lte(d1,d2,l) ->  if (CP.eq_exp_no_aset e2 d1) then [CP.Lt (e1, d2,l)] else [] *)
+  (*             | _ -> [])  *)
+  (*     | CP.Lte (e1,e2,_) ->  *)
+  (*           ( match f2 with *)
+  (*             | CP.Lt(d1,d2,l) -> if (CP.eq_exp_no_aset e2 d1) then [CP.Lt (e1, d2,l)] else [] *)
+  (*             | CP.Lte(d1,d2,l) ->  if (CP.eq_exp_no_aset e2 d1) then [CP.Lte (e1, d2,l)] else [] *)
+  (*             | _ -> [])  *)
+  (*     | CP.Eq (e1,e2,_)  ->  *)
+  (*           let spec_eq c d = if (CP.eq_exp_no_aset c d) then (match c with | CP.IConst _ | CP.FConst _ -> false | _-> true) else false in *)
+  (*           let pick_three e1 e2 d1 d2 fct l=  *)
+  (*             if (spec_eq d1 e1) then [fct (e2,d2,l)] *)
+  (*             else if (spec_eq d1 e2) then [fct (e1,d2,l)] *)
+  (*             else if (spec_eq d2 e1) then [fct (d1,e2,l)] *)
+  (*             else if (spec_eq d2 e2) then [fct (d1,e1,l)] *)
+  (*             else [] in *)
+  (*           ( (match f2 with *)
+  (*             | CP.Lt (d1,d2,l) -> pick_three e1 e2 d1 d2 ( fun a-> CP.Lt a) l                  *)
+  (*             | CP.Lte (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.Lte a) l *)
+  (*             | CP.Gt (d1,d2,l) -> pick_three e1 e2 d1 d2 ( fun a-> CP.Gt a) l *)
+  (*             | CP.Gte (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.Gte a) l *)
+  (*             | CP.Eq (d1,d2,l) -> pick_three e1 e2 d1 d2 ( fun a-> CP.Eq a) l *)
+  (*             | CP.Neq (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.Neq a) l *)
+  (*             | CP.BagIn (sv,d,l)->  *)
+  (*                   (( match (e1,e2) with  *)
+  (*                     | CP.Var (v1,_), CP.Var (v2,_) ->  *)
+  (*                           if (CP.eq_spec_var v1 sv) then [CP.BagIn (v2,d,l)] *)
+  (*                           else if (CP.eq_spec_var v2 sv) then [CP.BagIn (v1,d,l)] *)
+  (*                           else [] *)
+  (*                     | _ -> [] *)
+  (*                   )@(if(CP.eq_exp_no_aset d e1) then [CP.BagIn (sv,e2,l)] *)
+  (*                   else if (CP.eq_exp_no_aset d e2) then [CP.BagIn (sv,e1,l)] *)
+  (*                   else [])) *)
+  (*             | CP.BagNotIn (sv,d,l) ->  *)
+  (*                   (( match (e1,e2) with  *)
+  (*                     | CP.Var (v1,_), CP.Var (v2,_) ->  *)
+  (*                           if (CP.eq_spec_var v1 sv) then [CP.BagNotIn (v2,d,l)] *)
+  (*                           else if (CP.eq_spec_var v2 sv) then [CP.BagNotIn (v1,d,l)] *)
+  (*                           else [] *)
+  (*                     | _ -> [] *)
+  (*                   )@(if(CP.eq_exp_no_aset d e1) then [CP.BagNotIn (sv,e2,l)] *)
+  (*                   else if (CP.eq_exp_no_aset d e2) then [CP.BagNotIn (sv,e1,l)] else [])) *)
+  (*             | CP.ListIn (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.ListIn a) l *)
+  (*             | CP.ListNotIn (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.ListNotIn a) l *)
+  (*             | _ -> [] *)
+  (*           ) *)
+  (*           ) *)
+  (*     | _ -> [] in *)
   
   (* let rec propagate_constraints (p_c:CP.b_formula list) (nl:CP.b_formula list): CP.b_formula list =  *)
   (*   let rec new_con_list l = match l with *)
@@ -6344,15 +6344,15 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     Gen.Debug.no_2 "compute_invariants"  
         pr0 pr1 pr2 compute_invariants v_l pure_list in
 
-  let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list = 
-    List.filter (fun c-> 
-		let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in
-		not r) uinvl  in
+  (* let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list =  *)
+  (*   List.filter (fun c->  *)
+  (*   	let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in *)
+  (*   	not r) uinvl  in *)
 
-  let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list = 
-    let pr = pr_list Cprinter.string_of_b_formula in
-    Gen.Debug.no_2 "imply_by_all" Cprinter.string_of_pure_formula pr pr imply_by_all all_r uinvl
-  in
+  (* let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list =  *)
+  (*   let pr = pr_list Cprinter.string_of_b_formula in *)
+  (*   Gen.Debug.no_2 "imply_by_all" Cprinter.string_of_pure_formula pr pr imply_by_all all_r uinvl *)
+  (* in *)
 
   (*
     vl : spec_var list // list or parameters
@@ -6412,8 +6412,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let all_p = MCP.fold_mem_lst xp true true p in
     let split_p = filter_pure_conj_list (fst (get_pure_conj_list all_p)) in
     let r = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq CP.eq_spec_var (CP.bfv c) vl) split_p in		  
-	
-	let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) r) in
+	(* let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) r) in *)
 	
 	(* let uinv2 = List.filter (fun c->  *)
 	(*     let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in *)
@@ -6585,11 +6584,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(CP.BagaSV.conj_baga v_l b1,MCP.memo_norm_wrapper c2))) invariant_list in
   let ungrouped_g_l = List.concat (List.map (fun (lbl, (_,c_l))-> List.map (fun c-> (lbl,c)) c_l) guard_list) in
   let ungrouped_b_l = List.map (fun (lbl, (b,_))-> (b,lbl)) guard_list in
-  let prune_conds = List.fold_left (fun a (f_lbl, constr)-> 
-      let leq,lneq = List.partition (fun (c,_)-> CP.eq_b_formula_no_aset constr c) a in
-      let rest_lbls = match (List.length leq) with | 0 -> [] | 1 -> snd (List.hd leq) | _ -> [] in
-      (constr,f_lbl::rest_lbls)::lneq) [] ungrouped_g_l in
-  let prune_conds = List.filter (fun (c1,c2)-> (List.length init_form_lst)>(List.length c2)) prune_conds in 
+  (* let prune_conds = List.fold_left (fun a (f_lbl, constr)->  *)
+  (*     let leq,lneq = List.partition (fun (c,_)-> CP.eq_b_formula_no_aset constr c) a in *)
+  (*     let rest_lbls = match (List.length leq) with | 0 -> [] | 1 -> snd (List.hd leq) | _ -> [] in *)
+  (*     (constr,f_lbl::rest_lbls)::lneq) [] ungrouped_g_l in *)
+  (* let prune_conds = List.filter (fun (c1,c2)-> (List.length init_form_lst)>(List.length c2)) prune_conds in  *)
   let prune_conds = sel_prune_conds ungrouped_g_l in
   let safe_prune_conds = get_safe_prune_conds prune_conds pure_form_ls in
   (safe_prune_conds,ungrouped_b_l, norm_inv_list)
