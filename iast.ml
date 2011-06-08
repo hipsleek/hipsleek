@@ -1255,7 +1255,8 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
 	end 
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
-  Gen.Debug.no_1 "build_exc_hierarchy" string_of_bool pr_unit (fun _ -> build_exc_hierarchy clean prog) clean
+  let pr _ = Gen.ExcNumbering.string_of_exc_list 33 in
+  Gen.Debug.ho_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
   let rec helper e = match e with

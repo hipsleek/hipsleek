@@ -1613,6 +1613,10 @@ struct
     Globals.exc_flow_int := (-2,-2);
     exc_list := []
 
+  let reset_exc_hierarchy () =
+    let el = List.map (fun (a,b,_) -> (a,b,(0,0))) !exc_list in
+    exc_list := el
+
   let string_of_exc_list (i:int) =
     let x = !exc_list in
     let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int)) (List.map (fun (a,e,p) -> (a,e,p)) x) in
@@ -1661,7 +1665,7 @@ struct
     Debug.no_2 "add_edge" pr_id pr_id string_of_bool add_edge n1 n2
 
   (*constructs the mapping between class/data def names and interval types*) 
- (* FISHY : cannot be called multiple times, lead to segmentation problem *)
+ (* FISHY : cannot be called multiple times, lead to segmentation problem in lrr proc *)
   let compute_hierarchy () =
     let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
 	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
@@ -1673,7 +1677,10 @@ struct
 	let _  = add_edge Globals.top_flow "" in
     (* let r,_ = (lrr Globals.top_flow "") in *)
     (* why did below cause segmentation problem for sleek? *)
+    let _ = reset_exc_hierarchy () in
+    let _ = print_flush "c-h 1" in
     let r,_ = (lrr "" "") in
+    let _ = print_flush "c-h 2" in
     let _ = exc_list := r in
     Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
     Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
@@ -1686,7 +1693,7 @@ struct
 
   let compute_hierarchy i () =
     let pr () = string_of_exc_list 0 in
-     Debug.ho_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
+     Debug.loop_1 (*_num i*) "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
 
   let clean_duplicates ()= 
 	exc_list := remove_dups1 !exc_list
