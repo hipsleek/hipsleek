@@ -2474,7 +2474,7 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs pos pid : (list_context * 
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl) cs pos pid
 
 and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
-  Gen.Debug.ho_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
+  Gen.Debug.no_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
 
 (*the third output: bug is verified*)
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof * bool) =
@@ -3608,7 +3608,7 @@ and heap_entail_split_lhs_phases(*_debug*)
       (Cprinter.string_of_context)
       (fun _ -> "RHS")
       (* (Cprinter.string_of_formula) *)
-      (fun _ -> "OUT")
+      (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun ctx0 conseq -> heap_entail_split_lhs_phases_x p is_folding  ctx0 conseq d pos) ctx0 conseq
 
 (* entailment method for splitting the antecedent *)
@@ -3641,10 +3641,12 @@ and heap_entail_split_lhs_phases_x
       if ((is_true h1) && (is_true h3))
         or ((is_true h2) && (is_true h3))
       then
+        (*let _ = print_flush "locle:  helper_lhs 1************" in*)
         (* lhs contains only one phase (no need to split) *)
         let new_ctx = CF.set_context_formula ctx0 (func (choose_not_true_heap h1 h2 h3)) in
 	    (* in this case we directly call heap_entail_conjunct *)
         let final_ctx, final_prf = heap_entail_conjunct prog is_folding  new_ctx conseq pos in
+        (*let _ = print_flush ("locle*****************1:\n" ^ (Cprinter.string_of_list_context final_ctx)) in*)
 	    match final_ctx with
 	      | SuccCtx(cl) ->
 	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -3655,6 +3657,7 @@ and heap_entail_split_lhs_phases_x
       else
         if ((is_true h1) && (is_true h2)) then
 	      (* only the nested phase is different from true;*)
+           (*let _ = print_flush "locle:  helper_lhs 2************" in*)
 	      let new_ctx = CF.set_context_formula ctx0 (func h3) in
 	      let final_ctx, final_prf = 
 	        (* we must check whether this phase contains other nested phases *)
@@ -3667,6 +3670,7 @@ and heap_entail_split_lhs_phases_x
 	          let _ = print_string("\n\nRecursive call to heap_entail_split_lhs_phases\n") in
 	          heap_entail_split_lhs_phases prog is_folding  new_ctx conseq drop_read_phase pos
 	      in
+          (*let _ = print_flush ("locle*****************2:\n" ^ (Cprinter.string_of_list_context final_ctx)) in*)
 	      match final_ctx with
 	        | SuccCtx(cl) ->
 		          (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -3676,6 +3680,7 @@ and heap_entail_split_lhs_phases_x
 	        | FailCtx _ -> (final_ctx, final_prf)
 
         else
+           (*let _ = print_flush "locle:  helper_lhs 3************" in*)
 	      (* lhs contains multiple phases *)
 	      (******************************************************)
 	      (****** the first entailment uses h1 as lhs heap ******)
@@ -3690,6 +3695,7 @@ and heap_entail_split_lhs_phases_x
 
 
 	      let (with_rd_ctx, with_rd_prf) = heap_entail_conjunct prog is_folding  rd_ctx conseq pos in
+          (*let _ = print_flush ("locle*****************3.1:\n" ^ (Cprinter.string_of_list_context with_rd_ctx)) in*)
 	      let with_rd_ctx = 
 	        (match with_rd_ctx with
               | FailCtx _ -> with_rd_ctx
@@ -3764,23 +3770,45 @@ and heap_entail_split_lhs_phases_x
 			                heap_entail_with_cont  prog is_folding  ctx0 conseq ft h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos
 
 	      in
+          (*let _ = print_flush ("locle*****************3.2:\n" ^ (Cprinter.string_of_list_context with_wr_ctx)) in*)
 	      (* union of states *)
 	      (*	let _ = print_string("compute final answer\n") in*)
 	      ((fold_context_left [with_rd_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_rd_prf; final_prf]))		
 		      (*  end of helper method *)
 
-    (* handles the possible ent continuations *)
-    and heap_entail_with_cont  
-          (prog : prog_decl) 
-          (is_folding : bool) 
-          
-          (ctx0 : context) 
-          (conseq : formula) 
+and heap_entail_with_cont
+          (prog : prog_decl)
+          (is_folding : bool)
+          (ctx0 : context)
+          (conseq : formula)
           (ft : fail_type)
           (h1 : h_formula)
           (h2 : h_formula)
           (h3 : h_formula)
-          (with_wr_ctx : list_context) 
+          (with_wr_ctx : list_context)
+          (with_wr_prf : proof)
+          func
+          (drop_read_phase : bool)
+          pos : (list_context * proof) =
+  Gen.Debug.no_2 "heap_entail_with_cont"
+      (Cprinter.string_of_context)
+      (fun _ -> "RHS")
+      (* (Cprinter.string_of_formula) *)
+      (fun _ -> "OUT")
+      (fun ctx0 conseq -> heap_entail_with_cont_x prog is_folding  ctx0 conseq ft h1 h2 h3 with_wr_ctx with_wr_prf
+      func drop_read_phase pos) ctx0 conseq
+
+    (* handles the possible ent continuations *)
+    and heap_entail_with_cont_x
+          (prog : prog_decl)
+          (is_folding : bool)
+          (ctx0 : context)
+          (conseq : formula)
+          (ft : fail_type)
+          (h1 : h_formula)
+          (h2 : h_formula)
+          (h3 : h_formula)
+          (with_wr_ctx : list_context)
           (with_wr_prf : proof)
           func
           (drop_read_phase : bool)
@@ -3793,14 +3821,14 @@ and heap_entail_split_lhs_phases_x
 	            if (lhs.es_cont = []) then
 	              (* no continuation *)
 	              (* ---TODO:  need to enable folding --- *)
-                  let _ = print_flush ("Failure Continuation:"^(Cprinter.string_of_list_context_short with_wr_ctx)) in
+                  (*let _ = print_flush ("locle Failure Continuation:"^(Cprinter.string_of_list_context with_wr_ctx)) in*)
 	              (with_wr_ctx, with_wr_prf)
 	            else 
 	              (* pop the continuation record *)
 	              (* the cont record contains (actual continuation to be used on the lhs, the failing lhs) *)
 	              (* actually, we already know the continuation is h3 *)
 	              let _, lhs = Context.pop_cont_es lhs in
-		          (* retrieve the current conseq from the failed context *)				    
+		          (* retrieve the current conseq from the failed context *)
 	              let conseq = fc.fc_current_conseq in
 		          (* swap the current lhs heap (keep it as frame) and the continuation h3 *)
 	              let new_f, h2_rest = swap_heap lhs.es_formula h3 pos in
@@ -3814,16 +3842,20 @@ and heap_entail_split_lhs_phases_x
 	              let after_wr_ctx, after_wr_prf =
 		            if (CF.contains_phase h3) then
 		              (Debug.devel_pprint ("heap_entail_split_lhs_phases: \ncall heap_entail_split_lhs_phase for the continuation\n") pos;
+                       (*let _ = print_flush ("locle Failure Continuation 4.1:") in*)
 		              heap_entail_split_lhs_phases prog is_folding  cont_ctx conseq drop_read_phase pos)
 		            else
 		              (Debug.devel_pprint ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n") pos;
+                        (*let _ = print_flush ("locle Failure Continuation 4.2:") in*)
 		              heap_entail_conjunct prog is_folding  cont_ctx conseq pos)
 	              in
 		          (match after_wr_ctx with
-		            | FailCtx _ ->                   
-                          (* let _ = print_flush ("Failure Continuation 2:"^(Cprinter.string_of_list_context_short after_wr_ctx)) in *)
+		            | FailCtx _ ->
+                          (*let _ = print_flush ("locle Failure Continuation 2.1:"^(Cprinter.string_of_list_context after_wr_ctx)) in
+                          let _ = print_flush ("locle Failure Continuation 2.2:"^(Cprinter.string_of_list_context with_wr_ctx)) in*)
                           (after_wr_ctx, after_wr_prf)
-		            | SuccCtx (cl) -> 
+		            | SuccCtx (cl) ->
+                        (*let _ = print_flush ("locle Success Continuation 3:"^(Cprinter.string_of_list_context after_wr_ctx)) in*)
 		                  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		                  (* let _ = print_string("Substitute the holes\n") in *)
 		                  let cl = List.map Context.subs_crt_holes_ctx cl in
@@ -3854,7 +3886,7 @@ and heap_entail_split_lhs_phases_x
 		          )
 	          end
         | Or_Continuation(ft1, ft2) ->
-                 let _ = print_flush ("OR Continuation:") in
+                 (*let _ = print_flush ("locle OR Continuation:") in*)
                  let ctx1, prf1 = heap_entail_with_cont prog is_folding  ctx0 conseq ft1 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
 	          let ctx2, prf2 = heap_entail_with_cont prog is_folding  ctx0 conseq ft2 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
 	          (* union of states *)
@@ -3911,8 +3943,9 @@ and heap_entail_split_lhs_phases_x
 (* the check to fail.                     *)
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos : (list_context * proof) = 
-  Gen.Debug.loop_1_no "heap_entail_conjunct" Cprinter.string_of_formula (fun _ -> "?")
-      (fun c -> heap_entail_conjunct_x prog is_folding  ctx0 c pos) conseq
+  Gen.Debug.loop_2_no "heap_entail_conjunct" Cprinter.string_of_context Cprinter.string_of_formula
+      (fun (c,_) -> Cprinter.string_of_list_context c)
+      (fun ctx0 c -> heap_entail_conjunct_x prog is_folding  ctx0 c pos) ctx0 conseq
 
 and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos : (list_context * proof) =
   (* PRE : BOTH LHS and RHS are not disjunctive *)
@@ -4042,6 +4075,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_branches = br1;
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
+                                  (*let _ = print_flush "locle:heap_entail_conjunct: **********1" in*)
 				                  (* 23.10.2008 *)
 				                  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 				                  (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
@@ -4078,6 +4112,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_branches = br2;
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
+                                  (*let _ = print_flush "locle:heap_entail_conjunct: **********1" in*)
 				                  heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 pos
 				                end
 	          end

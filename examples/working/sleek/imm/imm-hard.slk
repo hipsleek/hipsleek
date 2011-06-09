@@ -15,30 +15,32 @@ print residue.
 // x * y
 // (2) Valid
 
-
+//wrong
 checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- y!=x. 
 print residue.
 // x * y
 // (3) Valid
 
 
-
+//wrong
 checkentail x::ll<n> * y::ll<m> & n>0 & m>0  |- y::ll<m1> * x::ll<n1> & y!=x.
 print residue.
 // true
 // (4) Valid
 
-
+//wrong
 checkentail (x::ll<n>@I * y::ll<m>@I) & x!=null & y!=null  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
 print residue.
 // x * y
 // (5) Valid
 
+//wrong
 checkentail (x::ll<n>@I * y::ll<n>@I) & n>0  |-  x!=y. 
 print residue.
 // x * y
 // (6) Valid
 
+//wrong
 checkentail x::ll<n> * x::ll<n> & n>0  |-  1=2. 
 print residue.
 // x * y
@@ -47,9 +49,11 @@ print residue.
 checkentail x::ll<n> * x::ll<n> & n=0   |-  x=null & n=0.
 // (8) Valid
 
+//wrong
 checkentail x::ll<n> * x::ll<n> & n>0   |-  x=null & n=0.
 // (9) Valid
 
+//wrong
 checkentail x::ll<n> * x::ll<n> & x=null  
          or x::ll<n> * x::ll<n> & x!=null   |-  x=null & n=0.
 // (10) Valid

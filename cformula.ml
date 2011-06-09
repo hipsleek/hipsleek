@@ -2177,7 +2177,7 @@ and fail_type =
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
   | And_Reason of (fail_type * fail_type (* * fail_explaining *))
-  | ContinuationErr of fail_context (* * fail_explaining *)
+  | ContinuationErr of fail_context
   | Or_Continuation of (fail_type * fail_type)
 
       
@@ -2608,10 +2608,10 @@ let list_context_union_x c1 c2 =
 match c1,c2 with
   | FailCtx t1 ,FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
       if ((is_cont t1) && not(is_cont t2))
-      then FailCtx(t1)
+      then FailCtx(t2)
       else
 	if ((is_cont t2) && not(is_cont t1))
-	then FailCtx(t2)
+	then FailCtx(t1)
 	else
 	  if (is_cont t1) && (is_cont t2) then
 	    FailCtx (Or_Continuation (t1,t2))  
