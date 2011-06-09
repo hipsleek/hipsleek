@@ -18,6 +18,8 @@ module AS = Astsimp
 module XF = Xmlfront
 module NF = Nativefront
 
+let sleek_proof_counter = new Gen.counter 0
+
 (*
   Global data structures. If we want to support push/pop commands,
   we'll need to make them into a stack of scopes.
@@ -358,12 +360,19 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
+    let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in 
     if not valid then begin
-      print_string ("Entail=Fail.\n");
+      let s = match CF.get_must_failure rs with
+        | Some s -> "(must) cause:"^s 
+        | _ -> (match CF.get_may_failure rs with
+            | Some s -> "(may) cause:"^s
+            | None -> report_error no_pos "process_entail_check : should be a failure") 
+      in
+      print_string (num_id^"=Fail."^s^"\n");
       if !Globals.print_err_sleek then
         print_string ("printing here"^(Cprinter.string_of_list_context rs))
     end
-      else print_string ("Entail=Valid.\n");
+      else print_string (num_id^"=Valid.\n");
   with _ ->
     Printexc.print_backtrace stdout;
     dummy_exception() ; 

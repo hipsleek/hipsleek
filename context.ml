@@ -50,6 +50,7 @@ and action =
   | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
   | M_Nothing_to_do of string
+  | M_unmatched_rhs_data_node of h_formula
   | Seq_action of action_wt list
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   
@@ -103,6 +104,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some c-> "lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
+  | M_unmatched_rhs_data_node h -> fmt_string ("Unmatched RHS data note: "^(string_of_h_formula h))
   | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
 
@@ -131,6 +133,7 @@ let action_get_holes a = match a with
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | M_Nothing_to_do _  
+  | M_unmatched_rhs_data_node _
   | Search_action _ ->None
 
  
@@ -410,7 +413,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
           (match lhs_node,rhs_node with
             | DataNode dl, DataNode dr -> 
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c)
-                  else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
+                  else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in
                   let l2 = 
@@ -470,16 +473,18 @@ and process_one_match_x prog (c:match_res) :action_wt =
   r
       
 and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
-  | [] -> if (is_view rhs_node && get_view_original rhs_node) then
-      let r = M_base_case_fold { 
-          match_res_lhs_node = HTrue; 
-          match_res_lhs_rest = lhs_h; 
-          match_res_holes = [];
-          match_res_type = Root;
-          match_res_rhs_node = rhs_node;
-          match_res_rhs_rest = rhs_rest;} in
-      (1,r)
-    else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
+  | [] -> if (is_view rhs_node) then
+      if (get_view_original rhs_node) then
+        let r = M_base_case_fold { 
+            match_res_lhs_node = HTrue; 
+            match_res_lhs_rest = lhs_h; 
+            match_res_holes = [];
+            match_res_type = Root;
+            match_res_rhs_node = rhs_node;
+            match_res_rhs_rest = rhs_rest;} in
+        (1,r)
+      else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
+    else (1,M_unmatched_rhs_data_node rhs_node)
   | x::[] -> process_one_match prog x 
   | _ -> (-1,Search_action (List.map (process_one_match prog) l))
 
