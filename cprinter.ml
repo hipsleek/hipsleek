@@ -1183,12 +1183,12 @@ let rec pr_fail_type (e:fail_type) =
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason (br,fe) -> (string_of_fail_explaining fe);
           if fe.fe_kind=Failure_None then () else (pr_fail_estate br)
-    | ContinuationErr br ->  pr_fail_estate br
+    | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")
           else pr_list_vbox_wrap "FAIL_OR " f_b args
-    | Or_Continuation _ -> (* fmt_string (" Or Continuation ! ") *)
+    | Or_Continuation _ -> fmt_string (" Or_Continuation ");
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Continuation")
           else  pr_list_vbox_wrap "CONT_OR " f_b args
@@ -1234,7 +1234,7 @@ let pr_context_list_short (ctx : context list) =
     
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_string "failctx"
+    | FailCtx ft -> (fmt_string "failctx"; pr_fail_type ft)
     | SuccCtx sc -> pr_context_list_short sc
     
 let pr_entail_state_short e = 

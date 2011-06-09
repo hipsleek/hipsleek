@@ -2177,7 +2177,7 @@ and fail_type =
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
   | And_Reason of (fail_type * fail_type (* * fail_explaining *))
-  | ContinuationErr of fail_context * fail_explaining
+  | ContinuationErr of fail_context (* * fail_explaining *)
   | Or_Continuation of (fail_type * fail_type)
 
       
@@ -2255,17 +2255,18 @@ let rec get_must_failure_ft (ft:fail_type) =
     | Basic_Reason (_,fe) -> get_must_failure_fe fe
     | Or_Reason (f1,f2) -> comb_or (get_must_failure_ft f1) (get_must_failure_ft f2)
     | And_Reason (f1,f2) -> comb_and (get_must_failure_ft f1) (get_must_failure_ft f2)
-    | ContinuationErr _ -> report_error no_pos "get_must_failure : continuation encountered"
-    | Or_Continuation _ -> report_error no_pos "get_must_failure : or continuation encountered"
+    | ContinuationErr _ -> None
+    | Or_Continuation (f1,f2) -> comb_or (get_must_failure_ft f1) (get_must_failure_ft f2)
+          (* report_error no_pos "get_must_failure : or continuation encountered" *)
     | _ -> None
 
 let get_must_failure (ft:list_context) =
   match ft with
-    | FailCtx f -> 
-          (try get_must_failure_ft f
-          with a ->  
-              let _ = print_flush (!print_list_context_short ft) in
-              raise a)
+    | FailCtx f -> get_must_failure_ft f
+          (* (try get_must_failure_ft f *)
+          (* with a ->   *)
+          (*     let _ = print_flush (!print_list_context_short ft) in *)
+          (*     raise a) *)
     | _ -> None
 
 let get_may_failure_fe (f:fail_explaining) =
@@ -2278,8 +2279,10 @@ let rec get_may_failure_ft (f:fail_type) =
     | Basic_Reason (_,fe) -> get_may_failure_fe fe
     | Or_Reason (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2)
     | And_Reason (f1,f2) -> comb_and (get_may_failure_ft f1) (get_may_failure_ft f2)
-    | ContinuationErr _ -> report_error no_pos "get_may_failure : continuation encountered"
-    | Or_Continuation _ -> report_error no_pos "get_may_failure : or continuation encountered"
+    | ContinuationErr _ -> Some "ContErr detected"
+          (* report_error no_pos "get_may_failure : continuation encountered" *)
+    | Or_Continuation (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2)
+          (* report_error no_pos "get_may_failure : or continuation encountered" *)
     | _ -> None
 
 let get_may_failure (f:list_context) =

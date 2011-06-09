@@ -3821,7 +3821,7 @@ and heap_entail_split_lhs_phases_x
 	              in
 		          (match after_wr_ctx with
 		            | FailCtx _ ->                   
-                          let _ = print_flush ("Failure Continuation 2:"^(Cprinter.string_of_list_context_short with_wr_ctx)) in
+                          (* let _ = print_flush ("Failure Continuation 2:"^(Cprinter.string_of_list_context_short after_wr_ctx)) in *)
                           (after_wr_ctx, after_wr_prf)
 		            | SuccCtx (cl) -> 
 		                  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -5128,7 +5128,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
     | Context.M_base_case_fold {
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
-          if (estate.es_cont != []) then (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the continuation" estate (Base rhs_b) (get_node_label rhs_node) pos)), NoAlias)
+          if (estate.es_cont != []) then (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the cont (base_case_fold)" estate (Base rhs_b) (get_node_label rhs_node) pos)), NoAlias)
 		  else do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
     | Context.M_rd_lemma {
           Context.match_res_lhs_node = lhs_node;
