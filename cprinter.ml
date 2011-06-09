@@ -553,7 +553,7 @@ let formula_wo_paren (e:formula) =
 let ft_assoc_op (e:fail_type) : (string * fail_type list) option = 
   match e with
     | Or_Reason (f1,f2) -> Some (op_or_short,[f1;f2])
-    | And_Reason (f1,f2, _) -> Some (op_and_short,[f1;f2])
+    | And_Reason (f1,f2) -> Some (op_and_short,[f1;f2])
     | Or_Continuation (f1,f2) -> Some (op_or_short,[f1;f2])
     | _ -> None
 
@@ -1125,7 +1125,7 @@ let string_of_entail_state  =  string_of_estate
 
 and string_of_failure_kind e_kind=
 match e_kind with
-  | Failure_May -> "MAY"
+  | Failure_May _ -> "MAY"
   | Failure_Must _ -> "MUST"
   | Failure_None -> "None"
 
@@ -1205,7 +1205,8 @@ let pr_list_context (ctx:list_context) =
     | FailCtx ft -> fmt_cut ();fmt_string "Bad Context: "; 
         (match ft with
             | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (*useful: MUST - OK*)
-            | And_Reason (_, _, fe) -> (string_of_fail_explaining fe)
+            (* TODO : to output must errors first *)
+            (* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *)
             | _ -> fmt_string "");
         pr_fail_type ft; fmt_cut ()
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()

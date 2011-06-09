@@ -359,7 +359,10 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     if not valid then begin
-      let s = if CF.is_must_failure rs then "(must)" else "(may)" in
+      let s = match CF.get_must_failure rs with
+        | Some s -> "(must) cause:"^s 
+        | _ -> "(may)" 
+      in
       print_string ("Entail=Fail."^s^"\n");
       if !Globals.print_err_sleek then
         print_string ("printing here"^(Cprinter.string_of_list_context rs))
