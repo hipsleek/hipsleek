@@ -4233,17 +4233,38 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                 let ante4, cons4 = elim_option res4 (MCP.pure_of_mix split_conseq) in
                 (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
                    otherwise MUST failure *)
-                let new_pformula = CP.mkAnd (ante4(*MCP.pure_of_mix split_ante1*))
-                  cons4(*MCP.pure_of_mix split_conseq*) no_pos in
-                let res_sat = TP.is_sat_sub_no new_pformula imp_no in
-                if res_sat then
+                (*let new_pformula = CP.mkAnd (ante4(*MCP.pure_of_mix split_ante1*))
+                  cons4(*MCP.pure_of_mix split_conseq*) no_pos in*)
+               (* let _ = print_endline ("ante:" ^ (Cprinter.string_of_pure_formula ante4) ) in
+                let _ = print_endline ("ante or1:" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1)) ) in
+                let _ = print_endline ("ante or0:" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante0)) ) in
+                let _ = print_endline ("cons:" ^ (Cprinter.string_of_pure_formula cons4) ) in*)
+                 let new_pformula = CP.mkAnd (MCP.pure_of_mix split_ante0)
+                  (MCP.pure_of_mix split_conseq) no_pos in
+                let res_sat0 = TP.is_sat_sub_no new_pformula imp_no in
+                if res_sat0 then
                   begin
-                    fc_msg :=  (Cprinter.string_of_pure_formula ante4)^" |- "^
-                        (Cprinter.string_of_pure_formula cons4) ^ ": HOLD ---" ^
-                        (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^
-                        (Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD";
-                    (*compute lub of may bug and current fc_flow*)
-                    CF.mk_failure_may_raw "22" 
+                      let new_pformula = CP.mkAnd (MCP.pure_of_mix split_ante1)
+                        (MCP.pure_of_mix split_conseq) no_pos in
+                     let res_sat1 = TP.is_sat_sub_no new_pformula imp_no in
+                     if res_sat1 then
+                       begin
+                           fc_msg :=  (Cprinter.string_of_pure_formula ante4)^" |- "^
+                               (Cprinter.string_of_pure_formula cons4) ^ ": HOLD ---" ^
+                               (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^
+                               (Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD";
+                     (*compute lub of may bug and current fc_flow*)
+                           CF.mk_failure_may_raw "22 may"
+                       end
+                     else
+                       begin
+                           fc_msg :=  (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- "^
+                               (Cprinter.string_of_pure_formula cons4) ^ ": not HOLD ---" ^
+                               (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^
+                               (Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD";
+                      (*compute lub of must bug and current fc_flow*)
+                           CF.mk_failure_must_raw "22 must"
+                       end
                   end else
                     begin
                       fc_msg :=  (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- "^
@@ -4251,7 +4272,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                           (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^
                           (Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD";
                       (*compute lub of must bug and current fc_flow*)
-                      CF.mk_failure_must_raw "22"
+                      CF.mk_failure_must_raw "22 must"
                     end
               in
 	          let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
@@ -4814,7 +4835,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   process_action prog estate conseq lhs_b rhs_b actions is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
-  Gen.Debug.loop_2 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
+  Gen.Debug.loop_2_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -5151,7 +5172,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 and process_action prog estate conseq lhs_b rhs_b a is_folding pos =
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Gen.Debug.loop_1 "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
+  Gen.Debug.loop_1_no "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
       
       
 (************************* match_all_nodes ******************)
