@@ -2462,7 +2462,6 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
 	        let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth "4" prog is_folding  has_post c conseq pos pid) cl in
 	        let tmp2, tmp_prfs, ls_is_bug_verified = Gen.Basic.split3 tmp1 in
 	        let prf = mkContextList cl conseq tmp_prfs in
-            let _ = print_endline "locle 4" in
             ((fold_context_left tmp2), prf, not(List.mem false ls_is_bug_verified))
 	      else
 	        (heap_entail_one_context_struc_nth "5" prog is_folding  has_post (List.hd cl) conseq pos pid)
@@ -4006,8 +4005,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 			              if (not(CF.is_false_flow fl2.formula_flow_interval)) &&
                             not(CF.is_sleek_mustbug_flow fl2.formula_flow_interval) && (*todo: abstract domain??*)
                             not(CF.subsume_flow_ff fl2 fl1) then begin
-                            let _ = print_endline "locle fail" in
-			                Debug.devel_pprint ("heap_entail_conjunct_helper: "
+      		                Debug.devel_pprint ("heap_entail_conjunct_helper: "
 						    ^ "conseq has an incompatible flow type"
 						    ^ "\ncontext:\n"
 						    ^ (Cprinter.string_of_context ctx0)
@@ -4023,8 +4021,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 							fc_failure_pts =[];}, fe)), UnsatConseq)
 			              end
 			              else
-                            let _ = print_endline "locle ok" in
-			                match h2 with
+      			            match h2 with
 			                  | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
 			                  | HTrue -> begin
 				                  Debug.devel_pprint ("heap_entail_conjunct_helper: "
@@ -4328,7 +4325,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
               | CF.Failure_May _ -> CF.substitute_flow_into_f  !sleek_maybug_flow_int estate.es_formula
               | CF.Failure_None -> CF.substitute_flow_into_f !n_flow_int estate.es_formula
     } in
-      let _ = print_endline "locle: 3" in
     (CF.mkFailCtx_in (Basic_Reason ({
 		fc_message = !fc_msg; (*"failed in entailing pure formula(s) in conseq";*)
 		fc_current_lhs  = new_estate;
@@ -4818,7 +4814,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   process_action prog estate conseq lhs_b rhs_b actions is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
-  Gen.Debug.loop_2_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
+  Gen.Debug.loop_2 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -5133,12 +5129,17 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           , CF.mk_failure_must "undefined action" )), NoAlias)
     | Context.M_Nothing_to_do s -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
       CF.mk_failure_may ("15"^s))), NoAlias)
-    | Context.M_unmatched_rhs_data_node rhs -> 
-          (* TODO : check LHS to see if null -> must error *)
+    | Context.M_unmatched_rhs_data_node rhs ->
+          (* check LHS to see if null -> must error else may error *)
+        if (List.length (MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure)) > 0 then
+          let s = "no match for rhs data node and lhs is null" in
+          (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
+                                          CF.mk_failure_must "15 no match for rhs data node and lhs is null")), NoAlias)
+        else
           let s = "no match for rhs data node" in
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-          CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
-    | Context.Seq_action l -> 
+                                          CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
+    | Context.Seq_action l ->
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
               , CF.mk_failure_must "sequential action - not handled" )), NoAlias)
     | Context.Search_action l ->
@@ -5150,7 +5151,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 and process_action prog estate conseq lhs_b rhs_b a is_folding pos =
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Gen.Debug.loop_1_no "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
+  Gen.Debug.loop_1 "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
       
       
 (************************* match_all_nodes ******************)
