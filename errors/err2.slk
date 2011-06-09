@@ -1,0 +1,50 @@
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//1. must failure  
+checkentail x::node<2,null> |- x::node<3,null> .
+
+
+//2. may failure
+checkentail x::node<v,null> & v>2 |- x::node<3,null> .
+
+
+//3. must failure
+checkentail x::node<v,null> & v>2 |- x::node<3,q>*q::node<_,null> .
+
+//4. must failure
+checkentail x::node<v,null> & v>2 |- x::node<_,q>*q::node<_,null> .
+
+
+//5. must failure
+checkentail x::node<v,q>*q::node<_,null> |- x::node<_,null> .
+
+
+//6. must failure
+checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+//7. may failure
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+//8. must failure but detected as may bug
+// requires a lemma!
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
+
+//9. may failure
+checkentail x::ll<n> & n>0 |- x::ll<n+1> .
+
+
+// soundness of must bug?
+// must bug via predicates?
