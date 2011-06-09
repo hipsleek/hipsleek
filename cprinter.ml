@@ -1183,7 +1183,7 @@ let rec pr_fail_type (e:fail_type) =
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason (br,fe) -> (string_of_fail_explaining fe);
           if fe.fe_kind=Failure_None then () else (pr_fail_estate br)
-    | Continuation br ->  pr_fail_estate br
+    | ContinuationErr br ->  pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")

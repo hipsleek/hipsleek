@@ -3786,13 +3786,14 @@ and heap_entail_split_lhs_phases_x
           (drop_read_phase : bool)
           pos : (list_context * proof) =
       match ft with
-        | Continuation(fc) ->
+        | ContinuationErr(fc) ->
 	          begin
 	            (* check if there is any continuation in the continuation list es_cont *)
 	            let lhs = fc.fc_current_lhs in
 	            if (lhs.es_cont = []) then
 	              (* no continuation *)
 	              (* ---TODO:  need to enable folding --- *)
+                  let _ = print_flush ("Failure Continuation:"^(Cprinter.string_of_list_context_short with_wr_ctx)) in
 	              (with_wr_ctx, with_wr_prf)
 	            else 
 	              (* pop the continuation record *)
@@ -3819,7 +3820,9 @@ and heap_entail_split_lhs_phases_x
 		              heap_entail_conjunct prog is_folding  cont_ctx conseq pos)
 	              in
 		          (match after_wr_ctx with
-		            | FailCtx _ -> (after_wr_ctx, after_wr_prf)
+		            | FailCtx _ ->                   
+                          let _ = print_flush ("Failure Continuation 2:"^(Cprinter.string_of_list_context_short with_wr_ctx)) in
+                          (after_wr_ctx, after_wr_prf)
 		            | SuccCtx (cl) -> 
 		                  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		                  (* let _ = print_string("Substitute the holes\n") in *)
@@ -3851,7 +3854,8 @@ and heap_entail_split_lhs_phases_x
 		          )
 	          end
         | Or_Continuation(ft1, ft2) ->
-	          let ctx1, prf1 = heap_entail_with_cont prog is_folding  ctx0 conseq ft1 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
+                 let _ = print_flush ("OR Continuation:") in
+                 let ctx1, prf1 = heap_entail_with_cont prog is_folding  ctx0 conseq ft1 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
 	          let ctx2, prf2 = heap_entail_with_cont prog is_folding  ctx0 conseq ft2 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
 	          (* union of states *)
 	          ((fold_context_left [ctx1; ctx2]),( mkOrRight ctx0 conseq [prf1; prf2]))		
@@ -5124,7 +5128,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
     | Context.M_base_case_fold {
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
-          if (estate.es_cont != []) then (CF.mkFailCtx_in (Continuation (mkFailContext "try the continuation" estate (Base rhs_b) (get_node_label rhs_node) pos)), NoAlias)
+          if (estate.es_cont != []) then (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the continuation" estate (Base rhs_b) (get_node_label rhs_node) pos)), NoAlias)
 		  else do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
     | Context.M_rd_lemma {
           Context.match_res_lhs_node = lhs_node;

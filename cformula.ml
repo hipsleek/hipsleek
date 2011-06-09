@@ -2177,7 +2177,7 @@ and fail_type =
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
   | And_Reason of (fail_type * fail_type (* * fail_explaining *))
-  | Continuation of fail_context    
+  | ContinuationErr of fail_context * fail_explaining
   | Or_Continuation of (fail_type * fail_type)
 
       
@@ -2202,6 +2202,11 @@ and list_failesc_context = failesc_context list
     (* conjunct of contexts *)
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
+
+let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
+let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
+let print_context_short = ref(fun (c:context) -> "printer not initialized")
+let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
 let mk_failure_must_raw msg = Failure_Must msg
 
@@ -2245,16 +2250,22 @@ let comb_and m1 m2 = match m1,m2 with
   | None, Some m2 -> Some (m2)
   | _, _ -> None
 
-let rec get_must_failure_ft (f:fail_type) =
-  match f with
+let rec get_must_failure_ft (ft:fail_type) =
+  match ft with
     | Basic_Reason (_,fe) -> get_must_failure_fe fe
     | Or_Reason (f1,f2) -> comb_or (get_must_failure_ft f1) (get_must_failure_ft f2)
     | And_Reason (f1,f2) -> comb_and (get_must_failure_ft f1) (get_must_failure_ft f2)
+    | ContinuationErr _ -> report_error no_pos "get_must_failure : continuation encountered"
+    | Or_Continuation _ -> report_error no_pos "get_must_failure : or continuation encountered"
     | _ -> None
 
-let get_must_failure (f:list_context) =
-  match f with
-    | FailCtx f -> get_must_failure_ft f
+let get_must_failure (ft:list_context) =
+  match ft with
+    | FailCtx f -> 
+          (try get_must_failure_ft f
+          with a ->  
+              let _ = print_flush (!print_list_context_short ft) in
+              raise a)
     | _ -> None
 
 let get_may_failure_fe (f:fail_explaining) =
@@ -2267,15 +2278,19 @@ let rec get_may_failure_ft (f:fail_type) =
     | Basic_Reason (_,fe) -> get_may_failure_fe fe
     | Or_Reason (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2)
     | And_Reason (f1,f2) -> comb_and (get_may_failure_ft f1) (get_may_failure_ft f2)
+    | ContinuationErr _ -> report_error no_pos "get_may_failure : continuation encountered"
+    | Or_Continuation _ -> report_error no_pos "get_may_failure : or continuation encountered"
     | _ -> None
 
 let get_may_failure (f:list_context) =
   match f with
-    | FailCtx f -> 
-          let m = (get_may_failure_ft f) in
+    | FailCtx ft -> 
+          let m = (get_may_failure_ft ft) in
           (match m with
             | Some s -> m
-            | None -> report_error no_pos "Should be a may failure here")
+            | None -> 
+                  let _ = print_flush (!print_list_context_short f) 
+                  in report_error no_pos "Should be a may failure here")
     | _ -> None
 
 let is_may_failure_fe (f:fail_explaining) = (get_may_failure_fe f) != None
@@ -2290,10 +2305,6 @@ let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
     | OCtx (c1,c2) -> helper (helper a c1) c2 in
   helper a c
 
-let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
-let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
-let print_context_short = ref(fun (c:context) -> "printer not initialized")
-let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
 
 let consistent_entail_state (es:entail_state) : bool = consistent_formula es.es_formula
@@ -2581,7 +2592,7 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
 
 let is_cont t = 
   match t with
-    | Continuation _ -> true
+    | ContinuationErr _ -> true
     | Or_Continuation _ -> true
     | _ -> false
 
@@ -2643,7 +2654,7 @@ and get_explaining t =
   | Trivial_Reason _ -> None
   | Or_Reason _ -> None
   | And_Reason (_,_) -> None
-  | Continuation _ -> None
+  | ContinuationErr _ -> None
   | Or_Continuation _ -> None
 
 and isMustFail fc = is_must_failure_ft fc
@@ -3985,7 +3996,7 @@ let rec transform_fail_ctx f (c:fail_type) : fail_type =
   match c with
     | Trivial_Reason s -> c
     | Basic_Reason (br,fe) -> Basic_Reason ((f br), fe)
-    | Continuation br -> Continuation (f br)
+    | ContinuationErr br -> ContinuationErr (f br)
     | Or_Reason (ft1,ft2) -> Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | Or_Continuation (ft1,ft2) -> Or_Continuation ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | And_Reason (ft1,ft2) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
@@ -4024,7 +4035,7 @@ let rec fold_fail_context f (c:fail_type) =
   match c with
     | Trivial_Reason br -> f c []
     | Basic_Reason br -> f c []
-    | Continuation br -> f c []
+    | ContinuationErr br -> f c []
     | Or_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
     | Or_Continuation (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
     | And_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
