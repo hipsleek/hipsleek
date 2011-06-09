@@ -4530,6 +4530,8 @@ and simplify_es_formula (f : formula) (bv : CP.spec_var list) =
 	            formula_exists_pos = pos})
 
 (** An Hoa : simplify a heap formula with the constraints, bv stores the base variables **)
+(** STEP 1 : replace variables that could be replaced by "original variables" **)
+(** STEP 2 : remove constraints concerning "unreachable" variables i.e. var without references **)
 and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var list) =
 	(* Print the base variables *)
 (*	let _ = print_string "Specification & procedure base variables = " in*)
@@ -4542,13 +4544,16 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 	let purefv = MCP.mfv p in
 (*	let _ = print_string "Pure free variables = " in*)
 (*	let _ = print_endline (!print_svl purefv) in    *)
-	(* Intermediate variables = all constraining variables subtract away the essential ones in heap *)
+	(* Intermediate variables = all constraining variables subtract away the *)
+	(* essential ones in heap and base; we try to eliminate them all *)
 	let intfv = Gen.BList.difference_eq CP.eq_spec_var purefv heapfv in
-(*	let _ = print_string "Intermediate variables = " in*)
-(*	let _ = print_endline (!print_svl intfv) in        *)
+	let intfv = Gen.BList.difference_eq CP.eq_spec_var intfv bv in
+	let intfv = List.filter CP.is_unprimed intfv in
+	let _ = print_string "Intermediate variables = " in
+	let _ = print_endline (!print_svl intfv) in
 	let nh = ref h in
 	
-	(* Internal function to process individual memoised group *)
+	(** Internal function to process individual memoised group **)
 	let process_memoised_group mg =
 		let mgfv = mg.MCP.memo_group_fv in 
 		let mgas = mg.MCP.memo_group_aset in 
@@ -4586,7 +4591,7 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 (*					let _ = print_string "group constraints = " in                                            *)
 (*					let _ = List.map (fun c -> print_endline (!CP.print_b_formula c.MCP.memo_formula)) mggc in*)
 					{ mg with 
-						MCP.memo_group_fv = mgfv;
+						MCP.memo_group_fv = (Gen.BList.difference_eq CP.eq_spec_var mgfv tobereplaced);
 						MCP.memo_group_aset = CP.EMapSV.mkEmpty;
 						MCP.memo_group_slice = List.map (fun f -> CP.subst sst f) mggs;
 						MCP.memo_group_cons = List.map (fun c -> let f = CP.b_apply_subs sst c.MCP.memo_formula in
@@ -4599,4 +4604,9 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 		| MCP.MemoF fm -> 
 				let nfm = List.map process_memoised_group fm in 
 					(!nh, MCP.MemoF nfm)
-  	| MCP.OnePF f1 -> (h,p) (* One piece ==> no change *)
+  	| MCP.OnePF f -> 
+			let nf, sst = CP.reduce_pure f bv in
+			let nh = subst_heap sst h in
+			let np = MCP.OnePF nf in 
+			(* Without --eps option, this is always the case. Rearrange the pure & then do replacement. *)
+			(nh, np)

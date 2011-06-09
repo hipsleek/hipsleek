@@ -5099,3 +5099,57 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
+(** An Hoa : Reduce the formula by removing 
+		redundant atomic formulas and variables
+		given the list of "important" variabless
+		@return A reduced formula together with
+		a list of replacement (substitution) to
+		be made. (The list of replacement is so
+		that the caller can make changes.)
+ **)
+let rec reduce_pure (f : formula) (bv : spec_var list) 
+					: (formula * ((spec_var * spec_var) list)) =
+	print_endline "reduce_pure";
+	(* Split f into collections of conjuction *)
+	let c = split_conjunctions f in
+	(* Pick out the term that are atomic *)
+	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c	in 
+	let bf = List.map (fun x -> match x with | BForm (y,_) -> y) bf in
+	(* Pick out equality from all atomic *)
+	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf	in
+	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p)) ebf in
+	let _ = List.map (fun x -> print_endline (!print_b_formula x)) bf in
+	(* Find the variables that we need to solve for *)
+	let vars = fv f in
+	let vars = Gen.BList.difference_eq eq_spec_var vars bv in
+	let _ = print_endline (!print_svl vars) in
+	(* Solve each variables in vars in term of bv, leave it there if we cannot do so *)
+		(f,[])
+(** An Hoa : End **)
+
+
+(** An Hoa : Symbollically solve the equations.
+@return a list of binding var --> expressions
+				a list of unsolved variables
+				a list of solved variables
+@algorithm
+		- Eliminate all cases of "v = constant"
+		- Create a dependency constraint graph: each vertex is
+			labelled by the variable, each edge is a constraint
+			between the vertices.
+		- Starting from variables with labelled in bv, add the
+			vertices  
+**)
+and sym_solve (ebf : (exp * exp * loc) list) (vars : spec_var list) (bv : spec_var list) 
+		: ((spec_var * exp) list * (spec_var list) * (spec_var list)) =
+	match ebf with
+		| [] -> ([],vars,bv)
+		| (e1,e2,pos)::r ->
+			(* Determine if some variable v in vars can be solved for *)
+			(* If it is, add that variable to bv & remove it from vars *)
+			(* and also transform (e1 = e2) into v = e(bv) *)
+			(* Need to provide some wrapper. *)
+			let bv = bv in
+			let vars = vars in
+			let resr,resvars,resbv = sym_solve r vars bv in
+				([],resvars,resbv)
