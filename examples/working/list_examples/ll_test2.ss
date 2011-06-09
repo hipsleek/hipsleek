@@ -16,7 +16,8 @@ ll<L1> == self=null & L1=[||]
 void delete(node x, int a)
 
 	requires x::ll<L1> & len(L1) > a & a > 0 
-	ensures x::ll<L2> & exists (La, Lm, Lb: L1 = app(La, Lm, Lb) & len(Lm) = 1);
+	ensures x::ll<L2> & exists (La, Lm, Lb: L1 = app(La, Lm, Lb) 
+                   & len(La)=a & L2=app(La,Lb) & len(Lm) = 1);
 
 {
 	if (a == 1) {

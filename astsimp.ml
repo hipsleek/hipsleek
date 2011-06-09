@@ -5586,6 +5586,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
   (*let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula "" nf)^"\n") in*)
   (*convert anonym to exists*)
 
+  (* TODO : h is probably free vars from the LHS *)
   (* strad_vs are variables from the LHS that appear in the RHS *)
   let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula) strad_vs :Iformula.struc_formula* ((ident*primed)list) = 
     let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
@@ -5596,9 +5597,10 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
             let nb = ilinearize_formula nb hp in
             let vars_list = Iformula.all_fv nb in
             (* let pr (i,_) = i in *)
+            (* let _ = print_endline ("LHS Vars : all? :"^(pr_list pr h)) in *)
             (* let _ = print_endline ("LHS Vars :"^(pr_list pr strad_vs)) in *)
             (* let _ = print_endline ("RHS Vars :"^(pr_list pr vars_list)) in *)
-	        (Iformula.EAssume (nb,y,strad_vs),(Gen.BList.difference_eq (=) vars_list p)) 
+	        (Iformula.EAssume (nb,y,h (*strad_vs*)),(Gen.BList.difference_eq (=) vars_list p)) 
       | Iformula.ECase b->
             let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
                 let r12 = Gen.BList.intersect_eq (=) (Ipure.fv c1) h in
