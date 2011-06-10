@@ -19,6 +19,8 @@ module TP = Tpdispatcher
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
 (* let crt_phase = ref (None);; *)
 
+let simple_imply f1 f2 = let r,_,_ = TP.imply f1 f2 "simple_imply" false None in r    
+
 let count_br_specialized prog cl = 
 let helper prog h_node = match h_node with	
 	| ViewNode v ->
@@ -5191,7 +5193,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
       CF.mk_failure_may ("15"^s))), NoAlias)
     | Context.M_unmatched_rhs_data_node rhs ->
           (* check LHS to see if null -> must error else may error *)
-        if (List.length (MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure)) > 0 then
+        let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
+        let lhs_p = List.fold_left 
+          (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
+        let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
+        if (simple_imply lhs_p rhs_p) then
+        (* if (List.length (MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure)) > 0 then *)
           let s = "no match for rhs data node and lhs is null" in
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
                                           CF.mk_failure_must "15 no match for rhs data node and lhs is null")), NoAlias)

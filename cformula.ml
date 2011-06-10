@@ -185,6 +185,11 @@ approx_formula_and_a2 : approx_formula }
 
 (* utility functions *)
 
+let get_ptr_from_data h =
+  match h with
+    | DataNode f -> f.h_formula_data_node
+    | _ -> report_error no_pos "get_ptr_from_data : data expected" 
+
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")

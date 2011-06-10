@@ -87,6 +87,90 @@ and rounding_func =
   | Ceil
   | Floor
 
+let name_of_spec_var (sv : spec_var) : ident = match sv with
+  | SpecVar (_, v, _) -> v
+
+let full_name_of_spec_var (sv : spec_var) : ident = match sv with
+  | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
+
+let type_of_spec_var (sv : spec_var) : typ = match sv with
+  | SpecVar (t, _, _) -> t
+
+let is_primed (sv : spec_var) : bool = match sv with
+  | SpecVar (_, _, p) -> p = Primed
+
+let is_unprimed (sv : spec_var) : bool = match sv with
+  | SpecVar (_, _, p) -> p = Unprimed
+
+let to_primed (sv : spec_var) : spec_var = match sv with
+  | SpecVar (t, v, _) -> SpecVar (t, v, Primed)
+
+let to_unprimed (sv : spec_var) : spec_var = match sv with
+  | SpecVar (t, v, _) -> SpecVar (t, v, Unprimed)
+
+let to_int_var (sv : spec_var) : spec_var = match sv with
+  | SpecVar (_, v, p) -> SpecVar (Int, v, p)
+
+(* name prefix for int const *)
+let const_prefix = "__CONST_Int_"
+
+let const_prefix_len = String.length(const_prefix)
+
+(* is string a int const, n is prefix length *)
+let is_int_str_aux (n:int) (s:string) : bool =
+  if (n<= const_prefix_len) then false
+  else 
+    let p = String.sub s 0 const_prefix_len in
+    if (p=const_prefix) then true
+    else false
+
+
+(* get int value if it is an int_const *)
+let get_int_const (s:string) : int option =
+  let n=String.length s in
+  if (is_int_str_aux n s) then
+    let c = String.sub s const_prefix_len (n-const_prefix_len) in
+    try Some (int_of_string c) 
+    with _ -> None (* should not be possible *)
+  else None
+
+(* check if a string denotes an int_const *)
+let is_int_str (s:string) : bool =
+  let n=String.length s in
+    is_int_str_aux n s
+
+(* check if a string is a null const *)
+let is_null_str (s:string) : bool = (s="null")
+
+
+(* is string a constant?  *)
+let is_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+  (is_null_str n) || (is_int_str n)
+
+(* is string a constant?  *)
+let is_null_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+  (is_null_str n) 
+
+(* is string an int constant?  *)
+let is_int_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+     (is_int_str n)
+
+let conv_var_to_exp (v:spec_var) :exp =
+  if (full_name_of_spec_var v="null") then (Null no_pos)
+  else match get_int_const (name_of_spec_var v) with
+    | Some i -> IConst(i,no_pos)
+    | None -> Var(v,no_pos)
+
+(* let conv_var_to_exp_debug (v:spec_var) :exp = *)
+(*  Gen.Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v *)
+
+(* is exp a var  *)
+let is_var (f:exp) = match f with
+  | Var _ -> true
+  | _ -> false  
 
 let rec contains_exists (f:formula) : bool =  match f with
     | BForm _ -> false
@@ -488,6 +572,15 @@ and mkMin a1 a2 pos = Min (a1, a2, pos)
 and mkVar sv pos = Var (sv, pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
+
+and mkVarNull v pos = 
+  if is_null_const v then Null pos
+  else mkVar v pos
+
+and mkPtrEqn v1 v2 pos = 
+  let v1 = mkVarNull v1 pos in
+  let v2 = mkVarNull v2 pos in
+   mkEqExp v1 v2 pos
 
 and mkLt a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
@@ -998,29 +1091,7 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
-and name_of_spec_var (sv : spec_var) : ident = match sv with
-  | SpecVar (_, v, _) -> v
 
-and full_name_of_spec_var (sv : spec_var) : ident = match sv with
-  | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
-
-and type_of_spec_var (sv : spec_var) : typ = match sv with
-  | SpecVar (t, _, _) -> t
-
-and is_primed (sv : spec_var) : bool = match sv with
-  | SpecVar (_, _, p) -> p = Primed
-
-and is_unprimed (sv : spec_var) : bool = match sv with
-  | SpecVar (_, _, p) -> p = Unprimed
-
-and to_primed (sv : spec_var) : spec_var = match sv with
-  | SpecVar (t, v, _) -> SpecVar (t, v, Primed)
-
-and to_unprimed (sv : spec_var) : spec_var = match sv with
-  | SpecVar (t, v, _) -> SpecVar (t, v, Unprimed)
-
-and to_int_var (sv : spec_var) : spec_var = match sv with
-  | SpecVar (_, v, p) -> SpecVar (Int, v, p)
 
 
 and fresh_old_name (s: string):string = 
@@ -3924,10 +3995,6 @@ let norm_bform_option_debug (bf:b_formula) : b_formula option =
   let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
   norm_bform_opt r
 
-(* name prefix for int const *)
-let const_prefix = "__CONST_Int_"
-
-let const_prefix_len = String.length(const_prefix)
 
 (* get string name of var e *)
 let string_of_var_eset e : string =
@@ -3941,61 +4008,6 @@ let get_sub_debug s n m =
   r
 
 
-(* is string a int const, n is prefix length *)
-let is_int_str_aux (n:int) (s:string) : bool =
-  if (n<=const_prefix_len) then false
-  else 
-    let p = String.sub s 0 const_prefix_len in
-    if (p=const_prefix) then true
-    else false
-
-
-(* get int value if it is an int_const *)
-let get_int_const (s:string) : int option =
-  let n=String.length s in
-  if (is_int_str_aux n s) then
-    let c = String.sub s const_prefix_len (n-const_prefix_len) in
-    try Some (int_of_string c) 
-    with _ -> None (* should not be possible *)
-  else None
-
-(* check if a string denotes an int_const *)
-let is_int_str (s:string) : bool =
-  let n=String.length s in
-    is_int_str_aux n s
-
-(* check if a string is a null const *)
-let is_null_str (s:string) : bool = (s="null")
-
-
-(* is string a constant?  *)
-let is_const (s:spec_var) : bool = 
-  let n = name_of_spec_var s in
-  (is_null_str n) || (is_int_str n)
-
-(* is string a constant?  *)
-let is_null_const (s:spec_var) : bool = 
-  let n = name_of_spec_var s in
-  (is_null_str n) 
-
-(* is string an int constant?  *)
-let is_int_const (s:spec_var) : bool = 
-  let n = name_of_spec_var s in
-     (is_int_str n)
-
-let conv_var_to_exp (v:spec_var) :exp =
-  if (full_name_of_spec_var v="null") then (Null no_pos)
-  else match get_int_const (name_of_spec_var v) with
-    | Some i -> IConst(i,no_pos)
-    | None -> Var(v,no_pos)
-
-let conv_var_to_exp_debug (v:spec_var) :exp =
- Gen.Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v
-
-(* is exp a var  *)
-let is_var (f:exp) = match f with
-  | Var _ -> true
-  | _ -> false  
 
 (* get args from a bform formula *)
 let get_bform_eq_args_aux conv (bf:b_formula) =
