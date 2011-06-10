@@ -5207,7 +5207,20 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
     | Context.M_Nothing_to_do s -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
       CF.mk_failure_may ("15"^s))), NoAlias)
     | Context.M_unmatched_rhs_data_node rhs ->
+          (* TODO : obtain xpure0 of RHS
+             (i) check if it is unsat, or
+             (ii) check if negated term implied by LHS
+          *)
           (* check LHS to see if null -> must error else may error *)
+          let (mix_f,br,svl,mem_f) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+          let pr = Cprinter.string_of_spec_var_list in
+          let _ = print_flush "UNMATCHED RHS" in
+          let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in
+          let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in
+          (* let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
+          let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_f)) in
+          let _ = print_flush ("RHS - xpure (svl) :"^(pr svl)) in
+          let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_f.mem_formula_mset)) in
         let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
         let lhs_p = List.fold_left 
           (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in

@@ -812,8 +812,8 @@ let rec pr_h_formula h =
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
           fmt_open_hbox ();
-          (if pid==None then fmt_string "NN " else fmt_string "SS ");
-          pr_formula_label_opt pid;
+          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+          (* pr_formula_label_opt pid; *)
           pr_spec_var sv; fmt_string "::";
           pr_angle c pr_spec_var svs ;
 	      pr_imm imm;
@@ -909,7 +909,7 @@ let rec pr_formula_base e =
 	  formula_base_flow = fl;
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
-          (match lbl with | None -> fmt_string "<NoLabel>" | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
 
