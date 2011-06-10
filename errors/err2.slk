@@ -61,8 +61,17 @@ checkentail y=null |- x::node<_,_> .
 //14. must
 checkentail x=y & y=null |- x::node<_,_> .
 
-//14. must
+//15. may
 checkentail x=y |- x::node<_,_> .
+
+//16. must (wrong)
+checkentail x=y |- x::node<_,_> * y::node<_,_>.
+
+//17. may 
+checkentail x!=y |- x::node<_,_> * y::node<_,_>.
+
+//18. must (wrong)
+checkentail true |- x::node<_,_> * x::node<_,_>.
 
 // soundness of must bug?
 // must bug via predicates?
