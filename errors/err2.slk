@@ -28,7 +28,7 @@ checkentail x::node<v,q>*q::node<_,null> |- x::node<_,null> .
 checkentail x::node<v,q>*q::node<_,null> |- x::node<2,q> .
 
 
-//6. must failure
+//7. must failure
 checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
 
 pred pos_ll<n> == self = null & n = 0
@@ -39,24 +39,30 @@ pred neg_ll<n> == self = null & n = 0
 	or self::node<d,r> * r::neg_ll<n - 1> & d<0
 	inv n >= 0.
 
-//7. may failure
+//8. may failure
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-//8. must failure but detected as may bug
+//9. must failure but detected as may bug
 // requires a lemma!
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 
-//9. may failure
+//10. may failure
 checkentail x::ll<n> & n>0 |- x::ll<n+1> .
 
-//10. valid
+//11. may
 checkentail true |- x::node<_,_> .
 
+//12. may
 checkentail y::node<_,_> & x!=y |- x::node<_,_> .
 
+//13. may
 checkentail y=null |- x::node<_,_> .
 
+//14. must
 checkentail x=y & y=null |- x::node<_,_> .
+
+//14. must
+checkentail x=y |- x::node<_,_> .
 
 // soundness of must bug?
 // must bug via predicates?

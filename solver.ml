@@ -3204,6 +3204,11 @@ and split_phase_debug_rhs h = Gen.Debug.no_1 "split_phase(rhs)"
   split_phase h
 
 and split_phase (h : h_formula) : (h_formula * h_formula * h_formula )= 
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = pr_triple pr pr pr in
+  Gen.Debug.ho_1 "split_phase" pr pr2 split_phase_x h
+
+and split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula )= 
   match h with
     | Phase ({h_formula_phase_rd = h1;
 	  h_formula_phase_rw = h2;
