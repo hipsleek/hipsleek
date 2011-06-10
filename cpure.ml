@@ -1878,6 +1878,10 @@ match ls with
   | f::fs -> (!print_formula f) ^ "\n" ^ (string_of_ls_pure_formula fs)
 
 and filter_redundant ante cons =
+  Gen.Debug.no_2 "filter_redundant" !print_formula !print_formula !print_formula
+  (fun a c -> filter_redundant_x a c) ante cons
+
+and filter_redundant_x ante cons =
   let ls_ante = list_of_bformula ante [] in
  (* let _ = print_endline ("ls_ante:" ^ (string_of_ls_pure_formula ls_ante)) in*)
   let ls_cons = list_of_bformula cons [] in
@@ -4453,22 +4457,23 @@ let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     (* let _ = print_string ("\nimply_one_conj xp1 #" ^ (string_of_int !imp_no) ^ "\n") in *)
-    let xp1 = imply_disj_orig ante_disj1 conseq t_imply imp_no in
+    let (xp11,xp12,xp13,xp14) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
-	xp1
+	(xp11,xp12,xp13,xp14)
   else (xp01,xp02,xp03,xp04)
 
+(*the last two outputs are core of failure*)
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
-   Globals.formula_label option * (formula option)=
+   Globals.formula_label option * (formula option) * (formula option)=
   match conseq_conj with
     | h :: rest ->
 	    let (r1,r2,r3,r4)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
 	    if r1 then
-	      let r1,r22,r23,r24 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
-	      (r1,r2@r22,r23,r24)
-	    else (r1,r2,r3,r4)
-    | [] -> (true,[],None, None)
+	      let r1,r22,r23,r24,r25 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
+	      (r1,r2@r22,r23,r24,r25)
+	    else (r1,r2,r3,r4,Some h)
+    | [] -> (true,[],None, None,None)
  (*###############################################################################  incremental_testing*)
 (*check implication having a single formula on the lhs and a conjuction of formulas on the rhs*)
 let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =

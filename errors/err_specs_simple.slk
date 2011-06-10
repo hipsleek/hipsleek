@@ -10,7 +10,6 @@ pred ll<n> == self = null & n = 0
 
 checkentail n = 1 |- n > 5 .
 
-
 //2. may failure
 checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
 print residue.
@@ -18,7 +17,6 @@ print residue.
 //3. must failure
 checkentail x=null  |- x::node<_,_>.
 print residue.
-
 
 //4. must failure
 checkentail x::node<_,_> |- x=null.
@@ -56,4 +54,5 @@ print residue.
 //12. must failure
 checkentail n = 1 |- n < 1.
 print residue.
+
 

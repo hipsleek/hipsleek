@@ -4261,59 +4261,68 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
         let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
         let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
         let split_ante1 = new_ante1 in
-        let res1,res2,res3,res4 = if (MCP.isConstMTrue rhs_p) then (true,[],None, None)
+        let res1,res2,res3,res4,res5 = if (MCP.isConstMTrue rhs_p) then (true,[],None, None, None)
         else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in
         let res1,res2,re3, fn_fc_kind =
           if res1 = false && branch_id = "" then
             begin
               let new_fc_kind =
-                let elim_option ant cons = match ant with
-                  | Some f -> (CP.filter_redundant f cons, cons) (*TP.filter f*)
-                  | _ -> CP.mkTrue no_pos, cons
+                let elim_option ant cons = match ant,cons with
+                  | Some ante, Some consq -> (CP.filter_redundant ante consq, consq) (*TP.filter f*)
+                  | _ -> report_error no_pos "heap_entail_empty_rhs_heap: should be different to None here"
                 in
-                let ante4, cons4 = elim_option res4 (MCP.pure_of_mix split_conseq) in
+                (*check_maymust*)
+                let check_maymust_failure ante cons=
+                   let new_pformula = CP.mkAnd ante cons no_pos in
+                   TP.is_sat_sub_no new_pformula imp_no
+                in
+                (*build must msg*)
+                let cons4 = (MCP.pure_of_mix split_conseq) in
+                let ante_core, cons_core = elim_option res4 res5 in
+                let ante_filter1 = CP.filter_redundant (MCP.pure_of_mix split_ante1) cons4 in
                 (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
                    otherwise MUST failure *)
-                (*let new_pformula = CP.mkAnd (ante4(*MCP.pure_of_mix split_ante1*))
-                  cons4(*MCP.pure_of_mix split_conseq*) no_pos in*)
-               (* let _ = print_endline ("ante:" ^ (Cprinter.string_of_pure_formula ante4) ) in
+               (* let _ = print_endline ("ante:" ^ (Cprinter.string_of_pure_formula ante_filter1) ) in 
                 let _ = print_endline ("ante or1:" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1)) ) in
                 let _ = print_endline ("ante or0:" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante0)) ) in
                 let _ = print_endline ("cons:" ^ (Cprinter.string_of_pure_formula cons4) ) in*)
-                 let new_pformula = CP.mkAnd (MCP.pure_of_mix split_ante0)
-                  (MCP.pure_of_mix split_conseq) no_pos in
-                let res_sat0 = TP.is_sat_sub_no new_pformula imp_no in
+                (*check maymust for ante0*)
+                let res_sat0 = check_maymust_failure (MCP.pure_of_mix split_ante0) (MCP.pure_of_mix split_conseq) in
                 if res_sat0 then
                   begin
-                      let new_pformula = CP.mkAnd (MCP.pure_of_mix split_ante1)
-                        (MCP.pure_of_mix split_conseq) no_pos in
-                     let res_sat1 = TP.is_sat_sub_no new_pformula imp_no in
+                      (*check maymust for ante1*)
+                      let res_sat1 = check_maymust_failure (MCP.pure_of_mix split_ante1) (MCP.pure_of_mix split_conseq) in
                      if res_sat1 then
                        begin
-                           fc_msg :=  (Cprinter.string_of_pure_formula ante4)^" |- "^
-                               (Cprinter.string_of_pure_formula cons4) ^ ": HOLD ---" ^
-                               (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^
-                               (Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD";
-                     (*compute lub of may bug and current fc_flow*)
-                           CF.mk_failure_may_raw "22 may"
+                           fc_msg :=  (Cprinter.string_of_pure_formula ante_filter1)^" |- "^
+                               (Cprinter.string_of_pure_formula cons4) ^ ": HOLD ---But, there is a must fail:" ^
+                               (Cprinter.string_of_pure_formula ante_core)^" |- not("^
+                               (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD";
+                           (*compute lub of may bug and current fc_flow*)
+                           CF.mk_failure_may_raw ("22 " ^ !fc_msg)
                        end
                      else
                        begin
-                           fc_msg :=  (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- "^
+                           fc_msg :=  (Cprinter.string_of_pure_formula ante_filter1)^" |- "^
                                (Cprinter.string_of_pure_formula cons4) ^ ": not HOLD ---" ^
-                               (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^
-                               (Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD";
+                               (Cprinter.string_of_pure_formula ante_core)^" |- not("^
+                               (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD";
                       (*compute lub of must bug and current fc_flow*)
-                           CF.mk_failure_must_raw "22 must"
+                            let msg =  (Cprinter.string_of_pure_formula ante_core) ^ " |- not("^
+                              (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD" in
+                            CF.mk_failure_must_raw ("22 " ^ msg)
                        end
                   end else
-                    begin
-                      fc_msg :=  (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- "^
+                  begin
+                       let ante_filter0 = CP.filter_redundant (MCP.pure_of_mix split_ante0) cons4 in
+                      fc_msg :=  (Cprinter.string_of_pure_formula ante_filter0)^" |- "^
                           (Cprinter.string_of_pure_formula cons4) ^ ": not HOLD ---" ^
-                          (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^
-                          (Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD";
+                          (Cprinter.string_of_pure_formula ante_core)^" |- not("^
+                          (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD";
                       (*compute lub of must bug and current fc_flow*)
-                      CF.mk_failure_must_raw "22 must"
+                        let msg =  (Cprinter.string_of_pure_formula ante_core) ^ " |- not("^
+                          (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD" in
+                      CF.mk_failure_must_raw ("22 " ^ msg)
                     end
               in
 	          let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
@@ -4537,17 +4546,18 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
       (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset)
       ante_m0 ante_m1 conseq_m memset
 
+(*the last two outputs are core of failure*)
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option
-      * CP.formula option =
+      * CP.formula option * CP.formula option=
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
           begin
             (*print_endline "imply_mix_formula: first";*)
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
-            if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3, None)
-            else let (r21, r22, r23) = MCP.imply_memo a1 c TP.imply imp_no in (r21, r22, r23, None)
+            if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3, None, None)
+            else let (r21, r22, r23) = MCP.imply_memo a1 c TP.imply imp_no in (r21, r22, r23, None, None)
                                                                                   (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
