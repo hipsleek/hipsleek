@@ -5,7 +5,8 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-//1. must failure  
+/*
+//1. must failure
 checkentail x::node<2,null> |- x::node<3,null> .
 
 
@@ -44,7 +45,10 @@ checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 
 //9. may failure
 checkentail x::ll<n> & n>0 |- x::ll<n+1> .
-
+*/
+//10. valid
+checkentail true |- x::node<_,_> .
 
 // soundness of must bug?
 // must bug via predicates?
+
