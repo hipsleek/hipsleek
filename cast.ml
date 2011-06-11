@@ -167,6 +167,7 @@ and exp_bind = {
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
     exp_bind_imm : bool;
+	exp_bind_perm : ident option;
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
 

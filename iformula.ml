@@ -1725,3 +1725,27 @@ and insert_rd_phase (f : h_formula) (rd_phase : h_formula) : h_formula =
 		  h_formula_phase_pos = no_pos;
 		})
 
+
+		
+let rec struc_has_perm (f:struc_formula):unit = 
+	let rec h_has_perm h = match h with
+		| Phase h-> (h_has_perm h.h_formula_phase_rd;h_has_perm h.h_formula_phase_rw)
+		| Conj h-> (h_has_perm h.h_formula_conj_h1;h_has_perm h.h_formula_conj_h2)
+		| Star h-> (h_has_perm h.h_formula_star_h1;h_has_perm h.h_formula_star_h2)
+		| HeapNode { h_formula_heap_perm = hp}
+		| HeapNode2 { h_formula_heap2_perm = hp} -> (match hp with | None -> () | Some _ -> Gen.report_error no_pos "view defs should not has permission formulae")
+	    | HTrue 
+		| HFalse -> () in
+		
+	let rec f_has_perm f = match f with
+		| Or f -> (f_has_perm f.formula_or_f1; f_has_perm f.formula_or_f2)
+		| Base b-> (if (IP.isConstTrue b.formula_base_perm) then h_has_perm b.formula_base_heap else Gen.report_error no_pos "view defs should not has permission formulae")
+		| Exists e-> (if (IP.isConstTrue e.formula_exists_perm) then h_has_perm e.formula_exists_heap else Gen.report_error no_pos "view defs should not has permission formulae") in
+		
+	let rec helper (f:ext_formula) : unit = match f with
+		| ECase e -> List.iter (fun (_,c)-> struc_has_perm c) e.formula_case_branches
+		| EBase b -> (f_has_perm b.formula_ext_base ; struc_has_perm b.formula_ext_continuation)
+		| EAssume (f,_) -> f_has_perm f 
+		| EVariance e -> struc_has_perm e.formula_var_continuation in
+	List.iter helper f 
+

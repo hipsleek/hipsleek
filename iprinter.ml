@@ -7,6 +7,7 @@ open Lexing
 
 module F = Iformula
 module P = Ipure
+module IP = Iperm
 
 (* function to enclose a string s into parenthesis *)
 let parenthesis s = "(" ^ s ^ ")"
@@ -248,6 +249,44 @@ let is_bool_f = function
   | _                  -> false 
 ;;
 
+let string_of_perm f = match f with
+	| PLeft -> "L"
+	| PRight -> "R"
+
+let string_of_frac f = match f with
+	| IP.PVar v-> string_of_id v
+	| IP.PConst l->	"[" ^(String.concat "," (List.map string_of_perm l))^"]"
+
+let rec string_of_opt_frac f = match f with
+ | None -> ""
+ | Some s -> "@"^(string_of_frac s)
+
+let string_of_perm_formula f = 
+  let rec helper f = match f with
+	  | IP.And (f1,f2,_) -> 
+		let s1 = helper f1 in
+		let s2 = helper f2 in
+		s1^" & "^s2
+	  | IP.Or (f1,f2,_) ->
+		let s1 = helper f1 in
+		let s2 = helper f2 in
+		s1^" | "^s2
+	  | IP.Join (f1,f2,f3,_) ->
+		 let s1 = string_of_frac f1 in
+		 let s2 = string_of_frac f2 in
+		 let s3 = string_of_frac f3 in
+		 s1^" + "^s2^" = "^s3
+	  | IP.Eq (f1,f2,_) ->
+		 let s1 = string_of_frac f1 in
+		 let s2 = string_of_frac f2 in
+		 s1^" = "^s2
+	  | IP.Exists (ql,f,_) ->
+		  "(EX " ^ (string_of_var_list ql) ^ " . " ^ (helper f) ^ ")"
+	  | IP.PTrue _ -> "true"
+	  | IP.PFalse _ -> "false" in
+  if (IP.isConstTrue f) then "" else helper f
+   
+   
 (* pretty printing for a heap formula *)
 let rec string_of_h_formula = function 
   | F.Star ({F.h_formula_star_h1 = f1;
@@ -279,18 +318,20 @@ let rec string_of_h_formula = function
 		 F.h_formula_heap_name = id;
 		 F.h_formula_heap_arguments = pl;
 		 F.h_formula_heap_label = pi;
+		 F.h_formula_heap_perm = pr;
 		 F.h_formula_heap_pos = l}) -> 				 
       string_of_formula_label_opt pi				 
-	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
+	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^(string_of_opt_frac pr) ^"<" ^ (string_of_formula_exp_list pl) ^ ">")
 	
   | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
+		  F.h_formula_heap2_perm = pr;
 		  F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
 	string_of_formula_label_opt pi
-	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">")
+	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id  ^(string_of_opt_frac pr)^ "<" ^ tmp2 ^ ">")
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 ;;
@@ -302,8 +343,9 @@ let rec string_of_formula = function
   | Iast.F.Base ({F.formula_base_heap = hf;
 				  F.formula_base_pure = pf;
 				  F.formula_base_flow = fl;
+				  F.formula_base_perm = pr;
 				  F.formula_base_pos = l}) ->  
-	  if hf = F.HTrue then 
+	  let s = if hf = F.HTrue then 
 		string_of_pure_formula pf
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
@@ -312,7 +354,8 @@ let rec string_of_formula = function
 	  else 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
-            else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+            else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")") in
+	  s^(string_of_perm_formula pr)
   | Iast.F.Or ({F.formula_or_f1 = f1;
 				F.formula_or_f2 = f2;
 				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
@@ -323,6 +366,7 @@ let rec string_of_formula = function
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
 					F.formula_exists_heap = hf;
 					F.formula_exists_flow = fl;
+					F.formula_exists_perm = pr;
 					F.formula_exists_pure = pf}) ->
 	  "(EX " ^ (string_of_var_list qvars) ^ " . "
 	  ^ (if hf = F.HTrue then 
@@ -334,7 +378,7 @@ let rec string_of_formula = function
 		 else 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)
-              else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))
+              else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))^(string_of_perm_formula pr)
 	  ^ ")"
 ;;
 

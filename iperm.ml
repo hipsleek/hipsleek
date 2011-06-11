@@ -22,8 +22,8 @@ type perm_formula =
   | PTrue of loc
   | PFalse of loc
 
-let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
-let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
+(*let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
+let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")*)
   
 let mkVPerm (v:ident*primed):frac_perm = PVar v
 

@@ -24,6 +24,8 @@ let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
   
 let fresh_perm_var () = P.SpecVar (Named perm,fresh_name(),Unprimed)
 
+let mk_perm_var (a,b) = P.SpecVar (Named perm, a,b)
+
 let top_share = Ts.top
 
 let mkCPerm s : frac_perm = PConst s
@@ -54,9 +56,9 @@ let mkEq f1 f2 pos = Eq (f1,f2,pos)
 
 let is_full_frac t = Ts.stree_eq t Ts.top 
 
-let mkFullVar () : (P.spec_var * perm_formula) = 
+(*let mkFullVar () : (P.spec_var * perm_formula) = 
   let nv = fresh_perm_var() in
-  (nv,mkEq (mkVPerm nv) (mkPFull ()) no_pos)
+  (nv,mkEq (mkVPerm nv) (mkPFull ()) no_pos)*)
 
 let mkJoin v1 v2 v3 pos = Join (v1,v2,v3,pos)
 
