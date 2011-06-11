@@ -911,7 +911,7 @@ let pr_mix_formula f = match f with
 let pr_mix_formula_branches (f,l) = match f with
   | MCP.MemoF f -> pr_memo_pure_formula_branches (f,l)
   | MCP.OnePF f -> pr_pure_formula_branches (f,l)
-
+  
 let rec string_of_flow_formula f c = 
   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
 	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
@@ -945,6 +945,10 @@ let pr_perm_formula f =
 	| Cpr.PFalse _ -> fmt_string "F" in
   if (Cpr.isConstTrue f) then () else (fmt_string "[";helper f ;fmt_string "]")
 	  
+
+let pr_mix_formula_branches_perm (f,l,pr) = ((match f with
+  | MCP.MemoF f -> pr_memo_pure_formula_branches (f,l)
+  | MCP.OnePF f -> pr_pure_formula_branches (f,l));fmt_string " & "; pr_perm_formula pr)
 	  
 let rec pr_formula_base e =
   match e with
@@ -1033,6 +1037,9 @@ let string_of_mix_formula (f:MP.mix_formula) : string =
 let string_of_mix_formula_branches (f,l) : string = 
   poly_string_of_pr pr_mix_formula_branches (f,l)
 
+let string_of_mix_formula_branches_perm (f,l,pr) : string = 
+  poly_string_of_pr pr_mix_formula_branches_perm (f,l,pr)
+  
 let printer_of_pure_formula_branches (fmt: Format.formatter) (f, l) : unit =
   poly_printer_of_pr fmt pr_pure_formula_branches (f, l)
 
@@ -1145,7 +1152,7 @@ let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_f
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
-  pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure; 
+  pr_vwrap "es_pure: " pr_mix_formula_branches_perm es.es_pure; 
   (* pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;

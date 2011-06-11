@@ -567,7 +567,7 @@ br_permission_constraints : [[`OSQUARE;t=LIST1 one_p_const SEP `AND; `CSQUARE ->
 one_p_const : [[t1=perm; `EQ ; t2=perm -> Pr.mkEq t1 t2 no_pos
 	| `JOIN ; `OPAREN; t1=perm; `COMMA;  t2=perm; `COMMA; t3=perm; `CPAREN -> Pr.mkJoin t1 t2 t3 no_pos]];
 
-perm : [[ `OSQUARE; t = LIST0 one_perm SEP `COMMA ;`CSQUARE -> Pr.mkCPerm t
+perm : [[ `OSQUARE; t = LIST1 one_perm SEP `COMMA ;`CSQUARE -> Pr.mkCPerm t
 		| t=cid -> Pr.mkVPerm t]];
 
 one_perm :[[ `IDENTIFIER id -> if id ="L" then PLeft else if id="R" then PRight else report_error (get_pos_camlp4 _loc 1) "only L or R as permission splits are allowed"]];

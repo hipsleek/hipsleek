@@ -1983,7 +1983,7 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
-  es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
+  es_pure : (MCP.mix_formula * (branch_label * CP.formula) list * Pr.perm_formula);
   es_evars : CP.spec_var list;
   (*used by lemmas*)
   es_ivars : CP.spec_var list; (* ivars are the variables to be instantiated (for the universal lemma application)  *)
@@ -2134,7 +2134,7 @@ let rec empty_es flowt pos =
 {
   es_formula = x;
   es_heap = HTrue;
-  es_pure = (MCP.mkMTrue pos , []);
+  es_pure = (MCP.mkMTrue pos , [], Pr.mkTrue pos);
   es_evars = [];
   (* es_must_match = false; *)
   es_ivars = [];
@@ -2701,7 +2701,7 @@ and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
 				else 
 					let rf1 = rename_bound_vars f1 in
 					(combine_and rf1 f2)
-		
+		(*
 and normalize_no_rename_context_formula (ctx : context) (p : MCP.mix_formula) : context = 
 	let rec push_pure (f:formula):formula = match f with
 		| Base b-> Base {b with formula_base_pure = MCP.merge_mems p b.formula_base_pure true;}
@@ -2718,7 +2718,7 @@ match ctx with
 	  let nc2 = normalize_no_rename_context_formula c2 p in
 	  let res = OCtx (nc1, nc2) in
 		res
-		
+		*)
 (* -- 17.05.2008 *)
 and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_clash_es") in *)
@@ -4299,3 +4299,63 @@ and extr_lhs_b (es:entail_state) =
   formula_base_label = None;
   formula_base_pos = no_pos } in
   b1
+
+let rec subst_h_exp pr f =  match f with
+	  | Star h-> Star {h with h_formula_star_h1 = subst_h_exp pr h.h_formula_star_h1; h_formula_star_h2 = subst_h_exp pr h.h_formula_star_h2}
+	  | Conj h-> Conj {h with h_formula_conj_h1 = subst_h_exp pr h.h_formula_conj_h1; h_formula_conj_h2 = subst_h_exp pr h.h_formula_conj_h2}
+	  | Phase h-> Phase {h with h_formula_phase_rd = subst_h_exp pr h.h_formula_phase_rd; h_formula_phase_rw = subst_h_exp pr h.h_formula_phase_rw}
+	  | DataNode h -> (match h.h_formula_data_perm with
+				| None -> f
+				| Some v-> if not (CP.eq_spec_var (fst pr) v) then f else DataNode {h with h_formula_data_perm = snd pr})
+	  | ViewNode h -> (match h.h_formula_view_perm with
+				| None -> f
+				| Some v-> if not (CP.eq_spec_var (fst pr) v) then f else ViewNode {h with h_formula_view_perm = snd pr})
+	  | Hole _  | HTrue | HFalse -> f 
+  
+let rec set_perm_h pr f = match f with
+	  | Star h-> Star {h with h_formula_star_h1 = set_perm_h pr h.h_formula_star_h1; h_formula_star_h2 = set_perm_h pr h.h_formula_star_h2}
+	  | Conj h-> Conj {h with h_formula_conj_h1 = set_perm_h pr h.h_formula_conj_h1; h_formula_conj_h2 = set_perm_h pr h.h_formula_conj_h2}
+	  | Phase h-> Phase {h with h_formula_phase_rd = set_perm_h pr h.h_formula_phase_rd; h_formula_phase_rw = set_perm_h pr h.h_formula_phase_rw}
+	  | DataNode h -> DataNode {h with h_formula_data_perm = pr}
+	  | ViewNode h -> ViewNode {h with h_formula_view_perm = pr}
+	  | Hole _  | HTrue | HFalse -> f 
+  
+let set_perm_formula f pr =    
+  let rec helper f = match f with
+	| Or f-> mkOr (helper f.formula_or_f1) (helper f.formula_or_f2) f.formula_or_pos
+	| Base b-> Base {b with formula_base_heap = set_perm_h pr b.formula_base_heap}
+	| Exists b-> Exists {b with formula_exists_heap = set_perm_h pr b.formula_exists_heap} in
+  if pr = None then f
+  else helper f
+  
+let set_perm_struc f pr = 
+	let rec helper (f:struc_formula):struc_formula = 
+		List.map (fun f-> match f with 
+			| EBase b -> EBase {b with formula_ext_base = set_perm_formula b.formula_ext_base pr; formula_ext_continuation = helper b.formula_ext_continuation}
+			| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)->(c1,helper c2)) b.formula_case_branches}
+		    | EAssume (vl,f,fl) -> EAssume (vl,set_perm_formula f pr,fl)
+		    | EVariance v -> EVariance {v with formula_var_continuation = helper v.formula_var_continuation} ) f in
+	if pr = None then f 
+	else helper f
+  
+let subst_pr_one_exp fi l = match l with
+	| [] -> fi
+	| (f,t)::_-> 
+		let t_perm = match t with | None -> Pr.mkPFull () | Some v -> Pr.mkVPerm v in 
+		let rec helper hf = match hf with
+			| Or hf-> mkOr (helper hf.formula_or_f1) (helper hf.formula_or_f2) hf.formula_or_pos
+			| Base b-> Base {b with 
+								formula_base_heap = subst_h_exp (f,t) b.formula_base_heap; 
+								formula_base_perm = Pr.apply_one_exp (f,t_perm) b.formula_base_perm}
+			| Exists b-> Exists {b with 
+									formula_exists_heap = subst_h_exp (f,t) b.formula_exists_heap; 
+									formula_exists_perm = Pr.apply_one_exp (f,t_perm) b.formula_exists_perm} in
+		helper fi
+		
+	 
+let rec replace_perm_formula f pr = match f with
+	| Base f-> Base {f with formula_base_perm = pr}
+	| Exists f-> Exists {f with formula_exists_perm = pr}
+	| Or f -> Or{f with formula_or_f1 = replace_perm_formula f.formula_or_f1 pr; formula_or_f2 = replace_perm_formula f.formula_or_f2 pr}
+	
+	 

@@ -8,10 +8,10 @@ pred ll2<n> == self = null & n = 0
 	or self::node<next = r> * r::ll2<n-1>
 	inv n >= 0.
 
-pred ll3<n> == self::node<next = r> * r::ll2@[R]<n-1>
+pred ll3<n> == self::node<next = r> * r::ll2<n-1>
 	inv n >= 1.
 
-checkentail x::node<_, null> * z::node<> * y::ll<> |- x::ll@[L]<m> & m = 2.
+checkentail x::node<_, null> * z::node<> * y::ll<> |- x::ll<m> & m = 2.
 print residue.
 
 checkentail x::node<_, null> * z::node<> * y::ll<> & m = 1 |- x::ll<m>.

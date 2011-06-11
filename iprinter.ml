@@ -284,7 +284,7 @@ let string_of_perm_formula f =
 		  "(EX " ^ (string_of_var_list ql) ^ " . " ^ (helper f) ^ ")"
 	  | IP.PTrue _ -> "true"
 	  | IP.PFalse _ -> "false" in
-  if (IP.isConstTrue f) then "" else helper f
+  if (IP.isConstTrue f) then "" else (" & "^(helper f))
    
    
 (* pretty printing for a heap formula *)

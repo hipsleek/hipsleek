@@ -1935,6 +1935,8 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let stab = H.create 103 in
+  let _ = Iformula.formula_has_perm coer.I.coercion_head in
+  let _ = Iformula.formula_has_perm coer.I.coercion_body in
   let _ = collect_type_info_formula prog coer.I.coercion_head stab false in
   let _ = collect_type_info_formula prog coer.I.coercion_body stab false in
   (*let _ = print_string ("\n"^(string_of_stab stab)^"\n") in*)
@@ -3639,11 +3641,12 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_pure = p;
             IF.formula_base_flow = fl;
             IF.formula_base_branches = br;
+			IF.formula_base_perm = pr;
             IF.formula_base_pos = pos} ->(
             let rl = Cformula.res_retrieve stab clean_res fl in
             let _ = if sep_collect then 
               (collect_type_info_pure prog (IF.flatten_branches p br) stab;
-              collect_type_info_heap prog h stab) else () in 					
+              collect_type_info_heap prog h stab;collect_type_info_perm pr stab) else () in 					
             let ch = linearize_formula prog f0 stab in					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
             let _ = 
@@ -3666,7 +3669,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_pos = pos} -> (
             let rl = Cformula.res_retrieve stab clean_res fl in
             let _ = if sep_collect then (collect_type_info_pure prog (IF.flatten_branches p br) stab;
-            collect_type_info_heap prog h stab) else () in 
+            collect_type_info_heap prog h stab;collect_type_info_perm perm stab) else () in 
             let f1 = IF.Base {
                 IF.formula_base_heap = h;
                 IF.formula_base_pure = p;
@@ -4885,10 +4888,11 @@ and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab : typ =
 and collect_type_info_formula prog f0 stab filter_res = 
   (* let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in 
      let _ = print_string ("stab: " ^ (string_of_stab stab) ^ "\n") in *)
-  let helper pure branches heap = 
+  let helper pure branches heap perm= 
     (
         collect_type_info_heap prog heap stab;
         collect_type_info_pure prog pure stab;
+		collect_type_info_perm perm stab;
         ignore (List.map (fun (c1,c2) -> collect_type_info_pure prog c2 stab) branches)
     )	in
   match f0 with
@@ -4896,11 +4900,11 @@ and collect_type_info_formula prog f0 stab filter_res =
 	  collect_type_info_formula prog b.Iformula.formula_or_f2 stab filter_res)
     | Iformula.Exists b -> 
 	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_exists_flow in
-	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap);	
+	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap b.Iformula.formula_exists_perm);	
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_exists_flow) 
     | Iformula.Base b ->
 	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_base_flow in
-	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap);
+	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap b.Iformula.formula_base_perm);
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow)
 
 and gather_type_info_formula prog f0 stab filter_res = 
@@ -4914,10 +4918,11 @@ and gather_type_info_formula prog f0 stab filter_res =
 and gather_type_info_formula_x prog f0 stab filter_res = 
   (* let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in 
      let _ = print_string ("stab: " ^ (string_of_stab stab) ^ "\n") in *)
-  let helper pure branches heap = 
+  let helper pure branches heap perm = 
     (
         gather_type_info_heap prog heap stab;
         gather_type_info_pure prog pure stab;
+		gather_type_info_perm perm stab;
         ignore (List.map (fun (c1,c2) -> gather_type_info_pure prog c2 stab) branches)
     )	in
   match f0 with
@@ -4925,11 +4930,11 @@ and gather_type_info_formula_x prog f0 stab filter_res =
 	  gather_type_info_formula_x prog b.Iformula.formula_or_f2 stab filter_res)
     | Iformula.Exists b -> 
 	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_exists_flow in
-	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap);	
+	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap b.IF.formula_exists_perm);	
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_exists_flow) 
     | Iformula.Base b ->
 	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_base_flow in
-	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap);
+	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap  b.IF.formula_base_perm);
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow) 
 
 and type_store_clean_up (f:Cformula.struc_formula) stab = () (*if stab to big,  -> get list of quantified vars, remove them from stab*)
@@ -4996,6 +5001,19 @@ and gather_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
     check_shallow_var := true
   end
       
+	  
+and collect_type_info_frac_perm f stab pos = match f with | Ipr.PVar (v,_)-> collect_type_info_var v stab (Named perm) pos | _ -> () 
+
+and collect_type_info_perm perm stab = match perm with
+  | Ipr.And (f1,f2,_)
+  | Ipr.Or (f1,f2,_) -> (collect_type_info_perm f1 stab; collect_type_info_perm f2 stab)
+  | Ipr.Join (f1,f2,f3,l) -> (collect_type_info_frac_perm f1 stab l; collect_type_info_frac_perm f2 stab l;collect_type_info_frac_perm f3 stab l)
+  | Ipr.Eq (f1,f2,l) -> (collect_type_info_frac_perm f1 stab l; collect_type_info_frac_perm f2 stab l)
+  | Ipr.Exists (_, f,_)-> collect_type_info_perm f stab
+  | Ipr.PTrue _
+  | Ipr.PFalse _ -> ()
+
+
 and collect_type_info_heap prog (h0 : IF.h_formula) stab =
   match h0 with
     | IF.Star
@@ -5026,8 +5044,10 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_node = (v, p);
                 IF.h_formula_heap_name = c;
                 IF.h_formula_heap_arguments = ies;
+				IF.h_formula_heap_perm = pr;
                 IF.h_formula_heap_pos = pos
 	        } ->
+		  (match pr with | Some pr -> collect_type_info_frac_perm pr stab pos | None -> ());
 	      let dname =
             (try
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
@@ -5145,6 +5165,18 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
 			                  (c ^ " is neither a view nor data declaration"))))
     | IF.HTrue | IF.HFalse -> ()
 
+and gather_type_info_frac_perm pr stab pos = match pr with | Ipr.PVar (v,_)-> let _ = gather_type_info_var v stab (Named perm) pos in () | _ -> () 
+	
+and gather_type_info_perm perm stab = match perm with
+  | Ipr.And (f1,f2,_)
+  | Ipr.Or (f1,f2,_) -> (gather_type_info_perm f1 stab; gather_type_info_perm f2 stab)
+  | Ipr.Join (f1,f2,f3,l) -> (gather_type_info_frac_perm f1 stab l; gather_type_info_frac_perm f2 stab l;gather_type_info_frac_perm f3 stab l)
+  | Ipr.Eq (f1,f2,l) -> (gather_type_info_frac_perm f1 stab l; gather_type_info_frac_perm f2 stab l)
+  | Ipr.Exists (_, f,_)-> gather_type_info_perm f stab
+  | Ipr.PTrue _
+  | Ipr.PFalse _ -> ()
+  
+	
 and gather_type_info_heap prog (h0 : IF.h_formula) stab =
   Gen.Debug.no_eff_2 "gather_type_info_heap" [false;true]
       Iprinter.string_of_h_formula string_of_stab (fun _ -> "()")
@@ -5180,8 +5212,10 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_node = (v, p);
                 IF.h_formula_heap_name = c;
                 IF.h_formula_heap_arguments = ies;
+				IF.h_formula_heap_perm = pr;
                 IF.h_formula_heap_pos = pos
 	        } ->
+		  (match pr with | Some pr -> gather_type_info_frac_perm pr stab pos | None -> ());
 	      let dname =
             (try
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c

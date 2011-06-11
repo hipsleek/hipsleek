@@ -265,12 +265,18 @@ let heap_partial_imply l_h l_pr perm_imply mkStarH h_apply_one pos = match perm_
     let t = fresh_perm_var () in
     (l_h,l_pr,[],(f,t))
 
-and get_eqns_free ((fr,t) : P.spec_var * P.spec_var) (evars : P.spec_var list) (expl_inst : P.spec_var list) 
-      (struc_expl_inst : P.spec_var list) pos : perm_formula*perm_formula * (P.spec_var * P.spec_var) list = 
-	if (P.mem fr evars) || (P.mem fr expl_inst) then (mkTrue pos, mkTrue pos,[(fr, t)])
-  else if (P.mem fr struc_expl_inst) then (mkTrue pos, mkEq (mkVPerm fr) (mkVPerm t) pos,[])
-  else (mkEq (mkVPerm fr) (mkVPerm t) pos, mkTrue pos, [])
-
+and get_eqns_free ((r_node_pr,l_node_pr) : P.spec_var option * P.spec_var option) (evars : P.spec_var list) (expl_inst : P.spec_var list) 
+      (struc_expl_inst : P.spec_var list) pos : perm_formula*perm_formula * (P.spec_var * P.spec_var option) list = 
+	let tr = mkTrue pos in
+	match l_node_pr, r_node_pr with
+		| None, None -> (tr, tr, [])
+		| Some v, None -> (tr, mkEq (mkVPerm v) (mkPFull ()) pos,[])
+		| _ , Some v -> 
+			let dst = match l_node_pr with | None -> mkPFull () | Some v-> mkVPerm v in
+			let r = mkEq (mkVPerm v) dst pos in
+			if (P.mem v evars) || (P.mem v expl_inst) then (tr,tr,[(v, l_node_pr)])
+			else if (P.mem v struc_expl_inst) then (tr, r,[])  
+			else (r ,tr,[]) 
 
 (*transformers*)
 
@@ -405,3 +411,45 @@ let find_rel_constraints (f:perm_formula) desired :perm_formula =
    let fixp = helper desired in
    let pairs = List.filter (fun (c,_) -> (List.length (Gen.BList.intersect_eq P.eq_spec_var c fixp))>0) lf_pair in
    conj_of_list (snd (List.split pairs))
+   
+   
+   
+   
+   
+
+let split_universal (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_vars : P.spec_var list)(impl_inst_vars : P.spec_var list) (vvars : P.spec_var list) (pos : loc) 
+      : perm_formula * perm_formula * (P.spec_var list) =
+  let rec split f = match f with
+		| And (f1, f2, _) ->
+		  let app1, cpp1 = split f1 in
+		  let app2, cpp2 = split f2 in
+		  (mkAnd app1 app2 pos, mkAnd cpp1 cpp2 pos)
+		| _ ->
+		  let fvars = fv f in
+		  if P.disjoint fvars vvars then (mkTrue pos, mkTrue pos)
+		  else if not (P.disjoint (evars@expl_inst_vars@impl_inst_vars) fvars) then (mkTrue pos, f)
+		  else (f, mkTrue pos) in
+  let rec drop_cons (f : perm_formula) (vvars: P.spec_var list) : perm_formula = match f with
+	  | Eq _
+	  | Join _
+	  | Exists _ ->
+			if P.disjoint (fv f) vvars then mkTrue no_pos else f
+	  | And(f1, f2, l) -> mkAnd (drop_cons f1 vvars) (drop_cons f2 vvars) l
+	  | Or(f1, f2, l) -> mkOr (drop_cons f1 vvars) (drop_cons f2 vvars)  l
+	  | _ -> f in
+   let f=f0 in
+  (*let f = normalize_to_CNF f0 pos in*)
+  let to_ante, to_conseq = split f0 in
+  let to_ante = find_rel_constraints to_ante vvars in
+  let conseq_fv = fv to_conseq in
+  let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) conseq_fv in
+  let wrapped_to_conseq = mkExists instantiate to_conseq pos in
+  let to_ante = if fv wrapped_to_conseq <> [] then mkAnd to_ante wrapped_to_conseq no_pos else to_ante in
+  let fvars = fv f in
+  if !Globals.move_exist_to_LHS & (not(Gen.is_empty (Gen.BList.difference_eq P.eq_spec_var fvars evars)) & not(Gen.is_empty evars))	then
+    let new_f = drop_cons f vvars in
+	let new_f = mkAnd to_ante (mkExists evars new_f pos) pos in
+    (new_f,to_conseq, evars)
+  else (elim_exists_exp_perm to_ante, to_conseq, evars)
+
+   

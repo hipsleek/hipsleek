@@ -38,7 +38,7 @@ lexer.ml: lexer.mll token.ml
  
 # dependencies of parser.ml needs to be manually specified
 parser.cmo: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
-	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
+	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
 parser.cmx : lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml	
 	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
@@ -48,23 +48,23 @@ parser.cmi: lexer.cmi iast.cmi sleekcommons.cmi globals.cmi error.cmi cast.cmi
 ocparser.cmo ocparser.ml: ocparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) ocparser.mly
 	rm ocparser.mli
-	$(OCAMLOPT) $(OCAMLFLAGS) -c -g ocparser.ml
+	$(OCAMLC) $(OCAMLFLAGS) -c -g ocparser.ml
 
 oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLLEX) oclexer.mll
-	$(OCAMLOPT) $(OCAMLFLAGS) -c -g oclexer.ml
+	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
 
 rlparser.cmo rlparser.ml: rlparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) rlparser.mly
 	rm rlparser.mli
-	$(OCAMLOPT) $(OCAMLFLAGS) -c -g rlparser.ml
+	$(OCAMLC) $(OCAMLFLAGS) -c -g rlparser.ml
 
 rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLLEX) rllexer.mll
-	$(OCAMLOPT) $(OCAMLFLAGS) -c -g rllexer.ml
+	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
 
 MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo tree_shares.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
+	cpure.cmo mcpure.cmo tree_shares.cmo cperm.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
 	iastUtil.cmo \
@@ -91,7 +91,7 @@ MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
 GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo tree_shares.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo mcpure.cmo tree_shares.cmo cperm.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo iastUtil.cmo \
 	iprinter.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
@@ -114,7 +114,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.c
 
 
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo tree_shares.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo mcpure.cmo tree_shares.cmo cperm.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
@@ -141,7 +141,7 @@ SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
 
 
 PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo tree_shares.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo mcpure.cmo tree_shares.cmo cperm.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
@@ -164,7 +164,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
 WEB_FILES=globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo tree_shares.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo mcpure.cmo tree_shares.cmo cperm.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
@@ -237,7 +237,7 @@ sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT)
 
 
 JAVA_FILES=debug.cmo globals.cmo error.cmo \
-	cpure.cmo tree_shares.cmo cperm.cmo mcpure.cmo ipure.cmo  iperm.cmo\
+	cpure.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo iprinter.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
 	iparser.cmo ilexer.cmo \
