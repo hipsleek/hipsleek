@@ -72,7 +72,36 @@ checkentail x!=y |- x::node<_,_> * y::node<_,_>.
 
 //18. must (wrong)
 checkentail true |- x::node<_,_> * x::node<_,_>.
-
 // soundness of must bug?
+
 // must bug via predicates?
 
+//19. type error!
+checkentail x=y |- x::node<_,_> .
+
+//20.
+checkentail true |- x::node<_,_> .
+
+//21. error below (should be a may bug)
+checkentail x=y & y!=null |- x::node<_,_> .
+
+//22.
+checkentail x=y & y=null |- x::node<_,_> .
+
+//23.
+checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
+
+//24.
+checkentail x=y |- x::node<_,_>*y::node<_,_> .
+
+//25.
+checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
+
+//26. must-bug
+checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
+
+//27. valid
+checkentail x::node<_,null> & y=null  |- y::ll<n>.
+
+//28.
+checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.

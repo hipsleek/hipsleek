@@ -5230,3 +5230,31 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
+let filter_ante (ante : formula) (conseq : formula) : formula =
+	let fvar = fv conseq in
+	let new_ante = filter_var ante fvar in
+	  new_ante
+
+let find_must_failures is_sat ante cons=
+  let cs= split_conjunctions cons in
+  let cand_pairs = List.map (fun c -> (filter_ante ante c,c)) cs in
+  let must_pairs = List.filter (fun (a,c) ->
+      let f = mkAnd a c no_pos in
+      not(is_sat f)) cand_pairs in
+  let must_pairs = List.map (fun (a,c) ->
+      if not(is_sat c) then (mkTrue no_pos,c) else (a,c)) must_pairs in
+  must_pairs
+
+let find_must_failures is_sat ante cons =
+  let pr = !print_formula in
+  let pr2 = pr_list (pr_pair pr pr) in
+  Gen.Debug.ho_2 "find_must_failures" pr pr pr2 (fun _ _ -> find_must_failures is_sat ante cons) ante cons 
+
+let check_maymust_failure is_sat ante cons=
+  let c_l = find_must_failures is_sat ante cons in
+  c_l==[]
+
+let check_maymust_failure is_sat ante cons=
+  let pr = !print_formula in
+  Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
+

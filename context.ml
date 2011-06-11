@@ -473,18 +473,18 @@ and process_one_match_x prog (c:match_res) :action_wt =
   r
       
 and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
-  | [] -> if (is_view rhs_node) then
-      if (get_view_original rhs_node) then
-        let r = M_base_case_fold { 
+  | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
+          if (is_view rhs_node) && (get_view_original rhs_node) then
+        let r = (1,M_base_case_fold { 
             match_res_lhs_node = HTrue; 
             match_res_lhs_rest = lhs_h; 
             match_res_holes = [];
             match_res_type = Root;
             match_res_rhs_node = rhs_node;
-            match_res_rhs_rest = rhs_rest;} in
-        (1,r)
-      else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
-    else (1,M_unmatched_rhs_data_node rhs_node)
+            match_res_rhs_rest = rhs_rest;}) in
+        (-1, (Search_action [r;r0]))
+      else r0
+(* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
   | x::[] -> process_one_match prog x 
   | _ -> (-1,Search_action (List.map (process_one_match prog) l))
 

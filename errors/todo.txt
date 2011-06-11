@@ -88,3 +88,104 @@ Is below correct?
 // effectiveness of approach? 
    benchmark?
 
+
+norm_flow |- must_norm * must_flow
+norm_flow |- may_norm  * may_flow
+norm_flow |- ok_norm   * norm_flow
+
+ X |- must_err_flow * ?
+
+
+ false <: norm  <: may_err
+
+ false <: must_err <: may_err
+
+  Valid
+  [x=1]norm   |- [x>=1]norm 
+                    * ([x=1->x=1]norm)
+
+  Must_Error
+  [x=1]norm   |- [x>1]norm  
+                    * ([(x=1&n>1)=false]must)
+
+  May_Error
+  [x>=1]norm  |- [x>1]norm 
+                    * ([not(x>=1->x>1)]may)
+
+
+  x=1 |- x>=1 * (true & norm_flow)
+
+
+  false_flow <: norm <: true_flow
+
+  false[flow] |- any[flow] * false[flow]
+
+  LHS[flow] |- RHS[flow] * (LHS->RHS)[flow]
+  LHS[flow] |- RHS[flow] * (must_err(LHS & RHS=false)[flow]
+  LHS[flow] |- RHS[flow] * (may_err(not(LHS->RHS)))[flow]
+
+           f1<:f2
+       --------------
+        f1 <: may[f2]
+
+             f1<:f2
+        ------------------
+        must[f1] <: may[f2]
+
+                 LHS -> RHS
+  -----------------------------------------
+  LHS[flow] |- RHS[flow] * (LHS->RHS)[flow]
+
+               LHS -> not(RHS) 
+  ---------------------------------------------
+  LHS[flow] |- RHS[flow] * (true)[musterr[flow]]
+
+               not(LHS -> RHS)
+  ---------------------------------------------
+  LHS[flow] |- RHS[flow] * (true)[may_err[flow]]
+
+      norm     <: may_err
+      must_err <: may_err
+
+
+  L1[flow] * L2[flow] <==> (L1*L2)[flow]
+
+              flow1 <: flow2
+  ---------------------------------------
+  L1[flow1] * L2[flow2] ==> (L1*L2)[flow2]
+
+
+
+
+====================================================
+
+  sorted<S> = self=null & S={}
+  \/ self::node<v,q> * q::sort<S1> & S={v}US &
+         forall x in S. v<=x
+
+  err_sorted<S> = 
+     self::node<v,q> * q::ll<S1> & S={v}US & exists x in S. v>x
+  \/ self::node<v,q> * q::err_sorted<S1> & S={v}US
+       & forall x in S. v<=x
+
+     x::err_sorted<S> =!=> not(x::sorted<S>) 
+  ------------------------------------------------------------
+  x::err_sorted<S>[norm] |- x::sorted<S>[norm] * true[must_err]
+
+        x=1 -> not(x>1)
+      -------------------
+         x=1 =!=> x>1
+
+        flow1<:flow2
+  ------------------------
+   D1[flow] ==> D1[flow2]
+
+        D1 --> D2
+  ------------------------
+   D1[flow] ==> D2[flow]
+
+ may_err <: 
+ may_err <: must_err 
+
+ A Calculus for Must and May Bugs
+ --------------------------------

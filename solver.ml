@@ -4274,14 +4274,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
               let new_fc_kind =
                 let elim_option ant cons = match ant,cons with
                   | Some ante, Some consq -> (CP.filter_redundant ante consq, consq) (*TP.filter f*)
-                  | _ -> report_error no_pos "heap_entail_empty_rhs_heap: should be different to None here"
+                  | _ -> report_error no_pos "heap_entail_empty_rhs_heap: should be different from None here"
                 in
                 (*check_maymust*)
-                let check_maymust_failure ante cons=
-                   let new_pformula = CP.mkAnd ante cons no_pos in
-                   TP.is_sat_sub_no new_pformula imp_no
-                in
-                (*build must msg*)
+                let r = ref (-9999) in
+                let is_sat f = TP.is_sat_sub_no f r in
+                let check_maymust_failure a c = CP.check_maymust_failure is_sat a c in
+                 (*build must msg*)
                 let cons4 = (MCP.pure_of_mix split_conseq) in
                 let ante_core, cons_core = elim_option res4 res5 in
                 let ante_filter1 = CP.filter_redundant (MCP.pure_of_mix split_ante1) cons4 in
@@ -5235,8 +5234,9 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
                                           CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
     | Context.Seq_action l ->
+          report_warning no_pos "Sequential action - not handled";
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
-              , CF.mk_failure_must "sequential action - not handled" )), NoAlias)
+              , CF.mk_failure_may "sequential action - not handled" )), NoAlias)
     | Context.Search_action l ->
           let r = List.map (fun (_,a1) -> process_action_x prog estate conseq lhs_b rhs_b a1 is_folding pos) l in
           List.fold_left combine_results (List.hd r) (List.tl r) in

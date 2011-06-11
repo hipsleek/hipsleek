@@ -539,9 +539,10 @@ let elim_exists (f : CP.formula) : CP.formula =
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
-	let fvar = CP.fv conseq in
-	let new_ante = CP.filter_var ante fvar in
-	  (new_ante, conseq)
+    (CP.filter_ante ante conseq, conseq)
+	(* let fvar = CP.fv conseq in *)
+	(* let new_ante = CP.filter_var ante fvar in *)
+	(*   (new_ante, conseq) *)
   else
     (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
 	(ante, conseq)
