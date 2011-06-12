@@ -1,0 +1,29 @@
+//1. must failure
+checkentail x=1 |- (exists y: y+y=x & y>2) .
+
+//2. must failure
+checkentail x=1 |- (exists y: y+y=x & x>2) .
+
+//3. x=1 & x=2 is a contradiction but
+//   not detected
+checkentail true |- x=1 & x=2 .
+
+//4. x=3 is must-fail, x>3 is may-fail
+checkentail x=1 |- x=3 & x>0 & x>3 .
+
+//5. x.=z isis must-fail but not detected
+checkentail  x<z |- x>=y & y>=z.
+
+//6. must-failure
+checkentail  x<z |- x>=y & y>=z & x>=z.
+
+
+// partition RHS by connected vars
+// detect contradiction with RHS parts
+//  --> search for individual?
+// detect must-failure with RHS parts
+//  --> search for individual?
+
+// perform closure (maybe incomplete), then search for must/may
+
+

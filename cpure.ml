@@ -660,6 +660,8 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
           BForm ((Neq (ae1, ae2, pos)),None)
   | _ ->  BForm ((Neq (ae1, ae2, pos)),None)
 
+and mkNot_s f :formula = mkNot f None no_pos
+
 and mkNot f lbl1 pos0 :formula= match f with
   | BForm (bf,lbl) -> begin
       match bf with
@@ -1765,6 +1767,7 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
 (* 
    Get a list of conjuncts, namely
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
+   TODO : push exists inside where possible..
 *)
 and list_of_conjs (f0 : formula) : formula list =
   let rec helper f conjs = match f with
@@ -5235,20 +5238,49 @@ let filter_ante (ante : formula) (conseq : formula) : formula =
 	let new_ante = filter_var ante fvar in
 	  new_ante
 
-let find_must_failures is_sat ante cons=
+let part_contradiction is_sat pairs =
+  let (p1,p2) = List.partition (fun (a,c) -> not(is_sat c)) pairs in
+  (List.map (fun (_,c) -> (mkTrue no_pos,c) ) p1, p2)
+
+let part_must_failures is_sat pairs =
+  List.partition (fun (a,c) -> 
+      let f = mkAnd a c no_pos in
+      not(is_sat f)) pairs 
+
+let part_must_failures is_sat pairs =
+  List.partition (fun (a,c) -> 
+      let f = mkAnd a c no_pos in
+      not(is_sat f)) pairs 
+
+let imply is_sat a c =
+  let r = mkNot_s c in
+  let f = mkAnd a r no_pos in
+  not (is_sat f)
+
+let find_may_failures imply pairs =
+  List.filter (fun (a,c) ->  not(imply a c)) pairs
+
+let find_all_failures is_sat ante cons =
   let cs= split_conjunctions cons in
   let cand_pairs = List.map (fun c -> (filter_ante ante c,c)) cs in
-  let must_pairs = List.filter (fun (a,c) ->
-      let f = mkAnd a c no_pos in
-      not(is_sat f)) cand_pairs in
-  let must_pairs = List.map (fun (a,c) ->
-      if not(is_sat c) then (mkTrue no_pos,c) else (a,c)) must_pairs in
-  must_pairs
+  let (contra_list,cand_pairs) = part_contradiction is_sat cand_pairs in
+  let (must_list,cand_pairs) = part_must_failures is_sat cand_pairs in
+  let may_list = find_may_failures (imply is_sat) cand_pairs in
+  (contra_list,must_list,may_list)
+
+let find_all_failures is_sat ante cons =
+  let pr = !print_formula in
+  let pr2 = pr_list (pr_pair pr pr) in
+  Gen.Debug.ho_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
+
+let find_must_failures is_sat ante cons =
+  let (contra_list,must_list,_) = find_all_failures is_sat ante cons in
+  contra_list@must_list
 
 let find_must_failures is_sat ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
-  Gen.Debug.ho_2 "find_must_failures" pr pr pr2 (fun _ _ -> find_must_failures is_sat ante cons) ante cons 
+  Gen.Debug.no_2 "find_must_failures" pr pr pr2 (fun _ _ -> find_must_failures is_sat ante cons) ante cons 
 
 let check_maymust_failure is_sat ante cons=
   let c_l = find_must_failures is_sat ante cons in
