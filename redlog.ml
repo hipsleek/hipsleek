@@ -1110,3 +1110,26 @@ let pairwisecheck (f: CP.formula): CP.formula =
     Omega.pairwisecheck f 
   else 
     f
+		
+
+(** An Hoa : Make use of reduce for equation solving facility.
+    Main issue: how to read back the result.
+		@param eqns -> List of equations; no max, min, inequality, ...
+		@param bv -> List of equation parameters
+		@return a list of binding (var,exp) indicating the root
+ **)
+let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
+	(* Pick out the variables to solve for *)
+	let _ = print_endline "solve_eqns" in
+	let _ = start () in
+	let _ = print_endline "solve_eqns :: reduce started!" in
+	let unks = List.map (fun (e1,e2) -> List.append (CP.afv e1) (CP.afv e2)) eqns in
+	let unks = List.flatten unks in
+	let _ = print_string "variables to solve for : " in
+	let _ = !CP.print_svl unks in
+	eqns
+;;
+
+
+(** Set the equation solver in Cpure **)
+Cpure.solve_equations := solve_eqns;;

@@ -4576,13 +4576,15 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 				let tobereplaced = List.filter (fun x -> not (CP.eq_spec_var x subv)) tobereplaced in
 				(* Primed variables cannot be replaced! *)
 				let tobereplaced = List.filter CP.is_unprimed tobereplaced in
+				(* Constant cannot be replaced as well! *)
+				let tobereplaced = List.filter (fun x -> not (CP.is_const x)) tobereplaced in
 				let sst = List.map (fun x -> (x,subv)) tobereplaced in
 				(* Replaced variables which we can find the equivalent one in the set of logical variables *)
 					nh := subst_heap sst !nh;
 				(* We also have to replace the ones in this mg *)
 				if (tobereplaced != []) then
-(*				let _ = print_string ("==> reducible :: replace variables in " ^ (!print_svl tobereplaced) ^ " by " ^ (!print_sv subv)) in*)
-(*				let _ = print_string (!print_h_formula !nh) in       *)
+					let _ = print_endline ("==> reducible :: replace variables in " ^ (!print_svl tobereplaced) ^ " by " ^ (!print_sv subv)) in
+(*					let _ = print_string (!print_h_formula !nh) in*)
 					(** Wrong! Only remove the ones that are replaced! 
                      Also, have to do substitution in the formulas as well.
 										 Change the list of free variables. **)

@@ -5099,6 +5099,10 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
+
+(** An Hoa : reference to function to solve equations in Redlog **)
+let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> eqns)
+
 (** An Hoa : Reduce the formula by removing 
 		redundant atomic formulas and variables
 		given the list of "important" variabless
@@ -5118,11 +5122,30 @@ let rec reduce_pure (f : formula) (bv : spec_var list)
 	(* Pick out equality from all atomic *)
 	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf	in
 	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p)) ebf in
+	let _ = print_endline "Equality occurs: " in
 	let _ = List.map (fun x -> print_endline (!print_b_formula x)) bf in
+	let eqns = List.map (fun (e1,e2,p) -> (e1,e2)) ebf in
+	(* Find all constants that appears in the equations *)
+	let ebfexps = List.map (fun (e1,e2,p) -> e1::[e2]) ebf in
+	let ebfexps = List.flatten ebfexps in
+	(* Convert to MNF *)
+	let ebf_mnf = List.map to_mnf ebfexps in
+	let _ = print_endline "MNF expressions:" in
+	let _ = List.map (fun x ->
+		print_string "["; 
+		List.map (fun y -> print_string ((!print_exp y) ^ " ")) x;
+		print_string "]\n") ebf_mnf in
+	let ebfcexps = List.map find_constants_exp ebfexps in
+	let ebfcexps = List.flatten ebfcexps in
+	let ebfcexps = Gen.BList.remove_dups_eq is_equal_constants ebfcexps in
+	let _ = print_endline "Constants found: " in
+	let _ = List.map (fun x -> print_string ((!print_exp x) ^ " ")) ebfcexps in
 	(* Find the variables that we need to solve for *)
 	let vars = fv f in
 	let vars = Gen.BList.difference_eq eq_spec_var vars bv in
 	let _ = print_endline (!print_svl vars) in
+	let _ = !solve_equations eqns bv in
+	(* Arithmetization *)
 	(* Solve each variables in vars in term of bv, leave it there if we cannot do so *)
 		(f,[])
 (** An Hoa : End **)
@@ -5138,7 +5161,7 @@ let rec reduce_pure (f : formula) (bv : spec_var list)
 			labelled by the variable, each edge is a constraint
 			between the vertices.
 		- Starting from variables with labelled in bv, add the
-			vertices  
+			vertices
 **)
 and sym_solve (ebf : (exp * exp * loc) list) (vars : spec_var list) (bv : spec_var list) 
 		: ((spec_var * exp) list * (spec_var list) * (spec_var list)) =
@@ -5153,3 +5176,72 @@ and sym_solve (ebf : (exp * exp * loc) list) (vars : spec_var list) (bv : spec_v
 			let vars = vars in
 			let resr,resvars,resbv = sym_solve r vars bv in
 				([],resvars,resbv)
+				
+				
+(** An Hoa : Find all the constants that appears in an expression **)
+and find_constants_exp (e : exp) = match e with
+	| Null _ -> [e]
+  | IConst _ | FConst _ -> [e]
+  | Add (e1,e2,_) | Subtract (e1,e2,_)
+	| Mult (e1,e2,_) | Div (e1,e2,_) -> List.append (find_constants_exp e1) (find_constants_exp e2)
+  | _ -> []
+(** An Hoa : End **)
+
+
+(** An Hoa : Find all the constants that appears in an expression **)
+and is_equal_constants (e1 : exp) (e2 : exp) = match (e1,e2) with
+		| (Null _, Null _) -> true
+		| (IConst (i1,_), IConst (i2,_)) -> (i1 = i2)
+		| (FConst (i1,_), FConst (i2,_)) -> (i1 = i2)
+		| _ -> false 
+(** An Hoa : End **)
+
+
+(** An Hoa : Check if e contains variables in vars **)
+and contains_vars (e : exp) (vars : spec_var list) = 
+	let ev = afv e in 
+		Gen.BList.overlap_eq eq_spec_var ev vars
+(** An Hoa : End **)
+
+	
+(** An Hoa : Move occurences of variables in bv from lhs to rhs **)
+and push_vars_right (lhs : exp) (rhs : exp) (bv : spec_var list) =
+	if (contains_vars lhs bv) then
+		match lhs with
+			| Null _ | IConst _ | FConst _ -> failwith "push_vars_right : something wrong here! The lhs must not be constant."
+  		| Var (sv, _) -> (mkIConst 0 no_pos, mkSubtract rhs lhs no_pos) (* sv must be in bv! *)
+		  | Add (e1,e2,_) -> (lhs,rhs)
+		  | Subtract (e1,e2,_) -> (lhs,rhs)
+		  | Mult (e1,e2,_) -> (lhs,rhs)
+		  | Div (e1,e2,_) -> (lhs,rhs)
+		  | _ -> failwith "push_vars_right : unsupported expressions!"
+	else (* Base case : no variable of lhs is in bv - done! *)
+		(lhs,rhs)
+(** An Hoa : End **)
+
+
+(** An Hoa : Convert an arithmetic expression into multiplicative normal form
+							i.e. x*x*...*x + y*y*...*y/z*z*z*... + ...
+						Subtraction is converted into (-1) * x
+ **)
+and to_mnf (e : exp) : (exp list) = match e with
+	| Null _
+  | Var _ 
+  | IConst _
+  | FConst _ -> [e]
+  | Add (e1,e2,p) -> List.append (to_mnf e1) (to_mnf e2)
+  | Subtract (e1,e2,p) -> (* Eliminate subtraction *)
+			let ne2 = mkMult (IConst (-1,no_pos)) e2 no_pos in
+			let ne2 = to_mnf ne2 in
+				List.append (to_mnf e1) ne2
+  | Mult (e1,e2,p) ->
+			let ne1 = to_mnf e1 in
+			let ne2 = to_mnf e2 in
+			let terms = List.map (fun x -> List.map (fun y -> mkMult x y no_pos) ne2) ne1 in
+			let terms = List.flatten terms in
+				terms
+  | Div (e1,e2,p) ->
+			let ne1 = to_mnf e1 in
+			let terms = List.map (fun x -> mkDiv x e2 no_pos) ne1 in
+				terms
+	| _ -> [e]
