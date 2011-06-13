@@ -1113,20 +1113,52 @@ let pairwisecheck (f: CP.formula): CP.formula =
 		
 
 (** An Hoa : Make use of reduce for equation solving facility.
-    Main issue: how to read back the result.
-		@param eqns -> List of equations; no max, min, inequality, ...
-		@param bv -> List of equation parameters
-		@return a list of binding (var,exp) indicating the root
+	@param eqns -> List of equations; no max, min, inequality, ...
+	@param bv -> List of equation parameters
+	@return a list of binding (var,exp) indicating the root
  **)
 let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
-	(* Pick out the variables to solve for *)
-	let _ = print_endline "solve_eqns" in
+	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS. *)
+	let _ = print_endline "solve_eqns :: starting reduce ..." in
 	let _ = start () in
 	let _ = print_endline "solve_eqns :: reduce started!" in
+	(* Pick out the variables in the equations *)
 	let unks = List.map (fun (e1,e2) -> List.append (CP.afv e1) (CP.afv e2)) eqns in
 	let unks = List.flatten unks in
-	let _ = print_string "variables to solve for : " in
-	let _ = !CP.print_svl unks in
+	(* Swap all primed variables *)
+	let unksmap = List.map (fun x -> match x with (* Unknown map *)
+		| CP.SpecVar (t,n,p) -> match p with
+			| Primed -> (x, CP.SpecVar (t, n ^ "_PRIMED", Unprimed)) (* primed variable is appended with _PRIMED *)
+			| Unprimed -> (x, x) (* unprimed vars does not change i.e. map to itself *)
+		) unks in
+	let red_unks = List.map snd unksmap in
+	let red_eqns = List.map (fun (e1,e2) -> (CP.e_apply_subs unksmap e1,CP.e_apply_subs unksmap e2)) eqns in
+	(* Get the reduce input for the unknowns *)
+	let input_unknowns = List.map !CP.print_sv red_unks in
+	let input_unknowns = "{" ^ (String.concat "," input_unknowns) ^ "}" in
+	let _ = print_endline "\nVariables to solve for : " in
+	let _ = print_endline input_unknowns in
+	(* Convert eqns into reduce input format *)
+	let input_eqns = List.map (fun (e1,e2) -> (!CP.print_exp e1) ^ " = " ^ (!CP.print_exp e2)) red_eqns in
+	let _ = print_endline "\nInput equations: " in
+	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
+	let _ = print_endline input_eqns in
+	(* Request reduce to handle equation solving *)
+	let red_input = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
+	let _ = send_cmd red_input in
+	let rec read_stream () = (** Internal function to read reduce output **)
+		let line = Gen.trim_str (input_line !process.inchannel) in
+		let l = String.length line in
+			if (l == 0) then 
+				"" 
+			else if (line.[l-1] == '$') then 
+				String.sub line 0 (l-1)
+			else 
+				line ^ (read_stream ())
+	in
+	let red_result = read_stream () in
+	let _ = print_endline ("\nSolution : " ^ red_result) in
+	(* Parse reduce's result *)
 	eqns
 ;;
 

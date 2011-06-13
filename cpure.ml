@@ -5122,24 +5122,24 @@ let rec reduce_pure (f : formula) (bv : spec_var list)
 	(* Pick out equality from all atomic *)
 	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf	in
 	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p)) ebf in
-	let _ = print_endline "Equality occurs: " in
-	let _ = List.map (fun x -> print_endline (!print_b_formula x)) bf in
+	(*let _ = print_endline "Equality occurs: " in
+	let _ = List.map (fun x -> print_endline (!print_b_formula x)) bf in*)
 	let eqns = List.map (fun (e1,e2,p) -> (e1,e2)) ebf in
 	(* Find all constants that appears in the equations *)
 	let ebfexps = List.map (fun (e1,e2,p) -> e1::[e2]) ebf in
 	let ebfexps = List.flatten ebfexps in
 	(* Convert to MNF *)
-	let ebf_mnf = List.map to_mnf ebfexps in
+	(*let ebf_mnf = List.map to_mnf ebfexps in
 	let _ = print_endline "MNF expressions:" in
 	let _ = List.map (fun x ->
 		print_string "["; 
 		List.map (fun y -> print_string ((!print_exp y) ^ " ")) x;
-		print_string "]\n") ebf_mnf in
+		print_string "]\n") ebf_mnf in*)
 	let ebfcexps = List.map find_constants_exp ebfexps in
 	let ebfcexps = List.flatten ebfcexps in
 	let ebfcexps = Gen.BList.remove_dups_eq is_equal_constants ebfcexps in
-	let _ = print_endline "Constants found: " in
-	let _ = List.map (fun x -> print_string ((!print_exp x) ^ " ")) ebfcexps in
+	(*let _ = print_endline "Constants found: " in
+	let _ = List.map (fun x -> print_string ((!print_exp x) ^ " ")) ebfcexps in*)
 	(* Find the variables that we need to solve for *)
 	let vars = fv f in
 	let vars = Gen.BList.difference_eq eq_spec_var vars bv in
