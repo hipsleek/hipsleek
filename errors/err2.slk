@@ -31,6 +31,7 @@ checkentail x::node<v,q>*q::node<_,null> |- x::node<2,q> .
 //7. must failure
 checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
 
+// must bug via predicates?
 pred pos_ll<n> == self = null & n = 0
 	or self::node<d,r> * r::pos_ll<n - 1> & d>0
 	inv n >= 0.
@@ -40,68 +41,59 @@ pred neg_ll<n> == self = null & n = 0
 	inv n >= 0.
 
 //8. may failure
+checkentail x::pos_ll<n> |- x::neg_ll<n> .
+
+//9. must? failure
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-//9. must failure but detected as may bug
+//10. must failure but detected as may bug
 // requires a lemma!
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 
-//10. may failure
+//11. must failure
 checkentail x::ll<n> & n>0 |- x::ll<n+1> .
 
-//11. may
+//12. may
 checkentail true |- x::node<_,_> .
 
-//12. may
+//13. may
 checkentail y::node<_,_> & x!=y |- x::node<_,_> .
 
-//13. may
+//14. may
 checkentail y=null |- x::node<_,_> .
 
-//14. must
+//15. must
 checkentail x=y & y=null |- x::node<_,_> .
 
-//15. may
+//16. may
 checkentail x=y |- x::node<_,_> .
 
-//16. must (wrong)
+//17. must (wrong)
 checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
-//17. may 
+//18. may 
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
 
-//18. must (wrong)
+//19. must but reported as may error
 checkentail true |- x::node<_,_> * x::node<_,_>.
 // soundness of must bug?
 
-// must bug via predicates?
 
-//19. type error!
-checkentail x=y |- x::node<_,_> .
-
-//20.
-checkentail true |- x::node<_,_> .
-
-//21. error below (should be a may bug)
+//20. may bug
 checkentail x=y & y!=null |- x::node<_,_> .
 
-//22.
-checkentail x=y & y=null |- x::node<_,_> .
 
-//23.
+//21. must bug
 checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
 
-//24.
-checkentail x=y |- x::node<_,_>*y::node<_,_> .
-
-//25.
+//22. must bug (but reported as may)
 checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
 
-//26. must-bug
+//23. must-bug
 checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 
-//27. valid
+//24. valid
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
-//28.
+//25.
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
