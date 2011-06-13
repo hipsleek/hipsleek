@@ -189,3 +189,20 @@ norm_flow |- ok_norm   * norm_flow
 
  A Calculus for Must and May Bugs
  --------------------------------
+
+
+ slice :: RHS --> [f1,..,fn]
+  (same as memo grouping)
+
+ Assume LHS is not false
+
+ (i) f_i is false
+
+ (ii) LHS & f_i is false
+       (look for LHS & f_i_j is false)
+
+ (iii) look for not(LHS -> f_i_j)
+
+
+
+

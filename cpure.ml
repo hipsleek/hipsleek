@@ -5238,6 +5238,26 @@ let filter_ante (ante : formula) (conseq : formula) : formula =
 	let new_ante = filter_var ante fvar in
 	  new_ante
 
+
+(* automatic slicing of variables *)
+
+(* slice_formula inp1 :[ 0<=x, 0<=y, z<x] *)
+(* slice_formula@22 EXIT out :[([z,x],[ z<x, 0<=x]),([y],[ 0<=y])] *)
+
+let slice_formula (fl : formula list) : (spec_var list * formula list) list =
+  let repart ac f = 
+    let vs = fv f in
+    let (ol,nl) = List.partition (fun (vl,f) -> (Gen.BList.overlap_eq eq_spec_var vs vl)) ac in
+    let n_vl = List.fold_left (fun a (v,_) -> a@v) vs ol  in
+    let n_fl = List.fold_left (fun a (_,fl) -> a@fl) [f] ol  in
+    (Gen.BList.remove_dups_eq eq_spec_var n_vl,n_fl)::nl
+  in List.fold_left repart [] fl
+
+let slice_formula (fl : formula list) : (spec_var list * formula list) list =
+  let pr = pr_list !print_formula in
+  let pr2 = pr_list (pr_pair !print_svl pr) in
+  Gen.Debug.no_1 "slice_formula" pr pr2 slice_formula fl
+
 let part_contradiction is_sat pairs =
   let (p1,p2) = List.partition (fun (a,c) -> not(is_sat c)) pairs in
   (List.map (fun (_,c) -> (mkTrue no_pos,c) ) p1, p2)
@@ -5257,14 +5277,32 @@ let imply is_sat a c =
   let f = mkAnd a r no_pos in
   not (is_sat f)
 
+let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
+  let cs = split_conjunctions conseq in
+  let ml = List.filter (fun c -> 
+      let f = mkAnd ante c no_pos in
+      not(is_sat f)) cs in
+  if ml==[] then [(ante,conseq)]
+  else List.map (fun f -> (ante,f)) ml 
+  
+let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) list =
+  let rs = List.map (refine_one_must is_sat) pairs in
+  List.concat rs
+ 
 let find_may_failures imply pairs =
+  let pairs = List.map (fun (a,c) -> 
+      let cs = split_conjunctions c in
+      List.map (fun c -> (a,c)) cs) pairs in
+  let pairs = List.concat pairs in
   List.filter (fun (a,c) ->  not(imply a c)) pairs
 
 let find_all_failures is_sat ante cons =
   let cs= split_conjunctions cons in
+  let cs = List.map (fun (_,ls) -> join_conjunctions ls) (slice_formula cs) in
   let cand_pairs = List.map (fun c -> (filter_ante ante c,c)) cs in
   let (contra_list,cand_pairs) = part_contradiction is_sat cand_pairs in
   let (must_list,cand_pairs) = part_must_failures is_sat cand_pairs in
+  let must_list = refine_must is_sat must_list in
   let may_list = find_may_failures (imply is_sat) cand_pairs in
   (contra_list,must_list,may_list)
 
@@ -5282,11 +5320,11 @@ let find_must_failures is_sat ante cons =
   let pr2 = pr_list (pr_pair pr pr) in
   Gen.Debug.no_2 "find_must_failures" pr pr pr2 (fun _ _ -> find_must_failures is_sat ante cons) ante cons 
 
-let check_maymust_failure is_sat ante cons=
+let check_maymust_failure is_sat ante cons =
   let c_l = find_must_failures is_sat ante cons in
   c_l==[]
 
-let check_maymust_failure is_sat ante cons=
+let check_maymust_failure is_sat ante cons =
   let pr = !print_formula in
   Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
 

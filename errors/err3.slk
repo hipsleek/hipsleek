@@ -27,3 +27,8 @@ checkentail  x<z |- x>=y & y>=z & x>=z.
 // perform closure (maybe incomplete), then search for must/may
 
 
+//6. must-failure
+checkentail  x<z |- x>=0 & y>=0 & x>y.
+
+//6. must-failure
+checkentail  x<z |- x>=0 & y>=0 & x>z.
