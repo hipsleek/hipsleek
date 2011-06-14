@@ -5102,7 +5102,8 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 
 (** An Hoa : remove redundant constraints.
  **)
-
+let remove_redundant_constraints (f : formula) : formula = match f with
+	| _ -> f
 
 (** An Hoa : reference to function to solve equations in Redlog **)
 let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> ([] : (spec_var * spec_var) list))
@@ -5153,7 +5154,8 @@ let rec reduce_pure (f : formula) (bv : spec_var list)
 	let sst = !solve_equations eqns bv in
 	(* Substitute equal variables & simplify the formula *)
 	let nf = subst sst f in
-	let nf = remove_dup_constraints in
+	let nf = remove_dup_constraints nf in
+	let nf = remove_redundant_constraints nf in
 		(nf,sst)
 (** An Hoa : End **)
 
