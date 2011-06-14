@@ -763,6 +763,10 @@ let simplify (f : CP.formula) : CP.formula =
       r
     with | _ -> f)
 
+(* always simplify directly with the help of prover *)
+let simplify_always (f:CP.formula): CP.formula = 
+  simplify f 
+
 (* let simplify f = *)
 (*   Gen.Debug.no_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (\* (fun x -> x) *\)simplify f *)
 
@@ -771,6 +775,13 @@ let simplify (f:CP.formula): CP.formula =
   (* if (CP.contains_exists f) then  *)
   (*   let f=CP.elim_exists f in  *)
   (*    simplify f else f *)
+
+let simplify (f:CP.formula): CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "simplify" pr pr simplify f
+
+
+
 
 (* let simplify (f:CP.formula): CP.formula =  *)
 (*   (\* (if (2107 <= !Util.proc_ctr  && !Util.proc_ctr <= 2109) then  *\) *)

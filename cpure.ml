@@ -1881,7 +1881,7 @@ match ls with
   | f::fs -> (!print_formula f) ^ "\n" ^ (string_of_ls_pure_formula fs)
 
 and filter_redundant ante cons =
-  Gen.Debug.no_2 "filter_redundant" !print_formula !print_formula !print_formula
+  Gen.Debug.ho_2 "filter_redundant" !print_formula !print_formula !print_formula
   (fun a c -> filter_redundant_x a c) ante cons
 
 and filter_redundant_x ante cons =
@@ -5327,3 +5327,10 @@ let check_maymust_failure is_sat ante cons =
   let pr = !print_formula in
   Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
 
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
+  let n_a = simpl ante in
+  filter_ante n_a conseq
+
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
+  let pr = !print_formula in
+  Gen.Debug.ho_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq 

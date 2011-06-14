@@ -4280,7 +4280,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                 let build_failure_msg (ante, cons) = (Cprinter.string_of_pure_formula ante) ^ " |- "^
                               (Cprinter.string_of_pure_formula cons) in
                 let cons4 = (MCP.pure_of_mix split_conseq) in
-                let ante_filter0 = CP.filter_redundant (MCP.pure_of_mix split_ante0) cons4 in
+                let filter_redundant_new a c = CP.simplify_filter_ante TP.simplify_always a c in
+                (* let ante_filter0 = CP.filter_redundant (MCP.pure_of_mix split_ante0) cons4 in *)
+                let ante_filter0 = filter_redundant_new (MCP.pure_of_mix split_ante0) cons4 in
                 (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
                    otherwise MUST failure *)
                 (*check maymust for ante0*)
@@ -4288,7 +4290,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                 if List.length (r1@r2) = 0 then
                   begin
                       (*check maymust for ante1*)
-                      let ante_filter1 = CP.filter_redundant (MCP.pure_of_mix split_ante1) cons4 in
+                      let ante_filter1 = filter_redundant_new (MCP.pure_of_mix split_ante1) cons4 in
                       let (r1, r2,r3) = find_all_failures ante_filter1 cons4 in
                        if List.length (r1@r2) = 0 then
                        begin
