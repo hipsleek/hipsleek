@@ -4197,7 +4197,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -4274,12 +4274,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
               let new_fc_kind =
                 let elim_option ant cons = match ant,cons with
                   | Some ante, Some consq -> (CP.filter_redundant ante consq, consq) (*TP.filter f*)
-                  | _ -> report_error no_pos "heap_entail_empty_rhs_heap: should be different from None here"
+                  | Some ante, None -> let _ = Cprinter.string_of_pure_formula ante in
+					report_error no_pos "1"
+				  | None, Some consq -> let _ = Cprinter.string_of_pure_formula consq in
+					report_error no_pos "2"
+				   | None, None -> 	report_error no_pos "3"
                 in
                 (*check_maymust*)
                 let r = ref (-9999) in
                 let is_sat f = TP.is_sat_sub_no f r in
                 let check_maymust_failure a c = CP.check_maymust_failure is_sat a c in
+                let build_failure_msg (ante, cons) = (Cprinter.string_of_pure_formula ante) ^ " |- "^
+                              (Cprinter.string_of_pure_formula cons) in
                  (*build must msg*)
                 let cons4 = (MCP.pure_of_mix split_conseq) in
                 let ante_core, cons_core = elim_option res4 res5 in
@@ -4307,26 +4313,27 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                        end
                      else
                        begin
-                           fc_msg :=  (Cprinter.string_of_pure_formula ante_filter1)^" |- "^
-                               (Cprinter.string_of_pure_formula cons4) ^ ": not HOLD ---" ^
-                               (Cprinter.string_of_pure_formula ante_core)^" |- not("^
-                               (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD";
-                      (*compute lub of must bug and current fc_flow*)
-                            let msg =  (Cprinter.string_of_pure_formula ante_core) ^ " |- not("^
-                              (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD" in
+                           fc_msg := (Cprinter.string_of_pure_formula ante_core)^" |- "^
+                               (Cprinter.string_of_pure_formula cons_core)  ^ "(must-bug)";
+                            (*compute lub of must bug and current fc_flow*)
+                            (*let msg =  (Cprinter.string_of_pure_formula ante_core) ^ " |- not("^
+                              (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD" in*)
+                           let ls_must_err = CP.find_must_failures is_sat (MCP.pure_of_mix split_ante1)
+                             (MCP.pure_of_mix split_conseq) in
+                           let msg = (String.concat "; " (List.map build_failure_msg ls_must_err)) ^ "(must-bug)." in
                             CF.mk_failure_must_raw ("22 " ^ msg)
                        end
                   end else
                   begin
-                       let ante_filter0 = CP.filter_redundant (MCP.pure_of_mix split_ante0) cons4 in
-                      fc_msg :=  (Cprinter.string_of_pure_formula ante_filter0)^" |- "^
-                          (Cprinter.string_of_pure_formula cons4) ^ ": not HOLD ---" ^
-                          (Cprinter.string_of_pure_formula ante_core)^" |- not("^
-                          (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD";
+                      fc_msg := (Cprinter.string_of_pure_formula ante_core)^" |- "^
+                          (Cprinter.string_of_pure_formula cons_core)  ^ "(must-bug)";
                       (*compute lub of must bug and current fc_flow*)
-                        let msg =  (Cprinter.string_of_pure_formula ante_core) ^ " |- not("^
-                          (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD" in
-                      CF.mk_failure_must_raw ("22 " ^ msg)
+                      (* let msg =  (Cprinter.string_of_pure_formula ante_core) ^ " |- not("^
+                         (Cprinter.string_of_pure_formula cons_core)  ^ ") :HOLD" in*)
+                       let ls_must_err = CP.find_must_failures is_sat (MCP.pure_of_mix split_ante0)
+                         (MCP.pure_of_mix split_conseq) in
+                       let msg = (String.concat "; " (List.map build_failure_msg ls_must_err)) ^ "(must-bug)." in
+                       CF.mk_failure_must_raw ("22 " ^ msg)
                     end
               in
 	          let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
