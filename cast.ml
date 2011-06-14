@@ -1038,12 +1038,12 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
                      F.h_formula_data_pruning_conditions = [];
 										 F.h_formula_data_pos = pos}) in
 				let rest_exts = gen_exts ext_link_p link_p rest_fields (cdef2 :: rest) in
-				let ext = F.mkStarH ext_h rest_exts pos in
+				let ext = F.mkStarH_nn ext_h rest_exts pos in
 				  ext
 		  end
 		| _ -> F.HTrue in
 	  let exts = gen_exts sup_ext_var sub_ext_var rest_fields cdefs0 in
-	  let res = F.mkStarH sup_h exts pos in
+	  let res = F.mkStarH_nn sup_h exts pos in
 		res
 	end
   | _ -> F.HTrue

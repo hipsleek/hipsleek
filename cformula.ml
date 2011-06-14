@@ -427,7 +427,7 @@ and drop_read_phase1 (f : h_formula) p : h_formula = match f with
 	h_formula_star_pos = pos;}) -> 
         let new_f1 = drop_read_phase1 h1 p in
         let new_f2 = drop_read_phase1 h2 p in
-	    mkStarH new_f1 new_f2 pos
+	    mkStarH_nn new_f1 new_f2 pos
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos;}) -> 
@@ -696,18 +696,112 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
 	
 and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) pr b (pos : loc) : formula= 
   mkBase_w_lbl h p t fl pr b pos None
-      
+   
 
-and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
+and normalize_frac_heap (f1:h_formula) (p:MCP.mix_formula) = 
+  if  not !Globals.enable_frac_perm then (f1,MCP.mkMTrue no_pos, Pr.mkTrue no_pos, [])
+  else 
+     let aset = MCP.comp_aliases p in
+	 let l1 = split_h f1 in
+	 let l1,l_n_simple = 
+		List.fold_left (fun (a1,a2) c-> match c with 
+			| DataNode{h_formula_data_node = d ; h_formula_data_perm = p;h_formula_data_name= n; h_formula_data_arguments = a}
+			| ViewNode{h_formula_view_node = d ; h_formula_view_perm = p;h_formula_view_name= n; h_formula_view_arguments = a}-> 
+				((c,d,(match p with | None -> true | Some _-> false),p,n,a)::a1,a2)
+			| _ -> (a1,c::a2)) ([],[]) l1 in
+	 let rec comb_hlp 
+		(l:(h_formula * CP.spec_var * bool * CP.spec_var option * string * CP.spec_var list)list) 
+		: (h_formula list *(CP.spec_var * CP.spec_var) list * (CP.spec_var * CP.spec_var option list) list * CP.spec_var list)= match l with
+		| []-> ([],[],[],[])
+		| (h,v,b,pr,nm,args)::t -> 		
+			let a = MCP.get_aset aset v in
+			let dups,rests = match a with 
+				| []-> List.partition ( fun (_,c,_,_,_,_)-> CP.eq_spec_var v c) t 
+				| _ -> List.partition ( fun (_,c,_,_,_,_)-> Gen.BList.mem_eq CP.eq_spec_var c a) t in
+			if (List.length dups)>0 then 
+				if b&&(List.for_all (fun (_,_,c,_,_,_)->c) dups) then 
+					let h_l,p,pr2,e = comb_hlp rests in
+					let h_dups = List.map (fun (a,_,_,_,_,_)-> a) dups in
+					(h::(h_dups@h_l),p,pr2,e)
+				else 
+					if (List.exists (fun (_,_,_,_,n2,_)->(String.compare nm n2)>0) dups) then 
+							report_error no_pos ("needed unfold as normalize_heap needs to combine "^nm^" with a different node")
+					else 
+						if (is_data h) then 
+							if b|| (List.exists (fun (_,_,c,_,_,_)->c) dups) then ([HFalse],[],[],[])
+							else
+								let n_p_v = Pr.fresh_perm_var () in
+								let n_h = set_perm_node (Some n_p_v) h in
+								let (p,h_pr) = List.fold_left (fun (a1,a2) (_,v2,_,pr2,_,args2) ->((v,v2):: (List.combine args args2)@a1, pr2::a2))([],[]) dups in	
+								let h_l,p_t,pr_t,e_t = comb_hlp rests in
+								(n_h::h_l,  p@p_t,  (n_p_v,(pr::h_pr))::pr_t,  n_p_v::e_t)
+						else
+							report_error no_pos ("needed to combine views and i'm not sure how to proceed, need an analysis of whether it strictly point to a node can be done but might be a penalty...")
+			else 
+				let h_l,p,pr,e = comb_hlp rests in
+				(h::h_l,p,pr,e)	in 
+	let n_h_l, p, pr, e_l = comb_hlp l1 in
+	let n_h = star_list (n_h_l@l_n_simple) no_pos in
+	let n_p = MCP.mix_of_pure (List.fold_left (fun a (c1,c2)-> CP.mkAnd a (CP.mkEqVar c1 c2 no_pos) no_pos) (CP.mkTrue no_pos) p) in
+	let opt_sv2pvar f= match f with
+		| None -> Pr.mkPFull ()
+		| Some v-> Pr.mkVPerm v in
+		
+	let rec perm_folder (h,l) = match l with
+		| v1::v2::[]-> 
+			let pv1 = opt_sv2pvar v1 in
+			let pv2 = opt_sv2pvar v2 in
+			(Pr.mkJoin pv1 pv2 (Pr.mkVPerm h) no_pos,[])
+		| v1::t-> 
+			let pv1 = opt_sv2pvar v1 in
+			let n_e = Pr.fresh_perm_var () in
+			let rf,rev = perm_folder (n_e,t) in
+			let nf = Pr.mkAnd rf (Pr.mkJoin pv1 (Pr.mkVPerm n_e) (Pr.mkVPerm h) no_pos) no_pos in
+			(nf,n_e::rev)
+		| _-> report_error no_pos ("perm_folder: must have at least two nodes to merge")	in
+	let n_pr,n_e = List.split (List.map perm_folder pr) in
+	let n_pr = List.fold_left (fun a c-> Pr.mkAnd a c no_pos) (Pr.mkTrue no_pos) n_pr in 
+	(n_h,n_p,n_pr,e_l@(List.concat n_e))
+  
+  
+and is_h_normalized f1 p = 
+	if  not !Globals.enable_frac_perm then true
+  else 
+     let aset = MCP.comp_aliases p in
+	 let l1 = List.fold_left (fun a c-> match c with 
+		| DataNode{h_formula_data_node=c; h_formula_data_perm = p}
+		| ViewNode{h_formula_view_node=c; h_formula_view_perm = p}-> (c,match p with | None -> true | Some _-> false)::a
+		| _ -> a) [] (split_h f1) in 
+		
+ 	 let rec ex_alias_dups l1 = match l1 with 
+		| [] -> true 
+		| (h,b)::t -> 
+			let a = MCP.get_aset aset h in
+			let dups,rests = match a with 
+				| []-> List.partition ( fun (c,_)-> CP.eq_spec_var h c) t 
+				| _ -> List.partition ( fun (c,_)-> Gen.BList.mem_eq CP.eq_spec_var c a) t in
+			if (List.length dups)=0 then ex_alias_dups rests
+			else if b&&(List.for_all snd dups) then ex_alias_dups rests 
+			else false in
+	 ex_alias_dups l1
+	 
+  
+(*and mkStarHh (f1 : h_formula) (f2 : h_formula) asets (pos : loc) = match f1 with
+  | HFalse -> HFalse,
+  | HTrue -> f2
+  | _ -> match f2 with
+      | HFalse -> HFalse
+      | HTrue -> f1
+      | _ -> normalize_h_f f1 f2 aset pos*)
+
+and mkStarH_nn f1 f2 pos = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
   | _ -> match f2 with
       | HFalse -> HFalse
       | HTrue -> f1
-      | _ -> Star ({h_formula_star_h1 = f1; 
-		h_formula_star_h2 = f2; 
-		h_formula_star_pos = pos})
-
+      | _ -> Star ({h_formula_star_h1 = f1; h_formula_star_h2 = f2; h_formula_star_pos = pos})
+      
 and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
@@ -731,7 +825,9 @@ and mkPhaseH (f1 : h_formula) (f2 : h_formula) (pos : loc) =
 
 and is_simple_formula (f:formula) =
   let h, _, _, _, _, _ = split_components f in
-  match h with
+  is_simple_h h 
+	
+and is_simple_h h =   match h with
     | HTrue | HFalse 
     | DataNode _ -> true
     | ViewNode _ -> true
@@ -748,13 +844,18 @@ and fv_simple_formula (f:formula) =
 and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, pr1, b1, t1 = split_components f1 in
   let h2, p2, fl2, pr2, b2, t2 = split_components f2 in
-  let h = mkStarH h1 h2 pos in
   let p = MCP.merge_mems p1 p2 true in
+  let h = mkStarH_nn h1 h2 pos in
+  let h, np, npr,ne = normalize_frac_heap h p in
+  let p = MCP.merge_mems p np false in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
   let pr = Pr.mkAnd pr1 pr2 pos in
-  mkBase h p t fl pr b pos
+  let pr = Pr.mkAnd pr npr pos in
+  match ne with
+    | [] -> mkBase h p t fl pr b pos
+    | _ -> mkExists ne h p t fl pr b pos 
       
 and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
   if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
@@ -792,24 +893,30 @@ and mkStar_combine_debug (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, pr1, b1, t1 = split_components f1 in
   let h2, p2, fl2, pr2, b2, t2 = split_components f2 in
-
+  
   (* i assume that at least one of the two formulae has only 1 phase *)
   let h = 
     if not(contains_phase h1) then
-      mkStarH h1 h2 pos
+      mkStarH_nn h1 h2 pos
     else
       if not(contains_phase h2) then
-	    mkStarH h2 h1 pos
+	    mkStarH_nn h2 h1 pos
       else
 	    report_error no_pos "[cformula.ml, mkstar_combine]: at least one of the formulae combined should not contain phases"
   in
-  (* let h = mkStarH h1 h2 pos in *)
   let p,_ = combine_and_pure f1 p1 p2 in
+  let h,np,npr,ne = normalize_frac_heap h p in
+  let p = MCP.merge_mems p np false in
+  (* let h = mkStarHh h1 h2 pos in *)
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
   let pr = Pr.mkAnd pr1 pr2 pos in
-  mkBase h p t fl pr b pos
+  let pr = Pr.mkAnd pr npr pos in
+  match ne with
+    | [] -> mkBase h p t fl pr b pos
+    | _ -> mkExists ne h p t fl pr b pos 
+  
 	  
 and mkConj_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, pr1, b1, t1 = split_components f1 in
@@ -937,6 +1044,12 @@ and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
   | _ -> failwith ("get_view_imm: not a view")
 
+and set_perm_node pr (h:h_formula) = match h with
+	| DataNode d-> DataNode {d with h_formula_data_perm = pr}
+	| ViewNode v-> ViewNode {v with h_formula_view_perm = pr}
+	| _ -> h
+	 
+  
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in
   let pr2 = !print_ident_list in
@@ -1731,7 +1844,7 @@ and propagate_imm_h_formula (f : h_formula) (imm : bool) : h_formula =
     | Star f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in
-	      mkStarH h1 h2 f1.h_formula_star_pos
+	      mkStarH_nn h1 h2 f1.h_formula_star_pos
     | Conj f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm in
@@ -1968,8 +2081,17 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
   -> (h_node_list h1)@(h_node_list h2)
   | _ -> []
 
-
-
+and split_h f = match f with
+  | DataNode _
+  | ViewNode _ 
+  | Conj _
+  | Phase _ 
+  | Hole _ 
+  | HTrue _ 
+  | HFalse _ -> [f]
+  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> (split_h h1)@(split_h h2)
+  
+and star_list l pos = List.fold_left (fun a c->mkStarH_nn a c pos) HTrue l
 
  (* context functions *)
 	
@@ -3250,8 +3372,7 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
 		| Star s -> 
                 let (e1,r1)=helper s.h_formula_star_h1 new_arg in
                 let (e2,r2)=helper s.h_formula_star_h2 new_arg in
-                (Star {s with h_formula_star_h1 = e1;
-			        h_formula_star_h2 = e2;},f_comb [r1;r2])
+                (mkStarH_nn e1 e2 s.h_formula_star_pos ,f_comb [r1;r2])
 		| Conj s -> 
                 let (e1,r1)=helper s.h_formula_conj_h1 new_arg in
                 let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
@@ -4359,3 +4480,23 @@ let rec replace_perm_formula f pr = match f with
 	| Or f -> Or{f with formula_or_f1 = replace_perm_formula f.formula_or_f1 pr; formula_or_f2 = replace_perm_formula f.formula_or_f2 pr}
 	
 	 
+let is_full_perm_failesc l v =
+  let rec find_h_node h a = match h with
+    | Star h-> (find_h_node h.h_formula_star_h1 a)||(find_h_node h.h_formula_star_h2 a)
+    | DataNode {h_formula_data_node=v ; h_formula_data_perm=p}
+    | ViewNode {h_formula_view_node=v ; h_formula_view_perm=p}-> 
+      (match p with 
+          | None -> true 
+          | Some _ -> if (List.exists (CP.eq_spec_var v) a) then false else true)
+    | _ -> true in
+  let rec helper_f f = match f with
+    | Or c-> (helper_f c.formula_or_f1)&& (helper_f c.formula_or_f2)
+    | Base {formula_base_heap=h; formula_base_pure = p}
+    | Exists {formula_exists_heap=h; formula_exists_pure = p} ->
+        let asets = MCP.get_aset (MCP.comp_aliases p) v in
+        find_h_node h asets in
+  let rec helper c = match c with
+    | OCtx (c1,c2)-> (helper c1)&&(helper c2)
+    | Ctx c-> helper_f c.es_formula in
+  List.for_all (fun (_,_,l)-> (List.for_all(fun (_,c)-> helper c) l)) l 
+   

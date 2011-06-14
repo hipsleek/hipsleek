@@ -1594,8 +1594,10 @@ let rec string_of_exp = function
 	exp_bind_fields = idl;
 	exp_bind_body = e;
 	exp_bind_path_id = pid;
+  exp_bind_perm = pr;
 	exp_bind_pos = l}) -> 
-        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") in \n{" ^ (string_of_exp e) ^ "\n}")
+      let spr = match pr with | None -> "" | Some v-> (" @"^v) in
+        string_of_control_path_id_opt pid ("bind " ^ id ^spr^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") in \n{" ^ (string_of_exp e) ^ "\n}")
   | Block ({exp_block_type = _;
 	exp_block_body = e;
 	exp_block_local_vars = _;

@@ -1183,7 +1183,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
 	        (r1,r2@r22,r23)
 	      else 
             (*let _ = print_string ("\n failed ante: "^(Cprinter.string_of_pure_formula  
-              (CP.fold_mem_lst (CP.mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
+              (fold_mem_lst (mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
             (r1,r2,r3)
     | [] -> (true,[],None)
 
@@ -1477,3 +1477,42 @@ let filter_complex_inv f = match f with
   
   
 let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isConstTrue b) bl)
+
+
+
+(* 
+   returns a list of tuples: (rest, matching node, flag, phase, ctx)
+   The flag associated with each node lets us know if the match is at the root pointer, materialized arg, arg.
+*)
+
+(* computes must-alias sets from equalities, maintains the invariant *)
+(* that these sets form a partition. *)
+let rec alias_x (ptr_eqs : (spec_var * spec_var) list) : spec_var list list = 
+  match ptr_eqs with
+  | (v1, v2) :: rest -> begin
+	  let rest_sets = alias_x rest in
+	  let search (v : spec_var) (asets : spec_var list list) = List.partition (fun aset -> mem v aset) asets in
+	  let av1, rest1 = search v1 rest_sets in
+	  let av2, rest2 = search v2 rest1 in
+	  let v1v2_set = remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
+	  v1v2_set :: rest2
+	end
+  | [] -> []
+
+let alias_nth i (ptr_eqs : (spec_var * spec_var) list) : spec_var list list = 
+  let psv = !print_sv_f in
+  let pr1 l = Gen.pr_list (Gen.pr_pair psv psv) l in
+  let pr2 l = Gen.pr_list (Gen.pr_list psv) l in
+  Gen.Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
+
+
+let comp_aliases (rhs_p:mix_formula) : (spec_var) list list =
+    let eqns = ptr_equations_without_null rhs_p in
+    alias_nth 1 eqns 
+    
+let get_aset (aset : spec_var list list) (v : spec_var) : spec_var list =
+  let tmp = List.filter (fun a -> mem v a) aset in
+  match tmp with
+	| [] -> []
+	| [s] -> s
+	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")

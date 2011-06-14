@@ -187,8 +187,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   exp_bind_fields = lvars;
                   exp_bind_body = body;
                   exp_bind_imm = imm;
-				  exp_bind_perm = pr;
-				  exp_bind_path_id = pid;
+                  exp_bind_perm = pr;
+                  exp_bind_path_id = pid;
                   exp_bind_pos = pos}) -> begin
 
 	    (* let _  = print_string("BIND\n"); flush stdout in *)
@@ -215,20 +215,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     ^ "\n") pos in
 	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
                 (*     ^ "\n") in *)
-			let n_pr = match pr with | None -> None | Some s-> Some (CP.SpecVar (Named perm, s, Primed)) in
+          let n_pr = match pr with 
+            | None -> None 
+            | Some s-> if  not !Globals.enable_frac_perm then report_error no_pos "bind: fractional permissions are disabled!!"
+              else if (CF.is_full_perm_failesc unfolded v_prim) then None else Some (Cpr.mk_perm_var (s, Primed)) in
 	        let c = string_of_typ v_t in
 	        let vdatanode = CF.DataNode ({
                             CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                             CF.h_formula_data_name = c;
-							CF.h_formula_data_imm = imm;
-							CF.h_formula_data_perm = n_pr;
+                            CF.h_formula_data_imm = imm;
+                            CF.h_formula_data_perm = n_pr;
                             CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
                             CF.h_formula_data_label = None;
                             CF.h_formula_data_remaining_branches = None;
                             CF.h_formula_data_pruning_conditions = [];
                             CF.h_formula_data_pos = pos}) in
 	        let vheap = CF.formula_of_heap vdatanode pos in
-		let vheap = prune_preds prog false vheap in
+          let vheap = prune_preds prog false vheap in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 			if (Gen.is_empty unfolded) then unfolded
@@ -655,7 +658,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
-    check_proc prog proc  
+    check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin
       (* dummy_exception(); *)

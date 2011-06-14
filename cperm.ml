@@ -249,13 +249,13 @@ let needs_split p = match p with
   | Some (true,_,_,_,_,_)-> true
   | _ -> false
 
-let heap_partial_imply l_h l_pr perm_imply mkStarH h_apply_one pos = match perm_imply with
+(*let heap_partial_imply l_h l_pr perm_imply mkStarHh h_apply_one pos = match perm_imply with
   | Some (b,l_v,r_v,l_f,r_f,l_node)->
     if b then 
       let s1 = fresh_perm_var () in
       let s2 = fresh_perm_var () in
       let l_node' = h_apply_one (l_v,s1) l_node in
-      let l_h' = mkStarH l_node' l_h pos in
+      let l_h' = mkStarHh l_node' l_h pos in
       let pr_eq = mkJoin (mkVPerm l_v) (mkVPerm s1) (mkVPerm s2) pos in
       let l_pr'= mkAnd l_pr pr_eq pos in
       (l_h',l_pr',[s1;s2],(r_v,s2))
@@ -263,7 +263,7 @@ let heap_partial_imply l_h l_pr perm_imply mkStarH h_apply_one pos = match perm_
   | None -> 
     let f = fresh_perm_var () in
     let t = fresh_perm_var () in
-    (l_h,l_pr,[],(f,t))
+    (l_h,l_pr,[],(f,t))*)
 
 and get_eqns_free ((r_node_pr,l_node_pr) : P.spec_var option * P.spec_var option) (evars : P.spec_var list) (expl_inst : P.spec_var list) 
       (struc_expl_inst : P.spec_var list) pos : perm_formula*perm_formula * (P.spec_var * P.spec_var option) list = 

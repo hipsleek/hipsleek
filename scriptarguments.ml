@@ -175,6 +175,8 @@ let common_arguments = [
 	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
     ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
     ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+	("--efrp", Arg.Set Globals.enable_frac_perm,"enable reasoning about fractional permissions");
+	("--dfrp", Arg.Clear Globals.enable_frac_perm,"disable reasoning about fractional permissions");
     (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
     (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
     *)

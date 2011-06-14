@@ -562,7 +562,9 @@ flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]];
 
 opt_perm_constraints: [[ t = OPT br_permission_constraints -> Pr.mkPFormula t]];
 
-br_permission_constraints : [[`OSQUARE;t=LIST1 one_p_const SEP `AND; `CSQUARE -> List.fold_left (fun a c-> Pr.mkAnd a c no_pos) (List.hd t) (List.tl t) ]];
+br_permission_constraints : [[`OSQUARE;t=LIST1 one_p_const SEP `AND; `CSQUARE ->
+        if  not !Globals.enable_frac_perm then report_error no_pos "parser: fractional permissions are disabled!!"
+        else List.fold_left (fun a c-> Pr.mkAnd a c no_pos) (List.hd t) (List.tl t) ]];
   
 one_p_const : [[t1=perm; `EQ ; t2=perm -> Pr.mkEq t1 t2 no_pos
 	| `JOIN ; `OPAREN; t1=perm; `COMMA;  t2=perm; `COMMA; t3=perm; `CPAREN -> Pr.mkJoin t1 t2 t3 no_pos]];
@@ -572,7 +574,9 @@ perm : [[ `OSQUARE; t = LIST1 one_perm SEP `COMMA ;`CSQUARE -> Pr.mkCPerm t
 
 one_perm :[[ `IDENTIFIER id -> if id ="L" then PLeft else if id="R" then PRight else report_error (get_pos_camlp4 _loc 1) "only L or R as permission splits are allowed"]];
 
-perm_annot : [[`AT; t=perm -> t]];
+perm_annot : [[`AT; t=perm -> 
+      if  not !Globals.enable_frac_perm then report_error no_pos "parser: fractional permissions are disabled!!"
+      else t]];
  
 opt_perm_annot : [[t = OPT perm_annot -> (*Pr.mkPAnnot*) t]];
  

@@ -151,46 +151,6 @@ and ctx_type =
   | ConjImm
   | ConjMutable
 *)
-(* 
-   returns a list of tuples: (rest, matching node, flag, phase, ctx)
-   The flag associated with each node lets us know if the match is at the root pointer, materialized arg, arg.
-*)
-
-(* computes must-alias sets from equalities, maintains the invariant *)
-(* that these sets form a partition. *)
-let rec alias_x (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = 
-  match ptr_eqs with
-  | (v1, v2) :: rest -> begin
-	  let rest_sets = alias_x rest in
-	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
-	  let av1, rest1 = search v1 rest_sets in
-	  let av2, rest2 = search v2 rest1 in
-	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
-	  v1v2_set :: rest2
-	end
-  | [] -> []
-
-
-(* let alias_x (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =  *)
-(*   let aset = alias_x ptr_eqs in *)
-(* List.filter (fun l -> List.length l > 1) aset *)
-
-let alias_nth i (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = 
-  let psv = Cprinter.string_of_spec_var in
-  let pr1 l = pr_list (pr_pair psv psv) l in
-  let pr2 l = pr_list (pr_list psv) l in
-  Gen.Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
-
-let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
-  let tmp = List.filter (fun a -> CP.mem v a) aset in
-  match tmp with
-	| [] -> []
-	| [s] -> s
-	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
-
-let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
-    let eqns = MCP.ptr_equations_without_null rhs_p in
-    alias_nth 1 eqns 
 
 let comp_alias_part r_asets a_vars = 
     (* let a_vars = lhs_fv @ posib_r_aliases in *)
@@ -210,7 +170,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let r_eqns =
     let eqns = (MCP.ptr_equations_without_null rhs_p)@rhs_es in
-    let r_asets = alias_nth 2 eqns in
+    let r_asets = MCP.alias_nth 2 eqns in
     let a_vars = lhs_fv @ posib_r_aliases in
     let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
     let colaps l = List.fold_left (fun a c -> match a with 
@@ -218,8 +178,8 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       | h::_-> (c,(fst h))::a) [] l in
     List.concat (List.map colaps fltr) in
   let eqns = (p, p) :: eqns' in
-  let asets = alias_nth 3 (eqns@r_eqns) in
-  let paset = get_aset asets p in (* find the alias set containing p *)
+  let asets = MCP.alias_nth 3 (eqns@r_eqns) in
+  let paset = MCP.get_aset asets p in (* find the alias set containing p *)
   if Gen.is_empty paset then  failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
   else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
 	(Debug.devel_pprint ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos; [] )
@@ -342,10 +302,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  h_formula_star_h2 = f2;
 	  h_formula_star_pos = pos}) ->
           let l1 = helper f1 in
-          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos, node1, hole1, match1)) l1 in  
+          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH_nn lhs1 f2 pos, node1, hole1, match1)) l1 in  
 
           let l2 = helper f2 in
-          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos, node2, hole2, match2)) l2 in
+          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH_nn f1 lhs2 pos, node2, hole2, match2)) l2 in
           res1 @ res2
     | _ -> 
           let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in 
@@ -413,17 +373,19 @@ and process_one_match_x prog (c:match_res) :action_wt =
           (match lhs_node,rhs_node with
             | DataNode dl, DataNode dr -> 
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then 
-					match dr.h_formula_data_perm with
-					  |  None -> (0,M_match c)
-					  | _ -> (-1, Search_action [(1,M_match c);(1,M_split_match c)])
+                    match dr.h_formula_data_perm with
+                      |  None -> (0,M_match c)
+                      | _ -> if  not !Globals.enable_frac_perm then report_error no_pos " process_one_match: fractional permissions are disabled!!"
+                         else (print_string "one\n";(-1, Search_action [(1,M_match c);(1,M_split_match c)]))
                   else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in
                   let l2 = 
                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then 
-						 match vr.h_formula_view_perm with
-						  | None -> [(1,M_match c)]
-						  | _ -> [(1,M_match c);(1,M_split_match c)] 
+                       match vr.h_formula_view_perm with
+                        | None -> [(1,M_match c)]
+                        | _ -> if  not !Globals.enable_frac_perm then report_error no_pos "process_one_match: fractional permissions are disabled!!"
+                         else (print_string"two\n";[(1,M_match c);(1,M_split_match c)] )
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
                     else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
                     else []
@@ -567,9 +529,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
 	  h_formula_star_pos = pos}) -> 
 	      let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
 	      let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
-	      Star ({h_formula_star_h1 = new_f1;
-		  h_formula_star_h2 = new_f2;
-		  h_formula_star_pos = pos})  
+	      mkStarH_nn new_f1 new_f2 pos  
     | Conj ({h_formula_conj_h1 = f1;
 	  h_formula_conj_h2 = f2;
 	  h_formula_conj_pos = pos}) -> 
@@ -786,9 +746,7 @@ and apply_subs_h_formula crt_holes (h : h_formula) : h_formula =
 	  h_formula_star_pos = pos}) ->
 	      let nh1 = apply_subs_h_formula crt_holes h1 in
 	      let nh2 = apply_subs_h_formula crt_holes h2 in
-	      Star({h_formula_star_h1 = nh1;
-	      h_formula_star_h2 = nh2;
-	      h_formula_star_pos = pos})
+	      mkStarH_nn nh1 nh2 pos
     | Conj({h_formula_conj_h1 = h1;
 	  h_formula_conj_h2 = h2;
 	  h_formula_conj_pos = pos}) ->

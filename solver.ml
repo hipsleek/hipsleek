@@ -834,16 +834,22 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
               (*Or {o with formula_or_f1 = f1; formula_or_f2 = f2;}*)
     | Exists e ->    
           let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in 
-          let rp = f_p_simp rp in
-          mkExists_w_lbl e.formula_exists_qvars rh rp 
-              e.formula_exists_type e.formula_exists_flow e.formula_exists_perm
+          let rh, rp0,rpr0,nev0 = normalize_frac_heap rh rp in
+          let rp = f_p_simp (MCP.merge_mems rp rp0 false) in  
+          let rpr = Cpr.mkAnd rpr0 e.formula_exists_perm no_pos in
+          mkExists_w_lbl (e.formula_exists_qvars@nev0) rh rp 
+              e.formula_exists_type e.formula_exists_flow rpr
               e.formula_exists_branches e.formula_exists_pos e.formula_exists_label
               (*Exists {e with formula_exists_pure = rp; formula_exists_heap = rh}*)
     | Base b ->
           let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
-          let rp = f_p_simp rp in
-          mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_perm b.formula_base_branches b.formula_base_pos b.formula_base_label
-              (*Base {b with formula_base_pure = rp; formula_base_heap = rh} *) in
+          let rh, rp0,rpr0,nev0 = normalize_frac_heap rh rp in
+          let rp = f_p_simp (MCP.merge_mems rp rp0 false) in
+          let rpr = Cpr.mkAnd rpr0 b.formula_base_perm no_pos in
+          if (List.length nev0 =0) then 
+            mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow rpr b.formula_base_branches b.formula_base_pos b.formula_base_label
+          else mkExists_w_lbl nev0 rh rp b.formula_base_type b.formula_base_flow rpr
+              b.formula_base_branches b.formula_base_pos b.formula_base_label in
   if not !Globals.allow_pred_spec then f
   else 
     (
@@ -879,7 +885,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_f
           let ba2 =ba_crt@(heap_baga prog s.h_formula_star_h2) in
           let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_star_h1 old_mem ba2 in
           let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_star_h2 mem1 ba1 in
-          (mkStarH h1 h2 s.h_formula_star_pos , mem2 , (changed1 or changed2))
+          let h = mkStarH_nn h1 h2 s.h_formula_star_pos in
+          (h, mem2 , (changed1 or changed2))
               (*(Star {  
                 h_formula_star_h1 = h1;
                 h_formula_star_h2 = h2;
@@ -1060,7 +1067,7 @@ and split_linear_node (h : h_formula) : (h_formula * h_formula) list = split_lin
 (* 	                  | HTrue -> print_string ("\n\n!!!This shouldn't happen!!!\n\n"); helper h2 (\* this shouldn't happen anyway *\) *)
 (* 	                  | _ -> *)
 (* 	                        let ln1, r1 = helper h1 in *)
-(* 	                        (ln1, mkStarH r1 h2 pos) *)
+(* 	                        (ln1, mkStarHh r1 h2 pos) *)
 (*                   end *)
 (*             | Phase ({h_formula_phase_rd = h1; *)
 (* 	          h_formula_phase_rw = h2; *)
@@ -1106,7 +1113,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | ViewNode _ -> [(h,HTrue)]
     | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
     | Phase h-> splitter h.h_formula_phase_rd h.h_formula_phase_rw mkPhaseH h.h_formula_phase_pos
-    | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 mkStarH h.h_formula_star_pos in
+    | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 mkStarH_nn h.h_formula_star_pos in
   let l = sln_helper h in
   List.filter (fun (c1,_)-> Cformula.is_complex_heap c1) l 
 
@@ -1139,7 +1146,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
   else (HTrue,h)
   | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
   | Phase h-> splitter h.h_formula_phase_rd h.h_formula_phase_rw mkPhaseH h.h_formula_phase_pos
-  | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 mkStarH h.h_formula_star_pos in
+  | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 mkStarHh h.h_formula_star_pos in
   helper h
 
   
@@ -1388,8 +1395,8 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
         resform
 
 and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) pr (v : CP.spec_var) pos b qvars already_unsat (uf:int) : formula =
-  let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
-  let aset' = Context.get_aset asets v in
+  let asets = MCP.alias_nth 6 (MCP.ptr_equations_with_null p) in
+  let aset' = MCP.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
   let unfolded_h = unfold_heap prog h aset v fl uf pos in
   let pure_f = mkBase HTrue p TypeTrue (mkTrueFlow ()) pr b pos in
@@ -3131,8 +3138,8 @@ and check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_form
   (*let _ = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
   let lhs_eqns = MCP.ptr_equations_with_null lhs_pure in
   let rhs_eqns = MCP.ptr_equations_with_null target_rhs_p in
-  let lhs_asets = Context.alias_nth 7 (lhs_eqns@rhs_eqns) in
-  let lhs_targetasets1 = Context.get_aset lhs_asets target in
+  let lhs_asets = MCP.alias_nth 7 (lhs_eqns@rhs_eqns) in
+  let lhs_targetasets1 = MCP.get_aset lhs_asets target in
   let lhs_targetasets =
     if CP.mem target lhs_targetasets1 then lhs_targetasets1
     else target :: lhs_targetasets1 in
@@ -3144,8 +3151,8 @@ and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_fo
       : bool =
   (*let _ = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
   let lhs_eqns = MCP.ptr_equations_with_null lhs_pure in
-  let lhs_asets = Context.alias_nth 8 lhs_eqns in
-  let lhs_targetasets1 = Context.get_aset lhs_asets target in
+  let lhs_asets = MCP.alias_nth 8 lhs_eqns in
+  let lhs_targetasets1 = MCP.get_aset lhs_asets target in
   let lhs_targetasets =
     if CP.mem target lhs_targetasets1 then lhs_targetasets1
     else target :: lhs_targetasets1 in
@@ -3241,7 +3248,7 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 	        | Star ({h_formula_star_h1 = sh1;
 		      h_formula_star_h2 = sh2;
 		      h_formula_star_pos = spos}) ->
-		          split_wr_phase (CF.mkStarH (CF.mkStarH h1 sh1 pos) sh2 pos)
+		          split_wr_phase (CF.mkStarH_nn (CF.mkStarH_nn h1 sh1 pos) sh2 pos)
 	        | _ -> (h, HTrue))
     | Conj _ -> report_error no_pos ("[solver.ml] : Conjunction should not appear at this level \n")
     | Phase({h_formula_phase_rd = h1;
@@ -3712,7 +3719,7 @@ and heap_entail_split_lhs_phases_x
 		            (* let _ = print_string("Substitute the holes \n") in *)
 		            let cl1 = List.map Context.subs_crt_holes_ctx cl in
 		            (* in case of success, put back the frame consisting of h2*h3 *)
-		            let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH h2 h3 pos) pos)) cl1 in
+		            let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH_nn h2 h3 pos) pos)) cl1 in
 		            SuccCtx(cl2))
 	      in
 
@@ -3747,7 +3754,7 @@ and heap_entail_split_lhs_phases_x
 		            let cl = List.map Context.subs_crt_holes_ctx cl in
 		            (* put back the frame consisting of h1 and h3 *)
 		            (* first add the frame []*h3 *) 
-		            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH f h3 pos)) cl in
+		            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH_nn f h3 pos)) cl in
 		            let cl = 
 		              if not(CF.contains_mutable conseq) && not(drop_read_phase) then
 			            (* next add the frame h1;[]*)
@@ -3840,7 +3847,7 @@ and heap_entail_split_lhs_phases_x
 		                  let cl = List.map Context.subs_crt_holes_ctx cl in
 			              (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
 			              (* first add the frame h2_rest*[] *) 
-		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2_rest f pos)) cl in
+		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH_nn h2_rest f pos)) cl in
 			              (* next add the frame h1;[]*)
 		                  let cl =
 			                if not(CF.contains_mutable conseq)  && not(drop_read_phase) then
@@ -3885,7 +3892,7 @@ and heap_entail_split_lhs_phases_x
 		                let cl = List.map Context.subs_crt_holes_ctx cl in   
 		                (* in case of success, put back the frame consisting of h1;h2*[] *)
 		                (* first add the frame h2*[] *) 
-		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos)) cl in
+		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH_nn h2 f pos)) cl in
                         (* next add the frame h1;[]*)
 		                let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl in
 		                (SuccCtx(cl), with_wr_prf)
@@ -4137,8 +4144,11 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
   let lhs_p = r.formula_base_pure in
   let lhs_b = r.formula_base_branches in
   let _ = reset_int2 () in
-  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog (mkStarH lhs_h estate.es_heap pos) 1 in
-  let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
+  let hx = mkStarH_nn lhs_h estate.es_heap pos in
+  let nhx,npx,_,_ = normalize_frac_heap hx lhs_p in
+  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog nhx 1 in
+  let tmp0 = MCP.merge_mems lhs_p npx false in
+  let tmp1 = MCP.merge_mems tmp0 xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
   let (res,_,_) = imply_mix_formula_no_memo new_ante new_conseq !imp_no !imp_subno (Some timeout) memset in
@@ -4183,9 +4193,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let lhs_pr = lhs.formula_base_perm in 
   let lhs_b = lhs.formula_base_branches in
   let _ = reset_int2 () in
-  let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
+  let hx = mkStarH_nn lhs_h estate.es_heap pos in
+  let curr_lhs_h,curr_lhs_p,_,_ = normalize_frac_heap hx lhs_p in
   let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap 5 prog curr_lhs_h 0 in
   let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap 5 prog curr_lhs_h 1 in
+  let xpure_lhs_h0 = MCP.merge_mems xpure_lhs_h0 curr_lhs_p false in
+  let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 curr_lhs_p false in
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
@@ -4729,7 +4742,7 @@ and do_match_x prog estate l_node r_node rhs is_folding pos : list_context *proo
     (* only add the consumed node if the node matched on the rhs is mutable *)
     let new_consumed = 
       if not(get_imm r_node)
-      then mkStarH l_node estate.es_heap pos 
+      then mkStarH_nn l_node estate.es_heap pos 
       else  estate.es_heap
     in
     let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
@@ -4789,7 +4802,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   let pure = rhs_p in
   let ptr_eq = MCP.ptr_equations_with_null pure in
   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
-  let asets = Context.alias_nth 9 ptr_eq in
+  let asets = MCP.alias_nth 9 ptr_eq in
   try
 	let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c2 in
 	let subs_vars = List.combine vdef.view_vars v2 in
@@ -4798,7 +4811,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
 	((List.map (fun (c1,c2)-> 
 		if (List.exists (comparator c1) vdef.view_case_vars) then
 		  if (List.exists (comparator c2) estate.es_evars) then
-			let paset = Context.get_aset asets c2 in
+			let paset = MCP.get_aset asets c2 in
 			List.find (fun c -> not (List.exists (comparator c) estate.es_evars )) paset 
 		  else c2
 		else c2					
@@ -5040,7 +5053,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos)), NoAlias)
           else
 			let prv1, prv2 = Cpr.fresh_perm_var () , Cpr.fresh_perm_var () in
-			let n_lhs_h = mkStarH lhs_rest (set_perm_h (Some prv1) lhs_node) pos in			
+			let n_lhs_h = mkStarH_nn lhs_rest (set_perm_h (Some prv1) lhs_node) pos in			
 			let pr_f = Cpr.mkJoin (Cpr.mkVPerm prv1) (Cpr.mkVPerm prv2) (match get_node_perm lhs_node with | [] -> Cpr.mkPFull () | v::_-> Cpr.mkVPerm v) pos in
 			let n_lhs_perm = Cpr.mkAnd lhs_b.formula_base_perm pr_f pos in			
 			let new_estate = {estate with 

@@ -1638,8 +1638,8 @@ and find_m_prop_heap_x eq_f h = match h with
 
 and param_alias_sets p params = 
   let eqns = MCP.ptr_equations_with_null p in
-	let asets = Context.alias_nth 10 eqns in
-  let aset_get x = x:: (Context.get_aset asets x) in
+	let asets = MCP.alias_nth 10 eqns in
+  let aset_get x = x:: (MCP.get_aset asets x) in
   List.map (fun c-> ( aset_get c,c)) params
   
 and find_materialized_prop params (f0 : CF.formula) : C.mater_property list = 
@@ -3235,8 +3235,8 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_bound_var = ((Named dname), fn);
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
-				C.exp_bind_imm = imm;
-				C.exp_bind_perm = Some pr_var;
+                C.exp_bind_imm = imm;
+                C.exp_bind_perm = Some pr_var;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in
@@ -3769,7 +3769,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
           } ->
               let (lf1, type1) = linearize_heap f1 pos in
               let (lf2, type2) = linearize_heap f2 pos in
-              let tmp_h = CF.mkStarH lf1 lf2 pos in
+              let tmp_h = CF.mkStarH_nn lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
         | IF.Phase
@@ -3809,16 +3809,22 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
     let p = base.IF.formula_base_pure in
     let br = base.IF.formula_base_branches in
     let fl = base.IF.formula_base_flow in
-	let pr = base.IF.formula_base_perm in
+    let pr = base.IF.formula_base_perm in
     let pos = base.IF.formula_base_pos in
-    let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
     let new_p = Cpure.arith_simplify 5 new_p in
+	let new_p = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p  in
+	
+    let (new_h, type_f) = linearize_heap h pos in
+    let new_h, new_p0,new_pr0,new_ev = CF.normalize_frac_heap new_h new_p in
+    let new_p = MCP.merge_mems  new_p new_p0 false in
+    
     let new_fl = trans_flow_formula fl pos in
     let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
     let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify 6 f)) new_br in
-	let new_pr  = trans_perm_formula pr in
-    (new_h, new_p, type_f, new_fl, new_pr, new_br) in
+	  let new_pr  = trans_perm_formula pr in
+    let new_pr  = Cpr.mkAnd new_pr new_pr0 pos in
+    (new_h, new_p, type_f, new_fl, new_pr, new_br, new_ev) in
   match f0 with
     | IF.Or {
           IF.formula_or_f1 = f1;
@@ -3829,8 +3835,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
           let result = CF.mkOr lf1 lf2 pos in result
     | IF.Base base ->
           let pos = base.Iformula.formula_base_pos in
-          let nh,np,nt,nfl,npr,nb = (linearize_base base pos) in
-          let np = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) np)  in
+          let nh,np,nt,nfl,npr,nb,nev = linearize_base base pos in
           CF.mkBase nh np nt nfl npr nb pos
     | IF.Exists {
           IF.formula_exists_heap = h; 
@@ -3848,9 +3853,10 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
               IF.formula_base_branches = br;
               IF.formula_base_pos = pos;
           } in 
-	      let nh,np,nt,nfl,npr,nb = linearize_base base pos in
-          let np = MCP.memoise_add_pure_N (MCP.mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl npr nb pos 
+	        let nh,np,nt,nfl,npr,nb,nev = linearize_base base pos in
+          let nqv = List.map (fun c-> trans_var c stab pos) qvars in
+          let nqv = nqv@nev in
+	      CF.mkExists nqv nh np nt nfl npr nb pos 
 	          
 
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
@@ -6728,7 +6734,7 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
 	      let rest_vars = List.tl v1 in	
 	      let br_cnt = List.length f_list_init in
 	      let f_list = List.map (fun (c1,c2)-> 
-			  let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (MCP.pure_ptr_equations c1))) crt_v in
+			  let aset = MCP.get_aset ( MCP.alias_nth 11 ((crt_v, crt_v) :: (MCP.pure_ptr_equations c1))) crt_v in
 			  let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
 			  let eqs = (Solver.get_equations_sets c1 aset)in
 			  let eqs = (Solver.transform_null eqs) in
