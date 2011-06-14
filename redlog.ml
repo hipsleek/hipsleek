@@ -1110,7 +1110,107 @@ let pairwisecheck (f: CP.formula): CP.formula =
     Omega.pairwisecheck f 
   else 
     f
-		
+
+
+(** An Hoa : Map a list of spec var to red log vars
+	@return The list of new variables, the correspondence between old variables
+			and new vars (for instance (h',hprmd) to indicate h' --> hprmd), the
+			reverse correspondence between new variable names & the original
+			variables.
+ **)
+let rl_vars_map (vars : CP.spec_var list) =
+	(* Since reduce uses only lower case for variables, we need to convert all
+	variables to lower case. There might be conflict but we shall ignore that for
+	the moment*)
+	let rlvarsnames = List.map (fun x -> String.lowercase (rl_of_spec_var x)) vars in
+	let newvars = List.map2 (fun v w -> CP.SpecVar (CP.type_of_spec_var v, w, Unprimed)) vars rlvarsnames in
+	let vars_map = List.map2 (fun v w -> (v,w)) vars newvars in
+	let vars_rev_map = List.map2 (fun v w -> (CP.name_of_spec_var w,v)) vars newvars in
+	(*let _ = print_endline "Variable reverse mapping :" in
+	let _ = List.map (fun (x,y) -> print_endline (x ^ "--->" ^ (!CP.print_sv y))) vars_rev_map in*)
+		(newvars, vars_map, vars_rev_map)
+
+
+(** An Hoa : Parse the assignments 
+ **)
+let parse_assignment (assignment : string) =
+	let i = String.index assignment '=' in
+	let l = String.length assignment in
+	let lhs = String.sub assignment 0 i in
+	let lhs = Gen.SysUti.trim_str lhs in
+	let rhs = String.sub assignment (i+1) (l-i-1) in
+	let rhs = Gen.SysUti.trim_str rhs in
+	(*let _ = print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n") in*)
+		(lhs,rhs)
+
+
+(** An Hoa : Group equal variables into lists **)
+let group_eq_vars (ass : (string * string) list) =
+	(* Since reduce already order the right hand side, we only need 
+	to group the variables according to the string representation of 
+	the right hand side *)
+	let ass_sorted = List.sort (fun (l1,r1) (l2,r2) -> String.compare r1 r2) ass in
+	(*let _ = print_endline "\nSorted assignments:" in
+	let _ = List.map (fun (lhs,rhs) -> print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n")) ass_sorted in*)
+	(** Internal function to partition the solution **)
+	let rec partition (a : (string * string) list) (res : (string * (string list)) list) = 
+		match a with
+		| [] -> res
+		| (lhs,rhs)::a1 -> match res with
+			| [] -> partition a1 [(rhs,[lhs])]
+			| h::t -> let r = fst h in
+				let l = snd h in
+				let newres = if (String.compare rhs r == 0) then
+					List.append [(r, List.append [lhs] l)] t
+				else
+					List.append [(rhs,[lhs])] res
+				in
+					(partition a1 newres)
+	in
+	let grouped_vars = partition ass_sorted [] in
+	(*let _ = print_endline "\nPartitioning result:" in
+	let _ = List.map (fun (x,y) -> print_string ((String.concat " = " y) ^ " = " ^ x ^ "\n"))
+			grouped_vars in*)
+		grouped_vars
+	
+
+(** An Hoa : parse the solution given out by reduce
+ **)
+let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * CP.spec_var) list) : (CP.spec_var * CP.spec_var) list =
+	let l = String.length solution in
+	(* Remove the braces { and } at the beginning & end of the list of solution *)
+	let solution = String.sub solution 1 (l-2) in
+	let l = String.length solution in
+	if (l == 0) then []
+	else (* Remove the braces { and } at the beginning & end of the list of solution *)
+		let solution = if (solution.[0] == '{') then String.sub solution 1 (l-2) else solution in
+		let assignments = Str.split (Str.regexp_string ",") solution in
+		let result = List.map parse_assignment assignments in
+		(* Convert back to our system format *)
+		let eqclasses = List.map snd (group_eq_vars result) in
+		let eqclasses = List.map (fun vnamelist -> List.map (fun vname -> List.assoc vname revmap) vnamelist) eqclasses in
+		(*let _ = print_endline "Equivalence classes : " in
+		let _ = List.map (fun x -> print_endline (!CP.print_svl x)) eqclasses in*)
+		(* Build the substitution map *)
+		(** Function to select candidate to do replacement **)
+		let select_sub_cand (c : CP.spec_var list) =
+			let intc = Gen.BList.intersect_eq CP.eq_spec_var bv c in
+				if (intc == []) then List.hd c else List.hd intc
+		in
+		let candidates = List.map select_sub_cand eqclasses in
+		(** Remove unsubstitutable targets **)
+		let filter_target (c : CP.spec_var list) =
+			let c = List.filter (fun x -> not (CP.is_primed x)) c in
+			let c = List.filter (fun x -> not (Gen.BList.mem_eq CP.eq_spec_var x bv)) c in
+				c
+		in
+		let replace_targets = List.map filter_target eqclasses in
+		let sst = List.map2 (fun x y -> List.map (fun z -> (z,x)) y) candidates replace_targets in
+		let sst = List.flatten sst in
+		(*let _ = print_endline "Replacements : " in
+		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in*)
+			sst
+
 
 (** An Hoa : Make use of reduce for equation solving facility.
 	@param eqns -> List of equations; no max, min, inequality, ...
@@ -1118,34 +1218,36 @@ let pairwisecheck (f: CP.formula): CP.formula =
 	@return a list of binding (var,exp) indicating the root
  **)
 let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
-	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS. *)
-	let _ = print_endline "solve_eqns :: starting reduce ..." in
+	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
+	(*let _ = print_endline "solve_eqns :: starting reduce ..." in*)
+	(*let _ = print_endline "Initiating solving sequence ..." in*)
 	let _ = start () in
-	let _ = print_endline "solve_eqns :: reduce started!" in
+	(*let _ = print_endline "solve_eqns :: reduce started!" in*)
+
 	(* Pick out the variables in the equations *)
 	let unks = List.map (fun (e1,e2) -> List.append (CP.afv e1) (CP.afv e2)) eqns in
 	let unks = List.flatten unks in
+
 	(* Swap all primed variables *)
-	let unksmap = List.map (fun x -> match x with (* Unknown map *)
-		| CP.SpecVar (t,n,p) -> match p with
-			| Primed -> (x, CP.SpecVar (t, n ^ "_PRIMED", Unprimed)) (* primed variable is appended with _PRIMED *)
-			| Unprimed -> (x, x) (* unprimed vars does not change i.e. map to itself *)
-		) unks in
-	let red_unks = List.map snd unksmap in
-	let red_eqns = List.map (fun (e1,e2) -> (CP.e_apply_subs unksmap e1,CP.e_apply_subs unksmap e2)) eqns in
-	(* Get the reduce input for the unknowns *)
-	let input_unknowns = List.map !CP.print_sv red_unks in
+	let red_unks, unksmap, unksrmap = rl_vars_map unks in
+	let red_bv, bvmaps, bvrmap = rl_vars_map bv in
+
+	(* Generate the reduce list of unknowns *)
+	let input_unknowns = List.map CP.name_of_spec_var red_unks in
 	let input_unknowns = "{" ^ (String.concat "," input_unknowns) ^ "}" in
-	let _ = print_endline "\nVariables to solve for : " in
-	let _ = print_endline input_unknowns in
-	(* Convert eqns into reduce input format *)
-	let input_eqns = List.map (fun (e1,e2) -> (!CP.print_exp e1) ^ " = " ^ (!CP.print_exp e2)) red_eqns in
-	let _ = print_endline "\nInput equations: " in
+	(*let _ = print_endline "\nVariables to solve for : " in
+	let _ = print_endline input_unknowns in*)
+
+	(* Generate reduce equations *)
+	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp e1) ^ " = " ^ (rl_of_exp e2)) eqns in
 	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
-	let _ = print_endline input_eqns in
-	(* Request reduce to handle equation solving *)
-	let red_input = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
-	let _ = send_cmd red_input in
+	(*let _ = print_endline "\nInput equations: " in
+	let _ = print_endline input_eqns in*)
+
+	(* Pipe the solve request to reduce process *)
+	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
+	let _ = send_cmd input_command in
+
 	let rec read_stream () = (** Internal function to read reduce output **)
 		let line = Gen.trim_str (input_line !process.inchannel) in
 		let l = String.length line in
@@ -1157,9 +1259,16 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 				line ^ (read_stream ())
 	in
 	let red_result = read_stream () in
-	let _ = print_endline ("\nSolution : " ^ red_result) in
-	(* Parse reduce's result *)
-	eqns
+	(*let _ = print_endline ("\nOriginal solution : " ^ red_result) in*)
+	(* Parse reduce's result which is of form "{  { (var = exp)* }+ }" *)
+	(* Currently we assume that only one root is obtained! *)
+	let sst = parse_reduce_solution red_result bv unksrmap in
+		sst
+
+let collect_parameters red_roots_str =
+	let paramrx = Str.regexp_string "arbcomplex\\([0-9]+\\)" in
+	
+		red_roots_str
 ;;
 
 

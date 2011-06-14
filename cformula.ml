@@ -4604,6 +4604,7 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 	(* Now, construct a more compact pure & heap *)
 	match p with
 		| MCP.MemoF fm -> 
+				let aasets = List.map (fun x -> x.MCP.memo_group_aset) fm in
 				let nfm = List.map process_memoised_group fm in 
 					(!nh, MCP.MemoF nfm)
   	| MCP.OnePF f -> 

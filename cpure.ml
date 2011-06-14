@@ -5100,8 +5100,12 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| Some bf -> Some (norm_bform_aux bf)
 
 
+(** An Hoa : remove redundant constraints.
+ **)
+
+
 (** An Hoa : reference to function to solve equations in Redlog **)
-let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> eqns)
+let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> ([] : (spec_var * spec_var) list))
 
 (** An Hoa : Reduce the formula by removing 
 		redundant atomic formulas and variables
@@ -5113,7 +5117,7 @@ let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) ->
  **)
 let rec reduce_pure (f : formula) (bv : spec_var list) 
 					: (formula * ((spec_var * spec_var) list)) =
-	print_endline "reduce_pure";
+	(*print_endline "reduce_pure";*)
 	(* Split f into collections of conjuction *)
 	let c = split_conjunctions f in
 	(* Pick out the term that are atomic *)
@@ -5143,11 +5147,14 @@ let rec reduce_pure (f : formula) (bv : spec_var list)
 	(* Find the variables that we need to solve for *)
 	let vars = fv f in
 	let vars = Gen.BList.difference_eq eq_spec_var vars bv in
-	let _ = print_endline (!print_svl vars) in
-	let _ = !solve_equations eqns bv in
-	(* Arithmetization *)
+	(*let _ = print_endline (!print_svl vars) in*)
+	(* Solve equations *)
 	(* Solve each variables in vars in term of bv, leave it there if we cannot do so *)
-		(f,[])
+	let sst = !solve_equations eqns bv in
+	(* Substitute equal variables & simplify the formula *)
+	let nf = subst sst f in
+	let nf = remove_dup_constraints in
+		(nf,sst)
 (** An Hoa : End **)
 
 
