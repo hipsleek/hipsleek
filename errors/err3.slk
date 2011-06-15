@@ -1,36 +1,36 @@
-/*
 //1. must failure
 checkentail x=1 |- (exists y: y+y=x & y>2) .
 
 //2. must failure
 checkentail x=1 |- (exists y: y+y=x & x>2) .
 
-//3. x=1 & x=2 is a contradiction but
-//   not detected
+//3. x=1 & x=2 is a contradiction 
 checkentail true |- x=1 & x=2 .
 
 //4. x=3 is must-fail, x>3 is may-fail
-checkentail x=1 |- x=3 & x>0 & x>3 .
+checkentail x=1 |- x=3 & x>0.
 
-//5. x.=z isis must-fail but not detected
+//5. x>=y & y>=z is must-fail 
 checkentail  x<z |- x>=y & y>=z.
 
 //6. must-failure
 checkentail  x<z |- x>=y & y>=z & x>=z.
-
 
 // partition RHS by connected vars
 // detect contradiction with RHS parts
 //  --> search for individual?
 // detect must-failure with RHS parts
 //  --> search for individual?
-
 // perform closure (maybe incomplete), then search for must/may
 
 
-//6. must-failure --may bug?? - should be improved
+//7.may bu
 checkentail  x<z |- x>=0 & y>=0 & x>y.
-*/
-//6. must-failure
-checkentail  x<z |- x>=0 & y>=0 & x>z.
+
+//8. must-failure
+checkentail  x<z |- x>=0 & z>=0 & x>=z.
+
+//9. x=3 is must-fail, x>3 is may-fail
+checkentail x=1 |- x=3 & x>0 & x>3 .
+
 
