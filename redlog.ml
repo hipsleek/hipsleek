@@ -1122,9 +1122,17 @@ let rl_vars_map (vars : CP.spec_var list) =
 	(* Since reduce uses only lower case for variables, we need to convert all
 	variables to lower case. There might be conflict but we shall ignore that for
 	the moment*)
-	let rlvarsnames = List.map (fun x -> String.lowercase (rl_of_spec_var x)) vars in
+	(** Internal function to create a list of strings of form [xn, x{n-1},...,x1] **)
+	let rec vars_1ton n =
+		if (n == 0) then []
+		else let l = vars_1ton (n-1) in
+			("x" ^ (string_of_int n))::l
+	in
+	(*let rlvarsnames = List.map (fun x -> String.lowercase (rl_of_spec_var x)) vars in*)
+	let numvars = List.length vars in
+	let rlvarsnames = vars_1ton numvars in
 	let newvars = List.map2 (fun v w -> CP.SpecVar (CP.type_of_spec_var v, w, Unprimed)) vars rlvarsnames in
-	let vars_map = List.map2 (fun v w -> (v,w)) vars newvars in
+	let vars_map = List.map2 (fun v w -> (v,w)) vars rlvarsnames in
 	let vars_rev_map = List.map2 (fun v w -> (CP.name_of_spec_var w,v)) vars newvars in
 	(*let _ = print_endline "Variable reverse mapping :" in
 	let _ = List.map (fun (x,y) -> print_endline (x ^ "--->" ^ (!CP.print_sv y))) vars_rev_map in*)
@@ -1220,7 +1228,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
 	(*let _ = print_endline "solve_eqns :: starting reduce ..." in*)
-	(*let _ = print_endline "Initiating solving sequence ..." in*)
+	let _ = print_endline "Starting solving sequence ..." in
 	let _ = start () in
 	(*let _ = print_endline "solve_eqns :: reduce started!" in*)
 
@@ -1239,13 +1247,24 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let _ = print_endline input_unknowns in*)
 
 	(* Generate reduce equations *)
-	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp e1) ^ " = " ^ (rl_of_exp e2)) eqns in
+	let rec rl_of_exp varsmap e = match e with
+		| CP.Var (v, _) -> List.assoc v varsmap
+		| CP.IConst (i, _) -> string_of_int i
+		| CP.FConst (f, _) -> string_of_float f
+		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
+		| CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " - " ^ (rl_of_exp varsmap e2) ^ ")"
+		| CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " * " ^ (rl_of_exp varsmap e2) ^ ")"
+		| CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " / " ^ (rl_of_exp varsmap e2) ^ ")"
+		| _ -> failwith ("solve : unsupported!")
+	in
+	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
 	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
 	(*let _ = print_endline "\nInput equations: " in
 	let _ = print_endline input_eqns in*)
 
 	(* Pipe the solve request to reduce process *)
 	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
+	let _ = print_endline ("\nReduce input command:\n" ^ input_command ^ "\n") in
 	let _ = send_cmd input_command in
 
 	let rec read_stream () = (** Internal function to read reduce output **)
@@ -1264,13 +1283,6 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	(* Currently we assume that only one root is obtained! *)
 	let sst = parse_reduce_solution red_result bv unksrmap in
 		sst
-
-let collect_parameters red_roots_str =
-	let paramrx = Str.regexp_string "arbcomplex\\([0-9]+\\)" in
-	
-		red_roots_str
-;;
-
 
 (** Set the equation solver in Cpure **)
 Cpure.solve_equations := solve_eqns;;

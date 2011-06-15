@@ -5137,9 +5137,21 @@ let rec reduce_pure (f : formula) (bv : spec_var list)
 	(* Split f into collections of conjuction *)
 	let c = split_conjunctions f in
 	(* Pick out the term that are atomic *)
-	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c	in 
+	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c in 
 	let bf = List.map (fun x -> match x with | BForm (y,_) -> y) bf in
 	(* Pick out equality from all atomic *)
+	let rec is_exp_arith e = (match e with
+		| Var (sv,_) -> let t = type_of_spec_var sv in 
+			(t == int_type || t == float_type)
+		| IConst _ | FConst _ -> true
+		| Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) | Div (e1,e2,_) | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
+		| Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ | ArrayAt _ -> true)
+	in
+	let is_b_form_arith f = (match f with
+		| Eq (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
+		| _ -> false)
+	in
+	let bf = List.filter is_b_form_arith bf in (* Take only arithmetic constraints, not object, etc. *)
 	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf	in
 	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p)) ebf in
 	(*let _ = print_endline "Equality occurs: " in
