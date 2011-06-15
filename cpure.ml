@@ -1684,7 +1684,7 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
               else ([], BForm (f,lbl))
         | _ , Var (sv2, _) ->
               if only_vars then ([], BForm (f,lbl))
-              else if (eq_spec_var sv2 v) && (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then ([(v, e1)], mkTrue no_pos )
+              else if (eq_spec_var sv2 v) && (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then ([(v, e1)],mkTrue no_pos)
               else ([], BForm (f,lbl))
         | _ ->([], BForm (f,lbl))
     end
@@ -5100,9 +5100,24 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| Some bf -> Some (norm_bform_aux bf)
 
 
-(** An Hoa : remove redundant constraints.
+(** An Hoa : remove redundant identity constraints.
  **)
-let remove_redundant_constraints (f : formula) : formula = match f with
+let rec remove_redundant_constraints (f : formula) : formula = match f with
+	| BForm (b,l) -> BForm (remove_redundant_constraints_b b,l)
+	| And (f1,f2,l) -> 
+		let g1 = remove_redundant_constraints f1 in
+		let g2 = remove_redundant_constraints f2 in
+			mkAnd g1 g2 l
+	| Or (f1,f2,l,p) ->
+		let g1 = remove_redundant_constraints f1 in
+		let g2 = remove_redundant_constraints f2 in
+			mkOr g1 g2 l p
+	| _ -> f
+
+and remove_redundant_constraints_b f = match f with  
+	| Eq (e1,e2,l) -> let r = eqExp_f eq_spec_var e1 e2 in 
+		if r then BConst (true,no_pos)
+		else f
 	| _ -> f
 
 (** An Hoa : reference to function to solve equations in Redlog **)
