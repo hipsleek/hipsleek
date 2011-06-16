@@ -582,6 +582,22 @@ and mkPtrEqn v1 v2 pos =
   let v2 = mkVarNull v2 pos in
    mkEqExp v1 v2 pos
 
+and mkPtrNeqEqn v1 v2 pos =
+  let v1 = mkVarNull v1 pos in
+  let v2 = mkVarNull v2 pos in
+   mkNeqExp v1 v2 pos
+
+and mklsPtrNeqEqn vs pos =
+  let rec helper vs=
+    match vs with
+      | [] -> []
+      | [v] -> []
+      | v::tl -> (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
+  in
+  let disj_sets= helper vs in
+  List.fold_left
+          (fun a b -> mkAnd a b pos) (mkTrue no_pos) disj_sets
+
 and mkLt a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
     failwith ("max/min can only be used in equality")
@@ -5260,16 +5276,23 @@ let slice_formula (fl : formula list) : (spec_var list * formula list) list =
 let part_contradiction is_sat pairs =
   let (p1,p2) = List.partition (fun (a,c) -> not(is_sat c)) pairs in
   (List.map (fun (_,c) -> (mkTrue no_pos,c) ) p1, p2)
+(*
+let refine_one_contradiction is_sat f=
+  let fvs = fv f in
+
+let refine_one_contradiction is_sat f=
+let pr = !print_formula in
+  Gen.Debug.ho_1 "refine_one_contradiction" pr pr refine_one_contradiction f
+*)
+let part_must_failures is_sat pairs =
+  List.partition (fun (a,c) ->
+      let f = mkAnd a c no_pos in
+      not(is_sat f)) pairs
 
 let part_must_failures is_sat pairs =
-  List.partition (fun (a,c) -> 
+  List.partition (fun (a,c) ->
       let f = mkAnd a c no_pos in
-      not(is_sat f)) pairs 
-
-let part_must_failures is_sat pairs =
-  List.partition (fun (a,c) -> 
-      let f = mkAnd a c no_pos in
-      not(is_sat f)) pairs 
+      not(is_sat f)) pairs
 
 let imply is_sat a c =
   let r = mkNot_s c in
@@ -5278,12 +5301,18 @@ let imply is_sat a c =
 
 let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
   let cs = split_conjunctions conseq in
-  let ml = List.filter (fun c -> 
+  let ml = List.filter (fun c ->
       let f = mkAnd ante c no_pos in
       not(is_sat f)) cs in
   if ml==[] then [(ante,conseq)]
-  else List.map (fun f -> (ante,f)) ml 
-  
+  else List.map (fun f -> (ante,f)) ml
+
+let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
+  let pr = !print_formula in
+  let pr2 = pr_list (pr_pair pr pr) in
+  Gen.Debug.no_1 "refine_one_must" (pr_pair pr pr) pr2 (fun  _ ->refine_one_must is_sat (ante, conseq)) (ante, conseq)
+
+
 let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) list =
   let rs = List.map (refine_one_must is_sat) pairs in
   List.concat rs
@@ -5308,7 +5337,7 @@ let find_all_failures is_sat ante cons =
 let find_all_failures is_sat ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
-  Gen.Debug.ho_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
+  Gen.Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
 
 let find_must_failures is_sat ante cons =
   let (contra_list,must_list,_) = find_all_failures is_sat ante cons in
@@ -5333,4 +5362,4 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula in
-  Gen.Debug.ho_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq 
+  Gen.Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq 

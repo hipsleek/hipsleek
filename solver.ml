@@ -294,11 +294,11 @@ and formula_2_mem (f : formula) prog : CF.mem_formula =
   Gen.Debug.no_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
       (fun _ -> formula_2_mem_x f prog) f
 
-and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
-  Gen.Debug.no_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
-      (fun f -> h_formula_2_mem f evars prog) f
-
 and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
+  Gen.Debug.no_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
+      (fun f -> h_formula_2_mem_x f evars prog) f
+
+and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
   let rec helper f =
     (* for h_formula *)
     match f with
@@ -3247,7 +3247,7 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 and heap_entail_split_rhs_phases
       p is_folding  ctx0 conseq d
       pos : (list_context * proof) =
-  Gen.Debug.no_2 "heap_entail_split_rhs_phases"
+  Gen.Debug.ho_2 "heap_entail_split_rhs_phases"
       (fun x -> Cprinter.string_of_context x)
       (Cprinter.string_of_formula)
       (fun (lc,_) -> Cprinter.string_of_list_context lc)
@@ -4197,7 +4197,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -4291,6 +4291,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                   begin
                       (*check maymust for ante1*)
                       let ante_filter1 = filter_redundant_new (MCP.pure_of_mix split_ante1) cons4 in
+                        (*CP.filter_redundant (MCP.pure_of_mix split_ante1) cons4*)
                       let (r1, r2,r3) = find_all_failures ante_filter1 cons4 in
                        if List.length (r1@r2) = 0 then
                        begin
@@ -4775,7 +4776,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 and do_match prog estate l_node r_node rhs is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in 
-  Gen.Debug.no_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
+  Gen.Debug.ho_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
       (fun _ _ _ _ -> do_match_x prog estate l_node r_node rhs is_folding pos)
       l_node r_node estate rhs
 
@@ -5199,17 +5200,17 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
              (ii) check if negated term implied by LHS
           *)
           (* check LHS to see if null -> must error else may error *)
-          let (mix_f,br,svl,mem_f) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+          let (mix_rf,br,svl,mem_f) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
           let pr = Cprinter.string_of_spec_var_list in
           let _ = print_flush "UNMATCHED RHS" in
           let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in
           let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in
           (* let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
-          let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_f)) in
+          let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in
           let _ = print_flush ("RHS - xpure (svl) :"^(pr svl)) in
           let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_f.mem_formula_mset)) in
         let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
-        let lhs_p = List.fold_left 
+        let lhs_p = List.fold_left
           (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
         let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
         if (simple_imply lhs_p rhs_p) then
@@ -5218,9 +5219,22 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
                                           CF.mk_failure_must "15 no match for rhs data node and lhs is null")), NoAlias)
         else
-          let s = "no match for rhs data node" in
-          (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-                                          CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
+          begin
+              (*check disj memset*)
+              let rhs_p = CP.mkAnd (MCP.pure_of_mix rhs_b.formula_base_pure) (CP.mklsPtrNeqEqn svl no_pos) no_pos in
+              let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
+              let f = CP.mkAnd lhs_p rhs_p no_pos in
+              let r = ref (-9999) in
+              if (TP.is_sat_sub_no f r) then
+                let s = "no match for rhs data node" in
+                (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
+                                                CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
+              else
+                let msg = (Cprinter.string_of_pure_formula lhs_p) ^ " |- "^
+                              (Cprinter.string_of_pure_formula rhs_p) in
+                (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
+                                                CF.mk_failure_must ("15" ^ msg))), NoAlias)
+          end
     | Context.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos

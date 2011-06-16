@@ -188,9 +188,21 @@ let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list
 	| [s] -> s
 	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
 
-let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
+let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
+let psv = Cprinter.string_of_spec_var in
+ let pr1 = (pr_list psv) in
+ let pr2 = pr_list pr1 in
+ Gen.Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
+
+let comp_aliases_x (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
     let eqns = MCP.ptr_equations_without_null rhs_p in
     alias_nth 1 eqns 
+
+let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
+ let psv = Cprinter.string_of_spec_var in
+ let pr2 = (pr_list (pr_list psv)) in
+ let pr1 = Cprinter.string_of_mix_formula in
+ Gen.Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p
 
 let comp_alias_part r_asets a_vars = 
     (* let a_vars = lhs_fv @ posib_r_aliases in *)
@@ -471,8 +483,15 @@ and process_one_match_x prog (c:match_res) :action_wt =
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
-      
-and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
+
+and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
+  let pr = Cprinter.string_of_h_formula   in
+  let pr1 = pr_list string_of_match_res in
+  let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
+  let pr3 = string_of_action_wt_res in
+  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+
+and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
           if (is_view rhs_node) && (get_view_original rhs_node) then
         let r = (1,M_base_case_fold { 

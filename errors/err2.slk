@@ -5,7 +5,7 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-
+/*
 //1. must failure
 checkentail x::node<2,null> |- x::node<3,null> .
 
@@ -48,7 +48,7 @@ checkentail x::pos_ll<n> |- x::neg_ll<n> .
 // x::neg_ll<n> & n=0 ==> x=null
 // x::pos_ll<n> & n=0 ==> x=null
 
-//9. must? failure 
+//9. must? failure
 // TODO (requires a lemma and unfolding
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
@@ -73,12 +73,12 @@ checkentail x=y & y=null |- x::node<_,_> .
 
 //16. may
 checkentail x=y |- x::node<_,_> .
-
+*/
 //17. must (wrong) but reported as may-bug
 // TODO requires baga
 checkentail x=y |- x::node<_,_> * y::node<_,_>.
-
-//18. may 
+/*
+//18. may
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
 
 //19. must but reported as may error
@@ -124,3 +124,4 @@ checkentail x=null |- x::neg_ll<m> & m>0.
 //31. must bug (but reported as may)
 // TODO (requires baga)
 checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
+*/
