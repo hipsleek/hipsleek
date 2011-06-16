@@ -5,7 +5,7 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-/*
+
 //1. must failure
 checkentail x::node<2,null> |- x::node<3,null> .
 
@@ -68,14 +68,13 @@ checkentail y::node<_,_> & x!=y |- x::node<_,_> .
 //14. may
 checkentail y=null |- x::node<_,_> .
 
-//15. must
+//15. must WRONG?
 checkentail x=y & y=null |- x::node<_,_> .
 
 //16. may
 checkentail x=y |- x::node<_,_> .
 
 //17. must bug
-// TODO requires baga
 checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
 //18. may
@@ -89,13 +88,12 @@ checkentail true |- x::node<_,_> * x::node<_,_>.
 //20. may bug
 checkentail x=y & y!=null |- x::node<_,_> .
 
-//21. must bug
+//21. must bug WRONG?
 checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
-*/
-//22. must bug (but reported as may)
-// TODO (requires baga)
-checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> . .
-/*
+
+//22. must bug
+checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
+
 //23. must-bug
 checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 
@@ -120,4 +118,4 @@ checkentail x::pos_ll<n> & x=null |- x::neg_ll<m> & m>0.
 //30 must-bug
 checkentail x=null |- x::neg_ll<m> & m>0.
 
-*/
+

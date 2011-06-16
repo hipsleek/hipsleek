@@ -4776,7 +4776,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 and do_match prog estate l_node r_node rhs is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in 
-  Gen.Debug.ho_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
+  Gen.Debug.no_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
       (fun _ _ _ _ -> do_match_x prog estate l_node r_node rhs is_folding pos)
       l_node r_node estate rhs
 
@@ -4875,8 +4875,13 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
-  let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos in
-  process_action prog estate conseq lhs_b rhs_b actions is_folding pos
+
+  let (_,_,svl,_) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+  let new_rhs_p = MCP.memoise_add_pure_N rhs_p (CP.mklsPtrNeqEqn svl no_pos) in
+  let new_rhs_b = { rhs_b with formula_base_pure = new_rhs_p} in
+
+  let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p new_rhs_p posib_r_alias rhs_lst pos in
+  process_action prog estate conseq lhs_b new_rhs_b actions is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   Gen.Debug.loop_2_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
@@ -5201,6 +5206,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           *)
           (* check LHS to see if null -> must error else may error *)
           let (mix_rf,br,svl,mem_f) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+          (*
           let pr = Cprinter.string_of_spec_var_list in
           let _ = print_flush "UNMATCHED RHS" in
           let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in
@@ -5209,6 +5215,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in
           let _ = print_flush ("RHS - xpure (svl) :"^(pr svl)) in
           let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_f.mem_formula_mset)) in
+          *)
         let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
         let lhs_p = List.fold_left
           (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
@@ -5222,7 +5229,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           begin
               (*check disj memset*)
               let r = ref (-9999) in
-              let rhs_p = CP.mkAnd (MCP.pure_of_mix rhs_b.formula_base_pure) (CP.mklsPtrNeqEqn svl no_pos) no_pos in
+              let rhs_p = MCP.pure_of_mix rhs_b.formula_base_pure in
               (*contradiction on RHS?*)
               if not(TP.is_sat_sub_no rhs_p r) then
                 (*contradiction on RHS*)
