@@ -5209,8 +5209,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           (*
           let pr = Cprinter.string_of_spec_var_list in
           let _ = print_flush "UNMATCHED RHS" in
-          let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in
-          let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in
+          let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in *)
+          let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in (*
           (* let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
           let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in
           let _ = print_flush ("RHS - xpure (svl) :"^(pr svl)) in
@@ -5221,10 +5221,10 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
         let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
         if (simple_imply lhs_p rhs_p) then
-        (* if (List.length (MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure)) > 0 then *)
-          let s = "no match for rhs data node and lhs is null" in
+          let lhs_node_name = CP.name_of_spec_var (CF.get_node_var rhs_b.CF.formula_base_heap) in
+          let s = "15 " ^ lhs_node_name ^"=null |- " ^  lhs_node_name ^ ".node" in
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-                                          CF.mk_failure_must "15 no match for rhs data node and lhs is null")), NoAlias)
+                                          CF.mk_failure_must s)), NoAlias)
         else
           begin
               (*check disj memset*)
@@ -5245,9 +5245,10 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
                                                   CF.mk_failure_must ("15 " ^ msg))), NoAlias)
                 else
-                  let s = "no match for rhs data node" in
+                  let lhs_node_name = CP.name_of_spec_var (CF.get_node_var rhs_b.CF.formula_base_heap) in
+                  let s = "15 no match for rhs data node " ^ lhs_node_name in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-                                                  CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
+                                                  CF.mk_failure_may s)), NoAlias)
           end
     | Context.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
