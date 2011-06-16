@@ -95,7 +95,7 @@ checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
 
 //22. must bug (but reported as may)
 // TODO (requires baga)
-checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
+checkentail x=y |- x::node<_,_>*y::node<_,_> .
 
 //23. must-bug
 checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
@@ -120,3 +120,7 @@ checkentail x::pos_ll<n> & x=null |- x::neg_ll<m> & m>0.
 
 //30 must-bug
 checkentail x=null |- x::neg_ll<m> & m>0.
+
+//31. must bug (but reported as may)
+// TODO (requires baga)
+checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
