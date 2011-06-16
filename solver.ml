@@ -5221,19 +5221,26 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
         else
           begin
               (*check disj memset*)
-              let rhs_p = CP.mkAnd (MCP.pure_of_mix rhs_b.formula_base_pure) (CP.mklsPtrNeqEqn svl no_pos) no_pos in
-              let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
-              let f = CP.mkAnd lhs_p rhs_p no_pos in
               let r = ref (-9999) in
-              if (TP.is_sat_sub_no f r) then
-                let s = "no match for rhs data node" in
-                (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-                                                CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
-              else
-                let msg = (Cprinter.string_of_pure_formula lhs_p) ^ " |- "^
-                              (Cprinter.string_of_pure_formula rhs_p) in
+              let rhs_p = CP.mkAnd (MCP.pure_of_mix rhs_b.formula_base_pure) (CP.mklsPtrNeqEqn svl no_pos) no_pos in
+              (*contradiction on RHS?*)
+              if not(TP.is_sat_sub_no rhs_p r) then
+                (*contradiction on RHS*)
+                let msg = "contradiction in RHS" in
                 (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
-                                                CF.mk_failure_must ("15" ^ msg))), NoAlias)
+                                                CF.mk_failure_must ("15 " ^ msg))), NoAlias)
+              else
+                let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
+                let f = CP.mkAnd lhs_p rhs_p no_pos in
+                if not(TP.is_sat_sub_no f r) then
+                  let msg = (Cprinter.string_of_pure_formula lhs_p) ^ " |- "^
+                    (Cprinter.string_of_pure_formula rhs_p) in
+                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
+                                                  CF.mk_failure_must ("15 " ^ msg))), NoAlias)
+                else
+                  let s = "no match for rhs data node" in
+                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
+                                                  CF.mk_failure_may "15 no match for rhs data node")), NoAlias)
           end
     | Context.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
