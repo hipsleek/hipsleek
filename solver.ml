@@ -5209,8 +5209,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           (*
           let pr = Cprinter.string_of_spec_var_list in
           let _ = print_flush "UNMATCHED RHS" in
-          let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in *)
-          let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in (*
+          let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in
+          let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in
           (* let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
           let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in
           let _ = print_flush ("RHS - xpure (svl) :"^(pr svl)) in
@@ -5887,7 +5887,7 @@ and find_coercions c1 c2 prog anode ln2 =
 
 and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  Gen.Debug.ho_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
 

@@ -12,11 +12,11 @@ checkentail x::node<2,null> |- x::node<3,null> .
 
 //2. may failure
 checkentail x::node<v,null> & v>2 |- x::node<3,null> .
-*/
+
 
 //3. must failure
 checkentail x::node<v,null> & v>2 |- x::node<3,q>*q::node<_,null> .
-/*
+
 //4. must failure
 checkentail x::node<v,null> & v>2 |- x::node<_,q>*q::node<_,null> .
 
@@ -30,7 +30,7 @@ checkentail x::node<v,q>*q::node<_,null> |- x::node<2,q> .
 
 //7. must failure
 checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
-
+*/
 // must bug via predicates?
 pred pos_ll<n> == self = null & n = 0
 	or self::node<d,r> * r::pos_ll<n - 1> & d>0
@@ -40,82 +40,89 @@ pred neg_ll<n> == self = null & n = 0
 	or self::node<d,r> * r::neg_ll<n - 1> & d<0
 	inv n >= 0.
 
-//8. may failure
+lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __SleekMustErr.
+lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __SleekMustErr.
+lemma self::neg_ll<n> & n=0 -> x=null.
+lemma self::pos_ll<n> & n=0 -> x=null.
+
+//8. valid
+checkentail x::pos_ll<n> & n>0|- x::neg_ll<n>.
+
+//9 valid
+checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
+
+//10 may failure WRONG (must now)
 checkentail x::pos_ll<n> |- x::neg_ll<n> .
 
-// x::pos_ll<n> & n>0 ==> x::neg_ll<n> & flow = must_bug
-// x::neg_ll<n> & n>0 ==> x::pos_ll<n> & flow = must_bug
-// x::neg_ll<n> & n=0 ==> x=null
-// x::pos_ll<n> & n=0 ==> x=null
-
-//9. must? failure
+//11. must? failure
 // TODO (requires a lemma and unfolding
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-//10. must failure but detected as may bug
+//12. must failure but detected as may bug
 // TODO requires a lemma!
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 
-//11. must failure
+//13. must failure
 checkentail x::ll<n> & n>0 |- x::ll<n+1> .
 
-//12. may
+//14. may
 checkentail true |- x::node<_,_> .
 
-//13. may
+//15. may
 checkentail y::node<_,_> & x!=y |- x::node<_,_> .
 
-//14. may
+//16. may
 checkentail y=null |- x::node<_,_> .
 
-//15. must
+//17. must
 checkentail x=y & y=null |- x::node<_,_> .
 
-//16. may
+//18. may
 checkentail x=y |- x::node<_,_> .
 
-//17. must bug
+//19. must bug
 checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
-//18. may
+//20. may
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
 
-//19. must bug
+//21. must bug
 checkentail true |- x::node<_,_> * x::node<_,_>.
 
 // soundness of must bug?
 
-//20. may bug
+//22. may bug
 checkentail x=y & y!=null |- x::node<_,_> .
 
-//21. must bug
+//23. must bug
 checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
 
-//22. must bug
+//24. must bug
 checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
 
-//23. must-bug
+//25. must-bug
 checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 
-//24. valid
+//26. valid
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
-//25. must-bug
+//27. must-bug
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
 
-//26 valid
+//28 valid
 checkentail x::ll<n> & n>0  |- x!=null.
 
-//27 must-bug
+//29 must-bug
 checkentail x::ll<n> & n>0  |- x=null.
 
-//28 must-bug
+//30 must-bug
 checkentail x::pos_ll<n> & n=0 |- x::neg_ll<m> & m>0.
 
-//29 must-bug
+//31 must-bug
 checkentail x::pos_ll<n> & x=null |- x::neg_ll<m> & m>0.
 
-//30 must-bug
+//32 must-bug
 checkentail x=null |- x::neg_ll<m> & m>0.
+
 
 */
