@@ -1,11 +1,11 @@
 
 data node { int val ; node next }.
-
+/*
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-/*
+
 //1. must failure
 checkentail x::node<2,null> |- x::node<3,null> .
 
@@ -45,9 +45,9 @@ lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __SleekMustErr.
 lemma self::neg_ll<n> & n=0 -> x=null.
 lemma self::pos_ll<n> & n=0 -> x=null.
 
-//8. valid
-checkentail x::pos_ll<n> & n>0|- x::neg_ll<n>.
-
+//8. must failure
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n>.
+/*
 //9 valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
 
