@@ -44,7 +44,6 @@ and ext_formula =
    | EScope of  (Cpure.spec_var list) 
  *)
 
-
 and ext_case_formula =
 	{
 		formula_case_branches : (Cpure.formula * struc_formula ) list;
@@ -87,6 +86,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_label : formula_label option;
+					formula_base_var_rep : (CP.spec_var * string) list; (* An Hoa : variable string representation *)
                       formula_base_pos : loc }
 
 and mem_formula = { 
@@ -105,6 +105,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_flow : flow_formula;
                         formula_exists_branches : (branch_label * CP.formula) list;
                         formula_exists_label : formula_label option;
+						formula_exists_var_rep : (CP.spec_var * string) list; (* An Hoa : variable string representation *)
                         formula_exists_pos : loc }
 
 and flow_formula = {  formula_flow_interval : nflow;
@@ -634,6 +635,7 @@ formula_base_type = TypeTrue;
 formula_base_flow = flowt (*(mkTrueFlow ())*);
 formula_base_branches = [];
 formula_base_label = None;
+formula_base_var_rep = [];
 formula_base_pos = pos})
 
 and mkTrue_nf pos = mkTrue (mkTrueFlow ()) pos
@@ -645,6 +647,7 @@ formula_base_type = TypeFalse;
 formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
 formula_base_branches = [];
 formula_base_label = None;
+formula_base_var_rep = [];
 formula_base_pos = pos})
   
 and mkEFalse flowt pos = EBase({
@@ -692,6 +695,7 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
 	formula_base_flow = fl;
     formula_base_branches = b;
     formula_base_label = lbl;
+	formula_base_var_rep = [];
 	formula_base_pos = pos})
 and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
   mkBase_w_lbl h p t fl b pos None
@@ -845,6 +849,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
   formula_base_flow = fl;
   formula_base_branches = b;
   formula_base_label = lbl;
+formula_base_var_rep = [];
   formula_base_pos = pos} in
   let fvars = fv (Base tmp_b) in
   let qvars = Gen.BList.intersect_eq (=) svs fvars in (* used only these for the quantified formula *)
@@ -857,7 +862,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
 	(* formula_exists_imm = contains_immutable_h_formula h; *)
 	formula_exists_flow = fl;
     formula_exists_branches = b;
-    formula_exists_label = lbl;
+    formula_exists_label = lbl;formula_exists_var_rep = [];
 	formula_exists_pos = pos})
 and is_true (h : h_formula) = match h with
   | HTrue _ -> true
@@ -1120,7 +1125,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 		(* formula_base_imm = imm; *)
 		formula_base_flow = fl;
         formula_base_branches = br;
-        formula_base_label = lbl;
+        formula_base_label = lbl;formula_base_var_rep = [];
 		formula_base_pos = pos})) in
 	    let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
 		res
@@ -1311,6 +1316,7 @@ and subst_x sst (f : formula) =
 					formula_base_flow = fl;
 					formula_base_label = lbl;
 					formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
+formula_base_var_rep = [];
 					formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 						formula_exists_heap = qh; 
@@ -1334,6 +1340,7 @@ and subst_x sst (f : formula) =
 									formula_exists_flow = fl;
 									formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
 									formula_exists_label = lbl;
+formula_exists_var_rep = [];
 									formula_exists_pos = pos})
   in helper f
 (** An Hoa : End of formula substitution **)
@@ -1431,6 +1438,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 		formula_base_flow = fl;
         formula_base_label = lbl;
         formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
+		formula_base_var_rep = [];
 		formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 	formula_exists_heap = qh; 
@@ -1450,6 +1458,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 		formula_exists_flow = fl;
         formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
         formula_exists_label = lbl;
+		formula_exists_var_rep = [];
 		formula_exists_pos = pos})
 		  
 
@@ -2131,6 +2140,13 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
+(** An Hoa : Additional field for display purpose; to be set on
+	simplification performed on dprint. It is a list of variable
+	and the string to display. For instance, (c,"1") will make sure
+	h::ll<n,c>
+	will be printed as h::ll<n,1> instead.
+ 
+  es_var_rep : (CP.spec_var * string) list; *)
 }
 
 and context = 
@@ -2312,7 +2328,7 @@ let rec empty_es flowt pos =
   es_aux_xpure_1 = MCP.mkMTrue pos;
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
-
+  (*es_var_rep = [];*)
 }
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)
@@ -3020,6 +3036,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 		 	formula_base_type = t;
       formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one_exp s p1)) b;
       formula_base_label = lbl;
+formula_base_var_rep = [];
 		 	formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 			 formula_exists_heap = qh; 
@@ -3039,7 +3056,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 					(* formula_exists_imm = imm; *)
 					formula_exists_flow = fl;
           formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one_exp s p1)) b;
-          formula_exists_label = lbl;
+          formula_exists_label = lbl;formula_exists_var_rep = [];
 					formula_exists_pos = pos})
 
 (*and combine_branch b *)
@@ -4404,6 +4421,7 @@ let extr_rhs_b (e:formula) =
   formula_base_branches = br1;
   formula_base_flow = fl1;
   formula_base_label = None;
+formula_base_var_rep = [];
   formula_base_pos = no_pos } in
   b1
     
@@ -4416,6 +4434,7 @@ and extr_lhs_b (es:entail_state) =
   formula_base_branches = br1;
   formula_base_flow = fl1;
   formula_base_label = None;
+formula_base_var_rep = [];
   formula_base_pos = no_pos } in
   b1
 	
@@ -4479,29 +4498,30 @@ and simplify_context (ctx : context) (bv : CP.spec_var list) =
 (** An Hoa : simplify a general formula **)
 and simplify_es_formula (f : formula) (bv : CP.spec_var list) = 
 	(* Print the mix formula for testing purpose *)
-	let print_mix_f (f : MCP.mix_formula) = match f with
+(*	let print_mix_f (f : MCP.mix_formula) = match f with
 		| MCP.MemoF mf -> (!MCP.print_mp_f mf)
 		| MCP.OnePF pf -> (!CP.print_formula pf)
-	in
+	in*)
 (*	let freevars = fv f in                        *)
 (*	let _ = print_endline (!print_svl freevars) in*)
 	match f with
 		| Base ({formula_base_heap = heap;
 						formula_base_pure = pure;
 						formula_base_type = fftype;
-	          formula_base_flow = flow;
-	          formula_base_branches = branches;
-	          formula_base_label = label;
+						formula_base_flow = flow;
+						formula_base_branches = branches;
+						formula_base_label = label;
 	          formula_base_pos = pos}) -> 
 (*			let _ = print_endline (!print_h_formula heap) in*)
 (*			let _ = print_endline (print_mix_f pure) in     *)
-			let newheap,newpure = simplify_heap_pure heap pure bv in
+			let newheap,newpure,strrep = simplify_heap_pure heap pure bv in
 			Base ({formula_base_heap = newheap;
 						formula_base_pure = newpure;
 						formula_base_type = fftype;
 	          formula_base_flow = flow;
 	          formula_base_branches = branches;
 	          formula_base_label = label;
+				formula_base_var_rep = strrep;
 	          formula_base_pos = pos})
 		| Or ({formula_or_f1 = f1;
 	        formula_or_f2 = f2;
@@ -4519,7 +4539,7 @@ and simplify_es_formula (f : formula) (bv : CP.spec_var list) =
 	            formula_exists_pos = pos}) ->
 (*			let _ = print_endline (!print_h_formula heap) in*)
 (*			let _ = print_endline (print_mix_f pure) in     *)
-			let newheap,newpure = simplify_heap_pure heap pure bv(*qvars*) in
+			let newheap,newpure,strrep = simplify_heap_pure heap pure bv(*qvars*) in
 			Exists ({formula_exists_qvars = qvars;
 	            formula_exists_heap = newheap;
 	            formula_exists_pure = newpure;
@@ -4527,6 +4547,7 @@ and simplify_es_formula (f : formula) (bv : CP.spec_var list) =
 	            formula_exists_flow = flow;
 	            formula_exists_branches = branches;
 	            formula_exists_label = label;
+				formula_exists_var_rep = strrep;
 	            formula_exists_pos = pos})
 
 (** An Hoa : simplify a heap formula with the constraints, bv stores the base variables **)
@@ -4549,8 +4570,8 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 	let intfv = Gen.BList.difference_eq CP.eq_spec_var purefv heapfv in
 	let intfv = Gen.BList.difference_eq CP.eq_spec_var intfv bv in
 	let intfv = List.filter CP.is_unprimed intfv in
-	let _ = print_string "Intermediate variables = " in
-	let _ = print_endline (!print_svl intfv) in
+	(*let _ = print_string "Intermediate variables = " in
+	let _ = print_endline (!print_svl intfv) in*)
 	let nh = ref h in
 	
 	(** Internal function to process individual memoised group **)
@@ -4606,10 +4627,10 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 		| MCP.MemoF fm -> 
 				let aasets = List.map (fun x -> x.MCP.memo_group_aset) fm in
 				let nfm = List.map process_memoised_group fm in 
-					(!nh, MCP.MemoF nfm)
+					(!nh, MCP.MemoF nfm, [])
   	| MCP.OnePF f -> 
-			let nf, sst = CP.reduce_pure f bv in
+			let nf,sst,strrep = CP.reduce_pure f bv in
 			let nh = subst_heap sst h in
 			let np = MCP.OnePF nf in 
 			(* Without --eps option, this is always the case. Rearrange the pure & then do replacement. *)
-			(nh, np)
+			(nh, np, strrep)

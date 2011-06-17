@@ -668,8 +668,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		  (*let _ = print_string ("check_proc: init_ctx: " ^ (Cprinter.string_of_context init_ctx) ^ "\n") in*)
 		  (* Add es_var_measures *)
 		  (*let init_ctx = CF.add_es_var_measures init_ctx2 proc.proc_static_specs in*)
-          let visible_vars = List.fold_left (fun acc (t,i) -> (CP.SpecVar (t,i,Primed))::(CP.SpecVar (t,i,Unprimed)):: acc) [] proc.proc_args in
-          let _ = print_endline ("\nProc Visible Vars "^proc.proc_name^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in
+          (*let visible_vars = List.fold_left (fun acc (t,i) -> (CP.SpecVar (t,i,Primed))::(CP.SpecVar (t,i,Unprimed)):: acc) [] proc.proc_args in
+          let _ = print_endline ("\nProc Visible Vars "^proc.proc_name^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in*)
 	      let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
 				let result =
 	        if pp then begin

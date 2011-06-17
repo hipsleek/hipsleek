@@ -1278,6 +1278,7 @@ and expand_all_preds prog f0 do_unsat: formula =
 		formula_base_flow = fl;
 		formula_base_branches = [];
 		formula_base_label = lbl;
+		formula_base_var_rep = [];
 		formula_base_pos = pos}) in
         let ef = List.fold_left (fun f -> fun v -> unfold_nth 4 (prog,None) f v do_unsat 0 pos  ) f proots in
         let ef0 = push_exists qvars ef in
@@ -4009,6 +4010,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_flow = fl1;
 					              formula_base_branches = br1;
 					              formula_base_label = None;
+									formula_base_var_rep = [];
 					              formula_base_pos = pos } in
 				                  (* 23.10.2008 *)
 				                  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
@@ -4037,6 +4039,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_branches = br1;
 					              formula_base_flow = fl1;
 					              formula_base_label = None;
+									formula_base_var_rep = [];
 					              formula_base_pos = pos } in
 				                  let b2 = { formula_base_heap = h2;
 					              formula_base_pure = p2;
@@ -4045,6 +4048,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_flow = fl2;
 					              formula_base_branches = br2;
 					              formula_base_label = None;
+									formula_base_var_rep = [];
 					              formula_base_pos = pos } in
 				                  heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 pos
 				                end
@@ -4813,7 +4817,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	(* formula_base_imm = contains_immutable_h_formula resth2; *)
 	formula_base_branches = rhs_br;
 	formula_base_flow = rhs_fl;		
-	formula_base_label = None;   
+	formula_base_label = None;  formula_base_var_rep = []; 
 	formula_base_pos = pos } in
 	let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in
 	let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in

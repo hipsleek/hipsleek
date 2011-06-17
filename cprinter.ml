@@ -785,6 +785,80 @@ let pr_mem_formula  (e : mem_formula) =
 (*     | [] -> fmt_string ";" *)
 (* ;; *)
 
+
+(** An Hoa : Print with variable consideration!
+ **)
+let rec pr_h_formula_anhoa_version h vr = 
+  let f_b e =  pr_bracket h_formula_wo_paren (fun x -> pr_h_formula_anhoa_version x vr) e 
+  in
+  let pr_spec_var_temp x = (* Internal function to print the spec_var *) 
+	let s = try
+		let i,k = Gen.BList.find_index (fun (a,b) -> CP.eq_spec_var a x) vr in
+			snd k
+	with
+		| Not_found -> string_of_spec_var x
+	in fmt_string s
+  in
+  match h with
+    | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_star f_b args
+    | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          fmt_string "("; pr_list_op op_phase f_b args; fmt_string ")" 
+    | Conj ({h_formula_conj_h1 = h1; h_formula_conj_h2 = h2; h_formula_conj_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conj_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conj f_b args
+    | DataNode ({h_formula_data_node = sv;
+      h_formula_data_name = c;
+	  h_formula_data_imm = imm;
+      h_formula_data_arguments = svs;
+      h_formula_data_pos = pos;
+      h_formula_data_remaining_branches = ann;
+      h_formula_data_label = pid})->
+          fmt_open_hbox ();
+          (if pid==None then fmt_string "NN " else fmt_string "SS ");
+          pr_formula_label_opt pid;
+          pr_spec_var sv; fmt_string "::";
+          pr_angle c pr_spec_var_temp svs ;
+	      pr_imm imm;
+          (match ann with | None -> () | Some _ -> fmt_string "[]");
+          fmt_close();
+    | ViewNode ({h_formula_view_node = sv; 
+      h_formula_view_name = c; 
+	  h_formula_view_imm = imm;
+      h_formula_view_arguments = svs; 
+      h_formula_view_origins = origs;
+      h_formula_view_original = original;
+      h_formula_view_label = pid;
+      h_formula_view_remaining_branches = ann;
+      h_formula_view_pruning_conditions = pcond;
+      h_formula_view_pos =pos}) ->
+          fmt_open_hbox ();
+         (if pid==None then fmt_string "NN " else fmt_string "SS ");
+          pr_formula_label_opt pid; 
+          pr_spec_var sv; 
+          fmt_string "::"; 
+          pr_angle c pr_spec_var_temp svs;
+	      pr_imm imm;
+          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
+	  if original then fmt_string "[Orig]"
+	  else fmt_string "[Derv]";
+          pr_remaining_branches ann; 
+          pr_prunning_conditions ann pcond;
+          fmt_close()
+    | HTrue -> fmt_bool true
+    | HFalse -> fmt_bool false
+    | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
+
+
+
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
   in
@@ -908,9 +982,10 @@ let rec pr_formula_base e =
 	  formula_base_type = t;
 	  formula_base_flow = fl;
       formula_base_label = lbl;
+	formula_base_var_rep = varrep; (* TODO edit *)
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "<NoLabel>" | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
+          pr_h_formula_anhoa_version h varrep; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
 
 let rec pr_formula e =
@@ -939,10 +1014,11 @@ let rec pr_formula e =
 	  formula_exists_type = t;
 	  formula_exists_flow = fl;
       formula_exists_label = lbl;
+		formula_exists_var_rep = varrep;
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
-          pr_h_formula h; pr_cut_after "&" ;
+          pr_h_formula_anhoa_version h varrep; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
 
@@ -1767,6 +1843,24 @@ if (Gen.is_empty cl) then "" else get_label_partial_context (List.hd cl)
 let string_of_label_list_failesc_context (cl:Cformula.list_failesc_context) : string =
   if (Gen.is_empty cl) then "" else string_of_label_failesc_context (List.hd cl)
 ;;
+
+
+
+(****************************************************************
+			INFORMATIVE (VISUAL) PRINTING OF CONTEXT
+					AUTHOR:    VU AN HOA
+ ****************************************************************)
+
+
+
+
+
+(** An Hoa : An alternative 
+ **)
+(*let string_of_list_failesc_context_anhoa_version (cl:Cformula.list_failesc_context) (vars_display : (CP.spec_var * string) list) =
+	string_of_list_failesc_context_anhoa_version cl*)
+(** An Hoa : End **)
+
 
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
