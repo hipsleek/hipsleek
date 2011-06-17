@@ -4884,7 +4884,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   process_action prog estate conseq lhs_b new_rhs_b actions is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
-  Gen.Debug.loop_2_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
+  Gen.Debug.loop_2 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -5192,7 +5192,10 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
       },ln) ->
           let _ = match ln with
             | None -> () 
-            | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in
+            | Some c -> (
+                let _ = print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in
+                print_endline ("locle 1: " ^ (Cprinter.string_of_coerc c))
+            ) in
           let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
           (r1,Search r2)
     | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos
@@ -5263,7 +5266,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 and process_action prog estate conseq lhs_b rhs_b a is_folding pos =
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Gen.Debug.loop_1_no "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
+  Gen.Debug.loop_1 "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
       
       
 (************************* match_all_nodes ******************)
@@ -5837,7 +5840,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 
 and apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
+  Gen.Debug.ho_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
       (fun _ _ _ -> apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos)
       anode resth1 c2
       (* anode - chosen node, resth1 - rest of heap *)
