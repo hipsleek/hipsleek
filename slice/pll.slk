@@ -1,0 +1,25 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred pll<n,s> ==
+	self = null & n = 0 & s = 0  or
+   self::node<v,p> * p::pll<n1,s1> & n = 1 + n1 & v > 0 & s = v + s1 
+  inv n >= 0 & s >= 0.
+
+/*
+ this is similar 
+   forall a,b: x::lseg<n,p> & n=a+b 
+       <==> x::lseg<a,q>*q::lseg<b,p>
+
+  forall v,s1. 
+   self::node<v,p> * p::pll<n1,s1> & n = 1 + n1 & v > 0 & s = v + s1  
+*/
+checkentail x::pll<n,10> & n>0 |- x::node<v,q> & v>0.
+
+//fail but should succeed
+checkentail x::pll<n,10> & n>0 |- x::node<3,q>.
+
+//fail but should succeed
+checkentail x::pll<n,10> & n>0 |- x::node<v,q> & v>3.
