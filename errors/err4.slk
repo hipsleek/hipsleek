@@ -10,10 +10,22 @@ pred neg_ll<n> == self = null & n = 0
 
 lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __SleekMustErr.
 lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __SleekMustErr.
-lemma self::neg_ll<n> & n=0 -> x=null.
-lemma self::pos_ll<n> & n=0 -> x=null.
+//lemma self::neg_ll<n> & n=0 -> x=null.
+//lemma self::pos_ll<n> & n=0 -> x=null.
 
-//checkentail x>3 |- x>0 & flow __SleekMustErr.
+// 1.
+checkentail x>3 |- x<=0 .
+
+// 2.
+checkentail x>3 |- x>0 & flow __SleekMustErr.
+
+// 3.
+checkentail x>3 |- x>5 & flow __SleekMustErr.
+
+// 4.
+checkentail x>3 |- x<=0 & flow __SleekMustErr .
+
+// 5.
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __SleekMustErr.
 /*
 //8. must failure
