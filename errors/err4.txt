@@ -1,0 +1,69 @@
+
+JUST FOR SLEEK or Proving LEMMA
+===============================
+
+
+  D1 & flow norm |- D2 & flow norm * R
+  is_must_error(R) --> R1 = true & flow norm
+  is_may_error(R)  --> R1 = R
+  is_valid (R)  --> R1 = true & flow __Error
+  -------------------------------------------
+  D1 & flow norm |- D2 & flow __Error *  R1
+
+
+PROVING for HIP
+================
+
+  D1 |- D2 * R
+  is_must_error(R) --> extract_must_error_plus_state(R1)
+  is_may_error(R) --> R1 = R
+  is_valid (R)  --> R1 = R
+   ---------------------------------=--------------
+  D1 & flow norm |- D2 & flow norm * R1
+
+
+  D1 & flow __Error  |- D2 & flow __Error * R
+  ---------------------------------------------
+  D1 & flow __Error |- D2 & flow __Error * R
+
+
+  __Sleek_Error <: __Error
+
+
+
+ x::node<1,null> |- x::node<2,null> & flow __Error 
+                    *  ? & flow __Sleek_Error  (f=1 --> f=2)
+
+
+
+  foo(x)
+    require x::node<v,_> 
+    ensures v;
+    require x==null
+    ensures true & flow __NullPtr_Error;
+  {
+    return x.next
+  }
+
+
+  x=null & norm |- (x::node<v,_> & norm) *  (true & flow __NullPtr_Error)
+ 
+
+  int subs(Int[] x, int i)
+  requires x::Arr<s> & 0<=i<s 
+  ensures  x::Arr<s 
+  requires x::Arr<s> & (i<0 | i>=s)
+  ensures  x::Arr<s> & flow __Array_Bound_Err 
+
+
+
+ x::node<_,_> * y::node<_,null>
+  |- (x=null & flow = norm) * ( x!=null & y::node<_,null> & flow Sleek_Error)
+
+   D1 |- D3
+   D2 |- D4
+ ------------------
+ D1 * D2 |- D3 * D4
+
+
+
