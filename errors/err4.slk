@@ -17,7 +17,15 @@ lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __Error.
 checkentail x>3 |- x<=0 .
 
 // 2.
+checkentail x>3 |- x>0 .
+
+// 3.
+checkentail x>3 & flow __Error |- x>0 & flow __Error.
+
+// 4.
 checkentail x>3 |- x>0 & flow __Error.
+
+print residue.
 
 // 3.
 checkentail x>3 |- x>5 & flow __Error.
