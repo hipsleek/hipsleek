@@ -5249,7 +5249,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
              (ii) check if negated term implied by LHS
           *)
           (* check LHS to see if null -> must error else may error *)
-          let (mix_rf,br,svl,mem_f) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+          let (mix_rf,br,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+          (*let (mix_lf,bl,lsvl,mem_lf) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in*)
           (*
           let pr = Cprinter.string_of_spec_var_list in
           let _ = print_flush "UNMATCHED RHS" in
@@ -5257,16 +5258,20 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in
           (* let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
           let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in
-          let _ = print_flush ("RHS - xpure (svl) :"^(pr svl)) in
-          let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_f.mem_formula_mset)) in
+          let _ = print_flush ("RHS - xpure (svl) :"^(pr rsvl)) in
+          let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_rf.mem_formula_mset)) in
           *)
           (*get list of pointers which equal NULL*)
-        let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
+          let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
+          let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
         let lhs_p = List.fold_left
           (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
-        let rhs_p = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
+        let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
+        (*all LHS = null |- RHS != null*)
         if (simple_imply lhs_p rhs_p) then
-          let s = "15" ^ (Cprinter.string_of_pure_formula lhs_p) ^ " |- " ^ (Cprinter.string_of_pure_formula rhs_p) in
+          let new_lhs_p = filter_redundant lhs_p rhs_p in
+          let new_rhs_p = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
+          let s = "15.1" ^ (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- " ^ (Cprinter.string_of_pure_formula new_rhs_p) in
           (*change to must flow*)
           let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
@@ -5284,21 +5289,20 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
                 let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
                 (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                                                CF.mk_failure_must ("15 " ^ msg))), NoAlias)
+                                                CF.mk_failure_must ("15.2 " ^ msg))), NoAlias)
               else
                 let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
                 let f = CP.mkAnd lhs_p rhs_p no_pos in
                 if not(TP.is_sat_sub_no f r) then
-                  let filter_redundant_new a c = CP.simplify_filter_ante TP.simplify_always a c in
-                  let new_lhs_p = filter_redundant_new lhs_p rhs_p in
+                  let new_lhs_p = filter_redundant lhs_p rhs_p in
                   let msg = (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- "^
                     (Cprinter.string_of_pure_formula rhs_p) in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                                                  CF.mk_failure_must ("15 " ^ msg))), NoAlias)
+                                                  CF.mk_failure_must ("15.3 " ^ msg))), NoAlias)
                 else
-                  let s = "15 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) in
+                  let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.top_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
