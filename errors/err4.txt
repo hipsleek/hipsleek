@@ -4,9 +4,10 @@ JUST FOR SLEEK or Proving LEMMA
 
 
   D1 & flow norm |- D2 & flow norm * R
-  is_must_error(R) --> R1 = true & flow norm
+  is_must_error(R) --> (extract_safe_must_state(R) ^^ flow norm)
   is_may_error(R)  --> R1 = R
-  is_valid (R)  --> R1 = true & flow __Error
+  is_valid (R)  --> extract_safe_state(R) ^^ flow __Error 
+           (succeeded when fail expected)
   -------------------------------------------
   D1 & flow norm |- D2 & flow __Error *  R1
 
@@ -14,25 +15,27 @@ JUST FOR SLEEK or Proving LEMMA
 PROVING for HIP
 ================
 
-  D1 |- D2 * R
-  is_must_error(R) --> extract_must_error_plus_state(R1)
+  D1 & norm  |- D2 & norm * R
+  f1<:f2
+  is_must_error(R) --> R1 = extract_safe_must_state(R)
   is_may_error(R) --> R1 = R
-  is_valid (R)  --> R1 = R
-   ---------------------------------=--------------
-  D1 & flow norm |- D2 & flow norm * R1
-
-
-  D1 & flow __Error  |- D2 & flow __Error * R
-  ---------------------------------------------
-  D1 & flow __Error |- D2 & flow __Error * R
+  is_valid (R)  --> R1 = update_flow(R, f1)
+   ---------------------------------------------
+  D1 & flow f1 |- D2 & flow f2 * R1
 
 
   __Sleek_Error <: __Error
 
 
+  (* Error flow persist*)
+   f1<:__Error
+   not(f1<:f2)
+  -------------------------------------------
+  D1 & flow f1 |- D2 & flow f2 * (D1*flow f1)
 
- x::node<1,null> |- x::node<2,null> & flow __Error 
-                    *  ? & flow __Sleek_Error  (f=1 --> f=2)
+
+ x::node<1,null> * D1 |- x::node<2,null> * D2 & flow __Error 
+                    *  (D1 -> D2) & flow __Sleek_Error  (f=1 --> f=2)
 
 
 
