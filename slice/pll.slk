@@ -21,5 +21,9 @@ checkentail x::pll<n,10> & n>0 |- x::node<v,q> & v>0.
 //fail but should succeed
 checkentail x::pll<n,10> & n>0 |- x::node<3,q>.
 
+checkentail x::node<3, q> * q::pll<_, 7> |- x::pll<_, 10>.
+
 //fail but should succeed
 checkentail x::pll<n,10> & n>0 |- x::node<v,q> & v>3.
+
+checkentail x::pll<n,10> & n=1 |- x::node<v,q> & v>3.
