@@ -51,11 +51,11 @@ checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
 //15. may
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
-*/
+
 //16. must bug
 checkentail true |- x::node<_,_> * x::node<_,_>.
 //Entail(16)=Fail.(must) cause:15 contradiction in RHS
-/*
+
 // soundness of must bug?
 
 //17. may bug
@@ -63,13 +63,12 @@ checkentail x=y & y!=null |- x::node<_,_> .
 
 //18. must bug
 checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
-//Entail(18)=Fail.(must) cause:15  flted_69_341=null & x=y |-  x!=y
-
+*/
 //19. must bug
 checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
 //Entail(19)=Fail.(must) cause:and[22  n=0 |-  0<n (must-bug).,
 //       15 y=null |- y.node]
-
+/*
 //20. must-bug
 checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 

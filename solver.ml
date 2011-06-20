@@ -2911,7 +2911,6 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
     else
       begin
           let flow_conseq = flow_formula_of_formula conseq in
-          let _ = print_endline ("locle1: " ^ (Cprinter.string_of_flow_formula "locle" flow_conseq)) in
           let new_conseq, post_check=
           (*RHS is error flow*)
             if CF.subsume_flow_f !Globals.error_flow_int flow_conseq then
@@ -3724,7 +3723,6 @@ and heap_entail_split_lhs_phases_x
 	          let _ = print_string("\n\nRecursive call to heap_entail_split_lhs_phases\n") in
 	          heap_entail_split_lhs_phases prog is_folding  new_ctx conseq drop_read_phase pos
 	      in
-          (*let _ = print_flush ("locle*****************2:\n" ^ (Cprinter.string_of_list_context final_ctx)) in*)
 	      match final_ctx with
 	        | SuccCtx(cl) ->
 		          (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -3734,7 +3732,6 @@ and heap_entail_split_lhs_phases_x
 	        | FailCtx _ -> (final_ctx, final_prf)
 
         else
-           (*let _ = print_flush "locle:  helper_lhs 3************" in*)
 	      (* lhs contains multiple phases *)
 	      (******************************************************)
 	      (****** the first entailment uses h1 as lhs heap ******)
@@ -3749,7 +3746,6 @@ and heap_entail_split_lhs_phases_x
 
 
 	      let (with_rd_ctx, with_rd_prf) = heap_entail_conjunct prog is_folding  rd_ctx conseq pos in
-          (*let _ = print_flush ("locle*****************3.1:\n" ^ (Cprinter.string_of_list_context with_rd_ctx)) in*)
 	      let with_rd_ctx = 
 	        (match with_rd_ctx with
               | FailCtx _ -> with_rd_ctx
@@ -3824,7 +3820,6 @@ and heap_entail_split_lhs_phases_x
 			                heap_entail_with_cont  prog is_folding  ctx0 conseq ft h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos
 
 	      in
-          (*let _ = print_flush ("locle*****************3.2:\n" ^ (Cprinter.string_of_list_context with_wr_ctx)) in*)
 	      (* union of states *)
 	      (*	let _ = print_string("compute final answer\n") in*)
 	      ((fold_context_left [with_rd_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_rd_prf; final_prf]))		
@@ -3875,7 +3870,6 @@ and heap_entail_with_cont
 	            if (lhs.es_cont = []) then
 	              (* no continuation *)
 	              (* ---TODO:  need to enable folding --- *)
-                  (*let _ = print_flush ("locle Failure Continuation:"^(Cprinter.string_of_list_context with_wr_ctx)) in*)
 	              (with_wr_ctx, with_wr_prf)
 	            else 
 	              (* pop the continuation record *)
@@ -3896,11 +3890,9 @@ and heap_entail_with_cont
 	              let after_wr_ctx, after_wr_prf =
 		            if (CF.contains_phase h3) then
 		              (Debug.devel_pprint ("heap_entail_split_lhs_phases: \ncall heap_entail_split_lhs_phase for the continuation\n") pos;
-                       (*let _ = print_flush ("locle Failure Continuation 4.1:") in*)
 		              heap_entail_split_lhs_phases prog is_folding  cont_ctx conseq drop_read_phase pos)
 		            else
 		              (Debug.devel_pprint ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n") pos;
-                        (*let _ = print_flush ("locle Failure Continuation 4.2:") in*)
 		              heap_entail_conjunct prog is_folding  cont_ctx conseq pos)
 	              in
 		          (match after_wr_ctx with
@@ -4166,7 +4158,6 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_branches = br2;
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
-                                  (*let _ = print_flush "locle:heap_entail_conjunct: **********1" in*)
 				                  heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 pos
 				                end
 	          end
@@ -4929,7 +4920,6 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     - for example if RHS contains {x,y}, the constraint x!=null & y!=null & x!=y will be added to LHS pure formula
   *)
   let new_rhs_p = MCP.memoise_add_pure_N rhs_p (CP.mklsPtrNeqEqn svl no_pos) in
-  let _ = print_endline ("locle10:" ^ (Cprinter.string_of_mix_formula new_rhs_p)) in
   let new_rhs_b = { rhs_b with formula_base_pure = new_rhs_p} in
 
   let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p new_rhs_p posib_r_alias rhs_lst pos in
@@ -5246,7 +5236,6 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
             | None -> () 
             | Some c -> (
                 print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n")
-                (*print_endline ("locle 1: " ^ (Cprinter.string_of_coerc c))*)
             ) in
           let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
           (r1,Search r2)
@@ -5275,10 +5264,9 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
         let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
         let lhs_p = List.fold_left
           (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
-        let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
+        let rhs_p = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
         if (simple_imply lhs_p rhs_p) then
-          let lhs_node_name = CP.name_of_spec_var (CF.get_node_var rhs_b.CF.formula_base_heap) in
-          let s = "15 " ^ lhs_node_name ^"=null |- " ^  lhs_node_name ^ "!=null" in
+          let s = "15" ^ (Cprinter.string_of_pure_formula lhs_p) ^ " |- " ^ (Cprinter.string_of_pure_formula rhs_p) in
           (*change to must flow*)
           let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
@@ -5292,7 +5280,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
               (*contradiction on RHS?*)
               if not(TP.is_sat_sub_no rhs_p r) then
                 (*contradiction on RHS*)
-                let msg = "contradiction in RHS" in
+                let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
                 let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
                 (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
@@ -5301,16 +5289,18 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
                 let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
                 let f = CP.mkAnd lhs_p rhs_p no_pos in
                 if not(TP.is_sat_sub_no f r) then
-                  let msg = (Cprinter.string_of_pure_formula lhs_p) ^ " |- "^
+                  let filter_redundant_new a c = CP.simplify_filter_ante TP.simplify_always a c in
+                  let new_lhs_p = filter_redundant_new lhs_p rhs_p in
+                  let msg = (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- "^
                     (Cprinter.string_of_pure_formula rhs_p) in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
                                                   CF.mk_failure_must ("15 " ^ msg))), NoAlias)
                 else
-                  let s = "15 no match for rhs data node " in
+                  let s = "15 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
-                  !Globals.error_flow_int estate.CF.es_formula} in
+                  !Globals.top_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
                                                   CF.mk_failure_may s)), NoAlias)
           end
