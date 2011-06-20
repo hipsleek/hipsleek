@@ -17,7 +17,8 @@ let sort_input = ref false
 let webserver = ref false
 
 
-let simplify_dprint = ref false
+(** An Hoa : switch to decide whether to simplify the context before doing each verification **)
+let simplify_context = ref false
 
 let parallelize num =
   num_para := num
@@ -327,10 +328,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let ctx = list_failesc_context_and_unsat_now prog ctx in
 						(** An Hoa : Add context simplification by removing 
 								redundant (atomic) formulas & variables (from equality) **)
-			let ctx = if (!simplify_dprint) then 
+			(*let ctx = if (!simplify_dprint) then 
 						CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars 
 					else ctx
-			in
+			in*)
             if str = "" then begin
               let str1 = (Cprinter.string_of_list_failesc_context ctx)  in
 	          (if (Gen.is_empty ctx) then
@@ -571,6 +572,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
     else ctx in
+	(** An Hoa : Simplify the context before checking **)
+	let ctx = if !simplify_context then 
+				CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
+			else ctx in
+	(** An Hoa : END **)
     let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
     (* if (Gen.is_empty cl) then fl
        else *)	    
@@ -634,6 +640,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 
 (* checking procedure *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+  let _ = Printexc.record_backtrace true in
   let unmin_name = unmingle_name proc.proc_name in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
     && not (List.mem unmin_name !Inliner.inlined_procs)
@@ -696,6 +703,7 @@ let check_proc_wrapper prog proc =
       (* dummy_exception(); *)
       print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+	  (*let e = Printexc.get_backtrace () in print_endline e;*)
       Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
@@ -980,4 +988,4 @@ let check_prog (prog : prog_decl) =
   end
 
 let check_prog (prog : prog_decl) =
-  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog

@@ -1163,14 +1163,18 @@ let rl_vars_map (vars : CP.spec_var list) (bv : CP.spec_var list) =
 (** An Hoa : Parse the assignments 
  **)
 let parse_assignment (assignment : string) : (string * string) =
-	let i = String.index assignment '=' in
-	let l = String.length assignment in
-	let lhs = String.sub assignment 0 i in
-	let lhs = Gen.SysUti.trim_str lhs in
-	let rhs = String.sub assignment (i+1) (l-i-1) in
-	let rhs = Gen.SysUti.trim_str rhs in
-	(*let _ = print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n") in*)
-		(lhs,rhs)
+	try 
+		let i = String.index assignment '=' in
+		let l = String.length assignment in
+		let lhs = String.sub assignment 0 i in
+		let lhs = Gen.SysUti.trim_str lhs in
+		let rhs = String.sub assignment (i+1) (l-i-1) in
+		let rhs = Gen.SysUti.trim_str rhs in
+		(*let _ = print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n") in*)
+			(lhs,rhs)
+	with
+		| Not_found -> let _ = print_string ("parse_assignment is called with input " ^ assignment) 
+							in ("","")
 ;;
 
 
@@ -1200,8 +1204,8 @@ let group_eq_vars (ass : (string * string) list) =
 
 	in
 	let grouped_vars = partition ass_sorted [] in
-	let _ = print_endline "\nPartitioning result:" in
-	(*let _ = List.map (fun (x,y) -> print_string ((String.concat " = " y) ^ " = " ^ x ^ "\n"))
+	(*let _ = print_endline "\nPartitioning result:" in
+	let _ = List.map (fun (x,y) -> print_string ((String.concat " = " y) ^ " = " ^ x ^ "\n"))
 			grouped_vars in*)
 		grouped_vars
 ;;	
@@ -1213,6 +1217,10 @@ let group_eq_vars (ass : (string * string) list) =
 let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * CP.spec_var) list) : (CP.spec_var * CP.spec_var) list * (CP.spec_var * string) list=
 	let l = String.length solution in
 	(* Remove the braces { and } at the beginning & end of the list of solution *)
+	if (l = 0 || solution.[0] = '*') then 
+		([],[]) 
+	else
+
 	let solution = String.sub solution 1 (l-2) in
 	let l = String.length solution in
 	if (l == 0) then ([],[])
@@ -1225,12 +1233,12 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let solved_vars = List.map fst result in
 		let all_vars = List.map fst revmap in
 		let param_vars = Gen.BList.difference_eq (fun x y -> x = y) all_vars solved_vars in
-		let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in
+		(*let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
 		let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in
-		let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in
+		(*let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
 		let result = List.append result (List.map (fun x -> (x,x)) param_vars) in
-		let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in
-		let _ = print_endline ("Variable fully solved : " ^ (String.concat "," vars_fully_solved)) in
+		(*let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in
+		let _ = print_endline ("Variable fully solved : " ^ (String.concat "," vars_fully_solved)) in*)
 
 		(* From the solution, find the string representation *)
 		let rec recover_strrep e m = (** Given an expression and a map of safe variable --> real variable, recover the real expression **)
@@ -1241,13 +1249,20 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 					let res = Str.global_replace rex (CP.string_of_spec_var s) et in
 						res
 		in
-		let strrep = List.map (fun (x,y) -> (List.assoc x revmap,recover_strrep y revmap)) result in
-		let _ = print_endline "String representations: " in
-		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " --> " ^ y)) strrep in
+		let strrep = try
+			List.map (fun (x,y) -> (List.assoc x revmap,recover_strrep y revmap)) result 
+		with
+			| Not_found -> let _ = print_endline "Assoc NotFound at strrep" in []
+		in
+		(*let _ = print_endline "String representations: " in
+		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " --> " ^ y)) strrep in*)
 
 		(* Convert back to our system format *)
 		let eqclasses = List.map snd (group_eq_vars result) in
-		let eqclasses = List.map (fun vnamelist -> List.map (fun vname -> List.assoc vname revmap) vnamelist) eqclasses in
+		let eqclasses = List.map (fun vnamelist -> List.map (fun vname -> try
+				List.assoc vname revmap
+			with | Not_found -> let _ = print_endline "Assoc NotFound at eqclasses" in failwith ""
+		) vnamelist) eqclasses in
 		(*let _ = print_endline "Equivalent classes : " in
 		let _ = List.map (fun x -> print_endline (!CP.print_svl x)) eqclasses in*)
 		(* Build the substitution map *)
@@ -1283,7 +1298,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
 	(*let _ = print_endline "solve_eqns :: starting reduce ..." in*)
-	let _ = print_endline "Initiating solving sequence ..." in
+	(*let _ = print_endline "Initiating solving sequence ..." in*)
 	let _ = start () in
 	(*let _ = print_endline "solve_eqns :: reduce started!" in*)
 
@@ -1313,7 +1328,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	(* Generate reduce equations *)
 	let rec rl_of_exp varsmap e = match e with
 		| CP.Null _ -> "null" (* null serves as a symbollic variable *)
-		| CP.Var (v, _) -> List.assoc v varsmap
+		| CP.Var (v, _) -> (try List.assoc v varsmap with | Not_found -> failwith "")
 		| CP.IConst (i, _) -> string_of_int i
 		| CP.FConst (f, _) -> string_of_float f
 		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
@@ -1329,7 +1344,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 
 	(* Pipe the solve request to reduce process *)
 	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
-	let _ = print_endline ("\nReduce input command:" ^ input_command) in
+	(*let _ = print_endline ("\nReduce input command:" ^ input_command) in*)
 	let _ = send_cmd input_command in
 
 	(** Internal function to read reduce output **)
@@ -1346,7 +1361,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 
 	(* Read, parse and return *)
 	let red_result = read_stream () in
-	let _ = print_endline ("\nOriginal solution : " ^ red_result) in
+	(*let _ = print_endline ("\nOriginal solution : " ^ red_result) in*)
 	let sst,strrep = parse_reduce_solution red_result bv unksrmap in
 		(sst,strrep)
 ;;

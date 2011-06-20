@@ -35,8 +35,10 @@ let set_frontend fe_str = match fe_str  with
 
 
 (* arguments/flags that might be used both by sleek and hip *)
-let common_arguments = [    
-	("--sdp", Arg.Set Typechecker.simplify_dprint,
+let common_arguments = [
+	("--sctx", Arg.Set Typechecker.simplify_context,
+    "Simplify the context before check_exp."); (* An Hoa *)
+	("--sdp", Arg.Set Cprinter.simplify_dprint,
     "Simplify the entail state before printing the dprint state."); (* An Hoa *)
     ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)

@@ -79,7 +79,7 @@ node insert(node t, int x)
 	t.height = get_max(height(t.left), height(t.right)) + 1;
 
 	// assert t'::avl<ntm,ntn,ntb> & (ntn=tn | ntn=tn+1 & ntb>0);
-
+	dprint;
 	return t;
 }
 

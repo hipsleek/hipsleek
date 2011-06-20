@@ -31,6 +31,8 @@ let is_long n = (n==0);;
 (* ;; *)
 
 
+(** An Hoa : Switch to simplify dprint **)
+let simplify_dprint = ref false
 
 
 (** the formatter that fmt- commands will use *)
@@ -796,7 +798,7 @@ let rec pr_h_formula_anhoa_version h vr =
 		let i,k = Gen.BList.find_index (fun (a,b) -> CP.eq_spec_var a x) vr in
 			snd k
 	with
-		| Not_found -> string_of_spec_var x
+		| Not_found -> (*let _ = print_endline ("pr_h_formula_anhoa_version : variable display string not found") in*) string_of_spec_var x
 	in fmt_string s
   in
   match h with
@@ -985,7 +987,8 @@ let rec pr_formula_base e =
 	formula_base_var_rep = varrep; (* TODO edit *)
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "<NoLabel>" | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          pr_h_formula_anhoa_version h varrep; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
+		(* Print with consideration on switch --sdp *)
+          if !simplify_dprint then pr_h_formula_anhoa_version h varrep else pr_h_formula h; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
 
 let rec pr_formula e =
@@ -1018,7 +1021,8 @@ let rec pr_formula e =
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
-          pr_h_formula_anhoa_version h varrep; pr_cut_after "&" ;
+			(* An Hoa : simplify further dprint *)
+          if !simplify_dprint then pr_h_formula_anhoa_version h varrep else pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
 
