@@ -4,13 +4,12 @@ data node { int val ; node next }.
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
-
+/*
 //1. must failure
 checkentail x::node<2,null> |- x::node<3,null> .
 
 //2. may failure
 checkentail x::node<v,null> & v>2 |- x::node<3,null> .
-
 
 //3. must failure
 checkentail x::node<v,null> & v>2 |- x::node<3,q>*q::node<_,null> .
@@ -52,11 +51,11 @@ checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
 //15. may
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
-
+*/
 //16. must bug
 checkentail true |- x::node<_,_> * x::node<_,_>.
 //Entail(16)=Fail.(must) cause:15 contradiction in RHS
-
+/*
 // soundness of must bug?
 
 //17. may bug
@@ -95,3 +94,4 @@ checkentail x::pos_ll<n> & x=null |- x::neg_ll<m> & m>0.
 //27 must-bug
 checkentail x=null |- x::neg_ll<m> & m>0.
 
+*/

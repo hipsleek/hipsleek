@@ -592,7 +592,8 @@ and mklsPtrNeqEqn vs pos =
     match vs with
       | [] -> []
       | [v] -> []
-      | v::tl -> (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
+      | v::tl ->
+          [mkNeqNull v pos] @ (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
   in
   let disj_sets= helper vs in
   List.fold_left
@@ -623,6 +624,8 @@ and mkGte a1 a2 pos =
     Gte (a1, a2, pos)
 
 and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
+
+and mkNeqNull (v : spec_var) pos = mkNeqExp (mkVar v pos) (Null pos) pos
 
 and mkNeq a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
