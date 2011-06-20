@@ -686,7 +686,7 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
   ) ([],[]) l1
       
 (*add both imply and fail*)
-and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) (status:prune_status) :memo_pure = 
+and create_memo_group_a (l1:(b_formula *(formula_label option)) list) (l2:formula list) (status:prune_status) :memo_pure = 
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
@@ -725,9 +725,9 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
 	  memo_group_aset = aset;}) ll in
   r
       
-and create_memo_group_debug ll l2 = 
-  Gen.Debug.no_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
-      (!print_mp_f) create_memo_group ll l2
+and create_memo_group(*_debug*) ll l2 = 
+  Gen.Debug.ho_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
+      (!print_mp_f) create_memo_group_a ll l2
 
       
 (* with_const; use get_equiv_eq *)
