@@ -76,7 +76,7 @@ let clear_proving_loc () =
 
 
 (* pretty printing for types *)
-let rec string_of_typ = function 
+let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
