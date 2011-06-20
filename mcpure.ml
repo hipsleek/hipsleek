@@ -46,6 +46,7 @@ and prune_status =
   (*| Unknown_prune of bool*)   (*pruning constraint with unknown status, -bool indicates if it comes from an invariant*)
   
 let print_mp_f = ref (fun (c:memo_pure)-> " printing not initialized")
+let print_mg_f = ref (fun (c:memoised_group)-> " printing not initialized")
 let print_mc_f = ref (fun (c:memoised_constraint)-> "printing not initialized")
 let print_sv_f = ref (fun (c:spec_var)-> "spec var printing not initialized")
 let print_sv_l_f = ref (fun (c:spec_var list)-> "spec var list printing not initialized")
@@ -676,17 +677,27 @@ and memoise_add_pure_aux l p status : memo_pure =
 and memoise_add_pure_N l p = memoise_add_pure_aux(*_debug*) l p Implied_N
 and memoise_add_pure_P l p = memoise_add_pure_aux(*_debug*) l p Implied_P
 
-and create_memo_group_wrapper (l1:b_formula list) status : memo_pure = 
-  let l = List.map (fun c-> (c, None)) l1 in
+and create_memo_group_wrapper (l1:b_formula list) status : memo_pure =
+	  Gen.Debug.no_2 "create_memo_group_wrapper"
+		(fun bl -> List.fold_left (fun r b -> r ^ (!print_bf_f b)) "" bl)
+		(fun s -> "") !print_mp_f create_memo_group_wrapper_a l1 status 
+	  
+and create_memo_group_wrapper_a (l1:b_formula list) status : memo_pure = 
+  let l = List.map (fun c -> (c, None)) l1 in
   create_memo_group(*_debug*) l [] status 
 
 and anon_partition (l1:(b_formula *(formula_label option)) list) = 
   List.fold_left (fun (a1,a2) (c1,c2)-> 
 	  if (List.exists is_anon_var (bfv c1)) then (a1,(BForm (c1,c2))::a2) else ((c1,c2)::a1,a2)
   ) ([],[]) l1
+
+and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
+	  let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
+	  let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
+	  Gen.Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_a l1 l2 status
       
 (*add both imply and fail*)
-and create_memo_group_a (l1:(b_formula *(formula_label option)) list) (l2:formula list) (status:prune_status) :memo_pure = 
+and create_memo_group_a (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
@@ -696,8 +707,10 @@ and create_memo_group_a (l1:(b_formula *(formula_label option)) list) (l2:formul
   let ll  = List.fold_left ( fun a f->
 	  let fv = match f with | None, Some c-> fv c | Some c, None -> bfv c | _-> [] in
 	  let rec f_rec fv a = 
-        let r1,r2 = if !f_1_slice then (a,[]) else
-          List.partition (fun (v,_,_)-> (List.length (Gen.BList.intersect_eq eq_spec_var fv v))>0) a in
+        let r1,r2 =
+		  if !f_1_slice then (a,[]) (* No slicing *)
+		  else (* Auto slicing *)
+			List.partition (fun (v,_,_)-> (List.length (Gen.BList.intersect_eq eq_spec_var fv v))>0) a in
 		if r1 = [] then ([],r2)
 		else
 		  let n_fv = List.fold_left (fun ac (v,_,_)-> ac@v) fv r1 in
@@ -725,9 +738,9 @@ and create_memo_group_a (l1:(b_formula *(formula_label option)) list) (l2:formul
 	  memo_group_aset = aset;}) ll in
   r
       
-and create_memo_group(*_debug*) ll l2 = 
-  Gen.Debug.ho_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
-      (!print_mp_f) create_memo_group_a ll l2
+and create_memo_group_debug ll l2 = 
+  Gen.Debug.no_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
+      (!print_mp_f) create_memo_group ll l2
 
       
 (* with_const; use get_equiv_eq *)
@@ -735,7 +748,9 @@ and create_memo_group(*_debug*) ll l2 =
   This attempts to split g into multiple groups if 
   the constraints are disjoint.
 *)
-and split_mem_grp (g:memoised_group): memo_pure =   
+and split_mem_grp (g:memoised_group): memo_pure =
+  Gen.Debug.ho_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_a g
+and split_mem_grp_a (g:memoised_group): memo_pure =   
   if !f_1_slice then [g]
   else
     let leq_all = get_equiv_eq_with_const g.memo_group_aset in

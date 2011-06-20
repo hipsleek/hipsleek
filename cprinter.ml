@@ -976,6 +976,9 @@ let string_of_memo_pure_formula_branches (f, l) : string =
 let string_of_memo_pure_formula (f:MP.memo_pure) : string = 
   poly_string_of_pr  pr_memo_pure_formula f
 
+let string_of_memoised_group g =
+  poly_string_of_pr pr_memoise_group [g]
+
 let string_of_mix_formula (f:MP.mix_formula) : string = 
   poly_string_of_pr pr_mix_formula f
 
@@ -1764,6 +1767,7 @@ let string_of_label_list_failesc_context (cl:Cformula.list_failesc_context) : st
 ;;
 
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
+Mcpure.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
 Mcpure.print_sv_f := string_of_spec_var ;; 
 Mcpure.print_sv_l_f := string_of_spec_var_list;;
