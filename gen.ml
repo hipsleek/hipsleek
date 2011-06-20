@@ -1693,7 +1693,8 @@ struct
     Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
     Globals.spec_flow_int := (get_hash_of_exc Globals.spec_flow);
     Globals.top_flow_int := (get_hash_of_exc Globals.top_flow);
-    Globals.exc_flow_int := (get_hash_of_exc Globals.abnormal_flow)
+    Globals.exc_flow_int := (get_hash_of_exc Globals.abnormal_flow);
+    Globals.error_flow_int := (get_hash_of_exc Globals.error_flow)
     (* ; Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow) *)
     (* ;Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow) *)
     (* let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)

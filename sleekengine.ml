@@ -349,30 +349,34 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-  let rs1, _,is_bug_verified = Solver.heap_entail_struc_init !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None in
+  let rs1, _, is_bug_verified = Solver.heap_entail_struc_init !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   flush stdout;
   let res = not (CF.isFailCtx rs) in
-  (res || is_bug_verified), rs
+  (res || is_bug_verified, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in 
-    if not valid then begin
-      let s = match CF.get_must_failure rs with
-        | Some s -> "(must) cause:"^s 
-        | _ -> (match CF.get_may_failure rs with
-            | Some s -> "(may) cause:"^s
-            | None -> report_error no_pos "process_entail_check : should be a failure") 
-      in
-      print_string (num_id^"=Fail."^s^"\n");
-      if !Globals.print_err_sleek then
-        print_string ("printing here"^(Cprinter.string_of_list_context rs))
-    end
-      else print_string (num_id^"=Valid.\n");
+    if not valid then
+      begin
+        let s = match CF.get_must_failure rs with
+          | Some s -> "(must) cause:"^s 
+          | _ -> (match CF.get_may_failure rs with
+                | Some s -> "(may) cause:"^s
+                | None -> "expected fail but success"
+          )
+        in
+        print_string (num_id^"=Fail."^s^"\n");
+        (*if !Globals.print_err_sleek then *)
+          print_string ("printing here: "^(Cprinter.string_of_list_context rs))
+      end
+    else
+	  print_string (num_id^"=Valid.\n");
+     print_string ("printing here: "^(Cprinter.string_of_list_context rs))
   with _ ->
     Printexc.print_backtrace stdout;
     dummy_exception() ; 

@@ -1,3 +1,4 @@
+/*
 data node { int val ; node next }.
 // must bug via predicates?
 pred pos_ll<n> == self = null & n = 0
@@ -18,41 +19,41 @@ checkentail x>3 |- x<=0 .
 
 // 2.
 checkentail x>3 |- x>0 .
-
-// 3.
-checkentail x>3 & flow __Error |- x>0 & flow __Error.
-
-// 4.
+*/
+// 3.Valid  is_valid (R)  --> R1 = true & flow __Error
 checkentail x>3 |- x>0 & flow __Error.
-
 print residue.
-
-// 3.
+/*
+// 4.may is_may_error(R)  --> R1 = R
 checkentail x>3 |- x>5 & flow __Error.
 
-// 4.
+
+// 5.must is_must_error(R) --> R1 = true & flow norm
 checkentail x>3 |- x<=0 & flow __Error .
 
-// 5.
+// 6.
+checkentail x>3 & flow __Error |- x>0 & flow __Error.
+
+// 7.
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
-/*
+
 //8. must failure
 checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
 
-//8. must failure
+//9. must failure
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-//9 valid
+//10 valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
 
-//10 may failure WRONG (must now)
+//11. may failure WRONG (must now)
 checkentail x::pos_ll<n> |- x::neg_ll<n> .
 
-//11. must? failure
+//12. must? failure
 // TODO (requires a lemma and unfolding
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-//12. must failure but detected as may bug
+//13. must failure but detected as may bug
 // TODO requires a lemma!
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 */

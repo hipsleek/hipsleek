@@ -2475,11 +2475,12 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs pos pid : (list_context * 
   let str="heap_entail_one_context_struc" in
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl) cs pos pid
 
-and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
-  Gen.Debug.no_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
+and heap_entail_one_context_struc_x p i1 hp cl cs pos pid =
+  Gen.Debug.no_2 "heap_entail_one_context_struc" Cprinter.string_of_context Cprinter.string_of_struc_formula
+      (fun _ -> "?") (fun cl cs -> heap_entail_one_context_struc_x_x p i1 hp cl cs pos pid) cl cs
 
 (*the third output: bug is verified*)
-and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof * bool) =
+and heap_entail_one_context_struc_x_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof * bool) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
@@ -2553,7 +2554,7 @@ and heap_entail_conjunct_lhs_struc
       p is_folding  has_post ctx conseq 
       pos pid : (list_context * proof * bool) = 
   let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
-  Gen.Debug.no_2 "heap_entail_conjunct_lhs_struc"
+  Gen.Debug.ho_2 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula)
       (fun _ -> "?")
       (fun ctx conseq -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq pos pid) ctx conseq
@@ -2643,8 +2644,8 @@ and heap_entail_conjunct_lhs_struc_x
 	            let st = List.combine base_exists ws in
 	            let new_struc = subst_struc st [(EBase {b with formula_ext_exists = []})]in
 	            let new_ctx = push_exists_context ws ctx11 in
-	        let nc,np, is_bug_verified = inner_entailer 4 new_ctx new_struc in 
-	        (nc,(mkEexStep ctx11 [f] np),is_bug_verified)
+	            let nc,np, is_bug_verified = inner_entailer 4 new_ctx new_struc in 
+	            (nc,(mkEexStep ctx11 [f] np),is_bug_verified)
 	          else 
                 (* XXXX explore the option to unfold the LHS *)
                 
@@ -2890,7 +2891,7 @@ and heap_entail (prog : prog_decl) (is_folding : bool)  (cl : list_context) (con
             (heap_entail_one_context prog is_folding  (List.hd cl) conseq pos)
 
 and heap_entail_one_context prog is_folding  ctx conseq pos =
-  Gen.Debug.loop_2_no "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
+  Gen.Debug.loop_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
       (fun ctx conseq -> heap_entail_one_context_a prog is_folding  ctx conseq pos) ctx conseq
 
 (*   and heap_entail_one_context prog is_folding  ctx conseq pos =  *)
@@ -2908,10 +2909,67 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
     else if isAnyFalseCtx ctx then
       (SuccCtx [ctx], UnsatAnte)
     else
-      heap_entail_after_sat prog is_folding  ctx conseq pos ([])
+      begin
+          let flow_conseq = flow_formula_of_formula conseq in
+          let _ = print_endline ("locle1: " ^ (Cprinter.string_of_flow_formula "locle" flow_conseq)) in
+          let new_conseq, post_check=
+          (*RHS is error flow*)
+            if CF.subsume_flow_f !Globals.error_flow_int flow_conseq then
+              let _ = print_endline ("locle2: " ^ (Cprinter.string_of_flow_formula "locle" 
+                                                       ({ CF.formula_flow_interval = !Globals.error_flow_int;
+                                                          CF.formula_flow_link = None;}))) in
+              (CF.substitute_flow_into_f !Globals.n_flow_int conseq, true)
+            else
+              let _ = print_endline ("locle2: " ^ (Cprinter.string_of_flow_formula "locle" (CF.mkNormalFlow()))) in
+              (conseq, false)
+          in
+          let rs, prf = heap_entail_after_sat prog is_folding  ctx new_conseq pos ([]) in
+          if post_check then
+            begin
+                match rs with
+                  | FailCtx ft ->
+                      begin
+                          if (is_must_failure_ft ft) then
+                            begin
+                                (*must case: R1 = true & flow norm*)
+                                let _ = print_endline "locle 3" in
+                                match ft with
+                                  | Basic_Reason (fc, _) ->
+                                      let res_es = fc.CF.fc_current_lhs in
+                                      let res_ctx = Ctx (CF.add_to_estate res_es fc.CF.fc_message) in
+                                      let new_rs = SuccCtx (CF.change_flow_ctx flow_conseq.CF.formula_flow_interval
+                                                                !Globals.n_flow_int [res_ctx]) in
+                                      (new_rs, prf)
+                                  (*| Trivial_Reason s ->*)
+                                  | _ -> report_error no_pos "solver.heap_entail_one_context: should be improved"
+                            end
+                          else  if (is_may_failure_ft ft) then
+                            (*may case: R1 = R (not handle now)*)
+                            let _ = print_endline "locle 4" in
+                            (rs, prf)
+                          else
+                            (*trivial cases*)
+                            (rs, prf)
+                      end
+                  | SuccCtx ctx_lst ->
+                       let _ = print_endline "locle 5" in
+                       (*valid case: R1 = true & flow __Error*)
+                       let new_rs = SuccCtx (CF.change_flow_ctx !Globals.n_flow_int
+                                                 flow_conseq.CF.formula_flow_interval ctx_lst)
+                       in (new_rs, prf)
+            end
+          else
+            let _ = print_endline "locle 6" in
+            (rs, prf)
+      end
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
-      (ss:CF.steps) : (list_context * proof) = 
+      (ss:CF.steps) : (list_context * proof) =
+  Gen.Debug.loop_2 "heap_entail_after_sat" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l)
+      (fun ctx conseq -> heap_entail_after_sat_x prog is_folding ctx conseq pos ss) ctx conseq
+
+and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
+      (ss:CF.steps) : (list_context * proof) =
   match ctx with
     | OCtx (c1, c2) ->
           Debug.devel_pprint ("heap_entail_after_sat:"
