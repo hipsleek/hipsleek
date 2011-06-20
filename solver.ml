@@ -4387,8 +4387,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     let new_estate = {
         estate with es_formula =
             match fc_kind with
-              | CF.Failure_Must _ -> CF.substitute_flow_into_f !sleek_mustbug_flow_int estate.es_formula
-              | CF.Failure_May _ -> CF.substitute_flow_into_f  !sleek_maybug_flow_int estate.es_formula
+              | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
+              | CF.Failure_May _ -> CF.substitute_flow_into_f  !top_flow_int estate.es_formula (* this denotes a maybe error *)
               | CF.Failure_None -> CF.substitute_flow_into_f !n_flow_int estate.es_formula
     } in
     (CF.mkFailCtx_in (Basic_Reason ({

@@ -1242,8 +1242,6 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
   let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
   let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge sleek_mustbug_flow error_flow) in
-  let _ = (Gen.ExcNumbering.add_edge sleek_maybug_flow error_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
@@ -1257,7 +1255,7 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let pr _ = Gen.ExcNumbering.string_of_exc_list 33 in
-  Gen.Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
+  Gen.Debug.ho_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
   let rec helper e = match e with

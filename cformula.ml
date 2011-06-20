@@ -498,8 +498,8 @@ and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if
 and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
 and is_true_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
 
-and is_sleek_mustbug_flow p: bool = (equal_flow_interval !Globals.sleek_mustbug_flow_int p)
-and is_sleek_mustbug_flow_ff ff: bool = (equal_flow_interval !Globals.sleek_mustbug_flow_int ff.formula_flow_interval)
+and is_sleek_mustbug_flow p: bool = (equal_flow_interval !Globals.error_flow_int p)
+and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
 
 and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
 
