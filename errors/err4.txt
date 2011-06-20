@@ -2,18 +2,21 @@
 JUST FOR SLEEK or Proving LEMMA
 ===============================
 
+Special case to detect capture must __Error, 
+especially for Lemma and sleek proving.
 
   D1 & flow norm |- D2 & flow norm * R
-  is_must_error(R) --> (extract_safe_must_state(R) ^^ flow norm)
+  is_must_error(R) --> R1 = update_flow(extract_must_error_state(R),norm)
+             // succeeds when must fail found
   is_may_error(R)  --> R1 = R
-  is_valid (R)  --> extract_safe_state(R) ^^ flow __Error 
-           (succeeded when fail expected)
+  is_valid (R)  --> R1 = update_flow(extract_safe_state(R),__Error 
+             // fails when validity detected
   -------------------------------------------
   D1 & flow norm |- D2 & flow __Error *  R1
 
 
-PROVING for HIP
-================
+Norming PROVING for HIP
+========================
 
   D1 & norm  |- D2 & norm * R
   f1<:f2
@@ -26,10 +29,16 @@ PROVING for HIP
 
   __Sleek_Error <: __Error
 
-
-  (* Error flow persist*)
-   f1<:__Error
+   // Below do not occur for hip proving
+   // should be detected as a must-failure.
    not(f1<:f2)
+  -------------------------------------------
+  D1 & flow f1 |- D2 & flow f2 * (D1*flow f1)
+
+
+   // Error flow persist
+   // not normally required
+   f1<:__Error
   -------------------------------------------
   D1 & flow f1 |- D2 & flow f2 * (D1*flow f1)
 
