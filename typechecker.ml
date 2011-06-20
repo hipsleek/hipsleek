@@ -38,8 +38,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 		let mn = Cast.unmingle_name (proc.Cast.proc_name) in
         let f_formula = fun f -> None in
-		let f_b_formula = function
-		  | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some (CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+		let f_b_formula (pf,il) = match pf with
+		  | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
 		  | _ -> None
 		in
 		let f_exp = function
@@ -186,7 +186,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | BConst ({exp_bconst_val = b;
           exp_bconst_pos = pos}) -> begin
 	        let res_v = CP.mkRes bool_type in
-	        let tmp1 = CP.BForm (CP.BVar (res_v, pos), None) in
+	        let tmp1 = CP.BForm ((CP.BVar (res_v, pos), None), None) in
 	        let tmp2 =
 	          if b then tmp1
 	          else CP.Not (tmp1, None, pos) in
@@ -212,7 +212,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
 	        let p = CP.fresh_spec_var v_prim in
 	        let link_pv = CF.formula_of_pure_N
-	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None)) pos) pos in
+	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
 	        (*let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
 	        (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
 	        let tmp_ctx =
@@ -297,7 +297,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_cond_else_arm = e2;
           exp_cond_path_id =pid;
           exp_cond_pos = pos}) -> begin
-	        let pure_cond = (CP.BForm (CP.mkBVar v Primed pos, None)) in
+	        let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
 	        let then_cond_prim = MCP.mix_of_pure pure_cond in
 	        let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
 	        let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in

@@ -170,7 +170,7 @@ let string_of_id (id,p) = id ^ (match p with
 ;;
    
 (* pretty printing for boolean constraints *)
-let string_of_b_formula = function 
+let string_of_b_formula (pf,_) = match pf with 
   | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
   | P.BVar (x, l)               -> string_of_id x
 (* (match x with  *)

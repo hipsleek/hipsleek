@@ -136,8 +136,9 @@ and coq_of_formula_exp_list l = match l with
   | h::t       -> (coq_of_exp h) ^ ", " ^ (coq_of_formula_exp_list t)
  
 (* pretty printing for boolean vars *)
-and coq_of_b_formula b = 
-  match b with
+and coq_of_b_formula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "True" else "False"
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
@@ -177,7 +178,7 @@ and coq_of_formula f =
     | CP.BForm (b,_) -> "(" ^ (coq_of_b_formula b) ^ ")"
     | CP.Not (p, _,_) ->
 	    begin match p with
-		| CP.BForm (CP.BVar (bv, _),_) -> (coq_of_spec_var bv) ^ " = 0"
+		| CP.BForm ((CP.BVar (bv, _),_),_) -> (coq_of_spec_var bv) ^ " = 0"
 		| _ -> " (~ (" ^ (coq_of_formula p) ^ ")) "
         end
     | CP.Forall (sv, p, _, _) ->
@@ -293,7 +294,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n[coq.ml]: #is_sat " ^ sat_no ^ "\n");
-  let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos), None))) in
+  let tmp_form = (imply f (CP.BForm((CP.BConst(false, no_pos), None), None))) in
   match tmp_form with
   | true ->
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> false\n";

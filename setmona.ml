@@ -94,7 +94,8 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 		  match !current_bforms with
 			| bf :: rest -> begin
 				current_bforms := rest; (* prepare for next iteration *)
-				match bf with
+			  let (pf,_) = bf in
+				match pf with
 					(* Bag constraints *)
 				  | BagIn (sv, e, _)
 				  | BagNotIn (sv, e, _) ->
@@ -400,13 +401,14 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	let right = a2 @ s1 in
 	let left_e, left_f, left_v = flatten_list left in
 	let right_e, right_f, right_v = flatten_list right in
-	let tmp = BForm ((mk left_e right_e pos),lbl) in
+	let tmp = BForm (((mk left_e right_e pos), None),lbl) in
 	let tmp1 = mkAnd left_f right_f pos in
 	let tmp2 = mkAnd tmp tmp1 pos in
 	let res_f = mkExists (left_v @ right_v) tmp2 lbl pos in
 	  res_f
   in
-	match bf0 with
+  let (pf,il) = bf0 in
+	match pf with
 	  | BConst _
 	  | BVar _
 	  | EqMin _
@@ -502,7 +504,7 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
 		  let sv = SpecVar (Int, fn, Unprimed) in
 		  let new_e = Var (sv, pos) in
-		  let additional_e = BForm (Eq (new_e, Add (e1, e2, pos), pos) , None) in
+		  let additional_e = BForm ((Eq (new_e, Add (e1, e2, pos), pos), None), None) in
 			if Gen.is_empty rest then
 			  (new_e, additional_e, [sv])
 			else
@@ -586,7 +588,9 @@ and mona_of_bin_op op1 op2 e1 e2 =
 	let tmp2 = mona_of_exp SO e2 in
 	  op2 ^ "(" ^ tmp1 ^ ", " ^ tmp2 ^ ")"
 
-and mona_of_b_formula bf0 = match bf0 with
+and mona_of_b_formula bf0 =
+  let rec mona_of_p_formula pf =
+	match pf with
   | BConst (b, _) -> if b then "true" else "false"
   | BVar (sv, _) -> "(" ^ (mona_of_spec_var sv) ^ " ~= empty)"
 (*
@@ -596,7 +600,7 @@ and mona_of_b_formula bf0 = match bf0 with
   | Eq (e1, e2, pos) ->
 	  if not (is_var_num e1 || is_var_num e2) then
 		failwith ("mona_of_b_formula: Eq: normalize failed to transform, still left with non vars ")
-	  else if not (is_var_num e1) then mona_of_b_formula (Eq (e2, e1, pos))
+	  else if not (is_var_num e1) then mona_of_p_formula (Eq (e2, e1, pos))
 	  else 
 		begin
 		  if is_fo_exp e1 || is_fo_exp e2 then
@@ -621,7 +625,7 @@ and mona_of_b_formula bf0 = match bf0 with
 				  else ve1str ^ " = " ^ (mona_of_exp SO e2)
 *)
 		end
-  | Neq (e1, e2, pos) -> "~(" ^ (mona_of_b_formula (Eq (e1, e2, pos))) ^ ")"
+  | Neq (e1, e2, pos) -> "~(" ^ (mona_of_p_formula (Eq (e1, e2, pos))) ^ ")"
   | Lt (e1, e2, _) -> mona_of_bin_op " < " "less" e1 e2
   | Lte (e1, e2, _) -> mona_of_bin_op " <= " "lessEq" e1 e2
   | Gt (e1, e2, _) -> mona_of_bin_op " > " "greater" e1 e2
@@ -660,6 +664,7 @@ and mona_of_b_formula bf0 = match bf0 with
 	  let tmp2 = mona_of_spec_var sv2 in
 		"max {" ^ tmp1 ^ ", " ^ tmp2 ^ "}"
   | _ -> failwith ("mona_of_b_formula, lists : not supported in set mode.")
+  in let (pf,_) = bf0 in mona_of_p_formula pf
 
 and ex_quant_of_spec_var (sv : spec_var) : string =
   if is_fo_ref sv then "ex1 "
@@ -819,7 +824,7 @@ let is_sat (f : formula) : bool =
   if !log_all_flag == true then
 	output_string log_all "\n\n[mona.ml]: #is_sat\n";
   let f = elim_exists f in
-  let tmp_form = (imply f (BForm(BConst(false, no_pos), None))) in
+  let tmp_form = (imply f (BForm((BConst(false, no_pos), None), None))) in
 	match tmp_form with
 	  | true -> 
 		  begin 

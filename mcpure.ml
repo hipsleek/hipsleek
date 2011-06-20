@@ -151,7 +151,9 @@ let rec filter_mem_fct fct lst =
   List.filter (fun c-> not (isConstGroupTrue c)) l
       
 and filter_mem_triv lst = 
-  filter_mem_fct (fun c->match c.memo_formula with 
+  filter_mem_fct (fun c ->
+	let (pf,_) = c.memo_formula in
+	match pf with 
 	| Lte (e1,e2,l) 
 	| Gte (e1,e2,l) 
 	| Eq  (e1,e2,l) 
@@ -291,7 +293,9 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
 (* and h_apply_one_m_constr_lst s l =  *)
 (*   List.map (fun (c,c2)-> ({c with memo_formula = b_apply_par [s] c.memo_formula},c2)) l *)
 
-and b_f_ptr_equations f =  match f with
+and b_f_ptr_equations f =
+  let (pf,_) = f in
+  match pf with
   | Eq (e1, e2, _) -> 
         let b = can_be_aliased e1 && can_be_aliased e2 in
         if not b then [] else [(get_alias e1, get_alias e2)]
@@ -395,8 +399,8 @@ and memo_apply_one_exp (s:spec_var * exp) (mem:memoised_group list) : memo_pure 
 			  else (add_equiv_eq_with_const a2 c1 c2)) empty_var_aset eqs)
     | None -> List.fold_left 
           (fun (a1,a2) (c1,c2) -> 
-              if (eq_spec_var c1 fr) then ((BForm (Eq (conv_var_to_exp c2,t,no_pos),None))::a1,a2)
-              else if (eq_spec_var c2 fr) then ((BForm (Eq (conv_var_to_exp c1,t,no_pos),None))::a1,a2)
+              if (eq_spec_var c1 fr) then ((BForm ((Eq (conv_var_to_exp c2,t,no_pos), None),None))::a1,a2)
+              else if (eq_spec_var c2 fr) then ((BForm ((Eq (conv_var_to_exp c1,t,no_pos), None),None))::a1,a2)
               else (a1,add_equiv_eq_with_const a2 c1 c2)) ([],empty_var_aset) eqs in
   let r = List.map (fun c -> 
 	  let eqs = get_equiv_eq_with_const c.memo_group_aset in
@@ -415,9 +419,11 @@ and memo_apply_one_exp (s:spec_var * exp) (mem:memoised_group list) : memo_pure 
   filter_mem_triv r_group
       
 
-and memo_f_neg (f: b_formula): b_formula = match f with
-  | Lt (e1,e2,l) -> Lte (e2,e1,l)
-  | Lte (e1,e2,l) -> Lt (e2,e1,l)
+and memo_f_neg (f: b_formula): b_formula =
+  let (pf,il) = f in
+  let npf = match pf with
+  | Lt (e1,e2,l) -> Gte (e2,e1,l)
+  | Lte (e1,e2,l) -> Gt (e2,e1,l)
   | Gt (e1,e2,l) -> Lte (e1,e2,l)
   | Gte (e1,e2,l) -> Lt (e1,e2,l)
   | Eq (e1,e2,l) -> Neq (e1,e2,l)
@@ -427,6 +433,7 @@ and memo_f_neg (f: b_formula): b_formula = match f with
   | ListIn (e1,e2,l) -> ListNotIn(e1,e2,l)
   | ListNotIn (e1,e2,l) -> ListIn(e1,e2,l)
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "memoized negation: unexpected constraint type"}
+  in (npf,il)
         
 and memo_arith_simplify (f:memo_pure) : memo_pure = 
   List.map (fun c-> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice}) f
@@ -450,7 +457,7 @@ and memo_is_member_pure p mm =
 			(match p with | BForm (r,_)-> equalBFormula_aset c.memo_group_aset r d.memo_formula | _ -> false)) c.memo_group_cons) in
 	  if r then true
 	  else match p with
-		| BForm (Eq(Var(v1,_),Var(v2,_),_), _) -> EMapSV.is_equiv c.memo_group_aset v1 v2
+		| BForm ((Eq(Var(v1,_),Var(v2,_),_),_), _) -> EMapSV.is_equiv c.memo_group_aset v1 v2
 		| _ -> false ) mm
       
 (* below with_const *)
@@ -850,7 +857,7 @@ and memo_pure_push_exists_slice  (f_simp,do_split) (qv:spec_var list) (f0:memo_p
     let aset = List.fold_left  ( fun a (c1,c2) -> add_equiv_eq_with_const a c1 c2) empty_var_aset drp3 in 
     let fand1 = List.fold_left (fun a c-> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
     let fand2 = List.fold_left (fun a c-> mkAnd a c pos) fand1 ns in
-    let fand3 =List.fold_left (fun a (c1,c2)-> mkAnd a (BForm ((form_bform_eq_with_const c1 c2),None))  no_pos) fand2 nas in
+    let fand3 =List.fold_left (fun a (c1,c2)-> mkAnd a (BForm (((form_bform_eq_with_const c1 c2), None),None))  no_pos) fand2 nas in
     (fand3, drp1, drp2, aset)
   in
   

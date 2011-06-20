@@ -61,7 +61,9 @@ let rec count_iconst (f : CP.exp) = match f with
   | CP.IConst _ -> 1
   | _ -> 0
 
-let simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
+let simpl_b_formula (f : CP.b_formula): CP.b_formula =
+  let (pf,il) = f in
+  match pf with
   | CP.Lt (e1, e2, pos)
   | CP.Lte (e1, e2, pos)
   | CP.Gt (e1, e2, pos)
@@ -74,7 +76,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
 	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_) ->
+  	        | CP.BForm(simpl_f1, _) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f
@@ -120,7 +122,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
   			simpl_f1
   		| _ -> f
   		end
-  	else f
+  		else f
  	| _ -> f
 
 
@@ -632,7 +634,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | DataNode ({ h_formula_data_node = p;
 	  h_formula_data_label = lbl;
 	  h_formula_data_pos = pos}) ->
-          let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in
+          let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
           (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p])
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
@@ -907,8 +909,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_f
           (match d.h_formula_data_remaining_branches with
             | Some l -> (hp, old_mem, false)
             | None -> 
-                  let not_null_form = CP.BForm (CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None) in
-                  let null_form = CP.Eq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos) in
+                  let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None) in
+                  let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None) in
                   let br_lbl = [(1,"")] in
                   let new_hp = DataNode{d with 
 	                  h_formula_data_remaining_branches = Some br_lbl;
@@ -963,7 +965,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_f
                                    let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
                                 *) 
                                 let imp = 
-                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.prune_with_slice in
+                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos), None) [corr] false true !Globals.prune_with_slice in
                                   let r = if (!Globals.enable_fast_imply) then 
                                     (*let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
                                       let _ = if r1 then 
@@ -1168,34 +1170,37 @@ and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP
         let l2 = get_equations_sets f2 interest_vars in
         l1@l2
   | CP.BForm (bf,_) -> begin
-      match bf with
+	let (pf,il) = bf in
+      match pf with
         | Cpure.BVar (v,l)-> [bf]
         | Cpure.Lt (e1,e2,l)-> 
-	          if (Cpure.of_interest e1 e2 interest_vars) then [Cpure.Lt(e1,e2,l)]
+	          if (Cpure.of_interest e1 e2 interest_vars) then [(Cpure.Lt(e1,e2,l), il)]
 	          else []
         | Cpure.Lte (e1,e2,l) -> 
-	          if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Lte(e1,e2,l)]
+	          if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lte(e1,e2,l), il)]
 	          else []
         | Cpure.Gt (e1,e2,l) -> 
-	          if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Lt(e2,e1,l)]
+	          if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lt(e2,e1,l), il)]
 	          else []
         | Cpure.Gte(e1,e2,l)-> 
-	          if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Lte(e2,e1,l)]
+	          if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lte(e2,e1,l), il)]
 	          else []
         | Cpure.Eq (e1,e2,l) -> 
-	          if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Eq(e1,e2,l)]
+	          if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Eq(e1,e2,l), il)]
 	          else []
         | Cpure.Neq (e1,e2,l)-> 
-	          if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Neq(e1,e2,l)]
+	          if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Neq(e1,e2,l), il)]
 	          else []
         | _ -> []
     end	
-  | CP.Not (f1,_,_) -> List.map (fun c-> match c with
+  | CP.Not (f1,_,_) -> List.map (fun c ->
+	let (pf,il) = c in 
+	match pf with
       | Cpure.BVar (v,l)-> c
-      | Cpure.Lt (e1,e2,l)-> Cpure.Lt (e2,e1,l)
-      | Cpure.Lte (e1,e2,l) -> Cpure.Lte (e2,e1,l)
-      | Cpure.Eq (e1,e2,l) -> Cpure.Neq (e1,e2,l) 
-      | Cpure.Neq (e1,e2,l)-> Cpure.Eq (e1,e2,l)
+      | Cpure.Lt (e1,e2,l)-> (Cpure.Lt (e2,e1,l), il)
+      | Cpure.Lte (e1,e2,l) -> (Cpure.Lte (e2,e1,l), il)
+      | Cpure.Eq (e1,e2,l) -> (Cpure.Neq (e1,e2,l) , il)
+      | Cpure.Neq (e1,e2,l)-> (Cpure.Eq (e1,e2,l), il)
       |_ ->Error.report_error { 
 	         Error.error_loc = no_pos; 
 	         Error.error_text ="malfunction:get_equations_sets must return only bvars, inequalities and equalities"}
@@ -2801,10 +2806,10 @@ and heap_entail_variance
 		  let lower_bound = match (snd r) with
 		    | None -> report_error no_pos ("termination: variance checking: error with lower bound in termination checking \n")
 		    | Some exp -> exp in
-		  let boundedness_checking_formula = CP.BForm (CP.mkGte l lower_bound loc, None) in
+		  let boundedness_checking_formula = CP.BForm ((CP.mkGte l lower_bound loc, None), None) in
 		  let lexico_ranking_formula = 
-		    if flag then CP.BForm (CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None)
-			else CP.BForm (CP.mkEq l (fst r) loc, None) in
+		    if flag then CP.BForm ((CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None), None)
+			else CP.BForm ((CP.mkEq l (fst r) loc, None), None) in
 		  let f = CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc in  
 		  (false, CP.mkAnd f res loc)) lst_measures (true, CP.mkTrue loc)
 	  in
@@ -3015,7 +3020,7 @@ and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context
 (* from a list containing equaltions of the form vi = wi -> obtain two lists [vi]  and [wi] *)
 and obtain_subst l =
   match l with
-    | CP.BForm(CP.Eq(CP.Var(e1, _), CP.Var(e2, _), _),_)::r -> ((e1::(fst (obtain_subst r))), (e2::(snd (obtain_subst r))))
+    | CP.BForm ((CP.Eq(CP.Var(e1, _), CP.Var(e2, _), _), _), _)::r -> ((e1::(fst (obtain_subst r))), (e2::(snd (obtain_subst r))))
     | _::r -> ((fst (obtain_subst r)), (snd (obtain_subst r)))
     | [] -> ([],[])
 
@@ -4300,12 +4305,14 @@ and solve_ineq_memo_formula (ante : MCP.memo_pure) (memset : Cformula.mem_formul
   let f_memo x = None in
   let f_aset x = None in
   let f_formula x = None in
-  let f_b_formula e = match e with
+  let f_b_formula e =
+	let (pf,il) = e in
+	match pf with
     | CP.Neq (e1,e2,_) -> 	if (CP.is_var e1) && (CP.is_var e2) then
 	    let v1 = CP.to_var e1 in
 	    let v2 = CP.to_var e2 in
 	    let discharge = CP.DisjSetSV.is_disj eq memset.Cformula.mem_formula_mset v1 v2 in
-	    let ans = (if discharge then CP.BConst(true,no_pos) else e) in 
+	    let ans = (if discharge then (CP.BConst(true,no_pos),il) else e) in 
         Some ans 
       else None
     | _ -> None in
@@ -4317,14 +4324,14 @@ and solve_ineq_memo_formula (ante : MCP.memo_pure) (memset : Cformula.mem_formul
 and check_disj ante memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpure.formula = 
   let s_ineq = solve_ineq_pure_formula ante memset in
   match f1, f2 with 
-    | CP.BForm(bf1, label1), CP.BForm(bf2, label2) -> 
-	      (match bf1, bf2 with
+    | CP.BForm((pf1, il1), label1), CP.BForm((pf2, il2), label2) -> 
+	      (match pf1, pf2 with
 	        | CP.Lt(e1, e2, _), CP.Lt(e3, e4, _) ->
 	              (match e1, e2, e3, e4 with
 		            | CP.Var(sv1, _), CP.Var(sv2, _), CP.Var(sv3, _), CP.Var(sv4, _) ->
 		                  if (CP.eq_spec_var sv1 sv4) && (CP.eq_spec_var sv2 sv3)
 		                  then 
-			                s_ineq  (CP.BForm (CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), label1))
+			                s_ineq  (CP.BForm ((CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), il1), label1))
 		                  else
 			                Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
 		            | _, _, _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
@@ -4334,7 +4341,8 @@ and check_disj ante memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpu
     | _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
 
 and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
-  match conseq with
+  let (pf,il) = conseq in
+  match pf with
     | Cpure.Neq (e1, e2, pos) -> 
 	      if (CP.is_var e1) && (CP.is_var e2) then
 	        let eq = (fun x y -> sem_eq x y) in
@@ -6005,24 +6013,26 @@ and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.
   let resform = push_struc_exists rs new_f in
   resform	
       
-and transform_null (eqs) :(CP.b_formula list) = List.map (fun c-> match c with
+and transform_null (eqs) :(CP.b_formula list) = List.map (fun c ->
+  let (pf,il) = c in
+  match pf with
   | Cpure.BVar _ 
   | Cpure.Lt _
   | Cpure.Lte _ -> c
   | Cpure.Eq (e1,e2,l) -> 
 		if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		  if (Cpure.is_zero e2) then Cpure.Eq (e1,(Cpure.Null l),l)
-		  else Cpure.Neq (e1,(Cpure.Null l),l)
+		  if (Cpure.is_zero e2) then (Cpure.Eq (e1,(Cpure.Null l),l), il)
+		  else (Cpure.Neq (e1,(Cpure.Null l),l), il)
 		else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		  if (Cpure.is_zero e1) then Cpure.Eq (e2,(Cpure.Null l),l)
-		  else Cpure.Neq (e2,(Cpure.Null l),l)
+		  if (Cpure.is_zero e1) then (Cpure.Eq (e2,(Cpure.Null l),l), il)
+		  else (Cpure.Neq (e2,(Cpure.Null l),l), il)
 		else c
   | Cpure.Neq (e1,e2,l)-> 
 		if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		  if (Cpure.is_zero e2) then Cpure.Neq (e1,(Cpure.Null l),l)
+		  if (Cpure.is_zero e2) then (Cpure.Neq (e1,(Cpure.Null l),l), il)
 		  else c
 		else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		  if (Cpure.is_zero e1) then Cpure.Neq (e2,(Cpure.Null l),l)
+		  if (Cpure.is_zero e1) then (Cpure.Neq (e2,(Cpure.Null l),l), il)
 		  else c
 		else c
   | _ -> c

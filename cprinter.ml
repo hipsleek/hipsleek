@@ -497,8 +497,9 @@ let b_formula_assoc_op (e:P.b_formula) : (string * P.exp list) option = None
 
 (* check if exp can be printed without a parenthesis,
      e.g. trivial expr and prefix forms *)
-let b_formula_wo_paren (e:P.b_formula) = 
-  match e with
+let b_formula_wo_paren (e:P.b_formula) =
+  let (pf,_) = e in
+  match pf with
     | P.BConst _ 
     | P.BVar _ | P.BagMin _ | P.BagMax _ -> true
     | _ -> false
@@ -607,7 +608,8 @@ let rec pr_formula_exp (e:P.exp) =
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
-  match e with
+  let (pf,_) = e in
+  match pf with
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
