@@ -1899,6 +1899,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 (*	let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in*)
 	let imp_spec_vars = collect_important_vars_in_spec final_static_specs_list in
 	let imp_vars = List.append imp_vars imp_spec_vars in
+	let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)
 (*	let _ = print_string "Important variables found: " in               *)
 (*	let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
 	(** An Hoa : end **)
