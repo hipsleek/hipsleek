@@ -24,13 +24,17 @@ pred neg_ll<n> == self = null & n = 0
 	or self::node<d,r> * r::neg_ll<n - 1> & d<0
 	inv n >= 0.
 
-lemma self::pos_ll<n> & flow __Error <- self::neg_ll<n> & n>0 & flow __norm.
-lemma self::neg_ll<n> & n>0 <- self::pos_ll<n> & flow __Error.
+lemma self::pos_ll<n> & n>0 <- self::neg_ll<n> & flow __Error.
+lemma self::neg_ll<n>  & n>0 <- self::pos_ll<n> & flow __Error.
 lemma self::neg_ll<n> & n=0 -> x=null.
 lemma self::pos_ll<n> & n=0 -> x=null.
+lemma self::neg_ll<n> & n=0 <- x=null.
+lemma self::pos_ll<n> & n=0 <- x=null.
 
-//11. must failure
-checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
+//16. must failure
+// TODO requires a lemma, need unfold here
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n>.
+
 /*
 // 1.
 checkentail x>3 |- x<=0 .
@@ -65,29 +69,33 @@ checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
 //lemma self::pos_ll<n>   <- self::neg_ll<n> & n>0 & flow __Error.
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
 
-//12. must failure
+//12. must failure - R = true, flow = __Error
 checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
 */
 
 /*
-//10 valid
+//13 valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
 
-//11. may failure WRONG (must now)
+//14. may failure , should be improved
 checkentail x::pos_ll<n> |- x::neg_ll<n> .
 
-//12. must? failure
+//15. must failure - R = true, flow = __Error
 // TODO (requires a lemma and unfolding
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-//13. must failure but detected as may bug
+//16. must failure - R = true, flow = __Error
+// TODO requires a lemma, need unfold here
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> & n=0 or x::neg_ll<n> & n>0.
+
+//17. must failure - R = true, flow = __Error
 // TODO requires a lemma!
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 
-// 6. inconsitent must failure
+//18. inconsitent must failure
 checkentail x>3 & flow __Error |- x>0 & flow __Error.
 
-//8. inconsistent must failure
+//19. inconsistent must failure
 checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
 
 */

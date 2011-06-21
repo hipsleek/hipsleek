@@ -3909,12 +3909,9 @@ and heap_entail_with_cont
 	              in
 		          (match after_wr_ctx with
 		            | FailCtx _ ->
-                          (*let _ = print_flush ("locle Failure Continuation 2.1:"^(Cprinter.string_of_list_context after_wr_ctx)) in
-                          let _ = print_flush ("locle Failure Continuation 2.2:"^(Cprinter.string_of_list_context with_wr_ctx)) in*)
                           (after_wr_ctx, after_wr_prf)
 		            | SuccCtx (cl) ->
-                        (*let _ = print_flush ("locle Success Continuation 3:"^(Cprinter.string_of_list_context after_wr_ctx)) in*)
-		                  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+                       	  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		                  (* let _ = print_string("Substitute the holes\n") in *)
 		                  let cl = List.map Context.subs_crt_holes_ctx cl in
 			              (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
@@ -5222,7 +5219,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
-                  , CF.mk_failure_may "base case unfold fail" )),NoAlias)
+                  , CF.mk_failure_may "base case unfold failed" )),NoAlias)
             | Some x -> x)
     | Context.M_base_case_fold {
           Context.match_res_rhs_node = rhs_node;
@@ -5810,7 +5807,6 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   (******************** here it was the test for coerce&match *************************)
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
-  let _ = print_endline ("locle 6:" ^ (Cprinter.string_of_formula coer_rhs)) in
   let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
   match node, lhs_heap with
@@ -5875,14 +5871,10 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		        (* ok because of TP.imply*)
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
-                  let new_flow = CF.flow_formula_of_formula coer_rhs_new in
-                  let f1 = CF.substitute_flow_into_f new_flow.CF.formula_flow_interval f in
-		          let new_f = CF.normalize coer_rhs_new f1 pos in
+                  let coercion_flow = CF.flow_formula_of_formula coer_rhs_new in
+                   let new_f = CF.normalize_flow_replace f coer_rhs_new pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
 			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
-                  let _ = print_endline ("locle 8.1:" ^ (Cprinter.string_of_formula f)) in
-                  let _ = print_endline ("locle 8.2:" ^ (Cprinter.string_of_formula coer_rhs_new)) in
-                  let _ = print_endline ("locle 8.3:" ^ (Cprinter.string_of_formula new_f)) in
 			      (true, new_f)
 		        else if !Globals.case_split then begin
 		          (*
@@ -5892,7 +5884,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		              ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
 		          let neg_guard = CP.mkNot lhs_guard_new None pos in
                   let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
-		          let f0 = normalize f (formula_of_heap node pos) pos in
+		          let f0 = normalize_flow_replace f (formula_of_heap node pos) pos in
 		          let f1 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 			      (* unfold the case with the negation of the guard. *)
 		          let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
@@ -5901,16 +5893,18 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		          let new_f = mkOr f1 f2 pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
 			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
-                   let _ = print_endline ("locle 7:" ^ (Cprinter.string_of_formula new_f)) in
 			      (true, new_f)
 		        end else begin
 		          Debug.devel_pprint
 		              ("rewrite_coercion: guard is not satisfied, " ^ "no splitting.\n") pos;
+                    let _ = print_endline ("locle8:") in
 		          (false, mkTrue (mkTrueFlow ()) no_pos)
 		        end
 		      end
           end
-    | _ -> (false, mkTrue (mkTrueFlow ()) no_pos)
+    | _ ->
+        let _ = print_endline ("locle9:") in
+        (false, mkTrue (mkTrueFlow ()) no_pos)
 	      (*end	*)
 
 and apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos =
@@ -6152,20 +6146,38 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
 	  coer.coercion_body tmp_prf  coer.coercion_name
 	in
 	(res, [prf])
-  end else 
-    let _ = Debug.devel_pprint ("do_right_coercion :  " ^ c2 ^ "failed \n") pos in
-    (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
-    fc_current_lhs = estate;
-    fc_prior_steps = estate.es_prior_steps;
-    fc_orig_conseq = estate.es_orig_conseq;
-    fc_current_conseq = CF.formula_of_heap HFalse pos;
-    fc_failure_pts = match (get_node_label ln2) with | Some s-> [s] | _ -> [];}, CF.mk_failure_must "13" )), [])
+  end else
+    begin
+        (*in the case rhs is a view, try to unfold and matching once*)
+        (*this code is copied from process_action.Context.M_unfold*)(*
+         let rhs_var = get_node_var c2 in
+          let curr_unfold_num = (get_view_unfold_num c2)+unfold_num in
+          if (curr_unfold_num>1) then
+            (CF.mkFailCtx_in(Basic_Reason(mkFailContext "ensuring finite unfold" estate conseq (get_node_label lhs_node) pos,
+            CF.mk_failure_must "infinite unfolding" )),NoAlias)
+          else
+            let delta1 = unfold_nth 1 (prog,None) estate.es_formula rhs_var true unfold_num pos in (* update unfold_num *)
+            let ctx1 = build_context (Ctx estate) delta1 pos in
+			let ctx1 = set_unsat_flag ctx1 true in
+			let res_rs, prf1 = heap_entail_one_context prog is_folding ctx1 conseq pos in
+			let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
+			(res_rs, prf)*)
+                (**********************************)
+        let _ = Debug.devel_pprint ("do_right_coercion :  " ^ c2 ^ "failed \n") pos in
+        (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
+                                         fc_current_lhs = estate;
+                                         fc_prior_steps = estate.es_prior_steps;
+                                         fc_orig_conseq = estate.es_orig_conseq;
+                                         fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                         fc_failure_pts = match (get_node_label ln2) with | Some s-> [s] | _ -> [];},
+                                        CF.mk_failure_must "13" )), [])
         (* else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application"; *)
         (* fc_current_lhs = estate; *)
         (* fc_prior_steps = estate.es_prior_steps; *)
         (* fc_orig_conseq = estate.es_orig_conseq; *)
         (* fc_current_conseq = CF.formula_of_heap HFalse pos; *)
         (* fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])  *)
+    end
         (*************************************************************************************************************************
                                                                                                                                   05.06.2008:
                                                                                                                                   Utilities for existential quantifier elimination:

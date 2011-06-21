@@ -48,7 +48,9 @@ Norming PROVING for HIP
  -------------------------------------------------
   D1 & flow f1 |- D2 & flow f2 * (R)
 
-
+ //todo:
+ // - unfold for lemma:  in the case right_coercion is fail and rhs is a view, try to unfold rhs and matching once
+ //-provide __Sleek_Error, __NullPtr_Error, examples + implementation
 
  x::node<1,null> * D1 |- x::node<2,null> * D2 & flow __Error 
                     *  (D1 -> D2) & flow __Sleek_Error  (f=1 --> f=2)

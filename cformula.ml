@@ -703,7 +703,6 @@ and mkOr f1 f2 pos =
         
 and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) lbl: formula= 
   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then
-    let _ = print_endline ("locle 11:") in
 	mkFalse fl pos
   else 
 	Base ({formula_base_heap = h; 
@@ -823,7 +822,6 @@ and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 	    report_error no_pos "[cformula.ml, mkstar_combine]: at least one of the formulae combined should not contain phases"
   in
   (* let h = mkStarH h1 h2 pos in *)
-   let _ = print_endline ("locle 10:" ^ (!print_h_formula h)) in
   let p,_ = combine_and_pure f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
@@ -1559,7 +1557,6 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 flow_tr pos in
-             let _ = print_endline ("locle 9:" ^ (!print_formula new_base)) in
 			let new_h, new_p, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
@@ -1568,6 +1565,10 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 	    
 and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
+
+(*final flow is of f2*)
+and normalize_flow_replace (f1 : formula) (f2 : formula) (pos : loc) = 
+  normalize_keep_flow f1 f2 Flow_replace pos
 
       (* todo: check if this is ok *)
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
