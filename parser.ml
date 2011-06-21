@@ -662,7 +662,7 @@ cexp: [[t=cexp_w -> match t with
                     | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
 ];
 
-opt_slicing_label: [[ t = OPT slicing_label -> t ]];
+(*opt_slicing_label: [[ t = OPT slicing_label -> t ]];*)
 
 slicing_label: [[ `DOLLAR -> true ]];
 

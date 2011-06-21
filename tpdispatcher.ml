@@ -724,7 +724,6 @@ let simplify_omega_debug f =
 
 let simplify (f : CP.formula) : CP.formula =
   if !Globals.no_simpl then f else
-  (*let _ = print_string ("\nsimplify: f before"^(Cprinter.string_of_pure_formula f)) in*)
   if !external_prover then 
     match Netprover.call_prover (Simplify f) with
         Some res -> res

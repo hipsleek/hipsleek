@@ -598,12 +598,12 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
     rs
   else begin
     (* get source code posistion of failed branches *)
-    let locs_of_failures = 
+    (*let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
-    in
-    let string_of_loc_list locs =
+    in*)
+    (*let string_of_loc_list locs =
       List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
-    in
+    in*)
     Err.report_error {
         Err.error_loc = pos;
         Err.error_text = Printf.sprintf

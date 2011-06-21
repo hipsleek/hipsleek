@@ -1163,12 +1163,15 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 	  (Cprinter.string_of_pure_formula xform')^"\n\n\n");flush stdout in	*)
     (*let xform' = TP.simplify  xform' in*)
          let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+		 (*let _ = print_string ("\ncompute_view_x_formula: xform'" ^ (Cprinter.string_of_mix_formula xform') ^ "\n") in*)
     (*let _  = print_string ("before memo simpl x pure: "^(Cprinter.string_of_memoised_list xform')^"\n") in
-      let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in
-    *)let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
+    let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
+    let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
+	  let _ = print_string ("\ncompute_view_x_formula: LHS" ^ (Cprinter.string_of_formula formula1) ^ "\n") in
       let ctx =
         CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
+	  let _ = print_string ("\ncompute_view_x_formula: RHS" ^ (Cprinter.string_of_formula formula) ^ "\n") in
       let (rs, _) =
       Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos
       in
@@ -6179,7 +6182,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
   (* let pick_pures (f:CP.formula list) v_l :(CP.b_formula list) =  *)
 
-  let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
+  (*let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
     let l1,l2 = get_pure_conj_list f in
     let l = filter_pure_conj_list l1 in      
     let neq,eq = List.partition (fun (pf,_) -> match pf with | CP.Neq _ -> true |_-> false) l in
@@ -6193,15 +6196,15 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let r = hull_invs v_l from_s in   
     (*let r = TP.hull r in*)
     if r=[] then [neq] 
-    else List.map (fun c-> CP.mkAnd c neq no_pos) r in
+    else List.map (fun c-> CP.mkAnd c neq no_pos) r in*)
 
-  let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
+  (*let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
     Gen.Debug.no_2 "simplify_pures " Cprinter.string_of_pure_formula 
         Cprinter.string_of_spec_var_list
         (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
-        simplify_pures f v_l in
+        simplify_pures f v_l in*)
 
-  let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list=
+  (*let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list=
 	let (pf1,il1) = f1 in
 	let (pf2,il2) = f2 in
 	let il = match il1 with
@@ -6259,7 +6262,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
               | _ -> []
             )
             )
-      | _ -> [] in
+      | _ -> [] in*)
   
   (* let rec propagate_constraints (p_c:CP.b_formula list) (nl:CP.b_formula list): CP.b_formula list =  *)
   (*   let rec new_con_list l = match l with *)
@@ -6358,15 +6361,14 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     Gen.Debug.no_2 "compute_invariants"  
         pr0 pr1 pr2 compute_invariants v_l pure_list in
 
-  let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list = 
+  (*let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list = 
     List.filter (fun c-> 
 		let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in
-		not r) uinvl  in
-
-  let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list = 
+		not r) uinvl  in*)
+  (*let imply_by_all (all_r:CP.formula) (uinvl:CP.b_formula list) : CP.b_formula list = 
     let pr = pr_list Cprinter.string_of_b_formula in
     Gen.Debug.no_2 "imply_by_all" Cprinter.string_of_pure_formula pr pr imply_by_all all_r uinvl
-  in
+  in*)
 
   (*
     vl : spec_var list // list or parameters
@@ -6427,7 +6429,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let split_p = filter_pure_conj_list (fst (get_pure_conj_list all_p)) in
     let r = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq CP.eq_spec_var (CP.bfv c) vl) split_p in		  
 	
-	let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) r) in
+	(*let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) r) in*)
 	
 	(* let uinv2 = List.filter (fun c->  *)
 	(*     let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in *)
@@ -6599,11 +6601,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(CP.BagaSV.conj_baga v_l b1,MCP.memo_norm_wrapper c2))) invariant_list in
   let ungrouped_g_l = List.concat (List.map (fun (lbl, (_,c_l))-> List.map (fun c-> (lbl,c)) c_l) guard_list) in
   let ungrouped_b_l = List.map (fun (lbl, (b,_))-> (b,lbl)) guard_list in
-  let prune_conds = List.fold_left (fun a (f_lbl, constr)-> 
+  (*let prune_conds = List.fold_left (fun a (f_lbl, constr)-> 
       let leq,lneq = List.partition (fun (c,_)-> CP.eq_b_formula_no_aset constr c) a in
       let rest_lbls = match (List.length leq) with | 0 -> [] | 1 -> snd (List.hd leq) | _ -> [] in
-      (constr,f_lbl::rest_lbls)::lneq) [] ungrouped_g_l in
-  let prune_conds = List.filter (fun (c1,c2)-> (List.length init_form_lst)>(List.length c2)) prune_conds in 
+      (constr,f_lbl::rest_lbls)::lneq) [] ungrouped_g_l in*)
+  (*let prune_conds = List.filter (fun (c1,c2)-> (List.length init_form_lst)>(List.length c2)) prune_conds in *)
   let prune_conds = sel_prune_conds ungrouped_g_l in
   let safe_prune_conds = get_safe_prune_conds prune_conds pure_form_ls in
   (safe_prune_conds,ungrouped_b_l, norm_inv_list)
