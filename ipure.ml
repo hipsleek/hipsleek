@@ -15,7 +15,7 @@ type formula =
   | Exists of ((ident * primed) * formula *(formula_label option)* loc)
 
 (* Boolean constraints *)
-and b_formula = p_formula * (bool option)
+and b_formula = p_formula * ((bool * int) option) (* (is_linking, label) *)
 	
 and p_formula = 
   | BConst of (bool * loc)

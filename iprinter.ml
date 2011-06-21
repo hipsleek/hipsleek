@@ -173,7 +173,7 @@ let string_of_id (id,p) = id ^ (match p with
 let string_of_slicing_label sl =
   match sl with
 	| None -> ""
-	| Some _ -> "<IL>"
+	| Some (il, lbl) -> "<" ^ (if il then "IL, " else ", ") ^ (string_of_int lbl) ^ ">"
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 

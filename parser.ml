@@ -364,6 +364,14 @@ let rec set_il_formula f il =
 and set_il_b_formula bf il =
   let (pf, _) = bf in (pf, il)
 
+and set_slicing_utils_pure_double f il =
+  match f with
+	| Pure_f pf ->
+		let _ = Globals.bformula_label_counter := !Globals.bformula_label_counter + 1 in
+		Pure_f (set_il_formula pf (Some (il, !Globals.bformula_label_counter)))
+	| _ -> f
+				   
+
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
@@ -662,7 +670,7 @@ cexp: [[t=cexp_w -> match t with
                     | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
 ];
 
-(*opt_slicing_label: [[ t = OPT slicing_label -> t ]];*)
+(*opt_slicing_label: [[ t = OPT slicing_label -> un_option t false ]];*)
 
 slicing_label: [[ `DOLLAR -> true ]];
 
@@ -671,10 +679,7 @@ cexp_w :
     [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
 
   | "slicing_label"
-	[sl=slicing_label; f=SELF ->
-		match f with
-		| Pure_f pf -> Pure_f (set_il_formula pf (Some sl))
-		| _ -> f ]
+	[ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
   
   | "pure_or" RIGHTA
    [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
@@ -683,27 +688,56 @@ cexp_w :
    [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
 
   |"bconstrp" RIGHTA
-    [  lc=SELF; `NEQ;  cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl
-     | lc=SELF; `EQ;   cl=SELF  -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
-     
+    [  lc=SELF; `NEQ;  cl=SELF       ->
+		let f = cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+		set_slicing_utils_pure_double f false
+	 | lc=SELF; `EQ;   cl=SELF  ->
+		let f = cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+		set_slicing_utils_pure_double f false
     ]  
   | "bconstr" 
     [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl *)
      (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl  *)
      (* |  *)
-	   lc=SELF; `LTE;    cl=SELF       ->  cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
-     | lc=SELF; `LT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl
-     | lc=SELF; peek_try; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl
-     | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos_camlp4 _loc 2)) lc cl   
-     | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl
-     | peek_try; lc=cid; `NOTIN;  cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos_camlp4 _loc 2))) cl  
-     | lc=SELF; `SUBSET; cl=SELF                            -> cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
-     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm ((P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None), None))
-     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None))  
-     | lc=SELF; `INLIST; cl=SELF                -> cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
-     | lc=SELF; `NOTINLIST; cl=SELF             -> cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
-     | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  
-     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  ]
+	   lc=SELF; `LTE;    cl=SELF       ->
+			let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+			set_slicing_utils_pure_double f false
+     | lc=SELF; `LT;     cl=SELF       ->
+			let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+			set_slicing_utils_pure_double f false
+     | lc=SELF; peek_try; `GT;     cl=SELF       ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `GTE;    cl=SELF       ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	   set_slicing_utils_pure_double f false
+     | peek_try; lc=cid; `IN_T;   cl=SELF                      ->
+	 let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in
+	 set_slicing_utils_pure_double f false
+     | peek_try; lc=cid; `NOTIN;  cl=SELF                      ->
+	 let f = cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos_camlp4 _loc 2))) cl  in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `SUBSET; cl=SELF                            ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false
+     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
+	 let f = Pure_f (P.BForm ((P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None), None)) in
+	 set_slicing_utils_pure_double f false
+     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
+	 let f = Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None))  in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `INLIST; cl=SELF                ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `NOTINLIST; cl=SELF             ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false
+     | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
+	 set_slicing_utils_pure_double f false
+     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false]
 
  
    

@@ -608,7 +608,7 @@ let rec pr_formula_exp (e:P.exp) =
 let string_of_slicing_label sl =
   match sl with
 	| None -> ""
-	| Some _ -> "<IL>"
+	| Some (il, lbl) -> "<" ^ (if il then "IL, " else ", ") ^ (string_of_int lbl) ^ ">"
 		  
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in

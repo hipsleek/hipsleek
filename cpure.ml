@@ -20,7 +20,7 @@ type formula =
   | Exists of (spec_var * formula * (formula_label option)*loc)
 
 (* Boolean constraints *)
-and b_formula = p_formula * (bool option)
+and b_formula = p_formula * ((bool * bformula_label) option)
 	  
 and p_formula =
   | BConst of (bool * loc)
@@ -5230,13 +5230,16 @@ and set_il_relation rl il =
 (* Slicing: Set <IL> for a formula based on a list of dependent groups *)
 let rec set_il_formula_with_dept_list f rel_vars_lst =
   match f with
-	| BForm ((bf, _), lbl) ->
+	| BForm ((pf, _), lbl) ->
 		let vl = fv f in
 		let check_dept vlist rvlist =
 		  if ((List.length vlist) > 0 & (Gen.BList.list_subset_eq eq_spec_var vlist rvlist)) then true else false
 		in
 		let is_dept = List.fold_left (fun res rvl -> if res then true else (check_dept vl rvl)) false rel_vars_lst in
-		if is_dept then BForm ((bf, None), lbl) else BForm ((bf, Some true), lbl)
+		if is_dept then BForm ((pf, None), lbl)
+		else
+		  let _ = Globals.bformula_label_counter := !Globals.bformula_label_counter + 1 in
+		  BForm ((pf, Some (true, !Globals.bformula_label_counter)), lbl)
 	| And (f1, f2, l) -> And (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, l)
 	| Or (f1, f2, lbl, l) -> Or (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, lbl, l)
 	| Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)

@@ -1,11 +1,16 @@
 (* global types and utility functions *)
 
+
+
 type ident = string
 type constant_flow = ident
 
 type nflow = (int*int)(*numeric representation of flow*)
 
+(* Counter for b_formula label *)
+let bformula_label_counter = ref 0
 	
+type bformula_label = int
 	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
