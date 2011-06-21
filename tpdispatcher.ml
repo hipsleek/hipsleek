@@ -723,6 +723,7 @@ let simplify_omega_debug f =
   Gen.Debug.no_1 "simplify_omega" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify_omega f
 
 let simplify (f : CP.formula) : CP.formula =
+  if !Globals.no_simpl then f else
   (*let _ = print_string ("\nsimplify: f before"^(Cprinter.string_of_pure_formula f)) in*)
   if !external_prover then 
     match Netprover.call_prover (Simplify f) with
@@ -761,11 +762,22 @@ let simplify (f : CP.formula) : CP.formula =
         | _ -> Omega.simplify f in
       Gen.Profiling.pop_time "simplify";
 	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
-      r
+	  (* To recreate <IL> relation after simplifying *)
+	  if !Globals.do_slicing then
+	    let rel_vars_lst =
+		  let bfl = CP.break_formula f in
+		  let bfl_no_il = List.filter
+			(fun (_,il) -> match il with
+			| None -> true
+			| _ -> false) bfl in
+		  CP.group_related_vars bfl_no_il
+		in
+		CP.set_il_formula_with_dept_list r rel_vars_lst
+	  else r
     with | _ -> f)
 
-(* let simplify f = *)
-(*   Gen.Debug.no_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (\* (fun x -> x) *\)simplify f *)
+let simplify (f : CP.formula) : CP.formula =
+  Gen.Debug.ho_1 "simplify_1" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 
 let simplify (f:CP.formula): CP.formula = 
   CP.elim_exists_with_simpl simplify f 
@@ -782,6 +794,9 @@ let simplify (f:CP.formula): CP.formula =
 (*   (\*   end); *\) *)
 (*   let pf = Cprinter.string_of_pure_formula in *)
 (*   Gen.Debug.no_1 "TP.simplify0" pf pf simplify f *)
+
+let simplify (f : CP.formula) : CP.formula =
+  Gen.Debug.ho_1 "simplify_2" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 
 let simplify_a (s:int) (f:CP.formula): CP.formula = 
   (* (if (2107 <= !Util.proc_ctr  && !Util.proc_ctr <= 2109) then  *)

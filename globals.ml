@@ -213,6 +213,8 @@ let instantiation_variants = ref 0
 
 let omega_simpl = ref true
 
+let no_simpl = ref false
+
 let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
@@ -336,6 +338,9 @@ let enable_incremental_proving = ref false
   let no_LHS_prop_drop = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
+
+(* Options for slicing *)
+  let do_slicing = ref false
   
 let add_count (t: int ref) = 
 	t := !t+1

@@ -605,10 +605,16 @@ let rec pr_formula_exp (e:P.exp) =
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
 
 (** print a b_formula  to formatter *)
+let string_of_slicing_label sl =
+  match sl with
+	| None -> ""
+	| Some _ -> "<IL>"
+		  
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
-  let (pf,_) = e in
+  let (pf,il) = e in
+  fmt_string (string_of_slicing_label il);
   match pf with
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)

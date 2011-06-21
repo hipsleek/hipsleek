@@ -355,6 +355,15 @@ let peek_array_type =
              |[_;OSQUARE,_] -> ()
              | _ -> raise Stream.Failure)
 
+(* Slicing Utils *)
+let rec set_il_formula f il =
+  match f with
+	| P.BForm (bf, lbl) -> P.BForm (set_il_b_formula bf il, lbl)
+	| _ -> f
+
+and set_il_b_formula bf il =
+  let (pf, _) = bf in (pf, il)
+
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
@@ -653,9 +662,19 @@ cexp: [[t=cexp_w -> match t with
                     | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
 ];
 
+opt_slicing_label: [[ t = OPT slicing_label -> t ]];
+
+slicing_label: [[ `DOLLAR -> true ]];
+
 cexp_w :
   [ "pure_lbl"
     [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
+
+  | "slicing_label"
+	[sl=slicing_label; f=SELF ->
+		match f with
+		| Pure_f pf -> Pure_f (set_il_formula pf (Some sl))
+		| _ -> f ]
   
   | "pure_or" RIGHTA
    [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
@@ -671,7 +690,8 @@ cexp_w :
   | "bconstr" 
     [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl *)
      (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl  *)
-     (* |  *)lc=SELF; `LTE;    cl=SELF       ->  cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
+     (* |  *)
+	   lc=SELF; `LTE;    cl=SELF       ->  cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
      | lc=SELF; `LT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl
      | lc=SELF; peek_try; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl
      | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos_camlp4 _loc 2)) lc cl   

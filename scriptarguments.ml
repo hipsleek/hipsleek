@@ -44,6 +44,8 @@ let common_arguments = [
     "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
+    ("--no-simpl", Arg.Set Globals.no_simpl,
+	"Do not simplify the arithmetic constraints");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
 	"Simplify the pure part of the formulas");
 	(* ("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic, *)
@@ -201,6 +203,9 @@ let common_arguments = [
   ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
   ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
+
+  (* slicing *)
+  ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable slicing");
   ] 
 
 (* arguments/flags used only by hip *)	

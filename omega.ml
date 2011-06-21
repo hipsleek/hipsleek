@@ -409,7 +409,8 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   end else ();
   result
   
-let rec match_vars (vars_list0 : spec_var list) rel = match rel with
+let rec match_vars (vars_list0 : spec_var list) rel =
+  match rel with
 | ConstRel b ->
     if b then
       mkTrue no_pos
@@ -429,7 +430,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
     if List.length aelist0 != List.length vars_list0 then
       failwith ("match_var: numbers of arguments do not match")
     else
-      match_helper vars_list0 aelist0 f0
+	  match_helper vars_list0 aelist0 f0
 | UnionRel (r1, r2) ->
     let f1 = match_vars vars_list0 r1 in
     let f2 = match_vars vars_list0 r2 in
@@ -480,10 +481,6 @@ let simplify (pe : formula) : formula =
     simp_f
   end
 
-let simplify (pe : formula) : formula =
-  let pf = !print_pure in
-  Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
-
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)
   begin
@@ -502,7 +499,7 @@ let pairwisecheck (pe : formula) : formula =
        flush log_all;
     end;
     let rel = send_and_receive fomega !timeout2 (* 0. *) in
-	  match_vars (fv pe) rel 
+	  match_vars (fv pe) rel
   end
 
 let hull (pe : formula) : formula =
@@ -523,10 +520,10 @@ let hull (pe : formula) : formula =
        flush log_all;
     end;
     let rel = send_and_receive fomega !timeout2 (* 0. *) in
-	  match_vars (fv pe) rel
+	  match_vars (fv pe) rel 
   end
 
-let gist (pe1 : formula) (pe2 : formula) : formula =
+let gist (pe1 : formula) (pe2 : formula): formula =
   (*print_endline "LOCLE: gist";*)
   begin
 		omega_subst_lst := [];

@@ -170,7 +170,13 @@ let string_of_id (id,p) = id ^ (match p with
 ;;
    
 (* pretty printing for boolean constraints *)
-let string_of_b_formula (pf,_) = match pf with 
+let string_of_slicing_label sl =
+  match sl with
+	| None -> ""
+	| Some _ -> "<IL>"
+
+let string_of_b_formula (pf,il) =
+  (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
   | P.BVar (x, l)               -> string_of_id x
 (* (match x with  *)

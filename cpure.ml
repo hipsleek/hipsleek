@@ -894,7 +894,11 @@ and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
   helper2 alist10 alist20*)
   
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
-and build_relation relop alist10 alist20 lbl pos=
+and build_relation relop alist10 alist20 lbl pos =
+  let prt = fun al -> List.fold_left (fun r a -> r ^ "; " ^ (!print_exp a)) "" al in
+	Gen.Debug.ho_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
+  
+and build_relation_x relop alist10 alist20 lbl pos =
   let rec helper1 ae alist =
     let a = List.hd alist in
     let rest = List.tl alist in
@@ -5178,3 +5182,64 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
+(* automatic slicing of variables *)
+
+(* slice_formula inp1 :[ 0<=x, 0<=y, z<x] *)
+(* slice_formula@22 EXIT out :[([z,x],[ z<x, 0<=x]),([y],[ 0<=y])] *)
+
+let slice_formula (fl : formula list) : (spec_var list * formula list) list =
+  let repart ac f =
+	let vs = fv f in
+	let (ol,nl) = List.partition (fun (vl,f) -> (Gen.BList.overlap_eq eq_spec_var vs vl)) ac in
+	let n_vl = List.fold_left (fun a (v,_) -> a@v) vs ol  in
+	let n_fl = List.fold_left (fun a (_,fl) -> a@fl) [f] ol  in
+	    (Gen.BList.remove_dups_eq eq_spec_var n_vl,n_fl)::nl
+  in List.fold_left repart [] fl
+
+let slice_formula (fl : formula list) : (spec_var list * formula list) list =
+  let pr = pr_list !print_formula in
+  let pr2 = pr_list (pr_pair !print_svl pr) in
+    Gen.Debug.no_1 "slice_formula" pr pr2 slice_formula fl
+
+(* For assigning <IL> fields after doing simplify *)
+
+let rec break_formula (f: formula) : b_formula list =
+  match f with
+	| BForm (bf, _) -> [bf]
+	| And (f1, f2, _) -> (break_formula f1) @ (break_formula f2)
+	| Or (f1, f2, _, _) -> (break_formula f1) @ (break_formula f2)
+	| Not (f, _, _) -> break_formula f
+	| Forall (_, f, _, _) -> break_formula f
+	| Exists (_, f, _, _) -> break_formula f
+
+(* Group related vars together after filtering the <IL> formula *)
+let group_related_vars (bfl: b_formula list) : (spec_var list) list =
+  let repart acc bf =
+	let vs = bfv bf in
+	let (ol, nl) = List.partition (fun vl -> (Gen.BList.overlap_eq eq_spec_var vs vl)) acc in
+	let n_vl = List.fold_left (fun a vl -> a@vl) vs ol in
+	    (Gen.BList.remove_dups_eq eq_spec_var n_vl)::nl
+  in List.fold_left repart [] bfl
+(*  
+and set_il_relation rl il =
+  match rl with
+	| ConstRel _ -> rl
+	| BaseRel (el, f) -> BaseRel (el, set_il_formula f il)
+	| UnionRel (r1, r2) -> UnionRel (set_il_relation r1 il, set_il_relation r2 il)
+*)
+(* Slicing: Set <IL> for a formula based on a list of dependent groups *)
+let rec set_il_formula_with_dept_list f rel_vars_lst =
+  match f with
+	| BForm ((bf, _), lbl) ->
+		let vl = fv f in
+		let check_dept vlist rvlist =
+		  if ((List.length vlist) > 0 & (Gen.BList.list_subset_eq eq_spec_var vlist rvlist)) then true else false
+		in
+		let is_dept = List.fold_left (fun res rvl -> if res then true else (check_dept vl rvl)) false rel_vars_lst in
+		if is_dept then BForm ((bf, None), lbl) else BForm ((bf, Some true), lbl)
+	| And (f1, f2, l) -> And (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, l)
+	| Or (f1, f2, lbl, l) -> Or (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, lbl, l)
+	| Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
+	| Forall (sv, f, lbl, l) -> Forall (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
+	| Exists (sv, f, lbl, l) -> Exists (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
+	
