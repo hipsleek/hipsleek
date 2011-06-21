@@ -2869,16 +2869,16 @@ and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context)
 	      let conseq_new = conseq in
 	      heap_entail prog is_folding  cl_new conseq_new pos
 
-and heap_entail_debug
+and heap_entail
       p is_folding  cl conseq 
       pos : (list_context * proof) = 
-  Gen.Debug.no_2 "heap_entail---------\n\n"
+  Gen.Debug.ho_2 "heap_entail"
       (Cprinter.string_of_list_context)
       (Cprinter.string_of_formula)
       (fun _ -> "?")
-      (fun cl conseq -> heap_entail p is_folding  cl conseq pos) cl conseq
+      (fun cl conseq -> heap_entail_x p is_folding  cl conseq pos) cl conseq
 
-and heap_entail (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
+and heap_entail_x (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   match cl with 
     | FailCtx _ -> (cl,Failure)
     | SuccCtx cl ->
@@ -2891,7 +2891,7 @@ and heap_entail (prog : prog_decl) (is_folding : bool)  (cl : list_context) (con
             (heap_entail_one_context prog is_folding  (List.hd cl) conseq pos)
 
 and heap_entail_one_context prog is_folding  ctx conseq pos =
-  Gen.Debug.loop_2_no "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
+  Gen.Debug.loop_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
       (fun ctx conseq -> heap_entail_one_context_a prog is_folding  ctx conseq pos) ctx conseq
 
 (*   and heap_entail_one_context prog is_folding  ctx conseq pos =  *)
@@ -2919,39 +2919,51 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
               (conseq, false)
           in
           let rs, prf = heap_entail_after_sat prog is_folding  ctx new_conseq pos ([]) in
-          if post_check then
-            begin
+         if post_check then
+           begin
                 match rs with
                   | FailCtx ft ->
                       begin
                           if (is_must_failure_ft ft) then
                             begin
                                 (*must case: R1 = true & flow norm*)
-                                match ft with
-                                  | Basic_Reason (fc, _) ->
-                                      let res_es = fc.CF.fc_current_lhs in
-                                      let res_ctx = Ctx (CF.add_to_estate res_es fc.CF.fc_message) in
-                                      let new_rs = SuccCtx (CF.change_flow_ctx flow_conseq.CF.formula_flow_interval
-                                                                !Globals.n_flow_int [res_ctx]) in
-                                      (new_rs, prf)
+                                let rec helper ft=
+                                  match ft with
+                                    | Basic_Reason (fc, _) ->
+                                        let res_es = fc.CF.fc_current_lhs in
+                                        let res_ctx = Ctx (CF.add_to_estate res_es fc.CF.fc_message) in
+                                        (CF.change_flow_into_ctx !Globals.n_flow_int [res_ctx])
                                   (*| Trivial_Reason s ->*)
-                                  | _ -> report_error no_pos "solver.heap_entail_one_context: should be improved"
+                                    | Or_Reason (ft1, ft2) ->
+                                        let rs1 = helper ft1 in
+                                        let rs2 = helper ft2 in
+                                        (rs1@rs2)
+                                    | And_Reason (ft1, ft2) ->
+                                         let rs1 = helper ft1 in
+                                        let rs2 = helper ft2 in
+                                        (rs1@rs2)
+                                    | _ -> report_error no_pos "solver.heap_entail_one_context: should be improved"
+                                in
+                                (SuccCtx (helper ft), prf)
                             end
                           else  if (is_may_failure_ft ft) then
                             (*may case: R1 = R (not handle now)*)
                             (rs, prf)
                           else
                             (*trivial cases*)
+                             let _ = print_endline "locle2" in
                             (rs, prf)
                       end
                   | SuccCtx ctx_lst ->
                        (*valid case: R1 = true & flow __Error*)
+                      let _ = print_endline "locle3" in
                        let new_rs = SuccCtx (CF.change_flow_ctx !Globals.n_flow_int
                                                  flow_conseq.CF.formula_flow_interval ctx_lst)
                        in (new_rs, prf)
-            end
-          else
-            (rs, prf)
+           end
+         else
+            let _ = print_endline "locle4" in
+           (rs, prf)
       end
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
@@ -5787,7 +5799,8 @@ and is_original_match anode ln2 =
 and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   let p1 = Cprinter.string_of_formula in
   let p2 = pr_pair string_of_bool Cprinter.string_of_formula in
-  Gen.Debug.no_2 "rewrite_coercion" Cprinter.string_of_h_formula  p1 p2 (fun _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f 
+  Gen.Debug.ho_3 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion
+      p2 (fun _ _ _-> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f coer
 
 and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   (* This function also needs to add the name and the origin list
@@ -5797,6 +5810,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   (******************** here it was the test for coerce&match *************************)
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
+  let _ = print_endline ("locle 6:" ^ (Cprinter.string_of_formula coer_rhs)) in
   let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
   match node, lhs_heap with
@@ -5861,9 +5875,14 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		        (* ok because of TP.imply*)
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
-		          let new_f = normalize coer_rhs_new f pos in
+                  let new_flow = CF.flow_formula_of_formula coer_rhs_new in
+                  let f1 = CF.substitute_flow_into_f new_flow.CF.formula_flow_interval f in
+		          let new_f = CF.normalize coer_rhs_new f1 pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
 			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
+                  let _ = print_endline ("locle 8.1:" ^ (Cprinter.string_of_formula f)) in
+                  let _ = print_endline ("locle 8.2:" ^ (Cprinter.string_of_formula coer_rhs_new)) in
+                  let _ = print_endline ("locle 8.3:" ^ (Cprinter.string_of_formula new_f)) in
 			      (true, new_f)
 		        else if !Globals.case_split then begin
 		          (*
@@ -5882,6 +5901,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		          let new_f = mkOr f1 f2 pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
 			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
+                   let _ = print_endline ("locle 7:" ^ (Cprinter.string_of_formula new_f)) in
 			      (true, new_f)
 		        end else begin
 		          Debug.devel_pprint
@@ -5945,7 +5965,7 @@ and find_coercions c1 c2 prog anode ln2 =
 
 and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  Gen.Debug.ho_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
 
@@ -6046,7 +6066,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 	(*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
+  Gen.Debug.ho_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
       (fun _ _ _ -> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
       anode resth1 coer
       (* anode - LHS matched node
@@ -6091,9 +6111,10 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
     (*******************************************************************************************************************************************************************************************)
 and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_3 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion 
+  Gen.Debug.ho_4 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion
+      Cprinter.string_of_formula_base
       (* Cprinter.string_of_formula (fun x -> x)  *)pr
-      (fun _ _ _ -> apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos) ln2 resth2 coer (* conseq c2 *)
+      (fun _ _ _ _ -> apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos) ln2 resth2 coer  rhs_b (* conseq c2 *)
 
 (* ln2 - RHS matched node
    resth2 - RHS remainder

@@ -702,7 +702,8 @@ and mkOr f1 f2 pos =
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
         
 and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) lbl: formula= 
-  if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then 
+  if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then
+    let _ = print_endline ("locle 11:") in
 	mkFalse fl pos
   else 
 	Base ({formula_base_heap = h; 
@@ -800,14 +801,14 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 
-and mkStar_combine_debug (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
-  Gen.Debug.no_2 "mkstar_combine"
-      (!print_formula)
-      (!print_formula)
-      (!print_formula)
-      (fun f1 f2 -> mkStar_combine f1 f2 flow_tr pos) f1 f2 
-	  
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+  Gen.Debug.ho_2 "mkstar_combine"
+      (!print_formula)
+      (!print_formula)
+      (!print_formula)
+      (fun f1 f2 -> mkStar_combine_x f1 f2 flow_tr pos) f1 f2 
+	  
+and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, b1, t1 = split_components f1 in
   let h2, p2, fl2, b2, t2 = split_components f2 in
 
@@ -822,6 +823,7 @@ and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 	    report_error no_pos "[cformula.ml, mkstar_combine]: at least one of the formulae combined should not contain phases"
   in
   (* let h = mkStarH h1 h2 pos in *)
+   let _ = print_endline ("locle 10:" ^ (!print_h_formula h)) in
   let p,_ = combine_and_pure f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
@@ -1557,6 +1559,7 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 flow_tr pos in
+             let _ = print_endline ("locle 9:" ^ (!print_formula new_base)) in
 			let new_h, new_p, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
@@ -1565,6 +1568,7 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 	    
 and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
+
       (* todo: check if this is ok *)
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
@@ -3051,7 +3055,12 @@ and change_flow_ctx from_fl to_fl ctx_list =
 		| Ctx c -> Ctx {c with es_formula = substitute_flow_in_f to_fl from_fl c.es_formula;}
 		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
 	List.map helper ctx_list
-	
+
+and change_flow_into_ctx to_fl ctx_list = 
+	let rec helper c = match c with
+		| Ctx c -> Ctx {c with es_formula = substitute_flow_into_f to_fl c.es_formula;}
+		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
+	List.map helper ctx_list
 (*23.10.2008*)
 
 and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
