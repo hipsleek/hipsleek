@@ -1294,6 +1294,8 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 	@param eqns -> List of equations; no max, min, inequality, ...
 	@param bv -> List of equation parameters
 	@return a list of binding (var,exp) indicating the root
+    TODO move all the occurences of "res" to bv; this is the safest
+		approach because this is the final back-end
  **)
 let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
@@ -1308,6 +1310,8 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	
 	(* Rearrange the variables so that parameters lies at the end! *)
 	(*let _ = print_endline ("Base variables : " ^ (!CP.print_svl bv)) in*)
+	let bv = List.append (List.filter (fun x -> match x with | CP.SpecVar (_,"res",_) -> true | _ -> false) unks) bv in (* Add res to bv *)
+	let bv = Gen.BList.remove_dups_eq CP.eq_spec_var bv in
 	let bv = Gen.BList.intersect_eq CP.eq_spec_var bv unks in
 	(*let _ = print_endline ("Base variables appeared in formulas: " ^ (!CP.print_svl bv)) in*)
 	let unks = Gen.BList.difference_eq CP.eq_spec_var unks bv in

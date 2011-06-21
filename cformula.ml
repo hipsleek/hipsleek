@@ -4540,7 +4540,9 @@ and simplify_es_formula (f : formula) (bv : CP.spec_var list) =
 (*			let _ = print_endline (!print_h_formula heap) in*)
 (*			let _ = print_endline (print_mix_f pure) in     *)
 			let newheap,newpure,strrep = simplify_heap_pure heap pure bv(*qvars*) in
-			Exists ({formula_exists_qvars = qvars;
+			let nqvars = List.append (h_fv newheap) (MCP.mfv newpure) in (* Remove redundant quantified variables *)
+			let nqvars = Gen.BList.intersect_eq CP.eq_spec_var qvars nqvars in
+			Exists ({formula_exists_qvars = nqvars;
 	            formula_exists_heap = newheap;
 	            formula_exists_pure = newpure;
 	            formula_exists_type = ftype;
@@ -4554,7 +4556,7 @@ and simplify_es_formula (f : formula) (bv : CP.spec_var list) =
 (** STEP 1 : replace variables that could be replaced by "original variables" **)
 (** STEP 2 : remove constraints concerning "unreachable" variables i.e. var without references **)
 and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var list) =
-	(* Print the base variables *)
+	(*(* Print the base variables *)
 (*	let _ = print_string "Specification & procedure base variables = " in*)
 (*	let _ = print_endline (!print_svl bv) in                             *)
 	(* Free variables in heap part *)
@@ -4633,4 +4635,10 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 			let nh = subst_heap sst h in
 			let np = MCP.OnePF nf in 
 			(* Without --eps option, this is always the case. Rearrange the pure & then do replacement. *)
-			(nh, np, strrep)
+			(nh, np, strrep)*)
+	let f = MCP.pure_of_mix p in
+	let nf,sst,strrep = CP.reduce_pure f bv in
+	let nh = subst_heap sst h in
+	let np = MCP.memo_subst sst p in
+		(nh, np, strrep)
+	

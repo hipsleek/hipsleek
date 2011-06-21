@@ -202,7 +202,7 @@ let read_last_line_from_in_channel chn : string =
 	  line := (input_line chn);
       let n = String.length !line in
         if n > 0 then begin
-		 (* print_string (line^"\n"); flush stdout;*)
+		  (*print_string (line^"\n"); flush stdout; An Hoa : comment *)
           (if !log_all_flag then 
             output_string log_all ("[omega.ml]: >> "^(!line)^"\n") );
           if !line.[0] != '#' then
