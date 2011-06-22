@@ -5,9 +5,18 @@ or{must,must} --> must
 or{valid,valid} --> valid
 or{valid,may} --> may
 */
-
 //pure
+// 1. or{must,valid} --> may
+checkentail n>3 or n<0 |- n>1.
 
+//2. or{must,must} --> must
+checkentail n<3 or n<0 |- n>5.
+
+// 3. or{valid,valid} --> valid
+checkentail n>2 or n>4 |- n>1.
+
+// 4. or{valid,may} --> may
+checkentail n>2 or n>0 |- n>1.
 
 //pointer
 
@@ -18,25 +27,21 @@ and{valid,valid} --> valid
 and{must,valid} --> must
 and{may,valid} --> may
 */
-
-//4. and{valid,valid} --> valid
 //pure
- checkentail n>3 or n>5 |- n>1.
+//5. and{valid,valid} --> valid
+ checkentail n>3 |- n>1 or n>2 & n>0.
 
-// 5. and{must,valid} --> must
-//pure
-checkentail n>3 or n<0 |- n>1.
+// 6. and{must,valid} --> must; WRONG: now valid
+checkentail n>8 |- n<3 or n>5 & n>6.
+
+// 7. and{must,must} --> must
+checkentail n>8 |- n<3 or n<4 & n<6.
+
+// 8. and{may,valid} --> may; WRONG: now valid
+checkentail n>4 |- n>6 or n>2 & n>3.
 
 //pointer
-/*
-C1:
-   a1 |- b: must
-   a2 |- b: may
-*/
-//checkentail n > 3 or n < 5 |- n <1.
-//checkentail x::ll<n> |-n>0.
 
-//pointer
 
 
 //UNION
