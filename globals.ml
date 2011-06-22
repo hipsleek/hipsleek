@@ -7,9 +7,6 @@ type constant_flow = ident
 
 type nflow = (int*int)(*numeric representation of flow*)
 
-(* Counter for b_formula label *)
-let bformula_label_counter = ref 0
-	
 type bformula_label = int
 	
 and branch_label = string	(*formula branches*)
@@ -345,8 +342,8 @@ let enable_incremental_proving = ref false
   let do_sat_slice = ref false
 
 (* Options for slicing *)
-  let do_slicing = ref false
-  
+let do_slicing = ref false
+
 let add_count (t: int ref) = 
 	t := !t+1
 

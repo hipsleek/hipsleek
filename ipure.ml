@@ -15,8 +15,9 @@ type formula =
   | Exists of ((ident * primed) * formula *(formula_label option)* loc)
 
 (* Boolean constraints *)
-and b_formula = p_formula * ((bool * int) option) (* (is_linking, label) *)
-	
+and b_formula = p_formula * ((bool * int * (exp list)) option)
+(* (is_linking, label, list of linking expressions in b_formula) *)
+
 and p_formula = 
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
@@ -69,7 +70,6 @@ and exp =
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
   | ArrayAt of ((ident * primed) * exp  * loc)      (* An Hoa : array access *)
-
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -644,4 +644,58 @@ let merge_branches l1 l2 =
     with Not_found -> (branch, List.assoc branch l2)
   in
   List.map map_fun branches
+
+let rec find_lexp_formula (f: formula) ls =
+  match f with
+	| BForm (bf, _) -> find_lexp_b_formula bf ls
+	| _ -> []
+	
+and find_lexp_b_formula (bf: b_formula) ls =
+  let (pf, _) = bf in
+  match pf with
+	| BConst _
+	| BVar _ -> []
+	| Lt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Lte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Gt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Gte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Eq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Neq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| EqMax (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
+	| EqMin (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
+	| BagIn (_, e, _) -> find_lexp_exp e ls
+	| BagNotIn (_, e, _) -> find_lexp_exp e ls
+	| BagSub (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| BagMin _ | BagMax _ -> []
+	| ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListNotIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+
+and find_lexp_exp (e: exp) ls =
+  if Hashtbl.mem ls e then [e] else
+  match e with
+	| Null _
+	| Var _
+	| IConst _
+	| FConst _ -> []
+	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Div (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| BagDiff (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| List (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| ListCons (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListHead (e, _) -> find_lexp_exp e ls
+	| ListTail (e, _) -> find_lexp_exp e ls
+	| ListLength (e, _) -> find_lexp_exp e ls
+	| ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| ListReverse (e, _) -> find_lexp_exp e ls
+	| ArrayAt (_, e, _) -> find_lexp_exp e ls
 ;;

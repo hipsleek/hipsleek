@@ -163,6 +163,11 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 
+let linking_exp_list = ref (Hashtbl.create 100)
+
+let _ = let zero = P.IConst (0, no_pos)
+		in Hashtbl.add !linking_exp_list zero 0
+  
 let rec string_of_spec_var_list l = match l with 
   | []               -> ""
   | h::[]            -> string_of_spec_var h 
@@ -735,7 +740,6 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 	in	
 	List.map helper f
 
-
 let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 	let rec helper (f:ext_formula):ext_formula = match f with
 		| EAssume (b,tag) -> EAssume ((rename_bound_vars b),tag)
@@ -785,7 +789,15 @@ and float_out_exps_from_heap (f:formula ):formula =
 					      | _ -> 
 						  let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 						  let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
-						  let npf = Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) in																
+						  let npf =
+							if !Globals.do_slicing then
+							  try
+								let _ = Hashtbl.find !linking_exp_list c in
+								let _ = Hashtbl.remove !linking_exp_list c in
+								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), [c]))), None)
+							  with Not_found ->
+								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+							else Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) in (* Slicing: TODO IL for linking exp *)																
 						    (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 	  (HeapNode ({b with h_formula_heap_arguments = na}),(List.concat ls))
     | HeapNode2 b ->	 
@@ -795,7 +807,15 @@ and float_out_exps_from_heap (f:formula ):formula =
 					      | _ -> 
 						  let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 						  let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
-						  let npf = Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in																
+						  let npf =
+							if !Globals.do_slicing then
+							  try
+								let _ = Hashtbl.find !linking_exp_list (snd c) in
+								let _ = Hashtbl.remove !linking_exp_list (snd c) in
+								Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), (Some (false, fresh_int(), [snd c]))), None)
+							  with Not_found ->
+								Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None)
+							else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)															
 						    (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
 	  (HeapNode2 ({b with h_formula_heap2_arguments = na}),(List.concat ls))
     | HTrue -> (f,[])
@@ -960,7 +980,8 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			let ne2, np2 = float_out_exp_min_max e2 in
 			let new_name = ("max"^(fresh_trailer())) in
 			let nv = Ipure.Var((new_name, Unprimed), l) in
-			let t = Ipure.BForm ((Ipure.EqMax(nv, ne1, ne2, l), None), None) in 
+			let t = Ipure.BForm ((Ipure.EqMax(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), [])), None) in
+			(* $ h = 1 + max(h1, h2) -> <$,_> h = 1 + max_1 & <_,_> max_1 = max(h1, h2) ==> h is still separated from h1, h2 *)
 			let r = match (np1, np2) with
 					| None, None -> Some (t,[new_name])
 					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
@@ -974,7 +995,7 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			let ne2, np2 = float_out_exp_min_max e2 in
 			let new_name = ("min"^(fresh_trailer())) in
 			let nv = Ipure.Var((new_name, Unprimed), l) in
-			let t = Ipure.BForm ((Ipure.EqMin(nv, ne1, ne2, l), None), None) in 
+			let t = Ipure.BForm ((Ipure.EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), [])), None) in 
 			let r = match (np1, np2) with
 					| None, None -> Some (t,[new_name])
 					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
@@ -1330,7 +1351,7 @@ match h with
 		      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
 		      let nv = Ipure.Var((new_name, Unprimed), l) in
 			(nv:: a, match c with
-			   | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), None), None)) )
+			   | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), None), None))) (* Slicing: TODO: mark IL for linking exp *)
 			   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), None), None))), s, l)))) ([], None) args in
            (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);}), new_p)
     |  HeapNode2 h1 ->

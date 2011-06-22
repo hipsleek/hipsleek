@@ -604,12 +604,13 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
 
-(** print a b_formula  to formatter *)
 let string_of_slicing_label sl =
   match sl with
 	| None -> ""
-	| Some (il, lbl) -> "<" ^ (if il then "IL, " else ", ") ^ (string_of_int lbl) ^ ">"
+	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
+	  ^ (string_of_int lbl) ^ (*", " ^ (string_of_formula_exp_list el) ^*) ">"
 		  
+(** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in

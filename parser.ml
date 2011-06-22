@@ -364,14 +364,15 @@ let rec set_il_formula f il =
 and set_il_b_formula bf il =
   let (pf, _) = bf in (pf, il)
 
+and set_il_exp exp il =
+  let (pe, _) = exp in (pe, il)				   
+				   
 and set_slicing_utils_pure_double f il =
   match f with
-	| Pure_f pf ->
-		let _ = Globals.bformula_label_counter := !Globals.bformula_label_counter + 1 in
-		Pure_f (set_il_formula pf (Some (il, !Globals.bformula_label_counter)))
-	| _ -> f
+	| Pure_f pf -> let ls = P.find_lexp_formula pf !F.linking_exp_list in
+				   Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
+	| Pure_c pc -> let _ = Hashtbl.add !F.linking_exp_list pc 0 in f
 				   
-
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"

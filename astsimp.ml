@@ -3827,7 +3827,9 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
   { Cformula.formula_flow_interval = Gen.ExcNumbering.get_hash_of_exc f0;
   Cformula.formula_flow_link = None} 
-      
+
+
+
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
   match f0 with
     | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl) 
@@ -3846,9 +3848,12 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
           let pf = trans_pure_formula f stab in
           let sv = trans_var (v,p) stab pos in
 	      CP.mkExists [ sv ] pf lbl pos
-
+			
+and trans_pure_b_formula_debug (b0 : IP.b_formula) stab : CP.b_formula =
+  Gen.Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula b stab) b0 			
+			
 and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
-  let (pf, il) = b0 in
+  let (pf, sl) = b0 in
   let npf =  match pf with
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
@@ -3905,9 +3910,14 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.RelForm (r, args, pos) ->
           let cpargs = trans_pure_exp_list args stab in
           CP.RelForm (r, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
-  in (npf,il)
+  in
+  match sl with
+	| None -> (npf, None)
+	| Some (il,lbl,el) -> let nel = trans_pure_exp_list el stab in (npf, Some (il,lbl,nel))
               
-
+and trans_pure_exp_debug (e0 : IP.exp) stab : CP.exp =
+  Gen.Debug.no_1 "trans_pure_exp" (Iprinter.string_of_formula_exp) (Cprinter.string_of_formula_exp) (fun e -> trans_pure_exp e stab) e0 
+  
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
@@ -5503,7 +5513,7 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Ifor
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
   let pr1 = Iprinter.string_of_struc_formula in
-  let pr2 x = "?" in
+  let pr2  = fun (sf,_) -> Iprinter.string_of_struc_formula sf in
   Gen.Debug.no_1 "case_normalize_struc_formula" pr1 pr2 (fun _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) f
       
 and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
@@ -6058,13 +6068,18 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   }
 
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
+and case_normalize_program_debug (prog: Iast.prog_decl):Iast.prog_decl =
+  Gen.Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program prog
+	
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
+  let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in
   let tmp_views = List.map (fun c-> 
 	  let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
 	  let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
 	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
 	  { c with Iast.view_formula = 	wf;}) tmp_views in
+  let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
   let prog = {prog with Iast.prog_data_decls = cdata} in

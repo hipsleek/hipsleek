@@ -20,8 +20,9 @@ type formula =
   | Exists of (spec_var * formula * (formula_label option)*loc)
 
 (* Boolean constraints *)
-and b_formula = p_formula * ((bool * bformula_label) option)
-	  
+and b_formula = p_formula * ((bool * int * (exp list)) option)
+(* (is_linking, label, list of linking expressions in b_formula) *)
+	
 and p_formula =
   | BConst of (bool * loc)
   | BVar of (spec_var * loc)
@@ -108,7 +109,8 @@ let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
      
 (* TODO: determine correct type of an exp *)
-let rec get_exp_type (e : exp) : typ = match e with
+let rec get_exp_type (e : exp) : typ =
+  match e with
   | Null _ -> Named ""
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ -> Int
@@ -242,7 +244,8 @@ and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv2 = afv a2 in
   remove_dups_svl (fv1 @ fv2)
 
-and afv (af : exp) : spec_var list = match af with
+and afv (af : exp) : spec_var list =
+  match af with
   | Null _ -> []
   | Var (sv, _) -> [sv]
   | IConst _ -> []
@@ -278,7 +281,8 @@ and afv_list (alist : exp list) : spec_var list = match alist with
   |[] -> []
   |a :: rest -> afv a @ afv_list rest
 
-and is_max_min a = match a with
+and is_max_min e =
+  match e with
   | Max _ | Min _ -> true
   | _ -> false
 
@@ -313,20 +317,24 @@ and isConstBFalse (p:b_formula) =
   | BConst (false, pos) -> true
   | _ -> false
 
-and is_null (e : exp) : bool = match e with
+and is_null (e : exp) : bool =
+  match e with
   | Null _ -> true
   | _ -> false
 
-and is_zero (e : exp) : bool = match e with
+and is_zero (e : exp) : bool =
+  match e with
   | IConst (0, _) -> true
   | FConst (0.0, _) -> true
   | _ -> false
 
-and is_var (e : exp) : bool = match e with
+and is_var (e : exp) : bool =
+  match e with
   | Var _ -> true
   | _ -> false
 
-and is_num (e : exp) : bool = match e with
+and is_num (e : exp) : bool =
+  match e with
   | IConst _ -> true
   | FConst _ -> true
   | _ -> false
@@ -342,39 +350,47 @@ and to_int_const e t =
           end
     | _ -> 0
 
-and is_int (e : exp) : bool = match e with
+and is_int (e : exp) : bool =
+  match e with
   | IConst _ -> true
   | _ -> false
 
-and is_float (e : exp) : bool = match e with
+and is_float (e : exp) : bool =
+  match e with
   | FConst _ -> true
   | _ -> false
         
-and get_num_int (e : exp) : int = match e with
+and get_num_int (e : exp) : int =
+  match e with
   | IConst (b,_) -> b
   | _ -> 0
 
-and get_num_float (e : exp) : float = match e with
+and get_num_float (e : exp) : float =
+  match e with
   | FConst (f, _) -> f
   | _ -> 0.0
 
-and is_var_num (e : exp) : bool = match e with
+and is_var_num (e : exp) : bool =
+  match e with
   | Var _ -> true
   | IConst _ -> true
   | FConst _ -> true
   | _ -> false
 
-and to_var (e : exp) : spec_var = match e with
+and to_var (e : exp) : spec_var =
+  match e with
   | Var (sv, _) -> sv
   | _ -> failwith ("to_var: argument is not a variable")
 
-and can_be_aliased (e : exp) : bool = match e with
+and can_be_aliased (e : exp) : bool =
+  match e with
   | Var _ | Null _ -> true
         (* null is necessary in this case: p=null & q=null.
            If null is not considered, p=q is not inferred. *)
   | _ -> false
 
-and get_alias (e : exp) : spec_var = match e with
+and get_alias (e : exp) : spec_var =
+  match e with
   | Var (sv, _) -> sv
   | Null _ -> null_var (* it is safe to name it "null" as no other variable can be named "null" *)
   | _ -> failwith ("get_alias: argument is neither a variable nor null")
@@ -383,18 +399,21 @@ and is_object_var (sv : spec_var) = match sv with
   | SpecVar (Named _, _, _) -> true
   | _ -> false
         
-and exp_is_object_var (sv : exp) = match sv with
+and exp_is_object_var (e : exp) =
+  match e with
   | Var(SpecVar (Named _, _, _),_) -> true
   | _ -> false
         
-and is_bag (e : exp) : bool = match e with
+and is_bag (e : exp) : bool =
+  match e with
   | Bag _
   | BagUnion _
   | BagIntersect _
   | BagDiff _ -> true
   | _ -> false
 
-and is_list (e : exp) : bool = match e with
+and is_list (e : exp) : bool =
+  match e with
   | List _
   | ListCons _
   | ListTail _
@@ -414,7 +433,8 @@ and is_list_bform (b: b_formula) : bool =
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> true
   | _ -> false
 
-and is_arith (e : exp) : bool = match e with
+and is_arith (e : exp) : bool =
+  match e with
   | Add _
   | Subtract _
   | Mult _
@@ -464,7 +484,8 @@ and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
   | RelForm _ -> false (* An Hoa *)
 
 (* Expression *)
-and is_exp_arith (e:exp) : bool= match e with
+and is_exp_arith (e:exp) : bool=
+  match e with
   | Null _  | Var _ | IConst _ | FConst _ -> true
   | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
   | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
@@ -566,7 +587,8 @@ and mkOr f1 f2 lbl pos=
   else if (isConstTrue f2) then f2
   else Or (f1, f2, lbl ,pos)
 
-and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula = match (ae1, ae2) with
+and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
+  match (ae1, ae2) with
   | (Var v1, Var v2) ->
         if eq_spec_var (fst v1) (fst v2) then
           mkTrue pos 
@@ -5228,6 +5250,7 @@ and set_il_relation rl il =
 	| UnionRel (r1, r2) -> UnionRel (set_il_relation r1 il, set_il_relation r2 il)
 *)
 (* Slicing: Set <IL> for a formula based on a list of dependent groups *)
+(*  *)  
 let rec set_il_formula_with_dept_list f rel_vars_lst =
   match f with
 	| BForm ((pf, _), lbl) ->
@@ -5238,8 +5261,7 @@ let rec set_il_formula_with_dept_list f rel_vars_lst =
 		let is_dept = List.fold_left (fun res rvl -> if res then true else (check_dept vl rvl)) false rel_vars_lst in
 		if is_dept then BForm ((pf, None), lbl)
 		else
-		  let _ = Globals.bformula_label_counter := !Globals.bformula_label_counter + 1 in
-		  BForm ((pf, Some (true, !Globals.bformula_label_counter)), lbl)
+		  BForm ((pf, Some (true, Globals.fresh_int(), [])), lbl)
 	| And (f1, f2, l) -> And (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, l)
 	| Or (f1, f2, lbl, l) -> Or (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, lbl, l)
 	| Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
