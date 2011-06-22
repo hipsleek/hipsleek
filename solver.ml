@@ -2899,8 +2899,8 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
     else if isAnyFalseCtx ctx then
       (SuccCtx [ctx], UnsatAnte)
     else
-      (* heap_entail_after_sat prog is_folding  ctx conseq pos ([])*)
-
+      heap_entail_after_sat prog is_folding  ctx conseq pos ([])
+(*
       begin
           let flow_conseq = flow_formula_of_formula conseq in
           let new_conseq, post_check=
@@ -2948,7 +2948,7 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
             (*let _ = print_endline "locle4" in*)
            (rs, prf)
       end
-
+*)
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
