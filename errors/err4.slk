@@ -9,23 +9,23 @@ pred neg_ll<n> == self = null & n = 0
 	or self::node<d,r> * r::neg_ll<n - 1> & d<0
 	inv n >= 0.
 
-lemma self::pos_ll<n> & n>0 <- self::neg_ll<n> & flow __Error.
-lemma self::neg_ll<n>  & n>0 <- self::pos_ll<n> & flow __Error.
+lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __Error.
+lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __Error.
 //lemma self::neg_ll<n> & n=0 -> x=null.
 //lemma self::pos_ll<n> & n=0 -> x=null.
 //lemma self::neg_ll<n> & n=0 <- x=null.
 //lemma self::pos_ll<n> & n=0 <- x=null.
 
-// 1.
+// 1. must fail
  checkentail x>3 |- x<=0 .
 
-// 2.
+// 2. valid
  checkentail x>3 |- x>0 .
 
 // 3.Valid  is_valid (R)  --> R1 = true & flow __Error
+// should be must_error..
 checkentail x>3 |- x>0 & flow __Error.
 print residue.
-
 /*  wrong as detected as valid since es_must_error was None
 Entail(3)=Valid.
 printing here:  
@@ -40,7 +40,7 @@ Good Context: [es_formula: true & 3<x & {FLOW,(13,13)=__Error,}
 // 4.may is_may_error(R)  --> R1 = R
 checkentail x>3 |- x>5 & flow __Error.
 
-
+// should be valid ..
 // 5.must is_must_error(R) --> R1 = true & flow norm
 checkentail x>3 |- x<=0 & flow __Error .
 
@@ -50,57 +50,81 @@ checkentail true |- true.
 // 7. valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n>.
 
-// 8. may fail
+// 8. may fail but detected as must fail..
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
 //9. may fail
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
-
-//10. R=valid.flow=__norm
-checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
-/* 
- this is wrong! UNSOUND
-
-Entail(10)=Valid.
+/* INCONSISTENCY:
+Entail(9)=Fail.(must) cause:12
 printing here:  
-Good Context: [es_formula: true & x=null & m=0 & m=0 & (x=null | m=0) & {FLOW,(27,27)=__norm,}
+Good Context: [es_formula: SS 33:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
 */
 
-//11. may failure
+//10. must fail
+checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
+/* 
+Entail(10)=Fail.(must) cause:and[and[22  n=0 |-  0<n (must-bug).,15.1 x=null |-  x!=null],12]
+printing here:  
+Good Context: [es_formula: 
+                true & x=null & m=0 & m=0 & (x=null | m=0) & n=0 &
+                {FLOW,(13,13)=__Error,}
+               es_pure: true
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: 
+                Some(and[and[22  n=0 |-  0<n (must-bug).,15.1 x=null |-  x!=null],12])
+               es_var_label: None]
+*/
+
+//11. may failure but detected as must-fail
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
+/*
+Good Context: [es_formula: SS 42:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_172]
+               es_aux_conseq: true
+               es_must_error: Some(12)
+               es_var_label: None]
+
+*/
 
 //12. must failure - R = true, flow = __Error
 checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
-/*  this is wrong! as es_must_error needs a message
-Entail(12)=Valid.
-printing here:  
-Good Context: [es_formula: true & 0<m & 0<n & n=m & {FLOW,(13,13)=__Error,}
-               es_pure: true
-               es_heap: SS 48:x::pos_ll<m>@M[Orig]
-               es_aux_conseq: true
-               es_must_error: None
-*/
+
 
 //13 valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
 
-//14. may failure , should be improved
+//14. may failure , but detected as must-fail!
 checkentail x::pos_ll<n> |- x::neg_ll<n> .
-/* UNSOUND __norm and es_must_error inconsistent!
-
-Entail(14)=Fail.(must) cause:13
+/* 
+Entail(14)=Fail.(must) cause:12
 printing here:  
-Good Context: [es_formula: SS 56:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+Good Context: [es_formula: SS 54:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
                es_pure: true
                es_heap: true
-               es_evars: [n_253]
+               es_evars: [n_222]
                es_aux_conseq: true
-               es_must_error: Some(13)
-               es_var_label: None]
+               es_must_error: Some(12)
+
 */
 
 //15. should be a must failure (not may) but needs an unfold of LHS
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+/*
+no unfold it seems:
+Entail(15)=Fail.(must) cause:12
+printing here:  
+Good Context: [es_formula: SS 59:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_240]
+               es_aux_conseq: true
+               es_must_error: Some(12)
+
+*/
 
 //16. must failure - R = true, flow = __Error
 // TODO requires a lemma, need unfold here
