@@ -2909,6 +2909,8 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
     else if isAnyFalseCtx ctx then
       (SuccCtx [ctx], UnsatAnte)
     else
+       (*heap_entail_after_sat prog is_folding  ctx conseq pos ([])*)
+
       begin
           let flow_conseq = flow_formula_of_formula conseq in
           let new_conseq, post_check=
@@ -2927,44 +2929,36 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
                           if (is_must_failure_ft ft) then
                             begin
                                 (*must case: R1 = true & flow norm*)
-                                let rec helper ft=
-                                  match ft with
-                                    | Basic_Reason (fc, _) ->
-                                        let res_es = fc.CF.fc_current_lhs in
-                                        let res_ctx = Ctx (CF.add_to_estate res_es fc.CF.fc_message) in
-                                        (CF.change_flow_into_ctx !Globals.n_flow_int [res_ctx])
-                                  (*| Trivial_Reason s ->*)
-                                    | Or_Reason (ft1, ft2) ->
-                                        let rs1 = helper ft1 in
-                                        let rs2 = helper ft2 in
-                                        (rs1@rs2)
-                                    | And_Reason (ft1, ft2) ->
-                                         let rs1 = helper ft1 in
-                                        let rs2 = helper ft2 in
-                                        (rs1@rs2)
-                                    | _ -> report_error no_pos "solver.heap_entail_one_context: should be improved"
+                                let new_rs =
+                                  (match (get_must_es_msg_ft ft) with
+                                    | Some (es,msg) ->
+                                        let new_ctx_lst = CF.change_flow_into_ctx !Globals.n_flow_int
+                                          [Ctx {es with es_must_error = Some msg } ] in
+                                        (SuccCtx new_ctx_lst)
+                                    | _ ->  rs)
                                 in
-                                (SuccCtx (helper ft), prf)
+                                (new_rs, prf)
                             end
                           else  if (is_may_failure_ft ft) then
                             (*may case: R1 = R (not handle now)*)
                             (rs, prf)
                           else
                             (*trivial cases*)
-                             let _ = print_endline "locle2" in
+                             (*let _ = print_endline "locle2" in*)
                             (rs, prf)
                       end
                   | SuccCtx ctx_lst ->
                        (*valid case: R1 = true & flow __Error*)
-                      let _ = print_endline "locle3" in
+                      (*let _ = print_endline "locle3" in*)
                        let new_rs = SuccCtx (CF.change_flow_ctx !Globals.n_flow_int
                                                  flow_conseq.CF.formula_flow_interval ctx_lst)
                        in (new_rs, prf)
            end
          else
-            let _ = print_endline "locle4" in
+            (*let _ = print_endline "locle4" in*)
            (rs, prf)
       end
+
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =

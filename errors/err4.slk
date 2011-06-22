@@ -17,14 +17,15 @@ lemma self::neg_ll<n>  & n>0 <- self::pos_ll<n> & flow __Error.
 //lemma self::pos_ll<n> & n=0 <- x=null.
 
 // 1.
-checkentail x>3 |- x<=0 .
+ checkentail x>3 |- x<=0 .
 
 // 2.
-checkentail x>3 |- x>0 .
+ checkentail x>3 |- x>0 .
 
 // 3.Valid  is_valid (R)  --> R1 = true & flow __Error
 checkentail x>3 |- x>0 & flow __Error.
 print residue.
+
 /*  wrong as detected as valid since es_must_error was None
 Entail(3)=Valid.
 printing here:  
@@ -106,7 +107,7 @@ checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> & n=0 or x::neg_ll<n> & n>0.
 /* could be a must failure if es_must_error instantiated
 Entail(16)=Valid.
-printing here:  
+printing here:
 Good Context: [es_formula: true & 0<n & {FLOW,(13,13)=__Error,}
                es_pure: true
                es_heap: SS 69:x::pos_ll<n>@M[Orig]
@@ -123,6 +124,7 @@ checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 
 //18. inconsitent must failure
 checkentail x>3 & flow __Error |- x>0 & flow __Error.
+
 /*
 flow need to be __norm following LHS
 Good Context: [es_formula: true & 3<x & {FLOW,(27,27)=__norm,}
@@ -132,10 +134,10 @@ Good Context: [es_formula: true & 3<x & {FLOW,(27,27)=__norm,}
 //19. inconsistent must failure
 checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
 /*
-__SleekMustErr seems empty
+__SleekMustErr seems empty. __SleekMustErr has not been supported yet.
 
 Entail(19)=Valid.
-printing here:  
+printing here:
 Good Context: [es_formula: false & false & {FLOW,(0,0)=__false,}
                es_pure: true
 

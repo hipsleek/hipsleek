@@ -19,9 +19,13 @@ and{must,valid} --> must
 and{may,valid} --> may
 */
 
-//and{valid,valid} --> valid
+//4. and{valid,valid} --> valid
 //pure
-checkentail n > 3 or n >5 |- n >1.
+ checkentail n>3 or n>5 |- n>1.
+
+// 5. and{must,valid} --> must
+//pure
+checkentail n>3 or n<0 |- n>1.
 
 //pointer
 /*
