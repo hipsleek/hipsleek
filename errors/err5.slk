@@ -1,0 +1,47 @@
+//OR
+/*
+or{must,valid} --> may
+or{must,must} --> must
+or{valid,valid} --> valid
+or{valid,may} --> may
+*/
+
+//pure
+
+
+//pointer
+
+
+//AND
+/*
+and{valid,valid} --> valid
+and{must,valid} --> must
+and{may,valid} --> may
+*/
+
+//and{valid,valid} --> valid
+//pure
+checkentail n > 3 or n >5 |- n >1.
+
+//pointer
+/*
+C1:
+   a1 |- b: must
+   a2 |- b: may
+*/
+//checkentail n > 3 or n < 5 |- n <1.
+//checkentail x::ll<n> |-n>0.
+
+//pointer
+
+
+//UNION
+/*
+union{valid,may} --> valid
+union{may,must} --> may
+*/
+//pure
+
+
+
+//pointer

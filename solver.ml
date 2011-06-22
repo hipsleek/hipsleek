@@ -6150,6 +6150,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
     begin
         (*in the case rhs is a view, try to unfold and matching once*)
         (*this code is copied from process_action.Context.M_unfold*)(*
+        let unfold_num = 0 in
          let rhs_var = get_node_var c2 in
           let curr_unfold_num = (get_view_unfold_num c2)+unfold_num in
           if (curr_unfold_num>1) then
