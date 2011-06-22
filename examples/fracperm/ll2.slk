@@ -73,6 +73,10 @@ x::node<_,null> |- [1/2]x::node<_,null>
 
 //// component-wise rules
 
+//match
+[p]x::ll<n> |- [p1]x::ll<m>.
+//residue = [p2]x::ll<n> & p2=p-p1 & m=m
+
 //unfold
 [p]x::ll<n> |- self = null & n = 0
 	or [p]x::node<next = r> * [p]r::ll<n - 1>
@@ -92,13 +96,11 @@ For examples:
 [1/2]x::node<_,q> * q::node<_,null> |- [1/2]x::ll<n> * [1/2]q::node<_,null> & n=2
 
 
-// QUANTIFIED/EXISTENTIAL factional permission
+//========== QUANTIFIED/EXISTENTIAL factional permission
 // Is is necessary?
 
-// HEURISTICS
+//========== HEURISTICS
 x::node<_,null> |- [f]x::node<_,null> & 0<f<1
  <=> [w]x::node<_,null> |- [r]x::node<_,null>
      with w,r are reserved keywords. The system automatically infers the permission fraction
 
-
-abc
