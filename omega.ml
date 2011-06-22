@@ -216,7 +216,7 @@ let read_last_line_from_in_channel chn : string =
 	!line
   
 (* send formula to omega and receive result -true/false*)
-let check_formula f timeout =
+let rec check_formula f timeout =
   (*  try*)
   begin
       if not !is_omega_running then start ()
@@ -236,7 +236,8 @@ let check_formula f timeout =
         in
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
-        
+		
+        try (** An Hoa : wrap with try/with to handle the End_of_file exception **)
         let result = ref true in
         let str = read_last_line_from_in_channel (!process.inchannel) in
         let n = String.length str in
@@ -249,6 +250,12 @@ let check_formula f timeout =
 	            end;
           end;
         !result
+		with (* An Hoa : added code *)
+			| End_of_file -> 
+				let _ = print_endline "Exception End_of_file occur! Resend formula..." in
+				let _ = restart "Restart after exception!" in
+					check_formula f (timeout *. 2.0)
+			(* An Hoa : end! *)
       in
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
