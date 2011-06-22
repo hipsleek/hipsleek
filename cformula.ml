@@ -801,7 +801,7 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
-  Gen.Debug.ho_2 "mkstar_combine"
+  Gen.Debug.no_2 "mkstar_combine"
       (!print_formula)
       (!print_formula)
       (!print_formula)
@@ -2154,6 +2154,7 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
+  es_must_error : string option
 }
 
 and context = 
@@ -2215,10 +2216,31 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
+
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
+
+let is_cont t = 
+  match t with
+    | ContinuationErr _ -> true
+    | Or_Continuation _ -> true
+    | _ -> false
+
+let isFailCtx cl = match cl with 
+	| FailCtx _ -> true
+	| SuccCtx _ -> false
+
+let get_must_error_from_ctx cs = 
+  match cs with 
+    | [Ctx es] -> es.es_must_error
+    | _ -> None
+
+let isFailCtx_gen cl = match cl with 
+	| FailCtx _ -> true
+	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
+    (* | _ -> false *)
 
 let mk_failure_must_raw msg = Failure_Must msg
 
@@ -2279,12 +2301,13 @@ let get_must_failure (ft:list_context) =
           (* with a ->   *)
           (*     let _ = print_flush (!print_list_context_short ft) in *)
           (*     raise a) *)
-    | _ -> None
+	| SuccCtx cs -> get_must_error_from_ctx cs
+    (* | _ -> None *)
 
 let get_may_failure_fe (f:fail_explaining) =
   match f.fe_kind with
     | Failure_May m | Failure_Must m -> Some m 
-    | _ -> None
+    | Failure_None -> Some "proven valid here"
 
 let rec get_may_failure_ft (f:fail_type) =
   match f with
@@ -2308,6 +2331,44 @@ let get_may_failure (f:list_context) =
                   in report_error no_pos "Should be a may failure here")
     | _ -> None
 
+(* returns Some es if it is a must failure *)
+let rec get_must_es_from_ft ft = 
+  match ft with
+    | Basic_Reason (fc,fe) -> 
+          if is_must_failure_fe fe then Some fc.fc_current_lhs
+          else None
+    | Or_Reason (f1,f2) -> 
+          let r1=(get_must_es_from_ft f1) in
+          let r2=(get_must_es_from_ft f2) in
+          (match r1,r2 with
+            | Some _,Some _ -> r1
+            | _, _ -> None)
+    | And_Reason (f1,f2) -> 
+          let r1=(get_must_es_from_ft f1) in
+          let r2=(get_must_es_from_ft f2) in
+          (match r1,r2 with
+            | Some _, _ -> r1
+            | None, Some _ -> r2
+            | None, None -> None)
+    | _ -> None
+
+let get_must_es_msg_ft ft = 
+  let es = get_must_es_from_ft ft in
+  let msg = get_must_failure_ft ft in
+  match es,msg with
+    | Some es, Some msg -> Some (es,msg)
+    | None, None -> None
+    | _, _ -> report_error no_pos "INCONSISTENCY with get_must_es_msg_ft"
+
+let convert_must_failure_to_value (l:list_context) : list_context =
+  match l with 
+  | FailCtx ft ->
+        (match (get_must_es_msg_ft ft) with
+          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some msg } ] 
+          | _ ->  l)
+  | SuccCtx _ -> l
+
+
 let is_may_failure_fe (f:fail_explaining) = (get_may_failure_fe f) != None
 
 let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
@@ -2319,7 +2380,6 @@ let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
     | Ctx es -> f a es
     | OCtx (c1,c2) -> helper (helper a c1) c2 in
   helper a c
-
 
 
 let consistent_entail_state (es:entail_state) : bool = consistent_formula es.es_formula
@@ -2442,6 +2502,7 @@ let rec empty_es flowt pos =
   es_aux_xpure_1 = MCP.mkMTrue pos;
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
+  es_must_error = None;
 
 }
 
@@ -2605,15 +2666,6 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
   
   (*context set union*)
 
-let is_cont t = 
-  match t with
-    | ContinuationErr _ -> true
-    | Or_Continuation _ -> true
-    | _ -> false
-
-let isFailCtx cl = match cl with 
-	| FailCtx _ -> true
-	| SuccCtx _ -> false
 
 let list_context_union_x c1 c2 = 
   let simplify x = (* context_list_simplify *) x in

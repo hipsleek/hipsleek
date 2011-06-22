@@ -1107,6 +1107,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_vwrap "es_aux_conseq: "  (pr_pure_formula) es.es_aux_conseq; 
+  pr_vwrap "es_must_error: "  (pr_opt fmt_string) es.es_must_error; 
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
@@ -1181,8 +1182,9 @@ let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
-    | Basic_Reason (br,fe) -> (string_of_fail_explaining fe);
-          if fe.fe_kind=Failure_None then () else (pr_fail_estate br)
+    | Basic_Reason (br,fe) -> 
+          (string_of_fail_explaining fe);
+          if fe.fe_kind=Failure_None then fmt_string ("Failure_None") else (pr_fail_estate br)
     | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
@@ -1205,11 +1207,11 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 let pr_list_context (ctx:list_context) =
   match ctx with
     | FailCtx ft -> fmt_cut ();fmt_string "Bad Context: "; 
-        (match ft with
-            | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (*useful: MUST - OK*)
-            (* TODO : to output must errors first *)
-            (* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *)
-            | _ -> fmt_string "");
+        (* (match ft with *)
+        (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+        (*     (\* TODO : to output must errors first *\) *)
+        (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+        (*     | _ -> fmt_string ""); *)
         pr_fail_type ft; fmt_cut ()
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
 

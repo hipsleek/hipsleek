@@ -350,11 +350,12 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
   let rs1, _, _ = Solver.heap_entail_struc_init !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None in
+  let rs1 = CF.convert_must_failure_to_value rs1 in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   flush stdout;
-  let res = not (CF.isFailCtx rs) in
+  let res = not (CF.isFailCtx_gen rs) in
   (res, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -367,7 +368,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
           | Some s -> "(must) cause:"^s 
           | _ -> (match CF.get_may_failure rs with
                 | Some s -> "(may) cause:"^s
-                | None -> "expected fail but success"
+                | None -> "INCONSISTENCY : expected failure but success instead"
           )
         in
         print_string (num_id^"=Fail."^s^"\n");

@@ -1900,7 +1900,7 @@ match ls with
   | f::fs -> (!print_formula f) ^ "\n" ^ (string_of_ls_pure_formula fs)
 
 and filter_redundant ante cons =
-  Gen.Debug.ho_2 "filter_redundant" !print_formula !print_formula !print_formula
+  Gen.Debug.no_2 "filter_redundant" !print_formula !print_formula !print_formula
   (fun a c -> filter_redundant_x a c) ante cons
 
 and filter_redundant_x ante cons =
@@ -5285,7 +5285,7 @@ let refine_one_contradiction is_sat f=
 
 let refine_one_contradiction is_sat f=
 let pr = !print_formula in
-  Gen.Debug.ho_1 "refine_one_contradiction" pr pr refine_one_contradiction f
+  Gen.Debug.no_1 "refine_one_contradiction" pr pr refine_one_contradiction f
 *)
 let part_must_failures is_sat pairs =
   List.partition (fun (a,c) ->

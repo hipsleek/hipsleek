@@ -1701,7 +1701,7 @@ struct
 
   let compute_hierarchy i () =
     let pr () = string_of_exc_list 0 in
-     Debug.ho_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
+     Debug.no_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
 
 
   (* TODO : use a graph module here! *)
