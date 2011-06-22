@@ -4637,8 +4637,7 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 			(* Without --eps option, this is always the case. Rearrange the pure & then do replacement. *)
 			(nh, np, strrep)*)
 	let f = MCP.pure_of_mix p in
-	let nf,sst,strrep = CP.reduce_pure f bv in
+	let sst,strrep = CP.reduce_pure f bv in
 	let nh = subst_heap sst h in
-	let np = MCP.memo_subst sst p in
+	let np = MCP.simplify_mix_formula (MCP.memo_subst sst p) in
 		(nh, np, strrep)
-	

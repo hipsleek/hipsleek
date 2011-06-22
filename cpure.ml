@@ -5132,12 +5132,11 @@ let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list)
 		@param 	f	Pure formula representing constraints to simplify
 		@param	bv	List of "parametric"/base variables to solve the
 					constraints for
-		@return A reduced formula; a list of replacement (substitution) to
+		@return  list of replacement (substitution) to
 		be made; (The list of replacement is so that the caller can make changes.)
 		the list of string representations of all the variables.
  **)
-let rec reduce_pure (f : formula) (bv : spec_var list) 
-					: (formula * ((spec_var * spec_var) list) * ((spec_var * string) list)) =
+let rec reduce_pure (f : formula) (bv : spec_var list) =
 	(*print_endline "reduce_pure";*)
 
 	(* Split f into collections of conjuction *)
@@ -5170,8 +5169,5 @@ let rec reduce_pure (f : formula) (bv : spec_var list)
 
 	(* Solve the equation to find the substitution *)
 	let sst,strrep = !solve_equations eqns bv in
-	let nf = subst sst f in
-	let nf = remove_dup_constraints nf in
-	let nf = remove_redundant_constraints nf in
-		(nf,sst,strrep)
+		(sst,strrep)
 (** An Hoa : End **)

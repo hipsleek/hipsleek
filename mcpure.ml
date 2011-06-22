@@ -1584,3 +1584,15 @@ let filter_complex_inv f = match f with
   
   
 let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isConstTrue b) bl)
+
+
+(** An Hoa : Simplify the mix formula by removing duplicates 
+			and redundant constraints.
+ **)
+let simplify_mix_formula mf =
+	match mf with 		
+		| MemoF _ -> mf
+		| OnePF f -> 
+			let nf = remove_dup_constraints f in
+			let nf = remove_redundant_constraints nf in
+				OnePF nf

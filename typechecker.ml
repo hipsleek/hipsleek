@@ -80,9 +80,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume ((x,vs),b,y) ->
-            let visible_vars = vs in
-            let _ = print_endline ("\nSpec Assume Visible Vars "^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in
-
+            (*let visible_vars = vs in
+            let _ = print_endline ("\nSpec Assume Visible Vars "^":"^(pr_list (Cprinter.string_of_spec_var) visible_vars)) in*)
             let _ = set_post_pos (CF.pos_of_formula b) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
