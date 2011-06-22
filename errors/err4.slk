@@ -11,15 +11,10 @@ pred neg_ll<n> == self = null & n = 0
 
 lemma self::pos_ll<n> & n>0 <- self::neg_ll<n> & flow __Error.
 lemma self::neg_ll<n>  & n>0 <- self::pos_ll<n> & flow __Error.
-lemma self::neg_ll<n> & n=0 -> x=null.
-lemma self::pos_ll<n> & n=0 -> x=null.
-lemma self::neg_ll<n> & n=0 <- x=null.
-lemma self::pos_ll<n> & n=0 <- x=null.
-
-//16. must failure
-// TODO requires a lemma, need unfold here
-//checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n>.
-
+//lemma self::neg_ll<n> & n=0 -> x=null.
+//lemma self::pos_ll<n> & n=0 -> x=null.
+//lemma self::neg_ll<n> & n=0 <- x=null.
+//lemma self::pos_ll<n> & n=0 <- x=null.
 
 // 1.
 checkentail x>3 |- x<=0 .
@@ -48,47 +43,101 @@ checkentail x>3 |- x>5 & flow __Error.
 // 5.must is_must_error(R) --> R1 = true & flow norm
 checkentail x>3 |- x<=0 & flow __Error .
 
+// 6. valid
+checkentail true |- true.
+
 // 7. valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n>.
 
-//8. valid
+// 8. may fail
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-//9. R=valid.flow=__Error
+//9. may fail
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
 //10. R=valid.flow=__norm
 checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
+/* 
+ this is wrong! UNSOUND
 
-//11. must failure
-//lemma self::pos_ll<n>   <- self::neg_ll<n> & n>0 & flow __Error.
+Entail(10)=Valid.
+printing here:  
+Good Context: [es_formula: true & x=null & m=0 & m=0 & (x=null | m=0) & {FLOW,(27,27)=__norm,}
+*/
+
+//11. may failure
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
 
 //12. must failure - R = true, flow = __Error
 checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
+/*  this is wrong! as es_must_error needs a message
+Entail(12)=Valid.
+printing here:  
+Good Context: [es_formula: true & 0<m & 0<n & n=m & {FLOW,(13,13)=__Error,}
+               es_pure: true
+               es_heap: SS 48:x::pos_ll<m>@M[Orig]
+               es_aux_conseq: true
+               es_must_error: None
+*/
 
 //13 valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
 
 //14. may failure , should be improved
 checkentail x::pos_ll<n> |- x::neg_ll<n> .
+/* UNSOUND __norm and es_must_error inconsistent!
 
-//15. must failure - R = true, flow = __Error
-// TODO (requires a lemma and unfolding
+Entail(14)=Fail.(must) cause:13
+printing here:  
+Good Context: [es_formula: SS 56:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_253]
+               es_aux_conseq: true
+               es_must_error: Some(13)
+               es_var_label: None]
+*/
+
+//15. should be a must failure (not may) but needs an unfold of LHS
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
 //16. must failure - R = true, flow = __Error
 // TODO requires a lemma, need unfold here
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> & n=0 or x::neg_ll<n> & n>0.
+/* could be a must failure if es_must_error instantiated
+Entail(16)=Valid.
+printing here:  
+Good Context: [es_formula: true & 0<n & {FLOW,(13,13)=__Error,}
+               es_pure: true
+               es_heap: SS 69:x::pos_ll<n>@M[Orig]
+               es_evars: [n_308]
+               es_subst (from): [n_308]
+               es_subst (to): [n]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None]
+*/
 
 //17. must failure - R = true, flow = __Error
-// TODO requires a lemma!
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
 
 //18. inconsitent must failure
 checkentail x>3 & flow __Error |- x>0 & flow __Error.
+/*
+flow need to be __norm following LHS
+Good Context: [es_formula: true & 3<x & {FLOW,(27,27)=__norm,}
+               es_pure: true
+*/
 
 //19. inconsistent must failure
 checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
+/*
+__SleekMustErr seems empty
 
+Entail(19)=Valid.
+printing here:  
+Good Context: [es_formula: false & false & {FLOW,(0,0)=__false,}
+               es_pure: true
+
+*/
 
