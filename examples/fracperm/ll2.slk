@@ -1,0 +1,103 @@
+/*
+ * LDK
+ * Examples with fractional permission over linked lists
+ * Fractional permission is enclosed in []
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//========== Fractional Permission
+/*
+
+Regaring permission, we classify into two:
+1. Permission to access a heap part
+2. Permission to access a variable (NOT CONSIDER here)
+(variables as resource, specify by Own(x))
+
+
+Atomic heap formula ::= [perm]p::c<v*>
+perm ::= [x/y]
+
+Examples:
+
+[1]x::node<..> : full permission
+
+[0]x::node[<..> : no permission at all //??? inconsideration
+
+[v]x::node<..> & 0<v<1 : strictly read-permission with no writing
+
+[v]x::node<..> & 0<v<=1 : a read-permission with possible writing
+
+[v]x::node<..> & (v>1 or v<0) : false
+
+*/
+
+//========== OBJECTS
+
+//split
+[p]x::node<_,null> |- [p1]x::node<_,null> * [p2]x::node<_,null> & p=p1+p2
+
+//join
+[p1]x::node<_,null> * [p2]x::node<_,null> & p=p1+p2 |- [p]x::node<_,null>
+
+//lose
+[p]x::node<_,null> & p1<p |- [p1]x::node<_,null>
+// residue = [p2]x::node<_,null> & p2=p-p1
+
+//non-alias
+[p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2>1 |- x!=y
+
+//contradict
+[p1]x::node<_,null> * [p2]x::node<_,null> & p1+p2>1 |- false
+[p]x::node<_,null> & p1>p |- [p1]x::node<_,null>
+
+For examples:
+
+//split
+x::node<_,null> |- [1/2]x::node<_,null> * [1/2]x::node<_,null>
+
+//join
+[1/2]x::node<_,null> * [1/2]x::node<_,null> |- x::node<_,null>
+
+//lose
+x::node<_,null> |- [1/2]x::node<_,null>
+
+
+//========== PREDICATES
+
+////rules for split, join, lose, non-alias, contradict are similar to those of objects
+
+//// component-wise rules
+
+//unfold
+[p]x::ll<n> |- self = null & n = 0
+	or [p]x::node<next = r> * [p]r::ll<n - 1>
+
+//fold
+[p]x::node<_,null> |- [p]x::ll<n>
+[p]x::node<_, r> * [p]r::ll<n> |- [p]x::ll<n + 1>.
+
+
+For examples:
+
+[1/2]x::node<_,null> * [1/2]x::ll<n> & n=1 |- x::node<_,null>
+[1/2]x::node<_,null> * [1/2]x::ll<n> |- x::ll<n> & n=1
+
+[1/2]x::node<_,q> * [1/2]q::node<_,null> |- [1/2]x::ll<n> & n=2
+
+[1/2]x::node<_,q> * q::node<_,null> |- [1/2]x::ll<n> * [1/2]q::node<_,null> & n=2
+
+
+// QUANTIFIED/EXISTENTIAL factional permission
+// Is is necessary?
+
+// HEURISTICS
+x::node<_,null> |- [f]x::node<_,null> & 0<f<1
+ <=> [w]x::node<_,null> |- [r]x::node<_,null>
+     with w,r are reserved keywords. The system automatically infers the permission fraction
+
+
