@@ -31,52 +31,73 @@ Examples:
 [v]x::node<..> & 0<v<1 ::= strictly read-permission with no writing
 
 [v]x::node<..> & 0<v<=1 ::= a read-permission with possible writing
+// Is there a real difference to above?
+// Guess both above are just read permission?
 
 [v]x::node<..> & (v>1 or v<0) ::= false
+// should we assume that any heap state
+// [v]x::node<..> has the invariant 0<v<=1
+
 
 */
 
 //========== OBJECTS
 
 //SPLIT
-[p]x::node<_,null> |- [p1]x::node<_,null> * [p2]x::node<_,null> & p=p1+p2
+[p]x::node<_,null> 
+ |- [p1]x::node<_,null> * [p2]x::node<_,null> & p=p1+p2.
 
 //JOIN
-[p1]x::node<_,null> * [p2]x::node<_,null> & p1+p2<=1 & p=p1+p2 |- [p]x::node<_,null>
+[p1]x::node<_,null> * [p2]x::node<_,null> & p1+p2<=1 & p=p1+p2 
+  |- [p]x::node<_,null>.
+
+//JOIN
+[p1]x::node<_,null> * [p2]x::node<_,null> 
+  |- [p]x::node<_,null> & p=p1+p2.
 
 /LOSE
-[p]x::node<_,null> & p1<p |- [p1]x::node<_,null>
+[p]x::node<_,null> & p1<p 
+  |- [p1]x::node<_,null>.
 // residue := [p2]x::node<_,null> & p2=p-p1
 
 //NON-ALIAS
-[p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2>1 |- x!=y
+[p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2>1 
+  |- x!=y.
 
 //CONTRADICT
-[p1]x::node<_,null> * [p2]x::node<_,null> & p1+p2>1 |- false
-[p]x::node<_,null> & p1>p |- [p1]x::node<_,null>
+[p1]x::node<_,null> * [p2]x::node<_,null> & p1+p2>1 
+  |- false.
 
-However, we can not say anything about x and y:
-[p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2<1 |- x?y
+[p]x::node<_,null> & p1>p 
+  |- [p1]x::node<_,null>.
+
+// However, we can not say anything about x and y:
+
+[p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2<1 
+  |- x=y.
+
+[p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2<1 
+  |- x!=y.
 
 
-
-For examples:
+//For examples:
 
 //SPLIT
-x::node<_,null> |- [1/2]x::node<_,null> * [1/2]x::node<_,null>
+x::node<_,null> |- [1/2]x::node<_,null> * [1/2]x::node<_,null>.
 
 //JOIN
-[1/2]x::node<_,null> * [1/2]x::node<_,null> |- x::node<_,null>
+[1/2]x::node<_,null> * [1/2]x::node<_,null> |- x::node<_,null>.
 
 //LOSE
-x::node<_,null> |- [1/2]x::node<_,null>
+x::node<_,null> |- [1/2]x::node<_,null>.
 
 //NON-ALIAS
-[1/2]x::node<_,null> * [3/4]y::node<_,null> & p1+p2>1 |- x!=y
+[1/2]x::node<_,null> * [3/4]y::node<_,null> & p1+p2>1 |- x!=y.
 
 //CONTRADICT
-[1/2]x::node<_,null> * [3/4]x::node<_,null> |- false
-[1/2]x::node<_,null> |- [3/4]x::node<_,null>
+[1/2]x::node<_,null> * [3/4]x::node<_,null> |- false.
+
+[1/2]x::node<_,null> |- [3/4]x::node<_,null>.
 
 //========== PREDICATES
 
@@ -85,18 +106,21 @@ x::node<_,null> |- [1/2]x::node<_,null>
 //// component-wise rules
 
 //MATCH
-[p]x::ll<n> |- [p]x::ll<m>.
+[p]x::ll<n> |- [p]x::ll<m> .
 //residue := m=m
+
+
+//MATCH
+[p]x::ll<n> |- [p1]x::ll<m> .
+//residue := [p2]x::ll<m> & m=n & p2=p-p1 & p2>=0
 
 //UNFOLD
 [p]x::ll<n> |- self = null & n = 0
-	or [p]x::node<next = r> * [p]r::ll<n - 1>
+	or [p]x::node<next = r> * [p]r::ll<n - 1>.
 
 //FOLD
 [p]x::node<_,null> |- [p]x::ll<n>
 [p]x::node<_, r> * [p]r::ll<n> |- [p]x::ll<n + 1>.
-
-
 
 
 For examples:
