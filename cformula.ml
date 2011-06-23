@@ -2680,7 +2680,8 @@ match c1,c2 with
 	  if (is_cont t1) && (is_cont t2) then
 	    FailCtx (Or_Continuation (t1,t2))  
 	  else
-	    FailCtx (And_Reason (t1,t2))  
+	    FailCtx (Or_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
+	    (* FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify(t1@t2))

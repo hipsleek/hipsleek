@@ -42,21 +42,6 @@ and{may,valid} --> may
  checkentail n>3 & p>6 |- n>4 & p>2.
 
 
-/*
-
-//5. and{valid,valid} --> valid
- checkentail n>3 |- n>1 or n>2 & n>0.
-
-// 6. and{must,valid} --> must; WRONG: now valid
-checkentail n>8 |- n<3 or n>5 & n>6.
-
-// 7. and{must,must} --> must
-checkentail n>8 |- n<3 or n<4 & n<6.
-
-// 8. and{may,valid} --> may; WRONG: now valid
-checkentail n>4 |- n>6 or n>2 & n>3.
-
-*/
 //pointer
 
 
@@ -71,8 +56,11 @@ union{may,must} --> may
 //9. union{valid,may} --> valid
  checkentail n>3 |- n>1 or n>5 .
 
-//10. union{must,may} --> may BUT DETECTED AS A MUST BUG
+//10. union{must,may} --> may // FIXED : DETECTED AS A MUST BUG
  checkentail n>3 |- n<1 or n>5 .
+
+//11. union{must,must} --> must
+ checkentail n>3 |- n<1 or n<2 .
 
 
 
