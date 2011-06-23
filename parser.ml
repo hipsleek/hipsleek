@@ -368,10 +368,12 @@ and set_il_exp exp il =
   let (pe, _) = exp in (pe, il)				   
 				   
 and set_slicing_utils_pure_double f il =
-  match f with
+  if !Globals.do_slicing then
+	match f with
 	| Pure_f pf -> let ls = P.find_lexp_formula pf !F.linking_exp_list in
 				   Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
 	| Pure_c pc -> let _ = Hashtbl.add !F.linking_exp_list pc 0 in f
+  else f
 				   
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"

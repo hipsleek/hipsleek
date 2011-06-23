@@ -604,18 +604,22 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
 
-let string_of_slicing_label sl =
+let pr_slicing_label sl =
   match sl with
-	| None -> ""
-	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
-	  ^ (string_of_int lbl) ^ (*", " ^ (string_of_formula_exp_list el) ^*) ">"
+	| None -> fmt_string "<>"
+	| Some (il, lbl, el) ->
+		fmt_string ("<" ^ (if il then "IL, " else ", ") ^ (string_of_int lbl) ^ ", ");
+	    fmt_string ("[");
+		pr_list_none pr_formula_exp el;
+		fmt_string ("]");
+		fmt_string (">")
 		  
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
   let (pf,il) = e in
-  fmt_string (string_of_slicing_label il);
+  pr_slicing_label il;
   match pf with
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
@@ -863,6 +867,9 @@ let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
 
 let string_of_memoised_list l : string  = poly_string_of_pr pr_memoise_group l
 
+(* string of a slicing label *)
+let string_of_slicing_label sl : string =  poly_string_of_pr  pr_slicing_label sl
+  
 (** convert b_formula to a string via pr_b_formula *)
 let string_of_b_formula (e:P.b_formula) : string =  poly_string_of_pr  pr_b_formula e
 

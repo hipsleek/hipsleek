@@ -5237,8 +5237,14 @@ let rec break_formula (f: formula) : b_formula list =
 (* Group related vars together after filtering the <IL> formula *)
 let group_related_vars (bfl: b_formula list) : (spec_var list) list =
   let repart acc bf =
-	let vs = bfv bf in
-	let (ol, nl) = List.partition (fun vl -> (Gen.BList.overlap_eq eq_spec_var vs vl)) acc in
+	let (_, sl) = bf in
+	let vs = match sl with
+	  | None -> []
+	  | Some (il, _, el) -> let vbf = bfv bf in
+							(* set of interesting variables *)
+							if il then vbf
+							else Gen.BList.difference_eq eq_spec_var vbf (List.fold_left (fun a e -> a @ (afv e)) [] el) (* the fv of linking exp not included *)
+	in 	let (ol, nl) = List.partition (fun vl -> (Gen.BList.overlap_eq eq_spec_var vs vl)) acc in
 	let n_vl = List.fold_left (fun a vl -> a@vl) vs ol in
 	    (Gen.BList.remove_dups_eq eq_spec_var n_vl)::nl
   in List.fold_left repart [] bfl
