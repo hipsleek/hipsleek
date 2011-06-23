@@ -84,7 +84,7 @@ let consistent_memoised_group (m:memoised_group) : bool =
   let v1 = m.memo_group_fv in
   let v2 = fv_memoised_group m in
   let r = Gen.BList.difference_eq eq_spec_var v2 v1 in
-  let r2 = Gen.BList.difference_eq eq_spec_var v2 v1 in
+  let r2 = Gen.BList.difference_eq eq_spec_var v1 v2 in
   if r==[] then 
     if r2==[] then true
     else
@@ -94,7 +94,7 @@ let consistent_memoised_group (m:memoised_group) : bool =
   else 
     let s = ("ERROR : FreeVars not captured:"^(!print_svl r)) in
     let _ = report_warning no_pos s in
-       false
+    false
 
 let consistent_memo_pure (m:memo_pure) : bool =
   List.for_all consistent_memoised_group m 
@@ -711,8 +711,19 @@ and create_memo_group_a (l1:(b_formula * (formula_label option)) list) (l2:formu
   let l2 = to_slice1 @ to_slice2 @ l2 in
   let l2 = List.map (fun c-> (None, Some c)) l2 in
   let l1 = List.map (fun c-> (Some c,None)) l1 in  
-  let ll  = List.fold_left ( fun a f->
-	  let fv = match f with | None, Some c-> fv c | Some c, None -> bfv c | _-> [] in
+  let ll  = List.fold_left ( fun a f ->
+	  let fv = match f with
+		| None, Some c-> fv c
+		| Some c, None -> let sv = bfv c in
+						  if !do_slicing then
+							let (_, sl) = c in
+							match sl with
+							  | None -> sv
+							  | Some (il, _, el) ->
+								if il then []
+								else Gen.BList.difference_eq eq_spec_var sv (List.fold_left (fun a e -> a @ (afv e)) [] el)
+						  else sv
+		| _-> [] in
 	  let rec f_rec fv a = 
         let r1,r2 =
 		  if !f_1_slice then (a,[]) (* No slicing *)
@@ -732,13 +743,15 @@ and create_memo_group_a (l1:(b_formula * (formula_label option)) list) (l2:formu
 		| _-> no_merge) [] (l1@l2) in
   let r = List.map (fun (vars,bfs,fs)-> 
 	  let nfs,aset = List.fold_left (fun (a,s) c-> 
-
 		  match get_bform_eq_args_with_const c with 
 			| Some(v1,v2) -> (a,add_equiv_eq_with_const(*_debug*) s v1 v2)
-			| _ ->
-				  let pos = {memo_formula=c;memo_status = status} in
-				  ((pos::a),s)) ([],empty_var_aset) bfs in 
-	  { memo_group_fv = vars;
+			| _ -> let pos = {memo_formula=c;memo_status = status} in
+				   ((pos::a),s)) ([],empty_var_aset) bfs in
+	  let n_vars =
+		if !do_slicing then
+		  remove_dups_svl (List.fold_left (fun acc bf -> acc@(bfv bf)) vars bfs)
+		else vars in
+	  { memo_group_fv = n_vars;
 	  memo_group_cons = filter_merged_cons aset [nfs];
 	  memo_group_slice = fs;
 	  memo_group_changed = true;

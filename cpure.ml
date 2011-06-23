@@ -5273,8 +5273,9 @@ let rec set_il_formula_with_dept_list f rel_vars_lst =
 	| BForm ((pf, _), lbl) ->
 	  	let vl = fv f in (* TODO: need to remove the linking vars in f *)
 		let check_dept vlist (dept_vars_list, linking_vars_list) =
-		  if ((List.length vlist) > 0 &
-			  (Gen.BList.list_subset_eq eq_spec_var (Gen.BList.difference_eq eq_spec_var vlist linking_vars_list) dept_vars_list))
+		  let dept_vars = Gen.BList.difference_eq eq_spec_var vlist linking_vars_list in
+		  if ((List.length dept_vars) > 0 &
+			  (Gen.BList.list_subset_eq eq_spec_var dept_vars dept_vars_list))
 		  then (true, Gen.BList.difference_eq eq_spec_var vlist dept_vars_list) else (false, [])
 		in
 		let is_dept = List.fold_left (fun res rvl -> if (fst res) then res else (check_dept vl rvl)) (false, []) rel_vars_lst in
