@@ -7,7 +7,7 @@ or{valid,may} --> may
 */
 //pure
 // 1. or{must,valid} --> may
-checkentail n>3 or n<0 |- n>1.
+checkentail n<0 or n>3 |- n>1.
 
 //2. or{must,must} --> must
 checkentail n<3 or n<0 |- n>5.
@@ -27,7 +27,23 @@ and{valid,valid} --> valid
 and{must,valid} --> must
 and{may,valid} --> may
 */
+
 //pure
+//5. and{valid,valid} --> valid
+ checkentail n>3 & p>6 |- n>1 & p>2.
+
+// 6. and{must,valid} --> must; 
+ checkentail n>3 & p>6 |- n<1 & p>2.
+
+// 7. and{must,must} --> must
+ checkentail n>3 & p>6 |- n<1 & p<2.
+
+// 8. and{may,valid} --> may; 
+ checkentail n>3 & p>6 |- n>4 & p>2.
+
+
+/*
+
 //5. and{valid,valid} --> valid
  checkentail n>3 |- n>1 or n>2 & n>0.
 
@@ -40,6 +56,7 @@ checkentail n>8 |- n<3 or n<4 & n<6.
 // 8. and{may,valid} --> may; WRONG: now valid
 checkentail n>4 |- n>6 or n>2 & n>3.
 
+*/
 //pointer
 
 
@@ -50,6 +67,13 @@ union{valid,may} --> valid
 union{may,must} --> may
 */
 //pure
+
+//9. union{valid,may} --> valid
+ checkentail n>3 |- n>1 or n>5 .
+
+//10. union{must,may} --> may BUT DETECTED AS A MUST BUG
+ checkentail n>3 |- n<1 or n>5 .
+
 
 
 
