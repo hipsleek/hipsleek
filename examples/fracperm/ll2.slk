@@ -27,6 +27,7 @@ Examples:
 [1]x::node<..> or x::node<..> ::= full permission
 
 [0]x::node<..> ::= no permission at all //??? under consideration
+// node exists but cannot be accessed
 
 [v]x::node<..> & 0<v<1 ::= strictly read-permission with no writing
 
@@ -36,10 +37,18 @@ Examples:
 
 [v]x::node<..> & (v>1 or v<0) ::= false
 // should we assume that any heap state
-// [v]x::node<..> has the invariant 0<v<=1
+// [v]x::node<..> automatically has the invariant 0<v<=1
 
 
 */
+
+forall p1,p2:
+  [p]x::node<_,null> & 0<=p1,p2<=1 & p=p1+p2
+    <=> [p1]x::node<_,null> * [p2]x::node<_,null
+
+forall n1,n2:
+ x::lseg<n,p> & n1,n2>=0 & n=n1+n2
+    <==> x::lseg<n1,q> * q::lseg<n2,p>
 
 //========== OBJECTS
 
