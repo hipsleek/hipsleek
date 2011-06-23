@@ -11,7 +11,7 @@ Second, for any given heap node:
 
 we expect the following invariant to hold:
 
-  0<=p<=1
+  0<p<=1
 
 Having such an permission invariant allows us 
 to avoid the need to write logic related to 
@@ -21,7 +21,7 @@ Thirdly, one of the splitting rule needed for reasoning
 can be written as follows:
 
  forall p1,p2:
-  [p]x::p<..> & 0<=p1,p2<=1 & p=p1+p2
+  [p]x::p<..> & 0<p1,p2<1 & p=p1+p2
     <=> [p1]x::p<..> * [p2]x::p<..>
 
 Here, the split provides  flexibility to p1,p2 through
@@ -29,14 +29,14 @@ the use of universal quantifier.  This is important
 for unfold (lhs->rhs) reasoning, as follows:
 
  forall p1,p2:
-  [p]x::p<..> & 0<=p1,p2<=1 & p=p1+p2
+  [p]x::p<..> & 0<p1,p2<1 & p=p1+p2
     => [p1]x::p<..> * [p2]x::p<..>
 
 We cannot use the following which would be too weak:
 
   [p]x::p<..>
     => exists p1,p2. [p1]x::p<..> * [p2]x::p<..> 
-         & 0<=p1,p2<=1 & p=p1+p2
+         & 0<p1,p2<1 & p=p1+p2
 
 This is because it gives some p1,p2 which may not have the conditions
 we require.
@@ -46,7 +46,7 @@ which would use the following instead:
 
   [p]x::p<..>
     <= exists p1,p2. [p1]x::p<..> * [p2]x::p<..> 
-         & 0<=p1,p2<=1 & p=p1+p2
+         & 0<p1,p2<1 & p=p1+p2
 
 There is a similar lemma which we used for the lseg predicate.
 
