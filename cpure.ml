@@ -5235,18 +5235,29 @@ let rec break_formula (f: formula) : b_formula list =
 	| Exists (_, f, _, _) -> break_formula f
 
 (* Group related vars together after filtering the <IL> formula *)
-let group_related_vars (bfl: b_formula list) : (spec_var list) list =
+let rec group_related_vars (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list = 
+  Gen.Debug.ho_1 "group_related_vars"
+	(fun bfl -> List.fold_left (fun acc bf -> acc ^ "\n" ^ (!print_b_formula bf)) "" bfl)
+	(fun sv_bfl -> List.fold_left (fun acc1 (svl,lkl,bfl) ->
+	  acc1 ^ "\n[" ^ (List.fold_left (fun acc2 sv -> acc2 ^ " " ^ (!print_sv sv)) "" svl) ^ " ]"
+	  ^ "\n[" ^ (List.fold_left (fun acc2 sv -> acc2 ^ " " ^ (!print_sv sv)) "" lkl) ^ " ]"
+	  ^ " [" ^ (List.fold_left (fun acc2 bf -> acc2 ^ " " ^ (!print_b_formula bf)) "" bfl) ^ " ]") "" sv_bfl) group_related_vars_x bfl
+	  
+and group_related_vars_x (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list = (* bfv = fv1 U fv2 *)
   let repart acc bf =
 	let (_, sl) = bf in
+	let vbf = bfv bf in
 	let vs = match sl with
-	  | None -> []
-	  | Some (il, _, el) -> let vbf = bfv bf in
-							(* set of interesting variables *)
-							if il then vbf
+	  | None -> vbf
+	  | Some (il, _, el) -> (* set of interesting variables *)
+							if il then [] (* not any interesting var if the b_formula is linking formula *)
 							else Gen.BList.difference_eq eq_spec_var vbf (List.fold_left (fun a e -> a @ (afv e)) [] el) (* the fv of linking exp not included *)
-	in 	let (ol, nl) = List.partition (fun vl -> (Gen.BList.overlap_eq eq_spec_var vs vl)) acc in
-	let n_vl = List.fold_left (fun a vl -> a@vl) vs ol in
-	    (Gen.BList.remove_dups_eq eq_spec_var n_vl)::nl
+	in let lkl = Gen.BList.difference_eq eq_spec_var vbf vs in
+	let (ol, nl) = List.partition (fun (vl,_,_) -> (Gen.BList.overlap_eq eq_spec_var vs vl)) acc in
+	let n_vl = List.fold_left (fun a (vl,_,_) -> a@vl) vs ol in
+	let n_lkl = List.fold_left (fun a (_,lk,_) -> a@lk) lkl ol in
+	let n_bfl = List.fold_left (fun a (_,_,bfl) -> a@bfl) [bf] ol in
+	    (Gen.BList.remove_dups_eq eq_spec_var n_vl, Gen.BList.remove_dups_eq eq_spec_var n_lkl, n_bfl)::nl
   in List.fold_left repart [] bfl
 (*  
 and set_il_relation rl il =
@@ -5256,18 +5267,22 @@ and set_il_relation rl il =
 	| UnionRel (r1, r2) -> UnionRel (set_il_relation r1 il, set_il_relation r2 il)
 *)
 (* Slicing: Set <IL> for a formula based on a list of dependent groups *)
-(*  *)  
+
 let rec set_il_formula_with_dept_list f rel_vars_lst =
   match f with
 	| BForm ((pf, _), lbl) ->
-		let vl = fv f in
-		let check_dept vlist rvlist =
-		  if ((List.length vlist) > 0 & (Gen.BList.list_subset_eq eq_spec_var vlist rvlist)) then true else false
+	  	let vl = fv f in (* TODO: need to remove the linking vars in f *)
+		let check_dept vlist (dept_vars_list, linking_vars_list) =
+		  if ((List.length vlist) > 0 &
+			  (Gen.BList.list_subset_eq eq_spec_var (Gen.BList.difference_eq eq_spec_var vlist linking_vars_list) dept_vars_list))
+		  then (true, Gen.BList.difference_eq eq_spec_var vlist dept_vars_list) else (false, [])
 		in
-		let is_dept = List.fold_left (fun res rvl -> if res then true else (check_dept vl rvl)) false rel_vars_lst in
-		if is_dept then BForm ((pf, None), lbl)
+		let is_dept = List.fold_left (fun res rvl -> if (fst res) then res else (check_dept vl rvl)) (false, []) rel_vars_lst in
+		(*if (fst is_dept) then BForm ((pf, Some (false, Globals.fresh_int(), (snd is_dept))), lbl)
 		else
-		  BForm ((pf, Some (true, Globals.fresh_int(), [])), lbl)
+		  BForm ((pf, Some (true, Globals.fresh_int(), [])), lbl)*)
+		let lexp = List.map (fun sv -> mkVar sv no_pos) (snd is_dept) in 
+		BForm ((pf, Some (not (fst is_dept), Globals.fresh_int(), lexp)), lbl)
 	| And (f1, f2, l) -> And (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, l)
 	| Or (f1, f2, lbl, l) -> Or (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, lbl, l)
 	| Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)

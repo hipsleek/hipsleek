@@ -762,14 +762,15 @@ let simplify (f : CP.formula) : CP.formula =
       Gen.Profiling.pop_time "simplify";
 	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
 	  (* To recreate <IL> relation after simplifying *)
+	  let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in
 	  if !Globals.do_slicing then
 	    let rel_vars_lst =
 		  let bfl = CP.break_formula f in
-		  let bfl_no_il = List.filter
+		  (*let bfl_no_il = List.filter
 			(fun (_,il) -> match il with
 			| None -> true
-			| _ -> false) bfl in
-		  CP.group_related_vars bfl_no_il
+			| _ -> false) bfl in*)
+		  (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
 		in
 		CP.set_il_formula_with_dept_list r rel_vars_lst
 	  else r
