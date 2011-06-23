@@ -67,7 +67,6 @@ forall n1,n2:
 /LOSE
 [p]x::node<_,null> & p1<p 
   |- [p1]x::node<_,null>.
-// residue := [p2]x::node<_,null> & p2=p-p1
 
 //NON-ALIAS
 [p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2>1 
@@ -137,7 +136,7 @@ For examples:
 //MATCH
 [1/2]x::ll<n> |- [1/2]x::ll<m> & n=m
 
-//MATCH + LOSE
+//MATCH
 [3/4]x::ll<n> |- [1/2]x::ll<m>
 //residue := [1/4]x:ll<n> & n=m
 

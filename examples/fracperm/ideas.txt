@@ -60,3 +60,89 @@ handle universal lemma proving in a special way. The standard
 mechanism works for only existential quantifier which is 
 weak.
 
+=================================================
+LDK:
+
+1. The use of zero permission [0]x::node<..>.
+
+Zero permission can mean that a node exits but cannot be accessed;
+however, is it necessary to know this information? In other words,
+is it necessary to know that a node exists even if we do not have
+permission to access it? Up to now, I have not come up with any
+examples of zero permission.
+
+2. I categorize fraction permission to 3 cases
+
+- Full permission (read or write) denoted as:
+[1]x::node<..> or x::node<..>
+
+- Read-only permission: [v]x::node<..> & 0<v<1
+
+- No-access permission: [0]x::node<..> 
+This is under consideration in (1).
+
+Permission invariant 0<p<=1 is expected for each heap node.
+Therefore, [v]x::node<..> & (v>1 or v<0) ::= false
+
+3. I saw you added some rules:
+
+//JOIN
+[p1]x::node<_,null> * [p2]x::node<_,null> 
+  |- [p]x::node<_,null> & p=p1+p2
+
+//MATCH
+[p]x::ll<n> |- [p1]x::ll<m> .
+//residue := [p2]x::ll<m> & m=n & p2=p-p1 & p2>=0
+
+They are quite reasonable, although MATCH is actually similar 
+to LOSE. However, I modify the rule LOSE with return no residue.
+
+//LOSE
+[p]x::node<_,null> & p1<p 
+  |- [p1]x::node<_,null>.
+// NO RESIDUE
+
+My intention for LOSE semantics is 2-fold:
+- One is that the programmer who writes the specification
+may want to make a data structure immutable by creating
+a method to withdraw some permission from that data structure
+as follow:
+requires [1]x::node<>
+ensures [1/2]x::node<>. //1/2 permission is missing intentionally.
+
+- When using fork/join, there are cases whereby no join is needed.
+In these cases, the permission hold by the precondition of the forked
+method is lost forever.
+
+4. Regarding the EQUIVALENCE rule
+
+[EQUIVALENCE]
+forall p1,p2:
+  [p]x::p<..> & 0<=p1,p2<=1 & p=p1+p2
+    <=> [p1]x::p<..> * [p2]x::p<..>
+
+I understood the points whereby universal quantifiers provide flexibility
+to SPLIT2 and existential quantifiers provide to JOIN2:
+
+[SPLIT2]
+forall p1,p2:
+  [p]x::p<..> & 0<=p1,p2<=1 & p=p1+p2
+    => [p1]x::p<..> * [p2]x::p<..>
+
+[JOIN2]
+  [p]x::p<..>
+    <= exists p1,p2: [p1]x::p<..> * [p2]x::p<..>
+        & 0<=p1,p2<=1 & p=p1+p2
+
+However, I am wondering whether EQUIVALENCE is the combination of 
+SPLIT2 and JOIN2? To me, Join2 is not intuitively similar to 
+right-to-left inference of the EQUIVALENCE rule.
+
+5. I have tried examples in sleek{7,8}; there are some I haven't
+really understood well. I think, I am still not sure about the role 
+of existential variables (captured in set V of our entailment rules).
+I will re-read Mr Hai's thesis again tomorrow to make sure the role 
+of the set V.
+
+
+
