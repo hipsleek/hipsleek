@@ -9,13 +9,11 @@ checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- x::ll<
 print residue.
 //1. Fail
 
-
 //wrong
 checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
 print residue.
 // t@I; z
 //2. Valid
-
 
 checkentail (x::ll<n>@I * p::ll<m>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n1>@I * p::ll<m1>@I); t::ll<a1>@I.
 print residue.

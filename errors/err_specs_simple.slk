@@ -5,8 +5,8 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-//1. must failure  PASSED
-//checkentail n = 1 |- n > 5 & flow __SleekMustErr.
+//1. must failure - WRONG
+//checkentail n = 1 |- n > 5 & flow __Err.
 
 checkentail n = 1 |- n > 5 .
 

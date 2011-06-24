@@ -39,7 +39,7 @@ checkentail x::node<v,q>*q::node<_,null> |- x::node<2,q> .
 //7. must failure
 checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
 
-//8. must failure
+//8. must failure - WRONG now may
 checkentail x::ll<n> & n>0 |- x::ll<n+1> .
 
 //9. may
@@ -57,13 +57,13 @@ checkentail x=y & y=null |- x::node<_,_> .
 //13. may
 checkentail x=y |- x::node<_,_> .
 
-//14. must bug
+//14. must bug - WRONG now may
 checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
 //15. may
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
 
-//16. must bug
+//16. must bug - WRONG now may
 checkentail true |- x::node<_,_> * x::node<_,_>.
 //Entail(16)=Fail.(must) cause:15 contradiction in RHS
 
@@ -75,7 +75,7 @@ checkentail x=y & y!=null |- x::node<_,_> .
 //18. must bug
 checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
 
-//19. must bug
+//19. must bug - WRONG now may
 checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
 
 
@@ -85,7 +85,7 @@ checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 //21. valid
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
-//22. must-bug
+//22. must-bug - WRONG now may
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
 
 //23 valid
@@ -107,5 +107,5 @@ checkentail x=null |- x::neg_ll<m> & m>0.
 checkentail x=null |- x=null or x::node<_,_>.
 
 
-//29 valid
+//29 valid (union) /may (|) bug -now may
 checkentail n=5 or n>0 or n>9 |- n>6.

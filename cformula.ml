@@ -82,7 +82,7 @@ and list_formula = formula list
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
-		              (* formula_base_imm : bool; *)
+		      (* formula_base_imm : bool; *)
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_label : formula_label option;
@@ -702,7 +702,7 @@ and mkOr f1 f2 pos =
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
         
 and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) lbl: formula= 
-  if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then
+  if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then 
 	mkFalse fl pos
   else 
 	Base ({formula_base_heap = h; 
@@ -1565,11 +1565,6 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 	    
 and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
-
-(*final flow is of f2*)(*
-and normalize_flow_replace (f1 : formula) (f2 : formula) (pos : loc) = 
-  normalize_keep_flow f1 f2 Flow_replace pos
-                       *)
       (* todo: check if this is ok *)
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
@@ -2189,8 +2184,8 @@ and fail_type =
   | Basic_Reason of (fail_context * fail_explaining)
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
-  | And_Reason of (fail_type * fail_type (* * fail_explaining *))
-  | ContinuationErr of fail_context
+  | And_Reason of (fail_type * fail_type)
+  | ContinuationErr of fail_context    
   | Or_Continuation of (fail_type * fail_type)
 
       
@@ -2215,7 +2210,6 @@ and list_failesc_context = failesc_context list
     (* conjunct of contexts *)
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
-
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
@@ -2323,7 +2317,7 @@ let rec get_may_failure_ft (f:fail_type) =
           (* report_error no_pos "get_may_failure : continuation encountered" *)
     | Or_Continuation (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2)
           (* report_error no_pos "get_may_failure : or continuation encountered" *)
-    | _ -> None
+    | Trivial_Reason s -> Some s
 
 let get_may_failure (f:list_context) =
   match f with
@@ -2671,22 +2665,21 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
   
   (*context set union*)
 
-
 let list_context_union_x c1 c2 = 
   let simplify x = (* context_list_simplify *) x in
 match c1,c2 with
   | FailCtx t1 ,FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
       if ((is_cont t1) && not(is_cont t2))
-      then FailCtx(t2)
+      then FailCtx(t1)
       else
 	if ((is_cont t2) && not(is_cont t1))
-	then FailCtx(t1)
+	then FailCtx(t2)
 	else
 	  if (is_cont t1) && (is_cont t2) then
 	    FailCtx (Or_Continuation (t1,t2))  
 	  else
 	    FailCtx (Or_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
-	    (* FailCtx (And_Reason (t1,t2))   *)
+	     (*FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify(t1@t2))
@@ -2761,55 +2754,6 @@ and isMustFailCtx cl = match cl with
 and isMayFailCtx cl = match cl with
   | FailCtx fc -> isMayFail fc
   | SuccCtx _ -> false
-
-(* and or_list_failure_explaining fc1 fc2 = *)
-(* match (get_explaining fc1, get_explaining fc2) with *)
-(*   | None, None -> *)
-(*     { *)
-(*       fe_kind = Failure_None *)
-(*     } *)
-(*   | None, Some fe -> fe *)
-(*   | Some fe, None -> fe *)
-(*   | Some fe1, Some fe2 -> *)
-(*       begin *)
-(*         match fe1.fe_kind, fe2.fe_kind with *)
-(*           | Failure_May, Failure_Must _ -> (\*C1*\) *)
-(*             { *)
-(*               fe_kind = Failure_May *)
-(*             } *)
-(*           | Failure_Must _, Failure_May -> *)
-(*             { *)
-(*               fe_kind = Failure_May *)
-(*             } *)
-(*           | Failure_May, Failure_None ->  (\*C2*\) *)
-(*             { *)
-(*               fe_kind = Failure_May *)
-(*             } *)
-(*            | Failure_None, Failure_May -> *)
-(*             { *)
-(*               fe_kind = Failure_May *)
-(*             } *)
-(*           | Failure_May, Failure_May -> (\*C3*\) *)
-(*             { *)
-(*               fe_kind = Failure_May *)
-(*             } *)
-(*           | Failure_Must m1, Failure_Must m2 -> (\*C4*\) *)
-(*             { *)
-(*               fe_kind = Failure_Must (comb_must m1 m2) *)
-(*             } *)
-(*           | Failure_Must _, Failure_None -> (\*C5*\) *)
-(*             { *)
-(*               fe_kind = Failure_May *)
-(*             } *)
-(*            | Failure_None, Failure_Must _ -> *)
-(*             { *)
-(*               fe_kind = Failure_May *)
-(*             } *)
-(*           | _ -> *)
-(*             { *)
-(*               fe_kind = Failure_None *)
-(*             } *)
-(*       end *)
 
 and fold_context_left c_l = 
   let pr = !print_list_context_short in
@@ -4078,7 +4022,7 @@ let rec transform_fail_ctx f (c:fail_type) : fail_type =
     | Or_Reason (ft1,ft2) -> Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | Or_Continuation (ft1,ft2) -> Or_Continuation ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | And_Reason (ft1,ft2) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
-
+  
 let transform_list_context f (c:list_context):list_context = 
   let f_c,f_f = f in
   match c with
