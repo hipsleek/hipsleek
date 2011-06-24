@@ -24,13 +24,13 @@ checkentail  x<z |- x>=y & y>=z & x>=z.
 // perform closure (maybe incomplete), then search for must/may
 
 
-//7.may bu
+//7.may failure
 checkentail  x<z |- x>=0 & y>=0 & x>y.
 
 //8. must-failure
 checkentail  x<z |- x>=0 & z>=0 & x>=z.
 
-//9. x=3 is must-fail, x>3 is may-fail
+//9. must-failure: x=3 is must-fail && x>3 is may-fail
 checkentail x=1 |- x=3 & x>0 & x>3 .
 
 

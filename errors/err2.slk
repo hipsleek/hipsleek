@@ -13,7 +13,7 @@ pred neg_ll<n> == self = null & n = 0
 	inv n >= 0.
 
 
-/*
+
 //1. must failure
 checkentail x::node<2,null> |- x::node<3,null> .
 print residue.
@@ -57,13 +57,13 @@ checkentail x=y & y=null |- x::node<_,_> .
 //13. may
 checkentail x=y |- x::node<_,_> .
 
-//14. must bug - WRONG now may
+//14. must bug - FIXED
 checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
 //15. may
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
 
-//16. must bug - WRONG now may
+//16. must bug - FIXED
 checkentail true |- x::node<_,_> * x::node<_,_>.
 //Entail(16)=Fail.(must) cause:15 contradiction in RHS
 
@@ -85,7 +85,7 @@ checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 //21. valid
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
-//22. must-bug - WRONG now may
+//22. must-bug - FIXED
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
 
 //23 valid
@@ -109,4 +109,6 @@ checkentail x=null |- x=null or x::node<_,_>.
 
 //29. may bug (|)
 checkentail n=5 or n>0 or n>9 |- n>6.
+
+
 

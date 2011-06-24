@@ -4897,19 +4897,20 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
 (*
+  example 19 of err2.slk should be handled here. checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> 
   let (_,_,svl,_) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
   (*
     - add disjoint pointers into LHS pure formula
     - for example if RHS contains {x,y}, the constraint x!=null & y!=null & x!=y will be added to LHS pure formula
   *)
-  let rhs_p = MCP.memoise_add_pure_N rhs_p (CP.mklsPtrNeqEqn svl no_pos) in
-  let new_rhs_b = { rhs_b with formula_base_pure = rhs_p} in
+  let new_rhs_p = MCP.memoise_add_pure_N rhs_p (CP.mklsPtrNeqEqn svl no_pos) in
+  let new_rhs_b = { rhs_b with formula_base_pure = new_rhs_p} in
 *)
   let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos in
   process_action prog estate conseq lhs_b rhs_b actions is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
-  Gen.Debug.loop_2 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
+  Gen.Debug.loop_2_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -5261,7 +5262,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           begin
               (*check disj memset*)
               let r = ref (-9999) in
-              let rhs_p = MCP.pure_of_mix rhs_b.formula_base_pure in
+              let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure (CP.mklsPtrNeqEqn rsvl no_pos) in
+              let rhs_p = MCP.pure_of_mix rhs_mix_p in
               (*contradiction on RHS?*)
               if not(TP.is_sat_sub_no rhs_p r) then
                 (*contradiction on RHS*)
@@ -5272,8 +5274,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
                                                 CF.mk_failure_must ("15.2 " ^ msg))), NoAlias)
               else
                 let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
-                let f = CP.mkAnd lhs_p rhs_p no_pos in
-                if not(TP.is_sat_sub_no f r) then
+                if not(simple_imply lhs_p rhs_p) then
                   let new_lhs_p = filter_redundant lhs_p rhs_p in
                   let msg = (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- "^
                     (Cprinter.string_of_pure_formula rhs_p) in
