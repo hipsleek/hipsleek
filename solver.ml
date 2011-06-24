@@ -2591,8 +2591,8 @@ and heap_entail_conjunct_lhs_struc_x
   let rec helper_inner (ctx11 : context) (f:ext_formula) : list_context * proof=
     begin
       match f with
-        | ECase b   -> 
-	          (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
+        | ECase b   ->
+              (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
               (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
               let ctx = add_to_context_num 1 ctx11 "case rule" in
 	          if (List.length b.formula_case_exists)>0 then
@@ -2633,8 +2633,8 @@ and heap_entail_conjunct_lhs_struc_x
 		      formula_ext_base = formula_base;
 		      formula_ext_continuation = formula_cont;
 		      formula_ext_pos = struc_pos;
-	      } as b)  -> 
-              if (List.length base_exists)>0 then 
+	      } as b)  ->
+            if (List.length base_exists)>0 then 
 	            let ws = CP.fresh_spec_vars base_exists in
 	            let st = List.combine base_exists ws in
 	            let new_struc = subst_struc st [(EBase {b with formula_ext_exists = []})]in
@@ -2656,12 +2656,12 @@ and heap_entail_conjunct_lhs_struc_x
 	            (*let _= print_string ("\n wrrap inst: "^(string_of_int (List.length formula_cont))^"\n"^
 	              (Cprinter.string_of_spec_var_list (expl_inst@impl_inst))^"\n") in*)
 	            (match n_ctx_list with
-	          | FailCtx fc ->
-                  begin
-                      (n_ctx_list, prf)
-                  end
+	              | FailCtx fc ->
+                      begin
+                          (n_ctx_list, prf)
+                      end
 	              | SuccCtx sc ->
-		                if (List.length formula_cont)>0 then
+                      if (List.length formula_cont)>0 then
                       let res, n_rpf = heap_entail_struc prog is_folding has_post n_ctx_list formula_cont pos pid in
                           (* let res, n_rpf = List.split (List.map (fun c->inner_entailer 5 c formula_cont) sc) in *)
                           (* let res = fold_context_left res in *)
@@ -2758,8 +2758,8 @@ and heap_entail_conjunct_lhs_struc_x
     if (List.length conseq)>0 then	
       (* this call captures an OCtx, why?? *)
 	  let ctx = CF.add_to_context_num 2 ctx22 "para OR on conseq" in
-	  let r = List.map (helper_inner ctx) conseq in
-	  let l1,l2 = List.split r in
+      let r = List.map (helper_inner ctx) conseq in
+      let l1,l2 = List.split r in
 	  ((fold_context_left l1),(mkCaseStep ctx conseq l2))
     else 
       (* TODO : can do a stronger falsity check on LHS *)
@@ -3292,7 +3292,7 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 and heap_entail_split_rhs_phases
       p is_folding  ctx0 conseq d
       pos : (list_context * proof) =
-  Gen.Debug.no_2 "heap_entail_split_rhs_phases"
+  Gen.Debug.ho_2 "heap_entail_split_rhs_phases"
       (fun x -> Cprinter.string_of_context x)
       (Cprinter.string_of_formula)
       (fun (lc,_) -> Cprinter.string_of_list_context lc)
@@ -3495,7 +3495,7 @@ and heap_n_pure_entail_x
           (entail_p_ctx, entail_p_prf)
 
 and one_ctx_entail prog is_folding  c conseq func p pos : (list_context * proof) =
-  Gen.Debug.no_2 "one_ctx_entail" (Cprinter.string_of_context) Cprinter.string_of_formula
+  Gen.Debug.ho_2 "one_ctx_entail" (Cprinter.string_of_context) Cprinter.string_of_formula
       (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")
       (fun ctx0 conseq ->  one_ctx_entail_x prog is_folding ctx0 conseq func p pos) c conseq
 
@@ -3656,7 +3656,7 @@ and swap_heap (f : formula) (new_h : h_formula) pos : (formula * h_formula) =
 and heap_entail_split_lhs_phases(*_debug*)
       p is_folding  ctx0 conseq d
       pos : (list_context * proof) =
-  Gen.Debug.no_2 "heap_entail_split_lhs_phases"
+  Gen.Debug.ho_2 "heap_entail_split_lhs_phases"
       (Cprinter.string_of_context)
       (fun _ -> "RHS")
       (* (Cprinter.string_of_formula) *)
@@ -3925,8 +3925,7 @@ and heap_entail_with_cont
 		          )
 	          end
         | Or_Continuation(ft1, ft2) ->
-                 (*let _ = print_flush ("locle OR Continuation:") in*)
-                 let ctx1, prf1 = heap_entail_with_cont prog is_folding  ctx0 conseq ft1 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
+            let ctx1, prf1 = heap_entail_with_cont prog is_folding  ctx0 conseq ft1 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
 	          let ctx2, prf2 = heap_entail_with_cont prog is_folding  ctx0 conseq ft2 h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos in
 	          (* union of states *)
 	          ((fold_context_left [ctx1; ctx2]),( mkOrRight ctx0 conseq [prf1; prf2]))		
@@ -4114,8 +4113,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_branches = br1;
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
-                                  (*let _ = print_flush "locle:heap_entail_conjunct: **********1" in*)
-				                  (* 23.10.2008 *)
+                                  (* 23.10.2008 *)
 				                  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 				                  (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
 				                  (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
@@ -5855,8 +5853,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		        (* ok because of TP.imply*)
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
-                  let coercion_flow = CF.flow_formula_of_formula coer_rhs_new in
-                   let new_f = CF.normalize_flow_replace f coer_rhs_new pos in
+                  let new_f = CF.normalize coer_rhs_new f pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
 			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
 			      (true, new_f)
@@ -5868,10 +5865,11 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		              ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
 		          let neg_guard = CP.mkNot lhs_guard_new None pos in
                   let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
-		          let f0 = normalize_flow_replace f (formula_of_heap node pos) pos in
+		          let f0 = normalize f (formula_of_heap node pos) pos in
 		          let f1 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 			      (* unfold the case with the negation of the guard. *)
 		          let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
+
 		          let f2 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			      (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		          let new_f = mkOr f1 f2 pos in

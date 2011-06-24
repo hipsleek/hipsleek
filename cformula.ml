@@ -1566,10 +1566,10 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
 
-(*final flow is of f2*)
+(*final flow is of f2*)(*
 and normalize_flow_replace (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_replace pos
-
+                       *)
       (* todo: check if this is ok *)
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
