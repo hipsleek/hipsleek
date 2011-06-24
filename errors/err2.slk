@@ -59,9 +59,29 @@ checkentail x=y |- x::node<_,_> .
 
 //14. must bug - FIXED
 checkentail x=y |- x::node<_,_> * y::node<_,_>.
+/*
+AND reason missing..
+
+Bad Context: 
+              fe_kind: MUST{
+                            fc_message:  y=x |-  x!=null & x!=y
+                            fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+
+*/
 
 //15. may
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
+/* 
+Why \/ on LHS?
+
+Entail(15)=Fail.(must) cause:15.3  y<x | x<y |-  x!=null & x!=y
+printing here:  
+Bad Context: 
+              fe_kind: MUST{
+                            fc_message:  y<x | x<y |-  x!=null & x!=y
+                            fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+
+*/
 
 //16. must bug - FIXED
 checkentail true |- x::node<_,_> * x::node<_,_>.
@@ -87,6 +107,23 @@ checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
 //22. must-bug - FIXED
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
+/*
+Why isn't it AND_reason?
+
+Entail(22)=Fail.(must) cause:or[22  y!=null |-  y=null (must-bug).,15.3  true |-  n=0]
+printing here:  
+Bad Context:  
+               fe_kind: MUST{
+                             fc_message:  y!=null |-  y=null (must-bug).
+                             fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+             FAIL_OR 
+              
+               fe_kind: MUST{
+                             fc_message:  true |-  n=0
+                             fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+
+*/
+
 
 //23 valid
 checkentail x::ll<n> & n>0  |- x!=null.
