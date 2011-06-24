@@ -13,7 +13,7 @@ pred neg_ll<n> == self = null & n = 0
 	inv n >= 0.
 
 
-
+/*
 //1. must failure
 checkentail x::node<2,null> |- x::node<3,null> .
 print residue.
@@ -107,5 +107,6 @@ checkentail x=null |- x::neg_ll<m> & m>0.
 checkentail x=null |- x=null or x::node<_,_>.
 
 
-//29 valid (union) /may (|) bug -now may
+//29. may bug (|)
 checkentail n=5 or n>0 or n>9 |- n>6.
+
