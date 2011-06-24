@@ -2222,6 +2222,11 @@ let print_context_list_short = ref(fun (c:context list) -> "printer not initiali
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
+let is_one_context (c:context) =
+  match c with
+    | Ctx _ -> true
+    | OCtx _ -> false
+
 let is_cont t = 
   match t with
     | ContinuationErr _ -> true

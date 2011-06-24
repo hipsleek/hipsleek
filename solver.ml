@@ -2881,7 +2881,7 @@ and heap_entail_x (prog : prog_decl) (is_folding : bool)  (cl : list_context) (c
             (heap_entail_one_context prog is_folding  (List.hd cl) conseq pos)
 
 and heap_entail_one_context prog is_folding  ctx conseq pos =
-  Gen.Debug.loop_2_no "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
+  Gen.Debug.no_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
       (fun ctx conseq -> heap_entail_one_context_a prog is_folding  ctx conseq pos) ctx conseq
 
 (*   and heap_entail_one_context prog is_folding  ctx conseq pos =  *)
@@ -2891,6 +2891,7 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
   Debug.devel_pprint ("heap_entail_one_context:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n") pos;
+   (* At this point, we may still have OCtx! *)
     if isAnyFalseCtx ctx then
       (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
@@ -2996,6 +2997,12 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
   (* pre ; LHS is not an OCtx *)
+  (* is LHS really conjunctive? *)
+  (* (if not(CF.is_one_context ctx) then report_error no_pos "heap_entail_one_context does not have Ctx es"); *)
+    (* let lhs_flow = CF.get_flow_context ctx in *)
+    (* let rhs_flow = CF.get_flow_formula conseq in *)
+    (* if CF.flow_subsume lhs_flow rhs_flow then return must_error *)
+    (* else  *)
   match conseq with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
