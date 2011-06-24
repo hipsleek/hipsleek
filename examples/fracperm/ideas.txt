@@ -57,8 +57,62 @@ There is a similar lemma which we used for the lseg predicate.
 You can play with it at examples/working/sleek/sleek{7,8}.slk
 to see its versaility. In our implementation, we have to
 handle universal lemma proving in a special way. The standard
-mechanism works for only existential quantifier which is 
-weak.
+mechanism works for only existential quantifier which is weak.
+
+Lent Notation (This part is similar to @I immutable annotation)
+=============
+
+With permission accounting:
+
+  requires [p]x::ll<n> & 0<p<=1
+  ensures  [p]x::ll<n> & res=1
+
+With Lent using @I immutability annotation, we can more concisely 
+write it as:
+
+  requires x::ll<n>@I
+  ensures  res=1
+
+In the case of fractional permission, we may use the
+following instead:
+
+  requires [p](H->x::ll<n>) & 0<p<=1
+  ensures  [p] H & res=1
+
+Here, H denotes the heap state that is matched against
+x::ll<n>. This heap state is being preserved by the
+immutable predicate, as it appears explicitly in H.
+
+As a short-cut, we may use the following :
+
+  requires [p@I]x::ll<n>
+  ensures  res=1
+
+We should investigate how immutable example can be handled
+here in a concise and precise way.
+
+=====================================
+
+Bag of Addresses with Permissions
+---------------------------------
+
+Instead of {x,y}, we will add permission to each
+distinct location, e.g: (p1,x),(p2,y)}
+
+ Three rules, we may add are:
+
+ {(p1,x),(p2,x)} & D       ==> {(p1+p2,x)} & D
+
+ {(p1,x),(p2,y)} & p1+p2>1 |- x!=y
+
+ {(p,x)} & p>1             |- false
+
+=====================================
+
+Related Work:
+
+ Can we have counting and full fractional permissions?
+
 
 =================================================
 LDK:
