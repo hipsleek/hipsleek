@@ -855,10 +855,10 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
         Gen.Profiling.pop_time "prune_preds";
         nf)
 
-and prune_preds  prog (simp_b:bool) (f:formula):formula =   
+and prune_preds prog (simp_b:bool) (f:formula):formula =   
   let p1 = string_of_bool in
   let p2 = Cprinter.string_of_formula in
-  Gen.Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
+  Gen.Debug.ho_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
 
 and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 
@@ -1850,7 +1850,6 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
   let pr1 = Cprinter.string_of_list_context_short in
   let pr2 x = pr1 (fst x) in
   Gen.Debug.no_1 "process_fold_result" pr1 pr2 (fun _ -> process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  fold_rs0
-      
 and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in
@@ -4081,7 +4080,7 @@ and heap_entail_build_pure_check ev an cq pos =
 and heap_entail_build_pure_check_a (evars : CP.spec_var list) (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
   let tmp1 = CP.mkExists evars conseq None no_pos in
   (ante, tmp1)
-
+	
 and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : bool = 
   let imp_subno = ref 0 in
   let estate = lhs in
@@ -4128,7 +4127,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -4145,7 +4144,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
-  let fold_fun (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.mix_formula) =
+
+  let rec fold_fun (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.mix_formula) =
+	Gen.Debug.ho_1 "fold_fun@heap_entail_empty_rhs_heap"
+	  (fun (_, mf) -> Cprinter.string_of_mix_formula mf)
+	  (fun _ -> "")
+	  (fun p -> fold_fun_x (is_ok,succs,fails) p) (branch_id, rhs_p)
+	
+  and fold_fun_x (is_ok,succs,fails) ((branch_id, rhs_p):string * MCP.mix_formula) =
     if (is_ok = false) then (is_ok,succs,fails) else 
       let m_lhs = MCP.combine_mix_branch branch_id (lhs_p, lhs_b) in
       let tmp2 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
@@ -4183,13 +4189,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
       let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
       let split_ante1 = new_ante1 in
-      let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then (true,[],None) 
-      else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in	
+      let res1,res2,res3 =
+		if (MCP.isConstMTrue rhs_p) then (true,[],None)
+		else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in	
       let res1,res2,re3 = 
         if res1 = false && branch_id = "" then
 	      let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
           let fold_fun (is_ok,a2,a3) branch_id_added =
-            if is_ok then (is_ok,a2,a3) else
+            if is_ok then (is_ok,a2,a3)
+			else
 	          let tmp1 = MCP.merge_mems (MCP.combine_mix_branch branch_id_added (xpure_lhs_h1, xpure_lhs_h1_b)) 
                 (MCP.combine_mix_branch branch_id_added (lhs_p, lhs_b)) false in
 	          let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars) tmp1 rhs_p pos in
@@ -4227,7 +4235,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	  Debug.devel_pprint ("heap_entail_empty_heap: folding: formula is valid") pos;
 	  Debug.devel_pprint ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
 	  (SuccCtx[res_ctx], prf)
-	end else begin
+	end
+	else begin
 	  let res_ctx = Ctx {estate with es_formula = res_delta;
 		  es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 			| Some s1,Some s2 -> (s1,s2)::a
@@ -4236,7 +4245,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	  Debug.devel_pprint ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
 	  (SuccCtx[res_ctx], prf)
 	end
-  end else begin
+  end
+  else begin
     Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
     (CF.mkFailCtx_in (Basic_Reason ({
 		fc_message = "failed in entailing pure formula(s) in conseq";
@@ -4383,7 +4393,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
-  Gen.Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Gen.Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
@@ -4414,13 +4424,13 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula_no_memo_debug new_ante new_conseq imp_no imp_subno timeout memset =   
-  Gen.Debug.no_3 "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
+and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset =   
+  Gen.Debug.ho_3 "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r) 
-      (fun new_ante new_conseq memset -> imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset) 
+      (fun new_ante new_conseq memset -> imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset) 
       new_ante new_conseq memset 
 
-and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset =   
+and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset =   
   let new_conseq = solve_ineq new_ante memset new_conseq in
   let (r1,r2,r3) =  
     match timeout with

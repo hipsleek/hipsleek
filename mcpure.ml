@@ -701,10 +701,10 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
 	  let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
 	  let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-	  Gen.Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_a l1 l2 status
+	  Gen.Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
       
 (*add both imply and fail*)
-and create_memo_group_a (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
+and create_memo_group_x (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
@@ -713,16 +713,12 @@ and create_memo_group_a (l1:(b_formula * (formula_label option)) list) (l2:formu
   let l1 = List.map (fun c-> (Some c,None)) l1 in  
   let ll  = List.fold_left ( fun a f ->
 	  let fv = match f with
-		| None, Some c-> fv c
-		| Some c, None -> let sv = bfv c in
-						  if !do_slicing then
-							let (_, sl) = c in
-							match sl with
-							  | None -> sv
-							  | Some (il, _, el) ->
-								if il then []
-								else Gen.BList.difference_eq eq_spec_var sv (List.fold_left (fun a e -> a @ (afv e)) [] el)
-						  else sv
+		| None, Some c ->
+			(*let _ = print_string ("\ncreate_memo_group: before elim_exist: " ^ (!print_p_f_f c) ^ "\n") in
+			let _ = print_string ("\ncreate_memo_group: after elim_exist: " ^ (!print_p_f_f (elim_exists c)) ^ "\n") in *)
+			fv c
+		| Some c, None -> if !do_slicing then fst (bfv_with_slicing_label c)
+						  else bfv c
 		| _-> [] in
 	  let rec f_rec fv a = 
         let r1,r2 =
@@ -910,8 +906,15 @@ and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure =
   if qv==[] then c
   else
     memo_pure_push_exists_all ((fun w f p-> mkExists w f None p),false) qv c no_pos
-        
-and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * formula list = 
+
+and memo_norm (l:(b_formula * (formula_label option)) list): b_formula list * formula list =
+  Gen.Debug.no_1 "memo_norm" (fun l -> List.fold_left (fun a (bf,_) -> a ^ (!print_bf_f bf)) "" l)
+	(fun (bfl, fl) ->
+	  "[" ^ (List.fold_left (fun a bf -> a ^ "," ^ (!print_bf_f bf)) "" bfl) ^ "]" ^
+	  "[" ^ (List.fold_left (fun a f -> a ^ (!print_p_f_f f)) "" fl) ^ "]")
+	memo_norm_x l
+	  
+and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * formula list = 
   let rec get_head e = match e with 
     | Null _ -> "Null"
     | Var (v,_) -> name_of_spec_var v
@@ -1246,8 +1249,11 @@ let elim_redundant_debug impl (f:memo_pure) : memo_pure  =
   print_string ("eliminate_redundant result: "^(!print_mp_f r1)^"\n");
   r1
 
-(* wrapper for fast_imply*)  
-let fast_memo_imply (g:memoised_group) (f:b_formula):int = 
+(* wrapper for fast_imply*)
+let rec fast_memo_imply (g:memoised_group) (f:b_formula):int =
+  Gen.Debug.ho_2 "fast_memo_imply" !print_mg_f !print_bf_f string_of_int fast_memo_imply_x g f
+	
+and fast_memo_imply_x (g:memoised_group) (f:b_formula):int = 
   let cons = List.map (fun c-> c.memo_formula) g.memo_group_cons in
   fast_imply(*_debug*) g.memo_group_aset cons f
 
@@ -1324,9 +1330,9 @@ let rec imply_memo_debug ante_memo0 conseq_memo t_imply imp_no=
  Gen.Debug.no_2 "imply_memo_x" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
-      (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no)ante_memo0 conseq_memo
+      (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
 
-and  imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
+and imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
@@ -1338,36 +1344,26 @@ and  imply_memo_x ante_memo0 conseq_memo t_imply imp_no
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
     | [] -> (true,[],None)
-          let imply_memo ante_memo0 conseq_memo t_imply imp_no =
-  let ante_memo0 = 
-    if !f_2_slice then match ante_memo0 with
-       | [] -> []
-       | [h] -> [h]
-       | h::t -> [List.fold_left (fun a c-> 
-          let na =EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
-            {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv); 
-             memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
-             memo_group_changed = true;
-             memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
-             memo_group_aset = na;}) h t]
-    else ante_memo0 in
-  imply_memo_x ante_memo0 conseq_memo t_imply imp_no
-          
+        
 let imply_memo ante_memo0 conseq_memo t_imply imp_no =
-  if (isConstMFalse ante_memo0) then (true,[],None)
-  else 
+  if (isConstMFalse ante_memo0) then (true,[],None) (* Slicing: TODO: if a FALSE is found in the ante then return true *)
+  else
+  let _ = print_string ("imply_memo: ante before merging: \n" ^ (List.fold_left (fun a mf -> a ^ (!print_mg_f mf)) "" ante_memo0)) in
   let ante_memo0 = 
-    if !f_2_slice then match ante_memo0 with
+    if !f_2_slice or !do_slicing (* Slicing: TODO: need to find relevant constraints with conseq *)
+	then
+	  match ante_memo0 with
        | [] -> []
        | [h] -> [h]
-       | h::t -> [List.fold_left (fun a c->
-          let na =EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
+       | h::t -> [List.fold_left (fun a c ->
+          let na = EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
             {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv); 
              memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
              memo_group_changed = true;
              memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
              memo_group_aset = na;}) h t]
     else ante_memo0 in
+  let _ = print_string ("imply_memo: ante after merging: \n" ^ (List.fold_left (fun a mf -> a ^ (!print_mg_f mf)) "" ante_memo0)) in
   imply_memo_x ante_memo0 conseq_memo t_imply imp_no
           
 (*let imply_memo_debug ante_memo conseq_memo t_imply =

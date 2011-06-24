@@ -520,7 +520,7 @@ let hull (pe : formula) : formula =
        flush log_all;
     end;
     let rel = send_and_receive fomega !timeout2 (* 0. *) in
-	  match_vars (fv pe) rel 
+	  match_vars (fv pe) rel
   end
 
 let gist (pe1 : formula) (pe2 : formula): formula =

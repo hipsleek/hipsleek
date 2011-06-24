@@ -1025,7 +1025,6 @@ let tp_imply_debug ante conseq imp_no timeout do_cache process =
       (fun c-> c) (fun _ -> "?") string_of_bool (fun _ -> "?")
       string_of_bool 
       tp_imply ante conseq imp_no timeout do_cache process
-
 (* renames all quantified variables *)
 let rec requant = function
   | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
@@ -1311,7 +1310,7 @@ let disj_cnt a c s =
 let imply_timeout a c i t dc process=
   disj_cnt a (Some c) "imply";
   Gen.Profiling.do_5 "TP.imply_timeout" imply_timeout a c i t dc process
-
+	
 let memo_imply_timeout ante0 conseq0 imp_no timeout = 
   (* let _ = print_string ("\nTPdispatcher.ml: memo_imply_timeout") in *)
   let _ = Gen.Profiling.push_time "memo_imply" in
@@ -1325,8 +1324,14 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
       (r1',r2@r2',r3')) (true, [], None) conseq0 in
   let _ = Gen.Profiling.pop_time "memo_imply" in
   r
-;;
 
+let memo_imply_timeout ante0 conseq0 imp_no timeout =
+  Gen.Debug.ho_2 "memo_imply_timeout"
+	(Cprinter.string_of_memoised_list)
+	(Cprinter.string_of_memoised_list)
+	(fun (r,_,_) -> string_of_bool r)
+	(fun a c -> memo_imply_timeout a c imp_no timeout) ante0 conseq0
+	
 let mix_imply_timeout ante0 conseq0 imp_no timeout = 
   (* let _ = print_string ("\nTPdispatcher.ml: mix_imply_timeout") in *)
   match ante0,conseq0 with

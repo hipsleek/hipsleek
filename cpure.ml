@@ -4380,9 +4380,6 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
 
 let fast_imply a l r = Gen.Profiling.do_3 "fast_imply" fast_imply a l r
 
-
-
-
 let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
   let pr1 = !print_b_formula in
 (*    let _ = print_string ("fast imply aset :"^(EMapSV.string_of aset)^"\n") in*)
@@ -5089,8 +5086,6 @@ let is_linear_exp e0 =
   in
   fold_exp e0 f and_list
 
-
-
 let inner_simplify simpl f =
   let f_f e = match e with
     | Exists _ -> (Some (simpl e))
@@ -5234,6 +5229,16 @@ let rec break_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_formula f
 	| Exists (_, f, _, _) -> break_formula f
 
+let bfv_with_slicing_label bf =
+  let (_, sl) = bf in
+  let vbf = bfv bf in
+  let vs = match sl with
+	  | None -> vbf
+	  | Some (il, _, el) -> (* set of interesting variables *)
+							if il then [] (* not any interesting var if the b_formula is linking formula *)
+							else Gen.BList.difference_eq eq_spec_var vbf (List.fold_left (fun a e -> a @ (afv e)) [] el) (* the fv of linking exp not included *)
+  in (vs, Gen.BList.difference_eq eq_spec_var vbf vs)
+	  
 (* Group related vars together after filtering the <IL> formula *)
 let rec group_related_vars (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list = 
   Gen.Debug.ho_1 "group_related_vars"
@@ -5242,17 +5247,10 @@ let rec group_related_vars (bfl: b_formula list) : (spec_var list * spec_var lis
 	  acc1 ^ "\n[" ^ (List.fold_left (fun acc2 sv -> acc2 ^ " " ^ (!print_sv sv)) "" svl) ^ " ]"
 	  ^ "\n[" ^ (List.fold_left (fun acc2 sv -> acc2 ^ " " ^ (!print_sv sv)) "" lkl) ^ " ]"
 	  ^ " [" ^ (List.fold_left (fun acc2 bf -> acc2 ^ " " ^ (!print_b_formula bf)) "" bfl) ^ " ]") "" sv_bfl) group_related_vars_x bfl
-	  
+				  
 and group_related_vars_x (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list = (* bfv = fv1 U fv2 *)
   let repart acc bf =
-	let (_, sl) = bf in
-	let vbf = bfv bf in
-	let vs = match sl with
-	  | None -> vbf
-	  | Some (il, _, el) -> (* set of interesting variables *)
-							if il then [] (* not any interesting var if the b_formula is linking formula *)
-							else Gen.BList.difference_eq eq_spec_var vbf (List.fold_left (fun a e -> a @ (afv e)) [] el) (* the fv of linking exp not included *)
-	in let lkl = Gen.BList.difference_eq eq_spec_var vbf vs in
+	let (vs,lkl) = bfv_with_slicing_label bf in
 	let (ol, nl) = List.partition (fun (vl,_,_) -> (Gen.BList.overlap_eq eq_spec_var vs vl)) acc in
 	let n_vl = List.fold_left (fun a (vl,_,_) -> a@vl) vs ol in
 	let n_lkl = List.fold_left (fun a (_,lk,_) -> a@lk) lkl ol in

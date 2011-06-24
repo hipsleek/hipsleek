@@ -1167,12 +1167,15 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
     (*let _  = print_string ("before memo simpl x pure: "^(Cprinter.string_of_memoised_list xform')^"\n") in
     let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
     let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
-	  let _ = print_string ("\ncompute_view_x_formula: LHS" ^ (Cprinter.string_of_formula formula1) ^ "\n") in
-      let ctx =
+	  let ctx =
         CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
-	  let _ = print_string ("\ncompute_view_x_formula: RHS" ^ (Cprinter.string_of_formula formula) ^ "\n") in
-      let (rs, _) =
+	  
+	  let _ = print_string ("\ncompute_view_x_formula: LHS (context) \n" ^ (Cprinter.string_of_context ctx) ^ "\n") in
+      let _ = print_string ("\ncompute_view_x_formula: LHS \n" ^ (Cprinter.string_of_formula formula1) ^ "\n") in
+	  let _ = print_string ("\ncompute_view_x_formula: RHS \n" ^ (Cprinter.string_of_formula formula) ^ "\n") in
+
+	  let (rs, _) =
       Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos
       in
 	(* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
