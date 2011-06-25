@@ -2,6 +2,7 @@ open Globals
 open Gen.Basic
 
 open Cpure
+
 (*
  -eprune = espec + ememo + eslice
  -espec enables specialization 
@@ -26,7 +27,7 @@ and memoised_group = {
     memo_group_changed: bool;
     memo_group_cons : memoised_constraint list;(*used for pruning*)
     memo_group_slice: formula list; (*constraints that can not be used for pruning but belong to the current slice non-the less*)
-    memo_group_aset : var_aset;
+    memo_group_aset : var_aset; (* alias set *)
     }
 
 and memoised_constraint = {
@@ -469,18 +470,18 @@ and memo_is_member_pure p mm =
 *)
 and fold_mem_lst_to_lst_gen  (mem:memo_pure) with_R with_P with_slice with_disj: formula list=	
   let rec has_disj_f c = match c with | Or _ -> true | _ -> false  in			  
-  let r = List.map (fun c-> 
+  let r = List.map (fun c -> 
 	  let slice = if with_slice then 
 		if with_disj then c.memo_group_slice 
-		else List.filter (fun c-> not (has_disj_f c)) c.memo_group_slice
+		else List.filter (fun c -> not (has_disj_f c)) c.memo_group_slice
 	  else [] in
-	  let cons = List.filter (fun c-> match c.memo_status with 
+	  let cons = List.filter (fun c -> match c.memo_status with 
 		| Implied_R -> with_R 
 		| Implied_N -> true 
 		| Implied_P-> with_P) c.memo_group_cons in
 	  let cons  = List.map (fun c-> (BForm(c.memo_formula, None))) cons in
 	  let asetf = List.map (fun(c1,c2)-> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const c.memo_group_aset) in
-	  asetf @ slice@cons) mem in
+	  asetf @ slice @ cons) mem in
   let r = List.map join_conjunctions r in
   r
       
@@ -491,7 +492,6 @@ and fold_mem_lst_to_lst_debug mem with_dupl with_inv with_slice =
   print_string ("fold_mem_lst_to_lst input: "^(!print_mp_f mem)^"\n");
   print_string ("fold_mem_lst_to_lst output: "^(print_p_f_l r)^"\n");
   r
-      
       
 and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj lst : formula = 
   let r = fold_mem_lst_to_lst_gen lst with_dupl with_inv with_slice with_disj in
@@ -525,7 +525,6 @@ and filter_merged_cons aset l=
     | Implied_N,Implied_N | Implied_P,Implied_P | Implied_N,Implied_P
 	      -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (false,true) else (true,true) 
     | Implied_P,Implied_N -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (true,false) else (true,true) in
-  
   let rec remove_d n = match n with 
     | [] -> []
     | q::qs -> 
@@ -1076,7 +1075,7 @@ let memo_find_relevant_slice fv l = List.find (fun d-> Gen.BList.subset_eq eq_sp
 let memo_find_relevant_slices fv l = List.filter (fun d->  Gen.BList.overlap_eq eq_spec_var fv d.memo_group_fv) l
 
 let memo_get_asets fv l = 
-  let r= memo_find_relevant_slices fv l in
+  let r = memo_find_relevant_slices fv l in
   match r with
     | [] -> empty_var_aset
     | h::t -> List.fold_left (fun a c-> EMapSV.merge_eset a c.memo_group_aset) h.memo_group_aset t 
@@ -1270,14 +1269,14 @@ let replace_memo_pure_label nl f =
  
  (* imply functions *)
 
-let rec mimply_process_ante_debug with_disj ante_disj conseq str str_time t_imply imp_no =
+let rec mimply_process_ante(*_debug*) with_disj ante_disj conseq str str_time t_imply imp_no =
  Gen.Debug.no_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
- (fun with_disj ante_disj conseq -> mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
+ (fun with_disj ante_disj conseq -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
     
-and mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
+and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let fv = fv conseq in 
-  let n_ante = List.filter(fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
+  let n_ante = List.filter (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
   (*check lhs is false*)
  (* let n_ante = if (isConstMFalse  ante_disj) then n_ante @ (mkMFalse no_pos) else n_ante in*)
   (* let _ = print_endline ("mimply_process_ante: n_ante 1"^ (!print_mp_f n_ante) )in*)
@@ -1286,13 +1285,40 @@ and mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
- 
+
   (Gen.Profiling.push_time str_time;
-  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
+  let r =
+	if !do_slicing then (* Slicing *)
+	  let flatten_f = partition_dnf_lhs r in
+	  
+	  let rec prove_lhs_conj ante_conj conseq = match ante_conj with
+		| [] -> (true,[],None)
+		| h::rest ->
+			let rel_constrs = find_relevant_constraints h fv in
+			let bl = List.flatten (List.map (fun (_,_,bl) -> bl) rel_constrs) in
+			let (r1,r2,r3) =
+			  if ((List.length bl) = 0) then (true,[],None)
+			  else
+				let ante = List.fold_left (fun a b -> mkAnd a (BForm (b, None)) no_pos) (mkTrue no_pos) bl in
+				t_imply ante conseq ("imply_process_ante"^(string_of_int !imp_no)) false None
+			in
+			(*
+			let str_ante = "LHS: " ^ (!print_p_f_f ante) ^ "\n" in
+			let str_cons = "RHS" ^ (!print_p_f_f conseq) ^ "\n" in
+			let str_res = "Res: " ^ string_of_bool r1 ^ "\n" in
+			let _ = print_string ("mimply_process_ante: \n" ^ str_ante ^ str_cons ^ str_res) in
+			*)
+			if r1 then
+			  let (r1,r22,r23) = prove_lhs_conj rest conseq in (r1,r2@r22,r23)
+			else (r1, r2, r3)
+	  in prove_lhs_conj flatten_f conseq
+	else 
+	  t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None
+  in
   Gen.Profiling.pop_time str_time;
   r)
  
-let mimply_one_conj ante_memo0 conseq  t_imply imp_no = 
+let mimply_one_conj ante_memo0 conseq t_imply imp_no = 
   let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
     (*("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^*) " with XPure0 no complex")*) "" 
     "imply_proc_one_ncplx" t_imply imp_no in  
@@ -1309,8 +1335,6 @@ let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no =
   (fun x -> string_of_int !x)
   (fun (c,_,_)-> string_of_bool c) 
   mimply_one_conj ante_memo0 conseq_conj t_imply imp_no
-
-  
  
 let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
   (*let _ = print_string ("\nMcpure.ml: mimply_conj " ^ (string_of_int !imp_no)) in*)
@@ -1332,15 +1356,15 @@ let rec imply_memo_debug ante_memo0 conseq_memo t_imply imp_no=
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
 
-and imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
+and imply_memo_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
           let r = fold_mem_lst_to_lst(*_debug*) [h] !no_RHS_prop_drop false true in
           let r = List.concat (List.map list_of_conjs r) in
-	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in
+	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
 	      if r1 then 
-	        let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in
+	        let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in (* A -> C *)
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
     | [] -> (true,[],None)
@@ -1348,9 +1372,8 @@ and imply_memo_x ante_memo0 conseq_memo t_imply imp_no
 let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   if (isConstMFalse ante_memo0) then (true,[],None) (* Slicing: TODO: if a FALSE is found in the ante then return true *)
   else
-  let _ = print_string ("imply_memo: ante before merging: \n" ^ (List.fold_left (fun a mf -> a ^ (!print_mg_f mf)) "" ante_memo0)) in
   let ante_memo0 = 
-    if !f_2_slice or !do_slicing (* Slicing: TODO: need to find relevant constraints with conseq *)
+    if !f_2_slice (* Use one slice for proving (sat, imply) *)
 	then
 	  match ante_memo0 with
        | [] -> []
@@ -1363,7 +1386,6 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
              memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
              memo_group_aset = na;}) h t]
     else ante_memo0 in
-  let _ = print_string ("imply_memo: ante after merging: \n" ^ (List.fold_left (fun a mf -> a ^ (!print_mg_f mf)) "" ante_memo0)) in
   imply_memo_x ante_memo0 conseq_memo t_imply imp_no
           
 (*let imply_memo_debug ante_memo conseq_memo t_imply =

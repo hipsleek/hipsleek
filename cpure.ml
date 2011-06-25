@@ -1204,7 +1204,7 @@ and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list
 and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_spec_var t v)) false sst
 
 and b_apply_subs sst bf =
-  let (pf,il) = bf in
+  let (pf,sl) = bf in
   let npf = match pf with
   | BConst _ -> pf
   | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
@@ -1237,9 +1237,11 @@ and b_apply_subs sst bf =
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
-  in (npf,il)
+  in let nsl = match sl with
+	| None -> None
+	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
+  in (npf,nsl)
 		
-
 (* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
 
 and subs_one sst v = 
@@ -5257,29 +5259,20 @@ and group_related_vars_x (bfl: b_formula list) : (spec_var list * spec_var list 
 	let n_bfl = List.fold_left (fun a (_,_,bfl) -> a@bfl) [bf] ol in
 	    (Gen.BList.remove_dups_eq eq_spec_var n_vl, Gen.BList.remove_dups_eq eq_spec_var n_lkl, n_bfl)::nl
   in List.fold_left repart [] bfl
-(*  
-and set_il_relation rl il =
-  match rl with
-	| ConstRel _ -> rl
-	| BaseRel (el, f) -> BaseRel (el, set_il_formula f il)
-	| UnionRel (r1, r2) -> UnionRel (set_il_relation r1 il, set_il_relation r2 il)
-*)
-(* Slicing: Set <IL> for a formula based on a list of dependent groups *)
 
+let check_dept vlist (dept_vars_list, linking_vars_list) =
+  let dept_vars = Gen.BList.difference_eq eq_spec_var vlist linking_vars_list in
+  if ((List.length dept_vars) > 0 &
+		 (Gen.BList.list_subset_eq eq_spec_var dept_vars dept_vars_list))
+  then (true, Gen.BList.difference_eq eq_spec_var vlist dept_vars_list)
+  else (false, [])
+
+(* Slicing: Set <IL> for a formula based on a list of dependent groups *)
 let rec set_il_formula_with_dept_list f rel_vars_lst =
   match f with
 	| BForm ((pf, _), lbl) ->
-	  	let vl = fv f in (* TODO: need to remove the linking vars in f *)
-		let check_dept vlist (dept_vars_list, linking_vars_list) =
-		  let dept_vars = Gen.BList.difference_eq eq_spec_var vlist linking_vars_list in
-		  if ((List.length dept_vars) > 0 &
-			  (Gen.BList.list_subset_eq eq_spec_var dept_vars dept_vars_list))
-		  then (true, Gen.BList.difference_eq eq_spec_var vlist dept_vars_list) else (false, [])
-		in
+	  	let vl = fv f in 
 		let is_dept = List.fold_left (fun res rvl -> if (fst res) then res else (check_dept vl rvl)) (false, []) rel_vars_lst in
-		(*if (fst is_dept) then BForm ((pf, Some (false, Globals.fresh_int(), (snd is_dept))), lbl)
-		else
-		  BForm ((pf, Some (true, Globals.fresh_int(), [])), lbl)*)
 		let lexp = List.map (fun sv -> mkVar sv no_pos) (snd is_dept) in 
 		BForm ((pf, Some (not (fst is_dept), Globals.fresh_int(), lexp)), lbl)
 	| And (f1, f2, l) -> And (set_il_formula_with_dept_list f1 rel_vars_lst, set_il_formula_with_dept_list f2 rel_vars_lst, l)
@@ -5287,4 +5280,91 @@ let rec set_il_formula_with_dept_list f rel_vars_lst =
 	| Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
 	| Forall (sv, f, lbl, l) -> Forall (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
 	| Exists (sv, f, lbl, l) -> Exists (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
-	
+
+(* Slicing: Substitute vars bound by EX by fresh vars in LHS *)
+let rec elim_exists_with_fresh_vars f =
+  match f with
+	| Exists (v, f1, _, _) -> let SpecVar (t, i, p) = v in
+							  elim_exists_with_fresh_vars (subst [v, SpecVar (t, fresh_any_name i, p)] f1)
+	| BForm _ -> f
+	| And (f1, f2, loc) -> And (elim_exists_with_fresh_vars f1, elim_exists_with_fresh_vars f2, loc)
+	| Or (f1, f2, fl, loc) -> Or (elim_exists_with_fresh_vars f1, elim_exists_with_fresh_vars f2, fl, loc)
+	| Not (f1, fl, loc) -> Not (elim_exists_with_fresh_vars f1, fl, loc)
+	| Forall _ -> f  (* Not skolemization: All x. Ex y. P(x, y) -> All x. P(x, f(x)) *)
+	  
+(* Slicing: Normalize LHS to DNF *)
+let rec dist_not_inwards f =
+  match f with
+	| Not (f1, fl, _) ->
+		(match f1 with
+		  | BForm _ -> f
+		  | And (f2, f3, loc) -> Or (dist_not_inwards (Not (f2, fl, no_pos)), dist_not_inwards (Not (f3, fl, no_pos)), fl, loc)
+		  | Or (f2, f3, _, loc) -> And (dist_not_inwards (Not (f2, fl, no_pos)), dist_not_inwards (Not (f3, fl, no_pos)), loc)
+		  | Not (f2, _, _) -> dist_not_inwards f2
+		  | Forall (sv, f2, fl, loc) -> Exists (sv, dist_not_inwards (Not (f2, fl, no_pos)), fl, loc)
+		  | Exists (sv, f2, fl, loc) -> Forall (sv, dist_not_inwards (Not (f2, fl, no_pos)), fl, loc))
+	| BForm _ -> f
+	| And (f1, f2, loc) -> And (dist_not_inwards f1, dist_not_inwards f2, loc)
+	| Or (f1, f2, fl, loc) -> Or (dist_not_inwards f1, dist_not_inwards f2, fl, loc)
+	| Forall (sv, f1, fl, loc) -> Forall (sv, dist_not_inwards f1, fl, loc)
+	| Exists (sv, f1, fl, loc) -> Exists (sv, dist_not_inwards f1, fl, loc)
+
+let rec standardize_vars f =
+  match f with
+	| BForm _ -> f
+	| And (f1, f2, loc) -> And (standardize_vars f1, standardize_vars f2, loc)
+	| Or (f1, f2, fl, loc) -> Or (standardize_vars f1, standardize_vars f2, fl, loc)
+	| Not (f1, fl, loc) -> Not (standardize_vars f1, fl, loc)
+	| Exists (sv, f1, fl, loc) ->
+		let SpecVar (t, i, p) = sv in
+		let nf1 = subst [sv, SpecVar (t, fresh_any_name i, p)] f1 in
+		Exists (sv, nf1, fl, loc)
+	| Forall (sv, f1, fl, loc) ->
+		let SpecVar (t, i, p) = sv in
+		let nf1 = subst [sv, SpecVar (t, fresh_any_name i, p)] f1 in
+		Forall (sv, nf1, fl, loc)
+
+let rec dist_and_over_or f =
+  match f with
+	| BForm _ -> f
+	| And (f1, f2, _) ->
+	  let nf1 = dist_and_over_or f1 in
+	  let nf2 = dist_and_over_or f2 in
+		(match f1 with
+		  | Or (f11, f12, lbl, _) ->
+			let nf1 = And (nf1, f2, no_pos) in
+			let nf2 = And (nf2, f2, no_pos) in
+			Or (dist_and_over_or nf1, dist_and_over_or nf2, lbl, no_pos)
+		  | _ ->
+			(match f2 with
+			  | Or (f21, f22, lbl, _) ->
+				let nf1 = And (f1, f21, no_pos) in
+				let nf2 = And (f1, f22, no_pos) in
+				Or (dist_and_over_or nf1, dist_and_over_or nf2, lbl, no_pos)
+			  | _ -> f))
+	| Or (f1, f2, fl, loc) ->
+	  let nf1 = dist_and_over_or f1 in
+	  let nf2 = dist_and_over_or f2 in
+	  Or (nf1, nf2, fl, loc)
+	| Not (f, fl, loc) -> Not (dist_and_over_or f, fl, loc)
+	| Forall (sv, f, fl, loc) -> Forall (sv, dist_and_over_or f, fl, loc)
+	| Exists (sv, f, fl, loc) -> Exists (sv, dist_and_over_or f, fl, loc)
+
+let trans_dnf f =
+  let f = dist_not_inwards f in
+  let f = elim_exists_with_fresh_vars f in
+  let f = dist_and_over_or f in
+  f
+
+let rec partition_dnf_lhs f =
+  match f with
+	| BForm (bf, _) -> [[bf]]
+	| Forall _
+	| Exists _
+	| Not _ -> report_error no_pos "do not allow Forall, Exists, Not"
+	| Or (f1, f2, _, _) -> (partition_dnf_lhs f1) @ (partition_dnf_lhs f2)
+	| And (f1, f2, _) -> [List.flatten ((partition_dnf_lhs f1) @ (partition_dnf_lhs f2))]
+
+let find_relevant_constraints bfl fv =
+  let parts = group_related_vars bfl in
+  List.filter (fun (svl,lkl,bfl) -> fst (check_dept fv (svl, lkl))) parts

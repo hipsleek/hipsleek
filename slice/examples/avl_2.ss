@@ -16,6 +16,16 @@ avl<n, h, s, B> ==
 	inv h >= 0 & n >= 0 & $ n >= h;
 
 /*
+avl<n, h> ==
+	self = null & h = 0 & n = 0 or
+	self::node<v, p, q> * p::avl<n1, h1> * q::avl<n2, h2>
+		& n = 1 + n1 + n2
+		& h = 1 + max(h1, h2)
+		& -1 <= h1 - h2  <= 1
+	inv h >= 0 & n >= 0 & $ n >= h;
+*/
+
+/*
 (SLICE[h,h1,h2]:
    [<>(-1+h1)<=h2(IN)& <, 18, []>(-1+h2)<=h1(IN)]
    [exists1(max_162:<, 17, []>h=max_162+1 & <, 163, []>max_162=max(h1,h2))]
