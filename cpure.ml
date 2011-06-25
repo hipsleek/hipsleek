@@ -593,7 +593,7 @@ and mklsPtrNeqEqn vs pos =
       | [] -> []
       | [v] -> []
       | v::tl ->
-          [mkNeqNull v pos] @ (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
+          (*[mkNeqNull v pos] @*) (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
   in
   let disj_sets= helper vs in
   List.fold_left

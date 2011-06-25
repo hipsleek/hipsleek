@@ -5,32 +5,32 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-//1. must failure
+//1. must failure. cause:22  n=1 |-  5<n (must-bug).
 //checkentail n = 1 |- n > 5 & flow __Err.
 
 checkentail n = 1 |- n > 5 .
 
-//2. may failure
+//2. may failure. cause:or[base case unfold failed,22  n=m & 2<=m |-  3<m (may-bug).]
 checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
 print residue.
 
-//3. must failure
+//3. must failure. cause:15.1 x=null |-  x!=null
 checkentail x=null  |- x::node<_,_>.
 print residue.
 
-//4. must failure
+//4. must failure. cause:22  x=1 |-  x=null (must-bug).
 checkentail x::node<_,_> |- x=null.
 print residue.
 
-//5. may failure
+//5. may failure. cause:22  Anon_33=0 & x=null | x!=null & 1<=Anon_33 |-  x=null (may-bug).
 checkentail x::ll<_> |- x=null.
 print residue.
 
-//6. must failure
+//6. must failure. cause:22  x!=null |-  x=null (must-bug).
 checkentail x::ll<n> & n>0 |- x=null.
 print residue.
 
-//7. may failure
+//7. may failure. cause:or[base case unfold failed,22  m=0 & n=0 & x=null | n=m & x!=null & 1<=m |-  3<m (may-bug).]
 checkentail x::ll<n> |- x::ll<m> & m>3.
 print residue.
 
@@ -46,12 +46,12 @@ print residue.
 checkentail n > 1 or n > 3 |- n > 1.
 //print residue.
 
-//11. may failure
+//11. may failure. cause:22  2<=n |-  2<n (may-bug).
 
 checkentail n > 1 |- n > 2.
 print residue.
 
-//12. must failure
+//12. must failure. cause:22  n=1 |-  n<1 (must-bug).
 checkentail n = 1 |- n < 1.
 print residue.
 

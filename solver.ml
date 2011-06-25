@@ -39,7 +39,7 @@ let helper prog h_node = match h_node with
   let f_aset e = Some e in
 	let f_formula e = Some e in
 	let f_b_formula e = Some e in
-	let f_exp e = Some e in			
+	let f_exp e = Some e in
   (*let f_fail e = e in*)
   let f_ctx e = 
     let f = e.es_formula in
@@ -2937,7 +2937,7 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
             (*let _ = print_endline "locle4" in*)
            (rs, prf)
       end
-*)
+      *)
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -4217,6 +4217,36 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
 	List.fold_left fold_fun2 false branches
   else res 
 
+and check_maymust_failure (failure_code:string) (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*string)=
+  let r = ref (-9999) in
+  let is_sat f = TP.is_sat_sub_no f r in
+  let find_all_failures a c = CP.find_all_failures is_sat a c in
+  (*build must/may msg*)
+  let build_failure_msg (ante, cons) = (Cprinter.string_of_pure_formula ante) ^ " |- "^
+    (Cprinter.string_of_pure_formula cons) in
+  let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
+   (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
+     otherwise MUST failure *)
+  let ante_filter = filter_redundant ante cons in
+  let (r1, r2,r3) = find_all_failures ante_filter cons in
+  if List.length (r1@r2) = 0 then
+    begin
+        let fc_msg = (String.concat "; " (List.map build_failure_msg r3)) ^ " (may-bug)." in
+        (*compute lub of may bug and current fc_flow*)
+        (CF.mk_failure_may_raw (failure_code ^ " " ^ fc_msg), fc_msg)
+    end
+  else
+    begin
+        (*compute lub of must bug and current fc_flow*)
+        let fc_msg =
+          if List.length r1 = 0 then
+            (String.concat "; " (List.map build_failure_msg r2)) ^ " (must-bug)."
+          else
+            (String.concat "; " (List.map build_failure_msg r1)) ^ " (RHS: contradiction)."
+        in
+        (CF.mk_failure_must_raw (failure_code ^ " " ^ fc_msg), fc_msg)
+    end
+
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
@@ -4295,51 +4325,25 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
             begin
               let new_fc_kind =
                 (*check_maymust*)
-                let r = ref (-9999) in
-                let is_sat f = TP.is_sat_sub_no f r in
-                let find_all_failures a c = CP.find_all_failures is_sat a c in
-                (*build must/may msg*)
-                let build_failure_msg (ante, cons) = (Cprinter.string_of_pure_formula ante) ^ " |- "^
-                              (Cprinter.string_of_pure_formula cons) in
                 let cons4 = (MCP.pure_of_mix split_conseq) in
-                let filter_redundant_new a c = CP.simplify_filter_ante TP.simplify_always a c in
-                (* let ante_filter0 = CP.filter_redundant (MCP.pure_of_mix split_ante0) cons4 in *)
-                let ante_filter0 = filter_redundant_new (MCP.pure_of_mix split_ante0) cons4 in
                 (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
                    otherwise MUST failure *)
                 (*check maymust for ante0*)
-                let (r1, r2,r3) = find_all_failures ante_filter0 cons4 in
-                if List.length (r1@r2) = 0 then
+                let (fc, msg) = check_maymust_failure "22" (MCP.pure_of_mix split_ante0) cons4 in
+                match fc with
+                  | Failure_May _ ->
                   begin
                       (*check maymust for ante1*)
-                      let ante_filter1 = filter_redundant_new (MCP.pure_of_mix split_ante1) cons4 in
-                        (*CP.filter_redundant (MCP.pure_of_mix split_ante1) cons4*)
-                      let (r1, r2,r3) = find_all_failures ante_filter1 cons4 in
-                       if List.length (r1@r2) = 0 then
-                       begin
-                           (*fc_msg :=  (Cprinter.string_of_pure_formula ante_filter1)^" |- "^
-                               (Cprinter.string_of_pure_formula cons4) ^ ": HOLD ---But, there is a must fail:";*)
-                           fc_msg :=(String.concat "; " (List.map build_failure_msg r3)) ^ " (may-bug).";
-                           (*compute lub of may bug and current fc_flow*)
-                           CF.mk_failure_may_raw ("22 " ^ !fc_msg)
-                       end
-                     else
-                       begin
-                           (*compute lub of must bug and current fc_flow*)
-                           if List.length r1 = 0 then
-                             fc_msg :=(String.concat "; " (List.map build_failure_msg r2)) ^ " (must-bug)."
-                           else
-                             fc_msg :=(String.concat "; " (List.map build_failure_msg r1)) ^ " (RHS: contradiction).";
-                            CF.mk_failure_must_raw ("22 " ^ !fc_msg)
-                       end
-                  end else
+                      let (fc, msg) = check_maymust_failure "22" (MCP.pure_of_mix split_ante1) cons4 in
+                      (
+                          fc_msg := msg;
+                          fc
+                      )
+                  end
+                  | _ ->
                   begin
-                      (*compute lub of must bug and current fc_flow*)
-                      if List.length r1 = 0 then
-                        fc_msg :=(String.concat "; " (List.map build_failure_msg r2)) ^ " (must-bug)."
-                      else
-                        fc_msg :=(String.concat "; " (List.map build_failure_msg r1)) ^ " (RHS: contradiction).";
-                      CF.mk_failure_must_raw ("22 " ^ !fc_msg)
+                     fc_msg := msg;
+                      fc
                     end
               in
 	          let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
@@ -5252,7 +5256,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
         if (simple_imply lhs_p rhs_p) then
           let new_lhs_p = filter_redundant lhs_p rhs_p in
           let new_rhs_p = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
-          let s = "15.1" ^ (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- " ^ (Cprinter.string_of_pure_formula new_rhs_p) in
+          let s = "15.1" ^ (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- " ^
+            (Cprinter.string_of_pure_formula new_rhs_p) ^ " (must-bug)." in
           (*change to must flow*)
           let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
@@ -5262,8 +5267,11 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           begin
               (*check disj memset*)
               let r = ref (-9999) in
-              let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure (CP.mklsPtrNeqEqn rsvl no_pos) in
-              let rhs_p = MCP.pure_of_mix rhs_mix_p in
+              let rhs_disj_set_p = CP.mklsPtrNeqEqn rsvl no_pos in
+              let rhs_neq_nulls = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
+              let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure rhs_disj_set_p in
+              let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
+              let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
               (*contradiction on RHS?*)
               if not(TP.is_sat_sub_no rhs_p r) then
                 (*contradiction on RHS*)
@@ -5271,19 +5279,22 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
                 let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
                 (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                                                CF.mk_failure_must ("15.2 " ^ msg))), NoAlias)
+                                                mk_failure_must ("15.2 " ^ msg ^ " (must-bug)."))), NoAlias)
               else
                 let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
+                (*
+                  rhs_disj_set != null has been checked above. Separately check for better error classifying.
+                *)
                 if not(simple_imply lhs_p rhs_p) then
-                  let new_lhs_p = filter_redundant lhs_p rhs_p in
-                  let msg = (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- "^
-                    (Cprinter.string_of_pure_formula rhs_p) in
+                  (*should check may-must here*)
+                  let (fc, msg) = check_maymust_failure "15.3" lhs_p rhs_p in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.error_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                                                  CF.mk_failure_must ("15.3 " ^ msg))), NoAlias)
+                                                  {fe_kind = fc})), NoAlias)
                 else
-                  let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) in
+                  let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
+                  ^ " (must-bug)."in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.top_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
@@ -6362,7 +6373,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let pr x = (string_of_int(List.length x))^"length" in
-  Gen.Debug.loop_2_no "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
+  Gen.Debug.loop_2 "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
       (fun _ _ -> heap_entail_list_partial_context_init prog is_folding  cl conseq pos pid) cl conseq
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)

@@ -1,3 +1,4 @@
+/*
 //OR
 /*
 or{must,valid} --> may
@@ -70,5 +71,6 @@ union{may,must} --> may
 //11. union{must,must} --> must
  checkentail n>3 |- n<1 or n<2 .
 
+*/
 
-
+checkentail n>3 & p>6 |- n>4 & p>2.
