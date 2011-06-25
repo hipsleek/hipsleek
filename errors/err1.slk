@@ -34,11 +34,11 @@ print residue.
 checkentail x::ll<n> |- x::ll<m> & m>3.
 print residue.
 
-//8. must failure - WRONG now may
+//8. must failure - cause:or[base case unfold failed,22  m=1 |-  3<m (must-bug).]
 checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
 print residue.
 
-//9. must failure - WRONG now may
+//9. must failure - cause:or[base case unfold failed,22  n=m & 2<=m |-  m<2 (must-bug).]
 checkentail x::ll<n> & n > 1 |- x::ll<m> & m < 2.
 print residue.
 

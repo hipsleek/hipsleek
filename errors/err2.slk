@@ -39,7 +39,7 @@ checkentail x::node<v,q>*q::node<_,null> |- x::node<2,q> .
 //7. must failure. cause:22  1<=v |-  v<0 (must-bug).
 checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
 
-//8. must failure - WRONG now may. OR vs.UNION?
+//8. must failure - UNION. FIXED
 checkentail x::ll<n> & n>0 |- x::ll<n+1> .
 
 //9. may. cause:15.3  true |-  x!=null (may-bug).
@@ -64,7 +64,7 @@ checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
 //15. may. cause:15.3  y<x | x<y |-  x!=null (may-bug).
 checkentail x!=y |- x::node<_,_> * y::node<_,_>.
-/* 
+/*
 Why \/ on LHS?  because CP.simplify_filter_ante call simplify from provers.
 */
 
@@ -93,6 +93,7 @@ checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
 //23. must-bug - cause:or[22  y!=null |-  y=null (must-bug).,15.3  true |-  n=0 (may-bug).] WRONG.OR vs.UNION?
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
+
 /*
 Why isn't it AND_reason?
 
@@ -129,4 +130,5 @@ checkentail x=null |- x=null or x::node<_,_>.
 
 //30. may bug (|). cause:or[or[22  n=5 |-  6<n (must-bug).,22  1<=n |-  6<n (may-bug).],proven valid here]
 checkentail n=5 or n>0 or n>9 |- n>6.
+
 

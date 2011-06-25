@@ -7,7 +7,7 @@ checkentail x=1 |- (exists y: y+y=x & x>2) .
 //3. x=1 & x=2 is a contradiction . cause:22  true |-  x=2 & x=1 (RHS: contradiction).
 checkentail true |- x=1 & x=2 .
 
-//4. x=3 is must-fail, x>3 is may-fail. cause:22  x=1 |-  x=3 (must-bug). shold AND here
+//4. x=3 is must-fail, x>3 is may-fail. cause:22  x=1 |-  x=3 (must-bug).
 checkentail x=1 |- x=3 & x>0.
 
 //5. x>=y & y>=z is must-fail. cause:22  x<z |-  z<=y & y<=x (must-bug).

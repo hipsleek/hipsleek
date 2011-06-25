@@ -2765,7 +2765,7 @@ and fold_context_left c_l =
 (* Fail or Succ --> Fail *)
 (* Fail m1 or Fail m2 --> Or m1 m2 *)
   (*list_context or*)
-
+(*
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 ->
@@ -2775,7 +2775,32 @@ and or_list_context_x c1 c2 = match c1,c2 with
          let t = mk_not_a_failure in
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
-
+*)
+(*maximising must bug with & (error information)*)
+and or_list_context_x c1 c2 = match c1,c2 with
+     | FailCtx t1 ,FailCtx t2 ->
+         if ((is_cont t1) && not(is_cont t2))
+         then FailCtx(t1)
+         else
+	       if ((is_cont t2) && not(is_cont t1))
+	       then FailCtx(t2)
+	       else
+	         if (is_cont t1) && (is_cont t2) then
+	           FailCtx (Or_Continuation (t1,t2))
+	         else
+	           FailCtx (And_Reason (t1,t2))  (* for AND, maximising must*)
+     | FailCtx t1 ,SuccCtx t2 ->
+          FailCtx t1
+     | SuccCtx t1 ,FailCtx t2 ->
+         FailCtx t2
+     | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+(*
+and fold_list_context_or c_l = match List.length c_l with
+  | 0 ->  Err.report_error {Err.error_loc = no_pos;
+              Err.error_text = "folding empty context list \n"}
+  | 1 -> (List.hd c_l)
+  | _ ->  List.fold_left or_list_context (List.hd c_l) (List.tl c_l)
+*)
 (* and or_list_context_x_old c1 c2 = match c1,c2 with *)
 (*      | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2, or_list_failure_explaining t1 t2)) *)
 (*      | FailCtx t1 ,SuccCtx t2 -> *)

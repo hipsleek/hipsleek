@@ -501,7 +501,7 @@ and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = matc
             match_res_type = Root;
             match_res_rhs_node = rhs_node;
             match_res_rhs_rest = rhs_rest;}) in
-        (-1, (Search_action [r;r0]))
+        (-1, (Search_action [r]))
       else r0
 (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
   | x::[] -> process_one_match prog x 

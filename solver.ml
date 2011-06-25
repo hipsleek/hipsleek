@@ -2549,7 +2549,7 @@ and heap_entail_conjunct_lhs_struc
   let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
   Gen.Debug.no_2 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula)
-      (fun _ -> "?")
+      (fun (a,b) -> Cprinter.string_of_list_context a)
       (fun ctx conseq -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq pos pid) ctx conseq
 
 and heap_entail_conjunct_lhs_struc_x
@@ -5194,7 +5194,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
-                  , CF.mk_failure_may "base case unfold failed" )),NoAlias)
+                  , CF.mk_failure_must "base case unfold failed" )),NoAlias)
+            (*use UNION, so return MUST, final res = latter case*)
             | Some x -> x)
     | Context.M_base_case_fold {
           Context.match_res_rhs_node = rhs_node;
@@ -5270,7 +5271,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                 - for example if RHS contains {x,y}, the constraint x!=y will be added to LHS pure formula
               *)
               let rhs_disj_set_p = CP.mklsPtrNeqEqn
-                (Gen.BList.remove_dups_eq (CP.eq_spec_var) (rsvl@rhs_h_matched_set)) no_pos in
+                (rsvl @ (Gen.BList.remove_dups_eq (CP.eq_spec_var) rhs_h_matched_set)) no_pos in
               (*use global information here*)
               let rhs_disj_set_p =
                 match rhs_disj_set_p with
@@ -5303,18 +5304,18 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                                                   {fe_kind = fc})), UnsatConseq)
                 else
                   let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
-                  ^ " (may-bug)."in
+                  ^ " (must-bug)."in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.top_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                                  CF.mk_failure_may s)), NoAlias)
+                                                  CF.mk_failure_must s)), NoAlias)
           end
     | Context.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
               , CF.mk_failure_may "sequential action - not handled" )), NoAlias)
     | Context.Search_action l ->
-          let r = List.map (fun (_,a1) -> process_action_x prog estate conseq lhs_b rhs_b a1
+          let r = List.map (fun (_,a1) -> process_action prog estate conseq lhs_b rhs_b a1
                rhs_h_matched_set is_folding pos) l in
           List.fold_left combine_results (List.hd r) (List.tl r) in
   if (Context.is_complex_action a) then (r1,r2) else 
@@ -5323,10 +5324,10 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
 and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  let pr3 = Cprinter.string_of_spec_var_list in
-  Gen.Debug.loop_2_no "process_action" pr1 pr3 pr2
-      (fun _ _-> process_action_x prog estate conseq lhs_b rhs_b a
-       rhs_h_matched_set is_folding pos) a rhs_h_matched_set
+  (*let pr3 = Cprinter.string_of_spec_var_list in*)
+  Gen.Debug.loop_1_no "process_action" pr1 pr2
+      (fun __-> process_action_x prog estate conseq lhs_b rhs_b a
+       rhs_h_matched_set is_folding pos) a
       
       
 (************************* match_all_nodes ******************)

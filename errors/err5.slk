@@ -1,3 +1,8 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
 /*
 //OR
 /*
@@ -73,4 +78,18 @@ union{may,must} --> may
 
 */
 
-checkentail n>3 & p>6 |- n>4 & p>2.
+/*
+//1. must failure - WRONG now may. OR vs.UNION?
+checkentail x::ll<n> & n>0 |- x::ll<n+1> .
+
+//2. must failure - WRONG now may
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
+
+//3. must failure - WRONG now may
+checkentail x::ll<n> & n > 1 |- x::ll<m> & m < 2.
+print residue.
+*/
+//2. must failure - WRONG now may
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
