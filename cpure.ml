@@ -5367,4 +5367,4 @@ let rec partition_dnf_lhs f =
 
 let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
-  List.filter (fun (svl,lkl,bfl) -> fst (check_dept fv (svl, lkl))) parts
+  List.filter (fun (svl,lkl,bfl) -> (*fst (check_dept fv (svl, lkl))*) true) parts

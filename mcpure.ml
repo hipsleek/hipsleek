@@ -1250,7 +1250,7 @@ let elim_redundant_debug impl (f:memo_pure) : memo_pure  =
 
 (* wrapper for fast_imply*)
 let rec fast_memo_imply (g:memoised_group) (f:b_formula):int =
-  Gen.Debug.ho_2 "fast_memo_imply" !print_mg_f !print_bf_f string_of_int fast_memo_imply_x g f
+  Gen.Debug.no_2 "fast_memo_imply" !print_mg_f !print_bf_f string_of_int fast_memo_imply_x g f
 	
 and fast_memo_imply_x (g:memoised_group) (f:b_formula):int = 
   let cons = List.map (fun c-> c.memo_formula) g.memo_group_cons in
@@ -1287,33 +1287,7 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   let _ = Debug.devel_pprint str no_pos in
 
   (Gen.Profiling.push_time str_time;
-  let r =
-	if !do_slicing then (* Slicing *)
-	  let flatten_f = partition_dnf_lhs r in
-	  
-	  let rec prove_lhs_conj ante_conj conseq = match ante_conj with
-		| [] -> (true,[],None)
-		| h::rest ->
-			let rel_constrs = find_relevant_constraints h fv in
-			let bl = List.flatten (List.map (fun (_,_,bl) -> bl) rel_constrs) in
-			let (r1,r2,r3) =
-			  if ((List.length bl) = 0) then (true,[],None)
-			  else
-				let ante = List.fold_left (fun a b -> mkAnd a (BForm (b, None)) no_pos) (mkTrue no_pos) bl in
-				t_imply ante conseq ("imply_process_ante"^(string_of_int !imp_no)) false None
-			in
-			(*
-			let str_ante = "LHS: " ^ (!print_p_f_f ante) ^ "\n" in
-			let str_cons = "RHS" ^ (!print_p_f_f conseq) ^ "\n" in
-			let str_res = "Res: " ^ string_of_bool r1 ^ "\n" in
-			let _ = print_string ("mimply_process_ante: \n" ^ str_ante ^ str_cons ^ str_res) in
-			*)
-			if r1 then
-			  let (r1,r22,r23) = prove_lhs_conj rest conseq in (r1,r2@r22,r23)
-			else (r1, r2, r3)
-	  in prove_lhs_conj flatten_f conseq
-	else 
-	  t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None
+  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None
   in
   Gen.Profiling.pop_time str_time;
   r)

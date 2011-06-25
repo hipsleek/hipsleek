@@ -667,15 +667,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       else
         Redlog.is_sat f sat_no
 
-let tp_is_sat_no_cache_debug f sat_no =
-  Gen.Debug.no_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
+let tp_is_sat_no_cache(*_debug*) f sat_no =
+  Gen.Debug.ho_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat_no_cache f sat_no) f
         
-        
 let prune_sat_cache  = Hashtbl.create 2000 ;;
-
-
-
 
 let tp_is_sat (f: CP.formula) (sat_no: string) =
   if !Globals.no_cache_formula then
@@ -777,7 +773,7 @@ let simplify (f : CP.formula) : CP.formula =
     with | _ -> f)
 
 let simplify (f : CP.formula) : CP.formula =
-  Gen.Debug.ho_1 "simplify_1" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
+  Gen.Debug.no_1 "simplify_1" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 
 let simplify (f:CP.formula): CP.formula = 
   CP.elim_exists_with_simpl simplify f 
@@ -796,7 +792,7 @@ let simplify (f:CP.formula): CP.formula =
 (*   Gen.Debug.no_1 "TP.simplify0" pf pf simplify f *)
 
 let simplify (f : CP.formula) : CP.formula =
-  Gen.Debug.ho_1 "simplify_2" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
+  Gen.Debug.no_1 "simplify_2" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 
 let simplify_a (s:int) (f:CP.formula): CP.formula = 
   (* (if (2107 <= !Util.proc_ctr  && !Util.proc_ctr <= 2109) then  *)
@@ -900,12 +896,14 @@ let rec split_disjunctions = function
 
 let called_prover = ref ""
 let print_implication = ref false (* An Hoa *)
+  
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
   let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
+  
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
@@ -925,7 +923,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | Mona | MonaH -> Mona.imply ante conseq imp_no 
   | CO -> 
       begin
-            let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
+        let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
         match result1 with
         | Some f -> f
         | None -> (* CVC Lite is not sure is this case, try Omega *)
@@ -962,6 +960,34 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       else
         Redlog.imply ante conseq imp_no
 ;;
+(*
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  if !do_slicing then (* Slicing *)
+	let flatten_f = CP.partition_dnf_lhs (CP.trans_dnf ante) in
+
+	let rec prove_lhs_conj ante_conj conseq = match ante_conj with
+		| [] -> true
+		| h::rest ->
+			let rel_constrs = CP.find_relevant_constraints h (CP.fv conseq) in
+			let bl = List.flatten (List.map (fun (_,_,bl) -> bl) rel_constrs) in
+			let r =
+			  if ((List.length bl) = 0) then true (* TODO *)
+			  else
+				let s_ante = List.fold_left (fun a b -> CP.mkAnd a (CP.BForm (b, None)) no_pos) (CP.mkTrue no_pos) bl in
+
+				let str_lhs = "LHS: " ^ (Cprinter.string_of_pure_formula s_ante) ^ "\n" in
+				let str_rhs = "RHS: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n" in
+				let _ = print_string ("tp_imply_no_cache with slicing:\n" ^ str_lhs ^ str_rhs) in
+				
+				tp_imply_no_cache s_ante conseq imp_no timeout process
+			in
+			if r then
+			  prove_lhs_conj rest conseq
+			else r
+	  in prove_lhs_conj flatten_f conseq
+  else
+	tp_imply_no_cache ante conseq imp_no timeout process  
+*)
 let imply_cache  = Hashtbl.create 2000 ;;
 let impl_conseq_cache  = Hashtbl.create 2000 ;;
 
@@ -993,7 +1019,6 @@ let tp_imply ante conseq imp_no timeout process =
         (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
         r
     in res
-
     
 let tp_imply ante conseq imp_no timeout do_cache process =
   (* let _ = print_string ("\nTPdispatcher.ml: tp_imply") in *)
@@ -1025,6 +1050,7 @@ let tp_imply_debug ante conseq imp_no timeout do_cache process =
       (fun c-> c) (fun _ -> "?") string_of_bool (fun _ -> "?")
       string_of_bool 
       tp_imply ante conseq imp_no timeout do_cache process
+
 (* renames all quantified variables *)
 let rec requant = function
   | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
