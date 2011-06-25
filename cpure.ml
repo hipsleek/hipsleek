@@ -593,11 +593,13 @@ and mklsPtrNeqEqn vs pos =
       | [] -> []
       | [v] -> []
       | v::tl ->
-          (*[mkNeqNull v pos] @*) (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
+          (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
   in
-  let disj_sets= helper vs in
-  List.fold_left
-          (fun a b -> mkAnd a b pos) (mkTrue no_pos) disj_sets
+  if List.length vs > 1 then
+    let disj_sets= helper vs in
+    Some (List.fold_left
+              (fun a b -> mkAnd a b pos) (mkTrue no_pos) disj_sets)
+  else None
 
 and mkLt a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then

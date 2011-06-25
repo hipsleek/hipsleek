@@ -39,7 +39,7 @@ checkentail x::node<v,q>*q::node<_,null> |- x::node<2,q> .
 //7. must failure. cause:22  1<=v |-  v<0 (must-bug).
 checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
 
-//8. must failure - WRONG now may
+//8. must failure - WRONG now may. OR vs.UNION?
 checkentail x::ll<n> & n>0 |- x::ll<n+1> .
 
 //9. may. cause:15.3  true |-  x!=null (may-bug).
@@ -73,23 +73,25 @@ checkentail true |- x::node<_,_> * x::node<_,_>.
 
 // soundness of must bug?
 
-//17. may bug. cause:15.1 y=x & x=null |-  x!=null
+//17. may bug. cause:15.4 no match for rhs data node: x (may-bug).
 checkentail x=y & y!=null |- x::node<_,_> .
 
 //18. must bug. cause:15.1 y=x & x=null |-  x!=null
 checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
 
-//19. must bug - WRONG now may
+//19. must bug - cause:15.3  y=x |-  y!=x (must-bug).FIXED
 checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
 
+//20. must bug - cause:15.2 contradiction in RHS: x=y & y!=x & y!=null (must-bug).
+checkentail x::node<_,null> |- x::node<_,_>*y::node<_,_> & x=y.
 
-//20. must-bug. cause:or[22  n=0 |-  0<n (must-bug).,15.1 y=null |-  y!=null].
+//21. must-bug. cause:or[22  n=0 |-  0<n (must-bug).,15.1 y=null |-  y!=null].
 checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 
-//21. valid
+//22. valid
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
-//22. must-bug - cause:or[22  y!=null |-  y=null (must-bug).,15.3  true |-  n=0 (may-bug).] WRONG
+//23. must-bug - cause:or[22  y!=null |-  y=null (must-bug).,15.3  true |-  n=0 (may-bug).] WRONG.OR vs.UNION?
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
 /*
 Why isn't it AND_reason?
@@ -106,28 +108,25 @@ Bad Context:
 */
 
 
-//23 valid
+//24 valid
 checkentail x::ll<n> & n>0  |- x!=null.
 
-//24 must-bug. cause:22  x!=null |-  x=null (must-bug).
+//25 must-bug. cause:22  x!=null |-  x=null (must-bug).
 checkentail x::ll<n> & n>0  |- x=null.
 
-//25 must-bug. cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+//26 must-bug. cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
 checkentail x::pos_ll<n> & n=0 |- x::neg_ll<m> & m>0.
 
-//26. must-bug. cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+//27. must-bug. cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
 checkentail x::pos_ll<n> & x=null |- x::neg_ll<m> & m>0.
 
-//27 must-bug.  cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+//28 must-bug.  cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
 checkentail x=null |- x::neg_ll<m> & m>0.
 
-//28 valid
+//29 valid
 checkentail x=null |- x=null or x::node<_,_>.
 
 
-//29. may bug (|). cause:or[or[22  n=5 |-  6<n (must-bug).,22  1<=n |-  6<n (may-bug).],proven valid here]
+//30. may bug (|). cause:or[or[22  n=5 |-  6<n (must-bug).,22  1<=n |-  6<n (may-bug).],proven valid here]
 checkentail n=5 or n>0 or n>9 |- n>6.
-
-
-
 
