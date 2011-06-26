@@ -5194,7 +5194,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
-                  , CF.mk_failure_may "base case unfold failed" )),NoAlias)
+                  , CF.mk_failure_must "base case unfold failed" )),NoAlias)
             | Some x -> x)
     | Context.M_base_case_fold {
           Context.match_res_rhs_node = rhs_node;
