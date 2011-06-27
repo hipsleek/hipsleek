@@ -4,6 +4,14 @@
  @date 24/06/2011
  **/
 
+relation IsConsistent(int[] b, int n) == true.
+
+relation NoSolution(int n) == true.
+
 // solve n-queens, return false if there is no solution
-int nqueens(int n) {
+bool nqueens(int[] b, int n)
+	requires dom(b,0,n-1)
+	ensures (res & IsConsistent(b,n) | !res & NoSolution(n))
+{
+	
 }
