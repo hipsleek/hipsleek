@@ -4221,9 +4221,21 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
 
 (*maximising must bug with AND (error information)*)
 and check_maymust_failure (failure_code:string) (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*string)=
+  let pr1 = Cprinter.string_of_pure_formula in
+  let pr2 = pr_pair (Cprinter.string_of_failure_kind) (fun x -> x) in
+  Gen.Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x failure_code ante cons) ante cons
+
+(*maximising must bug with AND (error information)*)
+(* to return fail_type with AND_reason *)
+and check_maymust_failure_x (failure_code:string) (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*string)=
   let r = ref (-9999) in
   let is_sat f = TP.is_sat_sub_no f r in
   let find_all_failures a c = CP.find_all_failures is_sat a c in
+  let find_all_failures a c = 
+    let pr1 = Cprinter.string_of_pure_formula in 
+    let pr2 = pr_list (pr_pair pr1 pr1) in
+    let pr3 = pr_triple pr2 pr2 pr2 in
+    Gen.Debug.no_2 "find_all_failures" pr1 pr1 pr3 find_all_failures a c in
   (*build must/may msg*)
   let build_failure_msg (ante, cons) = (Cprinter.string_of_pure_formula ante) ^ " |- "^
     (Cprinter.string_of_pure_formula cons) in
@@ -4231,7 +4243,12 @@ and check_maymust_failure (failure_code:string) (ante:CP.formula) (cons:CP.formu
    (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
      otherwise MUST failure *)
   let ante_filter = filter_redundant ante cons in
-  let (r1, r2,r3) = find_all_failures ante_filter cons in
+  let (r1, r2, r3) = find_all_failures ante_filter cons in
+  (* let build rs msg f ac = List.fold_left (fun ac r ->  *)
+  (*     let r = Basic_Reason in *)
+  (*     match ac with *)
+  (*       | None -> r *)
+  (*       | Some a -> And_Reason r a) ac rs in *)
   if List.length (r1@r2) = 0 then
     begin
         let fc_msg = (String.concat "; " (List.map build_failure_msg r3)) ^ " (may-bug)." in
@@ -6387,7 +6404,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let pr x = (string_of_int(List.length x))^"length" in
-  Gen.Debug.loop_2 "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
+  Gen.Debug.loop_2_no "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
       (fun _ _ -> heap_entail_list_partial_context_init prog is_folding  cl conseq pos pid) cl conseq
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
