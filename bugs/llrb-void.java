@@ -55,7 +55,7 @@ node insert_internal(node h, int v)
 		(c < 0 | c >= 4) -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>;
 	}
 {
-	assume c != 3; // ONLY verified WITH --eps option
+	//assume c != 3; // ONLY verified WITH --eps option
 	//assume c = 3; // ONLY verified WITHOUT --eps option
 	if (h == null) {
 		return new node(v, 0, null, null); // RED node

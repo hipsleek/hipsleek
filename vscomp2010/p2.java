@@ -6,18 +6,38 @@
 
 relation dom(int[] a, int i, int j) == true.
 
-relation isInverse(int[] a, int[] b, int i, int j) ==
-	forall(k : (k < i | k > j | a[b[k]] = k & b[a[k]] = k)).
+// b[-infty..infty] is a left inverse of a|{i..j}
+// i.e. b \circ a (x) = x for all x in {i..j}
+relation IsLeftInverse(int[] a, int[] b, int i, int j) ==
+	forall(k : (k < i | k > j | b[a[k]] = k)).
 
-relation range(int[] a, int i, int j, int l, int h) ==
-	forall(k : (k < i | k > j | l <= a[k] & a[k] <= h)).	
+// a[i..j] is a permutation of [l..h]
+relation Permute(int[] a, int i, int j, int l, int h) ==
+	forall(k : (k < i | k > j | l <= a[k] & a[k] <= h)) &
+	forall(x,y : (x = y | a[x] != a[y])).
 
-void invert(int[] A, ref int[] B, int N)
-	requires dom(A,0,N-1) & dom(B,0,N-1) & range(B,0,N-1,0,N-1)
-	ensures isInverse(A,B',0,N-1);
+// Construct inverse of a|{0..n-1} provided 
+// (i)	range(a) = {0..n-1}
+// (ii)	a is injective
+// i.e. a|{0..n-1} is a permutation of (0,1,...,n-1)
+void Invert(int[] a, ref int[] b, int n)
+	requires dom(a,0,n-1) & dom(b,0,n-1) & Permute(a,0,n-1,0,n-1)
+	ensures IsLeftInverse(a,b',0,n-1);
 {
-	if (N > 0) {
-		B[A[N-1]] = N-1;
-		invert(A,B,N-1);
+	// for(int i = 0; i < n; i++) b[a[i]] = i // equivalent iterative code
+	InvertHelper(a,b,n,0);
+}
+
+// Tail recursive expansion of the loop
+void InvertHelper(int[] a, ref int[] b, int n, int i)
+	requires 	dom(a,0,n-1) & dom(b,0,n-1)
+			 	& Permute(a,0,n-1,0,n-1)
+				& IsLeftInverse(a,b,0,i-1)
+	ensures 	IsLeftInverse(a,b',0,n-1);
+{
+	if (i < n) {
+		b[a[i]] = i;
+		assert IsLeftInverse(a,b',0,i);
+		InvertHelper(a,b,n,i+1);
 	}
 }
