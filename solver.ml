@@ -2889,55 +2889,6 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
       (SuccCtx [ctx], UnsatAnte)
     else
       heap_entail_after_sat prog is_folding  ctx conseq pos ([])
-(*
-      begin
-          let flow_conseq = flow_formula_of_formula conseq in
-          let new_conseq, post_check=
-          (*RHS is error flow*)
-            if CF.subsume_flow_f !Globals.error_flow_int flow_conseq then
-              (CF.substitute_flow_into_f !Globals.n_flow_int conseq, true)
-            else
-              (conseq, false)
-          in
-          let rs, prf = heap_entail_after_sat prog is_folding  ctx new_conseq pos ([]) in
-         if post_check then
-           begin
-                match rs with
-                  | FailCtx ft ->
-                      begin
-                          if (is_must_failure_ft ft) then
-                            begin
-                                (*must case: R1 = true & flow norm*)
-                                let new_rs =
-                                  (match (get_must_es_msg_ft ft) with
-                                    | Some (es,msg) ->
-                                        let new_ctx_lst = CF.change_flow_into_ctx !Globals.n_flow_int
-                                          [Ctx {es with es_must_error = Some msg } ] in
-                                        (SuccCtx new_ctx_lst)
-                                    | _ ->  rs)
-                                in
-                                (new_rs, prf)
-                            end
-                          else  if (is_may_failure_ft ft) then
-                            (*may case: R1 = R (not handle now)*)
-                            (rs, prf)
-                          else
-                            (*trivial cases*)
-                             (*let _ = print_endline "locle2" in*)
-                            (rs, prf)
-                      end
-                  | SuccCtx ctx_lst ->
-                       (*valid case: R1 = true & flow __Error*)
-                      (*let _ = print_endline "locle3" in*)
-                       let new_rs = SuccCtx (CF.change_flow_ctx !Globals.n_flow_int
-                                                 flow_conseq.CF.formula_flow_interval ctx_lst)
-                       in (new_rs, prf)
-           end
-         else
-            (*let _ = print_endline "locle4" in*)
-           (rs, prf)
-      end
-      *)
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -4081,7 +4032,8 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 						    ^ (Cprinter.string_of_context ctx0)
 						    ^ "\nconseq:\n"
 						    ^ (Cprinter.string_of_formula conseq)) pos;
-                            let fe = mk_failure_must "1" (* TODO : change to meaningful msg *)
+                              (* TODO : change to meaningful msg *)
+                            let fe = mk_failure_must "1: conseq has an incompatible flow type"
                             in
 			                (CF.mkFailCtx_in (Basic_Reason ({fc_message ="incompatible flow type";
 							fc_current_lhs = estate;
@@ -4227,7 +4179,6 @@ and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
   Gen.Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
 
 (*maximising must bug with AND (error information)*)
-(* to return fail_type with AND_reason *)
 and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
   let r = ref (-9999) in
   let is_sat f = TP.is_sat_sub_no f r in
@@ -4252,6 +4203,8 @@ and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
         (CF.mk_failure_must_raw "", (r1, r2, r3))
     end
 
+(*maximising must bug with AND (error information)*)
+(* to return fail_type with AND_reason *)
 and build_and_failures (failure_code:string) ((contra_list, must_list, may_list) :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context=
   let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
     (*build must/may msg*)

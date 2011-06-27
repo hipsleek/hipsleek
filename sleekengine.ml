@@ -324,7 +324,41 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	res
     end
   | MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
-	  
+
+let check_entail_rhs_flow_error (rs: CF.list_context) (flow_conseq:CF.flow_formula): (CF.list_context * bool)=
+    if CF.subsume_flow_f !Globals.error_flow_int flow_conseq then
+      begin
+          (*RHS is error flow*)
+          match rs with
+            | CF.FailCtx ft ->
+                begin
+                    if (CF.is_must_failure_ft ft) then
+                      begin
+                        (*must case: R1 = true & flow norm*)
+                          match (CF.get_must_es_msg_ft ft) with
+                            | Some (es,msg) ->
+                                let new_ctx_lst = CF.change_flow_into_ctx !Globals.n_flow_int
+                                  [CF.Ctx {es with CF.es_must_error = Some msg } ] in
+                                ((CF.SuccCtx new_ctx_lst), true)
+                            | _ ->  (rs,true)
+                      end
+                    else  if (CF.is_may_failure_ft ft) then
+                    (*may case: R1 = R (not handle now)*)
+                      (rs, true)
+                    else
+                    (*trivial cases*)
+                      (rs, true)
+                end
+            | CF.SuccCtx ctx_lst ->
+              (*valid case: R1 = true & flow __Error*)
+                (*let new_ctx_lst = CF.set_must_error_from_ctx ctx_lst "expected __Error but receive Valid" in*)
+                (CF.SuccCtx (CF.change_flow_ctx !Globals.n_flow_int
+                             flow_conseq.CF.formula_flow_interval ctx_lst), false)
+      end
+    else
+      (rs, true)
+
+
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		
 		(* An Hoa : PRINT OUT THE INPUT *)
@@ -340,7 +374,9 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
   let conseq = Solver.prune_pred_struc !cprog true conseq in
-  let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int !top_flow_int conseq ) in
+  let conseq_flow = CF.flow_formula_of_struc_formula conseq in
+  (*let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int !top_flow_int conseq ) in*)
+  let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int conseq_flow.CF.formula_flow_interval conseq ) in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
@@ -350,18 +386,19 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
   let rs1, _ = Solver.heap_entail_struc_init !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None in
- (* let rs1 = CF.convert_must_failure_to_value rs1 in*)
+  let (rs1,flow_compatible) = check_entail_rhs_flow_error rs1 conseq_flow in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  (*let _ = print_endline ( (Cprinter.string_of_list_context rs)) in*)
   residues := Some rs;
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   flush stdout;
-  let res = not (CF.isFailCtx_gen rs) in
+  let res = ((not (CF.isFailCtx rs)) && flow_compatible) in
   (res, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
-    let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in 
+    let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
     if not valid then
       begin
         let s = match CF.get_must_failure rs with

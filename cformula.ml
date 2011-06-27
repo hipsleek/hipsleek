@@ -577,6 +577,33 @@ and flow_formula_of_formula (f:formula) (*pos*) : flow_formula = match f with
 		else Err.report_error { Err.error_loc = no_pos;
 		Err.error_text = "flow_formula_of_formula: disjunctive formula"}
 
+and flow_formula_of_struc_formula (f:struc_formula):flow_formula=
+  let compare_flow ffi1 ffi2 =
+    if (equal_flow_interval ffi1.formula_flow_interval ffi2.formula_flow_interval) then ffi1
+	else Err.report_error { Err.error_loc = no_pos;
+		                    Err.error_text = "flow_formula_of_struc_formula: need to handle here"}
+  in
+  let fold_left_compare_flows flow_list=
+    match flow_list with
+      | [] -> report_error no_pos "Cformula.flow_formula_of_struc_formula"
+      | fl::[] -> fl
+      | _ ->  List.fold_left compare_flow (List.hd flow_list) (List.tl flow_list)
+  in
+  let rec helper (f:ext_formula) = match f with
+	| EBase b ->
+        flow_formula_of_formula b.formula_ext_base
+        (*let fl1 = flow_formula_of_formula b.formula_ext_base in*)
+        (*let fl2 = flow_formula_of_struc_formula b.formula_ext_continuation in
+        compare_flow fl1 fl2 *)
+	| ECase b ->
+        let ls = List.map (fun (_,c2) -> (flow_formula_of_struc_formula c2)) b.formula_case_branches in
+        fold_left_compare_flows ls
+	| EAssume (x,b,y) -> flow_formula_of_formula b
+	| EVariance b -> flow_formula_of_struc_formula b.formula_var_continuation
+  in
+  let flow_list = List.map helper f in
+  fold_left_compare_flows flow_list
+
 and substitute_flow_in_f to_flow from_flow (f:formula):formula = 
   Gen.Debug.no_1 "substitute_flow_in_f" !print_formula !print_formula (fun _ -> substitute_flow_in_f_x to_flow from_flow f) f
 
@@ -2236,7 +2263,17 @@ let get_must_error_from_ctx cs =
     | [Ctx es] -> es.es_must_error
     | _ -> None
 
-let isFailCtx_gen cl = match cl with 
+let rec set_must_error_from_one_ctx ctx msg=
+  match ctx with
+    | Ctx es -> Ctx {es with es_must_error = Some msg}
+    | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg, set_must_error_from_one_ctx ctx2 msg)
+
+let rec set_must_error_from_ctx cs msg=
+  match cs with
+    | [] -> []
+    | es::ls -> (set_must_error_from_one_ctx es msg):: (set_must_error_from_ctx ls msg)
+
+let isFailCtx_gen cl = match cl with
 	| FailCtx _ -> true
 	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
     (* | _ -> false *)
