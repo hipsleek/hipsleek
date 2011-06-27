@@ -4407,6 +4407,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
               | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
               (* this denotes a maybe error *)
               | CF.Failure_None -> estate.es_formula
+              | CF.Failure_Valid -> estate.es_formula
     } in
     let fc_template = {
 		fc_message = "";
@@ -5292,7 +5293,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                              | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
                              | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
                                (* this denotes a maybe error *)
-                             | CF.Failure_None -> estate.es_formula
+                             | CF.Failure_None 
+                             | CF.Failure_Valid -> estate.es_formula
                    } in
                   let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
                   (build_and_failures "15.3" (contra_list, must_list, may_list) fc_template, UnsatConseq)

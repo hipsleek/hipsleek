@@ -432,7 +432,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] 
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
                     else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
-                    else []
+                    else [(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))]
                   in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin

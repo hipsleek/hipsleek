@@ -11,15 +11,52 @@ pred neg_ll<n> == self = null & n = 0
 
 // 1.must fail
  checkentail x>3 |- x<=0 .
+/*
+@@@ change this to a Good Context!
+
+Entail(1)=Fail.(must) cause:22  4<=x |-  x<=0 (must-bug).
+printing here:  
+Bad Context: 
+              fe_kind: MUST{
+                            fc_message: 22  4<=x |-  x<=0 (must-bug).
+                            fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+E
+*/
 
 // 2. OK valid
  checkentail x>3 |- x>0 .
+
+// 3. may_error
+checkentail x>3 |- x>5.
+
 
 // 4. may_error
 checkentail x>3 |- x>5 & flow __Error.
 
 // 5. MUST -Inconsistency
 checkentail x>3 |- x>0 & flow __Error.
+/*
+@@@ put message into es_must_error
+Entail(5)=Fail.INCONSISTENCY : expected failure but success instead
+printing here:  
+Good Context: [es_formula: true & 3<x & {FLOW,(13,13)=__Error,}
+               es_pure: true
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None 
+               es_var_label: None]
+*/
 
 // 6. VALID
 checkentail x>3 |- x<=0 & flow __Error .
+/*
+@@@ es_must_error should be NONE!
+Entail(6)=Valid.
+printing here:  
+Good Context: [es_formula: true & 3<x & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: Some(22  4<=x |-  x<=0 (must-bug).)
+               es_var_label: None]
+*/

@@ -1,0 +1,21 @@
+// must bug via predicates?
+
+// 1. may_error
+checkentail x>3 |- x>5.
+
+// 2. valid
+checkentail x>3 |- x>0.
+
+// 3. must_error
+checkentail x>3 |- x<=0.
+
+// 4. May_error
+checkentail x>3 |- x>5 & flow __Error.
+
+// 5. MUST error; but detected as Valid
+checkentail x>3 |- x>0 & flow __Error.
+
+// 6. VALID; but detected as must error:
+checkentail x>3 |- x<=0 & flow __Error .
+
+print residue.

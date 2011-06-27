@@ -1130,6 +1130,7 @@ match e_kind with
   | Failure_May _ -> "MAY"
   | Failure_Must _ -> "MUST"
   | Failure_None -> "None"
+  | Failure_Valid -> "Valid"
 
 let string_of_fail_explaining fe=
   fmt_open_vbox 1;
@@ -1192,6 +1193,10 @@ let rec pr_fail_type (e:fail_type) =
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")
           else pr_list_vbox_wrap "FAIL_OR " f_b args
+    | Union_Reason _ ->
+          let args = bin_op_to_list op_or_short ft_assoc_op e in
+          if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type UNION_Reason")
+          else pr_list_vbox_wrap "FAIL_UNION " f_b args
     | Or_Continuation _ -> fmt_string (" Or_Continuation ");
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Continuation")
