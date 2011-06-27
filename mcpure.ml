@@ -259,8 +259,10 @@ and regroup_memo_group_no_slicing (lst : memo_pure) : memo_pure =
 and regroup_memo_group_slicing (lst : memo_pure) : memo_pure = 
   if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem "; failwith "multi slice problem");lst) 
   else
-    let rec f_rec fv a = 
-      let r1,r2 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) a in
+    let rec f_rec fv a =
+      let r1,r2 = List.partition (fun c ->
+		let cfv = Gen.BList.difference_eq eq_spec_var c.memo_group_fv c.memo_group_linking_vars in
+		(List.length (Gen.BList.intersect_eq eq_spec_var fv cfv))>0) a in
       if r1 = [] then ([],r2)
       else
 	    let n_fv = List.fold_left (fun ac c-> ac@c.memo_group_fv) fv r1 in
@@ -310,7 +312,7 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
     (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
 	  let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
    {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
-	memo_group_linking_vars = []; 
+	memo_group_linking_vars = List.map (fun v-> subs_one s v) f.memo_group_linking_vars; 
     memo_group_changed = f.memo_group_changed;
     memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs s d.memo_formula;}) f.memo_group_cons;
     memo_group_slice = List.map (par_subst s) f.memo_group_slice; 
@@ -349,7 +351,7 @@ and m_apply_par_x (sst:(spec_var * spec_var) list) f =
   let r1 = List.map (fun c -> 
 	  let r = EMapSV.subs_eset_par(*_debug !print_sv_f*) sst c.memo_group_aset in
 	 {memo_group_fv = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv);
-	  memo_group_linking_vars = [];
+	  memo_group_linking_vars = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_linking_vars);
 	  memo_group_changed = c.memo_group_changed;
 	  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs sst d.memo_formula;}) c.memo_group_cons;
 	  memo_group_slice = List.map (apply_subs sst) c.memo_group_slice; 
@@ -902,8 +904,13 @@ and create_memo_group_debug ll l2 =
   the constraints are disjoint.
 *)
 and split_mem_grp (g:memoised_group): memo_pure =
-  Gen.Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_a g
-and split_mem_grp_a (g:memoised_group): memo_pure =   
+  Gen.Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
+
+and split_mem_grp_x (g:memoised_group): memo_pure =
+  if !do_slicing then split_mem_grp_slicing g
+  else split_mem_grp_no_slicing g
+	
+and split_mem_grp_no_slicing (g:memoised_group): memo_pure =   
   if !f_1_slice then [g]
   else
     let leq_all = get_equiv_eq_with_const g.memo_group_aset in
@@ -933,7 +940,35 @@ and split_mem_grp_a (g:memoised_group): memo_pure =
 	    and_split_mem_grp_debug g =
 	    let r = split_mem_grp g in
 	    if (List.length r)>1 then *)
-      
+
+and split_mem_grp_slicing (g:memoised_group): memo_pure =   
+  if !f_1_slice then [g]
+  else
+    let leq_all = get_equiv_eq_with_const g.memo_group_aset in
+    let leq = get_equiv_eq g.memo_group_aset in
+    let l1 = List.map fv g.memo_group_slice in
+    let l2 = List.map (fun c -> bfv c.memo_formula) g.memo_group_cons in
+    let l3 = List.map (fun (c1,c2) -> [c1;c2]) leq in
+    let needs_split = List.fold_left (fun a c -> 
+		let n_unite,unite = List.partition (fun d -> (Gen.BList.intersect_eq eq_spec_var d c)=[]) a in
+		(List.fold_left (fun a c-> a@c) c unite)::n_unite ) [] (l1@l2@l3) in
+    if (List.length needs_split)>1 then
+      (
+	      Gen.Profiling.inc_counter "need_split";
+	      List.map (fun c -> {
+		      memo_group_fv = c;
+			  memo_group_linking_vars = [];
+		      memo_group_changed = g.memo_group_changed;
+		      memo_group_cons = List.filter (fun d-> not((Gen.BList.intersect_eq (=) c (bfv d.memo_formula))=[])) g.memo_group_cons;
+		      memo_group_slice = List.filter (fun d-> not((Gen.BList.intersect_eq (=) c (fv d))=[])) g.memo_group_slice;
+		      memo_group_aset = List.fold_left (fun a (c1,c2) -> 
+				  if (List.exists (eq_spec_var c1) c) or (List.exists (eq_spec_var c2) c) then add_equiv_eq_with_const a c1 c2
+				  else a) empty_var_aset leq_all;
+		  }) needs_split
+      )
+    else [g]
+
+	  
 (* this pushes an exist into a memo-pure;
    it is probably useful consider qv in aset for elimination.
    proc : 
