@@ -50,6 +50,7 @@ and exp =
   | Var of (spec_var * loc)
   | IConst of (int * loc)
   | FConst of (float * loc)
+  (* | FracConst of (int * int * loc) *)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)

@@ -73,10 +73,10 @@ forall p1,p2:
 // However, we can not say anything about x and y:
 
 [p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2<1 
-  |- x=y.
+  |/- x=y.
 
 [p1]x::node<_,null> * [p2]y::node<_,null> & p1+p2<1 
-  |- x!=y.
+  |/- x!=y.
 
 
 //For examples:
