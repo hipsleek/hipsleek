@@ -2768,6 +2768,14 @@ and heap_entail_variance
       (prog : prog_decl) 
       (es : entail_state) 
       (e : ext_variance_formula) =
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 e = pr_list (pr_pair Cprinter.string_of_formula_exp (pr_option Cprinter.string_of_formula_exp)) e.formula_var_measures in
+  Gen.Debug.ho_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
+
+and heap_entail_variance_x
+      (prog : prog_decl) 
+      (es : entail_state) 
+      (e : ext_variance_formula) =
   let loc = e.formula_var_pos in
 
   let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e -> let str = Cprinter.string_of_formula_exp e in
@@ -2786,6 +2794,7 @@ and heap_entail_variance
   in
   
   if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then
+    let _ = print_string ("termination: loop " ^ (string_of_int var_label_lhs) ^ " to " ^ (string_of_int var_label_rhs)) in
 	let lhs_measures = es.es_var_measures in
 	let rhs_measures = e.formula_var_measures in
 	let rec binding lhs_m rhs_m =
@@ -2818,9 +2827,9 @@ and heap_entail_variance
 	if (List.exists (fun (rs,prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
 	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
 	else
-	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc;
+	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
   else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then
-	Debug.print_info "termination" ("terminating state") loc
+	Debug.print_info "termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
   else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then
 	Debug.print_info "termination" ("non-terminating state") loc
   else if (var_label_lhs > var_label_rhs) then

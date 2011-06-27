@@ -41,10 +41,10 @@ int length (node xs)
 */
  
  requires xs::ll<n>
-//variance (1) [n@1]
+//variance [n@1]
  case {
-  xs=null -> ensures n=0 & res=0; // fails without n=0!
-   xs!=null -> ensures xs::ll<n> & res=n;
+  xs=null -> variance (0) ensures n=0 & res=0; // fails without n=0!
+  xs!=null -> variance (1) [n@1] ensures xs::ll<n> & res=n;
  }
 {
   if (xs==null) return 0;
