@@ -668,7 +668,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         Redlog.is_sat f sat_no
 
 let tp_is_sat_no_cache(*_debug*) f sat_no =
-  Gen.Debug.ho_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
+  Gen.Debug.no_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat_no_cache f sat_no) f
         
 let prune_sat_cache  = Hashtbl.create 2000 ;;
@@ -758,7 +758,7 @@ let simplify (f : CP.formula) : CP.formula =
       Gen.Profiling.pop_time "simplify";
 	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
 	  (* To recreate <IL> relation after simplifying *)
-	  let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in
+	  (*let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in*)
 	  if !Globals.do_slicing then
 	    let rel_vars_lst =
 		  let bfl = CP.break_formula f in
@@ -902,9 +902,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
-  let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
   
-  match !tp with
+  let r = match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
     | Cvc3 -> begin
@@ -959,6 +958,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         Mona.imply ante conseq imp_no
       else
         Redlog.imply ante conseq imp_no
+  in let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n" ^ "res: " ^ (string_of_bool r) ^ "\n") in
+  r
 ;;
 (*
 let tp_imply_no_cache ante conseq imp_no timeout process =
@@ -1352,7 +1353,7 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
   r
 
 let memo_imply_timeout ante0 conseq0 imp_no timeout =
-  Gen.Debug.ho_2 "memo_imply_timeout"
+  Gen.Debug.no_2 "memo_imply_timeout"
 	(Cprinter.string_of_memoised_list)
 	(Cprinter.string_of_memoised_list)
 	(fun (r,_,_) -> string_of_bool r)

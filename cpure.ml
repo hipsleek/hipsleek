@@ -5231,7 +5231,38 @@ let rec break_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_formula f
 	| Exists (_, f, _, _) -> break_formula f
 
-let bfv_with_slicing_label bf =
+let rec fv_with_slicing_label f =
+  match f with
+	| BForm (bf, _) -> bfv_with_slicing_label bf
+	| And (f1, f2, _) ->
+	  let (vs1, lkl1) = fv_with_slicing_label f1 in
+	  let (vs2, lkl2) = fv_with_slicing_label f2 in
+	  let vs = Gen.BList.remove_dups_eq eq_spec_var (vs1 @ vs2) in
+	  let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in
+	  let n_lkl2 = Gen.BList.difference_eq eq_spec_var lkl2 vs1 in
+	  let lkl = Gen.BList.remove_dups_eq eq_spec_var (n_lkl1 @ n_lkl2) in
+	  (vs,lkl)
+	| Or (f1, f2, _, _) ->
+	  let (vs1, lkl1) = fv_with_slicing_label f1 in
+	  let (vs2, lkl2) = fv_with_slicing_label f2 in
+	  let vs = Gen.BList.remove_dups_eq eq_spec_var (vs1 @ vs2) in
+	  let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in
+	  let n_lkl2 = Gen.BList.difference_eq eq_spec_var lkl2 vs1 in
+	  let lkl = Gen.BList.remove_dups_eq eq_spec_var (n_lkl1 @ n_lkl2) in
+	  (vs,lkl)
+	| Not (f, _, _) -> fv_with_slicing_label f
+	| Forall (sv, f, _, _) ->
+	  let (vs, lkl) = fv_with_slicing_label f in
+	  let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+	  let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+	  (n_vs, n_lkl)
+	| Exists (sv, f, _, _) ->
+	  let (vs, lkl) = fv_with_slicing_label f in
+	  let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+	  let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+	  (n_vs, n_lkl)
+	  
+and bfv_with_slicing_label bf =
   let (_, sl) = bf in
   let vbf = bfv bf in
   let vs = match sl with
@@ -5243,7 +5274,7 @@ let bfv_with_slicing_label bf =
 	  
 (* Group related vars together after filtering the <IL> formula *)
 let rec group_related_vars (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list = 
-  Gen.Debug.ho_1 "group_related_vars"
+  Gen.Debug.no_1 "group_related_vars"
 	(fun bfl -> List.fold_left (fun acc bf -> acc ^ "\n" ^ (!print_b_formula bf)) "" bfl)
 	(fun sv_bfl -> List.fold_left (fun acc1 (svl,lkl,bfl) ->
 	  acc1 ^ "\n[" ^ (List.fold_left (fun acc2 sv -> acc2 ^ " " ^ (!print_sv sv)) "" svl) ^ " ]"

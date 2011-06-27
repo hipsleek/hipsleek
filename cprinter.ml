@@ -606,7 +606,7 @@ let rec pr_formula_exp (e:P.exp) =
 
 let pr_slicing_label sl =
   match sl with
-	| None -> fmt_string "<>"
+	| None -> fmt_string ""
 	| Some (il, lbl, el) ->
 		fmt_string ("<" ^ (if il then "IL, " else ", ") ^ (string_of_int lbl) ^ ", ");
 	    fmt_string ("[");
@@ -732,7 +732,7 @@ let pr_memoise_group_vb m_gr =
   fmt_cut();
   wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE[";pr_list_of_spec_var c.MP.memo_group_fv ; fmt_string "]:") () ; 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.MP.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.MP.memo_group_linking_vars; fmt_string "]:") (); 
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
               fmt_cut ();fmt_string "  ";
