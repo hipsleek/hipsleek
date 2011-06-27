@@ -336,6 +336,9 @@ let enable_incremental_proving = ref false
   let no_LHS_prop_drop = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
+
+(* for Termination *)
+  let term_auto_number = ref false
   
 let add_count (t: int ref) = 
 	t := !t+1

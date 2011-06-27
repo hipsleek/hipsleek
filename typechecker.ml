@@ -850,8 +850,8 @@ module GSP = Graph.Path.Check(GS)
 
   
 let build_state_trans_graph ls =
-  (*print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");*)
+  print_string ("\ncheck_prog: call graph:\n" ^
+	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.variance_graph) ^ "\n");
 
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
@@ -904,6 +904,7 @@ let scc_numbering g =
   
 
 let variance_numbering ls g =
+  if !Globals.term_auto_number then
   let f = scc_numbering g in
   let nf = fun v -> if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
   let helper ele =
@@ -922,6 +923,7 @@ let variance_numbering ls g =
 			          else Some (nf es.CF.es_var_ctx_rhs)}
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
+  else ls
 		
 let check_prog (prog : prog_decl) =
   if (Printexc.backtrace_status ()) then print_string "backtrace active"

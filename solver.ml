@@ -2686,9 +2686,9 @@ and heap_entail_conjunct_lhs_struc_x
 	          ) in*)
 	        ((SuccCtx [rs4]),TrueConseq)
 	    | EVariance e ->
-		    (*let _ = print_string ("\ninner_entailer: EVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");
+		    let _ = print_string ("\ninner_entailer: EVariance: LHS: "^(Cprinter.string_of_context ctx11)^"\n");
 			        print_string ("\ninner_entailer: EVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n")
-			in*) 
+			in 
 			
 			let es = match ctx11 with
 			  | Ctx c -> c
@@ -2721,12 +2721,12 @@ and heap_entail_conjunct_lhs_struc_x
 			in 
 
 			let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
-			(*
-			let _ = print_string ("\ninner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
+			
+			(*let _ = print_string ("\ninner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
 			let _ = print_string ("\ninner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
 
-			let _ = print_string ("\ninner_entailer: call graph adding: " ^ string_ctx_lhs ^ " ->" ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
-            *)
+			let _ = print_string ("\ninner_entailer: call graph adding: " ^ string_ctx_lhs ^ " ->" ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in*)
+            
 
 			variance_graph := !variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
 			var_checked_list := !var_checked_list @ [(nes,e)];
@@ -2770,7 +2770,7 @@ and heap_entail_variance
       (e : ext_variance_formula) =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 e = pr_list (pr_pair Cprinter.string_of_formula_exp (pr_option Cprinter.string_of_formula_exp)) e.formula_var_measures in
-  Gen.Debug.ho_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
+  Gen.Debug.no_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
 
 and heap_entail_variance_x
       (prog : prog_decl) 

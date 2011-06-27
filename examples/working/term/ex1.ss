@@ -51,7 +51,7 @@ int length (node xs)
   else {
          node tmp = xs.next;
          int r = 1+length(tmp);
-         dprint;
+         //dprint;
          return r;
   }
 }

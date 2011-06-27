@@ -201,6 +201,9 @@ let common_arguments = [
   ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
   ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
+
+  (* Termination options *)
+  ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
   ] 
 
 (* arguments/flags used only by hip *)	
