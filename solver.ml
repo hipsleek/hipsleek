@@ -5321,11 +5321,11 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                                                   {fe_kind = fc})), UnsatConseq)
                 else
                   let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
-                  ^ " (must-bug)."in
+                  ^ " (may-bug)."in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                   !Globals.top_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                                  CF.mk_failure_must s)), NoAlias)
+                                                  CF.mk_failure_may s)), NoAlias)
           end
     | Context.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
