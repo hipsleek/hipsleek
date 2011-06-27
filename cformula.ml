@@ -2244,10 +2244,16 @@ let isFailCtx_gen cl = match cl with
 let mk_failure_must_raw msg = Failure_Must msg
 
 let mk_failure_may_raw msg = Failure_May msg
- 
+
 let mk_failure_may msg = {fe_kind = Failure_May msg;}
 
 let mk_failure_must msg = {fe_kind = mk_failure_must_raw msg;}
+
+let mkAnd_Reason (ft1:fail_type option) (ft2:fail_type option): fail_type option=
+  match ft1, ft2 with
+    | None, ft2 -> ft2
+    | _ , None -> ft1
+    | Some ft1, Some ft2 -> Some (And_Reason (ft1, ft2))
 
 let comb_must m1 m2 = "["^m1^","^m2^"]"
 

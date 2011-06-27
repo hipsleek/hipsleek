@@ -494,7 +494,7 @@ and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
 and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
           if (is_view rhs_node) && (get_view_original rhs_node) then
-        let r = (1,M_base_case_fold { 
+            let r = (1,M_base_case_fold { 
             match_res_lhs_node = HTrue; 
             match_res_lhs_rest = lhs_h; 
             match_res_holes = [];
