@@ -6,8 +6,8 @@ this prover is already supported by our system.
 
 Second, for any given heap node:
 
-     [p]x::node<_,null> 
-  or [p]x::ll<n>
+     x::node[p]<_,null> 
+  or x::ll[p]<n>
 
 we expect the following invariant to hold:
 
@@ -21,21 +21,21 @@ Thirdly, one of the splitting rule needed for reasoning
 can be written as follows:
 
  forall p1,p2:
-  [p]x::p<..> & 0<p1,p2<1 & p=p1+p2
-    <=> [p1]x::p<..> * [p2]x::p<..>
+  x::p[p]<..> & 0<p1,p2<1 & p=p1+p2
+    <=> x::p[p1]<..> * x::p[p2]<..>
 
 Here, the split provides  flexibility to p1,p2 through
 the use of universal quantifier.  This is important
 for unfold (lhs->rhs) reasoning, as follows:
 
  forall p1,p2:
-  [p]x::p<..> & 0<p1,p2<1 & p=p1+p2
-    => [p1]x::p<..> * [p2]x::p<..>
+  x::p[p]<..> & 0<p1,p2<1 & p=p1+p2
+    => x::p[p1]<..> * x::p[p2]<..>
 
 We cannot use the following which would be too weak:
 
-  [p]x::p<..>
-    => exists p1,p2. [p1]x::p<..> * [p2]x::p<..> 
+  x::p[p]<..>
+    => exists p1,p2. x::p[p1]<..> * x::p[p2]<..> 
          & 0<p1,p2<1 & p=p1+p2
 
 This is because it gives some p1,p2 which may not have the conditions
@@ -44,8 +44,8 @@ we require.
 In the reverse direction, we can use the folding mechanism
 which would use the following instead:
 
-  [p]x::p<..>
-    <= exists p1,p2. [p1]x::p<..> * [p2]x::p<..> 
+  x::p[p]<..>
+    <= exists p1,p2. x::p[p1]<..> * x::p[p2]<..> 
          & 0<p1,p2<1 & p=p1+p2
 
 There is a similar lemma which we used for the lseg predicate.
@@ -116,8 +116,16 @@ Related Work:
 
 =================================================
 LDK:
+=================================================
+Specifications with fractional permission
 
-1. The use of zero permission [0]x::node<..>.
+To avoid clashing with late instantiation notation [], we
+decide to annotate fractional permission as follow:
+
+       p::c[perm]<v*>
+
+=================================================
+The use of zero permission x::node[0]<..>. (NOT USE)
 
 When we talk about zero permission, we think about the ability to 
 know whether a heap part exists without actual write/read to it.
@@ -139,71 +147,79 @@ to update the second version, the first version is carried along.
 I think about the case whereby we have to prove that we don't have
 permission to call a procedure that needs certain permission such as:
 
-[0]x::ll<n> |- [1/2]x::ll<n> 
+x::ll[0]<n> |- x::ll[1/2]<n> 
 
 which is obviously false when comparing 0<1/2.
 
 If we don't support zero permission, we have
 
-... |- [1/2]x::ll<n>
+... |- x::ll[1/2]<n>
 
 What should the entailment does in this situation? Will we have to unfold
- x::ll<n> forever??? 
+ x::ll<n> forever???  [A] NO, ENTAILMENT checker can figure out this.
 
 If there is a way to falsify this entailment, then
 zero permission is NOT NEEDED.
 
-2. I categorize fraction permission to 2 cases
+=================================================
+I categorize fraction permission to 2 cases
 
 - Full permission (read or write) denoted as:
-[1]x::node<..> or x::node<..>
+x::node[1]<..> or x::node<..>
 
-- Read permission: [v]x::node<..> & 0<v=<1
+- Read permission: x::node[v]<..> & 0<v=<1
 
 Permission invariant 0<p<=1 is expected for each heap node.
-Therefore, [v]x::node<..> & (v>1 or v=<0) ::= false
+Therefore, x::node[v]<..> & (v>1 or v=<0) ::= false
 
-3. LOSE is omitted because we assume no memory leak due to lost
+Note: Read permission with  0<v=<1 is weaker than that with
+ 0<v<1
+=================================================
+LOSE is omitted because we assume no memory leak due to lost
 residue.
 
 //LOSE
-[p]x::node<_,null> & p1<p 
-  |- [p1]x::node<_,null>.
+x::node[p]<_,null> & p1<p 
+  |- x::node[p1]<_,null>.
 // NO RESIDUE
 
-4. Regarding the EQUIVALENCE rule
+=================================================
+Regarding the EQUIVALENCE rule
 
 [EQUIV]
 forall p1,p2:
-  [p]x::p<..> & 0<=p1,p2<=1 & p=p1+p2
-    <=> [p1]x::p<..> * [p2]x::p<..>
+  x::p[p1]<..> & 0<=p1,p2<=1 & p=p1+p2
+    <=> x::p[p1]<..> * x::p[p2]<..>
 
 [SPLIT2]
 forall p1,p2:
-  [p]x::p<..> & 0<=p1,p2<=1 & p=p1+p2
-    => [p1]x::p<..> * [p2]x::p<..>
+  x::p[p]<..> & 0<=p1,p2<=1 & p=p1+p2
+    => x::p[p1]<..> * x::p[p2]<..>
 
 [JOIN2]
-  [p]x::p<..>
-    <= exists p1,p2: [p1]x::p<..> * [p2]x::p<..>
+  x::p[p]<..>
+    <= exists p1,p2: x::p[p1]<..> * x::p[p2]<..>
         & 0<=p1,p2<=1 & p=p1+p2
 
 I was able to prove that
 
 [EQUIV] = [SPLIT2]+[JOIN2]
 
-5. Mr Hai's thesis and CAV08 paper are very helpful.
+=================================================
+Mr Hai's thesis and CAV08 paper are very helpful.
 
-6. Lent Notation (@I immutable annotation)
+=================================================
+Lent Notation (@I immutable annotation)
 
 I think, the immutablility annotation can be kept unchanged.
 
-  requires [p]x::ll<n>@I
+  requires x::ll[p]<n>@I
   ensures  res=1
 
 However, its meaning with added fractional permission is under
 investigation.
 
-7. Can we have counting and full fractional permissions?
+=================================================
+Can we have counting and full fractional permissions?
 
 Could you elaborate on this?
