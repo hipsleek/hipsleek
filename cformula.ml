@@ -2189,7 +2189,7 @@ and steps = string list
 and failure_kind =
   | Failure_May of string
   | Failure_Must of string
-  | Failure_None
+  | Failure_None of string
   | Failure_Valid
 
 and fail_explaining = {
@@ -2280,6 +2280,8 @@ let isFailCtx_gen cl = match cl with
 	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
     (* | _ -> false *)
 
+let mk_failure_none_raw msg = Failure_None msg
+
 let mk_failure_must_raw msg = Failure_Must msg
 
 let mk_failure_may_raw msg = Failure_May msg
@@ -2287,6 +2289,8 @@ let mk_failure_may_raw msg = Failure_May msg
 let mk_failure_may msg = {fe_kind = Failure_May msg;}
 
 let mk_failure_must msg = {fe_kind = mk_failure_must_raw msg;}
+
+let mk_failure_none msg = {fe_kind = mk_failure_none_raw msg;}
 
 let mkAnd_Reason (ft1:fail_type option) (ft2:fail_type option): fail_type option=
   match ft1, ft2 with
@@ -2329,44 +2333,95 @@ let comb_and m1 m2 = match m1,m2 with
   | None, Some m2 -> Some (m2)
   | _, _ -> None
 
-let rec get_must_failure_ft (ft:fail_type) =
-  match ft with
-    | Basic_Reason (_,fe) -> get_must_failure_fe fe
-    | Or_Reason (f1,f2) -> comb_or (get_must_failure_ft f1) (get_must_failure_ft f2)
-    | And_Reason (f1,f2) -> comb_and (get_must_failure_ft f1) (get_must_failure_ft f2)
-    | Union_Reason (f1,f2) -> comb_and (get_must_failure_ft f1) (get_must_failure_ft f2)
-    | ContinuationErr _ -> None
-    | Or_Continuation (f1,f2) -> comb_or (get_must_failure_ft f1) (get_must_failure_ft f2)
-          (* report_error no_pos "get_must_failure : or continuation encountered" *)
-    | _ -> None
+(* let rec get_must_failure_ft (ft:fail_type) = *)
+(*   match ft with *)
+(*     | Basic_Reason (_,fe) -> get_must_failure_fe fe *)
+(*     | Or_Reason (f1,f2) -> comb_or (get_must_failure_ft f1) (get_must_failure_ft f2) *)
+(*     | And_Reason (f1,f2) -> comb_and (get_must_failure_ft f1) (get_must_failure_ft f2) *)
+(*     | Union_Reason (f1,f2) -> comb_and (get_must_failure_ft f1) (get_must_failure_ft f2) *)
+(*     | ContinuationErr _ -> None *)
+(*     | Or_Continuation (f1,f2) -> comb_or (get_must_failure_ft f1) (get_must_failure_ft f2) *)
+(*           (\* report_error no_pos "get_must_failure : or continuation encountered" *\) *)
+(*     | _ -> None *)
 
-let get_must_failure (ft:list_context) =
+let get_failure_fe (f:fail_explaining) = f.fe_kind
+
+let gen_and m1 m2 = match m1,m2 with
+  | Failure_None _, _ -> report_error no_pos "Failure_None not expected in gen_and"
+  | _, Failure_None _ -> report_error no_pos "Failure_None not expected in gen_and"
+  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("and["^m1^","^m2^"]")
+  | Failure_Must m, _ -> Failure_Must m
+  | _, Failure_Must m -> Failure_Must m
+  | Failure_May m1, Failure_May m2 -> Failure_May ("and["^m1^","^m2^"]")
+  | Failure_May m, _ -> Failure_May m
+  | _, Failure_May m -> Failure_May m
+  | Failure_Valid, x  -> x
+  (* | x, Failure_Valid -> x *)
+
+let gen_or m1 m2 = match m1,m2 with
+  | Failure_None _, _ -> report_error no_pos "Failure_None not expected in gen_or"
+  | _, Failure_None _ -> report_error no_pos "Failure_None not expected in gen_or"
+  | Failure_May m1, Failure_May m2 -> Failure_May ("and["^m1^","^m2^"]")
+  | Failure_May m, _ -> Failure_May m
+  | _, Failure_May m -> Failure_May m
+  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("and["^m1^","^m2^"]")
+  | Failure_Must m, Failure_Valid -> Failure_May ("or["^m^",valid]")
+  | Failure_Valid, Failure_Must m -> Failure_May ("or["^m^",valid]")
+  (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)
+  (* | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]") *)
+  | Failure_Valid, x  -> x
+  (* | x, Failure_Valid -> x *)
+
+let gen_union m1 m2 = match m1,m2 with
+  | Failure_None _, x -> x
+  | x, Failure_None _ -> x
+  | Failure_Valid, _ -> Failure_Valid
+  | _, Failure_Valid -> Failure_Valid
+  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("union["^m1^","^m2^"]")
+  | Failure_May m1, Failure_May m2 -> Failure_May ("may["^m1^","^m2^"]")
+  | Failure_May _,  _ -> m1
+  | _, Failure_May _ -> m2
+
+let rec get_failure_ft (ft:fail_type) =
   match ft with
-    | FailCtx f -> get_must_failure_ft f
-          (* (try get_must_failure_ft f *)
-          (* with a ->   *)
-          (*     let _ = print_flush (!print_list_context_short ft) in *)
-          (*     raise a) *)
-	| SuccCtx cs -> get_must_error_from_ctx cs
-    (* | _ -> None *)
+    | Basic_Reason (_,fe) -> get_failure_fe fe
+    | Or_Reason (f1,f2) -> gen_or (get_failure_ft f1) (get_failure_ft f2)
+    | And_Reason (f1,f2) -> gen_and (get_failure_ft f1) (get_failure_ft f2)
+    | Union_Reason (f1,f2) -> gen_union (get_failure_ft f1) (get_failure_ft f2)
+    | ContinuationErr _ -> Failure_May "Continuation_Err"
+    | Or_Continuation (f1,f2) -> gen_or (get_failure_ft f1) (get_failure_ft f2)
+          (* report_error no_pos "get_must_failure : or continuation encountered" *)
+    | _ -> Failure_May "Unknown"
+
+let get_must_failure_ft f =
+  match (get_failure_ft f) with
+    | Failure_Must m -> Some m
+    | _ -> None
 
 let get_may_failure_fe (f:fail_explaining) =
   match f.fe_kind with
     | Failure_May m | Failure_Must m -> Some m 
     | Failure_Valid -> Some "proven valid here"
-    | Failure_None -> None
+    | Failure_None _ -> None
 
-let rec get_may_failure_ft (f:fail_type) =
-  match f with
-    | Basic_Reason (_,fe) -> get_may_failure_fe fe
-    | Or_Reason (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2)
-    | Union_Reason (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2)
-    | And_Reason (f1,f2) -> comb_and (get_may_failure_ft f1) (get_may_failure_ft f2)
-    | ContinuationErr _ -> Some "ContErr detected"
-          (* report_error no_pos "get_may_failure : continuation encountered" *)
-    | Or_Continuation (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2)
-          (* report_error no_pos "get_may_failure : or continuation encountered" *)
-    | Trivial_Reason s -> Some s
+(* let rec get_may_failure_ft (f:fail_type) = *)
+(*   match f with *)
+(*     | Basic_Reason (_,fe) -> get_may_failure_fe fe *)
+(*     | Or_Reason (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2) *)
+(*     | Union_Reason (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2) *)
+(*     | And_Reason (f1,f2) -> comb_and (get_may_failure_ft f1) (get_may_failure_ft f2) *)
+(*     | ContinuationErr _ -> Some "ContErr detected" *)
+(*           (\* report_error no_pos "get_may_failure : continuation encountered" *\) *)
+(*     | Or_Continuation (f1,f2) -> comb_or (get_may_failure_ft f1) (get_may_failure_ft f2) *)
+(*           (\* report_error no_pos "get_may_failure : or continuation encountered" *\) *)
+(*     | Trivial_Reason s -> Some s *)
+
+let get_may_failure_ft f =
+  match (get_failure_ft f) with
+    | Failure_Must m -> Some ("must:"^m)
+    | Failure_May m -> Some (m)
+    | Failure_Valid -> Some ("Failure_Valid")
+    | Failure_None m -> Some ("Failure_None"^m)
 
 let get_may_failure (f:list_context) =
   match f with
@@ -2416,54 +2471,16 @@ let convert_must_failure_to_value (l:list_context) : list_context =
           | _ ->  l)
   | SuccCtx _ -> l
 
-let get_failure_fe (f:fail_explaining) = f.fe_kind
 
-let gen_and m1 m2 = match m1,m2 with
-  | Failure_None, _ -> report_error no_pos "Failure_None not expected in gen_or"
-  | _, Failure_None -> report_error no_pos "Failure_None not expected in gen_or"
-  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("and["^m1^","^m2^"]")
-  | Failure_Must m, _ -> Failure_Must m
-  | _, Failure_Must m -> Failure_Must m
-  | Failure_May m1, Failure_May m2 -> Failure_May ("and["^m1^","^m2^"]")
-  | Failure_May m, _ -> Failure_May m
-  | _, Failure_May m -> Failure_May m
-  | Failure_Valid, x  -> x
-  | x, Failure_Valid -> x
-
-let gen_or m1 m2 = match m1,m2 with
-  | Failure_None, _ -> report_error no_pos "Failure_None not expected in gen_or"
-  | _, Failure_None -> report_error no_pos "Failure_None not expected in gen_or"
-  | Failure_May m1, Failure_May m2 -> Failure_May ("and["^m1^","^m2^"]")
-  | Failure_May m, _ -> Failure_May m
-  | _, Failure_May m -> Failure_May m
-  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("and["^m1^","^m2^"]")
-  | Failure_Must m, Failure_Valid -> Failure_May ("or["^m^",valid]")
-  | Failure_Valid, Failure_Must m -> Failure_May ("or["^m^",valid]")
-  | _, Failure_Must m -> Failure_May ("or["^m^",unknown]")
-  | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]")
-  | Failure_Valid, x  -> x
-  | x, Failure_Valid -> x
-
-let gen_union m1 m2 = match m1,m2 with
-  | Failure_None, x -> x
-  | x, Failure_None -> x
-  | Failure_Valid, _ -> Failure_Valid
-  | _, Failure_Valid -> Failure_Valid
-  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("union["^m1^","^m2^"]")
-  | Failure_May m1, Failure_May m2 -> Failure_May ("may["^m1^","^m2^"]")
-  | Failure_May _,  _ -> m1
-  | _, Failure_May _ -> m2
-
-let rec get_failure_ft (ft:fail_type) =
+let get_must_failure (ft:list_context) =
   match ft with
-    | Basic_Reason (_,fe) -> get_failure_fe fe
-    | Or_Reason (f1,f2) -> gen_or (get_failure_ft f1) (get_failure_ft f2)
-    | And_Reason (f1,f2) -> gen_and (get_failure_ft f1) (get_failure_ft f2)
-    | Union_Reason (f1,f2) -> gen_union (get_failure_ft f1) (get_failure_ft f2)
-    | ContinuationErr _ -> Failure_May "Continuation_Err"
-    | Or_Continuation (f1,f2) -> gen_or (get_failure_ft f1) (get_failure_ft f2)
-          (* report_error no_pos "get_must_failure : or continuation encountered" *)
-    | _ -> Failure_May "Unknown"
+    | FailCtx f -> get_must_failure_ft f
+          (* (try get_must_failure_ft f *)
+          (* with a ->   *)
+          (*     let _ = print_flush (!print_list_context_short ft) in *)
+          (*     raise a) *)
+	| SuccCtx cs -> get_must_error_from_ctx cs
+    (* | _ -> None *)
 
 let is_may_failure_fe (f:fail_explaining) = (get_may_failure_fe f) != None
 
@@ -2611,7 +2628,7 @@ let mk_not_a_failure =
       fc_failure_pts = [];
       fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
   }, {
-      fe_kind = Failure_None;
+      fe_kind = Failure_Valid;
   }
 )
 
@@ -2775,7 +2792,7 @@ match c1,c2 with
 	  if (is_cont t1) && (is_cont t2) then
 	    FailCtx (Or_Continuation (t1,t2))  
 	  else
-	    FailCtx (Or_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
+	    FailCtx (Union_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
 	     (*FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)

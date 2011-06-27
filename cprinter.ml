@@ -554,6 +554,7 @@ let ft_assoc_op (e:fail_type) : (string * fail_type list) option =
   match e with
     | Or_Reason (f1,f2) -> Some (op_or_short,[f1;f2])
     | And_Reason (f1,f2) -> Some (op_and_short,[f1;f2])
+    | Union_Reason (f1,f2) -> Some (op_union_short,[f1;f2])
     | Or_Continuation (f1,f2) -> Some (op_or_short,[f1;f2])
     | _ -> None
 
@@ -1129,7 +1130,7 @@ and string_of_failure_kind e_kind=
 match e_kind with
   | Failure_May _ -> "MAY"
   | Failure_Must _ -> "MUST"
-  | Failure_None -> "None"
+  | Failure_None _ -> "None"
   | Failure_Valid -> "Valid"
 
 let string_of_fail_explaining fe=
@@ -1187,14 +1188,14 @@ let rec pr_fail_type (e:fail_type) =
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason (br,fe) -> 
           (string_of_fail_explaining fe);
-          if fe.fe_kind=Failure_None then fmt_string ("Failure_None") else (pr_fail_estate br)
+          if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") else (pr_fail_estate br)
     | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")
           else pr_list_vbox_wrap "FAIL_OR " f_b args
     | Union_Reason _ ->
-          let args = bin_op_to_list op_or_short ft_assoc_op e in
+          let args = bin_op_to_list op_union_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type UNION_Reason")
           else pr_list_vbox_wrap "FAIL_UNION " f_b args
     | Or_Continuation _ -> fmt_string (" Or_Continuation ");
