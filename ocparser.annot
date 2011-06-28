@@ -1,0 +1,7690 @@
+"ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+type(
+  int -> Globals.loc
+)
+ident(
+  def get_pos "ocparser.mly" 13 658 660 --
+)
+"ocparser.mly" 8 503 517 "ocparser.mly" 8 503 518
+type(
+  int
+)
+ident(
+  def x "ocparser.mly" 9 522 526 "ocparser.mly" 12 651 656
+)
+"ocparser.mly" 9 522 539 "ocparser.mly" 9 522 563
+type(
+  unit -> Lexing.position
+)
+ident(
+  ext_ref Parsing.symbol_start_pos
+)
+"ocparser.mly" 9 522 564 "ocparser.mly" 9 522 566
+type(
+  unit
+)
+"ocparser.mly" 9 522 539 "ocparser.mly" 9 522 566
+type(
+  Lexing.position
+)
+"ocparser.mly" 10 568 583 "ocparser.mly" 10 568 606
+type(
+  unit -> Lexing.position
+)
+ident(
+  ext_ref Parsing.symbol_end_pos
+)
+"ocparser.mly" 10 568 607 "ocparser.mly" 10 568 609
+type(
+  unit
+)
+"ocparser.mly" 10 568 583 "ocparser.mly" 10 568 609
+type(
+  Lexing.position
+)
+"ocparser.mly" 11 611 626 "ocparser.mly" 11 611 647
+type(
+  int -> Lexing.position
+)
+ident(
+  ext_ref Parsing.rhs_start_pos
+)
+"ocparser.mly" 11 611 648 "ocparser.mly" 11 611 649
+type(
+  int
+)
+ident(
+  int_ref x "ocparser.mly" 8 503 517 "ocparser.mly" 8 503 518
+)
+"ocparser.mly" 11 611 626 "ocparser.mly" 11 611 649
+type(
+  Lexing.position
+)
+"ocparser.mly" 9 522 526 "ocparser.mly" 12 651 656
+type(
+  Globals.loc
+)
+"ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  def trans_null "ocparser.mly" 13 658 660 --
+)
+"ocparser.mly" 13 658 680 "ocparser.mly" 13 658 681
+type(
+  Cpure.formula
+)
+ident(
+  def b "ocparser.mly" 13 658 690 "ocparser.mly" 32 1842 1902
+)
+"ocparser.mly" 14 702 714 "ocparser.mly" 14 702 728
+type(
+  Cpure.b_formula -> Cpure.b_formula
+)
+"ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+type(
+  Cpure.b_formula
+)
+ident(
+  def b "ocparser.mly" 14 702 733 "ocparser.mly" 25 1510 1524
+)
+"ocparser.mly" 14 702 739 "ocparser.mly" 14 702 740
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 15 746 758 "ocparser.mly" 15 746 760
+type(
+  Cpure.exp
+)
+ident(
+  def e1 "ocparser.mly" 15 746 770 "ocparser.mly" 18 1052 1073
+)
+"ocparser.mly" 15 746 761 "ocparser.mly" 15 746 763
+type(
+  Cpure.exp
+)
+ident(
+  def e2 "ocparser.mly" 15 746 770 "ocparser.mly" 18 1052 1073
+)
+"ocparser.mly" 15 746 764 "ocparser.mly" 15 746 765
+type(
+  Globals.loc
+)
+ident(
+  def p "ocparser.mly" 15 746 770 "ocparser.mly" 18 1052 1073
+)
+"ocparser.mly" 15 746 757 "ocparser.mly" 15 746 766
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 15 746 754 "ocparser.mly" 15 746 766
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 15 746 778 "ocparser.mly" 15 746 780
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e1 "ocparser.mly" 15 746 758 "ocparser.mly" 15 746 760
+)
+"ocparser.mly" 15 746 781 "ocparser.mly" 15 746 783
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e2 "ocparser.mly" 15 746 761 "ocparser.mly" 15 746 763
+)
+"ocparser.mly" 15 746 777 "ocparser.mly" 15 746 784
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 16 790 812 "ocparser.mly" 16 790 813
+type(
+  int
+)
+ident(
+  def i "ocparser.mly" 16 790 831 "ocparser.mly" 16 790 916
+)
+"ocparser.mly" 16 790 814 "ocparser.mly" 16 790 815
+type(
+  Globals.loc
+)
+"ocparser.mly" 16 790 811 "ocparser.mly" 16 790 816
+type(
+  int * Globals.loc
+)
+"ocparser.mly" 16 790 804 "ocparser.mly" 16 790 816
+type(
+  Cpure.exp
+)
+"ocparser.mly" 16 790 822 "ocparser.mly" 16 790 823
+type(
+  Cpure.spec_var
+)
+ident(
+  def v "ocparser.mly" 16 790 831 "ocparser.mly" 16 790 916
+)
+"ocparser.mly" 16 790 824 "ocparser.mly" 16 790 825
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 16 790 831 "ocparser.mly" 16 790 916
+)
+"ocparser.mly" 16 790 821 "ocparser.mly" 16 790 826
+type(
+  Cpure.spec_var * Globals.loc
+)
+"ocparser.mly" 16 790 818 "ocparser.mly" 16 790 826
+type(
+  Cpure.exp
+)
+"ocparser.mly" 16 790 804 "ocparser.mly" 16 790 826
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 16 790 835 "ocparser.mly" 16 790 848
+type(
+  Cpure.spec_var -> bool
+)
+ident(
+  ext_ref Cpure.is_object_var
+)
+"ocparser.mly" 16 790 849 "ocparser.mly" 16 790 850
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref v "ocparser.mly" 16 790 822 "ocparser.mly" 16 790 823
+)
+"ocparser.mly" 16 790 834 "ocparser.mly" 16 790 851
+type(
+  bool
+)
+"ocparser.mly" 16 790 861 "ocparser.mly" 16 790 862
+type(
+  int
+)
+ident(
+  int_ref i "ocparser.mly" 16 790 812 "ocparser.mly" 16 790 813
+)
+"ocparser.mly" 16 790 862 "ocparser.mly" 16 790 864
+type(
+  int -> int -> bool
+)
+ident(
+  ext_ref Pervasives.( >= )
+)
+"ocparser.mly" 16 790 864 "ocparser.mly" 16 790 865
+type(
+  int
+)
+"ocparser.mly" 16 790 860 "ocparser.mly" 16 790 866
+type(
+  bool
+)
+"ocparser.mly" 16 790 876 "ocparser.mly" 16 790 878
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e2 "ocparser.mly" 15 746 761 "ocparser.mly" 15 746 763
+)
+"ocparser.mly" 16 790 884 "ocparser.mly" 16 790 885
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 16 790 824 "ocparser.mly" 16 790 825
+)
+"ocparser.mly" 16 790 879 "ocparser.mly" 16 790 885
+type(
+  Cpure.exp
+)
+"ocparser.mly" 16 790 886 "ocparser.mly" 16 790 887
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 15 746 764 "ocparser.mly" 15 746 765
+)
+"ocparser.mly" 16 790 875 "ocparser.mly" 16 790 888
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 16 790 872 "ocparser.mly" 16 790 888
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 16 790 902 "ocparser.mly" 16 790 906
+type(
+  bool
+)
+"ocparser.mly" 16 790 907 "ocparser.mly" 16 790 908
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 15 746 764 "ocparser.mly" 15 746 765
+)
+"ocparser.mly" 16 790 901 "ocparser.mly" 16 790 909
+type(
+  bool * Globals.loc
+)
+"ocparser.mly" 16 790 894 "ocparser.mly" 16 790 909
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 16 790 857 "ocparser.mly" 16 790 909
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 16 790 915 "ocparser.mly" 16 790 916
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 16 790 831 "ocparser.mly" 16 790 916
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 17 917 936 "ocparser.mly" 17 917 937
+type(
+  Cpure.spec_var
+)
+ident(
+  def v "ocparser.mly" 17 917 958 "ocparser.mly" 17 917 1041
+)
+"ocparser.mly" 17 917 938 "ocparser.mly" 17 917 939
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 17 917 958 "ocparser.mly" 17 917 1041
+)
+"ocparser.mly" 17 917 935 "ocparser.mly" 17 917 940
+type(
+  Cpure.spec_var * Globals.loc
+)
+"ocparser.mly" 17 917 931 "ocparser.mly" 17 917 940
+type(
+  Cpure.exp
+)
+"ocparser.mly" 17 917 950 "ocparser.mly" 17 917 951
+type(
+  int
+)
+ident(
+  def i "ocparser.mly" 17 917 958 "ocparser.mly" 17 917 1041
+)
+"ocparser.mly" 17 917 952 "ocparser.mly" 17 917 953
+type(
+  Globals.loc
+)
+"ocparser.mly" 17 917 949 "ocparser.mly" 17 917 954
+type(
+  int * Globals.loc
+)
+"ocparser.mly" 17 917 942 "ocparser.mly" 17 917 954
+type(
+  Cpure.exp
+)
+"ocparser.mly" 17 917 931 "ocparser.mly" 17 917 954
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 17 917 962 "ocparser.mly" 17 917 975
+type(
+  Cpure.spec_var -> bool
+)
+ident(
+  ext_ref Cpure.is_object_var
+)
+"ocparser.mly" 17 917 976 "ocparser.mly" 17 917 977
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref v "ocparser.mly" 17 917 936 "ocparser.mly" 17 917 937
+)
+"ocparser.mly" 17 917 961 "ocparser.mly" 17 917 978
+type(
+  bool
+)
+"ocparser.mly" 17 917 988 "ocparser.mly" 17 917 989
+type(
+  int
+)
+ident(
+  int_ref i "ocparser.mly" 17 917 950 "ocparser.mly" 17 917 951
+)
+"ocparser.mly" 17 917 989 "ocparser.mly" 17 917 991
+type(
+  int -> int -> bool
+)
+ident(
+  ext_ref Pervasives.( <= )
+)
+"ocparser.mly" 17 917 991 "ocparser.mly" 17 917 992
+type(
+  int
+)
+"ocparser.mly" 17 917 987 "ocparser.mly" 17 917 993
+type(
+  bool
+)
+"ocparser.mly" 17 917 1002 "ocparser.mly" 17 917 1004
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e1 "ocparser.mly" 15 746 758 "ocparser.mly" 15 746 760
+)
+"ocparser.mly" 17 917 1010 "ocparser.mly" 17 917 1011
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 17 917 938 "ocparser.mly" 17 917 939
+)
+"ocparser.mly" 17 917 1005 "ocparser.mly" 17 917 1011
+type(
+  Cpure.exp
+)
+"ocparser.mly" 17 917 1012 "ocparser.mly" 17 917 1013
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 15 746 764 "ocparser.mly" 15 746 765
+)
+"ocparser.mly" 17 917 1001 "ocparser.mly" 17 917 1014
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 17 917 999 "ocparser.mly" 17 917 1014
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 17 917 1027 "ocparser.mly" 17 917 1031
+type(
+  bool
+)
+"ocparser.mly" 17 917 1032 "ocparser.mly" 17 917 1033
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 15 746 764 "ocparser.mly" 15 746 765
+)
+"ocparser.mly" 17 917 1026 "ocparser.mly" 17 917 1034
+type(
+  bool * Globals.loc
+)
+"ocparser.mly" 17 917 1020 "ocparser.mly" 17 917 1034
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 17 917 984 "ocparser.mly" 17 917 1034
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 17 917 1040 "ocparser.mly" 17 917 1041
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 17 917 958 "ocparser.mly" 17 917 1041
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 18 1052 1066 "ocparser.mly" 18 1052 1067
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 18 1052 1071 "ocparser.mly" 18 1052 1072
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 15 746 770 "ocparser.mly" 18 1052 1073
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 19 1074 1086 "ocparser.mly" 19 1074 1088
+type(
+  Cpure.exp
+)
+ident(
+  def e1 "ocparser.mly" 19 1074 1097 "ocparser.mly" 22 1378 1399
+)
+"ocparser.mly" 19 1074 1089 "ocparser.mly" 19 1074 1091
+type(
+  Cpure.exp
+)
+ident(
+  def e2 "ocparser.mly" 19 1074 1097 "ocparser.mly" 22 1378 1399
+)
+"ocparser.mly" 19 1074 1092 "ocparser.mly" 19 1074 1093
+type(
+  Globals.loc
+)
+ident(
+  def p "ocparser.mly" 19 1074 1097 "ocparser.mly" 22 1378 1399
+)
+"ocparser.mly" 19 1074 1085 "ocparser.mly" 19 1074 1094
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 19 1074 1082 "ocparser.mly" 19 1074 1094
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 19 1074 1105 "ocparser.mly" 19 1074 1107
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e1 "ocparser.mly" 19 1074 1086 "ocparser.mly" 19 1074 1088
+)
+"ocparser.mly" 19 1074 1108 "ocparser.mly" 19 1074 1110
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e2 "ocparser.mly" 19 1074 1089 "ocparser.mly" 19 1074 1091
+)
+"ocparser.mly" 19 1074 1104 "ocparser.mly" 19 1074 1111
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 20 1117 1139 "ocparser.mly" 20 1117 1140
+type(
+  int
+)
+ident(
+  def i "ocparser.mly" 20 1117 1158 "ocparser.mly" 20 1117 1243
+)
+"ocparser.mly" 20 1117 1141 "ocparser.mly" 20 1117 1142
+type(
+  Globals.loc
+)
+"ocparser.mly" 20 1117 1138 "ocparser.mly" 20 1117 1143
+type(
+  int * Globals.loc
+)
+"ocparser.mly" 20 1117 1131 "ocparser.mly" 20 1117 1143
+type(
+  Cpure.exp
+)
+"ocparser.mly" 20 1117 1149 "ocparser.mly" 20 1117 1150
+type(
+  Cpure.spec_var
+)
+ident(
+  def v "ocparser.mly" 20 1117 1158 "ocparser.mly" 20 1117 1243
+)
+"ocparser.mly" 20 1117 1151 "ocparser.mly" 20 1117 1152
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 20 1117 1158 "ocparser.mly" 20 1117 1243
+)
+"ocparser.mly" 20 1117 1148 "ocparser.mly" 20 1117 1153
+type(
+  Cpure.spec_var * Globals.loc
+)
+"ocparser.mly" 20 1117 1145 "ocparser.mly" 20 1117 1153
+type(
+  Cpure.exp
+)
+"ocparser.mly" 20 1117 1131 "ocparser.mly" 20 1117 1153
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 20 1117 1162 "ocparser.mly" 20 1117 1175
+type(
+  Cpure.spec_var -> bool
+)
+ident(
+  ext_ref Cpure.is_object_var
+)
+"ocparser.mly" 20 1117 1176 "ocparser.mly" 20 1117 1177
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref v "ocparser.mly" 20 1117 1149 "ocparser.mly" 20 1117 1150
+)
+"ocparser.mly" 20 1117 1161 "ocparser.mly" 20 1117 1178
+type(
+  bool
+)
+"ocparser.mly" 20 1117 1188 "ocparser.mly" 20 1117 1189
+type(
+  int
+)
+ident(
+  int_ref i "ocparser.mly" 20 1117 1139 "ocparser.mly" 20 1117 1140
+)
+"ocparser.mly" 20 1117 1189 "ocparser.mly" 20 1117 1191
+type(
+  int -> int -> bool
+)
+ident(
+  ext_ref Pervasives.( >= )
+)
+"ocparser.mly" 20 1117 1191 "ocparser.mly" 20 1117 1192
+type(
+  int
+)
+"ocparser.mly" 20 1117 1187 "ocparser.mly" 20 1117 1193
+type(
+  bool
+)
+"ocparser.mly" 20 1117 1203 "ocparser.mly" 20 1117 1205
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e2 "ocparser.mly" 19 1074 1089 "ocparser.mly" 19 1074 1091
+)
+"ocparser.mly" 20 1117 1211 "ocparser.mly" 20 1117 1212
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 20 1117 1151 "ocparser.mly" 20 1117 1152
+)
+"ocparser.mly" 20 1117 1206 "ocparser.mly" 20 1117 1212
+type(
+  Cpure.exp
+)
+"ocparser.mly" 20 1117 1213 "ocparser.mly" 20 1117 1214
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 19 1074 1092 "ocparser.mly" 19 1074 1093
+)
+"ocparser.mly" 20 1117 1202 "ocparser.mly" 20 1117 1215
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 20 1117 1199 "ocparser.mly" 20 1117 1215
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 20 1117 1229 "ocparser.mly" 20 1117 1233
+type(
+  bool
+)
+"ocparser.mly" 20 1117 1234 "ocparser.mly" 20 1117 1235
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 19 1074 1092 "ocparser.mly" 19 1074 1093
+)
+"ocparser.mly" 20 1117 1228 "ocparser.mly" 20 1117 1236
+type(
+  bool * Globals.loc
+)
+"ocparser.mly" 20 1117 1221 "ocparser.mly" 20 1117 1236
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 20 1117 1184 "ocparser.mly" 20 1117 1236
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 20 1117 1242 "ocparser.mly" 20 1117 1243
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 20 1117 1158 "ocparser.mly" 20 1117 1243
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 21 1244 1263 "ocparser.mly" 21 1244 1264
+type(
+  Cpure.spec_var
+)
+ident(
+  def v "ocparser.mly" 21 1244 1285 "ocparser.mly" 21 1244 1367
+)
+"ocparser.mly" 21 1244 1265 "ocparser.mly" 21 1244 1266
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 21 1244 1285 "ocparser.mly" 21 1244 1367
+)
+"ocparser.mly" 21 1244 1262 "ocparser.mly" 21 1244 1267
+type(
+  Cpure.spec_var * Globals.loc
+)
+"ocparser.mly" 21 1244 1258 "ocparser.mly" 21 1244 1267
+type(
+  Cpure.exp
+)
+"ocparser.mly" 21 1244 1277 "ocparser.mly" 21 1244 1278
+type(
+  int
+)
+ident(
+  def i "ocparser.mly" 21 1244 1285 "ocparser.mly" 21 1244 1367
+)
+"ocparser.mly" 21 1244 1279 "ocparser.mly" 21 1244 1280
+type(
+  Globals.loc
+)
+"ocparser.mly" 21 1244 1276 "ocparser.mly" 21 1244 1281
+type(
+  int * Globals.loc
+)
+"ocparser.mly" 21 1244 1269 "ocparser.mly" 21 1244 1281
+type(
+  Cpure.exp
+)
+"ocparser.mly" 21 1244 1258 "ocparser.mly" 21 1244 1281
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 21 1244 1289 "ocparser.mly" 21 1244 1302
+type(
+  Cpure.spec_var -> bool
+)
+ident(
+  ext_ref Cpure.is_object_var
+)
+"ocparser.mly" 21 1244 1303 "ocparser.mly" 21 1244 1304
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref v "ocparser.mly" 21 1244 1263 "ocparser.mly" 21 1244 1264
+)
+"ocparser.mly" 21 1244 1288 "ocparser.mly" 21 1244 1305
+type(
+  bool
+)
+"ocparser.mly" 21 1244 1315 "ocparser.mly" 21 1244 1316
+type(
+  int
+)
+ident(
+  int_ref i "ocparser.mly" 21 1244 1277 "ocparser.mly" 21 1244 1278
+)
+"ocparser.mly" 21 1244 1316 "ocparser.mly" 21 1244 1317
+type(
+  int -> int -> bool
+)
+ident(
+  ext_ref Pervasives.( < )
+)
+"ocparser.mly" 21 1244 1317 "ocparser.mly" 21 1244 1318
+type(
+  int
+)
+"ocparser.mly" 21 1244 1314 "ocparser.mly" 21 1244 1319
+type(
+  bool
+)
+"ocparser.mly" 21 1244 1328 "ocparser.mly" 21 1244 1330
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e1 "ocparser.mly" 19 1074 1086 "ocparser.mly" 19 1074 1088
+)
+"ocparser.mly" 21 1244 1336 "ocparser.mly" 21 1244 1337
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 21 1244 1265 "ocparser.mly" 21 1244 1266
+)
+"ocparser.mly" 21 1244 1331 "ocparser.mly" 21 1244 1337
+type(
+  Cpure.exp
+)
+"ocparser.mly" 21 1244 1338 "ocparser.mly" 21 1244 1339
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 19 1074 1092 "ocparser.mly" 19 1074 1093
+)
+"ocparser.mly" 21 1244 1327 "ocparser.mly" 21 1244 1340
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 21 1244 1325 "ocparser.mly" 21 1244 1340
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 21 1244 1353 "ocparser.mly" 21 1244 1357
+type(
+  bool
+)
+"ocparser.mly" 21 1244 1358 "ocparser.mly" 21 1244 1359
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 19 1074 1092 "ocparser.mly" 19 1074 1093
+)
+"ocparser.mly" 21 1244 1352 "ocparser.mly" 21 1244 1360
+type(
+  bool * Globals.loc
+)
+"ocparser.mly" 21 1244 1346 "ocparser.mly" 21 1244 1360
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 21 1244 1311 "ocparser.mly" 21 1244 1360
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 21 1244 1366 "ocparser.mly" 21 1244 1367
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 21 1244 1285 "ocparser.mly" 21 1244 1367
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 22 1378 1392 "ocparser.mly" 22 1378 1393
+type(
+  Cpure.exp * Cpure.exp
+)
+"ocparser.mly" 22 1378 1397 "ocparser.mly" 22 1378 1398
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 19 1074 1097 "ocparser.mly" 22 1378 1399
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 23 1401 1413 "ocparser.mly" 23 1401 1415
+type(
+  Cpure.exp
+)
+ident(
+  def e1 "ocparser.mly" 23 1401 1425 "ocparser.mly" 23 1401 1454
+)
+"ocparser.mly" 23 1401 1416 "ocparser.mly" 23 1401 1418
+type(
+  Cpure.exp
+)
+ident(
+  def e2 "ocparser.mly" 23 1401 1425 "ocparser.mly" 23 1401 1454
+)
+"ocparser.mly" 23 1401 1419 "ocparser.mly" 23 1401 1420
+type(
+  Globals.loc
+)
+ident(
+  def p "ocparser.mly" 23 1401 1425 "ocparser.mly" 23 1401 1454
+)
+"ocparser.mly" 23 1401 1412 "ocparser.mly" 23 1401 1421
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 23 1401 1409 "ocparser.mly" 23 1401 1421
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 23 1401 1425 "ocparser.mly" 23 1401 1439
+type(
+  Cpure.b_formula -> Cpure.b_formula
+)
+ident(
+  int_ref trans_b_f_null "ocparser.mly" 14 702 714 "ocparser.mly" 14 702 728
+)
+"ocparser.mly" 23 1401 1445 "ocparser.mly" 23 1401 1447
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e2 "ocparser.mly" 23 1401 1416 "ocparser.mly" 23 1401 1418
+)
+"ocparser.mly" 23 1401 1448 "ocparser.mly" 23 1401 1450
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e1 "ocparser.mly" 23 1401 1413 "ocparser.mly" 23 1401 1415
+)
+"ocparser.mly" 23 1401 1451 "ocparser.mly" 23 1401 1452
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 23 1401 1419 "ocparser.mly" 23 1401 1420
+)
+"ocparser.mly" 23 1401 1444 "ocparser.mly" 23 1401 1453
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 23 1401 1440 "ocparser.mly" 23 1401 1454
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 23 1401 1425 "ocparser.mly" 23 1401 1454
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 24 1455 1467 "ocparser.mly" 24 1455 1469
+type(
+  Cpure.exp
+)
+ident(
+  def e1 "ocparser.mly" 24 1455 1479 "ocparser.mly" 24 1455 1509
+)
+"ocparser.mly" 24 1455 1470 "ocparser.mly" 24 1455 1472
+type(
+  Cpure.exp
+)
+ident(
+  def e2 "ocparser.mly" 24 1455 1479 "ocparser.mly" 24 1455 1509
+)
+"ocparser.mly" 24 1455 1473 "ocparser.mly" 24 1455 1474
+type(
+  Globals.loc
+)
+ident(
+  def p "ocparser.mly" 24 1455 1479 "ocparser.mly" 24 1455 1509
+)
+"ocparser.mly" 24 1455 1466 "ocparser.mly" 24 1455 1475
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 24 1455 1463 "ocparser.mly" 24 1455 1475
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 24 1455 1479 "ocparser.mly" 24 1455 1493
+type(
+  Cpure.b_formula -> Cpure.b_formula
+)
+ident(
+  int_ref trans_b_f_null "ocparser.mly" 14 702 714 "ocparser.mly" 14 702 728
+)
+"ocparser.mly" 24 1455 1500 "ocparser.mly" 24 1455 1502
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e2 "ocparser.mly" 24 1455 1470 "ocparser.mly" 24 1455 1472
+)
+"ocparser.mly" 24 1455 1503 "ocparser.mly" 24 1455 1505
+type(
+  Cpure.exp
+)
+ident(
+  int_ref e1 "ocparser.mly" 24 1455 1467 "ocparser.mly" 24 1455 1469
+)
+"ocparser.mly" 24 1455 1506 "ocparser.mly" 24 1455 1507
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "ocparser.mly" 24 1455 1473 "ocparser.mly" 24 1455 1474
+)
+"ocparser.mly" 24 1455 1499 "ocparser.mly" 24 1455 1508
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 24 1455 1494 "ocparser.mly" 24 1455 1509
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 24 1455 1479 "ocparser.mly" 24 1455 1509
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 25 1510 1518 "ocparser.mly" 25 1510 1519
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 25 1510 1523 "ocparser.mly" 25 1510 1524
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 14 702 729 "ocparser.mly" 14 702 730
+)
+"ocparser.mly" 14 702 733 "ocparser.mly" 25 1510 1524
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 26 1528 1538 "ocparser.mly" 26 1528 1539
+type(
+  Cpure.formula
+)
+ident(
+  int_ref b "ocparser.mly" 13 658 680 "ocparser.mly" 13 658 681
+)
+"ocparser.mly" 27 1545 1560 "ocparser.mly" 27 1545 1561
+type(
+  Cpure.b_formula
+)
+ident(
+  def b "ocparser.mly" 27 1545 1568 "ocparser.mly" 27 1545 1596
+)
+"ocparser.mly" 27 1545 1562 "ocparser.mly" 27 1545 1563
+type(
+  Globals.formula_label option
+)
+ident(
+  def l "ocparser.mly" 27 1545 1568 "ocparser.mly" 27 1545 1596
+)
+"ocparser.mly" 27 1545 1559 "ocparser.mly" 27 1545 1564
+type(
+  Cpure.b_formula * Globals.formula_label option
+)
+"ocparser.mly" 27 1545 1553 "ocparser.mly" 27 1545 1564
+type(
+  Cpure.formula
+)
+"ocparser.mly" 27 1545 1576 "ocparser.mly" 27 1545 1590
+type(
+  Cpure.b_formula -> Cpure.b_formula
+)
+ident(
+  int_ref trans_b_f_null "ocparser.mly" 14 702 714 "ocparser.mly" 14 702 728
+)
+"ocparser.mly" 27 1545 1591 "ocparser.mly" 27 1545 1592
+type(
+  Cpure.b_formula
+)
+ident(
+  int_ref b "ocparser.mly" 27 1545 1560 "ocparser.mly" 27 1545 1561
+)
+"ocparser.mly" 27 1545 1575 "ocparser.mly" 27 1545 1593
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 27 1545 1594 "ocparser.mly" 27 1545 1595
+type(
+  Globals.formula_label option
+)
+ident(
+  int_ref l "ocparser.mly" 27 1545 1562 "ocparser.mly" 27 1545 1563
+)
+"ocparser.mly" 27 1545 1574 "ocparser.mly" 27 1545 1596
+type(
+  Cpure.b_formula * Globals.formula_label option
+)
+"ocparser.mly" 27 1545 1568 "ocparser.mly" 27 1545 1596
+type(
+  Cpure.formula
+)
+"ocparser.mly" 28 1597 1610 "ocparser.mly" 28 1597 1612
+type(
+  Cpure.formula
+)
+ident(
+  def f1 "ocparser.mly" 28 1597 1622 "ocparser.mly" 28 1597 1661
+)
+"ocparser.mly" 28 1597 1613 "ocparser.mly" 28 1597 1615
+type(
+  Cpure.formula
+)
+ident(
+  def f2 "ocparser.mly" 28 1597 1622 "ocparser.mly" 28 1597 1661
+)
+"ocparser.mly" 28 1597 1616 "ocparser.mly" 28 1597 1617
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 28 1597 1622 "ocparser.mly" 28 1597 1661
+)
+"ocparser.mly" 28 1597 1609 "ocparser.mly" 28 1597 1618
+type(
+  Cpure.formula * Cpure.formula * Globals.loc
+)
+"ocparser.mly" 28 1597 1605 "ocparser.mly" 28 1597 1618
+type(
+  Cpure.formula
+)
+"ocparser.mly" 28 1597 1622 "ocparser.mly" 28 1597 1627
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 28 1597 1629 "ocparser.mly" 28 1597 1639
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 28 1597 1640 "ocparser.mly" 28 1597 1642
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f1 "ocparser.mly" 28 1597 1610 "ocparser.mly" 28 1597 1612
+)
+"ocparser.mly" 28 1597 1628 "ocparser.mly" 28 1597 1643
+type(
+  Cpure.formula
+)
+"ocparser.mly" 28 1597 1645 "ocparser.mly" 28 1597 1655
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 28 1597 1656 "ocparser.mly" 28 1597 1658
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f2 "ocparser.mly" 28 1597 1613 "ocparser.mly" 28 1597 1615
+)
+"ocparser.mly" 28 1597 1644 "ocparser.mly" 28 1597 1659
+type(
+  Cpure.formula
+)
+"ocparser.mly" 28 1597 1660 "ocparser.mly" 28 1597 1661
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 28 1597 1616 "ocparser.mly" 28 1597 1617
+)
+"ocparser.mly" 28 1597 1622 "ocparser.mly" 28 1597 1661
+type(
+  Cpure.formula
+)
+"ocparser.mly" 29 1662 1674 "ocparser.mly" 29 1662 1676
+type(
+  Cpure.formula
+)
+ident(
+  def f1 "ocparser.mly" 29 1662 1689 "ocparser.mly" 29 1662 1730
+)
+"ocparser.mly" 29 1662 1677 "ocparser.mly" 29 1662 1679
+type(
+  Cpure.formula
+)
+ident(
+  def f2 "ocparser.mly" 29 1662 1689 "ocparser.mly" 29 1662 1730
+)
+"ocparser.mly" 29 1662 1680 "ocparser.mly" 29 1662 1682
+type(
+  Globals.formula_label option
+)
+ident(
+  def fl "ocparser.mly" 29 1662 1689 "ocparser.mly" 29 1662 1730
+)
+"ocparser.mly" 29 1662 1683 "ocparser.mly" 29 1662 1684
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 29 1662 1689 "ocparser.mly" 29 1662 1730
+)
+"ocparser.mly" 29 1662 1673 "ocparser.mly" 29 1662 1685
+type(
+  Cpure.formula * Cpure.formula * Globals.formula_label option * Globals.loc
+)
+"ocparser.mly" 29 1662 1670 "ocparser.mly" 29 1662 1685
+type(
+  Cpure.formula
+)
+"ocparser.mly" 29 1662 1689 "ocparser.mly" 29 1662 1693
+type(
+  Cpure.formula ->
+  Cpure.formula ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkOr
+)
+"ocparser.mly" 29 1662 1695 "ocparser.mly" 29 1662 1705
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 29 1662 1706 "ocparser.mly" 29 1662 1708
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f1 "ocparser.mly" 29 1662 1674 "ocparser.mly" 29 1662 1676
+)
+"ocparser.mly" 29 1662 1694 "ocparser.mly" 29 1662 1709
+type(
+  Cpure.formula
+)
+"ocparser.mly" 29 1662 1711 "ocparser.mly" 29 1662 1721
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 29 1662 1722 "ocparser.mly" 29 1662 1724
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f2 "ocparser.mly" 29 1662 1677 "ocparser.mly" 29 1662 1679
+)
+"ocparser.mly" 29 1662 1710 "ocparser.mly" 29 1662 1725
+type(
+  Cpure.formula
+)
+"ocparser.mly" 29 1662 1726 "ocparser.mly" 29 1662 1728
+type(
+  Globals.formula_label option
+)
+ident(
+  int_ref fl "ocparser.mly" 29 1662 1680 "ocparser.mly" 29 1662 1682
+)
+"ocparser.mly" 29 1662 1729 "ocparser.mly" 29 1662 1730
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 29 1662 1683 "ocparser.mly" 29 1662 1684
+)
+"ocparser.mly" 29 1662 1689 "ocparser.mly" 29 1662 1730
+type(
+  Cpure.formula
+)
+"ocparser.mly" 30 1731 1744 "ocparser.mly" 30 1731 1745
+type(
+  Cpure.formula
+)
+ident(
+  def f "ocparser.mly" 30 1731 1755 "ocparser.mly" 30 1731 1780
+)
+"ocparser.mly" 30 1731 1746 "ocparser.mly" 30 1731 1748
+type(
+  Globals.formula_label option
+)
+ident(
+  def fl "ocparser.mly" 30 1731 1755 "ocparser.mly" 30 1731 1780
+)
+"ocparser.mly" 30 1731 1749 "ocparser.mly" 30 1731 1750
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 30 1731 1755 "ocparser.mly" 30 1731 1780
+)
+"ocparser.mly" 30 1731 1743 "ocparser.mly" 30 1731 1751
+type(
+  Cpure.formula * Globals.formula_label option * Globals.loc
+)
+"ocparser.mly" 30 1731 1739 "ocparser.mly" 30 1731 1751
+type(
+  Cpure.formula
+)
+"ocparser.mly" 30 1731 1761 "ocparser.mly" 30 1731 1771
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 30 1731 1772 "ocparser.mly" 30 1731 1773
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f "ocparser.mly" 30 1731 1744 "ocparser.mly" 30 1731 1745
+)
+"ocparser.mly" 30 1731 1760 "ocparser.mly" 30 1731 1774
+type(
+  Cpure.formula
+)
+"ocparser.mly" 30 1731 1775 "ocparser.mly" 30 1731 1777
+type(
+  Globals.formula_label option
+)
+ident(
+  int_ref fl "ocparser.mly" 30 1731 1746 "ocparser.mly" 30 1731 1748
+)
+"ocparser.mly" 30 1731 1778 "ocparser.mly" 30 1731 1779
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 30 1731 1749 "ocparser.mly" 30 1731 1750
+)
+"ocparser.mly" 30 1731 1759 "ocparser.mly" 30 1731 1780
+type(
+  Cpure.formula * Globals.formula_label option * Globals.loc
+)
+"ocparser.mly" 30 1731 1755 "ocparser.mly" 30 1731 1780
+type(
+  Cpure.formula
+)
+"ocparser.mly" 31 1781 1797 "ocparser.mly" 31 1781 1799
+type(
+  Cpure.spec_var
+)
+ident(
+  def sv "ocparser.mly" 31 1781 1811 "ocparser.mly" 31 1781 1841
+)
+"ocparser.mly" 31 1781 1800 "ocparser.mly" 31 1781 1801
+type(
+  Cpure.formula
+)
+ident(
+  def f "ocparser.mly" 31 1781 1811 "ocparser.mly" 31 1781 1841
+)
+"ocparser.mly" 31 1781 1802 "ocparser.mly" 31 1781 1804
+type(
+  Globals.formula_label option
+)
+ident(
+  def fl "ocparser.mly" 31 1781 1811 "ocparser.mly" 31 1781 1841
+)
+"ocparser.mly" 31 1781 1805 "ocparser.mly" 31 1781 1806
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 31 1781 1811 "ocparser.mly" 31 1781 1841
+)
+"ocparser.mly" 31 1781 1796 "ocparser.mly" 31 1781 1807
+type(
+  Cpure.spec_var * Cpure.formula * Globals.formula_label option * Globals.loc
+)
+"ocparser.mly" 31 1781 1789 "ocparser.mly" 31 1781 1807
+type(
+  Cpure.formula
+)
+"ocparser.mly" 31 1781 1818 "ocparser.mly" 31 1781 1820
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref sv "ocparser.mly" 31 1781 1797 "ocparser.mly" 31 1781 1799
+)
+"ocparser.mly" 31 1781 1822 "ocparser.mly" 31 1781 1832
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 31 1781 1833 "ocparser.mly" 31 1781 1834
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f "ocparser.mly" 31 1781 1800 "ocparser.mly" 31 1781 1801
+)
+"ocparser.mly" 31 1781 1821 "ocparser.mly" 31 1781 1835
+type(
+  Cpure.formula
+)
+"ocparser.mly" 31 1781 1836 "ocparser.mly" 31 1781 1838
+type(
+  Globals.formula_label option
+)
+ident(
+  int_ref fl "ocparser.mly" 31 1781 1802 "ocparser.mly" 31 1781 1804
+)
+"ocparser.mly" 31 1781 1839 "ocparser.mly" 31 1781 1840
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 31 1781 1805 "ocparser.mly" 31 1781 1806
+)
+"ocparser.mly" 31 1781 1817 "ocparser.mly" 31 1781 1841
+type(
+  Cpure.spec_var * Cpure.formula * Globals.formula_label option * Globals.loc
+)
+"ocparser.mly" 31 1781 1811 "ocparser.mly" 31 1781 1841
+type(
+  Cpure.formula
+)
+"ocparser.mly" 32 1842 1858 "ocparser.mly" 32 1842 1860
+type(
+  Cpure.spec_var
+)
+ident(
+  def sv "ocparser.mly" 32 1842 1872 "ocparser.mly" 32 1842 1902
+)
+"ocparser.mly" 32 1842 1861 "ocparser.mly" 32 1842 1862
+type(
+  Cpure.formula
+)
+ident(
+  def f "ocparser.mly" 32 1842 1872 "ocparser.mly" 32 1842 1902
+)
+"ocparser.mly" 32 1842 1863 "ocparser.mly" 32 1842 1865
+type(
+  Globals.formula_label option
+)
+ident(
+  def fl "ocparser.mly" 32 1842 1872 "ocparser.mly" 32 1842 1902
+)
+"ocparser.mly" 32 1842 1866 "ocparser.mly" 32 1842 1867
+type(
+  Globals.loc
+)
+ident(
+  def l "ocparser.mly" 32 1842 1872 "ocparser.mly" 32 1842 1902
+)
+"ocparser.mly" 32 1842 1857 "ocparser.mly" 32 1842 1868
+type(
+  Cpure.spec_var * Cpure.formula * Globals.formula_label option * Globals.loc
+)
+"ocparser.mly" 32 1842 1850 "ocparser.mly" 32 1842 1868
+type(
+  Cpure.formula
+)
+"ocparser.mly" 32 1842 1879 "ocparser.mly" 32 1842 1881
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref sv "ocparser.mly" 32 1842 1858 "ocparser.mly" 32 1842 1860
+)
+"ocparser.mly" 32 1842 1883 "ocparser.mly" 32 1842 1893
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 32 1842 1894 "ocparser.mly" 32 1842 1895
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f "ocparser.mly" 32 1842 1861 "ocparser.mly" 32 1842 1862
+)
+"ocparser.mly" 32 1842 1882 "ocparser.mly" 32 1842 1896
+type(
+  Cpure.formula
+)
+"ocparser.mly" 32 1842 1897 "ocparser.mly" 32 1842 1899
+type(
+  Globals.formula_label option
+)
+ident(
+  int_ref fl "ocparser.mly" 32 1842 1863 "ocparser.mly" 32 1842 1865
+)
+"ocparser.mly" 32 1842 1900 "ocparser.mly" 32 1842 1901
+type(
+  Globals.loc
+)
+ident(
+  int_ref l "ocparser.mly" 32 1842 1866 "ocparser.mly" 32 1842 1867
+)
+"ocparser.mly" 32 1842 1878 "ocparser.mly" 32 1842 1902
+type(
+  Cpure.spec_var * Cpure.formula * Globals.formula_label option * Globals.loc
+)
+"ocparser.mly" 32 1842 1872 "ocparser.mly" 32 1842 1902
+type(
+  Cpure.formula
+)
+"ocparser.mly" 26 1528 1532 "ocparser.mly" 32 1842 1902
+type(
+  Cpure.formula
+)
+"ocparser.mly" 14 702 706 "ocparser.mly" 32 1842 1902
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 71 1922 1926 "ocparser.ml" 71 1922 1940
+type(
+  int array
+)
+ident(
+  def yytransl_const "ocparser.ml" 105 2528 2528 --
+)
+"ocparser.ml" 72 1946 1948 "ocparser.ml" 72 1946 1951
+type(
+  int
+)
+"ocparser.ml" 73 1963 1965 "ocparser.ml" 73 1963 1968
+type(
+  int
+)
+"ocparser.ml" 74 1981 1983 "ocparser.ml" 74 1981 1986
+type(
+  int
+)
+"ocparser.ml" 75 2001 2003 "ocparser.ml" 75 2001 2006
+type(
+  int
+)
+"ocparser.ml" 76 2020 2022 "ocparser.ml" 76 2020 2025
+type(
+  int
+)
+"ocparser.ml" 77 2039 2041 "ocparser.ml" 77 2039 2044
+type(
+  int
+)
+"ocparser.ml" 78 2059 2061 "ocparser.ml" 78 2059 2064
+type(
+  int
+)
+"ocparser.ml" 79 2080 2082 "ocparser.ml" 79 2080 2085
+type(
+  int
+)
+"ocparser.ml" 80 2097 2099 "ocparser.ml" 80 2097 2102
+type(
+  int
+)
+"ocparser.ml" 81 2113 2117 "ocparser.ml" 81 2113 2118
+type(
+  int
+)
+"ocparser.ml" 82 2130 2132 "ocparser.ml" 82 2130 2135
+type(
+  int
+)
+"ocparser.ml" 83 2148 2150 "ocparser.ml" 83 2148 2153
+type(
+  int
+)
+"ocparser.ml" 84 2168 2170 "ocparser.ml" 84 2168 2173
+type(
+  int
+)
+"ocparser.ml" 85 2187 2189 "ocparser.ml" 85 2187 2192
+type(
+  int
+)
+"ocparser.ml" 86 2207 2209 "ocparser.ml" 86 2207 2212
+type(
+  int
+)
+"ocparser.ml" 87 2223 2225 "ocparser.ml" 87 2223 2228
+type(
+  int
+)
+"ocparser.ml" 88 2240 2242 "ocparser.ml" 88 2240 2245
+type(
+  int
+)
+"ocparser.ml" 89 2256 2258 "ocparser.ml" 89 2256 2261
+type(
+  int
+)
+"ocparser.ml" 90 2273 2275 "ocparser.ml" 90 2273 2278
+type(
+  int
+)
+"ocparser.ml" 91 2292 2294 "ocparser.ml" 91 2292 2297
+type(
+  int
+)
+"ocparser.ml" 92 2309 2311 "ocparser.ml" 92 2309 2314
+type(
+  int
+)
+"ocparser.ml" 93 2326 2328 "ocparser.ml" 93 2326 2331
+type(
+  int
+)
+"ocparser.ml" 94 2346 2348 "ocparser.ml" 94 2346 2351
+type(
+  int
+)
+"ocparser.ml" 95 2366 2368 "ocparser.ml" 95 2366 2371
+type(
+  int
+)
+"ocparser.ml" 96 2382 2384 "ocparser.ml" 96 2382 2387
+type(
+  int
+)
+"ocparser.ml" 97 2403 2405 "ocparser.ml" 97 2403 2408
+type(
+  int
+)
+"ocparser.ml" 98 2421 2423 "ocparser.ml" 98 2421 2426
+type(
+  int
+)
+"ocparser.ml" 99 2440 2442 "ocparser.ml" 99 2440 2445
+type(
+  int
+)
+"ocparser.ml" 100 2463 2465 "ocparser.ml" 100 2463 2468
+type(
+  int
+)
+"ocparser.ml" 101 2482 2484 "ocparser.ml" 101 2482 2487
+type(
+  int
+)
+"ocparser.ml" 102 2500 2502 "ocparser.ml" 102 2500 2505
+type(
+  int
+)
+"ocparser.ml" 103 2519 2523 "ocparser.ml" 103 2519 2524
+type(
+  int
+)
+"ocparser.ml" 71 1922 1943 "ocparser.ml" 103 2519 2526
+type(
+  int array
+)
+"ocparser.ml" 105 2528 2532 "ocparser.ml" 105 2528 2546
+type(
+  int array
+)
+ident(
+  def yytransl_block "ocparser.ml" 111 2619 2619 --
+)
+"ocparser.ml" 106 2552 2554 "ocparser.ml" 106 2552 2557
+type(
+  int
+)
+"ocparser.ml" 107 2572 2574 "ocparser.ml" 107 2572 2577
+type(
+  int
+)
+"ocparser.ml" 108 2588 2590 "ocparser.ml" 108 2588 2593
+type(
+  int
+)
+"ocparser.ml" 109 2610 2614 "ocparser.ml" 109 2610 2615
+type(
+  int
+)
+"ocparser.ml" 105 2528 2549 "ocparser.ml" 109 2610 2617
+type(
+  int array
+)
+"ocparser.ml" 111 2619 2623 "ocparser.ml" 111 2619 2628
+type(
+  string
+)
+ident(
+  def yylhs "ocparser.ml" 119 2983 2983 --
+)
+"ocparser.ml" 111 2619 2631 "ocparser.ml" 117 2972 2981
+type(
+  string
+)
+"ocparser.ml" 119 2983 2987 "ocparser.ml" 119 2983 2992
+type(
+  string
+)
+ident(
+  def yylen "ocparser.ml" 127 3347 3347 --
+)
+"ocparser.ml" 119 2983 2995 "ocparser.ml" 125 3336 3345
+type(
+  string
+)
+"ocparser.ml" 127 3347 3351 "ocparser.ml" 127 3347 3359
+type(
+  string
+)
+ident(
+  def yydefred "ocparser.ml" 139 3986 3986 --
+)
+"ocparser.ml" 127 3347 3362 "ocparser.ml" 137 3967 3984
+type(
+  string
+)
+"ocparser.ml" 139 3986 3990 "ocparser.ml" 139 3986 3997
+type(
+  string
+)
+ident(
+  def yydgoto "ocparser.ml" 143 4104 4104 --
+)
+"ocparser.ml" 139 3986 4000 "ocparser.ml" 141 4077 4102
+type(
+  string
+)
+"ocparser.ml" 143 4104 4108 "ocparser.ml" 143 4104 4116
+type(
+  string
+)
+ident(
+  def yysindex "ocparser.ml" 155 4743 4743 --
+)
+"ocparser.ml" 143 4104 4119 "ocparser.ml" 153 4724 4741
+type(
+  string
+)
+"ocparser.ml" 155 4743 4747 "ocparser.ml" 155 4743 4755
+type(
+  string
+)
+ident(
+  def yyrindex "ocparser.ml" 167 5382 5382 --
+)
+"ocparser.ml" 155 4743 4758 "ocparser.ml" 165 5363 5380
+type(
+  string
+)
+"ocparser.ml" 167 5382 5386 "ocparser.ml" 167 5382 5394
+type(
+  string
+)
+ident(
+  def yygindex "ocparser.ml" 171 5501 5501 --
+)
+"ocparser.ml" 167 5382 5397 "ocparser.ml" 169 5474 5499
+type(
+  string
+)
+"ocparser.ml" 171 5501 5505 "ocparser.ml" 171 5501 5516
+type(
+  int
+)
+ident(
+  def yytablesize "ocparser.ml" 172 5523 5523 --
+)
+"ocparser.ml" 171 5501 5519 "ocparser.ml" 171 5501 5522
+type(
+  int
+)
+"ocparser.ml" 172 5523 5527 "ocparser.ml" 172 5523 5534
+type(
+  string
+)
+ident(
+  def yytable "ocparser.ml" 195 6911 6911 --
+)
+"ocparser.ml" 172 5523 5537 "ocparser.ml" 193 6868 6909
+type(
+  string
+)
+"ocparser.ml" 195 6911 6915 "ocparser.ml" 195 6911 6922
+type(
+  string
+)
+ident(
+  def yycheck "ocparser.ml" 218 8299 8299 --
+)
+"ocparser.ml" 195 6911 6925 "ocparser.ml" 216 8256 8297
+type(
+  string
+)
+"ocparser.ml" 218 8299 8303 "ocparser.ml" 218 8299 8316
+type(
+  string
+)
+ident(
+  def yynames_const "ocparser.ml" 252 8714 8714 --
+)
+"ocparser.ml" 218 8299 8319 "ocparser.ml" 250 8709 8712
+type(
+  string
+)
+"ocparser.ml" 252 8714 8718 "ocparser.ml" 252 8714 8731
+type(
+  string
+)
+ident(
+  def yynames_block "ocparser.ml" 258 8782 8782 --
+)
+"ocparser.ml" 252 8714 8734 "ocparser.ml" 256 8777 8780
+type(
+  string
+)
+"ocparser.ml" 258 8782 8786 "ocparser.ml" 258 8782 8791
+type(
+  (Parsing.parser_env -> Obj.t) array
+)
+ident(
+  def yyact "ocparser.ml" 645 21102 21102 --
+)
+"ocparser.ml" 259 8797 8804 "ocparser.ml" 259 8797 8805
+type(
+  Parsing.parser_env
+)
+"ocparser.ml" 259 8797 8809 "ocparser.ml" 259 8797 8817
+type(
+  string -> Obj.t
+)
+ident(
+  ext_ref Pervasives.failwith
+)
+"ocparser.ml" 259 8797 8818 "ocparser.ml" 259 8797 8826
+type(
+  string
+)
+"ocparser.ml" 259 8797 8809 "ocparser.ml" 259 8797 8826
+type(
+  Obj.t
+)
+"ocparser.ml" 259 8797 8799 "ocparser.ml" 259 8797 8827
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 260 8828 8835 "ocparser.ml" 260 8828 8852
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 261 8856 8860 "ocparser.ml" 268 9006 9038
+)
+"ocparser.ml" 261 8856 8864 "ocparser.ml" 261 8856 8866
+type(
+  Cpure.relation
+)
+"ocparser.ml" 261 8856 8870 "ocparser.ml" 261 8856 8886
+type(
+  Parsing.parser_env -> int -> Cpure.relation
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 261 8856 8887 "ocparser.ml" 261 8856 8904
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 260 8828 8835 "ocparser.ml" 260 8828 8852
+)
+"ocparser.ml" 261 8856 8905 "ocparser.ml" 261 8856 8906
+type(
+  int
+)
+"ocparser.ml" 261 8856 8870 "ocparser.ml" 261 8856 8906
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 262 8923 8927 "ocparser.ml" 262 8923 8935
+type(
+  Cpure.relation -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 83 8957 8977 "ocparser.mly" 85 8984 8985
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+ident(
+  int_ref _1 "ocparser.ml" 261 8856 8864 "ocparser.ml" 261 8856 8866
+)
+"ocparser.ml" 262 8923 8927 "ocparser.ml" 268 9006 9038
+type(
+  Obj.t
+)
+"ocparser.ml" 261 8856 8860 "ocparser.ml" 268 9006 9038
+type(
+  Obj.t
+)
+"ocparser.ml" 260 8828 8830 "ocparser.ml" 268 9006 9039
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 269 9040 9047 "ocparser.ml" 269 9040 9064
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 270 9068 9072 "ocparser.ml" 278 9314 9341
+)
+"ocparser.ml" 270 9068 9076 "ocparser.ml" 270 9068 9078
+type(
+  Cpure.relation
+)
+"ocparser.ml" 270 9068 9082 "ocparser.ml" 270 9068 9098
+type(
+  Parsing.parser_env -> int -> Cpure.relation
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 270 9068 9099 "ocparser.ml" 270 9068 9116
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 269 9040 9047 "ocparser.ml" 269 9040 9064
+)
+"ocparser.ml" 270 9068 9117 "ocparser.ml" 270 9068 9118
+type(
+  int
+)
+"ocparser.ml" 270 9068 9082 "ocparser.ml" 270 9068 9118
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 271 9135 9143 "ocparser.ml" 271 9135 9145
+type(
+  Cpure.relation
+)
+"ocparser.ml" 271 9135 9149 "ocparser.ml" 271 9135 9165
+type(
+  Parsing.parser_env -> int -> Cpure.relation
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 271 9135 9166 "ocparser.ml" 271 9135 9183
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 269 9040 9047 "ocparser.ml" 269 9040 9064
+)
+"ocparser.ml" 271 9135 9184 "ocparser.ml" 271 9135 9185
+type(
+  int
+)
+"ocparser.ml" 271 9135 9149 "ocparser.ml" 271 9135 9185
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 272 9202 9206 "ocparser.ml" 272 9202 9214
+type(
+  Cpure.relation -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 89 9272 9284 "ocparser.mly" 89 9272 9286
+type(
+  Cpure.relation
+)
+ident(
+  int_ref _1 "ocparser.ml" 270 9068 9076 "ocparser.ml" 270 9068 9078
+)
+"ocparser.mly" 89 9272 9288 "ocparser.mly" 89 9272 9290
+type(
+  Cpure.relation
+)
+ident(
+  int_ref _3 "ocparser.ml" 271 9135 9143 "ocparser.ml" 271 9135 9145
+)
+"ocparser.mly" 89 9272 9283 "ocparser.mly" 89 9272 9291
+type(
+  Cpure.relation * Cpure.relation
+)
+"ocparser.mly" 88 9236 9270 "ocparser.mly" 90 9292 9293
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 272 9202 9206 "ocparser.ml" 278 9314 9341
+type(
+  Obj.t
+)
+"ocparser.ml" 271 9135 9139 "ocparser.ml" 278 9314 9341
+type(
+  Obj.t
+)
+"ocparser.ml" 270 9068 9072 "ocparser.ml" 278 9314 9341
+type(
+  Obj.t
+)
+"ocparser.ml" 269 9040 9042 "ocparser.ml" 278 9314 9342
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 279 9343 9350 "ocparser.ml" 279 9343 9367
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 280 9371 9375 "ocparser.ml" 288 9638 9665
+)
+"ocparser.ml" 280 9371 9379 "ocparser.ml" 280 9371 9381
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 280 9371 9385 "ocparser.ml" 280 9371 9401
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 280 9371 9402 "ocparser.ml" 280 9371 9419
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 279 9343 9350 "ocparser.ml" 279 9343 9367
+)
+"ocparser.ml" 280 9371 9420 "ocparser.ml" 280 9371 9421
+type(
+  int
+)
+"ocparser.ml" 280 9371 9385 "ocparser.ml" 280 9371 9421
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 281 9439 9447 "ocparser.ml" 281 9439 9449
+type(
+  Cpure.formula
+)
+"ocparser.ml" 281 9439 9453 "ocparser.ml" 281 9439 9469
+type(
+  Parsing.parser_env -> int -> Cpure.formula
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 281 9439 9470 "ocparser.ml" 281 9439 9487
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 279 9343 9350 "ocparser.ml" 279 9343 9367
+)
+"ocparser.ml" 281 9439 9488 "ocparser.ml" 281 9439 9489
+type(
+  int
+)
+"ocparser.ml" 281 9439 9453 "ocparser.ml" 281 9439 9489
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 282 9505 9509 "ocparser.ml" 282 9505 9517
+type(
+  Cpure.relation -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 92 9597 9608 "ocparser.mly" 92 9597 9610
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 280 9371 9379 "ocparser.ml" 280 9371 9381
+)
+"ocparser.mly" 92 9597 9612 "ocparser.mly" 92 9597 9614
+type(
+  Cpure.formula
+)
+ident(
+  int_ref _6 "ocparser.ml" 281 9439 9447 "ocparser.ml" 281 9439 9449
+)
+"ocparser.mly" 92 9597 9607 "ocparser.mly" 92 9597 9615
+type(
+  Cpure.exp list * Cpure.formula
+)
+"ocparser.mly" 91 9539 9595 "ocparser.mly" 93 9616 9617
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 282 9505 9509 "ocparser.ml" 288 9638 9665
+type(
+  Obj.t
+)
+"ocparser.ml" 281 9439 9443 "ocparser.ml" 288 9638 9665
+type(
+  Obj.t
+)
+"ocparser.ml" 280 9371 9375 "ocparser.ml" 288 9638 9665
+type(
+  Obj.t
+)
+"ocparser.ml" 279 9343 9345 "ocparser.ml" 288 9638 9666
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 289 9667 9674 "ocparser.ml" 289 9667 9691
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 290 9695 9699 "ocparser.ml" 297 9899 9926
+)
+"ocparser.ml" 290 9695 9703 "ocparser.ml" 290 9695 9705
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 290 9695 9709 "ocparser.ml" 290 9695 9725
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 290 9695 9726 "ocparser.ml" 290 9695 9743
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 289 9667 9674 "ocparser.ml" 289 9667 9691
+)
+"ocparser.ml" 290 9695 9744 "ocparser.ml" 290 9695 9745
+type(
+  int
+)
+"ocparser.ml" 290 9695 9709 "ocparser.ml" 290 9695 9745
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 291 9763 9767 "ocparser.ml" 291 9763 9775
+type(
+  Cpure.relation -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 95 9841 9851 "ocparser.mly" 95 9841 9853
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 290 9695 9703 "ocparser.ml" 290 9695 9705
+)
+"ocparser.mly" 95 9841 9855 "ocparser.mly" 95 9841 9861
+type(
+  Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkTrue
+)
+"ocparser.mly" 95 9841 9863 "ocparser.mly" 95 9841 9870
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 95 9841 9871 "ocparser.mly" 95 9841 9872
+type(
+  int
+)
+"ocparser.mly" 95 9841 9862 "ocparser.mly" 95 9841 9873
+type(
+  Globals.loc
+)
+"ocparser.mly" 95 9841 9855 "ocparser.mly" 95 9841 9873
+type(
+  Cpure.formula
+)
+"ocparser.mly" 95 9841 9850 "ocparser.mly" 95 9841 9874
+type(
+  Cpure.exp list * Cpure.formula
+)
+"ocparser.mly" 94 9797 9839 "ocparser.mly" 96 9875 9878
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 291 9763 9767 "ocparser.ml" 297 9899 9926
+type(
+  Obj.t
+)
+"ocparser.ml" 290 9695 9699 "ocparser.ml" 297 9899 9926
+type(
+  Obj.t
+)
+"ocparser.ml" 289 9667 9669 "ocparser.ml" 297 9899 9927
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 298 9928 9935 "ocparser.ml" 298 9928 9952
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 299 9956 9960 "ocparser.ml" 305 10052 10079
+)
+"ocparser.ml" 299 9956 9960 "ocparser.ml" 299 9956 9968
+type(
+  Cpure.relation -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 98 10013 10023 "ocparser.mly" 98 10013 10027
+type(
+  bool
+)
+"ocparser.mly" 97 9990 10011 "ocparser.mly" 99 10028 10031
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 299 9956 9960 "ocparser.ml" 305 10052 10079
+type(
+  Obj.t
+)
+"ocparser.ml" 298 9928 9930 "ocparser.ml" 305 10052 10080
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 306 10081 10088 "ocparser.ml" 306 10081 10105
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 307 10109 10113 "ocparser.ml" 313 10208 10235
+)
+"ocparser.ml" 307 10109 10113 "ocparser.ml" 307 10109 10121
+type(
+  Cpure.relation -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 101 10168 10178 "ocparser.mly" 101 10168 10183
+type(
+  bool
+)
+"ocparser.mly" 100 10144 10166 "ocparser.mly" 102 10184 10187
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)
+"ocparser.ml" 307 10109 10113 "ocparser.ml" 313 10208 10235
+type(
+  Obj.t
+)
+"ocparser.ml" 306 10081 10083 "ocparser.ml" 313 10208 10236
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 314 10237 10244 "ocparser.ml" 314 10237 10261
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 315 10265 10269 "ocparser.ml" 323 10512 10538
+)
+"ocparser.ml" 315 10265 10273 "ocparser.ml" 315 10265 10275
+type(
+  Cpure.formula
+)
+"ocparser.ml" 315 10265 10279 "ocparser.ml" 315 10265 10295
+type(
+  Parsing.parser_env -> int -> Cpure.formula
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 315 10265 10296 "ocparser.ml" 315 10265 10313
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 314 10237 10244 "ocparser.ml" 314 10237 10261
+)
+"ocparser.ml" 315 10265 10314 "ocparser.ml" 315 10265 10315
+type(
+  int
+)
+"ocparser.ml" 315 10265 10279 "ocparser.ml" 315 10265 10315
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 316 10331 10339 "ocparser.ml" 316 10331 10341
+type(
+  Cpure.formula
+)
+"ocparser.ml" 316 10331 10345 "ocparser.ml" 316 10331 10361
+type(
+  Parsing.parser_env -> int -> Cpure.formula
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 316 10331 10362 "ocparser.ml" 316 10331 10379
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 314 10237 10244 "ocparser.ml" 314 10237 10261
+)
+"ocparser.ml" 316 10331 10380 "ocparser.ml" 316 10331 10381
+type(
+  int
+)
+"ocparser.ml" 316 10331 10345 "ocparser.ml" 316 10331 10381
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 317 10397 10401 "ocparser.ml" 317 10397 10409
+type(
+  Cpure.formula -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 106 10464 10466 "ocparser.mly" 106 10464 10471
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 106 10464 10472 "ocparser.mly" 106 10464 10474
+type(
+  Cpure.formula
+)
+ident(
+  int_ref _1 "ocparser.ml" 315 10265 10273 "ocparser.ml" 315 10265 10275
+)
+"ocparser.mly" 106 10464 10475 "ocparser.mly" 106 10464 10477
+type(
+  Cpure.formula
+)
+ident(
+  int_ref _3 "ocparser.ml" 316 10331 10339 "ocparser.ml" 316 10331 10341
+)
+"ocparser.mly" 106 10464 10479 "ocparser.mly" 106 10464 10486
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 106 10464 10487 "ocparser.mly" 106 10464 10488
+type(
+  int
+)
+"ocparser.mly" 106 10464 10478 "ocparser.mly" 106 10464 10489
+type(
+  Globals.loc
+)
+"ocparser.mly" 105 10432 10461 "ocparser.mly" 107 10490 10491
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 317 10397 10401 "ocparser.ml" 323 10512 10538
+type(
+  Obj.t
+)
+"ocparser.ml" 316 10331 10335 "ocparser.ml" 323 10512 10538
+type(
+  Obj.t
+)
+"ocparser.ml" 315 10265 10269 "ocparser.ml" 323 10512 10538
+type(
+  Obj.t
+)
+"ocparser.ml" 314 10237 10239 "ocparser.ml" 323 10512 10539
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 324 10540 10547 "ocparser.ml" 324 10540 10564
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 325 10568 10572 "ocparser.ml" 330 10725 10751
+)
+"ocparser.ml" 325 10568 10576 "ocparser.ml" 325 10568 10578
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 325 10568 10582 "ocparser.ml" 325 10568 10598
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 325 10568 10599 "ocparser.ml" 325 10568 10616
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 324 10540 10547 "ocparser.ml" 324 10540 10564
+)
+"ocparser.ml" 325 10568 10617 "ocparser.ml" 325 10568 10618
+type(
+  int
+)
+"ocparser.ml" 325 10568 10582 "ocparser.ml" 325 10568 10618
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 326 10635 10639 "ocparser.ml" 326 10635 10647
+type(
+  Cpure.formula -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 108 10670 10683 "ocparser.mly" 108 10670 10693
+type(
+  Cpure.formula -> Cpure.formula
+)
+ident(
+  int_ref trans_null "ocparser.mly" 13 658 668 "ocparser.mly" 13 658 678
+)
+"ocparser.mly" 108 10670 10695 "ocparser.mly" 108 10670 10698
+type(
+  Cpure.formula * Cpure.exp list option -> Cpure.formula
+)
+ident(
+  ext_ref Pervasives.fst
+)
+"ocparser.mly" 108 10670 10699 "ocparser.mly" 108 10670 10701
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 325 10568 10576 "ocparser.ml" 325 10568 10578
+)
+"ocparser.mly" 108 10670 10694 "ocparser.mly" 108 10670 10702
+type(
+  Cpure.formula
+)
+"ocparser.mly" 108 10670 10681 "ocparser.mly" 108 10670 10704
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 326 10635 10639 "ocparser.ml" 330 10725 10751
+type(
+  Obj.t
+)
+"ocparser.ml" 325 10568 10572 "ocparser.ml" 330 10725 10751
+type(
+  Obj.t
+)
+"ocparser.ml" 324 10540 10542 "ocparser.ml" 330 10725 10752
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 331 10753 10760 "ocparser.ml" 331 10753 10777
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 332 10781 10785 "ocparser.ml" 343 11136 11162
+)
+"ocparser.ml" 332 10781 10789 "ocparser.ml" 332 10781 10791
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 332 10781 10795 "ocparser.ml" 332 10781 10811
+type(
+  Parsing.parser_env -> int -> Cpure.spec_var list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 332 10781 10812 "ocparser.ml" 332 10781 10829
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 331 10753 10760 "ocparser.ml" 331 10753 10777
+)
+"ocparser.ml" 332 10781 10830 "ocparser.ml" 332 10781 10831
+type(
+  int
+)
+"ocparser.ml" 332 10781 10795 "ocparser.ml" 332 10781 10831
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 333 10848 10856 "ocparser.ml" 333 10848 10858
+type(
+  Cpure.formula
+)
+"ocparser.ml" 333 10848 10862 "ocparser.ml" 333 10848 10878
+type(
+  Parsing.parser_env -> int -> Cpure.formula
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 333 10848 10879 "ocparser.ml" 333 10848 10896
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 331 10753 10760 "ocparser.ml" 331 10753 10777
+)
+"ocparser.ml" 333 10848 10897 "ocparser.ml" 333 10848 10898
+type(
+  int
+)
+"ocparser.ml" 333 10848 10862 "ocparser.ml" 333 10848 10898
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 334 10914 10918 "ocparser.ml" 334 10914 10926
+type(
+  Cpure.formula -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 110 10998 11003 "ocparser.mly" 110 10998 11008
+type(
+  Cpure.spec_var list
+)
+"ocparser.mly" 110 10998 11011 "ocparser.mly" 110 10998 11013
+type(
+  Cpure.spec_var list
+)
+ident(
+  int_ref _3 "ocparser.ml" 332 10781 10789 "ocparser.ml" 332 10781 10791
+)
+"ocparser.mly" 111 11017 11022 "ocparser.mly" 111 11017 11024
+type(
+  Cpure.formula -> Cpure.spec_var -> Cpure.formula
+)
+"ocparser.mly" 111 11017 11025 "ocparser.mly" 111 11017 11026
+type(
+  Cpure.formula
+)
+ident(
+  def f "ocparser.mly" 111 11017 11027 "ocparser.mly" 111 11017 11062
+)
+"ocparser.mly" 111 11017 11027 "ocparser.mly" 111 11017 11028
+type(
+  Cpure.spec_var
+)
+ident(
+  def v "ocparser.mly" 111 11017 11031 "ocparser.mly" 111 11017 11062
+)
+"ocparser.mly" 111 11017 11031 "ocparser.mly" 111 11017 11039
+type(
+  Cpure.spec_var list ->
+  Cpure.formula ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkExists
+)
+"ocparser.mly" 111 11017 11041 "ocparser.mly" 111 11017 11042
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref v "ocparser.mly" 111 11017 11027 "ocparser.mly" 111 11017 11028
+)
+"ocparser.mly" 111 11017 11040 "ocparser.mly" 111 11017 11043
+type(
+  Cpure.spec_var list
+)
+"ocparser.mly" 111 11017 11044 "ocparser.mly" 111 11017 11045
+type(
+  Cpure.formula
+)
+ident(
+  int_ref f "ocparser.mly" 111 11017 11025 "ocparser.mly" 111 11017 11026
+)
+"ocparser.mly" 111 11017 11046 "ocparser.mly" 111 11017 11050
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 111 11017 11052 "ocparser.mly" 111 11017 11059
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 111 11017 11060 "ocparser.mly" 111 11017 11061
+type(
+  int
+)
+"ocparser.mly" 111 11017 11051 "ocparser.mly" 111 11017 11062
+type(
+  Globals.loc
+)
+"ocparser.mly" 111 11017 11031 "ocparser.mly" 111 11017 11062
+type(
+  Cpure.formula
+)
+"ocparser.mly" 112 11066 11071 "ocparser.mly" 112 11066 11074
+type(
+  Cpure.formula
+)
+"ocparser.mly" 112 11066 11077 "ocparser.mly" 112 11066 11091
+type(
+  (Cpure.formula -> Cpure.spec_var -> Cpure.formula) ->
+  Cpure.formula -> Cpure.spec_var list -> Cpure.formula
+)
+ident(
+  ext_ref List.fold_left
+)
+"ocparser.mly" 112 11066 11092 "ocparser.mly" 112 11066 11094
+type(
+  Cpure.formula -> Cpure.spec_var -> Cpure.formula
+)
+ident(
+  int_ref qf "ocparser.mly" 111 11017 11022 "ocparser.mly" 111 11017 11024
+)
+"ocparser.mly" 112 11066 11095 "ocparser.mly" 112 11066 11097
+type(
+  Cpure.formula
+)
+ident(
+  int_ref _5 "ocparser.ml" 333 10848 10856 "ocparser.ml" 333 10848 10858
+)
+"ocparser.mly" 112 11066 11098 "ocparser.mly" 112 11066 11103
+type(
+  Cpure.spec_var list
+)
+ident(
+  int_ref svars "ocparser.mly" 110 10998 11003 "ocparser.mly" 110 10998 11008
+)
+"ocparser.mly" 112 11066 11077 "ocparser.mly" 112 11066 11103
+type(
+  Cpure.formula
+)
+"ocparser.mly" 113 11107 11110 "ocparser.mly" 113 11107 11113
+type(
+  Cpure.formula
+)
+ident(
+  int_ref res "ocparser.mly" 112 11066 11071 "ocparser.mly" 112 11066 11074
+)
+"ocparser.mly" 112 11066 11067 "ocparser.mly" 113 11107 11113
+type(
+  Cpure.formula
+)
+"ocparser.mly" 111 11017 11018 "ocparser.mly" 113 11107 11113
+type(
+  Cpure.formula
+)
+"ocparser.mly" 109 10949 10995 "ocparser.mly" 114 11114 11115
+type(
+  Cpure.formula
+)
+type(
+  Cpure.formula
+)
+"ocparser.ml" 334 10914 10918 "ocparser.ml" 343 11136 11162
+type(
+  Obj.t
+)
+"ocparser.ml" 333 10848 10852 "ocparser.ml" 343 11136 11162
+type(
+  Obj.t
+)
+"ocparser.ml" 332 10781 10785 "ocparser.ml" 343 11136 11162
+type(
+  Obj.t
+)
+"ocparser.ml" 331 10753 10755 "ocparser.ml" 343 11136 11163
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 344 11164 11171 "ocparser.ml" 344 11164 11188
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 345 11192 11196 "ocparser.ml" 352 11356 11383
+)
+"ocparser.ml" 345 11192 11200 "ocparser.ml" 345 11192 11202
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 345 11192 11206 "ocparser.ml" 345 11192 11222
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 345 11192 11223 "ocparser.ml" 345 11192 11240
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 344 11164 11171 "ocparser.ml" 344 11164 11188
+)
+"ocparser.ml" 345 11192 11241 "ocparser.ml" 345 11192 11242
+type(
+  int
+)
+"ocparser.ml" 345 11192 11206 "ocparser.ml" 345 11192 11242
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 346 11258 11262 "ocparser.ml" 346 11258 11270
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 118 11314 11316 "ocparser.mly" 118 11314 11319
+type(
+  Cpure.formula * Cpure.exp list option -> Cpure.formula
+)
+ident(
+  ext_ref Pervasives.fst
+)
+"ocparser.mly" 118 11314 11320 "ocparser.mly" 118 11314 11322
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 345 11192 11200 "ocparser.ml" 345 11192 11202
+)
+"ocparser.mly" 118 11314 11316 "ocparser.mly" 118 11314 11322
+type(
+  Cpure.formula
+)
+"ocparser.mly" 118 11314 11324 "ocparser.mly" 118 11314 11327
+type(
+  Cpure.formula * Cpure.exp list option -> Cpure.exp list option
+)
+ident(
+  ext_ref Pervasives.snd
+)
+"ocparser.mly" 118 11314 11328 "ocparser.mly" 118 11314 11330
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 345 11192 11200 "ocparser.ml" 345 11192 11202
+)
+"ocparser.mly" 118 11314 11324 "ocparser.mly" 118 11314 11330
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 117 11293 11311 "ocparser.mly" 119 11332 11335
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 346 11258 11262 "ocparser.ml" 352 11356 11383
+type(
+  Obj.t
+)
+"ocparser.ml" 345 11192 11196 "ocparser.ml" 352 11356 11383
+type(
+  Obj.t
+)
+"ocparser.ml" 344 11164 11166 "ocparser.ml" 352 11356 11384
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 353 11385 11392 "ocparser.ml" 353 11385 11409
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 354 11413 11417 "ocparser.ml" 368 11895 11922
+)
+"ocparser.ml" 354 11413 11421 "ocparser.ml" 354 11413 11423
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 354 11413 11427 "ocparser.ml" 354 11413 11443
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 354 11413 11444 "ocparser.ml" 354 11413 11461
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 353 11385 11392 "ocparser.ml" 353 11385 11409
+)
+"ocparser.ml" 354 11413 11462 "ocparser.ml" 354 11413 11463
+type(
+  int
+)
+"ocparser.ml" 354 11413 11427 "ocparser.ml" 354 11413 11463
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 355 11480 11488 "ocparser.ml" 355 11480 11490
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 355 11480 11494 "ocparser.ml" 355 11480 11510
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 355 11480 11511 "ocparser.ml" 355 11480 11528
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 353 11385 11392 "ocparser.ml" 353 11385 11409
+)
+"ocparser.ml" 355 11480 11529 "ocparser.ml" 355 11480 11530
+type(
+  int
+)
+"ocparser.ml" 355 11480 11494 "ocparser.ml" 355 11480 11530
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 356 11548 11552 "ocparser.ml" 356 11548 11560
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 121 11609 11614 "ocparser.mly" 121 11609 11615
+type(
+  Cpure.formula
+)
+"ocparser.mly" 121 11609 11617 "ocparser.mly" 121 11609 11620
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 121 11609 11614 "ocparser.mly" 121 11609 11620
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 121 11609 11623 "ocparser.mly" 121 11609 11625
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 354 11413 11421 "ocparser.ml" 354 11413 11423
+)
+"ocparser.mly" 122 11629 11638 "ocparser.mly" 122 11629 11641
+type(
+  Cpure.exp list option
+)
+ident(
+  int_ref oae "ocparser.mly" 121 11609 11617 "ocparser.mly" 121 11609 11620
+)
+"ocparser.mly" 123 11647 11656 "ocparser.mly" 123 11647 11658
+type(
+  Cpure.exp list
+)
+ident(
+  def ae "ocparser.mly" 124 11662 11665 "ocparser.mly" 125 11721 11760
+)
+"ocparser.mly" 123 11647 11651 "ocparser.mly" 123 11647 11658
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 124 11662 11669 "ocparser.mly" 124 11662 11672
+type(
+  Cpure.formula
+)
+"ocparser.mly" 124 11662 11675 "ocparser.mly" 124 11662 11689
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 124 11662 11690 "ocparser.mly" 124 11662 11694
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkLt
+)
+"ocparser.mly" 124 11662 11695 "ocparser.mly" 124 11662 11697
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref ae "ocparser.mly" 123 11647 11656 "ocparser.mly" 123 11647 11658
+)
+"ocparser.mly" 124 11662 11698 "ocparser.mly" 124 11662 11700
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 355 11480 11488 "ocparser.ml" 355 11480 11490
+)
+"ocparser.mly" 124 11662 11701 "ocparser.mly" 124 11662 11705
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 124 11662 11707 "ocparser.mly" 124 11662 11714
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 124 11662 11715 "ocparser.mly" 124 11662 11716
+type(
+  int
+)
+"ocparser.mly" 124 11662 11706 "ocparser.mly" 124 11662 11717
+type(
+  Globals.loc
+)
+"ocparser.mly" 124 11662 11675 "ocparser.mly" 124 11662 11717
+type(
+  Cpure.formula
+)
+"ocparser.mly" 125 11721 11727 "ocparser.mly" 125 11721 11732
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 125 11721 11733 "ocparser.mly" 125 11721 11734
+type(
+  Cpure.formula
+)
+ident(
+  int_ref b "ocparser.mly" 121 11609 11614 "ocparser.mly" 121 11609 11615
+)
+"ocparser.mly" 125 11721 11735 "ocparser.mly" 125 11721 11738
+type(
+  Cpure.formula
+)
+ident(
+  int_ref tmp "ocparser.mly" 124 11662 11669 "ocparser.mly" 124 11662 11672
+)
+"ocparser.mly" 125 11721 11740 "ocparser.mly" 125 11721 11747
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 125 11721 11748 "ocparser.mly" 125 11721 11749
+type(
+  int
+)
+"ocparser.mly" 125 11721 11739 "ocparser.mly" 125 11721 11750
+type(
+  Globals.loc
+)
+"ocparser.mly" 125 11721 11727 "ocparser.mly" 125 11721 11750
+type(
+  Cpure.formula
+)
+"ocparser.mly" 125 11721 11757 "ocparser.mly" 125 11721 11759
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 355 11480 11488 "ocparser.ml" 355 11480 11490
+)
+"ocparser.mly" 125 11721 11752 "ocparser.mly" 125 11721 11759
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 125 11721 11726 "ocparser.mly" 125 11721 11760
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 124 11662 11665 "ocparser.mly" 125 11721 11760
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 126 11761 11765 "ocparser.mly" 126 11761 11769
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 126 11761 11773 "ocparser.mly" 126 11761 11789
+type(
+  Err.error -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Err.report_error
+)
+"ocparser.mly" 126 11761 11807 "ocparser.mly" 126 11761 11814
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 126 11761 11815 "ocparser.mly" 126 11761 11816
+type(
+  int
+)
+"ocparser.mly" 126 11761 11807 "ocparser.mly" 126 11761 11816
+type(
+  Globals.loc
+)
+"ocparser.mly" 127 11818 11844 "ocparser.mly" 127 11818 11869
+type(
+  string
+)
+"ocparser.mly" 126 11761 11790 "ocparser.mly" 127 11818 11870
+type(
+  Err.error
+)
+"ocparser.mly" 126 11761 11773 "ocparser.mly" 127 11818 11870
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 122 11629 11632 "ocparser.mly" 127 11818 11870
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 120 11583 11607 "ocparser.mly" 128 11871 11874
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 356 11548 11552 "ocparser.ml" 368 11895 11922
+type(
+  Obj.t
+)
+"ocparser.ml" 355 11480 11484 "ocparser.ml" 368 11895 11922
+type(
+  Obj.t
+)
+"ocparser.ml" 354 11413 11417 "ocparser.ml" 368 11895 11922
+type(
+  Obj.t
+)
+"ocparser.ml" 353 11385 11387 "ocparser.ml" 368 11895 11923
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 369 11924 11931 "ocparser.ml" 369 11924 11948
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 370 11952 11956 "ocparser.ml" 384 12438 12465
+)
+"ocparser.ml" 370 11952 11960 "ocparser.ml" 370 11952 11962
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 370 11952 11966 "ocparser.ml" 370 11952 11982
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 370 11952 11983 "ocparser.ml" 370 11952 12000
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 369 11924 11931 "ocparser.ml" 369 11924 11948
+)
+"ocparser.ml" 370 11952 12001 "ocparser.ml" 370 11952 12002
+type(
+  int
+)
+"ocparser.ml" 370 11952 11966 "ocparser.ml" 370 11952 12002
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 371 12019 12027 "ocparser.ml" 371 12019 12029
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 371 12019 12033 "ocparser.ml" 371 12019 12049
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 371 12019 12050 "ocparser.ml" 371 12019 12067
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 369 11924 11931 "ocparser.ml" 369 11924 11948
+)
+"ocparser.ml" 371 12019 12068 "ocparser.ml" 371 12019 12069
+type(
+  int
+)
+"ocparser.ml" 371 12019 12033 "ocparser.ml" 371 12019 12069
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 372 12087 12091 "ocparser.ml" 372 12087 12099
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 130 12149 12154 "ocparser.mly" 130 12149 12155
+type(
+  Cpure.formula
+)
+"ocparser.mly" 130 12149 12157 "ocparser.mly" 130 12149 12160
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 130 12149 12154 "ocparser.mly" 130 12149 12160
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 130 12149 12163 "ocparser.mly" 130 12149 12165
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 370 11952 11960 "ocparser.ml" 370 11952 11962
+)
+"ocparser.mly" 131 12169 12178 "ocparser.mly" 131 12169 12181
+type(
+  Cpure.exp list option
+)
+ident(
+  int_ref oae "ocparser.mly" 130 12149 12157 "ocparser.mly" 130 12149 12160
+)
+"ocparser.mly" 132 12187 12196 "ocparser.mly" 132 12187 12198
+type(
+  Cpure.exp list
+)
+ident(
+  def ae "ocparser.mly" 133 12202 12205 "ocparser.mly" 134 12262 12302
+)
+"ocparser.mly" 132 12187 12191 "ocparser.mly" 132 12187 12198
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 133 12202 12209 "ocparser.mly" 133 12202 12212
+type(
+  Cpure.formula
+)
+"ocparser.mly" 133 12202 12215 "ocparser.mly" 133 12202 12229
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 133 12202 12230 "ocparser.mly" 133 12202 12235
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkLte
+)
+"ocparser.mly" 133 12202 12236 "ocparser.mly" 133 12202 12238
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref ae "ocparser.mly" 132 12187 12196 "ocparser.mly" 132 12187 12198
+)
+"ocparser.mly" 133 12202 12239 "ocparser.mly" 133 12202 12241
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 371 12019 12027 "ocparser.ml" 371 12019 12029
+)
+"ocparser.mly" 133 12202 12242 "ocparser.mly" 133 12202 12246
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 133 12202 12248 "ocparser.mly" 133 12202 12255
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 133 12202 12256 "ocparser.mly" 133 12202 12257
+type(
+  int
+)
+"ocparser.mly" 133 12202 12247 "ocparser.mly" 133 12202 12258
+type(
+  Globals.loc
+)
+"ocparser.mly" 133 12202 12215 "ocparser.mly" 133 12202 12258
+type(
+  Cpure.formula
+)
+"ocparser.mly" 134 12262 12268 "ocparser.mly" 134 12262 12273
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 134 12262 12274 "ocparser.mly" 134 12262 12275
+type(
+  Cpure.formula
+)
+ident(
+  int_ref b "ocparser.mly" 130 12149 12154 "ocparser.mly" 130 12149 12155
+)
+"ocparser.mly" 134 12262 12276 "ocparser.mly" 134 12262 12279
+type(
+  Cpure.formula
+)
+ident(
+  int_ref tmp "ocparser.mly" 133 12202 12209 "ocparser.mly" 133 12202 12212
+)
+"ocparser.mly" 134 12262 12281 "ocparser.mly" 134 12262 12288
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 134 12262 12289 "ocparser.mly" 134 12262 12290
+type(
+  int
+)
+"ocparser.mly" 134 12262 12280 "ocparser.mly" 134 12262 12291
+type(
+  Globals.loc
+)
+"ocparser.mly" 134 12262 12268 "ocparser.mly" 134 12262 12291
+type(
+  Cpure.formula
+)
+"ocparser.mly" 134 12262 12299 "ocparser.mly" 134 12262 12301
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 371 12019 12027 "ocparser.ml" 371 12019 12029
+)
+"ocparser.mly" 134 12262 12294 "ocparser.mly" 134 12262 12301
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 134 12262 12267 "ocparser.mly" 134 12262 12302
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 133 12202 12205 "ocparser.mly" 134 12262 12302
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 135 12303 12307 "ocparser.mly" 135 12303 12311
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 135 12303 12315 "ocparser.mly" 135 12303 12331
+type(
+  Err.error -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Err.report_error
+)
+"ocparser.mly" 135 12303 12349 "ocparser.mly" 135 12303 12356
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 135 12303 12357 "ocparser.mly" 135 12303 12358
+type(
+  int
+)
+"ocparser.mly" 135 12303 12349 "ocparser.mly" 135 12303 12358
+type(
+  Globals.loc
+)
+"ocparser.mly" 136 12360 12386 "ocparser.mly" 136 12360 12412
+type(
+  string
+)
+"ocparser.mly" 135 12303 12332 "ocparser.mly" 136 12360 12413
+type(
+  Err.error
+)
+"ocparser.mly" 135 12303 12315 "ocparser.mly" 136 12360 12413
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 131 12169 12172 "ocparser.mly" 136 12360 12413
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 129 12122 12147 "ocparser.mly" 137 12414 12417
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 372 12087 12091 "ocparser.ml" 384 12438 12465
+type(
+  Obj.t
+)
+"ocparser.ml" 371 12019 12023 "ocparser.ml" 384 12438 12465
+type(
+  Obj.t
+)
+"ocparser.ml" 370 11952 11956 "ocparser.ml" 384 12438 12465
+type(
+  Obj.t
+)
+"ocparser.ml" 369 11924 11926 "ocparser.ml" 384 12438 12466
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 385 12467 12474 "ocparser.ml" 385 12467 12491
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 386 12495 12499 "ocparser.ml" 400 12975 13002
+)
+"ocparser.ml" 386 12495 12503 "ocparser.ml" 386 12495 12505
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 386 12495 12509 "ocparser.ml" 386 12495 12525
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 386 12495 12526 "ocparser.ml" 386 12495 12543
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 385 12467 12474 "ocparser.ml" 385 12467 12491
+)
+"ocparser.ml" 386 12495 12544 "ocparser.ml" 386 12495 12545
+type(
+  int
+)
+"ocparser.ml" 386 12495 12509 "ocparser.ml" 386 12495 12545
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 387 12562 12570 "ocparser.ml" 387 12562 12572
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 387 12562 12576 "ocparser.ml" 387 12562 12592
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 387 12562 12593 "ocparser.ml" 387 12562 12610
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 385 12467 12474 "ocparser.ml" 385 12467 12491
+)
+"ocparser.ml" 387 12562 12611 "ocparser.ml" 387 12562 12612
+type(
+  int
+)
+"ocparser.ml" 387 12562 12576 "ocparser.ml" 387 12562 12612
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 388 12630 12634 "ocparser.ml" 388 12630 12642
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 139 12691 12696 "ocparser.mly" 139 12691 12697
+type(
+  Cpure.formula
+)
+"ocparser.mly" 139 12691 12699 "ocparser.mly" 139 12691 12702
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 139 12691 12696 "ocparser.mly" 139 12691 12702
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 139 12691 12705 "ocparser.mly" 139 12691 12707
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 386 12495 12503 "ocparser.ml" 386 12495 12505
+)
+"ocparser.mly" 140 12711 12720 "ocparser.mly" 140 12711 12723
+type(
+  Cpure.exp list option
+)
+ident(
+  int_ref oae "ocparser.mly" 139 12691 12699 "ocparser.mly" 139 12691 12702
+)
+"ocparser.mly" 141 12729 12738 "ocparser.mly" 141 12729 12740
+type(
+  Cpure.exp list
+)
+ident(
+  def ae "ocparser.mly" 142 12744 12747 "ocparser.mly" 143 12803 12842
+)
+"ocparser.mly" 141 12729 12733 "ocparser.mly" 141 12729 12740
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 142 12744 12751 "ocparser.mly" 142 12744 12754
+type(
+  Cpure.formula
+)
+"ocparser.mly" 142 12744 12757 "ocparser.mly" 142 12744 12771
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 142 12744 12772 "ocparser.mly" 142 12744 12776
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkGt
+)
+"ocparser.mly" 142 12744 12777 "ocparser.mly" 142 12744 12779
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref ae "ocparser.mly" 141 12729 12738 "ocparser.mly" 141 12729 12740
+)
+"ocparser.mly" 142 12744 12780 "ocparser.mly" 142 12744 12782
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 387 12562 12570 "ocparser.ml" 387 12562 12572
+)
+"ocparser.mly" 142 12744 12783 "ocparser.mly" 142 12744 12787
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 142 12744 12789 "ocparser.mly" 142 12744 12796
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 142 12744 12797 "ocparser.mly" 142 12744 12798
+type(
+  int
+)
+"ocparser.mly" 142 12744 12788 "ocparser.mly" 142 12744 12799
+type(
+  Globals.loc
+)
+"ocparser.mly" 142 12744 12757 "ocparser.mly" 142 12744 12799
+type(
+  Cpure.formula
+)
+"ocparser.mly" 143 12803 12809 "ocparser.mly" 143 12803 12814
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 143 12803 12815 "ocparser.mly" 143 12803 12816
+type(
+  Cpure.formula
+)
+ident(
+  int_ref b "ocparser.mly" 139 12691 12696 "ocparser.mly" 139 12691 12697
+)
+"ocparser.mly" 143 12803 12817 "ocparser.mly" 143 12803 12820
+type(
+  Cpure.formula
+)
+ident(
+  int_ref tmp "ocparser.mly" 142 12744 12751 "ocparser.mly" 142 12744 12754
+)
+"ocparser.mly" 143 12803 12822 "ocparser.mly" 143 12803 12829
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 143 12803 12830 "ocparser.mly" 143 12803 12831
+type(
+  int
+)
+"ocparser.mly" 143 12803 12821 "ocparser.mly" 143 12803 12832
+type(
+  Globals.loc
+)
+"ocparser.mly" 143 12803 12809 "ocparser.mly" 143 12803 12832
+type(
+  Cpure.formula
+)
+"ocparser.mly" 143 12803 12839 "ocparser.mly" 143 12803 12841
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 387 12562 12570 "ocparser.ml" 387 12562 12572
+)
+"ocparser.mly" 143 12803 12834 "ocparser.mly" 143 12803 12841
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 143 12803 12808 "ocparser.mly" 143 12803 12842
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 142 12744 12747 "ocparser.mly" 143 12803 12842
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 144 12843 12847 "ocparser.mly" 144 12843 12851
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 144 12843 12855 "ocparser.mly" 144 12843 12871
+type(
+  Err.error -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Err.report_error
+)
+"ocparser.mly" 144 12843 12889 "ocparser.mly" 144 12843 12896
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 144 12843 12897 "ocparser.mly" 144 12843 12898
+type(
+  int
+)
+"ocparser.mly" 144 12843 12889 "ocparser.mly" 144 12843 12898
+type(
+  Globals.loc
+)
+"ocparser.mly" 145 12900 12926 "ocparser.mly" 145 12900 12951
+type(
+  string
+)
+"ocparser.mly" 144 12843 12872 "ocparser.mly" 145 12900 12952
+type(
+  Err.error
+)
+"ocparser.mly" 144 12843 12855 "ocparser.mly" 145 12900 12952
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 140 12711 12714 "ocparser.mly" 145 12900 12952
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 138 12665 12689 "ocparser.mly" 146 12953 12954
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 388 12630 12634 "ocparser.ml" 400 12975 13002
+type(
+  Obj.t
+)
+"ocparser.ml" 387 12562 12566 "ocparser.ml" 400 12975 13002
+type(
+  Obj.t
+)
+"ocparser.ml" 386 12495 12499 "ocparser.ml" 400 12975 13002
+type(
+  Obj.t
+)
+"ocparser.ml" 385 12467 12469 "ocparser.ml" 400 12975 13003
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 401 13004 13011 "ocparser.ml" 401 13004 13028
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 402 13032 13036 "ocparser.ml" 416 13515 13542
+)
+"ocparser.ml" 402 13032 13040 "ocparser.ml" 402 13032 13042
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 402 13032 13046 "ocparser.ml" 402 13032 13062
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 402 13032 13063 "ocparser.ml" 402 13032 13080
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 401 13004 13011 "ocparser.ml" 401 13004 13028
+)
+"ocparser.ml" 402 13032 13081 "ocparser.ml" 402 13032 13082
+type(
+  int
+)
+"ocparser.ml" 402 13032 13046 "ocparser.ml" 402 13032 13082
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 403 13099 13107 "ocparser.ml" 403 13099 13109
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 403 13099 13113 "ocparser.ml" 403 13099 13129
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 403 13099 13130 "ocparser.ml" 403 13099 13147
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 401 13004 13011 "ocparser.ml" 401 13004 13028
+)
+"ocparser.ml" 403 13099 13148 "ocparser.ml" 403 13099 13149
+type(
+  int
+)
+"ocparser.ml" 403 13099 13113 "ocparser.ml" 403 13099 13149
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 404 13167 13171 "ocparser.ml" 404 13167 13179
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 148 13229 13234 "ocparser.mly" 148 13229 13235
+type(
+  Cpure.formula
+)
+"ocparser.mly" 148 13229 13237 "ocparser.mly" 148 13229 13240
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 148 13229 13234 "ocparser.mly" 148 13229 13240
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 148 13229 13243 "ocparser.mly" 148 13229 13245
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 402 13032 13040 "ocparser.ml" 402 13032 13042
+)
+"ocparser.mly" 149 13249 13258 "ocparser.mly" 149 13249 13261
+type(
+  Cpure.exp list option
+)
+ident(
+  int_ref oae "ocparser.mly" 148 13229 13237 "ocparser.mly" 148 13229 13240
+)
+"ocparser.mly" 150 13267 13276 "ocparser.mly" 150 13267 13278
+type(
+  Cpure.exp list
+)
+ident(
+  def ae "ocparser.mly" 151 13282 13285 "ocparser.mly" 152 13342 13381
+)
+"ocparser.mly" 150 13267 13271 "ocparser.mly" 150 13267 13278
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 151 13282 13289 "ocparser.mly" 151 13282 13292
+type(
+  Cpure.formula
+)
+"ocparser.mly" 151 13282 13295 "ocparser.mly" 151 13282 13309
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 151 13282 13310 "ocparser.mly" 151 13282 13315
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkGte
+)
+"ocparser.mly" 151 13282 13316 "ocparser.mly" 151 13282 13318
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref ae "ocparser.mly" 150 13267 13276 "ocparser.mly" 150 13267 13278
+)
+"ocparser.mly" 151 13282 13319 "ocparser.mly" 151 13282 13321
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 403 13099 13107 "ocparser.ml" 403 13099 13109
+)
+"ocparser.mly" 151 13282 13322 "ocparser.mly" 151 13282 13326
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 151 13282 13328 "ocparser.mly" 151 13282 13335
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 151 13282 13336 "ocparser.mly" 151 13282 13337
+type(
+  int
+)
+"ocparser.mly" 151 13282 13327 "ocparser.mly" 151 13282 13338
+type(
+  Globals.loc
+)
+"ocparser.mly" 151 13282 13295 "ocparser.mly" 151 13282 13338
+type(
+  Cpure.formula
+)
+"ocparser.mly" 152 13342 13348 "ocparser.mly" 152 13342 13353
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 152 13342 13354 "ocparser.mly" 152 13342 13355
+type(
+  Cpure.formula
+)
+ident(
+  int_ref b "ocparser.mly" 148 13229 13234 "ocparser.mly" 148 13229 13235
+)
+"ocparser.mly" 152 13342 13356 "ocparser.mly" 152 13342 13359
+type(
+  Cpure.formula
+)
+ident(
+  int_ref tmp "ocparser.mly" 151 13282 13289 "ocparser.mly" 151 13282 13292
+)
+"ocparser.mly" 152 13342 13361 "ocparser.mly" 152 13342 13368
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 152 13342 13369 "ocparser.mly" 152 13342 13370
+type(
+  int
+)
+"ocparser.mly" 152 13342 13360 "ocparser.mly" 152 13342 13371
+type(
+  Globals.loc
+)
+"ocparser.mly" 152 13342 13348 "ocparser.mly" 152 13342 13371
+type(
+  Cpure.formula
+)
+"ocparser.mly" 152 13342 13378 "ocparser.mly" 152 13342 13380
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 403 13099 13107 "ocparser.ml" 403 13099 13109
+)
+"ocparser.mly" 152 13342 13373 "ocparser.mly" 152 13342 13380
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 152 13342 13347 "ocparser.mly" 152 13342 13381
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 151 13282 13285 "ocparser.mly" 152 13342 13381
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 153 13382 13386 "ocparser.mly" 153 13382 13390
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 153 13382 13394 "ocparser.mly" 153 13382 13410
+type(
+  Err.error -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Err.report_error
+)
+"ocparser.mly" 153 13382 13428 "ocparser.mly" 153 13382 13435
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 153 13382 13436 "ocparser.mly" 153 13382 13437
+type(
+  int
+)
+"ocparser.mly" 153 13382 13428 "ocparser.mly" 153 13382 13437
+type(
+  Globals.loc
+)
+"ocparser.mly" 154 13439 13465 "ocparser.mly" 154 13439 13491
+type(
+  string
+)
+"ocparser.mly" 153 13382 13411 "ocparser.mly" 154 13439 13492
+type(
+  Err.error
+)
+"ocparser.mly" 153 13382 13394 "ocparser.mly" 154 13439 13492
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 149 13249 13252 "ocparser.mly" 154 13439 13492
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 147 13202 13227 "ocparser.mly" 155 13493 13494
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 404 13167 13171 "ocparser.ml" 416 13515 13542
+type(
+  Obj.t
+)
+"ocparser.ml" 403 13099 13103 "ocparser.ml" 416 13515 13542
+type(
+  Obj.t
+)
+"ocparser.ml" 402 13032 13036 "ocparser.ml" 416 13515 13542
+type(
+  Obj.t
+)
+"ocparser.ml" 401 13004 13006 "ocparser.ml" 416 13515 13543
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 417 13544 13551 "ocparser.ml" 417 13544 13568
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 418 13572 13576 "ocparser.ml" 432 14052 14079
+)
+"ocparser.ml" 418 13572 13580 "ocparser.ml" 418 13572 13582
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 418 13572 13586 "ocparser.ml" 418 13572 13602
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 418 13572 13603 "ocparser.ml" 418 13572 13620
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 417 13544 13551 "ocparser.ml" 417 13544 13568
+)
+"ocparser.ml" 418 13572 13621 "ocparser.ml" 418 13572 13622
+type(
+  int
+)
+"ocparser.ml" 418 13572 13586 "ocparser.ml" 418 13572 13622
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 419 13639 13647 "ocparser.ml" 419 13639 13649
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 419 13639 13653 "ocparser.ml" 419 13639 13669
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 419 13639 13670 "ocparser.ml" 419 13639 13687
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 417 13544 13551 "ocparser.ml" 417 13544 13568
+)
+"ocparser.ml" 419 13639 13688 "ocparser.ml" 419 13639 13689
+type(
+  int
+)
+"ocparser.ml" 419 13639 13653 "ocparser.ml" 419 13639 13689
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 420 13707 13711 "ocparser.ml" 420 13707 13719
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 157 13768 13773 "ocparser.mly" 157 13768 13774
+type(
+  Cpure.formula
+)
+"ocparser.mly" 157 13768 13776 "ocparser.mly" 157 13768 13779
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 157 13768 13773 "ocparser.mly" 157 13768 13779
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 157 13768 13782 "ocparser.mly" 157 13768 13784
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 418 13572 13580 "ocparser.ml" 418 13572 13582
+)
+"ocparser.mly" 158 13788 13797 "ocparser.mly" 158 13788 13800
+type(
+  Cpure.exp list option
+)
+ident(
+  int_ref oae "ocparser.mly" 157 13768 13776 "ocparser.mly" 157 13768 13779
+)
+"ocparser.mly" 159 13806 13815 "ocparser.mly" 159 13806 13817
+type(
+  Cpure.exp list
+)
+ident(
+  def ae "ocparser.mly" 160 13821 13824 "ocparser.mly" 161 13880 13919
+)
+"ocparser.mly" 159 13806 13810 "ocparser.mly" 159 13806 13817
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 160 13821 13828 "ocparser.mly" 160 13821 13831
+type(
+  Cpure.formula
+)
+"ocparser.mly" 160 13821 13834 "ocparser.mly" 160 13821 13848
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 160 13821 13849 "ocparser.mly" 160 13821 13853
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkEq
+)
+"ocparser.mly" 160 13821 13854 "ocparser.mly" 160 13821 13856
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref ae "ocparser.mly" 159 13806 13815 "ocparser.mly" 159 13806 13817
+)
+"ocparser.mly" 160 13821 13857 "ocparser.mly" 160 13821 13859
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 419 13639 13647 "ocparser.ml" 419 13639 13649
+)
+"ocparser.mly" 160 13821 13860 "ocparser.mly" 160 13821 13864
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 160 13821 13866 "ocparser.mly" 160 13821 13873
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 160 13821 13874 "ocparser.mly" 160 13821 13875
+type(
+  int
+)
+"ocparser.mly" 160 13821 13865 "ocparser.mly" 160 13821 13876
+type(
+  Globals.loc
+)
+"ocparser.mly" 160 13821 13834 "ocparser.mly" 160 13821 13876
+type(
+  Cpure.formula
+)
+"ocparser.mly" 161 13880 13886 "ocparser.mly" 161 13880 13891
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 161 13880 13892 "ocparser.mly" 161 13880 13893
+type(
+  Cpure.formula
+)
+ident(
+  int_ref b "ocparser.mly" 157 13768 13773 "ocparser.mly" 157 13768 13774
+)
+"ocparser.mly" 161 13880 13894 "ocparser.mly" 161 13880 13897
+type(
+  Cpure.formula
+)
+ident(
+  int_ref tmp "ocparser.mly" 160 13821 13828 "ocparser.mly" 160 13821 13831
+)
+"ocparser.mly" 161 13880 13899 "ocparser.mly" 161 13880 13906
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 161 13880 13907 "ocparser.mly" 161 13880 13908
+type(
+  int
+)
+"ocparser.mly" 161 13880 13898 "ocparser.mly" 161 13880 13909
+type(
+  Globals.loc
+)
+"ocparser.mly" 161 13880 13886 "ocparser.mly" 161 13880 13909
+type(
+  Cpure.formula
+)
+"ocparser.mly" 161 13880 13916 "ocparser.mly" 161 13880 13918
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 419 13639 13647 "ocparser.ml" 419 13639 13649
+)
+"ocparser.mly" 161 13880 13911 "ocparser.mly" 161 13880 13918
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 161 13880 13885 "ocparser.mly" 161 13880 13919
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 160 13821 13824 "ocparser.mly" 161 13880 13919
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 162 13920 13924 "ocparser.mly" 162 13920 13928
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 162 13920 13932 "ocparser.mly" 162 13920 13948
+type(
+  Err.error -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Err.report_error
+)
+"ocparser.mly" 162 13920 13966 "ocparser.mly" 162 13920 13973
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 162 13920 13974 "ocparser.mly" 162 13920 13975
+type(
+  int
+)
+"ocparser.mly" 162 13920 13966 "ocparser.mly" 162 13920 13975
+type(
+  Globals.loc
+)
+"ocparser.mly" 163 13977 14003 "ocparser.mly" 163 13977 14028
+type(
+  string
+)
+"ocparser.mly" 162 13920 13949 "ocparser.mly" 163 13977 14029
+type(
+  Err.error
+)
+"ocparser.mly" 162 13920 13932 "ocparser.mly" 163 13977 14029
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 158 13788 13791 "ocparser.mly" 163 13977 14029
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 156 13742 13766 "ocparser.mly" 164 14030 14031
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 420 13707 13711 "ocparser.ml" 432 14052 14079
+type(
+  Obj.t
+)
+"ocparser.ml" 419 13639 13643 "ocparser.ml" 432 14052 14079
+type(
+  Obj.t
+)
+"ocparser.ml" 418 13572 13576 "ocparser.ml" 432 14052 14079
+type(
+  Obj.t
+)
+"ocparser.ml" 417 13544 13546 "ocparser.ml" 432 14052 14080
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 433 14081 14088 "ocparser.ml" 433 14081 14105
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 434 14109 14113 "ocparser.ml" 448 14592 14619
+)
+"ocparser.ml" 434 14109 14117 "ocparser.ml" 434 14109 14119
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 434 14109 14123 "ocparser.ml" 434 14109 14139
+type(
+  Parsing.parser_env -> int -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 434 14109 14140 "ocparser.ml" 434 14109 14157
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 433 14081 14088 "ocparser.ml" 433 14081 14105
+)
+"ocparser.ml" 434 14109 14158 "ocparser.ml" 434 14109 14159
+type(
+  int
+)
+"ocparser.ml" 434 14109 14123 "ocparser.ml" 434 14109 14159
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 435 14176 14184 "ocparser.ml" 435 14176 14186
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 435 14176 14190 "ocparser.ml" 435 14176 14206
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 435 14176 14207 "ocparser.ml" 435 14176 14224
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 433 14081 14088 "ocparser.ml" 433 14081 14105
+)
+"ocparser.ml" 435 14176 14225 "ocparser.ml" 435 14176 14226
+type(
+  int
+)
+"ocparser.ml" 435 14176 14190 "ocparser.ml" 435 14176 14226
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 436 14244 14248 "ocparser.ml" 436 14244 14256
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 166 14306 14311 "ocparser.mly" 166 14306 14312
+type(
+  Cpure.formula
+)
+"ocparser.mly" 166 14306 14314 "ocparser.mly" 166 14306 14317
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 166 14306 14311 "ocparser.mly" 166 14306 14317
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 166 14306 14320 "ocparser.mly" 166 14306 14322
+type(
+  Cpure.formula * Cpure.exp list option
+)
+ident(
+  int_ref _1 "ocparser.ml" 434 14109 14117 "ocparser.ml" 434 14109 14119
+)
+"ocparser.mly" 167 14326 14335 "ocparser.mly" 167 14326 14338
+type(
+  Cpure.exp list option
+)
+ident(
+  int_ref oae "ocparser.mly" 166 14306 14314 "ocparser.mly" 166 14306 14317
+)
+"ocparser.mly" 168 14344 14353 "ocparser.mly" 168 14344 14355
+type(
+  Cpure.exp list
+)
+ident(
+  def ae "ocparser.mly" 169 14359 14362 "ocparser.mly" 170 14419 14458
+)
+"ocparser.mly" 168 14344 14348 "ocparser.mly" 168 14344 14355
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 169 14359 14366 "ocparser.mly" 169 14359 14369
+type(
+  Cpure.formula
+)
+"ocparser.mly" 169 14359 14372 "ocparser.mly" 169 14359 14386
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 169 14359 14387 "ocparser.mly" 169 14359 14392
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkNeq
+)
+"ocparser.mly" 169 14359 14393 "ocparser.mly" 169 14359 14395
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref ae "ocparser.mly" 168 14344 14353 "ocparser.mly" 168 14344 14355
+)
+"ocparser.mly" 169 14359 14396 "ocparser.mly" 169 14359 14398
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 435 14176 14184 "ocparser.ml" 435 14176 14186
+)
+"ocparser.mly" 169 14359 14399 "ocparser.mly" 169 14359 14403
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 169 14359 14405 "ocparser.mly" 169 14359 14412
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 169 14359 14413 "ocparser.mly" 169 14359 14414
+type(
+  int
+)
+"ocparser.mly" 169 14359 14404 "ocparser.mly" 169 14359 14415
+type(
+  Globals.loc
+)
+"ocparser.mly" 169 14359 14372 "ocparser.mly" 169 14359 14415
+type(
+  Cpure.formula
+)
+"ocparser.mly" 170 14419 14425 "ocparser.mly" 170 14419 14430
+type(
+  Cpure.formula -> Cpure.formula -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.mkAnd
+)
+"ocparser.mly" 170 14419 14431 "ocparser.mly" 170 14419 14432
+type(
+  Cpure.formula
+)
+ident(
+  int_ref b "ocparser.mly" 166 14306 14311 "ocparser.mly" 166 14306 14312
+)
+"ocparser.mly" 170 14419 14433 "ocparser.mly" 170 14419 14436
+type(
+  Cpure.formula
+)
+ident(
+  int_ref tmp "ocparser.mly" 169 14359 14366 "ocparser.mly" 169 14359 14369
+)
+"ocparser.mly" 170 14419 14438 "ocparser.mly" 170 14419 14445
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 170 14419 14446 "ocparser.mly" 170 14419 14447
+type(
+  int
+)
+"ocparser.mly" 170 14419 14437 "ocparser.mly" 170 14419 14448
+type(
+  Globals.loc
+)
+"ocparser.mly" 170 14419 14425 "ocparser.mly" 170 14419 14448
+type(
+  Cpure.formula
+)
+"ocparser.mly" 170 14419 14455 "ocparser.mly" 170 14419 14457
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 435 14176 14184 "ocparser.ml" 435 14176 14186
+)
+"ocparser.mly" 170 14419 14450 "ocparser.mly" 170 14419 14457
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 170 14419 14424 "ocparser.mly" 170 14419 14458
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 169 14359 14362 "ocparser.mly" 170 14419 14458
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 171 14459 14463 "ocparser.mly" 171 14459 14467
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 171 14459 14471 "ocparser.mly" 171 14459 14487
+type(
+  Err.error -> Cpure.formula * Cpure.exp list option
+)
+ident(
+  ext_ref Err.report_error
+)
+"ocparser.mly" 171 14459 14505 "ocparser.mly" 171 14459 14512
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 171 14459 14513 "ocparser.mly" 171 14459 14514
+type(
+  int
+)
+"ocparser.mly" 171 14459 14505 "ocparser.mly" 171 14459 14514
+type(
+  Globals.loc
+)
+"ocparser.mly" 172 14516 14542 "ocparser.mly" 172 14516 14568
+type(
+  string
+)
+"ocparser.mly" 171 14459 14488 "ocparser.mly" 172 14516 14569
+type(
+  Err.error
+)
+"ocparser.mly" 171 14459 14471 "ocparser.mly" 172 14516 14569
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 167 14326 14329 "ocparser.mly" 172 14516 14569
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.mly" 165 14279 14304 "ocparser.mly" 173 14570 14571
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 436 14244 14248 "ocparser.ml" 448 14592 14619
+type(
+  Obj.t
+)
+"ocparser.ml" 435 14176 14180 "ocparser.ml" 448 14592 14619
+type(
+  Obj.t
+)
+"ocparser.ml" 434 14109 14113 "ocparser.ml" 448 14592 14619
+type(
+  Obj.t
+)
+"ocparser.ml" 433 14081 14083 "ocparser.ml" 448 14592 14620
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 449 14621 14628 "ocparser.ml" 449 14621 14645
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 450 14649 14653 "ocparser.ml" 456 14930 14956
+)
+"ocparser.ml" 450 14649 14657 "ocparser.ml" 450 14649 14659
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 450 14649 14663 "ocparser.ml" 450 14649 14679
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 450 14649 14680 "ocparser.ml" 450 14649 14697
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 449 14621 14628 "ocparser.ml" 449 14621 14645
+)
+"ocparser.ml" 450 14649 14698 "ocparser.ml" 450 14649 14699
+type(
+  int
+)
+"ocparser.ml" 450 14649 14663 "ocparser.ml" 450 14649 14699
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 451 14717 14725 "ocparser.ml" 451 14717 14727
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 451 14717 14731 "ocparser.ml" 451 14717 14747
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 451 14717 14748 "ocparser.ml" 451 14717 14765
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 449 14621 14628 "ocparser.ml" 449 14621 14645
+)
+"ocparser.ml" 451 14717 14766 "ocparser.ml" 451 14717 14767
+type(
+  int
+)
+"ocparser.ml" 451 14717 14731 "ocparser.ml" 451 14717 14767
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 452 14785 14789 "ocparser.ml" 452 14785 14797
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 176 14820 14855 "ocparser.mly" 176 14820 14869
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 176 14820 14870 "ocparser.mly" 176 14820 14874
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkLt
+)
+"ocparser.mly" 176 14820 14875 "ocparser.mly" 176 14820 14877
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 450 14649 14657 "ocparser.ml" 450 14649 14659
+)
+"ocparser.mly" 176 14820 14878 "ocparser.mly" 176 14820 14880
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 451 14717 14725 "ocparser.ml" 451 14717 14727
+)
+"ocparser.mly" 176 14820 14881 "ocparser.mly" 176 14820 14885
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 176 14820 14887 "ocparser.mly" 176 14820 14894
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 176 14820 14895 "ocparser.mly" 176 14820 14896
+type(
+  int
+)
+"ocparser.mly" 176 14820 14886 "ocparser.mly" 176 14820 14897
+type(
+  Globals.loc
+)
+"ocparser.mly" 176 14820 14855 "ocparser.mly" 176 14820 14897
+type(
+  Cpure.formula
+)
+"ocparser.mly" 176 14820 14904 "ocparser.mly" 176 14820 14906
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 451 14717 14725 "ocparser.ml" 451 14717 14727
+)
+"ocparser.mly" 176 14820 14899 "ocparser.mly" 176 14820 14906
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 176 14820 14852 "ocparser.mly" 176 14820 14909
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 452 14785 14789 "ocparser.ml" 456 14930 14956
+type(
+  Obj.t
+)
+"ocparser.ml" 451 14717 14721 "ocparser.ml" 456 14930 14956
+type(
+  Obj.t
+)
+"ocparser.ml" 450 14649 14653 "ocparser.ml" 456 14930 14956
+type(
+  Obj.t
+)
+"ocparser.ml" 449 14621 14623 "ocparser.ml" 456 14930 14957
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 457 14958 14965 "ocparser.ml" 457 14958 14982
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 458 14986 14990 "ocparser.ml" 464 15262 15288
+)
+"ocparser.ml" 458 14986 14994 "ocparser.ml" 458 14986 14996
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 458 14986 15000 "ocparser.ml" 458 14986 15016
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 458 14986 15017 "ocparser.ml" 458 14986 15034
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 457 14958 14965 "ocparser.ml" 457 14958 14982
+)
+"ocparser.ml" 458 14986 15035 "ocparser.ml" 458 14986 15036
+type(
+  int
+)
+"ocparser.ml" 458 14986 15000 "ocparser.ml" 458 14986 15036
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 459 15054 15062 "ocparser.ml" 459 15054 15064
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 459 15054 15068 "ocparser.ml" 459 15054 15084
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 459 15054 15085 "ocparser.ml" 459 15054 15102
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 457 14958 14965 "ocparser.ml" 457 14958 14982
+)
+"ocparser.ml" 459 15054 15103 "ocparser.ml" 459 15054 15104
+type(
+  int
+)
+"ocparser.ml" 459 15054 15068 "ocparser.ml" 459 15054 15104
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 460 15122 15126 "ocparser.ml" 460 15122 15134
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 177 15157 15186 "ocparser.mly" 177 15157 15200
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 177 15157 15201 "ocparser.mly" 177 15157 15206
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkLte
+)
+"ocparser.mly" 177 15157 15207 "ocparser.mly" 177 15157 15209
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 458 14986 14994 "ocparser.ml" 458 14986 14996
+)
+"ocparser.mly" 177 15157 15210 "ocparser.mly" 177 15157 15212
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 459 15054 15062 "ocparser.ml" 459 15054 15064
+)
+"ocparser.mly" 177 15157 15213 "ocparser.mly" 177 15157 15217
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 177 15157 15219 "ocparser.mly" 177 15157 15226
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 177 15157 15227 "ocparser.mly" 177 15157 15228
+type(
+  int
+)
+"ocparser.mly" 177 15157 15218 "ocparser.mly" 177 15157 15229
+type(
+  Globals.loc
+)
+"ocparser.mly" 177 15157 15186 "ocparser.mly" 177 15157 15229
+type(
+  Cpure.formula
+)
+"ocparser.mly" 177 15157 15236 "ocparser.mly" 177 15157 15238
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 459 15054 15062 "ocparser.ml" 459 15054 15064
+)
+"ocparser.mly" 177 15157 15231 "ocparser.mly" 177 15157 15238
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 177 15157 15183 "ocparser.mly" 177 15157 15241
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 460 15122 15126 "ocparser.ml" 464 15262 15288
+type(
+  Obj.t
+)
+"ocparser.ml" 459 15054 15058 "ocparser.ml" 464 15262 15288
+type(
+  Obj.t
+)
+"ocparser.ml" 458 14986 14990 "ocparser.ml" 464 15262 15288
+type(
+  Obj.t
+)
+"ocparser.ml" 457 14958 14960 "ocparser.ml" 464 15262 15289
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 465 15290 15297 "ocparser.ml" 465 15290 15314
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 466 15318 15322 "ocparser.ml" 472 15592 15618
+)
+"ocparser.ml" 466 15318 15326 "ocparser.ml" 466 15318 15328
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 466 15318 15332 "ocparser.ml" 466 15318 15348
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 466 15318 15349 "ocparser.ml" 466 15318 15366
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 465 15290 15297 "ocparser.ml" 465 15290 15314
+)
+"ocparser.ml" 466 15318 15367 "ocparser.ml" 466 15318 15368
+type(
+  int
+)
+"ocparser.ml" 466 15318 15332 "ocparser.ml" 466 15318 15368
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 467 15386 15394 "ocparser.ml" 467 15386 15396
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 467 15386 15400 "ocparser.ml" 467 15386 15416
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 467 15386 15417 "ocparser.ml" 467 15386 15434
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 465 15290 15297 "ocparser.ml" 465 15290 15314
+)
+"ocparser.ml" 467 15386 15435 "ocparser.ml" 467 15386 15436
+type(
+  int
+)
+"ocparser.ml" 467 15386 15400 "ocparser.ml" 467 15386 15436
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 468 15454 15458 "ocparser.ml" 468 15454 15466
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 178 15489 15517 "ocparser.mly" 178 15489 15531
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 178 15489 15532 "ocparser.mly" 178 15489 15536
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkGt
+)
+"ocparser.mly" 178 15489 15537 "ocparser.mly" 178 15489 15539
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 466 15318 15326 "ocparser.ml" 466 15318 15328
+)
+"ocparser.mly" 178 15489 15540 "ocparser.mly" 178 15489 15542
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 467 15386 15394 "ocparser.ml" 467 15386 15396
+)
+"ocparser.mly" 178 15489 15543 "ocparser.mly" 178 15489 15547
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 178 15489 15549 "ocparser.mly" 178 15489 15556
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 178 15489 15557 "ocparser.mly" 178 15489 15558
+type(
+  int
+)
+"ocparser.mly" 178 15489 15548 "ocparser.mly" 178 15489 15559
+type(
+  Globals.loc
+)
+"ocparser.mly" 178 15489 15517 "ocparser.mly" 178 15489 15559
+type(
+  Cpure.formula
+)
+"ocparser.mly" 178 15489 15566 "ocparser.mly" 178 15489 15568
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 467 15386 15394 "ocparser.ml" 467 15386 15396
+)
+"ocparser.mly" 178 15489 15561 "ocparser.mly" 178 15489 15568
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 178 15489 15514 "ocparser.mly" 178 15489 15571
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 468 15454 15458 "ocparser.ml" 472 15592 15618
+type(
+  Obj.t
+)
+"ocparser.ml" 467 15386 15390 "ocparser.ml" 472 15592 15618
+type(
+  Obj.t
+)
+"ocparser.ml" 466 15318 15322 "ocparser.ml" 472 15592 15618
+type(
+  Obj.t
+)
+"ocparser.ml" 465 15290 15292 "ocparser.ml" 472 15592 15619
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 473 15620 15627 "ocparser.ml" 473 15620 15644
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 474 15648 15652 "ocparser.ml" 480 15924 15950
+)
+"ocparser.ml" 474 15648 15656 "ocparser.ml" 474 15648 15658
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 474 15648 15662 "ocparser.ml" 474 15648 15678
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 474 15648 15679 "ocparser.ml" 474 15648 15696
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 473 15620 15627 "ocparser.ml" 473 15620 15644
+)
+"ocparser.ml" 474 15648 15697 "ocparser.ml" 474 15648 15698
+type(
+  int
+)
+"ocparser.ml" 474 15648 15662 "ocparser.ml" 474 15648 15698
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 475 15716 15724 "ocparser.ml" 475 15716 15726
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 475 15716 15730 "ocparser.ml" 475 15716 15746
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 475 15716 15747 "ocparser.ml" 475 15716 15764
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 473 15620 15627 "ocparser.ml" 473 15620 15644
+)
+"ocparser.ml" 475 15716 15765 "ocparser.ml" 475 15716 15766
+type(
+  int
+)
+"ocparser.ml" 475 15716 15730 "ocparser.ml" 475 15716 15766
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 476 15784 15788 "ocparser.ml" 476 15784 15796
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 179 15819 15848 "ocparser.mly" 179 15819 15862
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 179 15819 15863 "ocparser.mly" 179 15819 15868
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkGte
+)
+"ocparser.mly" 179 15819 15869 "ocparser.mly" 179 15819 15871
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 474 15648 15656 "ocparser.ml" 474 15648 15658
+)
+"ocparser.mly" 179 15819 15872 "ocparser.mly" 179 15819 15874
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 475 15716 15724 "ocparser.ml" 475 15716 15726
+)
+"ocparser.mly" 179 15819 15875 "ocparser.mly" 179 15819 15879
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 179 15819 15881 "ocparser.mly" 179 15819 15888
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 179 15819 15889 "ocparser.mly" 179 15819 15890
+type(
+  int
+)
+"ocparser.mly" 179 15819 15880 "ocparser.mly" 179 15819 15891
+type(
+  Globals.loc
+)
+"ocparser.mly" 179 15819 15848 "ocparser.mly" 179 15819 15891
+type(
+  Cpure.formula
+)
+"ocparser.mly" 179 15819 15898 "ocparser.mly" 179 15819 15900
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 475 15716 15724 "ocparser.ml" 475 15716 15726
+)
+"ocparser.mly" 179 15819 15893 "ocparser.mly" 179 15819 15900
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 179 15819 15845 "ocparser.mly" 179 15819 15903
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 476 15784 15788 "ocparser.ml" 480 15924 15950
+type(
+  Obj.t
+)
+"ocparser.ml" 475 15716 15720 "ocparser.ml" 480 15924 15950
+type(
+  Obj.t
+)
+"ocparser.ml" 474 15648 15652 "ocparser.ml" 480 15924 15950
+type(
+  Obj.t
+)
+"ocparser.ml" 473 15620 15622 "ocparser.ml" 480 15924 15951
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 481 15952 15959 "ocparser.ml" 481 15952 15976
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 482 15980 15984 "ocparser.ml" 488 16254 16280
+)
+"ocparser.ml" 482 15980 15988 "ocparser.ml" 482 15980 15990
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 482 15980 15994 "ocparser.ml" 482 15980 16010
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 482 15980 16011 "ocparser.ml" 482 15980 16028
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 481 15952 15959 "ocparser.ml" 481 15952 15976
+)
+"ocparser.ml" 482 15980 16029 "ocparser.ml" 482 15980 16030
+type(
+  int
+)
+"ocparser.ml" 482 15980 15994 "ocparser.ml" 482 15980 16030
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 483 16048 16056 "ocparser.ml" 483 16048 16058
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 483 16048 16062 "ocparser.ml" 483 16048 16078
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 483 16048 16079 "ocparser.ml" 483 16048 16096
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 481 15952 15959 "ocparser.ml" 481 15952 15976
+)
+"ocparser.ml" 483 16048 16097 "ocparser.ml" 483 16048 16098
+type(
+  int
+)
+"ocparser.ml" 483 16048 16062 "ocparser.ml" 483 16048 16098
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 484 16116 16120 "ocparser.ml" 484 16116 16128
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 180 16151 16179 "ocparser.mly" 180 16151 16193
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 180 16151 16194 "ocparser.mly" 180 16151 16198
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkEq
+)
+"ocparser.mly" 180 16151 16199 "ocparser.mly" 180 16151 16201
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 482 15980 15988 "ocparser.ml" 482 15980 15990
+)
+"ocparser.mly" 180 16151 16202 "ocparser.mly" 180 16151 16204
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 483 16048 16056 "ocparser.ml" 483 16048 16058
+)
+"ocparser.mly" 180 16151 16205 "ocparser.mly" 180 16151 16209
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 180 16151 16211 "ocparser.mly" 180 16151 16218
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 180 16151 16219 "ocparser.mly" 180 16151 16220
+type(
+  int
+)
+"ocparser.mly" 180 16151 16210 "ocparser.mly" 180 16151 16221
+type(
+  Globals.loc
+)
+"ocparser.mly" 180 16151 16179 "ocparser.mly" 180 16151 16221
+type(
+  Cpure.formula
+)
+"ocparser.mly" 180 16151 16228 "ocparser.mly" 180 16151 16230
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 483 16048 16056 "ocparser.ml" 483 16048 16058
+)
+"ocparser.mly" 180 16151 16223 "ocparser.mly" 180 16151 16230
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 180 16151 16176 "ocparser.mly" 180 16151 16233
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 484 16116 16120 "ocparser.ml" 488 16254 16280
+type(
+  Obj.t
+)
+"ocparser.ml" 483 16048 16052 "ocparser.ml" 488 16254 16280
+type(
+  Obj.t
+)
+"ocparser.ml" 482 15980 15984 "ocparser.ml" 488 16254 16280
+type(
+  Obj.t
+)
+"ocparser.ml" 481 15952 15954 "ocparser.ml" 488 16254 16281
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 489 16282 16289 "ocparser.ml" 489 16282 16306
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 490 16310 16314 "ocparser.ml" 496 16586 16612
+)
+"ocparser.ml" 490 16310 16318 "ocparser.ml" 490 16310 16320
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 490 16310 16324 "ocparser.ml" 490 16310 16340
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 490 16310 16341 "ocparser.ml" 490 16310 16358
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 489 16282 16289 "ocparser.ml" 489 16282 16306
+)
+"ocparser.ml" 490 16310 16359 "ocparser.ml" 490 16310 16360
+type(
+  int
+)
+"ocparser.ml" 490 16310 16324 "ocparser.ml" 490 16310 16360
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 491 16378 16386 "ocparser.ml" 491 16378 16388
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 491 16378 16392 "ocparser.ml" 491 16378 16408
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 491 16378 16409 "ocparser.ml" 491 16378 16426
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 489 16282 16289 "ocparser.ml" 489 16282 16306
+)
+"ocparser.ml" 491 16378 16427 "ocparser.ml" 491 16378 16428
+type(
+  int
+)
+"ocparser.ml" 491 16378 16392 "ocparser.ml" 491 16378 16428
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 492 16446 16450 "ocparser.ml" 492 16446 16458
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 181 16481 16510 "ocparser.mly" 181 16481 16524
+type(
+  (Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula) ->
+  Cpure.exp list ->
+  Cpure.exp list ->
+  Globals.formula_label option -> Globals.loc -> Cpure.formula
+)
+ident(
+  ext_ref Cpure.build_relation
+)
+"ocparser.mly" 181 16481 16525 "ocparser.mly" 181 16481 16530
+type(
+  Cpure.exp -> Cpure.exp -> Globals.loc -> Cpure.b_formula
+)
+ident(
+  ext_ref Cpure.mkNeq
+)
+"ocparser.mly" 181 16481 16531 "ocparser.mly" 181 16481 16533
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 490 16310 16318 "ocparser.ml" 490 16310 16320
+)
+"ocparser.mly" 181 16481 16534 "ocparser.mly" 181 16481 16536
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 491 16378 16386 "ocparser.ml" 491 16378 16388
+)
+"ocparser.mly" 181 16481 16537 "ocparser.mly" 181 16481 16541
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 181 16481 16543 "ocparser.mly" 181 16481 16550
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 181 16481 16551 "ocparser.mly" 181 16481 16552
+type(
+  int
+)
+"ocparser.mly" 181 16481 16542 "ocparser.mly" 181 16481 16553
+type(
+  Globals.loc
+)
+"ocparser.mly" 181 16481 16510 "ocparser.mly" 181 16481 16553
+type(
+  Cpure.formula
+)
+"ocparser.mly" 181 16481 16560 "ocparser.mly" 181 16481 16562
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _3 "ocparser.ml" 491 16378 16386 "ocparser.ml" 491 16378 16388
+)
+"ocparser.mly" 181 16481 16555 "ocparser.mly" 181 16481 16562
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 181 16481 16507 "ocparser.mly" 181 16481 16565
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 492 16446 16450 "ocparser.ml" 496 16586 16612
+type(
+  Obj.t
+)
+"ocparser.ml" 491 16378 16382 "ocparser.ml" 496 16586 16612
+type(
+  Obj.t
+)
+"ocparser.ml" 490 16310 16314 "ocparser.ml" 496 16586 16612
+type(
+  Obj.t
+)
+"ocparser.ml" 489 16282 16284 "ocparser.ml" 496 16586 16613
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 497 16614 16621 "ocparser.ml" 497 16614 16638
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 498 16642 16646 "ocparser.ml" 502 16756 16782
+)
+"ocparser.ml" 498 16642 16646 "ocparser.ml" 498 16642 16654
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 182 16677 16702 "ocparser.mly" 182 16677 16706
+type(
+  bool
+)
+"ocparser.mly" 182 16677 16708 "ocparser.mly" 182 16677 16715
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 182 16677 16716 "ocparser.mly" 182 16677 16717
+type(
+  int
+)
+"ocparser.mly" 182 16677 16708 "ocparser.mly" 182 16677 16717
+type(
+  Globals.loc
+)
+"ocparser.mly" 182 16677 16701 "ocparser.mly" 182 16677 16718
+type(
+  bool * Globals.loc
+)
+"ocparser.mly" 182 16677 16694 "ocparser.mly" 182 16677 16718
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 182 16677 16721 "ocparser.mly" 182 16677 16725
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 182 16677 16693 "ocparser.mly" 182 16677 16726
+type(
+  Cpure.b_formula * Globals.formula_label option
+)
+"ocparser.mly" 182 16677 16687 "ocparser.mly" 182 16677 16726
+type(
+  Cpure.formula
+)
+"ocparser.mly" 182 16677 16728 "ocparser.mly" 182 16677 16732
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 182 16677 16684 "ocparser.mly" 182 16677 16735
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 498 16642 16646 "ocparser.ml" 502 16756 16782
+type(
+  Obj.t
+)
+"ocparser.ml" 497 16614 16616 "ocparser.ml" 502 16756 16783
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 503 16784 16791 "ocparser.ml" 503 16784 16808
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 504 16812 16816 "ocparser.ml" 508 16928 16954
+)
+"ocparser.ml" 504 16812 16816 "ocparser.ml" 504 16812 16824
+type(
+  Cpure.formula * Cpure.exp list option -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 183 16847 16873 "ocparser.mly" 183 16847 16878
+type(
+  bool
+)
+"ocparser.mly" 183 16847 16880 "ocparser.mly" 183 16847 16887
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 183 16847 16888 "ocparser.mly" 183 16847 16889
+type(
+  int
+)
+"ocparser.mly" 183 16847 16880 "ocparser.mly" 183 16847 16889
+type(
+  Globals.loc
+)
+"ocparser.mly" 183 16847 16872 "ocparser.mly" 183 16847 16890
+type(
+  bool * Globals.loc
+)
+"ocparser.mly" 183 16847 16865 "ocparser.mly" 183 16847 16890
+type(
+  Cpure.b_formula
+)
+"ocparser.mly" 183 16847 16893 "ocparser.mly" 183 16847 16897
+type(
+  Globals.formula_label option
+)
+"ocparser.mly" 183 16847 16864 "ocparser.mly" 183 16847 16898
+type(
+  Cpure.b_formula * Globals.formula_label option
+)
+"ocparser.mly" 183 16847 16858 "ocparser.mly" 183 16847 16898
+type(
+  Cpure.formula
+)
+"ocparser.mly" 183 16847 16900 "ocparser.mly" 183 16847 16904
+type(
+  Cpure.exp list option
+)
+"ocparser.mly" 183 16847 16855 "ocparser.mly" 183 16847 16907
+type(
+  Cpure.formula * Cpure.exp list option
+)
+type(
+  Cpure.formula * Cpure.exp list option
+)
+"ocparser.ml" 504 16812 16816 "ocparser.ml" 508 16928 16954
+type(
+  Obj.t
+)
+"ocparser.ml" 503 16784 16786 "ocparser.ml" 508 16928 16955
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 509 16956 16963 "ocparser.ml" 509 16956 16980
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 510 16984 16988 "ocparser.ml" 517 17137 17160
+)
+"ocparser.ml" 510 16984 16992 "ocparser.ml" 510 16984 16994
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 510 16984 16998 "ocparser.ml" 510 16984 17014
+type(
+  Parsing.parser_env -> int -> Cpure.spec_var
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 510 16984 17015 "ocparser.ml" 510 16984 17032
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 509 16956 16963 "ocparser.ml" 509 16956 16980
+)
+"ocparser.ml" 510 16984 17033 "ocparser.ml" 510 16984 17034
+type(
+  int
+)
+"ocparser.ml" 510 16984 16998 "ocparser.ml" 510 16984 17034
+type(
+  Cpure.spec_var
+)
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 511 17046 17050 "ocparser.ml" 511 17046 17058
+type(
+  Cpure.exp -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 187 17093 17099 "ocparser.mly" 187 17093 17101
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref _1 "ocparser.ml" 510 16984 16992 "ocparser.ml" 510 16984 16994
+)
+"ocparser.mly" 187 17093 17102 "ocparser.mly" 187 17093 17109
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 187 17093 17110 "ocparser.mly" 187 17093 17111
+type(
+  int
+)
+"ocparser.mly" 187 17093 17102 "ocparser.mly" 187 17093 17111
+type(
+  Globals.loc
+)
+"ocparser.mly" 187 17093 17098 "ocparser.mly" 187 17093 17112
+type(
+  Cpure.spec_var * Globals.loc
+)
+"ocparser.mly" 186 17081 17091 "ocparser.mly" 188 17113 17116
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 511 17046 17050 "ocparser.ml" 517 17137 17160
+type(
+  Obj.t
+)
+"ocparser.ml" 510 16984 16988 "ocparser.ml" 517 17137 17160
+type(
+  Obj.t
+)
+"ocparser.ml" 509 16956 16958 "ocparser.ml" 517 17137 17161
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 518 17162 17169 "ocparser.ml" 518 17162 17186
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 519 17190 17194 "ocparser.ml" 526 17345 17368
+)
+"ocparser.ml" 519 17190 17198 "ocparser.ml" 519 17190 17200
+type(
+  int
+)
+"ocparser.ml" 519 17190 17204 "ocparser.ml" 519 17190 17220
+type(
+  Parsing.parser_env -> int -> int
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 519 17190 17221 "ocparser.ml" 519 17190 17238
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 518 17162 17169 "ocparser.ml" 518 17162 17186
+)
+"ocparser.ml" 519 17190 17239 "ocparser.ml" 519 17190 17240
+type(
+  int
+)
+"ocparser.ml" 519 17190 17204 "ocparser.ml" 519 17190 17240
+type(
+  int
+)
+type(
+  int
+)
+"ocparser.ml" 520 17251 17255 "ocparser.ml" 520 17251 17263
+type(
+  Cpure.exp -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 190 17297 17306 "ocparser.mly" 190 17297 17308
+type(
+  int
+)
+ident(
+  int_ref _1 "ocparser.ml" 519 17190 17198 "ocparser.ml" 519 17190 17200
+)
+"ocparser.mly" 190 17297 17310 "ocparser.mly" 190 17297 17317
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 190 17297 17318 "ocparser.mly" 190 17297 17319
+type(
+  int
+)
+"ocparser.mly" 190 17297 17310 "ocparser.mly" 190 17297 17319
+type(
+  Globals.loc
+)
+"ocparser.mly" 190 17297 17305 "ocparser.mly" 190 17297 17320
+type(
+  int * Globals.loc
+)
+"ocparser.mly" 189 17286 17295 "ocparser.mly" 191 17321 17324
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 520 17251 17255 "ocparser.ml" 526 17345 17368
+type(
+  Obj.t
+)
+"ocparser.ml" 519 17190 17194 "ocparser.ml" 526 17345 17368
+type(
+  Obj.t
+)
+"ocparser.ml" 518 17162 17164 "ocparser.ml" 526 17345 17369
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 527 17370 17377 "ocparser.ml" 527 17370 17394
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 528 17398 17402 "ocparser.ml" 536 17659 17682
+)
+"ocparser.ml" 528 17398 17406 "ocparser.ml" 528 17398 17408
+type(
+  int
+)
+"ocparser.ml" 528 17398 17412 "ocparser.ml" 528 17398 17428
+type(
+  Parsing.parser_env -> int -> int
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 528 17398 17429 "ocparser.ml" 528 17398 17446
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 527 17370 17377 "ocparser.ml" 527 17370 17394
+)
+"ocparser.ml" 528 17398 17447 "ocparser.ml" 528 17398 17448
+type(
+  int
+)
+"ocparser.ml" 528 17398 17412 "ocparser.ml" 528 17398 17448
+type(
+  int
+)
+type(
+  int
+)
+"ocparser.ml" 529 17459 17467 "ocparser.ml" 529 17459 17469
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 529 17459 17473 "ocparser.ml" 529 17459 17489
+type(
+  Parsing.parser_env -> int -> Cpure.spec_var
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 529 17459 17490 "ocparser.ml" 529 17459 17507
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 527 17370 17377 "ocparser.ml" 527 17370 17394
+)
+"ocparser.ml" 529 17459 17508 "ocparser.ml" 529 17459 17509
+type(
+  int
+)
+"ocparser.ml" 529 17459 17473 "ocparser.ml" 529 17459 17509
+type(
+  Cpure.spec_var
+)
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 530 17521 17525 "ocparser.ml" 530 17521 17533
+type(
+  Cpure.exp -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 193 17571 17586 "ocparser.mly" 193 17571 17588
+type(
+  int
+)
+ident(
+  int_ref _1 "ocparser.ml" 528 17398 17406 "ocparser.ml" 528 17398 17408
+)
+"ocparser.mly" 193 17571 17590 "ocparser.mly" 193 17571 17597
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 193 17571 17598 "ocparser.mly" 193 17571 17599
+type(
+  int
+)
+"ocparser.mly" 193 17571 17590 "ocparser.mly" 193 17571 17599
+type(
+  Globals.loc
+)
+"ocparser.mly" 193 17571 17585 "ocparser.mly" 193 17571 17600
+type(
+  int * Globals.loc
+)
+"ocparser.mly" 193 17571 17578 "ocparser.mly" 193 17571 17600
+type(
+  Cpure.exp
+)
+"ocparser.mly" 193 17571 17608 "ocparser.mly" 193 17571 17610
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref _2 "ocparser.ml" 529 17459 17467 "ocparser.ml" 529 17459 17469
+)
+"ocparser.mly" 193 17571 17611 "ocparser.mly" 193 17571 17618
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 193 17571 17619 "ocparser.mly" 193 17571 17620
+type(
+  int
+)
+"ocparser.mly" 193 17571 17611 "ocparser.mly" 193 17571 17620
+type(
+  Globals.loc
+)
+"ocparser.mly" 193 17571 17607 "ocparser.mly" 193 17571 17621
+type(
+  Cpure.spec_var * Globals.loc
+)
+"ocparser.mly" 193 17571 17602 "ocparser.mly" 193 17571 17622
+type(
+  Cpure.exp
+)
+"ocparser.mly" 193 17571 17624 "ocparser.mly" 193 17571 17631
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 193 17571 17632 "ocparser.mly" 193 17571 17633
+type(
+  int
+)
+"ocparser.mly" 193 17571 17624 "ocparser.mly" 193 17571 17633
+type(
+  Globals.loc
+)
+"ocparser.mly" 193 17571 17577 "ocparser.mly" 193 17571 17634
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 192 17556 17569 "ocparser.mly" 194 17635 17638
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 530 17521 17525 "ocparser.ml" 536 17659 17682
+type(
+  Obj.t
+)
+"ocparser.ml" 529 17459 17463 "ocparser.ml" 536 17659 17682
+type(
+  Obj.t
+)
+"ocparser.ml" 528 17398 17402 "ocparser.ml" 536 17659 17682
+type(
+  Obj.t
+)
+"ocparser.ml" 527 17370 17372 "ocparser.ml" 536 17659 17683
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 537 17684 17691 "ocparser.ml" 537 17684 17708
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 538 17712 17716 "ocparser.ml" 546 17941 17964
+)
+"ocparser.ml" 538 17712 17720 "ocparser.ml" 538 17712 17722
+type(
+  Cpure.exp
+)
+"ocparser.ml" 538 17712 17726 "ocparser.ml" 538 17712 17742
+type(
+  Parsing.parser_env -> int -> Cpure.exp
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 538 17712 17743 "ocparser.ml" 538 17712 17760
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 537 17684 17691 "ocparser.ml" 537 17684 17708
+)
+"ocparser.ml" 538 17712 17761 "ocparser.ml" 538 17712 17762
+type(
+  int
+)
+"ocparser.ml" 538 17712 17726 "ocparser.ml" 538 17712 17762
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 539 17775 17783 "ocparser.ml" 539 17775 17785
+type(
+  Cpure.exp
+)
+"ocparser.ml" 539 17775 17789 "ocparser.ml" 539 17775 17805
+type(
+  Parsing.parser_env -> int -> Cpure.exp
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 539 17775 17806 "ocparser.ml" 539 17775 17823
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 537 17684 17691 "ocparser.ml" 537 17684 17708
+)
+"ocparser.ml" 539 17775 17824 "ocparser.ml" 539 17775 17825
+type(
+  int
+)
+"ocparser.ml" 539 17775 17789 "ocparser.ml" 539 17775 17825
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 540 17838 17842 "ocparser.ml" 540 17838 17850
+type(
+  Cpure.exp -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 196 17892 17898 "ocparser.mly" 196 17892 17900
+type(
+  Cpure.exp
+)
+ident(
+  int_ref _1 "ocparser.ml" 538 17712 17720 "ocparser.ml" 538 17712 17722
+)
+"ocparser.mly" 196 17892 17902 "ocparser.mly" 196 17892 17904
+type(
+  Cpure.exp
+)
+ident(
+  int_ref _3 "ocparser.ml" 539 17775 17783 "ocparser.ml" 539 17775 17785
+)
+"ocparser.mly" 196 17892 17906 "ocparser.mly" 196 17892 17913
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 196 17892 17914 "ocparser.mly" 196 17892 17915
+type(
+  int
+)
+"ocparser.mly" 196 17892 17906 "ocparser.mly" 196 17892 17915
+type(
+  Globals.loc
+)
+"ocparser.mly" 196 17892 17897 "ocparser.mly" 196 17892 17916
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 195 17873 17890 "ocparser.mly" 197 17917 17920
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 540 17838 17842 "ocparser.ml" 546 17941 17964
+type(
+  Obj.t
+)
+"ocparser.ml" 539 17775 17779 "ocparser.ml" 546 17941 17964
+type(
+  Obj.t
+)
+"ocparser.ml" 538 17712 17716 "ocparser.ml" 546 17941 17964
+type(
+  Obj.t
+)
+"ocparser.ml" 537 17684 17686 "ocparser.ml" 546 17941 17965
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 547 17966 17973 "ocparser.ml" 547 17966 17990
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 548 17994 17998 "ocparser.ml" 556 18229 18252
+)
+"ocparser.ml" 548 17994 18002 "ocparser.ml" 548 17994 18004
+type(
+  Cpure.exp
+)
+"ocparser.ml" 548 17994 18008 "ocparser.ml" 548 17994 18024
+type(
+  Parsing.parser_env -> int -> Cpure.exp
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 548 17994 18025 "ocparser.ml" 548 17994 18042
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 547 17966 17973 "ocparser.ml" 547 17966 17990
+)
+"ocparser.ml" 548 17994 18043 "ocparser.ml" 548 17994 18044
+type(
+  int
+)
+"ocparser.ml" 548 17994 18008 "ocparser.ml" 548 17994 18044
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 549 18057 18065 "ocparser.ml" 549 18057 18067
+type(
+  Cpure.exp
+)
+"ocparser.ml" 549 18057 18071 "ocparser.ml" 549 18057 18087
+type(
+  Parsing.parser_env -> int -> Cpure.exp
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 549 18057 18088 "ocparser.ml" 549 18057 18105
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 547 17966 17973 "ocparser.ml" 547 17966 17990
+)
+"ocparser.ml" 549 18057 18106 "ocparser.ml" 549 18057 18107
+type(
+  int
+)
+"ocparser.ml" 549 18057 18071 "ocparser.ml" 549 18057 18107
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 550 18120 18124 "ocparser.ml" 550 18120 18132
+type(
+  Cpure.exp -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 199 18175 18186 "ocparser.mly" 199 18175 18188
+type(
+  Cpure.exp
+)
+ident(
+  int_ref _1 "ocparser.ml" 548 17994 18002 "ocparser.ml" 548 17994 18004
+)
+"ocparser.mly" 199 18175 18190 "ocparser.mly" 199 18175 18192
+type(
+  Cpure.exp
+)
+ident(
+  int_ref _3 "ocparser.ml" 549 18057 18065 "ocparser.ml" 549 18057 18067
+)
+"ocparser.mly" 199 18175 18194 "ocparser.mly" 199 18175 18201
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 199 18175 18202 "ocparser.mly" 199 18175 18203
+type(
+  int
+)
+"ocparser.mly" 199 18175 18194 "ocparser.mly" 199 18175 18203
+type(
+  Globals.loc
+)
+"ocparser.mly" 199 18175 18185 "ocparser.mly" 199 18175 18204
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 198 18155 18173 "ocparser.mly" 200 18205 18208
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 550 18120 18124 "ocparser.ml" 556 18229 18252
+type(
+  Obj.t
+)
+"ocparser.ml" 549 18057 18061 "ocparser.ml" 556 18229 18252
+type(
+  Obj.t
+)
+"ocparser.ml" 548 17994 17998 "ocparser.ml" 556 18229 18252
+type(
+  Obj.t
+)
+"ocparser.ml" 547 17966 17968 "ocparser.ml" 556 18229 18253
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 557 18254 18261 "ocparser.ml" 557 18254 18278
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 558 18282 18286 "ocparser.ml" 565 18481 18504
+)
+"ocparser.ml" 558 18282 18290 "ocparser.ml" 558 18282 18292
+type(
+  Cpure.exp
+)
+"ocparser.ml" 558 18282 18296 "ocparser.ml" 558 18282 18312
+type(
+  Parsing.parser_env -> int -> Cpure.exp
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 558 18282 18313 "ocparser.ml" 558 18282 18330
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 557 18254 18261 "ocparser.ml" 557 18254 18278
+)
+"ocparser.ml" 558 18282 18331 "ocparser.ml" 558 18282 18332
+type(
+  int
+)
+"ocparser.ml" 558 18282 18296 "ocparser.ml" 558 18282 18332
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 559 18345 18349 "ocparser.ml" 559 18345 18357
+type(
+  Cpure.exp -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 202 18408 18427 "ocparser.mly" 202 18408 18428
+type(
+  int
+)
+"ocparser.mly" 202 18408 18430 "ocparser.mly" 202 18408 18437
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 202 18408 18438 "ocparser.mly" 202 18408 18439
+type(
+  int
+)
+"ocparser.mly" 202 18408 18430 "ocparser.mly" 202 18408 18439
+type(
+  Globals.loc
+)
+"ocparser.mly" 202 18408 18426 "ocparser.mly" 202 18408 18440
+type(
+  int * Globals.loc
+)
+"ocparser.mly" 202 18408 18419 "ocparser.mly" 202 18408 18440
+type(
+  Cpure.exp
+)
+"ocparser.mly" 202 18408 18442 "ocparser.mly" 202 18408 18444
+type(
+  Cpure.exp
+)
+ident(
+  int_ref _2 "ocparser.ml" 558 18282 18290 "ocparser.ml" 558 18282 18292
+)
+"ocparser.mly" 202 18408 18446 "ocparser.mly" 202 18408 18453
+type(
+  int -> Globals.loc
+)
+ident(
+  int_ref get_pos "ocparser.mly" 8 503 509 "ocparser.mly" 8 503 516
+)
+"ocparser.mly" 202 18408 18454 "ocparser.mly" 202 18408 18455
+type(
+  int
+)
+"ocparser.mly" 202 18408 18446 "ocparser.mly" 202 18408 18455
+type(
+  Globals.loc
+)
+"ocparser.mly" 202 18408 18418 "ocparser.mly" 202 18408 18456
+type(
+  Cpure.exp * Cpure.exp * Globals.loc
+)
+"ocparser.mly" 201 18380 18406 "ocparser.mly" 203 18457 18460
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 559 18345 18349 "ocparser.ml" 565 18481 18504
+type(
+  Obj.t
+)
+"ocparser.ml" 558 18282 18286 "ocparser.ml" 565 18481 18504
+type(
+  Obj.t
+)
+"ocparser.ml" 557 18254 18256 "ocparser.ml" 565 18481 18505
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 566 18506 18513 "ocparser.ml" 566 18506 18530
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 567 18534 18538 "ocparser.ml" 571 18607 18635
+)
+"ocparser.ml" 567 18534 18538 "ocparser.ml" 567 18534 18546
+type(
+  Cpure.exp list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 206 18569 18580 "ocparser.mly" 206 18569 18586
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 567 18534 18538 "ocparser.ml" 571 18607 18635
+type(
+  Obj.t
+)
+"ocparser.ml" 566 18506 18508 "ocparser.ml" 571 18607 18636
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 572 18637 18644 "ocparser.ml" 572 18637 18661
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 573 18665 18669 "ocparser.ml" 578 18824 18852
+)
+"ocparser.ml" 573 18665 18673 "ocparser.ml" 573 18665 18675
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 573 18665 18679 "ocparser.ml" 573 18665 18695
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 573 18665 18696 "ocparser.ml" 573 18665 18713
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 572 18637 18644 "ocparser.ml" 572 18637 18661
+)
+"ocparser.ml" 573 18665 18714 "ocparser.ml" 573 18665 18715
+type(
+  int
+)
+"ocparser.ml" 573 18665 18679 "ocparser.ml" 573 18665 18715
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 574 18737 18741 "ocparser.ml" 574 18737 18749
+type(
+  Cpure.exp list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 207 18772 18790 "ocparser.mly" 207 18772 18798
+type(
+  Cpure.exp list -> Cpure.exp list
+)
+ident(
+  ext_ref List.rev
+)
+"ocparser.mly" 207 18772 18799 "ocparser.mly" 207 18772 18801
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 573 18665 18673 "ocparser.ml" 573 18665 18675
+)
+"ocparser.mly" 207 18772 18788 "ocparser.mly" 207 18772 18803
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 574 18737 18741 "ocparser.ml" 578 18824 18852
+type(
+  Obj.t
+)
+"ocparser.ml" 573 18665 18669 "ocparser.ml" 578 18824 18852
+type(
+  Obj.t
+)
+"ocparser.ml" 572 18637 18639 "ocparser.ml" 578 18824 18853
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 579 18854 18861 "ocparser.ml" 579 18854 18878
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 580 18882 18886 "ocparser.ml" 585 19029 19061
+)
+"ocparser.ml" 580 18882 18890 "ocparser.ml" 580 18882 18892
+type(
+  Cpure.exp
+)
+"ocparser.ml" 580 18882 18896 "ocparser.ml" 580 18882 18912
+type(
+  Parsing.parser_env -> int -> Cpure.exp
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 580 18882 18913 "ocparser.ml" 580 18882 18930
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 579 18854 18861 "ocparser.ml" 579 18854 18878
+)
+"ocparser.ml" 580 18882 18931 "ocparser.ml" 580 18882 18932
+type(
+  int
+)
+"ocparser.ml" 580 18882 18896 "ocparser.ml" 580 18882 18932
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 581 18945 18949 "ocparser.ml" 581 18945 18957
+type(
+  Cpure.exp list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 210 18980 19003 "ocparser.mly" 210 18980 19005
+type(
+  Cpure.exp
+)
+ident(
+  int_ref _1 "ocparser.ml" 580 18882 18890 "ocparser.ml" 580 18882 18892
+)
+"ocparser.mly" 210 18980 19000 "ocparser.mly" 210 18980 19008
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 581 18945 18949 "ocparser.ml" 585 19029 19061
+type(
+  Obj.t
+)
+"ocparser.ml" 580 18882 18886 "ocparser.ml" 585 19029 19061
+type(
+  Obj.t
+)
+"ocparser.ml" 579 18854 18856 "ocparser.ml" 585 19029 19062
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 586 19063 19070 "ocparser.ml" 586 19063 19087
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 587 19091 19095 "ocparser.ml" 593 19320 19352
+)
+"ocparser.ml" 587 19091 19099 "ocparser.ml" 587 19091 19101
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 587 19091 19105 "ocparser.ml" 587 19091 19121
+type(
+  Parsing.parser_env -> int -> Cpure.exp list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 587 19091 19122 "ocparser.ml" 587 19091 19139
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 586 19063 19070 "ocparser.ml" 586 19063 19087
+)
+"ocparser.ml" 587 19091 19140 "ocparser.ml" 587 19091 19141
+type(
+  int
+)
+"ocparser.ml" 587 19091 19105 "ocparser.ml" 587 19091 19141
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 588 19163 19171 "ocparser.ml" 588 19163 19173
+type(
+  Cpure.exp
+)
+"ocparser.ml" 588 19163 19177 "ocparser.ml" 588 19163 19193
+type(
+  Parsing.parser_env -> int -> Cpure.exp
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 588 19163 19194 "ocparser.ml" 588 19163 19211
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 586 19063 19070 "ocparser.ml" 586 19063 19087
+)
+"ocparser.ml" 588 19163 19212 "ocparser.ml" 588 19163 19213
+type(
+  int
+)
+"ocparser.ml" 588 19163 19177 "ocparser.ml" 588 19163 19213
+type(
+  Cpure.exp
+)
+type(
+  Cpure.exp
+)
+"ocparser.ml" 589 19226 19230 "ocparser.ml" 589 19226 19238
+type(
+  Cpure.exp list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 211 19261 19290 "ocparser.mly" 211 19261 19292
+type(
+  Cpure.exp
+)
+ident(
+  int_ref _3 "ocparser.ml" 588 19163 19171 "ocparser.ml" 588 19163 19173
+)
+"ocparser.mly" 211 19261 19296 "ocparser.mly" 211 19261 19298
+type(
+  Cpure.exp list
+)
+ident(
+  int_ref _1 "ocparser.ml" 587 19091 19099 "ocparser.ml" 587 19091 19101
+)
+"ocparser.mly" 211 19261 19288 "ocparser.mly" 211 19261 19299
+type(
+  Cpure.exp list
+)
+type(
+  Cpure.exp list
+)
+"ocparser.ml" 589 19226 19230 "ocparser.ml" 593 19320 19352
+type(
+  Obj.t
+)
+"ocparser.ml" 588 19163 19167 "ocparser.ml" 593 19320 19352
+type(
+  Obj.t
+)
+"ocparser.ml" 587 19091 19095 "ocparser.ml" 593 19320 19352
+type(
+  Obj.t
+)
+"ocparser.ml" 586 19063 19065 "ocparser.ml" 593 19320 19353
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 594 19354 19361 "ocparser.ml" 594 19354 19378
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 595 19382 19386 "ocparser.ml" 599 19470 19497
+)
+"ocparser.ml" 595 19382 19386 "ocparser.ml" 595 19382 19394
+type(
+  Cpure.spec_var list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 214 19417 19429 "ocparser.mly" 214 19417 19431
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 595 19382 19386 "ocparser.ml" 599 19470 19497
+type(
+  Obj.t
+)
+"ocparser.ml" 594 19354 19356 "ocparser.ml" 599 19470 19498
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 600 19499 19506 "ocparser.ml" 600 19499 19523
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 601 19527 19531 "ocparser.ml" 606 19700 19727
+)
+"ocparser.ml" 601 19527 19535 "ocparser.ml" 601 19527 19537
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 601 19527 19541 "ocparser.ml" 601 19527 19557
+type(
+  Parsing.parser_env -> int -> Cpure.spec_var list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 601 19527 19558 "ocparser.ml" 601 19527 19575
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 600 19499 19506 "ocparser.ml" 600 19499 19523
+)
+"ocparser.ml" 601 19527 19576 "ocparser.ml" 601 19527 19577
+type(
+  int
+)
+"ocparser.ml" 601 19527 19541 "ocparser.ml" 601 19527 19577
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 602 19598 19602 "ocparser.ml" 602 19598 19610
+type(
+  Cpure.spec_var list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 215 19633 19650 "ocparser.mly" 215 19633 19658
+type(
+  Cpure.spec_var list -> Cpure.spec_var list
+)
+ident(
+  ext_ref List.rev
+)
+"ocparser.mly" 215 19633 19659 "ocparser.mly" 215 19633 19661
+type(
+  Cpure.spec_var list
+)
+ident(
+  int_ref _1 "ocparser.ml" 601 19527 19535 "ocparser.ml" 601 19527 19537
+)
+"ocparser.mly" 215 19633 19650 "ocparser.mly" 215 19633 19661
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 602 19598 19602 "ocparser.ml" 606 19700 19727
+type(
+  Obj.t
+)
+"ocparser.ml" 601 19527 19531 "ocparser.ml" 606 19700 19727
+type(
+  Obj.t
+)
+"ocparser.ml" 600 19499 19501 "ocparser.ml" 606 19700 19728
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 607 19729 19736 "ocparser.ml" 607 19729 19753
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 608 19757 19761 "ocparser.ml" 613 19919 19950
+)
+"ocparser.ml" 608 19757 19765 "ocparser.ml" 608 19757 19767
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 608 19757 19771 "ocparser.ml" 608 19757 19787
+type(
+  Parsing.parser_env -> int -> Cpure.spec_var
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 608 19757 19788 "ocparser.ml" 608 19757 19805
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 607 19729 19736 "ocparser.ml" 607 19729 19753
+)
+"ocparser.ml" 608 19757 19806 "ocparser.ml" 608 19757 19807
+type(
+  int
+)
+"ocparser.ml" 608 19757 19771 "ocparser.ml" 608 19757 19807
+type(
+  Cpure.spec_var
+)
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 609 19819 19823 "ocparser.ml" 609 19819 19831
+type(
+  Cpure.spec_var list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 218 19854 19876 "ocparser.mly" 218 19854 19878
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref _1 "ocparser.ml" 608 19757 19765 "ocparser.ml" 608 19757 19767
+)
+"ocparser.mly" 218 19854 19874 "ocparser.mly" 218 19854 19880
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 609 19819 19823 "ocparser.ml" 613 19919 19950
+type(
+  Obj.t
+)
+"ocparser.ml" 608 19757 19761 "ocparser.ml" 613 19919 19950
+type(
+  Obj.t
+)
+"ocparser.ml" 607 19729 19731 "ocparser.ml" 613 19919 19951
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 614 19952 19959 "ocparser.ml" 614 19952 19976
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 615 19980 19984 "ocparser.ml" 621 20224 20255
+)
+"ocparser.ml" 615 19980 19988 "ocparser.ml" 615 19980 19990
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 615 19980 19994 "ocparser.ml" 615 19980 20010
+type(
+  Parsing.parser_env -> int -> Cpure.spec_var list
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 615 19980 20011 "ocparser.ml" 615 19980 20028
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 614 19952 19959 "ocparser.ml" 614 19952 19976
+)
+"ocparser.ml" 615 19980 20029 "ocparser.ml" 615 19980 20030
+type(
+  int
+)
+"ocparser.ml" 615 19980 19994 "ocparser.ml" 615 19980 20030
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 616 20051 20059 "ocparser.ml" 616 20051 20061
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 616 20051 20065 "ocparser.ml" 616 20051 20081
+type(
+  Parsing.parser_env -> int -> Cpure.spec_var
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 616 20051 20082 "ocparser.ml" 616 20051 20099
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 614 19952 19959 "ocparser.ml" 614 19952 19976
+)
+"ocparser.ml" 616 20051 20100 "ocparser.ml" 616 20051 20101
+type(
+  int
+)
+"ocparser.ml" 616 20051 20065 "ocparser.ml" 616 20051 20101
+type(
+  Cpure.spec_var
+)
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 617 20113 20117 "ocparser.ml" 617 20113 20125
+type(
+  Cpure.spec_var list -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 219 20148 20176 "ocparser.mly" 219 20148 20178
+type(
+  Cpure.spec_var
+)
+ident(
+  int_ref _3 "ocparser.ml" 616 20051 20059 "ocparser.ml" 616 20051 20061
+)
+"ocparser.mly" 219 20148 20182 "ocparser.mly" 219 20148 20184
+type(
+  Cpure.spec_var list
+)
+ident(
+  int_ref _1 "ocparser.ml" 615 19980 19988 "ocparser.ml" 615 19980 19990
+)
+"ocparser.mly" 219 20148 20175 "ocparser.mly" 219 20148 20185
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+type(
+  Cpure.spec_var list
+)
+"ocparser.ml" 617 20113 20117 "ocparser.ml" 621 20224 20255
+type(
+  Obj.t
+)
+"ocparser.ml" 616 20051 20055 "ocparser.ml" 621 20224 20255
+type(
+  Obj.t
+)
+"ocparser.ml" 615 19980 19984 "ocparser.ml" 621 20224 20255
+type(
+  Obj.t
+)
+"ocparser.ml" 614 19952 19954 "ocparser.ml" 621 20224 20256
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 622 20257 20264 "ocparser.ml" 622 20257 20281
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 623 20285 20289 "ocparser.ml" 631 20598 20620
+)
+"ocparser.ml" 623 20285 20293 "ocparser.ml" 623 20285 20295
+type(
+  string
+)
+"ocparser.ml" 623 20285 20299 "ocparser.ml" 623 20285 20315
+type(
+  Parsing.parser_env -> int -> string
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 623 20285 20316 "ocparser.ml" 623 20285 20333
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 622 20257 20264 "ocparser.ml" 622 20257 20281
+)
+"ocparser.ml" 623 20285 20334 "ocparser.ml" 623 20285 20335
+type(
+  int
+)
+"ocparser.ml" 623 20285 20299 "ocparser.ml" 623 20285 20335
+type(
+  string
+)
+type(
+  string
+)
+"ocparser.ml" 624 20349 20353 "ocparser.ml" 624 20349 20361
+type(
+  Cpure.spec_var -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 224 20395 20410 "ocparser.mly" 224 20395 20421
+type(
+  (String.t * Globals.ident * Cpure.typ -> bool) ->
+  (String.t * Globals.ident * Cpure.typ) list ->
+  (String.t * Globals.ident * Cpure.typ) list
+)
+ident(
+  ext_ref List.filter
+)
+"ocparser.mly" 224 20395 20428 "ocparser.mly" 224 20395 20429
+type(
+  String.t
+)
+ident(
+  def a "ocparser.mly" 224 20395 20436 "ocparser.mly" 224 20395 20462
+)
+"ocparser.mly" 224 20395 20430 "ocparser.mly" 224 20395 20431
+type(
+  Globals.ident
+)
+ident(
+  def b "ocparser.mly" 224 20395 20436 "ocparser.mly" 224 20395 20462
+)
+"ocparser.mly" 224 20395 20432 "ocparser.mly" 224 20395 20433
+type(
+  Cpure.typ
+)
+"ocparser.mly" 224 20395 20427 "ocparser.mly" 224 20395 20434
+type(
+  String.t * Globals.ident * Cpure.typ
+)
+"ocparser.mly" 224 20395 20438 "ocparser.mly" 224 20395 20452
+type(
+  String.t -> String.t -> int
+)
+ident(
+  ext_ref String.compare
+)
+"ocparser.mly" 224 20395 20453 "ocparser.mly" 224 20395 20455
+type(
+  String.t
+)
+ident(
+  int_ref _1 "ocparser.ml" 623 20285 20293 "ocparser.ml" 623 20285 20295
+)
+"ocparser.mly" 224 20395 20456 "ocparser.mly" 224 20395 20457
+type(
+  String.t
+)
+ident(
+  int_ref a "ocparser.mly" 224 20395 20428 "ocparser.mly" 224 20395 20429
+)
+"ocparser.mly" 224 20395 20437 "ocparser.mly" 224 20395 20458
+type(
+  int
+)
+"ocparser.mly" 224 20395 20458 "ocparser.mly" 224 20395 20460
+type(
+  int -> int -> bool
+)
+ident(
+  ext_ref Pervasives.( == )
+)
+"ocparser.mly" 224 20395 20460 "ocparser.mly" 224 20395 20461
+type(
+  int
+)
+"ocparser.mly" 224 20395 20436 "ocparser.mly" 224 20395 20462
+type(
+  bool
+)
+"ocparser.mly" 224 20395 20422 "ocparser.mly" 224 20395 20463
+type(
+  String.t * Globals.ident * Cpure.typ -> bool
+)
+"ocparser.mly" 224 20395 20464 "ocparser.mly" 224 20395 20465
+type(
+  (String.t * Globals.ident * Cpure.typ) list ref ->
+  (String.t * Globals.ident * Cpure.typ) list
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"ocparser.mly" 224 20395 20465 "ocparser.mly" 224 20395 20480
+type(
+  (String.t * Globals.ident * Cpure.typ) list ref
+)
+ident(
+  ext_ref Cpure.omega_subst_lst
+)
+"ocparser.mly" 224 20395 20464 "ocparser.mly" 224 20395 20480
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 224 20395 20409 "ocparser.mly" 224 20395 20481
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 225 20488 20496 "ocparser.mly" 225 20488 20498
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 225 20488 20515 "ocparser.mly" 225 20488 20518
+type(
+  Globals.prim_type
+)
+"ocparser.mly" 225 20488 20510 "ocparser.mly" 225 20488 20518
+type(
+  Cpure.typ
+)
+"ocparser.mly" 225 20488 20519 "ocparser.mly" 225 20488 20521
+type(
+  Globals.ident
+)
+ident(
+  int_ref _1 "ocparser.ml" 623 20285 20293 "ocparser.ml" 623 20285 20295
+)
+"ocparser.mly" 225 20488 20523 "ocparser.mly" 225 20488 20531
+type(
+  Globals.primed
+)
+"ocparser.mly" 225 20488 20509 "ocparser.mly" 225 20488 20532
+type(
+  Cpure.typ * Globals.ident * Globals.primed
+)
+"ocparser.mly" 225 20488 20502 "ocparser.mly" 225 20488 20532
+type(
+  Cpure.spec_var
+)
+"ocparser.mly" 226 20533 20541 "ocparser.mly" 226 20533 20542
+type(
+  String.t
+)
+ident(
+  def a "ocparser.mly" 226 20533 20553 "ocparser.mly" 226 20533 20575
+)
+"ocparser.mly" 226 20533 20543 "ocparser.mly" 226 20533 20544
+type(
+  Globals.ident
+)
+ident(
+  def b "ocparser.mly" 226 20533 20553 "ocparser.mly" 226 20533 20575
+)
+"ocparser.mly" 226 20533 20545 "ocparser.mly" 226 20533 20546
+type(
+  Cpure.typ
+)
+ident(
+  def t "ocparser.mly" 226 20533 20553 "ocparser.mly" 226 20533 20575
+)
+"ocparser.mly" 226 20533 20540 "ocparser.mly" 226 20533 20547
+type(
+  String.t * Globals.ident * Cpure.typ
+)
+"ocparser.mly" 226 20533 20549 "ocparser.mly" 226 20533 20550
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+ident(
+  def h "ocparser.mly" 226 20533 20553 "ocparser.mly" 226 20533 20575
+)
+"ocparser.mly" 226 20533 20540 "ocparser.mly" 226 20533 20550
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 226 20533 20561 "ocparser.mly" 226 20533 20562
+type(
+  Cpure.typ
+)
+ident(
+  int_ref t "ocparser.mly" 226 20533 20545 "ocparser.mly" 226 20533 20546
+)
+"ocparser.mly" 226 20533 20564 "ocparser.mly" 226 20533 20565
+type(
+  Globals.ident
+)
+ident(
+  int_ref b "ocparser.mly" 226 20533 20543 "ocparser.mly" 226 20533 20544
+)
+"ocparser.mly" 226 20533 20566 "ocparser.mly" 226 20533 20574
+type(
+  Globals.primed
+)
+"ocparser.mly" 226 20533 20560 "ocparser.mly" 226 20533 20575
+type(
+  Cpure.typ * Globals.ident * Globals.primed
+)
+"ocparser.mly" 226 20533 20553 "ocparser.mly" 226 20533 20575
+type(
+  Cpure.spec_var
+)
+"ocparser.mly" 223 20384 20392 "ocparser.mly" 226 20533 20577
+type(
+  Cpure.spec_var
+)
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 624 20349 20353 "ocparser.ml" 631 20598 20620
+type(
+  Obj.t
+)
+"ocparser.ml" 623 20285 20289 "ocparser.ml" 631 20598 20620
+type(
+  Obj.t
+)
+"ocparser.ml" 622 20257 20259 "ocparser.ml" 631 20598 20621
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 632 20622 20629 "ocparser.ml" 632 20622 20646
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 633 20650 20654 "ocparser.ml" 641 20962 20984
+)
+"ocparser.ml" 633 20650 20658 "ocparser.ml" 633 20650 20660
+type(
+  string
+)
+"ocparser.ml" 633 20650 20664 "ocparser.ml" 633 20650 20680
+type(
+  Parsing.parser_env -> int -> string
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 633 20650 20681 "ocparser.ml" 633 20650 20698
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 632 20622 20629 "ocparser.ml" 632 20622 20646
+)
+"ocparser.ml" 633 20650 20699 "ocparser.ml" 633 20650 20700
+type(
+  int
+)
+"ocparser.ml" 633 20650 20664 "ocparser.ml" 633 20650 20700
+type(
+  string
+)
+type(
+  string
+)
+"ocparser.ml" 634 20714 20718 "ocparser.ml" 634 20714 20726
+type(
+  Cpure.spec_var -> Obj.t
+)
+ident(
+  ext_ref Obj.repr
+)
+"ocparser.mly" 228 20763 20778 "ocparser.mly" 228 20763 20789
+type(
+  (String.t * Globals.ident * Cpure.typ -> bool) ->
+  (String.t * Globals.ident * Cpure.typ) list ->
+  (String.t * Globals.ident * Cpure.typ) list
+)
+ident(
+  ext_ref List.filter
+)
+"ocparser.mly" 228 20763 20796 "ocparser.mly" 228 20763 20797
+type(
+  String.t
+)
+ident(
+  def a "ocparser.mly" 228 20763 20804 "ocparser.mly" 228 20763 20830
+)
+"ocparser.mly" 228 20763 20798 "ocparser.mly" 228 20763 20799
+type(
+  Globals.ident
+)
+ident(
+  def b "ocparser.mly" 228 20763 20804 "ocparser.mly" 228 20763 20830
+)
+"ocparser.mly" 228 20763 20800 "ocparser.mly" 228 20763 20801
+type(
+  Cpure.typ
+)
+"ocparser.mly" 228 20763 20795 "ocparser.mly" 228 20763 20802
+type(
+  String.t * Globals.ident * Cpure.typ
+)
+"ocparser.mly" 228 20763 20806 "ocparser.mly" 228 20763 20820
+type(
+  String.t -> String.t -> int
+)
+ident(
+  ext_ref String.compare
+)
+"ocparser.mly" 228 20763 20821 "ocparser.mly" 228 20763 20823
+type(
+  String.t
+)
+ident(
+  int_ref _1 "ocparser.ml" 633 20650 20658 "ocparser.ml" 633 20650 20660
+)
+"ocparser.mly" 228 20763 20824 "ocparser.mly" 228 20763 20825
+type(
+  String.t
+)
+ident(
+  int_ref a "ocparser.mly" 228 20763 20796 "ocparser.mly" 228 20763 20797
+)
+"ocparser.mly" 228 20763 20805 "ocparser.mly" 228 20763 20826
+type(
+  int
+)
+"ocparser.mly" 228 20763 20826 "ocparser.mly" 228 20763 20828
+type(
+  int -> int -> bool
+)
+ident(
+  ext_ref Pervasives.( == )
+)
+"ocparser.mly" 228 20763 20828 "ocparser.mly" 228 20763 20829
+type(
+  int
+)
+"ocparser.mly" 228 20763 20804 "ocparser.mly" 228 20763 20830
+type(
+  bool
+)
+"ocparser.mly" 228 20763 20790 "ocparser.mly" 228 20763 20831
+type(
+  String.t * Globals.ident * Cpure.typ -> bool
+)
+"ocparser.mly" 228 20763 20832 "ocparser.mly" 228 20763 20833
+type(
+  (String.t * Globals.ident * Cpure.typ) list ref ->
+  (String.t * Globals.ident * Cpure.typ) list
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"ocparser.mly" 228 20763 20833 "ocparser.mly" 228 20763 20848
+type(
+  (String.t * Globals.ident * Cpure.typ) list ref
+)
+ident(
+  ext_ref Cpure.omega_subst_lst
+)
+"ocparser.mly" 228 20763 20832 "ocparser.mly" 228 20763 20848
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 228 20763 20777 "ocparser.mly" 228 20763 20849
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 229 20856 20864 "ocparser.mly" 229 20856 20866
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 229 20856 20883 "ocparser.mly" 229 20856 20886
+type(
+  Globals.prim_type
+)
+"ocparser.mly" 229 20856 20878 "ocparser.mly" 229 20856 20886
+type(
+  Cpure.typ
+)
+"ocparser.mly" 229 20856 20887 "ocparser.mly" 229 20856 20889
+type(
+  Globals.ident
+)
+ident(
+  int_ref _1 "ocparser.ml" 633 20650 20658 "ocparser.ml" 633 20650 20660
+)
+"ocparser.mly" 229 20856 20891 "ocparser.mly" 229 20856 20897
+type(
+  Globals.primed
+)
+"ocparser.mly" 229 20856 20877 "ocparser.mly" 229 20856 20898
+type(
+  Cpure.typ * Globals.ident * Globals.primed
+)
+"ocparser.mly" 229 20856 20870 "ocparser.mly" 229 20856 20898
+type(
+  Cpure.spec_var
+)
+"ocparser.mly" 230 20899 20907 "ocparser.mly" 230 20899 20908
+type(
+  String.t
+)
+ident(
+  def a "ocparser.mly" 230 20899 20919 "ocparser.mly" 230 20899 20939
+)
+"ocparser.mly" 230 20899 20909 "ocparser.mly" 230 20899 20910
+type(
+  Globals.ident
+)
+ident(
+  def b "ocparser.mly" 230 20899 20919 "ocparser.mly" 230 20899 20939
+)
+"ocparser.mly" 230 20899 20911 "ocparser.mly" 230 20899 20912
+type(
+  Cpure.typ
+)
+ident(
+  def t "ocparser.mly" 230 20899 20919 "ocparser.mly" 230 20899 20939
+)
+"ocparser.mly" 230 20899 20906 "ocparser.mly" 230 20899 20913
+type(
+  String.t * Globals.ident * Cpure.typ
+)
+"ocparser.mly" 230 20899 20915 "ocparser.mly" 230 20899 20916
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+ident(
+  def h "ocparser.mly" 230 20899 20919 "ocparser.mly" 230 20899 20939
+)
+"ocparser.mly" 230 20899 20906 "ocparser.mly" 230 20899 20916
+type(
+  (String.t * Globals.ident * Cpure.typ) list
+)
+"ocparser.mly" 230 20899 20927 "ocparser.mly" 230 20899 20928
+type(
+  Cpure.typ
+)
+ident(
+  int_ref t "ocparser.mly" 230 20899 20911 "ocparser.mly" 230 20899 20912
+)
+"ocparser.mly" 230 20899 20930 "ocparser.mly" 230 20899 20931
+type(
+  Globals.ident
+)
+ident(
+  int_ref b "ocparser.mly" 230 20899 20909 "ocparser.mly" 230 20899 20910
+)
+"ocparser.mly" 230 20899 20932 "ocparser.mly" 230 20899 20938
+type(
+  Globals.primed
+)
+"ocparser.mly" 230 20899 20926 "ocparser.mly" 230 20899 20939
+type(
+  Cpure.typ * Globals.ident * Globals.primed
+)
+"ocparser.mly" 230 20899 20919 "ocparser.mly" 230 20899 20939
+type(
+  Cpure.spec_var
+)
+"ocparser.mly" 227 20749 20760 "ocparser.mly" 230 20899 20941
+type(
+  Cpure.spec_var
+)
+type(
+  Cpure.spec_var
+)
+"ocparser.ml" 634 20714 20718 "ocparser.ml" 641 20962 20984
+type(
+  Obj.t
+)
+"ocparser.ml" 633 20650 20654 "ocparser.ml" 641 20962 20984
+type(
+  Obj.t
+)
+"ocparser.ml" 632 20622 20624 "ocparser.ml" 641 20962 20985
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 643 21008 21015 "ocparser.ml" 643 21008 21032
+type(
+  Parsing.parser_env
+)
+ident(
+  def __caml_parser_env "ocparser.ml" 643 21008 21036 "ocparser.ml" 643 21008 21097
+)
+"ocparser.ml" 643 21008 21036 "ocparser.ml" 643 21008 21041
+type(
+  exn -> Obj.t
+)
+ident(
+  ext_ref Pervasives.raise
+)
+"ocparser.ml" 643 21008 21059 "ocparser.ml" 643 21008 21075
+type(
+  Parsing.parser_env -> int -> Obj.t
+)
+ident(
+  ext_ref Parsing.peek_val
+)
+"ocparser.ml" 643 21008 21076 "ocparser.ml" 643 21008 21093
+type(
+  Parsing.parser_env
+)
+ident(
+  int_ref __caml_parser_env "ocparser.ml" 643 21008 21015 "ocparser.ml" 643 21008 21032
+)
+"ocparser.ml" 643 21008 21094 "ocparser.ml" 643 21008 21095
+type(
+  int
+)
+"ocparser.ml" 643 21008 21058 "ocparser.ml" 643 21008 21096
+type(
+  Obj.t
+)
+"ocparser.ml" 643 21008 21042 "ocparser.ml" 643 21008 21097
+type(
+  exn
+)
+"ocparser.ml" 643 21008 21036 "ocparser.ml" 643 21008 21097
+type(
+  Obj.t
+)
+"ocparser.ml" 643 21008 21010 "ocparser.ml" 643 21008 21098
+type(
+  Parsing.parser_env -> Obj.t
+)
+"ocparser.ml" 258 8782 8794 "ocparser.ml" 644 21099 21101
+type(
+  (Parsing.parser_env -> Obj.t) array
+)
+"ocparser.ml" 645 21102 21106 "ocparser.ml" 645 21102 21114
+type(
+  Parsing.parse_tables
+)
+ident(
+  def yytables "ocparser.ml" 662 21623 21623 --
+)
+"ocparser.ml" 646 21117 21137 "ocparser.ml" 646 21117 21142
+type(
+  (Parsing.parser_env -> Obj.t) array
+)
+ident(
+  int_ref yyact "ocparser.ml" 258 8782 8786 "ocparser.ml" 258 8782 8791
+)
+"ocparser.ml" 647 21144 21169 "ocparser.ml" 647 21144 21183
+type(
+  int array
+)
+ident(
+  int_ref yytransl_const "ocparser.ml" 71 1922 1926 "ocparser.ml" 71 1922 1940
+)
+"ocparser.ml" 648 21185 21210 "ocparser.ml" 648 21185 21224
+type(
+  int array
+)
+ident(
+  int_ref yytransl_block "ocparser.ml" 105 2528 2532 "ocparser.ml" 105 2528 2546
+)
+"ocparser.ml" 649 21226 21242 "ocparser.ml" 649 21226 21247
+type(
+  string
+)
+ident(
+  int_ref yylhs "ocparser.ml" 111 2619 2623 "ocparser.ml" 111 2619 2628
+)
+"ocparser.ml" 650 21249 21265 "ocparser.ml" 650 21249 21270
+type(
+  string
+)
+ident(
+  int_ref yylen "ocparser.ml" 119 2983 2987 "ocparser.ml" 119 2983 2992
+)
+"ocparser.ml" 651 21272 21291 "ocparser.ml" 651 21272 21299
+type(
+  string
+)
+ident(
+  int_ref yydefred "ocparser.ml" 127 3347 3351 "ocparser.ml" 127 3347 3359
+)
+"ocparser.ml" 652 21301 21319 "ocparser.ml" 652 21301 21326
+type(
+  string
+)
+ident(
+  int_ref yydgoto "ocparser.ml" 139 3986 3990 "ocparser.ml" 139 3986 3997
+)
+"ocparser.ml" 653 21328 21347 "ocparser.ml" 653 21328 21355
+type(
+  string
+)
+ident(
+  int_ref yysindex "ocparser.ml" 143 4104 4108 "ocparser.ml" 143 4104 4116
+)
+"ocparser.ml" 654 21357 21376 "ocparser.ml" 654 21357 21384
+type(
+  string
+)
+ident(
+  int_ref yyrindex "ocparser.ml" 155 4743 4747 "ocparser.ml" 155 4743 4755
+)
+"ocparser.ml" 655 21386 21405 "ocparser.ml" 655 21386 21413
+type(
+  string
+)
+ident(
+  int_ref yygindex "ocparser.ml" 167 5382 5386 "ocparser.ml" 167 5382 5394
+)
+"ocparser.ml" 656 21415 21437 "ocparser.ml" 656 21415 21448
+type(
+  int
+)
+ident(
+  int_ref yytablesize "ocparser.ml" 171 5501 5505 "ocparser.ml" 171 5501 5516
+)
+"ocparser.ml" 657 21450 21468 "ocparser.ml" 657 21450 21475
+type(
+  string
+)
+ident(
+  int_ref yytable "ocparser.ml" 172 5523 5527 "ocparser.ml" 172 5523 5534
+)
+"ocparser.ml" 658 21477 21495 "ocparser.ml" 658 21477 21502
+type(
+  string
+)
+ident(
+  int_ref yycheck "ocparser.ml" 195 6911 6915 "ocparser.ml" 195 6911 6922
+)
+"ocparser.ml" 659 21504 21531 "ocparser.ml" 659 21504 21542
+type(
+  string -> unit
+)
+ident(
+  ext_ref Parsing.parse_error
+)
+"ocparser.ml" 660 21544 21568 "ocparser.ml" 660 21544 21581
+type(
+  string
+)
+ident(
+  int_ref yynames_const "ocparser.ml" 218 8299 8303 "ocparser.ml" 218 8299 8316
+)
+"ocparser.ml" 661 21583 21607 "ocparser.ml" 661 21583 21620
+type(
+  string
+)
+ident(
+  int_ref yynames_block "ocparser.ml" 252 8714 8718 "ocparser.ml" 252 8714 8731
+)
+"ocparser.ml" 646 21117 21119 "ocparser.ml" 661 21583 21622
+type(
+  Parsing.parse_tables
+)
+"ocparser.ml" 662 21623 21627 "ocparser.ml" 662 21623 21636
+type(
+  (Lexing.lexbuf -> token) -> Lexing.lexbuf -> Cpure.relation
+)
+ident(
+  def oc_output "ocparser.ml" 663 21698 21760 --
+)
+"ocparser.ml" 662 21623 21638 "ocparser.ml" 662 21623 21644
+type(
+  Lexing.lexbuf -> token
+)
+ident(
+  def lexfun "ocparser.ml" 662 21623 21671 "ocparser.ml" 663 21698 21760
+)
+"ocparser.ml" 662 21623 21672 "ocparser.ml" 662 21623 21678
+type(
+  Lexing.lexbuf
+)
+ident(
+  def lexbuf "ocparser.ml" 663 21698 21701 "ocparser.ml" 663 21698 21760
+)
+"ocparser.ml" 663 21698 21702 "ocparser.ml" 663 21698 21717
+type(
+  Parsing.parse_tables ->
+  int -> (Lexing.lexbuf -> token) -> Lexing.lexbuf -> Cpure.relation
+)
+ident(
+  ext_ref Parsing.yyparse
+)
+"ocparser.ml" 663 21698 21718 "ocparser.ml" 663 21698 21726
+type(
+  Parsing.parse_tables
+)
+ident(
+  int_ref yytables "ocparser.ml" 645 21102 21106 "ocparser.ml" 645 21102 21114
+)
+"ocparser.ml" 663 21698 21727 "ocparser.ml" 663 21698 21728
+type(
+  int
+)
+"ocparser.ml" 663 21698 21729 "ocparser.ml" 663 21698 21735
+type(
+  Lexing.lexbuf -> token
+)
+ident(
+  int_ref lexfun "ocparser.ml" 662 21623 21638 "ocparser.ml" 662 21623 21644
+)
+"ocparser.ml" 663 21698 21736 "ocparser.ml" 663 21698 21742
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "ocparser.ml" 662 21623 21672 "ocparser.ml" 662 21623 21678
+)
+"ocparser.ml" 663 21698 21702 "ocparser.ml" 663 21698 21742
+type(
+  Cpure.relation
+)
+type(
+  Cpure.relation
+)

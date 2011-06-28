@@ -1,0 +1,1514 @@
+"oclexer.mll" 6 91 97 "oclexer.mll" 6 91 109
+type(
+  string -> Lexing.lexbuf -> unit
+)
+ident(
+  def incr_linenum "oclexer.mll" 15 348 350 --
+)
+"oclexer.mll" 6 91 110 "oclexer.mll" 6 91 119
+type(
+  string
+)
+ident(
+  def file_name "oclexer.mll" 6 91 120 "oclexer.mll" 13 344 346
+)
+"oclexer.mll" 6 91 120 "oclexer.mll" 6 91 126
+type(
+  Lexing.lexbuf
+)
+ident(
+  def lexbuf "oclexer.mll" 7 129 133 "oclexer.mll" 13 344 346
+)
+"oclexer.mll" 7 129 137 "oclexer.mll" 7 129 140
+type(
+  Lexing.position
+)
+"oclexer.mll" 7 129 143 "oclexer.mll" 7 129 149
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.mll" 6 91 120 "oclexer.mll" 6 91 126
+)
+"oclexer.mll" 7 129 143 "oclexer.mll" 7 129 167
+type(
+  Lexing.position
+)
+"oclexer.mll" 8 171 177 "oclexer.mll" 8 171 183
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.mll" 6 91 120 "oclexer.mll" 6 91 126
+)
+"oclexer.mll" 9 206 209 "oclexer.mll" 9 206 212
+type(
+  Lexing.position
+)
+ident(
+  int_ref pos "oclexer.mll" 7 129 137 "oclexer.mll" 7 129 140
+)
+"oclexer.mll" 10 218 242 "oclexer.mll" 10 218 251
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.mll" 6 91 110 "oclexer.mll" 6 91 119
+)
+"oclexer.mll" 11 253 276 "oclexer.mll" 11 253 279
+type(
+  Lexing.position
+)
+ident(
+  int_ref pos "oclexer.mll" 7 129 137 "oclexer.mll" 7 129 140
+)
+"oclexer.mll" 11 253 276 "oclexer.mll" 11 253 295
+type(
+  int
+)
+"oclexer.mll" 11 253 296 "oclexer.mll" 11 253 297
+type(
+  int -> int -> int
+)
+ident(
+  ext_ref Pervasives.( + )
+)
+"oclexer.mll" 11 253 298 "oclexer.mll" 11 253 299
+type(
+  int
+)
+"oclexer.mll" 11 253 276 "oclexer.mll" 11 253 299
+type(
+  int
+)
+"oclexer.mll" 12 301 323 "oclexer.mll" 12 301 326
+type(
+  Lexing.position
+)
+ident(
+  int_ref pos "oclexer.mll" 7 129 137 "oclexer.mll" 7 129 140
+)
+"oclexer.mll" 12 301 323 "oclexer.mll" 12 301 342
+type(
+  int
+)
+"oclexer.mll" 9 206 207 "oclexer.mll" 13 344 346
+type(
+  Lexing.position
+)
+"oclexer.mll" 8 171 177 "oclexer.mll" 13 344 346
+type(
+  unit
+)
+"oclexer.mll" 7 129 133 "oclexer.mll" 13 344 346
+type(
+  unit
+)
+"oclexer.mll" 15 348 354 "oclexer.mll" 15 348 364
+type(
+  string
+)
+ident(
+  def primed_str "oclexer.mll" 17 377 379 --
+)
+"oclexer.mll" 15 348 367 "oclexer.mll" 15 348 373
+type(
+  string
+)
+"oclexer.mll" 17 377 383 "oclexer.mll" 17 377 396
+type(
+  int
+)
+ident(
+  def primed_length "oclexer.ml" 22 444 444 --
+)
+"oclexer.mll" 17 377 399 "oclexer.mll" 17 377 412
+type(
+  string -> int
+)
+ident(
+  ext_ref String.length
+)
+"oclexer.mll" 17 377 413 "oclexer.mll" 17 377 423
+type(
+  string
+)
+ident(
+  int_ref primed_str "oclexer.mll" 15 348 354 "oclexer.mll" 15 348 364
+)
+"oclexer.mll" 17 377 399 "oclexer.mll" 17 377 423
+type(
+  int
+)
+"oclexer.ml" 22 444 448 "oclexer.ml" 22 444 466
+type(
+  Lexing.lex_tables
+)
+ident(
+  def __ocaml_lex_tables "oclexer.ml" 1160 78805 78805 --
+)
+"oclexer.ml" 24 492 495 "oclexer.ml" 35 1262 1291
+type(
+  string
+)
+"oclexer.ml" 37 1317 1320 "oclexer.ml" 48 2087 2116
+type(
+  string
+)
+"oclexer.ml" 50 2142 2145 "oclexer.ml" 61 2912 2941
+type(
+  string
+)
+"oclexer.ml" 63 2965 2968 "oclexer.ml" 603 40765 40770
+type(
+  string
+)
+"oclexer.ml" 605 40794 40797 "oclexer.ml" 1145 78594 78599
+type(
+  string
+)
+"oclexer.ml" 1147 78627 78630 "oclexer.ml" 1147 78627 78632
+type(
+  string
+)
+"oclexer.ml" 1149 78663 78666 "oclexer.ml" 1149 78663 78668
+type(
+  string
+)
+"oclexer.ml" 1151 78699 78702 "oclexer.ml" 1151 78699 78704
+type(
+  string
+)
+"oclexer.ml" 1153 78733 78736 "oclexer.ml" 1153 78733 78738
+type(
+  string
+)
+"oclexer.ml" 1155 78767 78770 "oclexer.ml" 1155 78767 78772
+type(
+  string
+)
+"oclexer.ml" 1157 78795 78798 "oclexer.ml" 1157 78795 78800
+type(
+  string
+)
+"oclexer.ml" 22 444 469 "oclexer.ml" 1158 78802 78803
+type(
+  Lexing.lex_tables
+)
+"oclexer.ml" 1160 78805 78813 "oclexer.ml" 1160 78805 78822
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  def tokenizer "oclexer.ml" 1160 78805 78805 --
+)
+"oclexer.ml" 1160 78805 78823 "oclexer.ml" 1160 78805 78832
+type(
+  string
+)
+ident(
+  def file_name "oclexer.ml" 1160 78805 78833 "oclexer.ml" 1161 78842 78888
+)
+"oclexer.ml" 1160 78805 78833 "oclexer.ml" 1160 78805 78839
+type(
+  Lexing.lexbuf
+)
+ident(
+  def lexbuf "oclexer.ml" 1161 78842 78844 "oclexer.ml" 1161 78842 78888
+)
+"oclexer.ml" 1161 78842 78844 "oclexer.ml" 1161 78842 78869
+type(
+  string -> Lexing.lexbuf -> int -> Ocparser.token
+)
+ident(
+  int_ref __ocaml_lex_tokenizer_rec "oclexer.ml" 1162 78889 78893 "oclexer.ml" 1162 78889 78918
+)
+"oclexer.ml" 1161 78842 78870 "oclexer.ml" 1161 78842 78879
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1160 78805 78823 "oclexer.ml" 1160 78805 78832
+)
+"oclexer.ml" 1161 78842 78880 "oclexer.ml" 1161 78842 78886
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1160 78805 78833 "oclexer.ml" 1160 78805 78839
+)
+"oclexer.ml" 1161 78842 78887 "oclexer.ml" 1161 78842 78888
+type(
+  int
+)
+"oclexer.ml" 1161 78842 78844 "oclexer.ml" 1161 78842 78888
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1162 78889 78893 "oclexer.ml" 1162 78889 78918
+type(
+  string -> Lexing.lexbuf -> int -> Ocparser.token
+)
+ident(
+  def __ocaml_lex_tokenizer_rec "oclexer.ml" 1160 78805 78805 --
+)
+"oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+type(
+  string
+)
+ident(
+  def file_name "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1404 82879 82998
+)
+"oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+type(
+  Lexing.lexbuf
+)
+ident(
+  def lexbuf "oclexer.ml" 1162 78889 78936 "oclexer.ml" 1404 82879 82998
+)
+"oclexer.ml" 1162 78889 78936 "oclexer.ml" 1162 78889 78953
+type(
+  int
+)
+ident(
+  def __ocaml_lex_state "oclexer.ml" 1163 78956 78958 "oclexer.ml" 1404 82879 82998
+)
+"oclexer.ml" 1163 78956 78964 "oclexer.ml" 1163 78956 78977
+type(
+  Lexing.lex_tables -> int -> Lexing.lexbuf -> int
+)
+ident(
+  ext_ref Lexing.engine
+)
+"oclexer.ml" 1163 78956 78978 "oclexer.ml" 1163 78956 78996
+type(
+  Lexing.lex_tables
+)
+ident(
+  int_ref __ocaml_lex_tables "oclexer.ml" 22 444 448 "oclexer.ml" 22 444 466
+)
+"oclexer.ml" 1163 78956 78997 "oclexer.ml" 1163 78956 79014
+type(
+  int
+)
+ident(
+  int_ref __ocaml_lex_state "oclexer.ml" 1162 78889 78936 "oclexer.ml" 1162 78889 78953
+)
+"oclexer.ml" 1163 78956 79015 "oclexer.ml" 1163 78956 79021
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1163 78956 78964 "oclexer.ml" 1163 78956 79021
+type(
+  int
+)
+"oclexer.ml" 1164 79027 79035 "oclexer.ml" 1164 79027 79036
+type(
+  int
+)
+"oclexer.mll" 30 79059 79069 "oclexer.mll" 30 79059 79081
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  int_ref line_comment "oclexer.ml" 1406 83000 83004 "oclexer.ml" 1406 83000 83016
+)
+"oclexer.mll" 30 79059 79082 "oclexer.mll" 30 79059 79091
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 30 79059 79092 "oclexer.mll" 30 79059 79098
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 30 79059 79067 "oclexer.mll" 30 79059 79100
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1169 79122 79126 "oclexer.ml" 1169 79122 79127
+type(
+  int
+)
+"oclexer.mll" 31 79150 79158 "oclexer.mll" 31 79150 79165
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1174 79187 79191 "oclexer.ml" 1174 79187 79192
+type(
+  int
+)
+"oclexer.mll" 32 79215 79224 "oclexer.mll" 32 79215 79231
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1179 79253 79257 "oclexer.ml" 1179 79253 79258
+type(
+  int
+)
+"oclexer.mll" 33 79281 79291 "oclexer.mll" 33 79281 79298
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1184 79320 79324 "oclexer.ml" 1184 79320 79325
+type(
+  int
+)
+"oclexer.mll" 34 79348 79356 "oclexer.mll" 34 79348 79366
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1189 79388 79392 "oclexer.ml" 1189 79388 79393
+type(
+  int
+)
+"oclexer.mll" 35 79416 79424 "oclexer.mll" 35 79416 79433
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1194 79455 79459 "oclexer.ml" 1194 79455 79460
+type(
+  int
+)
+"oclexer.mll" 36 79483 79491 "oclexer.mll" 36 79483 79500
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1199 79522 79526 "oclexer.ml" 1199 79522 79527
+type(
+  int
+)
+"oclexer.mll" 37 79550 79558 "oclexer.mll" 37 79550 79568
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1204 79590 79594 "oclexer.ml" 1204 79590 79595
+type(
+  int
+)
+"oclexer.mll" 38 79618 79626 "oclexer.mll" 38 79618 79637
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1209 79659 79663 "oclexer.ml" 1209 79659 79664
+type(
+  int
+)
+"oclexer.mll" 39 79687 79695 "oclexer.mll" 39 79687 79702
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1214 79724 79728 "oclexer.ml" 1214 79724 79730
+type(
+  int
+)
+"oclexer.mll" 40 79753 79761 "oclexer.mll" 40 79753 79767
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1219 79789 79793 "oclexer.ml" 1219 79789 79795
+type(
+  int
+)
+"oclexer.mll" 41 79818 79827 "oclexer.mll" 41 79818 79835
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1224 79857 79861 "oclexer.ml" 1224 79857 79863
+type(
+  int
+)
+"oclexer.mll" 42 79886 79899 "oclexer.mll" 42 79886 79909
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1229 79931 79935 "oclexer.ml" 1229 79931 79937
+type(
+  int
+)
+"oclexer.mll" 43 79960 79973 "oclexer.mll" 43 79960 79983
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1234 80005 80009 "oclexer.ml" 1234 80005 80011
+type(
+  int
+)
+"oclexer.mll" 44 80034 80046 "oclexer.mll" 44 80034 80055
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1239 80077 80081 "oclexer.ml" 1239 80077 80083
+type(
+  int
+)
+"oclexer.mll" 45 80106 80118 "oclexer.mll" 45 80106 80127
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1244 80149 80153 "oclexer.ml" 1244 80149 80155
+type(
+  int
+)
+"oclexer.mll" 46 80178 80191 "oclexer.mll" 46 80178 80201
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1249 80223 80227 "oclexer.ml" 1249 80223 80229
+type(
+  int
+)
+"oclexer.mll" 47 80252 80265 "oclexer.mll" 47 80252 80275
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1254 80297 80301 "oclexer.ml" 1254 80297 80303
+type(
+  int
+)
+"oclexer.mll" 48 80326 80334 "oclexer.mll" 48 80326 80340
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1259 80362 80366 "oclexer.ml" 1259 80362 80368
+type(
+  int
+)
+"oclexer.mll" 49 80391 80400 "oclexer.mll" 49 80391 80407
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1264 80429 80433 "oclexer.ml" 1264 80429 80435
+type(
+  int
+)
+"oclexer.mll" 50 80458 80466 "oclexer.mll" 50 80458 80472
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1269 80494 80498 "oclexer.ml" 1269 80494 80500
+type(
+  int
+)
+"oclexer.mll" 51 80523 80532 "oclexer.mll" 51 80523 80539
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1274 80561 80565 "oclexer.ml" 1274 80561 80567
+type(
+  int
+)
+"oclexer.mll" 52 80590 80598 "oclexer.mll" 52 80590 80607
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1279 80629 80633 "oclexer.ml" 1279 80629 80635
+type(
+  int
+)
+"oclexer.mll" 53 80658 80667 "oclexer.mll" 53 80658 80674
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1284 80696 80700 "oclexer.ml" 1284 80696 80702
+type(
+  int
+)
+"oclexer.mll" 54 80725 80735 "oclexer.mll" 54 80725 80742
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1289 80764 80768 "oclexer.ml" 1289 80764 80770
+type(
+  int
+)
+"oclexer.mll" 55 80793 80801 "oclexer.mll" 55 80793 80811
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1294 80833 80837 "oclexer.ml" 1294 80833 80839
+type(
+  int
+)
+"oclexer.mll" 56 80862 80870 "oclexer.mll" 56 80862 80880
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1299 80902 80906 "oclexer.ml" 1299 80902 80908
+type(
+  int
+)
+"oclexer.mll" 57 80931 80939 "oclexer.mll" 57 80931 80950
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1304 80972 80976 "oclexer.ml" 1304 80972 80978
+type(
+  int
+)
+"oclexer.mll" 58 81001 81009 "oclexer.mll" 58 81001 81015
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1309 81037 81041 "oclexer.ml" 1309 81037 81043
+type(
+  int
+)
+"oclexer.mll" 59 81066 81075 "oclexer.mll" 59 81066 81081
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1314 81103 81107 "oclexer.ml" 1314 81103 81109
+type(
+  int
+)
+"oclexer.mll" 60 81132 81141 "oclexer.mll" 60 81132 81147
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1319 81169 81173 "oclexer.ml" 1319 81169 81175
+type(
+  int
+)
+"oclexer.mll" 61 81198 81206 "oclexer.mll" 61 81198 81214
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1324 81236 81240 "oclexer.ml" 1324 81236 81242
+type(
+  int
+)
+"oclexer.mll" 62 81265 81273 "oclexer.mll" 62 81265 81286
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1329 81308 81312 "oclexer.ml" 1329 81308 81314
+type(
+  int
+)
+"oclexer.mll" 63 81337 81345 "oclexer.mll" 63 81337 81354
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1334 81376 81380 "oclexer.ml" 1334 81376 81382
+type(
+  int
+)
+"oclexer.mll" 64 81405 81416 "oclexer.mll" 64 81405 81424
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1339 81446 81450 "oclexer.ml" 1339 81446 81452
+type(
+  int
+)
+"oclexer.mll" 65 81475 81486 "oclexer.mll" 65 81475 81494
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1344 81516 81520 "oclexer.ml" 1344 81516 81522
+type(
+  int
+)
+"oclexer.mll" 66 81545 81557 "oclexer.mll" 66 81545 81566
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1349 81588 81592 "oclexer.ml" 1349 81588 81594
+type(
+  int
+)
+"oclexer.mll" 67 81621 81635 "oclexer.mll" 67 81621 81641
+type(
+  string
+)
+"oclexer.ml" 1354 81662 81664 "oclexer.ml" 1354 81662 81681
+type(
+  Lexing.lexbuf -> int -> int -> string
+)
+ident(
+  ext_ref Lexing.sub_lexeme
+)
+"oclexer.ml" 1354 81662 81682 "oclexer.ml" 1354 81662 81688
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1354 81662 81689 "oclexer.ml" 1354 81662 81695
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1354 81662 81689 "oclexer.ml" 1354 81662 81716
+type(
+  int
+)
+"oclexer.ml" 1354 81662 81717 "oclexer.ml" 1354 81662 81723
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1354 81662 81717 "oclexer.ml" 1354 81662 81743
+type(
+  int
+)
+"oclexer.ml" 1354 81662 81664 "oclexer.ml" 1354 81662 81743
+type(
+  string
+)
+"oclexer.mll" 67 81766 81797 "oclexer.mll" 67 81766 81810
+type(
+  string -> int
+)
+ident(
+  ext_ref Pervasives.int_of_string
+)
+"oclexer.mll" 67 81766 81811 "oclexer.mll" 67 81766 81817
+type(
+  string
+)
+ident(
+  int_ref numstr "oclexer.mll" 67 81621 81635 "oclexer.mll" 67 81621 81641
+)
+"oclexer.mll" 67 81766 81796 "oclexer.mll" 67 81766 81818
+type(
+  int
+)
+"oclexer.mll" 67 81766 81787 "oclexer.mll" 67 81766 81820
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1350 81598 81598 "oclexer.mll" 67 81766 81820
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1359 81842 81846 "oclexer.ml" 1359 81842 81848
+type(
+  int
+)
+"oclexer.mll" 68 81875 81904 "oclexer.mll" 68 81875 81909
+type(
+  string
+)
+"oclexer.ml" 1364 81930 81932 "oclexer.ml" 1364 81930 81949
+type(
+  Lexing.lexbuf -> int -> int -> string
+)
+ident(
+  ext_ref Lexing.sub_lexeme
+)
+"oclexer.ml" 1364 81930 81950 "oclexer.ml" 1364 81930 81956
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1364 81930 81957 "oclexer.ml" 1364 81930 81963
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1364 81930 81957 "oclexer.ml" 1364 81930 81984
+type(
+  int
+)
+"oclexer.ml" 1364 81930 81985 "oclexer.ml" 1364 81930 81991
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1364 81930 81985 "oclexer.ml" 1364 81930 82011
+type(
+  int
+)
+"oclexer.ml" 1364 81930 81932 "oclexer.ml" 1364 81930 82011
+type(
+  string
+)
+"oclexer.mll" 69 82072 82079 "oclexer.mll" 69 82072 82080
+type(
+  int
+)
+"oclexer.mll" 69 82072 82083 "oclexer.mll" 69 82072 82096
+type(
+  string -> int
+)
+ident(
+  ext_ref String.length
+)
+"oclexer.mll" 69 82072 82097 "oclexer.mll" 69 82072 82102
+type(
+  string
+)
+ident(
+  int_ref idstr "oclexer.mll" 68 81875 81904 "oclexer.mll" 68 81875 81909
+)
+"oclexer.mll" 69 82072 82083 "oclexer.mll" 69 82072 82102
+type(
+  int
+)
+"oclexer.mll" 70 82106 82111 "oclexer.mll" 70 82106 82112
+type(
+  int
+)
+ident(
+  int_ref n "oclexer.mll" 69 82072 82079 "oclexer.mll" 69 82072 82080
+)
+"oclexer.mll" 70 82106 82113 "oclexer.mll" 70 82106 82114
+type(
+  int -> int -> bool
+)
+ident(
+  ext_ref Pervasives.( > )
+)
+"oclexer.mll" 70 82106 82115 "oclexer.mll" 70 82106 82128
+type(
+  int
+)
+ident(
+  int_ref primed_length "oclexer.mll" 17 377 383 "oclexer.mll" 17 377 396
+)
+"oclexer.mll" 70 82106 82111 "oclexer.mll" 70 82106 82128
+type(
+  bool
+)
+"oclexer.mll" 71 82134 82142 "oclexer.mll" 71 82134 82145
+type(
+  string
+)
+ident(
+  def tmp "oclexer.mll" 72 82202 82205 "oclexer.mll" 75 82293 82306
+)
+"oclexer.mll" 71 82134 82148 "oclexer.mll" 71 82134 82158
+type(
+  string -> int -> int -> string
+)
+ident(
+  ext_ref String.sub
+)
+"oclexer.mll" 71 82134 82159 "oclexer.mll" 71 82134 82164
+type(
+  string
+)
+ident(
+  int_ref idstr "oclexer.mll" 68 81875 81904 "oclexer.mll" 68 81875 81909
+)
+"oclexer.mll" 71 82134 82166 "oclexer.mll" 71 82134 82167
+type(
+  int
+)
+ident(
+  int_ref n "oclexer.mll" 69 82072 82079 "oclexer.mll" 69 82072 82080
+)
+"oclexer.mll" 71 82134 82168 "oclexer.mll" 71 82134 82169
+type(
+  int -> int -> int
+)
+ident(
+  ext_ref Pervasives.( - )
+)
+"oclexer.mll" 71 82134 82170 "oclexer.mll" 71 82134 82183
+type(
+  int
+)
+ident(
+  int_ref primed_length "oclexer.mll" 17 377 383 "oclexer.mll" 17 377 396
+)
+"oclexer.mll" 71 82134 82165 "oclexer.mll" 71 82134 82184
+type(
+  int
+)
+"oclexer.mll" 71 82134 82185 "oclexer.mll" 71 82134 82198
+type(
+  int
+)
+ident(
+  int_ref primed_length "oclexer.mll" 17 377 383 "oclexer.mll" 17 377 396
+)
+"oclexer.mll" 71 82134 82148 "oclexer.mll" 71 82134 82198
+type(
+  string
+)
+"oclexer.mll" 72 82202 82208 "oclexer.mll" 72 82202 82211
+type(
+  string
+)
+ident(
+  int_ref tmp "oclexer.mll" 71 82134 82142 "oclexer.mll" 71 82134 82145
+)
+"oclexer.mll" 72 82202 82212 "oclexer.mll" 72 82202 82213
+type(
+  string -> string -> bool
+)
+ident(
+  ext_ref Pervasives.( = )
+)
+"oclexer.mll" 72 82202 82214 "oclexer.mll" 72 82202 82224
+type(
+  string
+)
+ident(
+  int_ref primed_str "oclexer.mll" 15 348 354 "oclexer.mll" 15 348 364
+)
+"oclexer.mll" 72 82202 82208 "oclexer.mll" 72 82202 82224
+type(
+  bool
+)
+"oclexer.mll" 73 82230 82245 "oclexer.mll" 73 82230 82255
+type(
+  string -> int -> int -> string
+)
+ident(
+  ext_ref String.sub
+)
+"oclexer.mll" 73 82230 82256 "oclexer.mll" 73 82230 82261
+type(
+  string
+)
+ident(
+  int_ref idstr "oclexer.mll" 68 81875 81904 "oclexer.mll" 68 81875 81909
+)
+"oclexer.mll" 73 82230 82262 "oclexer.mll" 73 82230 82263
+type(
+  int
+)
+"oclexer.mll" 73 82230 82265 "oclexer.mll" 73 82230 82266
+type(
+  int
+)
+ident(
+  int_ref n "oclexer.mll" 69 82072 82079 "oclexer.mll" 69 82072 82080
+)
+"oclexer.mll" 73 82230 82267 "oclexer.mll" 73 82230 82268
+type(
+  int -> int -> int
+)
+ident(
+  ext_ref Pervasives.( - )
+)
+"oclexer.mll" 73 82230 82269 "oclexer.mll" 73 82230 82282
+type(
+  int
+)
+ident(
+  int_ref primed_length "oclexer.mll" 17 377 383 "oclexer.mll" 17 377 396
+)
+"oclexer.mll" 73 82230 82264 "oclexer.mll" 73 82230 82283
+type(
+  int
+)
+"oclexer.mll" 73 82230 82244 "oclexer.mll" 73 82230 82284
+type(
+  string
+)
+"oclexer.mll" 73 82230 82235 "oclexer.mll" 73 82230 82284
+type(
+  Ocparser.token
+)
+"oclexer.mll" 75 82293 82301 "oclexer.mll" 75 82293 82306
+type(
+  string
+)
+ident(
+  int_ref idstr "oclexer.mll" 68 81875 81904 "oclexer.mll" 68 81875 81909
+)
+"oclexer.mll" 75 82293 82298 "oclexer.mll" 75 82293 82306
+type(
+  Ocparser.token
+)
+"oclexer.mll" 72 82202 82205 "oclexer.mll" 75 82293 82306
+type(
+  Ocparser.token
+)
+"oclexer.mll" 71 82134 82138 "oclexer.mll" 75 82293 82306
+type(
+  Ocparser.token
+)
+"oclexer.mll" 77 82314 82321 "oclexer.mll" 77 82314 82326
+type(
+  string
+)
+ident(
+  int_ref idstr "oclexer.mll" 68 81875 81904 "oclexer.mll" 68 81875 81909
+)
+"oclexer.mll" 77 82314 82318 "oclexer.mll" 77 82314 82326
+type(
+  Ocparser.token
+)
+"oclexer.mll" 70 82106 82108 "oclexer.mll" 77 82314 82326
+type(
+  Ocparser.token
+)
+"oclexer.mll" 68 82034 82069 "oclexer.mll" 78 82328 82330
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1360 81852 81852 "oclexer.mll" 78 82328 82330
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1379 82352 82356 "oclexer.ml" 1379 82352 82358
+type(
+  int
+)
+"oclexer.mll" 79 82381 82398 "oclexer.mll" 79 82381 82407
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  int_ref tokenizer "oclexer.ml" 1160 78805 78813 "oclexer.ml" 1160 78805 78822
+)
+"oclexer.mll" 79 82381 82408 "oclexer.mll" 79 82381 82417
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 79 82381 82418 "oclexer.mll" 79 82381 82424
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 79 82381 82396 "oclexer.mll" 79 82381 82426
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1384 82448 82452 "oclexer.ml" 1384 82448 82454
+type(
+  int
+)
+"oclexer.mll" 80 82477 82488 "oclexer.mll" 80 82477 82500
+type(
+  string -> Lexing.lexbuf -> unit
+)
+ident(
+  int_ref incr_linenum "oclexer.mll" 6 91 97 "oclexer.mll" 6 91 109
+)
+"oclexer.mll" 80 82477 82501 "oclexer.mll" 80 82477 82510
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 80 82477 82511 "oclexer.mll" 80 82477 82517
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 80 82477 82488 "oclexer.mll" 80 82477 82517
+type(
+  unit
+)
+"oclexer.mll" 80 82477 82519 "oclexer.mll" 80 82477 82528
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  int_ref tokenizer "oclexer.ml" 1160 78805 78813 "oclexer.ml" 1160 78805 78822
+)
+"oclexer.mll" 80 82477 82529 "oclexer.mll" 80 82477 82538
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 80 82477 82539 "oclexer.mll" 80 82477 82545
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 80 82477 82519 "oclexer.mll" 80 82477 82545
+type(
+  Ocparser.token
+)
+"oclexer.mll" 80 82477 82486 "oclexer.mll" 80 82477 82547
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1389 82569 82573 "oclexer.ml" 1389 82569 82575
+type(
+  int
+)
+"oclexer.mll" 81 82598 82609 "oclexer.mll" 81 82598 82621
+type(
+  string -> Lexing.lexbuf -> unit
+)
+ident(
+  int_ref incr_linenum "oclexer.mll" 6 91 97 "oclexer.mll" 6 91 109
+)
+"oclexer.mll" 81 82598 82622 "oclexer.mll" 81 82598 82631
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 81 82598 82632 "oclexer.mll" 81 82598 82638
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 81 82598 82609 "oclexer.mll" 81 82598 82638
+type(
+  unit
+)
+"oclexer.mll" 81 82598 82640 "oclexer.mll" 81 82598 82649
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  int_ref tokenizer "oclexer.ml" 1160 78805 78813 "oclexer.ml" 1160 78805 78822
+)
+"oclexer.mll" 81 82598 82650 "oclexer.mll" 81 82598 82659
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 81 82598 82660 "oclexer.mll" 81 82598 82666
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 81 82598 82640 "oclexer.mll" 81 82598 82666
+type(
+  Ocparser.token
+)
+"oclexer.mll" 81 82598 82607 "oclexer.mll" 81 82598 82668
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1394 82690 82694 "oclexer.ml" 1394 82690 82696
+type(
+  int
+)
+"oclexer.mll" 82 82719 82732 "oclexer.mll" 82 82719 82744
+type(
+  string -> Lexing.lexbuf -> unit
+)
+ident(
+  int_ref incr_linenum "oclexer.mll" 6 91 97 "oclexer.mll" 6 91 109
+)
+"oclexer.mll" 82 82719 82745 "oclexer.mll" 82 82719 82754
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 82 82719 82755 "oclexer.mll" 82 82719 82761
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 82 82719 82732 "oclexer.mll" 82 82719 82761
+type(
+  unit
+)
+"oclexer.mll" 82 82719 82763 "oclexer.mll" 82 82719 82772
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  int_ref tokenizer "oclexer.ml" 1160 78805 78813 "oclexer.ml" 1160 78805 78822
+)
+"oclexer.mll" 82 82719 82773 "oclexer.mll" 82 82719 82782
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.mll" 82 82719 82783 "oclexer.mll" 82 82719 82789
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.mll" 82 82719 82763 "oclexer.mll" 82 82719 82789
+type(
+  Ocparser.token
+)
+"oclexer.mll" 82 82719 82730 "oclexer.mll" 82 82719 82791
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1399 82813 82817 "oclexer.ml" 1399 82813 82819
+type(
+  int
+)
+"oclexer.mll" 83 82842 82850 "oclexer.mll" 83 82842 82857
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1404 82879 82883 "oclexer.ml" 1404 82879 82900
+type(
+  int
+)
+ident(
+  def __ocaml_lex_state "oclexer.ml" 1404 82879 82904 "oclexer.ml" 1404 82879 82998
+)
+"oclexer.ml" 1404 82879 82904 "oclexer.ml" 1404 82879 82910
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1404 82879 82904 "oclexer.ml" 1404 82879 82929
+type(
+  Lexing.lexbuf -> unit
+)
+"oclexer.ml" 1404 82879 82930 "oclexer.ml" 1404 82879 82936
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1404 82879 82904 "oclexer.ml" 1404 82879 82936
+type(
+  unit
+)
+"oclexer.ml" 1404 82879 82938 "oclexer.ml" 1404 82879 82963
+type(
+  string -> Lexing.lexbuf -> int -> Ocparser.token
+)
+ident(
+  int_ref __ocaml_lex_tokenizer_rec "oclexer.ml" 1162 78889 78893 "oclexer.ml" 1162 78889 78918
+)
+"oclexer.ml" 1404 82879 82964 "oclexer.ml" 1404 82879 82973
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1162 78889 78919 "oclexer.ml" 1162 78889 78928
+)
+"oclexer.ml" 1404 82879 82974 "oclexer.ml" 1404 82879 82980
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1162 78889 78929 "oclexer.ml" 1162 78889 78935
+)
+"oclexer.ml" 1404 82879 82981 "oclexer.ml" 1404 82879 82998
+type(
+  int
+)
+ident(
+  int_ref __ocaml_lex_state "oclexer.ml" 1404 82879 82883 "oclexer.ml" 1404 82879 82900
+)
+"oclexer.ml" 1404 82879 82938 "oclexer.ml" 1404 82879 82998
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1404 82879 82904 "oclexer.ml" 1404 82879 82998
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1163 78956 78958 "oclexer.ml" 1404 82879 82998
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1406 83000 83004 "oclexer.ml" 1406 83000 83016
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  def line_comment "oclexer.ml" 1160 78805 78805 --
+)
+"oclexer.ml" 1406 83000 83017 "oclexer.ml" 1406 83000 83026
+type(
+  string
+)
+ident(
+  def file_name "oclexer.ml" 1406 83000 83027 "oclexer.ml" 1407 83036 83086
+)
+"oclexer.ml" 1406 83000 83027 "oclexer.ml" 1406 83000 83033
+type(
+  Lexing.lexbuf
+)
+ident(
+  def lexbuf "oclexer.ml" 1407 83036 83038 "oclexer.ml" 1407 83036 83086
+)
+"oclexer.ml" 1407 83036 83038 "oclexer.ml" 1407 83036 83066
+type(
+  string -> Lexing.lexbuf -> int -> Ocparser.token
+)
+ident(
+  int_ref __ocaml_lex_line_comment_rec "oclexer.ml" 1408 83087 83091 "oclexer.ml" 1408 83087 83119
+)
+"oclexer.ml" 1407 83036 83067 "oclexer.ml" 1407 83036 83076
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1406 83000 83017 "oclexer.ml" 1406 83000 83026
+)
+"oclexer.ml" 1407 83036 83077 "oclexer.ml" 1407 83036 83083
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1406 83000 83027 "oclexer.ml" 1406 83000 83033
+)
+"oclexer.ml" 1407 83036 83084 "oclexer.ml" 1407 83036 83086
+type(
+  int
+)
+"oclexer.ml" 1407 83036 83038 "oclexer.ml" 1407 83036 83086
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1408 83087 83091 "oclexer.ml" 1408 83087 83119
+type(
+  string -> Lexing.lexbuf -> int -> Ocparser.token
+)
+ident(
+  def __ocaml_lex_line_comment_rec "oclexer.ml" 1160 78805 78805 --
+)
+"oclexer.ml" 1408 83087 83120 "oclexer.ml" 1408 83087 83129
+type(
+  string
+)
+ident(
+  def file_name "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1420 83457 83579
+)
+"oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+type(
+  Lexing.lexbuf
+)
+ident(
+  def lexbuf "oclexer.ml" 1408 83087 83137 "oclexer.ml" 1420 83457 83579
+)
+"oclexer.ml" 1408 83087 83137 "oclexer.ml" 1408 83087 83154
+type(
+  int
+)
+ident(
+  def __ocaml_lex_state "oclexer.ml" 1409 83157 83159 "oclexer.ml" 1420 83457 83579
+)
+"oclexer.ml" 1409 83157 83165 "oclexer.ml" 1409 83157 83178
+type(
+  Lexing.lex_tables -> int -> Lexing.lexbuf -> int
+)
+ident(
+  ext_ref Lexing.engine
+)
+"oclexer.ml" 1409 83157 83179 "oclexer.ml" 1409 83157 83197
+type(
+  Lexing.lex_tables
+)
+ident(
+  int_ref __ocaml_lex_tables "oclexer.ml" 22 444 448 "oclexer.ml" 22 444 466
+)
+"oclexer.ml" 1409 83157 83198 "oclexer.ml" 1409 83157 83215
+type(
+  int
+)
+ident(
+  int_ref __ocaml_lex_state "oclexer.ml" 1408 83087 83137 "oclexer.ml" 1408 83087 83154
+)
+"oclexer.ml" 1409 83157 83216 "oclexer.ml" 1409 83157 83222
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+)
+"oclexer.ml" 1409 83157 83165 "oclexer.ml" 1409 83157 83222
+type(
+  int
+)
+"oclexer.ml" 1410 83228 83236 "oclexer.ml" 1410 83228 83237
+type(
+  int
+)
+"oclexer.mll" 86 83260 83287 "oclexer.mll" 86 83260 83299
+type(
+  string -> Lexing.lexbuf -> unit
+)
+ident(
+  int_ref incr_linenum "oclexer.mll" 6 91 97 "oclexer.mll" 6 91 109
+)
+"oclexer.mll" 86 83260 83300 "oclexer.mll" 86 83260 83309
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1408 83087 83120 "oclexer.ml" 1408 83087 83129
+)
+"oclexer.mll" 86 83260 83310 "oclexer.mll" 86 83260 83316
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+)
+"oclexer.mll" 86 83260 83287 "oclexer.mll" 86 83260 83316
+type(
+  unit
+)
+"oclexer.mll" 86 83260 83318 "oclexer.mll" 86 83260 83327
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  int_ref tokenizer "oclexer.ml" 1160 78805 78813 "oclexer.ml" 1160 78805 78822
+)
+"oclexer.mll" 86 83260 83328 "oclexer.mll" 86 83260 83337
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1408 83087 83120 "oclexer.ml" 1408 83087 83129
+)
+"oclexer.mll" 86 83260 83338 "oclexer.mll" 86 83260 83344
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+)
+"oclexer.mll" 86 83260 83318 "oclexer.mll" 86 83260 83344
+type(
+  Ocparser.token
+)
+"oclexer.mll" 86 83260 83285 "oclexer.mll" 86 83260 83346
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1415 83368 83372 "oclexer.ml" 1415 83368 83373
+type(
+  int
+)
+"oclexer.mll" 87 83396 83404 "oclexer.mll" 87 83396 83416
+type(
+  string -> Lexing.lexbuf -> Ocparser.token
+)
+ident(
+  int_ref line_comment "oclexer.ml" 1406 83000 83004 "oclexer.ml" 1406 83000 83016
+)
+"oclexer.mll" 87 83396 83417 "oclexer.mll" 87 83396 83426
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1408 83087 83120 "oclexer.ml" 1408 83087 83129
+)
+"oclexer.mll" 87 83396 83427 "oclexer.mll" 87 83396 83433
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+)
+"oclexer.mll" 87 83396 83402 "oclexer.mll" 87 83396 83435
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1420 83457 83461 "oclexer.ml" 1420 83457 83478
+type(
+  int
+)
+ident(
+  def __ocaml_lex_state "oclexer.ml" 1420 83457 83482 "oclexer.ml" 1420 83457 83579
+)
+"oclexer.ml" 1420 83457 83482 "oclexer.ml" 1420 83457 83488
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+)
+"oclexer.ml" 1420 83457 83482 "oclexer.ml" 1420 83457 83507
+type(
+  Lexing.lexbuf -> unit
+)
+"oclexer.ml" 1420 83457 83508 "oclexer.ml" 1420 83457 83514
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+)
+"oclexer.ml" 1420 83457 83482 "oclexer.ml" 1420 83457 83514
+type(
+  unit
+)
+"oclexer.ml" 1420 83457 83516 "oclexer.ml" 1420 83457 83544
+type(
+  string -> Lexing.lexbuf -> int -> Ocparser.token
+)
+ident(
+  int_ref __ocaml_lex_line_comment_rec "oclexer.ml" 1408 83087 83091 "oclexer.ml" 1408 83087 83119
+)
+"oclexer.ml" 1420 83457 83545 "oclexer.ml" 1420 83457 83554
+type(
+  string
+)
+ident(
+  int_ref file_name "oclexer.ml" 1408 83087 83120 "oclexer.ml" 1408 83087 83129
+)
+"oclexer.ml" 1420 83457 83555 "oclexer.ml" 1420 83457 83561
+type(
+  Lexing.lexbuf
+)
+ident(
+  int_ref lexbuf "oclexer.ml" 1408 83087 83130 "oclexer.ml" 1408 83087 83136
+)
+"oclexer.ml" 1420 83457 83562 "oclexer.ml" 1420 83457 83579
+type(
+  int
+)
+ident(
+  int_ref __ocaml_lex_state "oclexer.ml" 1420 83457 83461 "oclexer.ml" 1420 83457 83478
+)
+"oclexer.ml" 1420 83457 83516 "oclexer.ml" 1420 83457 83579
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1420 83457 83482 "oclexer.ml" 1420 83457 83579
+type(
+  Ocparser.token
+)
+"oclexer.ml" 1409 83157 83159 "oclexer.ml" 1420 83457 83579
+type(
+  Ocparser.token
+)

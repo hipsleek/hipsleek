@@ -1,0 +1,3312 @@
+"scriptarguments.ml" 1 0 4 "scriptarguments.ml" 1 0 14
+type(
+  bool ref
+)
+ident(
+  def parse_only "scriptarguments.ml" 3 28 28 --
+)
+"scriptarguments.ml" 1 0 17 "scriptarguments.ml" 1 0 20
+type(
+  bool -> bool ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 1 0 21 "scriptarguments.ml" 1 0 26
+type(
+  bool
+)
+"scriptarguments.ml" 1 0 17 "scriptarguments.ml" 1 0 26
+type(
+  bool ref
+)
+"scriptarguments.ml" 3 28 32 "scriptarguments.ml" 3 28 35
+type(
+  bool ref
+)
+ident(
+  def rtc "scriptarguments.ml" 5 49 49 --
+)
+"scriptarguments.ml" 3 28 38 "scriptarguments.ml" 3 28 41
+type(
+  bool -> bool ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 3 28 42 "scriptarguments.ml" 3 28 47
+type(
+  bool
+)
+"scriptarguments.ml" 3 28 38 "scriptarguments.ml" 3 28 47
+type(
+  bool ref
+)
+"scriptarguments.ml" 5 49 53 "scriptarguments.ml" 5 49 62
+type(
+  bool ref
+)
+ident(
+  def comp_pred "scriptarguments.ml" 7 76 76 --
+)
+"scriptarguments.ml" 5 49 65 "scriptarguments.ml" 5 49 68
+type(
+  bool -> bool ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 5 49 69 "scriptarguments.ml" 5 49 74
+type(
+  bool
+)
+"scriptarguments.ml" 5 49 65 "scriptarguments.ml" 5 49 74
+type(
+  bool ref
+)
+"scriptarguments.ml" 7 76 80 "scriptarguments.ml" 7 76 95
+type(
+  string list ref
+)
+ident(
+  def pred_to_compile "scriptarguments.ml" 9 122 122 --
+)
+"scriptarguments.ml" 7 76 98 "scriptarguments.ml" 7 76 101
+type(
+  string list -> string list ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 7 76 103 "scriptarguments.ml" 7 76 105
+type(
+  string list
+)
+type(
+  string list
+)
+"scriptarguments.ml" 7 76 98 "scriptarguments.ml" 7 76 120
+type(
+  string list ref
+)
+"scriptarguments.ml" 9 122 126 "scriptarguments.ml" 9 122 144
+type(
+  bool ref
+)
+ident(
+  def print_version_flag "scriptarguments.ml" 11 158 158 --
+)
+"scriptarguments.ml" 9 122 147 "scriptarguments.ml" 9 122 150
+type(
+  bool -> bool ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 9 122 151 "scriptarguments.ml" 9 122 156
+type(
+  bool
+)
+"scriptarguments.ml" 9 122 147 "scriptarguments.ml" 9 122 156
+type(
+  bool ref
+)
+"scriptarguments.ml" 11 158 162 "scriptarguments.ml" 11 158 167
+type(
+  bool ref
+)
+ident(
+  def inter "scriptarguments.ml" 13 181 181 --
+)
+"scriptarguments.ml" 11 158 170 "scriptarguments.ml" 11 158 173
+type(
+  bool -> bool ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 11 158 174 "scriptarguments.ml" 11 158 179
+type(
+  bool
+)
+"scriptarguments.ml" 11 158 170 "scriptarguments.ml" 11 158 179
+type(
+  bool ref
+)
+"scriptarguments.ml" 13 181 185 "scriptarguments.ml" 13 181 195
+type(
+  bool ref
+)
+ident(
+  def enable_gui "scriptarguments.ml" 15 209 209 --
+)
+"scriptarguments.ml" 13 181 198 "scriptarguments.ml" 13 181 201
+type(
+  bool -> bool ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 13 181 202 "scriptarguments.ml" 13 181 207
+type(
+  bool
+)
+"scriptarguments.ml" 13 181 198 "scriptarguments.ml" 13 181 207
+type(
+  bool ref
+)
+"scriptarguments.ml" 19 250 254 "scriptarguments.ml" 19 250 256
+type(
+  front_end ref
+)
+ident(
+  def fe "scriptarguments.ml" 21 273 273 --
+)
+"scriptarguments.ml" 19 250 259 "scriptarguments.ml" 19 250 262
+type(
+  front_end -> front_end ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"scriptarguments.ml" 19 250 263 "scriptarguments.ml" 19 250 271
+type(
+  front_end
+)
+"scriptarguments.ml" 19 250 259 "scriptarguments.ml" 19 250 271
+type(
+  front_end ref
+)
+"scriptarguments.ml" 21 273 277 "scriptarguments.ml" 21 273 285
+type(
+  string -> unit
+)
+ident(
+  def set_pred "scriptarguments.ml" 25 362 362 --
+)
+"scriptarguments.ml" 21 273 286 "scriptarguments.ml" 21 273 289
+type(
+  string
+)
+ident(
+  def arg "scriptarguments.ml" 22 293 295 "scriptarguments.ml" 23 314 358
+)
+"scriptarguments.ml" 22 293 295 "scriptarguments.ml" 22 293 304
+type(
+  bool ref
+)
+ident(
+  int_ref comp_pred "scriptarguments.ml" 5 49 53 "scriptarguments.ml" 5 49 62
+)
+"scriptarguments.ml" 22 293 305 "scriptarguments.ml" 22 293 307
+type(
+  bool ref -> bool -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 22 293 308 "scriptarguments.ml" 22 293 312
+type(
+  bool
+)
+"scriptarguments.ml" 22 293 295 "scriptarguments.ml" 22 293 312
+type(
+  unit
+)
+"scriptarguments.ml" 23 314 316 "scriptarguments.ml" 23 314 331
+type(
+  string list ref
+)
+ident(
+  int_ref pred_to_compile "scriptarguments.ml" 7 76 80 "scriptarguments.ml" 7 76 95
+)
+"scriptarguments.ml" 23 314 332 "scriptarguments.ml" 23 314 334
+type(
+  string list ref -> string list -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 23 314 335 "scriptarguments.ml" 23 314 338
+type(
+  string
+)
+ident(
+  int_ref arg "scriptarguments.ml" 21 273 286 "scriptarguments.ml" 21 273 289
+)
+"scriptarguments.ml" 23 314 342 "scriptarguments.ml" 23 314 343
+type(
+  string list ref -> string list
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"scriptarguments.ml" 23 314 343 "scriptarguments.ml" 23 314 358
+type(
+  string list ref
+)
+ident(
+  int_ref pred_to_compile "scriptarguments.ml" 7 76 80 "scriptarguments.ml" 7 76 95
+)
+"scriptarguments.ml" 23 314 342 "scriptarguments.ml" 23 314 358
+type(
+  string list
+)
+"scriptarguments.ml" 23 314 335 "scriptarguments.ml" 23 314 358
+type(
+  string list
+)
+"scriptarguments.ml" 23 314 316 "scriptarguments.ml" 23 314 358
+type(
+  unit
+)
+"scriptarguments.ml" 22 293 295 "scriptarguments.ml" 23 314 358
+type(
+  unit
+)
+"scriptarguments.ml" 25 362 366 "scriptarguments.ml" 25 362 383
+type(
+  string -> unit
+)
+ident(
+  def set_proc_verified "scriptarguments.ml" 29 489 489 --
+)
+"scriptarguments.ml" 25 362 384 "scriptarguments.ml" 25 362 387
+type(
+  string
+)
+ident(
+  def arg "scriptarguments.ml" 26 390 392 "scriptarguments.ml" 27 428 486
+)
+"scriptarguments.ml" 26 390 396 "scriptarguments.ml" 26 390 401
+type(
+  string list
+)
+"scriptarguments.ml" 26 390 404 "scriptarguments.ml" 26 390 416
+type(
+  string -> string -> string list
+)
+ident(
+  ext_ref Gen.split_by
+)
+"scriptarguments.ml" 26 390 417 "scriptarguments.ml" 26 390 420
+type(
+  string
+)
+"scriptarguments.ml" 26 390 421 "scriptarguments.ml" 26 390 424
+type(
+  string
+)
+ident(
+  int_ref arg "scriptarguments.ml" 25 362 384 "scriptarguments.ml" 25 362 387
+)
+"scriptarguments.ml" 26 390 404 "scriptarguments.ml" 26 390 424
+type(
+  string list
+)
+"scriptarguments.ml" 27 428 429 "scriptarguments.ml" 27 428 451
+type(
+  string list ref
+)
+ident(
+  ext_ref Globals.procs_verified
+)
+"scriptarguments.ml" 27 428 452 "scriptarguments.ml" 27 428 454
+type(
+  string list ref -> string list -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 27 428 455 "scriptarguments.ml" 27 428 460
+type(
+  string list
+)
+ident(
+  int_ref procs "scriptarguments.ml" 26 390 396 "scriptarguments.ml" 26 390 401
+)
+"scriptarguments.ml" 27 428 461 "scriptarguments.ml" 27 428 462
+type(
+  string list -> string list -> string list
+)
+ident(
+  ext_ref Pervasives.( @ )
+)
+"scriptarguments.ml" 27 428 463 "scriptarguments.ml" 27 428 464
+type(
+  string list ref -> string list
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"scriptarguments.ml" 27 428 464 "scriptarguments.ml" 27 428 486
+type(
+  string list ref
+)
+ident(
+  ext_ref Globals.procs_verified
+)
+"scriptarguments.ml" 27 428 463 "scriptarguments.ml" 27 428 486
+type(
+  string list
+)
+"scriptarguments.ml" 27 428 455 "scriptarguments.ml" 27 428 486
+type(
+  string list
+)
+"scriptarguments.ml" 27 428 429 "scriptarguments.ml" 27 428 486
+type(
+  unit
+)
+"scriptarguments.ml" 26 390 392 "scriptarguments.ml" 27 428 486
+type(
+  unit
+)
+"scriptarguments.ml" 29 489 493 "scriptarguments.ml" 29 489 505
+type(
+  string -> unit
+)
+ident(
+  def set_frontend "scriptarguments.ml" 36 709 709 --
+)
+"scriptarguments.ml" 29 489 506 "scriptarguments.ml" 29 489 512
+type(
+  string
+)
+ident(
+  def fe_str "scriptarguments.ml" 29 489 515 "scriptarguments.ml" 32 590 643
+)
+"scriptarguments.ml" 29 489 521 "scriptarguments.ml" 29 489 527
+type(
+  string
+)
+ident(
+  int_ref fe_str "scriptarguments.ml" 29 489 506 "scriptarguments.ml" 29 489 512
+)
+"scriptarguments.ml" 30 534 538 "scriptarguments.ml" 30 534 546
+type(
+  string
+)
+"scriptarguments.ml" 30 534 550 "scriptarguments.ml" 30 534 552
+type(
+  front_end ref
+)
+ident(
+  int_ref fe "scriptarguments.ml" 19 250 254 "scriptarguments.ml" 19 250 256
+)
+"scriptarguments.ml" 30 534 553 "scriptarguments.ml" 30 534 555
+type(
+  front_end ref -> front_end -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 30 534 556 "scriptarguments.ml" 30 534 564
+type(
+  front_end
+)
+"scriptarguments.ml" 30 534 550 "scriptarguments.ml" 30 534 564
+type(
+  unit
+)
+"scriptarguments.ml" 31 565 569 "scriptarguments.ml" 31 565 574
+type(
+  string
+)
+"scriptarguments.ml" 31 565 578 "scriptarguments.ml" 31 565 580
+type(
+  front_end ref
+)
+ident(
+  int_ref fe "scriptarguments.ml" 19 250 254 "scriptarguments.ml" 19 250 256
+)
+"scriptarguments.ml" 31 565 581 "scriptarguments.ml" 31 565 583
+type(
+  front_end ref -> front_end -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 31 565 584 "scriptarguments.ml" 31 565 589
+type(
+  front_end
+)
+"scriptarguments.ml" 31 565 578 "scriptarguments.ml" 31 565 589
+type(
+  unit
+)
+"scriptarguments.ml" 32 590 594 "scriptarguments.ml" 32 590 595
+type(
+  string
+)
+"scriptarguments.ml" 32 590 599 "scriptarguments.ml" 32 590 607
+type(
+  string -> unit
+)
+ident(
+  ext_ref Pervasives.failwith
+)
+"scriptarguments.ml" 32 590 609 "scriptarguments.ml" 32 590 633
+type(
+  string
+)
+"scriptarguments.ml" 32 590 634 "scriptarguments.ml" 32 590 635
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"scriptarguments.ml" 32 590 636 "scriptarguments.ml" 32 590 642
+type(
+  string
+)
+ident(
+  int_ref fe_str "scriptarguments.ml" 29 489 506 "scriptarguments.ml" 29 489 512
+)
+"scriptarguments.ml" 32 590 608 "scriptarguments.ml" 32 590 643
+type(
+  string
+)
+"scriptarguments.ml" 32 590 599 "scriptarguments.ml" 32 590 643
+type(
+  unit
+)
+"scriptarguments.ml" 29 489 515 "scriptarguments.ml" 32 590 643
+type(
+  unit
+)
+"scriptarguments.ml" 36 709 713 "scriptarguments.ml" 36 709 729
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  def common_arguments "scriptarguments.ml" 209 10901 10901 --
+)
+"scriptarguments.ml" 37 734 738 "scriptarguments.ml" 37 734 749
+type(
+  string
+)
+"scriptarguments.ml" 37 734 759 "scriptarguments.ml" 37 734 782
+type(
+  bool ref
+)
+ident(
+  ext_ref Smtsolver.try_induction
+)
+"scriptarguments.ml" 37 734 751 "scriptarguments.ml" 37 734 782
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 38 784 786 "scriptarguments.ml" 38 784 833
+type(
+  string
+)
+"scriptarguments.ml" 37 734 737 "scriptarguments.ml" 38 784 834
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 39 849 854 "scriptarguments.ml" 39 849 866
+type(
+  string
+)
+"scriptarguments.ml" 39 849 876 "scriptarguments.ml" 39 849 903
+type(
+  bool ref
+)
+ident(
+  ext_ref Smtsolver.print_implication
+)
+"scriptarguments.ml" 39 849 868 "scriptarguments.ml" 39 849 903
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 40 905 909 "scriptarguments.ml" 40 905 975
+type(
+  string
+)
+"scriptarguments.ml" 39 849 853 "scriptarguments.ml" 40 905 976
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 41 991 996 "scriptarguments.ml" 41 991 1006
+type(
+  string
+)
+"scriptarguments.ml" 41 991 1016 "scriptarguments.ml" 41 991 1054
+type(
+  bool ref
+)
+ident(
+  ext_ref Smtsolver.print_original_solver_output
+)
+"scriptarguments.ml" 41 991 1008 "scriptarguments.ml" 41 991 1054
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 42 1056 1060 "scriptarguments.ml" 42 1056 1112
+type(
+  string
+)
+"scriptarguments.ml" 41 991 995 "scriptarguments.ml" 42 1056 1113
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 43 1128 1133 "scriptarguments.ml" 43 1128 1143
+type(
+  string
+)
+"scriptarguments.ml" 43 1128 1153 "scriptarguments.ml" 43 1128 1174
+type(
+  bool ref
+)
+ident(
+  ext_ref Smtsolver.print_input
+)
+"scriptarguments.ml" 43 1128 1145 "scriptarguments.ml" 43 1128 1174
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 44 1176 1180 "scriptarguments.ml" 44 1176 1220
+type(
+  string
+)
+"scriptarguments.ml" 43 1128 1132 "scriptarguments.ml" 44 1176 1221
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 45 1236 1238 "scriptarguments.ml" 45 1236 1256
+type(
+  string
+)
+"scriptarguments.ml" 45 1236 1268 "scriptarguments.ml" 45 1236 1287
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.omega_simpl
+)
+"scriptarguments.ml" 45 1236 1258 "scriptarguments.ml" 45 1236 1287
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 46 1289 1290 "scriptarguments.ml" 46 1289 1371
+type(
+  string
+)
+"scriptarguments.ml" 45 1236 1237 "scriptarguments.ml" 46 1289 1372
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 47 1374 1376 "scriptarguments.ml" 47 1374 1395
+type(
+  string
+)
+"scriptarguments.ml" 47 1374 1405 "scriptarguments.ml" 47 1374 1426
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.simplify_pure
+)
+"scriptarguments.ml" 47 1374 1397 "scriptarguments.ml" 47 1374 1426
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 48 1428 1429 "scriptarguments.ml" 48 1428 1469
+type(
+  string
+)
+"scriptarguments.ml" 47 1374 1375 "scriptarguments.ml" 48 1428 1470
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 49 1472 1474 "scriptarguments.ml" 49 1472 1502
+type(
+  string
+)
+"scriptarguments.ml" 49 1472 1512 "scriptarguments.ml" 49 1472 1535
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.lemma_heuristic
+)
+"scriptarguments.ml" 49 1472 1504 "scriptarguments.ml" 49 1472 1535
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 50 1537 1538 "scriptarguments.ml" 50 1537 1611
+type(
+  string
+)
+"scriptarguments.ml" 49 1472 1473 "scriptarguments.ml" 50 1537 1612
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 51 1614 1616 "scriptarguments.ml" 51 1614 1637
+type(
+  string
+)
+"scriptarguments.ml" 51 1614 1647 "scriptarguments.ml" 51 1614 1672
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.move_exist_to_LHS
+)
+"scriptarguments.ml" 51 1614 1639 "scriptarguments.ml" 51 1614 1672
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 52 1674 1675 "scriptarguments.ml" 52 1674 1770
+type(
+  string
+)
+"scriptarguments.ml" 51 1614 1615 "scriptarguments.ml" 52 1674 1771
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 53 1773 1775 "scriptarguments.ml" 53 1773 1791
+type(
+  string
+)
+"scriptarguments.ml" 53 1773 1801 "scriptarguments.ml" 53 1773 1821
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.max_renaming
+)
+"scriptarguments.ml" 53 1773 1793 "scriptarguments.ml" 53 1773 1821
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 54 1823 1824 "scriptarguments.ml" 54 1823 1859
+type(
+  string
+)
+"scriptarguments.ml" 53 1773 1774 "scriptarguments.ml" 54 1823 1860
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 55 1862 1864 "scriptarguments.ml" 55 1862 1881
+type(
+  string
+)
+"scriptarguments.ml" 55 1862 1893 "scriptarguments.ml" 55 1862 1911
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.anon_exist
+)
+"scriptarguments.ml" 55 1862 1883 "scriptarguments.ml" 55 1862 1911
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 56 1913 1914 "scriptarguments.ml" 56 1913 1982
+type(
+  string
+)
+"scriptarguments.ml" 55 1862 1863 "scriptarguments.ml" 56 1913 1983
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 57 1985 1987 "scriptarguments.ml" 57 1985 2005
+type(
+  string
+)
+"scriptarguments.ml" 57 1985 2015 "scriptarguments.ml" 57 1985 2033
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.wrap_exist
+)
+"scriptarguments.ml" 57 1985 2007 "scriptarguments.ml" 57 1985 2033
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 58 2035 2036 "scriptarguments.ml" 58 2035 2116
+type(
+  string
+)
+"scriptarguments.ml" 57 1985 1986 "scriptarguments.ml" 58 2035 2117
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 59 2119 2121 "scriptarguments.ml" 59 2119 2128
+type(
+  string
+)
+"scriptarguments.ml" 59 2119 2140 "scriptarguments.ml" 59 2119 2169
+type(
+  bool ref
+)
+ident(
+  ext_ref Tpdispatcher.elim_exists_flag
+)
+"scriptarguments.ml" 59 2119 2130 "scriptarguments.ml" 59 2119 2169
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 60 2171 2172 "scriptarguments.ml" 60 2171 2229
+type(
+  string
+)
+"scriptarguments.ml" 59 2119 2120 "scriptarguments.ml" 60 2171 2230
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 61 2232 2234 "scriptarguments.ml" 61 2232 2245
+type(
+  string
+)
+"scriptarguments.ml" 61 2232 2257 "scriptarguments.ml" 61 2232 2284
+type(
+  bool ref
+)
+ident(
+  ext_ref Tpdispatcher.filtering_flag
+)
+"scriptarguments.ml" 61 2232 2247 "scriptarguments.ml" 61 2232 2284
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 62 2286 2287 "scriptarguments.ml" 62 2286 2313
+type(
+  string
+)
+"scriptarguments.ml" 61 2232 2233 "scriptarguments.ml" 62 2286 2314
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 63 2316 2318 "scriptarguments.ml" 63 2316 2337
+type(
+  string
+)
+"scriptarguments.ml" 63 2316 2347 "scriptarguments.ml" 63 2316 2370
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.check_coercions
+)
+"scriptarguments.ml" 63 2316 2339 "scriptarguments.ml" 63 2316 2370
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 64 2372 2373 "scriptarguments.ml" 64 2372 2398
+type(
+  string
+)
+"scriptarguments.ml" 63 2316 2317 "scriptarguments.ml" 64 2372 2399
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 65 2401 2403 "scriptarguments.ml" 65 2401 2408
+type(
+  string
+)
+"scriptarguments.ml" 65 2401 2418 "scriptarguments.ml" 65 2401 2438
+type(
+  bool ref
+)
+ident(
+  ext_ref Debug.devel_debug_on
+)
+"scriptarguments.ml" 65 2401 2410 "scriptarguments.ml" 65 2401 2438
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 66 2440 2444 "scriptarguments.ml" 66 2440 2465
+type(
+  string
+)
+"scriptarguments.ml" 65 2401 2402 "scriptarguments.ml" 66 2440 2466
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 67 2468 2470 "scriptarguments.ml" 67 2468 2493
+type(
+  string
+)
+"scriptarguments.ml" 67 2468 2504 "scriptarguments.ml" 67 2468 2544
+type(
+  unit -> unit
+)
+ident(
+  ext_ref Debug.enable_dd_and_orig_conseq_printing
+)
+"scriptarguments.ml" 67 2468 2495 "scriptarguments.ml" 67 2468 2544
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 68 2546 2550 "scriptarguments.ml" 68 2546 2650
+type(
+  string
+)
+"scriptarguments.ml" 67 2468 2469 "scriptarguments.ml" 68 2546 2651
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 69 2653 2655 "scriptarguments.ml" 69 2653 2662
+type(
+  string
+)
+"scriptarguments.ml" 69 2653 2672 "scriptarguments.ml" 69 2653 2689
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.show_gist
+)
+"scriptarguments.ml" 69 2653 2664 "scriptarguments.ml" 69 2653 2689
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 70 2691 2695 "scriptarguments.ml" 70 2691 2729
+type(
+  string
+)
+"scriptarguments.ml" 69 2653 2654 "scriptarguments.ml" 70 2691 2730
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 71 2732 2734 "scriptarguments.ml" 71 2732 2750
+type(
+  string
+)
+"scriptarguments.ml" 71 2732 2760 "scriptarguments.ml" 71 2732 2780
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.hull_pre_inv
+)
+"scriptarguments.ml" 71 2732 2752 "scriptarguments.ml" 71 2732 2780
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 72 2782 2783 "scriptarguments.ml" 72 2782 2826
+type(
+  string
+)
+"scriptarguments.ml" 71 2732 2733 "scriptarguments.ml" 72 2782 2827
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 73 2829 2831 "scriptarguments.ml" 73 2829 2846
+type(
+  string
+)
+"scriptarguments.ml" 73 2829 2862 "scriptarguments.ml" 73 2829 2881
+type(
+  float ref
+)
+ident(
+  ext_ref Globals.sat_timeout
+)
+"scriptarguments.ml" 73 2829 2848 "scriptarguments.ml" 73 2829 2881
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 74 2883 2884 "scriptarguments.ml" 74 2883 2910
+type(
+  string
+)
+"scriptarguments.ml" 73 2829 2830 "scriptarguments.ml" 74 2883 2911
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 75 2913 2915 "scriptarguments.ml" 75 2913 2932
+type(
+  string
+)
+"scriptarguments.ml" 75 2913 2948 "scriptarguments.ml" 75 2913 2969
+type(
+  float ref
+)
+ident(
+  ext_ref Globals.imply_timeout
+)
+"scriptarguments.ml" 75 2913 2934 "scriptarguments.ml" 75 2913 2969
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 76 2971 2975 "scriptarguments.ml" 76 2971 3003
+type(
+  string
+)
+"scriptarguments.ml" 75 2913 2914 "scriptarguments.ml" 76 2971 3004
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 77 3006 3008 "scriptarguments.ml" 77 3006 3021
+type(
+  string
+)
+"scriptarguments.ml" 77 3006 3034 "scriptarguments.ml" 77 3006 3060
+type(
+  string -> unit
+)
+ident(
+  ext_ref Prooftracer.set_proof_file
+)
+"scriptarguments.ml" 77 3006 3023 "scriptarguments.ml" 77 3006 3060
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 78 3062 3066 "scriptarguments.ml" 78 3062 3094
+type(
+  string
+)
+"scriptarguments.ml" 77 3006 3007 "scriptarguments.ml" 78 3062 3095
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 79 3097 3099 "scriptarguments.ml" 79 3097 3112
+type(
+  string
+)
+"scriptarguments.ml" 79 3097 3122 "scriptarguments.ml" 79 3097 3139
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.trace_all
+)
+"scriptarguments.ml" 79 3097 3114 "scriptarguments.ml" 79 3097 3139
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 80 3141 3145 "scriptarguments.ml" 80 3141 3168
+type(
+  string
+)
+"scriptarguments.ml" 79 3097 3098 "scriptarguments.ml" 80 3141 3169
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 81 3171 3173 "scriptarguments.ml" 81 3171 3185
+type(
+  string
+)
+"scriptarguments.ml" 81 3171 3198 "scriptarguments.ml" 81 3171 3218
+type(
+  string -> unit
+)
+ident(
+  ext_ref Cvclite.set_log_file
+)
+"scriptarguments.ml" 81 3171 3187 "scriptarguments.ml" 81 3171 3218
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 82 3220 3224 "scriptarguments.ml" 82 3220 3272
+type(
+  string
+)
+"scriptarguments.ml" 81 3171 3172 "scriptarguments.ml" 82 3220 3273
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 84 3327 3329 "scriptarguments.ml" 84 3327 3341
+type(
+  string
+)
+"scriptarguments.ml" 84 3327 3352 "scriptarguments.ml" 84 3327 3369
+type(
+  unit -> unit
+)
+ident(
+  ext_ref Cvc3.set_log_file
+)
+"scriptarguments.ml" 84 3327 3343 "scriptarguments.ml" 84 3327 3369
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 85 3371 3375 "scriptarguments.ml" 85 3371 3428
+type(
+  string
+)
+"scriptarguments.ml" 84 3327 3328 "scriptarguments.ml" 85 3371 3429
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 86 3431 3433 "scriptarguments.ml" 86 3431 3446
+type(
+  string
+)
+"scriptarguments.ml" 86 3431 3456 "scriptarguments.ml" 86 3431 3474
+type(
+  bool ref
+)
+ident(
+  ext_ref Omega.log_all_flag
+)
+"scriptarguments.ml" 86 3431 3448 "scriptarguments.ml" 86 3431 3474
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 87 3476 3477 "scriptarguments.ml" 87 3476 3540
+type(
+  string
+)
+"scriptarguments.ml" 86 3431 3432 "scriptarguments.ml" 87 3476 3541
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 88 3543 3545 "scriptarguments.ml" 88 3543 3561
+type(
+  string
+)
+"scriptarguments.ml" 88 3543 3571 "scriptarguments.ml" 88 3543 3592
+type(
+  bool ref
+)
+ident(
+  ext_ref Isabelle.log_all_flag
+)
+"scriptarguments.ml" 88 3543 3563 "scriptarguments.ml" 88 3543 3592
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 89 3594 3595 "scriptarguments.ml" 89 3594 3651
+type(
+  string
+)
+"scriptarguments.ml" 88 3543 3544 "scriptarguments.ml" 89 3594 3652
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 90 3654 3656 "scriptarguments.ml" 90 3654 3667
+type(
+  string
+)
+"scriptarguments.ml" 90 3654 3677 "scriptarguments.ml" 90 3654 3693
+type(
+  bool ref
+)
+ident(
+  ext_ref Coq.log_all_flag
+)
+"scriptarguments.ml" 90 3654 3669 "scriptarguments.ml" 90 3654 3693
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 91 3695 3696 "scriptarguments.ml" 91 3695 3745
+type(
+  string
+)
+"scriptarguments.ml" 90 3654 3655 "scriptarguments.ml" 91 3695 3746
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 92 3748 3750 "scriptarguments.ml" 92 3748 3762
+type(
+  string
+)
+"scriptarguments.ml" 92 3748 3772 "scriptarguments.ml" 92 3748 3789
+type(
+  bool ref
+)
+ident(
+  ext_ref Mona.log_all_flag
+)
+"scriptarguments.ml" 92 3748 3764 "scriptarguments.ml" 92 3748 3789
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 93 3791 3792 "scriptarguments.ml" 93 3791 3845
+type(
+  string
+)
+"scriptarguments.ml" 92 3748 3749 "scriptarguments.ml" 93 3791 3846
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 94 3848 3850 "scriptarguments.ml" 94 3848 3864
+type(
+  string
+)
+"scriptarguments.ml" 94 3848 3874 "scriptarguments.ml" 94 3848 3891
+type(
+  bool ref
+)
+ident(
+  ext_ref Redlog.is_log_all
+)
+"scriptarguments.ml" 94 3848 3866 "scriptarguments.ml" 94 3848 3891
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 95 3893 3897 "scriptarguments.ml" 95 3893 3957
+type(
+  string
+)
+"scriptarguments.ml" 94 3848 3849 "scriptarguments.ml" 95 3893 3958
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 96 3960 3962 "scriptarguments.ml" 96 3960 3982
+type(
+  string
+)
+"scriptarguments.ml" 96 3960 3992 "scriptarguments.ml" 96 3960 4009
+type(
+  bool ref
+)
+ident(
+  ext_ref Isabelle.bag_flag
+)
+"scriptarguments.ml" 96 3960 3984 "scriptarguments.ml" 96 3960 4009
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 97 4011 4012 "scriptarguments.ml" 97 4011 4073
+type(
+  string
+)
+"scriptarguments.ml" 96 3960 3961 "scriptarguments.ml" 97 4011 4074
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 98 4076 4078 "scriptarguments.ml" 98 4076 4085
+type(
+  string
+)
+"scriptarguments.ml" 98 4076 4095 "scriptarguments.ml" 98 4076 4112
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.allow_imm
+)
+"scriptarguments.ml" 98 4076 4087 "scriptarguments.ml" 98 4076 4112
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 98 4076 4113 "scriptarguments.ml" 98 4076 4157
+type(
+  string
+)
+"scriptarguments.ml" 98 4076 4077 "scriptarguments.ml" 98 4076 4158
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 99 4160 4162 "scriptarguments.ml" 99 4160 4177
+type(
+  string
+)
+"scriptarguments.ml" 99 4160 4189 "scriptarguments.ml" 99 4160 4209
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.use_coercion
+)
+"scriptarguments.ml" 99 4160 4179 "scriptarguments.ml" 99 4160 4209
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 100 4211 4215 "scriptarguments.ml" 100 4211 4244
+type(
+  string
+)
+"scriptarguments.ml" 99 4160 4161 "scriptarguments.ml" 100 4211 4245
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 101 4247 4249 "scriptarguments.ml" 101 4247 4267
+type(
+  string
+)
+"scriptarguments.ml" 101 4247 4279 "scriptarguments.ml" 101 4247 4298
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.elim_exists
+)
+"scriptarguments.ml" 101 4247 4269 "scriptarguments.ml" 101 4247 4298
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 102 4300 4301 "scriptarguments.ml" 102 4300 4367
+type(
+  string
+)
+"scriptarguments.ml" 101 4247 4248 "scriptarguments.ml" 102 4300 4368
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 103 4370 4372 "scriptarguments.ml" 103 4370 4383
+type(
+  string
+)
+"scriptarguments.ml" 103 4370 4393 "scriptarguments.ml" 103 4370 4407
+type(
+  bool ref
+)
+ident(
+  ext_ref Solver.no_diff
+)
+"scriptarguments.ml" 103 4370 4385 "scriptarguments.ml" 103 4370 4407
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 104 4409 4410 "scriptarguments.ml" 104 4409 4472
+type(
+  string
+)
+"scriptarguments.ml" 103 4370 4371 "scriptarguments.ml" 104 4409 4473
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 105 4475 4477 "scriptarguments.ml" 105 4475 4487
+type(
+  string
+)
+"scriptarguments.ml" 105 4475 4499 "scriptarguments.ml" 105 4475 4514
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.use_set
+)
+"scriptarguments.ml" 105 4475 4489 "scriptarguments.ml" 105 4475 4514
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 106 4516 4517 "scriptarguments.ml" 106 4516 4548
+type(
+  string
+)
+"scriptarguments.ml" 105 4475 4476 "scriptarguments.ml" 106 4516 4549
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 107 4551 4553 "scriptarguments.ml" 107 4551 4567
+type(
+  string
+)
+"scriptarguments.ml" 107 4551 4577 "scriptarguments.ml" 107 4551 4595
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.elim_unsat
+)
+"scriptarguments.ml" 107 4551 4569 "scriptarguments.ml" 107 4551 4595
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 108 4597 4601 "scriptarguments.ml" 108 4597 4666
+type(
+  string
+)
+"scriptarguments.ml" 107 4551 4552 "scriptarguments.ml" 108 4597 4667
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 109 4669 4671 "scriptarguments.ml" 109 4669 4680
+type(
+  string
+)
+"scriptarguments.ml" 109 4669 4694 "scriptarguments.ml" 109 4669 4709
+type(
+  int ref
+)
+ident(
+  ext_ref Globals.n_xpure
+)
+"scriptarguments.ml" 109 4669 4682 "scriptarguments.ml" 109 4669 4709
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 110 4711 4715 "scriptarguments.ml" 110 4711 4748
+type(
+  string
+)
+"scriptarguments.ml" 109 4669 4670 "scriptarguments.ml" 110 4711 4749
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 111 4751 4753 "scriptarguments.ml" 111 4751 4761
+type(
+  string
+)
+"scriptarguments.ml" 111 4751 4771 "scriptarguments.ml" 111 4751 4781
+type(
+  bool ref
+)
+ident(
+  int_ref parse_only "scriptarguments.ml" 1 0 4 "scriptarguments.ml" 1 0 14
+)
+"scriptarguments.ml" 111 4751 4763 "scriptarguments.ml" 111 4751 4781
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 112 4783 4784 "scriptarguments.ml" 112 4783 4796
+type(
+  string
+)
+"scriptarguments.ml" 111 4751 4752 "scriptarguments.ml" 112 4783 4797
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 113 4799 4801 "scriptarguments.ml" 113 4799 4818
+type(
+  string
+)
+"scriptarguments.ml" 113 4799 4828 "scriptarguments.ml" 113 4799 4847
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.print_mvars
+)
+"scriptarguments.ml" 113 4799 4820 "scriptarguments.ml" 113 4799 4847
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 114 4849 4850 "scriptarguments.ml" 114 4849 4888
+type(
+  string
+)
+"scriptarguments.ml" 113 4799 4800 "scriptarguments.ml" 114 4849 4889
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 115 4891 4893 "scriptarguments.ml" 115 4891 4908
+type(
+  string
+)
+"scriptarguments.ml" 115 4891 4918 "scriptarguments.ml" 115 4891 4937
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.print_x_inv
+)
+"scriptarguments.ml" 115 4891 4910 "scriptarguments.ml" 115 4891 4937
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 116 4939 4940 "scriptarguments.ml" 116 4939 4972
+type(
+  string
+)
+"scriptarguments.ml" 115 4891 4892 "scriptarguments.ml" 116 4939 4973
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 117 4975 4977 "scriptarguments.ml" 117 4975 4984
+type(
+  string
+)
+"scriptarguments.ml" 117 4975 4996 "scriptarguments.ml" 117 4975 5013
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.check_all
+)
+"scriptarguments.ml" 117 4975 4986 "scriptarguments.ml" 117 4975 5013
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 118 5015 5016 "scriptarguments.ml" 118 5015 5054
+type(
+  string
+)
+"scriptarguments.ml" 117 4975 4976 "scriptarguments.ml" 118 5015 5055
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 119 5057 5059 "scriptarguments.ml" 119 5057 5074
+type(
+  string
+)
+"scriptarguments.ml" 119 5057 5089 "scriptarguments.ml" 119 5057 5095
+type(
+  string
+)
+"scriptarguments.ml" 119 5057 5097 "scriptarguments.ml" 119 5057 5104
+type(
+  string
+)
+"scriptarguments.ml" 119 5057 5088 "scriptarguments.ml" 119 5057 5105
+type(
+  string list
+)
+"scriptarguments.ml" 119 5057 5107 "scriptarguments.ml" 119 5057 5130
+type(
+  string -> unit
+)
+ident(
+  ext_ref Isabelle.building_image
+)
+"scriptarguments.ml" 119 5057 5076 "scriptarguments.ml" 119 5057 5131
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 120 5133 5134 "scriptarguments.ml" 120 5133 5186
+type(
+  string
+)
+"scriptarguments.ml" 119 5057 5058 "scriptarguments.ml" 120 5133 5187
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 121 5189 5191 "scriptarguments.ml" 121 5189 5196
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5211 "scriptarguments.ml" 121 5189 5217
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5219 "scriptarguments.ml" 121 5189 5225
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5227 "scriptarguments.ml" 121 5189 5234
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5236 "scriptarguments.ml" 121 5189 5240
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5242 "scriptarguments.ml" 121 5189 5252
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5254 "scriptarguments.ml" 121 5189 5259
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5261 "scriptarguments.ml" 121 5189 5267
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5269 "scriptarguments.ml" 121 5189 5276
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5278 "scriptarguments.ml" 121 5189 5282
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5284 "scriptarguments.ml" 121 5189 5288
+type(
+  string
+)
+"scriptarguments.ml" 122 5290 5291 "scriptarguments.ml" 122 5290 5295
+type(
+  string
+)
+"scriptarguments.ml" 122 5290 5297 "scriptarguments.ml" 122 5290 5302
+type(
+  string
+)
+"scriptarguments.ml" 122 5290 5304 "scriptarguments.ml" 122 5290 5308
+type(
+  string
+)
+"scriptarguments.ml" 122 5290 5310 "scriptarguments.ml" 122 5290 5318
+type(
+  string
+)
+"scriptarguments.ml" 122 5290 5320 "scriptarguments.ml" 122 5290 5324
+type(
+  string
+)
+"scriptarguments.ml" 122 5290 5326 "scriptarguments.ml" 122 5290 5331
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5210 "scriptarguments.ml" 122 5290 5333
+type(
+  string list
+)
+"scriptarguments.ml" 122 5290 5335 "scriptarguments.ml" 122 5290 5354
+type(
+  string -> unit
+)
+ident(
+  ext_ref Tpdispatcher.set_tp
+)
+"scriptarguments.ml" 121 5189 5198 "scriptarguments.ml" 122 5290 5355
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 123 5357 5358 "scriptarguments.ml" 123 5357 5633
+type(
+  string
+)
+"scriptarguments.ml" 121 5189 5190 "scriptarguments.ml" 123 5357 5634
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 124 5636 5638 "scriptarguments.ml" 124 5636 5656
+type(
+  string
+)
+"scriptarguments.ml" 124 5636 5670 "scriptarguments.ml" 124 5636 5698
+type(
+  int ref
+)
+ident(
+  ext_ref Omega.omega_restart_interval
+)
+"scriptarguments.ml" 124 5636 5658 "scriptarguments.ml" 124 5636 5698
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 125 5700 5701 "scriptarguments.ml" 125 5700 5775
+type(
+  string
+)
+"scriptarguments.ml" 124 5636 5637 "scriptarguments.ml" 125 5700 5776
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 126 5778 5780 "scriptarguments.ml" 126 5778 5793
+type(
+  string
+)
+"scriptarguments.ml" 126 5778 5803 "scriptarguments.ml" 126 5778 5820
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.use_field
+)
+"scriptarguments.ml" 126 5778 5795 "scriptarguments.ml" 126 5778 5820
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 127 5822 5823 "scriptarguments.ml" 127 5822 5860
+type(
+  string
+)
+"scriptarguments.ml" 126 5778 5779 "scriptarguments.ml" 127 5822 5861
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 128 5863 5865 "scriptarguments.ml" 128 5863 5883
+type(
+  string
+)
+"scriptarguments.ml" 128 5863 5893 "scriptarguments.ml" 128 5863 5911
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.large_bind
+)
+"scriptarguments.ml" 128 5863 5885 "scriptarguments.ml" 128 5863 5911
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 129 5913 5914 "scriptarguments.ml" 129 5913 6001
+type(
+  string
+)
+"scriptarguments.ml" 128 5863 5864 "scriptarguments.ml" 129 5913 6002
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 130 6004 6006 "scriptarguments.ml" 130 6004 6010
+type(
+  string
+)
+"scriptarguments.ml" 130 6004 6020 "scriptarguments.ml" 130 6004 6034
+type(
+  bool ref
+)
+ident(
+  ext_ref Debug.debug_on
+)
+"scriptarguments.ml" 130 6004 6012 "scriptarguments.ml" 130 6004 6034
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 131 6037 6038 "scriptarguments.ml" 131 6037 6047
+type(
+  string
+)
+"scriptarguments.ml" 130 6004 6005 "scriptarguments.ml" 131 6037 6048
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 132 6050 6052 "scriptarguments.ml" 132 6050 6060
+type(
+  string
+)
+"scriptarguments.ml" 132 6050 6071 "scriptarguments.ml" 132 6050 6106
+type(
+  unit -> unit
+)
+ident(
+  ext_ref Tpdispatcher.( Netprover ).set_use_pipe
+)
+"scriptarguments.ml" 132 6050 6062 "scriptarguments.ml" 132 6050 6106
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 133 6109 6110 "scriptarguments.ml" 133 6109 6140
+type(
+  string
+)
+"scriptarguments.ml" 132 6050 6051 "scriptarguments.ml" 133 6109 6141
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 134 6143 6145 "scriptarguments.ml" 134 6143 6156
+type(
+  string
+)
+"scriptarguments.ml" 134 6143 6172 "scriptarguments.ml" 134 6143 6174
+type(
+  unit
+)
+"scriptarguments.ml" 134 6143 6178 "scriptarguments.ml" 134 6143 6215
+type(
+  string -> unit
+)
+ident(
+  ext_ref Tpdispatcher.( Netprover ).set_use_socket
+)
+"scriptarguments.ml" 134 6143 6216 "scriptarguments.ml" 134 6143 6230
+type(
+  string
+)
+"scriptarguments.ml" 134 6143 6178 "scriptarguments.ml" 134 6143 6230
+type(
+  unit
+)
+"scriptarguments.ml" 134 6143 6167 "scriptarguments.ml" 134 6143 6231
+type(
+  unit -> unit
+)
+"scriptarguments.ml" 134 6143 6158 "scriptarguments.ml" 134 6143 6231
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 135 6234 6235 "scriptarguments.ml" 135 6234 6286
+type(
+  string
+)
+"scriptarguments.ml" 134 6143 6144 "scriptarguments.ml" 135 6234 6287
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 136 6289 6291 "scriptarguments.ml" 136 6289 6301
+type(
+  string
+)
+"scriptarguments.ml" 136 6289 6314 "scriptarguments.ml" 136 6289 6351
+type(
+  string -> unit
+)
+ident(
+  ext_ref Tpdispatcher.( Netprover ).set_use_socket
+)
+"scriptarguments.ml" 136 6289 6303 "scriptarguments.ml" 136 6289 6351
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 137 6354 6355 "scriptarguments.ml" 137 6354 6400
+type(
+  string
+)
+"scriptarguments.ml" 136 6289 6290 "scriptarguments.ml" 137 6354 6401
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 138 6403 6405 "scriptarguments.ml" 138 6403 6415
+type(
+  string
+)
+"scriptarguments.ml" 138 6403 6428 "scriptarguments.ml" 138 6403 6447
+type(
+  string -> unit
+)
+ident(
+  ext_ref Tpdispatcher.set_tp
+)
+"scriptarguments.ml" 138 6403 6417 "scriptarguments.ml" 138 6403 6447
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 139 6450 6451 "scriptarguments.ml" 139 6450 6512
+type(
+  string
+)
+"scriptarguments.ml" 138 6403 6404 "scriptarguments.ml" 139 6450 6513
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 140 6515 6517 "scriptarguments.ml" 140 6515 6536
+type(
+  string
+)
+"scriptarguments.ml" 140 6515 6546 "scriptarguments.ml" 140 6515 6575
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_sat_statistics
+)
+"scriptarguments.ml" 140 6515 6538 "scriptarguments.ml" 140 6515 6575
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 141 6578 6579 "scriptarguments.ml" 141 6578 6602
+type(
+  string
+)
+"scriptarguments.ml" 140 6515 6516 "scriptarguments.ml" 141 6578 6603
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 142 6605 6607 "scriptarguments.ml" 142 6605 6614
+type(
+  string
+)
+"scriptarguments.ml" 142 6605 6624 "scriptarguments.ml" 142 6605 6641
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.profiling
+)
+"scriptarguments.ml" 142 6605 6616 "scriptarguments.ml" 142 6605 6641
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 143 6644 6645 "scriptarguments.ml" 143 6644 6674
+type(
+  string
+)
+"scriptarguments.ml" 142 6605 6606 "scriptarguments.ml" 143 6644 6675
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 144 6677 6679 "scriptarguments.ml" 144 6677 6686
+type(
+  string
+)
+"scriptarguments.ml" 144 6677 6696 "scriptarguments.ml" 144 6677 6724
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_syn_base_case
+)
+"scriptarguments.ml" 144 6677 6688 "scriptarguments.ml" 144 6677 6724
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 145 6727 6728 "scriptarguments.ml" 145 6727 6768
+type(
+  string
+)
+"scriptarguments.ml" 144 6677 6678 "scriptarguments.ml" 145 6727 6769
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 146 6771 6773 "scriptarguments.ml" 146 6771 6780
+type(
+  string
+)
+"scriptarguments.ml" 146 6771 6790 "scriptarguments.ml" 146 6771 6819
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_case_inference
+)
+"scriptarguments.ml" 146 6771 6782 "scriptarguments.ml" 146 6771 6819
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 147 6821 6822 "scriptarguments.ml" 147 6821 6855
+type(
+  string
+)
+"scriptarguments.ml" 146 6771 6772 "scriptarguments.ml" 147 6821 6856
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 148 6858 6860 "scriptarguments.ml" 148 6858 6867
+type(
+  string
+)
+"scriptarguments.ml" 148 6858 6877 "scriptarguments.ml" 148 6858 6895
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.print_core
+)
+"scriptarguments.ml" 148 6858 6869 "scriptarguments.ml" 148 6858 6895
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 149 6897 6898 "scriptarguments.ml" 149 6897 6925
+type(
+  string
+)
+"scriptarguments.ml" 148 6858 6859 "scriptarguments.ml" 149 6897 6926
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 150 6928 6930 "scriptarguments.ml" 150 6928 6937
+type(
+  string
+)
+"scriptarguments.ml" 150 6928 6947 "scriptarguments.ml" 150 6928 6966
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.print_input
+)
+"scriptarguments.ml" 150 6928 6939 "scriptarguments.ml" 150 6928 6966
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 151 6968 6969 "scriptarguments.ml" 151 6968 6997
+type(
+  string
+)
+"scriptarguments.ml" 150 6928 6929 "scriptarguments.ml" 151 6968 6998
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 152 7000 7002 "scriptarguments.ml" 152 7000 7014
+type(
+  string
+)
+"scriptarguments.ml" 152 7000 7024 "scriptarguments.ml" 152 7000 7048
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.no_cache_formula
+)
+"scriptarguments.ml" 152 7000 7016 "scriptarguments.ml" 152 7000 7048
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 153 7050 7054 "scriptarguments.ml" 153 7050 7115
+type(
+  string
+)
+"scriptarguments.ml" 152 7000 7001 "scriptarguments.ml" 153 7050 7116
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 154 7118 7120 "scriptarguments.ml" 154 7118 7127
+type(
+  string
+)
+"scriptarguments.ml" 154 7118 7145 "scriptarguments.ml" 154 7118 7146
+type(
+  string
+)
+ident(
+  def s "scriptarguments.ml" 154 7118 7150 "scriptarguments.ml" 154 7118 7310
+)
+"scriptarguments.ml" 154 7118 7151 "scriptarguments.ml" 154 7118 7196
+type(
+  string -> unit
+)
+ident(
+  ext_ref Tpdispatcher.( Netprover ).set_use_socket_for_web
+)
+"scriptarguments.ml" 154 7118 7197 "scriptarguments.ml" 154 7118 7198
+type(
+  string
+)
+ident(
+  int_ref s "scriptarguments.ml" 154 7118 7145 "scriptarguments.ml" 154 7118 7146
+)
+"scriptarguments.ml" 154 7118 7150 "scriptarguments.ml" 154 7118 7199
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7201 "scriptarguments.ml" 154 7118 7223
+type(
+  bool ref
+)
+ident(
+  ext_ref Tpdispatcher.webserver
+)
+"scriptarguments.ml" 154 7118 7224 "scriptarguments.ml" 154 7118 7226
+type(
+  bool ref -> bool -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 154 7118 7227 "scriptarguments.ml" 154 7118 7231
+type(
+  bool
+)
+"scriptarguments.ml" 154 7118 7201 "scriptarguments.ml" 154 7118 7231
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7233 "scriptarguments.ml" 154 7118 7254
+type(
+  bool ref
+)
+ident(
+  ext_ref Typechecker.webserver
+)
+"scriptarguments.ml" 154 7118 7255 "scriptarguments.ml" 154 7118 7257
+type(
+  bool ref -> bool -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 154 7118 7258 "scriptarguments.ml" 154 7118 7262
+type(
+  bool
+)
+"scriptarguments.ml" 154 7118 7233 "scriptarguments.ml" 154 7118 7262
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7264 "scriptarguments.ml" 154 7118 7279
+type(
+  bool ref
+)
+ident(
+  ext_ref Paralib1v2.webs
+)
+"scriptarguments.ml" 154 7118 7280 "scriptarguments.ml" 154 7118 7282
+type(
+  bool ref -> bool -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 154 7118 7283 "scriptarguments.ml" 154 7118 7287
+type(
+  bool
+)
+"scriptarguments.ml" 154 7118 7264 "scriptarguments.ml" 154 7118 7287
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7289 "scriptarguments.ml" 154 7118 7302
+type(
+  bool ref
+)
+ident(
+  ext_ref Paralib1.webs
+)
+"scriptarguments.ml" 154 7118 7303 "scriptarguments.ml" 154 7118 7305
+type(
+  bool ref -> bool -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"scriptarguments.ml" 154 7118 7306 "scriptarguments.ml" 154 7118 7310
+type(
+  bool
+)
+"scriptarguments.ml" 154 7118 7289 "scriptarguments.ml" 154 7118 7310
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7264 "scriptarguments.ml" 154 7118 7310
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7233 "scriptarguments.ml" 154 7118 7310
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7201 "scriptarguments.ml" 154 7118 7310
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7150 "scriptarguments.ml" 154 7118 7310
+type(
+  unit
+)
+"scriptarguments.ml" 154 7118 7140 "scriptarguments.ml" 154 7118 7311
+type(
+  string -> unit
+)
+"scriptarguments.ml" 154 7118 7129 "scriptarguments.ml" 154 7118 7311
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 155 7316 7317 "scriptarguments.ml" 155 7316 7367
+type(
+  string
+)
+"scriptarguments.ml" 154 7118 7119 "scriptarguments.ml" 155 7316 7368
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 156 7370 7372 "scriptarguments.ml" 156 7370 7379
+type(
+  string
+)
+"scriptarguments.ml" 156 7370 7389 "scriptarguments.ml" 156 7370 7412
+type(
+  int -> unit
+)
+ident(
+  ext_ref Typechecker.parallelize
+)
+"scriptarguments.ml" 156 7370 7381 "scriptarguments.ml" 156 7370 7412
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 157 7415 7416 "scriptarguments.ml" 157 7415 7472
+type(
+  string
+)
+"scriptarguments.ml" 156 7370 7371 "scriptarguments.ml" 157 7415 7473
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 158 7475 7477 "scriptarguments.ml" 158 7475 7489
+type(
+  string
+)
+"scriptarguments.ml" 158 7475 7501 "scriptarguments.ml" 158 7475 7537
+type(
+  string -> unit
+)
+ident(
+  ext_ref Tpdispatcher.( Netprover ).set_prio_list
+)
+"scriptarguments.ml" 158 7475 7490 "scriptarguments.ml" 158 7475 7537
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 159 7540 7541 "scriptarguments.ml" 159 7540 7614
+type(
+  string
+)
+"scriptarguments.ml" 158 7475 7476 "scriptarguments.ml" 159 7540 7615
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 160 7617 7619 "scriptarguments.ml" 160 7617 7631
+type(
+  string
+)
+"scriptarguments.ml" 160 7617 7640 "scriptarguments.ml" 160 7617 7666
+type(
+  bool ref
+)
+ident(
+  ext_ref Tpdispatcher.decr_priority
+)
+"scriptarguments.ml" 160 7617 7632 "scriptarguments.ml" 160 7617 7666
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 161 7670 7671 "scriptarguments.ml" 161 7670 7705
+type(
+  string
+)
+"scriptarguments.ml" 160 7617 7618 "scriptarguments.ml" 161 7670 7706
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 162 7708 7710 "scriptarguments.ml" 162 7708 7730
+type(
+  string
+)
+"scriptarguments.ml" 162 7708 7740 "scriptarguments.ml" 162 7708 7760
+type(
+  bool ref
+)
+ident(
+  ext_ref Redlog.no_pseudo_ops
+)
+"scriptarguments.ml" 162 7708 7732 "scriptarguments.ml" 162 7708 7760
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 163 7763 7764 "scriptarguments.ml" 163 7763 7828
+type(
+  string
+)
+"scriptarguments.ml" 162 7708 7709 "scriptarguments.ml" 163 7763 7829
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 164 7831 7833 "scriptarguments.ml" 164 7831 7845
+type(
+  string
+)
+"scriptarguments.ml" 164 7831 7855 "scriptarguments.ml" 164 7831 7876
+type(
+  bool ref
+)
+ident(
+  ext_ref Redlog.no_elim_exists
+)
+"scriptarguments.ml" 164 7831 7847 "scriptarguments.ml" 164 7831 7876
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 165 7879 7880 "scriptarguments.ml" 165 7879 7940
+type(
+  string
+)
+"scriptarguments.ml" 164 7831 7832 "scriptarguments.ml" 165 7879 7941
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 166 7943 7948 "scriptarguments.ml" 166 7943 7966
+type(
+  string
+)
+"scriptarguments.ml" 166 7943 7976 "scriptarguments.ml" 166 7943 7994
+type(
+  bool ref
+)
+ident(
+  ext_ref Redlog.no_simplify
+)
+"scriptarguments.ml" 166 7943 7968 "scriptarguments.ml" 166 7943 7994
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 167 7996 8000 "scriptarguments.ml" 167 7996 8056
+type(
+  string
+)
+"scriptarguments.ml" 166 7943 7947 "scriptarguments.ml" 167 7996 8057
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 168 8059 8064 "scriptarguments.ml" 168 8059 8079
+type(
+  string
+)
+"scriptarguments.ml" 168 8059 8089 "scriptarguments.ml" 168 8059 8104
+type(
+  bool ref
+)
+ident(
+  ext_ref Redlog.no_cache
+)
+"scriptarguments.ml" 168 8059 8081 "scriptarguments.ml" 168 8059 8104
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 169 8106 8110 "scriptarguments.ml" 169 8106 8188
+type(
+  string
+)
+"scriptarguments.ml" 168 8059 8063 "scriptarguments.ml" 169 8106 8189
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 170 8191 8193 "scriptarguments.ml" 170 8191 8207
+type(
+  string
+)
+"scriptarguments.ml" 170 8191 8221 "scriptarguments.ml" 170 8191 8235
+type(
+  int ref
+)
+ident(
+  ext_ref Redlog.timeout
+)
+"scriptarguments.ml" 170 8191 8209 "scriptarguments.ml" 170 8191 8235
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 171 8238 8239 "scriptarguments.ml" 171 8238 8297
+type(
+  string
+)
+"scriptarguments.ml" 170 8191 8192 "scriptarguments.ml" 171 8238 8298
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 172 8300 8302 "scriptarguments.ml" 172 8300 8322
+type(
+  string
+)
+"scriptarguments.ml" 172 8300 8331 "scriptarguments.ml" 172 8300 8355
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.failure_analysis
+)
+"scriptarguments.ml" 172 8300 8323 "scriptarguments.ml" 172 8300 8355
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 173 8358 8359 "scriptarguments.ml" 173 8358 8385
+type(
+  string
+)
+"scriptarguments.ml" 172 8300 8301 "scriptarguments.ml" 173 8358 8386
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 174 8388 8390 "scriptarguments.ml" 174 8388 8407
+type(
+  string
+)
+"scriptarguments.ml" 174 8388 8416 "scriptarguments.ml" 174 8388 8437
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.exhaust_match
+)
+"scriptarguments.ml" 174 8388 8408 "scriptarguments.ml" 174 8388 8437
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 175 8440 8441 "scriptarguments.ml" 175 8440 8498
+type(
+  string
+)
+"scriptarguments.ml" 174 8388 8389 "scriptarguments.ml" 175 8440 8499
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 176 8502 8504 "scriptarguments.ml" 176 8502 8515
+type(
+  string
+)
+"scriptarguments.ml" 176 8502 8525 "scriptarguments.ml" 176 8502 8551
+type(
+  unit -> unit
+)
+ident(
+  ext_ref Globals.set_tmp_files_path
+)
+"scriptarguments.ml" 176 8502 8516 "scriptarguments.ml" 176 8502 8551
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 177 8554 8555 "scriptarguments.ml" 177 8554 8638
+type(
+  string
+)
+"scriptarguments.ml" 176 8502 8503 "scriptarguments.ml" 177 8554 8639
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 178 8643 8648 "scriptarguments.ml" 178 8643 8655
+type(
+  string
+)
+"scriptarguments.ml" 178 8643 8665 "scriptarguments.ml" 178 8643 8689
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_norm_simp
+)
+"scriptarguments.ml" 178 8643 8657 "scriptarguments.ml" 178 8643 8689
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 178 8643 8691 "scriptarguments.ml" 178 8643 8724
+type(
+  string
+)
+"scriptarguments.ml" 178 8643 8647 "scriptarguments.ml" 178 8643 8725
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 179 8727 8732 "scriptarguments.ml" 179 8727 8739
+type(
+  string
+)
+"scriptarguments.ml" 179 8727 8749 "scriptarguments.ml" 179 8727 8772
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.allow_pred_spec
+)
+"scriptarguments.ml" 179 8727 8741 "scriptarguments.ml" 179 8727 8772
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 179 8727 8773 "scriptarguments.ml" 179 8727 8838
+type(
+  string
+)
+"scriptarguments.ml" 179 8727 8731 "scriptarguments.ml" 179 8727 8839
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 183 9074 9079 "scriptarguments.ml" 183 9074 9100
+type(
+  string
+)
+"scriptarguments.ml" 183 9074 9110 "scriptarguments.ml" 183 9074 9130
+type(
+  bool ref
+)
+ident(
+  ext_ref Redlog.is_presburger
+)
+"scriptarguments.ml" 183 9074 9102 "scriptarguments.ml" 183 9074 9130
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 183 9074 9132 "scriptarguments.ml" 183 9074 9170
+type(
+  string
+)
+"scriptarguments.ml" 183 9074 9078 "scriptarguments.ml" 183 9074 9171
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 184 9173 9178 "scriptarguments.ml" 184 9173 9196
+type(
+  string
+)
+"scriptarguments.ml" 184 9173 9210 "scriptarguments.ml" 184 9173 9224
+type(
+  int ref
+)
+ident(
+  ext_ref Redlog.timeout
+)
+"scriptarguments.ml" 184 9173 9198 "scriptarguments.ml" 184 9173 9224
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 184 9173 9226 "scriptarguments.ml" 184 9173 9300
+type(
+  string
+)
+"scriptarguments.ml" 184 9173 9177 "scriptarguments.ml" 184 9173 9301
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 186 9396 9401 "scriptarguments.ml" 186 9396 9408
+type(
+  string
+)
+"scriptarguments.ml" 186 9396 9420 "scriptarguments.ml" 186 9396 9446
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_prune_cache
+)
+"scriptarguments.ml" 186 9396 9410 "scriptarguments.ml" 186 9396 9446
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 186 9396 9447 "scriptarguments.ml" 186 9396 9470
+type(
+  string
+)
+"scriptarguments.ml" 186 9396 9400 "scriptarguments.ml" 186 9396 9471
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 187 9473 9478 "scriptarguments.ml" 187 9473 9489
+type(
+  string
+)
+"scriptarguments.ml" 187 9473 9499 "scriptarguments.ml" 187 9473 9533
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.disable_elim_redundant_ctr
+)
+"scriptarguments.ml" 187 9473 9491 "scriptarguments.ml" 187 9473 9533
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 187 9473 9535 "scriptarguments.ml" 187 9473 9590
+type(
+  string
+)
+"scriptarguments.ml" 187 9473 9477 "scriptarguments.ml" 187 9473 9591
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 188 9593 9598 "scriptarguments.ml" 188 9593 9611
+type(
+  string
+)
+"scriptarguments.ml" 188 9593 9623 "scriptarguments.ml" 188 9593 9646
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_counters
+)
+"scriptarguments.ml" 188 9593 9613 "scriptarguments.ml" 188 9593 9646
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 188 9593 9648 "scriptarguments.ml" 188 9593 9666
+type(
+  string
+)
+"scriptarguments.ml" 188 9593 9597 "scriptarguments.ml" 188 9593 9667
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 189 9669 9674 "scriptarguments.ml" 189 9669 9681
+type(
+  string
+)
+"scriptarguments.ml" 189 9669 9690 "scriptarguments.ml" 189 9669 9721
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_strong_invariant
+)
+"scriptarguments.ml" 189 9669 9682 "scriptarguments.ml" 189 9669 9721
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 189 9669 9723 "scriptarguments.ml" 189 9669 9758
+type(
+  string
+)
+"scriptarguments.ml" 189 9669 9673 "scriptarguments.ml" 189 9669 9759
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 190 9761 9766 "scriptarguments.ml" 190 9761 9773
+type(
+  string
+)
+"scriptarguments.ml" 190 9761 9783 "scriptarguments.ml" 190 9761 9814
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_aggressive_prune
+)
+"scriptarguments.ml" 190 9761 9775 "scriptarguments.ml" 190 9761 9814
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 190 9761 9816 "scriptarguments.ml" 190 9761 9844
+type(
+  string
+)
+"scriptarguments.ml" 190 9761 9765 "scriptarguments.ml" 190 9761 9845
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 191 9847 9852 "scriptarguments.ml" 191 9847 9859
+type(
+  string
+)
+"scriptarguments.ml" 191 9847 9871 "scriptarguments.ml" 191 9847 9903
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.disable_aggressive_prune
+)
+"scriptarguments.ml" 191 9847 9861 "scriptarguments.ml" 191 9847 9903
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 191 9847 9905 "scriptarguments.ml" 191 9847 9936
+type(
+  string
+)
+"scriptarguments.ml" 191 9847 9851 "scriptarguments.ml" 191 9847 9937
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 192 9939 9944 "scriptarguments.ml" 192 9939 9951
+type(
+  string
+)
+"scriptarguments.ml" 192 9939 9960 "scriptarguments.ml" 192 9939 9985
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_fast_imply
+)
+"scriptarguments.ml" 192 9939 9952 "scriptarguments.ml" 192 9939 9985
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 192 9939 9987 "scriptarguments.ml" 192 9939 10024
+type(
+  string
+)
+"scriptarguments.ml" 192 9939 9943 "scriptarguments.ml" 192 9939 10025
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 193 10027 10032 "scriptarguments.ml" 193 10027 10046
+type(
+  string
+)
+"scriptarguments.ml" 193 10027 10060 "scriptarguments.ml" 193 10027 10082
+type(
+  int ref
+)
+ident(
+  ext_ref Globals.memo_verbosity
+)
+"scriptarguments.ml" 193 10027 10048 "scriptarguments.ml" 193 10027 10082
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 194 10084 10088 "scriptarguments.ml" 194 10084 10160
+type(
+  string
+)
+"scriptarguments.ml" 193 10027 10031 "scriptarguments.ml" 194 10084 10161
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 195 10163 10168 "scriptarguments.ml" 195 10163 10178
+type(
+  string
+)
+"scriptarguments.ml" 195 10163 10187 "scriptarguments.ml" 195 10163 10221
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enable_incremental_proving
+)
+"scriptarguments.ml" 195 10163 10179 "scriptarguments.ml" 195 10163 10221
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 195 10163 10223 "scriptarguments.ml" 195 10163 10253
+type(
+  string
+)
+"scriptarguments.ml" 195 10163 10167 "scriptarguments.ml" 195 10163 10254
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 196 10256 10261 "scriptarguments.ml" 196 10256 10285
+type(
+  string
+)
+"scriptarguments.ml" 196 10256 10295 "scriptarguments.ml" 196 10256 10312
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.enulalias
+)
+"scriptarguments.ml" 196 10256 10287 "scriptarguments.ml" 196 10256 10312
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 196 10256 10314 "scriptarguments.ml" 196 10256 10337
+type(
+  string
+)
+"scriptarguments.ml" 196 10256 10260 "scriptarguments.ml" 196 10256 10338
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 199 10369 10372 "scriptarguments.ml" 199 10369 10391
+type(
+  string
+)
+"scriptarguments.ml" 199 10369 10401 "scriptarguments.ml" 199 10369 10418
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.f_1_slice
+)
+"scriptarguments.ml" 199 10369 10393 "scriptarguments.ml" 199 10369 10418
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 199 10369 10419 "scriptarguments.ml" 199 10369 10421
+type(
+  string
+)
+"scriptarguments.ml" 199 10369 10371 "scriptarguments.ml" 199 10369 10422
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 200 10424 10427 "scriptarguments.ml" 200 10424 10444
+type(
+  string
+)
+"scriptarguments.ml" 200 10424 10454 "scriptarguments.ml" 200 10424 10476
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.no_memoisation
+)
+"scriptarguments.ml" 200 10424 10446 "scriptarguments.ml" 200 10424 10476
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 200 10424 10477 "scriptarguments.ml" 200 10424 10479
+type(
+  string
+)
+"scriptarguments.ml" 200 10424 10426 "scriptarguments.ml" 200 10424 10480
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 201 10482 10485 "scriptarguments.ml" 201 10482 10503
+type(
+  string
+)
+"scriptarguments.ml" 201 10482 10513 "scriptarguments.ml" 201 10482 10535
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.no_incremental
+)
+"scriptarguments.ml" 201 10482 10505 "scriptarguments.ml" 201 10482 10535
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 201 10482 10536 "scriptarguments.ml" 201 10482 10538
+type(
+  string
+)
+"scriptarguments.ml" 201 10482 10484 "scriptarguments.ml" 201 10482 10539
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 202 10541 10544 "scriptarguments.ml" 202 10541 10564
+type(
+  string
+)
+"scriptarguments.ml" 202 10541 10574 "scriptarguments.ml" 202 10541 10598
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.no_LHS_prop_drop
+)
+"scriptarguments.ml" 202 10541 10566 "scriptarguments.ml" 202 10541 10598
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 202 10541 10599 "scriptarguments.ml" 202 10541 10601
+type(
+  string
+)
+"scriptarguments.ml" 202 10541 10543 "scriptarguments.ml" 202 10541 10602
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 203 10604 10607 "scriptarguments.ml" 203 10604 10627
+type(
+  string
+)
+"scriptarguments.ml" 203 10604 10637 "scriptarguments.ml" 203 10604 10661
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.no_RHS_prop_drop
+)
+"scriptarguments.ml" 203 10604 10629 "scriptarguments.ml" 203 10604 10661
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 203 10604 10662 "scriptarguments.ml" 203 10604 10664
+type(
+  string
+)
+"scriptarguments.ml" 203 10604 10606 "scriptarguments.ml" 203 10604 10665
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 204 10667 10670 "scriptarguments.ml" 204 10667 10689
+type(
+  string
+)
+"scriptarguments.ml" 204 10667 10699 "scriptarguments.ml" 204 10667 10719
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.do_sat_slice
+)
+"scriptarguments.ml" 204 10667 10691 "scriptarguments.ml" 204 10667 10719
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 204 10667 10721 "scriptarguments.ml" 204 10667 10750
+type(
+  string
+)
+"scriptarguments.ml" 204 10667 10669 "scriptarguments.ml" 204 10667 10751
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 205 10753 10756 "scriptarguments.ml" 205 10753 10783
+type(
+  string
+)
+"scriptarguments.ml" 205 10753 10794 "scriptarguments.ml" 205 10753 10811
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.f_2_slice
+)
+"scriptarguments.ml" 205 10753 10786 "scriptarguments.ml" 205 10753 10811
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 205 10753 10812 "scriptarguments.ml" 205 10753 10852
+type(
+  string
+)
+"scriptarguments.ml" 205 10753 10755 "scriptarguments.ml" 205 10753 10853
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 36 709 732 "scriptarguments.ml" 206 10855 10858
+type(
+  (string * Arg.spec * string) list
+)
+"scriptarguments.ml" 209 10901 10905 "scriptarguments.ml" 209 10901 10927
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  def hip_specific_arguments "scriptarguments.ml" 232 11862 11862 --
+)
+"scriptarguments.ml" 209 10901 10933 "scriptarguments.ml" 209 10901 10938
+type(
+  string
+)
+"scriptarguments.ml" 209 10901 10951 "scriptarguments.ml" 209 10901 10959
+type(
+  string -> unit
+)
+ident(
+  int_ref set_pred "scriptarguments.ml" 21 273 277 "scriptarguments.ml" 21 273 285
+)
+"scriptarguments.ml" 209 10901 10940 "scriptarguments.ml" 209 10901 10959
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 210 10961 10964 "scriptarguments.ml" 210 10961 11002
+type(
+  string
+)
+"scriptarguments.ml" 209 10901 10932 "scriptarguments.ml" 210 10961 11003
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 211 11005 11008 "scriptarguments.ml" 211 11005 11014
+type(
+  string
+)
+"scriptarguments.ml" 211 11005 11024 "scriptarguments.ml" 211 11005 11027
+type(
+  bool ref
+)
+ident(
+  int_ref rtc "scriptarguments.ml" 3 28 32 "scriptarguments.ml" 3 28 35
+)
+"scriptarguments.ml" 211 11005 11016 "scriptarguments.ml" 211 11005 11027
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 212 11029 11032 "scriptarguments.ml" 212 11029 11070
+type(
+  string
+)
+"scriptarguments.ml" 211 11005 11007 "scriptarguments.ml" 212 11029 11071
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 213 11073 11076 "scriptarguments.ml" 213 11073 11083
+type(
+  string
+)
+"scriptarguments.ml" 213 11073 11096 "scriptarguments.ml" 213 11073 11108
+type(
+  string -> unit
+)
+ident(
+  ext_ref Rtc.set_nopp
+)
+"scriptarguments.ml" 213 11073 11085 "scriptarguments.ml" 213 11073 11108
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 214 11110 11113 "scriptarguments.ml" 214 11110 11176
+type(
+  string
+)
+"scriptarguments.ml" 213 11073 11075 "scriptarguments.ml" 214 11110 11177
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 215 11179 11182 "scriptarguments.ml" 215 11179 11192
+type(
+  string
+)
+"scriptarguments.ml" 215 11179 11205 "scriptarguments.ml" 215 11179 11220
+type(
+  string -> unit
+)
+ident(
+  ext_ref Rtc.set_nofield
+)
+"scriptarguments.ml" 215 11179 11194 "scriptarguments.ml" 215 11179 11220
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 216 11222 11225 "scriptarguments.ml" 216 11222 11276
+type(
+  string
+)
+"scriptarguments.ml" 215 11179 11181 "scriptarguments.ml" 216 11222 11277
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 217 11279 11282 "scriptarguments.ml" 217 11279 11300
+type(
+  string
+)
+"scriptarguments.ml" 217 11279 11310 "scriptarguments.ml" 217 11279 11332
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.verify_callees
+)
+"scriptarguments.ml" 217 11279 11302 "scriptarguments.ml" 217 11279 11332
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 218 11334 11337 "scriptarguments.ml" 218 11334 11381
+type(
+  string
+)
+"scriptarguments.ml" 217 11279 11281 "scriptarguments.ml" 218 11334 11382
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 219 11384 11387 "scriptarguments.ml" 219 11384 11396
+type(
+  string
+)
+"scriptarguments.ml" 219 11384 11409 "scriptarguments.ml" 219 11384 11428
+type(
+  string -> unit
+)
+ident(
+  ext_ref Inliner.set_inlined
+)
+"scriptarguments.ml" 219 11384 11398 "scriptarguments.ml" 219 11384 11428
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 220 11430 11433 "scriptarguments.ml" 220 11430 11459
+type(
+  string
+)
+"scriptarguments.ml" 219 11384 11386 "scriptarguments.ml" 220 11430 11460
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 221 11462 11465 "scriptarguments.ml" 221 11462 11469
+type(
+  string
+)
+"scriptarguments.ml" 221 11462 11482 "scriptarguments.ml" 221 11462 11499
+type(
+  string -> unit
+)
+ident(
+  int_ref set_proc_verified "scriptarguments.ml" 25 362 366 "scriptarguments.ml" 25 362 383
+)
+"scriptarguments.ml" 221 11462 11471 "scriptarguments.ml" 221 11462 11499
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 222 11502 11505 "scriptarguments.ml" 222 11502 11569
+type(
+  string
+)
+"scriptarguments.ml" 221 11462 11464 "scriptarguments.ml" 222 11502 11570
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 223 11572 11575 "scriptarguments.ml" 223 11572 11583
+type(
+  string
+)
+"scriptarguments.ml" 223 11572 11593 "scriptarguments.ml" 223 11572 11611
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.print_proc
+)
+"scriptarguments.ml" 223 11572 11585 "scriptarguments.ml" 223 11572 11611
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 224 11613 11616 "scriptarguments.ml" 224 11613 11648
+type(
+  string
+)
+"scriptarguments.ml" 223 11572 11574 "scriptarguments.ml" 224 11613 11649
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 225 11651 11654 "scriptarguments.ml" 225 11651 11662
+type(
+  string
+)
+"scriptarguments.ml" 225 11651 11672 "scriptarguments.ml" 225 11651 11700
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.pass_global_by_value
+)
+"scriptarguments.ml" 225 11651 11664 "scriptarguments.ml" 225 11651 11700
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 226 11703 11706 "scriptarguments.ml" 226 11703 11743
+type(
+  string
+)
+"scriptarguments.ml" 225 11651 11653 "scriptarguments.ml" 226 11703 11744
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 227 11746 11749 "scriptarguments.ml" 227 11746 11756
+type(
+  string
+)
+"scriptarguments.ml" 227 11746 11766 "scriptarguments.ml" 227 11746 11784
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.seq_to_try
+)
+"scriptarguments.ml" 227 11746 11758 "scriptarguments.ml" 227 11746 11784
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 228 11786 11789 "scriptarguments.ml" 228 11786 11811
+type(
+  string
+)
+"scriptarguments.ml" 227 11746 11748 "scriptarguments.ml" 228 11786 11812
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 209 10901 10930 "scriptarguments.ml" 229 11814 11817
+type(
+  (string * Arg.spec * string) list
+)
+"scriptarguments.ml" 232 11862 11866 "scriptarguments.ml" 232 11862 11890
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  def sleek_specific_arguments "scriptarguments.ml" 244 12323 12323 --
+)
+"scriptarguments.ml" 233 11895 11899 "scriptarguments.ml" 233 11895 11904
+type(
+  string
+)
+"scriptarguments.ml" 233 11895 11919 "scriptarguments.ml" 233 11895 11927
+type(
+  string
+)
+"scriptarguments.ml" 233 11895 11929 "scriptarguments.ml" 233 11895 11934
+type(
+  string
+)
+"scriptarguments.ml" 233 11895 11918 "scriptarguments.ml" 233 11895 11935
+type(
+  string list
+)
+"scriptarguments.ml" 233 11895 11937 "scriptarguments.ml" 233 11895 11949
+type(
+  string -> unit
+)
+ident(
+  int_ref set_frontend "scriptarguments.ml" 29 489 493 "scriptarguments.ml" 29 489 505
+)
+"scriptarguments.ml" 233 11895 11906 "scriptarguments.ml" 233 11895 11950
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 234 11952 11953 "scriptarguments.ml" 234 11952 12011
+type(
+  string
+)
+"scriptarguments.ml" 233 11895 11898 "scriptarguments.ml" 234 11952 12012
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 235 12014 12018 "scriptarguments.ml" 235 12014 12024
+type(
+  string
+)
+"scriptarguments.ml" 235 12014 12034 "scriptarguments.ml" 235 12014 12039
+type(
+  bool ref
+)
+ident(
+  int_ref inter "scriptarguments.ml" 11 158 162 "scriptarguments.ml" 11 158 167
+)
+"scriptarguments.ml" 235 12014 12026 "scriptarguments.ml" 235 12014 12039
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 236 12041 12045 "scriptarguments.ml" 236 12041 12071
+type(
+  string
+)
+"scriptarguments.ml" 235 12014 12017 "scriptarguments.ml" 236 12041 12072
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 237 12074 12078 "scriptarguments.ml" 237 12074 12089
+type(
+  string
+)
+"scriptarguments.ml" 237 12074 12099 "scriptarguments.ml" 237 12074 12122
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.print_err_sleek
+)
+"scriptarguments.ml" 237 12074 12091 "scriptarguments.ml" 237 12074 12122
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 238 12124 12125 "scriptarguments.ml" 238 12124 12145
+type(
+  string
+)
+"scriptarguments.ml" 237 12074 12077 "scriptarguments.ml" 238 12124 12146
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 239 12148 12152 "scriptarguments.ml" 239 12148 12158
+type(
+  string
+)
+"scriptarguments.ml" 239 12148 12169 "scriptarguments.ml" 239 12148 12206
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.wrap_exists_implicit_explicit
+)
+"scriptarguments.ml" 239 12148 12161 "scriptarguments.ml" 239 12148 12206
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 240 12209 12213 "scriptarguments.ml" 240 12209 12269
+type(
+  string
+)
+"scriptarguments.ml" 239 12148 12151 "scriptarguments.ml" 240 12209 12270
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 232 11862 11893 "scriptarguments.ml" 241 12272 12276
+type(
+  (string * Arg.spec * string) list
+)
+"scriptarguments.ml" 244 12323 12327 "scriptarguments.ml" 244 12323 12349
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  def gui_specific_arguments "scriptarguments.ml" 249 12443 12443 --
+)
+"scriptarguments.ml" 245 12354 12356 "scriptarguments.ml" 245 12354 12363
+type(
+  string
+)
+"scriptarguments.ml" 245 12354 12373 "scriptarguments.ml" 245 12354 12383
+type(
+  bool ref
+)
+ident(
+  int_ref enable_gui "scriptarguments.ml" 13 181 185 "scriptarguments.ml" 13 181 195
+)
+"scriptarguments.ml" 245 12354 12365 "scriptarguments.ml" 245 12354 12383
+type(
+  Arg.spec
+)
+"scriptarguments.ml" 245 12354 12385 "scriptarguments.ml" 245 12354 12397
+type(
+  string
+)
+"scriptarguments.ml" 245 12354 12355 "scriptarguments.ml" 245 12354 12398
+type(
+  string * Arg.spec * string
+)
+"scriptarguments.ml" 244 12323 12352 "scriptarguments.ml" 246 12401 12403
+type(
+  (string * Arg.spec * string) list
+)
+"scriptarguments.ml" 249 12443 12447 "scriptarguments.ml" 249 12443 12460
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  def hip_arguments "scriptarguments.ml" 252 12546 12546 --
+)
+"scriptarguments.ml" 249 12443 12463 "scriptarguments.ml" 249 12443 12479
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  int_ref common_arguments "scriptarguments.ml" 36 709 713 "scriptarguments.ml" 36 709 729
+)
+"scriptarguments.ml" 249 12443 12480 "scriptarguments.ml" 249 12443 12481
+type(
+  (string * Arg.spec * string) list ->
+  (string * Arg.spec * string) list -> (string * Arg.spec * string) list
+)
+ident(
+  ext_ref Pervasives.( @ )
+)
+"scriptarguments.ml" 249 12443 12482 "scriptarguments.ml" 249 12443 12504
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  int_ref hip_specific_arguments "scriptarguments.ml" 209 10901 10905 "scriptarguments.ml" 209 10901 10927
+)
+"scriptarguments.ml" 249 12443 12463 "scriptarguments.ml" 249 12443 12504
+type(
+  (string * Arg.spec * string) list
+)
+"scriptarguments.ml" 252 12546 12550 "scriptarguments.ml" 252 12546 12565
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  def sleek_arguments "scriptarguments.ml" 255 12660 12660 --
+)
+"scriptarguments.ml" 252 12546 12568 "scriptarguments.ml" 252 12546 12584
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  int_ref common_arguments "scriptarguments.ml" 36 709 713 "scriptarguments.ml" 36 709 729
+)
+"scriptarguments.ml" 252 12546 12585 "scriptarguments.ml" 252 12546 12586
+type(
+  (string * Arg.spec * string) list ->
+  (string * Arg.spec * string) list -> (string * Arg.spec * string) list
+)
+ident(
+  ext_ref Pervasives.( @ )
+)
+"scriptarguments.ml" 252 12546 12587 "scriptarguments.ml" 252 12546 12611
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  int_ref sleek_specific_arguments "scriptarguments.ml" 232 11862 11866 "scriptarguments.ml" 232 11862 11890
+)
+"scriptarguments.ml" 252 12546 12568 "scriptarguments.ml" 252 12546 12611
+type(
+  (string * Arg.spec * string) list
+)
+"scriptarguments.ml" 255 12660 12664 "scriptarguments.ml" 255 12660 12677
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  def gui_arguments "scriptarguments.ml" 255 12660 12746 --
+)
+"scriptarguments.ml" 255 12660 12680 "scriptarguments.ml" 255 12660 12696
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  int_ref common_arguments "scriptarguments.ml" 36 709 713 "scriptarguments.ml" 36 709 729
+)
+"scriptarguments.ml" 255 12660 12697 "scriptarguments.ml" 255 12660 12698
+type(
+  (string * Arg.spec * string) list ->
+  (string * Arg.spec * string) list -> (string * Arg.spec * string) list
+)
+ident(
+  ext_ref Pervasives.( @ )
+)
+"scriptarguments.ml" 255 12660 12699 "scriptarguments.ml" 255 12660 12721
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  int_ref hip_specific_arguments "scriptarguments.ml" 209 10901 10905 "scriptarguments.ml" 209 10901 10927
+)
+"scriptarguments.ml" 255 12660 12722 "scriptarguments.ml" 255 12660 12723
+type(
+  (string * Arg.spec * string) list ->
+  (string * Arg.spec * string) list -> (string * Arg.spec * string) list
+)
+ident(
+  ext_ref Pervasives.( @ )
+)
+"scriptarguments.ml" 255 12660 12724 "scriptarguments.ml" 255 12660 12746
+type(
+  (string * Arg.spec * string) list
+)
+ident(
+  int_ref gui_specific_arguments "scriptarguments.ml" 244 12323 12327 "scriptarguments.ml" 244 12323 12349
+)
+"scriptarguments.ml" 255 12660 12699 "scriptarguments.ml" 255 12660 12746
+type(
+  (string * Arg.spec * string) list
+)
+"scriptarguments.ml" 255 12660 12680 "scriptarguments.ml" 255 12660 12746
+type(
+  (string * Arg.spec * string) list
+)

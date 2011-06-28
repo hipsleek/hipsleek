@@ -1,0 +1,1104 @@
+"paralib1.ml" 2 25 29 "paralib1.ml" 2 25 33
+type(
+  bool ref
+)
+ident(
+  def webs "paralib1.ml" 4 176 180 --
+)
+"paralib1.ml" 2 25 36 "paralib1.ml" 2 25 39
+type(
+  bool -> bool ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"paralib1.ml" 2 25 40 "paralib1.ml" 2 25 45
+type(
+  bool
+)
+"paralib1.ml" 2 25 36 "paralib1.ml" 2 25 45
+type(
+  bool ref
+)
+"paralib1.ml" 4 176 184 "paralib1.ml" 4 176 192
+type(
+  (unit -> 'a) -> ('b -> 'c) -> 'b list -> 'c list
+)
+ident(
+  def map_para "paralib1.ml" 46 1851 1858 --
+)
+"paralib1.ml" 4 176 193 "paralib1.ml" 4 176 197
+type(
+  unit -> 'a
+)
+ident(
+  def init "paralib1.ml" 4 176 198 "paralib1.ml" 46 1851 1858
+)
+"paralib1.ml" 4 176 198 "paralib1.ml" 4 176 199
+type(
+  'b -> 'c
+)
+ident(
+  def g "paralib1.ml" 4 176 200 "paralib1.ml" 46 1851 1858
+)
+"paralib1.ml" 4 176 200 "paralib1.ml" 4 176 210
+type(
+  'b list
+)
+ident(
+  def input_list "paralib1.ml" 5 214 218 "paralib1.ml" 46 1851 1858
+)
+"paralib1.ml" 6 229 239 "paralib1.ml" 6 229 256
+type(
+  'd list -> unit
+)
+"paralib1.ml" 6 229 257 "paralib1.ml" 6 229 266
+type(
+  'd list
+)
+ident(
+  def list_of_p "paralib1.ml" 7 269 277 "paralib1.ml" 13 533 542
+)
+"paralib1.ml" 7 269 285 "paralib1.ml" 7 269 286
+type(
+  int
+)
+"paralib1.ml" 7 269 290 "paralib1.ml" 7 269 301
+type(
+  'd list -> int
+)
+ident(
+  ext_ref List.length
+)
+"paralib1.ml" 7 269 302 "paralib1.ml" 7 269 311
+type(
+  'd list
+)
+ident(
+  int_ref list_of_p "paralib1.ml" 6 229 257 "paralib1.ml" 6 229 266
+)
+"paralib1.ml" 7 269 290 "paralib1.ml" 7 269 311
+type(
+  int
+)
+"paralib1.ml" 9 331 347 "paralib1.ml" 9 331 352
+type(
+  int
+)
+ident(
+  def mypid "paralib1.ml" 10 380 392 "paralib1.ml" 11 456 518
+)
+"paralib1.ml" 9 331 353 "paralib1.ml" 9 331 361
+type(
+  Unix.process_status
+)
+ident(
+  def mystatus "paralib1.ml" 10 380 392 "paralib1.ml" 11 456 518
+)
+"paralib1.ml" 9 331 347 "paralib1.ml" 9 331 361
+type(
+  int * Unix.process_status
+)
+"paralib1.ml" 9 331 364 "paralib1.ml" 9 331 373
+type(
+  unit -> int * Unix.process_status
+)
+ident(
+  ext_ref Unix.wait
+)
+"paralib1.ml" 9 331 374 "paralib1.ml" 9 331 376
+type(
+  unit
+)
+"paralib1.ml" 9 331 364 "paralib1.ml" 9 331 376
+type(
+  int * Unix.process_status
+)
+"paralib1.ml" 10 380 392 "paralib1.ml" 10 380 398
+type(
+  Unix.process_status -> unit
+)
+ident(
+  ext_ref Pervasives.ignore
+)
+"paralib1.ml" 10 380 399 "paralib1.ml" 10 380 410
+type(
+  string -> Unix.process_status
+)
+ident(
+  ext_ref Unix.system
+)
+"paralib1.ml" 10 380 412 "paralib1.ml" 10 380 429
+type(
+  string
+)
+"paralib1.ml" 10 380 430 "paralib1.ml" 10 380 431
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"paralib1.ml" 10 380 432 "paralib1.ml" 10 380 445
+type(
+  int -> string
+)
+ident(
+  ext_ref Pervasives.string_of_int
+)
+"paralib1.ml" 10 380 445 "paralib1.ml" 10 380 452
+type(
+  int
+)
+ident(
+  int_ref mypid "paralib1.ml" 9 331 347 "paralib1.ml" 9 331 352
+)
+"paralib1.ml" 10 380 432 "paralib1.ml" 10 380 452
+type(
+  string
+)
+"paralib1.ml" 10 380 411 "paralib1.ml" 10 380 453
+type(
+  string
+)
+"paralib1.ml" 10 380 398 "paralib1.ml" 10 380 454
+type(
+  Unix.process_status
+)
+"paralib1.ml" 10 380 392 "paralib1.ml" 10 380 454
+type(
+  unit
+)
+"paralib1.ml" 11 456 468 "paralib1.ml" 11 456 478
+type(
+  string -> unit
+)
+ident(
+  ext_ref Sys.remove
+)
+"paralib1.ml" 11 456 480 "paralib1.ml" 11 456 493
+type(
+  string
+)
+"paralib1.ml" 11 456 494 "paralib1.ml" 11 456 495
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"paralib1.ml" 11 456 496 "paralib1.ml" 11 456 509
+type(
+  int -> string
+)
+ident(
+  ext_ref Pervasives.string_of_int
+)
+"paralib1.ml" 11 456 509 "paralib1.ml" 11 456 516
+type(
+  int
+)
+ident(
+  int_ref mypid "paralib1.ml" 9 331 347 "paralib1.ml" 9 331 352
+)
+"paralib1.ml" 11 456 496 "paralib1.ml" 11 456 516
+type(
+  string
+)
+"paralib1.ml" 11 456 479 "paralib1.ml" 11 456 517
+type(
+  string
+)
+"paralib1.ml" 11 456 468 "paralib1.ml" 11 456 518
+type(
+  unit
+)
+"paralib1.ml" 10 380 392 "paralib1.ml" 11 456 518
+type(
+  unit
+)
+"paralib1.ml" 8 315 325 "paralib1.ml" 12 519 532
+type(
+  unit
+)
+"paralib1.ml" 7 269 277 "paralib1.ml" 13 533 542
+type(
+  unit
+)
+"paralib1.ml" 15 552 562 "paralib1.ml" 15 552 574
+type(
+  int list ref
+)
+"paralib1.ml" 15 552 577 "paralib1.ml" 15 552 580
+type(
+  int list -> int list ref
+)
+ident(
+  ext_ref Pervasives.ref
+)
+"paralib1.ml" 15 552 581 "paralib1.ml" 15 552 583
+type(
+  int list
+)
+"paralib1.ml" 15 552 577 "paralib1.ml" 15 552 583
+type(
+  int list ref
+)
+"paralib1.ml" 16 587 601 "paralib1.ml" 16 587 604
+type(
+  ('e -> 'f) -> 'e list -> bool -> 'f list
+)
+"paralib1.ml" 16 587 605 "paralib1.ml" 16 587 606
+type(
+  'e -> 'f
+)
+ident(
+  def f "paralib1.ml" 16 587 607 "paralib1.ml" 43 1795 1813
+)
+"paralib1.ml" 16 587 607 "paralib1.ml" 16 587 613
+type(
+  'e list
+)
+ident(
+  def mylist "paralib1.ml" 16 587 614 "paralib1.ml" 43 1795 1813
+)
+"paralib1.ml" 16 587 614 "paralib1.ml" 16 587 618
+type(
+  bool
+)
+ident(
+  def flag "paralib1.ml" 17 620 628 "paralib1.ml" 43 1795 1813
+)
+"paralib1.ml" 17 620 634 "paralib1.ml" 17 620 640
+type(
+  'e list
+)
+ident(
+  int_ref mylist "paralib1.ml" 16 587 607 "paralib1.ml" 16 587 613
+)
+"paralib1.ml" 18 646 655 "paralib1.ml" 18 646 657
+type(
+  'e list
+)
+"paralib1.ml" 18 646 661 "paralib1.ml" 18 646 663
+type(
+  'f list
+)
+"paralib1.ml" 19 664 673 "paralib1.ml" 19 664 677
+type(
+  'e
+)
+ident(
+  def head "paralib1.ml" 20 689 698 "paralib1.ml" 43 1795 1813
+)
+"paralib1.ml" 19 664 681 "paralib1.ml" 19 664 685
+type(
+  'e list
+)
+ident(
+  def tail "paralib1.ml" 20 689 698 "paralib1.ml" 43 1795 1813
+)
+"paralib1.ml" 19 664 673 "paralib1.ml" 19 664 685
+type(
+  'e list
+)
+"paralib1.ml" 20 689 702 "paralib1.ml" 20 689 707
+type(
+  Unix.file_descr
+)
+"paralib1.ml" 20 689 709 "paralib1.ml" 20 689 715
+type(
+  Unix.file_descr
+)
+"paralib1.ml" 20 689 702 "paralib1.ml" 20 689 715
+type(
+  Unix.file_descr * Unix.file_descr
+)
+"paralib1.ml" 20 689 718 "paralib1.ml" 20 689 727
+type(
+  unit -> Unix.file_descr * Unix.file_descr
+)
+ident(
+  ext_ref Unix.pipe
+)
+"paralib1.ml" 20 689 727 "paralib1.ml" 20 689 729
+type(
+  unit
+)
+"paralib1.ml" 20 689 718 "paralib1.ml" 20 689 729
+type(
+  Unix.file_descr * Unix.file_descr
+)
+"paralib1.ml" 21 733 748 "paralib1.ml" 21 733 757
+type(
+  unit -> int
+)
+ident(
+  ext_ref Unix.fork
+)
+"paralib1.ml" 21 733 757 "paralib1.ml" 21 733 759
+type(
+  unit
+)
+"paralib1.ml" 21 733 748 "paralib1.ml" 21 733 759
+type(
+  int
+)
+"paralib1.ml" 22 765 776 "paralib1.ml" 22 765 778
+type(
+  int
+)
+"paralib1.ml" 22 765 792 "paralib1.ml" 22 765 793
+type(
+  unit
+)
+"paralib1.ml" 22 765 796 "paralib1.ml" 22 765 809
+type(
+  string -> unit
+)
+ident(
+  ext_ref Pervasives.print_endline
+)
+"paralib1.ml" 22 765 810 "paralib1.ml" 22 765 824
+type(
+  string
+)
+"paralib1.ml" 22 765 796 "paralib1.ml" 22 765 824
+type(
+  unit
+)
+"paralib1.ml" 22 765 829 "paralib1.ml" 22 765 837
+type(
+  ('e -> 'f) -> 'e list -> 'f list
+)
+ident(
+  ext_ref List.map
+)
+"paralib1.ml" 22 765 838 "paralib1.ml" 22 765 839
+type(
+  'e -> 'f
+)
+ident(
+  int_ref f "paralib1.ml" 16 587 605 "paralib1.ml" 16 587 606
+)
+"paralib1.ml" 22 765 840 "paralib1.ml" 22 765 846
+type(
+  'e list
+)
+ident(
+  int_ref mylist "paralib1.ml" 16 587 607 "paralib1.ml" 16 587 613
+)
+"paralib1.ml" 22 765 828 "paralib1.ml" 22 765 847
+type(
+  'f list
+)
+"paralib1.ml" 22 765 782 "paralib1.ml" 22 765 850
+type(
+  'f list
+)
+"paralib1.ml" 23 851 862 "paralib1.ml" 23 851 863
+type(
+  int
+)
+"paralib1.ml" 24 867 877 "paralib1.ml" 24 867 886
+type(
+  Unix.file_descr -> Unix.file_descr -> unit
+)
+ident(
+  ext_ref Unix.dup2
+)
+"paralib1.ml" 24 867 888 "paralib1.ml" 24 867 901
+type(
+  string -> Unix.open_flag list -> Unix.file_perm -> Unix.file_descr
+)
+ident(
+  ext_ref Unix.openfile
+)
+"paralib1.ml" 24 867 903 "paralib1.ml" 24 867 916
+type(
+  string
+)
+"paralib1.ml" 24 867 916 "paralib1.ml" 24 867 917
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"paralib1.ml" 24 867 917 "paralib1.ml" 24 867 930
+type(
+  int -> string
+)
+ident(
+  ext_ref Pervasives.string_of_int
+)
+"paralib1.ml" 24 867 931 "paralib1.ml" 24 867 942
+type(
+  unit -> int
+)
+ident(
+  ext_ref Unix.getpid
+)
+"paralib1.ml" 24 867 943 "paralib1.ml" 24 867 945
+type(
+  unit
+)
+"paralib1.ml" 24 867 930 "paralib1.ml" 24 867 946
+type(
+  int
+)
+"paralib1.ml" 24 867 917 "paralib1.ml" 24 867 946
+type(
+  string
+)
+"paralib1.ml" 24 867 902 "paralib1.ml" 24 867 947
+type(
+  string
+)
+"paralib1.ml" 24 867 949 "paralib1.ml" 24 867 962
+type(
+  Unix.open_flag
+)
+"paralib1.ml" 24 867 963 "paralib1.ml" 24 867 975
+type(
+  Unix.open_flag
+)
+"paralib1.ml" 24 867 948 "paralib1.ml" 24 867 976
+type(
+  Unix.open_flag list
+)
+"paralib1.ml" 24 867 977 "paralib1.ml" 24 867 982
+type(
+  Unix.file_perm
+)
+"paralib1.ml" 24 867 887 "paralib1.ml" 24 867 983
+type(
+  Unix.file_descr
+)
+"paralib1.ml" 24 867 984 "paralib1.ml" 24 867 995
+type(
+  Unix.file_descr
+)
+ident(
+  ext_ref Unix.stdout
+)
+"paralib1.ml" 24 867 877 "paralib1.ml" 24 867 995
+type(
+  unit
+)
+"paralib1.ml" 25 997 1008 "paralib1.ml" 25 997 1018
+type(
+  Unix.file_descr -> unit
+)
+ident(
+  ext_ref Unix.close
+)
+"paralib1.ml" 25 997 1019 "paralib1.ml" 25 997 1024
+type(
+  Unix.file_descr
+)
+ident(
+  int_ref input "paralib1.ml" 20 689 702 "paralib1.ml" 20 689 707
+)
+"paralib1.ml" 25 997 1008 "paralib1.ml" 25 997 1024
+type(
+  unit
+)
+"paralib1.ml" 26 1026 1041 "paralib1.ml" 26 1026 1047
+type(
+  out_channel
+)
+"paralib1.ml" 26 1026 1050 "paralib1.ml" 26 1026 1075
+type(
+  Unix.file_descr -> out_channel
+)
+ident(
+  ext_ref Unix.out_channel_of_descr
+)
+"paralib1.ml" 26 1026 1076 "paralib1.ml" 26 1026 1082
+type(
+  Unix.file_descr
+)
+ident(
+  int_ref output "paralib1.ml" 20 689 709 "paralib1.ml" 20 689 715
+)
+"paralib1.ml" 26 1026 1050 "paralib1.ml" 26 1026 1082
+type(
+  out_channel
+)
+"paralib1.ml" 27 1086 1097 "paralib1.ml" 27 1086 1101
+type(
+  unit -> 'a
+)
+ident(
+  int_ref init "paralib1.ml" 4 176 193 "paralib1.ml" 4 176 197
+)
+"paralib1.ml" 27 1086 1102 "paralib1.ml" 27 1086 1104
+type(
+  unit
+)
+"paralib1.ml" 27 1086 1097 "paralib1.ml" 27 1086 1104
+type(
+  'a
+)
+"paralib1.ml" 28 1106 1117 "paralib1.ml" 28 1106 1135
+type(
+  out_channel -> 'f -> Marshal.extern_flags list -> unit
+)
+ident(
+  ext_ref Marshal.to_channel
+)
+"paralib1.ml" 28 1106 1136 "paralib1.ml" 28 1106 1142
+type(
+  out_channel
+)
+ident(
+  int_ref output "paralib1.ml" 26 1026 1041 "paralib1.ml" 26 1026 1047
+)
+"paralib1.ml" 28 1106 1144 "paralib1.ml" 28 1106 1145
+type(
+  'e -> 'f
+)
+ident(
+  int_ref f "paralib1.ml" 16 587 605 "paralib1.ml" 16 587 606
+)
+"paralib1.ml" 28 1106 1146 "paralib1.ml" 28 1106 1150
+type(
+  'e
+)
+ident(
+  int_ref head "paralib1.ml" 19 664 673 "paralib1.ml" 19 664 677
+)
+"paralib1.ml" 28 1106 1143 "paralib1.ml" 28 1106 1151
+type(
+  'f
+)
+"paralib1.ml" 28 1106 1152 "paralib1.ml" 28 1106 1154
+type(
+  Marshal.extern_flags list
+)
+"paralib1.ml" 28 1106 1117 "paralib1.ml" 28 1106 1154
+type(
+  unit
+)
+"paralib1.ml" 29 1156 1170 "paralib1.ml" 29 1156 1171
+type(
+  bool ref -> bool
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"paralib1.ml" 29 1156 1171 "paralib1.ml" 29 1156 1175
+type(
+  bool ref
+)
+ident(
+  int_ref webs "paralib1.ml" 2 25 29 "paralib1.ml" 2 25 33
+)
+"paralib1.ml" 29 1156 1170 "paralib1.ml" 29 1156 1175
+type(
+  bool
+)
+"paralib1.ml" 29 1156 1181 "paralib1.ml" 29 1156 1201
+type(
+  out_channel -> int -> string -> string -> int -> unit
+)
+ident(
+  ext_ref Net.( IO ).write_job_web
+)
+"paralib1.ml" 29 1156 1203 "paralib1.ml" 29 1156 1204
+type(
+  out_channel ref -> out_channel
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"paralib1.ml" 29 1156 1204 "paralib1.ml" 29 1156 1233
+type(
+  out_channel ref
+)
+ident(
+  ext_ref Tpdispatcher.( Netprover ).out_ch
+)
+"paralib1.ml" 29 1156 1202 "paralib1.ml" 29 1156 1234
+type(
+  out_channel
+)
+"paralib1.ml" 29 1156 1235 "paralib1.ml" 29 1156 1239
+type(
+  int
+)
+"paralib1.ml" 29 1156 1240 "paralib1.ml" 29 1156 1242
+type(
+  string
+)
+"paralib1.ml" 29 1156 1243 "paralib1.ml" 29 1156 1245
+type(
+  string
+)
+"paralib1.ml" 29 1156 1246 "paralib1.ml" 29 1156 1247
+type(
+  int
+)
+"paralib1.ml" 29 1156 1181 "paralib1.ml" 29 1156 1247
+type(
+  unit
+)
+"paralib1.ml" 29 1156 1253 "paralib1.ml" 29 1156 1255
+type(
+  unit
+)
+"paralib1.ml" 29 1156 1167 "paralib1.ml" 29 1156 1255
+type(
+  unit
+)
+"paralib1.ml" 30 1257 1268 "paralib1.ml" 30 1257 1277
+type(
+  out_channel -> unit
+)
+ident(
+  ext_ref Pervasives.close_out
+)
+"paralib1.ml" 30 1257 1278 "paralib1.ml" 30 1257 1284
+type(
+  out_channel
+)
+ident(
+  int_ref output "paralib1.ml" 26 1026 1041 "paralib1.ml" 26 1026 1047
+)
+"paralib1.ml" 30 1257 1268 "paralib1.ml" 30 1257 1284
+type(
+  unit
+)
+"paralib1.ml" 31 1286 1297 "paralib1.ml" 31 1286 1301
+type(
+  int -> 'f list
+)
+ident(
+  ext_ref Pervasives.exit
+)
+"paralib1.ml" 31 1286 1302 "paralib1.ml" 31 1286 1303
+type(
+  int
+)
+"paralib1.ml" 31 1286 1297 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 30 1257 1268 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 29 1156 1167 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 28 1106 1117 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 27 1086 1097 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 26 1026 1037 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 25 997 1008 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 24 867 877 "paralib1.ml" 31 1286 1303
+type(
+  'f list
+)
+"paralib1.ml" 32 1304 1315 "paralib1.ml" 32 1304 1318
+type(
+  int
+)
+ident(
+  def pid "paralib1.ml" 33 1322 1333 "paralib1.ml" 43 1795 1813
+)
+"paralib1.ml" 33 1322 1333 "paralib1.ml" 33 1322 1343
+type(
+  Unix.file_descr -> unit
+)
+ident(
+  ext_ref Unix.close
+)
+"paralib1.ml" 33 1322 1344 "paralib1.ml" 33 1322 1350
+type(
+  Unix.file_descr
+)
+ident(
+  int_ref output "paralib1.ml" 20 689 709 "paralib1.ml" 20 689 715
+)
+"paralib1.ml" 33 1322 1333 "paralib1.ml" 33 1322 1350
+type(
+  unit
+)
+"paralib1.ml" 34 1352 1367 "paralib1.ml" 34 1352 1372
+type(
+  in_channel
+)
+"paralib1.ml" 34 1352 1375 "paralib1.ml" 34 1352 1399
+type(
+  Unix.file_descr -> in_channel
+)
+ident(
+  ext_ref Unix.in_channel_of_descr
+)
+"paralib1.ml" 34 1352 1400 "paralib1.ml" 34 1352 1405
+type(
+  Unix.file_descr
+)
+ident(
+  int_ref input "paralib1.ml" 20 689 702 "paralib1.ml" 20 689 707
+)
+"paralib1.ml" 34 1352 1375 "paralib1.ml" 34 1352 1405
+type(
+  in_channel
+)
+"paralib1.ml" 35 1409 1424 "paralib1.ml" 35 1409 1425
+type(
+  'f list
+)
+"paralib1.ml" 35 1409 1429 "paralib1.ml" 35 1409 1432
+type(
+  ('e -> 'f) -> 'e list -> bool -> 'f list
+)
+ident(
+  int_ref inv "paralib1.ml" 16 587 601 "paralib1.ml" 16 587 604
+)
+"paralib1.ml" 35 1409 1433 "paralib1.ml" 35 1409 1434
+type(
+  'e -> 'f
+)
+ident(
+  int_ref f "paralib1.ml" 16 587 605 "paralib1.ml" 16 587 606
+)
+"paralib1.ml" 35 1409 1435 "paralib1.ml" 35 1409 1439
+type(
+  'e list
+)
+ident(
+  int_ref tail "paralib1.ml" 19 664 681 "paralib1.ml" 19 664 685
+)
+"paralib1.ml" 35 1409 1440 "paralib1.ml" 35 1409 1445
+type(
+  bool
+)
+"paralib1.ml" 35 1409 1428 "paralib1.ml" 35 1409 1446
+type(
+  'f list
+)
+"paralib1.ml" 36 1450 1465 "paralib1.ml" 36 1450 1466
+type(
+  unit
+)
+"paralib1.ml" 36 1450 1470 "paralib1.ml" 36 1450 1482
+type(
+  int list ref
+)
+ident(
+  int_ref list_of_pids "paralib1.ml" 15 552 562 "paralib1.ml" 15 552 574
+)
+"paralib1.ml" 36 1450 1483 "paralib1.ml" 36 1450 1485
+type(
+  int list ref -> int list -> unit
+)
+ident(
+  ext_ref Pervasives.( := )
+)
+"paralib1.ml" 36 1450 1487 "paralib1.ml" 36 1450 1490
+type(
+  int
+)
+ident(
+  int_ref pid "paralib1.ml" 32 1304 1315 "paralib1.ml" 32 1304 1318
+)
+"paralib1.ml" 36 1450 1492 "paralib1.ml" 36 1450 1493
+type(
+  int list ref -> int list
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"paralib1.ml" 36 1450 1493 "paralib1.ml" 36 1450 1505
+type(
+  int list ref
+)
+ident(
+  int_ref list_of_pids "paralib1.ml" 15 552 562 "paralib1.ml" 15 552 574
+)
+"paralib1.ml" 36 1450 1492 "paralib1.ml" 36 1450 1505
+type(
+  int list
+)
+"paralib1.ml" 36 1450 1486 "paralib1.ml" 36 1450 1506
+type(
+  int list
+)
+"paralib1.ml" 36 1450 1469 "paralib1.ml" 36 1450 1507
+type(
+  unit
+)
+"paralib1.ml" 37 1511 1526 "paralib1.ml" 37 1511 1527
+type(
+  'g
+)
+"paralib1.ml" 37 1511 1531 "paralib1.ml" 37 1511 1551
+type(
+  in_channel -> 'g
+)
+ident(
+  ext_ref Marshal.from_channel
+)
+"paralib1.ml" 37 1511 1552 "paralib1.ml" 37 1511 1557
+type(
+  in_channel
+)
+ident(
+  int_ref input "paralib1.ml" 34 1352 1367 "paralib1.ml" 34 1352 1372
+)
+"paralib1.ml" 37 1511 1530 "paralib1.ml" 37 1511 1558
+type(
+  'g
+)
+"paralib1.ml" 38 1562 1573 "paralib1.ml" 38 1562 1581
+type(
+  in_channel -> unit
+)
+ident(
+  ext_ref Pervasives.close_in
+)
+"paralib1.ml" 38 1562 1582 "paralib1.ml" 38 1562 1587
+type(
+  in_channel
+)
+ident(
+  int_ref input "paralib1.ml" 34 1352 1367 "paralib1.ml" 34 1352 1372
+)
+"paralib1.ml" 38 1562 1573 "paralib1.ml" 38 1562 1587
+type(
+  unit
+)
+"paralib1.ml" 39 1589 1603 "paralib1.ml" 39 1589 1607
+type(
+  bool
+)
+ident(
+  int_ref flag "paralib1.ml" 16 587 614 "paralib1.ml" 16 587 618
+)
+"paralib1.ml" 40 1620 1634 "paralib1.ml" 40 1620 1651
+type(
+  int list -> unit
+)
+ident(
+  int_ref wait_for_everyone "paralib1.ml" 6 229 239 "paralib1.ml" 6 229 256
+)
+"paralib1.ml" 40 1620 1652 "paralib1.ml" 40 1620 1653
+type(
+  int list ref -> int list
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"paralib1.ml" 40 1620 1653 "paralib1.ml" 40 1620 1665
+type(
+  int list ref
+)
+ident(
+  int_ref list_of_pids "paralib1.ml" 15 552 562 "paralib1.ml" 15 552 574
+)
+"paralib1.ml" 40 1620 1652 "paralib1.ml" 40 1620 1665
+type(
+  int list
+)
+"paralib1.ml" 40 1620 1633 "paralib1.ml" 40 1620 1666
+type(
+  unit
+)
+"paralib1.ml" 41 1669 1685 "paralib1.ml" 41 1669 1686
+type(
+  bool ref -> bool
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"paralib1.ml" 41 1669 1686 "paralib1.ml" 41 1669 1690
+type(
+  bool ref
+)
+ident(
+  int_ref webs "paralib1.ml" 2 25 29 "paralib1.ml" 2 25 33
+)
+"paralib1.ml" 41 1669 1685 "paralib1.ml" 41 1669 1690
+type(
+  bool
+)
+"paralib1.ml" 41 1669 1696 "paralib1.ml" 41 1669 1716
+type(
+  out_channel -> int -> string -> string -> int -> unit
+)
+ident(
+  ext_ref Net.( IO ).write_job_web
+)
+"paralib1.ml" 41 1669 1718 "paralib1.ml" 41 1669 1719
+type(
+  out_channel ref -> out_channel
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"paralib1.ml" 41 1669 1719 "paralib1.ml" 41 1669 1748
+type(
+  out_channel ref
+)
+ident(
+  ext_ref Tpdispatcher.( Netprover ).out_ch
+)
+"paralib1.ml" 41 1669 1717 "paralib1.ml" 41 1669 1749
+type(
+  out_channel
+)
+"paralib1.ml" 41 1669 1750 "paralib1.ml" 41 1669 1754
+type(
+  int
+)
+"paralib1.ml" 41 1669 1755 "paralib1.ml" 41 1669 1757
+type(
+  string
+)
+"paralib1.ml" 41 1669 1758 "paralib1.ml" 41 1669 1760
+type(
+  string
+)
+"paralib1.ml" 41 1669 1761 "paralib1.ml" 41 1669 1762
+type(
+  int
+)
+"paralib1.ml" 41 1669 1696 "paralib1.ml" 41 1669 1762
+type(
+  unit
+)
+"paralib1.ml" 41 1669 1768 "paralib1.ml" 41 1669 1770
+type(
+  unit
+)
+"paralib1.ml" 41 1669 1682 "paralib1.ml" 41 1669 1770
+type(
+  unit
+)
+"paralib1.ml" 39 1589 1613 "paralib1.ml" 42 1771 1785
+type(
+  unit
+)
+"paralib1.ml" 42 1771 1791 "paralib1.ml" 42 1771 1793
+type(
+  unit
+)
+"paralib1.ml" 39 1589 1600 "paralib1.ml" 42 1771 1793
+type(
+  unit
+)
+"paralib1.ml" 43 1795 1807 "paralib1.ml" 43 1795 1808
+type(
+  'f
+)
+ident(
+  int_ref a "paralib1.ml" 37 1511 1526 "paralib1.ml" 37 1511 1527
+)
+"paralib1.ml" 43 1795 1812 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+ident(
+  int_ref b "paralib1.ml" 35 1409 1424 "paralib1.ml" 35 1409 1425
+)
+"paralib1.ml" 43 1795 1807 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 39 1589 1600 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 38 1562 1573 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 37 1511 1522 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 36 1450 1461 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 35 1409 1420 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 34 1352 1363 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 33 1322 1333 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 21 733 742 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 20 689 698 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 17 620 628 "paralib1.ml" 43 1795 1813
+type(
+  'f list
+)
+"paralib1.ml" 45 1823 1829 "paralib1.ml" 45 1823 1832
+type(
+  ('b -> 'c) -> 'b list -> bool -> 'c list
+)
+ident(
+  int_ref inv "paralib1.ml" 16 587 601 "paralib1.ml" 16 587 604
+)
+"paralib1.ml" 45 1823 1833 "paralib1.ml" 45 1823 1834
+type(
+  'b -> 'c
+)
+ident(
+  int_ref g "paralib1.ml" 4 176 198 "paralib1.ml" 4 176 199
+)
+"paralib1.ml" 45 1823 1835 "paralib1.ml" 45 1823 1845
+type(
+  'b list
+)
+ident(
+  int_ref input_list "paralib1.ml" 4 176 200 "paralib1.ml" 4 176 210
+)
+"paralib1.ml" 45 1823 1846 "paralib1.ml" 45 1823 1850
+type(
+  bool
+)
+"paralib1.ml" 45 1823 1829 "paralib1.ml" 45 1823 1850
+type(
+  'c list
+)
+"paralib1.ml" 16 587 593 "paralib1.ml" 45 1823 1850
+type(
+  'c list
+)
+"paralib1.ml" 15 552 558 "paralib1.ml" 45 1823 1850
+type(
+  'c list
+)
+"paralib1.ml" 5 214 218 "paralib1.ml" 46 1851 1858
+type(
+  'c list
+)

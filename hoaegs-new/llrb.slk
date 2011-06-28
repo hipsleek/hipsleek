@@ -1,0 +1,30 @@
+/**
+ Left-leaning Red Black Tree
+ Entailment testing.
+ @author: Vu An Hoa
+ */
+
+data node {
+	int val;
+	int color; /* 0 for red, 1 for black */
+	node left;
+	node right;
+}.
+
+/* Red black tree with case analysis */
+pred rbc<n, cl, bh, c> == self = null & n = 0 & bh = 1 & cl = 1 & c = 0
+	or self::node<v, 1, l, r> * l::rbc<ln, 1, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> 
+       & cl = 1 & n = 1 + ln + rn & c = 1
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 1, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 2
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 0, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 3
+	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _>
+	   & cl = 0 & n = 1 + ln + rn & c = 4
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4.
+	
+//checkentail x::rbc<n,cl,bh,c> & c = 4 |- cl = 0.
+
+checkentail x::rbc<_,0,_,c>  |- c = 4. 
+
+//checkentail x::node<_,0,null,null> |- x::rbc<_,_,_,_>.
