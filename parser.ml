@@ -638,16 +638,16 @@ general_h_args:
               
 opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
-and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr ->t]];
+and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
 (* (formula option , expr option )   *)
     
-pure_constr: [[ peek_pure_out; t=cexp_w -> match t with
+pure_constr: [[ peek_pure_out; t= cexp_w -> match t with
                     | Pure_f f -> f
                     | Pure_c (P.Var (v,_)) ->  P.BForm (P.mkBVar v (get_pos_camlp4 _loc 1), None )
                     | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
 
-cexp: [[t=cexp_w -> match t with
+cexp: [[t= cexp_w -> match t with
                     | Pure_c f -> f
                     | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
 ];

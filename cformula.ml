@@ -143,6 +143,9 @@ h_formula_phase_pos : loc }
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_imm : bool;
+
+                        h_formula_data_frac_perm : float; (*LDK: fractional permission*)
+
                         h_formula_data_arguments : CP.spec_var list;
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
@@ -152,6 +155,9 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_imm : bool;
+
+                        h_formula_view_frac_perm : float; (*LDK: fractional permission*)
+
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
                         h_formula_view_coercible : bool;
@@ -1377,6 +1383,7 @@ and h_subst sst (f : h_formula) =
   | DataNode ({h_formula_data_node = x; 
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm; 
+							h_formula_data_frac_perm = frac; 
 							h_formula_data_arguments = svs; 
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
@@ -1385,6 +1392,7 @@ and h_subst sst (f : h_formula) =
 		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm;  
+							h_formula_data_frac_perm = frac;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
@@ -1499,6 +1507,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | DataNode ({h_formula_data_node = x; 
 	h_formula_data_name = c; 
     h_formula_data_imm = imm; 
+    h_formula_data_frac_perm = frac; (*LDK*)
 	h_formula_data_arguments = svs; 
 	h_formula_data_label = lbl;
     h_formula_data_remaining_branches = ann;
@@ -1507,6 +1516,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
+    	h_formula_data_frac_perm = frac;  (*LDK*)
 		h_formula_data_arguments = List.map (subst_var s) svs;
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;

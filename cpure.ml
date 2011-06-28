@@ -50,7 +50,10 @@ and exp =
   | Var of (spec_var * loc)
   | IConst of (int * loc)
   | FConst of (float * loc)
-  (* | FracConst of (int * int * loc) *)
+
+ (* (\*LDK: fractional permission*\) *)
+ (*  | FracConst of (float * loc) *)
+
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -112,6 +115,10 @@ let rec get_exp_type (e : exp) : typ = match e with
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ -> Int
   | FConst _ -> Float
+
+  (* (\*LDK*\) *)
+  (* | FracConst _ -> Float *)
+
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
@@ -243,6 +250,10 @@ and afv (af : exp) : spec_var list = match af with
   | Var (sv, _) -> [sv]
   | IConst _ -> []
   | FConst _ -> []
+
+  (* (\*LDK*\) *)
+  (* | FracConst _ -> [] *)
+
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
@@ -311,6 +322,10 @@ and is_null (e : exp) : bool = match e with
 and is_zero (e : exp) : bool = match e with
   | IConst (0, _) -> true
   | FConst (0.0, _) -> true
+
+  (* (\*LDK*\) *)
+  (* | FracConst (0.0, _) -> true *)
+
   | _ -> false
 
 and is_var (e : exp) : bool = match e with
@@ -320,6 +335,10 @@ and is_var (e : exp) : bool = match e with
 and is_num (e : exp) : bool = match e with
   | IConst _ -> true
   | FConst _ -> true
+
+  (* (\*LDK*\) *)
+  (* | FracConst _ -> true *)
+
   | _ -> false
 
 and to_int_const e t =

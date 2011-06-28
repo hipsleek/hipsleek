@@ -146,6 +146,9 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_imm : bool; 
 		       h_formula_heap_full : bool;
 		       h_formula_heap_with_inv : bool;
+
+		       h_formula_heap_frac_perm : float; (*LDK: fractional permission*)
+
 		       h_formula_heap_arguments : P.exp list;
 		       h_formula_heap_pseudo_data : bool;
 		       h_formula_heap_label : formula_label option;
@@ -156,6 +159,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_imm : bool;
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
+
+		    h_formula_heap2_frac_perm : float; (*LDK: fractional permission*)
+
 			h_formula_heap2_arguments : (ident * P.exp) list;
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
@@ -342,6 +348,7 @@ and mkHeapNode c id i f inv pd hl ofl l= HeapNode {
                    h_formula_heap_full = f;
                    h_formula_heap_with_inv = inv;
                    h_formula_heap_pseudo_data = pd;
+                   h_formula_heap_frac_perm = 1.0; (*LDK*)
                    h_formula_heap_arguments = hl;
                    h_formula_heap_label = ofl;
                    h_formula_heap_pos = l }
@@ -353,6 +360,7 @@ and mkHeapNode2 c id i f inv pd ohl ofl l = HeapNode2 {
                     h_formula_heap2_full = f;
                     h_formula_heap2_with_inv = inv;
                     h_formula_heap2_pseudo_data = pd;
+                    h_formula_heap2_frac_perm = 1.0; (*LDK*)
                     h_formula_heap2_arguments = ohl;
                     h_formula_heap2_label = ofl;
                     h_formula_heap2_pos = l}
@@ -630,6 +638,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	       h_formula_heap_imm = imm; 
 	       h_formula_heap_full = full; 
 	       h_formula_heap_with_inv = winv;
+	       h_formula_heap_frac_perm = frac; (*LDK*)
 	       h_formula_heap_arguments = args;
 	       h_formula_heap_pseudo_data = ps_data;
 	       h_formula_heap_label = l;
@@ -639,6 +648,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		 h_formula_heap_imm = imm; 
 		 h_formula_heap_full = full;
 		 h_formula_heap_with_inv = winv;
+		 h_formula_heap_frac_perm = frac; (*LDK*)
 		 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		 h_formula_heap_pseudo_data = ps_data;
 		 h_formula_heap_label = l;
@@ -650,6 +660,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		 h_formula_heap2_full = full;
 		 h_formula_heap2_with_inv = winv;
 		 h_formula_heap2_arguments = args;
+		 h_formula_heap2_frac_perm = frac; (*LDK*)
 		 h_formula_heap2_pseudo_data = ps_data;
 		 h_formula_heap2_label = l;
 		 h_formula_heap2_pos= pos}) -> 
@@ -659,6 +670,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		   h_formula_heap2_imm = imm;
 		   h_formula_heap2_full =full;
 		   h_formula_heap2_with_inv = winv;
+		   h_formula_heap2_frac_perm = frac; (*LDK*)
 		   h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 		   h_formula_heap2_pseudo_data =ps_data;
 		   h_formula_heap2_label = l;
