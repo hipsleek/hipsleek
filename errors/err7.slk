@@ -69,7 +69,7 @@ checkentail x::pos_ll<n> & n=0|- x::neg_ll<n>.
 //4. must failure (but needs lemma)
 checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
 
-//5. OK may fail 
+//5. OK may fail
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
 
@@ -77,7 +77,7 @@ checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
 
 
-//7. OK may failure 
+//7. OK may failure
 checkentail x::pos_ll<n> |- x::neg_ll<n> .
 
 

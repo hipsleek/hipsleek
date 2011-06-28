@@ -93,22 +93,8 @@ checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 //22. valid
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
-//23. must-bug - cause:or[22  y!=null |-  y=null (must-bug).,15.3  true |-  n=0 (may-bug).] WRONG.OR vs.UNION?
+//23. must-bug - cause:22  y!=null |-  y=null (must-bug).
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
-
-/*
-Why isn't it AND_reason?
-
-Bad Context:  
-               fe_kind: MUST{
-                             fc_message:  y!=null |-  y=null (must-bug).
-                             fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
-             FAIL_OR 
-              
-               fe_kind: MAY{
-                            fc_message:  true |-  n=0 (may-bug).
-                            fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
-*/
 
 
 //24 valid

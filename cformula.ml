@@ -2270,7 +2270,22 @@ let get_must_error_from_ctx cs =
 
 let rec set_must_error_from_one_ctx ctx msg ft=
   match ctx with
-    | Ctx es -> Ctx {es with es_must_error = Some (msg,ft)}
+    | Ctx es ->
+        begin
+            let instance_ft=
+              (
+                  match ft with
+                    | Basic_Reason (fc, fe) ->
+                        let instance_fc = {fc with fc_current_lhs = es;
+                            fc_message = msg;
+                            fc_prior_steps = es.es_prior_steps
+                                          }
+                        in Basic_Reason (instance_fc, fe)
+                    | _ -> report_error no_pos "Cformula.set_must_error_from_one_ctx: should be basic reason here"
+              )
+            in
+            Ctx {es with es_must_error = Some (msg,instance_ft)}
+        end
     | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg ft, set_must_error_from_one_ctx ctx2 msg ft)
 
 let rec set_must_error_from_ctx cs msg ft=
@@ -2475,15 +2490,6 @@ let get_must_es_msg_ft ft =
     | None, Failure_Must ms -> report_error no_pos "INCONSISTENCY with get_must_es_msg_ft"
     | _, _ -> None
  
-let convert_must_failure_to_value (l:list_context) : list_context =
-  match l with 
-  | FailCtx ft ->
-        (match (get_must_es_msg_ft ft) with
-          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ] 
-          | _ ->  l)
-  | SuccCtx _ -> l
-
-
 let get_must_failure (ft:list_context) =
   match ft with
     | FailCtx f -> get_must_failure_ft f
@@ -3211,11 +3217,45 @@ and change_flow_ctx from_fl to_fl ctx_list =
 		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
 	List.map helper ctx_list
 
-and change_flow_into_ctx to_fl ctx_list = 
+and change_flow_into_ctx to_fl ctx_list =
 	let rec helper c = match c with
 		| Ctx c -> Ctx {c with es_formula = substitute_flow_into_f to_fl c.es_formula;}
 		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
 	List.map helper ctx_list
+
+and convert_must_failure_to_value (l:list_context) conseq (bug_verified:bool): list_context =
+  let conseq_flow = flow_formula_of_struc_formula conseq in
+  match l with
+  | FailCtx ft ->
+        (match (get_must_es_msg_ft ft) with
+          | Some (es,msg) ->
+              begin
+                  match bug_verified with
+                    | true ->
+                        (*change flow to normal*)
+                        let new_ctx_lst = change_flow_into_ctx !Globals.n_flow_int [Ctx es] in
+                        SuccCtx new_ctx_lst
+                    | false ->
+                        (*update es_must_error*)
+                        SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]
+              end
+          | _ ->  l)
+  | SuccCtx ctx_lst -> if not bug_verified then l else
+        begin
+            let fc_template = {
+		        fc_message = "INCONSISTENCY : expected failure but success instead";
+		        fc_current_lhs  =  empty_es (mkTrueFlow ()) no_pos;
+		        fc_prior_steps = [];
+		        fc_orig_conseq  = conseq;
+		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
+		        fc_failure_pts =  []} in
+            let ft_template = (Basic_Reason (fc_template,
+                                             mk_failure_must "INCONSISTENCY : expected failure but success instead")) in
+            let new_ctx_lst = set_must_error_from_ctx ctx_lst "INCONSISTENCY : expected failure but success instead"
+              ft_template in
+            (SuccCtx (change_flow_ctx !Globals.n_flow_int
+                          conseq_flow.formula_flow_interval new_ctx_lst))
+            end
 (*23.10.2008*)
 
 and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
