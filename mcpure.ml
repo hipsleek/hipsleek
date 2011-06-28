@@ -1072,11 +1072,18 @@ and memo_pure_push_exists_eq_x (qv:spec_var list) (f0:memo_pure) pos : (memo_pur
 and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
   Gen.Debug.no_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
       (fun (c, vl)-> !print_mp_f c ^"\n to be q vars: "^(!print_sv_l_f vl)) (fun qv f0 -> memo_pure_push_exists_eq_x qv f0 pos) qv f0
-      
-(*pushes the exists into the individual groups, picks the simple and complex constraints related to qv, combines them into
-  a formula*)
-and memo_pure_push_exists_slice  (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
-  
+
+and memo_pure_push_exists_slice (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =
+  Gen.Debug.ho_2 "memo_pure_push_exists_slice" !print_sv_l_f !print_mp_f !print_mp_f
+	(fun qv f0 -> memo_pure_push_exists_slice_x (f_simp,do_split) qv f0 pos) qv f0
+	
+(* pushes the exists into the individual groups, picks the simple and complex constraints related to qv, combines them into
+  a formula *)
+and memo_pure_push_exists_slice_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =
+  if !do_slicing then memo_pure_push_exists_slice_slicing (f_simp,do_split) qv f0 pos
+  else memo_pure_push_exists_slice_no_slicing (f_simp,do_split) qv f0 pos
+
+and memo_pure_push_exists_slice_no_slicing (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =  
   (*builds a formula to be simplified with the constraints related to qv*) 
   let pick_rel_constraints slice cons aset =
     let equiv_lst = get_equiv_eq_with_const aset in
@@ -1105,7 +1112,43 @@ and memo_pure_push_exists_slice  (f_simp,do_split) (qv:spec_var list) (f0:memo_p
 	  memo_group_slice = rem_slice @after_elim_trues;
 	  memo_group_aset = rem_aset;} in
 	  if do_split then split_mem_grp r else [r] in
-  List.concat (List.map helper f0)  
+  List.concat (List.map helper f0)
+
+and pick_rel_constraints qv slice cons aset pos =
+  let equiv_lst = get_equiv_eq_with_const aset in
+  let nas, drp3 = List.partition (fun (c1,c2)-> (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) equiv_lst in
+  let r,drp1 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var (bfv c.memo_formula) qv))>0) cons in
+  let r = List.filter (fun c -> not (c.memo_status=Implied_R)) r in
+  let ns,drp2 = List.partition (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var (fv c) qv))>0) slice in 
+  let aset = List.fold_left  (fun a (c1,c2) -> add_equiv_eq_with_const a c1 c2) empty_var_aset drp3 in 
+  let fand1 = List.fold_left (fun a c-> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
+  let fand2 = List.fold_left (fun a c-> mkAnd a c pos) fand1 ns in
+  let fand3 =List.fold_left (fun a (c1,c2)-> mkAnd a (BForm (((form_bform_eq_with_const c1 c2), None),None))  no_pos) fand2 nas in
+  (fand3, drp1, drp2, aset)
+
+and memo_pure_push_exists_slice_slicing (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =  
+  (* builds a formula to be simplified with the constraints related to qv *) 
+  let rel_mg, non_rel_mg = List.partition (fun mg -> Gen.BList.overlap_eq eq_spec_var qv mg.memo_group_fv) f0 in
+
+  let slice, cons, aset = List.fold_left
+	(fun (ass, acs, aas) mg -> (ass@mg.memo_group_slice, acs@mg.memo_group_cons, aas@mg.memo_group_aset)) ([],[],[]) rel_mg in
+  let (to_simpl, rem_cons, rem_slice, rem_aset) = pick_rel_constraints qv slice cons aset pos in
+  let after_simpl = f_simp qv to_simpl pos in
+  let after_elim_trues = List.filter (fun c-> not (isConstTrue c))(split_conjunctions after_simpl) in
+
+  let gfv = List.fold_left (fun a mg -> a @ mg.memo_group_fv) [] rel_mg in
+  let glkl = List.fold_left (fun a mg -> a @ mg.memo_group_linking_vars) [] rel_mg in
+  
+  let r =
+	{memo_group_fv = Gen.BList.difference_eq eq_spec_var gfv qv;
+	 memo_group_linking_vars = Gen.BList.difference_eq eq_spec_var glkl qv;
+	 memo_group_changed = true;
+	 memo_group_cons = rem_cons;
+	 memo_group_slice = rem_slice @ after_elim_trues;
+	 memo_group_aset = rem_aset;} in
+  let r = if do_split then split_mem_grp r else [r] in
+  r @ non_rel_mg  
+	
       (*pushes exists qv over f0. It takes two steps: first searches for substitutions in the eq set, this avoids some 
         simplify calls, pushes the rest of the qv vars through memo_pure_push_exists_slice which picks relevant constraints
         ands them and sends them to simplify  *)
@@ -1122,7 +1165,6 @@ and memo_pure_push_exists_all fs qv f0 pos =
 (*and memo_pure_push_exists_eq_debug qv f0 pos =
   Gen.Debug.no_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
   (fun (c1,c2) -> (!print_mp_f c1)^"\n remaining: "^(String.concat ", " (List.map !print_sv_f c2)) ) memo_pure_push_exists_eq qv f0 pos*)
-
       
 and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
   if qv==[] then c
@@ -1497,8 +1539,27 @@ let rec mimply_process_ante(*_debug*) with_disj ante_disj conseq str str_time t_
  Gen.Debug.no_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
  (fun with_disj ante_disj conseq -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
-    
+
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
+  if !do_slicing then mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no
+  else mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no
+  
+and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
+  let n_ante =
+	  let fv = fv conseq in 
+	  List.filter (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) ante_disj in
+  let r = match with_disj with  
+    | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
+    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
+    | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
+  let _ = Debug.devel_pprint str no_pos in
+
+  (Gen.Profiling.push_time str_time;
+  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
+  Gen.Profiling.pop_time str_time;
+  r)
+
+and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
   (*let n_ante =
 	if !do_slicing then*)
 	  let (sv, lkl) = fv_with_slicing_label conseq in
@@ -1550,7 +1611,7 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   in
   Gen.Profiling.pop_time str_time;
   r)
- 
+	
 let mimply_one_conj ante_memo0 conseq t_imply imp_no = 
   let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
     (*("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^*) " with XPure0 no complex")*) "" 
