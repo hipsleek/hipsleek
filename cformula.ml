@@ -144,7 +144,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_imm : bool;
 
-                        h_formula_data_frac_perm : float; (*LDK: fractional permission*)
+                        h_formula_data_frac_perm : CP.exp; (*LDK: fractional permission*)
 
                         h_formula_data_arguments : CP.spec_var list;
                         h_formula_data_label : formula_label option;
@@ -156,7 +156,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_imm : bool;
 
-                        h_formula_view_frac_perm : float; (*LDK: fractional permission*)
+                        h_formula_view_frac_perm : CP.exp; (*LDK: fractional permission*)
 
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;

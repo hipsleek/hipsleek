@@ -4792,14 +4792,14 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
   let (new_v2,use_case) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
-
+  let frac = (CP.FConst (1.0, pos)) in (*LDK*)
   let view_to_fold = ViewNode ({  
 	  h_formula_view_node = List.hd new_v2 (*var_to_fold*);
 	  h_formula_view_name = c2;
 	  h_formula_view_imm = get_view_imm ln2;
       h_formula_view_original = original2;
       h_formula_view_unfold_num = unfold_num;
-      h_formula_view_frac_perm = 1.0; (*LDK*)
+      h_formula_view_frac_perm = frac; (*LDK*)
 	  h_formula_view_arguments = List.tl new_v2;
 	  h_formula_view_modes = get_view_modes ln2;
 	  h_formula_view_coercible = true;

@@ -504,7 +504,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 	  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-          IF.h_formula_heap_frac_perm = 1.0; (*LDK*)
+          IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm; (*LDK*)
           IF.h_formula_heap_arguments = hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
@@ -526,7 +526,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
             IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
             IF.h_formula_heap_arguments = hargs;
-            IF.h_formula_heap_frac_perm = 1.0; (*LDK*)
+            IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm;(*LDK*)
             IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
             IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
 			IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
@@ -3707,11 +3707,12 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                     vdef.I.view_data_name)
                   else vdef.I.view_data_name in
                 let new_v = CP.SpecVar (Named c0, v, p) in
+                let newFrac = trans_pure_exp frac stab in
                 let new_h = CF.ViewNode {
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
 		            CF.h_formula_view_imm = imm;
-		            CF.h_formula_view_frac_perm = frac; (*LDK*)
+		            CF.h_formula_view_frac_perm = newFrac; (*LDK*)
                     CF.h_formula_view_arguments = hvars;
                     CF.h_formula_view_modes = vdef.I.view_modes;
                     CF.h_formula_view_coercible = true;
@@ -3728,11 +3729,12 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                       let labels = List.map (fun _ -> "") exps in
                       let hvars = match_exp (List.combine exps labels) pos in
                       let new_v = CP.SpecVar (Named c, v, p) in
+                      let newFrac = trans_pure_exp frac stab in
                       let new_h = CF.DataNode {
                           CF.h_formula_data_node = new_v;
                           CF.h_formula_data_name = c;
 		                  CF.h_formula_data_imm = imm;
-		                  CF.h_formula_data_frac_perm = frac; (*LDK*)
+		                  CF.h_formula_data_frac_perm = newFrac; (*LDK*)
 		                  CF.h_formula_data_arguments = hvars;
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;

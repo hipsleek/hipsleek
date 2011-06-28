@@ -483,10 +483,9 @@ view_body:
   
 (********** Constraints **********)
 
-opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t
-]];
+opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t]];
 
-opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA ->error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
+opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
   
 heap_arg2: [[ peek_heap_args; `IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]]; 
 
@@ -596,32 +595,41 @@ heap_rw:
 
 heap_wr:
   [[   
-     shc=SELF; peek_star; `STAR;  hw=simple_heap_constr     -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
+     shc=SELF; peek_star; `STAR;  hw= simple_heap_constr     -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
    | shc=simple_heap_constr        -> shc
    (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
   ]];
  
-simple2:  [[ t= opt_type_var_list; `LT -> ()]];
-   
-simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
-     match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2)]];
+simple2:  [[ t= opt_type_var_list -> ()]];
 
+(*LDK: frac for fractional permission*)   
+simple_heap_constr_imm:
+  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac= opt_frac_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+     match hl with
+        | ([],t) -> F.mkHeapNode2 c id true false false false frac t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id true false false false frac t ofl (get_pos_camlp4 _loc 2)]];
+
+(*LDK: add frac for fractional permission*)
 simple_heap_constr:
   [[ 
-    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_frac_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
     (match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
+        | ([],t) -> F.mkHeapNode2 c id true false false false frac t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id true false false false frac t ofl (get_pos_camlp4 _loc 2))
+  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_frac_perm;`LT; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)]];
-  
+      | ([],t) -> F.mkHeapNode2 c id false false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id false false false false frac t ofl (get_pos_camlp4 _loc 2))
+  | t = ho_fct_header -> 
+      let frac = (P.FConst (1.0, get_pos_camlp4 _loc 1)) in 
+      F.mkHeapNode ("",Primed) "" false false false false frac [] None  (get_pos_camlp4 _loc 1)]];
+
+(*LDK: parse optional fractional permission, default = 1.0*)
+opt_frac_perm: [[t = OPT frac_perm -> un_option t (P.FConst (1.0, get_pos_camlp4 _loc 1)) ]];
+
+frac_perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];
+
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
 (*general_h_args:
@@ -873,7 +881,7 @@ split_combine:
    
 ext_form: [[ h=hpred_header;	`WITH; `OBRACE; t=ho_fct_def_list; `CBRACE ->("",[])]];
   
-ho_fct_header: [[`IDENTIFIER id; `OPAREN; f=fct_arg_list; `CPAREN -> f]];
+ho_fct_header: [[`IDENTIFIER id; `OPAREN; f= fct_arg_list; `CPAREN -> f]];
 
 ho_fct_def:	[[ h=ho_fct_header; `EQ; s=shape -> ()]];
 

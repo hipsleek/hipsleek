@@ -147,7 +147,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_full : bool;
 		       h_formula_heap_with_inv : bool;
 
-		       h_formula_heap_frac_perm : float; (*LDK: fractional permission*)
+		       h_formula_heap_frac_perm : P.exp; (*LDK: fractional permission*)
 
 		       h_formula_heap_arguments : P.exp list;
 		       h_formula_heap_pseudo_data : bool;
@@ -160,7 +160,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
 
-		    h_formula_heap2_frac_perm : float; (*LDK: fractional permission*)
+		    h_formula_heap2_frac_perm : P.exp; (*LDK: fractional permission*)
 
 			h_formula_heap2_arguments : (ident * P.exp) list;
 			h_formula_heap2_pseudo_data : bool;
@@ -341,26 +341,26 @@ and mkPhase f1 f2 pos =
 					h_formula_phase_rw = f2;
 					h_formula_phase_pos = pos }
 
-and mkHeapNode c id i f inv pd hl ofl l= HeapNode { 
+and mkHeapNode c id i f inv pd frac hl ofl l= HeapNode { 
                    h_formula_heap_node = c;
                    h_formula_heap_name = id;
                    h_formula_heap_imm = i;
                    h_formula_heap_full = f;
                    h_formula_heap_with_inv = inv;
                    h_formula_heap_pseudo_data = pd;
-                   h_formula_heap_frac_perm = 1.0; (*LDK*)
+                   h_formula_heap_frac_perm = frac; (*LDK*)
                    h_formula_heap_arguments = hl;
                    h_formula_heap_label = ofl;
                    h_formula_heap_pos = l }
           
-and mkHeapNode2 c id i f inv pd ohl ofl l = HeapNode2 { 
+and mkHeapNode2 c id i f inv pd frac ohl ofl l = HeapNode2 { 
                     h_formula_heap2_node = c;
                     h_formula_heap2_name = id;
                     h_formula_heap2_imm = i;
                     h_formula_heap2_full = f;
                     h_formula_heap2_with_inv = inv;
                     h_formula_heap2_pseudo_data = pd;
-                    h_formula_heap2_frac_perm = 1.0; (*LDK*)
+                    h_formula_heap2_frac_perm = frac; (*LDK*)
                     h_formula_heap2_arguments = ohl;
                     h_formula_heap2_label = ofl;
                     h_formula_heap2_pos = l}
