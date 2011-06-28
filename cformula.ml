@@ -2284,7 +2284,8 @@ let rec set_must_error_from_one_ctx ctx msg ft=
                     | _ -> report_error no_pos "Cformula.set_must_error_from_one_ctx: should be basic reason here"
               )
             in
-            Ctx {es with es_must_error = Some (msg,instance_ft)}
+            Ctx {es with  es_formula = substitute_flow_into_f  !Globals.error_flow_int es.es_formula;
+                es_must_error = Some (msg,instance_ft)}
         end
     | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg ft, set_must_error_from_one_ctx ctx2 msg ft)
 
@@ -3224,8 +3225,7 @@ and change_flow_into_ctx to_fl ctx_list =
 		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
 	List.map helper ctx_list
 
-and convert_must_failure_to_value (l:list_context) conseq (bug_verified:bool): list_context =
-  let conseq_flow = flow_formula_of_struc_formula conseq in
+and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verified:bool): list_context =
   match l with
   | FailCtx ft ->
         (match (get_must_es_msg_ft ft) with
@@ -3233,8 +3233,8 @@ and convert_must_failure_to_value (l:list_context) conseq (bug_verified:bool): l
               begin
                   match bug_verified with
                     | true ->
-                        (*change flow to normal*)
-                        let new_ctx_lst = change_flow_into_ctx !Globals.n_flow_int [Ctx es] in
+                        (*change flow to the flow at the beginning*)
+                        let new_ctx_lst = change_flow_into_ctx ante_flow [Ctx es] in
                         SuccCtx new_ctx_lst
                     | false ->
                         (*update es_must_error*)
@@ -3254,9 +3254,8 @@ and convert_must_failure_to_value (l:list_context) conseq (bug_verified:bool): l
                                              mk_failure_must "INCONSISTENCY : expected failure but success instead")) in
             let new_ctx_lst = set_must_error_from_ctx ctx_lst "INCONSISTENCY : expected failure but success instead"
               ft_template in
-            (SuccCtx (change_flow_ctx !Globals.n_flow_int
-                          conseq_flow.formula_flow_interval new_ctx_lst))
-            end
+            SuccCtx new_ctx_lst
+        end
 (*23.10.2008*)
 
 and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
