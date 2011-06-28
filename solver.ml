@@ -2435,6 +2435,22 @@ and heap_entail_struc_init_bug (prog : prog_decl) (is_folding : bool)  (has_post
   let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
   (CF.convert_must_failure_to_value ans ante_flow conseq post_check, prf)
 
+and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
+  let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
+  (CF.convert_must_failure_to_value_orig ans, prf)
+
+and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
+  let f1 = CF.struc_formula_is_eq_flow conseq !error_flow_int in
+  let f2 = CF.list_context_is_eq_flow cl !n_flow_int in
+  if f1 && f2 then
+    begin
+     let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in
+     let (ans,prf) = heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid in
+     (CF.invert_outcome ans,prf)
+    end
+  else
+    heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid 
+
 and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
   Debug.devel_pprint ("heap_entail_struc_init:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_list_context cl)
@@ -4026,13 +4042,13 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 		                let h1, p1, fl1, br1, t1 = split_components ante in
 		                let h2, p2, fl2, br2, t2 = split_components conseq in
 			            (* let _ = print_string "pp 1\n" in*)
-			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 
+			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff 1 fl2 fl1) then 
 			              let _ = print_string ("got: "^(Cprinter.string_of_formula ante)^"|-"^(Cprinter.string_of_formula conseq)^"\n\n") in
 			              (SuccCtx [false_ctx fl1 pos], UnsatAnte)
 			            else					  
 			              (*  let _ = print_string "pp 2\n" in*)
 			              (* let _ = print_string ("bol : "^(string_of_bool ((CF.is_false_flow fl2.formula_flow_interval)))^"\n") in*)
-			              if (not(CF.is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then begin
+			              if (not(CF.is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff 2 fl2 fl1) then begin
 			                Debug.devel_pprint ("heap_entail_conjunct_helper: "
 						    ^ "conseq has an incompatible flow type"
 						    ^ "\ncontext:\n"
@@ -4040,7 +4056,10 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 						    ^ "\nconseq:\n"
 						    ^ (Cprinter.string_of_formula conseq)) pos;
                               (* TODO : change to meaningful msg *)
-                            let fe = mk_failure_must "1: conseq has an incompatible flow type"
+                            (* what if must failure on the ante -> conseq *)
+                            let fe = 
+                              if CF.overlap_flow_ff fl2 fl1 then mk_failure_may "2: conseq has overlapping flow type"
+                              else mk_failure_must "1: conseq has an incompatible flow type"
                             in
 			                (CF.mkFailCtx_in (Basic_Reason ({fc_message ="incompatible flow type";
 							fc_current_lhs = estate;
@@ -6390,7 +6409,9 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let pr x = (string_of_int(List.length x))^"length" in
-  Gen.Debug.loop_2_no "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
+  let pr2 = Cprinter.string_of_list_partial_context in 
+  Gen.Debug.no_2 (* loop_2_no *) "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula) 
+      (fun (x,_) -> pr2 x)
       (fun _ _ -> heap_entail_list_partial_context_init prog is_folding  cl conseq pos pid) cl conseq
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)

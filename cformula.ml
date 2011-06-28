@@ -199,6 +199,7 @@ let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 let print_ext_formula = ref(fun (c:ext_formula) -> "printer not initialized")
+let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list l = match l with 
@@ -297,6 +298,8 @@ and mkTrueFlow () =
 and mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
 
 and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link = None;}
+
+and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_link = None;}
 
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
@@ -517,7 +520,17 @@ and disjoint_flow t1 t2 : bool = not(overlap_flow t1 t2)
 
 and subsume_flow_f (n1,n2) f :bool = subsume_flow (n1,n2) f.formula_flow_interval
 
-and subsume_flow_ff f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formula_flow_interval
+and subsume_flow_ff_x f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formula_flow_interval
+
+and subsume_flow_ff i f1 f2 :bool = 
+  let pr = !print_flow_formula in
+  Gen.Debug.no_2_num i "subsume_flow_ff" pr pr string_of_bool subsume_flow_ff_x f1 f2
+
+and overlap_flow_ff_x f1 f2 :bool = overlap_flow f1.formula_flow_interval f2.formula_flow_interval
+
+and overlap_flow_ff f1 f2 :bool = 
+  let pr = !print_flow_formula in
+  Gen.Debug.no_2 "subsume_flow_ff" pr pr string_of_bool overlap_flow_ff_x f1 f2
 
 and get_flow_from_stack c l pos = 
   try
@@ -567,10 +580,46 @@ and set_flow_to_link_f flow_store f pos = match f with
 	formula_or_f2 = set_flow_to_link_f flow_store b.formula_or_f2 pos;
 	formula_or_pos = b.formula_or_pos}
 
-and flow_formula_of_formula (f:formula) (*pos*) : flow_formula = match f with
+
+and formula_is_eq_flow  (f:formula) ff   : bool =
+  let is_eq f = equal_flow_interval ff (f.formula_flow_interval) in
+  match f with
+  | Base b-> is_eq b.formula_base_flow
+  | Exists b-> is_eq b.formula_exists_flow
+  | Or b ->  (formula_is_eq_flow b.formula_or_f1 ff) &&  (formula_is_eq_flow b.formula_or_f2 ff)
+
+and struc_formula_is_eq_flow (f:struc_formula) ff : bool =
+  let rec helper (f:ext_formula) = match f with
+	| EBase b ->
+        (formula_is_eq_flow b.formula_ext_base ff) && (struc_formula_is_eq_flow b.formula_ext_continuation ff)
+	| ECase b -> List.for_all (fun (_,c) -> struc_formula_is_eq_flow c ff) b.formula_case_branches 
+	| EAssume (x,b,y) -> formula_is_eq_flow b ff
+	| EVariance b -> struc_formula_is_eq_flow b.formula_var_continuation ff 
+  in List.for_all helper f
+
+and formula_subst_flow (f:formula) ff : formula =
+  match f with
+  | Base b-> Base {b with formula_base_flow = ff} 
+  | Exists b-> Exists{b with formula_exists_flow = ff}
+  | Or b -> Or {b with formula_or_f1 = formula_subst_flow b.formula_or_f1 ff;
+	formula_or_f2 = formula_subst_flow b.formula_or_f2 ff}
+
+and struc_formula_subst_flow (f:struc_formula) ff : struc_formula =
+  let helper (f:ext_formula) = match f with
+	| EBase b -> EBase {b with formula_ext_base = formula_subst_flow b.formula_ext_base ff ; 
+		  formula_ext_continuation = struc_formula_subst_flow b.formula_ext_continuation ff}
+	| ECase b -> ECase {b with formula_case_branches = 
+              List.map (fun (c1,c2) -> (c1,(struc_formula_subst_flow c2 ff))) b.formula_case_branches;}
+	| EAssume (x,b,y) -> EAssume (x,(formula_subst_flow b ff),y)
+	| EVariance b -> EVariance {b with formula_var_continuation = struc_formula_subst_flow  b.formula_var_continuation ff}
+  in
+  List.map helper f	
+
+and flow_formula_of_formula (f:formula) (*pos*) : flow_formula = 
+  match f with
   | Base b-> b.formula_base_flow
   | Exists b-> b.formula_exists_flow
-  | Or b-> 
+  | Or b -> 
 		let fl1 = flow_formula_of_formula b.formula_or_f1 in
 		let fl2 = flow_formula_of_formula b.formula_or_f2 in
 		if (equal_flow_interval fl1.formula_flow_interval fl2.formula_flow_interval) then fl1
@@ -2352,6 +2401,16 @@ let comb_and m1 m2 = match m1,m2 with
   | None, Some m2 -> Some (m2)
   | _, _ -> None
 
+let rec context_is_eq_flow (f:context) (ff)  : bool=
+  match f with
+    | Ctx es -> formula_is_eq_flow es.es_formula ff
+    | OCtx (c1,c2) -> (context_is_eq_flow c1 ff) && (context_is_eq_flow c2 ff)
+
+let list_context_is_eq_flow (f:list_context) (ff)  : bool=
+  match f with
+    | FailCtx _ -> false
+    | SuccCtx ls -> List.for_all (fun f -> context_is_eq_flow f ff) ls
+
 (* let rec get_must_failure_ft (ft:fail_type) = *)
 (*   match ft with *)
 (*     | Basic_Reason (_,fe) -> get_must_failure_fe fe *)
@@ -2508,6 +2567,16 @@ let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
 
 let is_may_failure (f:list_context) = (get_may_failure f) != None
 
+let convert_must_failure_to_value_orig (l:list_context) : list_context =
+  match l with 
+  | FailCtx ft ->
+        (match (get_must_es_msg_ft ft) with
+          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ] 
+          | _ ->  l)
+  | SuccCtx _ -> l
+
+
+
 let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
   let rec helper a c = match c with
     | Ctx es -> f a es
@@ -2652,6 +2721,32 @@ let mk_not_a_failure =
   }
 )
 
+let invert ls = 
+  let foo es =
+            let fc_template = {
+		        fc_message = "INCONSISTENCY : expected failure but success instead";
+		        fc_current_lhs  =  empty_es (mkTrueFlow ()) no_pos;
+		        fc_prior_steps = [];
+		        fc_orig_conseq  = es.es_orig_conseq;
+		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
+		        fc_failure_pts =  []} in
+            (Basic_Reason (fc_template,
+                 mk_failure_must "INCONSISTENCY : expected failure but success instead")) in
+  let goo es ff = formula_subst_flow es.es_formula ff in
+  let errmsg = "Expecting Failure but Success instead" in
+  match ls with
+  | [] -> []
+  | [Ctx es] -> (match es.es_must_error with
+      | None -> [Ctx {es with es_must_error = Some ("1"^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+      | Some _ -> [Ctx {es with es_must_error = None; es_formula = goo es (mkNormalFlow())}])
+  | (Ctx es)::_ -> [Ctx {es with es_must_error = Some ("2"^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+  | _ -> report_error no_pos "not sure how to invert_outcome"
+
+
+let invert_outcome (l:list_context) : list_context =
+  match l with 
+  | FailCtx ft -> l
+  | SuccCtx ls -> SuccCtx (invert ls)
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
@@ -3224,6 +3319,7 @@ and change_flow_into_ctx to_fl ctx_list =
 		| Ctx c -> Ctx {c with es_formula = substitute_flow_into_f to_fl c.es_formula;}
 		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
 	List.map helper ctx_list
+
 
 and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verified:bool): list_context =
   match l with
@@ -4173,7 +4269,8 @@ and trans_struc_formula (e: struc_formula) (arg: 'a) f f_arg f_comb : (struc_for
   let trans_ext e = trans_ext_formula e arg f f_arg f_comb in
   let ne, vals = List.split (List.map trans_ext e) in
   (ne, f_comb vals)
-    
+
+      
 (* let fold_struc_formula_args (e:struc_formula) (init_a:'a) (f:'a -> h_formula-> 'b option)  *)
 (*       (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) : 'b = *)
 (*   let f1 ac e = match (f ac e) with *)

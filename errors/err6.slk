@@ -1,13 +1,4 @@
 // must bug via predicates?
-data node { int val ; node next }.
-
-pred pos_ll<n> == self = null & n = 0
-	or self::node<d,r> * r::pos_ll<n - 1> & d>0
-	inv n >= 0.
-
-pred neg_ll<n> == self = null & n = 0
-	or self::node<d,r> * r::neg_ll<n - 1> & d<0
-	inv n >= 0.
 
 // 1.must fail
  checkentail x>3 |- x<=0 .
