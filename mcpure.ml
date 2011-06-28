@@ -162,6 +162,9 @@ and filter_mem_triv lst =
 	| _ -> true) lst
 
 and group_mem_by_fv (lst: memo_pure):memo_pure =
+  Gen.Debug.no_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_x lst
+	
+and group_mem_by_fv_x (lst: memo_pure):memo_pure =
   if !do_slicing then group_mem_by_fv_slicing lst
   else group_mem_by_fv_no_slicing lst
       
@@ -198,7 +201,8 @@ and group_mem_by_fv_slicing (lst: memo_pure):memo_pure =
   else
     let n_l = List.fold_left (fun a d -> 
 		let n_l = List.map (fun c -> (fst (bfv_with_slicing_label c.memo_formula),[(Some c, None, None)])) d.memo_group_cons in
-		let n_l_f = List.map (fun f -> ((fv f),[(None, Some f, None)])) d.memo_group_slice in
+		(*let n_l_f = List.map (fun f -> ((fv f),[(None, Some f, None)])) d.memo_group_slice in*) (* Option A *)
+		let n_l_f = List.map (fun f -> (fst (fv_with_slicing_label f),[(None, Some f, None)])) d.memo_group_slice in (* Option B *)
 		let n_l_a = (fun f -> ((get_elems_eq f),[(None, None, Some f)])) d.memo_group_aset in
 		n_l_a :: (n_l @ n_l_f @ a)) [] lst in
 
@@ -207,7 +211,7 @@ and group_mem_by_fv_slicing (lst: memo_pure):memo_pure =
 		let l_merged, l_unmerged = List.partition (fun (v_l,_)-> 
 			(List.length (Gen.BList.intersect_eq eq_spec_var v_l v_list)) > 0) acc in
 		let l_v,l_m = List.fold_left (fun (a1,a2)(c1,c2)-> (a1@c1,c2@a2)) (v_list,mem) l_merged in
-		((Gen.BList.remove_dups_eq eq_spec_var l_v),l_m)::l_unmerged ) [] n_l in
+		((Gen.BList.remove_dups_eq eq_spec_var l_v),l_m)::l_unmerged) [] n_l in
     
     List.map (fun (v_l,m_l)-> 
 		let mc_l, f_l, a_l = List.fold_left (fun (a1,a2,a3) c -> match c with
@@ -215,7 +219,12 @@ and group_mem_by_fv_slicing (lst: memo_pure):memo_pure =
 		  | Some f, None , None -> (f::a1,a2,a3)
 		  | None, None, Some f -> (a1,a2,EMapSV.merge_eset(*_debug !print_sv_f*) f a3)
 		  | _ -> (a1,a2,a3)) ([], [], empty_var_aset) m_l in
-		let n_v_l = Gen.BList.remove_dups_eq eq_spec_var (List.fold_left (fun acc bf -> acc @ (fv_memoised_constraint bf)) v_l mc_l) in
+		(*let n_v_l = Gen.BList.remove_dups_eq eq_spec_var (List.fold_left (fun acc bf -> acc @ (fv_memoised_constraint bf)) v_l mc_l) in*) (* Option A *)
+		let n_v_l = (* Option B *)
+		  let v1 = List.concat (List.map fv_memoised_constraint mc_l) in
+		  let v2 = List.concat (List.map fv f_l) in
+		  let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset a_l) in
+		  remove_dups_svl (v1 @ v2 @ v3) in 
 	  { memo_group_fv = n_v_l;
 		memo_group_linking_vars = Gen.BList.difference_eq eq_spec_var n_v_l v_l;
 		memo_group_changed = true ; 
@@ -1024,7 +1033,7 @@ and split_mem_grp_slicing (g:memoised_group): memo_pure =
 		      memo_group_changed = g.memo_group_changed;
 		      memo_group_cons = List.filter
 				(fun d -> let dcl = bfv_with_slicing_label d.memo_formula in
-				  List.exists (fun cl -> cl=dcl) cl_l
+				  List.exists (fun cl -> cl = dcl) cl_l
 				) g.memo_group_cons;
 		      memo_group_slice = List.filter
 				(fun d -> let dcl = fv_with_slicing_label d in
@@ -1583,9 +1592,9 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
 and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
   (*let n_ante =
 	if !do_slicing then*)
-	  let (sv, lkl) = fv_with_slicing_label conseq in
+	  (*let (sv, lkl) = fv_with_slicing_label conseq in
 	  let ante1 = List.filter (fun c -> Gen.BList.overlap_eq eq_spec_var sv c.memo_group_fv) ante_disj in
-	  let ante2 = List.filter (fun c -> Gen.BList.subset_eq eq_spec_var c.memo_group_fv lkl) ante_disj in
+	  let ante2 = List.filter (fun c -> Gen.BList.subset_eq eq_spec_var c.memo_group_fv lkl) ante_disj in*)
 	  (*ante1 @ ante2*)
 	  
 	  (*let n_ante1 = ante1 @ ante2 in
@@ -1595,7 +1604,7 @@ and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply 
 	  let _ = print_string ("no do_slicing: " ^ (!print_mp_f n_ante2) ^ "\n") in
       n_ante2*)
 
-	let n_ante1 = ante1 @ ante2 in
+	(*let n_ante1 = ante1 @ ante2 in*)
 	(*else*)
   let n_ante =
 	  let fv = fv conseq in 
