@@ -539,6 +539,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 		end
     | e -> 
         begin 
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unexpected exception => sat\n"); flush stdout; 
             Unix.kill !prover_pid 9;
