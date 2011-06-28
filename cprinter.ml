@@ -1214,7 +1214,7 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut ();fmt_string "Bad Context: "; 
+    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
         (* (match ft with *)
         (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
         (*     (\* TODO : to output must errors first *\) *)
