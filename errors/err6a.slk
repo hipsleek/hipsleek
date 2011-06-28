@@ -1,21 +1,25 @@
 // must bug via predicates?
 
-// 1. may_error
-checkentail x>3 |- x>5.
+// 1. must-bug (incompatible flow)
+checkentail x>3 & flow __Error |- x>0.
 
-// 2. valid
-checkentail x>3 |- x>0.
+// 2. valid  with __Error flo
+checkentail x>3 & flow __Error |- x>0 & flow __flow.
 
-// 3. must_error
-checkentail x>3 |- x<=0.
 
-// 4. May_error
-checkentail x>3 |- x>5 & flow __Error.
+// 3. valid with __Error flow
+checkentail x>3 & flow __Error |- x>0 & flow __Error.
 
-// 5. MUST error; but detected as Valid
-checkentail x>3 |- x>0 & flow __Error.
+// 4. may-bug (weaker LHS flow)
+checkentail x>3 & flow __flow |- x>0 & flow __Error.
 
-// 6. VALID; but detected as must error:
-checkentail x>3 |- x<=0 & flow __Error .
+/*
+checkentail x>3 & flow __Error or x>0 & __flow-__Error 
+   |- x>0 & flow __Error.
+
+must or must --> must
+may or must --> may
+valid or must --> may
+*/
 
 print residue.

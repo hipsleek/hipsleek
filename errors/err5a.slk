@@ -1,15 +1,13 @@
-data node { int val ; node next }.
-
-pred ll<n> == self = null & n = 0
-	or self::node<next = r> * r::ll<n - 1>
-	inv n >= 0.
 
 //OR
 /*
+maximise may-bug,
+
 or{must,valid} --> may
 or{must,must} --> must
 or{valid,valid} --> valid
 or{valid,may} --> may
+
 */
 //pure
 // 1. or{must,valid} --> may

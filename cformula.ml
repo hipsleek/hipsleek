@@ -2376,13 +2376,14 @@ let gen_and (m1,e1) (m2,e2) = match m1,m2 with
   | Failure_Valid, x  -> (m2,e2)
   (* | x, Failure_Valid -> x *)
 
-let gen_or (m1,e1) (m2,e2) = match m1,m2 with
+(* state to be refined to accurate one for must-bug *)
+let gen_or (m1,e1) (m2,e2) : (failure_kind * (entail_state option)) = match m1,m2 with
   | Failure_None _, _ -> report_error no_pos "Failure_None not expected in gen_or"
   | _, Failure_None _ -> report_error no_pos "Failure_None not expected in gen_or"
-  | Failure_May m1, Failure_May m2 -> Failure_May ("and["^m1^","^m2^"]"), None
+  | Failure_May m1, Failure_May m2 -> Failure_May ("or["^m1^","^m2^"]"), None
   | Failure_May m, _ -> Failure_May m, None
   | _, Failure_May m -> Failure_May m,None
-  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("and["^m1^","^m2^"]"),e1)
+  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("or["^m1^","^m2^"]"),e1)
   | Failure_Must m, Failure_Valid -> (Failure_May ("or["^m^",valid]"),None)
   | Failure_Valid, Failure_Must m -> (Failure_May ("or["^m^",valid]"),None)
   (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)

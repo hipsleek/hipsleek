@@ -1,13 +1,13 @@
 
 //pure
-// 1. --> valid
-checkentail n>3 |- n>1.
+// 1. --> valid (is safe)
+checkentail n>5 |- n>3.
 
-// 2. --> maybe error
+// 2. --> maybe error (maybe violation)
 checkentail n>1 |- n>3.
 
-// 3. --> must error
-checkentail n>3 |- n<=0.
+// 3. --> must error (definite violation)
+checkentail n<0 |- n>3.
 
 
 
@@ -15,12 +15,13 @@ checkentail n>3 |- n<=0.
 
  mn(x..)
  case {
-  x=null -> .. flow Error;
-  x!=null -> .. flow Norm;
+  x=null -> .. flow Error; // must-bug
+  x!=null -> .. flow Norm; // safe ptr access
  }
  {
    x.next;
  }
+
 
  x!=null |- x!=null (safety)
 

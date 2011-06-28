@@ -13,7 +13,6 @@ pred neg_ll<n> == self = null & n = 0
 	inv n >= 0.
 
 
-
 //1. must failure. cause:22  flted_18_151=2 |-  flted_18_151=3 (must-bug)
 checkentail x::node<2,null> |- x::node<3,null> .
 print residue.
@@ -94,8 +93,8 @@ checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
 //23. must-bug - cause:22  y!=null |-  y=null (must-bug).
-checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
 
+checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
 
 //24 valid
 checkentail x::ll<n> & n>0  |- x!=null.
@@ -107,9 +106,11 @@ checkentail x::ll<n> & n>0  |- x=null.
 checkentail x::pos_ll<n> & n=0 |- x::neg_ll<m> & m>0.
 
 //27. must-bug. cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+
 checkentail x::pos_ll<n> & x=null |- x::neg_ll<m> & m>0.
 
 //28 must-bug.  cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+
 checkentail x=null |- x::neg_ll<m> & m>0.
 
 //29 valid
