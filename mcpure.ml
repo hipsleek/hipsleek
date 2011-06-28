@@ -904,7 +904,7 @@ and create_memo_group_debug ll l2 =
   the constraints are disjoint.
 *)
 and split_mem_grp (g:memoised_group): memo_pure =
-  Gen.Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
+  Gen.Debug.ho_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
 
 and split_mem_grp_x (g:memoised_group): memo_pure =
   if !do_slicing then split_mem_grp_slicing g
@@ -936,33 +936,37 @@ and split_mem_grp_no_slicing (g:memoised_group): memo_pure =
 		  }) needs_split
       )
     else [g]
-      (*
-	    and_split_mem_grp_debug g =
-	    let r = split_mem_grp g in
-	    if (List.length r)>1 then *)
-
+      
 and split_mem_grp_slicing (g:memoised_group): memo_pure =   
   if !f_1_slice then [g]
   else
-    let leq_all = get_equiv_eq_with_const g.memo_group_aset in
+	let leq_all = get_equiv_eq_with_const g.memo_group_aset in
     let leq = get_equiv_eq g.memo_group_aset in
-    let l1 = List.map fv g.memo_group_slice in
-    let l2 = List.map (fun c -> bfv c.memo_formula) g.memo_group_cons in
-    let l3 = List.map (fun (c1,c2) -> [c1;c2]) leq in
-    let needs_split = List.fold_left (fun a c -> 
-		let n_unite,unite = List.partition (fun d -> (Gen.BList.intersect_eq eq_spec_var d c)=[]) a in
-		(List.fold_left (fun a c-> a@c) c unite)::n_unite ) [] (l1@l2@l3) in
+    let l1 = List.map (fun f -> let (v,l) = fv_with_slicing_label f in (v, l)) g.memo_group_slice in
+    let l2 = List.map (fun c -> let (v,l) = bfv_with_slicing_label c.memo_formula in (v,l)) g.memo_group_cons in
+    let l3 = List.map (fun (c1,c2) -> ([c1;c2],[])) leq in
+    let needs_split = List.fold_left (fun a (c,l) -> 
+		let unite,n_unite = List.partition (fun l_d -> List.exists (fun (d,_) -> Gen.BList.overlap_eq eq_spec_var d c) l_d) a in
+		(List.fold_left (fun a c -> a@c) [(c,l)] unite)::n_unite) [] (l1@l2@l3) in
     if (List.length needs_split)>1 then
       (
 	      Gen.Profiling.inc_counter "need_split";
-	      List.map (fun c -> {
-		      memo_group_fv = c;
-			  memo_group_linking_vars = [];
+	      List.map (fun cl_l ->
+			let (c,l) = List.fold_left (fun (a1,a2) (c,l) -> (a1@c,a2@l)) ([],[]) cl_l in
+			{
+		      memo_group_fv = remove_dups_svl c;
+			  memo_group_linking_vars = remove_dups_svl l;
 		      memo_group_changed = g.memo_group_changed;
-		      memo_group_cons = List.filter (fun d-> not((Gen.BList.intersect_eq (=) c (bfv d.memo_formula))=[])) g.memo_group_cons;
-		      memo_group_slice = List.filter (fun d-> not((Gen.BList.intersect_eq (=) c (fv d))=[])) g.memo_group_slice;
+		      memo_group_cons = List.filter
+				(fun d -> let dcl = bfv_with_slicing_label d.memo_formula in
+				  List.exists (fun cl -> cl=dcl) cl_l
+				) g.memo_group_cons;
+		      memo_group_slice = List.filter
+				(fun d -> let dcl = fv_with_slicing_label d in
+				  List.exists (fun cl -> cl = dcl) cl_l
+				) g.memo_group_slice;
 		      memo_group_aset = List.fold_left (fun a (c1,c2) -> 
-				  if (List.exists (eq_spec_var c1) c) or (List.exists (eq_spec_var c2) c) then add_equiv_eq_with_const a c1 c2
+				  if (List.exists (eq_spec_var c1) (c@l)) or (List.exists (eq_spec_var c2) (c@l)) then add_equiv_eq_with_const a c1 c2
 				  else a) empty_var_aset leq_all;
 		  }) needs_split
       )

@@ -5267,9 +5267,11 @@ and bfv_with_slicing_label bf =
   let vbf = bfv bf in
   let vs = match sl with
 	  | None -> vbf
-	  | Some (il, _, el) -> (* set of interesting variables *)
-							if il then [] (* not any interesting var if the b_formula is linking formula *)
-							else Gen.BList.difference_eq eq_spec_var vbf (List.fold_left (fun a e -> a @ (afv e)) [] el) (* the fv of linking exp not included *)
+	  | Some (il, _, el) ->
+		(* set of interesting variables *)
+		if il then [] (* not any interesting var if the b_formula is linking formula *)
+		else Gen.BList.difference_eq eq_spec_var vbf
+		  (List.fold_left (fun a e -> a @ (afv e)) [] el) (* the fv of linking exp not included *)
   in (vs, Gen.BList.difference_eq eq_spec_var vbf vs)
 	  
 (* Group related vars together after filtering the <IL> formula *)
