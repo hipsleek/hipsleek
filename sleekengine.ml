@@ -338,7 +338,7 @@ let check_entail_rhs_flow_error (rs: CF.list_context) (flow_conseq:CF.flow_formu
                           match (CF.get_must_es_msg_ft ft) with
                             | Some (es,msg) ->
                                 let new_ctx_lst = CF.change_flow_into_ctx !Globals.n_flow_int
-                                  [CF.Ctx {es with CF.es_must_error = Some msg } ] in
+                                  [CF.Ctx {es with CF.es_must_error = Some (msg,ft) } ] in
                                 ((CF.SuccCtx new_ctx_lst), true)
                             | _ ->  (rs,true)
                       end
@@ -385,14 +385,15 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-  let rs1, _ = Solver.heap_entail_struc_init !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None in
-  let (rs1,flow_compatible) = check_entail_rhs_flow_error rs1 conseq_flow in
+  let rs1, _ = Solver.heap_entail_struc_init_bug !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None in
+  (* let (rs1,flow_compatible) = check_entail_rhs_flow_error rs1 conseq_flow in *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   (*let _ = print_endline ( (Cprinter.string_of_list_context rs)) in*)
   residues := Some rs;
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   flush stdout;
-  let res = ((not (CF.isFailCtx rs)) && flow_compatible) in
+  (* let res = ((not (CF.isFailCtx rs)) && flow_compatible) in *)
+  let res = ((not (CF.isFailCtx_gen rs))) in
   (res, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =

@@ -2176,7 +2176,8 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
-  es_must_error : string option
+  es_must_error : (string * fail_type) option
+  (* es_must_error : string option *)
 }
 
 and context = 
@@ -2262,18 +2263,20 @@ let isFailCtx cl = match cl with
 
 let get_must_error_from_ctx cs = 
   match cs with 
-    | [Ctx es] -> es.es_must_error
+    | [Ctx es] -> (match es.es_must_error with
+        | None -> None
+        | Some (msg,_) -> Some msg)
     | _ -> None
 
-let rec set_must_error_from_one_ctx ctx msg=
+let rec set_must_error_from_one_ctx ctx msg ft=
   match ctx with
-    | Ctx es -> Ctx {es with es_must_error = Some msg}
-    | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg, set_must_error_from_one_ctx ctx2 msg)
+    | Ctx es -> Ctx {es with es_must_error = Some (msg,ft)}
+    | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg ft, set_must_error_from_one_ctx ctx2 msg ft)
 
-let rec set_must_error_from_ctx cs msg=
+let rec set_must_error_from_ctx cs msg ft=
   match cs with
     | [] -> []
-    | es::ls -> (set_must_error_from_one_ctx es msg):: (set_must_error_from_ctx ls msg)
+    | es::ls -> (set_must_error_from_one_ctx es msg ft):: (set_must_error_from_ctx ls msg ft)
 
 let isFailCtx_gen cl = match cl with
 	| FailCtx _ -> true
@@ -2467,7 +2470,7 @@ let convert_must_failure_to_value (l:list_context) : list_context =
   match l with 
   | FailCtx ft ->
         (match (get_must_es_msg_ft ft) with
-          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some msg } ] 
+          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ] 
           | _ ->  l)
   | SuccCtx _ -> l
 

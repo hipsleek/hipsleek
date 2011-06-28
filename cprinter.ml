@@ -1109,7 +1109,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_vwrap "es_aux_conseq: "  (pr_pure_formula) es.es_aux_conseq; 
-  pr_vwrap "es_must_error: "  (pr_opt fmt_string) es.es_must_error; 
+  pr_vwrap "es_must_error: "  (pr_opt (fun (s,_) -> fmt_string s)) (es.es_must_error); 
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
@@ -1221,7 +1221,10 @@ let pr_list_context (ctx:list_context) =
         (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
         (*     | _ -> fmt_string ""); *)
         pr_fail_type ft; fmt_cut ()
-    | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
+    | SuccCtx sc -> let str = 
+        if (get_must_error_from_ctx sc)==None then "Good Context: "
+        else "Error Context: " in
+      fmt_cut (); fmt_string str; pr_context_list sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with

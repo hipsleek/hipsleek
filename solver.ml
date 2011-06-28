@@ -2428,6 +2428,10 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
         context_list_proofs = prf_l; } in
     (res, proof)  
 
+and heap_entail_struc_init_bug (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
+  let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in
+  (CF.convert_must_failure_to_value ans, prf)
+ 
 and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
   Debug.devel_pprint ("heap_entail_struc_init:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_list_context cl)
