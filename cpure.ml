@@ -5261,18 +5261,23 @@ let rec fv_with_slicing_label f =
 	  let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
 	  let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
 	  (n_vs, n_lkl)
-	  
+
 and bfv_with_slicing_label bf =
+  Gen.Debug.no_1 "bfv_with_slicing_label" !print_b_formula
+  (fun (nlv, lv) -> (pr_list !print_sv nlv) ^ (pr_list !print_sv lv))
+  bfv_with_slicing_label_x bf
+		
+and bfv_with_slicing_label_x bf = (* OUT: (non-linking vars, linking vars) *)
   let (_, sl) = bf in
-  let vbf = bfv bf in
-  let vs = match sl with
-	  | None -> vbf
-	  | Some (il, _, el) ->
-		(* set of interesting variables *)
-		if il then [] (* not any interesting var if the b_formula is linking formula *)
-		else Gen.BList.difference_eq eq_spec_var vbf
-		  (List.fold_left (fun a e -> a @ (afv e)) [] el) (* the fv of linking exp not included *)
-  in (vs, Gen.BList.difference_eq eq_spec_var vbf vs)
+  let v_bf = bfv bf in
+  match sl with
+	| None -> (v_bf, [])
+	| Some (il, _, el) ->
+		if il then ([], v_bf)
+		else
+		  let lv = List.fold_left (fun a e -> a @ (afv e)) [] el in
+		  let nlv = Gen.BList.difference_eq eq_spec_var v_bf lv in
+		  (nlv, lv)
 	  
 (* Group related vars together after filtering the <IL> formula *)
 let rec group_related_vars (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list = 
