@@ -70,7 +70,7 @@ let is_view_recursive (n:ident) =
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
 
-relation dom(int[] a, int low, int high) == true.
+let prim_str = "relation dom(int[] a, int low, int high) == true.
 	//(dom(a,low-1,high) | dom(a,low,high+1)).
 	
 // originally idexc in many examples
@@ -89,7 +89,7 @@ int[] update___(int[] a, int i, int v)
 
 int[] aalloc___(int dim) 
 	requires true 
-	ensures dom(res,0,dim-1);
+	ensures dom(res,0,dim-1);"
 (* AN HOA: Add a primitive function update___.    *)
 (* 3/5 : Add aalloc for array allocation. *)
 (* Note: it is supposed to be dynamically inserted*)
@@ -159,10 +159,10 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
     | [] -> ()
   in
     (
+       
      (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
-
+     (*Buffer.add_string prim_buffer prim_str; (* Add primitive relations *)*)
      helper prog.I.prog_data_decls;
-
      let all_prims = Buffer.contents prim_buffer in
 
      let prog = Parser.parse_hip_string "primitives" all_prims in
@@ -971,6 +971,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	    Gen.ExcNumbering.compute_hierarchy 1 ();
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in *)
+	    let prims,prim_rels = gen_primitives prog0 in
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
 															(* AN HOA : adjoint the program with primitive relations *)
 															I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;} in

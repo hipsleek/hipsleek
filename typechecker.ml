@@ -63,8 +63,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx)
 	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
-			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in
-	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
+			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
 	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 	        r
@@ -606,7 +605,6 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = PTracer.log_proof prf in
   if (CF.isSuccessListPartialCtx rs) then 
     rs
-     rs
   else begin
     (* get source code position of failed branches *)
     let locs_of_failures = 

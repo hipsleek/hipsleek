@@ -2354,12 +2354,6 @@ and heap_entail_struc_list_failesc_context (prog : prog_decl) (is_folding : bool
 
 and heap_entail_struc_list_failesc_context_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
       (conseq) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =           
-  Gen.Debug.no_1 "heap_entail_struc_list_failesc_context" (fun _ -> "?") (fun _ -> "?") 
-      (fun _ -> heap_entail_struc_list_failesc_context_x prog is_folding is_universal has_post cl 
-      (conseq) pos pid f to_string) 0
-
-and heap_entail_struc_list_failesc_context_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_failesc_context)
-      (conseq) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =           
   (* print_string ("\ncalling struct_list_partial_context .."^string_of_int(List.length cl)); *)
   (* print_string (Cprinter.string_of_list_partial_context cl); *)
   let l = List.map 
@@ -2409,13 +2403,6 @@ and heap_entail_struc_failesc_context (prog : prog_decl) (is_folding : bool)
 
 
 and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool) 
-      (has_post: bool)(cl : failesc_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
-  Gen.Debug.no_1 "heap_entail_struc_failesc_context" (fun _ -> "?") (fun _ -> "?") (fun x -> 
-      heap_entail_struc_failesc_context_x prog is_folding (is_universal)
-      (has_post)(cl) (conseq) pos (pid) f to_string) conseq
-
-
-and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool) (is_universal : bool)
       (has_post: bool)(cl : failesc_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
   (* print_string "\ncalling struct_partial_context .."; *)
   Debug.devel_pprint ("heap_entail_struc_failesc_context:"
@@ -2665,7 +2652,7 @@ and heap_entail_conjunct_lhs_struc_x
 		      formula_ext_base = formula_base;
 		      formula_ext_continuation = formula_cont;
 		      formula_ext_pos = struc_pos;
-	    } as b)  -> (*let _ = print_string "An Hoa :: inner_entailer_a :: case EBase\n" in*) if (List.length base_exists)>0 then
+	      } as b)  -> 
           if (List.length base_exists)>0 then 
 	        let ws = CP.fresh_spec_vars base_exists in
 	        let st = List.combine base_exists ws in
@@ -2678,7 +2665,7 @@ and heap_entail_conjunct_lhs_struc_x
             
 	        let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
 	        let n_ctx_list, prf = heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding)   n_ctx formula_base pos in
-				let _ = print_string ("An Hoa :: inner_entailer_a :: ORIGINAL CONTEXT\n" ^ (Cprinter.string_of_context ctx) ^ "\n\n") in
+				(*let _ = print_string ("An Hoa :: inner_entailer_a :: ORIGINAL CONTEXT\n" ^ (Cprinter.string_of_context ctx) ^ "\n\n") in
 				let _ = print_string ("An Hoa :: inner_entailer_a :: RESULT CONTEXT AFTER <heap_entail_one_context>\n" ^ (Cprinter.string_of_list_context n_ctx_list) ^ "\n\n") in*)
 	        (*let _ = print_string ("pp: "^(Cprinter.string_of_spec_var_list b.formula_ext_explicit_inst)^"\n"^
 	          (Cprinter.string_of_spec_var_list b.formula_ext_implicit_inst)^"\n"^
@@ -4297,12 +4284,6 @@ and build_and_failures (failure_code:string) ((contra_list, must_list, may_list)
     | Some ft -> FailCtx ft
     | None -> report_error no_pos "Solver.build_and_failures: should a failure here"
 
-and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
-  let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
-      (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
-
-and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
 (** An Hoa : Extract the relations that appears in the input formula
  *  RETURN : a list of b_formula, each of which is a RelForm  
  *)
@@ -4402,34 +4383,41 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 	"ENTAIL STATE = " ^ (Cprinter.string_of_estate estate) ^ "\n" ^
   "LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^
   "RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in*)
+
+and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
+  let pr (e,_) = Cprinter.string_of_list_context e in
+  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+      (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
+
+and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
   let lhs_t = lhs.formula_base_type in
   let lhs_fl = lhs.formula_base_flow in
   let lhs_b = lhs.formula_base_branches in
-	(* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)
-	let evarstoi = estate.es_gen_expl_vars in
-	let lhs_p = if (evarstoi = []) then lhs_p else
-		(*let _ = print_string ("\n\nAn Hoa :: Variables to be instantiated : ") in
-		let _ = print_string ((String.concat "," (List.map Cprinter.string_of_spec_var evarstoi)) ^ "\n") in*)
-		let _ = (Smtsolver.suppress_print_implication := true) in (* Temporarily suppress output of implication checking *)
-		let lhs_pp = (match lhs_p with
-			| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!"
-			| MCP.OnePF f -> f) in
-		let rhs_pp = (match rhs_p with
-			| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!"
-			| MCP.OnePF f -> f) in
-		(*let _ = print_string ("An Hoa :: Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp ^ "\n") in 
-		let _ = print_string ("An Hoa :: Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp ^ "\n") in*)
-		let inst = pure_match evarstoi lhs_pp rhs_pp in
-		let lhs_pp = CP.mkAnd lhs_pp inst no_pos in
-		let lhs_p = (MCP.OnePF lhs_pp) in
-		let _ = (Smtsolver.suppress_print_implication := false) in (* Unsuppress *)
-		(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
-		lhs_p
-	in
-	(* An Hoa : END OF INSTANTIATION *)
+	(* (\* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *\) *)
+	(* let evarstoi = estate.es_gen_expl_vars in *)
+	(* let lhs_p = if (evarstoi = []) then lhs_p else *)
+	(* 	(\*let _ = print_string ("\n\nAn Hoa :: Variables to be instantiated : ") in *)
+	(* 	let _ = print_string ((String.concat "," (List.map Cprinter.string_of_spec_var evarstoi)) ^ "\n") in*\) *)
+	(* 	let _ = (Smtsolver.suppress_print_implication := true) in (\* Temporarily suppress output of implication checking *\) *)
+	(* 	let lhs_pp = (match lhs_p with *)
+	(* 		| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!" *)
+	(* 		| MCP.OnePF f -> f) in *)
+	(* 	let rhs_pp = (match rhs_p with *)
+	(* 		| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!" *)
+	(* 		| MCP.OnePF f -> f) in *)
+	(* 	(\*let _ = print_string ("An Hoa :: Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp ^ "\n") in *)
+	(* 	let _ = print_string ("An Hoa :: Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp ^ "\n") in*\) *)
+	(* 	let inst = pure_match evarstoi lhs_pp rhs_pp in *)
+	(* 	let lhs_pp = CP.mkAnd lhs_pp inst no_pos in *)
+	(* 	let lhs_p = (MCP.OnePF lhs_pp) in *)
+	(* 	let _ = (Smtsolver.suppress_print_implication := false) in (\* Unsuppress *\) *)
+	(* 	(\*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*\) *)
+	(* 	lhs_p *)
+	(* in *)
+	(* (\* An Hoa : END OF INSTANTIATION *\) *)
   let _ = reset_int2 () in
   let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
   let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap 5 prog curr_lhs_h 0 in
@@ -4474,7 +4462,7 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
                 in
                 (* use the previous conseq , reset the error flag *)
                 memo_normalize_to_CNF_new (MCP.memo_arith_simplify simp_conseq1) pos
-	    else (*let _ = print_string ("simplify::no change\n") in*) new_conseq0 in
+              end
 	      else new_conseq0
         in
         let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)
@@ -4493,7 +4481,6 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
         let split_ante1 = new_ante1 in
         let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then (true,[],None)
         else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in
-      else (*let _ = print_string "An Hoa :: This case\n" in*) (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in	
         let res1,res2,re3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list)) =
           if res1 = false && branch_id = "" then
             begin
@@ -4544,7 +4531,7 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
         in
 	    (imp_no := !imp_no+1;
 	    (res1,res2@succs,res3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list))))
-  (* END OF fold_fun DEFINITION *)
+    end
   in
 	
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
@@ -6571,10 +6558,6 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
       conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)) in
   heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx c) cl_after_prune 
   end
-let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_partial_context)
-        (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
-  Gen.Debug.no_1 "heap_entail_list_partial_context_init" (Cprinter.string_of_formula) (fun _ -> "?")
-      (fun c -> heap_entail_list_partial_context_init prog is_folding is_universal cl c pos pid) conseq
 
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 

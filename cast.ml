@@ -146,20 +146,8 @@ and sharp_val =
    exp_arraymod_rhs : exp; 
    exp_arraymod_pos : loc } *)
 		
-(**
- An Hoa : Memory allocation.
- NOTE : <exp_aalloc_dimension> is an <exp>, not a list
-        because we use nested arrays to handle the case
-				of multidimensional arrays.
-				
-				This time, we should not take advantage of scall
-				because the type might be different; but it still
-				works!
- 
-and exp_aalloc = { exp_aalloc_etype : P.typ;
-	     exp_aalloc_dimension : exp;
-			 exp_aalloc_pos : loc; }*)
-			
+and exp_assert = { 
+    exp_assert_asserted_formula : F.struc_formula option;
     exp_assert_assumed_formula : F.formula option;
     exp_assert_path_id : formula_label;
     exp_assert_pos : loc }
