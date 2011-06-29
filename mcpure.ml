@@ -277,18 +277,26 @@ and regroup_memo_group_slicing (lst : memo_pure) : memo_pure =
 	    let n_fv = List.fold_left (fun ac c-> ac@c.memo_group_fv) fv r1 in
 	    let x1,x2 = f_rec n_fv r2 in
 	    (r1@x1,x2) in
+	
     let rec helper c = match c with
       | [] -> []
       | h::t -> 
 	        let h_merged, h_not_merged = f_rec (Gen.BList.difference_eq eq_spec_var h.memo_group_fv h.memo_group_linking_vars) t in
 	        let h_m = List.fold_left (fun a c ->
-				{ memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv);
-				  memo_group_linking_vars = remove_dups_svl (a.memo_group_linking_vars @ c.memo_group_linking_vars);
+			  let fv = a.memo_group_fv @ c.memo_group_fv in
+			  let lv = a.memo_group_linking_vars @ c.memo_group_linking_vars in
+			  let non_lv = Gen.BList.difference_eq eq_spec_var fv lv in
+			  let n_lv = Gen.BList.difference_eq eq_spec_var lv non_lv in
+				{ memo_group_fv = fv;
+				  memo_group_linking_vars = n_lv (*lv*);
 				  memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
 				  memo_group_cons =  a.memo_group_cons  @ c.memo_group_cons;
 				  memo_group_changed = true;
 				  memo_group_aset = EMapSV.merge_eset(*_debug !print_sv_f*) a.memo_group_aset c.memo_group_aset;}) h h_merged in
-	        let r_h = {h_m with memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var h_m.memo_group_fv;} in      
+	        let r_h = {h_m with
+			  memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var h_m.memo_group_fv;
+			  memo_group_linking_vars = Gen.BList.remove_dups_eq eq_spec_var h_m.memo_group_linking_vars;
+			} in      
 	        let r = helper h_not_merged in
 	        r_h::r in
     helper lst
@@ -331,7 +339,6 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
 (* and subst_avoid_capture_memo_debug (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure = *)
 (*   Gen.Debug.no_3a_list "subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l *)
 
-      
 and memo_cons_subst sst (f_l : memoised_constraint list): memoised_constraint list = 
   List.map (fun c-> 
 	  (* let nf = List.fold_left (fun a c-> b_apply_one c a) c.memo_formula sst in *)
@@ -1706,7 +1713,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
           let na = EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
             {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv);
 			 memo_group_linking_vars = [];
-             memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
+             memo_group_cons = filter_merged_cons na [a.memo_group_cons; c.memo_group_cons];
              memo_group_changed = true;
              memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
              memo_group_aset = na;}) h t]
