@@ -24,10 +24,20 @@ relation IsSafeQueen(int[] b, int i) ==
 
 // Board b[1..n] is consistent if and only if every queen is safe.
 relation IsConsistent(int[] b, int n) ==
-	forall(i : (i < 1 | i > n | IsSafeQueen(b,i))).
+	//the nested forall formulation does not work!
+	//forall(i : (i < 1 | i > n | IsSafeQueen(b,i))).
+	forall(i, j: (i < 1 | i > n | j < 1 | j >= i |
+		b[j] != b[i] & b[j] - b[i] != j - i & b[j] - b[i] != i - j)).
 
 // DIFFICULT TO WRITE!!!
 relation NoSolution(int n) == true.
+	//NoSolutionPrefix(b,0).
+
+// There is no solution with prefix b[1..i]
+//relation NoSolutionPrefix(int[] b, int n, int i) ==
+//	(i >= n & !IsConsistent(b,n) // base case: i >= n & b[1..n] is inconsistent
+	// induction: for any choice of b[i+1] in {1..n}, there is no solution with prefix b[1..i+1]
+//	| forall(j: (j < 1 | j > n | b[i+1] != j | NoSolutionPrefix(b,n,i+1)))).
 
 /** FUNCTIONS **/
 
@@ -46,7 +56,7 @@ bool nQueens(ref int[] b, int n)
 bool nQueensHelper(ref int[] b, int n, int i)
 	requires dom(b,1,n) & 1 <= i <= n+1 & IsConsistent(b,i-1)
 	ensures (res & IsConsistent(b',n) | !res & NoSolution(n)) 
-		& IdenticalRange(b',b,1,i-1);
+				& IdenticalRange(b',b,1,i-1);
 {
 	if (i == n + 1) // nothing more to search!
 		return true;
@@ -58,26 +68,25 @@ bool nQueensHelper(ref int[] b, int n, int i)
 bool nQueensHelperHelper(ref int[] b, int n, int i, int j)
 	requires dom(b,1,n) & 1 <= i <= n & 1 <= j <= n + 1 & IsConsistent(b,i-1)
 	ensures (res & IsConsistent(b',n) | !res & NoSolution(n))
-		& IdenticalRange(b',b,1,i-1);
+				& IdenticalRange(b',b,1,i-1);
 {
 	if (j <= n) {
 		b[i] = j; // try putting a queen at (i,j)
-		assume IsConsistent(b',i-1); 	// we know that b'[1..i-1] = b[1..i-1]
-						// but we cannot prove this property!
+		//assert IsConsistent(b',i-1);	// we know that b'[1..i-1] = b[1..i-1]
+		//assume IsConsistent(b',i-1); 	// but we cannot prove this property!
 		if (IsSafe(b,n,i)) {
 			if (nQueensHelper(b,n,i+1)) // safe ==> try the next queen
 				return true;
 			else { 	// cannot find solution by putting queen at (i,j)
-				// need to make sure that b[1..i] is not changed
-				// after the call nQueensHelper(b,n,i+1)
-				assume IsConsistent(b',i-1);
+					// need to make sure that b[1..i] is not changed
+					// after the call nQueensHelper(b,n,i+1)
+				//assert IsConsistent(b',i-1); 
+				//assume IsConsistent(b',i-1);
 				return nQueensHelperHelper(b, n, i, j + 1);
 			}
 		}
 	}
-	dprint;
-	// call when j > n i.e. j = n+1 or when (i,j) is not a safe position
-	return false;
+	return false;	// call when j > n i.e. j = n+1 or when (i,j) is not a safe position
 }
 
 bool IsSafe(int[] b, int n, int i)
@@ -103,3 +112,4 @@ bool IsSafe(int[] b, int n, int i)
 /*bool IsSafeHelper(int[] b, int n, int i)
 	requires dom(b,0,n-1) & 0 <= i <= n-1 & IsConsistent(b,i-1)
 	ensures  (!res | res & IsConsistent(b,i));*/
+
