@@ -3113,6 +3113,12 @@ let keep_failure_failesc_context ((c,es,sc): failesc_context) : failesc_context 
 let keep_failure_list_failesc_context (lc: list_failesc_context) : list_failesc_context =
   List.map ( keep_failure_failesc_context) lc 
 
+let keep_failure_partial_context ((c,es): partial_context) : partial_context =
+  (c,[])
+
+let keep_failure_list_partial_context (lc: list_partial_context) : list_partial_context =
+  List.map ( keep_failure_partial_context) lc 
+
 
 
 (* this should be applied to merging also and be improved *)
