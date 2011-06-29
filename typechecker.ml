@@ -23,7 +23,8 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+	check_specs_a prog proc ctx spec_list e0
+  (*Gen.Debug.loop_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
       
@@ -62,7 +63,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx)
 	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
-			(*let _ = print_string ("check_specs: EBase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in
+	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
 	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
 	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 	        r
@@ -400,6 +402,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let farg_types, farg_names = List.split proc.proc_args in
 	        let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+            
+            (* Internal function to check pre/post condition of the function call. *)        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
 			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
@@ -466,17 +470,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;
 	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+            (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
 		      let _ = PTracer.log_proof prf in
               (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)
 			  
               if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                 Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
               rs in	        
+                    
+            (* Call check_pre_post with debug information *)
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
               let _ = Cprinter.string_of_list_failesc_context in
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
+            (*let _ = print_string ("\nAn Hoa :: Encounter function call [" ^ mn ^ "(" ^ (String.concat "," vs) ^ ")]" (*^ "with static spec :: " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs_with_pre) ^ "\n\n"*)) in*)
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
             else check_pre_post proc.proc_static_specs_with_pre ctx in	
 		    
@@ -598,6 +606,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = PTracer.log_proof prf in
   if (CF.isSuccessListPartialCtx rs) then 
     rs
+     rs
   else begin
     (* get source code position of failed branches *)
     let locs_of_failures = 

@@ -11,6 +11,13 @@ open Gen.Basic
 type spec_var =
   | SpecVar of (typ * ident * primed)
   
+	(** An Hoa : Array whose elements are all of type typ.
+      In principle, this is 1D array. To have higher 
+			dimensional array, but we need to use nested arrays.
+			It seems inefficient to me; but simpler to do!
+	 *)
+  (* | Array of typ  *)
+
 type formula =
   | BForm of (b_formula *(formula_label option))
   | And of (formula * formula * loc)

@@ -1,0 +1,2 @@
+relation zeros(int[] a, int i, int j) == (i > j | i <= j & a[i] = 0 & zeros(a, i+1, j)).
+checkentail zeros(a,1,3) |- zeros(a,1,4).

@@ -956,7 +956,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
     formula_exists_label = lbl;
 	formula_exists_pos = pos})
 and is_true (h : h_formula) = match h with
-  | HTrue _ -> true
+  | HTrue -> true
   | _ -> false
 
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) b (pos : loc) = 

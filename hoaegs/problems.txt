@@ -1,0 +1,23 @@
+
+- array bounds & memory safety
+
+- left & right recursion
+
+- existential instantiation
+
+- multi-sets
+
+- array as heap memory 
+
+- pointer arithmetic
+
+- nested array & multi-dimensional ?
+
+- concurrent programs?
+
+- automatic frame condition?
+
+- termination (variance + non-termination)
+
+- a bug in z3 where unsat was reported! can we have
+  a certification?

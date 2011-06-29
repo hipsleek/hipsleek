@@ -183,6 +183,11 @@ and exp_arrayat = { exp_arrayat_array_name : ident;
 	     exp_arrayat_index : exp;
 			 exp_arrayat_pos : loc; }
 
+(* An Hoa : array memory allocation expression *)
+and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
+	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
+			 exp_aalloc_pos : loc; }
+
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
@@ -333,6 +338,7 @@ and exp_unfold = { exp_unfold_var : (string * primed);
 
 and exp =
 	| ArrayAt of exp_arrayat (* An Hoa *)
+	| ArrayAlloc of exp_aalloc (* An Hoa *)
   | Assert of exp_assert
   | Assign of exp_assign
   | Binary of exp_binary
@@ -483,6 +489,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | IntLit e -> e.exp_int_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
+	| ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
   | New e -> e.exp_new_pos
   | Null p -> p
   | Return e -> e.exp_return_pos
@@ -698,6 +705,10 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | Member b -> 
                 let e1,r1 = helper n_arg b.exp_member_base in
                 (Member {b with exp_member_base = e1;},r1)
+					(* An Hoa *)
+					| ArrayAlloc b -> 
+                let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+                (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
           | New b -> 
                 let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
                 (New {b with exp_new_arguments = el},(comb_f rl))
@@ -1278,6 +1289,7 @@ let rec label_e e =
     | Null _ 
     | VarDecl _
     | Seq _
+		| ArrayAlloc _ (* An Hoa *)
     | New _ 
     | Finally _ 
     | Label _ -> None
