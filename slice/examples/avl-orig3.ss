@@ -14,7 +14,7 @@ avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
 		// -1 <= n1-n2 <=1 
 		& n2+($ bal)=n1+1 & n2<=n1+1 & n1 <= 1+n2
 	inv m >= 0 & n >= 0 & 0<=bal<=2  & $ -2+(2* bal)<=n & 
-  $ 2<=(2* bal)+n  &  $ -1+bal<=m & $ 1<=(bal+m)     ;
+  $ 2<=(2* bal)+n  &  $ -1+bal<=m & $ 1<=(bal+m) & $ m >= n ;
 
 
 
