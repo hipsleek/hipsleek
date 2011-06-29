@@ -6385,7 +6385,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
   ^"\n") pos; 
   let res,prf = heap_entail_failesc_prefix_init prog is_folding  has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2")) in
-  ((* CF.list_failesc_context_simplify  *)res,prf)
+  (CF.list_failesc_context_simplify res,prf)
 
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 

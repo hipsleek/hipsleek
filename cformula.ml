@@ -1835,9 +1835,14 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
   | _ -> remove_quantifiers qvars f
         (* 19.05.2008 *)
 
-and formula_of_disjuncts (f:formula list) : formula= 
-  if (f=[]) then (mkTrue (mkTrueFlow()) no_pos)
-  else List.fold_left (fun a c-> mkOr a c no_pos) (mkFalse (mkFalseFlow ) no_pos) f
+(* and formula_of_disjuncts (f:formula list) : formula=  *)
+(*   if (f=[]) then (mkTrue (mkTrueFlow()) no_pos) *)
+(*   else List.fold_left (fun a c-> mkOr a c no_pos) (mkFalse (mkFalseFlow ) no_pos) f *)
+
+and formula_of_disjuncts (f:formula list) : formula=
+  match f with
+    | [] -> (mkTrue (mkTrueFlow()) no_pos)
+    | x::xs -> List.fold_left (fun a c-> mkOr a c no_pos) x xs
 
 and rename_struc_bound_vars (f:struc_formula):struc_formula =
   let rec helper (f:ext_formula):ext_formula = match f with
@@ -2599,7 +2604,6 @@ let must_consistent_context (s:string) l : unit =
 
 let consistent_branch_ctx ((_,c):branch_ctx) : bool = consistent_context c
 
-
 let consistent_esc_stack (ls:esc_stack) : bool = 
   List.for_all (fun (_,b_ls) -> List.for_all consistent_branch_ctx b_ls) ls
  
@@ -2616,6 +2620,41 @@ let must_consistent_list_failesc_context (s:string) l : unit =
     let b = consistent_list_failesc_context l in
     if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR: "^s^" list_failesc context inconsistent")
+
+(*let isStrictFalseCtx ctx = match ctx with
+  | Ctx es -> isStrictConstFalse es.es_formula
+  | _ -> false*)
+
+let isAnyFalseCtx (ctx:context) : bool = match ctx with
+  | Ctx es -> isAnyConstFalse es.es_formula
+  | _ -> false  
+
+let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with
+  | _,Ctx es -> isAnyConstFalse es.es_formula
+  | _ -> false
+
+let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
+  List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
+
+let isAnyFalseFailescCtx (fc,ec,sc) = (fc=[]) &&
+  List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
+
+let isAnyFalseListCtx ctx = match ctx with
+  | SuccCtx lc ->List.exists isAnyFalseCtx lc
+  | FailCtx _ -> false
+  
+let isStrictTrueCtx ctx = match ctx with
+  | Ctx es -> isStrictConstTrue es.es_formula
+  | _ -> false
+
+let isAnyTrueCtx ctx = match ctx with
+  | Ctx es -> isAnyConstTrue es.es_formula
+  | _ -> false
+  
+let rec allFalseCtx ctx = match ctx with
+	| Ctx es -> isAnyFalseCtx ctx
+	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
+
 
 let es_simplify (e1:entail_state):entail_state = 
   let hfv0 = h_fv e1.es_heap in
@@ -2658,12 +2697,16 @@ let list_context_simplify (l : list_context) : list_context = match l with
   | SuccCtx sc -> SuccCtx (List.map context_simplify sc)
 
 let failesc_context_simplify ((l,a,cs) : failesc_context) : failesc_context = 
-        let newcs = List.map (fun (p,c) -> (p,context_simplify c)) cs in
-        (l,a,newcs)
+  let cs = List.filter (fun x -> not(isAnyFalseBranchCtx x)) cs in
+  let newcs = List.map (fun (p,c) -> (p,context_simplify c)) cs in
+  (l,a,newcs)
 
 let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_context = 
   List.map failesc_context_simplify l
 
+let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_context = 
+  let pr = !print_list_failesc_context in
+  Gen.Debug.no_1 "list_failesc_context_simplify" pr pr list_failesc_context_simplify l 
 
 
 let mk_empty_frame () : (h_formula * int ) = 
@@ -2765,35 +2808,7 @@ let rec contains_immutable_ctx (ctx : context) : bool =
     | Ctx(es) -> contains_immutable es.es_formula
     | OCtx(c1, c2) -> (contains_immutable_ctx c1) or (contains_immutable_ctx c2)
 
-(*let isStrictFalseCtx ctx = match ctx with
-  | Ctx es -> isStrictConstFalse es.es_formula
-  | _ -> false*)
 
-let isAnyFalseCtx ctx = match ctx with
-  | Ctx es -> isAnyConstFalse es.es_formula
-  | _ -> false  
-
-let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
-  List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
-
-let isAnyFalseFailescCtx (fc,ec,sc) = (fc=[]) &&
-  List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
-
-let isAnyFalseListCtx ctx = match ctx with
-  | SuccCtx lc ->List.exists isAnyFalseCtx lc
-  | FailCtx _ -> false
-  
-let isStrictTrueCtx ctx = match ctx with
-  | Ctx es -> isStrictConstTrue es.es_formula
-  | _ -> false
-
-let isAnyTrueCtx ctx = match ctx with
-  | Ctx es -> isAnyConstTrue es.es_formula
-  | _ -> false
-  
-let rec allFalseCtx ctx = match ctx with
-	| Ctx es -> isAnyFalseCtx ctx
-	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
 
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
@@ -3073,14 +3088,15 @@ let isSuccessListPartialCtx cl =
 
 let isSuccessListPartialCtx cl =
   let pr = !print_list_partial_context in
-  Gen.Debug.ho_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
+  Gen.Debug.no_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
   
 let isSuccessListFailescCtx cl =
   cl==[] || List.exists isSuccessFailescCtx cl 
 
 let isSuccessListFailescCtx cl =
+  (* let cl = list_failesc_context_simplify cl in *)
   let pr = !print_list_failesc_context in
-  Gen.Debug.ho_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
+  Gen.Debug.no_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
 
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
@@ -3090,6 +3106,14 @@ let isNonFalseListFailescCtx cl =
  List.exists (fun (_,el,ss)-> 
   let ess = (colapse_esc_stack el)@ss in
   ((List.length ess) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ess )) cl
+
+let keep_failure_failesc_context ((c,es,sc): failesc_context) : failesc_context =
+  (c,[],[])
+
+let keep_failure_list_failesc_context (lc: list_failesc_context) : list_failesc_context =
+  List.map ( keep_failure_failesc_context) lc 
+
+
 
 (* this should be applied to merging also and be improved *)
 let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
@@ -3690,9 +3714,10 @@ let rec struc_to_formula (f0:struc_formula):formula =
 		| EAssume (_,b,_)-> b 
 		| EVariance b -> struc_to_formula b.formula_var_continuation (* (mkTrue (mkTrueFlow ()) b.formula_var_pos) *)
 			in	
-	if (List.length f0)>0 then
-		List.fold_left (fun a c-> mkOr a (ext_to_formula c) no_pos) (mkFalse (mkFalseFlow) no_pos)f0
-	else mkTrue (mkTrueFlow ()) no_pos	
+    formula_of_disjuncts (List.map ext_to_formula f0)
+	(* if (List.length f0)>0 then *)
+	(* 	List.fold_left (fun a c-> mkOr a (ext_to_formula c) no_pos) (mkFalse (mkFalseFlow) no_pos)f0 *)
+	(* else mkTrue (mkTrueFlow ()) no_pos	 *)
 	
 and formula_to_struc_formula (f:formula):struc_formula =
 	let rec helper (f:formula):struc_formula = match f with

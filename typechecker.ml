@@ -253,6 +253,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 begin
 		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
                       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
+		          Debug.print_info ("(Cause of Failure)")
+                     (Cprinter.string_of_failure_list_failesc_context rs) pos;
 		          rs
                 end
               else 

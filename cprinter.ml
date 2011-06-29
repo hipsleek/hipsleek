@@ -1275,6 +1275,20 @@ let pr_esc_stack_lvl ((i,_),e) =
 		  pr_vwrap "State:" pr_context fs)) e;
   fmt_close_box ()
 
+(* should this include must failures? *)
+let pr_failed_states e = match e with
+  | [] -> ()
+  | _ ->   pr_vwrap_naive_nocut "Failed States:"
+      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		  pr_vwrap "State:" pr_fail_type fs)) e
+
+let pr_successful_states e = match e with
+  | [] -> ()
+  | _ ->   
+  pr_vwrap_naive "Successful States:"
+      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		  pr_vwrap "State:" pr_context fs)) e
+
 let pr_esc_stack e = match e with
   | [] 
   | [((0,""),[])] -> ()
@@ -1288,13 +1302,15 @@ let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
 let pr_failesc_context ((l1,l2,l3): failesc_context) =
   fmt_open_vbox 0;
-  pr_vwrap_naive_nocut "Failed States:"
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_fail_type fs)) l1;
+  pr_failed_states l1;
+  (* pr_vwrap_naive_nocut "Failed States:" *)
+  (*     (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl; *)
+  (*   	  pr_vwrap "State:" pr_fail_type fs)) l1; *)
   pr_esc_stack l2;
-  pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) l3;
+  (* pr_vwrap_naive "Successful States:" *)
+  (*     (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl; *)
+  (*   	  pr_vwrap "State:" pr_context fs)) l3; *)
+  pr_successful_states l3;
   fmt_close_box ()
 
 let pr_partial_context ((l1,l2): partial_context) =
@@ -1795,6 +1811,11 @@ if (Gen.is_empty cl) then "" else get_label_partial_context (List.hd cl)
 
 let string_of_label_list_failesc_context (cl:Cformula.list_failesc_context) : string =
   if (Gen.is_empty cl) then "" else string_of_label_failesc_context (List.hd cl)
+;;
+
+let string_of_failure_list_failesc_context (lc: Cformula.list_failesc_context) =  
+  let lc = Cformula.keep_failure_list_failesc_context lc
+  in string_of_list_failesc_context lc
 ;;
 
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
