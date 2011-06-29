@@ -929,9 +929,9 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
-        let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in
+        (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	    Gen.ExcNumbering.compute_hierarchy 1 ();
-        let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in
+        (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in *)
 	    let prims = gen_primitives prog0 in
 	    let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
       (set_mingled_name prog;

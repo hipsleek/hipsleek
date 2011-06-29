@@ -4442,7 +4442,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 		fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br pos) pos;
 		fc_current_conseq = CF.formula_of_heap HFalse pos;
 		fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
-    (build_and_failures "22" (contra_list, must_list, may_list) fc_template, prf)
+    (build_and_failures "213" (contra_list, must_list, may_list) fc_template, prf)
   end
     (****************************************************************)  
     (* utilities for splitting the disjunctions in the antecedent and the conjunctions in the consequent *)

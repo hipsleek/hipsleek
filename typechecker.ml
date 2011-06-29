@@ -597,7 +597,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   if (CF.isSuccessListPartialCtx rs) then 
     rs
   else begin
-    (* get source code posistion of failed branches *)
+    (* get source code position of failed branches *)
     let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
     in

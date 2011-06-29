@@ -2294,6 +2294,8 @@ let print_list_context_short = ref(fun (c:list_context) -> "printer not initiali
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
+let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
+let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
 
 let is_one_context (c:context) =
   match c with
@@ -3068,10 +3070,18 @@ if (Gen.is_empty fs) then true else false
 
 let isSuccessListPartialCtx cl =
   cl==[] || List.exists isSuccessPartialCtx cl 
+
+let isSuccessListPartialCtx cl =
+  let pr = !print_list_partial_context in
+  Gen.Debug.ho_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
   
 let isSuccessListFailescCtx cl =
   cl==[] || List.exists isSuccessFailescCtx cl 
-  
+
+let isSuccessListFailescCtx cl =
+  let pr = !print_list_failesc_context in
+  Gen.Debug.ho_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
+
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
 

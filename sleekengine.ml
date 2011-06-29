@@ -370,14 +370,14 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
                 | None -> "INCONSISTENCY : expected failure but success instead"
           )
         in
-        print_string (num_id^"=Fail."^s^"\n");
+        print_string (num_id^"=Fail."^s^"\n")
         (*if !Globals.print_err_sleek then *)
-          print_string ("printing here: "^(Cprinter.string_of_list_context rs))
+         (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
     else
       begin
-	      print_string (num_id^"=Valid.\n");
-          print_string ("printing here: "^(Cprinter.string_of_list_context rs))
+	      print_string (num_id^"=Valid.\n")
+          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
   with _ ->
     Printexc.print_backtrace stdout;

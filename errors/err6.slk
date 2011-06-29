@@ -11,10 +11,12 @@ checkentail x>3 |- x>5.
 
 // 4. may_error
 checkentail x>3 |- x>5 & flow __Error.
+print residue.
 
 // 5. MUST -Inconsistency
 checkentail x>3 |- x>0 & flow __Error.
+print residue.
 
 // 6. VALID
 checkentail x>3 |- x<=0 & flow __Error .
-
+print residue.
