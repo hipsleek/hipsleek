@@ -1,0 +1,39 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<x,y> ==
+  self=null & x=0 & y=0
+  or self::node<sm, r> * r::ll<x-1, y-x> 
+  inv x>=0 & y>=0 & y>=x.
+
+
+pred ll1<x,y> ==
+  self=null & x=0 & y=0
+  or self::node<sm, r> * r::ll1<x-1, y-x> 
+  inv x>=0 .
+/*
+pred ll2<x,y> ==
+  self=null & x=0 & y=0
+  or self::node<sm, r> * r::ll2<x-1, y-x> 
+  inv y>=0.
+*/
+
+
+pred ll3<x,y> ==
+  self=null & x=0 & y=0
+  or self::node<sm, r> * r::ll3<x-1, y-2> 
+  inv x>=0 & y>=0 & y=2*x.
+
+
+pred ll4<n,s,B> ==
+	self = null & n = 0 & s = 0 & B = {} or
+	self::node<v,p> * p::ll4<n1,s1,B1> & n = 1 + n1 & v >= 0 & s = v + s1 & B = union({v}, B1)
+	inv n >= 0 & s >= 0 & forall (xxx : (xxx notin B | xxx >= 0)).
+/*
+ll<n,s> ==
+	self = null & n = 0 & s = 0 or
+	self::node<v,p> * p::ll<n1,s1> & n = 1 + n1 & v >= 1 & s = v + s1
+	inv n >= 0 & s >= 0 & s>=n;
+*/

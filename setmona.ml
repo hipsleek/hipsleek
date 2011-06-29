@@ -500,7 +500,7 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 		else
 		  let pos = pos_of_exp e1 in
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
-		  let sv = SpecVar (Prim Int, fn, Unprimed) in
+		  let sv = SpecVar (Int, fn, Unprimed) in
 		  let new_e = Var (sv, pos) in
 		  let additional_e = BForm (Eq (new_e, Add (e1, e2, pos), pos) , None) in
 			if Gen.is_empty rest then

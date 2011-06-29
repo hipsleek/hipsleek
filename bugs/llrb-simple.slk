@@ -1,0 +1,42 @@
+/**
+ Left-leaning Red Black Tree
+ Entailment testing.
+ @author: Vu An Hoa
+ */
+
+data node {
+	int val;
+	int color; /* 0 for red, 1 for black */
+	node left;
+	node right;
+}.
+
+/* Red black tree with case analysis */
+pred rbc<n, cl, bh, c> == self = null & n = 0 & bh = 1 & cl = 1 & c = 0
+	or self::node<v, 1, l, r> * l::rbc<ln, 1, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> 
+       & cl = 1 & n = 1 + ln + rn & c = 1
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 1, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 2
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 0, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 3
+	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _>
+	   & cl = 0 & n = 1 + ln + rn & c = 4
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4.
+	
+// ok
+// checkentail x::rbc<n,c,bh,d> & 0<=d<=3 |- c=1.
+
+checkentail x::rbc<n,c,bh,d> & d=4 |- c=0.
+
+//checkentail x::rbc<n,c,bh,d> & c=0 |- d=4.
+
+//checkentail x::rbc<n,c,bh,d> & c=1 |- 0<=d<=3.
+
+//checkentail x::rbc<n,c,bh,d> & n=0 |- c=1.
+
+// tricky to prove valid
+//checkentail x::rbc<n,c,bh,d> & c=0 & n>1 |- bh>1.
+/*
+    R BB 
+*/
+//checkentail x::node<_,0,lt,rt>*lt::rbc<n1,1,bh,_> *rt::rbc<n1,1,bh,_> & n>1 |- bh>1.

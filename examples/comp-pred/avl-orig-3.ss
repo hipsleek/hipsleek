@@ -9,31 +9,31 @@ data node {
 // bal: 0: left is higher, 1: balanced, 2: right is higher
 
 
-pred avl_shape[t,b]<a:t>[Base,Rec,Inv] = 
+ho_pred avl_shape[t,b]<a:t>[Base,Rec,Inv] == 
   case {
-    self = null -> [] Base(a,self)
-    self!=null -> [] self::node<v,n,l,r> *l::avl_shape(al)*r::avl_shape(ar)* Rec(a,al,ar,v,n,l,r) }
+    self = null -> [] Base(a,self);
+    self != null -> [] self::node<v,n,l,r> *l::avl_shape<al>*r::avl_shape<ar> * Rec(a,al,ar,v,n,l,r); };
 
-pred avl_n[int,b]<n:int>[Base,Rec,Inv] extends avl_shape[int,b]<n>
+ho_pred avl_n[int,b]<n:int>[Base,Rec,Inv] extends avl_shape[int,b]<n>
    with {
     Base(n,self)= n=0
     Rec (n,nl,nr,v,n,l,r) = n = 1+nl+nr
     Inv (n,self) = n>=0}
     
-pred avl_H[int,b]<h:int>[Base,Rec,Inv] extends avl_shape[int,b]<h>
+ho_pred avl_H[int,b]<h:int>[Base,Rec,Inv] extends avl_shape[int,b]<h>
   with{
     Base(h,self) = h = 1
     Rec (h,hl,hr,v,n,l,r) = -1<= hl-hr<=1  & h=1+max(hl,hr)
     Inv (h,self) = h>=0}
 
-pred avl_B[int,int,b]<bal:int,h:int>[Base,Rec,Inv] refines avl_H[int,int,b]<bal,h>
+ho_pred avl_B[int,int,b]<bal:int,h:int>[Base,Rec,Inv] refines avl_H[int,int,b]<bal,h>
   with{
     Base(bal,h,self) = bal = 1 
     Rec (bal,ball,balr,h,hl,hr,v,n,l,r) = bal = hl-hr+1
     Inv(bal,h,self) = 0<=bal<=2
   }
   
-pred avl<m,n,bal> finalizes (avl_B[int]<bal,n> split avl_n[int]<m>)
+avl<m,n,bal> == finalizes avl_B[int]<bal,n> split avl_n[int]<m>;
 
 
 /*

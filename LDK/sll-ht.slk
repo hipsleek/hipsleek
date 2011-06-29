@@ -1,0 +1,47 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred sll_tail<n, t, sm, lg> ==
+  self::node< _, null> & t=self & n=0 & sm<=lg //empty list
+  or self::node<sm, r> * r::sll_tail<n-1, t, _, _> & r!=null  & n=1 & sm=lg
+  or self::node<sm, r> * r::sll_tail<n-1, t, sm1, lg> & r!=null & sm<=sm1 & n>1
+  inv n>=0 & self!=null & sm<=lg & t!=null.
+
+pred sll_ht<n, h, t, sm, lg> == self::node<_, r> * r::sll_tail<n, t, sm, lg> & self=h
+  inv n>=0 & self!=null.
+
+checkentail self::sll_tail<n+1,t, sm, lg> & n>0 |- self::sll_ht<n,_,t,sm1,lg1>.
+
+// NEED TO PROVE
+checkentail x::node<v, r> * r::sll_ht<n, h, t, sm, lg> * h::node<v1,_> & v1<=sm |- x::sll_ht<n,_,t,_,_>.
+
+
+checkentail x::sll_ht<n, h, t, sm, lg> * x::node<v1,_> & v1<=sm &n>=1
+            |- x::sll_tail<n+1,t,v1,lg>.
+
+
+checkentail x::sll_ht<n, h, t, sm, lg> * x::node<v1,_> & n=0
+            |- x::sll_tail<n-1,t,v1,lg>.
+
+checkentail x::node<v,q>*q::sll_tail<n,t,sm,lg> & v<=sm & n>=1
+            |- x::sll_tail<n+1,t,v,lg>.
+
+checkentail x::node<v,q>*q::sll_tail<n,t,sm,lg> & v<=sm & n=0
+            |- x::sll_tail<n+1,t,v,v>.
+
+checkentail x::node<_,q>*q::sll_tail<n,t,sm,lg> & n=0
+            |- x::sll_ht<n,_,t,sm,lg>.
+
+// NEED TO PROVE
+checkentail x::node<_, r> * r::sll_ht<0, h, t, _, _>
+            |- x::sll_ht<n,x,t,_,_>.
+
+checkentail x::sll_ht<0, h, t, _, _> |-  h::node<_,r> * r::sll_tail<0, t, _, _>.
+
+checkentail x::node<_, h> * h::node<_,r> * r::sll_tail<0, t, _, _>
+            |- x::sll_ht<n,x,t,_,_>.
+
+checkentail x::node<_, h> * h::node<_,t> * t::node<_,null> 
+            |- x::sll_ht<n,x,t,_,_>.

@@ -14,31 +14,31 @@ data node2[b] {
 */
 
 
-tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
-	or self::node2[n]<v,l,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec1(a,al,ar,self,v,l,r);
+ho_pred tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
+	or self::node2[n]<v,l,r>* l::tree_shape<al>*m::tree2_3<am> * r::tree_shape<ar>* Rec1(a,al,ar,self,v,l,r)
 	inv Inv(a,self);
 
-pred tree_B[t,b]<a:t>[Base,Rec,Inv] refines tree_shape[t,b]<a>
-  with { Base(a,self) = self=null;}  
+ho_pred tree_B[t,b]<a:t>[Base,Rec,Inv] refines tree_shape[t,b]<a>
+  with { Base(a,self) = self=null}  
   
-pred tree_Hmin [int,b]<nmin:int>[Base,Rec,Inv] extends tree_B[int,b]<nmin>
+ho_pred tree_Hmin [int,b]<nmin:int>[Base,Rec,Inv] extends tree_B[int,b]<nmin>
  with 
   { Base (nmin,self) = nmin=0
     Rec (nmin,nminl,nminr,self,v,l,r) = nmin= min(nminl,nminr)+1
     Inv (nmin,self)= nmin>=0
   }
   
-pred tree_H [int,b]<n:int>[Base,Rec,Inv] extends tree_B[int,b]<n>
+ho_pred tree_H [int,b]<n:int>[Base,Rec,Inv] extends tree_B[int,b]<n>
  with 
   { Base(n,self) = n=0
     Rec (n,nl,nr,self,v,l,r) =  nl=n-1 & (nr=n-2 | nr = n-1)
   }
   
-pred tree_inv[int,int,b]<nmin,n>[Base,Rec,Inv] refines (tree_H[int,b]<n> combine tree_Hmin[int,b]<nmin>)
+ho_pred tree_inv[int,int,b]<nmin,n>[Base,Rec,Inv] refines (tree_H[int,b]<n> combine tree_Hmin[int,b]<nmin>)
   with 
     {Inv(nmin,n,self) = n>=nmin}
   
-complete<n, nmin> finalizes tree_inv[int]<nmin,n>
+complete<n, nmin> == finalizes tree_inv[int]<nmin,n>;
 
 /* possible view for a complete tree */
 /*

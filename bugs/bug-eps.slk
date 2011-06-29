@@ -1,0 +1,11 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<x> ==
+  self=null & x=0 
+  or self::node<sm, r> * r::ll<x-1> 
+  inv x>=0 .
+
+

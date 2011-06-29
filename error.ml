@@ -6,8 +6,10 @@
 
 open Globals
 
-type error = { error_loc : loc;
-			   error_text : string }
+type error = {
+  error_loc : loc;
+  error_text : string
+}
 
 (*
 let all_errors : error list ref = ref []
@@ -16,19 +18,28 @@ let add_error e = all_errors := e :: !all_errors
 *)
 
 let report_error e =
-   print_string "E1\n";
-   print_string ("\nFile \"" ^ e.error_loc.start_pos.Lexing.pos_fname 
-				^ "\", line " ^ (string_of_int e.error_loc.start_pos.Lexing.pos_lnum) ^", col "^
-				(string_of_int (e.error_loc.start_pos.Lexing.pos_cnum - e.error_loc.start_pos.Lexing.pos_bol))^ ": "
-				^ e.error_text ^ "\n"); flush stdout;
-   print_string "E2\n";
-  failwith "Error detected - error.ml A"
+  (match !proving_loc with
+    | Some p ->
+          Printf.printf "\nLast Proving Location: File \"%s\", line %d, col %d "
+               p.start_pos.Lexing.pos_fname
+               p.start_pos.Lexing.pos_lnum
+              (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol)
+    | None -> ());
+  Printf.printf "\nERROR: File \"%s\", line %d, col %d : %s \n"
+      e.error_loc.start_pos.Lexing.pos_fname
+      e.error_loc.start_pos.Lexing.pos_lnum
+      (e.error_loc.start_pos.Lexing.pos_cnum - e.error_loc.start_pos.Lexing.pos_bol)
+      e.error_text;
+  flush stdout;
+  failwith e.error_text
 
 let report_warning e =
-  if (not !suppress_warning_msg) then 
-   (print_string ("\nFile \"" ^ e.error_loc.start_pos.Lexing.pos_fname 
-				^ "\", line " ^ (string_of_int e.error_loc.start_pos.Lexing.pos_lnum) ^", col "^
-				(string_of_int (e.error_loc.start_pos.Lexing.pos_cnum - e.error_loc.start_pos.Lexing.pos_bol))^ ": "
-				^ e.error_text ^ "\n");flush stdout;)
-  else ();
-  failwith "Error detected : error.ml B"
+  if (not !suppress_warning_msg) then begin
+    Printf.printf "\nWARNING: File \"%s\", line %d, col %d: %s \n"
+        e.error_loc.start_pos.Lexing.pos_fname
+        e.error_loc.start_pos.Lexing.pos_lnum
+        (e.error_loc.start_pos.Lexing.pos_cnum - e.error_loc.start_pos.Lexing.pos_bol)
+        e.error_text;
+    flush stdout
+  end else ()
+  (* failwith "Error detected : error.ml B" *)

@@ -1,5 +1,7 @@
 let parse_only = ref false
 
+let typecheck_only = ref false
+
 let rtc = ref false
 
 let comp_pred = ref false
@@ -46,8 +48,8 @@ let common_arguments = [
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
 	"Simplify the pure part of the formulas");
-	("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic,
-	"Use the combined coerce&match + history heuristic for lemma application");
+	(* ("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic, *)
+	(* "Use the combined coerce&match + history heuristic for lemma application"); *)
 	("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
 	"Move instantiation (containing existential vars) to the LHS at the end of the folding process");
 	("--max-renaming", Arg.Set Globals.max_renaming,
@@ -81,8 +83,7 @@ let common_arguments = [
 	("--log-cvcl", Arg.String Cvclite.set_log_file,
     "Log all CVC Lite formula to specified log file");
 	(* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
-	("--log-cvc3", Arg.Unit Cvc3.set_log_file,
-    "Log all formulae sent to CVC3 in file allinput.cvc3");
+	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
@@ -108,10 +109,9 @@ let common_arguments = [
     "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
-	("-parse", Arg.Set parse_only,
-	"Parse only");
-	("--print-iparams", Arg.Set Globals.print_mvars,
-	"Print input parameters of predicates");
+	("-parse", Arg.Set parse_only,"Parse only");
+	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
+	("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
 	("--print-x-inv", Arg.Set Globals.print_x_inv,
 	"Print computed view invariants");
 	("-stop", Arg.Clear Globals.check_all,
@@ -167,7 +167,7 @@ let common_arguments = [
     "Do not try to simplify non-linear formulas with Redlog");
     ("--rl-no-cache", Arg.Set Redlog.no_cache,
     "Do not use cache for unsatisfiability and implication's checking with Redlog");
-	("--rl-timeout", Arg.Set_int Redlog.timeout, 
+	("--rl-timeout", Arg.Set_float Redlog.timeout, 
 	"Set timeout (in seconds) for is_sat or imply with Redlog");
 	("--failure-analysis",Arg.Set Globals.failure_analysis, 
 	"Turn on failure analysis");
@@ -181,7 +181,7 @@ let common_arguments = [
     (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
     *)
     ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
-    ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
+    ("--redlog-timeout", Arg.Set_float Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
     ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");

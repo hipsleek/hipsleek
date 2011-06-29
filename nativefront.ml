@@ -47,12 +47,17 @@ let parse (input : string) : command =
 	  | _ -> failwith ("Unsupported command: " ^ cmd)
 *)
 
-let parse (input : string) : command =
-  let inlex = Lexing.from_string input in
-  let cmd = Sparser.command (Slexer.tokenizer "interactive") inlex in
-	cmd
+let parse (input : string) : command =  Parser.parse_sleek_int "sleek string" input
+
+(* let parse (input : string) : command =   *)
+(*   Gen.Debug.loop_1_no "parse" (fun x -> x) (fun _ -> "?") parse input *)
+
 let list_parse (input_file) : command list =
   let org_in_chnl = open_in input_file in
-  let inlex = Lexing.from_channel org_in_chnl in
-  let cmd = Sparser.opt_command_list (Slexer.tokenizer "interactive") inlex in
+  Globals.input_file_name:= input_file;
+  let cmd = Parser.parse_sleek input_file (Stream.of_channel org_in_chnl) in
+  close_in org_in_chnl;
 	cmd
+
+(* let list_parse (input_file) : command list = *)
+(*   Gen.Debug.loop_1_no "list_parse" (fun _ -> "?") (fun _ -> "?") list_parse input_file *)

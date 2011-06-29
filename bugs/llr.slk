@@ -1,0 +1,39 @@
+/**
+ Left-leaning Red Black Tree
+ Modified from RedBlackBST.java
+ @author: Vu An Hoa
+ */
+
+data node {
+	int val;
+	int color; /* 0 for red, 1 for black */
+	node left;
+	node right;
+}.
+
+/* view for red-black trees */
+pred rbd<n, cl, d, bh> == self = null & n = 0 & bh = 1 & cl = 1 & d=0
+	// self is red, both child must be black
+    or self::node<v, 0, l, r> * l::rbd<ln, 1,_, lbh> * r::rbd<rn, 1,_, rbh>
+	   & cl = 0 & n = 1 + ln + rn & lbh = bh & rbh = bh & d=1
+	// if left is black, right must be black due to left-leaning!
+   or self::node<v, 1, l, r> * l::rbd<ln, 1,_, lbh> * r::rbd<rn, 1,_, rbh>
+       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=1
+   or self::node<v, 1, l, r> * l::rbd<ln, 0,_, lbh> * r::rbd<rn, 0,_, rbh>
+       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=2
+   or self::node<v, 1, l, r> * l::rbd<ln, 0,_, lbh> * r::rbd<rn, 1,_, rbh>
+       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=3
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= d <=3.
+
+checkentail x::rbd<n,c,d,bh> & x=null |- false.
+
+checkentail x::rbd<n,c,d,bh> & x=null |- n=0 & bh=1 & c=1 & d=0.
+
+checkentail x::node<_,c,_,_> & c=0 |- x::node<_,0,_,_>.
+
+
+ checkentail h::node<_, 0, L, R> * L::rbd<ln, 1,_, lbh> * R::rbd<rn, 1,_, rbh>
+     & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=2
+  |- h::rbd<n2,c2,d2,bh2>.
+
+print residue.

@@ -2,15 +2,16 @@ OCAMLC=ocamlc.opt
 OCAMLOPT=ocamlopt.opt
 OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
-
+camlp4l=dynlink.cmxa camlp4lib.cmxa
+camlp4lnorm=dynlink.cma camlp4lib.cma
 DIRS=.
-INCLUDES=-I ./xml -I +ocamlgraph
+INCLUDES=-I ./xml -I +ocamlgraph -I +camlp4 
 GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS=  $(INCLUDES) # add other options for ocamlc here
 GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
-OCAMLOPTFLAGS= -dtypes $(INCLUDES) # add other options for ocamlopt here
+OCAMLOPTFLAGS= -annot $(INCLUDES) # add other options for ocamlopt here
 # removed -p from above as it seems related to profiling..
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
@@ -32,23 +33,17 @@ rest: hip.norm sleek.norm prover.norm prdebug decidez.vo
 
 opt: hip sleek prover
 
-sparser.cmo sparser.ml: sparser.mly
-	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
-	rm sparser.mli
-	$(OCAMLC) $(OCAMLFLAGS) -c -g sparser.ml
+lexer.ml: lexer.mll token.ml
+	$(OCAMLLEX) lexer.mll
+ 
+# dependencies of parser.ml needs to be manually specified
+parser.cmo: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
+	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
-slexer.cmo slexer.ml: slexer.mll sparser.ml
-	$(OCAMLLEX) slexer.mll
-	$(OCAMLC) $(OCAMLFLAGS) -c -g slexer.ml
+parser.cmx : lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml	
+	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
-iparser.cmo iparser.ml: iparser.mly
-	$(OCAMLYACC) $(OCAMLYACCFLAGS) iparser.mly
-	rm iparser.mli
-	$(OCAMLC) $(OCAMLFLAGS) -c -g iparser.ml
-
-ilexer.cmo ilexer.ml: ilexer.mll iparser.ml
-	$(OCAMLLEX) ilexer.mll
-	$(OCAMLC) $(OCAMLFLAGS) -c -g ilexer.ml
+parser.cmi: lexer.cmi iast.cmi sleekcommons.cmi globals.cmi error.cmi cast.cmi
 
 ocparser.cmo ocparser.ml: ocparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) ocparser.mly
@@ -68,17 +63,17 @@ rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLLEX) rllexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
 
-MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
-	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo\
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo\
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -92,28 +87,19 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 	slices.cmo main.cmo 
 
 
-PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo \
-	iparser.cmo ilexer.cmo \
-	iprinter.cmo \
-	iastUtil.cmo \
-	cformula.cmo cast.cmo cprinter.cmo
-
-
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
-GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iastUtil.cmo \
-	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   rlparser.cmo rllexer.cmo \
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -127,18 +113,17 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.c
 
 
 
-SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
 	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  sleekcommons.cmo \
-	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -155,25 +140,17 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
 
 
-MAIN_FILES_2=debug.cmo globals.cmo \
-	ipure.cmo iformula.cmo iast.cmo \
-	iparser.cmo ilexer.cmo \
-	iprinter.cmo
-
-MAIN_FILES_2_OPT := $(MAIN_FILES_2:.cmo=.cmx)
-
-
-PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
-	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-  ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+  ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo\
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -186,17 +163,17 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
-WEB_FILES=globals.cmo error.cmo gen.cmo debug.cmo \
+WEB_FILES=globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
-	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo \
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
@@ -206,48 +183,37 @@ WEB_FILES=globals.cmo error.cmo gen.cmo debug.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
 	web.cmo
-hip1: $(MAIN_FILES_2) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
 
 hipc:
 	make clean; make hip
 
 hip.norm: decidez.vo $(MAIN_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(MAIN_FILES)
 #[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hip: $(MAIN_FILES_OPT) decidez.vo
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(camlp4l) $(MAIN_FILES_OPT)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 mytop: $(MAIN_FILES) decidez.vo
-	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
-
-prdebug: $(PP_FILES) 
-	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
-#	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
+	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(MAIN_FILES)
 
 
 hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
-	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
-
-#hip.opt: $(MAIN_FILES:*.cmo=*.cmx) 
-#	make -f Makefile.opt hip.opt
 
 
 prover.norm: $(PROVE_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(PROVE_FILES)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover: $(PROVE_FILES_OPT)
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(camlp4l) $(PROVE_FILES_OPT)
 
 
 web: $(WEB_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)
-
-#$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(WEB_FILES)
 
 sleekc:
 	make clean; make sleek 
@@ -259,59 +225,43 @@ xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
 sleek.norm: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(camlp4lnorm) $(SLEEK_FILES)
 #	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
 sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(camlp4l) $(SLEEK_FILES_OPT)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
-#	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
+#	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa camlp4lib.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
 
-CRISTINA_FILES=debug.cmo globals.cmo error.cmo \
-	cpure.cmo mcpure.cmo cformula.cmo cast.cmo
-
-cristina: $(CRISTINA_FILES)
-
-TEST_OO_FILES= gen.cmo debug.cmo globals.cmo error.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo \
-	checks.cmo \
-	iparser.cmo ilexer.cmo \
-	iprinter.cmo \
-	iastUtil.cmo \
-	cformula.cmo cast.cmo cprinter.cmo \
-	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
-	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo \
-	context.cmo \
-	solver.cmo \
-	env.cmo astsimp.cmo \
-	test-oo.cmo \
-#	typechecker.cmo \
-#	main.cmo
-
-oo: $(TEST_OO_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(TEST_OO_FILES)
 
 
 JAVA_FILES=debug.cmo globals.cmo error.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iprinter.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
 	iparser.cmo ilexer.cmo \
 	iastUtil.cmo \
 	java.cmo
 
 j: $(JAVA_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(JAVA_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4l) $(JAVA_FILES)
 
 decidez.vo:
 	coqtop -compile decidez
 
+install:
+	cp mona_predicates.mona /usr/local/lib/mona_predicates.mona
+	coqtop -compile decidez
+	cp decidez.vo /usr/local/lib/decidez.vo
+	./hip --build-image true
+	cp MyImage /usr/local/lib/MyImage
+
 # ------------------------------------------------------------
 # Common rules
 # ------------------------------------------------------------
-.SUFFIXES: .ml .mli .cmo .cmi .cmx .mly .mll
+#.SUFFIXES: .ml .mli .cmo .cmi .cmx .mly .mll
+.SUFFIXES: .ml .mli .cmo .cmi .cmx .mll
 
 .ml.annot:
 	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
@@ -327,15 +277,17 @@ decidez.vo:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hip hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe hipgui prdebug ss ss.exe ss.norm
+	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hip hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe hipgui prdebug ss ss.exe ss.norm
 
 # Dependencies
-beforedepend: iparser.ml ocparser.ml
+#beforedepend: parser.ml iparser.ml ocparser.ml
+beforedepend: ocparser.ml
 
 depend: beforedepend
+	mv parser.ml p_x_x_x
 	(for d in $(DIRS); \
 	do $(OCAMLDEP) $(INCLUDES) $$d/*.mli $$d/*.ml; \
 	done) > .depend
-
+	mv p_x_x_x parser.ml
 -include .depend
 # DO NOT DELETE

@@ -1,0 +1,13 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll<v,n> ==
+  self=null & n=0 
+  or self::node<v, r> * r::ll<_,n-1> 
+  inv n>=0 .
+
+
+checkentail x::node<0,q>*q::ll<v,n> |- x::node<_,r>*q::ll<w,a> & a=n+1.

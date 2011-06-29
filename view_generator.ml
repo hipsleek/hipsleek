@@ -29,7 +29,7 @@ let rec gen_ext_view (prog : C.prog_decl) (c : C.data_decl) : C.proc_decl =
 
 (* prelucrating the lhs *)
 (* this is considered as the precondition *)
-      let lhs_base_heap = CF.ViewNode({ CF.h_formula_view_node = CP.SpecVar(CP.OType(c.C.data_name), 
+      let lhs_base_heap = CF.ViewNode({ CF.h_formula_view_node = CP.SpecVar(Named(c.C.data_name), 
 																			fn2, 
 																			Unprimed);
 										CF.h_formula_view_name = c.C.data_name;
@@ -45,7 +45,7 @@ let rec gen_ext_view (prog : C.prog_decl) (c : C.data_decl) : C.proc_decl =
 										CF.h_formula_view_pos = no_pos}) in
       let lhs_base_pure = CP.BForm(CP.BConst(true, no_pos)) in
       let lhs_base_type = CF.TypeSub({
-	  CF.t_formula_sub_type_var = CP.SpecVar(CP.OType(c.C.data_name), 
+	  CF.t_formula_sub_type_var = CP.SpecVar(Named(c.C.data_name), 
 						 actual_type_var, 
 						 Unprimed);
 	  CF.t_formula_sub_type_type = c.C.data_name}) in
@@ -58,11 +58,11 @@ let rec gen_ext_view (prog : C.prog_decl) (c : C.data_decl) : C.proc_decl =
 (* prelucrating the rhs *)
 (* this is considered as the postcondition *)
       let extension_var = fresh_var_name ("Ext" ^parent.C.data_name) 0 in  
-      let extension_arg = CP.SpecVar(CP.OType("Ext" ^ c.C.data_name), 
+      let extension_arg = CP.SpecVar(Named("Ext" ^ c.C.data_name), 
 				     extension_var, 
 				     Unprimed) in 
       let h_formula_star_h1 = CF.ViewNode({
-	    CF.h_formula_view_node = CP.SpecVar(CP.OType(parent.C.data_name), 
+	    CF.h_formula_view_node = CP.SpecVar(Named(parent.C.data_name), 
 						fn1, 
 						Unprimed);
 	    CF.h_formula_view_name = parent.C.data_name;
@@ -87,7 +87,7 @@ let rec gen_ext_view (prog : C.prog_decl) (c : C.data_decl) : C.proc_decl =
 	    CF.h_formula_star_pos = no_pos}) in
       let rhs_base_pure = CP.BForm(CP.BConst(true, no_pos)) in
       let rhs_base_type = CF.TypeSub({
-	    CF.t_formula_sub_type_var = CP.SpecVar(CP.OType(c.C.data_name),
+	    CF.t_formula_sub_type_var = CP.SpecVar(Named(c.C.data_name),
 						   actual_type_var, 
 						   Unprimed);
 	    CF.t_formula_sub_type_type = c.C.data_name}) in
@@ -103,7 +103,7 @@ let rec gen_ext_view (prog : C.prog_decl) (c : C.data_decl) : C.proc_decl =
 (*	    C.proc_equiv = true; *)
 (*	    C.proc_source_target_list = [((fn1, fn2), (pre, post))]; *)
 	    C.proc_coercion_list = [(fn1, (pre, post))];
-	    C.proc_args = [(CP.OType(c.C.data_name), fn2)];
+	    C.proc_args = [(Named(c.C.data_name), fn2)];
 	    C.proc_return = (CP.Prim Void);
 	    C.proc_static_specs = [(pre, post)];
 	    C.proc_dynamic_specs = [];
@@ -133,7 +133,7 @@ and equal_types (t1 : CP.typ) (t2 : CP.typ) : bool =
 	| CP.Prim (p2) -> (p1 = p2)
 	| _ -> false
       end	      
-  | CP.OType (i1) -> 
+  | Named (i1) -> 
       begin 
 	match t2 with
 	| CP.OType (i2) -> (i1 = i2)
@@ -170,6 +170,7 @@ and gen_ext_all_view (prog : C.prog_decl) ( c : C.data_decl) : C.view_decl =
 	    C.view_data_name = "";
 	    C.view_formula = formula;
 	    C.view_user_inv = (CP.BForm(CP.BConst(true, no_pos)), []);
+        C.view_complex_inv = None;
 	    C.view_x_formula = (CP.BForm(CP.BConst(true, no_pos)), []);
 	    C.view_addr_vars = []} in
             new_view 

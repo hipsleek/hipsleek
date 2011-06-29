@@ -1,0 +1,84 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or (exists r2: self::node<next = r2> * r2::lseg<n - 1, p>)
+         inv n >= 0.
+
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+//checkentail x::lseg<n1, r> * r::node<_,p> |- (exists n,p1: x::lseg<n, p1> & p1=p).
+=======
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u,p2] x::lseg<u, p2>.
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- x::lseg<n, p1 > & p1=p.
+// 3 answers, (i) 2 identical and using x::lseg<n,x>
+//  when 1 may be sufficient.
+=======
+//print residue.
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+//checkentail x::lseg<n1, r> * r::node<_,p> |-  x::lseg<n, p1> & p1=p.
+=======
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u] x::lseg<u, p>.
+
+//print residue.
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+=======
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u] x::lseg<u, p2>.
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+//checkentail x::lseg<n,p> |-  x::lseg<n1, p1> * p1::lseg<n2,p2> & p2=p.
+=======
+//print residue.
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+
+// checkentail x::lseg<n1, r> * r::node<_,y>*y::lseg<n2,p> |- x::lseg<n, p>.
+=======
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- x::lseg<u, p2>.
+// missing a case from right folding.
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+=======
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- x::lseg<u, p>.
+// valid but fail
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u] x::lseg<u, p>.
+=======
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- x::lseg<u, p1> & p1=p.
+// valid answer:
+// true & p1=p & u=n2+n1 & {FLOW,(142,143)=__norm,}
+
+//checkentail x::lseg<n1, r> * r::node<_,p> |- x::lseg<u, p1> & p1=p.
+// true & r_810=p & r_810=p1 & u=0+1+n1 & {FLOW,(143,144)=__norm,}
+
+
+//checkentail x::lseg<n1, r> * r::node<_,p> |- x::lseg<u, p1>.
+// appears to loop!
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- x::lseg<u, q>.
+// valid but fail
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+<<<<<<< /home/chinwn/hg/sleekex/bugs/lem3.slk
+=======
+//checkentail x::lseg<n1, r> * r::lseg<n2,p> |- (exists u,q: x::lseg<u, q> & q=p).
+>>>>>>> /tmp/lem3.slk~other.24l3xD
+
+print residue.
+
+print residue.

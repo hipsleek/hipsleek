@@ -11,6 +11,7 @@
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
+    | Hopred of hopred_decl
 		
   type decl = 
     | Type of type_decl
@@ -86,6 +87,9 @@
 	| [] -> ([], [])
 
   let rec remove_spec_qualifier (_, pre, post) = (pre, post)
+let parse_error s = 
+print_endline s;
+flush stdout
 %}
 
 %token ALLN
@@ -205,6 +209,7 @@
 %token SPLIT
 %token STAR
 %token STATIC
+%token SET
 %token SUBSET
 %token TAIL
 %token THEN
@@ -220,6 +225,13 @@
 %token GLOBAL
 %token VARIANCE
 %token ESCAPE
+/* Higher Order Predicate Related */
+%token HPRED
+%token REFINES
+%token JOIN
+%token WITH
+%token COMBINE
+%token FINALIZES
 /*exception related*/
 %token <string> FLOW
 %token TRY
@@ -259,12 +271,15 @@ program
 	let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
     let proc_defs = ref ([] : proc_decl list) in
 	let coercion_defs = ref ([] : coercion_decl list) in
+    let hopred_defs = ref ([] : hopred_decl list) in
     let choose d = match d with
       | Type tdef -> begin
 		  match tdef with
 			| Data ddef -> data_defs := ddef :: !data_defs
 			| Enum edef -> enum_defs := edef :: !enum_defs
 			| View vdef -> view_defs := vdef :: !view_defs
+                        | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
+           
 		end
 			| Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
       | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
@@ -287,7 +302,9 @@ program
 				prog_view_decls = !view_defs;
 				prog_rel_decls = !rel_defs; (* An Hoa *)
 				prog_proc_decls = !proc_defs;
-				prog_coercion_decls = !coercion_defs; }
+		prog_coercion_decls = !coercion_defs; 
+        prog_hopred_decls = !hopred_defs;
+}
   }
 ;
 
@@ -314,6 +331,7 @@ type_decl
   | class_decl { Data $1 }
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
+  | hopred_decl  {Hopred $1 }
 ;
 
 /***************** Global_variable **************/
@@ -400,9 +418,12 @@ data_decl
 		data_methods = [] }
 	}
 ;
-
+with_typed_var
+  : OSQUARE typ CSQUARE {}
+;
 data_header
   : DATA IDENTIFIER { $2 }
+  | DATA IDENTIFIER with_typed_var {"Done"}
 ;
 
 data_body
@@ -421,11 +442,18 @@ opt_semicolon
 
 field_list
   : typ IDENTIFIER { [(($1, $2), get_pos 1)] }
+  | typ OSQUARE typ CSQUARE IDENTIFIER {[(($1,$5), get_pos 1)]}
   | field_list SEMICOLON typ IDENTIFIER { 
 			if List.mem $4 (List.map (fun f -> snd (fst f)) $1) then
 				report_error (get_pos 4) ($4 ^ " is duplicated")
 			else
 				(($3, $4), get_pos 3) :: $1 
+		}
+  | field_list SEMICOLON typ OSQUARE typ CSQUARE IDENTIFIER{ 
+			if List.mem $7 (List.map (fun f -> snd (fst f)) $1) then
+				report_error (get_pos 4) ($7 ^ " is duplicated")
+			else
+				(($3, $7), get_pos 3) :: $1 
 		}
 ;
 
@@ -456,11 +484,121 @@ enumerator
   | IDENTIFIER EQ LITERAL_INTEGER { ($1, Some $3) }
 ;
 
+
+/********** Higher Order Preds *******/
+ /* ho_pred_list 
+    : {}
+    | ho_pred ho_pred_list {}
+;*/
+hopred_decl 
+	: HPRED hpred_header EXTENDS ext_form
+     {{   hopred_name = (fst (fst $2));
+          hopred_mode = "extends";
+          hopred_mode_headers = [(fst $4)];
+          hopred_typed_vars = (snd (fst $2));
+          hopred_typed_args = (fst (snd $2));
+          hopred_fct_args = (snd (snd $2));
+          hopred_shape    = (snd $4);
+          hopred_invariant = (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])}
+     }
+	| HPRED hpred_header  REFINES  ext_form {{   
+          hopred_name = (fst (fst $2));
+          hopred_mode = "refines";
+          hopred_mode_headers = [(fst $4)];
+          hopred_typed_vars = (snd (fst $2));
+          hopred_typed_args = (fst (snd $2));
+          hopred_fct_args = (snd (snd $2));
+          hopred_shape    = (snd $4);
+          hopred_invariant = (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])}}
+    | HPRED hpred_header  JOIN  split_combine {{   
+          hopred_name = (fst (fst $2));
+          hopred_mode = "split_combine";
+          hopred_mode_headers = [];
+          hopred_typed_vars = [];
+          hopred_typed_args = [];
+          hopred_fct_args = [];
+          hopred_shape    = [];
+          hopred_invariant = (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])}}
+	| HPRED hpred_header  EQEQ shape opt_inv SEMICOLON {{    
+          hopred_name = (fst (fst $2));
+          hopred_mode = "pure_higherorder_pred";
+          hopred_mode_headers = [];
+          hopred_typed_vars = (snd (fst $2));
+          hopred_typed_args = (fst (snd $2));
+          hopred_fct_args = (snd (snd $2));
+          hopred_shape    = [$4];
+          hopred_invariant = $5 }}
+;	
+shape :  formulas {fst $1}
+;
+split_combine 
+	: HPRED {}
+	| hpred_header SPLIT split_combine {}
+	| hpred_header COMBINE split_combine {}
+;			
+ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {("",[])(*($1,$4)*)}
+;
+ho_fct_header 
+	: IDENTIFIER OPAREN fct_arg_list CPAREN {}
+;
+ho_fct_def
+	: ho_fct_header EQ shape {}
+;
+ho_fct_def_list
+	: ho_fct_def {}
+	| ho_fct_def ho_fct_def_list {}
+;
+hpred_header
+	: IDENTIFIER opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {(($1,$2),($4,$6))}
+;
+
+typed_arg
+    : typ {}
+    | SET OSQUARE typ CSQUARE {}
+    | SET OSQUARE typ CSQUARE COLON typed_arg {}
+    | typ OSQUARE typ CSQUARE {}
+    | typ OSQUARE typ CSQUARE COLON typed_arg {}
+	| typ COLON typed_arg {}
+;
+
+typed_arg_list
+    : typed_arg {}
+	| typed_arg COMMA typed_arg_list {}
+;
+type_var_lst
+    : typ {}
+    | SET OSQUARE typ CSQUARE {}
+    | SET OSQUARE typ CSQUARE COMMA type_var_lst {}
+    | typ OSQUARE typ CSQUARE COMMA type_var_lst {}
+	| typ COMMA type_var_lst {}
+;
+opt_typed_arg_list
+	: {[]}
+    | typed_arg_list {[]}
+;
+type_var_list
+    : OSQUARE type_var_lst CSQUARE {}
+; 
+ opt_type_var_list
+	: type_var_list {[]}
+    | {[]}
+;
+fct_arg_list
+    : cid {}
+    | cid COMMA fct_arg_list {}
+;
+opt_fct_list
+    : {[]}
+	| OSQUARE fct_arg_list CSQUARE {[]}
+;
 /********** Views **********/
 
 view_decl
   : view_header EQEQ view_body opt_inv SEMICOLON {
-	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3)}
+	{ $1 with 
+    view_formula = (fst $3); 
+    view_invariant = $4; 
+    try_case_inference = (snd $3)}
   }
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")
@@ -470,6 +608,7 @@ view_decl
 opt_inv
   : { (P.mkTrue no_pos, []) }
   | INV pure_constr opt_branches { ($2, $3) }
+  | INV ho_fct_header {(P.mkTrue no_pos, [])}
 ;
 
 opt_branches
@@ -507,6 +646,7 @@ view_header
 			view_typed_vars = [];
 			view_formula = F.mkETrue top_flow (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
+			view_pt_by_self  = [];
 			try_case_inference = false;}
   }
 ;
@@ -521,6 +661,8 @@ cid
 
 view_body
   : formulas {((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1))}
+  | FINALIZES hpred_header {report_error (get_pos 1) 
+		  ("here")}
 ;
 
 
@@ -756,9 +898,14 @@ heap_wr
   | simple_heap_constr_imm {$1}
 ;
 
+simple2
+: opt_type_var_list LT {}
+;
+
+
 simple_heap_constr_imm: 
 cid COLONCOLON IDENTIFIER LT heap_arg_list GT IMM opt_formula_label{
-	let h = F.HeapNode { F.h_formula_heap_node = $1;
+let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
 						 F.h_formula_heap_imm = true;
 						 F.h_formula_heap_full = false;
@@ -783,8 +930,24 @@ cid COLONCOLON IDENTIFIER LT heap_arg_list GT IMM opt_formula_label{
 	}
 ;
 
+
+
+
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label{
+  :ho_fct_header { 
+      let h = F.HeapNode { F.h_formula_heap_node = ("",Primed);
+						 F.h_formula_heap_name = "";
+						 F.h_formula_heap_full = false;
+						 F.h_formula_heap_with_inv = false;
+						 F.h_formula_heap_pseudo_data = false;
+						 F.h_formula_heap_arguments = [];
+						 F.h_formula_heap_label = None;
+						 F.h_formula_heap_imm = false;
+						 F.h_formula_heap_pos = get_pos 2 } in
+	  h
+(*report_error (get_pos 1) ("parse error in simple heap")
+*)}
+  |cid COLONCOLON IDENTIFIER simple2 heap_arg_list GT opt_formula_label { 
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
 						 F.h_formula_heap_imm =  false;
@@ -796,7 +959,7 @@ simple_heap_constr
 						 F.h_formula_heap_pos = get_pos 2 } in
 	  h
   }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
+  | cid COLONCOLON IDENTIFIER simple2 opt_heap_arg_list2 GT opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
 							F.h_formula_heap2_imm = false;
@@ -819,6 +982,7 @@ pure_constr
 	                | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
 			| P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
                         | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
+  | pure_constr AND ho_fct_header {$1}
 ;
 
 disjunctive_pure_constr
@@ -946,7 +1110,7 @@ bconstr
 ;
 
 /* constraint expressions */
-
+--->line 1098
 cexp
   : additive_cexp { $1 }
   /* bags */
@@ -1189,10 +1353,11 @@ constructor_header
 
 coercion_decl
   : COERCION opt_name disjunctive_constr coercion_direction disjunctive_constr SEMICOLON {  
+  let body = F.subst_stub_flow top_flow $5 in
 	{ coercion_type = $4;
-	  coercion_name = $2;
-	  coercion_head =  (F.subst_stub_flow top_flow $3);
-	  coercion_body =  (F.subst_stub_flow top_flow $5);
+	  coercion_name = (let v=$2 in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
+	  coercion_head = (F.subst_stub_flow top_flow $3);
+	  coercion_body =  body ;
 	  coercion_proof = Return ({ exp_return_val = None;
 								 exp_return_path_id = None ;
 								 exp_return_pos = get_pos 1 })
@@ -1289,20 +1454,26 @@ spec
 						Iformula.formula_case_pos = get_pos 1; 
 				}
 			}
-	| VARIANCE OPAREN integer_literal CPAREN measures escape_conditions spec
+	| VARIANCE var_label var_measures escape_conditions spec
 		{
 			Iformula.EVariance
 			  {
-					Iformula.formula_var_label = $3;
-					Iformula.formula_var_measures = $5;
-					Iformula.formula_var_escape_clauses = $6;
-					Iformula.formula_var_continuation = [$7];
+					Iformula.formula_var_label = $2;
+					Iformula.formula_var_measures = $3;
+					Iformula.formula_var_escape_clauses = $4;
+					Iformula.formula_var_continuation = [$5];
 					Iformula.formula_var_pos = get_pos 1;
 			  }
 		}
-;	
+;
 
-measures
+var_label
+    : {None}
+	| OPAREN integer_literal CPAREN {Some $2}
+	| OPAREN MINUS integer_literal CPAREN {Some (-$3)}
+	;
+
+var_measures
 	: {[]}
 	| OSQUARE variance_list CSQUARE {$2}
 	;
@@ -1417,7 +1588,7 @@ array_type
 ;
 
 rank_specifier
-  : OSQUARE comma_list_opt CSQUARE {}
+  : OBRACE comma_list_opt CBRACE {}
 ;
 
 comma_list_opt

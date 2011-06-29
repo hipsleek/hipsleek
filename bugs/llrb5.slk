@@ -1,0 +1,46 @@
+/**
+ Left-leaning Red Black Tree
+ Entailment testing.
+ @author: Vu An Hoa
+ */
+
+data node {
+	int val;
+	int color; /* 0 for red, 1 for black */
+	node left;
+	node right;
+}.
+
+/* Red black tree with case analysis */
+pred rbc<n, cl, bh, c> == self = null & n = 0 & bh = 1 & cl = 1 & c = 0
+	or self::node<v, 1, l, r> * l::rbc<ln, 1, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> 
+       & cl = 1 & n = 1 + ln + rn & c = 1
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 1, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 2
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 0, bh - 1, _>
+       & cl = 1 & n = 1 + ln + rn & c = 3
+	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _>
+	   & cl = 0 & n = 1 + ln + rn & c = 4
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4.
+	
+pred rbs<n, bh> == 
+	self::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,_> & ln + rn + 1 = n
+	inv n >= 1 & bh >= 1 & self!=null.
+
+//checkentail h::node<_,0,l,r> * l::rbc<_,1,bh,1> * r::rbc<_,1,bh,1> |- h::rbc<_,0,bh,4>.
+
+//checkentail x::node<a,b,c,d> * y::node<m,n,p,q> & x = y |- a = m & b = n & c = p & d = q.
+
+//checkentail h::node<_,0,lx,rx> * lx::rbc<rn,1,bh,_> * rx::rbc<ln,1,bh,_> & rn + ln + 1 = n - 1 & n >= 1 |- h::rbc<_,_,_,_>.
+
+checkentail x::rbc<ln,cl,bh,d> & 0<=d<=3 |- cl=1 .
+
+// below failed name to name clash!
+checkentail x::rbc<ln,c,bh,d> & c=1 |- 0<=d<=3  .
+
+//checkentail x::rbc<ln,e,bh,d> & e=1 |- 0<=d<=3  .
+
+//checkentail x::rbc<ln,0,bh,d>  |- d=4 .
+
+//checkentail x::rbc<ln,c,bh,d>  |- 0<=d<=4.
+

@@ -213,7 +213,7 @@ let yyact = [|
     Obj.repr(
 # 39 "rlparser.mly"
                                           ( 
-      let sv = CP.SpecVar (CP.Prim Int, _3, Unprimed) in
+      let sv = CP.SpecVar (Int, _3, Unprimed) in
       CP.Forall (sv, _5, None, no_pos) 
     )
 # 220 "rlparser.ml"
@@ -224,7 +224,7 @@ let yyact = [|
     Obj.repr(
 # 43 "rlparser.mly"
                                           (
-      let sv = CP.SpecVar (CP.Prim Int, _3, Unprimed) in
+      let sv = CP.SpecVar (Int, _3, Unprimed) in
       CP.Exists (sv, _5, None, no_pos) 
     )
 # 231 "rlparser.ml"
@@ -314,7 +314,7 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
 # 64 "rlparser.mly"
-       ( CP.mkVar (CP.SpecVar (CP.Prim Int, _1, Unprimed)) no_pos )
+       ( CP.mkVar (CP.SpecVar (Int, _1, Unprimed)) no_pos )
 # 319 "rlparser.ml"
                : 'exp))
 ; (fun __caml_parser_env ->

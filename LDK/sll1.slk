@@ -1,0 +1,66 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred sll_tail<n, t, sm, lg> == 
+  self::node< _, null> & t=self & n=0 & sm<=lg //empty list, we don't know sm&lg
+  or self::node<sm, r> * r::sll_tail<n-1, t, _, _> & r!=null  & n=1 & sm=lg
+  or self::node<sm, r> * r::sll_tail<n-1, t, sm1, lg> & r!=null & sm<=sm1 & n>1
+  inv n>=0 & self!=null & sm<=lg & t!=null.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+/*
+//show case: the weakness of the old prover when unfolding
+checkentail x::ll<n> |- x=null or x::node<_,q>*q::ll<m>.
+
+checkentail x::ll<n> |- x=null or x::ll<m> & m>0.
+
+checkentail x::ll<n> |- 
+            case {
+             x=null -> [] x=null or x::ll<m> & m>0;
+             x!=null -> [] x=null or x::ll<m> & m>0;
+             }.
+
+*/
+
+checkentail x::node<v,t>*t::node<_,null>
+            |- x::sll_tail<1,t,v,v> .
+
+checkentail x::node<_,null>
+            |- x::sll_tail<0,_,_,_> .
+
+
+
+
+/*IMPORTANT*/
+checkentail x::node<v,q>*q::sll_tail<n,t,sm,lg> & v<=sm 
+            |- case {
+                  n=0 -> [] x::sll_tail<1,t,v,v>;
+                  n>=1 -> [] x::sll_tail<n+1,t,v,lg>;
+                  n<0 -> [] false;
+                  } .
+
+
+
+
+checkentail x::node<v,q>*q::sll_tail<n,t,sm,lg> & v<=sm & n>=1
+            |- x::sll_tail<n+1,t,v,lg>.
+
+checkentail x::node<v,q>*q::sll_tail<n,t,sm,lg> & v<=sm & n=0
+            |- x::sll_tail<n+1,t,v,v>.
+
+
+/*IMPORTANT*/
+checkentail x::sll_tail<n,t,sm,lg>
+            |- case {
+                  n=0 -> [] x::node< _, null>; // & t=x & sm<=lg;
+                  n=1 -> [] x::node<sm, r> * r::sll_tail<n-1, t, _, _> & sm=lg;
+                  n>1 -> [] x::node<sm, r> * r::sll_tail<n-1, t, sm1, lg> & sm<=sm1;
+                  n<0 -> [] false;
+                  } .
+
+
+

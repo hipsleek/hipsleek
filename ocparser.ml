@@ -625,7 +625,7 @@ let yyact = [|
 # 223 "ocparser.mly"
         ( 
         match (List.filter (fun (a,b,_)->((String.compare _1 a)==0)) !omega_subst_lst) with 
-					|  [] -> SpecVar(Prim Int,_1, Unprimed)
+					|  [] -> SpecVar(Int,_1, Unprimed)
 					| (a,b,t)::h-> SpecVar(t, b,Unprimed) )
 # 631 "ocparser.ml"
                : 'cid))
@@ -635,7 +635,7 @@ let yyact = [|
 # 227 "ocparser.mly"
            ( 
         match (List.filter (fun (a,b,_)->((String.compare _1 a)==0)) !omega_subst_lst) with 
-					|  [] -> SpecVar(Prim Int,_1, Primed)
+					|  [] -> SpecVar(Int,_1, Primed)
 					| (a,b,t)::h-> SpecVar(t, b,Primed) )
 # 641 "ocparser.ml"
                : 'cid))

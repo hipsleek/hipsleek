@@ -441,3 +441,32 @@ void delete(ref node x, int a)
 }
 */
 
+node merge(node t1, node t2)
+/*requires t2::avl<s2,h2>
+case {
+      t1=null -> ensures res::avl<s2,h2>;
+      t1!=null -> requires t1::avl<s1,h1>  ensures res::avl<s1+s2,_>;
+}*/
+
+
+
+case {
+      t1=null -> requires t2::avl<s2,h2> ensures res::avl<s2,h2>;
+      t1!=null -> requires t1::avl<s1,h1> * t2::avl<s2,h2> ensures res::avl<s1+s2,_>;
+}
+
+
+//requires t2::avl<s2,h2> & t1=null
+//ensures res::avl<s2,h2>;
+//requires t1::avl<s1,h1> * t2::avl<s2,h2> & t1!=null 
+//ensures res::avl<s2,h2>;
+
+{
+ if (t1 == null) return t2;
+    else {
+	  node tmp = insert(t2, t1.val);
+	  node tmp1 = merge (tmp, t1.left);
+	  return merge(tmp1, t1.right);
+	  }
+}
+
