@@ -1,0 +1,83 @@
+// must bug via predicates?
+data node { int val ; node next }.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+/*
+//1. VALID
+checkentail x::pos_ll<n> & n<=0 |- x::neg_ll<n> .
+
+//2. should be a must failure
+checkentail x::pos_ll<n> & n<=0 |- x::neg_ll<n> & x!=null.
+
+//3. should be a must failure (not may)
+checkentail x::pos_ll<n> & n<=0 |- x::neg_ll<m> & m>0.
+
+//4. should be a must failure; 
+checkentail x::pos_ll<n> & n>0 |- x=null.
+
+//5. should be a must failure; but needs an unfold of RHS
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<m> & m=0.
+
+//6. should be a may failure;
+checkentail x::pos_ll<n>  |- x::pos_ll<m> .
+*/
+
+//7. must : should be a may failure;
+//checkentail x::pos_ll<n>  |- x::neg_ll<m> .
+
+//8. should be a may failure; but needs an unfold of LHS
+//checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+
+
+/*
+no unfold it seems:
+Entail(15)=Fail.(must) cause:12
+printing here:  
+Good Context: [es_formula: SS 59:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_240]
+               es_aux_conseq: true
+               es_must_error: Some(12)
+
+*/
+
+//2. VALID but detected as MAY
+//checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
+/*
+Good Context: [es_formula: SS 42:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_172]
+               es_aux_conseq: true
+               es_must_error: Some(12)
+               es_var_label: None]
+
+*/
+/*
+// 3. OK Valid
+checkentail x::pos_ll<n> & n=0|- x::neg_ll<n>.
+
+//4. must failure (but needs lemma)
+checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
+
+//5. may failure without lemma; must failure but needs lemma!
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+
+//6. must failure but requires an LHS base-case unfold: OK must fail
+checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
+*/
+
+//7. OK may failure 
+checkentail x::pos_ll<n> |- x::neg_ll<n> .
+
+

@@ -1,0 +1,51 @@
+data node { int val ; node next }.
+// must bug via predicates?
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+(* parser bug since illegal flow is not checked *)
+lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __XXXSleekMustErr.
+lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __SleekMustErr.
+//lemma self::neg_ll<n> & n=0 -> x=null.
+//lemma self::pos_ll<n> & n=0 -> x=null.
+
+// 1.
+checkentail x>3 |- x<=0 .
+
+// 2.
+checkentail x>3 |- x>0 & flow __SleekXXXMustErr.
+
+// 3.
+checkentail x>3 |- x>5 & flow __SleekMustErr.
+
+// 4.
+checkentail x>3 |- x<=0 & flow __SleekMustErr .
+
+// 5.
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __SleekMustErr.
+/*
+//8. must failure
+checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
+
+//8. must failure
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+//9 valid
+checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
+
+//10 may failure WRONG (must now)
+checkentail x::pos_ll<n> |- x::neg_ll<n> .
+
+//11. must? failure
+// TODO (requires a lemma and unfolding
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+//12. must failure but detected as may bug
+// TODO requires a lemma!
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
+*/

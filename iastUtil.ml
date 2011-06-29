@@ -1208,7 +1208,11 @@ let add_globalv_to_mth_prog prog =
   Gen.Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
 
   
-let pre_process_of_iprog prog = 
+let pre_process_of_iprog iprims prog = 
+  let prog =
+          { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
+                      prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+          } in
   let prog = float_var_decl_prog prog in
   (* let _ = print_string "1\n" in *)
   let prog = rename_prog prog in

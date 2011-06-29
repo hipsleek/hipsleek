@@ -1,0 +1,29 @@
+// must bug via predicates?
+
+// 1. must-bug (incompatible flow)
+checkentail x>3 & flow __Error |- x>0.
+
+// 2. valid  with __Error flow
+checkentail x>3 & flow __Error |- x>0 & flow __flow.
+
+// 3. valid with __Error flow
+checkentail x>3 & flow __Error |- x>0 & flow __Error.
+
+// 4. may-bug (weaker LHS flow)
+checkentail x>3 & flow __flow |- x>0 & flow __Error.
+
+// TODO (should be a must-bug)
+// 5. must-bug (weaker LHS flow & must-bug on value)
+checkentail x>3 & flow __flow |- x<0 & flow __Error.
+
+
+/*
+checkentail x>3 & flow __Error or x>3 & __flow-__Error 
+   |- x>0 & flow __Error.
+
+must or must --> must
+may or must --> may
+valid or must --> may
+*/
+
+print residue.

@@ -50,6 +50,7 @@ and action =
   | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
   | M_Nothing_to_do of string
+  | M_unmatched_rhs_data_node of h_formula
   | Seq_action of action_wt list
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   
@@ -103,6 +104,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some c-> "lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
+  | M_unmatched_rhs_data_node h -> fmt_string ("Unmatched RHS data note: "^(string_of_h_formula h))
   | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
 
@@ -131,6 +133,7 @@ let action_get_holes a = match a with
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | M_Nothing_to_do _  
+  | M_unmatched_rhs_data_node _
   | Search_action _ ->None
 
  
@@ -185,9 +188,21 @@ let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list
 	| [s] -> s
 	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
 
-let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
+let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
+let psv = Cprinter.string_of_spec_var in
+ let pr1 = (pr_list psv) in
+ let pr2 = pr_list pr1 in
+ Gen.Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
+
+let comp_aliases_x (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
     let eqns = MCP.ptr_equations_without_null rhs_p in
     alias_nth 1 eqns 
+
+let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
+ let psv = Cprinter.string_of_spec_var in
+ let pr2 = (pr_list (pr_list psv)) in
+ let pr1 = Cprinter.string_of_mix_formula in
+ Gen.Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p
 
 let comp_alias_part r_asets a_vars = 
     (* let a_vars = lhs_fv @ posib_r_aliases in *)
@@ -345,9 +360,9 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos, node2, hole2, match2)) l2 in
           res1 @ res2
     | _ -> 
-          let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in 
+          let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
-              
+
   (*| Conj ({h_formula_conj_h1 = f1;
     h_formula_conj_h2 = f2;
     h_formula_conj_pos = pos}) -> (* [] *)
@@ -410,14 +425,14 @@ and process_one_match_x prog (c:match_res) :action_wt =
           (match lhs_node,rhs_node with
             | DataNode dl, DataNode dr -> 
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c)
-                  else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
+                  else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in
                   let l2 = 
                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] 
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
                     else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
-                    else []
+                    else [(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))]
                   in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin
@@ -468,18 +483,27 @@ and process_one_match_x prog (c:match_res) :action_wt =
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
-      
-and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
-  | [] -> if (is_view rhs_node && get_view_original rhs_node) then
-      let r = M_base_case_fold { 
-          match_res_lhs_node = HTrue; 
-          match_res_lhs_rest = lhs_h; 
-          match_res_holes = [];
-          match_res_type = Root;
-          match_res_rhs_node = rhs_node;
-          match_res_rhs_rest = rhs_rest;} in
-      (1,r)
-    else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
+
+and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
+  let pr = Cprinter.string_of_h_formula   in
+  let pr1 = pr_list string_of_match_res in
+  let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
+  let pr3 = string_of_action_wt_res in
+  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+
+and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
+  | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
+          if (is_view rhs_node) && (get_view_original rhs_node) then
+            let r = (1,M_base_case_fold { 
+            match_res_lhs_node = HTrue; 
+            match_res_lhs_rest = lhs_h; 
+            match_res_holes = [];
+            match_res_type = Root;
+            match_res_rhs_node = rhs_node;
+            match_res_rhs_rest = rhs_rest;}) in
+        (-1, (Search_action [r]))
+      else r0
+(* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
   | x::[] -> process_one_match prog x 
   | _ -> (-1,Search_action (List.map (process_one_match prog) l))
 

@@ -820,8 +820,10 @@ coercion_decl:
       { coercion_type = cd;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
-        coercion_head = (F.subst_stub_flow top_flow dc1);
-        coercion_body = (F.subst_stub_flow top_flow dc2);
+        (* coercion_head = (F.subst_stub_flow top_flow dc1); *)
+        (* coercion_body = (F.subst_stub_flow top_flow dc2); *)
+        coercion_head = (F.subst_stub_flow n_flow dc1);
+        coercion_body = (F.subst_stub_flow n_flow dc2);
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 })}]];
@@ -981,7 +983,7 @@ hprogn:
 					data_methods = [] } in
     let string_def = { data_name = "String";
 					   data_fields = [];
-					   data_parent_name = "";
+					   data_parent_name = "Object";
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
