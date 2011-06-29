@@ -1,0 +1,92 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//OR
+/*
+or{must,valid} --> may
+or{must,must} --> must
+or{valid,valid} --> valid
+or{valid,may} --> may
+*/
+//pure
+// 1. or{must,valid} --> may
+checkentail n<0 or n>3 |- n>1.
+
+//2. or{must,must} --> must
+checkentail n<3 or n<0 |- n>5.
+
+// 3. or{valid,valid} --> valid
+checkentail n>2 or n>4 |- n>1.
+
+// 4. or{valid,may} --> may
+checkentail n>2 or n>0 |- n>1.
+
+//pointer
+
+
+//AND
+/*
+and{valid,valid} --> valid
+and{must,valid} --> must
+and{may,valid} --> may
+*/
+
+//pure
+//5. and{valid,valid} --> valid
+ checkentail n>3 & p>6 |- n>1 & p>2.
+
+// 6. and{must,valid} --> must; 
+ checkentail n>3 & p>6 |- n<1 & p>2.
+
+// 7. and{must,must} --> must
+ checkentail n>3 & p>6 |- n<1 & p<2.
+
+// 8. and{may,must} --> must
+ checkentail n>1 & p>6 |- n>3 & p<2.
+
+// 9. and{must,may} --> must
+ checkentail n>1 & p>6 |- p<2 & n>3.
+
+// 10. and{may,valid} --> may; 
+ checkentail n>3 & p>6 |- n>4 & p>2.
+
+
+
+
+//pointer
+
+
+
+//UNION
+/*
+union{valid,may} --> valid
+union{may,must} --> may
+*/
+//pure
+
+//11. union{valid,may} --> valid
+ checkentail n>3 |- n>1 or n>5 .
+
+//12. union{must,may} --> may // FIXED : DETECTED AS A MUST BUG
+ checkentail n>3 |- n<1 or n>5 .
+
+//13. union{must,must} --> must
+ checkentail n>3 |- n<1 or n<2 .
+
+
+/*
+//1. must failure - WRONG now may. OR vs.UNION?
+checkentail x::ll<n> & n>0 |- x::ll<n+1> .
+
+//2. must failure - WRONG now may
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
+
+//3. must failure - WRONG now may
+checkentail x::ll<n> & n > 1 |- x::ll<m> & m < 2.
+print residue.
+*/
+

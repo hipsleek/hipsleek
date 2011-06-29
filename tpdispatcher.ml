@@ -539,9 +539,10 @@ let elim_exists (f : CP.formula) : CP.formula =
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
-	let fvar = CP.fv conseq in
-	let new_ante = CP.filter_var ante fvar in
-	  (new_ante, conseq)
+    (CP.filter_ante ante conseq, conseq)
+	(* let fvar = CP.fv conseq in *)
+	(* let new_ante = CP.filter_var ante fvar in *)
+	(*   (new_ante, conseq) *)
   else
     (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
 	(ante, conseq)
@@ -772,14 +773,25 @@ let simplify (f : CP.formula) : CP.formula =
 	  else r
     with | _ -> f)
 
-let simplify (f : CP.formula) : CP.formula =
-  Gen.Debug.no_1 "simplify_1" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
+(* always simplify directly with the help of prover *)
+let simplify_always (f:CP.formula): CP.formula = 
+  simplify f 
+
+(* let simplify f = *)
+(*   Gen.Debug.no_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (\* (fun x -> x) *\)simplify f *)
 
 let simplify (f:CP.formula): CP.formula = 
   CP.elim_exists_with_simpl simplify f 
   (* if (CP.contains_exists f) then  *)
   (*   let f=CP.elim_exists f in  *)
   (*    simplify f else f *)
+
+let simplify (f:CP.formula): CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "simplify" pr pr simplify f
+
+
+
 
 (* let simplify (f:CP.formula): CP.formula =  *)
 (*   (\* (if (2107 <= !Util.proc_ctr  && !Util.proc_ctr <= 2109) then  *\) *)

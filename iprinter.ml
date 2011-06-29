@@ -311,7 +311,7 @@ let rec string_of_formula = function
 				  F.formula_base_flow = fl;
 				  F.formula_base_pos = l}) ->  
 	  if hf = F.HTrue then 
-		string_of_pure_formula pf
+		((string_of_pure_formula pf)^" FLOW "^fl^")")
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)

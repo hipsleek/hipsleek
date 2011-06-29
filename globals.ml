@@ -14,7 +14,7 @@ type formula_label = (int*string)
 and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict  option(*identifier for if, catch, call*)
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
-type path_trace = (control_path_id_strict * path_label) list 
+type path_trace = (control_path_id_strict * path_label) list
 
 and loc = {
 			start_pos : Lexing.position (* might be expanded to contain more information *);
@@ -187,12 +187,15 @@ let spec_flow = "__Spec"
 let false_flow = "__false"
 let abnormal_flow = "__abnormal"
 let stub_flow = "__stub"
+let error_flow = "__Error"
 
 let n_flow_int = ref ((-1,-1):nflow)
 let ret_flow_int = ref ((-1,-1):nflow)
 let spec_flow_int = ref ((-1,-1):nflow)
 let top_flow_int = ref ((-2,-2):nflow)
 let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
+let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
+(* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
 let false_flow_int = (0,0)
 (*let stub_flow_int = (-3,-3)*)
 
@@ -201,6 +204,10 @@ let res = "res"
 let self = "self"
 
 let this = "this"
+
+(*precluded files*)
+let header_file_list  = ref (["\"prelude.ss\""] : string list)
+let pragma_list = ref ([] : string list)
 
 (*in case the option of saving provers temp files to a different directory is enabled, the value of 
   this variable is going to be changed accordingly in method set_tmp_files_path *)

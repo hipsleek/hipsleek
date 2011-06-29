@@ -1,0 +1,45 @@
+
+//AND
+/*
+
+maximise must-bug, followed by may-bug
+
+and{valid,valid} --> valid
+and{must,valid} --> must
+and{may,valid} --> may
+*/
+
+//pure
+//1. and{valid,valid} --> valid
+ checkentail n>3 & p>6 |- n>1 & p>2.
+
+// 2. and{must,valid} --> must; 
+ checkentail n>3 & p>6 |- n<1 & p>2.
+
+// 3. and{must,must} --> must
+ checkentail n>3 & p>6 |- n<1 & p<2.
+
+// 4. and{may,must} --> must
+ checkentail n>1 & p>6 |- n>3 & p<2.
+/* to capture AND here
+Entail(4)=Fail.(must) cause:22  7<=p |-  p<2 (must-bug).
+printing here:  
+Bad Context: 
+              fe_kind: MUST{
+                            fc_message:  7<=p |-  p<2 (must-bug).
+                            fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+*/
+
+// 5. and{must,may} --> must
+ checkentail n>1 & p>6 |- p<2 & n>3.
+
+// 6. and{may,valid} --> may; 
+ checkentail n>3 & p>6 |- n>4 & p>2.
+
+// 7. and{valid,may} --> may; 
+ checkentail n>3 & p>6 |- p>2 & n>4.
+
+// 8. and{must,contra} --> must
+ checkentail n>1 & p>6 |- p<2 & n=n+1.
+
+
