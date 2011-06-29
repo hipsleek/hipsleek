@@ -1867,8 +1867,8 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
 	      let (to_ante, to_ante_br), (to_conseq, to_conseq_br), new_evars = 
             split_universal (e_pure, snd fold_es.es_pure) fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
 	      let tmp_conseq = mkBase resth2 pure2 type2 flow2 branches2 pos in
-	      let new_conseq = normalize tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure_N to_conseq pos)) pos in
-	      let new_ante = normalize fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure_N to_ante pos)) pos in
+	      let new_conseq = normalize 6 tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure_N to_conseq pos)) pos in
+	      let new_ante = normalize 7 fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure_N to_ante pos)) pos in
           let new_ante = filter_formula_memo new_ante false in
 	      let new_consumed = fold_es.es_heap in
           let impl_vars = Gen.BList.intersect_eq CP.eq_spec_var vs2 (CP.fv to_ante) in
@@ -5767,13 +5767,16 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 		      (*let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in*)
 		      (*let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in
 		        let _ = print_string("guard: " ^ (Cprinter.string_of_pure_formula guard_to_check) ^ "\n") in*)
-		      let new_f = normalize coer_rhs_new rest_of_lhs pos in
+              let _ = print_endline "@0" in
+		      let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
 		      (* add the guard to the consequent  - however, the guard check is delayed *)
               (* ?? *)
+              let _ = print_endline "@1" in
 		      let formula,to_aux_conseq = 
                 if !allow_imm then (replace_branches lhs_branches_new (mkTrue (mkTrueFlow ()) pos),lhs_guard_new)
                 else (replace_branches lhs_branches_new (formula_of_pure_N lhs_guard_new pos), CP.mkTrue pos) in
-		      let new_conseq = normalize conseq formula pos in
+              let _ = print_endline "@2" in
+		      let new_conseq = normalize 9 conseq formula pos in
 		      let new_estate = {estate with
 				  (* es_evars = f_univ_vars @ estate.es_evars; *)
 				  (* the new universal vars to be instantiated *)
@@ -5904,7 +5907,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		        (* ok because of TP.imply*)
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
-		          let new_f = normalize coer_rhs_new f pos in
+		          let new_f = normalize_replace coer_rhs_new f pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
 			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
 			      (true, new_f)
@@ -5916,11 +5919,11 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		              ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
 		          let neg_guard = CP.mkNot lhs_guard_new None pos in
                   let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
-		          let f0 = normalize f (formula_of_heap node pos) pos in
-		          let f1 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
+		          let f0 = normalize 10 f (formula_of_heap node pos) pos in
+		          let f1 = normalize 11 f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 			      (* unfold the case with the negation of the guard. *)
 		          let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
-		          let f2 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
+		          let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			      (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		          let new_f = mkOr f1 f2 pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)

@@ -687,9 +687,14 @@ and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula
 	| EVariance b -> EVariance {b with formula_var_continuation = substitute_flow_in_struc_f to_flow from_flow  b.formula_var_continuation}
   in
   List.map helper f	
-	  
-(*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
+
 and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
+  let pr = !print_flow_formula in
+  let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" in
+  Gen.Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
+
+(*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
+and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
   let int1 = fl1.formula_flow_interval in
   let int2 = fl2.formula_flow_interval in
   let r = if (is_false_flow int1) then fl1
@@ -1618,14 +1623,14 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
 and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-        let eo1 = normalize o11 f2 pos in
-        let eo2 = normalize o12 f2 pos in
+        let eo1 = normalize_x o11 f2 pos in
+        let eo2 = normalize_x o12 f2 pos in
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
 		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize f1 o21 pos in
-			  let eo2 = normalize f1 o22 pos in
+			  let eo1 = normalize_x f1 o21 pos in
+			  let eo2 = normalize_x f1 o22 pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
 			let rf1 = rename_bound_vars f1 in
@@ -1638,10 +1643,18 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			resform
 		  end
     end
+
+and normalize i (f1 : formula) (f2 : formula) (pos : loc) = 
+  Gen.Debug.no_1_num i "normalize" pr_no pr_no normalize_x f1 f2 pos
 	    
-and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
+and normalize_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
+  (* normalize_keep_flow f1 f2 Flow_combine pos *)
       (* todo: check if this is ok *)
+
+and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) = 
+  normalize_keep_flow f1 f2 Flow_replace pos
+
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
 and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -3430,7 +3443,7 @@ and simplify_context (ctx:context):context =
 								else  ctx
 		
 and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
-	Ctx {es with es_formula = normalize es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
+	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_es_combine") in *)
@@ -4786,11 +4799,11 @@ and split_struc_formula_a (f0:struc_formula):(formula*formula) list =
 		| ECase b-> 
       let r =  List.concat (List.map (fun (c1,c2)->
 				let ll = split_struc_formula_a c2 in
-				List.map (fun (d1,d2)-> ((normalize d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
+				List.map (fun (d1,d2)-> ((normalize 4 d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
 			List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r 
 		| EBase b-> 
 				let ll = split_struc_formula_a b.formula_ext_continuation in
-				let e = List.map (fun (c1,c2)-> ((normalize c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
+				let e = List.map (fun (c1,c2)-> ((normalize 5 c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
 				let nf = ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) in
 				let e = List.map (fun (c1,c2)-> ((push_exists nf c1),(push_exists nf c2))) e in
 				e
