@@ -700,8 +700,9 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
   let int2 = fl2.formula_flow_interval in
   let r = if (is_top_flow int1) then fl2
   else if (is_top_flow int2) then fl1
-  else match flow_tr with
-	| Flow_replace -> 
+  else 
+    match flow_tr with
+	| Flow_replace ->
 		  {	formula_flow_interval = int2;
 		  formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
 			| None,None -> None
@@ -709,7 +710,7 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 			| None, Some s -> Some s
 			| Some _, Some s -> Some s
 			(* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
-                  ;} 
+                  ;}
 	| Flow_combine ->
 		  if (overlapping int1 int2) then 
 			{	formula_flow_interval = intersect_flow int1 int2;
@@ -717,16 +718,17 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 			  | None,None -> None
 			  | Some s,None-> Some s
 			  | None, Some s -> Some s
-			  | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"}
+			  | Some s1, Some s2 -> Some (s1^"AND"^s2)
+			  (* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
                     ;}
 		  else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
-  (*let string_of_flow_formula f c = 
-	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
+  (* let string_of_flow_formula f c =  *)
+  (*   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^ *)
+  (*   ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in *)
 
-	let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^
-	(string_of_flow_formula "f2 " fl2)^"\n"^
-	(string_of_flow_formula "r " r)^"\n") in*)
+  (*   let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^ *)
+  (*   (string_of_flow_formula "f2 " fl2)^"\n"^ *)
+  (*   (string_of_flow_formula "r " r)^"\n") in *)
   r
 
 and get_case_guard_list lbl (lst:(Cpure.b_formula * formula_label list) list) :  CP.b_formula list= 

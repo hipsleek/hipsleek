@@ -899,7 +899,7 @@ let pr_mix_formula_branches (f,l) = match f with
 
 let rec string_of_flow_formula f c = 
   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
+	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
 let rec pr_formula_base e =
   match e with
