@@ -119,7 +119,7 @@ and omega_of_formula f  = match f with
 
 
 let omegacalc = "oc"(* TODO: fix oc path *)
-(*let omegacalc = "/home/locle/workspace/hg/omega_incremental/sleekex/omega_modified/omega_calc/obj/oc"*)
+(*let omegacalc = "/home/locle/workspace/hg/test/sleekex/omega_modified/omega_calc/obj/oc"*)
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 

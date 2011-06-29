@@ -193,11 +193,10 @@ Because the RHS n1+n2>=h1+h2 involving both n1,h1 and n2,h2,
 we should try the constraints with $[] for the LHS fisrt. 
 $[] n1>=h1 & $[] n2>=h2 |- n1+n2>=h1+h2
 
-If the entailment does not succeed, we try
+Unfortunately, the entailment fails and we try to put all LHS
+constraints to form the new entailment
 h1 >= 0 & n1>=0 & $[] n1>=h1
 & h2 >= 0 & n2>=0 & $[] n2>=h2 |- n1+n2>=h1+h2
-
-Fortunately, the entailment succeeds in the first try. 
 
 Folding
 -------
