@@ -3707,7 +3707,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                     vdef.I.view_data_name)
                   else vdef.I.view_data_name in
                 let new_v = CP.SpecVar (Named c0, v, p) in
-                let newFrac = trans_pure_exp frac stab in
+                let newFrac = trans_pure_exp frac stab in (*LDK*)
                 let new_h = CF.ViewNode {
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
@@ -3729,7 +3729,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                       let labels = List.map (fun _ -> "") exps in
                       let hvars = match_exp (List.combine exps labels) pos in
                       let new_v = CP.SpecVar (Named c, v, p) in
-                      let newFrac = trans_pure_exp frac stab in
+                      let newFrac = trans_pure_exp frac stab in  (*LDK*)
                       let new_h = CF.DataNode {
                           CF.h_formula_data_node = new_v;
                           CF.h_formula_data_name = c;
