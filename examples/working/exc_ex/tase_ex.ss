@@ -7,8 +7,11 @@ class NoCreditException extends __Exc { int s;}
 	
 void withdraw(account ac, int sum) throws NoCreditException
 
-	requires ac::account<i,b> & b>sum ensures ac::account<i,q>&b=q+sum ;
-	requires ac::account<i,b> & b<=sum  ensures ac::account<i,b>*res::NoCreditException<q>&b=q+sum&flow NoCreditException ;
+	requires ac::account<i,b> & b>sum 
+    ensures ac::account<i,q>&b=q+sum ;
+	requires ac::account<i,b> & b<=sum  
+    ensures ac::account<i,b>*res::NoCreditException<q>&b=q+sum
+      & flow NoCreditException ;
 {
 	if 
 		(ac.balance > sum )
@@ -18,8 +21,10 @@ void withdraw(account ac, int sum) throws NoCreditException
 }
 
 int remove10 (account ac1) 
-requires ac1::account<n1,v1>& v1>10 ensures ac1::account<n1,v>&v1 = v+10 & res= 1;
-requires ac1::account<n1,v1>& v1<=10 ensures ac1::account<n1,v1>& res=0;
+  requires ac1::account<n1,v1>& v1>10 
+  ensures ac1::account<n1,v>&v1 = v+10 & res= 1;
+  requires ac1::account<n1,v1>& v1<=10 
+  ensures ac1::account<n1,v1>& res=0;
 {
 	try{
 		withdraw (ac1, 10);

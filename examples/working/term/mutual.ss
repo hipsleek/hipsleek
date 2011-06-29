@@ -17,22 +17,15 @@ case {
 }
 
 int g (int x)
-
 case {
-	x > 10 -> variance [2*x] ensures true;
-	x <= 10 -> case {
+	x > 5 -> variance (1) [x] ensures true;
+	x <= 5 -> case {
 					x < 0 -> variance (0) ensures true;
 					x >= 0 -> variance (1) [2*x] ensures true;
 			   }
 }
-/*
-case {
-	x >= 0 -> variance [2*x] ensures true;
-	x < 0 -> variance (0) ensures true;
-}
-*/
 {
-	if (x > 10)
+	if (x > 5)
 	   return g(x - 1);
 	else
 		if (x < 0)

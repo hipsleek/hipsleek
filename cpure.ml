@@ -87,6 +87,90 @@ and rounding_func =
   | Ceil
   | Floor
 
+let name_of_spec_var (sv : spec_var) : ident = match sv with
+  | SpecVar (_, v, _) -> v
+
+let full_name_of_spec_var (sv : spec_var) : ident = match sv with
+  | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
+
+let type_of_spec_var (sv : spec_var) : typ = match sv with
+  | SpecVar (t, _, _) -> t
+
+let is_primed (sv : spec_var) : bool = match sv with
+  | SpecVar (_, _, p) -> p = Primed
+
+let is_unprimed (sv : spec_var) : bool = match sv with
+  | SpecVar (_, _, p) -> p = Unprimed
+
+let to_primed (sv : spec_var) : spec_var = match sv with
+  | SpecVar (t, v, _) -> SpecVar (t, v, Primed)
+
+let to_unprimed (sv : spec_var) : spec_var = match sv with
+  | SpecVar (t, v, _) -> SpecVar (t, v, Unprimed)
+
+let to_int_var (sv : spec_var) : spec_var = match sv with
+  | SpecVar (_, v, p) -> SpecVar (Int, v, p)
+
+(* name prefix for int const *)
+let const_prefix = "__CONST_Int_"
+
+let const_prefix_len = String.length(const_prefix)
+
+(* is string a int const, n is prefix length *)
+let is_int_str_aux (n:int) (s:string) : bool =
+  if (n<= const_prefix_len) then false
+  else 
+    let p = String.sub s 0 const_prefix_len in
+    if (p=const_prefix) then true
+    else false
+
+
+(* get int value if it is an int_const *)
+let get_int_const (s:string) : int option =
+  let n=String.length s in
+  if (is_int_str_aux n s) then
+    let c = String.sub s const_prefix_len (n-const_prefix_len) in
+    try Some (int_of_string c) 
+    with _ -> None (* should not be possible *)
+  else None
+
+(* check if a string denotes an int_const *)
+let is_int_str (s:string) : bool =
+  let n=String.length s in
+    is_int_str_aux n s
+
+(* check if a string is a null const *)
+let is_null_str (s:string) : bool = (s="null")
+
+
+(* is string a constant?  *)
+let is_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+  (is_null_str n) || (is_int_str n)
+
+(* is string a constant?  *)
+let is_null_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+  (is_null_str n) 
+
+(* is string an int constant?  *)
+let is_int_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+     (is_int_str n)
+
+let conv_var_to_exp (v:spec_var) :exp =
+  if (full_name_of_spec_var v="null") then (Null no_pos)
+  else match get_int_const (name_of_spec_var v) with
+    | Some i -> IConst(i,no_pos)
+    | None -> Var(v,no_pos)
+
+(* let conv_var_to_exp_debug (v:spec_var) :exp = *)
+(*  Gen.Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v *)
+
+(* is exp a var  *)
+let is_var (f:exp) = match f with
+  | Var _ -> true
+  | _ -> false  
 
 let rec contains_exists (f:formula) : bool =  match f with
     | BForm _ -> false
@@ -489,6 +573,34 @@ and mkVar sv pos = Var (sv, pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
+and mkVarNull v pos = 
+  if is_null_const v then Null pos
+  else mkVar v pos
+
+and mkPtrEqn v1 v2 pos = 
+  let v1 = mkVarNull v1 pos in
+  let v2 = mkVarNull v2 pos in
+   mkEqExp v1 v2 pos
+
+and mkPtrNeqEqn v1 v2 pos =
+  let v1 = mkVarNull v1 pos in
+  let v2 = mkVarNull v2 pos in
+   mkNeqExp v1 v2 pos
+
+and mklsPtrNeqEqn vs pos =
+  let rec helper vs=
+    match vs with
+      | [] -> []
+      | [v] -> []
+      | v::tl ->
+          (List.map (fun b -> mkPtrNeqEqn v b pos) tl) @ (helper tl)
+  in
+  if List.length vs > 1 then
+    let disj_sets= helper vs in
+    Some (List.fold_left
+              (fun a b -> mkAnd a b pos) (mkTrue no_pos) disj_sets)
+  else None
+
 and mkLt a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
     failwith ("max/min can only be used in equality")
@@ -514,6 +626,8 @@ and mkGte a1 a2 pos =
     Gte (a1, a2, pos)
 
 and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
+
+and mkNeqNull (v : spec_var) pos = mkNeqExp (mkVar v pos) (Null pos) pos
 
 and mkNeq a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
@@ -566,6 +680,8 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
         else
           BForm ((Neq (ae1, ae2, pos)),None)
   | _ ->  BForm ((Neq (ae1, ae2, pos)),None)
+
+and mkNot_s f :formula = mkNot f None no_pos
 
 and mkNot f lbl1 pos0 :formula= match f with
   | BForm (bf,lbl) -> begin
@@ -998,29 +1114,7 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
-and name_of_spec_var (sv : spec_var) : ident = match sv with
-  | SpecVar (_, v, _) -> v
 
-and full_name_of_spec_var (sv : spec_var) : ident = match sv with
-  | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
-
-and type_of_spec_var (sv : spec_var) : typ = match sv with
-  | SpecVar (t, _, _) -> t
-
-and is_primed (sv : spec_var) : bool = match sv with
-  | SpecVar (_, _, p) -> p = Primed
-
-and is_unprimed (sv : spec_var) : bool = match sv with
-  | SpecVar (_, _, p) -> p = Unprimed
-
-and to_primed (sv : spec_var) : spec_var = match sv with
-  | SpecVar (t, v, _) -> SpecVar (t, v, Primed)
-
-and to_unprimed (sv : spec_var) : spec_var = match sv with
-  | SpecVar (t, v, _) -> SpecVar (t, v, Unprimed)
-
-and to_int_var (sv : spec_var) : spec_var = match sv with
-  | SpecVar (_, v, p) -> SpecVar (Int, v, p)
 
 
 and fresh_old_name (s: string):string = 
@@ -1694,6 +1788,7 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
 (* 
    Get a list of conjuncts, namely
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
+   TODO : push exists inside where possible..
 *)
 and list_of_conjs (f0 : formula) : formula list =
   let rec helper f conjs = match f with
@@ -1705,6 +1800,123 @@ and list_of_conjs (f0 : formula) : formula list =
   in
   helper f0 []
 
+(******************)
+(*collect all bformula of f0*)
+and list_of_bformula (f0:formula) ls: formula list =
+match f0 with
+  | BForm f -> f0::ls
+  | And (f1,f2,_) ->
+        let new_ls = list_of_bformula f1 ls in
+        list_of_bformula f2 new_ls
+  | Or (f1,f2,_,_) ->
+        let new_ls = list_of_bformula f1 ls in
+        list_of_bformula f2 new_ls
+  | Not (f1,_,_) ->
+        list_of_bformula f1 ls
+  | Forall _ -> f0::ls (*should be improved*)
+  | Exists _ -> f0::ls (*should be improved*)
+
+and  check_dependent f ls_working: bool=
+  let ls_var = fv f in
+  let ls_varset = List.flatten (List.map fv ls_working) in
+  let rec helper_check ls_lvarset =
+   match ls_lvarset with
+    | [] -> false
+    | v::vs ->
+      begin
+          if List.mem v ls_var then
+            true
+          else
+           helper_check vs
+      end
+  in
+   helper_check ls_varset
+
+and list_of_irr_bformula (ls_lhs:formula list) ls_working: ((formula list)*(formula list))=
+  let rec helper_loop ls_llhs ls_lworking ls_lhs_rem =
+   match ls_llhs with
+    | [] ->  [], ls_lworking, ls_lhs_rem
+    | f ::fs ->
+      begin
+       (*
+          for each f2 in ls_lhs do
+          if  depent(f2,f) then 
+           - remove f2 out of ls_lhs;
+           - add f2 into ls_working
+       *)
+        match (check_dependent f ls_working) with
+          | true -> helper_loop fs (ls_lworking @ [f]) ls_lhs_rem
+          | false -> helper_loop fs ls_lworking (ls_lhs_rem @ [f])
+      end
+  in
+  let new_ls_lhs,new_ls_working, new_ls_lhs_rem = helper_loop ls_lhs [] [] in
+  if ((List.length new_ls_lhs_rem) = (List.length ls_lhs)) then
+  (*fixpoint*)
+    ls_lhs,ls_working
+  else
+   list_of_irr_bformula new_ls_lhs_rem new_ls_working
+
+and elim_of_bformula (f0:formula) ls: formula  =
+match f0 with
+  | BForm f ->
+      begin
+        if List.mem f0 ls then
+          BForm (BConst (true,no_pos), snd f)
+        else
+          f0
+      end
+  | And (f1,f2,p) ->
+      begin
+        let new_f1 = elim_of_bformula f1 ls in
+        let new_f2 = elim_of_bformula f2 ls in
+        match new_f1, new_f2 with
+          | (BForm (BConst _, _), BForm (BConst _, _)) -> BForm (BConst (true,no_pos), None)
+          | (BForm (BConst _, _), _) -> (* let _ = print_endline "And 2" in*) new_f2
+          | (_, BForm (BConst _, _))->  new_f1
+          | (_,_) -> And (new_f1,new_f2,p)
+      end
+  | Or (f1,f2,l,p) ->
+      begin
+        let new_f1 = elim_of_bformula f1 ls in
+        let new_f2 = elim_of_bformula f2 ls in
+        match new_f1, new_f2 with
+          | (BForm (BConst _, _), BForm (BConst _, _)) -> BForm (BConst (true,no_pos), l)
+          | (BForm (BConst _, _), _) -> new_f2
+          | (_, BForm (BConst _, _))-> new_f1
+          | (_,_) -> Or (new_f1,new_f2,l,p)
+      end
+  | Not (f1,l,p) ->
+      begin
+          let new_f1 = elim_of_bformula f1 ls in
+         match (new_f1) with
+           | BForm (BConst _, _) -> BForm (BConst (true,no_pos), l)
+           | _ -> Not (new_f1,l,p)
+      end
+  | Forall _ -> f0 (*should be improved*)
+  | Exists _ -> f0 (*should be improved*)
+
+and string_of_ls_pure_formula ls =
+match ls with
+  | [] -> ""
+  | f::[] ->  (!print_formula f)
+  | f::fs -> (!print_formula f) ^ "\n" ^ (string_of_ls_pure_formula fs)
+
+and filter_redundant ante cons =
+  Gen.Debug.no_2 "filter_redundant" !print_formula !print_formula !print_formula
+  (fun a c -> filter_redundant_x a c) ante cons
+
+and filter_redundant_x ante cons =
+  let ls_ante = list_of_bformula ante [] in
+ (* let _ = print_endline ("ls_ante:" ^ (string_of_ls_pure_formula ls_ante)) in*)
+  let ls_cons = list_of_bformula cons [] in
+(*  let _ = print_endline ("ls_cons:" ^ (string_of_ls_pure_formula ls_cons)) in *)
+  let ls_irr,_= list_of_irr_bformula ls_ante ls_cons in
+(* let _ = print_endline ("ls_irr:" ^ (string_of_ls_pure_formula ls_irr)) in*)
+ let new_ante = elim_of_bformula ante ls_irr in
+(* let _ = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
+   new_ante
+
+(******************)
 (* 
    Make a formula from a list of conjuncts, namely
    [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
@@ -3811,10 +4023,6 @@ let norm_bform_option_debug (bf:b_formula) : b_formula option =
   let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
   norm_bform_opt r
 
-(* name prefix for int const *)
-let const_prefix = "__CONST_Int_"
-
-let const_prefix_len = String.length(const_prefix)
 
 (* get string name of var e *)
 let string_of_var_eset e : string =
@@ -3828,61 +4036,6 @@ let get_sub_debug s n m =
   r
 
 
-(* is string a int const, n is prefix length *)
-let is_int_str_aux (n:int) (s:string) : bool =
-  if (n<=const_prefix_len) then false
-  else 
-    let p = String.sub s 0 const_prefix_len in
-    if (p=const_prefix) then true
-    else false
-
-
-(* get int value if it is an int_const *)
-let get_int_const (s:string) : int option =
-  let n=String.length s in
-  if (is_int_str_aux n s) then
-    let c = String.sub s const_prefix_len (n-const_prefix_len) in
-    try Some (int_of_string c) 
-    with _ -> None (* should not be possible *)
-  else None
-
-(* check if a string denotes an int_const *)
-let is_int_str (s:string) : bool =
-  let n=String.length s in
-    is_int_str_aux n s
-
-(* check if a string is a null const *)
-let is_null_str (s:string) : bool = (s="null")
-
-
-(* is string a constant?  *)
-let is_const (s:spec_var) : bool = 
-  let n = name_of_spec_var s in
-  (is_null_str n) || (is_int_str n)
-
-(* is string a constant?  *)
-let is_null_const (s:spec_var) : bool = 
-  let n = name_of_spec_var s in
-  (is_null_str n) 
-
-(* is string an int constant?  *)
-let is_int_const (s:spec_var) : bool = 
-  let n = name_of_spec_var s in
-     (is_int_str n)
-
-let conv_var_to_exp (v:spec_var) :exp =
-  if (full_name_of_spec_var v="null") then (Null no_pos)
-  else match get_int_const (name_of_spec_var v) with
-    | Some i -> IConst(i,no_pos)
-    | None -> Var(v,no_pos)
-
-let conv_var_to_exp_debug (v:spec_var) :exp =
- Gen.Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v
-
-(* is exp a var  *)
-let is_var (f:exp) = match f with
-  | Var _ -> true
-  | _ -> false  
 
 (* get args from a bform formula *)
 let get_bform_eq_args_aux conv (bf:b_formula) =
@@ -4310,40 +4463,41 @@ let rec replace_pure_formula_label nl f = match f with
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
 
-  
+
 let rec imply_disj_orig ante_disj conseq t_imply imp_no =
   match ante_disj with
-    | h :: rest -> 
+    | h :: rest ->
 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
-	    if r1 then 
+	    if r1 then
 	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
-  
-let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no = 
+
+let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
-  let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in  
+  let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
   (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
   if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     (* let _ = print_string ("\nimply_one_conj xp1 #" ^ (string_of_int !imp_no) ^ "\n") in *)
-    let xp1 = imply_disj_orig ante_disj1 conseq t_imply imp_no in
+    let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
-	xp1
-  else (xp01,xp02,xp03)	
-  
+	(xp11,xp12,xp13)
+  else (xp01,xp02,xp03)
+
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
-   : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
+   : bool * (Globals.formula_label option * Globals.formula_label option) list *
+   Globals.formula_label option=
   match conseq_conj with
-    | h :: rest -> 
+    | h :: rest ->
 	    let (r1,r2,r3)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
-	    if r1 then 
+	    if r1 then
 	      let r1,r22,r23 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
-(*###############################################################################  incremental_testing*)
+ (*###############################################################################  incremental_testing*)
 (*check implication having a single formula on the lhs and a conjuction of formulas on the rhs*)
 let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
   (* let _ = print_string("\nCpure.ml: imply_conj") in *)
@@ -5099,3 +5253,118 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
+let filter_ante (ante : formula) (conseq : formula) : formula =
+	let fvar = fv conseq in
+	let new_ante = filter_var ante fvar in
+	  new_ante
+
+
+(* automatic slicing of variables *)
+
+(* slice_formula inp1 :[ 0<=x, 0<=y, z<x] *)
+(* slice_formula@22 EXIT out :[([z,x],[ z<x, 0<=x]),([y],[ 0<=y])] *)
+
+let slice_formula (fl : formula list) : (spec_var list * formula list) list =
+  let repart ac f = 
+    let vs = fv f in
+    let (ol,nl) = List.partition (fun (vl,f) -> (Gen.BList.overlap_eq eq_spec_var vs vl)) ac in
+    let n_vl = List.fold_left (fun a (v,_) -> a@v) vs ol  in
+    let n_fl = List.fold_left (fun a (_,fl) -> a@fl) [f] ol  in
+    (Gen.BList.remove_dups_eq eq_spec_var n_vl,n_fl)::nl
+  in List.fold_left repart [] fl
+
+let slice_formula (fl : formula list) : (spec_var list * formula list) list =
+  let pr = pr_list !print_formula in
+  let pr2 = pr_list (pr_pair !print_svl pr) in
+  Gen.Debug.no_1 "slice_formula" pr pr2 slice_formula fl
+
+let part_contradiction is_sat pairs =
+  let (p1,p2) = List.partition (fun (a,c) -> not(is_sat c)) pairs in
+  (List.map (fun (_,c) -> (mkTrue no_pos,c) ) p1, p2)
+(*
+let refine_one_contradiction is_sat f=
+  let fvs = fv f in
+
+let refine_one_contradiction is_sat f=
+let pr = !print_formula in
+  Gen.Debug.no_1 "refine_one_contradiction" pr pr refine_one_contradiction f
+*)
+let part_must_failures is_sat pairs =
+  List.partition (fun (a,c) ->
+      let f = mkAnd a c no_pos in
+      not(is_sat f)) pairs
+
+let part_must_failures is_sat pairs =
+  List.partition (fun (a,c) ->
+      let f = mkAnd a c no_pos in
+      not(is_sat f)) pairs
+
+let imply is_sat a c =
+  let r = mkNot_s c in
+  let f = mkAnd a r no_pos in
+  not (is_sat f)
+
+let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
+  let cs = split_conjunctions conseq in
+  let ml = List.filter (fun c ->
+      let f = mkAnd ante c no_pos in
+      not(is_sat f)) cs in
+  if ml==[] then [(ante,conseq)]
+  else List.map (fun f -> (ante,f)) ml
+
+let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
+  let pr = !print_formula in
+  let pr2 = pr_list (pr_pair pr pr) in
+  Gen.Debug.no_1 "refine_one_must" (pr_pair pr pr) pr2 (fun  _ ->refine_one_must is_sat (ante, conseq)) (ante, conseq)
+
+
+let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) list =
+  let rs = List.map (refine_one_must is_sat) pairs in
+  List.concat rs
+ 
+let find_may_failures imply pairs =
+  let pairs = List.map (fun (a,c) -> 
+      let cs = split_conjunctions c in
+      List.map (fun c -> (a,c)) cs) pairs in
+  let pairs = List.concat pairs in
+  List.filter (fun (a,c) ->  not(imply a c)) pairs
+
+let find_all_failures is_sat ante cons =
+  let cs= split_conjunctions cons in
+  let cs = List.map (fun (_,ls) -> join_conjunctions ls) (slice_formula cs) in
+  let cand_pairs = List.map (fun c -> (filter_ante ante c,c)) cs in
+  let (contra_list,cand_pairs) = part_contradiction is_sat cand_pairs in
+  let (must_list,cand_pairs) = part_must_failures is_sat cand_pairs in
+  let must_list = refine_must is_sat must_list in
+  let may_list = find_may_failures (imply is_sat) cand_pairs in
+  (contra_list,must_list,may_list)
+
+let find_all_failures is_sat ante cons =
+  let pr = !print_formula in
+  let pr2 = pr_list (pr_pair pr pr) in
+  Gen.Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
+
+let find_must_failures is_sat ante cons =
+  let (contra_list,must_list,_) = find_all_failures is_sat ante cons in
+  contra_list@must_list
+
+let find_must_failures is_sat ante cons =
+  let pr = !print_formula in
+  let pr2 = pr_list (pr_pair pr pr) in
+  Gen.Debug.no_2 "find_must_failures" pr pr pr2 (fun _ _ -> find_must_failures is_sat ante cons) ante cons 
+
+let check_maymust_failure is_sat ante cons =
+  let c_l = find_must_failures is_sat ante cons in
+  c_l==[]
+
+let check_maymust_failure is_sat ante cons =
+  let pr = !print_formula in
+  Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
+
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
+  let n_a = simpl ante in
+  filter_ante n_a conseq
+
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
+  let pr = !print_formula in
+  Gen.Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq 

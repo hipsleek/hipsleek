@@ -1,0 +1,46 @@
+
+
+//UNION
+/*
+maximise valid, followed by may-bug
+
+union{valid,may} --> valid
+union{may,must} --> may
+*/
+//pure
+
+//1. union{valid,may} --> valid
+ checkentail n>3 |- n>1 or n>5 .
+
+//2. union{must,may} --> may // FIXED : DETECTED AS A MUST BUG
+ checkentail n>3 |- n<1 or n>5 .
+
+//3. union{may,must} --> may // FIXED : DETECTED AS A MUST BUG
+ checkentail n>3 |- n>5 or n<1.
+
+//4. union{must,must} --> must
+ checkentail n>3 |- n<1 or n<2 .
+
+//5. union{may,may} --> may // FIXED : DETECTED AS A MUST BUG
+ checkentail n>3 |- n>5 or n>8.
+
+//6. union{may,may} --> may // FIXED : DETECTED AS A MUST BUG
+ checkentail n>3 |- n>5 or n=n+2.
+
+//7. must failure - WRONG now may
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
+
+
+/*
+//1. must failure - WRONG now may. OR vs.UNION?
+checkentail x::ll<n> & n>0 |- x::ll<n+1> .
+
+//2. must failure - WRONG now may
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
+
+//3. must failure - WRONG now may
+checkentail x::ll<n> & n > 1 |- x::ll<m> & m < 2.
+print residue.
+*/

@@ -69,170 +69,22 @@ let is_view_recursive (n:ident) =
   else List.mem n !view_rec 
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
-  
+
 (* let op_map = Hashtbl.create 19 *)
 
 (************************************************************
 Primitives handling stuff
 ************************************************************)
-let prim_str_0 =
-  "int add___(int a, int b) requires true ensures res = a + b;
-int minus___(int a, int b) requires true ensures res = a - b;
-
-
-float add___(float a, float b) requires true ensures res = a + b;
-float minus___(float a, float b) requires true ensures res = a - b;
-bool eq___(int a, int b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(bool a, bool b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(float a, float b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool neq___(int a, int b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(bool a, bool b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(float a, float b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool lt___(int a, int b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lt___(float a, float b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lte___(int a, int b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool lte___(float a, float b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool gt___(int a, int b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gt___(float a, float b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gte___(int a, int b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool gte___(float a, float b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool land___(bool a, bool b) case {
-  a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}
-  !a -> requires true ensures !res;}
-bool lor___(bool a, bool b) case {
-  a -> requires true ensures res;
-  !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
-bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
-int pow___(int a, int b) requires true ensures true;
-"
 (* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
-
-let prim_str =
-  "int add___(int a, int b) requires true ensures res = a + b;
-int minus___(int a, int b) requires true ensures res = a - b;
-int mult___(int a, int b) requires true ensures res = a * b;
-
-int div___(int a, int b) case {
-  a >= 0 -> case {
-    b >= 1 -> requires true ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
-    b <= -1 -> requires true ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-    }
-  a < 0 -> case {
-    b >= 1 -> requires true ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1);
-    b <= -1 -> requires true ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-    }
-}
-
-int mod___(int a, int b) case {
-  a >= 0 -> case {
-    b >= 1 -> requires true ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
-    b <= -1 -> requires true ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-  }
-  a < 0 -> case {
-    b >= 1 -> requires true ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1);
-    b <= -1 -> requires true ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-  }
-}
-
-float add___(float a, float b) requires true ensures res = a + b;
-float minus___(float a, float b) requires true ensures res = a - b;
-float mult___(float a, float b) requires true ensures res = a * b;
-float div___(float a, float b) requires b != 0.0 ensures res = a / b;
-bool eq___(int a, int b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(bool a, bool b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(float a, float b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool neq___(int a, int b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(bool a, bool b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(float a, float b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool lt___(int a, int b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lt___(float a, float b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lte___(int a, int b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool lte___(float a, float b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool gt___(int a, int b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gt___(float a, float b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gte___(int a, int b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool gte___(float a, float b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool land___(bool a, bool b) case {
-  a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}
-  !a -> requires true ensures !res;}
-bool lor___(bool a, bool b) case {
-  a -> requires true ensures res;
-  !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
-bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
-int pow___(int a, int b) requires true ensures true;
-relation update_array(int[] a, int i, int v, int[] r) == true. 
-int array_get_elm_at___(int[] a, int i) requires true ensures res = a[i];
-int[] update___(int[] a, int i, int v) requires true ensures update_array(a,i,v,res);
-"
-and string_of_stab stab = Hashtbl.fold 
-		(fun c1 c2 a -> 
+let string_of_stab stab = Hashtbl.fold
+		(fun c1 c2 a ->
 			a^"; ("^c1^" "^
 			(
                 (* match c2.sv_info_kind with  *)
 				(* | Unknown -> "unknown"  *)
 				(* | Known d->  *)
 			string_of_typ c2.sv_info_kind )^")") stab ""
-	
+
 and string_of_var_kind k = string_of_typ k
   (* (match k with  *)
   (*   	| Unknown -> "unknown"  *)
@@ -240,7 +92,7 @@ and string_of_var_kind k = string_of_typ k
   (*   ("known "^(string_of_typ d)) ) *)
 
 let prim_buffer = Buffer.create 1024
-	  
+
 (* search prog and generate all eq, neq for all the data declaration,      *)
 (* along with the ones in prim_str                                         *)
 let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
@@ -279,8 +131,6 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
   in
     (
      (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
-
-     Buffer.add_string prim_buffer prim_str;
 
      helper prog.I.prog_data_decls;
 
@@ -1035,20 +885,43 @@ and prepare_labels (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
 and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
-	
 
-let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
-  let _ = I.build_exc_hierarchy false prog3 in
+let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
+  let _ = (Gen.ExcNumbering.add_edge "Object" "") in
+  let _ = (Gen.ExcNumbering.add_edge "String" "Object") in
   let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
-  let prog2 = { prog3 with I.prog_data_decls = 
-          ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
-                      ::prog3.I.prog_data_decls;} in  
-  let prog0 = { prog2 with			
-	  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
-	  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+  let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+  (* let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in *)
+  (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
+  let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
+  (* let prog3 = *)
+  (*         { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls; *)
+  (*                      I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls; *)
+  (*         } *)
+  (* in *)
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in *)
+  let prog3 = prog4 in
+  let prog2 = { prog4 with I.prog_data_decls =
+      ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+      ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+      :: prog3.I.prog_data_decls;} in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (2)) in *)
+  (* let _ = I.find_empty_static_specs prog2 in *)
+
+  let prog1 = { prog2 with
+		  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
+		  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (3)) in *)
+  (* let _ = I.find_empty_static_specs prog1 in *)
+  let prog0 = { prog1 with
+                  I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
+
   (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (4)) in *)
+  (* let _ = I.find_empty_static_specs prog0 in *)
   let _ = I.build_hierarchy prog0 in
   (* let _ = print_string "trans_prog :: I.build_hierarchy PASSED\n" in *)
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (5)) in *)
   let check_overridding = Chk.overridding_correct prog0 in
   let check_field_dup = Chk.no_field_duplication prog0 in
   let check_method_dup = Chk.no_method_duplication prog0 in
@@ -1056,7 +929,9 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
-	    Gen.ExcNumbering.c_h (); 
+        (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in *)
+	    Gen.ExcNumbering.compute_hierarchy 1 ();
+        (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in *)
 	    let prims = gen_primitives prog0 in
 	    let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
       (set_mingled_name prog;
@@ -1064,10 +939,13 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
         ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
             (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
       let dups = Gen.BList.find_dups_eq (=) all_names in
+      (* let _ = I.find_empty_static_specs prog in *)
       if not (Gen.is_empty dups) then
 		(print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
       else (
 		  let prog = case_normalize_program prog in
+          (* let _ =  print_endline " after case normalize" in *)
+          (* let _ = I.find_empty_static_specs prog in *)
 		  let tmp_views = order_views prog.I.prog_view_decls in
 		   let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 		  let cviews = List.map (trans_view prog) tmp_views in
@@ -1100,7 +978,8 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 	      let c = (mark_recursive_call prog cprog5) in 
-		  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
+          (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (12)) in *)
+	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 		  c)))
 	  end)
   else   failwith "Error detected"
@@ -1229,7 +1108,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   else vdef.I.view_data_name in
    (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
-  let cf = trans_I2C_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+  let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let (inv, inv_b) = vdef.I.view_invariant in
   let _ = gather_type_info_pure prog inv stab in
   let _ = List.iter (fun (_,f) -> gather_type_info_pure prog f stab) inv_b in
@@ -1783,24 +1662,27 @@ and check_return (proc : I.proc_decl) : bool =
               (not (all_paths_return e))
 	    then false
 	    else true
-
 and set_pre_flow f = 
+  let pr = Cprinter.string_of_struc_formula in
+  Gen.Debug.no_1 "set_pre_flow" pr pr set_pre_flow_x f
+
+and set_pre_flow_x f = 
   let nf = {	Cformula.formula_flow_interval = !n_flow_int;
                 Cformula.formula_flow_link =None} in
   let helper f0 = match f0 with
     | Cformula.EBase b-> Cformula.EBase {b with
 		Cformula.formula_ext_base = Cformula.set_flow_in_formula_override nf b.Cformula.formula_ext_base;
-		Cformula.formula_ext_continuation = set_pre_flow b.Cformula.formula_ext_continuation}
+		Cformula.formula_ext_continuation = set_pre_flow_x b.Cformula.formula_ext_continuation}
     | Cformula.ECase b-> Cformula.ECase {b with 
-        Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow c2))) b.Cformula.formula_case_branches;}
-    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2),b3)
+        Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow_x c2))) b.Cformula.formula_case_branches;}
+    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,((* Cformula.substitute_flow_in_f !n_flow_int !top_flow_int  *)b2),b3)
 	| Cformula.EVariance b -> Cformula.EVariance {b with
-		  Cformula.formula_var_continuation = set_pre_flow b.Cformula.formula_var_continuation
+		  Cformula.formula_var_continuation = set_pre_flow_x b.Cformula.formula_var_continuation
 	  }
   in
   List.map helper f
-      
-and check_valid_flows f = 
+
+and check_valid_flows (f:Iformula.struc_formula) = 
   let rec check_valid_flows_f f = match f with
     | Iformula.Base b -> if ((Cformula.is_false_flow (Gen.ExcNumbering.get_hash_of_exc b.Iformula.formula_base_flow))&&
 		                            ((String.compare b.Iformula.formula_base_flow false_flow)<>0))then 
@@ -1816,12 +1698,15 @@ and check_valid_flows f =
     | Iformula.EAssume (b,_)-> check_valid_flows_f b
 	| Iformula.EVariance b -> check_valid_flows b.Iformula.formula_var_continuation
   in
+  (* if f==[] then print_endline "Empty Spec detected" else *)
   List.iter helper f
       
-(* and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl = *)
-(*   Gen.Debug.loop_1_no "trans_proc" (fun _ -> "?") (fun _ -> "?") (trans_proc_x prog) proc *)
-      
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
+  let pr x = if (x.I.proc_static_specs==[]) then "Empty Spec "^x.I.proc_name else x.I.proc_name in
+  let pr2 x = if (x.C.proc_static_specs==[]) then "Empty Spec"^x.C.proc_name else x.C.proc_name in
+  Gen.Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
+      
+and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
   let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
   if not (Gen.is_empty dup_names) then
@@ -1882,7 +1767,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let static_specs_list  = Cformula.plug_ref_vars static_specs_list by_names in
 	let dynamic_specs_list = Cformula.plug_ref_vars dynamic_specs_list by_names in
 	let final_static_specs_list =
-	  if Gen.is_empty static_specs_list then Cast.mkEAssume proc.I.proc_loc
+	  if Gen.is_empty static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc
 	  else static_specs_list in
 	let final_dynamic_specs_list = dynamic_specs_list in
        let _ = 

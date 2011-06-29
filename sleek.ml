@@ -31,6 +31,7 @@ module AS = Astsimp
 module XF = Xmlfront
 module NF = Nativefront
 
+
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
 let source_files = ref ([] : string list)
@@ -138,8 +139,10 @@ let main () =
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
   } in
+  let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = Gen.ExcNumbering.c_h () in
+  let _ = Gen.ExcNumbering.compute_hierarchy 3 () in
+  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in *)
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with

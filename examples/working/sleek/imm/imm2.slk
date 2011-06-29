@@ -6,7 +6,7 @@ pred ll<n> == self = null & n = 0
 
 
 checkentail (x::ll<n>@I & y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
-// Fail
+//1. Fail
 
 
 
@@ -15,23 +15,23 @@ checkentail (x::ll<n>@I & y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I
 checkentail (x::ll<n>@I * y::ll<m>@I)  |- (y::ll<m1>@I & x::ll<n1>@I).
 print residue.
 // x@I * y@I
-// Valid
+//2. Valid
 
 
 checkentail (x::ll<n>@I & y::ll<m>@I) & x!=null & y!=null  |- (y::ll<m1>@I * x::ll<n1>@I).
 print residue.
-// Fail
+//3. Fail
 
 
 checkentail (x::ll<n>@I * y::ll<m>@I) ; p::ll<_> * ((t::ll<a>@I); z::ll<m>) & n > 3 |- (y::ll<m1>@I & x::ll<n1>@I).
 print residue.
 // x * y; p * (t; z)
-// Valid.
+//4. Valid.
 
 
 checkentail (x::ll<n>@I & y::ll<m>@I & t::ll<a>@I); z::ll<m> & n > 3  |- (y::ll<m1>@I & x::ll<n1>@I) & n1>6.
 print residue.
-// Fail
+//5. Fail
 
 
 

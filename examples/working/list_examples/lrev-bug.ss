@@ -11,7 +11,7 @@ ls<p,n> == self = p & n=0
 
 /* below is wrong but still verifies */
 
-coercion "lseg2" self::ls<p, n> <-> self::ls<q, n1> * q::node<_, p> & n=n1+2;
+coercion "lseg2" self::ls<p, n> <-> self::ls<q, n1> * q::node<_, p> & n=n1+1;
 
 node lrev(node i, node o)
   requires i::ls<null,n>

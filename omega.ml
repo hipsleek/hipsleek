@@ -173,22 +173,22 @@ let restart reason =
 let read_from_in_channel chn : string =
   let res = ref "" in
   let quitloop = ref false in
-     while not !quitloop do
-	  let line = input_line chn in
-      let n = String.length line in
-        if n > 0 then begin
-		 (* print_string (line^"\n"); flush stdout;*)
-          (if !log_all_flag then
-            output_string log_all ("[omega.ml]: >> "^line^"\n") );
-          if line.[0] != '#' then
-		    begin
+  while not !quitloop do
+	let line = input_line chn in
+    let n = String.length line in
+    if n > 0 then begin
+		(* print_string (line^"\n"); flush stdout;*)
+        (if !log_all_flag then
+              output_string log_all ("[omega.ml]: >> "^line^"\n") );
+        if line.[0] != '#' then
+		  begin
               res := !res ^ line;
               if (line.[n-1] == '}') then
-		         quitloop := true;
-            end;
-        end;
-    done;
-	!res
+		        quitloop := true;
+          end;
+    end;
+  done;
+  !res
 
 (*
   - in: input channel
@@ -198,23 +198,22 @@ let read_from_in_channel chn : string =
 let read_last_line_from_in_channel chn : string =
   let line = ref "" in
   let quitloop = ref false in
-     while not !quitloop do
-	  line := (input_line chn);
+  while not !quitloop do
+	line := (input_line chn);
       let n = String.length !line in
-        if n > 0 then begin
-		 (* print_string (line^"\n"); flush stdout;*)
+      if n > 0 then begin
+		  (* print_string (line^"\n"); flush stdout;*)
           (if !log_all_flag then 
-            output_string log_all ("[omega.ml]: >> "^(!line)^"\n") );
+                output_string log_all ("[omega.ml]: >> "^(!line)^"\n") );
           if !line.[0] != '#' then
-		    begin   
-              
-              if (!line.[n-1] == '}') then
-		         quitloop := true;			  
+		    begin
+                if(!line.[n-1] == '}') then
+		          quitloop := true;
             end;
-        end;
-    done;
-	!line
-  
+      end;
+  done;
+  !line
+
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
   (*  try*)
@@ -335,7 +334,10 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       try
         check_formula 1 fomega !timeout
       with
-      | exc ->
+        |End_of_file ->
+          restart ("End_of_file when checking #SAT \n");
+          true
+        |exc ->
           begin
             Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
             stop (); raise exc
@@ -373,7 +375,10 @@ let is_valid (pe : formula) timeout: bool =
       try
         not (check_formula 2 (fomega ^ "\n") !timeout2)
       with
-      | exc ->
+        | End_of_file ->
+          restart ("IMPLY : End_of_file when checking \n");
+          true
+        | exc ->
           begin
             Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
             stop (); raise exc
@@ -465,10 +470,13 @@ let simplify (pe : formula) : formula =
           (*log ERROR ("TIMEOUT");*)
           restart ("Timeout when checking #simplify ");
           pe
+      | End_of_file ->
+          restart ("End_of_file when checking #simplify \n");
+          pe
       | exc -> (* stop (); raise exc  *)
           begin
             Printf.eprintf "Unexpected exception : %s" (Printexc.to_string exc);
-            restart ("Unexpected exception when checking #simplify ");
+            restart ("Unexpected exception when checking #simplify\n ");
             pe
           end
     in
