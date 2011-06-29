@@ -814,6 +814,7 @@ coercion_decl:
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
         (* coercion_body = dc2; *)
+        (* must remove stub flow from formula - replace with top_flow *)
         coercion_head = (F.subst_stub_flow top_flow dc1);
         coercion_body = (F.subst_stub_flow top_flow dc2);
         (* coercion_head = (F.subst_stub_flow n_flow dc1); *)

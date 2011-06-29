@@ -11,7 +11,7 @@ pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 	 
 lemma self::lseg<n, p> & n = a + b & a,b >=0 & flow __norm -> self::lseg<a, r> * r::lseg<b, p> & flow __norm.
 
-lemma self::ll_tail<t, n> & flow __norm <-> self::lseg<n-1, t> * t::node<_, null> & flow __norm .
+lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null> & flow __norm .
 
 //lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
 	

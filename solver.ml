@@ -5767,15 +5767,12 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 		      (*let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in*)
 		      (*let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in
 		        let _ = print_string("guard: " ^ (Cprinter.string_of_pure_formula guard_to_check) ^ "\n") in*)
-              let _ = print_endline "@0" in
 		      let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
 		      (* add the guard to the consequent  - however, the guard check is delayed *)
               (* ?? *)
-              let _ = print_endline "@1" in
 		      let formula,to_aux_conseq = 
                 if !allow_imm then (replace_branches lhs_branches_new (mkTrue (mkTrueFlow ()) pos),lhs_guard_new)
                 else (replace_branches lhs_branches_new (formula_of_pure_N lhs_guard_new pos), CP.mkTrue pos) in
-              let _ = print_endline "@2" in
 		      let new_conseq = normalize 9 conseq formula pos in
 		      let new_estate = {estate with
 				  (* es_evars = f_univ_vars @ estate.es_evars; *)

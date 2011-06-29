@@ -399,7 +399,7 @@ and isStrictConstTrue_x f = match f with
     formula_base_pure = p;
     formula_base_branches = br;
     formula_base_flow = fl;}) -> 
-        MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])&&(is_true_flow fl.formula_flow_interval)
+        MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])&&(is_top_flow fl.formula_flow_interval)
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
@@ -498,8 +498,9 @@ and non_overlapping (n1,n2) (p1,p2) : bool = n1>p2 || p1>n2
 and overlapping n p : bool = not(non_overlapping n p)
 and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
 
-and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
-and is_true_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
+and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2
+and is_top_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
+
 
 and is_sleek_mustbug_flow p: bool = (equal_flow_interval !Globals.error_flow_int p)
 and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
@@ -697,8 +698,8 @@ and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
   let int1 = fl1.formula_flow_interval in
   let int2 = fl2.formula_flow_interval in
-  let r = if (is_false_flow int1) then fl1
-  else if (is_false_flow int2) then fl2
+  let r = if (is_top_flow int1) then fl2
+  else if (is_top_flow int2) then fl1
   else match flow_tr with
 	| Flow_replace -> 
 		  {	formula_flow_interval = int2;
@@ -706,7 +707,9 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 			| None,None -> None
 			| Some s,None-> Some s
 			| None, Some s -> Some s
-			| _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
+			| Some _, Some s -> Some s
+			(* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
+                  ;} 
 	| Flow_combine ->
 		  if (overlapping int1 int2) then 
 			{	formula_flow_interval = intersect_flow int1 int2;
@@ -714,7 +717,8 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 			  | None,None -> None
 			  | Some s,None-> Some s
 			  | None, Some s -> Some s
-			  | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
+			  | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"}
+                    ;}
 		  else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
   (*let string_of_flow_formula f c = 
 	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
@@ -1645,7 +1649,7 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
     end
 
 and normalize i (f1 : formula) (f2 : formula) (pos : loc) = 
-  Gen.Debug.no_1_num i "normalize" pr_no pr_no normalize_x f1 f2 pos
+  Gen.Debug.no_1_num i "normalize" pr_no pr_no (fun _ -> normalize_x f1 f2 pos) f1
 	    
 and normalize_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
@@ -1653,6 +1657,9 @@ and normalize_x (f1 : formula) (f2 : formula) (pos : loc) =
       (* todo: check if this is ok *)
 
 and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) = 
+  Gen.Debug.no_1 "normalize_replace" pr_no pr_no (fun _ -> normalize_replace_x f1 f2 pos) f1
+
+and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_replace pos
 
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
