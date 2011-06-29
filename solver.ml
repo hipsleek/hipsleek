@@ -4057,18 +4057,32 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 						    ^ (Cprinter.string_of_formula conseq)) pos;
                               (* TODO : change to meaningful msg *)
                             (* what if must failure on the ante -> conseq *)
-                            let fe = 
-                              if CF.overlap_flow_ff fl2 fl1 then mk_failure_may "2: conseq has overlapping flow type"
-                              else mk_failure_must "1: conseq has an incompatible flow type"
-                            in
-			                (CF.mkFailCtx_in (Basic_Reason ({fc_message ="incompatible flow type";
-							fc_current_lhs = estate;
-							fc_orig_conseq = struc_formula_of_formula conseq pos;
-							fc_prior_steps = estate.es_prior_steps;
-							fc_current_conseq = CF.formula_of_heap HFalse pos;
-							fc_failure_pts =[];}, fe)), UnsatConseq)
+                              if CF.overlap_flow_ff fl2 fl1 then
+                                begin
+                                    let _ = print_endline "locle" in
+                                    let fe = mk_failure_may "2: conseq has overlapping flow type" in
+                                    let may_flow_failure =
+			                        FailCtx (Basic_Reason ({fc_message ="1.2: conseq has an incompatible flow type";
+							                        fc_current_lhs = estate;
+							                        fc_orig_conseq = struc_formula_of_formula conseq pos;
+							                        fc_prior_steps = estate.es_prior_steps;
+							                        fc_current_conseq = CF.formula_of_heap HFalse pos;
+							                        fc_failure_pts =[];}, fe)) in
+                                    (*set conseq with top flow, top flow is the highest flow.*)
+                                    let new_conseq = CF.substitute_flow_into_f !Globals.top_flow_int conseq in
+                                    let res,prf = heap_entail_conjunct prog is_folding ctx0 new_conseq rhs_h_matched_set pos in
+                                    (and_list_context may_flow_failure res, prf)
+                                end
+                              else
+                                let fe = mk_failure_must "1: conseq has an incompatible flow type" in
+			                    (CF.mkFailCtx_in (Basic_Reason ({fc_message ="1.1: conseq has an incompatible flow type";
+							                                     fc_current_lhs = estate;
+							                                     fc_orig_conseq = struc_formula_of_formula conseq pos;
+							                                     fc_prior_steps = estate.es_prior_steps;
+							                                     fc_current_conseq = CF.formula_of_heap HFalse pos;
+							                                     fc_failure_pts =[];}, fe)), UnsatConseq)
 			              end
-			              else 
+			              else
 			                match h2 with
 			                  | HFalse (* -> (--[], UnsatConseq)  entailment fails *)
 			                  | HTrue -> begin
@@ -4123,7 +4137,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
 				                  heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 rhs_h_matched_set pos
-				                end
+				              end
 	          end
         end
 
@@ -6408,7 +6422,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
 
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
-  let pr x = (string_of_int(List.length x))^"length" in
+  (*let pr x = (string_of_int(List.length x))^"length" in*)
   let pr2 = Cprinter.string_of_list_partial_context in 
   Gen.Debug.no_2 (* loop_2_no *) "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula) 
       (fun (x,_) -> pr2 x)

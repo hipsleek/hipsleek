@@ -3023,6 +3023,14 @@ and or_list_context_x c1 c2 = match c1,c2 with
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
+and and_list_context c1 c2= match c1,c2 with
+  | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
+  | FailCtx t1 ,SuccCtx t2 ->
+         c1
+  | SuccCtx t1 ,FailCtx t2 ->
+      c2
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+
 (*maximising must bug with & (error information)*)
 (* and or_list_context_x c1 c2 = match c1,c2 with *)
 (*      | FailCtx t1 ,FailCtx t2 -> *)
