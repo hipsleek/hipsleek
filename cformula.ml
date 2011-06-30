@@ -2596,14 +2596,45 @@ let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
 
 let is_may_failure (f:list_context) = (get_may_failure f) != None
 
+let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option =
+     match (get_must_es_msg_ft ft) with
+          | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft) } ) 
+          | _ ->  None
+
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
   match l with 
-  | FailCtx ft ->
-        (match (get_must_es_msg_ft ft) with
-          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ] 
-          | _ ->  l)
-  | SuccCtx _ -> l
+    | FailCtx ft ->
+          (* (match (get_must_es_msg_ft ft) with *)
+          (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+          (*   | _ ->  l) *)
+          (match (convert_must_failure_4_fail_type "" ft) with
+            | Some ctx -> SuccCtx [ctx]
+            | None -> l)
+    | SuccCtx _ -> l
 
+(* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
+(*   ((-1,"Must Err @"^s),fme) :: e *)
+
+let add_must_err_to_pc (s:string) (fme:branch_ctx list) (e:branch_ctx list) : branch_ctx list =
+  fme @ e
+
+let convert_must_failure_4_branch_type  (s:string) ((pt,ft):branch_fail) : branch_ctx option =
+  match (convert_must_failure_4_fail_type s ft) with
+    | Some b -> Some (pt,b)
+    | None -> None
+
+let convert_must_failure_4_branch_fail_list  (s:string) (fl:branch_fail list) : (branch_ctx list * branch_fail list) =
+  List.fold_left (fun (must_l,may_l) bf ->
+      match (convert_must_failure_4_branch_type s bf) with
+        | Some r -> (r::must_l, may_l)
+        | None -> (must_l, bf::may_l)) ([],[]) fl
+
+let convert_must_failure_4_failesc_context (s:string) ((fl,e,bl):failesc_context) : failesc_context =
+  let (fme,fl) = convert_must_failure_4_branch_fail_list s fl in
+  (fl,e,add_must_err_to_pc s fme bl)
+
+let convert_must_failure_4_list_failesc_context (s:string) (l:list_failesc_context) : list_failesc_context =
+  List.map (convert_must_failure_4_failesc_context s) l
 
 
 let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
