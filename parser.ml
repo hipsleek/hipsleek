@@ -248,6 +248,9 @@ let peek_try =
           | [FLOAT,_;IDENTIFIER n,_] -> ()
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
+          | [INT,_;OSQUARE,_] -> ()
+          | [FLOAT,_;OSQUARE,_] -> ()
+          | [BOOL,_;OSQUARE,_] -> ()
           |  _ -> raise Stream.Failure)
 
  (* let peek_ensures =  *)
@@ -1194,9 +1197,9 @@ declaration_statement:
   [[peek_try_declarest; t=local_variable_declaration -> t
    | peek_try_declarest; t=local_constant_declaration -> t]];
 
-local_variable_type: [[ t= typ -> t]];
+local_variable_type: [[ t= typ ->  t]];
 
-local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators ->  mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]];
+local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators -> mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]]; 
 
 local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_declarators ->  mkConstDecl lvt cd (get_pos_camlp4 _loc 1)]];
 	
