@@ -352,7 +352,7 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> ()
+             |[_;OSQUARE,_] -> (* An Hoa*)let _ = print_endline "Array found!" in ()
              | _ -> raise Stream.Failure)
 
 let sprog = SHGram.Entry.mk "sprog" 
@@ -830,8 +830,8 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> t
-    | t=non_array_type -> t]];
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+    | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
   [[ `INT                -> int_type

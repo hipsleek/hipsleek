@@ -31,14 +31,35 @@ type relation_definition =
  *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let print_input = ref false
-let print_original_solver_output = ref false
-let timeout = ref 10.0
+let timeout = ref 100.0
 let prover_pid = ref 0
 let prover_process = ref {name = "smtsolver"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
-let suppress_print_implication = ref false
-let print_implication = ref false
+
+(**
+ An Hoa : control printing of SMT input code
+ *)
+let print_input = ref (false : bool)
+
+(**
+ An Hoa : control printing of SMT original output (sat, unsat, unknown)
+ *)
+let print_original_solver_output = ref (false : bool)
+
+(**
+ An Hoa : control printing of the implication problem
+ *)
+let print_implication = ref (false : bool)
+
+(**
+ An Hoa : control temporary suppression of all printing
+ *)
+let suppress_print_implication = ref (false : bool)
+
+(**
+ An Hoa : function to print formula
+ *)
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+
 
 (**
  * @author An Hoa
@@ -99,7 +120,8 @@ let rec is_linear_formula f0 = match f0 with
 let rec get_formula_of_rel_with_name rn rdefs =
   (*if (rn = "dom") then (mkTrue Globals.no_pos) else*)
   match rdefs with
-	| [] -> failwith ("Relation " ^ rn ^ " is not found!")
+	| [] -> let _ = print_endline ("Relation " ^ rn ^ " cannot be found!") in
+		failwith ("Relation " ^ rn ^ " is not found!")
 	| h :: t -> match h with RelDefn (r,_,f) -> if (r = rn) then f else get_formula_of_rel_with_name rn t
 		
 (**

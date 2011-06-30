@@ -4385,7 +4385,7 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
 	(* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
-	(*let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^
+	(* let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^
 	"ENTAIL STATE = " ^ (Cprinter.string_of_estate estate) ^ "\n" ^
 	"LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^
 	"RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in*)
@@ -4395,28 +4395,31 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let lhs_t = lhs.formula_base_type in
   let lhs_fl = lhs.formula_base_flow in
   let lhs_b = lhs.formula_base_branches in
-	(* (\* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *\) *)
-	(* let evarstoi = estate.es_gen_expl_vars in *)
-	(* let lhs_p = if (evarstoi = []) then lhs_p else *)
-	(* 	(\*let _ = print_string ("\n\nAn Hoa :: Variables to be instantiated : ") in *)
-	(* 	let _ = print_string ((String.concat "," (List.map Cprinter.string_of_spec_var evarstoi)) ^ "\n") in*\) *)
-	(* 	let _ = (Smtsolver.suppress_print_implication := true) in (\* Temporarily suppress output of implication checking *\) *)
-	(* 	let lhs_pp = (match lhs_p with *)
-	(* 		| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!" *)
-	(* 		| MCP.OnePF f -> f) in *)
-	(* 	let rhs_pp = (match rhs_p with *)
-	(* 		| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!" *)
-	(* 		| MCP.OnePF f -> f) in *)
-	(* 	(\*let _ = print_string ("An Hoa :: Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp ^ "\n") in *)
-	(* 	let _ = print_string ("An Hoa :: Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp ^ "\n") in*\) *)
-	(* 	let inst = pure_match evarstoi lhs_pp rhs_pp in *)
-	(* 	let lhs_pp = CP.mkAnd lhs_pp inst no_pos in *)
-	(* 	let lhs_p = (MCP.OnePF lhs_pp) in *)
-	(* 	let _ = (Smtsolver.suppress_print_implication := false) in (\* Unsuppress *\) *)
-	(* 	(\*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*\) *)
-	(* 	lhs_p *)
-	(* in *)
-	(* (\* An Hoa : END OF INSTANTIATION *\) *)
+	(* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)
+	let evarstoi = estate.es_gen_expl_vars in
+	let lhs_p = if (evarstoi = []) then (* Nothing to instantiate *) lhs_p 
+	else (*let _ = print_endline ("\n\nAn Hoa :: Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in*)
+		 match lhs_p with
+	 		| MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
+				lhs_p
+	 		| MCP.OnePF f -> let lhs_pp = f in
+			 	match rhs_p with
+			 		| MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
+						lhs_p
+			 		| MCP.OnePF f -> let rhs_pp = f in
+	 					(*let _ = print_string ("An Hoa :: Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp ^ "\n") in
+	 					let _ = print_string ("An Hoa :: Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp ^ "\n") in*)
+						(* Temporarily suppress output of implication checking *)
+						let _ = (Smtsolver.suppress_print_implication := true) in
+	 					let inst = pure_match evarstoi lhs_pp rhs_pp in (* Do matching! *)
+	 					let lhs_pp = CP.mkAnd lhs_pp inst no_pos in 
+	 					let lhs_p = (MCP.OnePF lhs_pp) in
+						(* Unsuppress the printing *)
+	 					let _ = (Smtsolver.suppress_print_implication := false) in
+ 	 					(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
+	 						lhs_p
+	in
+	(* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in
   let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
   let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap 5 prog curr_lhs_h 0 in
