@@ -19,6 +19,7 @@ let is_medium n = (n==1);;
 let is_long n = (n==0);;
 
 
+
 (* (\* pretty printing for primitive types *\) *)
 (* let string_of_prim_type = function  *)
 (*   | Bool          -> "boolean" *)
@@ -454,6 +455,12 @@ let string_of_spec_var x =
         | Primed -> "'"
         | Unprimed -> "" )
 
+let add_frac c frac =
+  match frac with
+    | None -> c^"()"
+    | Some v -> c^"("^(string_of_spec_var v)^")"
+
+
 let string_of_imm imm = 
   if imm then "@I" else "@M"
 
@@ -809,9 +816,11 @@ let rec pr_h_formula h =
       h_formula_data_name = c;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
+      h_formula_data_frac_perm = frac; (*LDK*)
       h_formula_data_pos = pos;
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
+        let c = add_frac c frac in
           fmt_open_hbox ();
           (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid; *)
@@ -823,6 +832,7 @@ let rec pr_h_formula h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_imm = imm;
+      h_formula_view_frac_perm = frac; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
       h_formula_view_original = original;
@@ -830,6 +840,7 @@ let rec pr_h_formula h =
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
+        let c = add_frac c frac in
           fmt_open_hbox ();
          (if pid==None then fmt_string "NN " else fmt_string "SS ");
           pr_formula_label_opt pid; 
@@ -1501,7 +1512,6 @@ let rec string_of_t_formula = function
 	  (string_of_t_formula f1) ^ " & " ^ (string_of_t_formula f2)
   | TypeTrue -> "TypeTrue"
   | TypeFalse -> "TypeFalse"
-
 
 (* function to print a list of type F.formula * F.formula *)
 let rec string_of_formulae_list l = match l with 

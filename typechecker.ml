@@ -192,7 +192,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          else CP.Not (tmp1, None, pos) in
 	        let f = CF.formula_of_pure_N tmp2 pos in
 	        CF.normalize_max_renaming_list_failesc_context f pos true ctx 
-	      end
+	    end
+
+        (*LDK: ??? what is it for*)
         | Bind ({ exp_bind_type = body_t;
           exp_bind_bound_var = (v_t, v);
           exp_bind_fields = lvars;
@@ -229,12 +231,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (*     ^ "\n") in *)
 
 	        let c = string_of_typ v_t in
-            let frac = (CP.FConst (1.0, pos)) in (*LDK*)
+            (* let frac = (CP.FConst (1.0, pos)) in (\*LDK*\) *)
 	        let vdatanode = CF.DataNode ({
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_imm = imm;
-			    CF.h_formula_data_frac_perm = frac; (*LDK ???*)
+			    CF.h_formula_data_frac_perm = None; (*LDK: belong to heap, deal later ???*)
                 CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_remaining_branches = None;
@@ -282,7 +284,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   res
 	                  
                 end
-          end; (*end BIND*)
+          end; (*end Bind*)
 	          
         | Block ({exp_block_type = t;
           exp_block_body = e;
@@ -370,12 +372,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let field_types, vs = List.split args in
 	        let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed))
 	          vs field_types in
-            let frac = (CP.FConst (1.0, pos)) in (*LDK*)
+            let frac = Some (CP.FConst (1.0, pos)) in (*LDK: a new node created with frac perm = 1.0*)
 	        let heap_node = CF.DataNode ({
                 CF.h_formula_data_node = CP.SpecVar (Named c, res, Unprimed);
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_imm = false;
-		        CF.h_formula_data_frac_perm = frac; (*LDK*)
+		        CF.h_formula_data_frac_perm = None; (*LDK*)
                 CF.h_formula_data_arguments =(*type_var :: ext_var :: *) heap_args;
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];

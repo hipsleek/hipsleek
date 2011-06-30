@@ -3569,6 +3569,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
             let hvars = e_hvars :: rest_hvars in
 	        hvars
       | [] -> [] in
+  (* let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) = *)
+
   let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =    
     let res = 
       match f with
@@ -3592,12 +3594,12 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                     vdef.I.view_data_name)
                   else vdef.I.view_data_name in
                 let new_v = CP.SpecVar (Named c0, v, p) in
-                let newFrac = trans_pure_exp frac stab in (*LDK*)
+                (* let newFrac = trans_pure_exp frac stab in (\*LDK*\) *)
                 let new_h = CF.ViewNode {
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
 		            CF.h_formula_view_imm = imm;
-		            CF.h_formula_view_frac_perm = newFrac; (*LDK*)
+		            CF.h_formula_view_frac_perm = None; (*LDK*)
                     CF.h_formula_view_arguments = hvars;
                     CF.h_formula_view_modes = vdef.I.view_modes;
                     CF.h_formula_view_coercible = true;
@@ -3619,7 +3621,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                           CF.h_formula_data_node = new_v;
                           CF.h_formula_data_name = c;
 		                  CF.h_formula_data_imm = imm;
-		                  CF.h_formula_data_frac_perm = newFrac; (*LDK*)
+		                  CF.h_formula_data_frac_perm = None (* Some newFrac *); (*LDK: ???*)
 		                  CF.h_formula_data_arguments = hvars;
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;
@@ -6918,33 +6920,32 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 		
 
 (* Build call graph of the program *)
-(*
-and addin_callgraph_of_exp (cg: NG.t) exp mnv : unit = 
-  let f e = 
-    match exp with
-    | Cast.ICall e ->
-      NG.add_edge cg mnv e.Cast.exp_icall_method_name;
-      Some ()
-    | Cast.SCall e ->
-      NG.add_edge cg mnv e.Cast.exp_scall_method_name;
-      Some ()
-    | _ -> None
-  in
-  iter_exp exp f
+
+(* and addin_callgraph_of_exp (cg: NG.t) exp mnv : unit =  *)
+(*   let f e =  *)
+(*     match exp with *)
+(*     | Cast.ICall e -> *)
+(*       NG.add_edge cg mnv e.Cast.exp_icall_method_name; *)
+(*       Some () *)
+(*     | Cast.SCall e -> *)
+(*       NG.add_edge cg mnv e.Cast.exp_scall_method_name; *)
+(*       Some () *)
+(*     | _ -> None *)
+(*   in *)
+(*   iter_exp exp f *)
    
 
 
-and addin_callgraph_of_proc cg proc : unit = 
-  match proc.Cast.proc_body with
-  | None -> ()
-  | Some e -> addin_callgraph_of_exp cg e proc.Cast.proc_name
+(* and addin_callgraph_of_proc cg proc : unit =  *)
+(*   match proc.Cast.proc_body with *)
+(*   | None -> () *)
+(*   | Some e -> addin_callgraph_of_exp cg e proc.Cast.proc_name *)
 
-and callgraph_of_prog prog : NG.t = 
-  let cg = NG.create () in
-  let pn pc = pc.Cast.proc_name in
-  let mns = List.map pn prog.Cast.prog_proc_decls in
-  List.iter (NG.add_vertex cg) mns;
-  List.iter (addin_callgraph_of_proc cg) prog.Cast.prog_proc_decls;
-  cg
-*)
+(* and callgraph_of_prog prog : NG.t =  *)
+(*   let cg = NG.create () in *)
+(*   let pn pc = pc.Cast.proc_name in *)
+(*   let mns = List.map pn prog.Cast.prog_proc_decls in *)
+(*   List.iter (NG.add_vertex cg) mns; *)
+(*   List.iter (addin_callgraph_of_proc cg) prog.Cast.prog_proc_decls; *)
+(*   cg *)
 		

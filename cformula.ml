@@ -144,7 +144,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_imm : bool;
 
-                        h_formula_data_frac_perm : CP.exp; (*LDK: fractional permission*)
+                        h_formula_data_frac_perm : CP.spec_var option; (*CP.exp;*) (*LDK: fractional permission*)
 
                         h_formula_data_arguments : CP.spec_var list;
                         h_formula_data_label : formula_label option;
@@ -156,7 +156,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_imm : bool;
 
-                        h_formula_view_frac_perm : CP.exp; (*LDK: fractional permission*)
+                        h_formula_view_frac_perm : CP.spec_var option; (*CP.exp;*) (*LDK: fractional permission*)
 
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
@@ -1489,7 +1489,7 @@ and h_subst sst (f : h_formula) =
 		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm;  
-							h_formula_data_frac_perm = frac;   (*LDK*)
+							h_formula_data_frac_perm = map_opt (CP.subst_var_par sst) frac;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
@@ -1613,7 +1613,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
-    	h_formula_data_frac_perm = frac;  (*LDK*)
+    	h_formula_data_frac_perm = map_opt (subst_var s) frac;  (*LDK*)
 		h_formula_data_arguments = List.map (subst_var s) svs;
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;

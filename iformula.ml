@@ -648,7 +648,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		 h_formula_heap_imm = imm; 
 		 h_formula_heap_full = full;
 		 h_formula_heap_with_inv = winv;
-		 h_formula_heap_frac_perm = frac; (*LDK*)
+		 h_formula_heap_frac_perm = Ipure.e_apply_one s frac; (*LDK: ??? what is it for*)
 		 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		 h_formula_heap_pseudo_data = ps_data;
 		 h_formula_heap_label = l;
@@ -670,7 +670,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		   h_formula_heap2_imm = imm;
 		   h_formula_heap2_full =full;
 		   h_formula_heap2_with_inv = winv;
-		   h_formula_heap2_frac_perm = frac; (*LDK*)
+		   h_formula_heap2_frac_perm = Ipure.e_apply_one s frac; (*LDK: ???*)
 		   h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 		   h_formula_heap2_pseudo_data =ps_data;
 		   h_formula_heap2_label = l;
