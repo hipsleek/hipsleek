@@ -13,22 +13,24 @@ avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
 		& m = 1+m1+m2 & n = max(n1, n2) + 1 
 		// -1 <= n1-n2 <=1 
 		& n2+($ bal)=n1+1 & n2<=n1+1 & n1 <= 1+n2
-	inv m >= 0 & n >= 0 & 0<=bal<=2  & $ -2+(2*bal)<=n & 
-  $ 2<=(2*bal)+n  &  $ -1+bal<=m & $ 1<=(bal+m) /*& $ m >= n*/;
-
-
-
+	inv m >= 0 & n >= 0 & 0<=bal<=2  &  ($ -2<=n-(2*(bal))) & 
+  ($ 2<=(2*(bal))+n)  & ($ -1+(bal)<=m) & ($ 1<=((bal)+m)) & ($ m >= n);
+/*($ -2+(2*bal)<=n)*/
 /* function to return the height of an avl tree */
 int height(node x)
 	requires x::avl<m, n, b>
 	ensures x::avl<m, n, b> & res = n;
 
 {
-  dprint;
-	if (x == null)
+	//dprint;
+	if (x == null) {
+		assume false;
 		return 0;
-	else
+	}
+	else {
+		//assume false;
 		return x.height;
+	}
 }
 
 int get_max(int a, int b) 
