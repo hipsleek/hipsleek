@@ -248,6 +248,9 @@ let peek_try =
           | [FLOAT,_;IDENTIFIER n,_] -> ()
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
+          | [INT,_;OSQUARE,_] -> ()
+          | [FLOAT,_;OSQUARE,_] -> ()
+          | [BOOL,_;OSQUARE,_] -> ()
           |  _ -> raise Stream.Failure)
 
  (* let peek_ensures =  *)
@@ -352,7 +355,7 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> (* An Hoa*)let _ = print_endline "Array found!" in ()
+             |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
 let sprog = SHGram.Entry.mk "sprog" 
