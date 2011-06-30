@@ -70,35 +70,6 @@ let is_view_recursive (n:ident) =
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
 
-let prim_str = "relation dom(int[] a, int low, int high) == true.
-	//(dom(a,low-1,high) | dom(a,low,high+1)).
-	
-// originally idexc in many examples
-// this is to specify that a[] and b[] are identical
-// except possibly between the range [i..j]
-relation amodr(int[] a, int[] b, int i, int j) == 
-    forall(k : (i<=k & k<=j | a[k] = b[k])).
-
-int array_get_elm_at___(int[] a, int i) 
-	requires [k,t] dom(a,k,t) & k<=i & i<=t
-	ensures res = a[i];
-
-int[] update___(int[] a, int i, int v) 
-	requires [k,t] dom(a,k,t) & k<=i & i<=t 
-	ensures dom(res,k,t) & update_array(a,i,v,res);
-
-int[] aalloc___(int dim) 
-	requires true 
-	ensures dom(res,0,dim-1);"
-(* AN HOA: Add a primitive function update___.    *)
-(* 3/5 : Add aalloc for array allocation. *)
-(* Note: it is supposed to be dynamically inserted*)
-(* depending on the available array types in used.*)
-(* Similarly, aalloc should be dynamically inserted*)
-(* as well. *)
-(* AN HOA: Add relation [dom] as a primitive. *)
-
-
 (* let op_map = Hashtbl.create 19 *)
 
 (************************************************************
@@ -159,9 +130,7 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
     | [] -> ()
   in
     (
-       
      (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
-     (*Buffer.add_string prim_buffer prim_str; (* Add primitive relations *)*)
      helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
 
@@ -1749,6 +1718,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   Gen.Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
       
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
+	(* An Hoa *)
+	let _ = print_endline ("trans_proc_x : " ^ proc.I.proc_name) in
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
   let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
   if not (Gen.is_empty dup_names) then
@@ -3395,6 +3366,8 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
     | Cformula.ECase b -> 
 	      let r1,r2 = List.split b.Cformula.formula_case_branches in
 	      let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.Cformula.formula_case_pos) r1  in
+			(** An Hoa Temporary Printing **)
+			(* let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in*)
 	      let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then 
 	        let _ = print_string (
 	            (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^

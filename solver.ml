@@ -4378,18 +4378,17 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 	List.fold_left (fun x y -> CP.mkAnd x y no_pos) (CP.mkTrue no_pos) match_conditions
 (* End of pure_match *)
 
-	(* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
-  (*let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^
-	"ENTAIL STATE = " ^ (Cprinter.string_of_estate estate) ^ "\n" ^
-  "LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^
-  "RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in*)
-
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
+	(* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
+	(*let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^
+	"ENTAIL STATE = " ^ (Cprinter.string_of_estate estate) ^ "\n" ^
+	"LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^
+	"RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in*)
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
@@ -4434,9 +4433,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
         let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
         let new_ante0, new_conseq0 = heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos in
         let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
-			(*let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^
-				"NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^
-				"NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in*)
+
+	(*let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^
+	"NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^
+	"NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in*)
+
+
 	    (* 26.03.2009 simplify the pure part *)
 	    (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 	    (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
@@ -4539,10 +4541,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 
   let (r_rez,r_succ_match, r_fail_match, (fc_kind, (contra_list, must_list, may_list))) = List.fold_left fold_fun  (true,[],None, (Failure_None "Wat?", ([],[],[])))
     (("", rhs_p) :: memo_r_br) in
-	(*let _ = print_string ("An Hoa :: memo_r_br =\n") in
-	let _ = List.map (fun (c1,c2) -> print_string (c1 ^ Cprinter.string_of_mix_formula c2)) memo_r_br in*)   
+	(*let _ = print_string ("An Hoa :: memo_r_br =\n") in*)
+	(*let _ = List.map (fun (c1,c2) -> print_string (c1 ^ Cprinter.string_of_mix_formula c2)) memo_r_br in*)   
 	(* An Hoa note: THE FOLLOWING let DOES ALL THE WORK! *)
-  (*let _ = print_string ("After folding :  " ^  (string_of_bool r_rez) ^ "\n") in*)
+	(*let _ = print_string ("After folding :  " ^  (string_of_bool r_rez) ^ "\n") in*)
   if r_rez then begin (* Entailment is valid *)
     let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
 		(*let _ = print_string ("res_delta : " ^ (Cprinter.string_of_formula res_delta) ^ "\n") in*)
@@ -4737,9 +4739,9 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
 
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
-  (*let _ = print_string ("\nAn Hoa :: imply_mix_formula ::\n" ^
-	"ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n" ^
-	"CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n\n") in*) 
+	(*let _ = print_string ("\nAn Hoa :: imply_mix_formula ::\n" ^*)
+	(*"ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n" ^*)
+	(*"CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n\n") in*) 
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->

@@ -634,6 +634,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 
 (* checking procedure *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+	(* An Hoa *)
+	let _ = print_endline ("check_proc : " ^ proc.Cast.proc_name) in
   let unmin_name = unmingle_name proc.proc_name in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
     && not (List.mem unmin_name !Inliner.inlined_procs)

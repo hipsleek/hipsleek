@@ -29,7 +29,7 @@ type relation_definition =
 (**
  * Temp files used to feed input and capture output from provers
  *)
-let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
+let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 let print_input = ref false
 let print_original_solver_output = ref false
@@ -218,7 +218,7 @@ let extract_name sv =
 let rec smt_of_typ t = 
 	match t with
 	  | Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
-	  | Float -> "Real"
+	  | Float -> (*"Real"*) "Int" (* Have to use int as float is not supported! *)
 	  | Int -> "Int"
       | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
@@ -608,7 +608,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
       let res = output = "unsat" in
 	(* Only do printing in case there is no suppression and output is not unsat *)
 	(*let _ = print_string (string_of_bool !suppress_print_implication) in*)
-	let _ = if (not !suppress_print_implication) && (not res) then
+	let _ = if (not !suppress_print_implication) (*&& (not res)*) then
 						let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
 						let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
 						let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in ()
@@ -623,6 +623,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
   with 
     |Procutils.PrvComms.Timeout ->
 	    begin
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
@@ -631,6 +632,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 		end
     | e -> 
         begin 
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
             Unix.kill !prover_process.pid 9;
@@ -650,15 +652,17 @@ let imply ante conseq = (*let _ = print_string "Come to imply\n" in*)
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   try
+	(*let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in*)
       let input = to_smt f None prover in
-	(*let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in*)
+	let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in
       let output = run prover input in
-	(*let _ = if !print_original_solver_output then print_string ("==> SMT output : " ^ output ^ "\n") in*)
+	let _ = if !print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in
       let res = output = "unsat" in
       not res
   with 
     |Procutils.PrvComms.Timeout ->
 	    begin
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => sat\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
@@ -667,6 +671,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 		end
     | e -> 
         begin 
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unexpected exception => sat\n"); flush stdout; 
             Unix.kill !prover_pid 9;
