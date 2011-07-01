@@ -13,7 +13,7 @@ avl<n, h> == self = null & n = 0 & h = 0
 	or self::node<_, h, p, q> * p::avl<n1, h1> * q::avl<n2, h2>
 		& n = 1+n1+n2
 		& h2<=h1+1 & h1<=h2+1 & h = max(h1, h2) + 1 
-	inv n >= 0 & h >= 0 & ($ n >= h);
+	inv n >= 0 & h >= 0;
 
 /* function to return the height of an avl tree */
 int height(node x)
@@ -24,15 +24,11 @@ int height(node x)
 {
 	if (x == null)
 		return 0;
-	else {
-		/*node tmp = x.left;
-		x.left = x.right;
-		x.right = tmp;*/
+	else
 		return x.height;
-	}
 }
 
-/*  function to rotate left */
+/* function to rotate left */
 node rotate_left(node l, node rl, node rr)
 
 	requires l::avl<lm, ln> * rl::avl<rlm, ln> * rr::avl<rrm, ln+1>

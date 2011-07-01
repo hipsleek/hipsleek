@@ -24,12 +24,8 @@ int height(node x)
 {
 	if (x == null)
 		return 0;
-	else {
-		/*node tmp = x.left;
-		x.left = x.right;
-		x.right = tmp;*/
+	else 
 		return x.height;
-	}
 }
 
 /*  function to rotate left */
