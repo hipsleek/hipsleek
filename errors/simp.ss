@@ -67,6 +67,7 @@ ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
 	inv self!=null & tx!=null & n>=1;
 
+
 /* coercion "lseg2" self::lseg<p, n> <- self::lseg<q, n1> * q::lseg<p, n2> & n=n1+n2; */
 /* coercion "ll_tail2" self::ll_tail<t, n> <-> self::lseg<t, n-1> * t::node<_, null>; */
 
@@ -105,15 +106,17 @@ int upto(node x, node p)
       or self::node<v,q> * q::pos<> & v>=0
       inv true;
 
- one_neg<> == self::node<v,q>  & v<0
-    or self::node<v,q> * q::one_neg<> //& v>=0
+ one_neg<n> == self::node<v,q> * q::ll<_>  & v<0
+    or self::node<v,q> * q::one_neg<n> & v>=0
   inv self!=null;
 
  int sumsqrt(node x)
    requires x::pos<>
-   ensures  res>=0;
-   requires x::one_neg<>
+   ensures  res>=0 ;
+   requires x::one_neg<n>
    ensures  true & flow __Error;
+   requires x::ll<_> 
+   ensures  true & flow __flow ; //maybe error
 {
   if (x==null) return 0;
   else return sqrt(x.val)+sumsqrt(x.next);

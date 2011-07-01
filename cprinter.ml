@@ -252,7 +252,7 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
 
  (** invoke pr_args_gen  *)   
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
-  pr_args_gen (fun () -> fmt_string (open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
+  pr_args_gen (fun () -> fmt_string (op^open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
 
  (** invoke pr_args_gen and print nothing when xs  is empty  *)      
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
