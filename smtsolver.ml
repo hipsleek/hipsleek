@@ -72,8 +72,8 @@ let rel_defs = ref ([] : relation_definition list)
  * Notice that we have to add the relation at the end in order to preserve the order of appearance of the relations.
  *)
 let add_rel_def rdef =
-	(* let rn = match rdef with RelDefn (a,_,_) -> a in
-	let _ = print_string ("Smtsolver :: add relation definition - " ^ rn ^ "\n") in *) 
+	(*let rn = match rdef with RelDefn (a,_,_) -> a in
+	let _ = print_endline ("smtsolver : add_rel_def : " ^ rn) in*)
 	rel_defs := !rel_defs @ [rdef]
 
 (******************

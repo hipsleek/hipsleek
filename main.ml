@@ -32,6 +32,10 @@ let parse_file_full file_name =
     (*		  let ptime2 = Unix.times () in
 		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
 			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
+		(* An Hoa *)
+		(*let _ = print_endline "Primitive relations : " in
+		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
+
 			prog 
     with
 		End_of_file -> exit 0

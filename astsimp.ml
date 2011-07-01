@@ -135,9 +135,13 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
      let all_prims = Buffer.contents prim_buffer in
 
      let prog = Parser.parse_hip_string "primitives" all_prims in
+		(* An Hoa : print out the primitive relations parsed -- Problem : no relation parsed! *)
+		let _ = print_endline "Primitive relations : " in
+		let _ = List.map (fun x -> print_endline x.I.rel_name) prog.I.prog_rel_decls in
+		(* An Hoa : THIS IS NOT THE PLACE THE PRIMITIVES IN prelude.ss IS ADDED! *)
 
 	 (* AN HOA : modify to return the list of primitive relations *)
-	 (prog.I.prog_proc_decls,prog.I.prog_rel_decls) )
+	 (prog.I.prog_proc_decls, prog.I.prog_rel_decls))
      (* let input = Lexing.from_string all_prims in *)
      (* input_file_name := "primitives"; *)
      (* let prog = Iparser.program (Ilexer.tokenizer "primitives") input *)
@@ -1202,16 +1206,17 @@ and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_ba
   
 (* An Hoa : trans_rel *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
-  let pos = IP.pos_of_formula rdef.I.rel_formula in
-  let rel_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) rdef.I.rel_typed_vars in
-  let stab = H.create 103 in
-  let _ = List.map (fun (var_type, var_name) -> H.add stab var_name { sv_info_kind = (trans_type prog var_type pos);id = fresh_int () };) rdef.I.rel_typed_vars in
-  (* Need to collect the type information before translating the formula *)
-  let _ = collect_type_info_pure prog rdef.I.rel_formula stab in
-  let crf = trans_pure_formula rdef.I.rel_formula stab in
-  { C.rel_name = rdef.I.rel_name; 
-  C.rel_vars = rel_sv_vars;
-  C.rel_formula = crf }
+	let pos = IP.pos_of_formula rdef.I.rel_formula in
+	let rel_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) rdef.I.rel_typed_vars in
+	let stab = H.create 103 in
+	let _ = List.map (fun (var_type, var_name) -> H.add stab var_name { sv_info_kind = (trans_type prog var_type pos);id = fresh_int () };) rdef.I.rel_typed_vars in
+	(* Need to collect the type information before translating the formula *)
+	let _ = collect_type_info_pure prog rdef.I.rel_formula stab in
+	let crf = trans_pure_formula rdef.I.rel_formula stab in
+	(*let _ = Smtsolver.add_rel_def (Smtsolver.RelDefn (rdef.I.rel_name, rel_sv_vars, crf)) in*)
+		{C.rel_name = rdef.I.rel_name; 
+  		C.rel_vars = rel_sv_vars;
+  		C.rel_formula = crf }
       (* let stab = H.create 103 in
          let view_formula1 = vdef.I.view_formula in
          let _ = Iformula.has_top_flow_struc view_formula1 in

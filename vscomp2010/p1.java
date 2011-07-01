@@ -4,9 +4,9 @@
  @date 24/06/2011
  **/
 
-relation dom(int[] a, int i, int j) == true.
+//relation sumarr(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & sumarr(a,i,j-1,s-a[j])).
 
-relation sumarr(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & sumarr(a,i,j-1,s-a[j])).
+relation sumarr(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & sumarr(a,i+1,j,s-a[i])).
 
 relation upperbnd(int[] a, int i, int j, int s) == forall(k : (k < i | k > j | a[k] <= s)).
 
