@@ -508,7 +508,11 @@ and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_in
 and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
 
 (*first subsumes the second*)
-and subsume_flow (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+and subsume_flow_x (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+
+and subsume_flow n p : bool = 
+  let pr1 = pr_pair string_of_int  string_of_int in
+  Gen.Debug.no_2 "subsume_flow" pr1 pr1 string_of_bool subsume_flow_x n p 
 
 and overlap_flow t1 t2 : bool = (subsume_flow t1 t2) || (subsume_flow t2 t1)
 

@@ -111,12 +111,12 @@ int upto(node x, node p)
   inv self!=null;
 
  int sumsqrt(node x)
-   requires x::pos<>
-   ensures  res>=0 ;
-   requires x::one_neg<n>
-   ensures  true & flow __Error;
+   /* requires x::pos<> */
+   /* ensures  res>=0 ; */
+   /* requires x::one_neg<n> */
+   /* ensures  true & flow __Error; */
    requires x::ll<_> 
-   ensures  true & flow __flow ; //maybe error
+   ensures  res>=0 & flow __flow ; //maybe error
 {
   if (x==null) return 0;
   else return sqrt(x.val)+sumsqrt(x.next);

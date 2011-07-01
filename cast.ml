@@ -1191,8 +1191,9 @@ let rec check_proper_return cret_type exc_list f =
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
-			else if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
-			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
+			else if not (List.exists (fun c-> 
+                let _ =print_endline "XX" in F.subsume_flow c fl_int) exc_list) then
+			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type is not covered by the throw list";}
 			else if not(overlap_flow_type fl_int res_t) then
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
 			else ()			
