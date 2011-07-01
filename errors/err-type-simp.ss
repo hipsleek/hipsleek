@@ -31,17 +31,19 @@ ll<n> == self = null & n = 0
       or self::node<v,q> * q::pos<> & v>=0
       inv true;
 
- one_neg<n> == self::node<v,q> * q::ll<_>  & v<0
-    or self::node<v,q> * q::one_neg<n> & v>=0
+ one_neg<> == self::node<v,q> * q::ll<_>  & v<0
+    or self::node<v,q> * q::one_neg<> & v>=0
   inv self!=null;
+
+// why is there a type-error below when res is used?
 
  int sumsqrt(node x)
    /* requires x::pos<> */
    /* ensures  res>=0 ; */
-   /* requires x::one_neg<n> */
+   /* requires x::one_neg<> */
    /* ensures  true & flow __Error; */
    requires x::ll<_> 
-   ensures  true & flow __flow ; //maybe error
+   ensures  res>=0 & flow __flow ; //type error here? why
 {
   if (x==null) return 0;
   else return sqrt(x.val)+sumsqrt(x.next);
