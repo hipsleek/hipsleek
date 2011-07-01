@@ -122,7 +122,7 @@ if($timings){
     }
 
     $row = 3;
-    (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
+    (my $Second, my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
@@ -169,6 +169,24 @@ $sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
+	# AN HOA : ADDED ARRAY TESTING EXAMPLES
+	"hip_array"=>[
+		["array/arr_at.ss",1,"","main","SUCCESS"],
+		["array/arr_bsort.ss",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["array/arr_double.ss",1,"","doublearr","SUCCESS"],
+		["array/arr_init.ss",1,"","zinit","SUCCESS"],
+		["array/arr_insertsort.ss",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["array/arr_invert.ss",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
+		["array/arr_max.ss",1,"","max_value_of_array","SUCCESS"],
+		["array/arr_mergesort.ss",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
+		["array/arr_new_exp.ss",1,"","main","SUCCESS"],
+		["array/arr_nqueens.ss",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
+		["array/arr_qsort.ss",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
+		["array/arr_rev.ss",1,"","arrayrev","SUCCESS"],
+		["array/arr_selectionsort.ss",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["array/arr_sum.ss",2,"--ahwytdi","sigmaright","SUCCESS","sigmaleft","SUCCESS"]
+	],
+	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
     "hip_imm" =>[ 
         ["imm/bigint.ss",17, "",
