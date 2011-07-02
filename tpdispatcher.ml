@@ -926,7 +926,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       end
   | Z3 -> Smtsolver.imply ante conseq
   | Isabelle -> Isabelle.imply ante conseq imp_no
-    | Coq -> (* Coq.imply ante conseq *)
+  | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else

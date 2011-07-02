@@ -205,7 +205,8 @@ let common_arguments = [
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
   (* slicing *)
-  ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable slicing");
+  ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+  ("--opt-imply", Arg.Set Globals.opt_imply, "Enable optimal implication for forced slicing");
   ] 
 
 (* arguments/flags used only by hip *)	

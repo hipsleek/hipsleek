@@ -350,6 +350,7 @@ let enable_incremental_proving = ref false
 
 (* Options for slicing *)
 let do_slicing = ref false
+let opt_imply = ref false
 
 let add_count (t: int ref) = 
 	t := !t+1

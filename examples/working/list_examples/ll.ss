@@ -18,8 +18,10 @@ void append(node x, node y)
 
 {
 	if (x.next == null) {
+		assume false;
 		x.next = y;
 	} else {
+		//assume false;
 		append(x.next, y);
 	}
 }

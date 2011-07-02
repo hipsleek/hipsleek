@@ -16,6 +16,7 @@ let bag_flag = ref false
 let coq_running = ref false
 let coq_channels = ref (stdin, stdout)
 
+let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")  
 
 (* pretty printing for primitive types *)
 (* let rec coq_of_prim_type = function *)
@@ -281,15 +282,24 @@ let write (ante : CP.formula) (conseq : CP.formula) : bool =
 	flush log_file;
   end;
 
+  (*let _ = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
-  
+
+let write (ante : CP.formula) (conseq : CP.formula) : bool =
+  Gen.Debug.no_2 "[coq.ml] write" !print_p_f_f !print_p_f_f
+	string_of_bool write ante conseq
+	
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
   if !log_all_flag == true then
 	output_string log_file "\n[coq.ml]: #imply\n";
   max_flag := false;
   choice := 1;
-    write ante conseq
-    (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
+  write ante conseq
+  (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
+
+let imply (ante : CP.formula) (conseq : CP.formula) : bool =
+  Gen.Debug.no_2 "[coq.ml] imply" !print_p_f_f !print_p_f_f
+	string_of_bool imply ante conseq
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then

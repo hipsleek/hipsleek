@@ -8,21 +8,21 @@ data node {
 
 /* view for a singly linked list */
 ll<L1> == self = null & L1 = [||]
-	or self::node<v, r> * r::ll<L2> & L1 = v:::L2;
+	or self::node<v, r> * r::ll<L2> & L1 = v:::L2
+	inv len(L1) >= 0;
 
 /* append two singly linked lists */
-void append(node x, node y)
+node append(node x, node y)
 
-	requires x::ll<L1> * y::ll<L2> & len(L1) > 0
-	ensures x::ll<L> & L = app(L1, L2) ;
+	requires x::ll<L1> * y::ll<L2>
+	ensures res::ll<L> & L = app(L1, L2);
 
 {
-	if (x.next == null) {
-		assume false;
-		x.next = y;
-	} else {
-		//assume false;
-		append(x.next, y);
+	if (x == null)
+	   return y;
+	else {
+		x.next = append (x.next, y);
+		return x;
 	}
 }
 
@@ -79,7 +79,7 @@ node get_next_next(node x)
 }
 
 /* function to insert a node in a singly linked list */
-void insert(node x, int a)
+/*void insert(node x, int a)
 
 	requires x::ll<L1> & len(L1) > 0
 	ensures x::ll<L2> & L2 = app(L1, [|a|]);
@@ -90,7 +90,21 @@ void insert(node x, int a)
 	} else {
 		insert(x.next, a);
 	}
-} 
+}*/
+
+node insert(node x, int a)
+
+	requires x::ll<L1>
+	ensures res::ll<L2> & L2 = app(L1, [|a|]);
+	
+{
+	if (x == null)
+	   return new node (a, null);
+	else {
+		x.next = insert (x.next, a);
+		return x;
+	}
+}
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
