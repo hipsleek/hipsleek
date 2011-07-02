@@ -1717,7 +1717,25 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
 and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante =
 	if !opt_imply then
-	  ante_disj
+	  let (c_nlv, c_lv) = fv_with_slicing_label conseq in
+	  
+	  let ((a_lv1, ante1), rest_ante1) = List.fold_left
+		(fun ((lv, ante), r_ante) mg ->
+		  let mg_nlv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
+		  let cond = Gen.BList.overlap_eq eq_spec_var c_nlv mg_nlv in
+		  if cond then ((lv@mg.memo_group_linking_vars, ante@[mg]), r_ante)
+		  else ((lv, ante), r_ante@[mg])
+		)
+		(([],[]), []) ante_disj in
+
+	  let n_lv = a_lv1@c_lv in
+	  let ante2 = List.filter
+		(fun mg ->
+		  let mg_nlv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
+		  Gen.BList.overlap_eq eq_spec_var n_lv mg_nlv
+		) rest_ante1 in
+
+	  ante1 @ ante2
 	else  
 	  let fv = fv conseq in 
 	  List.filter (fun c -> (Gen.BList.overlap_eq eq_spec_var fv c.memo_group_fv)) ante_disj
@@ -1767,7 +1785,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
     | [] -> (true,[],None)
 
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
- Gen.Debug.ho_2 "imply_memo_x" (!print_mp_f)
+ Gen.Debug.no_2 "imply_memo_x" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1791,7 +1809,7 @@ and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
 
 and imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
-  if !opt_imply then
+  (*if !opt_imply then
 	begin
 	  match conseq_memo with
 		| h :: rest -> 
@@ -1802,7 +1820,7 @@ and imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
 	      else (r1,r2,r3)
 		| [] -> (true,[],None)
 	end
-  else
+  else*)
 	begin
 	  match conseq_memo with
 		| h :: rest -> 
@@ -1816,10 +1834,11 @@ and imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
 		| [] -> (true,[],None)
 	end
 
-and opt_imply_memo_group_slicing ante_mc conseq_mg t_imply imp_no =
+(*and opt_imply_memo_group_slicing ante_mc conseq_mg t_imply imp_no =
   let c_lv = conseq_mg.memo_group_linking_vars in
   let c_nlv = Gen.BList.difference_eq eq_spec_var conseq_mg.memo_group_fv c_lv in
   (true, [], None)
+*)
         
 let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   if (isConstMFalse ante_memo0) then (true,[],None) (* Slicing: TODO: if a FALSE is found in the ante then return true *)
