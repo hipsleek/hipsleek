@@ -1313,40 +1313,44 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let _ = Gen.Profiling.pop_time s in
   if res1  then Gen.Profiling.inc_counter "true_imply_count" else Gen.Profiling.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
+	
 let disj_cnt a c s =
-  if (!Globals.enable_counters)then
-	  (let rec p_f_size f = match f with | CP.BForm _ -> 1
-		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
-		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
-	  let rec or_f_size f = match f with | CP.BForm _ -> 1
-		  | CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
-		  | CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
-		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
-            (*Gen.Profiling.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
-            Gen.Profiling.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
-            Gen.Profiling.inc_counter "imply_count";
-            Gen.Profiling.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
-    let rec add_or_f_size f = match f with
-      | CP.BForm _ -> 0
-		  | CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
-		  | CP.Or (f1,f2,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
-		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
-    match c with
-      | None -> 
-          Gen.Profiling.inc_counter ("stat_count"^s);
+  if (!Globals.enable_counters) then
+	begin
+	  let rec p_f_size f = match f with
+		| CP.BForm _ -> 1
+		| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
+
+	  let rec or_f_size f = match f with
+		| CP.BForm _ -> 1
+		| CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
+		| CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
+     (*Gen.Profiling.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
+       Gen.Profiling.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
+       Gen.Profiling.inc_counter "imply_count";
+       Gen.Profiling.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
+      let rec add_or_f_size f = match f with
+		| CP.BForm _ -> 0
+		| CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
+		| CP.Or (f1,f2,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
+      match c with
+		| None -> 
+          Gen.Profiling.inc_counter ("stat_count_"^s);
           Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a));
-          Gen.Profiling.add_to_counter ("stat_disj_count"^s) (or_f_size a);
-          Gen.Profiling.add_to_counter ("stat_size_count"^s) (p_f_size a)
-      | Some c-> 
-          Gen.Profiling.inc_counter ("stat_count"^s);
+          Gen.Profiling.add_to_counter ("stat_disj_count_"^s) (or_f_size a);
+          Gen.Profiling.add_to_counter ("stat_size_count_"^s) (p_f_size a)
+		| Some c-> 
+          Gen.Profiling.inc_counter ("stat_count_"^s);
           Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a)); 
-          Gen.Profiling.add_to_counter ("stat_disj_count"^s) ((or_f_size a)+(or_f_size c));
-          Gen.Profiling.add_to_counter ("stat_size_count"^s) ((p_f_size a)+(p_f_size c)) ;
-    )
+          Gen.Profiling.add_to_counter ("stat_disj_count_"^s) ((or_f_size a)+(or_f_size c));
+          Gen.Profiling.add_to_counter ("stat_size_count_"^s) ((p_f_size a)+(p_f_size c)) ;
+    end
   else ()
 
-
-let imply_timeout a c i t dc process=
+let imply_timeout a c i t dc process =
   disj_cnt a (Some c) "imply";
   Gen.Profiling.do_5 "TP.imply_timeout" imply_timeout a c i t dc process
 	
@@ -1356,7 +1360,7 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
   let r = List.fold_left (fun (r1,r2,r3) c->
     if not r1 then (r1,r2,r3)
     else 
-      let l = List.filter (fun d-> (List.length (Gen.BList.intersect_eq CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
+      let l = List.filter (fun d -> (List.length (Gen.BList.intersect_eq CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
       let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true (*!no_LHS_prop_drop*) true l in
       let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) !no_RHS_prop_drop false [c] in
       let r1',r2',r3' = imply_timeout ant con imp_no timeout false None in 
@@ -1392,7 +1396,6 @@ let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
 let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
-
 let is_sat f sat_no do_cache =
   if !external_prover then 
       match Netprover.call_prover (Sat f) with
@@ -1403,8 +1406,10 @@ let is_sat f sat_no do_cache =
     Gen.Profiling.do_1 "is_sat" (is_sat f sat_no) do_cache
   end
 ;;
+
 let sat_no = ref 1
 ;;
+
 let incr_sat_no () = 
  sat_no := !sat_no +1 
 ;;
