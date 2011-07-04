@@ -23,18 +23,16 @@ float foo(float x, float y)
     return sqrt(0.0-x)+r;
   }
  }
-/*
-float sine(float x)
- case {
-  x>=0.0 & x <= 3.14 -> ensures (res>=0.0) & (res <1.0);
-  x<0.0  & x >= (0.0 - 3.14) -> ensures (res <0.0) & (res >= (0.0 - 1.0));
-  (x> 3.14 | x < (0.0 - 3.14)) -> ensures (true) & flow __Error;
-}
-*/
-/*
-  requires true
-  ensures  -1 <= res <= 1;  //is this correct?
-*/
+
+/* float sinfn(float x) */
+/*   requires true */
+/*   ensures  -1.1 <= res <= 1.2;  //is this correct? */
+
+/*  case { */
+/*   x>=0.0 & x <= 3.14 -> ensures (res>=0.0) & (res <1.0); */
+/*   x<0.0  & x >= (0.0 - 3.14) -> ensures (res <0.0) & (res >= (0.0 - 1.0)); */
+/*   (x> 3.14 | x < (0.0 - 3.14)) -> ensures (true) & flow __Error; */
+/* } */
 /*
 float foo1(float x, float y)
  case {
