@@ -14,9 +14,6 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
-	
-	
-
 /* return the tail of a singly linked list */
 node get_next(node x)
 	/* requires x::ll<n> & n > 0 */
@@ -117,7 +114,9 @@ int upto(node x, node p)
    requires x::one_neg<>
    ensures  true & flow __Error;
    requires x::ll<_> 
-   ensures  true & flow __flow ; //maybe error
+   ensures  res>=0 & flow __norm  or true & flow __Error ; //maybe error
+   requires x::ll<_> 
+   ensures  true & flow __Error ; //maybe error
 {
   if (x==null) return 0;
   else return sqrt(x.val)+sumsqrt(x.next);
