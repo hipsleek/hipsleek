@@ -116,7 +116,7 @@ int upto(node x, node p)
    requires x::ll<_> 
    ensures  res>=0 & flow __norm  or true & flow __Error ; //maybe error
    requires x::ll<_> 
-   ensures  true & flow __Error ; //maybe error
+   ensures  true & flow __flow ; //maybe error
 {
   if (x==null) return 0;
   else return sqrt(x.val)+sumsqrt(x.next);
