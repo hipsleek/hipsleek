@@ -1722,9 +1722,17 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
   Gen.Profiling.pop_time str_time;
   r)
 
-and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
-  let n_ante =
-	if !opt_imply then
+and pick_relevant_lhs_constraints (nlv, lv) ante_disj =
+  if !opt_imply then
+	(*pick_relevant_lhs_constraints_opt (nlv, lv) ante_disj*)
+	pick_relevant_lhs_constraints_opt_2 (nlv@lv) ante_disj
+  else
+	pick_relevant_lhs_constraints_simpl (nlv@lv) ante_disj
+
+and pick_relevant_lhs_constraints_simpl fv ante_disj =
+  List.filter (fun c -> (Gen.BList.overlap_eq eq_spec_var fv c.memo_group_fv)) ante_disj
+
+and pick_relevant_lhs_constraints_opt (nlv, lv) ante_disj =
 	  (*let (c_nlv, c_lv) = fv_with_slicing_label conseq in
 		
 		let ((a_lv1, ante1), rest_ante1) = List.fold_left
@@ -1745,52 +1753,67 @@ and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply 
 
 		ante1 @ ante2*) (* Algo 1 *)
 
-	  let (nlv, lv)  = fv_with_slicing_label conseq in
-	  if (lv = []) then
-		List.filter (fun c -> (Gen.BList.overlap_eq eq_spec_var nlv c.memo_group_fv)) ante_disj
-	  else
-		let fv = nlv@lv in
-		let ((direct_fv, direct_lv, direct_ante), residue_ante) = List.fold_left
-		  (fun ((fvd, dlv, atd), r) mg ->
-			let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
-			let cond1 = (mg_ulv != []) && (Gen.BList.overlap_eq eq_spec_var fv mg_ulv) in
-			let cond2 = Gen.BList.list_setequal_eq eq_spec_var mg.memo_group_linking_vars fv in
-		  (*let _ =
-			if (not cond2) then
-			print_string ("mimply_process_ante_slicing: false\n" ^ (!print_sv_l_f mg.memo_group_linking_vars) ^ (!print_sv_l_f fv))
-			else () in*)
-			if (cond1 || cond2) then ((fvd@mg.memo_group_fv, dlv@mg.memo_group_linking_vars, atd@[mg]), r)
-			else ((fvd, dlv, atd), r@[(mg_ulv, mg)])
-		  )
-		  (([], [], []), []) ante_disj in
+  if (lv = []) then
+	List.filter (fun c -> (Gen.BList.overlap_eq eq_spec_var nlv c.memo_group_fv)) ante_disj
+  else
+	let fv = nlv@lv in
+	let ((direct_fv, direct_lv, direct_ante), residue_ante) = List.fold_left
+	  (fun ((fvd, dlv, atd), r) mg ->
+		let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
+		let cond1 = (mg_ulv != []) && (Gen.BList.overlap_eq eq_spec_var fv mg_ulv) in
+		let cond2 = Gen.BList.list_setequal_eq eq_spec_var mg.memo_group_linking_vars fv in
+			(*let _ =
+			  if (not cond2) then
+			  print_string ("mimply_process_ante_slicing: false\n" ^ (!print_sv_l_f mg.memo_group_linking_vars) ^ (!print_sv_l_f fv))
+			  else () in*)
+		if (cond1 || cond2) then ((fvd@mg.memo_group_fv, dlv@mg.memo_group_linking_vars, atd@[mg]), r)
+		else ((fvd, dlv, atd), r@[(mg_ulv, mg)])
+	  )
+	  (([], [], []), []) ante_disj in
 
-		let res_lv = Gen.BList.difference_eq eq_spec_var direct_lv fv in
-		let res_ulv = Gen.BList.difference_eq eq_spec_var (Gen.BList.difference_eq eq_spec_var direct_fv direct_lv) fv in
+	let res_lv = Gen.BList.difference_eq eq_spec_var direct_lv fv in
+	let res_ulv = Gen.BList.difference_eq eq_spec_var (Gen.BList.difference_eq eq_spec_var direct_fv direct_lv) fv in
 
-		let (_, indirect_ante) = List.split (
-		  List.filter
-		  (
-			fun (mg_ulv, mg) ->
-			(* Version 1 *)
+	let (_, indirect_ante) = List.split (
+	  List.filter
+		(
+		  fun (mg_ulv, mg) ->
+			  (* Version 1 *)
 			  (*let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in*)
-			(*if mg.memo_group_linking_vars = [] then
-			  Gen.BList.overlap_eq eq_spec_var mg.memo_group_fv (res_lv@res_ulv)
-			  else
-			  Gen.BList.overlap_eq eq_spec_var mg.memo_group_linking_vars res_ulv*)
+			  (*if mg.memo_group_linking_vars = [] then
+				Gen.BList.overlap_eq eq_spec_var mg.memo_group_fv (res_lv@res_ulv)
+				else
+				Gen.BList.overlap_eq eq_spec_var mg.memo_group_linking_vars res_ulv*)
 
-			(* Version 2 *)
-			(*Gen.BList.overlap_eq eq_spec_var mg.memo_group_fv res_fv*)
+			  (* Version 2 *)
+			  (*Gen.BList.overlap_eq eq_spec_var mg.memo_group_fv res_fv*)
 
-			(* Version 3 *)
-			  (Gen.BList.overlap_eq eq_spec_var mg.memo_group_fv res_ulv) || (Gen.BList.overlap_eq eq_spec_var mg_ulv res_lv)
-		  ) residue_ante) in
-		direct_ante@indirect_ante
-	(*in *)
-	else
-	  (*let n_ante1 = *)
-	  let fv = fv conseq in 
-	  List.filter (fun c -> (Gen.BList.overlap_eq eq_spec_var fv c.memo_group_fv)) ante_disj
-  in
+			  (* Version 3 *)
+			(Gen.BList.overlap_eq eq_spec_var mg.memo_group_fv res_ulv) || (Gen.BList.overlap_eq eq_spec_var mg_ulv res_lv)
+		) residue_ante) in
+	direct_ante@indirect_ante
+
+and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
+  let ((direct_fv, direct_lv, direct_ante), residue_ante) = List.fold_left
+	  (fun ((fvd, dlv, atd), r) mg ->
+		let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
+		let cond = Gen.BList.overlap_eq eq_spec_var fv mg_ulv in
+		if cond then ((fvd@mg.memo_group_fv, dlv@mg.memo_group_linking_vars, atd@[mg]), r)
+		else ((fvd, dlv, atd), r@[mg])
+	  )
+	  (([], [], []), []) ante_disj in
+
+  let direct_ulv = Gen.BList.difference_eq eq_spec_var direct_fv direct_lv in
+  let need_to_find_links = direct_ulv @ fv in
+
+  let linking_ante = List.filter
+	(fun mg -> Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars need_to_find_links
+	) residue_ante in
+  direct_ante @ linking_ante
+  
+and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
+  let (nlv, lv) = fv_with_slicing_label conseq in
+  let n_ante = pick_relevant_lhs_constraints (nlv, lv) ante_disj in
 
   (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
 
