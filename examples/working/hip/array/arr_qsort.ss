@@ -22,6 +22,25 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 
 relation matchinp(int x, int y) == true.
 
+void qsort(ref int[] a, int i, int j)
+	case {
+		i >= j -> ensures a=a';
+        i < j -> requires [u,v,l,h] dom(a,u,v) & u<=i & j<=v & bnd(a,i,j,l,h)
+          ensures dom(a',u,v) & bnd(a',i,j,l,h) & sorted(a',i,j) & idexc(a',a,i,j);
+    }
+{
+	if (i < j)
+	{
+		int k, t;
+        int x = a[i];
+		arraypart(a, i, j, x, k, t);
+		qsort(a, i, k);
+		assume bnd(a',t',j,x+1,h);
+		qsort(a, t, j);
+		assume bnd(a',i,j,l,h);
+	}
+}
+
 void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 	case {
 		i > j  -> ensures k' = i - 1 & t' = j + 1 & a' = a;
@@ -52,24 +71,5 @@ void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 			a[k] = x;
 			k = k - 1;
 		}
-	}
-}
-
-void qsort(ref int[] a, int i, int j)
-	case {
-		i >= j -> ensures a=a';
-        i < j -> requires [u,v,l,h] dom(a,u,v) & u<=i & j<=v & bnd(a,i,j,l,h)
-          ensures dom(a',u,v) & bnd(a',i,j,l,h) & sorted(a',i,j) & idexc(a',a,i,j);
-    }
-{
-	if (i < j)
-	{
-		int k, t;
-        int x = a[i];
-		arraypart(a, i, j, x, k, t);
-		qsort(a, i, k);
-		assume bnd(a',t',j,x+1,h);
-		qsort(a, t, j);
-		assume bnd(a',i,j,l,h);
 	}
 }

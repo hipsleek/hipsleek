@@ -2,7 +2,7 @@ int main()
 	requires true
 	ensures res = 4;
 {
-	int[] a;
+	int[] a;// = new int[5];
 	// new expression will add domain constraint: dom(a',0,4) 
 	a = new int[5];
 	a[0] = 0;
