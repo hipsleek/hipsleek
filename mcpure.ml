@@ -1723,16 +1723,28 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
   r)
 
 and pick_relevant_lhs_constraints (nlv, lv) ante_disj =
-  if !opt_imply then
-	(*pick_relevant_lhs_constraints_opt (nlv, lv) ante_disj*)
-	pick_relevant_lhs_constraints_opt_2 (nlv@lv) ante_disj
-  else
+  Gen.Debug.no_2 "pick_relevant_lhs_constraints"
+	(fun (nlv, lv) -> (!print_sv_l_f nlv) ^ (!print_sv_l_f lv))
+	!print_mp_f	!print_mp_f
+	pick_relevant_lhs_constraints_x (nlv, lv) ante_disj
+	
+and pick_relevant_lhs_constraints_x (nlv, lv) ante_disj =
+  let choose_algo = !opt_imply in
+  if choose_algo = 0 then
 	pick_relevant_lhs_constraints_simpl (nlv@lv) ante_disj
-
+  else if choose_algo = 1 then
+	pick_relevant_lhs_constraints_opt_1 (nlv, lv) ante_disj
+  else if choose_algo = 2 then
+	pick_relevant_lhs_constraints_opt_2 (nlv@lv) ante_disj
+  else if choose_algo = 3 then
+	pick_relevant_lhs_constraints_opt_3 (nlv@lv) ante_disj
+  else
+	ante_disj
+  
 and pick_relevant_lhs_constraints_simpl fv ante_disj =
   List.filter (fun c -> (Gen.BList.overlap_eq eq_spec_var fv c.memo_group_fv)) ante_disj
 
-and pick_relevant_lhs_constraints_opt (nlv, lv) ante_disj =
+and pick_relevant_lhs_constraints_opt_1 (nlv, lv) ante_disj =
 	  (*let (c_nlv, c_lv) = fv_with_slicing_label conseq in
 		
 		let ((a_lv1, ante1), rest_ante1) = List.fold_left
@@ -1810,6 +1822,37 @@ and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
 	(fun mg -> Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars need_to_find_links
 	) residue_ante in
   direct_ante @ linking_ante
+
+and pick_relevant_lhs_constraints_opt_3a fv ante_disj = (* exhausted search - TODO: Slicing: fix bugs *)
+  let repart acc mg =
+	let (ol, nl) = List.partition
+	  (fun (vl, mgl) -> Gen.BList.overlap_eq eq_spec_var vl mg.memo_group_fv) acc in
+	let n_vl = List.fold_left (fun a (vl, _) -> a@vl) mg.memo_group_fv ol in
+	let n_mgl = List.fold_left (fun a (_, mgl) -> a@mgl) [mg] ol in
+	(n_vl, n_mgl)::nl
+  in
+  let n_partitions = List.fold_left repart [] ante_disj in
+  List.fold_left
+	(fun acc (vl, mgl) ->
+	  if Gen.BList.overlap_eq eq_spec_var vl fv then acc@mgl
+	  else acc
+	)
+	[] n_partitions
+
+and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
+  let rec exhaustive_collect fv ante =
+	let (n_fv, n_ante1, r_ante) = List.fold_left
+	  (fun (afv, amc, rmc) mg ->
+		if Gen.BList.overlap_eq eq_spec_var afv mg.memo_group_fv then
+		  (afv@mg.memo_group_fv, amc@[mg], rmc)
+		else (afv, amc, rmc@[mg])
+	  ) (fv, [], []) ante in
+	if n_fv = fv then n_ante1
+	else
+	  let n_ante2 = exhaustive_collect n_fv r_ante in
+	  n_ante1 @ n_ante2
+  in
+  exhaustive_collect fv ante_disj
   
 and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
   let (nlv, lv) = fv_with_slicing_label conseq in

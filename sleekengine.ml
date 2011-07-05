@@ -358,9 +358,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (res, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let index = (sleek_proof_counter#inc_and_get) in
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
-    let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+    let num_id = "Entail("^(string_of_int index)^")" in
     if not valid then
       begin
         let s = match CF.get_must_failure rs with
