@@ -68,7 +68,7 @@ void qsort(ref int[] a, int i, int j)
         int x = a[i];
 		arraypart(a, i, j, x, k, t);
 		qsort(a, i, k);
-		assume bnd(a',t',j,x+1,h);
+		assume bnd(a',t',j,x'+1,h);
 		qsort(a, t, j);
 		assume bnd(a',i,j,l,h);
 	}

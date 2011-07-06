@@ -4398,7 +4398,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	(* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)
 	let evarstoi = estate.es_gen_expl_vars in
 	let lhs_p = if (evarstoi = []) then (* Nothing to instantiate *) lhs_p 
-	else (*let _ = print_endline ("\n\nAn Hoa :: Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in*)
+	else let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in
 		 match lhs_p with
 	 		| MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
 				lhs_p
