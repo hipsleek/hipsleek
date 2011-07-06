@@ -136,8 +136,8 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
 
      let prog = Parser.parse_hip_string "primitives" all_prims in
 		(* An Hoa : print out the primitive relations parsed -- Problem : no relation parsed! *)
-		let _ = print_endline "Primitive relations : " in
-		let _ = List.map (fun x -> print_endline x.I.rel_name) prog.I.prog_rel_decls in
+		(*let _ = print_endline "Primitive relations : " in
+		let _ = List.map (fun x -> print_endline x.I.rel_name) prog.I.prog_rel_decls in*)
 		(* An Hoa : THIS IS NOT THE PLACE THE PRIMITIVES IN prelude.ss IS ADDED! *)
 
 	 (* AN HOA : modify to return the list of primitive relations *)

@@ -4398,7 +4398,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	(* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)
 	let evarstoi = estate.es_gen_expl_vars in
 	let lhs_p = if (evarstoi = []) then (* Nothing to instantiate *) lhs_p 
-	else let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in
+	else (*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in*)
 		 match lhs_p with
 	 		| MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
 				lhs_p
@@ -4407,8 +4407,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 			 		| MCP.MemoF _ -> (* Instantiation is not applicable to memoised formula, simply do nothing to ensure the system behavior ! *)
 						lhs_p
 			 		| MCP.OnePF f -> let rhs_pp = f in
-	 					let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp) in
-	 					let _ = print_endline ("heap_entail_empty_rhs_heap_x : Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp) in
+	 					(*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp) in
+	 					let _ = print_endline ("heap_entail_empty_rhs_heap_x : Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp) in*)
 						(* Temporarily suppress output of implication checking *)
 						let _ = (Smtsolver.suppress_print_implication := true) in
 	 					let inst = pure_match evarstoi lhs_pp rhs_pp in (* Do matching! *)
@@ -4416,7 +4416,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	 					let lhs_p = (MCP.OnePF lhs_pp) in
 						(* Unsuppress the printing *)
 	 					let _ = (Smtsolver.suppress_print_implication := false) in
- 	 					let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in
+ 	 					(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
 	 						lhs_p
 	in
 	(* An Hoa : END OF INSTANTIATION *)
