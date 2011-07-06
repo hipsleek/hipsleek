@@ -669,6 +669,36 @@ $output_file = "log";
 			"double_right_child", "SUCCESS",
 			"rotate_left_child", "SUCCESS",
 			"rotate_right_child", "SUCCESS"
+		],
+		["bubble_size_bags_0_link.ss", 2, "",  
+			"bsort", "SUCCESS",
+			"bubble", "SUCCESS"
+		],
+		["qsort_size_bags_0_link.ss", 3, "",  
+			"qsort1", "SUCCESS",
+			"append_bll1", "SUCCESS",
+		    "partition1", "SUCCESS"
+		],
+		["msort_size_bags_0_link.ss", 5, "",  
+			"insert1", "SUCCESS",
+			"merge1", "SUCCESS",
+		    "merge_sort1", "SUCCESS",
+		    "split1", "SUCCESS",
+		    "count1", "SUCCESS"
+		],
+		["complete_size_minheight_1_link.ss", 5, "",  
+			"insert", "SUCCESS",
+			"min_height", "SUCCESS",
+		    "height", "SUCCESS",
+		    "minim", "SUCCESS",
+		    "maxim", "SUCCESS"
+		],
+		["heaps_size_maxelem_0_link.ss", 5, "",  
+			"deletemax", "SUCCESS",
+			"ripple", "SUCCESS",
+		    "deleteone", "SUCCESS",
+		    "deleteoneel", "SUCCESS",
+		    "insert", "SUCCESS"
 		]
 	]
     );

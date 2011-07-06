@@ -1806,6 +1806,7 @@ and pick_relevant_lhs_constraints_opt_1 (nlv, lv) ante_disj =
 	direct_ante@indirect_ante
 
 and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
+  let _ = Gen.Profiling.push_time "--opt-imply 2" in
   let ((direct_fv, direct_lv, direct_ante), residue_ante) = List.fold_left
 	  (fun ((fvd, dlv, atd), r) mg ->
 		let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
@@ -1821,6 +1822,7 @@ and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
   let linking_ante = List.filter
 	(fun mg -> Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars need_to_find_links
 	) residue_ante in
+  let _ = Gen.Profiling.pop_time "--opt-imply 2" in
   direct_ante @ linking_ante
 
 and pick_relevant_lhs_constraints_opt_3a fv ante_disj = (* exhausted search - TODO: Slicing: fix bugs *)
@@ -1840,6 +1842,7 @@ and pick_relevant_lhs_constraints_opt_3a fv ante_disj = (* exhausted search - TO
 	[] n_partitions
 
 and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
+  let _ = Gen.Profiling.push_time "--opt-imply 3" in
   let rec exhaustive_collect fv ante =
 	let (n_fv, n_ante1, r_ante) = List.fold_left
 	  (fun (afv, amc, rmc) mg ->
@@ -1852,6 +1855,7 @@ and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
 	  let n_ante2 = exhaustive_collect n_fv r_ante in
 	  n_ante1 @ n_ante2
   in
+  let _ = Gen.Profiling.pop_time "--opt-imply 3" in
   exhaustive_collect fv ante_disj
   
 and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =

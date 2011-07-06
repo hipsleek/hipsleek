@@ -44,7 +44,6 @@ node rotate_left(node l, node rl, node rr)
 	return new node(v, h, tmp, rr);
 }
 
-
 /* function to rotate right */
 node rotate_right(node ll, node lr, node r)
 
@@ -73,7 +72,6 @@ int get_max(int a , int b)
 		return b;
 }
 
-
 /* double left rotation */
 node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
 
@@ -97,7 +95,6 @@ node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
 	h = h + 1;
 	return new node(v2, h, tmp1, tmp2);
 }
-
 
 /* double right rotation */
 node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
@@ -123,7 +120,6 @@ node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
 	return new node(v2, h, tmp1, tmp2);
 
 }
-
 
 /* functions to build avl trees */
 node build_avl1(node x, node y)
