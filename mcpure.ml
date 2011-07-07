@@ -1820,7 +1820,7 @@ and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
   let need_to_find_links = direct_ulv @ fv in
 
   let linking_ante = List.filter
-	(fun mg -> Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars need_to_find_links
+	(fun mg -> (not (mg.memo_group_linking_vars == [])) && Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars need_to_find_links
 	) residue_ante in
   let _ = Gen.Profiling.pop_time "--opt-imply 2" in
   direct_ante @ linking_ante
