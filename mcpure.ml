@@ -1733,7 +1733,7 @@ and pick_relevant_lhs_constraints_x (nlv, lv) ante_disj =
   if choose_algo = 0 then
 	pick_relevant_lhs_constraints_simpl (nlv@lv) ante_disj
   else if choose_algo = 1 then
-	pick_relevant_lhs_constraints_opt_1 (nlv, lv) ante_disj
+	pick_relevant_lhs_constraints_opt_1 (nlv@lv) ante_disj
   else if choose_algo = 2 then
 	pick_relevant_lhs_constraints_opt_2 (nlv@lv) ante_disj
   else if choose_algo = 3 then
@@ -1744,7 +1744,7 @@ and pick_relevant_lhs_constraints_x (nlv, lv) ante_disj =
 and pick_relevant_lhs_constraints_simpl fv ante_disj =
   List.filter (fun c -> (Gen.BList.overlap_eq eq_spec_var fv c.memo_group_fv)) ante_disj
 
-and pick_relevant_lhs_constraints_opt_1 (nlv, lv) ante_disj =
+and pick_relevant_lhs_constraints_opt_1_1 (nlv, lv) ante_disj =
 	  (*let (c_nlv, c_lv) = fv_with_slicing_label conseq in
 		
 		let ((a_lv1, ante1), rest_ante1) = List.fold_left
@@ -1805,8 +1805,8 @@ and pick_relevant_lhs_constraints_opt_1 (nlv, lv) ante_disj =
 		) residue_ante) in
 	direct_ante@indirect_ante
 
-and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
-  let _ = Gen.Profiling.push_time "--opt-imply 2" in
+and pick_relevant_lhs_constraints_opt_1 fv ante_disj =
+  let _ = Gen.Profiling.push_time "--opt-imply 1" in
   let ((direct_fv, direct_lv, direct_ante), residue_ante) = List.fold_left
 	  (fun ((fvd, dlv, atd), r) mg ->
 		let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
@@ -1822,10 +1822,10 @@ and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
   let linking_ante = List.filter
 	(fun mg -> (not (mg.memo_group_linking_vars == [])) && Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars need_to_find_links
 	) residue_ante in
-  let _ = Gen.Profiling.pop_time "--opt-imply 2" in
+  let _ = Gen.Profiling.pop_time "--opt-imply 1" in
   direct_ante @ linking_ante
 
-and pick_relevant_lhs_constraints_opt_3a fv ante_disj = (* exhausted search - TODO: Slicing: fix bugs *)
+and pick_relevant_lhs_constraints_opt_2_1 fv ante_disj = (* exhausted search - TODO: Slicing: fix bugs *)
   let repart acc mg =
 	let (ol, nl) = List.partition
 	  (fun (vl, mgl) -> Gen.BList.overlap_eq eq_spec_var vl mg.memo_group_fv) acc in
@@ -1841,8 +1841,7 @@ and pick_relevant_lhs_constraints_opt_3a fv ante_disj = (* exhausted search - TO
 	)
 	[] n_partitions
 
-and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
-  let _ = Gen.Profiling.push_time "--opt-imply 3" in
+and pick_relevant_lhs_constraints_opt_2 fv ante_disj = (* exhausted search *)
   let rec exhaustive_collect fv ante =
 	let (n_fv, n_ante1, r_ante) = List.fold_left
 	  (fun (afv, amc, rmc) mg ->
@@ -1855,9 +1854,37 @@ and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
 	  let n_ante2 = exhaustive_collect n_fv r_ante in
 	  n_ante1 @ n_ante2
   in
-  let _ = Gen.Profiling.pop_time "--opt-imply 3" in
-  exhaustive_collect fv ante_disj
   
+  let _ = Gen.Profiling.push_time "--opt-imply 2" in
+  let r = exhaustive_collect fv ante_disj in
+  let _ = Gen.Profiling.pop_time "--opt-imply 2" in r
+
+and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
+  let rec exhaustive_collect_with_selection fv ante =
+	let (n_fv, n_ante1, r_ante) = List.fold_left
+	  (fun (afv, amc, rmc) (mg_ulv, mg) ->
+		let cond_direct = Gen.BList.overlap_eq eq_spec_var afv mg_ulv in
+		let cond_link = ((List.length mg.memo_group_linking_vars) > 1) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in
+		if (cond_direct || cond_link) then
+		  (afv@mg.memo_group_fv, amc@[mg], rmc)
+		else (afv, amc, rmc@[(mg_ulv, mg)])
+	  ) (fv, [], []) ante in
+	if n_fv = fv then n_ante1
+	else
+	  let n_ante2 = exhaustive_collect_with_selection n_fv r_ante in
+	  n_ante1 @ n_ante2
+  in
+
+  let ante_with_ulv = List.map
+	(fun mg ->
+	  let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
+	  (mg_ulv, mg)
+	) ante_disj in
+
+  let _ = Gen.Profiling.push_time "--opt-imply 3" in
+  let r = exhaustive_collect_with_selection fv ante_with_ulv in
+  let _ = Gen.Profiling.pop_time "--opt-imply 3" in r
+	
 and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
   let (nlv, lv) = fv_with_slicing_label conseq in
   let n_ante = pick_relevant_lhs_constraints (nlv, lv) ante_disj in
