@@ -1,0 +1,240 @@
+data node {
+	int val;
+	int color; // 0 for red, 1 for black
+	node left;
+	node right;
+}.
+
+// Red black tree with case analysis
+// Remark: color information is already known in the case!
+pred rbc<n, cl, bh, c> == 
+	// BASE CASE
+	self = null & n = 0 & bh = 1 & cl = 1 & c = 0
+	// c = 1:   B
+	//        B   B
+	or self::node<v, 1, l, r> * l::rbc<ln, 1, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 1
+	// c = 2:   B
+	//        R   B
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, 4> * r::rbc<rn, 1, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 2
+	// c = 3:   B
+	//        R   R
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, 4> * r::rbc<rn, 0, bh - 1, 4> & cl = 1 & n = 1 + ln + rn & c = 3
+	// c = 4:   R
+	//        B   B
+	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _> & cl = 0 & n = 1 + ln + rn & c = 4
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4.
+
+//checkentail x::rbc<_,1,1,c> |- x = null & c = 0.
+
+//////////////////// NO SIMPLIFICATION ///////////////////////
+
+checkentail l_4002::rbc<ln_4003,flted_30_3999,bh_3994,Anon_3996> * 
+	r_4004::rbc<rn_4005,flted_30_3998,bh_3995,Anon_3997> * 
+	v_node_190_3727::rbc<flted_164_3676,flted_164_3675,bh_3603,flted_164_3674> * 
+	h_primed::node<rv,c_5258,l1_5288,rr> * 
+	l1_5288::node<v_5257,flted_326_5287,l_5259,rl> &
+	flted_30_4000=0 & flted_30_3999=1 & flted_30_3998=1 & 
+	flted_364_3585=0 & rn=rn_4005+1+ln_4003 & flted_364_3583=4 & 
+	bh_3994=flted_364_3584 & bh_3995=flted_364_3584 & flted_30_3368=0 & 
+	flted_30_3367=1 & flted_30_3366=1 & Anon_3374=0 & n=rn_3373+1+
+	ln_3371 & c=4 & bh_3362=bh & bh_3363=bh & h_primed=h & 2<=c & 1<=n & 
+	(c<2 | 4<=c) & n!=1 & c=4 & n!=1 & l_3370!=null & 
+	!(v_bool_171_2350_primed) & l_3370!=null & !(v_bool_171_2350_primed) & 
+	n_3412=ln_3371 & cl=flted_30_3367 & bh_3413=bh_3362 & 
+	c_3414=Anon_3364 & 0<=n_3412 & 1<=bh_3413 & 0<=cl & cl<=1 & 
+	0<=c_3414 & c_3414<=4 & lc_366_primed=c_3414 & lc_366_primed=1 & 
+	n_3442=rn_3373 & cl_3443=flted_30_3366 & bh_3444=bh_3363 & 
+	c_3445=Anon_3365 & 0<=n_3442 & 1<=bh_3444 & 0<=cl_3443 & 
+	cl_3443<=1 & 0<=c_3445 & c_3445<=4 & rc_367_primed=c_3445 & rc_367_primed=1 & 
+	n_3473=ln_3371 & cl_3474=flted_30_3367 & bh_3475=bh_3362 & 
+	c_3476=Anon_3364 & 0<=n_3473 & 1<=bh_3475 & 0<=cl_3474 & 
+	cl_3474<=1 & 0<=c_3476 & c_3476<=4 & c_3476=1 & v_bool_182_2375_primed & 
+	c_3476=c_3476 & v_bool_182_2375_primed & l=l_3370 & //r=r_3372 & 
+	ln=ln_3371 & bh_3507=bh_3362 & rn=rn_3373 & c_3508=Anon_3365 & 
+	c_3508=1 & flted_362_3589=1 & flted_363_3588=0 & flted_363_3587+
+	1=bh_3507 & flted_363_3586=4 & flted_364_3585=0 & flted_364_3584+
+	1=bh_3507 & flted_364_3583=4 & c_3508=1 & 0<=ln & 1<=bh_3507 & 
+	0<=flted_360_207 & flted_360_207<=1 & 0<=flted_360_206 & 
+	flted_360_206<=4 & 0<=rn & 1<=bh_220 & 0<=flted_360_205 & 
+	flted_360_205<=1 & 0<=c_3508 & c_3508<=4 & n_3602=ln & 
+	bh_3603=flted_363_3587 & c_3604=flted_363_3586 & (c_3604<2 | 
+	4<=c_3604) & n_3602=1 & flted_164_3676+1=n_3602 & flted_164_3675=1 & 
+	flted_164_3674=0 & bh_3603=1 & n_3602=1 & v_node_190_3727=null & 
+	n_3602=1 & (c_3604<2 | 4<=c_3604) & 0<=n_3602 & 1<=bh_3603 & 
+	0<=Anon_33 & Anon_33<=1 & 0<=c_3604 & c_3604<=4 & resr_3591!=null & 
+	v=v_4001 & c_3762=flted_30_4000 & l_3763=l_4002 & r_3764=r_4004 & 
+	c_3762=0 & v_bool_194_2398_primed & c_3762=0 & resr_3591!=null & 
+	v_bool_194_2398_primed & v_node_190_3727=null & 
+	!(v_boolean_195_5264) & v_node_190_3727=null & 
+	v_bool_195_2397_primed & !(v_boolean_195_5264) & v_bool_195_2397_primed & 
+	v_5257=Anon_3582 & c_5258=flted_362_3589 & l_5259=v_node_190_3727 & 
+	r_5260=resr_3591 & rv=v_4001 & rl=l_4002 & rr=r_4004 & 
+	flted_326_5287=0 
+|- h_primed::rbc<n-1,0,bh,4> or h_primed::rbc<n-1,1,bh,3>.
+
+
+checkentail l_4536::rbc<ln_4537,flted_30_4533,bh_4528,Anon_4530> * 
+	r_4538::rbc<rn_4539,flted_30_4532,bh_4529,Anon_4531> * 
+	v_node_190_3749::node<v_5171,flted_27_5170,l_5172,r_5174> * 
+	l_5172::rbc<ln_5173,flted_27_5169,flted_27_5168,flted_27_5167> * 
+	r_5174::rbc<rn_5175,flted_27_5166,flted_27_5165,flted_27_5164> * 
+	h_primed::node<rv,c_5258,l1_5321,rr> * 
+	l1_5321::node<v_5257,flted_326_5320,l_5259,rl> &
+	flted_27_5170=1 & flted_27_5169=0 & flted_27_5168+1=bh_3603 & 
+	flted_27_5167=4 & flted_27_5166=0 & flted_27_5165+1=bh_3603 & 
+	flted_27_5164=4 & flted_165_3703=1 & flted_165_3704=rn_5175+1+
+	ln_5173 & flted_165_3702=3 & flted_30_4534=0 & 
+	flted_30_4533=1 & flted_30_4532=1 & flted_364_3585=0 & 
+	rn=rn_4539+1+ln_4537 & flted_364_3583=4 & 
+	bh_4528=flted_364_3584 & bh_4529=flted_364_3584 & 
+	flted_30_3368=0 & flted_30_3367=1 & flted_30_3366=1 & 
+	Anon_3374=0 & n=rn_3373+1+ln_3371 & c=4 & bh_3362=bh & 
+	bh_3363=bh & h_primed=h & 2<=c & 1<=n & (c<2 | 4<=c) & n!=1 & c=4 & 
+	n!=1 & l_3370!=null & !(v_bool_171_2350_primed) & l_3370!=null & 
+	!(v_bool_171_2350_primed) & n_3412=ln_3371 & cl=flted_30_3367 & 
+	bh_3413=bh_3362 & c_3414=Anon_3364 & 0<=n_3412 & 1<=bh_3413 & 
+	0<=cl & cl<=1 & 0<=c_3414 & c_3414<=4 & lc_366_primed=c_3414 & 
+	lc_366_primed=1 & n_3442=rn_3373 & cl_3443=flted_30_3366 & 
+	bh_3444=bh_3363 & c_3445=Anon_3365 & 0<=n_3442 & 1<=bh_3444 & 
+	0<=cl_3443 & cl_3443<=1 & 0<=c_3445 & c_3445<=4 & 
+	rc_367_primed=c_3445 & rc_367_primed=1 & n_3473=ln_3371 & 
+	cl_3474=flted_30_3367 & bh_3475=bh_3362 & c_3476=Anon_3364 & 
+	0<=n_3473 & 1<=bh_3475 & 0<=cl_3474 & cl_3474<=1 & 0<=c_3476 & 
+	c_3476<=4 & c_3476=1 & v_bool_182_2375_primed & c_3476=c_3476 & 
+	v_bool_182_2375_primed & l=l_3370 & /*r=r_3372 &*/ ln=ln_3371 & 
+	bh_3507=bh_3362 & rn=rn_3373 & c_3508=Anon_3365 & c_3508=1 & 
+	flted_362_3589=1 & flted_363_3588=0 & flted_363_3587+
+	1=bh_3507 & flted_363_3586=4 & flted_364_3585=0 & 
+	flted_364_3584+1=bh_3507 & flted_364_3583=4 & c_3508=1 & 
+	0<=ln & 1<=bh_3507 & 0<=flted_360_207 & flted_360_207<=1 & 
+	0<=flted_360_206 & flted_360_206<=4 & 0<=rn & 1<=bh_220 & 
+	0<=flted_360_205 & flted_360_205<=1 & 0<=c_3508 & c_3508<=4 & 
+	n_3602=ln & bh_3603=flted_363_3587 & c_3604=flted_363_3586 & 
+	(c_3604<2 | 4<=c_3604) & n_3602!=1 & flted_165_3704+
+	1=n_3602 & flted_165_3703=1 & flted_165_3702=3 & n_3602!=1 & 
+	(c_3604<2 | 4<=c_3604) & 0<=n_3602 & 1<=bh_3603 & 
+	0<=Anon_33 & Anon_33<=1 & 0<=c_3604 & c_3604<=4 & 
+	resr_3591!=null & v=v_4535 & c_3762=flted_30_4534 & 
+	l_3763=l_4536 & r_3764=r_4538 & c_3762=0 & v_bool_194_2398_primed & 
+	c_3762=0 & resr_3591!=null & v_bool_194_2398_primed & 
+	v_node_190_3749!=null & v_4632=v_5171 & c_4633=flted_27_5170 & 
+	l_4634=l_5172 & r_4635=r_5174 & c_4633!=0 & 
+	!(v_boolean_195_5293) & c_4633!=0 & v_node_190_3749!=null & 
+	v_bool_195_2397_primed & !(v_boolean_195_5293) & 
+	v_bool_195_2397_primed & v_5257=Anon_3582 & c_5258=flted_362_3589 & 
+	l_5259=v_node_190_3749 & r_5260=resr_3591 & rv=v_4535 & 
+	rl=l_4536 & rr=r_4538 & flted_326_5320=0
+|- h_primed::rbc<n-1,0,bh,4> or h_primed::rbc<n-1,1,bh,3>.
+
+
+checkentail resr_3591::node<v_4268,flted_30_4267,l_4269,r_4271> * 
+	l_4269::rbc<ln_4270,flted_30_4266,bh_4261,Anon_4263> * 
+	r_4271::rbc<rn_4272,flted_30_4265,bh_4262,Anon_4264> * 
+	v_node_190_3738::node<v_4888,flted_30_4887,l_4889,r_4891> * 
+	l_4889::rbc<ln_4890,flted_30_4886,bh_4881,Anon_4883> * 
+	r_4891::rbc<rn_4892,flted_30_4885,bh_4882,Anon_4884> * 
+	h_primed::node<Anon_3582,flted_362_3589,v_node_190_3738,resr_3591> &
+	flted_30_4887=0 & flted_30_4886=1 & flted_30_4885=1 & 
+	flted_165_3689=0 & flted_165_3690=rn_4892+1+ln_4890 & 
+	flted_165_3688=4 & bh_4881=bh_3603 & bh_4882=bh_3603 & 
+	flted_30_4267=0 & flted_30_4266=1 & flted_30_4265=1 & 
+	flted_364_3585=0 & rn=rn_4272+1+ln_4270 & flted_364_3583=4 & 
+	bh_4261=flted_364_3584 & bh_4262=flted_364_3584 & flted_30_3368=0 & 
+	flted_30_3367=1 & flted_30_3366=1 & Anon_3374=0 & n=rn_3373+1+
+	ln_3371 & c=4 & bh_3362=bh & bh_3363=bh & h_primed=h & 2<=c & 1<=n & 
+	(c<2 | 4<=c) & n!=1 & c=4 & n!=1 & l_3370!=null & 
+	!(v_bool_171_2350_primed) & l_3370!=null & !(v_bool_171_2350_primed) & 
+	n_3412=ln_3371 & cl=flted_30_3367 & bh_3413=bh_3362 & 
+	c_3414=Anon_3364 & 0<=n_3412 & 1<=bh_3413 & 0<=cl & cl<=1 & 
+	0<=c_3414 & c_3414<=4 & lc_366_primed=c_3414 & lc_366_primed=1 & 
+	n_3442=rn_3373 & cl_3443=flted_30_3366 & bh_3444=bh_3363 & 
+	c_3445=Anon_3365 & 0<=n_3442 & 1<=bh_3444 & 0<=cl_3443 & 
+	cl_3443<=1 & 0<=c_3445 & c_3445<=4 & rc_367_primed=c_3445 & rc_367_primed=1 & 
+	n_3473=ln_3371 & cl_3474=flted_30_3367 & bh_3475=bh_3362 & 
+	c_3476=Anon_3364 & 0<=n_3473 & 1<=bh_3475 & 0<=cl_3474 & 
+	cl_3474<=1 & 0<=c_3476 & c_3476<=4 & c_3476=1 & v_bool_182_2375_primed & 
+	c_3476=c_3476 & v_bool_182_2375_primed & l=l_3370 & //r=r_3372 & 
+	ln=ln_3371 & bh_3507=bh_3362 & rn=rn_3373 & c_3508=Anon_3365 & 
+	c_3508=1 & flted_362_3589=1 & flted_363_3588=0 & flted_363_3587+
+	1=bh_3507 & flted_363_3586=4 & flted_364_3585=0 & flted_364_3584+
+	1=bh_3507 & flted_364_3583=4 & c_3508=1 & 0<=ln & 1<=bh_3507 & 
+	0<=flted_360_207 & flted_360_207<=1 & 0<=flted_360_206 & 
+	flted_360_206<=4 & 0<=rn & 1<=bh_220 & 0<=flted_360_205 & 
+	flted_360_205<=1 & 0<=c_3508 & c_3508<=4 & n_3602=ln & 
+	bh_3603=flted_363_3587 & c_3604=flted_363_3586 & (c_3604<2 | 
+	4<=c_3604) & n_3602!=1 & flted_165_3690+1=n_3602 & 
+	flted_165_3689=0 & flted_165_3688=4 & n_3602!=1 & (c_3604<2 | 
+	4<=c_3604) & 0<=n_3602 & 1<=bh_3603 & 0<=Anon_33 & Anon_33<=1 & 
+	0<=c_3604 & c_3604<=4 & resr_3591!=null & v=v_4268 & 
+	c_3762=flted_30_4267 & l_3763=l_4269 & r_3764=r_4271 & c_3762=0 & 
+	v_bool_194_2398_primed & c_3762=0 & resr_3591!=null & v_bool_194_2398_primed & 
+	v_node_190_3738!=null & v_4632=v_4888 & c_4633=flted_30_4887 & 
+	l_4634=l_4889 & r_4635=r_4891 & c_4633=0 & v_boolean_195_5232 & 
+	c_4633=0 & v_node_190_3738!=null & !(v_bool_195_2397_primed) & 
+	v_boolean_195_5232 & !(v_bool_195_2397_primed)
+|- h_primed::rbc<n-1,0,bh,4> or h_primed::rbc<n-1,1,bh,3>.
+
+////////////////////  SIMPLIFICATION  ////////////////////////
+
+checkentail l_3998::rbc<ln_3999,lc_366_primed,lc_366_primed,Anon_3992> * 
+	r_4000::rbc<rn_4001,lc_366_primed,lc_366_primed,Anon_3993> * 
+	l::rbc<flted_326_5276,rc_367_primed,rc_367_primed,flted_326_5276> * 
+	h_primed::node<v_3997,c_5247,l1_5277,r_4000> * 
+	l1_5277::node<Anon_3587,flted_326_5276,l,l_3998> &
+	rn=rn_4001+1+ln_3999 & n=rn+1+rc_367_primed & h_primed=h & 2<=c & 1<=n & n!=1 & 
+	l_3370!=null & !(v_bool_171_2350_primed) & rc_367_primed=lc_366_primed & rc_367_primed<=1 & 
+	lc_366_primed<=1 & 0<=lc_366_primed & lc_366_primed<=4 & lc_366_primed=1 & 
+	v_bool_182_2375_primed & rc_367_primed+1=bh & c=4 & 1<=bh & 0<=flted_360_207 & 
+	flted_360_207<=1 & 0<=flted_360_206 & flted_360_206<=4 & 0<=rn & 
+	1<=bh_220 & 0<=flted_360_205 & flted_360_205<=1 & rc_367_primed<=4 & 
+	flted_326_5276+1=rc_367_primed & rc_367_primed=1 & (c<2 | 4<=c) & 
+	0<=rc_367_primed & 1<=rc_367_primed & 0<=Anon_33 & Anon_33<=1 & 0<=c & c<=4 & 
+	resr_3592!=null & v_bool_194_2398_primed & l=null & 
+	!(v_boolean_195_5253) & v_bool_195_2397_primed & c_5247=rc_367_primed & 
+	flted_326_5276=0
+|- h_primed::rbc<n-1,0,bh,4> or h_primed::rbc<n-1,1,bh,3>.
+
+
+checkentail l_4532::rbc<ln_4533,lc_366_primed,bh_4525,Anon_4526> * 
+	r_4534::rbc<rn_4535,lc_366_primed,bh_4525,Anon_4527> * 
+	v_node_190_3744::node<v_5158,lc_366_primed,l_5159,r_5161> * 
+	l_5159::rbc<ln_5160,flted_326_5309,flted_27_5152,c> * 
+	r_5161::rbc<rn_5162,flted_326_5309,flted_27_5152,c> * 
+	h_primed::node<v_4531,c_5247,l1_5310,r_4534> * 
+	l1_5310::node<Anon_3587,flted_326_5309,v_node_190_3744,l_4532> &
+	flted_27_5152+1=bh_4525 & flted_165_3699=rn_5162+1+ln_5160 & 
+	rn=rn_4535+1+ln_4533 & n=rn+1+n_3603 & h_primed=h & 2<=c & 1<=n & 
+	n!=1 & l_3370!=null & !(v_bool_171_2350_primed) & rc_367_primed=lc_366_primed & 
+	rc_367_primed<=1 & lc_366_primed<=1 & 0<=lc_366_primed & lc_366_primed<=4 & lc_366_primed=1 & 
+	v_bool_182_2375_primed & bh_4525+1=bh & c=4 & 1<=bh & 
+	0<=flted_360_207 & flted_360_207<=1 & 0<=flted_360_206 & 
+	flted_360_206<=4 & 0<=rn & 1<=bh_220 & 0<=flted_360_205 & 
+	flted_360_205<=1 & 0<=rc_367_primed & rc_367_primed<=4 & flted_165_3699+
+	1=n_3603 & rc_367_primed=1 & flted_165_3697=3 & n_3603!=1 & 
+	(c<2 | 4<=c) & 0<=n_3603 & 1<=bh_4525 & 0<=Anon_33 & 
+	Anon_33<=1 & 0<=c & c<=4 & resr_3592!=null & v_bool_194_2398_primed & 
+	lc_366_primed!=0 & v_node_190_3744!=null & 
+	!(v_boolean_195_5282) & v_bool_195_2397_primed & c_5247=rc_367_primed & 
+	flted_326_5309=0
+|- h_primed::rbc<n-1,0,bh,4> or h_primed::rbc<n-1,1,bh,3>.
+
+
+checkentail resr_3592::node<v_4264,c_4628,l_4265,r_4267> * 
+	l_4265::rbc<ln_4266,lc_366_primed,bh_4869,Anon_4259> * 
+	r_4267::rbc<rn_4268,lc_366_primed,bh_4869,Anon_4260> * 
+	v_node_190_3733::node<v_4875,c_4628,l_4876,r_4878> * 
+	l_4876::rbc<ln_4877,lc_366_primed,bh_4869,Anon_4870> * 
+	r_4878::rbc<rn_4879,lc_366_primed,bh_4869,Anon_4871> * 
+	h_primed::node<Anon_3587,rc_367_primed,v_node_190_3733,resr_3592> &
+	flted_165_3685=rn_4879+1+ln_4877 & rn=rn_4268+1+ln_4266 & n=rn+1+
+	n_3603 & h_primed=h & 2<=c & 1<=n & n!=1 & l_3370!=null & 
+	!(v_bool_171_2350_primed) & rc_367_primed=lc_366_primed & rc_367_primed<=1 & lc_366_primed<=1 & 
+	0<=lc_366_primed & lc_366_primed<=4 & lc_366_primed=1 & v_bool_182_2375_primed & bh_4869+
+	1=bh & rc_367_primed=1 & 1<=bh & 0<=flted_360_207 & flted_360_207<=1 & 
+	0<=flted_360_206 & flted_360_206<=4 & 0<=rn & 1<=bh_220 & 
+	0<=flted_360_205 & flted_360_205<=1 & 0<=rc_367_primed & rc_367_primed<=4 & 
+	flted_165_3685+1=n_3603 & c=4 & n_3603!=1 & (c<2 | 4<=c) & 
+	0<=n_3603 & 1<=bh_4869 & 0<=Anon_33 & Anon_33<=1 & 0<=c & c<=4 & 
+	resr_3592!=null & v_bool_194_2398_primed & c_4628=0 & 
+	v_node_190_3733!=null & v_boolean_195_5221 & !(v_bool_195_2397_primed)
+|- h_primed::rbc<n-1,0,bh,4> or h_primed::rbc<n-1,1,bh,3>.
