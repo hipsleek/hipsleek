@@ -3421,6 +3421,10 @@ and add_pre_debug prog f =
       
 and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
+
+  (* (\*LDK*\) *)
+  (* let _ = print_string("\n [LDK] b4 trans_I2C_struc_formula, I_struc_formula = " ^ (Iprinter.string_of_struc_formula f0) ^ "\n") in *)
+
   let prb = string_of_bool in
   Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
@@ -3487,8 +3491,13 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   let _ = type_store_clean_up r stab in
   r
 
+(*LDK ??? transform iformula to cformula *)
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
+
+  (* (\*LDK*\) *)
+  (* let _ = print_string("\n [LDK] trans_formula IF = " ^ (Iprinter.string_of_formula f0) ^ "\n") in *)
+
   let prb = string_of_bool in
   Gen.Debug.no_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
@@ -3497,6 +3506,10 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 (* AN HOA : TODO CHECK *)
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
+  
+  (*LDK*)
+  let _ = print_string("\n [LDK] trans_formula IF = " ^ (Iprinter.string_of_formula f0) ^ "\n") in
+
   let rec helper f0 =
     match f0 with
       | IF.Or { 
@@ -3514,7 +3527,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let rl = Cformula.res_retrieve stab clean_res fl in
             let _ = if sep_collect then 
               (gather_type_info_pure prog (IF.flatten_branches p br) stab;
-              gather_type_info_heap prog h stab) else () in 					
+              gather_type_info_heap prog h stab) else () in
             let ch = linearize_formula prog f0 stab in					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
             let _ = 
@@ -3558,7 +3571,12 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
 	        (Cformula.res_replace stab rl clean_res fl);ch) 
   in helper f0
 
+  (*LDK debug*)
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
+    let pr1 prog = "prog" in
+    Gen.Debug.ho_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_stab Cprinter.string_of_formula linearize_formula_x prog f0 stab
+
+and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
     match hargs with
       | (e, label) :: rest ->
@@ -3569,10 +3587,15 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
             let hvars = e_hvars :: rest_hvars in
 	        hvars
       | [] -> [] in
-  (* let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) = *)
+  (*   (\*LDK Debug*\) *)
+  (* let linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =     *)
+  (*   let pr (f: CF.h_formula * CF.t_formula) =  match f with *)
+  (*     | (h,t) -> Cprinter.string_of_h_formula h  *)
+  (*   in *)
+  (*   Gen.Debug.ho_2 "linearize_heap" Iprinter.string_of_h_formula Cprinter.string_of_pos pr linearize_heap_x f po *)
 
-  let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =    
-    let res = 
+  let linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =    
+    let rec helper f pos = 
       match f with
         | IF.HeapNode2 h2 -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = "malfunction with convert to heap node"; }
         | IF.HeapNode{
@@ -3585,6 +3608,9 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
               IF.h_formula_heap_pos = pos;
               IF.h_formula_heap_label = pi;} ->
               (try
+
+                let _ = print_string("\n [LDK] frac = " ^ (Iprinter.string_of_formula_exp frac) ^ "\n") in
+                let _ = print_string("\n [LDK] " ^ (Iprinter.string_of_formula_exp_list exps) ^ "\n") in
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
                 let labels = vdef.I.view_labels in
                 let hvars = match_exp (List.combine exps labels) pos in
@@ -3594,12 +3620,24 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                     vdef.I.view_data_name)
                   else vdef.I.view_data_name in
                 let new_v = CP.SpecVar (Named c0, v, p) in
+
+                (*LDK: linearize frac permission as a spec var*)
+                let fracs = frac :: [] in
+                let fraclabels = List.map (fun _ -> "") fracs in
+                (* let fracvars = match_exp (List.combine fracs fraclabels) pos in *)
+
+                (* let fracvar = *)
+                (*   let fracvars = match_exp (List.combine fracs fraclabels) pos in *)
+                (*   match fracvars with *)
+                (*     | v :: rest -> v *)
+                (* in *)
+                (* let _ = print_string("fracvar = " ^ (Cprinter.string_of_spec_var fracvar) ^ "\n") in *)
                 (* let newFrac = trans_pure_exp frac stab in (\*LDK*\) *)
                 let new_h = CF.ViewNode {
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
 		            CF.h_formula_view_imm = imm;
-		            CF.h_formula_view_frac_perm = None; (*LDK*)
+		            CF.h_formula_view_frac_perm = None; (*LDK ???*)
                     CF.h_formula_view_arguments = hvars;
                     CF.h_formula_view_modes = vdef.I.view_modes;
                     CF.h_formula_view_coercible = true;
@@ -3633,8 +3671,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
               IF.h_formula_star_h2 = f2;
               IF.h_formula_star_pos = pos
           } ->
-              let (lf1, type1) = linearize_heap f1 pos in
-              let (lf2, type2) = linearize_heap f2 pos in
+              let (lf1, type1) = helper f1 pos in
+              let (lf2, type2) = helper f2 pos in
               let tmp_h = CF.mkStarH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
@@ -3644,8 +3682,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                     IF.h_formula_phase_rw = f2;
                     IF.h_formula_phase_pos = pos
                 } ->
-              let (lf1, type1) = linearize_heap f1 pos in
-              let (lf2, type2) = linearize_heap f2 pos in
+              let (lf1, type1) = helper f1 pos in
+              let (lf2, type2) = helper f2 pos in
               let tmp_h = CF.mkPhaseH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
@@ -3655,8 +3693,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                     IF.h_formula_conj_h2 = f2;
                     IF.h_formula_conj_pos = pos
                 } ->
-              let (lf1, type1) = linearize_heap f1 pos in
-              let (lf2, type2) = linearize_heap f2 pos in
+              let (lf1, type1) = helper f1 pos in
+              let (lf2, type2) = helper f2 pos in
               let tmp_h = CF.mkConjH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
@@ -3666,7 +3704,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
     (* let normalized_res = CF.normalize_h_formula (fst res) in *)
     (* let _ = print_string("f = " ^ (Cprinter.string_of_h_formula (fst res)) ^ "\n") in *)
     (* let _ = print_string("normalize f = " ^ (Cprinter.string_of_h_formula normalized_res) ^ "\n") in *)
-    res
+    (* res*)
+    helper f pos
 
   in
   
@@ -3713,6 +3752,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 	      let nh,np,nt,nfl,nb = linearize_base base pos in
           let np = MCP.memoise_add_pure_N (MCP.mkMTrue pos) np in
 	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb pos 
+
+
 	          
 
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 

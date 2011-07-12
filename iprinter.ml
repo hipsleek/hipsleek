@@ -277,20 +277,26 @@ let rec string_of_h_formula = function
 
   | F.HeapNode ({F.h_formula_heap_node = x;
 		 F.h_formula_heap_name = id;
+         F.h_formula_heap_frac_perm = frac; (*LDK*)
 		 F.h_formula_heap_arguments = pl;
 		 F.h_formula_heap_label = pi;
 		 F.h_formula_heap_pos = l}) -> 				 
       string_of_formula_label_opt pi				 
-	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
+	(* ((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">") *)
+	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^"(" ^ string_of_formula_exp frac ^ ")" ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
 	
   | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
+          F.h_formula_heap2_frac_perm = frac; (*LDK*)
 		  F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
+	(* string_of_formula_label_opt pi *)
+	(*   (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">") *)
 	string_of_formula_label_opt pi
-	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">")
+	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^"(" ^ string_of_formula_exp frac ^ ")" ^ "<" ^ tmp2 ^ ">")
+
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 ;;

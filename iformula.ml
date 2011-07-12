@@ -771,8 +771,11 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 	List.map helper f
 
 
+and float_out_exps_from_heap (f:formula ):formula = float_out_exps_from_heap_x f
+  (* let pr = Iprinter.string_of_formula in *)
+  (* Gen.Debug.ho_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f *)
 
-and float_out_exps_from_heap (f:formula ):formula = 
+and float_out_exps_from_heap_x (f:formula ):formula = 
 	
   let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
     | Star b-> 
@@ -842,8 +845,8 @@ and float_out_exps_from_heap (f:formula ):formula =
 			formula_exists_pos = b.formula_exists_pos
 		      })	
     | Or b-> Or ({
-		   formula_or_f1 = float_out_exps_from_heap b.formula_or_f1;
-		   formula_or_f2 = float_out_exps_from_heap b.formula_or_f2;
+		   formula_or_f1 = float_out_exps_from_heap_x b.formula_or_f1;
+		   formula_or_f2 = float_out_exps_from_heap_x b.formula_or_f2;
 		   formula_or_pos = b.formula_or_pos
 		 })		
   in helper f

@@ -605,7 +605,7 @@ simple2:  [[ t= opt_type_var_list -> ()]];
 
 (*LDK: frac for fractional permission*)   
 simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac= opt_frac_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac = opt_frac_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
      match hl with
         | ([],t) -> F.mkHeapNode2 c id true false false false frac t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id true false false false frac t ofl (get_pos_camlp4 _loc 2)]];
