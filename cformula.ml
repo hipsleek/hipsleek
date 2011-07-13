@@ -842,8 +842,19 @@ and fv_simple_formula (f:formula) =
   let h, _, _, _, _ = split_components f in
   match h with
     | HTrue | HFalse -> []
-    | DataNode h ->  h.h_formula_data_node::h.h_formula_data_arguments
-    | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments
+    (* | DataNode h ->  h.h_formula_data_node::h.h_formula_data_arguments *)
+    | DataNode h -> let frac = h.h_formula_data_frac_perm in
+        (match frac with
+          | None -> h.h_formula_data_node::h.h_formula_data_arguments
+          | Some f -> h.h_formula_data_node::(f::h.h_formula_data_arguments))
+
+
+    (* | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments *)
+    | ViewNode h -> let frac = h.h_formula_view_frac_perm in
+        (match frac with
+          | None -> h.h_formula_view_node::h.h_formula_view_arguments
+          | Some f -> h.h_formula_view_node::(f::h.h_formula_view_arguments))
+
     | _ -> []
 
 and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
@@ -980,6 +991,12 @@ and get_node_name (h : h_formula) = match h with
   | ViewNode ({h_formula_view_name = c}) 
   | DataNode ({h_formula_data_name = c}) -> c
   | _ -> failwith ("get_node_name: invalid argument")
+
+(*LDK*)
+and get_node_frac_perm (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_frac_perm = c}) 
+  | DataNode ({h_formula_data_frac_perm = c}) -> c
+  | _ -> failwith ("get_node_frac_perm: invalid argument")
 
 and get_node_args (h : h_formula) = match h with
   | ViewNode ({h_formula_view_arguments = c}) 
@@ -1237,13 +1254,35 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Phase ({h_formula_phase_rd = h1; 
 	h_formula_phase_rw = h2; 
 	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
-  | DataNode ({h_formula_data_node = v; 
-	h_formula_data_arguments = vs0}) ->
+  (* | DataNode ({h_formula_data_node = v;  *)
+  (*   h_formula_data_arguments = vs0}) -> *)
+  (*       (\*let vs = List.tl (List.tl vs0) in*\) *)
+  (*       let vs = vs0 in *)
+  (*       if List.mem v vs then vs else v :: vs *)
+
+(*LDK*)
+  | DataNode ({h_formula_data_node = v;
+               h_formula_data_frac_perm = frac;
+               h_formula_data_arguments = vs0}) ->
         (*let vs = List.tl (List.tl vs0) in*)
-        let vs = vs0 in
-	    if List.mem v vs then vs else v :: vs
+      let vs = vs0 in
+      let vs1 = if List.mem v vs then vs else v :: vs in
+      (match frac with
+        | None -> vs1
+        | Some f -> if List.mem f vs1 then vs1 else f :: vs1)
+
+  (* | ViewNode ({h_formula_view_node = v;  *)
+  (*   h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs *)
+
+(*LDK*)
   | ViewNode ({h_formula_view_node = v; 
-	h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
+               h_formula_view_frac_perm = frac; 
+	           h_formula_view_arguments = vs}) -> 
+      let vs1 = if List.mem v vs then vs else v :: vs in
+      (match frac with
+        | None -> vs1
+        | Some f -> if List.mem f vs1 then vs1 else f::vs1)
+
   | HTrue | HFalse | Hole _ -> []
 
 and br_fv br init_l: CP.spec_var list =
@@ -1579,6 +1618,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | ViewNode ({h_formula_view_node = x; 
 	h_formula_view_name = c; 
     h_formula_view_imm = imm; 
+	h_formula_view_frac_perm = frac; (*LDK*)
 	h_formula_view_arguments = svs; 
 	h_formula_view_modes = modes;
 	h_formula_view_coercible = coble;
@@ -1592,6 +1632,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         ViewNode {g with h_formula_view_node = subst_var s x; 
 		(* h_formula_view_name = c;  *)
         (* h_formula_view_imm = imm;   *)
+        h_formula_view_frac_perm = map_opt (subst_var s) frac;  (*LDK*)
 		h_formula_view_arguments = List.map (subst_var s) svs;
 	   (*  h_formula_view_modes = modes; *)
 	   (*  h_formula_view_coercible = coble; *)

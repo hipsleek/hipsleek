@@ -232,8 +232,12 @@ let rec
   | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
       let tmp1 = look_for_anonymous_h_formula h1 in
       let tmp2 = look_for_anonymous_h_formula h2 in List.append tmp1 tmp2
-  | IF.HeapNode { IF.h_formula_heap_arguments = args } ->
-      let tmp1 = look_for_anonymous_exp_list args in tmp1
+  | IF.HeapNode { IF.h_formula_heap_arguments = args;
+                  IF.h_formula_heap_frac_perm = frac; (*LDK*)
+                } ->
+      (* let tmp1 = look_for_anonymous_exp_list args in tmp1 *)
+      let tmp1 = look_for_anonymous_exp_list (frac::args) in tmp1
+
   | _ -> []
 
 and look_for_anonymous_exp_list (args : IP.exp list) :
@@ -354,7 +358,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 	  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-          IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm; (*LDK*)
+          IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm; (*LDK: not sure???*)
           IF.h_formula_heap_arguments = hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
@@ -376,7 +380,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
             IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
             IF.h_formula_heap_arguments = hargs;
-            IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm;(*LDK*)
+            IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm;(*LDK: not sure ???*)
             IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
             IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
 			IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
@@ -1925,6 +1929,7 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		              {
 		                  CF.h_formula_data_node = p;
 		                  CF.h_formula_data_name = c;
+		                  CF.h_formula_data_frac_perm = _; (*LDK*)
 		                  CF.h_formula_data_arguments = _;
 		                  CF.h_formula_data_pos = _
 		              } ->
@@ -1940,6 +1945,7 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		              {
 		                  CF.h_formula_view_node = p;
 		                  CF.h_formula_view_name = c;
+		                  CF.h_formula_view_frac_perm = _; (*LDK*)
 		                  CF.h_formula_view_arguments = _;
 		                  CF.h_formula_view_pos = _
 		              } -> if (CP.name_of_spec_var p) = v then c else ""
@@ -3611,6 +3617,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 
                 (* let _ = print_string("\n [LDK] frac = " ^ (Iprinter.string_of_formula_exp frac) ^ "\n") in *)
                 (* let _ = print_string("\n [LDK] " ^ (Iprinter.string_of_formula_exp_list exps) ^ "\n") in *)
+
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
                 let labels = vdef.I.view_labels in
                 let hvars = match_exp (List.combine exps labels) pos in
@@ -3624,20 +3631,16 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                 (*LDK: linearize frac permission as a spec var*)
                 let fracs = frac :: [] in
                 let fraclabels = List.map (fun _ -> "") fracs in
-                (* let fracvars = match_exp (List.combine fracs fraclabels) pos in *)
+                let fracvars = match_exp (List.combine fracs fraclabels) pos in
+                let fracvar = List.nth fracvars 0 in
 
-                (* let fracvar = *)
-                (*   let fracvars = match_exp (List.combine fracs fraclabels) pos in *)
-                (*   match fracvars with *)
-                (*     | v :: rest -> v *)
-                (* in *)
                 (* let _ = print_string("fracvar = " ^ (Cprinter.string_of_spec_var fracvar) ^ "\n") in *)
-                (* let newFrac = trans_pure_exp frac stab in (\*LDK*\) *)
+
                 let new_h = CF.ViewNode {
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
 		            CF.h_formula_view_imm = imm;
-		            CF.h_formula_view_frac_perm = None; (*LDK ???*)
+		            CF.h_formula_view_frac_perm = Some fracvar; (*LDK ???*)
                     CF.h_formula_view_arguments = hvars;
                     CF.h_formula_view_modes = vdef.I.view_modes;
                     CF.h_formula_view_coercible = true;
@@ -3654,12 +3657,18 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       let labels = List.map (fun _ -> "") exps in
                       let hvars = match_exp (List.combine exps labels) pos in
                       let new_v = CP.SpecVar (Named c, v, p) in
-                      let newFrac = trans_pure_exp frac stab in  (*LDK*)
+
+                      (*LDK: linearize frac permission as a spec var*)
+                      let fracs = frac :: [] in
+                      let fraclabels = List.map (fun _ -> "") fracs in
+                      let fracvars = match_exp (List.combine fracs fraclabels) pos in
+                      let fracvar = List.nth fracvars 0 in
+
                       let new_h = CF.DataNode {
                           CF.h_formula_data_node = new_v;
                           CF.h_formula_data_name = c;
 		                  CF.h_formula_data_imm = imm;
-		                  CF.h_formula_data_frac_perm = None (* Some newFrac *); (*LDK: ???*)
+		                  CF.h_formula_data_frac_perm = (Some fracvar); (*LDK*)
 		                  CF.h_formula_data_arguments = hvars;
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;
@@ -5039,7 +5048,7 @@ and gather_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 (*     | IF.HTrue | IF.HFalse -> () *)
 
 and gather_type_info_heap prog (h0 : IF.h_formula) stab =
-  Gen.Debug.no_eff_2 "gather_type_info_heap" [false;true]
+  Gen.Debug.ho_eff_2 "gather_type_info_heap" [false;true]
       Iprinter.string_of_h_formula string_of_stab (fun _ -> "()")
       (fun _ _ -> gather_type_info_heap_x prog h0 stab) h0 stab 
 
@@ -5072,9 +5081,11 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 	        {
                 IF.h_formula_heap_node = (v, p);
                 IF.h_formula_heap_name = c;
+                IF.h_formula_heap_frac_perm = frac;
                 IF.h_formula_heap_arguments = ies;
                 IF.h_formula_heap_pos = pos
 	        } ->
+          (* let ies = (frac::ies) in (*LDK*) *) 
 	      let dname =
             (try
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
@@ -5092,7 +5103,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                           (match e with
 				            | IP.Var ((v, p), pos) -> ((fst t), v) :: tmp
 				            | _ -> tmp)
-                    | _ ->
+                    | _ -> let _ = print_string "LDK TEST 1" in
 			              Err.report_error
                               {
                                   Err.error_loc = pos;
@@ -5100,7 +5111,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 				                      "number of arguments for view " ^
 				                          (c ^ " does not match");
                               } in
-                let tmp = helper ies vdef.I.view_typed_vars
+                (* let tmp = helper ies vdef.I.view_typed_vars *)
+                let tmp = helper (frac::ies) vdef.I.view_typed_vars
                 in
                 ignore
                     (List.map
@@ -5155,7 +5167,9 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
             let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
             let fields = I.look_up_all_fields prog ddef
             in
-		    if (List.length ies) = (List.length fields)
+            (* let _ = print_string ("[LDK] |ies|= "^(string_of_int (List.length ies)) ^ "\n") in *)
+            (* let _ = print_string ("[LDK] |fields|= "^(string_of_int (List.length fields)) ^ "\n") in *)
+		    if (List.length ies)  = (List.length fields)
 		    then
               (let typs =
                 List.map (fun f -> trans_type prog (fst (fst f)) pos)
@@ -5170,7 +5184,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                               (c ^ " does not match");
                   }
           with
-            | Not_found ->
+            | Not_found -> 
 		          (try
                     let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
                     in
@@ -5193,7 +5207,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 				                      (c ^ " does not match");
 			              }
 		          with
-		            | Not_found ->
+		            | Not_found -> 
+                        (* let _ = print_string "LDK TEST 2" in (\*LDK*\) *)
 			              report_error pos
 			                  (c ^ " is neither a view nor data declaration"))))
     | IF.HTrue | IF.HFalse -> ()
@@ -5421,17 +5436,17 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 (* AN HOA : TODO CHECK *)
 and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Iformula.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
-  (* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in
   let f = convert_heap2 prog f in
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
   let f = Iformula.float_out_exps_from_heap f in
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
   let f = Iformula.float_out_min_max f in
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
   let f = Iformula.rename_bound_vars f in
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
   f
       
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
