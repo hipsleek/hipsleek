@@ -4,9 +4,9 @@
  @date 24/06/2011
  **/
 
-//relation sumarr(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & sumarr(a,i,j-1,s-a[j])).
+relation sumarr(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & sumarr(a,i,j-1,s-a[j])).
 
-relation sumarr(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & sumarr(a,i+1,j,s-a[i])).
+//relation sumarr(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & sumarr(a,i+1,j,s-a[i])).
 
 relation upperbnd(int[] a, int i, int j, int s) == forall(k : (k < i | k > j | a[k] <= s)).
 
@@ -16,7 +16,7 @@ relation isNatural(int[] a, int i, int j) == forall(k : (k < i | k > j | a[k] >=
  **/
 void compute_sum_max(int[] a, int N, ref int sumout, ref int maxout)
 	requires dom(a,0,N-1) & N >= 0
-	ensures upperbnd(a,0,N-1,maxout') & sumarr(a,0,N-1,sumout');
+	ensures upperbnd(a,0,N-1,maxout') & sumarr(a,0,N-1,sumout') & sumout' <= maxout' * N;
 {
 	compute_sum_max_helper(a, N, 0, sumout, 0, maxout);
 	dprint; // issue detected: variable is not renamed on input
@@ -29,7 +29,8 @@ void compute_sum_max(int[] a, int N, ref int sumout, ref int maxout)
  **/
 void compute_sum_max_helper(int[] a, int N, int si, ref int s, int mi, ref int m)
 	requires dom(a,0,N-1) & N >= 0
-	ensures upperbnd(a,0,N-1,m') & m' >= mi & sumarr(a,0,N-1,s' - si);
+	ensures upperbnd(a,0,N-1,m') & m' >= mi & sumarr(a,0,N-1,s' - si)
+			& s' <= si + m' * N;
 {
 	if (N > 0)
 	{
