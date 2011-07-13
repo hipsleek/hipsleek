@@ -1389,7 +1389,7 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 and subst sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
+  Gen.Debug.ho_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
 
 and subst_x sst (f : formula) =
   let rec helper f =
@@ -1462,6 +1462,7 @@ and h_subst sst (f : h_formula) =
   | ViewNode ({h_formula_view_node = x; 
 							h_formula_view_name = c; 
 							h_formula_view_imm = imm; 
+							h_formula_view_frac_perm = frac; (*LDK*)
 							h_formula_view_arguments = svs; 
 							h_formula_view_modes = modes;
 							h_formula_view_coercible = coble;
@@ -1474,13 +1475,14 @@ and h_subst sst (f : h_formula) =
 							h_formula_view_pos = pos} as g) -> 
 		ViewNode { g with 
 							h_formula_view_node = CP.subst_var_par sst x; 
+							h_formula_view_frac_perm = map_opt (CP.subst_var_par sst) frac;
 							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
 		}
   | DataNode ({h_formula_data_node = x; 
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm; 
-							h_formula_data_frac_perm = frac; 
+							h_formula_data_frac_perm = frac; (*LDK*)
 							h_formula_data_arguments = svs; 
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;

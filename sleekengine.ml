@@ -336,17 +336,41 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ante = Solver.prune_preds !cprog true ante in
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
+
+    let _ = print_string ("LDK: I am here inside run_entail_check 1 \n") in
+
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+
+    let _ = print_string ("LDK: I am here inside run_entail_check 2 \n") in
+
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+
+    let _ = print_string ("LDK: I am here inside run_entail_check 3 \n") in
+
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+
+    let _ = print_string ("LDK: I am here inside run_entail_check 4 \n") in
+
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
   (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
+
+    let _ = print_string ("LDK: I am here inside run_entail_check 5 \n") in
+
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+
+    let _ = print_string ("[LDK] I am here inside run_entail_check 6 \n") in
+
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*exception in entail check is thrawn here*)
+
+    let _ = print_string ("[LDK] I am here inside run_entail_check 7 \n") in
+
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
   let ante_flow_ff = (CF.flow_formula_of_formula ante) in
+
+    let _ = print_string ("[LDK] I am here inside run_entail_check 8 \n") in
+
   let rs1, _ = Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
     (CF.SuccCtx[ctx]) conseq no_pos None in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
@@ -354,12 +378,23 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   residues := Some rs;
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   flush stdout;
+
+    let _ = print_string ("LDK: I am here inside run_entail_check END \n") in
+
   let res = ((not (CF.isFailCtx_gen rs))) in
   (res, rs)
 
+
+
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+		(* (\* LDK *\) *)
+		(*  let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in *)
+		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
+		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   try 
+    let _ = print_string ("LDK: I am here before run_entail_check \n") in
     let valid, rs = run_entail_check iante0 iconseq0 in
+    let _ = print_string ("LDK: I am here after run_entail_check\n") in
     let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
     if not valid then
       begin
@@ -383,6 +418,11 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     Printexc.print_backtrace stdout;
     dummy_exception() ; 
     print_string "exception in entail check\n"
+
+(*LDK debug*)
+let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  Gen.Debug.ho_2 "process_entail_check" pr pr (fun _ -> "unit") process_entail_check iante0 iconseq0
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 

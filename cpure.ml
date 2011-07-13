@@ -1231,7 +1231,8 @@ and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_sub
   (* match sst with *)
   (* | s::ss -> subst ss (apply_one s f) 				(\* applies one substitution at a time *\) *)
   (* | [] -> f *)
- 
+
+(*LDK ???*) 
 and subst_var (fr, t) (o : spec_var) = if eq_spec_var fr o then t else o
 
 (* should not use = since type of spec_var may have been different *)

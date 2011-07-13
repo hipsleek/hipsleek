@@ -3507,8 +3507,8 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   
-  (*LDK*)
-  let _ = print_string("\n [LDK] trans_formula IF = " ^ (Iprinter.string_of_formula f0) ^ "\n") in
+  (* (\*LDK*\) *)
+  (* let _ = print_string("\n [LDK] trans_formula IF = " ^ (Iprinter.string_of_formula f0) ^ "\n") in *)
 
   let rec helper f0 =
     match f0 with
@@ -3574,7 +3574,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   (*LDK debug*)
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
     let pr1 prog = "prog" in
-    Gen.Debug.ho_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_stab Cprinter.string_of_formula linearize_formula_x prog f0 stab
+    Gen.Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_stab Cprinter.string_of_formula linearize_formula_x prog f0 stab
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
@@ -3609,8 +3609,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               IF.h_formula_heap_label = pi;} ->
               (try
 
-                let _ = print_string("\n [LDK] frac = " ^ (Iprinter.string_of_formula_exp frac) ^ "\n") in
-                let _ = print_string("\n [LDK] " ^ (Iprinter.string_of_formula_exp_list exps) ^ "\n") in
+                (* let _ = print_string("\n [LDK] frac = " ^ (Iprinter.string_of_formula_exp frac) ^ "\n") in *)
+                (* let _ = print_string("\n [LDK] " ^ (Iprinter.string_of_formula_exp_list exps) ^ "\n") in *)
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
                 let labels = vdef.I.view_labels in
                 let hvars = match_exp (List.combine exps labels) pos in
