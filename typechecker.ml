@@ -23,7 +23,8 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+	check_specs_a prog proc ctx spec_list e0
+  (*Gen.Debug.loop_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
       
@@ -36,20 +37,20 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     match spec with
 	  | Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-		let mn = Cast.unmingle_name (proc.Cast.proc_name) in
-        let f_formula = fun f -> None in
-		let f_b_formula = function
-		  | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some (CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc))
-		  | _ -> None
-		in
-		let f_exp = function
-		  | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
-		  | _ -> None
-		in
-		let new_c1 = CP.transform_formula (true,true,f_formula,f_b_formula,f_exp) c1 in
+		    let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+            let f_formula = fun f -> None in
+		    let f_b_formula = function
+		      | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some (CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+		      | _ -> None
+		    in
+		    let f_exp = function
+		      | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+		      | _ -> None
+		    in
+		    let new_c1 = CP.transform_formula (true,true,f_formula,f_b_formula,f_exp) c1 in
 		let _ = print_string ("c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in
 		let _ = print_string ("new c1: " ^ (Cprinter.string_of_pure_formula new_c1) ^ "\n") in
-		
+		    
 		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in  
 			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 			let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
@@ -62,7 +63,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx)
 	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
-			(*let _ = print_string ("check_specs: EBase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
 	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 	        r
@@ -70,7 +71,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 		    (*let _ = print_string "check_specs: EVariance: before nctx\n" in*)
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
-			  Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
+			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,b,y) ->
@@ -253,6 +254,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 begin
 		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
                       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
+		          Debug.print_info ("(Cause of Bind Failure)")
+                      (Cprinter.string_of_failure_list_failesc_context rs) pos;
 		          rs
                 end
               else 
@@ -270,13 +273,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		          (* let _ = print_string ("bind: tmp_res2:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res2) *)
                   (* ^ "\n") in  *)
                   let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
-                   let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
+                  let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                   (* let _ = print_string ("bind: tmp_res3:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res3) *)
                   (*     ^ "\n") in *)
-		           let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
-                   let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
-                   res
-	                
+		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+                  let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
+                  res
+	                  
                 end
           end;
 	          
@@ -398,6 +401,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let farg_types, farg_names = List.split proc.proc_args in
 	        let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+            
+            (* Internal function to check pre/post condition of the function call. *)        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
 			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
@@ -428,26 +433,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
 
 			  (*let l = (String.index mn '$') in
-              let new_mn = String.create l in
-			  let _ = print_string ("mn: " ^ mn ^ "\n") in
-			  let _ = String.blit mn 0 new_mn 0 l in
-			  let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
+                let new_mn = String.create l in
+			    let _ = print_string ("mn: " ^ mn ^ "\n") in
+			    let _ = String.blit mn 0 new_mn 0 l in
+			    let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
 			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
 			  let sctx = List.map
 				(fun fctx -> let (lb,estk,lbctx) = fctx in
-							 let nlbctx = List.map
-							   (fun bctx -> let (pt,ctx) = bctx in
-											let nctx = CF.transform_context
-											  (fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst}) ctx in (pt,nctx)) lbctx in
-				             (lb,estk,nlbctx)) sctx in
+				let nlbctx = List.map
+				  (fun bctx -> let (pt,ctx) = bctx in
+				  let nctx = CF.transform_context
+					(fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst}) ctx in (pt,nctx)) lbctx in
+				(lb,estk,nlbctx)) sctx in
 
 			  
 			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec1: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
 	          let renamed_spec = CF.subst_struc st1 renamed_spec in
 			  
 			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec2: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: fr_vars: " ^ (Cprinter.string_of_spec_var_list fr_vars) ^ "\n") in
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: to_vars: " ^ (Cprinter.string_of_spec_var_list to_vars) ^ "\n") in*)				
+			    let _ = print_string ("\ncheck_pre_post@SCall@check_exp: fr_vars: " ^ (Cprinter.string_of_spec_var_list fr_vars) ^ "\n") in
+			    let _ = print_string ("\ncheck_pre_post@SCall@check_exp: to_vars: " ^ (Cprinter.string_of_spec_var_list to_vars) ^ "\n") in*)				
 	          let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
 
 			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec3: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
@@ -464,17 +469,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;
 	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+            (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
 		      let _ = PTracer.log_proof prf in
               (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)
-				
+			  
               if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                 Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
               rs in	        
+                    
+            (* Call check_pre_post with debug information *)
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
               let _ = Cprinter.string_of_list_failesc_context in
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
+            (*let _ = print_string ("\nAn Hoa :: Encounter function call [" ^ mn ^ "(" ^ (String.concat "," vs) ^ ")]" (*^ "with static spec :: " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs_with_pre) ^ "\n\n"*)) in*)
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
             else check_pre_post proc.proc_static_specs_with_pre ctx in	
 		    
@@ -567,7 +576,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let _ = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.loop_2_no "check_post" Cprinter.string_of_pos pr2 pr2  
+  Gen.Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2  
       (fun _ _ -> 
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)
@@ -597,23 +606,29 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   if (CF.isSuccessListPartialCtx rs) then 
     rs
   else begin
-    (* get source code posistion of failed branches *)
+    (* get source code position of failed branches *)
     let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
     in
     let string_of_loc_list locs =
       List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
     in
-    Err.report_error {
-        Err.error_loc = pos;
-        Err.error_text = Printf.sprintf
-			(* "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s." *)
-            "Post condition cannot be derived by the system."
-            (*(Cprinter.string_of_formula post)
-              (Cprinter.string_of_list_partial_context final_state)
-              (Cprinter.string_of_list_partial_context rs)
-              (string_of_loc_list locs_of_failures)*)
-    }
+    begin
+	  Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ") 
+          ("Postcondition cannot be derived from context\n") pos; 
+	  Debug.print_info ("(Cause of PostCond Failure)")
+          (Cprinter.string_of_failure_list_partial_context rs) pos;
+      Err.report_error {
+          Err.error_loc = pos;
+          Err.error_text = Printf.sprintf
+			  (* "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s." *)
+              "Post condition cannot be derived by the system."
+              (*(Cprinter.string_of_formula post)
+                (Cprinter.string_of_list_partial_context final_state)
+                (Cprinter.string_of_list_partial_context rs)
+                (string_of_loc_list locs_of_failures)*)
+      }
+    end
   end
 
 

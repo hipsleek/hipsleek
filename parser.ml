@@ -248,6 +248,9 @@ let peek_try =
           | [FLOAT,_;IDENTIFIER n,_] -> ()
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
+          | [INT,_;OSQUARE,_] -> ()
+          | [FLOAT,_;OSQUARE,_] -> ()
+          | [BOOL,_;OSQUARE,_] -> ()
           |  _ -> raise Stream.Failure)
 
  (* let peek_ensures =  *)
@@ -812,8 +815,10 @@ coercion_decl:
       { coercion_type = cd;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
-        coercion_head = (F.subst_stub_flow top_flow dc1);
-        coercion_body = (F.subst_stub_flow top_flow dc2);
+        (* coercion_head = (F.subst_stub_flow top_flow dc1); *)
+        (* coercion_body = (F.subst_stub_flow top_flow dc2); *)
+        coercion_head = (F.subst_stub_flow n_flow dc1);
+        coercion_body = (F.subst_stub_flow n_flow dc2);
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 })}]];
@@ -973,7 +978,7 @@ hprogn:
 					data_methods = [] } in
     let string_def = { data_name = "String";
 					   data_fields = [];
-					   data_parent_name = "";
+					   data_parent_name = "Object";
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
@@ -1192,9 +1197,9 @@ declaration_statement:
   [[peek_try_declarest; t=local_variable_declaration -> t
    | peek_try_declarest; t=local_constant_declaration -> t]];
 
-local_variable_type: [[ t= typ -> t]];
+local_variable_type: [[ t= typ ->  t]];
 
-local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators ->  mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]];
+local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators -> mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]]; 
 
 local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_declarators ->  mkConstDecl lvt cd (get_pos_camlp4 _loc 1)]];
 	

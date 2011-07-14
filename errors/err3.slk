@@ -1,0 +1,36 @@
+//1. must failure.  cause:22  x=1 |-  exists1(alpha:alpha+alpha=x & 6<=x) (must-bug).
+checkentail x=1 |- (exists y: y+y=x & y>2) .
+
+//2. must failure. cause:22  x=1 |-  exists1(alpha:alpha+alpha=x);  x=1 |-  2<x (must-bug).
+checkentail x=1 |- (exists y: y+y=x & x>2) .
+
+//3. x=1 & x=2 is a contradiction . cause:22  true |-  x=2 & x=1 (RHS: contradiction).
+checkentail true |- x=1 & x=2 .
+
+//4. x=3 is must-fail, x>3 is may-fail. cause:22  x=1 |-  x=3 (must-bug).
+checkentail x=1 |- x=3 & x>0.
+
+//5. x>=y & y>=z is must-fail. cause:22  x<z |-  z<=y & y<=x (must-bug).
+checkentail  x<z |- x>=y & y>=z.
+
+//6. must-failure. cause:22  x<z |-  z<=x (must-bug).
+checkentail  x<z |- x>=y & y>=z & x>=z.
+
+// partition RHS by connected vars
+// detect contradiction with RHS parts
+//  --> search for individual?
+// detect must-failure with RHS parts
+//  --> search for individual?
+// perform closure (maybe incomplete), then search for must/may
+
+
+//7.may failure. cause:22  x<z |-  y<x;  x<z |-  0<=y;  x<z |-  0<=x (may-bug).
+checkentail  x<z |- x>=0 & y>=0 & x>y.
+
+//8. must-failure. cause:22  x<z |-  z<=x (must-bug).
+checkentail  x<z |- x>=0 & z>=0 & x>=z.
+
+//9. must-failure: x=3 is must-fail && x>3 is may-fail. cause:22  true |-  3<x & 0<x & x=3 (RHS: contradiction).
+checkentail x=1 |- x=3 & x>0 & x>3 .
+
+

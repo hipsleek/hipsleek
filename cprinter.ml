@@ -554,6 +554,7 @@ let ft_assoc_op (e:fail_type) : (string * fail_type list) option =
   match e with
     | Or_Reason (f1,f2) -> Some (op_or_short,[f1;f2])
     | And_Reason (f1,f2) -> Some (op_and_short,[f1;f2])
+    | Union_Reason (f1,f2) -> Some (op_union_short,[f1;f2])
     | Or_Continuation (f1,f2) -> Some (op_or_short,[f1;f2])
     | _ -> None
 
@@ -812,8 +813,8 @@ let rec pr_h_formula h =
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
           fmt_open_hbox ();
-          (if pid==None then fmt_string "NN " else fmt_string "SS ");
-          pr_formula_label_opt pid;
+          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+          (* pr_formula_label_opt pid; *)
           pr_spec_var sv; fmt_string "::";
           pr_angle c pr_spec_var svs ;
 	      pr_imm imm;
@@ -909,7 +910,7 @@ let rec pr_formula_base e =
 	  formula_base_flow = fl;
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
-          (match lbl with | None -> fmt_string "<NoLabel>" | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
 
@@ -1098,6 +1099,7 @@ let pr_estate (es : entail_state) =
   (* pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
+  (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
   pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars; 
   pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
@@ -1107,6 +1109,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_vwrap "es_aux_conseq: "  (pr_pure_formula) es.es_aux_conseq; 
+  pr_vwrap "es_must_error: "  (pr_opt (fun (s,_) -> fmt_string s)) (es.es_must_error); 
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
@@ -1123,10 +1126,26 @@ let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_p
 
 let string_of_entail_state  =  string_of_estate
 
+and string_of_failure_kind e_kind=
+match e_kind with
+  | Failure_May _ -> "MAY"
+  | Failure_Must _ -> "MUST"
+  | Failure_None _ -> "None"
+  | Failure_Valid -> "Valid"
+
+let string_of_fail_explaining fe=
+  fmt_open_vbox 1;
+  pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
+(*  fe_sugg = struc_formula *)
+  fmt_close ()
+
 let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 1; fmt_string "{";
+  (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;*)
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
+  pr_vwrap "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
+                                                   (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
   (* pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; *)
   (* pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; *)
   (* pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)
@@ -1167,13 +1186,19 @@ let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
-    | Basic_Reason br ->  pr_fail_estate br
-    | Continuation br ->  pr_fail_estate br
+    | Basic_Reason (br,fe) -> 
+          (string_of_fail_explaining fe);
+          if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") else (pr_fail_estate br)
+    | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")
           else pr_list_vbox_wrap "FAIL_OR " f_b args
-    | Or_Continuation _ -> (* fmt_string (" Or Continuation ! ") *)
+    | Union_Reason _ ->
+          let args = bin_op_to_list op_union_short ft_assoc_op e in
+          if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type UNION_Reason")
+          else pr_list_vbox_wrap "FAIL_UNION " f_b args
+    | Or_Continuation _ -> fmt_string (" Or_Continuation ");
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Continuation")
           else  pr_list_vbox_wrap "CONT_OR " f_b args
@@ -1189,8 +1214,17 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
-    | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
+    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+        (* (match ft with *)
+        (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+        (*     (\* TODO : to output must errors first *\) *)
+        (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+        (*     | _ -> fmt_string ""); *)
+        pr_fail_type ft; fmt_cut ()
+    | SuccCtx sc -> let str = 
+        if (get_must_error_from_ctx sc)==None then "Good Context: "
+        else "Error Context: " in
+      fmt_cut (); fmt_string str; pr_context_list sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
@@ -1213,7 +1247,7 @@ let pr_context_list_short (ctx : context list) =
     
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_string "failctx"
+    | FailCtx ft -> (fmt_string "failctx"; pr_fail_type ft)
     | SuccCtx sc -> pr_context_list_short sc
     
 let pr_entail_state_short e = 
@@ -1241,6 +1275,20 @@ let pr_esc_stack_lvl ((i,_),e) =
 		  pr_vwrap "State:" pr_context fs)) e;
   fmt_close_box ()
 
+(* should this include must failures? *)
+let pr_failed_states e = match e with
+  | [] -> ()
+  | _ ->   pr_vwrap_naive_nocut "Failed States:"
+      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		  pr_vwrap "State:" pr_fail_type fs)) e
+
+let pr_successful_states e = match e with
+  | [] -> ()
+  | _ ->   
+  pr_vwrap_naive "Successful States:"
+      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		  pr_vwrap "State:" pr_context fs)) e
+
 let pr_esc_stack e = match e with
   | [] 
   | [((0,""),[])] -> ()
@@ -1254,13 +1302,15 @@ let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
 let pr_failesc_context ((l1,l2,l3): failesc_context) =
   fmt_open_vbox 0;
-  pr_vwrap_naive_nocut "Failed States:"
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_fail_type fs)) l1;
+  pr_failed_states l1;
+  (* pr_vwrap_naive_nocut "Failed States:" *)
+  (*     (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl; *)
+  (*   	  pr_vwrap "State:" pr_fail_type fs)) l1; *)
   pr_esc_stack l2;
-  pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) l3;
+  (* pr_vwrap_naive "Successful States:" *)
+  (*     (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl; *)
+  (*   	  pr_vwrap "State:" pr_context fs)) l3; *)
+  pr_successful_states l3;
   fmt_close_box ()
 
 let pr_partial_context ((l1,l2): partial_context) =
@@ -1763,6 +1813,16 @@ let string_of_label_list_failesc_context (cl:Cformula.list_failesc_context) : st
   if (Gen.is_empty cl) then "" else string_of_label_failesc_context (List.hd cl)
 ;;
 
+let string_of_failure_list_failesc_context (lc: Cformula.list_failesc_context) =  
+  let lc = Cformula.keep_failure_list_failesc_context lc
+  in string_of_list_failesc_context lc
+;;
+
+let string_of_failure_list_partial_context (lc: Cformula.list_partial_context) =  
+  let lc = Cformula.keep_failure_list_partial_context lc
+  in string_of_list_partial_context lc
+;;
+
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
 Mcpure.print_sv_f := string_of_spec_var ;; 
@@ -1784,12 +1844,15 @@ Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
+Cformula.print_list_partial_context := string_of_list_partial_context;;
+Cformula.print_list_failesc_context := string_of_list_failesc_context;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_ext_formula := string_of_ext_formula;;
+Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;

@@ -1,0 +1,74 @@
+TASK LEGENDS
+ @  :  DEVELOPMENT ASSIST
+ *  :  INCOMPLETE / NOT STARTED
+ +  :  COMPLETE
+ -  :  IN PROGRESS / PARTIALLY COMPLETE
+ !  :  URGENT (USUALLY INDICATORS FOR BUGS) OR FEATURES THAT HELP
+       US SOLVE MANY IMPLEMENTATION ISSUES.
+ XX :  CHALLENGING AND REQUIRE MUCH RESEARCH
+
+TASKS
+
+ +  [BUG] Induction introduces "hd" exception in case no value 
+    can be chosen! Fix by automatically return false if we cannot
+    choose any value to do induction on.
+    
+ +  Make [dom] a primitive. Remark: for empty array, no "dom" is
+    associated so the implementation is still correct!
+ 
+ -  Implement the [new] expression for array i.e. array memory
+    allocation in case of C
+    +  Extend iparser
+    +  Extend iast with exp_aalloc
+    +  Extend cast with exp_aalloc
+    +  Fix "unmatched cases" problems in [astsimp.ml].
+    +  Implement [trans_exp]
+    *  Generalize from 1D array of int.
+       Current obstacle: parsing clash with object constructor!
+    
+ *  Dynamically add the primitive functions for array operations 
+    *  Access
+    *  Update
+    *  Allocate
+    
+ -  Extend the tests set
+    -  Implement merge sort
+    -  Maximum sum subsequent
+ 
+ @  Enhance the output system: add more switches to indicate 
+    the desire level of smt output, for e.g. "--smtoutlev xxx"
+    Fix the scriptargument, smtsolver, tpdispatcher
+    +  Only fail implications
+    +  No implication from the existential instantiation
+    *  Annotation for implication type: [EI], [Pre], [Post],
+       [Induction], ...
+    
+ @  Enhance SMT Solver Interface Input generation
+    +  Convert a big /\ conjunction into a sequence of assert
+    *  Logical implication => using "implies" instead of ! and \/
+    *  Rename variables, v_2010_10021 is not easy to read (and relate).
+    *  Organize the clauses: [arithmetic],[equality],[inequality],
+       [useful-relations], etc.
+    *  Remove unrelated relation such as [dom] 
+    
+ @  Write a test GUI program (Java) to run batch tests.
+ 
+ +  Modification range expression to indicate the range of the
+    array that is modified by a function: "amod(a,l,h)" for the
+    frequently used "idexc". When we use separation logic, this is
+    automatic.
+    
+ *  Multidimensional array
+ 
+ *  Array with a frequency map (multi-set for bag representation)
+ 
+ ** Handle permutation as a primitive
+ 
+ *  Extend sleek and then hip with separation array predicates
+ 
+ ** Implement the function to find the minimum of an expression
+    given the logical constraints; necessary for correct 
+    induction proofs.
+    
+ ** Extends induction to non-array formulas
+

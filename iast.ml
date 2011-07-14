@@ -176,10 +176,17 @@ and assign_op =
   | OpDivAssign
   | OpModAssign
 
+
+
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 and exp_arrayat = { exp_arrayat_array_name : ident;
 	     exp_arrayat_index : exp;
 			 exp_arrayat_pos : loc; }
+
+(* An Hoa : array memory allocation expression *)
+and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
+	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
+			 exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
@@ -331,6 +338,7 @@ and exp_unfold = { exp_unfold_var : (string * primed);
 
 and exp =
 	| ArrayAt of exp_arrayat (* An Hoa *)
+	| ArrayAlloc of exp_aalloc (* An Hoa *)
   | Assert of exp_assert
   | Assign of exp_assign
   | Binary of exp_binary
@@ -382,6 +390,13 @@ let bool_type = Bool
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
+
+
+let find_empty_static_specs iprog = 
+  let r = iprog.prog_proc_decls in
+  let er = List.filter (fun pd -> pd.proc_static_specs ==[]) r in
+  let s = "Empty Specs: " ^ (pr_list pr_id (List.map (fun x -> x.proc_name) er)) in
+  report_warning no_pos s
  
 (* apply substitution to an id *)
 let apply_subs_to_id (subs:(ident *ident) list) (id:ident) : ident
@@ -474,6 +489,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | IntLit e -> e.exp_int_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
+	| ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
   | New e -> e.exp_new_pos
   | Null p -> p
   | Return e -> e.exp_return_pos
@@ -689,6 +705,10 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | Member b -> 
                 let e1,r1 = helper n_arg b.exp_member_base in
                 (Member {b with exp_member_base = e1;},r1)
+					(* An Hoa *)
+					| ArrayAlloc b -> 
+                let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+                (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
           | New b -> 
                 let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
                 (New {b with exp_new_arguments = el},(comb_f rl))
@@ -1220,9 +1240,8 @@ let sub_type t1 t2 = Globals.sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
-let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
-  (* build the class hierarchy *)
-    
+let inbuilt_build_exc_hierarchy () =
+  let _  = Gen.ExcNumbering.add_edge top_flow "" in
   let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
   let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
   let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
@@ -1233,12 +1252,21 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
   let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
   let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
-  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) prog.prog_data_decls in
+  let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
+  ()
+
+let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
+  (* build the class hierarchy *)
+  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
   let _ = if clean then (Gen.ExcNumbering.clean_duplicates ()) in
 	if (Gen.ExcNumbering.has_cycles ()) then begin
 	  print_string ("Error: Exception hierarchy has cycles\n");
 	  failwith ("Exception hierarchy has cycles\n");
 	end 
+
+let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
+  let pr _ = Gen.ExcNumbering.string_of_exc_list 33 in
+  Gen.Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
   let rec helper e = match e with
@@ -1261,6 +1289,7 @@ let rec label_e e =
     | Null _ 
     | VarDecl _
     | Seq _
+		| ArrayAlloc _ (* An Hoa *)
     | New _ 
     | Finally _ 
     | Label _ -> None
@@ -1516,3 +1545,50 @@ let label_procs_prog prog = {prog with
 	prog_data_decls = List.map (fun c->{ c with data_methods = List.map label_proc c.data_methods}) prog.prog_data_decls;	
 	prog_proc_decls = List.map label_proc prog.prog_proc_decls;
 	}
+(************************************************************************************
+ * Use to support pragma declaration in system
+ *   - Remove duplicated Obj/Class, such as Object and String which are
+ *   automatically generated when translating Iast to Cast.
+ *   - Append all primitives in many seperated prelude files.
+ ************************************************************************************)
+
+(* Use to remove to duplicated Obj/Class when translating many header files along with source program *)
+let rec remove_dup_obj (defs : data_decl list) : data_decl list=
+        match defs with
+        | [] -> []
+        | head::tail ->
+                if (List.mem head tail && (head.data_name = "Object" ||
+                head.data_name = "String")) then
+                        remove_dup_obj tail
+                else head::remove_dup_obj tail
+
+(* Append two prog_decl list *)
+let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) : prog_decl =
+  match iprims_list with
+  | [] -> iprims
+  | hd::tl ->
+        let new_iprims = {
+                prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
+                prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
+                prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
+                prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
+                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls;
+                prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
+                prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
+                prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;} in
+             append_iprims_list new_iprims tl
+
+let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
+  match iprims_list with
+  | [] ->
+        let new_prims = {
+                prog_data_decls = [];
+                prog_global_var_decls = [];
+                prog_enum_decls = [];
+                prog_view_decls = [];
+                prog_rel_decls = [];
+                prog_hopred_decls = [];
+                prog_proc_decls = [];
+                prog_coercion_decls = [];}
+        in new_prims
+  | hd::tl -> append_iprims_list hd tl

@@ -171,7 +171,7 @@ let string_of_id (id,p) = id ^ (match p with
    
 (* pretty printing for boolean constraints *)
 let string_of_b_formula = function 
-  | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
+  | P.BConst (b,l)              -> string_of_bool b
   | P.BVar (x, l)               -> string_of_id x
 (* (match x with  *)
 (*     |(id, p) -> id ^ (match p with  *)
@@ -304,7 +304,7 @@ let rec string_of_formula = function
 				  F.formula_base_flow = fl;
 				  F.formula_base_pos = l}) ->  
 	  if hf = F.HTrue then 
-		string_of_pure_formula pf
+		((string_of_pure_formula pf)^" FLOW "^fl^")")
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
@@ -479,6 +479,9 @@ let rec string_of_exp = function
 			   exp_call_recv_path_id = pid;
 			   exp_call_recv_arguments = el})-> 
           string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
+	(* An Hoa *)
+	| ArrayAlloc ({exp_aalloc_etype_name = elm_type;
+		  exp_aalloc_dimensions = dims})  -> "new " ^ elm_type ^ "[" ^ (string_of_exp_list dims ",") ^ "]"
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
   | Var ({exp_var_name = v}) -> v

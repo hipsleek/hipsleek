@@ -9,12 +9,12 @@ pred ll<n> == self = null & n = 0
 checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::node<_,_>@I).
 // y; x * (t; z)
 print residue.
-// Valid.
+//1. Valid.
 
 
 checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- y::node<_,_>. 
 //print residue.
-//Fail.
+//2. Fail.
 
 
 

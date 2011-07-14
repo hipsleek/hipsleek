@@ -1,0 +1,620 @@
+   0  $accept : %entry% $end
+
+   1  input : formula ENDF
+
+   2  formula : bformula
+   3          | formula OR formula
+   4          | formula AND formula
+   5          | NOT formula
+   6          | FORALL OPAREN ID COMMA formula CPAREN
+   7          | EXISTS OPAREN ID COMMA formula CPAREN
+   8          | OPAREN formula CPAREN
+
+   9  bformula : TRUE
+  10           | FALSE
+  11           | ID
+  12           | exp GT exp
+  13           | exp GTE exp
+  14           | exp LT exp
+  15           | exp LTE exp
+  16           | exp EQ exp
+  17           | exp NEQ exp
+
+  18  exp : INT_LIT
+  19      | ID
+  20      | exp PLUS exp
+  21      | exp MINUS exp
+  22      | exp STAR exp
+
+  23  %entry% : '\001' input
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . input  (23)
+
+	INT_LIT  shift 3
+	ID  shift 4
+	TRUE  shift 5
+	FALSE  shift 6
+	FORALL  shift 7
+	EXISTS  shift 8
+	OPAREN  shift 9
+	NOT  shift 10
+	.  error
+
+	input  goto 11
+	formula  goto 12
+	bformula  goto 13
+	exp  goto 14
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	exp : INT_LIT .  (18)
+
+	.  reduce 18
+
+
+state 4
+	bformula : ID .  (11)
+	exp : ID .  (19)
+
+	CPAREN  reduce 11
+	ENDF  reduce 11
+	OR  reduce 11
+	AND  reduce 11
+	GT  reduce 19
+	GTE  reduce 19
+	LT  reduce 19
+	LTE  reduce 19
+	EQ  reduce 19
+	NEQ  reduce 19
+	PLUS  reduce 19
+	MINUS  reduce 19
+	STAR  reduce 19
+
+
+state 5
+	bformula : TRUE .  (9)
+
+	.  reduce 9
+
+
+state 6
+	bformula : FALSE .  (10)
+
+	.  reduce 10
+
+
+state 7
+	formula : FORALL . OPAREN ID COMMA formula CPAREN  (6)
+
+	OPAREN  shift 15
+	.  error
+
+
+state 8
+	formula : EXISTS . OPAREN ID COMMA formula CPAREN  (7)
+
+	OPAREN  shift 16
+	.  error
+
+
+state 9
+	formula : OPAREN . formula CPAREN  (8)
+
+	INT_LIT  shift 3
+	ID  shift 4
+	TRUE  shift 5
+	FALSE  shift 6
+	FORALL  shift 7
+	EXISTS  shift 8
+	OPAREN  shift 9
+	NOT  shift 10
+	.  error
+
+	formula  goto 17
+	bformula  goto 13
+	exp  goto 14
+
+
+state 10
+	formula : NOT . formula  (5)
+
+	INT_LIT  shift 3
+	ID  shift 4
+	TRUE  shift 5
+	FALSE  shift 6
+	FORALL  shift 7
+	EXISTS  shift 8
+	OPAREN  shift 9
+	NOT  shift 10
+	.  error
+
+	formula  goto 18
+	bformula  goto 13
+	exp  goto 14
+
+
+state 11
+	%entry% : '\001' input .  (23)
+
+	.  reduce 23
+
+
+state 12
+	input : formula . ENDF  (1)
+	formula : formula . OR formula  (3)
+	formula : formula . AND formula  (4)
+
+	ENDF  shift 19
+	OR  shift 20
+	AND  shift 21
+	.  error
+
+
+state 13
+	formula : bformula .  (2)
+
+	.  reduce 2
+
+
+state 14
+	bformula : exp . GT exp  (12)
+	bformula : exp . GTE exp  (13)
+	bformula : exp . LT exp  (14)
+	bformula : exp . LTE exp  (15)
+	bformula : exp . EQ exp  (16)
+	bformula : exp . NEQ exp  (17)
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	GT  shift 22
+	GTE  shift 23
+	LT  shift 24
+	LTE  shift 25
+	EQ  shift 26
+	NEQ  shift 27
+	PLUS  shift 28
+	MINUS  shift 29
+	STAR  shift 30
+	.  error
+
+
+state 15
+	formula : FORALL OPAREN . ID COMMA formula CPAREN  (6)
+
+	ID  shift 31
+	.  error
+
+
+state 16
+	formula : EXISTS OPAREN . ID COMMA formula CPAREN  (7)
+
+	ID  shift 32
+	.  error
+
+
+state 17
+	formula : formula . OR formula  (3)
+	formula : formula . AND formula  (4)
+	formula : OPAREN formula . CPAREN  (8)
+
+	CPAREN  shift 33
+	OR  shift 20
+	AND  shift 21
+	.  error
+
+
+state 18
+	formula : formula . OR formula  (3)
+	formula : formula . AND formula  (4)
+	formula : NOT formula .  (5)
+
+	.  reduce 5
+
+
+state 19
+	input : formula ENDF .  (1)
+
+	.  reduce 1
+
+
+state 20
+	formula : formula OR . formula  (3)
+
+	INT_LIT  shift 3
+	ID  shift 4
+	TRUE  shift 5
+	FALSE  shift 6
+	FORALL  shift 7
+	EXISTS  shift 8
+	OPAREN  shift 9
+	NOT  shift 10
+	.  error
+
+	formula  goto 34
+	bformula  goto 13
+	exp  goto 14
+
+
+state 21
+	formula : formula AND . formula  (4)
+
+	INT_LIT  shift 3
+	ID  shift 4
+	TRUE  shift 5
+	FALSE  shift 6
+	FORALL  shift 7
+	EXISTS  shift 8
+	OPAREN  shift 9
+	NOT  shift 10
+	.  error
+
+	formula  goto 35
+	bformula  goto 13
+	exp  goto 14
+
+
+state 22
+	bformula : exp GT . exp  (12)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 37
+
+
+state 23
+	bformula : exp GTE . exp  (13)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 38
+
+
+state 24
+	bformula : exp LT . exp  (14)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 39
+
+
+state 25
+	bformula : exp LTE . exp  (15)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 40
+
+
+state 26
+	bformula : exp EQ . exp  (16)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 41
+
+
+state 27
+	bformula : exp NEQ . exp  (17)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 42
+
+
+state 28
+	exp : exp PLUS . exp  (20)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 43
+
+
+state 29
+	exp : exp MINUS . exp  (21)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 44
+
+
+state 30
+	exp : exp STAR . exp  (22)
+
+	INT_LIT  shift 3
+	ID  shift 36
+	.  error
+
+	exp  goto 45
+
+
+state 31
+	formula : FORALL OPAREN ID . COMMA formula CPAREN  (6)
+
+	COMMA  shift 46
+	.  error
+
+
+state 32
+	formula : EXISTS OPAREN ID . COMMA formula CPAREN  (7)
+
+	COMMA  shift 47
+	.  error
+
+
+state 33
+	formula : OPAREN formula CPAREN .  (8)
+
+	.  reduce 8
+
+
+state 34
+	formula : formula . OR formula  (3)
+	formula : formula OR formula .  (3)
+	formula : formula . AND formula  (4)
+
+	AND  shift 21
+	CPAREN  reduce 3
+	ENDF  reduce 3
+	OR  reduce 3
+
+
+state 35
+	formula : formula . OR formula  (3)
+	formula : formula . AND formula  (4)
+	formula : formula AND formula .  (4)
+
+	.  reduce 4
+
+
+state 36
+	exp : ID .  (19)
+
+	.  reduce 19
+
+
+state 37
+	bformula : exp GT exp .  (12)
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	PLUS  shift 28
+	MINUS  shift 29
+	STAR  shift 30
+	CPAREN  reduce 12
+	ENDF  reduce 12
+	OR  reduce 12
+	AND  reduce 12
+
+
+state 38
+	bformula : exp GTE exp .  (13)
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	PLUS  shift 28
+	MINUS  shift 29
+	STAR  shift 30
+	CPAREN  reduce 13
+	ENDF  reduce 13
+	OR  reduce 13
+	AND  reduce 13
+
+
+state 39
+	bformula : exp LT exp .  (14)
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	PLUS  shift 28
+	MINUS  shift 29
+	STAR  shift 30
+	CPAREN  reduce 14
+	ENDF  reduce 14
+	OR  reduce 14
+	AND  reduce 14
+
+
+state 40
+	bformula : exp LTE exp .  (15)
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	PLUS  shift 28
+	MINUS  shift 29
+	STAR  shift 30
+	CPAREN  reduce 15
+	ENDF  reduce 15
+	OR  reduce 15
+	AND  reduce 15
+
+
+state 41
+	bformula : exp EQ exp .  (16)
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	PLUS  shift 28
+	MINUS  shift 29
+	STAR  shift 30
+	CPAREN  reduce 16
+	ENDF  reduce 16
+	OR  reduce 16
+	AND  reduce 16
+
+
+state 42
+	bformula : exp NEQ exp .  (17)
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	PLUS  shift 28
+	MINUS  shift 29
+	STAR  shift 30
+	CPAREN  reduce 17
+	ENDF  reduce 17
+	OR  reduce 17
+	AND  reduce 17
+
+
+state 43
+	exp : exp . PLUS exp  (20)
+	exp : exp PLUS exp .  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+
+	STAR  shift 30
+	CPAREN  reduce 20
+	ENDF  reduce 20
+	OR  reduce 20
+	AND  reduce 20
+	GT  reduce 20
+	GTE  reduce 20
+	LT  reduce 20
+	LTE  reduce 20
+	EQ  reduce 20
+	NEQ  reduce 20
+	PLUS  reduce 20
+	MINUS  reduce 20
+
+
+state 44
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp MINUS exp .  (21)
+	exp : exp . STAR exp  (22)
+
+	STAR  shift 30
+	CPAREN  reduce 21
+	ENDF  reduce 21
+	OR  reduce 21
+	AND  reduce 21
+	GT  reduce 21
+	GTE  reduce 21
+	LT  reduce 21
+	LTE  reduce 21
+	EQ  reduce 21
+	NEQ  reduce 21
+	PLUS  reduce 21
+	MINUS  reduce 21
+
+
+state 45
+	exp : exp . PLUS exp  (20)
+	exp : exp . MINUS exp  (21)
+	exp : exp . STAR exp  (22)
+	exp : exp STAR exp .  (22)
+
+	.  reduce 22
+
+
+state 46
+	formula : FORALL OPAREN ID COMMA . formula CPAREN  (6)
+
+	INT_LIT  shift 3
+	ID  shift 4
+	TRUE  shift 5
+	FALSE  shift 6
+	FORALL  shift 7
+	EXISTS  shift 8
+	OPAREN  shift 9
+	NOT  shift 10
+	.  error
+
+	formula  goto 48
+	bformula  goto 13
+	exp  goto 14
+
+
+state 47
+	formula : EXISTS OPAREN ID COMMA . formula CPAREN  (7)
+
+	INT_LIT  shift 3
+	ID  shift 4
+	TRUE  shift 5
+	FALSE  shift 6
+	FORALL  shift 7
+	EXISTS  shift 8
+	OPAREN  shift 9
+	NOT  shift 10
+	.  error
+
+	formula  goto 49
+	bformula  goto 13
+	exp  goto 14
+
+
+state 48
+	formula : formula . OR formula  (3)
+	formula : formula . AND formula  (4)
+	formula : FORALL OPAREN ID COMMA formula . CPAREN  (6)
+
+	CPAREN  shift 50
+	OR  shift 20
+	AND  shift 21
+	.  error
+
+
+state 49
+	formula : formula . OR formula  (3)
+	formula : formula . AND formula  (4)
+	formula : EXISTS OPAREN ID COMMA formula . CPAREN  (7)
+
+	CPAREN  shift 51
+	OR  shift 20
+	AND  shift 21
+	.  error
+
+
+state 50
+	formula : FORALL OPAREN ID COMMA formula CPAREN .  (6)
+
+	.  reduce 6
+
+
+state 51
+	formula : EXISTS OPAREN ID COMMA formula CPAREN .  (7)
+
+	.  reduce 7
+
+
+26 terminals, 6 nonterminals
+24 grammar rules, 52 states

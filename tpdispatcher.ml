@@ -539,9 +539,10 @@ let elim_exists (f : CP.formula) : CP.formula =
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
-	let fvar = CP.fv conseq in
-	let new_ante = CP.filter_var ante fvar in
-	  (new_ante, conseq)
+    (CP.filter_ante ante conseq, conseq)
+	(* let fvar = CP.fv conseq in *)
+	(* let new_ante = CP.filter_var ante fvar in *)
+	(*   (new_ante, conseq) *)
   else
     (* let _ = print_string ("\naTpdispatcher.ml: no filter") in *)
 	(ante, conseq)
@@ -762,6 +763,10 @@ let simplify (f : CP.formula) : CP.formula =
       r
     with | _ -> f)
 
+(* always simplify directly with the help of prover *)
+let simplify_always (f:CP.formula): CP.formula = 
+  simplify f 
+
 (* let simplify f = *)
 (*   Gen.Debug.no_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (\* (fun x -> x) *\)simplify f *)
 
@@ -770,6 +775,13 @@ let simplify (f:CP.formula): CP.formula =
   (* if (CP.contains_exists f) then  *)
   (*   let f=CP.elim_exists f in  *)
   (*    simplify f else f *)
+
+let simplify (f:CP.formula): CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "simplify" pr pr simplify f
+
+
+
 
 (* let simplify (f:CP.formula): CP.formula =  *)
 (*   (\* (if (2107 <= !Util.proc_ctr  && !Util.proc_ctr <= 2109) then  *\) *)
@@ -882,13 +894,12 @@ let rec split_disjunctions = function
 ;;
 
 let called_prover = ref ""
-let print_implication = ref false (* An Hoa *)
+
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
-  let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq

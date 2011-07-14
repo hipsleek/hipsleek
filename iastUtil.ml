@@ -91,6 +91,9 @@ let transform_exp
       | Member b -> 
         let e1,r1 = helper n_arg b.exp_member_base in
         (Member {b with exp_member_base = e1;},r1)
+			| ArrayAlloc b -> 
+        let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+        (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
       | New b -> 
         let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
         (New {b with exp_new_arguments = el},(comb_f rl))
@@ -1208,7 +1211,11 @@ let add_globalv_to_mth_prog prog =
   Gen.Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
 
   
-let pre_process_of_iprog prog = 
+let pre_process_of_iprog iprims prog = 
+  let prog =
+          { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
+                      prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+          } in
   let prog = float_var_decl_prog prog in
   (* let _ = print_string "1\n" in *)
   let prog = rename_prog prog in
