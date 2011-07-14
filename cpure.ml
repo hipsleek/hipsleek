@@ -102,6 +102,16 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
 
+let cmp_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+	    let r = String.compare v1 v2 in
+		if r = 0 then match p1,p2 with
+		  | Unprimed, Unprimed
+		  | Primed, Primed -> 0
+		  | Unprimed, _ -> -1
+		  | _ -> 1
+		else r 
+		
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
      

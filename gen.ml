@@ -94,6 +94,13 @@ struct
     | ([], [], []) -> []
     | _ -> failwith ("combine3: combining lists with different lengths")
 
+  let rec combine4 a b c d= match (a, b, c,d) with
+    | (ah::arest, bh::brest, ch::crest, dh::drest) ->
+	      let l = combine4 arest brest crest drest in
+		  (ah, bh, ch, dh)::l
+    | ([], [], [], []) -> []
+    | _ -> failwith ("combine4: combining lists with different lengths")
+	
   let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c list) : 'd list = 
     match (a0, bs, cs) with
 	  | (a :: r1, b :: r2, c :: r3) ->

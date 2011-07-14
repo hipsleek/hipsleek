@@ -2224,7 +2224,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_var_pos = pos;
                           } in
                           let (tmp_e, tmp_t) =
-			                flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos 
+			                flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false true pos 
 			              in
 			              
                           let fn_decl = if new_var then C.VarDecl {
@@ -2368,7 +2368,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_assign_rhs = crecv;
                         C.exp_assign_pos = pos; } in
                     let seq = C.mkSeq C.void_type fdecl finit pos in (fname, seq, true)) in
-          let tmp = List.map (trans_exp prog proc) args in
+		  let tmp = List.map (trans_exp prog proc) args in
           let (cargs, cts) = List.split tmp in
           let mingled_mn = C.mingle_name mn cts in
           let class_name = string_of_typ crecv_t in
@@ -2384,8 +2384,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 Err.report_error{ Err.error_loc = pos;Err.error_text = "argument types do not match";}
               else
                 (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+				let need_pfull_bind = 
+					if !Globals.enable_frac_perm then 
+						List.map2 (fun a p-> match a with |I.Member _ -> I.RefMod = p.I.param_mod | _ -> false) args pdef.I.proc_args 
+				    else List.map (fun _-> false) args in
                 let positions = List.map I.get_exp_pos args in
-                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine4 cargs cts positions need_pfull_bind) in
                 let call_e = C.ICall{
                     C.exp_icall_type = ret_ct;
                     C.exp_icall_receiver = recv_ident;
@@ -2438,7 +2442,11 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               else 
                 ( let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                 let positions = List.map I.get_exp_pos args in
-                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+				let need_pfull_bind = 
+					if !Globals.enable_frac_perm then 
+						List.map2 (fun a p-> match a with |I.Member _ -> I.RefMod = p.I.param_mod | _ -> false) args pdef.I.proc_args 
+				    else List.map (fun _-> false) args in
+                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine4 cargs cts positions need_pfull_bind) in
                 let call_e = C.SCall {
                     C.exp_scall_type = ret_ct;
                     C.exp_scall_method_name = mingled_mn;
@@ -2572,12 +2580,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_path_id = pid;
           I.exp_member_pos = pos } -> 
           (*let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in*)
-          let r = 
-	        if (!Globals.allow_imm) then
-	          flatten_to_bind prog proc e (List.rev fs) None pid true pos
-	        else
-	          flatten_to_bind prog proc e (List.rev fs) None pid false pos
-	      in
+          let r =   flatten_to_bind prog proc e (List.rev fs) None pid (!Globals.allow_imm) (not !Globals.enable_frac_perm) pos in
           (*let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in*)
           r
     | I.New {
@@ -2597,7 +2600,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
               Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match";}
             else ( let positions = Gen.repeat pos nargs in
-            let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+			let nfb = List.map (fun _-> false) args in
+            let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine4 cargs cts positions nfb ) in
             let new_e = C.New {
                 C.exp_new_class_name = c;
                 C.exp_new_parent_name = data_def.I.data_parent_name;
@@ -3162,19 +3166,19 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
              } *)
     | p -> p
 
-and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
+and flatten_to_bind_debug prog proc b r rhs_o pid imm need_full pos =
   Gen.Debug.no_2 "flatten_to_bind " 
       (Iprinter.string_of_exp) 
       (fun x -> match x with
         | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
       (fun _ -> "?")
-      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
+      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm need_full pos) b rhs_o
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
-      (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) pos =
+      (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) need_full pos =
   match rev_fs with
     | f :: rest ->
-          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm pos in
+          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm need_full pos in
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
@@ -3193,8 +3197,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
           else C.Unit pos in
           let dname = CP.name_of_type base_t in
           let ddef = I.look_up_data_def pos prog.I.prog_data_decls dname in
-          let rec gen_names (fn : ident) (flist : I.typed_ident list) :
-                ((I.typed_ident option) * (ident list)) =
+          let rec gen_names (fn : ident) (flist : I.typed_ident list) : ((I.typed_ident option) * (ident list)) =
             (match flist with
               | [] -> (None, [])
               | f :: rest ->
@@ -3236,7 +3239,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
                 C.exp_bind_imm = imm;
-                C.exp_bind_perm = Some pr_var;
+                C.exp_bind_perm = if need_full then None else Some pr_var;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in
@@ -3347,17 +3350,16 @@ and trans_type_back (te : typ) : typ =
     | Array (t, _) -> Array (trans_type_back t, None) (* An Hoa *) 
     | p -> p 
 
-and trans_args (args : (C.exp * typ * loc) list) :
+and trans_args (args : (C.exp * typ * loc*bool) list) :
       ((C.typed_ident list) * C.exp * (ident list)) =
   match args with
     | arg :: rest ->
 	      let (rest_local_vars, rest_e, rest_names) = trans_args rest
 	      in
           (match arg with
-            | (C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _
-		      },
-		      _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
-            | (arg_e, at, pos) ->
+            | (C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _ }, _, _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
+            | (arg_e, at, pos, nfb) ->
+				  let arg_e = if nfb then C.mkFull_bind_exp arg_e else arg_e in				  
 		          let fn = fresh_var_name (string_of_typ at) pos.start_pos.Lexing.pos_lnum in
 		          let fn_decl =
 		            C.VarDecl
@@ -6451,7 +6453,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 	(*let _ = print_string ("init inv:" ^(pr_list Cprinter.string_of_b_formula uinvl)) in*)
     let split_one_branch ((b,lbl):(CF.formula * Globals.formula_label)) = 
       let h,p,_,_, b,_ = CF.split_components b in
-      let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in
+      let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 p in
       let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
       let xp = MCP.fold_mem_lst fbr true true cm in
       let all_p = MCP.fold_mem_lst xp true true p in

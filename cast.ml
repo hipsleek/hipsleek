@@ -1290,3 +1290,13 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
 let any_xpure_1 prog (f:F.h_formula) : bool =
   let pr = !print_h_formula in
   Gen.Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
+
+  
+  
+let mkFull_bind_exp e = 
+  let rec ft _ e = match e with
+   | Bind b-> 
+		let bb = transform_exp b.exp_bind_body 0 ft (fun _ _ -> 0) (fun _ -> 0) 0 in
+	  Some (Bind{b with exp_bind_perm=None; exp_bind_body= fst bb},0)
+   | _ -> None in
+  fst (transform_exp e 0 ft (fun _ _-> 0) (fun _ -> 0) 0)  

@@ -25,7 +25,19 @@ open Globals
     | Leaf b1,Leaf b2  -> b1==b2
     | Node (l1, r1), Node (l2,r2) -> (stree_eq l1 l2)&&(stree_eq r1 r2)
     | _ -> false
-        
+  
+  let rec stree_cmp t1 t2 = match t1,t2 with
+	| Leaf false, Leaf false 
+	| Leaf true, Leaf true -> 0
+	| Leaf false, _ -> -1
+	| Leaf true, _ -> 1
+	| _, Leaf true -> -1
+	| _, Leaf false -> 1
+    | Node (l1, r1), Node (l2,r2) -> 
+		let r = stree_cmp l1 l2 in
+		if r=0 then stree_cmp r1 r2
+		else r
+		
   let rec can_join x y = match x,y with
     | _ , Leaf false
     | Leaf false, _ -> true

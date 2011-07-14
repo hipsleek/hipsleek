@@ -357,14 +357,14 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_lab
     let a, b, c = xpure_mem_enum prog f0 in
     (a, b, [], c)
 
-and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
+and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) p : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
       = Gen.Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) 
-  (fun _ _ -> xpure_heap_x prog h0 which_xpure) h0 which_xpure
+  (fun _ _ -> xpure_heap_x prog h0 which_xpure p) h0 which_xpure
 
-and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
-  if (!Globals.allow_imm) then xpure_heap_symbolic prog h0 which_xpure
+and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) p: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+   if (!Globals.allow_imm) then xpure_heap_symbolic prog h0 which_xpure p
   else
-    let a, b, c = xpure_heap_mem_enum prog h0 which_xpure in
+    let a, b, c = xpure_heap_mem_enum prog h0 which_xpure p in
     (a, b, [], c)
 
 (* TODO : if no complex & --eps then then return true else xpure1 generated;
@@ -404,7 +404,7 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (bra
 		formula_base_pure = p;
 		formula_base_branches = br;
 		formula_base_pos = pos}) ->
-            let (ph, phb, _) = xpure_heap_mem_enum prog h 1 in
+            let (ph, phb, _) = xpure_heap_mem_enum prog h 1 p in
             let n_p = MCP.merge_mems p ph true in           
             let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_p) in
             let rb = CP.merge_branches_with_common br phb cf [] in   
@@ -420,7 +420,7 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (bra
 		formula_exists_pure = qp;
 		formula_exists_branches = br;
 		formula_exists_pos = pos}) ->
-            let (pqh, pqhb, _) = xpure_heap_mem_enum prog qh 1 in
+            let (pqh, pqhb, _) = xpure_heap_mem_enum prog qh 1 qp in
             (*let pqhb = CP.merge_branches pqhb br in
               let sqvars = (* List.map CP.to_int_var *) qvars in*)
             let tmp1 = MCP.merge_mems qp pqh true in
@@ -438,12 +438,14 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (bra
   (pf, pb, mset)
 
 
-and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Gen.Debug.no_2 "xpure_heap_mem_enum" Cprinter.string_of_h_formula string_of_int (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
-    ^(Cprinter.string_of_mem_formula a3)) (fun _ _ -> xpure_heap_mem_enum_x prog h0 which_xpure) h0 which_xpure 
+and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) p : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Gen.Debug.no_2 "xpure_heap_mem_enum" Cprinter.string_of_h_formula string_of_int (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
+    ^(Cprinter.string_of_mem_formula a3)) (fun _ _ -> xpure_heap_mem_enum_x prog h0 which_xpure p) h0 which_xpure 
 
 
-and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =
+and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) p : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =
   (* let _  = print_string("Calling xpure_heap for f = " ^ (Cprinter.string_of_h_formula h0) ^ "\n") in *)
+  if not (is_h_normalized h0 p) then report_error no_pos "xpure_heap_mem_enum: xpuring a non normalized formula"
+  else
   let memset = h_formula_2_mem h0 [] prog in
 
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list) = 
@@ -549,7 +551,7 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
 	  formula_base_pure = p;
 	  formula_base_branches = fbr;
 	  formula_base_pos = pos}) ->
-          let ph, br, addrs, _ = xpure_heap_symbolic prog h 1 in
+          let ph, br, addrs, _ = xpure_heap_symbolic prog h 1 p in
           let n_p = MCP.merge_mems p ph true in
           let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_p) in
           (* let n_br = CP.merge_branches br fbr in       *)
@@ -564,7 +566,7 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
 	  formula_exists_pure = qp;
 	  formula_exists_branches = fbr;
 	  formula_exists_pos = pos}) ->
-          let pqh, br, addrs', _ = xpure_heap_symbolic prog qh 1 in
+          let pqh, br, addrs', _ = xpure_heap_symbolic prog qh 1 qp in
           let sqvars = (* List.map CP.to_int_var *) qvars in
           let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' sqvars in
           let tmp1 = MCP.merge_mems qp pqh true in
@@ -587,17 +589,17 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
   (pf, pb, pa, mset)
 
 
-and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) p : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Gen.Debug.no_1_opt 
       (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) 
       "xpure_heap_symbolic" Cprinter.string_of_h_formula 
       (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
           ^string_of_bool(is_sat_mem_formula p4)) 
-      (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0
+      (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure p) h0
 
-and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) p: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 [] prog in
-  let ph, pb, pa = xpure_heap_symbolic_i prog h0 which_xpure in
+  let ph, pb, pa = xpure_heap_symbolic_i prog h0 which_xpure p in
   if (is_sat_mem_formula memset) then 
     (ph, pb, pa, memset)
   else (MCP.mkMFalse no_pos, pb, pa, memset)  
@@ -624,12 +626,14 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | HTrue | Hole _ | HFalse -> [] in
   helper h0
 
-and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i p: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
   Gen.Debug.no_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula pr
-      (fun h0 -> xpure_heap_symbolic_i_x prog h0 i) h0
+      (fun h0 -> xpure_heap_symbolic_i_x prog h0 i p) h0
 
-and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no p: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+  if not (is_h_normalized h0 p) then report_error no_pos "xpure_heap_symbolic_i: xpuring a non normalized formula"
+  else
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
 	  h_formula_data_label = lbl;
@@ -2085,14 +2089,14 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	  formula_base_perm = pr;
 	  formula_base_branches = br;
 	  formula_base_pos = pos}) ->
-          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) [] h p pr br pos sat_subno
+          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 p in (a,b)) [] h p pr br pos sat_subno
     | Exists ({ formula_exists_qvars = qvars;
       formula_exists_heap = qh;
       formula_exists_pure = qp;
 	  formula_exists_perm = pr;
       formula_exists_branches = br;
       formula_exists_pos = pos}) ->
-          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) qvars qh qp pr br pos sat_subno
+          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 qp in (a,b)) qvars qh qp pr br pos sat_subno
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
@@ -3761,8 +3765,8 @@ and heap_entail_split_lhs_phases_x
 			            List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
 		              else
 			            (* else drop the read phase (don't add back the frame) *)
-			            let xpure_rd_0, _, _, memset_rd = xpure_heap 2 prog h1 0 in
-			            let xpure_rd_1, _, _, memset_rd = xpure_heap 2 prog h1 1 in
+			            let xpure_rd_0, _, _, memset_rd = xpure_heap 2 prog h1 0 (MCP.mkMTrue pos) in
+			            let xpure_rd_1, _, _, memset_rd = xpure_heap 2 prog h1 1 (MCP.mkMTrue pos) in
 			            (* add the pure info for the dropped reading phase *)
 			            List.map 
 			                (Cformula.transform_context 
@@ -3854,8 +3858,8 @@ and heap_entail_split_lhs_phases_x
 			                  List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
 			                else
 			                  (* drop read phase *)
-			                  let xpure_rd_0, _, _, memset_rd = xpure_heap 3 prog h1 0 in
-			                  let xpure_rd_1, _, _, memset_rd = xpure_heap 3 prog h1 1 in
+			                  let xpure_rd_0, _, _, memset_rd = xpure_heap 3 prog h1 0 (MCP.mkMTrue pos) in
+			                  let xpure_rd_1, _, _, memset_rd = xpure_heap 3 prog h1 1 (MCP.mkMTrue pos) in
 			                  (* add the pure info corresponding to the dropped reading phase *)
 			                  List.map 
 			                      (Cformula.transform_context 
@@ -4146,7 +4150,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
   let _ = reset_int2 () in
   let hx = mkStarH_nn lhs_h estate.es_heap pos in
   let nhx,npx,_,_ = normalize_frac_heap hx lhs_p in
-  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog nhx 1 in
+  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog nhx 1 npx in
   let tmp0 = MCP.merge_mems lhs_p npx false in
   let tmp1 = MCP.merge_mems tmp0 xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars) tmp1 
@@ -4195,8 +4199,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let _ = reset_int2 () in
   let hx = mkStarH_nn lhs_h estate.es_heap pos in
   let curr_lhs_h,curr_lhs_p,_,_ = normalize_frac_heap hx lhs_p in
-  let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap 5 prog curr_lhs_h 0 in
-  let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap 5 prog curr_lhs_h 1 in
+  let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap 5 prog curr_lhs_h 0 lhs_p in
+  let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap 5 prog curr_lhs_h 1 lhs_p in
   let xpure_lhs_h0 = MCP.merge_mems xpure_lhs_h0 curr_lhs_p false in
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 curr_lhs_p false in
   (* add the information about the dropped reading phases *)
