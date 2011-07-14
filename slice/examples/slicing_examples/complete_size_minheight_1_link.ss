@@ -86,12 +86,12 @@ void insert(ref node2 t, int v)
 	}
 	else {
 		if(min_height(t.left) < height(t.left)) {		// there is still space in the left subtree
-      aux = t.left;
+			aux = t.left;
 			insert(aux, v);
 			t.left = aux;
 			return;	
 		}
-		else {
+	  else {
       if(min_height(t.right) < height(t.right)) {	// there is still space in the right subtree
         aux = t.right;
 				insert(aux, v);

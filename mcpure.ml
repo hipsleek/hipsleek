@@ -1722,14 +1722,15 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
   Gen.Profiling.pop_time str_time;
   r)
 
-and pick_relevant_lhs_constraints (nlv, lv) ante_disj =
-  Gen.Debug.no_2 "pick_relevant_lhs_constraints"
+and pick_relevant_lhs_constraints choose_algo (nlv, lv) ante_disj =
+  Gen.Debug.no_3 "pick_relevant_lhs_constraints"
+	string_of_int
 	(fun (nlv, lv) -> (!print_sv_l_f nlv) ^ (!print_sv_l_f lv))
 	!print_mp_f	!print_mp_f
-	pick_relevant_lhs_constraints_x (nlv, lv) ante_disj
+	pick_relevant_lhs_constraints_x choose_algo (nlv, lv) ante_disj
 	
-and pick_relevant_lhs_constraints_x (nlv, lv) ante_disj =
-  let choose_algo = !opt_imply in
+and pick_relevant_lhs_constraints_x choose_algo (nlv, lv) ante_disj =
+  (*let choose_algo = !opt_imply in*)
   if choose_algo = 0 then
 	pick_relevant_lhs_constraints_simpl (nlv@lv) ante_disj
   else if choose_algo = 1 then
@@ -1864,7 +1865,8 @@ and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
 	let (n_fv, n_ante1, r_ante) = List.fold_left
 	  (fun (afv, amc, rmc) (mg_ulv, mg) ->
 		let cond_direct = Gen.BList.overlap_eq eq_spec_var afv mg_ulv in
-		let cond_link = ((List.length mg.memo_group_linking_vars) > 1) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in
+		(*let cond_link = ((List.length mg.memo_group_linking_vars) > 1) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in*)
+		let cond_link = (mg_ulv = []) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in
 		if (cond_direct || cond_link) then
 		  (afv@mg.memo_group_fv, amc@[mg], rmc)
 		else (afv, amc, rmc@[(mg_ulv, mg)])
@@ -1887,7 +1889,7 @@ and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
 	
 and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
   let (nlv, lv) = fv_with_slicing_label conseq in
-  let n_ante = pick_relevant_lhs_constraints (nlv, lv) ante_disj in
+  let n_ante = pick_relevant_lhs_constraints !opt_imply (nlv, lv) ante_disj in
 
   (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
 

@@ -22,7 +22,8 @@ GetOptions( "stop"  => \$stop,
             "bags" => \$bags,
             "term" => \$term,
             "lists" => \$lists,
-			"slicing" => \$slicing
+			"slicing" => \$slicing,
+			"small" => \$small
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
@@ -472,7 +473,7 @@ $output_file = "log";
          "insert", "SUCCESS", "rotate_double_left",  "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
         ["avl-modular-2.ss", 16, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
          "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
-         "rotate_left", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
+         "rotateleft", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
          "height","SUCCESS"],
         ["avl-modular-3.ss", 11, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS","remove_max_add", "SUCCESS", ,"remove_min_add","SUCCESS",
          "insert", "SUCCESS", "rotate_double_left",  "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
@@ -699,7 +700,117 @@ $output_file = "log";
 		    "deleteone", "SUCCESS",
 		    "deleteoneel", "SUCCESS",
 		    "insert", "SUCCESS"
-		]
+		],
+	],
+	"small" => [
+		["append.ss", 1,  "",
+		 "append", "SUCCESS"
+		],
+		["append-tail.ss", 1,  "",
+		 "append", "SUCCESS"
+		],
+		["bll.ss", 2,  "",
+		 "insert", "SUCCESS",
+		 "delete", "SUCCESS"
+		],
+		["cll.ss", 5,  "",
+		 "test", "SUCCESS",
+		 "insert", "SUCCESS",
+		 "count_rest", "SUCCESS",
+		 "count", "SUCCESS",
+		 "delete", "SUCCESS"
+		],
+		["dll.ss", 10, "",
+		 "insert","SUCCESS",
+		 "delete","SUCCESS",
+		 "delete1","SUCCESS",
+		 "test_del","SUCCESS",
+		 "test_del2","SUCCESS",
+		 "test_fold","SUCCESS",
+		 "append","SUCCESS",
+		 "append1","SUCCESS",
+		 "f1","SUCCESS",
+		 "f2","SUCCESS",
+		],
+		["insertion.ss", 2, "",
+		 "insert","SUCCESS",
+		 "insertion_sort","SUCCESS"
+		],
+		["ll.ss", 10, "",
+		 "append","SUCCESS",
+		 "ret_first","SUCCESS",
+		 "get_next","SUCCESS",
+		 "set_next","SUCCESS",
+		 "set_null","SUCCESS",
+		 "get_next_next","SUCCESS",
+		 "insert","SUCCESS",
+		 "delete","SUCCESS",
+		 #"delete1","SUCCESS",
+		 "create_list","SUCCESS",
+		 "rev","SUCCESS",
+		 #"reverse1","SUCCESS",
+		 #"test","SUCCESS"
+		],
+		["perfect.ss", 5, "",
+		 "simple_insert","SUCCESS",
+		 "create","SUCCESS",
+		 "maxim","SUCCESS",
+		 "height","SUCCESS",
+		 "insert","SUCCESS"
+		],
+		["selection.ss", 3, "",
+		 "find_min","SUCCESS",
+		 "delete_min","SUCCESS",
+		 "selection_sort","SUCCESS"
+		],
+		["sll.ss", 6, "",
+		 "insert","SUCCESS",
+		 "insert2","SUCCESS",
+		 "delete","SUCCESS",
+		 "get_tail","SUCCESS",
+		 "insertion_sort","SUCCESS",
+		 "id","SUCCESS"
+		],
+		["trees.ss", 6, "",
+		 "append","SUCCESS",
+		 #"append1","SUCCESS",
+		 "count","SUCCESS",
+		 "flatten","SUCCESS",
+		 #"flatten1","SUCCESS",
+		 "insert","SUCCESS",
+		 #"insert1","SUCCESS",
+		 "remove_min","SUCCESS",
+		 #"remove_min1","SUCCESS",
+		 "delete","SUCCESS",
+		 #"delete1","SUCCESS"
+		 ],
+		 ["global1.ss", 1, "",
+		  "increase","SUCCESS"
+		 ],
+         ["global2.ss", 1, "", "increase","SUCCESS"],
+         ["global3.ss", 2, "",
+		  "increase","SUCCESS",
+          "increase_n","SUCCESS"
+		 ],
+         ["global4.ss", 2, "",
+		  "increase_n","SUCCESS",
+          "main", "SUCCESS"
+		 ],
+         ["global5.ss", 2, "",
+		  "increase","SUCCESS",
+          "decrease","SUCCESS"],
+		 ["global-ll.ss", 5, "",
+		  "insert_rec","SUCCESS",
+          "delete_last_rec","SUCCESS",
+          "insert","SUCCESS",
+          "delete_last","SUCCESS",
+          "main","SUCCESS"
+		 ],
+		 ["global-mutual-rec.ss", 3, "",
+		  "decrease1","SUCCESS",
+          "decrease2","SUCCESS",
+		  "main","SUCCESS"
+		 ]
 	]
     );
 
@@ -817,6 +928,9 @@ sub hip_process_file {
         }elsif ("$param" =~ "slicing") {
             $exempl_path_full = "$exempl_path/slicing_examples";
             print "Starting slicing tests:\n";
+        }elsif ("$param" =~ "small") {
+            $exempl_path_full = "$exempl_path/slicing_small_examples";
+            print "Starting slicing tests for small examples:\n";
         }
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
