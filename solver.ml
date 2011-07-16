@@ -4059,7 +4059,6 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                             (* what if must failure on the ante -> conseq *)
                               if CF.overlap_flow_ff fl2 fl1 then
                                 begin
-                                    let _ = print_endline "locle" in
                                     let fe = mk_failure_may "2: conseq has overlapping flow type" in
                                     let may_flow_failure =
 			                        FailCtx (Basic_Reason ({fc_message ="1.2: conseq has an incompatible flow type";
@@ -5921,7 +5920,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		        (* ok because of TP.imply*)
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
-		          let new_f = normalize_replace coer_rhs_new f pos in
+		          let new_f = normalize_replace f coer_rhs_new pos in
 			      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
 			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
 			      (true, new_f)

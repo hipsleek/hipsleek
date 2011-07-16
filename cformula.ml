@@ -2616,6 +2616,11 @@ let convert_must_failure_to_value_orig (l:list_context) : list_context =
             | None -> l)
     | SuccCtx _ -> l
 
+let convert_must_failure_to_value_orig (l:list_context) : list_context =
+ let pr = !print_list_context_short in
+  Gen.Debug.no_1 "convert_must_failure_to_value_orig" pr pr
+  (fun _ -> convert_must_failure_to_value_orig l) l
+
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
 (*   ((-1,"Must Err @"^s),fme) :: e *)
 
