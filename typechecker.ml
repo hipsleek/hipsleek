@@ -236,7 +236,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_imm = imm;
-			    CF.h_formula_data_frac_perm = None; (*LDK: belong to heap, deal later ???*)
+			    CF.h_formula_data_frac_perm = None; (*LDK: belong to HIP, deal later ???*)
                 CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_remaining_branches = None;

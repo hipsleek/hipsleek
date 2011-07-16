@@ -199,7 +199,9 @@ let get_ptr_from_data h =
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
+let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
 let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
@@ -1428,7 +1430,7 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 and subst sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Gen.Debug.ho_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
+  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
 
 and subst_x sst (f : formula) =
   let rec helper f =
@@ -4110,26 +4112,99 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
    f_h_f : heap formula
 *)
 
-let rec transform_formula f (e:formula):formula =
+
+let transform_formula_x f (e:formula):formula =
+  let rec helper f e = 
 	let (_, f_f, f_h_f, f_p_t) = f in
 	let r =  f_f e in 
 	match r with
 	| Some e1 -> e1
-	| None  -> match e with	 
+	| None  -> 
+
+        (* let _ = print_string ("\n [Debug] transform_formula, e = " ^ (!print_formula e)) in  *)
+
+        match e with	 
 		| Base b -> 
+
+        (* let _ = print_string ("\n [Debug] transform_formula, base b = " ^ "\n") in *)
+
       Base{b with 
               formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
               formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure;
               formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;}
-		| Or o -> Or {o with 
-                    formula_or_f1 = transform_formula f o.formula_or_f1;
-                    formula_or_f2 = transform_formula f o.formula_or_f2;}
+		| Or o -> 
+
+        (* let _ = print_string ("\n [Debug] transform_formula, Or o = ") in  *)
+
+Or {o with 
+                    formula_or_f1 = helper f o.formula_or_f1;
+                    formula_or_f2 = helper f o.formula_or_f2;}
 		| Exists e -> 
+
+        (* let _ = print_string ("\n [Debug] transform_h_formula,before, Exists e = " ^(!print_h_formula e.formula_exists_heap)) in  *)
+        (* let feh = transform_h_formula f_h_f e.formula_exists_heap in *)
+        (* let _ = print_string ("\n [Debug] transform_h_formula,after, Exists e = " ^(!print_h_formula feh) ^ "\n") in  *)
+
+        (* let fep = e.formula_exists_pure in *)
+        (* let _ = print_string ("\n [Debug] transform_mix_formula,before, Exists e = " ^(!print_mix_f fep)) in *)
+        (* let fep = MCP.transform_mix_formula f_p_t fep in *)
+        (* let _ = print_string ("\n [Debug] transform_mix_formula,after, Exists e = " ^(!print_mix_f fep) ^ "\n") in       *)  
+
       Exists {e with
                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;
                 formula_exists_branches = 
                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
+
+  in helper f e
+
+let transform_formula f (e:formula):formula =
+  let pr = !print_formula in
+  Gen.Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
+
+(* let rec transform_formula f (e:formula):formula = *)
+(* 	let (_, f_f, f_h_f, f_p_t) = f in *)
+(* 	let r =  f_f e in  *)
+(* 	match r with *)
+(* 	| Some e1 -> e1 *)
+(* 	| None  ->  *)
+
+(*         let _ = print_string ("\n [Debug] transform_formula, e = " ^ (!print_formula e)) in  *)
+
+(*         match e with	  *)
+(* 		| Base b ->  *)
+
+(*         let _ = print_string ("\n [Debug] transform_formula, base b = " ^ "\n") in *)
+
+(*       Base{b with  *)
+(*               formula_base_heap = transform_h_formula f_h_f b.formula_base_heap; *)
+(*               formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure; *)
+(*               formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;} *)
+(* 		| Or o ->  *)
+
+(*         let _ = print_string ("\n [Debug] transform_formula, Or o = ") in  *)
+
+(* Or {o with  *)
+(*                     formula_or_f1 = transform_formula f o.formula_or_f1; *)
+(*                     formula_or_f2 = transform_formula f o.formula_or_f2;} *)
+(* 		| Exists e ->  *)
+
+(*         let _ = print_string ("\n [Debug] transform_h_formula,before, Exists e = " ^(!print_h_formula e.formula_exists_heap)) in  *)
+(*         let feh = transform_h_formula f_h_f e.formula_exists_heap in *)
+(*         let _ = print_string ("\n [Debug] transform_h_formula,after, Exists e = " ^(!print_h_formula feh) ^ "\n") in  *)
+
+(*         let fep = e.formula_exists_pure in *)
+(*         let _ = print_string ("\n [Debug] transform_mix_formula,before, Exists e = " ^(!print_mix_f fep)) in *)
+(*         let fep = MCP.transform_mix_formula f_p_t fep in *)
+(*         let _ = print_string ("\n [Debug] transform_mix_formula,after, Exists e = " ^(!print_mix_f fep) ^ "\n") in         *)
+
+(*       Exists {e with *)
+(*                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap; *)
+(*                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure; *)
+(*                 formula_exists_branches =  *)
+(*                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;} *)
+
+
 
 
 let rec trans2_formula f (e:formula):formula =
@@ -4374,8 +4449,12 @@ and trans_struc_formula (e: struc_formula) (arg: 'a) f f_arg f_comb : (struc_for
 
 let rec transform_context f (c:context):context = 
 	match c with
-	| Ctx e -> (f e)
-	| OCtx (c1,c2) -> mkOCtx (transform_context f c1)(transform_context f c2) no_pos
+	| Ctx e -> 
+        (* let _ = print_string ("[LDK] transform context Ctx \n") in (*LDK*)*)
+        (f e)
+	| OCtx (c1,c2) -> 
+        (* let _ = print_string ("[LDK] transform context OCtx \n") in (*LDK*)  *)  
+        mkOCtx (transform_context f c1)(transform_context f c2) no_pos
 		
 let trans_context (c: context) (arg: 'a) 
         (f: 'a -> context -> (context * 'b) option) 
@@ -4488,7 +4567,7 @@ let rename_labels_formula_ante  e=
 	let n_l_f n_l = match n_l with
 				| None -> (fresh_branch_point_id "")
 				| Some (_,s) -> (fresh_branch_point_id s) in	
-  let f_e_f e = None in
+    let f_e_f e = None in
 	let f_f e = None in
 	let rec f_h_f e = match e with 
 	    | Conj s -> None

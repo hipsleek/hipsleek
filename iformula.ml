@@ -1362,7 +1362,7 @@ and float_out_heap_min_max (h :  h_formula) :
 
     |  HeapNode h1->
 
-        let _ = print_string (" [LDK] Inside float_out_heap_min_max \n") in 
+        (* let _ = print_string (" [LDK] Inside float_out_heap_min_max \n") in  (\*LDK*\) *)
 	    let l = h1. h_formula_heap_pos in
         (*LDK*)
 	    let frac = h1. h_formula_heap_frac_perm in 

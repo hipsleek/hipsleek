@@ -236,7 +236,7 @@ let rec
                   IF.h_formula_heap_frac_perm = frac; (*LDK*)
                 } ->
       (* let tmp1 = look_for_anonymous_exp_list args in tmp1 *)
-      let tmp1 = look_for_anonymous_exp_list (frac::args) in tmp1
+      let tmp1 = look_for_anonymous_exp_list (frac::args) in tmp1 (*LDK: ??? not sure*)
 
   | _ -> []
 
@@ -3905,7 +3905,8 @@ and must_unify_expect (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_expect k1 k2 stab in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : Found "
+    | None -> 
+        report_error pos ("TYPE ERROR : Found "
       ^(string_of_typ (get_type_entire stab k1))
       ^" but expecting "^(string_of_typ (get_type_entire  stab k2)))
 
@@ -3961,7 +3962,8 @@ and must_unify_expect_test k1 k2 pos =
   let k = unify_expect_modify false k1 k2 !type_table  in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : Found "
+    | None -> 
+        report_error pos ("TYPE ERROR : Found "
       ^(string_of_typ (k1))
       ^" but expecting "^(string_of_typ (k2)))
 
@@ -4125,6 +4127,7 @@ and gather_type_info_var_x (var : ident) stab (ex_t : spec_var_kind) pos : spec_
   begin
     try
       let k = H.find stab var in
+
       let tmp = must_unify_expect k.sv_info_kind ex_t stab pos in
       (k.sv_info_kind <- tmp); tmp
     with | Not_found -> 
@@ -5048,7 +5051,7 @@ and gather_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 (*     | IF.HTrue | IF.HFalse -> () *)
 
 and gather_type_info_heap prog (h0 : IF.h_formula) stab =
-  Gen.Debug.ho_eff_2 "gather_type_info_heap" [false;true]
+  Gen.Debug.no_eff_2 "gather_type_info_heap" [false;true]
       Iprinter.string_of_h_formula string_of_stab (fun _ -> "()")
       (fun _ _ -> gather_type_info_heap_x prog h0 stab) h0 stab 
 
@@ -5085,7 +5088,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_arguments = ies;
                 IF.h_formula_heap_pos = pos
 	        } ->
-          (* let ies = (frac::ies) in (*LDK*) *) 
+          (* let ies = (frac::ies) in (\*LDK*\)  *)
 	      let dname =
             (try
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
@@ -5103,7 +5106,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                           (match e with
 				            | IP.Var ((v, p), pos) -> ((fst t), v) :: tmp
 				            | _ -> tmp)
-                    | _ -> let _ = print_string "LDK TEST 1" in
+                    | _ -> (* let _ = print_string "LDK TEST 1" in *)
 			              Err.report_error
                               {
                                   Err.error_loc = pos;
@@ -5111,8 +5114,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 				                      "number of arguments for view " ^
 				                          (c ^ " does not match");
                               } in
-                (* let tmp = helper ies vdef.I.view_typed_vars *)
-                let tmp = helper (frac::ies) vdef.I.view_typed_vars
+                let tmp = helper ies vdef.I.view_typed_vars
+                (* let tmp = helper (frac::ies) vdef.I.view_typed_vars *)
                 in
                 ignore
                     (List.map
@@ -5436,17 +5439,17 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 (* AN HOA : TODO CHECK *)
 and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Iformula.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
-  let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = Iformula.float_out_exps_from_heap f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = Iformula.float_out_min_max f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = Iformula.rename_bound_vars f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   f
       
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)

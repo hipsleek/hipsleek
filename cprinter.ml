@@ -1274,6 +1274,8 @@ let string_of_context_list_short (ctx:context list): string =  poly_string_of_pr
 
 let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx
 
+let string_of_list_context_list (ctxl:list_context list): string =  List.fold_right (fun lctx str -> (string_of_list_context lctx) ^ str ^"\n") ctxl ""
+
 let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_entail_state_short e
 
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
@@ -1849,6 +1851,7 @@ Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cformula.print_formula := string_of_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
+(* Cformula.print_mix_formula := string_of_mix_formula;; *)
 Cformula.print_svl := string_of_spec_var_list;;
 Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;

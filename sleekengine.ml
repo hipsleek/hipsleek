@@ -301,11 +301,11 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
 
-      let _ = print_string ("LDK: I am here before AS.case_normalize_formula \n") in
+      (* let _ = print_string ("LDK: I am here before AS.case_normalize_formula \n") in *)
 
       let wf = AS.case_normalize_formula iprog h mf in
 
-      let _ = print_string ("LDK: I am here after AS.case_normalize_formula \n") in
+      (* let _ = print_string ("LDK: I am here after AS.case_normalize_formula \n") in *)
 
       let _ = Astsimp.gather_type_info_formula iprog wf stab false in
       let r = AS.trans_formula iprog quant fv_idents false wf stab false in
@@ -335,61 +335,63 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(* An Hoa : PRINT OUT THE INPUT *)
 		(*  let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in *)
 		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
-		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in  *)
+		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   let _ = residues := None in
   let stab = H.create 103 in
+  (* let _ = print_string ("\n [Debug] ante0 = "^(string_of_meta_formula iante0)^"\n\n") in *)
   let ante = meta_to_formula iante0 false [] stab in    
+  (* let _ = print_string ("\n [Debug] ante = "^(Cprinter.string_of_formula ante)^"\n\n") in *)
   let ante = Solver.prune_preds !cprog true ante in
+
+  (* let _ = print_string ("\n [Debug] ante = "^(Cprinter.string_of_formula ante)^"\n\n") in *)
+
   let fvs = CF.fv ante in
+
+  (* let _ = print_string ("\n [Debug] fvs = "^(Cprinter.string_of_spec_var_list fvs)^"\n\n") in *)
+
   let fv_idents = List.map CP.name_of_spec_var fvs in
 
-    let _ = print_string ("LDK: I am here inside run_entail_check 1 \n") in
+  (* let _ = print_string ("\n [Debug] fv_idents = "^(Cprinter.string_of_ident_list fv_idents ",")^"\n\n") in *)
 
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
-
-    let _ = print_string ("LDK: I am here inside run_entail_check 2 \n") in
-
   let conseq = Solver.prune_pred_struc !cprog true conseq in
 
-    let _ = print_string ("LDK: I am here inside run_entail_check 3 \n") in
+  (* let _ = print_string ("\n [Debug] conseq = "^(Cprinter.string_of_struc_formula conseq)^"\n\n") in *)
 
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
-
-    let _ = print_string ("LDK: I am here inside run_entail_check 4 \n") in
-
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
   (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
 
-    let _ = print_string ("LDK: I am here inside run_entail_check 5 \n") in
+  (* let _ = print_string ("\n ctx = "^(Cprinter.string_of_context ctx)^"\n\n\n") in *)
 
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
 
-    let _ = print_string ("[LDK] I am here inside run_entail_check 6 \n") in
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*LDK:exception in entail check is thrawn here*)
 
-  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*exception in entail check is thrawn here*)
+  (* let _ = print_string ("\n ctx = "^(Cprinter.string_of_context ctx)^"\n\n\n") in *)
 
-    let _ = print_string ("[LDK] I am here inside run_entail_check 7 \n") in
-
-  (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-  let ante_flow_ff = (CF.flow_formula_of_formula ante) in
-
-    let _ = print_string ("[LDK] I am here inside run_entail_check 8 \n") in
+  (* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *)
 
   let rs1, _ = Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
-    (CF.SuccCtx[ctx]) conseq no_pos None in
+    (CF.SuccCtx[ctx]) conseq no_pos None in (*LDK: ??? rs1=fail context*)
+
+  (* let _ = print_string ("rs1 = "^(Cprinter.string_of_list_context rs1)^"\n") in (\*LDK*\) *)
+
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   (*let _ = print_endline ( (Cprinter.string_of_list_context rs)) in*)
-  residues := Some rs;
-  (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
-  flush stdout;
+  let residues = Some rs in
+  (* ;print_string ((Cprinter.string_of_list_context rs)^"\n") *)
+  let _ = flush stdout in
 
-    let _ = print_string ("LDK: I am here inside run_entail_check END \n") in
+  (* let _ = print_string ("rs = "^(Cprinter.string_of_list_context rs)^"\n") in (\*LDK*\) *)
 
   let res = ((not (CF.isFailCtx_gen rs))) in
-  (res, rs)
 
+  (* let _ = print_string ("res = "^(string_of_bool res)^"\n") in (\*LDK*\) *)
+
+  (res, rs)
 
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -398,9 +400,9 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
 		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   try 
-    let _ = print_string ("LDK: I am here before run_entail_check \n") in
+    (* let _ = print_string ("LDK: I am here before run_entail_check \n") in *)
     let valid, rs = run_entail_check iante0 iconseq0 in
-    let _ = print_string ("LDK: I am here after run_entail_check\n") in
+    (* let _ = print_string ("LDK: I am here after run_entail_check\n") in *)
     let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
     if not valid then
       begin
@@ -428,7 +430,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 (*LDK debug*)
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
-  Gen.Debug.ho_2 "process_entail_check" pr pr (fun _ -> "unit") process_entail_check iante0 iconseq0
+  Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "unit") process_entail_check iante0 iconseq0
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -442,6 +444,7 @@ let process_capture_residue (lvar : ident) =
       | Some s -> CF.list_formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
+(*LDK*)
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
