@@ -309,7 +309,9 @@ let pass_global_by_value = ref false
 
 let allow_pred_spec = ref false
 
-let allow_failure_explaining = ref false
+let disable_failure_explaining = ref false
+
+let simplify_error = ref false
 
 let prune_cnt_limit = ref 2
 

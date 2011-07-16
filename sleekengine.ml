@@ -348,7 +348,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
   (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
   let rs1, _ = 
-  if !Globals.allow_failure_explaining then
+  if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
         (CF.SuccCtx[ctx]) conseq no_pos None
   else
@@ -361,7 +361,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   flush stdout;
   let res =
-    if !Globals.allow_failure_explaining then ((not (CF.isFailCtx_gen rs)))
+    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs)))
   in
   (res, rs)
@@ -373,7 +373,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     if not valid then
       begin
         let s =
-           if !Globals.allow_failure_explaining then
+           if not !Globals.disable_failure_explaining then
              match CF.get_must_failure rs with
           | Some s -> "(must) cause:"^s 
           | _ -> (match CF.get_may_failure rs with
@@ -384,12 +384,12 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
         in
         print_string (num_id^"=Fail."^s^"\n")
         (*if !Globals.print_err_sleek then *)
-        (*  ;print_string ("printing here: "^(Cprinter.string_of_list_context rs))*)
+          ;print_string ("printing here: "^(Cprinter.string_of_list_context rs))
       end
     else
       begin
 	      print_string (num_id^"=Valid.\n")
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs))*)
+           ;print_string ("printing here: "^(Cprinter.string_of_list_context rs))
       end
   with _ ->
     Printexc.print_backtrace stdout;

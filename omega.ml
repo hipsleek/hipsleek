@@ -21,6 +21,7 @@ let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
+let oc_maxVars = ref 54
 let print_pure = ref (fun (c:formula)-> " printing not initialized")
 
 let process = ref {name = "omega"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
@@ -116,8 +117,8 @@ and omega_of_formula f  = match f with
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "oc"(* TODO: fix oc path *)
-(*let omegacalc = "/home/locle/workspace/hg/omega_incremental/sleekex/omega_modified/omega_calc/obj/oc"*)
+(*let omegacalc = "oc"(* TODO: fix oc path *)*)
+let omegacalc = "/home/locle/workspace/hg/error_specs/sleekex/omega_modified/omega_calc/obj/oc"
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
@@ -305,7 +306,7 @@ let rec omega_of_var_list (vars : ident list) : string = match vars with
 
 let get_vars_formula (p : formula):(bool * string list) =
   let svars = fv p in
-  if List.length svars >= 56 then (false, []) else
+  if List.length svars >= !oc_maxVars then (false, []) else
     (true, List.map omega_of_spec_var svars)
 
 (*
