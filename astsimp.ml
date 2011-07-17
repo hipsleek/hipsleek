@@ -1103,7 +1103,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
-  Gen.Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+  Gen.Debug.ho_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
@@ -1115,6 +1115,9 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
    (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+
+  (*LDK*)
+
   let (inv, inv_b) = vdef.I.view_invariant in
   let _ = gather_type_info_pure prog inv stab in
   let _ = List.iter (fun (_,f) -> gather_type_info_pure prog f stab) inv_b in
@@ -5091,8 +5094,14 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
           (* let ies = (frac::ies) in (\*LDK*\)  *)
 	      let dname =
             (try
-              let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
-              in
+              let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
+
+
+             (*  (\*LDK*\) *)
+             (* let _ = print_string ("uuu, vdef = " ^ (Iprinter.string_of_view_decl vdef) ^ "\n") in *)
+             (* let _ = print_string ("uuu, vdef.view_vars = " ^ (Iprinter.string_of_view_vars vdef.I.view_vars) ^ "\n") in *)
+
+
 	          let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types prog vdef in
 	          (* let _ = print_string ("\n searching for: "^c^" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^"-\n") in *)
               (if not (Gen.is_empty vdef.I.view_typed_vars)

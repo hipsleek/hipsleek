@@ -205,6 +205,10 @@ let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a ->
   begin
    Globals.prune_with_slice := !Globals.enable_aggressive_prune;
    let first_res = crt_heap_entailer argument in
+
+   (* (\*LDK*\) *)
+   (* let _ = print_string "I am here \n" in *)
+
    first_res (*
    let res = match !Globals.enable_aggressive_prune, !Globals.disable_aggressive_prune with
       | true, true 
@@ -305,8 +309,11 @@ and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.m
   Gen.Debug.no_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
       (fun f -> h_formula_2_mem f evars prog) f
 
-and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
-  let rec helper f =
+and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
+  Gen.Debug.no_2 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (fun f evars -> h_formula_2_mem_x f evars prog) f evars
+
+and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
+    let rec helper f =
     (* for h_formula *)
     match f with
       | Star ({h_formula_star_h1 = h1;
@@ -2468,7 +2475,7 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
   (* let _ = print_string "[Debug] heap_entail_struc_init \n" in *)
   (* let _ = print_string ("[Debug] heap_entail_struc_init:" *)
   (* ^ "\nctx:\n" ^ (Cprinter.string_of_list_context cl) *)
-  (* ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))  *)
+  (* ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) *)
   (* in *)
 
   Debug.devel_pprint ("heap_entail_struc_init:"
@@ -2495,13 +2502,20 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
 
             (*LDK: !!! need tracing, error might be HERE*)
             let entail_fct = fun c-> heap_entail_struc prog is_folding  has_post c conseq pos pid in
+            
+            (* (\*LDK*\) *)
+            (* let _ = print_string "I am here \n" in *)
+
+
             let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
+
+            (* (\*LDK*\) *)
+            (* let _ = print_string ("\n [Debug] heap_entail_struc_init: ans = "^(Cprinter.string_of_list_context ans)^"\n\n\n") in *)
 
             let (ans1,prf1) = entail_fct cl_new in
             let (ans2,prf2) = heap_entail_struc prog is_folding  has_post cl_new conseq pos pid in
 
-            (* (\*LDK*\) *)
-            (* let _ = print_string ("\n [Debug] heap_entail_struc_init: ans = "^(Cprinter.string_of_list_context ans)^"\n\n\n") in *)
+
             (* let _ = print_string ("\n [Debug] heap_entail_struc_init: ans2 = "^(Cprinter.string_of_list_context ans2)^"\n\n\n") in *)
 
             (CF.list_context_simplify ans,prf)
@@ -2537,7 +2551,7 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
             ((fold_context_left tmp2), prf)
 	      else
 
-            (* let _ = print_string "\n [Debug] heap_entail_struc: branch 2 \n" in (*LDK*)*)
+            (* let _ = print_string "\n [Debug] heap_entail_struc: branch 2 \n" in (\*LDK*\) *)
 
 	        (heap_entail_one_context_struc_nth "5" prog is_folding  has_post (List.hd cl) conseq pos pid)
 
@@ -2776,7 +2790,7 @@ and heap_entail_conjunct_lhs_struc_x
 	      else 
 
             (* (\*LDK: error this way*\) *)
-            (* let _ = print_string "helper_inner: EBase branch 2" in (\*LDK*\) *)
+            (* let _ = print_string "helper_inner: EBase branch 2 \n" in (\*LDK*\) *)
 
             (* XXXX explore the option to unfold the LHS *)
             
@@ -3175,6 +3189,10 @@ and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
+
+    (* (\*LDK*\) *)
+    (* let _ = print_string "heap_entail_conjunct_lhs_x: inside \n" in *)
+
   (* pre ; LHS is not an OCtx *)
   (* is LHS really conjunctive? *)
   (* (if not(CF.is_one_context ctx) then report_error no_pos "heap_entail_one_context does not have Ctx es"); *)
@@ -5241,9 +5259,14 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
   let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos in
+
+  let _ = print_string "I am here: after compute_action() \n" in
+
   process_action prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
+
+    (* let _ = print_string "heap_entail_non_empty_rhs_heap: inside \n" in *)
 
 (*LDK*)
   Gen.Debug.no_3 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula
@@ -5490,6 +5513,10 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
     | _ -> report_error no_pos ("process_unfold - expecting just unfold operation")
       
 and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
+
+    (* (\*LDK*\) *)
+    (* let _ = print_string "process_action_x: inside" in *)
+
   let r1,r2 = match a with
     | Context.M_match {
           Context.match_res_lhs_node = lhs_node;
@@ -6349,11 +6376,11 @@ and find_coercions c1 c2 prog anode ln2 =
   let p1 = Cprinter.string_of_h_formula in
   let p = (fun l -> string_of_int (List.length l)) in 
   let p2 (v,_) = pr_pair p p v in
-  Gen.Debug.no_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
+  Gen.Debug.ho_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
 
 and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  Gen.Debug.ho_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
 
