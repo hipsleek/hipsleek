@@ -176,6 +176,7 @@ $output_file = "log";
 		["array/arr_search_decrease_less_than_two.java",1,"--ahwytdi","searchzero","SUCCESS"],
 		["array/arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
 		["array/arr_double.java",1,"","doublearr","SUCCESS"],
+		["array/arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
 		["array/arr_init.java",1,"","zinit","SUCCESS"],
 		["array/arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
 		["array/arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
