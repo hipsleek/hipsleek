@@ -171,20 +171,21 @@ $output_file = "log";
 %hip_files=(
 	# AN HOA : ADDED ARRAY TESTING EXAMPLES
 	"hip_array"=>[
-		["array/arr_at.ss",1,"","main","SUCCESS"],
-		["array/arr_bsort.ss",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
-		["array/arr_double.ss",1,"","doublearr","SUCCESS"],
-		["array/arr_init.ss",1,"","zinit","SUCCESS"],
-		["array/arr_insertsort.ss",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
-		["array/arr_invert.ss",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
-		["array/arr_max.ss",1,"","max_value_of_array","SUCCESS"],
-		["array/arr_mergesort.ss",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
-		["array/arr_new_exp.ss",1,"","main","SUCCESS"],
-		["array/arr_nqueens.ss",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
-		["array/arr_qsort.ss",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
-		["array/arr_rev.ss",1,"","arrayrev","SUCCESS"],
-		["array/arr_selectionsort.ss",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
-		["array/arr_sum.ss",2,"--ahwytdi","sigmaright","SUCCESS","sigmaleft","SUCCESS"]
+		["array/arr_at.java",1,"","main","SUCCESS"],
+		["array/arr_binarysearch.java",1,"","binary_search","SUCCESS"],
+		["array/arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["array/arr_double.java",1,"","doublearr","SUCCESS"],
+		["array/arr_init.java",1,"","zinit","SUCCESS"],
+		["array/arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["array/arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
+		["array/arr_max.java",1,"","max_value_of_array","SUCCESS"],
+		["array/arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
+		["array/arr_new_exp.java",1,"","main","SUCCESS"],
+		["array/arr_nqueens.java",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
+		["array/arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
+		["array/arr_rev.java",1,"","arrayrev","SUCCESS"],
+		["array/arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["array/arr_sum.java",2,"--ahwytdi","sigmaright","SUCCESS","sigmaleft","SUCCESS"]
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
