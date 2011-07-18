@@ -1,3 +1,8 @@
+/**
+ * Test the array allocation using new expression.
+ * 
+ * @author Vu An Hoa
+ */
 int main()
 	requires true
 	ensures res = 4;

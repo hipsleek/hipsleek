@@ -2,13 +2,17 @@
  Example: array sorting using selection sort.
  **/
 
-relation idexc(int[] a, int[] b, int i, int j) == forall(k : (i<=k & k<=j | a[k] = b[k])).
+relation idexc(int[] a, int[] b, int i, int j) == 
+	forall(k : (i<=k & k<=j | a[k] = b[k])).
 
-relation sorted(int[] a, int i, int j) == (i >= j | forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
+relation sorted(int[] a, int i, int j) == 
+	(i >= j | forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
 
-relation upperbnd(int[] a, int i, int j, int s) == (i > j | forall ( k : (k < i | k > j | a[k] <= s))).
+relation upperbnd(int[] a, int i, int j, int s) == 
+	(i > j | forall ( k : (k < i | k > j | a[k] <= s))).
 
-relation upperbndprev(int[] a, int[] b, int i, int j) == forall(s : (!(upperbnd(a,i,j,s)) | upperbnd(b,i,j,s))).
+relation upperbndprev(int[] a, int[] b, int i, int j) == 
+	forall(s : (!(upperbnd(a,i,j,s)) | upperbnd(b,i,j,s))).
 
 // Smallest index that gives maximum value in the array
 int array_index_of_max(int[] a, int i, int j)

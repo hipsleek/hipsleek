@@ -2,6 +2,7 @@
  * Binary search example.
  * Remark: need to use the general definition of sorted-ness. The
  * definition in sorting algorithms does not work.
+ * 
  * @author Vu An Hoa
  */
 

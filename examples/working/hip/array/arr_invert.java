@@ -1,7 +1,7 @@
 /**
- Problem 2 in VSComp 2010: Inverting an Injection
- @author Vu An Hoa
- @date 24/06/2011
+ * Problem 2 in VSComp 2010: Inverting an Injection
+ * @author Vu An Hoa
+ * @date 24/06/2011
  **/
 
 relation dom(int[] a, int i, int j) == true.

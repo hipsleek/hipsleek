@@ -173,6 +173,7 @@ $output_file = "log";
 	"hip_array"=>[
 		["array/arr_at.java",1,"","main","SUCCESS"],
 		["array/arr_binarysearch.java",1,"","binary_search","SUCCESS"],
+		["array/arr_search_decrease_less_than_two.java",1,"--ahwytdi","searchzero","SUCCESS"],
 		["array/arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
 		["array/arr_double.java",1,"","doublearr","SUCCESS"],
 		["array/arr_init.java",1,"","zinit","SUCCESS"],

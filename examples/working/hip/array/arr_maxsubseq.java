@@ -1,8 +1,11 @@
 /**
- Example: Array for dynamic programming
- **/
+ * Solve the maximum subsequence problem using DP.
+ * TODO Implemented.
+ * @author Vu An Hoa
+ */
 
-relation sumarray(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & ex ( t : sumarray(a,i+1,j,t) & s = t + a[i])).
+relation sumarray(int[] a, int i, int j, int s) == 
+	(i > j & s = 0 | i <= j & ex ( t : sumarray(a,i+1,j,t) & s = t + a[i])).
 
 relation maxsubsum(int[] a, int i, int j, int s) == 
      (i > j & s = 0 | forall(k,t,h: (!(i <= k & k <= t & t <= j & sumarray(a, k, t, h)) | h <= s))).

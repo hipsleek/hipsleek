@@ -1,6 +1,10 @@
 /**
- Example: merge two arrays.
- **/
+ * Implementation of merge sort. This also illustrates the
+ * capability of array allocation.
+ * Remark: two assumptions is required.
+ * 
+ * @author Vu An Hoa 
+ */
 
 //relation idexc(int[] a, int[] b, int i, int j) == 
 //    forall(k : (i<=k & k<=j | a[k] = b[k])).

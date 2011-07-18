@@ -1,6 +1,8 @@
 /**
- Example: using array to represents sets data structure.
- **/
+ * Using array to represents sets data structure.
+ * 
+ * @author Vu An Hoa 
+ */
 
 // s is a set with n elements
 relation isset(int[] s, int n) == 0 <= n &

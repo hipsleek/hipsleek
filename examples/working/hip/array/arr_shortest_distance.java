@@ -1,5 +1,8 @@
 /**
- Example: Djikstra shortest distance algorithm
+ * Djikstra shortest distance algorithm
+ * TODO implement
+ * 
+ * @author Vu An Hoa
  */
  
 // Graph will be stored as adjacency matrix
