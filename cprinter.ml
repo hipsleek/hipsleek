@@ -793,6 +793,8 @@ let pr_mem_formula  (e : mem_formula) =
 (*     | [] -> fmt_string ";" *)
 (* ;; *)
 
+
+
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
   in
@@ -883,6 +885,7 @@ let printer_of_pure_formula (crt_fmt: Format.formatter) (e:P.formula) : unit =
 
 (** convert h_formula  to a string via pr_h_formula *)
 let string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  pr_h_formula e
+
 
 let printer_of_h_formula (crt_fmt: Format.formatter) (e:h_formula) : unit =
   poly_printer_of_pr crt_fmt pr_h_formula e

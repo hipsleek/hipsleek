@@ -254,16 +254,15 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
 and view_mater_match prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
 
-   let _ = print_string ("\n\nview_mater_match: vdef = " ^ (Cprinter.string_of_view_decl vdef)^ " \n\n") in 
+   (* let _ = print_string ("\n\nview_mater_match: vdef = " ^ (Cprinter.string_of_view_decl vdef)^ " \n\n") in  *)
 
    let vars =  vdef.view_vars in
    
-   let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in 
+   (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
 
 
   let mvs = subst_mater_list_nth 1 vdef.view_vars vs1 vdef.view_materialized_vars in
 
-  let _ = print_string "\n\nI am here \n\n" in
 
   try
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
@@ -288,14 +287,14 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   else 
     let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
 
-    (*LDK*)
-    let _ = print_string ("ttt, l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs) ^ "\n") in
+    (* (\*LDK*\) *)
+    (* let _ = print_string ("ttt, l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs) ^ "\n") in *)
 
     let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
 
 
 
-    let _ = print_string "choose_full_mater_coercion_x: inside" in
+    (* let _ = print_string "choose_full_mater_coercion_x: inside" in *)
 
     try
       let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
@@ -305,17 +304,17 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
 and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr (c,_) = string_of_coercion c in
-  Gen.Debug.ho_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
+  Gen.Debug.no_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
 and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
   let coercs = prog.prog_left_coercions in
 
-  let _ = print_string ("[coerc_mater_match_x]" 
-                        ^"\n l_vname = " ^ (Cprinter.string_of_ident l_vname)
-                        ^"\n  l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs)
-                        ^"\n  r_aset = " ^ (Cprinter.string_of_spec_var_list r_aset)
-                        ^ "\n") in
+  (* let _ = print_string ("[coerc_mater_match_x]"  *)
+  (*                       ^"\n l_vname = " ^ (Cprinter.string_of_ident l_vname) *)
+  (*                       ^"\n  l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs) *)
+  (*                       ^"\n  r_aset = " ^ (Cprinter.string_of_spec_var_list r_aset) *)
+  (*                       ^ "\n") in *)
 
   let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
     | None ->  a 
@@ -339,7 +338,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Gen.Debug.ho_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
+  Gen.Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
       
 (*
@@ -350,7 +349,7 @@ and spatial_ctx_extract p f a i rn rr =
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
   (* let pr = pr_no in *)
-  Gen.Debug.ho_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
+  Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
       (fun _ _ _ _ -> spatial_ctx_extract_x p f a i rn rr) f i a rn
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
@@ -383,30 +382,22 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
               else
                 [(HTrue, f, [], Root)]
              else
-                  (* match frac1 with *)
-                  (*   | Some fr ->                *)
-                  (*       let vmm = view_mater_match prog c (fr::vs1) aset imm f in *)
-                  (*       let cmm = coerc_mater_match prog c (fr::vs1) aset imm f in *)
-                  (*       vmm@cmm *)
-                  (*   | None ->  *)
-                  (*       let vmm = view_mater_match prog c vs1 aset imm f in *)
-                  (*       let cmm = coerc_mater_match prog c vs1 aset imm f in *)
-                  (*       vmm@cmm *)
 
-            let _ = print_string "\n I am here, before vmm = view_mater_match... \n" in
+            (*   (\*LDK*\) *)
+            (* let _ = print_string "\n I am here, before vmm = view_mater_match... \n" in *)
 
-            let vmm =  match frac1 with
-              | Some fr -> 
-                  view_mater_match prog c (fr::vs1) aset imm f
-              | None -> 
-                  view_mater_match prog c vs1 aset imm f
-              in
+            (* let vmm =  match frac1 with *)
+            (*   | Some fr ->  *)
+            (*       view_mater_match prog c (fr::vs1) aset imm f *)
+            (*   | None ->  *)
+            (*       view_mater_match prog c vs1 aset imm f *)
+            (*   in *)
 
-              (* let vmm = view_mater_match prog c vs1 aset imm f in *)
+              let vmm = view_mater_match prog c vs1 aset imm f in
 
 
-
-              let _ = print_string "I am here, before cmm = coerc_mater_match... \n" in
+              (* (\*LDK*\) *)
+              (* let _ = print_string "I am here, before cmm = coerc_mater_match... \n" in *)
 
               let cmm =  match frac1 with
                     | Some fr -> coerc_mater_match prog c (fr::vs1) aset imm f
@@ -414,7 +405,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                         in
 
               (* let cmm = coerc_mater_match prog c vs1 aset imm f in (\*LDK: error here*\) *)
-              let _ = print_string "I am here, after cmm = coerc_mater_match ... \n" in
+              (* let _ = print_string "I am here, after cmm = coerc_mater_match ... \n" in *)
+
               vmm@cmm
             )
           else []
