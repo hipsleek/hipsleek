@@ -216,6 +216,7 @@ let read_last_line_from_in_channel chn : string =
 
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
+  let _ = print_string ("\nf = " ^ f ^ "\n") in (*LDK*)
   (*  try*)
   begin
       if not !is_omega_running then start ()
