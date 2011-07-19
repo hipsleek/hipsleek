@@ -10,92 +10,132 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-
-checkentail x::node<_, null> & m = 1 |- x::ll<m>.
+//(1)
+checkentail x::node(1.0)<_, null> & m = 1 |- x::ll(1.0)<m>.
 print residue. // FOLD
 
-checkentail x::node<_, null>         |- x::ll<m>.
+//(2)
+checkentail x::node(1.0)<_, null>         |- x::ll(1.0)<m>.
 print residue. // FOLD
 
-checkentail x::node<_, null> & m = 1 |- m=1.
+//(3)
+checkentail x::node(1.0)<_, null> & m = 1 |- m=1.
 print residue. //EMP
 
-checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2>.
+//(4)
+checkentail x::node(1.0)<_, r> * r::node(1.0)<_, r2> * r2::ll(1.0)<n> |- x::ll(1.0)<n + 2>.
 //FOLD, no residue
 
-checkentail x::node<next = r1> * r1::node<next = aa> * y::node<> & b > 10 & aa=null |- x::ll<c>.
+//(5)
+checkentail x::node(1.0)<next = r1> * r1::node(1.0)<next = aa> * y::node(1.0)<> & b > 10 & aa=null |- x::ll(1.0)<c>.
 print residue. //FOLD
 
-checkentail x::ll<n> & x!=null |- x::ll<m> & m>0.
+//(6)
+checkentail x::ll(1.0)<n> & x!=null |- x::ll(1.0)<m> & m>0.
 print residue. //MATCH
 
-checkentail x=null |- x::ll<0>.
+//(7)
+checkentail x=null |- x::ll(1.0)<0>.
 print residue. //FOLD
 
-checkentail x=null or x::node<_,q>*q::node<_,null> & q=null |- x::ll<d>.
+//(8)
+checkentail x=null or x::node(1.0)<_,q>*q::node(1.0)<_,null> & q=null |- x::ll(1.0)<d>.
 print residue. //OR-L, valid because the 2nd disjunc of the antecedent is false
 
-checkentail x=null or x::node<_,q>*q::node<_,null> |- x::ll<d>.
+//(9)
+checkentail x=null or x::node(1.0)<_,q>*q::node(1.0)<_,null> |- x::ll(1.0)<d>.
 print residue. //OR-L, residue has a disjunction
 
-checkentail x::ll<n> & x!=null |- x::ll<n> & n>0 or x::ll<0> .
+//(10)
+checkentail x::ll(1.0)<n> & x!=null |- x::ll(1.0)<n> & n>0 or x::ll(1.0)<0> .
 print residue. //OR-R
 
-checkentail x::node<_,q>*q::ll<n> & n>=0 |- x::ll<d>.
+//(11)
+checkentail x::node(1.0)<_,q>*q::ll(1.0)<n> & n>=0 |- x::ll(1.0)<d>.
 print residue. //FOLD
 
-checkentail false |- x::ll<d>.
+//(12)
+checkentail false |- x::ll(1.0)<d>.
 print residue. //False antecedent
 
-checkentail x::ll<n> |- true.
+//(13)
+checkentail true |- x::ll(1.0)<d>.
+print residue. //true antecedent
+
+//(14)
+checkentail x::ll(1.0)<n> |- true.
 print residue. //true consequent
 
-checkentail x::ll<n> & n>1 |- x::node<_,q> * q::node<_,r>.
+//(15)
+checkentail x::ll(1.0)<n> |- false.
+print residue. //false consequent
+
+//(16)
+checkentail x::ll(1.0)<n> & n>1 |- x::node(1.0)<_,q> * q::node(1.0)<_,r>.
 print residue. //UNFOLD
 
-checkentail x::ll<n> & n<2 |- x=null or x::node<_,null>.
+//(17)
+checkentail x::ll(1.0)<n> & n<2 |- x=null or x::node(1.0)<_,null>.
 print residue. //OR-R
 
-checkentail x::ll<n> & n<2 |- case { x=null -> [] x=null;
-                                    x!=null ->  [] x::node<_,null>; }.
+//(18)
+checkentail x::ll(1.0)<n> & n<2 |- case { x=null -> [] x=null;
+                                    x!=null ->  [] x::node(1.0)<_,null>; }.
 print residue. // CASE 
 
-checkentail x::ll<n> & n > 0 |- x::ll<m>.
+//(19)
+checkentail x::ll(1.0)<n> & n > 0 |- x::ll(1.0)<m>.
 print residue. // FOLD
 
-checkentail (exists n : x::ll<n> & n > 0) |- x!=null.
+//(20)
+checkentail (exists n : x::ll(1.0)<n> & n > 0) |- x!=null.
 print residue. // EX-L
 
-checkentail x=null       |- (exists n: x::ll<n> & n=0).
+//(21)
+checkentail x=null       |- (exists n: x::ll(1.0)<n> & n=0).
 print residue. //EX-R, n is not in residue
 
-
-checkentail x::node<_, r> & r=null        |-  x::ll<m>.
+//(22)
+checkentail x::node(1.0)<_, r> & r=null        |-  x::ll(1.0)<m>.
 print residue. // FOLD, then MATCH
 
-checkentail x::node<_, r> & r!=null       |-  x::ll<m> & m>0.
+//(23)
+checkentail x::node(1.0)<_, r> & r!=null       |-  x::ll(1.0)<m> & m>0.
 print residue. // FOLD ??? why fail
 
+//(24)
 //if..., valid
-checkentail x::node<_, r> * r::ll<n> & r!=null  |-  x::ll<m>.
+checkentail x::node(1.0)<_, r> * r::ll(1.0)<n> & r!=null  |-  x::ll(1.0)<m>.
 print residue. // FOLD, then MATCH
 
-
-checkentail x=null       |-  x::ll<n> & n=0.
+//(25)
+checkentail x=null       |-  x::ll(1.0)<n> & n=0.
 print residue. //FOLD, valid
-checkentail x!=null       |-  x::ll<m> & m>0.
+
+//(26)
+checkentail x!=null       |-  x::ll(1.0)<m> & m>0.
 print residue. // FOLD ???why fail
-checkentail x!=null       |-  x::node<_, r> * r::ll<m>.
-checkentail x!=null       |-  x::node<_, r>.
+// NOT STRONG ENOUGH antecedent
+
+//(27)
+checkentail x!=null       |-  x::node(1.0)<_, r> * r::ll(1.0)<m>.
+
+//(28)
+checkentail x!=null       |-  x::node(1.0)<_, r>.
 // ??? do not know which rule to apply???
 
+//(29)
 //BUT, ... valid
-checkentail x::node<_, r> |- x!=null .
+checkentail x::node(1.0)<_, r> |- x!=null .
 print residue. //EMP, valid
 
+//(30)
 //if ..., valid
-checkentail x::ll<n> &  x!=null       |-  x::ll<m> & m>0.
+checkentail x::ll(1.0)<n> &  x!=null       |-  x::ll(1.0)<m> & m>0.
 print residue. // MATCHING
 
-checkentail x::ll<n> |- x::ll<m>.
+//(31)
+checkentail x::ll(1.0)<n> |- x::ll(1.0)<m>.
 print residue. //MATCH
+
+

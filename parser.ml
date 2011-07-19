@@ -622,11 +622,11 @@ simple_heap_constr:
       | ([],t) -> F.mkHeapNode2 c id false false false false frac t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c id false false false false frac t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> 
-      let frac = (P.FConst (1.0, get_pos_camlp4 _loc 1)) in 
+      let frac = Some (P.FConst (1.0, get_pos_camlp4 _loc 1)) in 
       F.mkHeapNode ("",Primed) "" false false false false frac [] None  (get_pos_camlp4 _loc 1)]];
 
 (*LDK: parse optional fractional permission, default = 1.0*)
-opt_frac_perm: [[t = OPT frac_perm -> un_option t (P.FConst (1.0, get_pos_camlp4 _loc 1)) ]];
+opt_frac_perm: [[t = OPT frac_perm -> t ]];
 
 frac_perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];
 

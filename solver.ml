@@ -4608,7 +4608,7 @@ and build_and_failures (failure_code:string) ((contra_list, must_list, may_list)
       | _ ->
 
           (*LDK: error from here*)
-          let msg = "www" ^ failure_code ^ " " ^
+          let msg = "(failure_code="^failure_code ^ ") " ^
           (* let msg = failure_code ^ " " ^ *)
             (String.concat "; " (List.map build_failure_msg failure_list)) ^ " ("  ^ failure_string ^ ")." in
           let fe = match fk with

@@ -235,9 +235,10 @@ let rec
   | IF.HeapNode { IF.h_formula_heap_arguments = args;
                   IF.h_formula_heap_frac_perm = frac; (*LDK*)
                 } ->
-      (* let tmp1 = look_for_anonymous_exp_list args in tmp1 *)
-      let tmp1 = look_for_anonymous_exp_list (frac::args) in tmp1 (*LDK: ??? not sure*)
-
+      ( match frac with 
+        | None -> let tmp1 = look_for_anonymous_exp_list args in tmp1
+        | Some f -> let tmp1 = look_for_anonymous_exp_list (f::args) in tmp1 (*LDK: ??? not sure*)
+      )
   | _ -> []
 
 and look_for_anonymous_exp_list (args : IP.exp list) :
@@ -3632,10 +3633,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                 let new_v = CP.SpecVar (Named c0, v, p) in
 
                 (*LDK: linearize frac permission as a spec var*)
-                let fracs = frac :: [] in
-                let fraclabels = List.map (fun _ -> "") fracs in
-                let fracvars = match_exp (List.combine fracs fraclabels) pos in
-                let fracvar = List.nth fracvars 0 in
+                let fracvar = (match frac with
+                  | None -> None
+                  | Some f -> 
+                      let fracs = f :: [] in
+                      let fraclabels = List.map (fun _ -> "") fracs in
+                      let fracvars = match_exp (List.combine fracs fraclabels) pos in
+                      Some (List.nth fracvars 0) )
+                in
 
                 (* let _ = print_string("fracvar = " ^ (Cprinter.string_of_spec_var fracvar) ^ "\n") in *)
 
@@ -3643,7 +3648,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
 		            CF.h_formula_view_imm = imm;
-		            CF.h_formula_view_frac_perm = Some fracvar; (*LDK ???*)
+		            CF.h_formula_view_frac_perm = fracvar; (*LDK ???*)
                     CF.h_formula_view_arguments = hvars;
                     CF.h_formula_view_modes = vdef.I.view_modes;
                     CF.h_formula_view_coercible = true;
@@ -3662,16 +3667,20 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       let new_v = CP.SpecVar (Named c, v, p) in
 
                       (*LDK: linearize frac permission as a spec var*)
-                      let fracs = frac :: [] in
-                      let fraclabels = List.map (fun _ -> "") fracs in
-                      let fracvars = match_exp (List.combine fracs fraclabels) pos in
-                      let fracvar = List.nth fracvars 0 in
+                      let fracvar = match frac with 
+                        | None -> None
+                        | Some f -> 
+                            let fracs = f :: [] in
+                            let fraclabels = List.map (fun _ -> "") fracs in
+                            let fracvars = match_exp (List.combine fracs fraclabels) pos in
+                            Some (List.nth fracvars 0) 
+                      in
 
                       let new_h = CF.DataNode {
                           CF.h_formula_data_node = new_v;
                           CF.h_formula_data_name = c;
 		                  CF.h_formula_data_imm = imm;
-		                  CF.h_formula_data_frac_perm = (Some fracvar); (*LDK*)
+		                  CF.h_formula_data_frac_perm = fracvar; (*LDK*)
 		                  CF.h_formula_data_arguments = hvars;
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;
