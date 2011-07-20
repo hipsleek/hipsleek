@@ -1,0 +1,1994 @@
+"monads.ml" 21 363 369 "monads.ml" 21 363 372
+type(
+  'a M.m -> 'b M.m -> 'b M.m
+)
+ident(
+  def seq "monads.ml" 22 399 401 "monads.ml" 42 992 995
+)
+"monads.ml" 21 363 373 "monads.ml" 21 363 374
+type(
+  'a M.m
+)
+ident(
+  def m "monads.ml" 21 363 375 "monads.ml" 21 363 398
+)
+"monads.ml" 21 363 375 "monads.ml" 21 363 376
+type(
+  'b M.m
+)
+ident(
+  def f "monads.ml" 21 363 379 "monads.ml" 21 363 398
+)
+"monads.ml" 21 363 379 "monads.ml" 21 363 383
+type(
+  'a M.m -> ('a -> 'b M.m) -> 'b M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 21 363 384 "monads.ml" 21 363 385
+type(
+  'a M.m
+)
+ident(
+  int_ref m "monads.ml" 21 363 373 "monads.ml" 21 363 374
+)
+"monads.ml" 21 363 391 "monads.ml" 21 363 392
+type(
+  'a
+)
+"monads.ml" 21 363 396 "monads.ml" 21 363 397
+type(
+  'b M.m
+)
+ident(
+  int_ref f "monads.ml" 21 363 375 "monads.ml" 21 363 376
+)
+"monads.ml" 21 363 386 "monads.ml" 21 363 398
+type(
+  'a -> 'b M.m
+)
+"monads.ml" 21 363 379 "monads.ml" 21 363 398
+type(
+  'b M.m
+)
+"monads.ml" 22 399 405 "monads.ml" 22 399 409
+type(
+  'c M.m M.m -> 'c M.m
+)
+ident(
+  def join "monads.ml" 23 434 436 "monads.ml" 42 992 995
+)
+"monads.ml" 22 399 410 "monads.ml" 22 399 411
+type(
+  'c M.m M.m
+)
+ident(
+  def m "monads.ml" 22 399 414 "monads.ml" 22 399 433
+)
+"monads.ml" 22 399 414 "monads.ml" 22 399 418
+type(
+  'c M.m M.m -> ('c M.m -> 'c M.m) -> 'c M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 22 399 419 "monads.ml" 22 399 420
+type(
+  'c M.m M.m
+)
+ident(
+  int_ref m "monads.ml" 22 399 410 "monads.ml" 22 399 411
+)
+"monads.ml" 22 399 426 "monads.ml" 22 399 427
+type(
+  'c M.m
+)
+ident(
+  def m "monads.ml" 22 399 431 "monads.ml" 22 399 432
+)
+"monads.ml" 22 399 431 "monads.ml" 22 399 432
+type(
+  'c M.m
+)
+ident(
+  int_ref m "monads.ml" 22 399 426 "monads.ml" 22 399 427
+)
+"monads.ml" 22 399 421 "monads.ml" 22 399 433
+type(
+  'c M.m -> 'c M.m
+)
+"monads.ml" 22 399 414 "monads.ml" 22 399 433
+type(
+  'c M.m
+)
+"monads.ml" 23 434 440 "monads.ml" 23 434 444
+type(
+  ('d -> 'e) -> 'd M.m -> 'e M.m
+)
+ident(
+  def fmap "monads.ml" 24 482 484 "monads.ml" 42 992 995
+)
+"monads.ml" 23 434 445 "monads.ml" 23 434 446
+type(
+  'd -> 'e
+)
+ident(
+  def f "monads.ml" 23 434 447 "monads.ml" 23 434 481
+)
+"monads.ml" 23 434 447 "monads.ml" 23 434 448
+type(
+  'd M.m
+)
+ident(
+  def m "monads.ml" 23 434 451 "monads.ml" 23 434 481
+)
+"monads.ml" 23 434 451 "monads.ml" 23 434 455
+type(
+  'd M.m -> ('d -> 'e M.m) -> 'e M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 23 434 456 "monads.ml" 23 434 457
+type(
+  'd M.m
+)
+ident(
+  int_ref m "monads.ml" 23 434 447 "monads.ml" 23 434 448
+)
+"monads.ml" 23 434 463 "monads.ml" 23 434 464
+type(
+  'd
+)
+ident(
+  def x "monads.ml" 23 434 468 "monads.ml" 23 434 480
+)
+"monads.ml" 23 434 468 "monads.ml" 23 434 474
+type(
+  'e -> 'e M.m
+)
+ident(
+  ext_ref M.return
+)
+"monads.ml" 23 434 476 "monads.ml" 23 434 477
+type(
+  'd -> 'e
+)
+ident(
+  int_ref f "monads.ml" 23 434 445 "monads.ml" 23 434 446
+)
+"monads.ml" 23 434 478 "monads.ml" 23 434 479
+type(
+  'd
+)
+ident(
+  int_ref x "monads.ml" 23 434 463 "monads.ml" 23 434 464
+)
+"monads.ml" 23 434 475 "monads.ml" 23 434 480
+type(
+  'e
+)
+"monads.ml" 23 434 468 "monads.ml" 23 434 480
+type(
+  'e M.m
+)
+"monads.ml" 23 434 458 "monads.ml" 23 434 481
+type(
+  'd -> 'e M.m
+)
+"monads.ml" 23 434 451 "monads.ml" 23 434 481
+type(
+  'e M.m
+)
+"monads.ml" 24 482 488 "monads.ml" 24 482 493
+type(
+  ('f -> 'g) -> 'f M.m -> 'g M.m
+)
+ident(
+  def liftm "monads.ml" 25 501 503 "monads.ml" 42 992 995
+)
+"monads.ml" 24 482 496 "monads.ml" 24 482 500
+type(
+  ('f -> 'g) -> 'f M.m -> 'g M.m
+)
+ident(
+  int_ref fmap "monads.ml" 23 434 440 "monads.ml" 23 434 444
+)
+"monads.ml" 25 501 507 "monads.ml" 25 501 513
+type(
+  ('h -> 'i -> 'j) -> 'h M.m -> 'i M.m -> 'j M.m
+)
+ident(
+  def liftm2 "monads.ml" 29 593 595 "monads.ml" 42 992 995
+)
+"monads.ml" 25 501 514 "monads.ml" 25 501 515
+type(
+  'h -> 'i -> 'j
+)
+ident(
+  def f "monads.ml" 25 501 516 "monads.ml" 28 571 592
+)
+"monads.ml" 25 501 516 "monads.ml" 25 501 517
+type(
+  'h M.m
+)
+ident(
+  def m "monads.ml" 25 501 518 "monads.ml" 28 571 592
+)
+"monads.ml" 25 501 518 "monads.ml" 25 501 520
+type(
+  'i M.m
+)
+ident(
+  def m' "monads.ml" 26 523 527 "monads.ml" 28 571 592
+)
+"monads.ml" 26 523 527 "monads.ml" 26 523 531
+type(
+  'h M.m -> ('h -> 'j M.m) -> 'j M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 26 523 532 "monads.ml" 26 523 533
+type(
+  'h M.m
+)
+ident(
+  int_ref m "monads.ml" 25 501 516 "monads.ml" 25 501 517
+)
+"monads.ml" 26 523 540 "monads.ml" 26 523 541
+type(
+  'h
+)
+ident(
+  def x "monads.ml" 27 545 553 "monads.ml" 28 571 591
+)
+"monads.ml" 27 545 553 "monads.ml" 27 545 557
+type(
+  'i M.m -> ('i -> 'j M.m) -> 'j M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 27 545 558 "monads.ml" 27 545 560
+type(
+  'i M.m
+)
+ident(
+  int_ref m' "monads.ml" 25 501 518 "monads.ml" 25 501 520
+)
+"monads.ml" 27 545 566 "monads.ml" 27 545 567
+type(
+  'i
+)
+ident(
+  def y "monads.ml" 28 571 576 "monads.ml" 28 571 590
+)
+"monads.ml" 28 571 576 "monads.ml" 28 571 582
+type(
+  'j -> 'j M.m
+)
+ident(
+  ext_ref M.return
+)
+"monads.ml" 28 571 584 "monads.ml" 28 571 585
+type(
+  'h -> 'i -> 'j
+)
+ident(
+  int_ref f "monads.ml" 25 501 514 "monads.ml" 25 501 515
+)
+"monads.ml" 28 571 586 "monads.ml" 28 571 587
+type(
+  'h
+)
+ident(
+  int_ref x "monads.ml" 26 523 540 "monads.ml" 26 523 541
+)
+"monads.ml" 28 571 588 "monads.ml" 28 571 589
+type(
+  'i
+)
+ident(
+  int_ref y "monads.ml" 27 545 566 "monads.ml" 27 545 567
+)
+"monads.ml" 28 571 583 "monads.ml" 28 571 590
+type(
+  'j
+)
+"monads.ml" 28 571 576 "monads.ml" 28 571 590
+type(
+  'j M.m
+)
+"monads.ml" 27 545 561 "monads.ml" 28 571 591
+type(
+  'i -> 'j M.m
+)
+"monads.ml" 27 545 553 "monads.ml" 28 571 591
+type(
+  'j M.m
+)
+"monads.ml" 26 523 535 "monads.ml" 28 571 592
+type(
+  'h -> 'j M.m
+)
+"monads.ml" 26 523 527 "monads.ml" 28 571 592
+type(
+  'j M.m
+)
+"monads.ml" 29 593 599 "monads.ml" 29 593 605
+type(
+  ('k -> 'l -> 'm -> 'n) -> 'k M.m -> 'l M.m -> 'm M.m -> 'n M.m
+)
+ident(
+  def liftm3 "monads.ml" 34 714 716 "monads.ml" 42 992 995
+)
+"monads.ml" 29 593 606 "monads.ml" 29 593 607
+type(
+  'k -> 'l -> 'm -> 'n
+)
+ident(
+  def f "monads.ml" 29 593 608 "monads.ml" 33 689 713
+)
+"monads.ml" 29 593 608 "monads.ml" 29 593 609
+type(
+  'k M.m
+)
+ident(
+  def m "monads.ml" 29 593 610 "monads.ml" 33 689 713
+)
+"monads.ml" 29 593 610 "monads.ml" 29 593 612
+type(
+  'l M.m
+)
+ident(
+  def m' "monads.ml" 29 593 613 "monads.ml" 33 689 713
+)
+"monads.ml" 29 593 613 "monads.ml" 29 593 616
+type(
+  'm M.m
+)
+ident(
+  def m'' "monads.ml" 30 619 623 "monads.ml" 33 689 713
+)
+"monads.ml" 30 619 623 "monads.ml" 30 619 627
+type(
+  'k M.m -> ('k -> 'n M.m) -> 'n M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 30 619 628 "monads.ml" 30 619 629
+type(
+  'k M.m
+)
+ident(
+  int_ref m "monads.ml" 29 593 608 "monads.ml" 29 593 609
+)
+"monads.ml" 30 619 637 "monads.ml" 30 619 638
+type(
+  'k
+)
+ident(
+  def x "monads.ml" 31 642 644 "monads.ml" 33 689 712
+)
+"monads.ml" 31 642 644 "monads.ml" 31 642 648
+type(
+  'l M.m -> ('l -> 'n M.m) -> 'n M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 31 642 649 "monads.ml" 31 642 651
+type(
+  'l M.m
+)
+ident(
+  int_ref m' "monads.ml" 29 593 610 "monads.ml" 29 593 612
+)
+"monads.ml" 31 642 658 "monads.ml" 31 642 659
+type(
+  'l
+)
+ident(
+  def y "monads.ml" 32 663 670 "monads.ml" 33 689 711
+)
+"monads.ml" 32 663 670 "monads.ml" 32 663 674
+type(
+  'm M.m -> ('m -> 'n M.m) -> 'n M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 32 663 675 "monads.ml" 32 663 678
+type(
+  'm M.m
+)
+ident(
+  int_ref m'' "monads.ml" 29 593 613 "monads.ml" 29 593 616
+)
+"monads.ml" 32 663 684 "monads.ml" 32 663 685
+type(
+  'm
+)
+ident(
+  def z "monads.ml" 33 689 694 "monads.ml" 33 689 710
+)
+"monads.ml" 33 689 694 "monads.ml" 33 689 700
+type(
+  'n -> 'n M.m
+)
+ident(
+  ext_ref M.return
+)
+"monads.ml" 33 689 702 "monads.ml" 33 689 703
+type(
+  'k -> 'l -> 'm -> 'n
+)
+ident(
+  int_ref f "monads.ml" 29 593 606 "monads.ml" 29 593 607
+)
+"monads.ml" 33 689 704 "monads.ml" 33 689 705
+type(
+  'k
+)
+ident(
+  int_ref x "monads.ml" 30 619 637 "monads.ml" 30 619 638
+)
+"monads.ml" 33 689 706 "monads.ml" 33 689 707
+type(
+  'l
+)
+ident(
+  int_ref y "monads.ml" 31 642 658 "monads.ml" 31 642 659
+)
+"monads.ml" 33 689 708 "monads.ml" 33 689 709
+type(
+  'm
+)
+ident(
+  int_ref z "monads.ml" 32 663 684 "monads.ml" 32 663 685
+)
+"monads.ml" 33 689 701 "monads.ml" 33 689 710
+type(
+  'n
+)
+"monads.ml" 33 689 694 "monads.ml" 33 689 710
+type(
+  'n M.m
+)
+"monads.ml" 32 663 679 "monads.ml" 33 689 711
+type(
+  'm -> 'n M.m
+)
+"monads.ml" 32 663 670 "monads.ml" 33 689 711
+type(
+  'n M.m
+)
+"monads.ml" 31 642 653 "monads.ml" 33 689 712
+type(
+  'l -> 'n M.m
+)
+"monads.ml" 31 642 644 "monads.ml" 33 689 712
+type(
+  'n M.m
+)
+"monads.ml" 30 619 632 "monads.ml" 33 689 713
+type(
+  'k -> 'n M.m
+)
+"monads.ml" 30 619 623 "monads.ml" 33 689 713
+type(
+  'n M.m
+)
+"monads.ml" 34 714 720 "monads.ml" 34 714 724
+type(
+  ('o -> 'p) -> 'o M.m list -> 'p list M.m
+)
+ident(
+  def mapm "monads.ml" 36 798 800 "monads.ml" 42 992 995
+)
+"monads.ml" 34 714 725 "monads.ml" 34 714 726
+type(
+  'o -> 'p
+)
+ident(
+  def f "monads.ml" 34 714 727 "monads.ml" 35 731 797
+)
+"monads.ml" 34 714 727 "monads.ml" 34 714 728
+type(
+  'o M.m list
+)
+ident(
+  def l "monads.ml" 35 731 735 "monads.ml" 35 731 797
+)
+"monads.ml" 35 731 735 "monads.ml" 35 731 750
+type(
+  ('o M.m -> 'p list M.m -> 'p list M.m) ->
+  'o M.m list -> 'p list M.m -> 'p list M.m
+)
+ident(
+  ext_ref List.fold_right
+)
+"monads.ml" 35 731 752 "monads.ml" 35 731 758
+type(
+  ('o -> 'p list -> 'p list) -> 'o M.m -> 'p list M.m -> 'p list M.m
+)
+ident(
+  int_ref liftm2 "monads.ml" 25 501 507 "monads.ml" 25 501 513
+)
+"monads.ml" 35 731 764 "monads.ml" 35 731 765
+type(
+  'o
+)
+ident(
+  def x "monads.ml" 35 731 766 "monads.ml" 35 731 781
+)
+"monads.ml" 35 731 766 "monads.ml" 35 731 768
+type(
+  'p list
+)
+ident(
+  def xs "monads.ml" 35 731 772 "monads.ml" 35 731 781
+)
+"monads.ml" 35 731 772 "monads.ml" 35 731 773
+type(
+  'o -> 'p
+)
+ident(
+  int_ref f "monads.ml" 34 714 725 "monads.ml" 34 714 726
+)
+"monads.ml" 35 731 774 "monads.ml" 35 731 775
+type(
+  'o
+)
+ident(
+  int_ref x "monads.ml" 35 731 764 "monads.ml" 35 731 765
+)
+"monads.ml" 35 731 772 "monads.ml" 35 731 775
+type(
+  'p
+)
+"monads.ml" 35 731 779 "monads.ml" 35 731 781
+type(
+  'p list
+)
+ident(
+  int_ref xs "monads.ml" 35 731 766 "monads.ml" 35 731 768
+)
+"monads.ml" 35 731 772 "monads.ml" 35 731 781
+type(
+  'p list
+)
+"monads.ml" 35 731 759 "monads.ml" 35 731 782
+type(
+  'o -> 'p list -> 'p list
+)
+"monads.ml" 35 731 751 "monads.ml" 35 731 783
+type(
+  'o M.m -> 'p list M.m -> 'p list M.m
+)
+"monads.ml" 35 731 784 "monads.ml" 35 731 785
+type(
+  'o M.m list
+)
+ident(
+  int_ref l "monads.ml" 34 714 727 "monads.ml" 34 714 728
+)
+"monads.ml" 35 731 787 "monads.ml" 35 731 793
+type(
+  'p list -> 'p list M.m
+)
+ident(
+  ext_ref M.return
+)
+"monads.ml" 35 731 794 "monads.ml" 35 731 796
+type(
+  'p list
+)
+"monads.ml" 35 731 786 "monads.ml" 35 731 797
+type(
+  'p list M.m
+)
+"monads.ml" 35 731 735 "monads.ml" 35 731 797
+type(
+  'p list M.m
+)
+"monads.ml" 36 798 804 "monads.ml" 36 798 812
+type(
+  'q M.m list -> 'q list M.m
+)
+ident(
+  def sequence "monads.ml" 37 837 839 "monads.ml" 42 992 995
+)
+"monads.ml" 36 798 813 "monads.ml" 36 798 814
+type(
+  'q M.m list
+)
+ident(
+  def l "monads.ml" 36 798 817 "monads.ml" 36 798 836
+)
+"monads.ml" 36 798 817 "monads.ml" 36 798 821
+type(
+  ('q -> 'q) -> 'q M.m list -> 'q list M.m
+)
+ident(
+  int_ref mapm "monads.ml" 34 714 720 "monads.ml" 34 714 724
+)
+"monads.ml" 36 798 827 "monads.ml" 36 798 828
+type(
+  'q
+)
+ident(
+  def x "monads.ml" 36 798 832 "monads.ml" 36 798 833
+)
+"monads.ml" 36 798 832 "monads.ml" 36 798 833
+type(
+  'q
+)
+ident(
+  int_ref x "monads.ml" 36 798 827 "monads.ml" 36 798 828
+)
+"monads.ml" 36 798 822 "monads.ml" 36 798 834
+type(
+  'q -> 'q
+)
+"monads.ml" 36 798 835 "monads.ml" 36 798 836
+type(
+  'q M.m list
+)
+ident(
+  int_ref l "monads.ml" 36 798 813 "monads.ml" 36 798 814
+)
+"monads.ml" 36 798 817 "monads.ml" 36 798 836
+type(
+  'q list M.m
+)
+"monads.ml" 37 837 843 "monads.ml" 37 837 848
+type(
+  ('r -> 's M.m) -> 'r list -> unit M.m
+)
+ident(
+  def mapm_ "monads.ml" 39 910 912 "monads.ml" 42 992 995
+)
+"monads.ml" 37 837 849 "monads.ml" 37 837 850
+type(
+  'r -> 's M.m
+)
+ident(
+  def f "monads.ml" 37 837 851 "monads.ml" 38 855 909
+)
+"monads.ml" 37 837 851 "monads.ml" 37 837 852
+type(
+  'r list
+)
+ident(
+  def l "monads.ml" 38 855 859 "monads.ml" 38 855 909
+)
+"monads.ml" 38 855 859 "monads.ml" 38 855 874
+type(
+  ('r -> unit M.m -> unit M.m) -> 'r list -> unit M.m -> unit M.m
+)
+ident(
+  ext_ref List.fold_right
+)
+"monads.ml" 38 855 880 "monads.ml" 38 855 881
+type(
+  'r
+)
+ident(
+  def x "monads.ml" 38 855 885 "monads.ml" 38 855 894
+)
+"monads.ml" 38 855 885 "monads.ml" 38 855 888
+type(
+  's M.m -> unit M.m -> unit M.m
+)
+ident(
+  int_ref seq "monads.ml" 21 363 369 "monads.ml" 21 363 372
+)
+"monads.ml" 38 855 890 "monads.ml" 38 855 891
+type(
+  'r -> 's M.m
+)
+ident(
+  int_ref f "monads.ml" 37 837 849 "monads.ml" 37 837 850
+)
+"monads.ml" 38 855 892 "monads.ml" 38 855 893
+type(
+  'r
+)
+ident(
+  int_ref x "monads.ml" 38 855 880 "monads.ml" 38 855 881
+)
+"monads.ml" 38 855 889 "monads.ml" 38 855 894
+type(
+  's M.m
+)
+"monads.ml" 38 855 885 "monads.ml" 38 855 894
+type(
+  unit M.m -> unit M.m
+)
+"monads.ml" 38 855 875 "monads.ml" 38 855 895
+type(
+  'r -> unit M.m -> unit M.m
+)
+"monads.ml" 38 855 896 "monads.ml" 38 855 897
+type(
+  'r list
+)
+ident(
+  int_ref l "monads.ml" 37 837 851 "monads.ml" 37 837 852
+)
+"monads.ml" 38 855 899 "monads.ml" 38 855 905
+type(
+  unit -> unit M.m
+)
+ident(
+  ext_ref M.return
+)
+"monads.ml" 38 855 906 "monads.ml" 38 855 908
+type(
+  unit
+)
+"monads.ml" 38 855 898 "monads.ml" 38 855 909
+type(
+  unit M.m
+)
+"monads.ml" 38 855 859 "monads.ml" 38 855 909
+type(
+  unit M.m
+)
+"monads.ml" 39 910 916 "monads.ml" 39 910 925
+type(
+  't M.m list -> unit M.m
+)
+ident(
+  def sequence_ "monads.ml" 40 951 953 "monads.ml" 42 992 995
+)
+"monads.ml" 39 910 926 "monads.ml" 39 910 927
+type(
+  't M.m list
+)
+ident(
+  def l "monads.ml" 39 910 930 "monads.ml" 39 910 950
+)
+"monads.ml" 39 910 930 "monads.ml" 39 910 935
+type(
+  ('t M.m -> 't M.m) -> 't M.m list -> unit M.m
+)
+ident(
+  int_ref mapm_ "monads.ml" 37 837 843 "monads.ml" 37 837 848
+)
+"monads.ml" 39 910 941 "monads.ml" 39 910 942
+type(
+  't M.m
+)
+ident(
+  def x "monads.ml" 39 910 946 "monads.ml" 39 910 947
+)
+"monads.ml" 39 910 946 "monads.ml" 39 910 947
+type(
+  't M.m
+)
+ident(
+  int_ref x "monads.ml" 39 910 941 "monads.ml" 39 910 942
+)
+"monads.ml" 39 910 936 "monads.ml" 39 910 948
+type(
+  't M.m -> 't M.m
+)
+"monads.ml" 39 910 949 "monads.ml" 39 910 950
+type(
+  't M.m list
+)
+ident(
+  int_ref l "monads.ml" 39 910 926 "monads.ml" 39 910 927
+)
+"monads.ml" 39 910 930 "monads.ml" 39 910 950
+type(
+  unit M.m
+)
+"monads.ml" 40 951 957 "monads.ml" 40 951 964
+type(
+  'u M.m -> ('u -> 'v M.m) -> 'v M.m
+)
+ident(
+  def >>= "monads.ml" 41 972 974 "monads.ml" 42 992 995
+)
+"monads.ml" 40 951 967 "monads.ml" 40 951 971
+type(
+  'u M.m -> ('u -> 'v M.m) -> 'v M.m
+)
+ident(
+  ext_ref M.bind
+)
+"monads.ml" 41 972 978 "monads.ml" 41 972 985
+type(
+  'w M.m -> 'x M.m -> 'x M.m
+)
+ident(
+  def >> "monads.ml" 41 972 991 "monads.ml" 42 992 995
+)
+"monads.ml" 41 972 988 "monads.ml" 41 972 991
+type(
+  'w M.m -> 'x M.m -> 'x M.m
+)
+ident(
+  int_ref seq "monads.ml" 21 363 369 "monads.ml" 21 363 372
+)
+"monads.ml" 53 1186 1192 "monads.ml" 53 1186 1198
+type(
+  'a -> 'b -> 'a * 'b
+)
+ident(
+  def return "monads.ml" 54 1221 1223 "monads.ml" 56 1282 1285
+)
+"monads.ml" 53 1186 1199 "monads.ml" 53 1186 1200
+type(
+  'a
+)
+ident(
+  def a "monads.ml" 53 1186 1203 "monads.ml" 53 1186 1220
+)
+"monads.ml" 53 1186 1208 "monads.ml" 53 1186 1209
+type(
+  'b
+)
+ident(
+  def s "monads.ml" 53 1186 1213 "monads.ml" 53 1186 1219
+)
+"monads.ml" 53 1186 1214 "monads.ml" 53 1186 1215
+type(
+  'a
+)
+ident(
+  int_ref a "monads.ml" 53 1186 1199 "monads.ml" 53 1186 1200
+)
+"monads.ml" 53 1186 1217 "monads.ml" 53 1186 1218
+type(
+  'b
+)
+ident(
+  int_ref s "monads.ml" 53 1186 1208 "monads.ml" 53 1186 1209
+)
+"monads.ml" 53 1186 1213 "monads.ml" 53 1186 1219
+type(
+  'a * 'b
+)
+"monads.ml" 53 1186 1203 "monads.ml" 53 1186 1220
+type(
+  'b -> 'a * 'b
+)
+"monads.ml" 54 1221 1227 "monads.ml" 54 1221 1231
+type(
+  ('c -> 'd * 'e) -> ('d -> 'e -> 'f) -> 'c -> 'f
+)
+ident(
+  def bind "monads.ml" 55 1250 1281 "monads.ml" 56 1282 1285
+)
+"monads.ml" 54 1221 1232 "monads.ml" 54 1221 1235
+type(
+  'c -> 'd * 'e
+)
+ident(
+  def m "monads.ml" 54 1221 1236 "monads.ml" 55 1250 1281
+)
+"monads.ml" 54 1221 1236 "monads.ml" 54 1221 1237
+type(
+  'd -> 'e -> 'f
+)
+ident(
+  def f "monads.ml" 54 1221 1240 "monads.ml" 55 1250 1281
+)
+"monads.ml" 54 1221 1245 "monads.ml" 54 1221 1246
+type(
+  'c
+)
+ident(
+  def s "monads.ml" 55 1250 1253 "monads.ml" 55 1250 1280
+)
+"monads.ml" 55 1250 1258 "monads.ml" 55 1250 1259
+type(
+  'd
+)
+"monads.ml" 55 1250 1261 "monads.ml" 55 1250 1263
+type(
+  'e
+)
+"monads.ml" 55 1250 1257 "monads.ml" 55 1250 1264
+type(
+  'd * 'e
+)
+"monads.ml" 55 1250 1267 "monads.ml" 55 1250 1268
+type(
+  'c -> 'd * 'e
+)
+ident(
+  int_ref m "monads.ml" 54 1221 1232 "monads.ml" 54 1221 1235
+)
+"monads.ml" 55 1250 1269 "monads.ml" 55 1250 1270
+type(
+  'c
+)
+ident(
+  int_ref s "monads.ml" 54 1221 1245 "monads.ml" 54 1221 1246
+)
+"monads.ml" 55 1250 1267 "monads.ml" 55 1250 1270
+type(
+  'd * 'e
+)
+"monads.ml" 55 1250 1274 "monads.ml" 55 1250 1275
+type(
+  'd -> 'e -> 'f
+)
+ident(
+  int_ref f "monads.ml" 54 1221 1236 "monads.ml" 54 1221 1237
+)
+"monads.ml" 55 1250 1276 "monads.ml" 55 1250 1277
+type(
+  'd
+)
+ident(
+  int_ref x "monads.ml" 55 1250 1258 "monads.ml" 55 1250 1259
+)
+"monads.ml" 55 1250 1278 "monads.ml" 55 1250 1280
+type(
+  'e
+)
+ident(
+  int_ref s' "monads.ml" 55 1250 1261 "monads.ml" 55 1250 1263
+)
+"monads.ml" 55 1250 1274 "monads.ml" 55 1250 1280
+type(
+  'f
+)
+"monads.ml" 55 1250 1253 "monads.ml" 55 1250 1280
+type(
+  'f
+)
+"monads.ml" 54 1221 1240 "monads.ml" 55 1250 1281
+type(
+  'c -> 'f
+)
+"monads.ml" 64 1403 1409 "monads.ml" 64 1403 1412
+type(
+  'a -> 'a * 'a
+)
+ident(
+  def get "monads.ml" 65 1433 1435 "monads.ml" 70 1595 1598
+)
+"monads.ml" 64 1403 1420 "monads.ml" 64 1403 1421
+type(
+  'a
+)
+ident(
+  def s "monads.ml" 64 1403 1425 "monads.ml" 64 1403 1431
+)
+"monads.ml" 64 1403 1426 "monads.ml" 64 1403 1427
+type(
+  'a
+)
+ident(
+  int_ref s "monads.ml" 64 1403 1420 "monads.ml" 64 1403 1421
+)
+"monads.ml" 64 1403 1429 "monads.ml" 64 1403 1430
+type(
+  'a
+)
+ident(
+  int_ref s "monads.ml" 64 1403 1420 "monads.ml" 64 1403 1421
+)
+"monads.ml" 64 1403 1425 "monads.ml" 64 1403 1431
+type(
+  'a * 'a
+)
+"monads.ml" 64 1403 1415 "monads.ml" 64 1403 1432
+type(
+  'a -> 'a * 'a
+)
+"monads.ml" 65 1433 1439 "monads.ml" 65 1433 1442
+type(
+  'b -> 'c -> unit * 'b
+)
+ident(
+  def put "monads.ml" 67 1497 1499 "monads.ml" 70 1595 1598
+)
+"monads.ml" 65 1433 1443 "monads.ml" 65 1433 1444
+type(
+  'b
+)
+ident(
+  def s "monads.ml" 65 1433 1447 "monads.ml" 65 1433 1465
+)
+"monads.ml" 65 1433 1452 "monads.ml" 65 1433 1453
+type(
+  'c
+)
+"monads.ml" 65 1433 1458 "monads.ml" 65 1433 1460
+type(
+  unit
+)
+"monads.ml" 65 1433 1462 "monads.ml" 65 1433 1463
+type(
+  'b
+)
+ident(
+  int_ref s "monads.ml" 65 1433 1443 "monads.ml" 65 1433 1444
+)
+"monads.ml" 65 1433 1457 "monads.ml" 65 1433 1464
+type(
+  unit * 'b
+)
+"monads.ml" 65 1433 1447 "monads.ml" 65 1433 1465
+type(
+  'c -> unit * 'b
+)
+"monads.ml" 67 1497 1503 "monads.ml" 67 1497 1507
+type(
+  ('d -> 'e * 'f) -> 'd -> 'e
+)
+ident(
+  def eval "monads.ml" 69 1559 1561 "monads.ml" 70 1595 1598
+)
+"monads.ml" 67 1497 1508 "monads.ml" 67 1497 1511
+type(
+  'd -> 'e * 'f
+)
+ident(
+  def m "monads.ml" 67 1497 1514 "monads.ml" 67 1497 1532
+)
+"monads.ml" 67 1497 1518 "monads.ml" 67 1497 1519
+type(
+  'd
+)
+ident(
+  def s "monads.ml" 67 1497 1523 "monads.ml" 67 1497 1532
+)
+"monads.ml" 67 1497 1523 "monads.ml" 67 1497 1526
+type(
+  'e * 'f -> 'e
+)
+ident(
+  ext_ref Pervasives.fst
+)
+"monads.ml" 67 1497 1528 "monads.ml" 67 1497 1529
+type(
+  'd -> 'e * 'f
+)
+ident(
+  int_ref m "monads.ml" 67 1497 1508 "monads.ml" 67 1497 1511
+)
+"monads.ml" 67 1497 1530 "monads.ml" 67 1497 1531
+type(
+  'd
+)
+ident(
+  int_ref s "monads.ml" 67 1497 1518 "monads.ml" 67 1497 1519
+)
+"monads.ml" 67 1497 1527 "monads.ml" 67 1497 1532
+type(
+  'e * 'f
+)
+"monads.ml" 67 1497 1523 "monads.ml" 67 1497 1532
+type(
+  'e
+)
+"monads.ml" 67 1497 1514 "monads.ml" 67 1497 1532
+type(
+  'd -> 'e
+)
+"monads.ml" 69 1559 1565 "monads.ml" 69 1559 1568
+type(
+  ('g -> 'h * 'i) -> 'g -> 'i
+)
+ident(
+  def run "monads.ml" 69 1559 1594 "monads.ml" 70 1595 1598
+)
+"monads.ml" 69 1559 1570 "monads.ml" 69 1559 1573
+type(
+  'g -> 'h * 'i
+)
+ident(
+  def m "monads.ml" 69 1559 1576 "monads.ml" 69 1559 1594
+)
+"monads.ml" 69 1559 1580 "monads.ml" 69 1559 1581
+type(
+  'g
+)
+ident(
+  def s "monads.ml" 69 1559 1585 "monads.ml" 69 1559 1594
+)
+"monads.ml" 69 1559 1585 "monads.ml" 69 1559 1588
+type(
+  'h * 'i -> 'i
+)
+ident(
+  ext_ref Pervasives.snd
+)
+"monads.ml" 69 1559 1590 "monads.ml" 69 1559 1591
+type(
+  'g -> 'h * 'i
+)
+ident(
+  int_ref m "monads.ml" 69 1559 1570 "monads.ml" 69 1559 1573
+)
+"monads.ml" 69 1559 1592 "monads.ml" 69 1559 1593
+type(
+  'g
+)
+ident(
+  int_ref s "monads.ml" 69 1559 1580 "monads.ml" 69 1559 1581
+)
+"monads.ml" 69 1559 1589 "monads.ml" 69 1559 1594
+type(
+  'h * 'i
+)
+"monads.ml" 69 1559 1585 "monads.ml" 69 1559 1594
+type(
+  'i
+)
+"monads.ml" 69 1559 1576 "monads.ml" 69 1559 1594
+type(
+  'g -> 'i
+)
+"monads.ml" 84 1894 1898 "monads.ml" 84 1894 1902
+type(
+  unit StateM_int.m
+)
+ident(
+  def incr "monads.ml" 86 1974 1974 --
+)
+"monads.ml" 84 1894 1905 "monads.ml" 84 1894 1920
+type(
+  Int4t.t StateM_int.m -> (Int4t.t -> unit StateM_int.m) -> unit StateM_int.m
+)
+ident(
+  ext_ref StateM_int.bind
+)
+"monads.ml" 84 1894 1921 "monads.ml" 84 1894 1935
+type(
+  Int4t.t StateM_int.m
+)
+ident(
+  ext_ref StateM_int.get
+)
+"monads.ml" 84 1894 1941 "monads.ml" 84 1894 1942
+type(
+  Int4t.t
+)
+ident(
+  def s "monads.ml" 84 1894 1946 "monads.ml" 84 1894 1969
+)
+"monads.ml" 84 1894 1946 "monads.ml" 84 1894 1960
+type(
+  Int4t.t -> unit StateM_int.m
+)
+ident(
+  ext_ref StateM_int.put
+)
+"monads.ml" 84 1894 1962 "monads.ml" 84 1894 1966
+type(
+  Int4t.t -> Int4t.t
+)
+ident(
+  ext_ref Pervasives.succ
+)
+"monads.ml" 84 1894 1967 "monads.ml" 84 1894 1968
+type(
+  Int4t.t
+)
+ident(
+  int_ref s "monads.ml" 84 1894 1941 "monads.ml" 84 1894 1942
+)
+"monads.ml" 84 1894 1961 "monads.ml" 84 1894 1969
+type(
+  Int4t.t
+)
+"monads.ml" 84 1894 1946 "monads.ml" 84 1894 1969
+type(
+  unit StateM_int.m
+)
+"monads.ml" 84 1894 1936 "monads.ml" 84 1894 1970
+type(
+  Int4t.t -> unit StateM_int.m
+)
+"monads.ml" 84 1894 1905 "monads.ml" 84 1894 1970
+type(
+  unit StateM_int.m
+)
+"monads.ml" 86 1974 1978 "monads.ml" 86 1974 1984
+type(
+  int StateM_int.m -> int StateM_int.m -> int StateM_int.m
+)
+ident(
+  def +! "monads.ml" 94 2189 2189 --
+)
+"monads.ml" 86 1974 1985 "monads.ml" 86 1974 1987
+type(
+  int StateM_int.m
+)
+ident(
+  def mx "monads.ml" 86 1974 1988 "monads.ml" 90 2099 2141
+)
+"monads.ml" 86 1974 1988 "monads.ml" 86 1974 1990
+type(
+  int StateM_int.m
+)
+ident(
+  def my "monads.ml" 87 1993 1995 "monads.ml" 90 2099 2141
+)
+"monads.ml" 87 1993 1995 "monads.ml" 87 1993 2010
+type(
+  int StateM_int.m -> (int -> int StateM_int.m) -> int StateM_int.m
+)
+ident(
+  ext_ref StateM_int.bind
+)
+"monads.ml" 87 1993 2011 "monads.ml" 87 1993 2013
+type(
+  int StateM_int.m
+)
+ident(
+  int_ref mx "monads.ml" 86 1974 1985 "monads.ml" 86 1974 1987
+)
+"monads.ml" 87 1993 2019 "monads.ml" 87 1993 2020
+type(
+  int
+)
+ident(
+  def x "monads.ml" 88 2024 2027 "monads.ml" 90 2099 2140
+)
+"monads.ml" 88 2024 2027 "monads.ml" 88 2024 2042
+type(
+  int StateM_int.m -> (int -> int StateM_int.m) -> int StateM_int.m
+)
+ident(
+  ext_ref StateM_int.bind
+)
+"monads.ml" 88 2024 2043 "monads.ml" 88 2024 2045
+type(
+  int StateM_int.m
+)
+ident(
+  int_ref my "monads.ml" 86 1974 1988 "monads.ml" 86 1974 1990
+)
+"monads.ml" 88 2024 2051 "monads.ml" 88 2024 2052
+type(
+  int
+)
+ident(
+  def y "monads.ml" 89 2057 2067 "monads.ml" 90 2099 2139
+)
+"monads.ml" 89 2057 2067 "monads.ml" 89 2057 2082
+type(
+  unit StateM_int.m -> (unit -> int StateM_int.m) -> int StateM_int.m
+)
+ident(
+  ext_ref StateM_int.bind
+)
+"monads.ml" 89 2057 2083 "monads.ml" 89 2057 2087
+type(
+  unit StateM_int.m
+)
+ident(
+  int_ref incr "monads.ml" 84 1894 1898 "monads.ml" 84 1894 1902
+)
+"monads.ml" 89 2057 2093 "monads.ml" 89 2057 2094
+type(
+  unit
+)
+"monads.ml" 90 2099 2113 "monads.ml" 90 2099 2130
+type(
+  int -> int StateM_int.m
+)
+ident(
+  ext_ref StateM_int.return
+)
+"monads.ml" 90 2099 2132 "monads.ml" 90 2099 2133
+type(
+  int
+)
+ident(
+  int_ref x "monads.ml" 87 1993 2019 "monads.ml" 87 1993 2020
+)
+"monads.ml" 90 2099 2134 "monads.ml" 90 2099 2135
+type(
+  int -> int -> int
+)
+ident(
+  ext_ref Pervasives.( + )
+)
+"monads.ml" 90 2099 2136 "monads.ml" 90 2099 2137
+type(
+  int
+)
+ident(
+  int_ref y "monads.ml" 88 2024 2051 "monads.ml" 88 2024 2052
+)
+"monads.ml" 90 2099 2131 "monads.ml" 90 2099 2138
+type(
+  int
+)
+"monads.ml" 90 2099 2113 "monads.ml" 90 2099 2138
+type(
+  int StateM_int.m
+)
+"monads.ml" 89 2057 2088 "monads.ml" 90 2099 2139
+type(
+  unit -> int StateM_int.m
+)
+"monads.ml" 89 2057 2067 "monads.ml" 90 2099 2139
+type(
+  int StateM_int.m
+)
+"monads.ml" 88 2024 2046 "monads.ml" 90 2099 2140
+type(
+  int -> int StateM_int.m
+)
+"monads.ml" 88 2024 2027 "monads.ml" 90 2099 2140
+type(
+  int StateM_int.m
+)
+"monads.ml" 87 1993 2014 "monads.ml" 90 2099 2141
+type(
+  int -> int StateM_int.m
+)
+"monads.ml" 87 1993 1995 "monads.ml" 90 2099 2141
+type(
+  int StateM_int.m
+)
+"monads.ml" 106 2443 2449 "monads.ml" 106 2443 2455
+type(
+  'a -> 'a list
+)
+ident(
+  def return "monads.ml" 107 2464 2466 "monads.ml" 110 2547 2550
+)
+"monads.ml" 106 2443 2456 "monads.ml" 106 2443 2457
+type(
+  'a
+)
+ident(
+  def a "monads.ml" 106 2443 2460 "monads.ml" 106 2443 2463
+)
+"monads.ml" 106 2443 2461 "monads.ml" 106 2443 2462
+type(
+  'a
+)
+ident(
+  int_ref a "monads.ml" 106 2443 2456 "monads.ml" 106 2443 2457
+)
+"monads.ml" 106 2443 2460 "monads.ml" 106 2443 2463
+type(
+  'a list
+)
+"monads.ml" 107 2464 2470 "monads.ml" 107 2464 2475
+type(
+  'b list
+)
+ident(
+  def zeroM "monads.ml" 108 2481 2483 "monads.ml" 110 2547 2550
+)
+"monads.ml" 107 2464 2478 "monads.ml" 107 2464 2480
+type(
+  'b list
+)
+"monads.ml" 108 2481 2487 "monads.ml" 108 2481 2492
+type(
+  'c list -> 'c list -> 'c list
+)
+ident(
+  def plusM "monads.ml" 109 2503 2505 "monads.ml" 110 2547 2550
+)
+"monads.ml" 108 2481 2493 "monads.ml" 108 2481 2494
+type(
+  'c list
+)
+ident(
+  def x "monads.ml" 108 2481 2495 "monads.ml" 108 2481 2502
+)
+"monads.ml" 108 2481 2495 "monads.ml" 108 2481 2496
+type(
+  'c list
+)
+ident(
+  def y "monads.ml" 108 2481 2499 "monads.ml" 108 2481 2502
+)
+"monads.ml" 108 2481 2499 "monads.ml" 108 2481 2500
+type(
+  'c list
+)
+ident(
+  int_ref x "monads.ml" 108 2481 2493 "monads.ml" 108 2481 2494
+)
+"monads.ml" 108 2481 2500 "monads.ml" 108 2481 2501
+type(
+  'c list -> 'c list -> 'c list
+)
+ident(
+  ext_ref Pervasives.( @ )
+)
+"monads.ml" 108 2481 2501 "monads.ml" 108 2481 2502
+type(
+  'c list
+)
+ident(
+  int_ref y "monads.ml" 108 2481 2495 "monads.ml" 108 2481 2496
+)
+"monads.ml" 108 2481 2499 "monads.ml" 108 2481 2502
+type(
+  'c list
+)
+"monads.ml" 109 2503 2509 "monads.ml" 109 2503 2513
+type(
+  'd list -> ('d -> 'e list) -> 'e list
+)
+ident(
+  def bind "monads.ml" 109 2503 2546 "monads.ml" 110 2547 2550
+)
+"monads.ml" 109 2503 2514 "monads.ml" 109 2503 2515
+type(
+  'd list
+)
+ident(
+  def m "monads.ml" 109 2503 2516 "monads.ml" 109 2503 2546
+)
+"monads.ml" 109 2503 2516 "monads.ml" 109 2503 2517
+type(
+  'd -> 'e list
+)
+ident(
+  def f "monads.ml" 109 2503 2520 "monads.ml" 109 2503 2546
+)
+"monads.ml" 109 2503 2520 "monads.ml" 109 2503 2531
+type(
+  'e list list -> 'e list
+)
+ident(
+  ext_ref List.concat
+)
+"monads.ml" 109 2503 2533 "monads.ml" 109 2503 2541
+type(
+  ('d -> 'e list) -> 'd list -> 'e list list
+)
+ident(
+  ext_ref List.map
+)
+"monads.ml" 109 2503 2542 "monads.ml" 109 2503 2543
+type(
+  'd -> 'e list
+)
+ident(
+  int_ref f "monads.ml" 109 2503 2516 "monads.ml" 109 2503 2517
+)
+"monads.ml" 109 2503 2544 "monads.ml" 109 2503 2545
+type(
+  'd list
+)
+ident(
+  int_ref m "monads.ml" 109 2503 2514 "monads.ml" 109 2503 2515
+)
+"monads.ml" 109 2503 2532 "monads.ml" 109 2503 2546
+type(
+  'e list list
+)
+"monads.ml" 109 2503 2520 "monads.ml" 109 2503 2546
+type(
+  'e list
+)
+"monads.ml" 116 2640 2646 "monads.ml" 116 2640 2652
+type(
+  'a -> 'a option
+)
+ident(
+  def return "monads.ml" 117 2664 2666 "monads.ml" 120 2733 2736
+)
+"monads.ml" 116 2640 2653 "monads.ml" 116 2640 2654
+type(
+  'a
+)
+ident(
+  def a "monads.ml" 116 2640 2657 "monads.ml" 116 2640 2663
+)
+"monads.ml" 116 2640 2662 "monads.ml" 116 2640 2663
+type(
+  'a
+)
+ident(
+  int_ref a "monads.ml" 116 2640 2653 "monads.ml" 116 2640 2654
+)
+"monads.ml" 116 2640 2657 "monads.ml" 116 2640 2663
+type(
+  'a option
+)
+"monads.ml" 117 2664 2670 "monads.ml" 117 2664 2674
+type(
+  'b option -> ('b -> 'c option) -> 'c option
+)
+ident(
+  def bind "monads.ml" 119 2713 2732 "monads.ml" 120 2733 2736
+)
+"monads.ml" 117 2664 2675 "monads.ml" 117 2664 2676
+type(
+  'b option
+)
+ident(
+  def m "monads.ml" 117 2664 2677 "monads.ml" 119 2713 2732
+)
+"monads.ml" 117 2664 2677 "monads.ml" 117 2664 2678
+type(
+  'b -> 'c option
+)
+ident(
+  def f "monads.ml" 117 2664 2681 "monads.ml" 119 2713 2732
+)
+"monads.ml" 117 2664 2687 "monads.ml" 117 2664 2688
+type(
+  'b option
+)
+ident(
+  int_ref m "monads.ml" 117 2664 2675 "monads.ml" 117 2664 2676
+)
+"monads.ml" 118 2694 2700 "monads.ml" 118 2694 2704
+type(
+  'b option
+)
+"monads.ml" 118 2694 2708 "monads.ml" 118 2694 2712
+type(
+  'c option
+)
+"monads.ml" 119 2713 2724 "monads.ml" 119 2713 2725
+type(
+  'b
+)
+ident(
+  def v "monads.ml" 119 2713 2729 "monads.ml" 119 2713 2732
+)
+"monads.ml" 119 2713 2719 "monads.ml" 119 2713 2725
+type(
+  'b option
+)
+"monads.ml" 119 2713 2729 "monads.ml" 119 2713 2730
+type(
+  'b -> 'c option
+)
+ident(
+  int_ref f "monads.ml" 117 2664 2677 "monads.ml" 117 2664 2678
+)
+"monads.ml" 119 2713 2731 "monads.ml" 119 2713 2732
+type(
+  'b
+)
+ident(
+  int_ref v "monads.ml" 119 2713 2724 "monads.ml" 119 2713 2725
+)
+"monads.ml" 119 2713 2729 "monads.ml" 119 2713 2732
+type(
+  'c option
+)
+"monads.ml" 117 2664 2681 "monads.ml" 119 2713 2732
+type(
+  'c option
+)
+"monads.ml" 137 3166 3172 "monads.ml" 137 3166 3178
+type(
+  'a -> 'a m
+)
+ident(
+  def return "monads.ml" 138 3193 3195 "monads.ml" 141 3273 3276
+)
+"monads.ml" 137 3166 3179 "monads.ml" 137 3166 3180
+type(
+  'a
+)
+ident(
+  def a "monads.ml" 137 3166 3183 "monads.ml" 137 3166 3192
+)
+"monads.ml" 137 3166 3191 "monads.ml" 137 3166 3192
+type(
+  'a
+)
+ident(
+  int_ref a "monads.ml" 137 3166 3179 "monads.ml" 137 3166 3180
+)
+"monads.ml" 137 3166 3183 "monads.ml" 137 3166 3192
+type(
+  'a m
+)
+"monads.ml" 138 3193 3199 "monads.ml" 138 3193 3203
+type(
+  'b m -> ('b -> 'c m) -> 'c m
+)
+ident(
+  def bind "monads.ml" 140 3248 3272 "monads.ml" 141 3273 3276
+)
+"monads.ml" 138 3193 3204 "monads.ml" 138 3193 3206
+type(
+  'b m
+)
+ident(
+  def er "monads.ml" 138 3193 3207 "monads.ml" 140 3248 3272
+)
+"monads.ml" 138 3193 3207 "monads.ml" 138 3193 3208
+type(
+  'b -> 'c m
+)
+ident(
+  def f "monads.ml" 138 3193 3211 "monads.ml" 140 3248 3272
+)
+"monads.ml" 138 3193 3217 "monads.ml" 138 3193 3219
+type(
+  'b m
+)
+ident(
+  int_ref er "monads.ml" 138 3193 3204 "monads.ml" 138 3193 3206
+)
+"monads.ml" 139 3225 3239 "monads.ml" 139 3225 3240
+type(
+  'b
+)
+ident(
+  def v "monads.ml" 139 3225 3244 "monads.ml" 139 3225 3247
+)
+"monads.ml" 139 3225 3231 "monads.ml" 139 3225 3240
+type(
+  'b m
+)
+"monads.ml" 139 3225 3244 "monads.ml" 139 3225 3245
+type(
+  'b -> 'c m
+)
+ident(
+  int_ref f "monads.ml" 138 3193 3207 "monads.ml" 138 3193 3208
+)
+"monads.ml" 139 3225 3246 "monads.ml" 139 3225 3247
+type(
+  'b
+)
+ident(
+  int_ref v "monads.ml" 139 3225 3239 "monads.ml" 139 3225 3240
+)
+"monads.ml" 139 3225 3244 "monads.ml" 139 3225 3247
+type(
+  'c m
+)
+"monads.ml" 140 3248 3260 "monads.ml" 140 3248 3261
+type(
+  string
+)
+ident(
+  def s "monads.ml" 140 3248 3265 "monads.ml" 140 3248 3272
+)
+"monads.ml" 140 3248 3254 "monads.ml" 140 3248 3261
+type(
+  'b m
+)
+"monads.ml" 140 3248 3271 "monads.ml" 140 3248 3272
+type(
+  string
+)
+ident(
+  int_ref s "monads.ml" 140 3248 3260 "monads.ml" 140 3248 3261
+)
+"monads.ml" 140 3248 3265 "monads.ml" 140 3248 3272
+type(
+  'c m
+)
+"monads.ml" 138 3193 3211 "monads.ml" 140 3248 3272
+type(
+  'c m
+)
+"monads.ml" 146 3355 3361 "monads.ml" 146 3355 3366
+type(
+  S.s M.m -> string
+)
+ident(
+  def showE "monads.ml" 148 3431 3463 "monads.ml" 149 3464 3467
+)
+"monads.ml" 146 3355 3367 "monads.ml" 146 3355 3368
+type(
+  S.s M.m
+)
+ident(
+  def e "monads.ml" 146 3355 3371 "monads.ml" 148 3431 3463
+)
+"monads.ml" 146 3355 3377 "monads.ml" 146 3355 3378
+type(
+  S.s M.m
+)
+ident(
+  int_ref e "monads.ml" 146 3355 3367 "monads.ml" 146 3355 3368
+)
+"monads.ml" 147 3384 3401 "monads.ml" 147 3384 3402
+type(
+  S.s
+)
+ident(
+  def v "monads.ml" 147 3384 3407 "monads.ml" 147 3384 3429
+)
+"monads.ml" 147 3384 3390 "monads.ml" 147 3384 3403
+type(
+  S.s M.m
+)
+"monads.ml" 147 3384 3407 "monads.ml" 147 3384 3416
+type(
+  string
+)
+"monads.ml" 147 3384 3418 "monads.ml" 147 3384 3419
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"monads.ml" 147 3384 3420 "monads.ml" 147 3384 3426
+type(
+  S.s -> string
+)
+ident(
+  ext_ref A.show
+)
+"monads.ml" 147 3384 3427 "monads.ml" 147 3384 3428
+type(
+  S.s
+)
+ident(
+  int_ref v "monads.ml" 147 3384 3401 "monads.ml" 147 3384 3402
+)
+"monads.ml" 147 3384 3419 "monads.ml" 147 3384 3429
+type(
+  string
+)
+"monads.ml" 147 3384 3407 "monads.ml" 147 3384 3429
+type(
+  string
+)
+"monads.ml" 148 3431 3446 "monads.ml" 148 3431 3447
+type(
+  string
+)
+ident(
+  def s "monads.ml" 148 3431 3452 "monads.ml" 148 3431 3463
+)
+"monads.ml" 148 3431 3437 "monads.ml" 148 3431 3448
+type(
+  S.s M.m
+)
+"monads.ml" 148 3431 3452 "monads.ml" 148 3431 3461
+type(
+  string
+)
+"monads.ml" 148 3431 3461 "monads.ml" 148 3431 3462
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"monads.ml" 148 3431 3462 "monads.ml" 148 3431 3463
+type(
+  string
+)
+ident(
+  int_ref s "monads.ml" 148 3431 3446 "monads.ml" 148 3431 3447
+)
+"monads.ml" 148 3431 3452 "monads.ml" 148 3431 3463
+type(
+  string
+)
+"monads.ml" 146 3355 3371 "monads.ml" 148 3431 3463
+type(
+  string
+)
+"monads.ml" 155 3589 3595 "monads.ml" 155 3589 3600
+type(
+  S.s m -> string
+)
+ident(
+  def showE "monads.ml" 157 3663 3693 "monads.ml" 158 3694 3697
+)
+"monads.ml" 155 3589 3601 "monads.ml" 155 3589 3602
+type(
+  S.s m
+)
+ident(
+  def e "monads.ml" 155 3589 3605 "monads.ml" 157 3663 3693
+)
+"monads.ml" 155 3589 3611 "monads.ml" 155 3589 3612
+type(
+  S.s m
+)
+ident(
+  int_ref e "monads.ml" 155 3589 3601 "monads.ml" 155 3589 3602
+)
+"monads.ml" 156 3618 3633 "monads.ml" 156 3618 3634
+type(
+  S.s
+)
+ident(
+  def v "monads.ml" 156 3618 3639 "monads.ml" 156 3618 3661
+)
+"monads.ml" 156 3618 3624 "monads.ml" 156 3618 3635
+type(
+  S.s m
+)
+"monads.ml" 156 3618 3639 "monads.ml" 156 3618 3648
+type(
+  string
+)
+"monads.ml" 156 3618 3650 "monads.ml" 156 3618 3651
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"monads.ml" 156 3618 3652 "monads.ml" 156 3618 3658
+type(
+  S.s -> string
+)
+ident(
+  ext_ref A.show
+)
+"monads.ml" 156 3618 3659 "monads.ml" 156 3618 3660
+type(
+  S.s
+)
+ident(
+  int_ref v "monads.ml" 156 3618 3633 "monads.ml" 156 3618 3634
+)
+"monads.ml" 156 3618 3651 "monads.ml" 156 3618 3661
+type(
+  string
+)
+"monads.ml" 156 3618 3639 "monads.ml" 156 3618 3661
+type(
+  string
+)
+"monads.ml" 157 3663 3676 "monads.ml" 157 3663 3677
+type(
+  string
+)
+ident(
+  def s "monads.ml" 157 3663 3682 "monads.ml" 157 3663 3693
+)
+"monads.ml" 157 3663 3669 "monads.ml" 157 3663 3678
+type(
+  S.s m
+)
+"monads.ml" 157 3663 3682 "monads.ml" 157 3663 3691
+type(
+  string
+)
+"monads.ml" 157 3663 3691 "monads.ml" 157 3663 3692
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"monads.ml" 157 3663 3692 "monads.ml" 157 3663 3693
+type(
+  string
+)
+ident(
+  int_ref s "monads.ml" 157 3663 3676 "monads.ml" 157 3663 3677
+)
+"monads.ml" 157 3663 3682 "monads.ml" 157 3663 3693
+type(
+  string
+)
+"monads.ml" 155 3589 3605 "monads.ml" 157 3663 3693
+type(
+  string
+)
+"monads.ml" 163 3798 3804 "monads.ml" 163 3798 3809
+type(
+  s -> string -> string
+)
+ident(
+  def shows "monads.ml" 165 3867 3898 "monads.ml" 166 3899 3902
+)
+"monads.ml" 163 3798 3810 "monads.ml" 163 3798 3811
+type(
+  s
+)
+ident(
+  def x "monads.ml" 163 3798 3812 "monads.ml" 165 3867 3898
+)
+"monads.ml" 163 3798 3812 "monads.ml" 163 3798 3813
+type(
+  string
+)
+ident(
+  def s "monads.ml" 163 3798 3816 "monads.ml" 165 3867 3898
+)
+"monads.ml" 163 3798 3822 "monads.ml" 163 3798 3823
+type(
+  s
+)
+ident(
+  int_ref x "monads.ml" 163 3798 3810 "monads.ml" 163 3798 3811
+)
+"monads.ml" 164 3829 3840 "monads.ml" 164 3829 3841
+type(
+  int
+)
+ident(
+  def i "monads.ml" 164 3829 3845 "monads.ml" 164 3829 3866
+)
+"monads.ml" 164 3829 3835 "monads.ml" 164 3829 3841
+type(
+  s
+)
+"monads.ml" 164 3829 3846 "monads.ml" 164 3829 3859
+type(
+  int -> string
+)
+ident(
+  ext_ref Pervasives.string_of_int
+)
+"monads.ml" 164 3829 3860 "monads.ml" 164 3829 3861
+type(
+  int
+)
+ident(
+  int_ref i "monads.ml" 164 3829 3840 "monads.ml" 164 3829 3841
+)
+"monads.ml" 164 3829 3845 "monads.ml" 164 3829 3862
+type(
+  string
+)
+"monads.ml" 164 3829 3863 "monads.ml" 164 3829 3864
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"monads.ml" 164 3829 3865 "monads.ml" 164 3829 3866
+type(
+  string
+)
+ident(
+  int_ref s "monads.ml" 163 3798 3812 "monads.ml" 163 3798 3813
+)
+"monads.ml" 164 3829 3845 "monads.ml" 164 3829 3866
+type(
+  string
+)
+"monads.ml" 165 3867 3878 "monads.ml" 165 3867 3879
+type(
+  s M.m -> s M.m
+)
+"monads.ml" 165 3867 3873 "monads.ml" 165 3867 3879
+type(
+  s
+)
+"monads.ml" 165 3867 3883 "monads.ml" 165 3867 3896
+type(
+  string
+)
+"monads.ml" 165 3867 3896 "monads.ml" 165 3867 3897
+type(
+  string -> string -> string
+)
+ident(
+  ext_ref Pervasives.( ^ )
+)
+"monads.ml" 165 3867 3897 "monads.ml" 165 3867 3898
+type(
+  string
+)
+ident(
+  int_ref s "monads.ml" 163 3798 3812 "monads.ml" 163 3798 3813
+)
+"monads.ml" 165 3867 3883 "monads.ml" 165 3867 3898
+type(
+  string
+)
+"monads.ml" 163 3798 3816 "monads.ml" 165 3867 3898
+type(
+  string
+)

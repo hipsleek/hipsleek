@@ -1,0 +1,18 @@
+
+int ISqrt(int n) 
+ requires n>=0
+  ensures res=n;
+{
+int x = 0;
+ while ((x+1> * (x*1) <= n) 
+
+ case{
+   i<=n -> requires n>=0 ensures i'=n;
+   i>n -> ensures i'=i;
+ }
+
+  {
+    x = x+1;
+  }
+ return i;
+}

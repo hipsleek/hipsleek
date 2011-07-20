@@ -1,0 +1,1197 @@
++++ Transcript to reduce.log started at Wed Jul 20 19:27:14 2011 +++
+Reduce (Free CSL version), 12-Jan-11 ...
+
+off nat;
+
+linelength 10000;
+t$
+
+
+load_package redlog;
+
+rlset ofsf;
+{}$
+
+
+on rlnzden;
+
+rlqe rlex(((flted_14_72 = 1.) and (flted_14_71 = 0)));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_14_90 = 1.) and (flted_14_89 = 0)) and (m = 1)) and (x = 1));
+flted_14_89 = 0 and flted_14_90 - 1 = 0 and m - 1 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_14_104 = 1.) and (flted_14_103 = 0)) and (m = 1)) and (x = 1));
+flted_14_103 = 0 and flted_14_104 - 1 = 0 and m - 1 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_14_118 = 1.) and (flted_14_117 = 0)) and (m = 1)) and (x = 1));
+flted_14_117 = 0 and flted_14_118 - 1 = 0 and m - 1 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((flted_18_134 = 1.) and (flted_18_133 = 0)));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_18_148 = 1.) and (flted_18_147 = 0)) and (x = 1));
+flted_18_147 = 0 and flted_18_148 - 1 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_18_161 = 1.) and (flted_18_160 = 0)) and (x = 1));
+flted_18_160 = 0 and flted_18_161 - 1 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_18_174 = 1.) and (flted_18_173 = 0)) and (x = 1));
+flted_18_173 = 0 and flted_18_174 - 1 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((flted_22_189 = 1.) and (flted_22_188 = 0)));
+true$
+
+
+rlqe rlex(((((flted_26_209 = 1.) and (flted_26_208 = 1.)) and (flted_26_207 = 1.)) and (((r2 = 0) and (n = 0)) or (((r2 <= (0 + -1)) or (r2 >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_26_234 = 1.) and (flted_26_233 = 1.)) and (flted_26_232 = 1.)) and (r_237 = r)) and (((r = 1) and (0 <= n)) and (x = 2)));
+flted_26_232 - 1 = 0 and flted_26_233 - 1 = 0 and flted_26_234 - 1 = 0 and n >= 0 and r - 1 = 0 and r_237 - 1 = 0 and x - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_26_234 = 1.) and (flted_26_233 = 1.)) and (flted_26_232 = 1.)) and (((x = 1) and (r = 2)) and (0 <= n)));
+flted_26_232 - 1 = 0 and flted_26_233 - 1 = 0 and flted_26_234 - 1 = 0 and n >= 0 and r - 2 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_26_256 = 1.) and (flted_26_255 = 1.)) and (flted_26_254 = 1.)) and (r_259 = r)) and (((r = 1) and (0 <= n)) and (x = 2)));
+flted_26_254 - 1 = 0 and flted_26_255 - 1 = 0 and flted_26_256 - 1 = 0 and n >= 0 and r - 1 = 0 and r_259 - 1 = 0 and x - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_26_256 = 1.) and (flted_26_255 = 1.)) and (flted_26_254 = 1.)) and (((x = 1) and (r = 2)) and (0 <= n)));
+flted_26_254 - 1 = 0 and flted_26_255 - 1 = 0 and flted_26_256 - 1 = 0 and n >= 0 and r - 2 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_26_278 = 1.) and (flted_26_277 = 1.)) and (flted_26_276 = 1.)) and (r_281 = r)) and (((r = 1) and (0 <= n)) and (x = 2)));
+flted_26_276 - 1 = 0 and flted_26_277 - 1 = 0 and flted_26_278 - 1 = 0 and n >= 0 and r - 1 = 0 and r_281 - 1 = 0 and x - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_26_278 = 1.) and (flted_26_277 = 1.)) and (flted_26_276 = 1.)) and (((x = 1) and (r = 2)) and (0 <= n)));
+flted_26_276 - 1 = 0 and flted_26_277 - 1 = 0 and flted_26_278 - 1 = 0 and n >= 0 and r - 2 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((((flted_30_307 = 1.) and (flted_30_306 = 1.)) and (flted_30_305 = 1.)) and ((10 <= (b + -1)) and (aa = 0))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((((flted_30_330 = 1.) and (flted_30_329 = 1.)) and (flted_30_328 = 1.)) and ((10 < b) and (aa = 0))) and (r_332 = r1)) and (((r1 = 1) and (y = 2)) and (x = 3)));
+aa = 0 and b - 10 > 0 and flted_30_328 - 1 = 0 and flted_30_329 - 1 = 0 and flted_30_330 - 1 = 0 and r1 - 1 = 0 and r_332 - 1 = 0 and x - 3 = 0 and y - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_30_330 = 1.) and (flted_30_329 = 1.)) and (flted_30_328 = 1.)) and ((10 < b) and (aa = 0))) and (((x = 1) and (r1 = 2)) and (y = 3)));
+aa = 0 and b - 10 > 0 and flted_30_328 - 1 = 0 and flted_30_329 - 1 = 0 and flted_30_330 - 1 = 0 and r1 - 2 = 0 and x - 1 = 0 and y - 3 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((((flted_30_352 = 1.) and (flted_30_351 = 1.)) and (flted_30_350 = 1.)) and ((10 < b) and (aa = 0))) and (r_354 = r1)) and (((r1 = 1) and (y = 2)) and (x = 3)));
+aa = 0 and b - 10 > 0 and flted_30_350 - 1 = 0 and flted_30_351 - 1 = 0 and flted_30_352 - 1 = 0 and r1 - 1 = 0 and r_354 - 1 = 0 and x - 3 = 0 and y - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_30_352 = 1.) and (flted_30_351 = 1.)) and (flted_30_350 = 1.)) and ((10 < b) and (aa = 0))) and (((x = 1) and (r1 = 2)) and (y = 3)));
+aa = 0 and b - 10 > 0 and flted_30_350 - 1 = 0 and flted_30_351 - 1 = 0 and flted_30_352 - 1 = 0 and r1 - 2 = 0 and x - 1 = 0 and y - 3 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((((flted_30_374 = 1.) and (flted_30_373 = 1.)) and (flted_30_372 = 1.)) and ((10 < b) and (aa = 0))) and (r_376 = r1)) and (((r1 = 1) and (y = 2)) and (x = 3)));
+aa = 0 and b - 10 > 0 and flted_30_372 - 1 = 0 and flted_30_373 - 1 = 0 and flted_30_374 - 1 = 0 and r1 - 1 = 0 and r_376 - 1 = 0 and x - 3 = 0 and y - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_30_374 = 1.) and (flted_30_373 = 1.)) and (flted_30_372 = 1.)) and ((10 < b) and (aa = 0))) and (((x = 1) and (r1 = 2)) and (y = 3)));
+aa = 0 and b - 10 > 0 and flted_30_372 - 1 = 0 and flted_30_373 - 1 = 0 and flted_30_374 - 1 = 0 and r1 - 2 = 0 and x - 1 = 0 and y - 3 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex((((flted_34_395 = 1.) and ((x <= (0 + -1)) or (x >= (0 + 1)))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((((flted_42_444 = 1.) and (flted_42_443 = 1.)) and (flted_42_442 = 0)) and (2 = 0)));
+false$
+
+
+rlqe rlex((((flted_46_475 = 1.) and (flted_46_474 = 1.)) and (flted_46_473 = 0)));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_46_496 = 1.) and (flted_46_495 = 1.)) and (flted_46_494 = 0)) and (r_498 = q)) and ((q = 1) and (x = 2)));
+flted_46_494 = 0 and flted_46_495 - 1 = 0 and flted_46_496 - 1 = 0 and q - 1 = 0 and r_498 - 1 = 0 and x - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_46_496 = 1.) and (flted_46_495 = 1.)) and (flted_46_494 = 0)) and ((x = 1) and (q = 2)));
+flted_46_494 = 0 and flted_46_495 - 1 = 0 and flted_46_496 - 1 = 0 and q - 2 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_46_521 = 1.) and (flted_46_520 = 1.)) and (flted_46_519 = 0)) and (r_523 = q)) and ((q = 1) and (x = 2)));
+flted_46_519 = 0 and flted_46_520 - 1 = 0 and flted_46_521 - 1 = 0 and q - 1 = 0 and r_523 - 1 = 0 and x - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_46_521 = 1.) and (flted_46_520 = 1.)) and (flted_46_519 = 0)) and ((x = 1) and (q = 2)));
+flted_46_519 = 0 and flted_46_520 - 1 = 0 and flted_46_521 - 1 = 0 and q - 2 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((((flted_46_546 = 1.) and (flted_46_545 = 1.)) and (flted_46_544 = 0)) and (r_548 = q)) and ((q = 1) and (x = 2)));
+flted_46_544 = 0 and flted_46_545 - 1 = 0 and flted_46_546 - 1 = 0 and q - 1 = 0 and r_548 - 1 = 0 and x - 2 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_46_546 = 1.) and (flted_46_545 = 1.)) and (flted_46_544 = 0)) and ((x = 1) and (q = 2)));
+flted_46_544 = 0 and flted_46_545 - 1 = 0 and flted_46_546 - 1 = 0 and q - 2 = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex((((flted_50_567 = 1.) and ((x <= (0 + -1)) or (x >= (0 + 1)))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_50_599 = 1.) and (x <> 0)) and (0 <= n));
+flted_50_599 - 1 = 0 and n >= 0 and x <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_50_599 = 1.) and (x <> 0)) and (((x = 0) and (n = 0)) or ((x <> 0) and (1 <= n))));
+flted_50_599 - 1 = 0 and n > 0 and x <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_50_607 = 1.) and (x <> 0)) and (0 <= n));
+flted_50_607 - 1 = 0 and n >= 0 and x <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_50_607 = 1.) and (x <> 0)) and (((x = 0) and (n = 0)) or ((x <> 0) and (1 <= n))));
+flted_50_607 - 1 = 0 and n > 0 and x <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_50_615 = 1.) and (x <> 0)) and (0 <= n));
+flted_50_615 - 1 = 0 and n >= 0 and x <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_50_615 = 1.) and (x <> 0)) and (((x = 0) and (n = 0)) or ((x <> 0) and (1 <= n))));
+flted_50_615 - 1 = 0 and n > 0 and x <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((((flted_54_622 = 1.) and (flted_54_621 = 1.)) and (0 <= n)) and (((q = 0) and (n = 0)) or (((q <= (0 + -1)) or (q >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_54_638 = 1.) and (flted_54_637 = 1.)) and (0 <= n)) and ((x = 1) and (0 <= n)));
+flted_54_637 - 1 = 0 and flted_54_638 - 1 = 0 and n >= 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_54_650 = 1.) and (flted_54_649 = 1.)) and (0 <= n)) and ((x = 1) and (0 <= n)));
+flted_54_649 - 1 = 0 and flted_54_650 - 1 = 0 and n >= 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_54_662 = 1.) and (flted_54_661 = 1.)) and (0 <= n)) and ((x = 1) and (0 <= n)));
+flted_54_661 - 1 = 0 and flted_54_662 - 1 = 0 and n >= 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((flted_66_699 = 1.) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((flted_70_707 = 1.) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((flted_70_711 = 1.) and (0 <= n));
+flted_70_711 - 1 = 0 and n >= 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((flted_70_712 = 1.) and (0 <= n));
+flted_70_712 - 1 = 0 and n >= 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((flted_70_713 = 1.) and (0 <= n));
+flted_70_713 - 1 = 0 and n >= 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex((((flted_74_715 = 1.) and (1 <= (n + -1))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((x = 0) and ((flted_74_732 = 1.) and (1 <= (0 + -1)))));
+false$
+
+
+rlqe rlex(((((flted_10_743 + 1) = n) and ((flted_74_732 = 1.) and (1 <= (n + -1)))) and (((r_744 = 0) and (flted_10_743 = 0)) or (((r_744 <= (0 + -1)) or (r_744 >= (0 + 1))) and (1 <= flted_10_743)))));
+true$
+
+
+rlqe rlex(((r_747 = 0) and (((0 + 1) = n) and ((flted_74_732 = 1.) and (1 <= (n + -1))))));
+false$
+
+
+rlqe rlex(((((flted_10_755 + 1) = flted_10_746) and (((flted_10_746 + 1) = n) and ((flted_74_732 = 1.) and (1 <= (n + -1))))) and (((r_756 = 0) and (flted_10_755 = 0)) or (((r_756 <= (0 + -1)) or (r_756 >= (0 + 1))) and (1 <= flted_10_755)))));
+true$
+
+
+rlqe rlex(((x = 0) and ((flted_74_761 = 1.) and (1 <= (0 + -1)))));
+false$
+
+
+rlqe rlex(((((flted_10_772 + 1) = n) and ((flted_74_761 = 1.) and (1 <= (n + -1)))) and (((r_773 = 0) and (flted_10_772 = 0)) or (((r_773 <= (0 + -1)) or (r_773 >= (0 + 1))) and (1 <= flted_10_772)))));
+true$
+
+
+rlqe rlex(((r_776 = 0) and (((0 + 1) = n) and ((flted_74_761 = 1.) and (1 <= (n + -1))))));
+false$
+
+
+rlqe rlex(((((flted_10_784 + 1) = flted_10_775) and (((flted_10_775 + 1) = n) and ((flted_74_761 = 1.) and (1 <= (n + -1))))) and (((r_785 = 0) and (flted_10_784 = 0)) or (((r_785 <= (0 + -1)) or (r_785 >= (0 + 1))) and (1 <= flted_10_784)))));
+true$
+
+
+rlqe rlex(((x = 0) and ((flted_74_790 = 1.) and (1 <= (0 + -1)))));
+false$
+
+
+rlqe rlex(((((flted_10_801 + 1) = n) and ((flted_74_790 = 1.) and (1 <= (n + -1)))) and (((r_802 = 0) and (flted_10_801 = 0)) or (((r_802 <= (0 + -1)) or (r_802 >= (0 + 1))) and (1 <= flted_10_801)))));
+true$
+
+
+rlqe rlex(((r_805 = 0) and (((0 + 1) = n) and ((flted_74_790 = 1.) and (1 <= (n + -1))))));
+false$
+
+
+rlqe rlex(((((flted_10_813 + 1) = flted_10_804) and (((flted_10_804 + 1) = n) and ((flted_74_790 = 1.) and (1 <= (n + -1))))) and (((r_814 = 0) and (flted_10_813 = 0)) or (((r_814 <= (0 + -1)) or (r_814 >= (0 + 1))) and (1 <= flted_10_813)))));
+true$
+
+
+rlqe rlex((((flted_78_820 = 1.) and (n <= (2 + -1))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((x = 0) and ((flted_78_837 = 1.) and (0 <= (2 + -1)))));
+true$
+
+
+rlqe rlex(((((flted_10_844 + 1) = n) and ((flted_78_837 = 1.) and (n <= (2 + -1)))) and (((r_845 = 0) and (flted_10_844 = 0)) or (((r_845 <= (0 + -1)) or (r_845 >= (0 + 1))) and (1 <= flted_10_844)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_10_852 + 1) = n) and ((flted_78_854 = 1.) and (n < 2))) and ((x = 1) and (0 <= flted_10_852)));
+flted_10_852 - n + 1 = 0 and flted_10_852 >= 0 and flted_78_854 - 1 = 0 and n - 1 <= 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((x = 0) and ((flted_78_864 = 1.) and (0 <= (2 + -1)))));
+true$
+
+
+rlqe rlex(((((flted_10_871 + 1) = n) and ((flted_78_864 = 1.) and (n <= (2 + -1)))) and (((r_872 = 0) and (flted_10_871 = 0)) or (((r_872 <= (0 + -1)) or (r_872 >= (0 + 1))) and (1 <= flted_10_871)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_10_879 + 1) = n) and ((flted_78_881 = 1.) and (n < 2))) and ((x = 1) and (0 <= flted_10_879)));
+flted_10_879 - n + 1 = 0 and flted_10_879 >= 0 and flted_78_881 - 1 = 0 and n - 1 <= 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((x = 0) and ((flted_78_891 = 1.) and (0 <= (2 + -1)))));
+true$
+
+
+rlqe rlex(((((flted_10_898 + 1) = n) and ((flted_78_891 = 1.) and (n <= (2 + -1)))) and (((r_899 = 0) and (flted_10_898 = 0)) or (((r_899 <= (0 + -1)) or (r_899 >= (0 + 1))) and (1 <= flted_10_898)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_10_906 + 1) = n) and ((flted_78_908 = 1.) and (n < 2))) and ((x = 1) and (0 <= flted_10_906)));
+flted_10_906 - n + 1 = 0 and flted_10_906 >= 0 and flted_78_908 - 1 = 0 and n - 1 <= 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex((((flted_82_919 = 1.) and (n <= (2 + -1))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((((flted_82_919 = 1.) and (n <= (2 + -1))) and ((x <= (0 + -1)) or (x >= (0 + 1)))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((x = 0) and (((flted_82_940 = 1.) and (0 <= (2 + -1))) and ((x <= (0 + -1)) or (x >= (0 + 1))))));
+false$
+
+
+rlqe rlex(((((flted_10_950 + 1) = n) and (((flted_82_940 = 1.) and (n <= (2 + -1))) and ((1 <= (0 + -1)) or (1 >= (0 + 1))))) and (((r_951 = 0) and (flted_10_950 = 0)) or (((r_951 <= (0 + -1)) or (r_951 >= (0 + 1))) and (1 <= flted_10_950)))));
+true$
+
+
+rlqe rlex(((((flted_82_919 = 1.) and (n <= (2 + -1))) and (x = 0)) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((x = 0) and (((flted_82_958 = 1.) and (0 <= (2 + -1))) and ((x <= (0 + -1)) or (x >= (0 + 1))))));
+false$
+
+
+rlqe rlex(((((flted_10_968 + 1) = n) and (((flted_82_958 = 1.) and (n <= (2 + -1))) and ((1 <= (0 + -1)) or (1 >= (0 + 1))))) and (((r_969 = 0) and (flted_10_968 = 0)) or (((r_969 <= (0 + -1)) or (r_969 >= (0 + 1))) and (1 <= flted_10_968)))));
+true$
+
+
+rlqe rlex(((x = 0) and (((flted_82_976 = 1.) and (0 <= (2 + -1))) and ((x <= (0 + -1)) or (x >= (0 + 1))))));
+false$
+
+
+rlqe rlex(((((flted_10_986 + 1) = n) and (((flted_82_976 = 1.) and (n <= (2 + -1))) and ((1 <= (0 + -1)) or (1 >= (0 + 1))))) and (((r_987 = 0) and (flted_10_986 = 0)) or (((r_987 <= (0 + -1)) or (r_987 >= (0 + 1))) and (1 <= flted_10_986)))));
+true$
+
+
+rlqe rlex((((flted_87_995 = 1.) and (0 <= (n + -1))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex((((flted_91_1014 = 1.) and (0 <= (n_1015 + -1))) and (((x = 0) and (n_1015 = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n_1015)))));
+true$
+
+
+rlqe rlex(((flted_99_1053 = 1.) and (r = 0)));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_99_1066 = 1.) and (r = 0)) and (x = 1));
+flted_99_1066 - 1 = 0 and r = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_99_1078 = 1.) and (r = 0)) and (x = 1));
+flted_99_1078 - 1 = 0 and r = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_99_1090 = 1.) and (r = 0)) and (x = 1));
+flted_99_1090 - 1 = 0 and r = 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((flted_103_1103 = 1.) and ((r <= (0 + -1)) or (r >= (0 + 1)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_103_1118 = 1.) and (r <> 0)) and (r_1120 = r)) and (x = 1));
+flted_103_1118 - 1 = 0 and r - r_1120 = 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_103_1118 = 1.) and (r <> 0)) and (r_1120 = r));
+flted_103_1118 - 1 = 0 and r - r_1120 = 0 and r <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_103_1118 = 1.) and (r <> 0)) and (x = 1));
+flted_103_1118 - 1 = 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_103_1130 = 1.) and (r <> 0)) and (r_1132 = r)) and (x = 1));
+flted_103_1130 - 1 = 0 and r - r_1132 = 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_103_1130 = 1.) and (r <> 0)) and (r_1132 = r));
+flted_103_1130 - 1 = 0 and r - r_1132 = 0 and r <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_103_1130 = 1.) and (r <> 0)) and (x = 1));
+flted_103_1130 - 1 = 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_103_1142 = 1.) and (r <> 0)) and (r_1144 = r)) and (x = 1));
+flted_103_1142 - 1 = 0 and r - r_1144 = 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_103_1142 = 1.) and (r <> 0)) and (r_1144 = r));
+flted_103_1142 - 1 = 0 and r - r_1144 = 0 and r <> 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl (((flted_103_1142 = 1.) and (r <> 0)) and (x = 1));
+flted_103_1142 - 1 = 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex(((((flted_108_1157 = 1.) and (flted_108_1156 = 1.)) and ((r <= (0 + -1)) or (r >= (0 + 1)))) and (((r = 0) and (n = 0)) or (((r <= (0 + -1)) or (r >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_108_1173 = 1.) and (flted_108_1172 = 1.)) and (r <> 0)) and ((x = 1) and (0 <= n)));
+flted_108_1172 - 1 = 0 and flted_108_1173 - 1 = 0 and n >= 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_108_1185 = 1.) and (flted_108_1184 = 1.)) and (r <> 0)) and ((x = 1) and (0 <= n)));
+flted_108_1184 - 1 = 0 and flted_108_1185 - 1 = 0 and n >= 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlset pasf;
+*** turned on switch rlsusi 
+
+{ofsf}$
+
+
+rlsimpl ((((flted_108_1197 = 1.) and (flted_108_1196 = 1.)) and (r <> 0)) and ((x = 1) and (0 <= n)));
+flted_108_1196 - 1 = 0 and flted_108_1197 - 1 = 0 and n >= 0 and r <> 0 and x - 1 = 0$
+
+
+rlset ofsf;
+*** turned off switch rlsusi 
+
+{pasf}$
+
+
+rlqe rlex((((flted_121_1260 = 1.) and (flted_121_1259 = 1.)) and ((x <= (0 + -1)) or (x >= (0 + 1)))));
+true$
+
+
+rlqe rlall(((flted_121_1260 > (1. + -1)) and (flted_121_1260 < (1. + 1))));
+false$
+
+
+rlqe rlex((flted_121_1259 = 1.));
+true$
+
+
+rlqe rlex((flted_121_1260 = 1.));
+true$
+
+
+rlqe rlex(((flted_121_1259 <= (1. + -1)) or (flted_121_1259 >= (1. + 1))));
+true$
+
+
+rlqe rlex(((flted_121_1260 <= (1. + -1)) or (flted_121_1260 >= (1. + 1))));
+true$
+
+
+rlqe rlex((((flted_121_1264 = 1.) and (flted_121_1263 = 1.)) and ((x <= (0 + -1)) or (x >= (0 + 1)))));
+true$
+
+
+rlqe rlall(((flted_121_1264 > (1. + -1)) and (flted_121_1264 < (1. + 1))));
+false$
+
+
+rlqe rlex((flted_121_1263 = 1.));
+true$
+
+
+rlqe rlex((flted_121_1264 = 1.));
+true$
+
+
+rlqe rlex(((flted_121_1263 <= (1. + -1)) or (flted_121_1263 >= (1. + 1))));
+true$
+
+
+rlqe rlex(((flted_121_1264 <= (1. + -1)) or (flted_121_1264 >= (1. + 1))));
+true$
+
+
+rlqe rlex((((flted_121_1268 = 1.) and (flted_121_1267 = 1.)) and ((x <= (0 + -1)) or (x >= (0 + 1)))));
+true$
+
+
+rlqe rlall(((flted_121_1268 > (1. + -1)) and (flted_121_1268 < (1. + 1))));
+false$
+
+
+rlqe rlex((flted_121_1267 = 1.));
+true$
+
+
+rlqe rlex((flted_121_1268 = 1.));
+true$
+
+
+rlqe rlex(((flted_121_1267 <= (1. + -1)) or (flted_121_1267 >= (1. + 1))));
+true$
+
+
+rlqe rlex(((flted_121_1268 <= (1. + -1)) or (flted_121_1268 >= (1. + 1))));
+true$
+
+
+rlqe rlex(((flted_124_1278 = 1.) and ((x <= (0 + -1)) or (x >= (0 + 1)))));
+true$
+
+
+rlqe rlall(((flted_124_1278 > (1. + -1)) and (flted_124_1278 < (1. + 1))));
+false$
+
+
+rlqe rlex((flted_124_1278 = 1.));
+true$
+
+
+rlqe rlex(((flted_124_1278 <= (1. + -1)) or (flted_124_1278 >= (1. + 1))));
+true$
+
+
+rlqe rlex(((flted_124_1280 = 1.) and ((x <= (0 + -1)) or (x >= (0 + 1)))));
+true$
+
+
+rlqe rlall(((flted_124_1280 > (1. + -1)) and (flted_124_1280 < (1. + 1))));
+false$
+
+
+rlqe rlex((flted_124_1280 = 1.));
+true$
+
+
+rlqe rlex(((flted_124_1280 <= (1. + -1)) or (flted_124_1280 >= (1. + 1))));
+true$
+
+
+rlqe rlex(((flted_124_1282 = 1.) and ((x <= (0 + -1)) or (x >= (0 + 1)))));
+true$
+
+
+rlqe rlall(((flted_124_1282 > (1. + -1)) and (flted_124_1282 < (1. + 1))));
+false$
+
+
+rlqe rlex((flted_124_1282 = 1.));
+true$
+
+
+rlqe rlex(((flted_124_1282 <= (1. + -1)) or (flted_124_1282 >= (1. + 1))));
+true$
+
+
+rlqe rlex((flted_129_1284 = 1.));
+true$
+
+
+rlqe rlex((((flted_134_1295 = 1.) and ((x <= (0 + -1)) or (x >= (0 + 1)))) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+
+rlqe rlex(((flted_138_1316 = 1.) and (((x = 0) and (n = 0)) or (((x <= (0 + -1)) or (x >= (0 + 1))) and (1 <= n)))));
+true$
+
+

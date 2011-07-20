@@ -1,0 +1,908 @@
+"typeclass.ml" 19 306 312 "typeclass.ml" 19 306 315
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  def neq "typeclass.ml" 20 334 336 "typeclass.ml" 27 532 535
+)
+"typeclass.ml" 19 306 316 "typeclass.ml" 19 306 317
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 19 306 318 "typeclass.ml" 19 306 333
+)
+"typeclass.ml" 19 306 318 "typeclass.ml" 19 306 319
+type(
+  M.a
+)
+ident(
+  def y "typeclass.ml" 19 306 322 "typeclass.ml" 19 306 333
+)
+"typeclass.ml" 19 306 322 "typeclass.ml" 19 306 325
+type(
+  bool -> bool
+)
+ident(
+  ext_ref Pervasives.not
+)
+"typeclass.ml" 19 306 326 "typeclass.ml" 19 306 328
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  ext_ref M.eq
+)
+"typeclass.ml" 19 306 329 "typeclass.ml" 19 306 330
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 19 306 316 "typeclass.ml" 19 306 317
+)
+"typeclass.ml" 19 306 331 "typeclass.ml" 19 306 332
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 19 306 318 "typeclass.ml" 19 306 319
+)
+"typeclass.ml" 19 306 325 "typeclass.ml" 19 306 333
+type(
+  bool
+)
+"typeclass.ml" 19 306 322 "typeclass.ml" 19 306 333
+type(
+  bool
+)
+"typeclass.ml" 20 334 340 "typeclass.ml" 20 334 346
+type(
+  M.a -> M.a list -> bool
+)
+ident(
+  def member "typeclass.ml" 26 524 531 "typeclass.ml" 27 532 535
+)
+"typeclass.ml" 20 334 348 "typeclass.ml" 20 334 349
+type(
+  M.a
+)
+ident(
+  def y "typeclass.ml" 20 334 353 "typeclass.ml" 26 524 531
+)
+"typeclass.ml" 20 334 354 "typeclass.ml" 20 334 356
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 20 334 367 "typeclass.ml" 26 524 531
+)
+"typeclass.ml" 22 386 400 "typeclass.ml" 22 386 406
+type(
+  M.a list -> bool
+)
+"typeclass.ml" 22 386 407 "typeclass.ml" 22 386 409
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 22 386 412 "typeclass.ml" 24 448 504
+)
+"typeclass.ml" 22 386 418 "typeclass.ml" 22 386 420
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 22 386 407 "typeclass.ml" 22 386 409
+)
+"typeclass.ml" 23 426 436 "typeclass.ml" 23 426 438
+type(
+  M.a list
+)
+"typeclass.ml" 23 426 442 "typeclass.ml" 23 426 447
+type(
+  bool
+)
+"typeclass.ml" 24 448 458 "typeclass.ml" 24 448 459
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 24 448 467 "typeclass.ml" 24 448 504
+)
+"typeclass.ml" 24 448 461 "typeclass.ml" 24 448 463
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 24 448 467 "typeclass.ml" 24 448 504
+)
+"typeclass.ml" 24 448 458 "typeclass.ml" 24 448 463
+type(
+  M.a list
+)
+"typeclass.ml" 24 448 471 "typeclass.ml" 24 448 473
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  ext_ref M.eq
+)
+"typeclass.ml" 24 448 474 "typeclass.ml" 24 448 475
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 24 448 458 "typeclass.ml" 24 448 459
+)
+"typeclass.ml" 24 448 476 "typeclass.ml" 24 448 477
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 20 334 348 "typeclass.ml" 20 334 349
+)
+"typeclass.ml" 24 448 470 "typeclass.ml" 24 448 478
+type(
+  bool
+)
+"typeclass.ml" 24 448 484 "typeclass.ml" 24 448 488
+type(
+  bool
+)
+"typeclass.ml" 24 448 495 "typeclass.ml" 24 448 501
+type(
+  M.a list -> bool
+)
+ident(
+  int_ref helper "typeclass.ml" 22 386 400 "typeclass.ml" 22 386 406
+)
+"typeclass.ml" 24 448 502 "typeclass.ml" 24 448 504
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 24 448 461 "typeclass.ml" 24 448 463
+)
+"typeclass.ml" 24 448 495 "typeclass.ml" 24 448 504
+type(
+  bool
+)
+"typeclass.ml" 24 448 467 "typeclass.ml" 24 448 504
+type(
+  bool
+)
+"typeclass.ml" 22 386 412 "typeclass.ml" 24 448 504
+type(
+  bool
+)
+"typeclass.ml" 25 508 514 "typeclass.ml" 25 508 520
+type(
+  M.a list -> bool
+)
+ident(
+  int_ref helper "typeclass.ml" 22 386 400 "typeclass.ml" 22 386 406
+)
+"typeclass.ml" 25 508 521 "typeclass.ml" 25 508 523
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 20 334 354 "typeclass.ml" 20 334 356
+)
+"typeclass.ml" 25 508 514 "typeclass.ml" 25 508 523
+type(
+  bool
+)
+"typeclass.ml" 21 376 380 "typeclass.ml" 26 524 531
+type(
+  bool
+)
+type(
+  bool
+)
+"typeclass.ml" 41 814 820 "typeclass.ml" 41 814 822
+type(
+  M1.a * M2.a -> M1.a * M2.a -> bool
+)
+ident(
+  def eq "typeclass.ml" 41 814 871 "typeclass.ml" 42 872 875
+)
+"typeclass.ml" 41 814 824 "typeclass.ml" 41 814 826
+type(
+  M1.a
+)
+ident(
+  def x1 "typeclass.ml" 41 814 831 "typeclass.ml" 41 814 871
+)
+"typeclass.ml" 41 814 827 "typeclass.ml" 41 814 829
+type(
+  M2.a
+)
+ident(
+  def x2 "typeclass.ml" 41 814 831 "typeclass.ml" 41 814 871
+)
+"typeclass.ml" 41 814 823 "typeclass.ml" 41 814 830
+type(
+  M1.a * M2.a
+)
+"typeclass.ml" 41 814 832 "typeclass.ml" 41 814 834
+type(
+  M1.a
+)
+ident(
+  def y1 "typeclass.ml" 41 814 841 "typeclass.ml" 41 814 871
+)
+"typeclass.ml" 41 814 835 "typeclass.ml" 41 814 837
+type(
+  M2.a
+)
+ident(
+  def y2 "typeclass.ml" 41 814 841 "typeclass.ml" 41 814 871
+)
+"typeclass.ml" 41 814 831 "typeclass.ml" 41 814 838
+type(
+  M1.a * M2.a
+)
+"typeclass.ml" 41 814 842 "typeclass.ml" 41 814 847
+type(
+  M1.a -> M1.a -> bool
+)
+ident(
+  ext_ref M1.eq
+)
+"typeclass.ml" 41 814 848 "typeclass.ml" 41 814 850
+type(
+  M1.a
+)
+ident(
+  int_ref x1 "typeclass.ml" 41 814 824 "typeclass.ml" 41 814 826
+)
+"typeclass.ml" 41 814 851 "typeclass.ml" 41 814 853
+type(
+  M1.a
+)
+ident(
+  int_ref y1 "typeclass.ml" 41 814 832 "typeclass.ml" 41 814 834
+)
+"typeclass.ml" 41 814 841 "typeclass.ml" 41 814 854
+type(
+  bool
+)
+"typeclass.ml" 41 814 855 "typeclass.ml" 41 814 857
+type(
+  bool -> bool -> bool
+)
+ident(
+  ext_ref Pervasives.( && )
+)
+"typeclass.ml" 41 814 859 "typeclass.ml" 41 814 864
+type(
+  M2.a -> M2.a -> bool
+)
+ident(
+  ext_ref M2.eq
+)
+"typeclass.ml" 41 814 865 "typeclass.ml" 41 814 867
+type(
+  M2.a
+)
+ident(
+  int_ref x2 "typeclass.ml" 41 814 827 "typeclass.ml" 41 814 829
+)
+"typeclass.ml" 41 814 868 "typeclass.ml" 41 814 870
+type(
+  M2.a
+)
+ident(
+  int_ref y2 "typeclass.ml" 41 814 835 "typeclass.ml" 41 814 837
+)
+"typeclass.ml" 41 814 858 "typeclass.ml" 41 814 871
+type(
+  bool
+)
+"typeclass.ml" 41 814 841 "typeclass.ml" 41 814 871
+type(
+  bool
+)
+"typeclass.ml" 51 1046 1056 "typeclass.ml" 51 1046 1058
+type(
+  M.a list -> M.a list -> bool
+)
+ident(
+  def eq "typeclass.ml" 51 1046 1048 "typeclass.ml" 55 1176 1179
+)
+"typeclass.ml" 51 1046 1059 "typeclass.ml" 51 1046 1061
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 51 1046 1062 "typeclass.ml" 54 1156 1175
+)
+"typeclass.ml" 51 1046 1062 "typeclass.ml" 51 1046 1064
+type(
+  M.a list
+)
+ident(
+  def ys "typeclass.ml" 51 1046 1067 "typeclass.ml" 54 1156 1175
+)
+"typeclass.ml" 51 1046 1073 "typeclass.ml" 51 1046 1075
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 51 1046 1059 "typeclass.ml" 51 1046 1061
+)
+"typeclass.ml" 51 1046 1076 "typeclass.ml" 51 1046 1078
+type(
+  M.a list
+)
+ident(
+  int_ref ys "typeclass.ml" 51 1046 1062 "typeclass.ml" 51 1046 1064
+)
+"typeclass.ml" 51 1046 1073 "typeclass.ml" 51 1046 1078
+type(
+  M.a list * M.a list
+)
+"typeclass.ml" 52 1084 1090 "typeclass.ml" 52 1084 1092
+type(
+  M.a list
+)
+"typeclass.ml" 52 1084 1094 "typeclass.ml" 52 1084 1096
+type(
+  M.a list
+)
+"typeclass.ml" 52 1084 1090 "typeclass.ml" 52 1084 1096
+type(
+  M.a list * M.a list
+)
+"typeclass.ml" 52 1084 1100 "typeclass.ml" 52 1084 1104
+type(
+  bool
+)
+"typeclass.ml" 53 1105 1112 "typeclass.ml" 53 1105 1113
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 53 1105 1131 "typeclass.ml" 53 1105 1155
+)
+"typeclass.ml" 53 1105 1115 "typeclass.ml" 53 1105 1117
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 53 1105 1131 "typeclass.ml" 53 1105 1155
+)
+"typeclass.ml" 53 1105 1111 "typeclass.ml" 53 1105 1118
+type(
+  M.a list
+)
+"typeclass.ml" 53 1105 1121 "typeclass.ml" 53 1105 1122
+type(
+  M.a
+)
+ident(
+  def y "typeclass.ml" 53 1105 1131 "typeclass.ml" 53 1105 1155
+)
+"typeclass.ml" 53 1105 1124 "typeclass.ml" 53 1105 1126
+type(
+  M.a list
+)
+ident(
+  def ys "typeclass.ml" 53 1105 1131 "typeclass.ml" 53 1105 1155
+)
+"typeclass.ml" 53 1105 1120 "typeclass.ml" 53 1105 1127
+type(
+  M.a list
+)
+"typeclass.ml" 53 1105 1111 "typeclass.ml" 53 1105 1127
+type(
+  M.a list * M.a list
+)
+"typeclass.ml" 53 1105 1132 "typeclass.ml" 53 1105 1136
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  ext_ref M.eq
+)
+"typeclass.ml" 53 1105 1137 "typeclass.ml" 53 1105 1138
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 53 1105 1112 "typeclass.ml" 53 1105 1113
+)
+"typeclass.ml" 53 1105 1139 "typeclass.ml" 53 1105 1140
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 53 1105 1121 "typeclass.ml" 53 1105 1122
+)
+"typeclass.ml" 53 1105 1131 "typeclass.ml" 53 1105 1141
+type(
+  bool
+)
+"typeclass.ml" 53 1105 1142 "typeclass.ml" 53 1105 1144
+type(
+  bool -> bool -> bool
+)
+ident(
+  ext_ref Pervasives.( && )
+)
+"typeclass.ml" 53 1105 1146 "typeclass.ml" 53 1105 1148
+type(
+  M.a list -> M.a list -> bool
+)
+ident(
+  int_ref eq "typeclass.ml" 51 1046 1056 "typeclass.ml" 51 1046 1058
+)
+"typeclass.ml" 53 1105 1149 "typeclass.ml" 53 1105 1151
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 53 1105 1115 "typeclass.ml" 53 1105 1117
+)
+"typeclass.ml" 53 1105 1152 "typeclass.ml" 53 1105 1154
+type(
+  M.a list
+)
+ident(
+  int_ref ys "typeclass.ml" 53 1105 1124 "typeclass.ml" 53 1105 1126
+)
+"typeclass.ml" 53 1105 1145 "typeclass.ml" 53 1105 1155
+type(
+  bool
+)
+"typeclass.ml" 53 1105 1131 "typeclass.ml" 53 1105 1155
+type(
+  bool
+)
+"typeclass.ml" 54 1156 1162 "typeclass.ml" 54 1156 1163
+type(
+  M.a list
+)
+"typeclass.ml" 54 1156 1165 "typeclass.ml" 54 1156 1166
+type(
+  M.a list
+)
+"typeclass.ml" 54 1156 1162 "typeclass.ml" 54 1156 1166
+type(
+  M.a list * M.a list
+)
+"typeclass.ml" 54 1156 1170 "typeclass.ml" 54 1156 1175
+type(
+  bool
+)
+"typeclass.ml" 51 1046 1067 "typeclass.ml" 54 1156 1175
+type(
+  bool
+)
+"typeclass.ml" 61 1316 1322 "typeclass.ml" 61 1316 1325
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  def leq "typeclass.ml" 62 1353 1355 "typeclass.ml" 73 1647 1650
+)
+"typeclass.ml" 61 1316 1326 "typeclass.ml" 61 1316 1327
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 61 1316 1328 "typeclass.ml" 61 1316 1352
+)
+"typeclass.ml" 61 1316 1328 "typeclass.ml" 61 1316 1329
+type(
+  M.a
+)
+ident(
+  def y "typeclass.ml" 61 1316 1332 "typeclass.ml" 61 1316 1352
+)
+"typeclass.ml" 61 1316 1333 "typeclass.ml" 61 1316 1335
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  ext_ref M.lt
+)
+"typeclass.ml" 61 1316 1336 "typeclass.ml" 61 1316 1337
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 61 1316 1326 "typeclass.ml" 61 1316 1327
+)
+"typeclass.ml" 61 1316 1338 "typeclass.ml" 61 1316 1339
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 61 1316 1328 "typeclass.ml" 61 1316 1329
+)
+"typeclass.ml" 61 1316 1332 "typeclass.ml" 61 1316 1340
+type(
+  bool
+)
+"typeclass.ml" 61 1316 1341 "typeclass.ml" 61 1316 1343
+type(
+  bool -> bool -> bool
+)
+ident(
+  ext_ref Pervasives.( || )
+)
+"typeclass.ml" 61 1316 1345 "typeclass.ml" 61 1316 1347
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  ext_ref M.eq
+)
+"typeclass.ml" 61 1316 1348 "typeclass.ml" 61 1316 1349
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 61 1316 1326 "typeclass.ml" 61 1316 1327
+)
+"typeclass.ml" 61 1316 1350 "typeclass.ml" 61 1316 1351
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 61 1316 1328 "typeclass.ml" 61 1316 1329
+)
+"typeclass.ml" 61 1316 1344 "typeclass.ml" 61 1316 1352
+type(
+  bool
+)
+"typeclass.ml" 61 1316 1332 "typeclass.ml" 61 1316 1352
+type(
+  bool
+)
+"typeclass.ml" 62 1353 1359 "typeclass.ml" 62 1353 1361
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  def gt "typeclass.ml" 63 1378 1380 "typeclass.ml" 73 1647 1650
+)
+"typeclass.ml" 62 1353 1362 "typeclass.ml" 62 1353 1363
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 62 1353 1364 "typeclass.ml" 62 1353 1376
+)
+"typeclass.ml" 62 1353 1364 "typeclass.ml" 62 1353 1365
+type(
+  M.a
+)
+ident(
+  def y "typeclass.ml" 62 1353 1368 "typeclass.ml" 62 1353 1376
+)
+"typeclass.ml" 62 1353 1369 "typeclass.ml" 62 1353 1371
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  ext_ref M.lt
+)
+"typeclass.ml" 62 1353 1372 "typeclass.ml" 62 1353 1373
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 62 1353 1364 "typeclass.ml" 62 1353 1365
+)
+"typeclass.ml" 62 1353 1374 "typeclass.ml" 62 1353 1375
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 62 1353 1362 "typeclass.ml" 62 1353 1363
+)
+"typeclass.ml" 62 1353 1368 "typeclass.ml" 62 1353 1376
+type(
+  bool
+)
+"typeclass.ml" 63 1378 1384 "typeclass.ml" 63 1378 1387
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  def geq "typeclass.ml" 64 1405 1407 "typeclass.ml" 73 1647 1650
+)
+"typeclass.ml" 63 1378 1388 "typeclass.ml" 63 1378 1389
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 63 1378 1390 "typeclass.ml" 63 1378 1403
+)
+"typeclass.ml" 63 1378 1390 "typeclass.ml" 63 1378 1391
+type(
+  M.a
+)
+ident(
+  def y "typeclass.ml" 63 1378 1394 "typeclass.ml" 63 1378 1403
+)
+"typeclass.ml" 63 1378 1395 "typeclass.ml" 63 1378 1398
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  int_ref leq "typeclass.ml" 61 1316 1322 "typeclass.ml" 61 1316 1325
+)
+"typeclass.ml" 63 1378 1399 "typeclass.ml" 63 1378 1400
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 63 1378 1388 "typeclass.ml" 63 1378 1389
+)
+"typeclass.ml" 63 1378 1401 "typeclass.ml" 63 1378 1402
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 63 1378 1390 "typeclass.ml" 63 1378 1391
+)
+"typeclass.ml" 63 1378 1394 "typeclass.ml" 63 1378 1403
+type(
+  bool
+)
+"typeclass.ml" 64 1405 1411 "typeclass.ml" 64 1405 1414
+type(
+  M.a list -> M.a
+)
+ident(
+  def max "typeclass.ml" 72 1639 1646 "typeclass.ml" 73 1647 1650
+)
+"typeclass.ml" 64 1405 1416 "typeclass.ml" 64 1405 1418
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 64 1405 1429 "typeclass.ml" 72 1639 1646
+)
+"typeclass.ml" 66 1445 1459 "typeclass.ml" 66 1445 1465
+type(
+  M.a list -> M.a
+)
+"typeclass.ml" 66 1445 1466 "typeclass.ml" 66 1445 1468
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 66 1445 1471 "typeclass.ml" 70 1589 1619
+)
+"typeclass.ml" 66 1445 1477 "typeclass.ml" 66 1445 1479
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 66 1445 1466 "typeclass.ml" 66 1445 1468
+)
+"typeclass.ml" 67 1485 1495 "typeclass.ml" 67 1485 1497
+type(
+  M.a list
+)
+"typeclass.ml" 67 1485 1501 "typeclass.ml" 67 1485 1509
+type(
+  string -> M.a
+)
+ident(
+  ext_ref Pervasives.failwith
+)
+"typeclass.ml" 67 1485 1510 "typeclass.ml" 67 1485 1531
+type(
+  string
+)
+"typeclass.ml" 67 1485 1501 "typeclass.ml" 67 1485 1531
+type(
+  M.a
+)
+"typeclass.ml" 68 1532 1543 "typeclass.ml" 68 1532 1544
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 68 1532 1549 "typeclass.ml" 68 1532 1550
+)
+"typeclass.ml" 68 1532 1542 "typeclass.ml" 68 1532 1545
+type(
+  M.a list
+)
+"typeclass.ml" 68 1532 1549 "typeclass.ml" 68 1532 1550
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 68 1532 1543 "typeclass.ml" 68 1532 1544
+)
+"typeclass.ml" 69 1551 1561 "typeclass.ml" 69 1551 1562
+type(
+  M.a
+)
+ident(
+  def x "typeclass.ml" 69 1551 1570 "typeclass.ml" 70 1589 1619
+)
+"typeclass.ml" 69 1551 1564 "typeclass.ml" 69 1551 1566
+type(
+  M.a list
+)
+ident(
+  def xs "typeclass.ml" 69 1551 1570 "typeclass.ml" 70 1589 1619
+)
+"typeclass.ml" 69 1551 1561 "typeclass.ml" 69 1551 1566
+type(
+  M.a list
+)
+"typeclass.ml" 69 1551 1574 "typeclass.ml" 69 1551 1575
+type(
+  M.a
+)
+"typeclass.ml" 69 1551 1576 "typeclass.ml" 69 1551 1582
+type(
+  M.a list -> M.a
+)
+ident(
+  int_ref helper "typeclass.ml" 66 1445 1459 "typeclass.ml" 66 1445 1465
+)
+"typeclass.ml" 69 1551 1583 "typeclass.ml" 69 1551 1585
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 69 1551 1564 "typeclass.ml" 69 1551 1566
+)
+"typeclass.ml" 69 1551 1576 "typeclass.ml" 69 1551 1585
+type(
+  M.a
+)
+"typeclass.ml" 70 1589 1599 "typeclass.ml" 70 1589 1601
+type(
+  M.a -> M.a -> bool
+)
+ident(
+  ext_ref M.lt
+)
+"typeclass.ml" 70 1589 1602 "typeclass.ml" 70 1589 1603
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 69 1551 1561 "typeclass.ml" 69 1551 1562
+)
+"typeclass.ml" 70 1589 1604 "typeclass.ml" 70 1589 1605
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 69 1551 1574 "typeclass.ml" 69 1551 1575
+)
+"typeclass.ml" 70 1589 1599 "typeclass.ml" 70 1589 1605
+type(
+  bool
+)
+"typeclass.ml" 70 1589 1611 "typeclass.ml" 70 1589 1612
+type(
+  M.a
+)
+ident(
+  int_ref x "typeclass.ml" 69 1551 1561 "typeclass.ml" 69 1551 1562
+)
+"typeclass.ml" 70 1589 1618 "typeclass.ml" 70 1589 1619
+type(
+  M.a
+)
+ident(
+  int_ref y "typeclass.ml" 69 1551 1574 "typeclass.ml" 69 1551 1575
+)
+"typeclass.ml" 70 1589 1596 "typeclass.ml" 70 1589 1619
+type(
+  M.a
+)
+"typeclass.ml" 69 1551 1570 "typeclass.ml" 70 1589 1619
+type(
+  M.a
+)
+"typeclass.ml" 66 1445 1471 "typeclass.ml" 70 1589 1619
+type(
+  M.a
+)
+"typeclass.ml" 71 1623 1629 "typeclass.ml" 71 1623 1635
+type(
+  M.a list -> M.a
+)
+ident(
+  int_ref helper "typeclass.ml" 66 1445 1459 "typeclass.ml" 66 1445 1465
+)
+"typeclass.ml" 71 1623 1636 "typeclass.ml" 71 1623 1638
+type(
+  M.a list
+)
+ident(
+  int_ref xs "typeclass.ml" 64 1405 1416 "typeclass.ml" 64 1405 1418
+)
+"typeclass.ml" 71 1623 1629 "typeclass.ml" 71 1623 1638
+type(
+  M.a
+)
+"typeclass.ml" 65 1435 1439 "typeclass.ml" 72 1639 1646
+type(
+  M.a
+)
+type(
+  M.a
+)
+"typeclass.ml" 84 1824 1830 "typeclass.ml" 84 1824 1832
+type(
+  'a -> 'a -> bool
+)
+ident(
+  def eq "typeclass.ml" 84 1824 1838 "typeclass.ml" 85 1839 1842
+)
+"typeclass.ml" 84 1824 1835 "typeclass.ml" 84 1824 1838
+type(
+  'a -> 'a -> bool
+)
+ident(
+  ext_ref Pervasives.( = )
+)
+"typeclass.ml" 93 1989 1995 "typeclass.ml" 93 1989 1997
+type(
+  'a -> 'a -> bool
+)
+ident(
+  def lt "typeclass.ml" 93 1989 2003 "typeclass.ml" 94 2004 2007
+)
+"typeclass.ml" 93 1989 2000 "typeclass.ml" 93 1989 2003
+type(
+  'a -> 'a -> bool
+)
+ident(
+  ext_ref Pervasives.( < )
+)
+"typeclass.ml" 116 2322 2328 "typeclass.ml" 116 2322 2332
+type(
+  S.s -> string
+)
+ident(
+  def show "typeclass.ml" 116 2322 2361 "typeclass.ml" 117 2362 2365
+)
+"typeclass.ml" 116 2322 2334 "typeclass.ml" 116 2322 2335
+type(
+  S.s
+)
+ident(
+  def x "typeclass.ml" 116 2322 2339 "typeclass.ml" 116 2322 2361
+)
+"typeclass.ml" 116 2322 2351 "typeclass.ml" 116 2322 2356
+type(
+  S.s -> string -> string
+)
+ident(
+  ext_ref S.shows
+)
+"typeclass.ml" 116 2322 2357 "typeclass.ml" 116 2322 2358
+type(
+  S.s
+)
+ident(
+  int_ref x "typeclass.ml" 116 2322 2334 "typeclass.ml" 116 2322 2335
+)
+"typeclass.ml" 116 2322 2359 "typeclass.ml" 116 2322 2361
+type(
+  string
+)
+"typeclass.ml" 116 2322 2351 "typeclass.ml" 116 2322 2361
+type(
+  string
+)
+type(
+  string
+)

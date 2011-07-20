@@ -1,0 +1,152 @@
+/*
+ * LDK
+ * Examples with fractional permission over linked lists
+ * Fractional permission is enclosed in []
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//========== Fractional Permission using fractions
+/*
+
+Regarding permission, we classify into two types:
+1. Permission to access a heap part
+2. Permission to access a variable (NOT CONSIDERED here)
+(variables as resource, specify by Own(x))
+
+
+Atomic heap formula ::= p::c[perm]<v*>
+perm ::= [x/y]
+
+Permission invariant: 0<p<=1
+
+Examples:
+
+x::node[1]<..> or x::node<..> ::= full permission (both read & write)
+
+x::node[v]<..> & 0<v<=1 ::= a read-permission with possible writing
+
+x::node[v]<..> & (v>1 or v<=0) ::= false
+
+*/
+
+
+//========== OBJECTS
+
+//EQUIV
+forall p1,p2:
+  x::node[p]<_,null> & 0<p1,p2<1 & p=p1+p2
+    <=> x::node[p1]<_,null> * x::node[p2]<_,null>
+
+//SPLIT
+x::node[p]<_,null> 
+ |- x::node[p1]<_,null> * x::node[p2]<_,null> & p=p1+p2.
+
+//JOIN
+x::node[p1]<_,null> * x::node[p2]<_,null> & p1+p2<=1 & p=p1+p2 
+  |- x::node[p]<_,null>.
+
+//JOIN
+x::node[p1]<_,null> * x::node[p2]<_,null> 
+  |- x::node[p]<_,null> & p=p1+p2.
+
+//NON-ALIAS
+x::node[p1]<_,null> * y::node[p2]<_,null> & p1+p2>1 
+  |- x!=y.
+
+//CONTRADICT
+x::node[p1]<_,null> * x::node[p2]<_,null> & p1+p2>1 
+  |- false.
+
+x::node[p]<_,null> & p1>p 
+  |- x::node[p1]<_,null>.
+
+// However, we can not say anything about x and y:
+
+x::node[p1]<_,null> * y::node[p2]<_,null> & p1+p2<1 
+  |\- x=y.
+
+x::node[p1]<_,null> * y::node[p2]<_,null> & p1+p2<1 
+  |\- x!=y.
+
+
+//For examples:
+
+//SPLIT
+x::node<_,null> |- x::node[1/4]<_,null> * x::node[3/4]<_,null>.
+
+//JOIN
+x::node[1/2]<_,null> * x::node[1/2]<_,null> |- x::node<_,null>.
+
+//NON-ALIAS
+x::node[1/2]<_,null> * y::node[3/4]<_,null> & p1+p2>1 |- x!=y.
+
+//CONTRADICT
+x::node[1/2]<_,null> * x::node[3/4]<_,null> |- false.
+
+x::node[1/2]<_,null> |- x::node[3/4]<_,null>.
+
+//========== PREDICATES
+
+////rules for SPLIT, JOIN, NON-ALIAS, CONTRADICT are similar to those of objects
+
+//// component-wise rules
+
+//MATCH
+x::ll[p]<n> |- x::ll[p]<m> .
+//residue := m=m
+
+//MATCH
+x::ll[p]<n> |- x::ll[p1]<m> .
+//residue := x::ll[p2]<m> & m=n & p2=p-p1 & p2>=0
+
+//UNFOLD
+x::ll[p]<n> |- self = null & n = 0
+	or x::node[p]<next = r> * r::ll[p]<n - 1>.
+
+//FOLD
+x::node[p]<_,null> |- x::ll[p]<n> & n=0
+x::node[p]<_, r> * r::ll[p]<n> |- [p]x::ll[p]<n + 1>.
+
+
+For examples:
+
+//MATCH
+x::ll[1/2]<n> |- x::ll[1/2]<m>
+//residue := n=m
+
+//MATCH
+x::ll[3/4]<n> |- x::ll[1/2]<m>
+//residue := x:ll[1/4]<n> & n=m
+
+//UNFOLD
+x::ll[1/2]<n> & n>1 |- x::node[1/2]<_,q> * q::node[1/2]<_,r>.
+
+//FOLD
+x::node[1/2]<_,q> * q::node[1/2]<_,null> |- x::ll[1/2]<n> & n=2
+
+//FOLD => MATCH x => FOLD => SPLIT q => MATCH q
+x::node[1/2]<_,q> * q::node<_,null> |- x::ll[1/2]<n> * q::node[1/2]<_,null> & n=2
+
+// UNFOLD ll => JOIN
+x::node[1/2]<_,null> * x::ll[1/2]<n> & n=1 |- x::node<_,null>
+x::node[1/2]<_,null> * x::ll[1/2]<n> |- x::ll<n> & n=1
+
+
+//========== QUANTIFIED/EXISTENTIAL/Zero factional permission
+Is is necessary to say that we know a heap part exits
+but we do not have permission to read or write to it
+(zero permission) (NOT NEEDED)
+
+x::node[0]<..>
+
+//========== HEURISTICS
+x::node<_,null> |- x::node[f]<_,null> & 0<f<1
+ <=> x::node[w]<_,null> |- x::node[r]<_,null>
+     with w,r are reserved keywords. The system automatically infers the permission fraction
+

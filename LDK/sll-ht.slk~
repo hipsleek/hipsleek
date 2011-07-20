@@ -1,0 +1,14 @@
+data node {
+	int val; 
+	node next;	
+}
+
+sll_tail<n, t, sm, lg> ==
+  self::node< _, null> & t=self & n=0 & sm<=lg //empty list
+  or self::node<sm, r> * r::sll_tail<n-1, t, _, _> & r!=null  & n=1 & sm=lg
+  or self::node<sm, r> * r::sll_tail<n-1, t, sm1, lg> & r!=null & sm<=sm1 & n>1
+  inv n>=0 & self!=null & sm<=lg & t!=null;
+
+sll_ht<n, h, t, sm, lg> == self::node<_, r> * r::sll_tail<n, t, sm, lg> & self=h
+  inv n>=0 & self!=null;
+

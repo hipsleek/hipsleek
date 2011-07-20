@@ -1,0 +1,3108 @@
+/usr/local/etc/reduce/bin/redcsl
+Starting Reduce... 
+Starting Omega... 
+
+trans_view@1
+trans_view inp1 :lseg<n,p> == 
+ [][](EX  . true & (self = p) & (n = 0)) {}
+ [ r][](EX p_37 Anon_29 flted_9_34 flted_9_35 flted_9_36 . ((self::node(flted_9_36)<Anon_29, r>) * (r::lseg(flted_9_35)<flted_9_34, p_37>))*((((flted_9_36 = 1.) & (flted_9_35 = 1.)) & (flted_9_34 = n-1)) & (p_37 = p))( FLOW __flow)) {} inv n >= 0
+trans_view@1 EXIT out : view lseg<n:int,p:node>= 
+  EBase {1}->true & self=p & n=0 & {FLOW,(13,28)=__flow,}
+  || EBase exists [](I)[r][]{2}->EXISTS(p_37,Anon_29,flted_9_34,flted_9_35,
+           flted_9_36: self::node(flted_9_36)<Anon_29,r>@M * 
+           NN r::lseg(flted_9_35)<flted_9_34,p_37>@M[Orig] & flted_9_36=1. & 
+           flted_9_35=1. & flted_9_34+1=n & p_37=p & {FLOW,(13,28)=__flow,})
+  inv: 0<=n
+  unstructured formula: 
+   {1}->true & self=p & n=0 & {FLOW,(13,28)=__flow,}
+   || {2}->EXISTS(p_37,Anon_29,flted_9_34,flted_9_35,flted_9_36,
+      r: self::node(flted_9_36)<Anon_29,r>@M * 
+      NN r::lseg(flted_9_35)<flted_9_34,p_37>@M[Orig] & flted_9_36=1. & 
+      flted_9_35=1. & flted_9_34+1=n & p_37=p & {FLOW,(13,28)=__flow,})
+  xform: 0<=n
+  is_recursive?: true
+  materialized vars: []
+  bag of addr: 
+  raw base case: {1}->true & self=p & n=0 & {FLOW,(13,28)=__flow,}
+  view_complex_inv: None
+  prune branches: []
+  prune conditions: {[]}
+  prune baga conditions: 
+  prune invs:0:[]
+
+ heap_entail_conjunct:
+context:
+ es_formula: true & (self=p & n=0 | self!=null & 1<=n) & {FLOW,(13,28)=__flow,}
+ es_pure: true
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & 0<=n & {FLOW,(13,28)=__flow,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  self=p & n=0 | self!=null & 1<=n
+ [conseq], h2 =  true
+ p2 =  0<=n
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & (self=p & n=0 | self!=null & 1<=n) & {FLOW,(13,28)=__flow,}
+ rhs, p2 =  0<=n
+
+heap_entail_empty_rhs_heap@2
+heap_entail_empty_rhs_heap inp1 : true & (self=p & n=0 | self!=null & 1<=n) & {FLOW,(13,28)=__flow,}
+heap_entail_empty_rhs_heap inp2 : 0<=n
+heap_entail_empty_rhs_heap@2 EXIT out : 
+Good Context: [es_formula: true & (self=p & n=0 | self!=null & 1<=n) & {FLOW,(13,28)=__flow,}
+               es_pure: true
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None]
+
+Call [Sleekengine.process_entail_check] with
+ANTECEDENCE : (x::lseg(1.)<n, p>)*(n = 7)( FLOW __norm)
+CONSEQUENCE : 
+ [][]((x::lseg(1.)<n1, r1>) * (r1::lseg(1.)<n2, r2>))*((n1 = 3) & (n2 = 4))( FLOW __norm) {}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_15_82: SS 11:x::lseg(flted_15_82)<n,p>@M[Orig] &
+  flted_15_82=1. & n=7 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: true
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ EXISTS(flted_15_90,flted_15_91: SS 10:x::lseg(flted_15_91)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_90)<n2,r2>@M[Orig] & flted_15_91=1. & 
+flted_15_90=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,})
+kkk: Exists in conseq 
+kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+ p1 =  flted_15_112=1. & n=7
+ [conseq], h2 =  SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  SS 11:x::lseg(flted_15_112)<n,p>@M[Orig] & flted_15_112=1. & n=7 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_113; flted_15_114]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: true & flted_15_112=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+ es_evars: [flted_15_113; flted_15_114]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_112=1. & n=7 & n1=n & r1=p
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: true & flted_15_112=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+ es_evars: [flted_15_113; flted_15_114]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: true & flted_15_112=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+ es_evars: [n2; r2]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ {1}->true & r1=r2 & n2=0 & {FLOW,(13,28)=__flow,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_112=1. & n=7 & n1=n & r1=p
+ [conseq], h2 =  true
+ p2 =  r1=r2 & n2=0
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_15_112=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  r1=r2 & n2=0
+
+heap_entail_empty_rhs_heap@3
+heap_entail_empty_rhs_heap inp1 : true & flted_15_112=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : r1=r2 & n2=0
+heap_entail_empty_rhs_heap@3 EXIT out : 
+Good Context: [es_formula: true & flted_15_112=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+               es_pure: r1=r2 & n2=0
+               es_heap: SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+               es_evars: [n2; r2]
+               es_gen_impl_vars: [n2; r2]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None]
+
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  true & flted_15_112=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+ es_evars: [flted_15_113; flted_15_114]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 &
+{FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_112=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0
+ [conseq], h2 =  true
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_15_112=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+{FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4
+rrr 213
+heap_entail_empty_rhs_heap@4
+heap_entail_empty_rhs_heap inp1 : true & flted_15_112=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+{FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4
+heap_entail_empty_rhs_heap@4 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MUST{
+                                 fc_message: www213  n1=7 |-  n1=3;  n2=0 |-  n2=4 (must-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  true & flted_15_112=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  SS 11:x::lseg(flted_15_112)<n,p>@M[Orig] & flted_15_112=1. & n=7 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_113; flted_15_114]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  SS 11:x::lseg(flted_15_112)<n,p>@M[Orig] & flted_15_112=1. & n=7 &
+{FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = false
+do_universal: 2 
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_12_129,flted_12_130,
+  r_131: NN x::lseg(flted_12_130)<a_118,r_131>@M#O[lem_30][Derv] * 
+  NN r_131::lseg(flted_12_129)<b_119,p>@M[Derv] & flted_12_130=1. & 
+  flted_12_129=1. & flted_15_112=1. & n=7 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_113; flted_15_114]
+ es_ivars: [a_118; b_119]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+a_118 & 0<=a_118 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv] * 
+NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv]
+ p1 =  flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & n=7
+ [conseq], h2 =  SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+
+a_118 & 0<=a_118 & 0<=b_119
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv] * 
+  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+  flted_12_132=1. & flted_15_112=1. & n=7 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_113; flted_15_114]
+ es_ivars: [a_118; b_119]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+a_118 & 0<=a_118 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+  flted_12_132=1. & flted_15_112=1. & n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114]
+ es_ivars: [b_119]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv]
+ p1 =  flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & n=7 & r1=r_134
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+
+n1 & 0<=n1 & 0<=b_119
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+  flted_12_132=1. & flted_15_112=1. & n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114]
+ es_ivars: [b_119]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  true & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & n=7 & 
+  r1=r_134 & r2=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: 
+  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] * 
+  NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114]
+ es_gen_expl_vars: [n1; n2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & 
+n=n2+n1 & 0<=n1 & 0<=n2 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & n=7 & r1=r_134 & r2=p
+ [conseq], h2 =  true
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & n=7 & 
+r1=r_134 & r2=p & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+rrr 213
+heap_entail_empty_rhs_heap@7@6@5
+heap_entail_empty_rhs_heap inp1 : true & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & n=7 & 
+r1=r_134 & r2=p & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+heap_entail_empty_rhs_heap@7 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY{
+                                fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  true & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & n=7 & 
+r1=r_134 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+  flted_12_132=1. & flted_15_112=1. & n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114; b_119]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+flted_12_132=1. & flted_15_112=1. & n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = false
+do_universal: 2 
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_12_148,flted_12_149,
+  r_150: NN r_134::lseg(flted_12_149)<a_137,r_150>@M#O[lem_30][Derv] * 
+  NN r_150::lseg(flted_12_148)<b_138,p>@M[Derv] & flted_12_149=1. & 
+  flted_12_148=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+  n=7 & r1=r_134 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114; b_119]
+ es_ivars: [a_137; b_138]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & flted_12_62=1. & b_119=b_138+a_137 & 0<=a_137 & 0<=b_138 &
+{FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv] * 
+NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv]
+ p1 =  flted_12_152=1. & flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & 
+flted_15_112=1. & n=7 & r1=r_134
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+
+n1 & 0<=n1 & 0<=b_119 & flted_12_62=1. & b_119=b_138+a_137 & 0<=a_137 & 
+0<=b_138
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv] * 
+  NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv] & flted_12_152=1. & 
+  flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+  n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114; b_119]
+ es_ivars: [a_137; b_138]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & flted_12_62=1. & b_119=b_138+a_137 & 0<=a_137 & 0<=b_138 &
+{FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv] & flted_12_152=1. & 
+  flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+  n=7 & r1=r_134 & r2=r_153 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: 
+  NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv] * 
+  NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114; b_119]
+ es_ivars: [b_138]
+ es_gen_expl_vars: [n1; n2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & 
+n=b_119+n1 & 0<=n1 & 0<=b_119 & flted_12_62=1. & b_119=b_138+n2 & 0<=n2 & 
+0<=b_138 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv]
+ p1 =  flted_12_152=1. & flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & 
+flted_15_112=1. & n=7 & r1=r_134 & r2=r_153
+ [conseq], h2 =  true
+ p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+
+n1 & 0<=n1 & 0<=b_119 & flted_12_62=1. & b_119=b_138+n2 & 0<=n2 & 0<=b_138
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv] & flted_12_152=1. & 
+flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+n=7 & r1=r_134 & r2=r_153 & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+
+n1 & 0<=n1 & 0<=b_119 & flted_12_62=1. & b_119=b_138+n2 & 0<=n2 & 0<=b_138
+rrr 213
+heap_entail_empty_rhs_heap@10@9@8@6@5
+heap_entail_empty_rhs_heap inp1 : NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv] & flted_12_152=1. & 
+flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+n=7 & r1=r_134 & r2=r_153 & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_114=1. & flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+
+n1 & 0<=n1 & 0<=b_119 & flted_12_62=1. & b_119=b_138+n2 & 0<=n2 & 0<=b_138
+heap_entail_empty_rhs_heap@10 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY{
+                                fc_message: 
+                                 www213  flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 
+1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+p=r2 & b_138=0 & r_153=r2 & r_134=r1 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 
+1<=r2 & 1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 
+1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & 
+a_137=0 & r_134=r1 & 1<=b_138 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & 
+r_134=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & 
+r_153=r2 & r_134=r1 & x<=(0 - 1) & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=r2 & 1<=a_137 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_137 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r1 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & 
+r_134=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=a_137 & 1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 & 1<=b_138 & 1<=r1 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & p=r1 & 
+b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 |-  exists1(b_138:0<=b_138 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_138) & n=3+b_138+4) (may-bug).
+                                fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv] & flted_12_152=1. & 
+flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv] * 
+  NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv] & flted_12_152=1. & 
+  flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+  n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ es_evars: [flted_15_113; flted_15_114; b_119; a_137]
+ es_ivars: [b_138]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv] * 
+NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv] & flted_12_152=1. & 
+flted_12_151=1. & flted_12_133=1. & flted_12_132=1. & flted_15_112=1. & 
+n=7 & r1=r_134 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & flted_12_62=1. & b_119=b_138+a_137 & 0<=a_137 & 0<=b_138 &
+{FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = true
+do_universal: 1 : mkFailCtx_in 
+
+apply_universal@12@11@9@8@6@5
+apply_universal inp1 : NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv]
+apply_universal inp2 : NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv]
+apply_universal inp3 :lseg
+apply_universal@12 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@11@9@8@6@5
+do_coercion inp1 : NN r_134::lseg(flted_12_152)<a_137,r_153>@M#O[lem_30][Derv]
+do_coercion inp2 : NN r_153::lseg(flted_12_151)<b_138,p>@M[Derv]
+do_coercion inp3 : SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+do_coercion inp4 : true
+do_coercion inp5 : SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & flted_12_62=1. & b_119=b_138+a_137 & 0<=a_137 & 0<=b_138 &
+{FLOW,(27,27)=__norm,}
+do_coercion@11 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+apply_universal@9@8@6@5
+apply_universal inp1 : NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv]
+apply_universal inp2 : true
+apply_universal inp3 :lseg
+apply_universal@9 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 
+1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+p=r2 & b_138=0 & r_153=r2 & r_134=r1 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 
+1<=r2 & 1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 
+1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & 
+a_137=0 & r_134=r1 & 1<=b_138 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & 
+r_134=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & 
+r_153=r2 & r_134=r1 & x<=(0 - 1) & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=r2 & 1<=a_137 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_137 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r1 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & 
+r_134=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=a_137 & 1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 & 1<=b_138 & 1<=r1 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & p=r1 & 
+b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 |-  exists1(b_138:0<=b_138 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_138) & n=3+b_138+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@8@6@5
+do_coercion inp1 : NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv]
+do_coercion inp2 : true
+do_coercion inp3 : SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+do_coercion inp4 : true
+do_coercion inp5 : SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+n1 & 0<=n1 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}
+do_coercion@8 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 
+1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+p=r2 & b_138=0 & r_153=r2 & r_134=r1 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 
+1<=r2 & 1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 
+1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & 
+a_137=0 & r_134=r1 & 1<=b_138 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & 
+r_134=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & 
+r_153=r2 & r_134=r1 & x<=(0 - 1) & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=r2 & 1<=a_137 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_137 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r1 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & 
+r_134=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=a_137 & 1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 & 1<=b_138 & 1<=r1 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & p=r1 & 
+b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 |-  exists1(b_138:0<=b_138 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_138) & n=3+b_138+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+flted_12_132=1. & flted_15_112=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv] * 
+  NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+  flted_12_132=1. & flted_15_112=1. & n=7 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_113; flted_15_114; a_118]
+ es_ivars: [b_119]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv] * 
+NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv] & flted_12_133=1. & 
+flted_12_132=1. & flted_15_112=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+a_118 & 0<=a_118 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = true
+do_universal: 1 : mkFailCtx_in 
+
+apply_universal@14@13@6@5
+apply_universal inp1 : NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+apply_universal inp2 : NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv]
+apply_universal inp3 :lseg
+apply_universal@14 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@13@6@5
+do_coercion inp1 : NN x::lseg(flted_12_133)<a_118,r_134>@M#O[lem_30][Derv]
+do_coercion inp2 : NN r_134::lseg(flted_12_132)<b_119,p>@M[Derv]
+do_coercion inp3 : SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig]
+do_coercion inp4 : SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+do_coercion inp5 : SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_119+a_118 & 0<=a_118 & 
+0<=b_119 & {FLOW,(27,27)=__norm,}
+do_coercion@13 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+apply_universal@6@5
+apply_universal inp1 : SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+apply_universal inp2 : true
+apply_universal inp3 :lseg
+apply_universal@6 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 
+1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+p=r2 & b_138=0 & r_153=r2 & r_134=r1 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 
+1<=r2 & 1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 
+1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & 
+a_137=0 & r_134=r1 & 1<=b_138 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & 
+r_134=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & 
+r_153=r2 & r_134=r1 & x<=(0 - 1) & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=r2 & 1<=a_137 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_137 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r1 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & 
+r_134=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=a_137 & 1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 & 1<=b_138 & 1<=r1 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & p=r1 & 
+b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 |-  exists1(b_138:0<=b_138 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_138) & n=3+b_138+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@5
+do_coercion inp1 : SS 11:x::lseg(flted_15_112)<n,p>@M[Orig]
+do_coercion inp2 : true
+do_coercion inp3 : SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig]
+do_coercion inp4 : SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig]
+do_coercion inp5 : SS 10:x::lseg(flted_15_114)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_113)<n2,r2>@M[Orig] & flted_15_114=1. & 
+flted_15_113=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+do_coercion@5 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 
+1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+p=r2 & b_138=0 & r_153=r2 & r_134=r1 & 1<=a_137 & 1<=r1 & 1<=a_118 & 1<=x | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 
+1<=r2 & 1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & 
+1<=a_137 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & 
+a_137=0 & r_134=r1 & 1<=b_138 & 1<=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 & 
+1<=x | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & 
+r_134=r1 & 1<=a_118 & 1<=x | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=a_137 & 1<=r1 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & 
+r_153=r2 & r_134=r1 & x<=(0 - 1) & 1<=a_137 & 1<=r1 & 1<=a_118 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_138 & 1<=r2 & 1<=a_137 & 1<=a_118 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_137 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 1<=b_138 & 1<=r1 & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & 
+r_134=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_138 & 1<=a_118 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & p=r1 & b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & x<=(0 - 1) & 
+1<=a_118 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 1<=r1 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r2<=(0 - 1) & 1<=b_138 & 1<=a_137 & 
+1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & 1<=a_137 & 1<=r1 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 & 1<=r2 & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r_153=r2 & r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_138 & 1<=a_137 | flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & 
+flted_12_152=1 & flted_15_112=1 & n=7 & p=r2 & b_138=0 & r_153=r2 & 
+r_134=r1 & a_118=0 & x=r1 & r1<=(0 - 1) & 1<=a_137 | flted_12_132=1 & 
+flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & 
+r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 & 1<=b_138 & 1<=r1 | 
+flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r2=r1 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_138 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & p=r1 & 
+b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 |-  exists1(b_138:0<=b_138 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_138) & n=3+b_138+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_15_82: SS 11:x::lseg(flted_15_82)<n,p>@M[Orig] &
+  flted_15_82=1. & n=7 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: true
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ EXISTS(flted_15_90,flted_15_91: SS 10:x::lseg(flted_15_91)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_90)<n2,r2>@M[Orig] & flted_15_91=1. & 
+flted_15_90=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,})
+kkk: Exists in conseq 
+kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+ p1 =  flted_15_171=1. & n=7
+ [conseq], h2 =  SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  SS 11:x::lseg(flted_15_171)<n,p>@M[Orig] & flted_15_171=1. & n=7 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_172; flted_15_173]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: true & flted_15_171=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+ es_evars: [flted_15_172; flted_15_173]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_171=1. & n=7 & n1=n & r1=p
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: true & flted_15_171=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+ es_evars: [flted_15_172; flted_15_173]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: true & flted_15_171=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+ es_evars: [n2; r2]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ {1}->true & r1=r2 & n2=0 & {FLOW,(13,28)=__flow,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_171=1. & n=7 & n1=n & r1=p
+ [conseq], h2 =  true
+ p2 =  r1=r2 & n2=0
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_15_171=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  r1=r2 & n2=0
+
+heap_entail_empty_rhs_heap@15
+heap_entail_empty_rhs_heap inp1 : true & flted_15_171=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : r1=r2 & n2=0
+heap_entail_empty_rhs_heap@15 EXIT out : 
+Good Context: [es_formula: true & flted_15_171=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+               es_pure: r1=r2 & n2=0
+               es_heap: SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+               es_evars: [n2; r2]
+               es_gen_impl_vars: [n2; r2]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None]
+
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  true & flted_15_171=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+ es_evars: [flted_15_172; flted_15_173]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 &
+{FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_171=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0
+ [conseq], h2 =  true
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_15_171=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+{FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4
+rrr 213
+heap_entail_empty_rhs_heap@16
+heap_entail_empty_rhs_heap inp1 : true & flted_15_171=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+{FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4
+heap_entail_empty_rhs_heap@16 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MUST{
+                                 fc_message: www213  n1=7 |-  n1=3;  n2=0 |-  n2=4 (must-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  true & flted_15_171=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  SS 11:x::lseg(flted_15_171)<n,p>@M[Orig] & flted_15_171=1. & n=7 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_172; flted_15_173]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  SS 11:x::lseg(flted_15_171)<n,p>@M[Orig] & flted_15_171=1. & n=7 &
+{FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = false
+do_universal: 2 
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_12_188,flted_12_189,
+  r_190: NN x::lseg(flted_12_189)<a_177,r_190>@M#O[lem_30][Derv] * 
+  NN r_190::lseg(flted_12_188)<b_178,p>@M[Derv] & flted_12_189=1. & 
+  flted_12_188=1. & flted_15_171=1. & n=7 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_172; flted_15_173]
+ es_ivars: [a_177; b_178]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+a_177 & 0<=a_177 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv] * 
+NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv]
+ p1 =  flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & n=7
+ [conseq], h2 =  SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+
+a_177 & 0<=a_177 & 0<=b_178
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv] * 
+  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+  flted_12_191=1. & flted_15_171=1. & n=7 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_172; flted_15_173]
+ es_ivars: [a_177; b_178]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+a_177 & 0<=a_177 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+  flted_12_191=1. & flted_15_171=1. & n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173]
+ es_ivars: [b_178]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv]
+ p1 =  flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & n=7 & r1=r_193
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+
+n1 & 0<=n1 & 0<=b_178
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+  flted_12_191=1. & flted_15_171=1. & n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173]
+ es_ivars: [b_178]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  true & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & n=7 & 
+  r1=r_193 & r2=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: 
+  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] * 
+  NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173]
+ es_gen_expl_vars: [n1; n2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & 
+n=n2+n1 & 0<=n1 & 0<=n2 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & n=7 & r1=r_193 & r2=p
+ [conseq], h2 =  true
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & n=7 & 
+r1=r_193 & r2=p & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+rrr 213
+heap_entail_empty_rhs_heap@19@18@17
+heap_entail_empty_rhs_heap inp1 : true & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & n=7 & 
+r1=r_193 & r2=p & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+heap_entail_empty_rhs_heap@19 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY{
+                                fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  true & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & n=7 & 
+r1=r_193 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+  flted_12_191=1. & flted_15_171=1. & n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173; b_178]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+flted_12_191=1. & flted_15_171=1. & n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = false
+do_universal: 2 
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_12_207,flted_12_208,
+  r_209: NN r_193::lseg(flted_12_208)<a_196,r_209>@M#O[lem_30][Derv] * 
+  NN r_209::lseg(flted_12_207)<b_197,p>@M[Derv] & flted_12_208=1. & 
+  flted_12_207=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+  n=7 & r1=r_193 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173; b_178]
+ es_ivars: [a_196; b_197]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & flted_12_62=1. & b_178=b_197+a_196 & 0<=a_196 & 0<=b_197 &
+{FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv] * 
+NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv]
+ p1 =  flted_12_211=1. & flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & 
+flted_15_171=1. & n=7 & r1=r_193
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+
+n1 & 0<=n1 & 0<=b_178 & flted_12_62=1. & b_178=b_197+a_196 & 0<=a_196 & 
+0<=b_197
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv] * 
+  NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv] & flted_12_211=1. & 
+  flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+  n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173; b_178]
+ es_ivars: [a_196; b_197]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & flted_12_62=1. & b_178=b_197+a_196 & 0<=a_196 & 0<=b_197 &
+{FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv] & flted_12_211=1. & 
+  flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+  n=7 & r1=r_193 & r2=r_212 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: 
+  NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv] * 
+  NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173; b_178]
+ es_ivars: [b_197]
+ es_gen_expl_vars: [n1; n2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & 
+n=b_178+n1 & 0<=n1 & 0<=b_178 & flted_12_62=1. & b_178=b_197+n2 & 0<=n2 & 
+0<=b_197 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv]
+ p1 =  flted_12_211=1. & flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & 
+flted_15_171=1. & n=7 & r1=r_193 & r2=r_212
+ [conseq], h2 =  true
+ p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+
+n1 & 0<=n1 & 0<=b_178 & flted_12_62=1. & b_178=b_197+n2 & 0<=n2 & 0<=b_197
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv] & flted_12_211=1. & 
+flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+n=7 & r1=r_193 & r2=r_212 & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+
+n1 & 0<=n1 & 0<=b_178 & flted_12_62=1. & b_178=b_197+n2 & 0<=n2 & 0<=b_197
+rrr 213
+heap_entail_empty_rhs_heap@22@21@20@18@17
+heap_entail_empty_rhs_heap inp1 : NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv] & flted_12_211=1. & 
+flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+n=7 & r1=r_193 & r2=r_212 & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_173=1. & flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+
+n1 & 0<=n1 & 0<=b_178 & flted_12_62=1. & b_178=b_197+n2 & 0<=n2 & 0<=b_197
+heap_entail_empty_rhs_heap@22 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY{
+                                fc_message: 
+                                 www213  flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 
+1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+p=r2 & b_197=0 & r_212=r2 & r_193=r1 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 
+1<=r2 & 1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 
+1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & 
+a_196=0 & r_193=r1 & 1<=b_197 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & 
+r_193=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & 
+r_212=r2 & r_193=r1 & x<=(0 - 1) & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=r2 & 1<=a_196 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_196 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r1 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & 
+r_193=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=a_196 & 1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 & 1<=b_197 & 1<=r1 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & p=r1 & 
+b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 |-  exists1(b_197:0<=b_197 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_197) & n=3+b_197+4) (may-bug).
+                                fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv] & flted_12_211=1. & 
+flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv] * 
+  NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv] & flted_12_211=1. & 
+  flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+  n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ es_evars: [flted_15_172; flted_15_173; b_178; a_196]
+ es_ivars: [b_197]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv] * 
+NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv] & flted_12_211=1. & 
+flted_12_210=1. & flted_12_192=1. & flted_12_191=1. & flted_15_171=1. & 
+n=7 & r1=r_193 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & flted_12_62=1. & b_178=b_197+a_196 & 0<=a_196 & 0<=b_197 &
+{FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = true
+do_universal: 1 : mkFailCtx_in 
+
+apply_universal@24@23@21@20@18@17
+apply_universal inp1 : NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv]
+apply_universal inp2 : NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv]
+apply_universal inp3 :lseg
+apply_universal@24 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@23@21@20@18@17
+do_coercion inp1 : NN r_193::lseg(flted_12_211)<a_196,r_212>@M#O[lem_30][Derv]
+do_coercion inp2 : NN r_212::lseg(flted_12_210)<b_197,p>@M[Derv]
+do_coercion inp3 : SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+do_coercion inp4 : true
+do_coercion inp5 : SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & flted_12_62=1. & b_178=b_197+a_196 & 0<=a_196 & 0<=b_197 &
+{FLOW,(27,27)=__norm,}
+do_coercion@23 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+apply_universal@21@20@18@17
+apply_universal inp1 : NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv]
+apply_universal inp2 : true
+apply_universal inp3 :lseg
+apply_universal@21 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 
+1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+p=r2 & b_197=0 & r_212=r2 & r_193=r1 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 
+1<=r2 & 1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 
+1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & 
+a_196=0 & r_193=r1 & 1<=b_197 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & 
+r_193=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & 
+r_212=r2 & r_193=r1 & x<=(0 - 1) & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=r2 & 1<=a_196 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_196 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r1 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & 
+r_193=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=a_196 & 1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 & 1<=b_197 & 1<=r1 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & p=r1 & 
+b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 |-  exists1(b_197:0<=b_197 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_197) & n=3+b_197+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@20@18@17
+do_coercion inp1 : NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv]
+do_coercion inp2 : true
+do_coercion inp3 : SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+do_coercion inp4 : true
+do_coercion inp5 : SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+n1 & 0<=n1 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}
+do_coercion@20 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 
+1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+p=r2 & b_197=0 & r_212=r2 & r_193=r1 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 
+1<=r2 & 1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 
+1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & 
+a_196=0 & r_193=r1 & 1<=b_197 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & 
+r_193=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & 
+r_212=r2 & r_193=r1 & x<=(0 - 1) & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=r2 & 1<=a_196 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_196 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r1 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & 
+r_193=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=a_196 & 1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 & 1<=b_197 & 1<=r1 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & p=r1 & 
+b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 |-  exists1(b_197:0<=b_197 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_197) & n=3+b_197+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+flted_12_191=1. & flted_15_171=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv] * 
+  NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+  flted_12_191=1. & flted_15_171=1. & n=7 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_172; flted_15_173; a_177]
+ es_ivars: [b_178]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv] * 
+NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv] & flted_12_192=1. & 
+flted_12_191=1. & flted_15_171=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+a_177 & 0<=a_177 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = true
+do_universal: 1 : mkFailCtx_in 
+
+apply_universal@26@25@18@17
+apply_universal inp1 : NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+apply_universal inp2 : NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv]
+apply_universal inp3 :lseg
+apply_universal@26 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@25@18@17
+do_coercion inp1 : NN x::lseg(flted_12_192)<a_177,r_193>@M#O[lem_30][Derv]
+do_coercion inp2 : NN r_193::lseg(flted_12_191)<b_178,p>@M[Derv]
+do_coercion inp3 : SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig]
+do_coercion inp4 : SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+do_coercion inp5 : SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_178+a_177 & 0<=a_177 & 
+0<=b_178 & {FLOW,(27,27)=__norm,}
+do_coercion@25 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+apply_universal@18@17
+apply_universal inp1 : SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+apply_universal inp2 : true
+apply_universal inp3 :lseg
+apply_universal@18 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 
+1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+p=r2 & b_197=0 & r_212=r2 & r_193=r1 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 
+1<=r2 & 1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 
+1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & 
+a_196=0 & r_193=r1 & 1<=b_197 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & 
+r_193=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & 
+r_212=r2 & r_193=r1 & x<=(0 - 1) & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=r2 & 1<=a_196 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_196 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r1 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & 
+r_193=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=a_196 & 1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 & 1<=b_197 & 1<=r1 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & p=r1 & 
+b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 |-  exists1(b_197:0<=b_197 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_197) & n=3+b_197+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@17
+do_coercion inp1 : SS 11:x::lseg(flted_15_171)<n,p>@M[Orig]
+do_coercion inp2 : true
+do_coercion inp3 : SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig]
+do_coercion inp4 : SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig]
+do_coercion inp5 : SS 10:x::lseg(flted_15_173)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_172)<n2,r2>@M[Orig] & flted_15_173=1. & 
+flted_15_172=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+do_coercion@17 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 
+1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+p=r2 & b_197=0 & r_212=r2 & r_193=r1 & 1<=a_196 & 1<=r1 & 1<=a_177 & 1<=x | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 
+1<=r2 & 1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & 
+1<=a_196 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & 
+a_196=0 & r_193=r1 & 1<=b_197 & 1<=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 & 
+1<=x | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & 
+r_193=r1 & 1<=a_177 & 1<=x | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r2<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=a_196 & 1<=r1 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & 
+r_212=r2 & r_193=r1 & x<=(0 - 1) & 1<=a_196 & 1<=r1 & 1<=a_177 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 
+1<=b_197 & 1<=r2 & 1<=a_196 & 1<=a_177 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & r2<=(0 - 1) & x<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & r1<=(0 - 1) & x<=(0 - 1) & 1<=a_196 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 1<=b_197 & 1<=r1 & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & 
+r_193=r1 & x<=(0 - 1) & r1<=(0 - 1) & 1<=b_197 & 1<=a_177 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & p=r1 & b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & x<=(0 - 1) & 
+1<=a_177 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=b_197 & 1<=r2 & 1<=a_196 & 1<=r1 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r2<=(0 - 1) & 1<=b_197 & 1<=a_196 & 
+1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & 1<=a_196 & 1<=r1 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & r_212=r2 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 & 1<=r2 & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r_212=r2 & r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & r2<=(0 - 1) & 
+1<=b_197 & 1<=a_196 | flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & 
+flted_12_211=1 & flted_15_171=1 & n=7 & p=r2 & b_197=0 & r_212=r2 & 
+r_193=r1 & a_177=0 & x=r1 & r1<=(0 - 1) & 1<=a_196 | flted_12_191=1 & 
+flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & 
+r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 & 1<=b_197 & 1<=r1 | 
+flted_12_191=1 & flted_12_192=1 & flted_12_210=1 & flted_12_211=1 & 
+flted_15_171=1 & n=7 & r2=r1 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_197 | flted_12_191=1 & flted_12_192=1 & 
+flted_12_210=1 & flted_12_211=1 & flted_15_171=1 & n=7 & r2=r1 & p=r1 & 
+b_197=0 & r_212=r1 & a_196=0 & r_193=r1 & a_177=0 & x=r1 |-  exists1(b_197:0<=b_197 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_197) & n=3+b_197+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_15_82: SS 11:x::lseg(flted_15_82)<n,p>@M[Orig] &
+  flted_15_82=1. & n=7 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: true
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ EXISTS(flted_15_90,flted_15_91: SS 10:x::lseg(flted_15_91)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_90)<n2,r2>@M[Orig] & flted_15_91=1. & 
+flted_15_90=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,})
+kkk: Exists in conseq 
+kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+ p1 =  flted_15_230=1. & n=7
+ [conseq], h2 =  SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  SS 11:x::lseg(flted_15_230)<n,p>@M[Orig] & flted_15_230=1. & n=7 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_231; flted_15_232]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: true & flted_15_230=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+ es_evars: [flted_15_231; flted_15_232]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_230=1. & n=7 & n1=n & r1=p
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: true & flted_15_230=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+ es_evars: [flted_15_231; flted_15_232]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: true & flted_15_230=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+ es_evars: [n2; r2]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ {1}->true & r1=r2 & n2=0 & {FLOW,(13,28)=__flow,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_230=1. & n=7 & n1=n & r1=p
+ [conseq], h2 =  true
+ p2 =  r1=r2 & n2=0
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_15_230=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  r1=r2 & n2=0
+
+heap_entail_empty_rhs_heap@27
+heap_entail_empty_rhs_heap inp1 : true & flted_15_230=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : r1=r2 & n2=0
+heap_entail_empty_rhs_heap@27 EXIT out : 
+Good Context: [es_formula: true & flted_15_230=1. & n=7 & n1=n & r1=p & {FLOW,(27,27)=__norm,}
+               es_pure: r1=r2 & n2=0
+               es_heap: SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+               es_evars: [n2; r2]
+               es_gen_impl_vars: [n2; r2]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None]
+
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  true & flted_15_230=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+ es_evars: [flted_15_231; flted_15_232]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 &
+{FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_15_230=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0
+ [conseq], h2 =  true
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_15_230=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+{FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4
+rrr 213
+heap_entail_empty_rhs_heap@28
+heap_entail_empty_rhs_heap inp1 : true & flted_15_230=1. & n=7 & n1=n & r1=p & r1=r2 & n2=0 &
+{FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4
+heap_entail_empty_rhs_heap@28 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MUST{
+                                 fc_message: www213  n1=7 |-  n1=3;  n2=0 |-  n2=4 (must-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,13)=__Error,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  true & flted_15_230=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  SS 11:x::lseg(flted_15_230)<n,p>@M[Orig] & flted_15_230=1. & n=7 &
+  {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_231; flted_15_232]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  SS 11:x::lseg(flted_15_230)<n,p>@M[Orig] & flted_15_230=1. & n=7 &
+{FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = false
+do_universal: 2 
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_12_247,flted_12_248,
+  r_249: NN x::lseg(flted_12_248)<a_236,r_249>@M#O[lem_30][Derv] * 
+  NN r_249::lseg(flted_12_247)<b_237,p>@M[Derv] & flted_12_248=1. & 
+  flted_12_247=1. & flted_15_230=1. & n=7 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_231; flted_15_232]
+ es_ivars: [a_236; b_237]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+a_236 & 0<=a_236 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv] * 
+NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv]
+ p1 =  flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & n=7
+ [conseq], h2 =  SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+
+a_236 & 0<=a_236 & 0<=b_237
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv] * 
+  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+  flted_12_250=1. & flted_15_230=1. & n=7 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_231; flted_15_232]
+ es_ivars: [a_236; b_237]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+a_236 & 0<=a_236 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+  flted_12_250=1. & flted_15_230=1. & n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232]
+ es_ivars: [b_237]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv]
+ p1 =  flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & n=7 & r1=r_252
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+
+n1 & 0<=n1 & 0<=b_237
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+  flted_12_250=1. & flted_15_230=1. & n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232]
+ es_ivars: [b_237]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  true & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & n=7 & 
+  r1=r_252 & r2=p & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: 
+  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] * 
+  NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232]
+ es_gen_expl_vars: [n1; n2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & 
+n=n2+n1 & 0<=n1 & 0<=n2 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  true
+ p1 =  flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & n=7 & r1=r_252 & r2=p
+ [conseq], h2 =  true
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   true & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & n=7 & 
+r1=r_252 & r2=p & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+rrr 213
+heap_entail_empty_rhs_heap@31@30@29
+heap_entail_empty_rhs_heap inp1 : true & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & n=7 & 
+r1=r_252 & r2=p & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=n2+
+n1 & 0<=n1 & 0<=n2
+heap_entail_empty_rhs_heap@31 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY{
+                                fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  true & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & n=7 & 
+r1=r_252 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+  flted_12_250=1. & flted_15_230=1. & n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232; b_237]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+flted_12_250=1. & flted_15_230=1. & n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = false
+do_universal: 2 
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  EXISTS(flted_12_266,flted_12_267,
+  r_268: NN r_252::lseg(flted_12_267)<a_255,r_268>@M#O[lem_30][Derv] * 
+  NN r_268::lseg(flted_12_266)<b_256,p>@M[Derv] & flted_12_267=1. & 
+  flted_12_266=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+  n=7 & r1=r_252 & {FLOW,(27,27)=__norm,})
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232; b_237]
+ es_ivars: [a_255; b_256]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & flted_12_62=1. & b_237=b_256+a_255 & 0<=a_255 & 0<=b_256 &
+{FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv] * 
+NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv]
+ p1 =  flted_12_270=1. & flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & 
+flted_15_230=1. & n=7 & r1=r_252
+ [conseq], h2 =  SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+
+n1 & 0<=n1 & 0<=b_237 & flted_12_62=1. & b_237=b_256+a_255 & 0<=a_255 & 
+0<=b_256
+
+ lll, heap_entail_conjunct_helper: conseq has an non-empty heap component
+context:
+ es_formula: 
+  NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv] * 
+  NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv] & flted_12_270=1. & 
+  flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+  n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232; b_237]
+ es_ivars: [a_255; b_256]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & flted_12_62=1. & b_237=b_256+a_255 & 0<=a_255 & 0<=b_256 &
+{FLOW,(27,27)=__norm,}
+
+ heap_entail_conjunct:
+context:
+ es_formula: 
+  NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv] & flted_12_270=1. & 
+  flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+  n=7 & r1=r_252 & r2=r_271 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: 
+  NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv] * 
+  NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232; b_237]
+ es_ivars: [b_256]
+ es_gen_expl_vars: [n1; n2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ true & flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & 
+n=b_237+n1 & 0<=n1 & 0<=b_237 & flted_12_62=1. & b_237=b_256+n2 & 0<=n2 & 
+0<=b_256 & {FLOW,(27,27)=__norm,}kkk: No Exists in conseq 
+kkk: No Exists in conseq
+ [ante], h1 =  NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv]
+ p1 =  flted_12_270=1. & flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & 
+flted_15_230=1. & n=7 & r1=r_252 & r2=r_271
+ [conseq], h2 =  true
+ p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+
+n1 & 0<=n1 & 0<=b_237 & flted_12_62=1. & b_237=b_256+n2 & 0<=n2 & 0<=b_256
+
+ fff, heap_entail_empty_rhs_heap: before 
+
+ lhs, b1 =   NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv] & flted_12_270=1. & 
+flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+n=7 & r1=r_252 & r2=r_271 & {FLOW,(27,27)=__norm,}
+ rhs, p2 =  flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+
+n1 & 0<=n1 & 0<=b_237 & flted_12_62=1. & b_237=b_256+n2 & 0<=n2 & 0<=b_256
+rrr 213
+heap_entail_empty_rhs_heap@34@33@32@30@29
+heap_entail_empty_rhs_heap inp1 : NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv] & flted_12_270=1. & 
+flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+n=7 & r1=r_252 & r2=r_271 & {FLOW,(27,27)=__norm,}
+heap_entail_empty_rhs_heap inp2 : flted_15_232=1. & flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+
+n1 & 0<=n1 & 0<=b_237 & flted_12_62=1. & b_237=b_256+n2 & 0<=n2 & 0<=b_256
+heap_entail_empty_rhs_heap@34 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY{
+                                fc_message: 
+                                 www213  flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & flted_12_270=1 & 
+flted_15_230=1 & n=7 & r_271=r2 & r_252=r1 & 1<=b_256 & 1<=r2 & 1<=a_255 & 
+1<=r1 & 1<=a_236 & 1<=x | flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & 
+flted_1
+
+x=r1 & r1<=(0 - 1) & 1<=b_256 | flted_12_250=1 & flted_12_251=1 & 
+flted_12_269=1 & flted_12_270=1 & flted_15_230=1 & n=7 & r2=r1 & p=r1 & 
+b_256=0 & r_271=r1 & a_255=0 & r_252=r1 & a_236=0 & x=r1 |-  exists1(b_256:0<=b_256 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_256) & n=3+b_256+4) (may-bug).
+                                fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv] & flted_12_270=1. & 
+flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv] * 
+  NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv] & flted_12_270=1. & 
+  flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+  n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ es_evars: [flted_15_231; flted_15_232; b_237; a_255]
+ es_ivars: [b_256]
+ es_gen_expl_vars: [n1]
+ es_gen_impl_vars: [n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv] * 
+NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv] & flted_12_270=1. & 
+flted_12_269=1. & flted_12_251=1. & flted_12_250=1. & flted_15_230=1. & 
+n=7 & r1=r_252 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & flted_12_62=1. & b_237=b_256+a_255 & 0<=a_255 & 0<=b_256 &
+{FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = true
+do_universal: 1 : mkFailCtx_in 
+
+apply_universal@36@35@33@32@30@29
+apply_universal inp1 : NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv]
+apply_universal inp2 : NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv]
+apply_universal inp3 :lseg
+apply_universal@36 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@35@33@32@30@29
+do_coercion inp1 : NN r_252::lseg(flted_12_270)<a_255,r_271>@M#O[lem_30][Derv]
+do_coercion inp2 : NN r_271::lseg(flted_12_269)<b_256,p>@M[Derv]
+do_coercion inp3 : SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+do_coercion inp4 : true
+do_coercion inp5 : SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & flted_12_62=1. & b_237=b_256+a_255 & 0<=a_255 & 0<=b_256 &
+{FLOW,(27,27)=__norm,}
+do_coercion@35 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+apply_universal@33@32@30@29
+apply_universal inp1 : NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv]
+apply_universal inp2 : true
+apply_universal inp3 :lseg
+apply_universal@33 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & flted_12_270=1 & 
+flted_15_230=1 & n=7 & r_271=r2 & r_252=r1 & 1<=b_256 & 1<=r2 & 1<=a_255 & 
+1<=r1 & 1<=a_236 & 1<=x | flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & 
+flted_12_27
+flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & flted_12_270=1 & 
+flted_15_230
+flted_15_230=1 & n=7 & r2=r1 & r_271=r1 & a_255=0 & r_252=r1 & a_236=0 & 
+x=r1 & r1<=(0 - 1) & 1<=b_256 | flted_12_250=1 & flted_12_251=1 & 
+flted_12_269=1 & flted_12_270=1 & flted_15_230=1 & n=7 & r2=r1 & p=r1 & 
+b_256=0 & r_271=r1 & a_255=0 & r_252=r1 & a_236=0 & x=r1 |-  exists1(b_256:0<=b_256 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_256) & n=3+b_256+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@32@30@29
+do_coercion inp1 : NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv]
+do_coercion inp2 : true
+do_coercion inp3 : SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+do_coercion inp4 : true
+do_coercion inp5 : SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+n1 & 0<=n1 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}
+do_coercion@32 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & flted_12_270=1 & 
+flted_15_230=1 & n=7 & r_271=r2 & r_252=r1 & 1<=b_256 & 1<=r2 & 1<=a_255 & 
+1<=r1 & 1<=a_236 & 1<=x | flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & 
+f
+x=r1 & r1<=(0 - 1) & 1<=b_256 | flted_12_250=1 & flted_12_251=1 & 
+flted_12_269=1 & flted_12_270=1 & flted_15_230=1 & n=7 & r2=r1 & p=r1 & 
+b_256=0 & r_271=r1 & a_255=0 & r_252=r1 & a_236=0 & x=r1 |-  exists1(b_256:0<=b_256 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_256) & n=3+b_256+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+!!! do_coercion should try directly lemma: lem_30
+xxx, branch  2
+ c = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ c.coercion_univ_vars = [a,b]
+apply_universal_a: 
+ ### coer = Lemma "lem_30":  EXISTS(flted_12_62: NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv] &
+flted_12_62=1. & n=b+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm,})==> EXISTS(flted_12_65,flted_12_66,
+r: NN self::lseg(flted_12_66)<a,r>@M#O[lem_30][Derv] * 
+NN r::lseg(flted_12_65)<b,p>@M[Derv] & flted_12_66=1. & flted_12_65=1. &
+{FLOW,(27,27)=__norm,})
+ head match:lseg
+ body view:lseg
+ materialized vars:  [(self,full,[lseg])]
+
+ ### mkBase, f =  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+flted_12_250=1. & flted_15_230=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### estate  =  es_formula: 
+  NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv] * 
+  NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+  flted_12_250=1. & flted_15_230=1. & n=7 & {FLOW,(27,27)=__norm,}
+ es_pure: true
+ es_heap: true
+ es_evars: [flted_15_231; flted_15_232; a_236]
+ es_ivars: [b_237]
+ es_gen_impl_vars: [n1; r1; n2; r2]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+apply_universal_a: 
+ ### lhs_b =  NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv] * 
+NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv] & flted_12_251=1. & 
+flted_12_250=1. & flted_15_230=1. & n=7 & {FLOW,(27,27)=__norm,}
+ ### rhs_b =  SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+a_236 & 0<=a_236 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}
+do_universal:
+ ### h1 =  NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+ ### h2 =  NN self::lseg(flted_12_62)<n,p>@M#O[lem_30][Derv]
+do_universal:
+ ### apply_coer = true
+ ### is_cycle = true
+do_universal: 1 : mkFailCtx_in 
+
+apply_universal@38@37@30@29
+apply_universal inp1 : NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+apply_universal inp2 : NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv]
+apply_universal inp3 :lseg
+apply_universal@38 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@37@30@29
+do_coercion inp1 : NN x::lseg(flted_12_251)<a_236,r_252>@M#O[lem_30][Derv]
+do_coercion inp2 : NN r_252::lseg(flted_12_250)<b_237,p>@M[Derv]
+do_coercion inp3 : SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig]
+do_coercion inp4 : SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+do_coercion inp5 : SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & flted_12_62=1. & n=b_237+a_236 & 0<=a_236 & 
+0<=b_237 & {FLOW,(27,27)=__norm,}
+do_coercion@37 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: None{
+                                 fc_message: failed coercion application
+                                 fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+apply_universal@30@29
+apply_universal inp1 : SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+apply_universal inp2 : true
+apply_universal inp3 :lseg
+apply_universal@30 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & flted_12_270=1 & 
+flted_15_230=1 & n=7 & r_271=r2 & r_252=r1 & 1<=b_256 & 1<=r2 & 1<=a_255 & 
+1<=r1 & 1<=a_236 & 1<=x | flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & 
+flted_12_2
+flted_12
+flted_12_269=1 & flted_12_270=1 & flted_15_230=1 & n=7 & r2=r1 & p=r1 & 
+b_256=0 & r_271=r1 & a_255=0 & r_252=r1 & a_236=0 & x=r1 |-  exists1(b_256:0<=b_256 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_256) & n=3+b_256+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+
+do_coercion@29
+do_coercion inp1 : SS 11:x::lseg(flted_15_230)<n,p>@M[Orig]
+do_coercion inp2 : true
+do_coercion inp3 : SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig]
+do_coercion inp4 : SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig]
+do_coercion inp5 : SS 10:x::lseg(flted_15_232)<n1,r1>@M[Orig] * 
+SS 9:r1::lseg(flted_15_231)<n2,r2>@M[Orig] & flted_15_232=1. & 
+flted_15_231=1. & n1=3 & n2=4 & {FLOW,(27,27)=__norm,}
+do_coercion@29 EXIT out : 
+MaybeErr Context:  
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: www213  true |-  flted_12_62=1. (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: base_case_unfold failed
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: MAY{
+                                 fc_message: 
+                                  www213  flted_12_250=1 & flted_12_251=1 & flted_12_269=1 & flted_12_270=1 & 
+flted_15_230=1 & n=7 & r_271=r2 & r_252=r1 & 1<=b_256 & 1<=r2 & 1<=a_255 & 
+
+flted_12_269=1 & flted_12_270=1 & flted_15_230=1 & n=7 & r2=r1 & p=r1 & 
+b_256=0 & r_271=r1 & a_255=0 & r_252=r1 & a_236=0 & x=r1 |-  exists1(b_256:0<=b_256 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_256) & n=3+b_256+4) (may-bug).
+                                 fc_current_lhs_flow: {FLOW,(13,28)=__flow,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+                  FAIL_UNION 
+                   
+                    fe_kind: None{
+                                  fc_message: failed coercion application
+                                  fc_current_lhs_flow: {FLOW,(27,27)=__norm,}}
+
+Entail(1)=Fail.(may) cause:may[www213  true |-  flted_12_62=1. (may-bug).,www213  flted_12_132=1 & flted_12_133=1 & flted_12_151=1 & flted_12_152=1 & 
+flted_15_112=1 & n=7 & r_153=r2 & r_134=r1 & 1<=b_138 & 1<=r2 & 1<=a_137 & 
+
+x=r1 & r1<=(0 - 1) & 1<=b_138 | flted_12_132=1 & flted_12_133=1 & 
+flted_12_151=1 & flted_12_152=1 & flted_15_112=1 & n=7 & r2=r1 & p=r1 & 
+b_138=0 & r_153=r1 & a_137=0 & r_134=r1 & a_118=0 & x=r1 |-  exists1(b_138:0<=b_138 & flted_12_62=1. & flted_12_62=1. & 0<=4 & 0<=3 & 
+0<=(4+b_138) & n=3+b_138+4) (may-bug).]
+Halting Reduce... 
+Stop Omega... 51 invocations 

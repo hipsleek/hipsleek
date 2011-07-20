@@ -1,0 +1,495 @@
+"error.ml" 20 222 226 "error.ml" 20 222 238
+type(
+  error -> 'a
+)
+ident(
+  def report_error "error.ml" 36 845 845 --
+)
+"error.ml" 20 222 239 "error.ml" 20 222 240
+type(
+  error
+)
+ident(
+  def e "error.ml" 21 243 245 "error.ml" 34 820 843
+)
+"error.ml" 21 243 252 "error.ml" 21 243 253
+type(
+  Globals.loc option ref -> Globals.loc option
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"error.ml" 21 243 253 "error.ml" 21 243 264
+type(
+  Globals.loc option ref
+)
+ident(
+  ext_ref Globals.proving_loc
+)
+"error.ml" 21 243 252 "error.ml" 21 243 264
+type(
+  Globals.loc option
+)
+"error.ml" 22 270 281 "error.ml" 22 270 282
+type(
+  Globals.loc
+)
+ident(
+  def p "error.ml" 23 286 296 "error.ml" 26 454 526
+)
+"error.ml" 22 270 276 "error.ml" 22 270 282
+type(
+  Globals.loc option
+)
+"error.ml" 23 286 296 "error.ml" 23 286 309
+type(
+  (string -> int -> int -> unit, out_channel, unit) format ->
+  string -> int -> int -> unit
+)
+ident(
+  ext_ref Printf.printf
+)
+"error.ml" 23 286 310 "error.ml" 23 286 366
+type(
+  (string -> int -> int -> unit, out_channel, unit) format
+)
+"error.ml" 24 367 382 "error.ml" 24 367 383
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "error.ml" 22 270 281 "error.ml" 22 270 282
+)
+"error.ml" 24 367 382 "error.ml" 24 367 393
+type(
+  Lexing.position
+)
+"error.ml" 24 367 382 "error.ml" 24 367 410
+type(
+  string
+)
+"error.ml" 25 411 426 "error.ml" 25 411 427
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "error.ml" 22 270 281 "error.ml" 22 270 282
+)
+"error.ml" 25 411 426 "error.ml" 25 411 437
+type(
+  Lexing.position
+)
+"error.ml" 25 411 426 "error.ml" 25 411 453
+type(
+  int
+)
+"error.ml" 26 454 469 "error.ml" 26 454 470
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "error.ml" 22 270 281 "error.ml" 22 270 282
+)
+"error.ml" 26 454 469 "error.ml" 26 454 480
+type(
+  Lexing.position
+)
+"error.ml" 26 454 469 "error.ml" 26 454 496
+type(
+  int
+)
+"error.ml" 26 454 497 "error.ml" 26 454 498
+type(
+  int -> int -> int
+)
+ident(
+  ext_ref Pervasives.( - )
+)
+"error.ml" 26 454 499 "error.ml" 26 454 500
+type(
+  Globals.loc
+)
+ident(
+  int_ref p "error.ml" 22 270 281 "error.ml" 22 270 282
+)
+"error.ml" 26 454 499 "error.ml" 26 454 510
+type(
+  Lexing.position
+)
+"error.ml" 26 454 499 "error.ml" 26 454 525
+type(
+  int
+)
+"error.ml" 26 454 468 "error.ml" 26 454 526
+type(
+  int
+)
+"error.ml" 23 286 296 "error.ml" 26 454 526
+type(
+  unit
+)
+"error.ml" 27 527 533 "error.ml" 27 527 537
+type(
+  Globals.loc option
+)
+"error.ml" 27 527 541 "error.ml" 27 527 543
+type(
+  unit
+)
+"error.ml" 21 243 245 "error.ml" 27 527 544
+type(
+  unit
+)
+"error.ml" 28 546 548 "error.ml" 28 546 561
+type(
+  (string -> int -> int -> string -> unit, out_channel, unit) format ->
+  string -> int -> int -> string -> unit
+)
+ident(
+  ext_ref Printf.printf
+)
+"error.ml" 28 546 562 "error.ml" 28 546 609
+type(
+  (string -> int -> int -> string -> unit, out_channel, unit) format
+)
+"error.ml" 29 610 616 "error.ml" 29 610 617
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 20 222 239 "error.ml" 20 222 240
+)
+"error.ml" 29 610 616 "error.ml" 29 610 627
+type(
+  Globals.loc
+)
+"error.ml" 29 610 616 "error.ml" 29 610 637
+type(
+  Lexing.position
+)
+"error.ml" 29 610 616 "error.ml" 29 610 654
+type(
+  string
+)
+"error.ml" 30 655 661 "error.ml" 30 655 662
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 20 222 239 "error.ml" 20 222 240
+)
+"error.ml" 30 655 661 "error.ml" 30 655 672
+type(
+  Globals.loc
+)
+"error.ml" 30 655 661 "error.ml" 30 655 682
+type(
+  Lexing.position
+)
+"error.ml" 30 655 661 "error.ml" 30 655 698
+type(
+  int
+)
+"error.ml" 31 699 706 "error.ml" 31 699 707
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 20 222 239 "error.ml" 20 222 240
+)
+"error.ml" 31 699 706 "error.ml" 31 699 717
+type(
+  Globals.loc
+)
+"error.ml" 31 699 706 "error.ml" 31 699 727
+type(
+  Lexing.position
+)
+"error.ml" 31 699 706 "error.ml" 31 699 743
+type(
+  int
+)
+"error.ml" 31 699 744 "error.ml" 31 699 745
+type(
+  int -> int -> int
+)
+ident(
+  ext_ref Pervasives.( - )
+)
+"error.ml" 31 699 746 "error.ml" 31 699 747
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 20 222 239 "error.ml" 20 222 240
+)
+"error.ml" 31 699 746 "error.ml" 31 699 757
+type(
+  Globals.loc
+)
+"error.ml" 31 699 746 "error.ml" 31 699 767
+type(
+  Lexing.position
+)
+"error.ml" 31 699 746 "error.ml" 31 699 782
+type(
+  int
+)
+"error.ml" 31 699 705 "error.ml" 31 699 783
+type(
+  int
+)
+"error.ml" 32 784 790 "error.ml" 32 784 791
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 20 222 239 "error.ml" 20 222 240
+)
+"error.ml" 32 784 790 "error.ml" 32 784 802
+type(
+  string
+)
+"error.ml" 28 546 548 "error.ml" 32 784 802
+type(
+  unit
+)
+"error.ml" 33 804 806 "error.ml" 33 804 811
+type(
+  out_channel -> unit
+)
+ident(
+  ext_ref Pervasives.flush
+)
+"error.ml" 33 804 812 "error.ml" 33 804 818
+type(
+  out_channel
+)
+ident(
+  ext_ref Pervasives.stdout
+)
+"error.ml" 33 804 806 "error.ml" 33 804 818
+type(
+  unit
+)
+"error.ml" 34 820 822 "error.ml" 34 820 830
+type(
+  string -> 'a
+)
+ident(
+  ext_ref Pervasives.failwith
+)
+"error.ml" 34 820 831 "error.ml" 34 820 832
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 20 222 239 "error.ml" 20 222 240
+)
+"error.ml" 34 820 831 "error.ml" 34 820 843
+type(
+  string
+)
+"error.ml" 34 820 822 "error.ml" 34 820 843
+type(
+  'a
+)
+"error.ml" 33 804 806 "error.ml" 34 820 843
+type(
+  'a
+)
+"error.ml" 28 546 548 "error.ml" 34 820 843
+type(
+  'a
+)
+"error.ml" 21 243 245 "error.ml" 34 820 843
+type(
+  'a
+)
+"error.ml" 36 845 849 "error.ml" 36 845 863
+type(
+  error -> unit
+)
+ident(
+  def report_warning "error.ml" 44 1198 1211 --
+)
+"error.ml" 36 845 864 "error.ml" 36 845 865
+type(
+  error
+)
+ident(
+  def e "error.ml" 37 868 870 "error.ml" 44 1198 1211
+)
+"error.ml" 37 868 874 "error.ml" 37 868 877
+type(
+  bool -> bool
+)
+ident(
+  ext_ref Pervasives.not
+)
+"error.ml" 37 868 878 "error.ml" 37 868 879
+type(
+  bool ref -> bool
+)
+ident(
+  ext_ref Pervasives.( ! )
+)
+"error.ml" 37 868 879 "error.ml" 37 868 899
+type(
+  bool ref
+)
+ident(
+  ext_ref Globals.suppress_warning_msg
+)
+"error.ml" 37 868 878 "error.ml" 37 868 899
+type(
+  bool
+)
+"error.ml" 37 868 873 "error.ml" 37 868 900
+type(
+  bool
+)
+"error.ml" 38 912 916 "error.ml" 38 912 929
+type(
+  (string -> int -> int -> string -> unit, out_channel, unit) format ->
+  string -> int -> int -> string -> unit
+)
+ident(
+  ext_ref Printf.printf
+)
+"error.ml" 38 912 930 "error.ml" 38 912 978
+type(
+  (string -> int -> int -> string -> unit, out_channel, unit) format
+)
+"error.ml" 39 979 987 "error.ml" 39 979 988
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 36 845 864 "error.ml" 36 845 865
+)
+"error.ml" 39 979 987 "error.ml" 39 979 998
+type(
+  Globals.loc
+)
+"error.ml" 39 979 987 "error.ml" 39 979 1008
+type(
+  Lexing.position
+)
+"error.ml" 39 979 987 "error.ml" 39 979 1025
+type(
+  string
+)
+"error.ml" 40 1026 1034 "error.ml" 40 1026 1035
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 36 845 864 "error.ml" 36 845 865
+)
+"error.ml" 40 1026 1034 "error.ml" 40 1026 1045
+type(
+  Globals.loc
+)
+"error.ml" 40 1026 1034 "error.ml" 40 1026 1055
+type(
+  Lexing.position
+)
+"error.ml" 40 1026 1034 "error.ml" 40 1026 1071
+type(
+  int
+)
+"error.ml" 41 1072 1081 "error.ml" 41 1072 1082
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 36 845 864 "error.ml" 36 845 865
+)
+"error.ml" 41 1072 1081 "error.ml" 41 1072 1092
+type(
+  Globals.loc
+)
+"error.ml" 41 1072 1081 "error.ml" 41 1072 1102
+type(
+  Lexing.position
+)
+"error.ml" 41 1072 1081 "error.ml" 41 1072 1118
+type(
+  int
+)
+"error.ml" 41 1072 1119 "error.ml" 41 1072 1120
+type(
+  int -> int -> int
+)
+ident(
+  ext_ref Pervasives.( - )
+)
+"error.ml" 41 1072 1121 "error.ml" 41 1072 1122
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 36 845 864 "error.ml" 36 845 865
+)
+"error.ml" 41 1072 1121 "error.ml" 41 1072 1132
+type(
+  Globals.loc
+)
+"error.ml" 41 1072 1121 "error.ml" 41 1072 1142
+type(
+  Lexing.position
+)
+"error.ml" 41 1072 1121 "error.ml" 41 1072 1157
+type(
+  int
+)
+"error.ml" 41 1072 1080 "error.ml" 41 1072 1158
+type(
+  int
+)
+"error.ml" 42 1159 1167 "error.ml" 42 1159 1168
+type(
+  error
+)
+ident(
+  int_ref e "error.ml" 36 845 864 "error.ml" 36 845 865
+)
+"error.ml" 42 1159 1167 "error.ml" 42 1159 1179
+type(
+  string
+)
+"error.ml" 38 912 916 "error.ml" 42 1159 1179
+type(
+  unit
+)
+"error.ml" 43 1181 1185 "error.ml" 43 1181 1190
+type(
+  out_channel -> unit
+)
+ident(
+  ext_ref Pervasives.flush
+)
+"error.ml" 43 1181 1191 "error.ml" 43 1181 1197
+type(
+  out_channel
+)
+ident(
+  ext_ref Pervasives.stdout
+)
+"error.ml" 43 1181 1185 "error.ml" 43 1181 1197
+type(
+  unit
+)
+"error.ml" 37 868 906 "error.ml" 44 1198 1203
+type(
+  unit
+)
+"error.ml" 44 1198 1209 "error.ml" 44 1198 1211
+type(
+  unit
+)
+"error.ml" 37 868 870 "error.ml" 44 1198 1211
+type(
+  unit
+)

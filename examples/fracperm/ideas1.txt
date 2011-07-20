@@ -1,0 +1,64 @@
+// 23/06/2011
+
+I have three points to make.
+
+First since permission are fraction, we probably need
+redlog to handle its exact reasoning. Fortunately,
+this prover is already supported by our system.
+
+Second, for any given heap node:
+
+     [p]x::node<_,null> 
+  or [p]x::ll<n>
+
+we expect the following invariant to hold:
+
+  0<p<=1
+
+Having such an permission invariant allows us 
+to avoid the need to write logic related to 
+permission which should hold by default.
+
+Thirdly, one of the splitting rule needed for reasoning
+can be written as follows:
+
+ forall p1,p2:
+  [p]x::p<..> & 0<p1,p2<1 & p=p1+p2
+    <=> [p1]x::p<..> * [p2]x::p<..>
+
+Here, the split provides  flexibility to p1,p2 through
+the use of universal quantifier.  This is important
+for unfold (lhs->rhs) reasoning, as follows:
+
+ forall p1,p2:
+  [p]x::p<..> & 0<p1,p2<1 & p=p1+p2
+    => [p1]x::p<..> * [p2]x::p<..>
+
+We cannot use the following which would be too weak:
+
+  [p]x::p<..>
+    => exists p1,p2. [p1]x::p<..> * [p2]x::p<..> 
+         & 0<p1,p2<1 & p=p1+p2
+
+This is because it gives some p1,p2 which may not have the conditions
+we require.
+
+In the reverse direction, we can use the folding mechanism
+which would use the following instead:
+
+  [p]x::p<..>
+    <= exists p1,p2. [p1]x::p<..> * [p2]x::p<..> 
+         & 0<p1,p2<1 & p=p1+p2
+
+There is a similar lemma which we used for the lseg predicate.
+
+ forall n1,n2:
+  x::lseg<n,p> & n1,n2>=0 & n=n1+n2
+    <==> x::lseg<n1,q> * q::lseg<n2,p>
+
+You can play with it at examples/working/sleek/sleek{7,8}.slk
+to see its versaility. In our implementation, we have to
+handle universal lemma proving in a special way. The standard
+mechanism works for only existential quantifier which is 
+weak.
+

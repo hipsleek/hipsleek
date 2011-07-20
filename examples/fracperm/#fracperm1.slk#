@@ -1,0 +1,24 @@
+data cell { int val }.
+
+pred cellp<v> == self::cell<v>
+       inv true.
+
+/*
+// self must point to only one view
+// and self must point to a view
+
+lemma self::cell(f)<v> & f = f1 + f2 -> self::cell(f1)<v> * self::cell(f2)<v>.
+
+lemma self::cellp(f)<v> & f = f1 + f2 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+
+*/
+
+
+
+/*
+checkentail x::cell(1.0)<a> |- x::cell(1/2)<d>.
+print residue.
+*/
+
+checkentail x::cellp(1/2)<a> |- x::cellp<d>.
+print residue.
