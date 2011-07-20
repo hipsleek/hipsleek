@@ -64,7 +64,9 @@ let parse_file (parse) (source_file : string) =
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
-								 | PrintCmd pcmd -> process_print_command pcmd
+								 | PrintCmd pcmd -> 
+                                     let _ = print_string " I am here \n" in (*LDK*)
+                                     process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
                  | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
 								 | EmptyCmd -> ())) cmds) in ()

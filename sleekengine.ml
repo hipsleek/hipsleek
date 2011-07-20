@@ -53,7 +53,7 @@ let cprog = ref { C.prog_data_decls = [];
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
 
-let residues = ref (None : CF.list_context option)
+let residues =  ref (None : CF.list_context option)
 
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
@@ -380,12 +380,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (* let _ = print_string ("rs1 = "^(Cprinter.string_of_list_context rs1)^"\n") in (\*LDK*\) *)
 
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-  (*let _ = print_endline ( (Cprinter.string_of_list_context rs)) in*)
-  let residues = Some rs in
+  (* let _ = print_endline ( (Cprinter.string_of_list_context rs)) in *)
+  residues := Some rs;
   (* ;print_string ((Cprinter.string_of_list_context rs)^"\n") *)
-  let _ = flush stdout in
-
-  (* let _ = print_string ("rs = "^(Cprinter.string_of_list_context rs)^"\n") in (\*LDK*\) *)
+  flush stdout;
 
   let res = ((not (CF.isFailCtx_gen rs))) in
 
@@ -439,6 +437,9 @@ let old_process_capture_residue (lvar : ident) =
 		put_var lvar (Sleekcommons.MetaFormCF flist)
 		
 let process_capture_residue (lvar : ident) = 
+
+  (* let _ = print_string "process_capture_residue: inside \n" in (\*LDK*\) *)
+
 	let flist = match !residues with 
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some s -> CF.list_formula_of_list_context s in
@@ -455,7 +456,11 @@ let process_lemma ldef =
 	!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
 	!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions
 
-let process_print_command pcmd0 = match pcmd0 with
+let process_print_command pcmd0 = 
+
+  (* let _ = print_string "process_print_command: inside \n" in (\*LDK*\) *)
+
+match pcmd0 with
   | PVar pvar ->
 	  let stab = H.create 103 in
 	  let mf = try get_var pvar with Not_found->  Error.report_error {

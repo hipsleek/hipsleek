@@ -138,4 +138,11 @@ print residue. // MATCHING
 checkentail x::ll(1.0)<n> |- x::ll(1.0)<m>.
 print residue. //MATCH
 
+//(32)
+checkentail x::node<_, r> |- x!=null .
+print residue. //EMP, valid
+
+//(33)
+checkentail x::node<_,null> |- x!=null.
+print residue.
 
