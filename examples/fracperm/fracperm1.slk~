@@ -1,4 +1,0 @@
-data cell { int val }.
-
-checkentail x::cell<a> |- x::cell<d>.
-print residue.

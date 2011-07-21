@@ -1,7 +1,0 @@
-data cell { int val }.
-
-pred cellp<x> == self::cell<x>
-       inv true.
-
-checkentail x::cellp<1> |- x::cellp<1>.
-print residue.

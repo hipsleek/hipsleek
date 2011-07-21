@@ -1,4 +1,0 @@
-void main(){
-  int t=2;
-  assert t'=2;
-}
