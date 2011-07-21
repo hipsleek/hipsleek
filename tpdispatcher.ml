@@ -896,6 +896,9 @@ let rec split_disjunctions = function
 let called_prover = ref ""
 let print_implication = ref false (* An Hoa *)
 let tp_imply_no_cache ante conseq imp_no timeout process =
+
+  (* let _ = print_string ("tp_imply_no_cache: before \n") in *)
+
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
@@ -950,13 +953,27 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       else
         (Omega.imply ante conseq imp_no timeout)
   | SetMONA -> Setmona.imply ante conseq 
-  | Redlog -> Redlog.imply ante conseq imp_no 
+  | Redlog -> 
+      (* let _ = print_string ("tp_imply_no_cache: Redlog \n") in *)
+      Redlog.imply ante conseq imp_no 
   | RM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         Mona.imply ante conseq imp_no
       else
         Redlog.imply ante conseq imp_no
+
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  Gen.Debug.no_5 "tp_imply_no_cache" 
+      Cprinter.string_of_pure_formula 
+      Cprinter.string_of_pure_formula
+      (fun c-> c) (fun _ -> "?") (fun _ -> "?")
+      string_of_bool 
+      tp_imply_no_cache ante conseq imp_no timeout process
+
 ;;
+
+
+
 let imply_cache  = Hashtbl.create 2000 ;;
 let impl_conseq_cache  = Hashtbl.create 2000 ;;
 
@@ -970,6 +987,10 @@ let add_conseq_to_cache s =
           )
           
 let tp_imply ante conseq imp_no timeout process =
+
+  (* (\*LDK*\) *)
+  (* let _ = print_string ("tp_imply: before \n") in *)
+
   if !Globals.no_cache_formula then
     tp_imply_no_cache ante conseq imp_no timeout process
   else
@@ -991,29 +1012,37 @@ let tp_imply ante conseq imp_no timeout process =
 
     
 let tp_imply ante conseq imp_no timeout do_cache process =
-  (* let _ = print_string ("\nTPdispatcher.ml: tp_imply") in *)
+
+  (* let _ = print_string ("\nTPdispatcher.ml: tp_imply \n") in *)
+
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
-    Gen.Profiling.inc_counter "impl_cache_count";
-    add_conseq_to_cache (!print_pure conseq) ;
-    let s_rhs = !print_pure conseq in
-    let s = (!print_pure ante)^"/"^ s_rhs in
-    try 
-      let r = Hashtbl.find imply_cache s in
+        (* let _ = print_string ("\ntp_imply: !Globals.enable_prune_cache = true \n") in *)
+
+        Gen.Profiling.inc_counter "impl_cache_count";
+        add_conseq_to_cache (!print_pure conseq) ;
+        let s_rhs = !print_pure conseq in
+        let s = (!print_pure ante)^"/"^ s_rhs in
+        try 
+            let r = Hashtbl.find imply_cache s in
       (* print_string ("hit rhs: "^s_rhs^"\n");*)
-      r
-      with Not_found -> 
-        let r = tp_imply_no_cache ante conseq imp_no timeout process in
-        (Hashtbl.add imply_cache s r ;
+            r
+        with Not_found ->
+
+            (* let _ = print_string ("\ntp_imply: not found in cache \n") in    *)         
+
+            let r = tp_imply_no_cache ante conseq imp_no timeout process in
+            (Hashtbl.add imply_cache s r ;
          (*print_string ("s rhs: "^s_rhs^"\n");*)
-         Gen.Profiling.inc_counter "impl_proof_count";
-        r))
+             Gen.Profiling.inc_counter "impl_proof_count";
+             r))
   else  
+    (* let _ = print_string ("\ntp_imply: !Globals.enable_prune_cache = false \n") in *)
     tp_imply ante conseq imp_no timeout process
 ;;
 
 
-let tp_imply_debug ante conseq imp_no timeout do_cache process =
+let tp_imply(* _debug *) ante conseq imp_no timeout do_cache process =
   Gen.Debug.no_6 "tp_imply " 
       Cprinter.string_of_pure_formula 
       Cprinter.string_of_pure_formula
@@ -1145,7 +1174,9 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout begining") in *)
+
+  (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout begining \n") in *)
+
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
   (* let _ = print_string ("\nTPdispatcher.ml: imply_timeout:" ^ imp_no) in *)
@@ -1153,21 +1184,35 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   Debug.devel_pprint ("ante: " ^ (!print_pure ante0)) no_pos;
   Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
   if !external_prover then 
+
+    (* let _ = print_string ("imply_timeout: !external_prove \n ") in *)
+
     match Netprover.call_prover (Imply (ante0,conseq0)) with
         Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
-	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
+
+	(* let _ = print_string ("imply_timeout: [Imply] " ^(Cprinter.string_of_pure_formula ante0)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in *)
+
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
+
+	(* let _ = print_string ("imply_timeout: [Imply] " ^(Cprinter.string_of_pure_formula ante0)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
+
 	if CP.isConstTrue conseq then (true, [],None)
 	else
       let ante = if CP.should_simplify ante0 then simplify_a 13 ante0 else ante0 in
+
+	(* let _ = print_string ("imply_timeout: [Imply] " ^(Cprinter.string_of_pure_formula ante)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
+
 	  if (* CP.isConstFalse ante0 || *) CP.isConstFalse ante then (true,[],None)
 	  else
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout bef elim exist ante") in *)
 		let ante = elim_exists ante in
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout after elim exist ante") in *)
 		let conseq = elim_exists conseq in
+
+	    (* let _ = print_string ("imply_timeout: [Imply] " ^(Cprinter.string_of_pure_formula ante)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
+
 		let split_conseq = split_conjunctions conseq in
 		let pairs = List.map (fun cons -> 
             let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
@@ -1181,25 +1226,47 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let fold_fun (res1,res2,res3) (ante, conseq) =
 		  (incr imp_sub_no;
 		  if res1 then 
+
+            (* (\*LDK*\) *)
+            (* let _ = print_string ("imply_timeout: res1 = true \n") in *)
+
+	        (* let _ = print_string ("imply_timeout: [Imply] :: " ^(Cprinter.string_of_pure_formula ante)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
+
             (*<< for log - numbering *)
 			let imp_no = 
 			  if pairs_length > 1 then ( (* let _ = print_string("\n!!!!!!! \n") in flush stdout ; *) (imp_no ^ "." ^ string_of_int (!imp_sub_no)))
 			  else imp_no in
             (*>> for log - numbering *)
             (*<< test the pair for implication - implication result is saved in res1*)
+
+	        (* let _ = print_string ("imply_timeout: before tp_imply [Imply] :: " ^(Cprinter.string_of_pure_formula ante)^"\n   ==> "^(Cprinter.string_of_pure_formula conseq)^"\n") in *)
+
 			let res1 =
 			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+
+                (* let _ = print_string ("imply_timeout: res1:1 \n" ) in *)
+                
 				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache process in
 				if res1 then res1
 				else tp_imply(*_debug*) ante conseq imp_no timeout do_cache process
-			  else tp_imply(*_debug*) ante conseq imp_no timeout do_cache process in
+			  else 
+
+                (* let _ = print_string ("imply_timeout: res1:2 \n" ) in *)
+                tp_imply(*_debug*) ante conseq imp_no timeout do_cache process 
+            in
+
 			let l1 = CP.get_pure_label ante in
             let l2 = CP.get_pure_label conseq in
              (* let _ = print_string ("\n!!! " ^ (* (Cprinter.string_of_formula_label l1 "") *) str^ " \n") in *)
 			if res1 then (res1,(l1,l2)::res2,None)
 			else (res1,res2,l2)
             (*>> test the pair for implication - implication result is saved in res1*)
-		  else (res1,res2,res3) )
+		  else 
+
+            (*LDK*)
+            let _ = print_string ("imply_timeout: res1 = false \n") in
+
+            (res1,res2,res3) )
 		in
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout end") in *)
 		List.fold_left fold_fun (true,[],None) pairs
@@ -1334,7 +1401,12 @@ Gen.Debug.no_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pur
       (fun (r, _, _) -> string_of_bool r)
       (fun ante0 conseq0 -> imply ante0 conseq0 imp_no do_cache process) ante0 conseq0
 
-and imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no 0. do_cache process
+and imply ante0 conseq0 imp_no do_cache process = 
+
+  
+  (* let _ = print_string ("\nTPdispatcher.ml: imply -> imply_timeout") in *)
+
+  imply_timeout ante0 conseq0 imp_no 0. do_cache process
 ;;
 
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
@@ -1444,7 +1516,8 @@ let start_prover () =
 	  Omega.start ();
 	 end
   | Redlog | RM -> 
-    begin
+      begin
+      (* print_string "[Debug] start_prover: inside \n"; (\*LDK*\) *)
       Redlog.start ();
 	  Omega.start ();
 	 end

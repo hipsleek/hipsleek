@@ -1137,7 +1137,11 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
         }
   else(
       let pos = IF.pos_of_struc_formula view_formula1 in
-      let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_vars in
+      let view_sv_vars = List.map (fun c-> 
+
+          (* let _  = print_string "trans_view_x: inside \n" in *)
+
+          trans_var (c,Unprimed) stab pos) vdef.I.view_vars in
        let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
       let _ = 
         let ffv = Gen.BList.difference_eq (=) (CF.struc_fv cf) (self_c_var::view_sv_vars) in
@@ -1821,7 +1825,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let stab = H.create 103 in
   let _ = gather_type_info_formula prog coer.I.coercion_head stab false in
   let _ = gather_type_info_formula prog coer.I.coercion_body stab false in
-  (*let _ = print_string ("\n"^(string_of_stab stab)^"\n") in*)
+
+  (* let _ = print_string ("trans_one_coercion_x:" *)
+  (*                       ^ "\n stab = " *)
+  (*                       ^(string_of_stab stab)^"\n") in *)
+
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
   let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
@@ -1833,6 +1841,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars in
   let univ_vars = compute_univ () in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
+
+  (* let _ = print_string ("trans_one_coercion_x:" *)
+  (*                       ^ "\n stab = " *)
+  (*                       ^(string_of_stab stab)^"\n") in *)
+
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
   let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in
   (* let c_rhs_struc = trans_struc_formula prog true lhs_fnames0 coer.I.coercion_body_struc stab false in *)
@@ -2024,7 +2037,13 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           let assume_cf_o =
             (match assume_f_o with
               | None -> None
-              | Some f -> Some (trans_formula prog false free_vars true f stab false)) in
+              | Some f -> 
+
+                  (* let _ = print_string (" trans_exp: I.Asser: " *)
+                  (*                       ^ "\n stab = " *)
+                  (*                       ^(string_of_stab stab)^"\n") in *)
+
+                  Some (trans_formula prog false free_vars true f stab false)) in
           let assert_e =
             C.Assert
                 {
@@ -3378,7 +3397,10 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
   in
   let _ = List.map (ext_case_coverage instant) f in true
 
-and trans_var (ve, pe) stab pos =try
+and trans_var (ve, pe) stab pos =
+  Gen.Debug.no_2 "trans_var" (fun (v1,p1) -> Cprinter.string_of_ident v1) string_of_stab Cprinter.string_of_spec_var (fun _ _ -> trans_var_x (ve, pe) stab pos) (ve, pe) stab
+
+and trans_var_x (ve, pe) stab pos =try
   let ve_info = H.find stab ve
   in
   (match ve_info.sv_info_kind with
@@ -3443,11 +3465,21 @@ and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : iden
       
 and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
+
+  (* let _ = print_string (" trans_I2C_struc_formula_x " *)
+  (*                       ^ "\n stab = " *)
+  (*                       ^(string_of_stab stab)^"\n") in *)
+
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
     (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
       | Iformula.EAssume (b,y)->	(*add res, self*)
             (*let _ = H.add stab res { sv_info_kind = cret_type; } in*)
+
+          (* let _ = print_string (" trans_I2C_struc_formula_x: trans_ext_formula: Iformula.EAssume \n  " *)
+          (*                       ^ "\n stab = " *)
+          (*                       ^(string_of_stab stab)^"\n") in *)
+
             let nb = trans_formula prog true (self::res::fvars) false b stab true in				
             (*let _ = H.remove stab res in*)
             Cformula.EAssume ([],nb,y)
@@ -3460,7 +3492,15 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
       | Iformula.EBase b-> 			
             let nc = trans_struc_formula_hlp b.Iformula.formula_ext_continuation 
               (fvars @ (fst (List.split(Iformula.heap_fv b.Iformula.formula_ext_base))))in
+            
+            (* let _ = print_string ("trans_I2C_struc_formula_x: " *)
+            (*                       ^"\n stab = "^(string_of_stab stab) *)
+            (*                       ^"\n") in       *)
+
             let nb = trans_formula prog quantify fvars false b.Iformula.formula_ext_base stab false in
+
+            (* let _  = print_string "trans_I2C_struc_formula_x: Iformula.EBase \n" in *)
+
             let ex_inst = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_explicit_inst in
             let ext_impl = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_implicit_inst in
             let ext_exis = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_exists in
@@ -3486,6 +3526,9 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   (* let _ = collect_type_info_struc_f prog f0 stab in	 *)
   let _ = gather_type_info_struc_f prog f0 stab in
   let r = trans_struc_formula_hlp f0 fvars in
+
+  (* let _  = print_string "trans_I2C_struc_formula_x: inside \n" in *)
+
   let cfvhp1 = List.map (fun c-> trans_var (c,Primed) stab (Iformula.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun c-> trans_var (c,Unprimed) stab (Iformula.pos_of_struc_formula f0)) fvars in
   let cfvhp = cfvhp1@cfvhp2 in
@@ -3538,6 +3581,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let _ = if sep_collect then 
               (gather_type_info_pure prog (IF.flatten_branches p br) stab;
               gather_type_info_heap prog h stab) else () in
+            
+            let _  = print_string ("trans_formula_x: helper: IF.Base: before linearize_formula \n") in
+
             let ch = linearize_formula prog f0 stab in					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
             let _ = 
@@ -3567,6 +3613,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_branches = br;
                 IF.formula_base_pos = pos; } in
             let ch = linearize_formula prog f1 stab in
+
+            (* let _ = print_string("trans_formula: IF.Exists \n") in *)
+
             let qsvars = List.map (fun qv -> trans_var qv stab pos) qvars in
             let ch = CF.push_exists qsvars ch in
             let _ = if sep_collect then
@@ -3587,11 +3636,17 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
     Gen.Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_stab Cprinter.string_of_formula linearize_formula_x prog f0 stab
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
+  (* let _ = print_string("linearize_formula: \n") in *)
+
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
     match hargs with
       | (e, label) :: rest ->
             let e_hvars = match e with
-              | IP.Var ((ve, pe), pos_e) -> trans_var (ve, pe) stab pos_e
+              | IP.Var ((ve, pe), pos_e) -> 
+
+                  (* let _ = print_string("linearize_formula: match_exp: \n") in *)
+
+                  trans_var (ve, pe) stab pos_e
               | _ -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = ("malfunction with float out exp: "^(Iprinter.string_of_formula f0)); }in
             let rest_hvars = match_exp rest pos in
             let hvars = e_hvars :: rest_hvars in
@@ -3604,7 +3659,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
   (*   in *)
   (*   Gen.Debug.ho_2 "linearize_heap" Iprinter.string_of_h_formula Cprinter.string_of_pos pr linearize_heap_x f po *)
 
-  let linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =    
+  let linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =   
+
+    (* let _ = print_string("linearize_heap: \n") in *)
+    
     let rec helper f pos = 
       match f with
         | IF.HeapNode2 h2 -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = "malfunction with convert to heap node"; }
@@ -3624,6 +3682,21 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
                 let labels = vdef.I.view_labels in
+
+
+
+                (* (\*LDK: test*\) *)
+                (* let exps , labels = (match frac with *)
+                (*   | None -> (exps,labels) *)
+                (*   | Some f ->  *)
+                (*       let _ = print_string("linearize_heap: IF.HeapNode: Some f \n") in *)
+                (*       (f::exps,""::labels)) *)
+                (* in *)
+
+                (* let _ = print_string("linearize_heap: IF.HeapNode"  *)
+                (*                      ^ "\n exps = " ^ (Iprinter.string_of_formula_exp_list exps) *)
+                (*                      ^ " \n") in *)
+
                 let hvars = match_exp (List.combine exps labels) pos in
                 let c0 =
                   if vdef.I.view_data_name = "" then 
@@ -3772,7 +3845,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           } in 
 	      let nh,np,nt,nfl,nb = linearize_base base pos in
           let np = MCP.memoise_add_pure_N (MCP.mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb pos 
+	      CF.mkExists (List.map (fun c-> 
+              let _  = print_string "linearize_base: IF.Exists \n" in
+              trans_var c stab pos) qvars) 
+              nh np nt nfl nb pos 
 
 
 	          
@@ -3793,10 +3869,16 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
     | IP.Not (f, lbl, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf lbl pos
     | IP.Forall ((v, p), f, lbl, pos) ->
           let pf = trans_pure_formula f stab in
+          
+          (* let _ = print_string ("trans_pure_formula: IP.Forall ") in *)
+
           let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) stab pos) in
           let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
     | IP.Exists ((v, p), f, lbl, pos) ->
           let pf = trans_pure_formula f stab in
+
+          (* let _ = print_string ("trans_pure_formula: IP.Exists ") in *)
+
           let sv = trans_var (v,p) stab pos in
 	      CP.mkExists [ sv ] pf lbl pos
 
@@ -3831,10 +3913,16 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
           let pe2 = trans_pure_exp e2 stab in
           let pe3 = trans_pure_exp e3 stab in CP.EqMin (pe1, pe2, pe3, pos)
     | IP.BagIn ((v, p), e, pos) ->
-          let pe = trans_pure_exp e stab in CP.BagIn ((trans_var (v,p) stab pos), pe, pos)
+
+        let _  = print_string ("trans_pure_b_formula:IP.BagIn \n") in
+
+        let pe = trans_pure_exp e stab in CP.BagIn ((trans_var (v,p) stab pos), pe, pos)
     | IP.BagNotIn ((v, p), e, pos) ->
-          let pe = trans_pure_exp e stab
-          in CP.BagNotIn ((trans_var (v,p) stab pos), pe, pos)
+        let pe = trans_pure_exp e stab in
+
+        let _  = print_string ("trans_pure_b_formula:IP.BagIn \n") in
+
+        CP.BagNotIn ((trans_var (v,p) stab pos), pe, pos)
     | IP.BagSub (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.BagSub (pe1, pe2, pos)
@@ -3862,7 +3950,9 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
-    | IP.Var ((v, p), pos) -> CP.Var ((trans_var (v,p) stab pos),pos)
+    | IP.Var ((v, p), pos) -> 
+        (* let _  = print_string ("trans_pure_exp: IP.Var \n") in *)
+        CP.Var ((trans_var (v,p) stab pos),pos)
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
     | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
@@ -4845,9 +4935,15 @@ and gather_type_info_formula_x prog f0 stab filter_res =
 	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap);	
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_exists_flow) 
     | Iformula.Base b ->
-	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_base_flow in
-	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap);
-	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow) 
+
+        (* let _ = print_string ("gather_type_info_formula_x: "  *)
+        (*                       ^ "\n stab = "  *)
+        (*                       ^ (string_of_stab stab)  *)
+        (*                       ^ "\n") in *)
+
+	    let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_base_flow in
+	    (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap);
+	    (Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow) 
 
 and type_store_clean_up (f:Cformula.struc_formula) stab = () (*if stab to big,  -> get list of quantified vars, remove them from stab*)
   
@@ -5101,138 +5197,192 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_pos = pos
 	        } ->
           (* let ies = (frac::ies) in (\*LDK*\)  *)
-	      let dname =
-            (try
-              let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
-
-
-             (*  (\*LDK*\) *)
-             (* let _ = print_string ("uuu, vdef = " ^ (Iprinter.string_of_view_decl vdef) ^ "\n") in *)
-             (* let _ = print_string ("uuu, vdef.view_vars = " ^ (Iprinter.string_of_view_vars vdef.I.view_vars) ^ "\n") in *)
-
-
-	          let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types prog vdef in
-	          (* let _ = print_string ("\n searching for: "^c^" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^"-\n") in *)
-              (if not (Gen.is_empty vdef.I.view_typed_vars)
-		      then
-                (let rec helper exps tvars =
-                  match (exps, tvars) with
-                    | ([], []) -> []
-                    | (e :: rest1, t :: rest2) ->
-			              let tmp = helper rest1 rest2
-			              in
-                          (match e with
-				            | IP.Var ((v, p), pos) -> ((fst t), v) :: tmp
-				            | _ -> tmp)
-                    | _ -> (* let _ = print_string "LDK TEST 1" in *)
-			              Err.report_error
-                              {
-                                  Err.error_loc = pos;
-                                  Err.error_text =
-				                      "number of arguments for view " ^
-				                          (c ^ " does not match");
-                              } in
-                let tmp = helper ies vdef.I.view_typed_vars
-                (* let tmp = helper (frac::ies) vdef.I.view_typed_vars *)
-                in
-                ignore
-                    (List.map
-                        (fun (t, n) ->
-                            gather_type_info_var n stab (t) pos)
-                        tmp))
-		      else ();
-		      vdef.I.view_data_name)
-            with
-              | Not_found ->
-		            (try
-                      (ignore (I.look_up_data_def_raw prog.I.prog_data_decls c); c)
-		            with
-		              | Not_found ->
-			                (*let _ = print_string (Iprinter.string_of_program prog) in*)
-			                Err.report_error
-			                    {
-			                        Err.error_loc = pos;
-			                        Err.error_text = c ^ " is neither 2 a data nor view name";
-			                    })) in
-	      let check_ie ie t =
-            (match t with
-              | Bool ->
-		            if IP.is_var ie
-		            then
-                      gather_type_info_var (IP.name_of_var ie) stab
-                          (C.bool_type) (IP.pos_of_exp ie)
-		            else
-                      Err.report_error
-                          {
-			                  Err.error_loc = IP.pos_of_exp ie;
-			                  Err.error_text = "expecting type bool";
-                          }
-              | Int -> gather_type_info_exp ie stab (C.int_type)
-              | Float -> gather_type_info_exp ie stab (C.float_type)
-              | Named _ -> gather_type_info_exp ie stab t  
-			  | Array et -> gather_type_info_exp ie stab ( (Array et))
-              | _ ->  Err.report_error
-                    {
-			            Err.error_loc = IP.pos_of_exp ie;
-			            Err.error_text = "check_ie : unexpected type "^(string_of_typ t);
-                    } ) in (* An Hoa BUG DETECTED Replace (et) by ((CP.Array et)) TODO : add a collect_type_info_array instead *)
-	      let check_ie ie t =
-            Gen.Debug.no_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ
-                (fun _ _ _ -> check_ie ie t) ie t stab
-          in 
-	      (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)
-          (if not (dname = "")
-          then let _ = gather_type_info_var v stab ( (Named dname)) pos in ()
-          else ();
+	    let dname =
           (try
-            let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
-            let fields = I.look_up_all_fields prog ddef
-            in
+               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
+
+
+             (* (\*  (\\*LDK*\\) *\) *)
+             (*   let _ = print_string ("gather_type_info_heap_x: zzz \n") in *)
+
+              (* let _ = print_string ("uuu, vdef = " ^ (Iprinter.string_of_view_decl vdef) ^ "\n") in *)
+              (* let _ = print_string ("uuu, vdef.view_vars = " ^ (Iprinter.string_of_view_vars vdef.I.view_vars) ^ "\n") in *)
+
+
+	           let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types prog vdef in
+	          (* let _ = print_string ("\n searching for: "^c^" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^"-\n") in *)
+
+              (*LDK*)
+               let view_vars = vdef.I.view_typed_vars in
+               let ies , view_vars = (match frac with
+                 | None -> (ies , view_vars)
+                 | Some f -> (match f with
+                       | IP.Var ((id,_),_) -> ((f::ies), ((Globals.Float,id)::view_vars))
+                       | _ -> (ies, view_vars)))
+               in
+
+               (* let _ = print_string ("gather_type_info_heap_x:" *)
+               (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+               (*                       ^ "\n view_vars = " ^ (Iprinter.string_of_typed_var_list view_vars) *)
+               (*                       ^ "\n\n") in *)
+
+               (if not (Gen.is_empty vdef.I.view_typed_vars)
+		        then
+
+                     (* let _ = print_string ("gather_type_info_heap_x: not (Gen.is_empty vdef.I.view_typed_vars) = true \n\n") in *)
+
+                     (
+                         let rec helper exps tvars =
+                           match (exps, tvars) with
+                             | ([], []) -> []
+                             | (e :: rest1, t :: rest2) ->
+			                     let tmp = helper rest1 rest2
+			                     in
+                                 (match e with
+				                   | IP.Var ((v, p), pos) -> ((fst t), v) :: tmp
+				                   | _ -> tmp)
+                             | _ -> (* let _ = print_string "LDK TEST 1" in *)
+			                     Err.report_error
+                                     {
+                                         Err.error_loc = pos;
+                                         Err.error_text =
+				                             "number of arguments for view " ^
+				                                 (c ^ " does not match");
+                                     } in
+                         let tmp = helper ies view_vars
+                        (* let tmp = helper (frac::ies) vdef.I.view_typed_vars *)
+                        (* let tmp = helper ies vdef.I.view_typed_vars *)
+                         in
+                         ignore
+                             (List.map
+                                  (fun (t, n) ->
+                                      gather_type_info_var n stab (t) pos)
+                                  tmp)
+                     )
+		        else ();
+		        vdef.I.view_data_name
+               )
+           with
+             | Not_found ->
+		         (try
+                      (ignore (I.look_up_data_def_raw prog.I.prog_data_decls c); c)
+		          with
+		            | Not_found ->
+			              (*let _ = print_string (Iprinter.string_of_program prog) in*)
+			            Err.report_error
+			                {
+			                    Err.error_loc = pos;
+			                    Err.error_text = c ^ " is neither 2 a data nor view name";
+			                })) in
+
+	    let check_ie ie t =
+          (match t with
+            | Bool ->
+		        if IP.is_var ie
+		        then
+                  gather_type_info_var (IP.name_of_var ie) stab
+                      (C.bool_type) (IP.pos_of_exp ie)
+		        else
+                  Err.report_error
+                      {
+			              Err.error_loc = IP.pos_of_exp ie;
+			              Err.error_text = "expecting type bool";
+                      }
+            | Int -> gather_type_info_exp ie stab (C.int_type)
+            | Float -> gather_type_info_exp ie stab (C.float_type)
+            | Named _ -> gather_type_info_exp ie stab t  
+			| Array et -> gather_type_info_exp ie stab ( (Array et))
+            | _ ->  Err.report_error
+                {
+			        Err.error_loc = IP.pos_of_exp ie;
+			        Err.error_text = "check_ie : unexpected type "^(string_of_typ t);
+                } ) in (* An Hoa BUG DETECTED Replace (et) by ((CP.Array et)) TODO : add a collect_type_info_array instead *)
+	    let check_ie ie t =
+          Gen.Debug.no_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ
+              (fun _ _ _ -> check_ie ie t) ie t stab
+          in 
+
+	      (* let _ = print_string ("gather_type_info_heap_x: \nlf:"^c^"\nfnd:"^dname) in *)
+
+          (* let _ = print_string ("gather_type_info_heap_x: before  gather_type_info_var" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                       ^ "\n\n") in *)
+
+          (if not (dname = "")
+           then let _ = gather_type_info_var v stab ( (Named dname)) pos in ()
+           else ();
+           (try
+
+
+
+                let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
+                let fields = I.look_up_all_fields prog ddef in
+
+                let fields_ids, _ = List.split fields in
+	            (* let _ = print_string ("gather_type_info_heap_x:"  *)
+                (*                       ^" fields = " ^ (Iprinter.string_of_typed_var_list fields_ids) *)
+                (*                       ^ "\n\n") in *)
+
             (* let _ = print_string ("[LDK] |ies|= "^(string_of_int (List.length ies)) ^ "\n") in *)
             (* let _ = print_string ("[LDK] |fields|= "^(string_of_int (List.length fields)) ^ "\n") in *)
-		    if (List.length ies)  = (List.length fields)
-		    then
-              (let typs =
-                List.map (fun f -> trans_type prog (fst (fst f)) pos)
-                    fields in
-              let _ = List.map2 check_ie ies typs in ())
-		    else
-              Err.report_error
-                  {
-                      Err.error_loc = pos;
-                      Err.error_text =
-			              "number of arguments for data " ^
-                              (c ^ " does not match");
-                  }
-          with
-            | Not_found -> 
+		        if (List.length ies)  = (List.length fields)
+		        then
+                  (*LDK*)
+                  (let typs =
+                     List.map (fun f -> trans_type prog (fst (fst f)) pos)
+                         fields in
+                   let ies , typs = (match frac with
+                     | None -> (ies , typs)
+                     | Some f -> (match f with
+                           | IP.Var ((id,_),_) -> ((f::ies), ((Globals.Float)::typs))
+                           | _ -> (ies, typs)))
+                   in 
+                   let _ = List.map2 check_ie ies typs in ())
+
+                  (* (let typs = *)
+                  (*    List.map (fun f -> trans_type prog (fst (fst f)) pos) *)
+                  (*        fields in *)
+                  (*  let _ = List.map2 check_ie ies typs in ()) *)
+		        else
+                  Err.report_error
+                      {
+                          Err.error_loc = pos;
+                          Err.error_text =
+			                  "number of arguments for data " ^
+                                  (c ^ " does not match");
+                      }
+            with
+              | Not_found -> 
 		          (try
-                    let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
-                    in
-                    if (List.length ies) = (List.length vdef.I.view_vars)
-                    then
-			          (let mk_eq v ie =
-                        let pos = IP.pos_of_exp ie
-                        in IP.mkEqExp (IP.Var ((v, Unprimed), pos)) ie pos in
-			          let all_eqns = List.map2 mk_eq vdef.I.view_vars ies in
-			          let tmp_form =
-                        List.fold_left (fun f1 f2 -> IP.mkAnd f1 f2 pos)
-                            (IP.mkTrue pos) all_eqns
-			          in gather_type_info_pure prog tmp_form stab)
-                    else
-			          Err.report_error
-			              {
-                              Err.error_loc = pos;
-                              Err.error_text =
-                                  "number of arguments for view " ^
-				                      (c ^ " does not match");
-			              }
-		          with
-		            | Not_found -> 
+                       let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
+                       in
+                       if (List.length ies) = (List.length vdef.I.view_vars)
+                       then
+			             (let mk_eq v ie =
+                            let pos = IP.pos_of_exp ie
+                            in IP.mkEqExp (IP.Var ((v, Unprimed), pos)) ie pos in
+			              let all_eqns = List.map2 mk_eq vdef.I.view_vars ies in
+			              let tmp_form =
+                            List.fold_left (fun f1 f2 -> IP.mkAnd f1 f2 pos)
+                                (IP.mkTrue pos) all_eqns
+			              in gather_type_info_pure prog tmp_form stab)
+                       else
+			             Err.report_error
+			                 {
+                                 Err.error_loc = pos;
+                                 Err.error_text =
+                                     "number of arguments for view " ^
+				                         (c ^ " does not match");
+			                 }
+		           with
+		             | Not_found -> 
                         (* let _ = print_string "LDK TEST 2" in (\*LDK*\) *)
-			              report_error pos
-			                  (c ^ " is neither a view nor data declaration"))))
-    | IF.HTrue | IF.HFalse -> ()
+			             report_error pos
+			                 (c ^ " is neither a view nor data declaration")
+                   )
+                  )
+           )
+                | IF.HTrue | IF.HFalse -> ()
 
 and get_spec_var_stab (v : ident) stab pos =
   try

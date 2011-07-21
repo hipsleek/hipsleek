@@ -3783,6 +3783,8 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
                  (fun x l -> f_comb l),
                  (fun x l -> f_comb l)
     in
+    (* let _ = print_string ("[cpure.ml] trans_formula: \n") in *)
+
     foldr_formula e arg f f_arg f_comb
 
 (* compute a result from formula with argument
@@ -3793,6 +3795,9 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
 let fold_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg (f_comb: 'b list -> 'b) : 'b =
     let trans_func func = (fun a e -> push_opt_val_rev (func a e) e) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+
+    (* let _ = print_string ("[cpure.ml] fold_formula_arg: \n") in *)
+
     snd (trans_formula e arg new_f f_arg f_comb)
 
 (* compute a result from formula without passing an argument
@@ -3804,6 +3809,9 @@ let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
     let trans_func func = (fun _ e -> push_opt_val_rev (func e) e) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
     let f_arg = voidf2, voidf2, voidf2 in
+
+    (* let _ = print_string ("[cpure.ml] fold_formula: \n") in *)
+
     snd (trans_formula e () new_f f_arg f_comb)
 
 (* map functions to formula with argument
@@ -3814,6 +3822,9 @@ let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
 let map_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg : formula =
     let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+
+    (* let _ = print_string ("[cpure.ml]  map_formula_arg: \n") in *)
+
     fst (trans_formula e arg new_f f_arg voidf)
 
 (* map functions to formula without argument
@@ -3825,6 +3836,9 @@ let map_formula (e: formula) (f_f, f_bf, f_e) : formula =
     let trans_func f = (fun _ e -> push_opt_void_pair (f e)) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
     let f_arg = idf2, idf2, idf2 in
+
+    (* let _ = print_string ("[cpure.ml]  map_formula: \n") in *)
+
     fst (trans_formula e () new_f f_arg voidf)
 
 let rec transform_formula f (e:formula) :formula = 
@@ -4490,6 +4504,11 @@ let rec imply_disj_orig ante_disj conseq t_imply imp_no =
     | h :: rest ->
 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
 	    if r1 then
+
+          (* (\*LDK*\) *)
+          (* let _ = print_string ("imply_disj_orig:  r1 = true \n") in *)
+
+
 	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
@@ -4502,10 +4521,19 @@ let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     (* let _ = print_string ("\nimply_one_conj xp1 #" ^ (string_of_int !imp_no) ^ "\n") in *)
+    
+    (* (\*LDK*\) *)
+    (* let _ = print_string ("imply_one_conj_orig:  (not(xp01) \n") in *)
+    
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	(xp11,xp12,xp13)
-  else (xp01,xp02,xp03)
+  else 
+
+    (* (\*LDK*\) *)
+    (* let _ = print_string ("imply_one_conj_orig:  NOT(not(xp01) \n") in *)
+    
+    (xp01,xp02,xp03)
 
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *

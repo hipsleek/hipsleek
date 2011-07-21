@@ -403,8 +403,10 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
               h_formula_heap_arguments = b} ->
       (match frac with
         | Some f ->
-            let ls = Gen.BList.remove_dups_eq (=) (name:: (Ipure.afv f)) in
-            Gen.BList.remove_dups_eq (=) (List.append ls (name:: (List.concat (List.map Ipure.afv b))))
+            Gen.BList.remove_dups_eq (=) (List.append (Ipure.afv f) (name :: (List.concat (List.map Ipure.afv b))))
+
+            (* let ls = Gen.BList.remove_dups_eq (=) (name:: (Ipure.afv f)) in *)
+            (* Gen.BList.remove_dups_eq (=) (List.append ls (name:: (List.concat (List.map Ipure.afv b)))) *)
         | None ->
             Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map Ipure.afv b)))
       )
@@ -420,8 +422,10 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
     	        h_formula_heap2_arguments = b}->
       (match frac with
         | Some f ->
-            let ls = Gen.BList.remove_dups_eq (=) (name:: (Ipure.afv f)) in
-            Gen.BList.remove_dups_eq (=) (List.append ls (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+            Gen.BList.remove_dups_eq (=) (List.append  (Ipure.afv f) (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+
+            (* let ls = Gen.BList.remove_dups_eq (=) (name:: (Ipure.afv f)) in *)
+            (* Gen.BList.remove_dups_eq (=) (List.append ls (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))) *)
         | None ->
             Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
       )

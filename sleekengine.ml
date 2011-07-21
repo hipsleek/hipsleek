@@ -305,12 +305,23 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 
       let wf = AS.case_normalize_formula iprog h mf in
 
-      (* let _ = print_string ("LDK: I am here after AS.case_normalize_formula \n") in *)
+      (* let _ = print_string ("meta_to_formula: I am here after AS.case_normalize_formula \n") in *)
+
+      (* let _ = print_string ("meta_to_formula:"  *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in       *)
 
       let _ = Astsimp.gather_type_info_formula iprog wf stab false in
+
+      (* let _ = print_string ("meta_to_formula:"  *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in       *)
+
       let r = AS.trans_formula iprog quant fv_idents false wf stab false in
-      (*let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in
-      let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in*)
+
+      (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
+      (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
+
       r
   | MetaVar mvar -> begin
       try 
@@ -338,9 +349,18 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   let _ = residues := None in
   let stab = H.create 103 in
-  (* let _ = print_string ("\n [Debug] ante0 = "^(string_of_meta_formula iante0)^"\n\n") in *)
+
+  (* let _ = print_string ("run_entail_check: " *)
+  (*                       ^ " ante0 = " ^ (string_of_meta_formula iante0) *)
+  (*                       ^"\n\n") in *)
+
   let ante = meta_to_formula iante0 false [] stab in    
   (* let _ = print_string ("\n [Debug] ante = "^(Cprinter.string_of_formula ante)^"\n\n") in *)
+
+  (* let _ = print_string ("run_entail_check: " *)
+  (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+  (*                       ^"\n\n") in *)
+
   let ante = Solver.prune_preds !cprog true ante in
 
   (* let _ = print_string ("\n [Debug] ante = "^(Cprinter.string_of_formula ante)^"\n\n") in *)

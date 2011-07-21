@@ -4297,6 +4297,9 @@ let foldheap_struc_formula (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:struc
 
 
 let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
+
+    (* let _ = print_string ("zzz [cformula.ml] trans_formula \n") in *)
+
   let f_ext_f, f_f, f_heap_f, f_pure, f_memo = f in
   let f_ext_f_arg, f_f_arg, f_heap_f_arg, f_pure_arg, f_memo_arg = f_arg in
   let trans_heap (e: h_formula) (arg: 'a) : (h_formula * 'b) =
@@ -4381,12 +4384,18 @@ let rec trans_ext_formula (e: ext_formula) (arg: 'a) f f_arg f_comb : (ext_formu
   let f_ext_f, f_f, f_h_formula, f_pure, f_memo = f in
   let f_ext_f_arg, f_f_arg, f_h_f_arg, f_pure_arg, f_memo_arg = f_arg in
   let trans_pure (e: CP.formula) (arg: 'a) : (CP.formula * 'b) =
+
+    (* let _ = print_string ("[cformula.ml] trans_ext_formula: trans_pure \n") in *)
+
     CP.trans_formula e arg f_pure f_pure_arg f_comb
   in
   let trans_struc (e: struc_formula) (arg: 'a) : (struc_formula * 'b) =
     trans_struc_formula e arg f f_arg f_comb
   in
   let trans_f (e: formula) (arg: 'a) : (formula * 'b) =
+
+    (* let _ = print_string ("[cformula.ml] trans_ext_formula: trans_f \n") in *)
+
     trans_formula e arg f f_arg f_comb
   in
   let trans_ext (e: ext_formula) (arg: 'a) : (ext_formula * 'b) =
@@ -4582,7 +4591,8 @@ let rename_labels_formula_ante  e=
   let f_a e = None in
 	let f_b e = Some e in
 	let f_e e = Some e in
-	let f_p_f e = Some e in			
+	let f_p_f e = Some e in		
+	
 	transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 			 
 let erase_propagated f = 

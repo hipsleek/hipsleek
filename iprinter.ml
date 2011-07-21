@@ -101,6 +101,13 @@ let string_of_var (c1,c2) = c1^(match c2 with | Primed -> "#'"| _ -> "");;
 let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
 
 
+let string_of_typed_var (t,id) = "(" ^ (string_of_typ t) ^ "," ^  id  ^ ")";;
+
+let rec string_of_typed_var_list l = match l with 
+  | [] -> ""
+  | h::[] -> (string_of_typed_var h) 
+  | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
+
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l                  -> "null"

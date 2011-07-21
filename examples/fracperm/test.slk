@@ -10,6 +10,7 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
+/*
 //(1)
 checkentail x::node(1.0)<_, null> & m = 1 |- x::ll(1.0)<m>.
 print residue. // FOLD
@@ -143,6 +144,66 @@ checkentail x::node<_, r> |- x!=null .
 print residue. //EMP, valid
 
 //(33)
-checkentail x::node<_,null> |- x!=null.
-print residue.
+checkentail x::node(1.0)<_,null> |- x!=null.
+print residue. //VALID
+
+
+
+//(33)
+checkentail x::node(1.0)<3,r1>  |- x::node(1.0)<3,r2>.
+print residue. //MATCH, valid
+
+//(33)
+checkentail x::node(1.0)<3,p>  |- x::node(f)<n,p1>.
+print residue. //MATCH, valid
+
+//(33)
+checkentail x::node(f1)<3,p>  |- x::node(f2)<n,p2>.
+print residue. //MATCH, valid
+
+//(33)
+checkentail x::node(0.5)<3,_>  |- x::node(1.0)<3,_>.
+print residue. //MATCH, fail
+
+checkentail x::node(f - 1.0)<v1,r1> & n=2  |- x::node(f1)<v2,r2>.
+print residue. //MATCH, valid
+
+//(33)
+checkentail x::node(f)<_,_> |- x!=null.
+print residue. //VALID, bug
+
+//(33)
+checkentail x::node(f)<_,_> |- x!=null.
+print residue. //VALID, bug
+
+
+
+//(33)
+checkentail x::ll(1.0)<3>  |- x::ll(1.0)<3>.
+print residue. //MATCH, valid
+
+//(33)
+checkentail x::ll(1.0)<3>  |- x::ll(f)<n>.
+print residue. //MATCH, valid
+
+//(33)
+checkentail x::ll(f1)<3>  |- x::ll(f2)<n>.
+print residue. //MATCH, valid
+
+//(33)
+checkentail x::ll(0.5)<3>  |- x::ll(1.0)<3>.
+print residue. //MATCH, fail
+
+//(33)
+checkentail x::ll(f - 1.0)<n> & n=2  |- x::ll(f1)<m>.
+print residue. //MATCH, valid
+
+
+*/
+
+
+//(33)
+checkentail x::ll(f)<1> |- x!=null.
+print residue. // valid
+
 

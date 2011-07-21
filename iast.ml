@@ -39,6 +39,7 @@ and data_decl = { data_name : ident;
 
 and view_decl = { view_name : ident; 
 		  mutable view_data_name : ident;
+          view_frac_var : ident option; (*LDK: frac perm ??? think about it later*)
 		  view_vars : ident list;
 		  view_labels : branch_label list;
 		  view_modes : mode list;

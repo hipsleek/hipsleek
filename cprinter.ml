@@ -880,6 +880,14 @@ let string_of_mem_formula (e:Cformula.mem_formula) : string =  poly_string_of_pr
 (** convert pure_formula  to a string via pr_pure_formula *)
 let string_of_pure_formula (e:P.formula) : string =  poly_string_of_pr  pr_pure_formula e
 
+let rec string_of_pure_formula_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_pure_formula h 
+  | h::t -> (string_of_pure_formula h) ^ " ;" ^ (string_of_pure_formula_list_noparen t)
+;;
+
+let string_of_pure_formula_list l = "["^(string_of_pure_formula_list_noparen l)^"]" ;;
+
 let printer_of_pure_formula (crt_fmt: Format.formatter) (e:P.formula) : unit =
   poly_printer_of_pr crt_fmt pr_pure_formula e
 
@@ -965,6 +973,15 @@ let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
+let rec string_of_formula_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_formula h 
+  | h::t -> (string_of_formula h) ^ " ;" ^ (string_of_formula_list_noparen t)
+;;
+
+let string_of_formula_list l = "["^(string_of_formula_list_noparen l)^"]" ;;
+
+
 let string_of_formula_base (e:formula_base) : string =  poly_string_of_pr  pr_formula_base e
 
 let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
@@ -993,6 +1010,14 @@ let string_of_memo_pure_formula (f:MP.memo_pure) : string =
 
 let string_of_mix_formula (f:MP.mix_formula) : string = 
   poly_string_of_pr pr_mix_formula f
+
+let rec string_of_mix_formula_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_mix_formula h 
+  | h::t -> (string_of_mix_formula h) ^ " ;" ^ (string_of_mix_formula_list_noparen t)
+;;
+
+let string_of_mix_formula_list l = "["^(string_of_mix_formula_list_noparen l)^"]" ;;
 
 let string_of_mix_formula_branches (f,l) : string = 
   poly_string_of_pr pr_mix_formula_branches (f,l)
@@ -1873,6 +1898,7 @@ Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
 Cast.print_formula := string_of_pure_formula;;
+(* Cast.print_pure_formula := string_of_pure_formula;; *)
 Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;

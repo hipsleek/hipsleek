@@ -458,6 +458,7 @@ view_header:
         { view_name = vn;
           view_data_name = "";
           view_vars = List.map fst cids;
+          view_frac_var = None;
           view_labels = br_labels;
           view_modes = modes;
           view_typed_vars = [];

@@ -93,6 +93,24 @@ fmt_string "(";
   fmt_string "\n match_res_rhs_node "; pr_h_formula c.match_res_rhs_node;
   fmt_string ")"
 
+(*LDK*)
+let pr_action a = match a with
+  | Undefined_action e -> "==> Undefined_action"
+  | M_match e -> "==> Match"
+  | M_fold e ->  "==> Fold"
+  | M_unfold (e,i) -> ("==> Unfold "^(string_of_int i))
+  | M_base_case_unfold e ->  "==> Base case unfold"
+  | M_base_case_fold e ->   "==> Base case fold"
+  | M_rd_lemma e ->  "==> Right distributive lemma"
+  | M_lemma (e,s) ->  ("==> "^(match s with | None -> "any lemma" | Some c-> "lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
+  | M_Nothing_to_do s ->  ("Nothing can be done: "^s)
+  | M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note: "^(string_of_h_formula h))
+  | Seq_action l -> "seq:"
+  | Search_action l -> "search:"
+
+let string_of_action a = pr_action a
+
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "==> Undefined_action"
   | M_match e -> pr_mr e; fmt_string "==> Match"
@@ -107,6 +125,8 @@ let rec pr_action_res pr_mr a = match a with
   | M_unmatched_rhs_data_node h -> fmt_string ("Unmatched RHS data note: "^(string_of_h_formula h))
   | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
+
+
 
 and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
   fmt_string ("(Weigh:"^(string_of_int w)^")")

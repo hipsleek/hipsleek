@@ -6,6 +6,7 @@
 open Globals
 module CP = Cpure
 
+
 (* options *)
 let is_presburger = ref false
 let no_pseudo_ops = ref false
@@ -39,6 +40,7 @@ let cached_count = ref 0
 let prompt_regexp = Str.regexp "^[0-9]+:$"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+
 
 (**********************
  * auxiliari function *
@@ -488,21 +490,104 @@ let has_exists2 f0 =
   let f_e a e = Some false in
   CP.fold_formula_arg f0 false (f_f, f_bf, f_e) (f_f_arg, idf2, idf2) or_list
 
+
+(* LDK: not hold when using fractional permission*)
 (*
  * e1 < e2 ~> e1 <= e2 -1
  * e1 > e2 ~> e1 >= e2 + 1
  * e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1
  *) 
  
+(*  let rec strengthen_formula f0 =  *)
+(*   match f0 with *)
+(*   | CP.BForm (b,lbl) ->  *)
+(*       let r = match b with *)
+(*         | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl) *)
+(*         | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl) *)
+(*         | CP.Neq (e1, e2, l) -> *)
+(*             let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
+(*             let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*             CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l) *)
+(*         | _ -> f0  *)
+(*       in r *)
+(*   | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l) *)
+(*   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l) *)
+(*   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l) *)
+(*   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l) *)
+(*   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l) *)
+
+
+(* let strengthen2 f0 = *)
+(*   let f_f f = match f with *)
+(*     | CP.BForm (CP.Neq (e1, e2, l), lbl) -> *)
+(*         let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
+(*         let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*         Some (CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)) *)
+(*     | _ -> None *)
+(*   in *)
+(*   let f_bf bf = match bf with *)
+(*     | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)) *)
+(*     | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)) *)
+(*     | _ -> Some bf *)
+(*   in *)
+(*   CP.map_formula f0 (f_f, f_bf, nonef) *)
+
+(*
+ * e1 <= e2 ~> e1 < e2 + 1
+ * e1 >= e2 ~> e1 > e2 - 1
+ * e1 = e2 ~> e2 - 1 < e1 < e2 + 1
+ *)
+(* let rec weaken_formula f0 =  *)
+(*   match f0 with *)
+(*   | CP.BForm (b,lbl) -> *)
+(*       let r = match b with *)
+(*         | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl) *)
+(*         | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl) *)
+(*         | CP.Eq (e1, e2, l) -> *)
+(*             let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
+(*             let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*             CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l) *)
+(*         | _ -> f0  *)
+(*       in r *)
+(*   | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l) *)
+(*   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l) *)
+(*   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l) *)
+(*   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l) *)
+(*   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l) *)
+
+(* let weaken2 f0 = *)
+(*   let f_f f = match f with *)
+(*     | CP.BForm (CP.Eq (e1, e2, l), lbl) -> *)
+(*         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
+(*         let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*         Some (CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)) *)
+(*     | _ -> None *)
+(*   in *)
+(*   let f_bf bf = match bf with *)
+(*     | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)) *)
+(*     | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)) *)
+(*     | _ -> Some bf *)
+(*   in *)
+(*   CP.map_formula f0 (f_f, f_bf, nonef) *)
+
+
+(*LDK*)
+
+(*
+ * e1 < e2 ~> e1 <= e2 -0.01
+ * e1 > e2 ~> e1 >= e2 + 0.01
+ * e1 != e2 ~> e1 >= e2 + 0.01 or e1 <= e2 - 0.01
+ *) 
+ 
  let rec strengthen_formula f0 = 
   match f0 with
   | CP.BForm (b,lbl) -> 
       let r = match b with
-        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
-        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
+        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l), lbl)
+        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l), lbl)
         | CP.Neq (e1, e2, l) ->
-            let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-            let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+            let lp = CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
+            let rp = CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
             CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)
         | _ -> f0 
       in r
@@ -516,33 +601,32 @@ let has_exists2 f0 =
 let strengthen2 f0 =
   let f_f f = match f with
     | CP.BForm (CP.Neq (e1, e2, l), lbl) ->
-        let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-        let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        let lp = CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
+        let rp = CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
         Some (CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l))
     | _ -> None
   in
   let f_bf bf = match bf with
-    | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
-    | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
+    | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l))
+    | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l))
     | _ -> Some bf
   in
   CP.map_formula f0 (f_f, f_bf, nonef)
 
 (*
- * e1 <= e2 ~> e1 < e2 + 1
- * e1 >= e2 ~> e1 > e2 - 1
- * e1 = e2 ~> e2 - 1 < e1 < e2 + 1
+ * e1 <= e2 ~> e1 < e2 + 0.01
+ * e1 >= e2 ~> e1 > e2 - 0.01
+ * e1 = e2 ~> e2 - 0.01 < e1 < e2 + 0.01
  *)
- 
 let rec weaken_formula f0 = 
   match f0 with
   | CP.BForm (b,lbl) ->
       let r = match b with
-        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl)
-        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl)
+        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l),l),lbl)
+        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l),l),lbl)
         | CP.Eq (e1, e2, l) ->
-            let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-            let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+            let lp = CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
+            let rp = CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
             CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
         | _ -> f0 
       in r
@@ -552,18 +636,18 @@ let rec weaken_formula f0 =
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
 
-  
+
 let weaken2 f0 =
   let f_f f = match f with
     | CP.BForm (CP.Eq (e1, e2, l), lbl) ->
-        let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-        let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        let lp = CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
+        let rp = CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
         Some (CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l))
     | _ -> None
   in
   let f_bf bf = match bf with
-    | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
-    | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
+    | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l))
+    | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l))
     | _ -> Some bf
   in
   CP.map_formula f0 (f_f, f_bf, nonef)
@@ -1020,19 +1104,45 @@ let is_valid f imp_no =
   let valid = options_to_bool (Some res) false in (* default is INVALID *)
   (valid, time)
 
+let is_valid f imp_no =
+  Gen.Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+       is_valid f imp_no
+
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   let has_eq f = has_existential_quantifier f false in
   let elim_eq f =
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
-    let wf = if !no_pseudo_ops then f else weaken_formula f in
-    is_valid wf imp_no    in
+    (*   (\*LDK*\) *)
+    (* let _ = print_string ("[Redlog] imply_no_cache: " *)
+    (*                       ^ "\n f = " ^ (string_of_formula f) *)
+    (*                       ^ "\n\n") in *)
+
+    let wf = if !no_pseudo_ops then f else weaken_formula f 
+    in
+    (* let _ = print_string ("[Redlog] imply_no_cache: " *)
+    (*                       ^ "\n (weakened) wf = " ^ (string_of_formula wf) *)
+    (*                       ^ "\n\n") in *)
+    is_valid wf imp_no    
+  in
    let res = 
     if is_linear_formula f then
+
+      (* (\*LDK*\) *)
+      (* let _ = print_string ("[Redlog] imply_no_cache: is_linear_formula = true \n") in *)
+
       call_omega (lazy (Omega.is_valid f !timeout))
+      (* (is_valid f imp_no) *)
     else
+      (* (\*LDK*\) *)
+      (* let _ = print_string ("[Redlog] imply_no_cache: is_linear_formula = false \n") in *)
+
       if has_eq f then
+
+      (* (\*LDK*\) *)
+      (*   let _ = print_string ("[Redlog] imply_no_cache: has_eq f  = true \n") in *)
+
         let eef = elim_eq f in
         if has_eq eef then
           (print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog");
@@ -1040,12 +1150,21 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
         else
           let _ = incr success_ee_count in
           valid eef
-      else valid f
+      else 
+
+        (* (\*LDK*\) *)
+        (* let _ = print_string ("[Redlog] imply_no_cache: has_eq f  = false \n") in *)
+
+        valid f
   in
   res
 
+let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
+  Gen.Debug.no_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
+
 let imply ante conseq imp_no =
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
+  (*LDK: example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
   let fstring = string_of_formula sf in
   log DEBUG ("\n#imply " ^ imp_no);
@@ -1061,13 +1180,23 @@ let imply ante conseq imp_no =
         log DEBUG "Cached.";
         res
       with Not_found ->
-        let res, time = imply_no_cache f imp_no in
-        let _ = if time > cache_threshold then
-          Hashtbl.add !impl_cache fstring res
-        in res
+          
+          (* let _ = print_string "[redlog.ml] imply: no cache \n" in *)
+          (* let _ = print_string ("[redlog.ml] imply:"  *)
+          (*                       ^ "\n f = " ^ (string_of_formula f) *)
+          (*                       ^ "\n\n") in *)
+          
+          let res, time = imply_no_cache f imp_no in
+          let _ = if time > cache_threshold then
+                Hashtbl.add !impl_cache fstring res
+          in res
   in
   log DEBUG (if res then "VALID" else "INVALID");
   res
+
+let imply ante conseq imp_no =
+  Gen.Debug.no_3 "[Redlog] imply" string_of_formula string_of_formula (fun c -> c) string_of_bool imply ante conseq imp_no
+
 
 let simplify (f: CP.formula) : CP.formula =
   if is_linear_formula f then 
