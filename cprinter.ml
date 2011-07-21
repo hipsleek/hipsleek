@@ -497,8 +497,9 @@ let b_formula_assoc_op (e:P.b_formula) : (string * P.exp list) option = None
 
 (* check if exp can be printed without a parenthesis,
      e.g. trivial expr and prefix forms *)
-let b_formula_wo_paren (e:P.b_formula) = 
-  match e with
+let b_formula_wo_paren (e:P.b_formula) =
+  let (pf,_) = e in
+  match pf with
     | P.BConst _ 
     | P.BVar _ | P.BagMin _ | P.BagMax _ -> true
     | _ -> false
@@ -604,11 +605,23 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
 
+let pr_slicing_label sl =
+  match sl with
+	| None -> fmt_string ""
+	| Some (il, lbl, el) ->
+		fmt_string ("<" ^ (if il then "IL, " else ", ") ^ (string_of_int lbl) ^ ", ");
+	    fmt_string ("[");
+		pr_list_none pr_formula_exp el;
+		fmt_string ("]");
+		fmt_string (">")
+		  
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
-  match e with
+  let (pf,il) = e in
+  pr_slicing_label il;
+  match pf with
     | P.BConst (b,l) -> fmt_bool b 
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
@@ -720,7 +733,7 @@ let pr_memoise_group_vb m_gr =
   fmt_cut();
   wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE[";pr_list_of_spec_var c.MP.memo_group_fv ; fmt_string "]:") () ; 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.MP.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.MP.memo_group_linking_vars; fmt_string "]:") (); 
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
               fmt_cut ();fmt_string "  ";
@@ -855,6 +868,9 @@ let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
 
 let string_of_memoised_list l : string  = poly_string_of_pr pr_memoise_group l
 
+(* string of a slicing label *)
+let string_of_slicing_label sl : string =  poly_string_of_pr  pr_slicing_label sl
+  
 (** convert b_formula to a string via pr_b_formula *)
 let string_of_b_formula (e:P.b_formula) : string =  poly_string_of_pr  pr_b_formula e
 
@@ -976,6 +992,9 @@ let string_of_memo_pure_formula_branches (f, l) : string =
 
 let string_of_memo_pure_formula (f:MP.memo_pure) : string = 
   poly_string_of_pr  pr_memo_pure_formula f
+
+let string_of_memoised_group g =
+  poly_string_of_pr pr_memoise_group [g]
 
 let string_of_mix_formula (f:MP.mix_formula) : string = 
   poly_string_of_pr pr_mix_formula f
@@ -1824,6 +1843,7 @@ let string_of_failure_list_partial_context (lc: Cformula.list_partial_context) =
 ;;
 
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
+Mcpure.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
 Mcpure.print_sv_f := string_of_spec_var ;; 
 Mcpure.print_sv_l_f := string_of_spec_var_list;;
@@ -1863,3 +1883,4 @@ Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
+Coq.print_p_f_f := string_of_pure_formula ;;

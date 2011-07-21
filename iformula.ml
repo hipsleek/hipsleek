@@ -163,6 +163,11 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 
+let linking_exp_list = ref (Hashtbl.create 100)
+
+let _ = let zero = P.IConst (0, no_pos)
+		in Hashtbl.add !linking_exp_list zero 0
+  
 let rec string_of_spec_var_list l = match l with 
   | []               -> ""
   | h::[]            -> string_of_spec_var h 
@@ -735,7 +740,6 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 	in	
 	List.map helper f
 
-
 let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 	let rec helper (f:ext_formula):ext_formula = match f with
 		| EAssume (b,tag) -> EAssume ((rename_bound_vars b),tag)
@@ -785,7 +789,15 @@ and float_out_exps_from_heap (f:formula ):formula =
 					      | _ -> 
 						  let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 						  let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
-						  let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos), None) in																
+						  let npf =
+							if !Globals.do_slicing then
+							  try
+								let lexp = P.find_lexp_exp c !linking_exp_list in
+								(*let _ = Hashtbl.remove !linking_exp_list c in*)
+								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
+							  with Not_found ->
+								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+							else Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) in (* Slicing: TODO IL for linking exp *)																
 						    (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 	  (HeapNode ({b with h_formula_heap_arguments = na}),(List.concat ls))
     | HeapNode2 b ->	 
@@ -795,7 +807,15 @@ and float_out_exps_from_heap (f:formula ):formula =
 					      | _ -> 
 						  let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 						  let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
-						  let npf = Ipure.BForm (Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None) in																
+						  let npf =
+							if !Globals.do_slicing then
+							  try
+								let lexp = P.find_lexp_exp (snd c) !linking_exp_list in
+								(*let _ = Hashtbl.remove !linking_exp_list (snd c) in*)
+								Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None)
+							  with Not_found ->
+								Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None)
+							else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)															
 						    (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
 	  (HeapNode2 ({b with h_formula_heap2_arguments = na}),(List.concat ls))
     | HTrue -> (f,[])
@@ -960,7 +980,9 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			let ne2, np2 = float_out_exp_min_max e2 in
 			let new_name = ("max"^(fresh_trailer())) in
 			let nv = Ipure.Var((new_name, Unprimed), l) in
-			let t = Ipure.BForm (Ipure.EqMax(nv, ne1, ne2, l), None) in 
+			let lexp = P.find_lexp_exp e !linking_exp_list in (* find the linking exp inside Max *)
+			let t = Ipure.BForm ((Ipure.EqMax(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in
+			(* $ h = 1 + max(h1, h2) -> <$,_> h = 1 + max_1 & <_,_> max_1 = max(h1, h2) ==> h is still separated from h1, h2 *)
 			let r = match (np1, np2) with
 					| None, None -> Some (t,[new_name])
 					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
@@ -974,7 +996,8 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			let ne2, np2 = float_out_exp_min_max e2 in
 			let new_name = ("min"^(fresh_trailer())) in
 			let nv = Ipure.Var((new_name, Unprimed), l) in
-			let t = Ipure.BForm (Ipure.EqMin(nv, ne1, ne2, l), None) in 
+			let lexp = P.find_lexp_exp e !linking_exp_list in (* find the linking exp inside Min *)
+			let t = Ipure.BForm ((Ipure.EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in 
 			let r = match (np1, np2) with
 					| None, None -> Some (t,[new_name])
 					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
@@ -1086,28 +1109,30 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		  List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, None,l))) r ev2 in *)							
 		(* End add_exists *)
 				
-		let rec float_out_b_formula_min_max (b: Ipure.b_formula) lbl: Ipure.formula = match b with
-			| Ipure.BConst _ -> Ipure.BForm (b,lbl)
+		let rec float_out_b_formula_min_max (b: Ipure.b_formula) lbl: Ipure.formula =
+		  let (pf,il) = b in
+		  match pf with
+		  | Ipure.BConst _ -> Ipure.BForm (b,lbl)
 		  | Ipure.BVar _ -> Ipure.BForm (b,lbl)
 		  | Ipure.Lt (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Lt (ne1, ne2, l), lbl) in
+						let t = Ipure.BForm ((Ipure.Lt (ne1, ne2, l), il), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Lte (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Lte (ne1, ne2, l),lbl) in
+						let t = Ipure.BForm ((Ipure.Lte (ne1, ne2, l), il),lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Gt (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Gt (ne1, ne2, l), lbl) in
+						let t = Ipure.BForm ((Ipure.Gt (ne1, ne2, l), il), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Gte (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Gte (ne1, ne2, l), lbl) in
+						let t = Ipure.BForm ((Ipure.Gte (ne1, ne2, l), il), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Eq (e1, e2, l) ->
 						let r = match e1 with
@@ -1118,12 +1143,12 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 																	| Ipure.Var _ ->
 																			 let ne1 , np1 = float_out_exp_min_max v1 in
 																			 let ne2 , np2 = float_out_exp_min_max v2 in
-																			 let t = Ipure.BForm(Ipure.EqMin(e2, ne1, ne2, l), lbl) in
+																			 let t = Ipure.BForm((Ipure.EqMin(e2, ne1, ne2, l), il), lbl) in
 																			 add_exists t np1 np2 l
 																	| _ -> 
 																			 let ne1, np1 = float_out_exp_min_max e1 in
 																			 let ne2, np2 = float_out_exp_min_max e2 in
-																			 let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
+																			 let t = Ipure.BForm ((Ipure.Eq (ne1, ne2, l), il), lbl) in
 																			 add_exists t np1 np2 l  in r2
 							| Ipure.Max(v1, v2, v3) -> let r2 = match e2 with
 																						| Ipure.Null _
@@ -1132,12 +1157,12 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 																						| Ipure.Var _ ->
 																								 let ne1 , np1 = float_out_exp_min_max v1 in
 																								 let ne2 , np2 = float_out_exp_min_max v2 in
-																								 let t = Ipure.BForm(Ipure.EqMax(e2, ne1, ne2, l), lbl) in
+																								 let t = Ipure.BForm ((Ipure.EqMax(e2, ne1, ne2, l), il), lbl) in
 																								 add_exists t np1 np2 l
 																						| _ -> 
 																							let ne1, np1 = float_out_exp_min_max e1 in
 																							let ne2, np2 = float_out_exp_min_max e2 in
-																							let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
+																							let t = Ipure.BForm ((Ipure.Eq (ne1, ne2, l), il), lbl) in
 																							add_exists t np1 np2 l 
 																			in r2
 							| Ipure.Null _
@@ -1147,35 +1172,35 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 																					| Ipure.Min (v1, v2, v3) ->
 																						 	 let ne1 , np1 = float_out_exp_min_max v1 in
 																							 let ne2 , np2 = float_out_exp_min_max v2 in
-																							 let t = Ipure.BForm(Ipure.EqMin(e1, ne1, ne2, l), lbl) in
+																							 let t = Ipure.BForm ((Ipure.EqMin(e1, ne1, ne2, l), il), lbl) in
 																							 add_exists t np1 np2 l
 																					| Ipure.Max (v1, v2, v3) ->
 																							 let ne1 , np1 = float_out_exp_min_max v1 in
 																							 let ne2 , np2 = float_out_exp_min_max v2 in
-																							 let t = Ipure.BForm(Ipure.EqMax(e1, ne1, ne2, l), lbl) in
+																							 let t = Ipure.BForm ((Ipure.EqMax(e1, ne1, ne2, l), il), lbl) in
 																							 add_exists t np1 np2 l
 																					| _ -> 
 																						let ne1, np1 = float_out_exp_min_max e1 in
 																						let ne2, np2 = float_out_exp_min_max e2 in
-																						let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
+																						let t = Ipure.BForm ((Ipure.Eq (ne1, ne2, l), il), lbl) in
 																						add_exists t np1 np2 l 
 																in r2
 							| _ ->
 									let ne1, np1 = float_out_exp_min_max e1 in
 									let ne2, np2 = float_out_exp_min_max e2 in
-									let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
+									let t = Ipure.BForm ((Ipure.Eq (ne1, ne2, l), il), lbl) in
 									add_exists t np1 np2 l 
 							in r
 		  | Ipure.Neq (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Neq (ne1, ne2, l), lbl) in
+						let t = Ipure.BForm ((Ipure.Neq (ne1, ne2, l), il), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.EqMax (e1, e2, e3, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
 						let ne3, np3 = float_out_exp_min_max e3 in
-						let t = Ipure.BForm (Ipure.EqMax (ne1, ne2, ne3, l), lbl) in
+						let t = Ipure.BForm ((Ipure.EqMax (ne1, ne2, ne3, l), il), lbl) in
 						let t = add_exists t np1 np2 l in
 						let r = match np3 with 
 							| None -> t
@@ -1184,7 +1209,7 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
 						let ne3, np3 = float_out_exp_min_max e3 in
-						let t = Ipure.BForm (Ipure.EqMin (ne1, ne2, ne3, l), lbl) in
+						let t = Ipure.BForm ((Ipure.EqMin (ne1, ne2, ne3, l), il), lbl) in
 						let t = add_exists t np1 np2 l in
 						let r = match np3 with 
 							| None -> t
@@ -1192,46 +1217,46 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		  | Ipure.BagIn (v, e, l) -> 
 							let ne1, np1 = float_out_exp_min_max e in
 							let r = match np1 with
-								| None -> Ipure.BForm (Ipure.BagIn(v, ne1, l), lbl)
-								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, lbl, l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l),lbl), r, l)) l1 in r 
+								| None -> Ipure.BForm ((Ipure.BagIn(v, ne1, l), il), lbl)
+								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, lbl, l)) (Ipure.And (Ipure.BForm ((Ipure.BagIn(v, ne1, l), il), lbl), r, l)) l1 in r 
 		  | Ipure.BagNotIn (v, e, l) -> 
 							let ne1, np1 = float_out_exp_min_max e in
 							let r = match np1 with
-								| None -> Ipure.BForm (Ipure.BagNotIn(v, ne1, l), lbl)
-								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, lbl,  l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l),lbl), r, l)) l1 in r
+								| None -> Ipure.BForm ((Ipure.BagNotIn(v, ne1, l), il), lbl)
+								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, lbl,  l)) (Ipure.And (Ipure.BForm ((Ipure.BagIn(v, ne1, l), il), lbl), r, l)) l1 in r
 		  | Ipure.BagSub (e1, e2, l) ->
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
-					let t = Ipure.BForm (Ipure.BagSub (ne1, ne2, l),lbl) in
+					let t = Ipure.BForm ((Ipure.BagSub (ne1, ne2, l), il), lbl) in
 					add_exists t np1 np2 l
 		  | Ipure.BagMin _ -> Ipure.BForm (b,lbl)
 		  | Ipure.BagMax _ -> Ipure.BForm (b,lbl)	
 		  | Ipure.ListIn (e1, e2, l) -> 
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
-					let t = Ipure.BForm (Ipure.ListIn (ne1, ne2, l),lbl) in
+					let t = Ipure.BForm ((Ipure.ListIn (ne1, ne2, l), il), lbl) in
 					add_exists t np1 np2 l
 		  | Ipure.ListNotIn (e1, e2, l) -> 
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
-					let t = Ipure.BForm (Ipure.ListNotIn (ne1, ne2, l),lbl) in
+					let t = Ipure.BForm ((Ipure.ListNotIn (ne1, ne2, l), il), lbl) in
 					add_exists t np1 np2 l
 		  | Ipure.ListAllN (e1, e2, l) ->
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
-					let t = Ipure.BForm (Ipure.ListAllN (ne1, ne2, l),lbl) in
+					let t = Ipure.BForm ((Ipure.ListAllN (ne1, ne2, l), il), lbl) in
 					add_exists t np1 np2 l
 		  | Ipure.ListPerm (e1, e2, l) ->
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
-					let t = Ipure.BForm (Ipure.ListPerm (ne1, ne2, l),lbl) in
+					let t = Ipure.BForm ((Ipure.ListPerm (ne1, ne2, l), il), lbl) in
 					add_exists t np1 np2 l
 			(* An Hoa : handle relation *)
 			(* TODO Have to add the existential before the formula! Add a add_exists with a list instead *)
 			| Ipure.RelForm (r, args, l) ->
 					let nargs = List.map float_out_exp_min_max args in
 					let nargse = List.map fst nargs in
-					let t = Ipure.BForm (Ipure.RelForm (r, nargse, l), lbl) in
+					let t = Ipure.BForm ((Ipure.RelForm (r, nargse, l), il), lbl) in
 					t
 			in		 
 		match p with
@@ -1323,13 +1348,13 @@ match h with
 	        match d with
 		  | Ipure.Null _ 
 		  | Ipure.IConst _
-		  | Ipure.Var _ -> (d:: a, c)
+		  | Ipure.Var _ -> (d::a, c)
 		  | _ -> 
 		      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
 		      let nv = Ipure.Var((new_name, Unprimed), l) in
-			(nv:: a, match c with
-			   | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l), None)) )
-			   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l), None))), s, l)))) ([], None) args in
+			(nv::a, let lexp = P.find_lexp_exp d !linking_exp_list in match c with
+			   | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))) 
+			   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))), s, l)))) ([], None) args in
            (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);}), new_p)
     |  HeapNode2 h1 ->
 	 let args = h1. h_formula_heap2_arguments in
@@ -1344,9 +1369,9 @@ match h with
 		  | _ -> 
 		      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
 		      let nv = Ipure.Var((new_name, Unprimed), l) in
-			((d1,nv):: a, match c with
-			   | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) )
-			   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) ), s, l)))) ([], None) args in
+			((d1,nv):: a, let lexp = P.find_lexp_exp d2 !linking_exp_list in match c with
+			   | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)))
+			   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], None) args in
            (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);}), new_p)
     |  HTrue -> (h, None)
     |  HFalse -> (h, None)

@@ -1,0 +1,13 @@
+R:={[n,h,n1,h1,n2,h2]: n>=h};
+A1:={[n,h,n1,h1,n2,h2]: n1>=h1 & n2>=h2};
+A2:={[n,h,n1,h1,n2,h2]: n=1+n2+n1 };
+A3:={[n,h,n1,h1,n2,h2]: ((h1<=h2 & h=1+h2) | (h1>=h2 & h=1+h1)) };
+A4:={[n,h,n1,h1,n2,h2]: h1>=0 & h2>=0};
+A5:={[n,h,n1,h1,n2,h2]: n1>=0 & n2>=0};
+
+L1:= A1 intersection A2 intersection A3 intersection A5;
+L1 subset R;
+
+L2:= A1 intersection A2 intersection A3;
+L2 subset R;
+

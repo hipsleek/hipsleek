@@ -1,0 +1,38 @@
+19/06/2011
+[Prof. Chin]
+I broke the examples into simpler ones, and there seem
+to be at least three cases we need to consider:
+
+ . linking variable e.g. v>=0
+ . linking expression, e.g. h1-h2 in bal=h1-h2
+ . linking constraint, e.g. size>=height for trees.
+
+I try to work thru how these classficiation can faciliate
+slicing when proving for predicate invariant,
+unfolding, folding, etc. What I found was that these
+linking annotations are mainly useful in the LHS.
+They are used to tell us how to slice the LHS. I am
+not sure how its presence in RHS would affect our
+slicing mechanism. I suspect that on the RHS,
+we just need to first find what variables (or expression)
+are present, and then select constraints for these
+variables (or expressions) to use in the LHS.
+
+Ctr from linking expression is selected if the same expr
+is present in the RHS.
+
+Ctr from linking variable is selected if the linking var
+is present in the RHS.
+It is also selected if its variable is present in LHS,
+e.g. $[v]v>0 is selected if s=v+s1 has been selected;
+but not vice-versa.
+
+For linking ctr of the form $[]n>=h, they are
+only selected if both n and h are present in the LHS
+of the selected antecedent. If the current LHS
+only has h=1+max(h1,h2), the linking constraint $[]n>=h is
+not selected.
+
+I will add my examples to our repo, and you may want to
+do the same. Let me know what you think esp in connection
+with your current proposal.
