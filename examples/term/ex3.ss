@@ -43,4 +43,68 @@ reaching other states or base case:
 	Valid.
 
 Overall: May_Term for x != 10.
+
+============================================
+Constraint-based approach
+============================================
+int foo (int x)
+case {
+	x = 10 -> __Bot
+	x != 10 -> T
+}
+{
+	if (x = 10)
+		return 1;
+	else
+		return 2 + foo (x + 1); 
+}
+
+T(!=10) = x != 10 &
+          case {x+1 = 10 -> __Bot;
+				x+1 != 10 -> T}
+
+T(!=10) = case {x = 9 -> __Bot;
+				x != 10 & x != 9 -> T(!=10)}
+
+T(=9) = __Bot
+T(x!=10 & x!=9) = T(x!=10) = T(x!=10 & x!=9) or T(x=9) -> May_Term
+
+----------------------------------------------
+int foo (int x)
+case {
+	x = 10 -> __Bot
+	x <= 9 -> T1
+	x >= 11 -> T2
+}
+{
+	if (x = 10)
+		return 1;
+	else if (x <= 9)
+		return 2 + foo (x + 1); //T1
+	else
+		return 2 + foo (x + 1); //T2
+}
+
+T1 = x <= 9 &
+     case {
+		x+1 = 10 -> __Bot;
+		x+1 <= 9 -> T1;
+		x+1 >= 11 -> T2;}
+   = case {
+		x = 9 -> __Bot;
+		x <= 8 -> T1}
+
+T1(x=9) = __Bot
+T1(x<=8) = T1(x<=9) = T1(x<=8) or T1(x=9)
+
+T2 = x >= 11 &
+     case {
+		x+1 = 10 -> __Bot;
+		x+1 <= 9 -> T1;
+		x+1 >= 11 -> T2;}
+   = x >= 11 -> T2
+
+T2(x>=11) = T2(x>=11)   
+
 */
+
