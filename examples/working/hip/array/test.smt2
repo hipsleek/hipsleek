@@ -1,7 +1,18 @@
-relation is_modified(int[] val, int[] idx, int[] bk, int n, int i) ==
-	0 <= idx[i] < n & bk[idx[i]] = i.
+(set-logic AUFNIA)
+(declare-fun a () (Array Int Int))
+(declare-fun sumarray ((Array Int Int) Int Int Int) Bool)
+(declare-fun issubsum ((Array Int Int) Int Int Int) Bool)
+(assert (forall (a (Array Int Int)) (i Int) (j Int) (s Int) 
+	(= 	(sumarray a i j s) 
+		(or (and (> i j) (= s 0)) (and (<= i j) (sumarray a (+ i 1) j (- s (select a i))))))))
+(assert (forall (a (Array Int Int)) (i Int) (j Int) (s Int) 
+	(= 	(issubsum a i j s) 
+		(exists (?v Int) (exists (?u Int) 
+				(and (<= i ?u) 
+					(and (<= ?u j) 
+					(and (<= i ?v) 
+					(and (<= ?v j) 
+					(sumarray a ?u ?v s))))))))))
+(assert (not (issubsum a 1 1 (select a 1))))
+(check-sat)
 
-relation value_at(int[] val, int[] idx, int[] bk, int n, int i, int v) ==
-	0 <= i <= 1000-1 & (is_modified(val, idx, bk, n, i) & val[i] = v | !(is_modified(val, idx, bk, n, i)) & v = 0).
-
-checkentail value_at(val,idx,bk,n,i,v) & u != v |- !(value_at(val,idx,bk,n,i,u)).

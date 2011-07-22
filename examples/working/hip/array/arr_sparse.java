@@ -18,11 +18,18 @@
  * Reference:
  * Sparse Arrays in Why3
  * http://proval.lri.fr/gallery/vacid_0_sparse_array.en.html
- *
+ * 
+ * Remark: The original code has a macro MAXLEN for
+ * the maximum size of the sparse array. In this implementation, 
+ * we substitute that value by 1000.
+ * 
+ * Task 0 {50 pts} is handled.
+ * Task 1 {30 pts} is in progress.
+ * 
  * @author Vu An Hoa
  */
 
-// Define MAXLEN = 1000
+
 data SparseArray {	
 	int[] values;
 	int[] index;
@@ -35,14 +42,18 @@ relation dom(int[] a, int i, int j) == true.
 relation bounded(int[] a, int i, int j, int low, int high) ==
 	forall(k : k < i | k > j | low <= a[k] <= high).
 	
+relation is_sparse_array(int[] val, int[] idx, int[] bk, int n) ==
+	forall(i : i < 0 | i >= n | 0 <= bk[i] < 1000 & idx[bk[i]] = i).
+	
 relation is_modified(int[] val, int[] idx, int[] bk, int n, int i) ==
-	0 <= idx[i] < n & bk[idx[i]] = i.
+	0 <= i < 1000 & 0 <= idx[i] < n & bk[idx[i]] = i.
 
 relation value_at(int[] val, int[] idx, int[] bk, int n, int i, int v) ==
-	0 <= i <= 1000-1 & (is_modified(val, idx, bk, n, i) & v = val[i] | 
-							!(is_modified(val, idx, bk, n, i)) & v = 0).
-	// this property is provable in sleek!
-	//forall(u : u = v | !(value_at(val,idx,bk,n,i,u))).
+	0 <= i <= 1000-1 & 
+	(is_modified(val, idx, bk, n, i) & v = val[i] | 
+		!(is_modified(val, idx, bk, n, i)) & v = 0).
+	// the following property is provable in sleek:
+	// forall(u : u = v | !(value_at(val,idx,bk,n,i,u))).
 			
 relation idexc(int[] val1, int[] idx1, int[] bk1, int n1, 
 			int[] val2, int[] idx2, int[] bk2, int n2, int i) ==
@@ -72,7 +83,8 @@ void harness()
 SparseArray create(int sz)
 	requires sz >= 0
 	ensures res::SparseArray<val,idx,bk,0> & dom(val,0,1000-1) 
-		& dom(idx,0,1000-1) & dom(bk,0,1000-1);
+		& dom(idx,0,1000-1) & dom(bk,0,1000-1)
+		& is_sparse_array(val,idx,bk,0);
 {
 	int[] values = new int[1000];
 	int[] index = new int[1000];
@@ -84,7 +96,8 @@ SparseArray create(int sz)
 int get(SparseArray a, int i)
 	requires a::SparseArray<val,idx,bk,n>@I & dom(val,0,1000-1) 
 			& dom(idx,0,1000-1) & dom(bk,0,1000-1)
-			& 0 <= n <= 1000 - 1 & 0 <= i <= 1000-1
+			& 0 <= n <= 1000 & 0 <= i <= 1000-1
+			& is_sparse_array(val,idx,bk,n)
 			& bounded(bk,0,n-1,0,1000-1)
 	ensures value_at(val,idx,bk,n,i,res);
 {
@@ -103,15 +116,17 @@ int get(SparseArray a, int i)
 void setsa(SparseArray a, int i, int v)
 	requires a::SparseArray<val,idx,bk,n> & dom(val,0,1000-1) 
 				& dom(idx,0,1000-1) & dom(bk,0,1000-1)
-				& 0 <= n <= 1000 - 1 & bounded(bk,0,n-1,0,1000-1)
-				& 0 <= i <= 1000-1
+				& 0 <= n <= 1000 & bounded(bk,0,n-1,0,1000-1)
+				& is_sparse_array(val,idx,bk,n)
+				& 0 <= i < 1000
 	ensures a::SparseArray<valr,idxr,bkr,nr> & dom(valr,0,1000-1) 
 				& dom(idxr,0,1000-1) & dom(bkr,0,1000-1)
-				& 0 <= nr <= 1000 - 1
+				& 0 <= nr <= 1000
 				& (is_modified(val,idx,bk,n,i) & nr = n | 
-						!(is_modified(val,idx,bk,n,i)) & nr = n + 1)
+					!(is_modified(val,idx,bk,n,i)) & nr = n + 1)
 				& bounded(bkr,0,nr-1,0,1000-1)
 				& value_at(valr,idxr,bkr,nr,i,v)
+				& is_sparse_array(valr,idxr,bkr,nr)
 				& idexc(val,idx,bk,n,valr,idxr,bkr,nr,i);
 {
 	int[] val = a.values;
@@ -119,12 +134,15 @@ void setsa(SparseArray a, int i, int v)
 	int[] bk = a.back;
 	val[i] = v;
 	if (idx[i] >= a.n || idx[i] < 0) {
-//		assert(n < MAXLEN); // (*), see Verification Tasks
+		dprint;
+		assert n < 1000;
+		assume n < 1000;
 		idx[i] = a.n;
 		bk[a.n] = i;
 		a.n = a.n + 1;
 	} else if (bk[idx[i]] != i) {
-//		assert(n < MAXLEN); // (*), see Verification Tasks
+		assert n < 1000;
+		assume n < 1000;
 		idx[i] = a.n;
 		bk[a.n] = i;
 		a.n = a.n + 1;

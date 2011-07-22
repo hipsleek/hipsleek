@@ -637,8 +637,9 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 	in if res then
       res
 		else 
-			let _ = print_string "An Hoa :: smt_imply : try induction\n" in 
 			if (!try_induction) then
+				(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in
+				let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
 				smt_imply_with_induction ante conseq prover
 			else 
 				false
