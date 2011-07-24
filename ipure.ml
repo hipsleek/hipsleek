@@ -699,3 +699,12 @@ and find_lexp_exp (e: exp) ls =
 	| ListReverse (e, _) -> find_lexp_exp e ls
 	| ArrayAt (_, e, _) -> find_lexp_exp e ls
 ;;
+
+let rec break_pure_formula (f: formula) : b_formula list =
+  match f with
+	| BForm (bf, _) -> [bf]
+	| And (f1, f2, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
+	| Or (f1, f2, _, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
+	| Not (f, _, _) -> break_pure_formula f
+	| Forall (_, f, _, _) -> break_pure_formula f
+	| Exists (_, f, _, _) -> break_pure_formula f

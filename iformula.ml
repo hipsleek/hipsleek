@@ -1628,3 +1628,13 @@ and insert_rd_phase (f : h_formula) (rd_phase : h_formula) : h_formula =
 		  h_formula_phase_pos = no_pos;
 		})
 
+let rec break_formula (f : formula) : P.b_formula list list =
+  match f with
+	| Base bf -> [P.break_pure_formula bf.formula_base_pure]
+	| Exists ef -> [P.break_pure_formula ef.formula_exists_pure]
+	| Or orf -> (break_formula orf.formula_or_f1) @ (break_formula orf.formula_or_f2)
+(*
+and break_ext_formula (f : ext_formula) : P.b_formula list list =
+  match f with
+	| ECase cf  
+*)

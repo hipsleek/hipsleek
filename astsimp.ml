@@ -944,10 +944,15 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		(print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
       else (
 		  let prog = case_normalize_program prog in
+
+		  let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
+
+		  (*let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in*)
+		  
           (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
 		  let tmp_views = order_views prog.I.prog_view_decls in
-		   let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
+		  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 		  let cviews = List.map (trans_view prog) tmp_views in
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
@@ -1032,54 +1037,61 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];
   }
-and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  (if n > 0 then
-        (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-         let (xform', xform_b, addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
-         let addr_vars = CP.remove_dups_svl addr_vars' in
-	(*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
-	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
-	  (Cprinter.string_of_pure_formula xform')^"\n\n\n");flush stdout in	*)
-    (*let xform' = TP.simplify  xform' in*)
-         let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
-		 (*let _ = print_string ("\ncompute_view_x_formula: xform'" ^ (Cprinter.string_of_mix_formula xform') ^ "\n") in*)
-    (*let _  = print_string ("before memo simpl x pure: "^(Cprinter.string_of_memoised_list xform')^"\n") in
-    let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
-    let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
-	  let ctx =
-        CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
-      let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
-	  
-	  (*let _ = print_string ("\ncompute_view_x_formula: LHS (context) \n" ^ (Cprinter.string_of_context ctx) ^ "\n") in
-      let _ = print_string ("\ncompute_view_x_formula: LHS \n" ^ (Cprinter.string_of_formula formula1) ^ "\n") in
-	  let _ = print_string ("\ncompute_view_x_formula: RHS \n" ^ (Cprinter.string_of_formula formula) ^ "\n") in*)
 
-	  let (rs, _) =
-      Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos
-      in
-	(* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
-    (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
-	  let _ = if not(CF.isFailCtx rs)
-          then
-            (vdef.C.view_x_formula <- (xform, xform_b);
-             vdef.C.view_addr_vars <- addr_vars;
-             vdef.C.view_baga <- (match ms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-             compute_view_x_formula prog vdef (n - 1))
-          else
-            Err.report_error
-                {
-                    Err.error_loc = pos;
-                    Err.error_text = "view formula does not entail supplied invariant\n";} in ()
-                                                                                            (* print_string ("\nAstsimp.ml: bef error") *)
-    )
+and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
+  Gen.Debug.ho_3 "compute_view_x_formula"
+	Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
+	compute_view_x_formula_x prog vdef n
+	
+and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
+  (if n > 0 then
+      (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
+       let (xform', xform_b, addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
+       let addr_vars = CP.remove_dups_svl addr_vars' in
+		 (*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
+		   (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
+		   (Cprinter.string_of_pure_formula xform')^"\n\n\n");flush stdout in	*)
+		 (*let xform' = TP.simplify  xform' in*)
+       let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+	(*let _ = print_string ("\ncompute_view_x_formula: xform'" ^ (Cprinter.string_of_mix_formula xform') ^ "\n") in*)
+    (*let _  = print_string ("before memo simpl x pure: "^(Cprinter.string_of_memoised_list xform')^"\n") in
+      let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
+       let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
+	   let ctx =
+         CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
+       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
+
+	   (*let _ = print_string ("\ncompute_view_x_formula: xform" ^ (Cprinter.string_of_mix_formula xform) ^ "\n") in
+	   let _ = print_string ("\ncompute_view_x_formula: LHS (context) \n" ^ (Cprinter.string_of_context ctx) ^ "\n") in
+	   let _ = print_string ("\ncompute_view_x_formula: LHS \n" ^ (Cprinter.string_of_formula formula1) ^ "\n") in
+	   let _ = print_string ("\ncompute_view_x_formula: RHS \n" ^ (Cprinter.string_of_formula formula) ^ "\n") in*)
+
+	   let (rs, _) =
+		 Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos
+       in
+	  (* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
+      (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
+	   let _ = if not(CF.isFailCtx rs)
+         then
+           (vdef.C.view_x_formula <- (xform, xform_b);
+            vdef.C.view_addr_vars <- addr_vars;
+            vdef.C.view_baga <- (match ms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
+            compute_view_x_formula prog vdef (n - 1))
+         else
+           Err.report_error
+             {
+               Err.error_loc = pos;
+               Err.error_text = "view formula does not entail supplied invariant\n";} in ()
+    (* print_string ("\nAstsimp.ml: bef error") *)
+      )
    else ();
    if !Globals.print_x_inv && (n = 0)
    then
      (print_string
-          ("\ncomputed invariant for view: " ^
-                  (vdef.C.view_name ^("\n" ^((Cprinter.string_of_mix_formula_branches (vdef.C.view_x_formula)) ^"\n"))));
+        ("\ncomputed invariant for view: " ^
+            (vdef.C.view_name ^("\n" ^((Cprinter.string_of_mix_formula_branches (vdef.C.view_x_formula)) ^"\n"))));
       print_string
-          ("addr_vars: " ^((String.concat ", "(List.map CP.name_of_spec_var vdef.C.view_addr_vars))^ "\n\n")))
+        ("addr_vars: " ^((String.concat ", "(List.map CP.name_of_spec_var vdef.C.view_addr_vars))^ "\n\n")))
    else ())
       
 and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
@@ -1119,7 +1131,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let _ = gather_type_info_pure prog inv stab in
   let _ = List.iter (fun (_,f) -> gather_type_info_pure prog f stab) inv_b in
   let pf = trans_pure_formula inv stab in
-    let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
+  let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
   let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
   let pf = Cpure.arith_simplify 1 pf in
   let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
@@ -5383,7 +5395,12 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
   helper f    
 
 (* AN HOA : TODO CHECK *)
-and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Iformula.formula = 
+and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Iformula.formula =
+  let pr = Iprinter.string_of_formula in
+  Gen.Debug.no_1 "case_normalize_formula" pr pr (fun f -> case_normalize_formula_x prog h f) f
+	
+	
+and case_normalize_formula_x prog (h:(ident*primed) list)(f:Iformula.formula):Iformula.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
   (* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
@@ -5956,10 +5973,10 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   }
 
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
-and case_normalize_program_debug (prog: Iast.prog_decl):Iast.prog_decl =
-  Gen.Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program prog
+and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
+  Gen.Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
 	
-and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
+and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
   (*let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
   let tmp_views = List.map (fun c-> 
@@ -6973,3 +6990,16 @@ and callgraph_of_prog prog : NG.t =
   cg
 *)
 		
+and slicing_label_inference_program (prog : I.prog_decl) : I.prog_decl =
+  {prog with
+	  I.prog_view_decls = List.map (fun v -> slicing_label_inference_view v) prog.I.prog_view_decls;}
+
+and slicing_label_inference_view (view : I.view_decl) : I.view_decl =
+  let inv = IP.break_pure_formula (fst view.Iast.view_invariant) in
+
+  view
+
+	  
+
+
+	  
