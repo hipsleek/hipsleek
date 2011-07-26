@@ -11,7 +11,6 @@ module P = Cpure
 module MP = Mcpure
 
 
-
 let is_short n = (n==2);;
 
 let is_medium n = (n==1);;
@@ -1891,6 +1890,7 @@ Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
+Cformula.print_mix_f := string_of_mix_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;

@@ -3657,7 +3657,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
   (*   let pr (f: CF.h_formula * CF.t_formula) =  match f with *)
   (*     | (h,t) -> Cprinter.string_of_h_formula h  *)
   (*   in *)
-  (*   Gen.Debug.ho_2 "linearize_heap" Iprinter.string_of_h_formula Cprinter.string_of_pos pr linearize_heap_x f po *)
+  (*   Gen.Debug.no_2 "linearize_heap" Iprinter.string_of_h_formula Cprinter.string_of_pos pr linearize_heap_x f po *)
 
   let linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =   
 

@@ -198,16 +198,21 @@ let get_ptr_from_data h =
     | ViewNode f -> f.h_formula_view_node
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
+
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
+let print_mix_formula = print_mix_f
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
 let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 let print_ext_formula = ref(fun (c:ext_formula) -> "printer not initialized")
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
+let print_spec_var = print_sv
+let print_spec_var_list = print_svl
+
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list l = match l with 
@@ -1354,6 +1359,48 @@ and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
 		  | _ -> sv in
 		new_sv :: new_vars
 
+
+(*LDK: substitue variales (t) in formula (f) by variables (fr)*)
+and subst_struc_avoid_capture_w_frac (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula) (fracvar: CP.spec_var)  (rhs_p : MCP.mix_formula) : struc_formula =
+  Gen.Debug.no_5 "subst_struc_avoid_capture_w_frac"
+      !print_spec_var_list
+      !print_spec_var_list
+      !print_struc_formula
+      !print_spec_var
+      !print_mix_formula
+      !print_struc_formula
+      subst_struc_avoid_capture_w_frac_x fr t f fracvar rhs_p
+      
+
+and subst_struc_avoid_capture_w_frac_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula) (fracvar: CP.spec_var)  (rhs_p : MCP.mix_formula) :struc_formula =
+
+  let f' =  add_rhspure_to_struc_formula f rhs_p in
+  let fresh_fr = CP.fresh_spec_vars fr in
+  let st1 = List.combine fr fresh_fr in
+  let st2 = List.combine fresh_fr t in
+  let f1 = subst_struc_w_frac st1 f' fracvar in
+  let f2 = subst_struc_w_frac st2 f1 fracvar in
+  f2
+
+(* (\*LDK: substitue variales (t) in formula (f) by variables (fr)*\) *)
+(* and subst_struc_avoid_capture_w_frac (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula) (fracvar: CP.spec_var) :struc_formula = *)
+
+(*   let fresh_fr = CP.fresh_spec_vars fr in *)
+(*   let st1 = List.combine fr fresh_fr in *)
+(*   let st2 = List.combine fresh_fr t in *)
+(*   let f1 = subst_struc_w_frac st1 f fracvar in *)
+(*   let f2 = subst_struc_w_frac st2 f1 fracvar in *)
+(*   f2 *)
+
+  (* let (f', new_frac) = add_frac_to_struc_formula f fracvar in *)
+  (* let fresh_fr = CP.fresh_spec_vars fr in *)
+  (* let st1 = List.combine fr fresh_fr in *)
+  (* let st2 = List.combine fresh_fr t in *)
+  (* let f1 = subst_struc_w_frac st1 f' new_frac in *)
+  (* let f2 = subst_struc_w_frac st2 f1 new_frac in *)
+  (* f2 *)
+
+(*LDK: substitue variales (t) in formula (f) by variables (fr)*)
 and subst_struc_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula):struc_formula =
   let fresh_fr = CP.fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
@@ -1364,7 +1411,12 @@ and subst_struc_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f 
 and subst_struc sst (f : struc_formula) = match sst with
   | s :: rest -> subst_struc rest (apply_one_struc s f)
   | [] -> f 
-        
+
+(*LDK*)
+and subst_struc_w_frac sst (f : struc_formula) (fracvar: CP.spec_var) : struc_formula  = match sst with
+  | s :: rest -> subst_struc_w_frac rest (apply_one_struc_w_frac s f fracvar) fracvar
+  | [] -> f
+
 and subst_struc_pre sst (f : struc_formula) = 
   (* apply_par_struc_pre s f *)
   match sst with
@@ -1420,6 +1472,313 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 	  })
   in	
   List.map helper f
+
+(*LDK: add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *)
+and add_rhspure_to_struc_formula  (f : struc_formula) (rhs_p: MCP.mix_formula): struc_formula =
+  Gen.Debug.no_2 "add_rhspure_to_struc_formula"
+      !print_struc_formula !print_mix_formula !print_struc_formula
+      add_rhspure_to_struc_formula_x f rhs_p
+
+(*LDK: only heap need fractional permision spec var (frac) *)
+and add_rhspure_to_struc_formula_x  (f : struc_formula) (rhs_p: MCP.mix_formula): struc_formula =
+  let rec helper (f:ext_formula):(ext_formula) = match f with
+	| ECase b ->
+        let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for ECase not added") in
+        f
+	| EBase b ->
+        let ext_base = b.formula_ext_base in
+
+        (* let _ = print_string ("ttt, add_rhspure_to_struc_formula_x:" *)
+        (*                       ^ "\n  ext_base = " ^ (!print_formula ext_base) *)
+        (*                       ^ "\n  b.formula_ext_explicit_inst = " ^ (!print_spec_var_list  b.formula_ext_explicit_inst) *)
+        (*                       ^ "\n  b.formula_ext_implicit_inst = " ^ (!print_spec_var_list  b.formula_ext_implicit_inst) *)
+        (*                       ^ "\n  b.formula_ext_exists = " ^ (!print_spec_var_list  b.formula_ext_exists) *)
+        (*                       ^ "\n b.formula_ext_base = " ^ (!print_formula b.formula_ext_base) *)
+        (*                       ^ "\n b.formula_ext_continuation = " ^ (!print_struc_formula b.formula_ext_continuation) *)
+        (*                       ^ "\n\n") in *)
+
+
+        let ext_base = add_rhspure_to_formula_ext_base ext_base rhs_p in
+
+        (* let _ = print_string ("ttt, add_rhspure_to_struc_formula_x: after add_rhspure_to_formula_ext_base \n") in *)
+
+        let ext_cont_f = (add_rhspure_to_struc_formula_x b.formula_ext_continuation rhs_p) in
+        let res_f =
+		  EBase ({
+			  formula_ext_explicit_inst = b.formula_ext_explicit_inst;
+			  formula_ext_implicit_inst = b.formula_ext_implicit_inst;
+			  formula_ext_exists = b.formula_ext_exists;
+			  formula_ext_base = ext_base;
+			  (* formula_ext_base = apply_one_w_frac s  b.formula_ext_base fracvar; *)
+			  formula_ext_continuation = ext_cont_f;
+			  formula_ext_pos = b.formula_ext_pos
+		  })
+        in res_f
+
+	| EAssume (x,b,y)->
+                let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for EAssume not added") in
+                f
+	| EVariance b ->
+        let cont = add_rhspure_to_struc_formula_x b.formula_var_continuation rhs_p in
+        let res =
+        EVariance ({ b with
+		  formula_var_measures = b.formula_var_measures;
+		  formula_var_escape_clauses = b.formula_var_escape_clauses;
+		  formula_var_continuation = cont;
+	  }) in
+        res
+  in
+  let res = List.map helper f in
+  res
+
+(* (\*LDK: add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *\) *)
+(* and add_frac_to_struc_formula  (f : struc_formula) (fracvar: CP.spec_var):(struc_formula * CP.spec_var) =  *)
+(*   Gen.Debug.no_2 "add_frac_to_struc_formula"  *)
+(*       !print_struc_formula !print_spec_var  *)
+(*       (fun (f1,v1) -> "(" ^ !print_struc_formula f1 ^ "," ^ !print_spec_var v1 ^ ")") *)
+(*       add_frac_to_struc_formula_x f fracvar *)
+
+(* (\*LDK: only heap need fractional permision spec var (frac) *\) *)
+(* and add_frac_to_struc_formula_x  (f : struc_formula) (fracvar: CP.spec_var):(struc_formula* CP.spec_var) = *)
+(*   let rec helper (f:ext_formula):(ext_formula * CP.spec_var) = match f with *)
+(* 	| ECase b ->  *)
+(*         let _ = print_string ("[add_frac_to_struc_formula] Warning: fractional permission for ECase not added") in *)
+(*         (f,fracvar) *)
+(* 	| EBase b -> *)
+
+(*         let _ = print_string ("ttt, add_frac_to_struc_formula:" *)
+(*                               ^ "\n  b.formula_ext_explicit_inst = " ^ (!print_spec_var_list  b.formula_ext_explicit_inst) *)
+(*                               ^ "\n  b.formula_ext_implicit_inst = " ^ (!print_spec_var_list  b.formula_ext_implicit_inst) *)
+(*                               ^ "\n  b.formula_ext_exists = " ^ (!print_spec_var_list  b.formula_ext_exists) *)
+(*                               ^ "\n b.formula_ext_base = " ^ (!print_formula b.formula_ext_base) *)
+(*                               ^ "\n b.formula_ext_continuation = " ^ (!print_struc_formula b.formula_ext_continuation) *)
+(*                               ^ "\n\n") in *)
+
+(*         let ext_base = b.formula_ext_base in *)
+(*         let (ext_base,ext_base_fracvar) = add_frac_to_formula_ext_base ext_base fracvar in *)
+(*         let _ = print_string ("ttt, add_frac_to_struc_formula: after add_frac_to_formula_ext_base \n") in *)
+(*         let (ext_cont_f, ext_cont_fracvar) = (add_frac_to_struc_formula_x b.formula_ext_continuation fracvar) in *)
+(*         let res_f =  *)
+(* 		  EBase ({ *)
+(* 			  formula_ext_explicit_inst = b.formula_ext_explicit_inst; *)
+(* 			  formula_ext_implicit_inst = b.formula_ext_implicit_inst; *)
+(* 			  formula_ext_exists = b.formula_ext_exists; *)
+(* 			  formula_ext_base = ext_base; *)
+(* 			  (\* formula_ext_base = apply_one_w_frac s  b.formula_ext_base fracvar; *\) *)
+(* 			  formula_ext_continuation = ext_cont_f; *)
+(* 			  formula_ext_pos = b.formula_ext_pos	 *)
+(* 		  }) *)
+(*         in (res_f, ext_base_fracvar) *)
+
+(* 	| EAssume (x,b,y)->  *)
+(*                 let _ = print_string ("[add_frac_to_struc_formula] Warning: fractional permission for EAssume not added") in *)
+(*                 (f,fracvar) *)
+(* 	| EVariance b ->  *)
+(*         let (cont,cont_var) = add_frac_to_struc_formula_x b.formula_var_continuation fracvar in *)
+(*         let res =  *)
+(*         EVariance ({ b with *)
+(* 		  formula_var_measures = b.formula_var_measures; *)
+(* 		  formula_var_escape_clauses = b.formula_var_escape_clauses; *)
+(* 		  formula_var_continuation = cont; *)
+(* 	  }) in *)
+(*         (res, cont_var) *)
+(*   in *)
+(*   let res = List.map helper f in *)
+(*   let res1,res2 = List.split res in *)
+(*   match res1 with *)
+(*     | [] -> (res1,fracvar) *)
+(*     | _ -> (res1, List.hd res2) *)
+
+
+
+(*LDK: only heap need fractional permision spec var (frac) *)
+and apply_one_struc_w_frac  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula) (fracvar: CP.spec_var):struc_formula = 
+  let rec helper (f:ext_formula):ext_formula = match f with
+	| ECase b -> 
+		  ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc_w_frac s c2 fracvar)) ) b.formula_case_branches;})
+	| EBase b ->
+
+
+        (* let _ = print_string ("ttt, apply_one_struc_w_frac" *)
+        (*                       ^ "\n  b.formula_ext_explicit_inst = " ^ (!print_spec_var_list  b.formula_ext_explicit_inst) *)
+        (*                       ^ "\n  b.formula_ext_implicit_inst = " ^ (!print_spec_var_list  b.formula_ext_implicit_inst) *)
+        (*                       ^ "\n  b.formula_ext_exists = " ^ (!print_spec_var_list  b.formula_ext_exists) *)
+        (*                       ^ "\n b.formula_ext_base = " ^ (!print_formula b.formula_ext_base) *)
+        (*                       ^ "\n b.formula_ext_continuation = " ^ (!print_struc_formula b.formula_ext_continuation) *)
+        (*                       ^ "\n\n") in *)
+
+        let ext_base = b.formula_ext_base in
+        (* let ext_base = add_frac_to_formula_ext_base ext_base fracvar in *)
+        let impl_inst = b.formula_ext_implicit_inst in
+        (* let impl_inst = if (List.mem fracvar b.formula_ext_implicit_inst) then impl_inst else (fracvar::impl_inst) in *)
+		  EBase ({
+			  formula_ext_explicit_inst = List.map (subst_var s)  b.formula_ext_explicit_inst;
+			  formula_ext_implicit_inst = List.map (subst_var s) impl_inst;
+			  (* formula_ext_implicit_inst = List.map (subst_var s)  b.formula_ext_implicit_inst; *)
+			  formula_ext_exists = List.map (subst_var s)  b.formula_ext_exists;
+			  formula_ext_base = apply_one_w_frac s  ext_base fracvar;
+			  (* formula_ext_base = apply_one_w_frac s  b.formula_ext_base fracvar; *)
+			  formula_ext_continuation = apply_one_struc_w_frac s b.formula_ext_continuation fracvar;
+			  formula_ext_pos = b.formula_ext_pos	
+		  })
+	| EAssume (x,b,y)-> EAssume((subst_var_list [s] x),(apply_one_w_frac s b fracvar),y)
+	| EVariance b -> EVariance ({ b with
+		  formula_var_measures = List.map (fun (expr, bound) -> match bound with
+			| None -> ((CP.e_apply_one s expr), None)
+			| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures;
+		  formula_var_escape_clauses = List.map (fun f -> CP.apply_one s f) b.formula_var_escape_clauses;
+		  formula_var_continuation = apply_one_struc_w_frac s b.formula_var_continuation fracvar;
+	  })
+  in	
+  List.map helper f
+
+
+
+(*LDK : add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *)
+and add_rhspure_to_formula_ext_base (ext_base:formula) (rhs_p: MCP.mix_formula) : formula =
+  Gen.Debug.no_2 "add_rhspure_to_formula_ext_base_x" !print_formula !print_mix_formula
+      !print_formula
+      add_rhspure_to_formula_ext_base_x ext_base rhs_p
+
+and add_rhspure_to_formula_ext_base_x (ext_base:formula) (rhs_p: MCP.mix_formula) : formula=
+  match ext_base with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+        Or ({formula_or_f1 = add_rhspure_to_formula_ext_base_x f1 rhs_p; formula_or_f2 =  add_rhspure_to_formula_ext_base_x f2 rhs_p; formula_or_pos = pos})
+
+    | Base ({  formula_base_heap = qh;
+			   formula_base_pure = qp;
+			   formula_base_type = tconstr;
+			   (* formula_exists_imm = imm; *)
+			   formula_base_flow = fl;
+			   formula_base_branches = b;
+			   formula_base_label = lbl;
+			   formula_base_pos = pos}) ->
+
+        let qp1 = add_rhspure_formula_to_pure qp rhs_p in
+        let res =
+          Base ({  formula_base_heap = qh;
+			       formula_base_pure = qp1;
+			       formula_base_type = tconstr;
+			       (* formula_exists_imm = imm; *)
+			       formula_base_flow = fl;
+			       formula_base_branches = b;
+			       formula_base_label = lbl;
+			       formula_base_pos = pos})
+
+        in res
+
+    | Exists ({formula_exists_qvars = qsv;
+			   formula_exists_heap = qh;
+			   formula_exists_pure = qp;
+			   formula_exists_type = tconstr;
+			   (* formula_exists_imm = imm; *)
+			   formula_exists_flow = fl;
+			   formula_exists_branches = b;
+			   formula_exists_label = lbl;
+			   formula_exists_pos = pos}) ->
+
+        let qp1 = add_rhspure_formula_to_pure qp rhs_p in
+        let res =
+          Exists ({formula_exists_qvars = qsv;
+			       formula_exists_heap =  qh;
+			       formula_exists_pure = qp1;
+			       formula_exists_type = tconstr;
+			       (* formula_exists_imm = imm; *)
+			       formula_exists_flow = fl;
+			       formula_exists_branches = b;
+			       formula_exists_label = lbl;
+			       formula_exists_pos = pos})
+        in res
+
+
+(* (\*LDK : add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *\) *)
+(* and add_frac_to_formula_ext_base (ext_base:formula) (fracvar: CP.spec_var) : (formula *CP.spec_var)= *)
+(*   Gen.Debug.no_2 "add_frac_to_formula_ext_base" !print_formula !print_spec_var *)
+(*       (fun (f1,v1) -> "(" ^ !print_formula f1 ^ "," ^ !print_spec_var v1  ^ ")") *)
+(*       add_frac_to_formula_ext_base_x ext_base fracvar *)
+
+(* and add_frac_to_formula_ext_base_x (ext_base:formula) (fracvar: CP.spec_var) : (formula *CP.spec_var)= *)
+(*   let rec helper f v= *)
+(* 	match f with *)
+(*   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> *)
+(*       let f1_1,v1 =  helper f1 v in *)
+(*       let f2_1,v2 = helper f2 v1 in *)
+(*       let res = Or ({formula_or_f1 = f1_1; formula_or_f2 =  f2_1; formula_or_pos = pos}) in *)
+(*       (res,v2) *)
+
+(*   | Base b -> (f,v) (\*LDK: guess (ext_base = Base b) does not use fractional variable *\) *)
+(*   | Exists ({formula_exists_qvars = qsv; *)
+(* 						formula_exists_heap = qh; *)
+(* 						formula_exists_pure = qp; *)
+(* 						formula_exists_type = tconstr; *)
+(* 						(\* formula_exists_imm = imm; *\) *)
+(* 						formula_exists_flow = fl; *)
+(* 						formula_exists_branches = b; *)
+(* 						formula_exists_label = lbl; *)
+(* 						formula_exists_pos = pos}) -> *)
+
+(*         (\*LDK: introduce a new fresh variable and assign it to frac*\) *)
+(*       let nn_frac = ("flted_"^"frac_"^(fresh_trailer ())) in *)
+(* 	  let nv_frac = Cpure.SpecVar (Float,nn_frac, Unprimed) in *)
+(*         (\*bind the new spec var and fracvar*\) *)
+(*       let pure_formula_frac = Cpure.BForm ( (Cpure.Eq ( *)
+(*           (Cpure.Var (nv_frac,no_pos)), *)
+(*           (Cpure.Var (fracvar,no_pos)), *)
+(*           no_pos *)
+(*       )),None) in *)
+(*       let qp1 = add_frac_formula_to_pure qp pure_formula_frac in *)
+(*       let res = *)
+(*       Exists ({formula_exists_qvars = qsv; (\*LDK: add new frac var*\) *)
+(*                (\* formula_exists_qvars = nv_frac::qsv; (\\*LDK: add new frac var*\\) *\) *)
+(* 			   formula_exists_heap =  qh; *)
+(* 			   formula_exists_pure = qp1; *)
+(* 			   formula_exists_type = tconstr; *)
+(* 			   (\* formula_exists_imm = imm; *\) *)
+(* 			   formula_exists_flow = fl; *)
+(* 			   formula_exists_branches = b; *)
+(* 			   formula_exists_label = lbl; *)
+(* 			   formula_exists_pos = pos}) *)
+(*               in (res, nv_frac) *)
+(*   in helper ext_base fracvar *)
+
+
+and add_rhspure_formula_to_pure (p: MCP.mix_formula) (rhs_p: MCP.mix_formula):MCP.mix_formula = 
+  (  match p with
+    | MCP.MemoF m -> 
+        let _ = print_string ("[ add_frac_formula_to_pure] Warning 1: rhs_p not added to MCP.MemoF ") in
+        p
+    | MCP.OnePF p_f -> 
+        (match rhs_p with
+          | MCP.MemoF m1 -> 
+              let _ = print_string ("[ add_frac_formula_to_pure] Warning 2: rhs_p not added to MCP.MemoF") in
+              p
+          | MCP.OnePF rhs_f -> MCP.OnePF (add_rhspure_formula_to_pure_formula p_f rhs_f)
+        )
+  )
+
+and add_rhspure_formula_to_pure_formula (p_f: CP.formula) (rhs_f:CP.formula) =
+  (CP.And (p_f,rhs_f,no_pos))
+
+
+(* and add_frac_formula_to_pure (p: MCP.mix_formula) (frac_p:CP.formula) =  *)
+(*   (  match p with *)
+(*     | MCP.MemoF m ->  *)
+(*         let _ = print_string ("[ add_frac_formula_to_pure] Warning: frac_p not added to MCP.MemoF") in *)
+(*         p *)
+(*     | MCP.OnePF p_f -> MCP.OnePF (add_frac_formula_to_pure_formula p_f frac_p)) *)
+
+
+(* and add_frac_formula_to_pure_formula (p_f: CP.formula) (frac_p:CP.formula) = *)
+(*   (CP.And (p_f,frac_p,no_pos)) *)
+(*   (\* ( match p_f with *\) *)
+(*   (\*   | CP.BForm (b,f_l) -> p_f *\) *)
+(*   (\*   | CP.And (e1,e2,l) -> p_f *\) *)
+(*   (\*   | CP.Or (e1,e2,f_l,l) -> p_f *\) *)
+(*   (\*   | CP.Not (e1,f_l, l) -> p_f *\) *)
+(*   (\*   | CP.Forall (v,e1,f_l, l) -> p_f *\) *)
+  (*   | CP.Exists (v,e1,f_l, l) -> p_f) *)
+
+
 
 (*and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
@@ -1596,7 +1955,135 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
         formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
         formula_exists_label = lbl;
 		formula_exists_pos = pos})
+
+and apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) (fracvar: CP.spec_var) = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+        Or ({formula_or_f1 = apply_one_w_frac s f1 fracvar; formula_or_f2 =  apply_one_w_frac s f2 fracvar; formula_or_pos = pos})
+  | Base ({formula_base_heap = h; 
+	formula_base_pure = p; 
+	formula_base_type = t;
+	(* formula_base_imm = imm; *)
+	formula_base_flow = fl;
+    formula_base_branches = b;
+    formula_base_label = lbl;
+	formula_base_pos = pos}) -> 
+
+      (* let _  = print_string ("apply_one_w_frac: Base"  *)
+      (*                        ^ "\n f = " ^ (!print_formula f) *)
+      (*                        ^ "\n formula_base_heap = " ^ (!print_h_formula h) *)
+      (*                        ^ "\n formula_base_pure = " ^ (!print_mix_f p) *)
+      (*                        ^ "\n") in *)
+      
+        Base ({formula_base_heap = h_apply_one_w_frac s h fracvar; 
+		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p); 
+		formula_base_type = t;
+		(* formula_base_imm = imm; *)
+		formula_base_flow = fl;
+        formula_base_label = lbl;
+        formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
+		formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv; 
+	formula_exists_heap = qh; 
+	formula_exists_pure = qp; 
+	formula_exists_type = tconstr;
+	(* formula_exists_imm = imm; *)
+	formula_exists_flow = fl;
+    formula_exists_branches = b;
+    formula_exists_label = lbl;
+	formula_exists_pos = pos}) -> 
+
+      (* let _  = print_string ("apply_one_w_frac: Exists, before add frac"  *)
+      (*                        ^ "\n f = " ^ (!print_formula f) *)
+      (*                        ^ "\n formula_base_heap = " ^ (!print_h_formula qh) *)
+      (*                        ^ "\n formula_base_pure = " ^ (!print_mix_f qp) *)
+      (*                        ^ "\n") in *)
+
+      (*   (\*LDK: introduce a new fresh variable and assign it to frac*\) *)
+      (* let nn_frac = ("flted_"^"frac"^(fresh_trailer ())) in *)
+	  (* let nv_frac = Cpure.SpecVar (Float,nn_frac, Unprimed) in *)
+      (*   (\*bind the new spec var and fracvar*\) *)
+      (* let pure_formula_frac = Cpure.BForm ( (Cpure.Eq ( *)
+      (*     (Cpure.Var (nv_frac,no_pos)), *)
+      (*     (Cpure.Var (fracvar,no_pos)), *)
+      (*     no_pos *)
+      (* )),None) in *)
+      (* let qp1 = add_frac_formula_to_pure qp pure_formula_frac in *)
+
+      (* let _  = print_string ("apply_one_w_frac: Exists, after add frac"  *)
+      (*                        ^ "\n fracvar = " ^ (!print_spec_var fracvar)                                          ^ "\n nv_frac = " ^ (!print_spec_var nv_frac) *)
+      (*                        ^ "\n formula_base_heap, ph= = " ^ (!print_h_formula qh) *)
+      (*                        ^ "\n formula_base_pure, qp1 = " ^ (!print_mix_f qp1) *)
+      (*                        ^ "\n") in *)
+
+      let rs = if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) 
+          then f 
+	      else 
+            (* let qsv1 = if (List.mem fracvar qsv) then qsv else fracvar::qsv in *)
+            Exists ({formula_exists_qvars = qsv; 
+		                formula_exists_heap =  h_apply_one_w_frac s qh fracvar; 
+		                formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp); 
+		                formula_exists_type = tconstr;
+		(* formula_exists_imm = imm; *)
+		                formula_exists_flow = fl;
+                        formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
+                        formula_exists_label = lbl;
+		                formula_exists_pos = pos}) in
+      rs
+
 		  
+(* and apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) (fracvar: CP.spec_var) = match f with *)
+(*   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->  *)
+(*         Or ({formula_or_f1 = apply_one_w_frac s f1 fracvar; formula_or_f2 =  apply_one_w_frac s f2 fracvar; formula_or_pos = pos}) *)
+(*   | Base ({formula_base_heap = h;  *)
+(* 	formula_base_pure = p;  *)
+(* 	formula_base_type = t; *)
+(* 	(\* formula_base_imm = imm; *\) *)
+(* 	formula_base_flow = fl; *)
+(*     formula_base_branches = b; *)
+(*     formula_base_label = lbl; *)
+(* 	formula_base_pos = pos}) ->  *)
+
+(*       let _  = print_string ("apply_one_w_frac: Base"  *)
+(*                              ^ "\n f = " ^ (!print_formula f) *)
+(*                              ^ "\n formula_base_heap = " ^ (!print_h_formula h) *)
+(*                              ^ "\n formula_base_pure = " ^ (!print_mix_f p) *)
+(*                              ^ "\n") in *)
+      
+(*         Base ({formula_base_heap = h_apply_one_w_frac s h fracvar;  *)
+(* 		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p);  *)
+(* 		formula_base_type = t; *)
+(* 		(\* formula_base_imm = imm; *\) *)
+(* 		formula_base_flow = fl; *)
+(*         formula_base_label = lbl; *)
+(*         formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b; *)
+(* 		formula_base_pos = pos}) *)
+(*   | Exists ({formula_exists_qvars = qsv;  *)
+(* 	formula_exists_heap = qh;  *)
+(* 	formula_exists_pure = qp;  *)
+(* 	formula_exists_type = tconstr; *)
+(* 	(\* formula_exists_imm = imm; *\) *)
+(* 	formula_exists_flow = fl; *)
+(*     formula_exists_branches = b; *)
+(*     formula_exists_label = lbl; *)
+(* 	formula_exists_pos = pos}) ->  *)
+
+(*       let _  = print_string ("apply_one_w_frac: Exists"  *)
+(*                              ^ "\n f = " ^ (!print_formula f) *)
+(*                              ^ "\n formula_base_heap = " ^ (!print_h_formula qh) *)
+(*                              ^ "\n formula_base_pure = " ^ (!print_mix_f qp) *)
+(*                              ^ "\n") in *)
+
+(* 	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f  *)
+(* 	    else Exists ({formula_exists_qvars = qsv;  *)
+(* 		formula_exists_heap =  h_apply_one_w_frac s qh fracvar;  *)
+(* 		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp);  *)
+(* 		formula_exists_type = tconstr; *)
+(* 		(\* formula_exists_imm = imm; *\) *)
+(* 		formula_exists_flow = fl; *)
+(*         formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b; *)
+(*         formula_exists_label = lbl; *)
+(* 		formula_exists_pos = pos}) *)
+
 
 and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = match f with
   | Star ({h_formula_star_h1 = f1; 
@@ -1631,6 +2118,15 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
     h_formula_view_remaining_branches = ann;
     h_formula_view_pruning_conditions = pcond;
 	h_formula_view_pos = pos} as g) -> 
+
+      (* let _  = print_string ("h_apply_one : ViewNode \n ") in *)
+
+      (* let _ = match frac with *)
+      (*   | None -> print_string "NONE" *)
+      (*   | Some f -> print_string "SOME" *)
+      (* in *)
+
+
         ViewNode {g with h_formula_view_node = subst_var s x; 
 		(* h_formula_view_name = c;  *)
         (* h_formula_view_imm = imm;   *)
@@ -1655,10 +2151,113 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
     h_formula_data_remaining_branches = ann;
     h_formula_data_pruning_conditions = pcond;
 	h_formula_data_pos = pos}) -> 
+
+      (* let _  = print_string ("h_apply_one : DataNode \n ") in *)
+      (* let _ = match frac with *)
+      (*   | None -> print_string "NONE \n" *)
+      (*   | Some f -> print_string "SOME \n" *)
+      (* in *)
+
+
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
     	h_formula_data_frac_perm = map_opt (subst_var s) frac;  (*LDK*)
+		h_formula_data_arguments = List.map (subst_var s) svs;
+		h_formula_data_label = lbl;
+        h_formula_data_remaining_branches = ann;
+        h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
+		h_formula_data_pos = pos})
+
+  | HTrue -> f
+  | HFalse -> f
+  | Hole _ -> f    
+
+
+
+
+and h_apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) (fracvar: CP.spec_var) = match f with
+  | Star ({h_formula_star_h1 = f1; 
+	h_formula_star_h2 = f2; 
+	h_formula_star_pos = pos}) -> 
+        Star ({h_formula_star_h1 = h_apply_one_w_frac s f1 fracvar; 
+	    h_formula_star_h2 = h_apply_one_w_frac s f2 fracvar; 
+	    h_formula_star_pos = pos})
+  | Phase ({h_formula_phase_rd = f1; 
+	h_formula_phase_rw = f2; 
+	h_formula_phase_pos = pos}) -> 
+        Phase ({h_formula_phase_rd = h_apply_one_w_frac s f1 fracvar; 
+	    h_formula_phase_rw = h_apply_one_w_frac s f2 fracvar; 
+	    h_formula_phase_pos = pos})
+  | Conj ({h_formula_conj_h1 = f1; 
+	h_formula_conj_h2 = f2; 
+	h_formula_conj_pos = pos}) -> 
+        Conj ({h_formula_conj_h1 = h_apply_one_w_frac s f1 fracvar; 
+	    h_formula_conj_h2 = h_apply_one_w_frac s f2 fracvar; 
+	    h_formula_conj_pos = pos})
+  | ViewNode ({h_formula_view_node = x; 
+	h_formula_view_name = c; 
+    h_formula_view_imm = imm; 
+	h_formula_view_frac_perm = frac; (*LDK*)
+	h_formula_view_arguments = svs; 
+	h_formula_view_modes = modes;
+	h_formula_view_coercible = coble;
+	h_formula_view_origins = orgs;
+	h_formula_view_original = original;
+	h_formula_view_unfold_num = i;
+	h_formula_view_label = lbl;
+    h_formula_view_remaining_branches = ann;
+    h_formula_view_pruning_conditions = pcond;
+	h_formula_view_pos = pos} as g) -> 
+
+      (* let _  = print_string ("h_apply_one_w_frac : ViewNode, ") in *)
+      let frac1 = match frac with
+        | None -> 
+            (* let _ = print_string "NONE -> fracvar \n" in *)
+            (Some fracvar)
+        | Some f -> 
+            (* let _ = print_string "SOME f \n" in *)
+            frac
+      in
+        ViewNode {g with h_formula_view_node = subst_var s x; 
+		(* h_formula_view_name = c;  *)
+        (* h_formula_view_imm = imm;   *)
+        h_formula_view_frac_perm = map_opt (subst_var s) frac1;  (*LDK*)
+		h_formula_view_arguments = List.map (subst_var s) svs;
+	   (*  h_formula_view_modes = modes; *)
+	   (*  h_formula_view_coercible = coble; *)
+	   (*  h_formula_view_origins = orgs; *)
+	   (*  h_formula_view_original = original; *)
+	   (* h_formula_view_unfold_num = i; *)
+	   (*  h_formula_view_label = lbl; *)
+       (*  h_formula_view_remaining_branches = ann; *)
+        h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
+		(* h_formula_view_pos = pos *)
+        }
+  | DataNode ({h_formula_data_node = x; 
+	h_formula_data_name = c; 
+    h_formula_data_imm = imm; 
+    h_formula_data_frac_perm = frac; (*LDK*)
+	h_formula_data_arguments = svs; 
+	h_formula_data_label = lbl;
+    h_formula_data_remaining_branches = ann;
+    h_formula_data_pruning_conditions = pcond;
+	h_formula_data_pos = pos}) -> 
+
+      (* let _  = print_string ("h_apply_one_w_frac : DataNode, ") in *)
+      let frac1 = match frac with
+        | None -> 
+            (* let _ = print_string "NONE -> fracvar \n" in *)
+            (Some fracvar)
+        | Some f -> 
+            (* let _ = print_string "SOME f \n" in *)
+            frac
+      in
+
+        DataNode ({h_formula_data_node = subst_var s x; 
+		h_formula_data_name = c; 
+    	h_formula_data_imm = imm;  
+    	h_formula_data_frac_perm = map_opt (subst_var s) frac1;  (*LDK*)
 		h_formula_data_arguments = List.map (subst_var s) svs;
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;

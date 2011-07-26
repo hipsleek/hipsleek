@@ -8,7 +8,7 @@ open Cpure
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
-type var_aset = Gen.EqMap(SV).emap 
+type var_aset = Gen.EqMap(SV).emap
 
 let empty_var_aset = EMapSV.mkEmpty 
 

@@ -808,7 +808,7 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 (*LDK ?? how to trace*)
 and float_out_exps_from_heap (f:formula ):formula = float_out_exps_from_heap_x f
 (* let pr = Iprinter.string_of_formula in *)
-(* Gen.Debug.ho_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f *)
+(* Gen.Debug.no_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f *)
 
 and float_out_exps_from_heap_x (f:formula ):formula = 
   

@@ -1163,7 +1163,18 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   Gen.Debug.no_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
 
 let imply ante conseq imp_no =
+
+  (* let f1 = (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in *)
+  (* let _ = print_string ("imply: before normalize"  *)
+  (*                       ^ "f1 = " ^ string_of_formula f1 *)
+  (*                       ^ "\n\n") in *)
+
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
+
+  (* let _ = print_string ("imply: after normalize"  *)
+  (*                       ^ "f = " ^ string_of_formula f *)
+  (*                       ^ "\n\n") in *)
+
   (*LDK: example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
   let fstring = string_of_formula sf in
