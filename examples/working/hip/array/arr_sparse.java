@@ -134,7 +134,7 @@ void setsa(SparseArray a, int i, int v)
 	int[] bk = a.back;
 	val[i] = v;
 	if (idx[i] >= a.n || idx[i] < 0) {
-		dprint;
+//		dprint;
 		assert n < 1000;
 		assume n < 1000;
 		idx[i] = a.n;

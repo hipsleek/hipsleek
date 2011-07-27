@@ -25,7 +25,7 @@ int sigmaright(int[] a, int i, int j)
 }
 
 int sigmaleft(int[] a, int i, int j) 
-	requires [t,k] dom(a,t,k) & t <= i & j <= k
+	requires [t,k] dom(a,t,k) & t <= i & j <= k & induce(j - i)
 	ensures sumarray(a,i,j,res);
 {
 	if (i > j)

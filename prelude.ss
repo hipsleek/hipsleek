@@ -184,6 +184,9 @@ int pow___(int a, int b)
 // <NEW> PRIMITIVE RELATIONS
 //////////////////////////////////////////////////////////////////
 
+// Special relation to indicate the value to do induction on
+relation induce(int value) == true.
+
 relation dom(int[] a, int low, int high) == true.
 
 relation amodr(int[] a, int[] b, int i, int j) == 
@@ -198,18 +201,18 @@ relation amodr(int[] a, int[] b, int i, int j) ==
 //////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___(int[] a, int i) 
-	requires [___AnHoaArrayLowerBound,___AnHoaArrayUpperBound]
-				dom(a,___AnHoaArrayLowerBound,___AnHoaArrayUpperBound) 
-				& ___AnHoaArrayLowerBound <= i 
-				& i <= ___AnHoaArrayUpperBound
+	requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
 	ensures res = a[i];
 
 int[] update___(int[] a, int i, int v) 
-	requires [___AnHoaArrayLowerBound,___AnHoaArrayUpperBound]
-				dom(a,___AnHoaArrayLowerBound,___AnHoaArrayUpperBound) 
-				& ___AnHoaArrayLowerBound <= i 
-				& i <= ___AnHoaArrayUpperBound
-	ensures dom(res,___AnHoaArrayLowerBound,___AnHoaArrayUpperBound) 
+	requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+	ensures dom(res,ahalb,ahaub) 
 				& update_array(a,i,v,res);
 
 int[] aalloc___(int dim) 
