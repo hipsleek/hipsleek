@@ -3993,7 +3993,7 @@ and dim_unify d1 d2 =
 
 and must_unify (k1 : typ) (k2 : typ) stab pos : typ  =
   let pr = string_of_typ in
-  Gen.Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 stab pos) k1 k2
+  Gen.Debug.no_3 "must_unify" pr pr string_of_stab pr (fun _ _ _ -> must_unify_x k1 k2 stab pos) k1 k2 stab
 
 and must_unify_x (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_type k1 k2 stab in
@@ -4008,6 +4008,7 @@ and must_unify_expect (k1 : typ) (k2 : typ) stab pos : typ  =
   match k with
     | Some r -> r
     | None -> 
+        let _ = print_string ("must_unify_expect: TYPE ERROR \n\n") in
         report_error pos ("TYPE ERROR : Found "
       ^(string_of_typ (get_type_entire stab k1))
       ^" but expecting "^(string_of_typ (get_type_entire  stab k2)))
@@ -4031,9 +4032,14 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Float, NUM -> Some Float (* give refined type *)
       | NUM, Int -> Some Int
       | NUM, Float -> Some Float
-      | Int, Float -> None
-      | Float, Int -> None
+      | Int, Float -> Some Float (*LDK*)
+      | Float, Int -> Some Float (*LDK*)
+      (* | Int, Float -> None *)
+      (* | Float, Int -> None *)
       | t1, t2  -> 
+
+          (* let _ = print_string ("\nunify_type_modify: t1, t2 \n\n") in *)
+
             if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
             else if sub_type t2 t1 then Some k1
             else 
@@ -4073,7 +4079,7 @@ and subtype_expect_test _ _ = true
 
 and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
   let pr = string_of_typ in
-  Gen.Debug.no_2 "unify_expect_modify" pr pr (pr_option pr) (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 stab) k1 k2
+  Gen.Debug.no_3 "unify_expect_modify" pr pr string_of_stab (pr_option pr) (fun _ _ _-> unify_expect_modify_x modify_flag k1 k2 stab) k1 k2 stab
 
 (* k2 is expected type *)
 and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
@@ -4085,6 +4091,8 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
       | _, UNK -> Some k1
       | Int, NUM -> Some Int (* give refined type *)
       | Float, NUM -> Some Float (* give refined type *)
+      | Int , Float -> Some Float (*LDK*)
+      | Float , Int -> Some Float (*LDK*)
       | t1, t2  -> 
             if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
               (* else if sub_type t2 t1 then Some k1 *)
@@ -4128,11 +4136,40 @@ and repl_tvar_in_x unify flag stab i k =
       match et with
         | None -> et
         | Some t1 -> begin
-            if not(test en) then et
-            else match en.sv_info_kind with
+            if not(test en) then 
+              (* let _ = print_string ("repl_tvar_in_x: res_t = :" *)
+              (*                       ^ "\n v = " ^ Cprinter.string_of_ident v *)
+              (*                       ^ "\n en.sv_info_kind = " ^ string_of_typ en.sv_info_kind *)
+              (*                       ^ "\n en.id = " ^ string_of_int en.id *)
+              (*                       ^ "\n et = " ^ pr_option string_of_typ et *)
+              (*                       ^"\n\n") in *)
+              et
+            else 
+
+              (* let _ = print_string ("repl_tvar_in_x: res_t = :" *)
+              (*                       ^ "\n v = " ^ Cprinter.string_of_ident v *)
+              (*                       ^ "\n en.sv_info_kind = " ^ string_of_typ en.sv_info_kind *)
+              (*                       ^ "\n en.id = " ^ string_of_int en.id *)
+              (*                       ^ "\n et = " ^ pr_option string_of_typ et *)
+              (*                       ^ "\n t1 = " ^ string_of_typ t1 *)
+              (*                       ^"\n\n") in *)
+              match en.sv_info_kind with
               | TVar _ -> et
               | t -> (unify t t1)
+
+              (* match en.sv_info_kind with *)
+              (* | TVar _ -> et *)
+              (* | t -> (unify t t1) *)
           end) stab (Some new_k) in
+
+
+  (* let _ = print_string ("repl_tvar_in_x:" *)
+  (*                       ^ "\n i = " ^ string_of_int i *)
+  (*                       ^ "\n k = " ^ string_of_typ k *)
+  (*                       ^ "\n stab = " ^ string_of_stab stab *)
+  (*                       ^ "\n res_t = " ^ pr_option string_of_typ res_t *)
+  (*                       ^"\n\n") in *)
+
   match res_t with 
     | None -> None
     | Some ut ->
@@ -4295,24 +4332,98 @@ and gather_type_info_exp_x a0 stab et =
           let t = gather_type_info_var sv stab et pos
           in t
     | IP.IConst (_,pos) -> 
+
+        (* let _ = print_string ("gather_type_info_exp_x:  IP.IConst" *)
+        (*                       ^ "\n a0 = " ^ Iprinter.string_of_formula_exp a0 *)
+        (*                       ^ " \n\n") in *)
+
           let t = I.int_type in
           let _ = must_unify_expect t et stab pos in
           t
     | IP.FConst (_,pos) -> 
+
+        (* let _ = print_string ("gather_type_info_exp_x:  IP.FConst" *)
+        (*                       ^ "\n a0 = " ^ Iprinter.string_of_formula_exp a0 *)
+        (*                       ^ " \n\n") in *)
+
           let t = I.float_type in
           let _ = must_unify_expect t et stab pos in
           t
     | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
 	          IP.Min (a1, a2, pos) 
-    | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) -> (* Num t: t -> t -> t *)
+    | IP.Mult (a1, a2, pos) -> (* Num t: t -> t -> t *)
+        
+        (* let _ = print_string ("gather_type_info_exp_x:  IP.Mult \n\n") in *)
+
           let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
           let new_et = fresh_tvar stab in
 	      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
 	      let t2 = gather_type_info_exp_x a2 stab new_et in
+
+
+
           let t1 = must_unify_expect t1 et stab pos in
           let t2 = must_unify_expect t2 t1 stab pos in
           t2
+    | IP.Div (a1, a2, pos) -> (* Num t: t -> t -> t *)
+
+        (* let _ = print_string ("gather_type_info_exp_x:  IP.Div \n\n") in *)
+
+        (* let _ = print_string ("\ngather_type_info_exp_x:  IP.Div, before must_unify_expect" *)
+        (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+        (*                       ^ " \n\n") in *)
+
+          let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
+
+          (* let _ = print_string ("\ngather_type_info_exp_x:  IP.Div, after must_unify_expect" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                     ^ " \n\n") in *)
+
+          let new_et = fresh_tvar stab in
+
+
+          (* let _ = print_string ("\ngather_type_info_exp_x:  IP.Div, before t1" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                     ^ " \n\n") in *)
+
+	      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
+
+          (* let _ = print_string ("\ngather_type_info_exp_x:  IP.Div, before t2" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                     ^ " \n\n") in *)
+
+	      let t2 = gather_type_info_exp_x a2 stab new_et in
+
+          (* let _ = print_string ("\ngather_type_info_exp_x:  IP.Div, after t2" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                       ^ "\n et = " ^ (string_of_typ et) *)
+          (*                       ^ "\n new_et = " ^ (string_of_typ new_et) *)
+          (*                       ^ "\n (a1 , t1) = " ^ Iprinter.string_of_formula_exp a1 ^ " , " ^ (string_of_typ t1) *)
+          (*                       ^ "\n (a2 , t2) = " ^ Iprinter.string_of_formula_exp a2 ^ " , " ^ (string_of_typ t2) *)
+          (*                     ^ " \n\n") in *)
+
+
+          let t1 = must_unify_expect t1 et stab pos in
+
+
+          (* let _ = print_string ("\ngather_type_info_exp_x:  IP.Div, after must_unify_expec t1" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                     ^ " \n\n") in *)
+
+          let t2 = must_unify_expect t2 t1 stab pos in
+
+          (* let _ = print_string ("\ngather_type_info_exp_x:  IP.Div, after must_unify_expect t2" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                     ^ " \n\n") in *)
+          t2
+
     | IP.BagDiff (a1,a2,pos) ->
+
+        (* let _ = print_string ("gather_type_info_exp_x:  IP.BagDiff" *)
+        (*                       ^ "\n a0 = " ^ Iprinter.string_of_formula_exp a0 *)
+        (*                       ^ " \n\n") in *)
+
+
           let el_t = fresh_tvar stab in
           let new_et = must_unify_expect_test (BagT el_t) et pos in 
 	      let t1 = gather_type_info_exp_x a1 stab new_et in 
@@ -4641,9 +4752,32 @@ and gather_type_info_b_formula_x prog b0 stab =
           let _ = must_unify t1 t2 stab pos in
           ()
     | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) ->
+
+        (* let _ = print_string ("\ngather_type_info_b_formula:  IP.Eq" *)
+        (*                       ^ "\n a0 = " ^ Iprinter.string_of_b_formula b0 *)
+        (*                       ^ " \n\n") in *)
+
           let new_et = fresh_tvar stab in
+
+          (* let _ = print_string ("\n gather_type_info_b_formula:  IP.EQ | IP.NEQ, before t1" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                     ^ " \n\n") in *)
+
 	      let t1 = gather_type_info_exp a1 stab new_et in (* tvar, Int, Float *)
+
+          (* let _ = print_string ("\n gather_type_info_b_formula:  IP.EQ | IP.NEQ, before t2" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                     ^ " \n\n") in *)
+
 	      let t2 = gather_type_info_exp a2 stab new_et in
+
+          (* let _ = print_string ("\n gather_type_info_b_formula:  IP.EQ | IP.NEQ, before must_unify" *)
+          (*                       ^ "\n stab = " ^ (string_of_stab stab) *)
+          (*                       ^ "\n new_et = " ^ (string_of_typ new_et) *)
+          (*                       ^ "\n (a1 , t1) = " ^ Iprinter.string_of_formula_exp a1 ^ " , " ^ (string_of_typ t1) *)
+          (*                       ^ "\n (a2 , t2) = " ^ Iprinter.string_of_formula_exp a2 ^ " , " ^ (string_of_typ t2) *)
+          (*                     ^ " \n\n") in *)
+
           let _ = must_unify t1 t2 stab pos  in (* UNK, Int, Float, TVar *)
           ()
     | IP.BagMax ((v1, p1), (v2, p2), pos) 

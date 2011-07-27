@@ -491,22 +491,99 @@ let has_exists2 f0 =
   CP.fold_formula_arg f0 false (f_f, f_bf, f_e) (f_f_arg, idf2, idf2) or_list
 
 
-(* LDK: not hold when using fractional permission*)
-(*
- * e1 < e2 ~> e1 <= e2 -1
- * e1 > e2 ~> e1 >= e2 + 1
- * e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1
- *) 
+(* LDK: not hold when using fractional permission *)
+(* e1 < e2 ~> e1 <= e2 -1 *)
+(* e1 > e2 ~> e1 >= e2 + 1 *)
+(* e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1  *)
+ 
+ let rec strengthen_formula f0 =
+  match f0 with
+  | CP.BForm (b,lbl) ->
+      let r = match b with
+        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
+        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
+        | CP.Neq (e1, e2, l) ->
+            let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+            let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+            CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)
+        | _ -> f0
+      in r
+  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
+  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
+  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
+  | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
+  | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
+
+
+let strengthen2 f0 =
+  let f_f f = match f with
+    | CP.BForm (CP.Neq (e1, e2, l), lbl) ->
+        let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+        let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        Some (CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l))
+    | _ -> None
+  in
+  let f_bf bf = match bf with
+    | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
+    | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
+    | _ -> Some bf
+  in
+  CP.map_formula f0 (f_f, f_bf, nonef)
+
+(* e1 <= e2 ~> e1 < e2 + 1 *)
+(* e1 >= e2 ~> e1 > e2 - 1 *)
+(* e1 = e2 ~> e2 - 1 < e1 < e2 + 1 *)
+let rec weaken_formula f0 =
+  match f0 with
+  | CP.BForm (b,lbl) ->
+      let r = match b with
+        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl)
+        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl)
+        | CP.Eq (e1, e2, l) ->
+            let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+            let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+            CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
+        | _ -> f0
+      in r
+  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
+  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
+  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
+  | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
+  | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
+
+let weaken2 f0 =
+  let f_f f = match f with
+    | CP.BForm (CP.Eq (e1, e2, l), lbl) ->
+        let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+        let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        Some (CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l))
+    | _ -> None
+  in
+  let f_bf bf = match bf with
+    | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
+    | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
+    | _ -> Some bf
+  in
+  CP.map_formula f0 (f_f, f_bf, nonef)
+
+
+(* (\*LDK*\) *)
+
+(* (\* *)
+(*  * e1 < e2 ~> e1 <= e2 -0.01 *)
+(*  * e1 > e2 ~> e1 >= e2 + 0.01 *)
+(*  * e1 != e2 ~> e1 >= e2 + 0.01 or e1 <= e2 - 0.01 *)
+(*  *\)  *)
  
 (*  let rec strengthen_formula f0 =  *)
 (*   match f0 with *)
 (*   | CP.BForm (b,lbl) ->  *)
 (*       let r = match b with *)
-(*         | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl) *)
-(*         | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl) *)
+(*         | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l), lbl) *)
+(*         | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l), lbl) *)
 (*         | CP.Neq (e1, e2, l) -> *)
-(*             let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
-(*             let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*             let lp = CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in *)
+(*             let rp = CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in *)
 (*             CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l) *)
 (*         | _ -> f0  *)
 (*       in r *)
@@ -520,32 +597,32 @@ let has_exists2 f0 =
 (* let strengthen2 f0 = *)
 (*   let f_f f = match f with *)
 (*     | CP.BForm (CP.Neq (e1, e2, l), lbl) -> *)
-(*         let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
-(*         let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*         let lp = CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in *)
+(*         let rp = CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in *)
 (*         Some (CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)) *)
 (*     | _ -> None *)
 (*   in *)
 (*   let f_bf bf = match bf with *)
-(*     | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)) *)
-(*     | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)) *)
+(*     | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l)) *)
+(*     | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l)) *)
 (*     | _ -> Some bf *)
 (*   in *)
 (*   CP.map_formula f0 (f_f, f_bf, nonef) *)
 
-(*
- * e1 <= e2 ~> e1 < e2 + 1
- * e1 >= e2 ~> e1 > e2 - 1
- * e1 = e2 ~> e2 - 1 < e1 < e2 + 1
- *)
+(* (\* *)
+(*  * e1 <= e2 ~> e1 < e2 + 0.01 *)
+(*  * e1 >= e2 ~> e1 > e2 - 0.01 *)
+(*  * e1 = e2 ~> e2 - 0.01 < e1 < e2 + 0.01 *)
+(*  *\) *)
 (* let rec weaken_formula f0 =  *)
 (*   match f0 with *)
 (*   | CP.BForm (b,lbl) -> *)
 (*       let r = match b with *)
-(*         | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl) *)
-(*         | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl) *)
+(*         | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l),l),lbl) *)
+(*         | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l),l),lbl) *)
 (*         | CP.Eq (e1, e2, l) -> *)
-(*             let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
-(*             let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*             let lp = CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in *)
+(*             let rp = CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in *)
 (*             CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l) *)
 (*         | _ -> f0  *)
 (*       in r *)
@@ -555,102 +632,21 @@ let has_exists2 f0 =
 (*   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l) *)
 (*   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l) *)
 
+
 (* let weaken2 f0 = *)
 (*   let f_f f = match f with *)
 (*     | CP.BForm (CP.Eq (e1, e2, l), lbl) -> *)
-(*         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in *)
-(*         let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in *)
+(*         let lp = CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in *)
+(*         let rp = CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in *)
 (*         Some (CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)) *)
 (*     | _ -> None *)
 (*   in *)
 (*   let f_bf bf = match bf with *)
-(*     | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)) *)
-(*     | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)) *)
+(*     | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l)) *)
+(*     | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l)) *)
 (*     | _ -> Some bf *)
 (*   in *)
 (*   CP.map_formula f0 (f_f, f_bf, nonef) *)
-
-
-(*LDK*)
-
-(*
- * e1 < e2 ~> e1 <= e2 -0.01
- * e1 > e2 ~> e1 >= e2 + 0.01
- * e1 != e2 ~> e1 >= e2 + 0.01 or e1 <= e2 - 0.01
- *) 
- 
- let rec strengthen_formula f0 = 
-  match f0 with
-  | CP.BForm (b,lbl) -> 
-      let r = match b with
-        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l), lbl)
-        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l), lbl)
-        | CP.Neq (e1, e2, l) ->
-            let lp = CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
-            let rp = CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
-            CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)
-        | _ -> f0 
-      in r
-  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
-  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
-  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
-  | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
-  | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
-
-
-let strengthen2 f0 =
-  let f_f f = match f with
-    | CP.BForm (CP.Neq (e1, e2, l), lbl) ->
-        let lp = CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
-        let rp = CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
-        Some (CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l))
-    | _ -> None
-  in
-  let f_bf bf = match bf with
-    | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l))
-    | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l))
-    | _ -> Some bf
-  in
-  CP.map_formula f0 (f_f, f_bf, nonef)
-
-(*
- * e1 <= e2 ~> e1 < e2 + 0.01
- * e1 >= e2 ~> e1 > e2 - 0.01
- * e1 = e2 ~> e2 - 0.01 < e1 < e2 + 0.01
- *)
-let rec weaken_formula f0 = 
-  match f0 with
-  | CP.BForm (b,lbl) ->
-      let r = match b with
-        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l),l),lbl)
-        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l),l),lbl)
-        | CP.Eq (e1, e2, l) ->
-            let lp = CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
-            let rp = CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
-            CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
-        | _ -> f0 
-      in r
-  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
-  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
-  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
-  | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
-  | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
-
-
-let weaken2 f0 =
-  let f_f f = match f with
-    | CP.BForm (CP.Eq (e1, e2, l), lbl) ->
-        let lp = CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l) in
-        let rp = CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l) in
-        Some (CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l))
-    | _ -> None
-  in
-  let f_bf bf = match bf with
-    | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.FConst (0.01, no_pos), l), l))
-    | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.FConst (-0.01, no_pos), l), l))
-    | _ -> Some bf
-  in
-  CP.map_formula f0 (f_f, f_bf, nonef)
 
  (***********************************
  existential quantifier elimination 
