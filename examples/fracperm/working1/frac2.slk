@@ -56,3 +56,19 @@ print residue. //valid
 //(9)
 checkentail x::node(f)<_, x1> * x1::node(f)<_, x2> * x2::ll(f)<m>|- x::ll(f1)<n>.
 print residue. //valid
+
+//(10)
+checkentail x::node(1.0)<_, x1> * x1::node(f)<_, null> |- x::ll(f)<n>.
+print residue. //fail
+
+//(11)
+checkentail x::node(f)<_, x1> * x1::node(f)<_, null> |- x::ll(f)<n>.
+print residue. //valid
+
+//(12)
+checkentail x::node(0.5)<_, x1> * x1::node(f)<_, null> |- x::ll(0.5)<n>.
+print residue. //fail
+
+//(13)
+checkentail x::node(f)<_, x1> * x1::node(0.5)<_, null> |- x::ll(0.5)<n>.
+print residue. //fail

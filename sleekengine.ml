@@ -255,38 +255,89 @@ let process_data_def ddef =
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
 	
-let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
-  | MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)
-  | MetaFormLCF mf -> (Cformula.formula_to_struc_formula (List.hd mf))
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
+  let rec helper (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
+  match mf0 with
+  | MetaFormCF mf -> 
+
+      (* let _ = print_string ("meta_to_struc_formula: MetaFormCF" *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in  *)
+
+      (Cformula.formula_to_struc_formula mf)
+  | MetaFormLCF mf -> 
+
+      (* let _ = print_string ("meta_to_struc_formula: MetaFormLCF" *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in  *)
+
+      (Cformula.formula_to_struc_formula (List.hd mf))
   | MetaForm mf -> 
+
+      (* let _ = print_string ("meta_to_struc_formula: betaForm" *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in   *)    
+
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true [] in
       AS.trans_I2C_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
-  | MetaVar mvar -> begin
+  | MetaVar mvar -> 
+
+      (* let _ = print_string ("meta_to_struc_formula: MetaVar" *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in  *)
+      begin
       try 
         let mf = get_var mvar in
-          meta_to_struc_formula mf quant fv_idents stab
+          helper mf quant fv_idents stab
       with
         | Not_found ->
           dummy_exception() ;
           print_string (mvar ^ " is undefined.\n");
           raise SLEEK_Exception
       end
-  | MetaCompose (vs, mf1, mf2) -> begin
-      let cf1 = meta_to_struc_formula mf1 quant fv_idents stab in
-      let cf2 = meta_to_struc_formula mf2 quant fv_idents stab in
+  | MetaCompose (vs, mf1, mf2) -> 
+
+      (* let _ = print_string ("meta_to_struc_formula: MetaCompose" *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in  *)
+
+      begin
+      let cf1 = helper mf1 quant fv_idents stab in
+      let cf2 = helper mf2 quant fv_idents stab in
       let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
       let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
       res
     end
   | MetaEForm b -> 
+
+      (* let _ = print_string ("meta_to_struc_formula: MetaEForm" *)
+      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
+      (*                       ^ "\n\n") in *) 
+
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p b false true [] in
+
+
+      (* let _ = print_string ("meta_to_struc_formula: MetaEForm" *)
+      (*                       ^ "\n wf = " ^ (Iprinter.string_of_struc_formula wf) *)
+      (*                       ^ "\n\n") in   *)    
+
       let res = AS.trans_I2C_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
       (*let _ = print_string (" before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in*)
       res
+  in helper mf0 quant fv_idents stab 
+
+
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Gen.Debug.no_4 "meta_to_struc_formula"
+  string_of_meta_formula
+  string_of_bool
+  string_of_ident_list
+  AS.string_of_stab
+  Cprinter.string_of_struc_formula
+  meta_to_struc_formula mf0 quant fv_idents stab
 
 (* An Hoa : DETECT THAT EITHER OF 
 AS.case_normalize_formula iprog h mf
@@ -355,7 +406,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^"\n\n") in *)
 
   let ante = meta_to_formula iante0 false [] stab in    
-  (* let _ = print_string ("\n [Debug] ante = "^(Cprinter.string_of_formula ante)^"\n\n") in *)
+
+  (* let _ = print_string ("run_entail_check:"  *)
+  (*                       ^ "\n ante = "^(Cprinter.string_of_formula ante) *)
+  (*                       ^"\n\n") in *)
 
   (* let _ = print_string ("run_entail_check: " *)
   (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
@@ -367,16 +421,28 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
   let fvs = CF.fv ante in
 
-  (* let _ = print_string ("\n [Debug] fvs = "^(Cprinter.string_of_spec_var_list fvs)^"\n\n") in *)
+  (* let _ = print_string ("run_entail_check:"  *)
+  (*                       ^ "\n fvs = "^(Cprinter.string_of_spec_var_list fvs) *)
+  (*                       ^"\n\n") in *)
 
   let fv_idents = List.map CP.name_of_spec_var fvs in
 
-  (* let _ = print_string ("\n [Debug] fv_idents = "^(Cprinter.string_of_ident_list fv_idents ",")^"\n\n") in *)
+  (* let _ = print_string ("run_entail_check:"  *)
+  (*                       ^ "\n fv_idents = "^(Cprinter.string_of_ident_list fv_idents ",") *)
+  (*                       ^"\n\n") in *)
 
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+
+  (* let _ = print_string ("run_entail_check:" *)
+  (*                       ^ "\n conseq = "^(Cprinter.string_of_struc_formula conseq) *)
+  (*                       ^"\n\n") in *)
+
   let conseq = Solver.prune_pred_struc !cprog true conseq in
 
-  (* let _ = print_string ("\n [Debug] conseq = "^(Cprinter.string_of_struc_formula conseq)^"\n\n") in *)
+  (* let _ = print_string ("run_entail_check:" *)
+  (*                       ^ "\n ante = "^(Cprinter.string_of_formula ante) *)
+  (*                       ^ "\n conseq = "^(Cprinter.string_of_struc_formula conseq) *)
+  (*                       ^"\n\n") in *)
 
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in

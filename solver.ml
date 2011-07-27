@@ -5664,7 +5664,30 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 	        | Ctx c -> (None,Some c) *)
   end
     
-    
+(*create an equality constrain between LHS frac var and RHS frac var
+and add it to RHS pure formula (to_rhs) *)
+and create_bind_to_rhs (rhs_p:MCP.mix_formula) (l_f:CP.spec_var) (r_f:CP.spec_var) : MCP.mix_formula =
+    Gen.Debug.no_3 "create_bind_to_rhs" 
+        Cprinter.string_of_mix_formula 
+        Cprinter.string_of_spec_var 
+        Cprinter.string_of_spec_var 
+        Cprinter.string_of_mix_formula
+    create_bind_to_rhs_x rhs_p l_f r_f
+
+and create_bind_to_rhs_x (rhs_p:MCP.mix_formula) (l_f:CP.spec_var) (r_f:CP.spec_var) : MCP.mix_formula =
+  (match rhs_p with
+    | MCP.MemoF m ->
+        let _ = print_string ("[create_bind_to_rhs] Warning: rhs_p not added to MCP.MemoF") in
+        rhs_p
+    | MCP.OnePF p_f ->
+      let frac_p = Cpure.BForm ( (Cpure.Eq (
+          (Cpure.Var (l_f,no_pos)),
+          (Cpure.Var (r_f,no_pos)),
+          no_pos
+      )),None) in
+      let res = (CP.And (p_f,frac_p,no_pos)) in
+      (MCP.OnePF res)
+  )
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -5681,7 +5704,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     Debug.devel_pprint ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate)) pos;
     Debug.devel_pprint ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs)) pos;
 
-    let l_args, l_node_name = match l_node with
+    let l_args, l_node_name, l_frac = match l_node with
       | DataNode {h_formula_data_name = l_node_name;
                   h_formula_data_frac_perm = frac;
                   h_formula_data_arguments = l_args}
@@ -5689,11 +5712,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   h_formula_view_frac_perm = frac;
                   h_formula_view_arguments = l_args} ->
           (match frac with
-            | None -> (l_args, l_node_name)
-            | Some f -> (f::l_args, l_node_name))
+            | None -> (l_args, l_node_name,frac)
+            | Some f -> (f::l_args, l_node_name,frac))
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
 
-    let r_args, r_node_name, r_var, frac = match r_node with
+    let r_args, r_node_name, r_var, r_frac = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
                   h_formula_data_frac_perm = frac;
                   h_formula_data_arguments = r_args;
@@ -5788,22 +5811,34 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* (\*LDK*\) *)
     (* let _ = print_string ("do_match_x: before is_fracvar_from_lhs" *)
     (*                       ^ "\n new_exist_vars  = " ^ (Cprinter.string_of_spec_var_list new_exist_vars) *)
+    (*                       ^ "\n estate.es_evars = " ^ (Cprinter.string_of_spec_var_list estate.es_evars) *)
+    (*                       ^ "\n estate.es_gen_impl_vars = " ^ (Cprinter.string_of_spec_var_list estate.es_gen_impl_vars) *)
     (*                       ^"\n\n") in *)
 
-    (*if frac var is 
-    exist var -> keep at RHS
-    impl vars -> instantiated and move to RHS
-    otherwise, it is the variable from the LHS -> put it into evars
-      ,is_fracvar_from_lhs = true, and later will be remove
+    (* LDK:
+       if rhs frac var is 
+        - exist var -> keep at RHS
+        - impl vars -> instantiated and move to LHS
+        - otherwise, 2 scenarioes:
+       (1) it is the frac var from the rhs, which replaces the frac 
+       variable in the RHS. There is pure part which should be keep in 
+       the RHS ->temporarily put it into evars (later will be removed) 
+       to keep its constraint on the RHS. 
+       Note: Create a new binding between it and l_frac does not effect
+       the soundness ??? (I hope so)
+       (2) it was an impl var and was instantiated to the LHS. Because it
+       was an impl var, there is no pure part along with it => we need to
+       create a binding between it and its LSH counterpart.
+       Here, is_fracvar_from_lhs = true, and we create a binding between l_frac and r_frac which is added to to_rhs to keep the constraint at the RHS
     *)
-    let is_fracvar_from_lhs, new_exist_vars = (match frac with
+    let is_fracvar_from_lhs, new_exist_vars = (match r_frac with
       | None -> (false, estate.es_evars)
       | Some f -> if (List.mem f estate.es_evars) then
             (false,estate.es_evars)
           else if (List.mem f estate.es_gen_impl_vars) then
             (false,estate.es_evars)
           else
-            (true,f::estate.es_evars)
+            (true,f::estate.es_evars) (*if true, we have to create the binding between l_frac and r_frac*)
     )
     in
 
@@ -5853,9 +5888,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (*                       ^ "\n ext_subst = " ^ (List.fold_left (fun str pair -> (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" ext_subst) *)
     (*                       ^"\n\n") in *)
 
-    (*remove fracvar from evars if it is from the LHS*)
+    (*LDK: remove fracvar from evars if it is from the LHS*)
     let new_exist_vars = 
-      (match frac with
+      (match r_frac with
       | None -> new_exist_vars
       | Some f -> 
           if (is_fracvar_from_lhs) then
@@ -5889,6 +5924,38 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
 
     let tmp_h2, tmp_p2, tmp_fl2, tmp_b2, _ = split_components tmp_conseq' in
+
+
+    (* (\*LDK*\) *)
+    (* let _ = print_string ("do_match:  before split_components :" *)
+    (*                       ^ "\nRHS, tmp_h2 = "^ (Cprinter.string_of_h_formula tmp_h2) *)
+    (*                       ^ "\nRHS, tmp_p2 = "^ (Cprinter.string_of_mix_formula tmp_p2) *)
+    (*                       ^ "\n\n") in *)
+
+    (*LDK: create an equality constrainst between LHS frac var and RHS frac var
+    and add it to pure part of RHS
+      Note: we should add binding after subst_avoid_capture
+    *)
+    let tmp_p2 = 
+      if (is_fracvar_from_lhs) then 
+        
+        (match l_frac with
+          | None ->
+              (match r_frac with
+                | None -> tmp_p2
+                | Some r_f ->
+                    let _ = print_string ("[do_match_x] Warning: l_frac does not exist but r_frac does \n") in
+                    tmp_p2)
+          | Some l_f ->
+              (match r_frac with
+                | None ->
+                    let _ = print_string ("[do_match_x] Warning: l_frac exists but r_frac does not \n") in
+                    tmp_p2
+                | Some r_f ->
+                    create_bind_to_rhs tmp_p2 l_f r_f))
+      else tmp_p2
+    in
+
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
     (* only add the consumed node if the node matched on the rhs is mutable *)
     let new_consumed = 

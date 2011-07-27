@@ -5623,7 +5623,7 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Ifor
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
   let pr1 = Iprinter.string_of_struc_formula in
-  let pr2 x = "?" in
+  let pr2 (f , _)  = Iprinter.string_of_struc_formula f in
   Gen.Debug.no_1 "case_normalize_struc_formula" pr1 pr2 (fun _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) f
       
 and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
@@ -5663,6 +5663,11 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
 			    Iformula.formula_case_pos = b.Iformula.formula_case_pos
 			}),(Gen.BList.remove_dups_eq (=) (List.concat r2)))			
       | Iformula.EBase b->		
+
+          (* let _ = print_string ("case_normalize_struc_formula: helper1:"  *)
+          (*                       ^ "\n Input formula = " ^ Iprinter.string_of_ext_formula f  *)
+          (*                       ^ "\n\n") in *)
+          
             let init_expl = b.Iformula.formula_ext_explicit_inst in
             let _ = if (List.length (Gen.BList.intersect_eq (=) h init_expl))>0 then 
               Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos;
@@ -5670,6 +5675,16 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
             else true in
             let onb = convert_anonym_to_exist b.Iformula.formula_ext_base in
             let nb,h3,new_expl = case_normalize_renamed_formula prog h strad_vs onb in  
+          (* let _ = print_string ("case_normalize_struc_formula: helper1:"  *)
+          (*                       ^ "\n h = " ^  *)
+          (*                           let res1,res2 = List.split h in *)
+          (*                                 (string_of_ident_list res1 ) *)
+
+          (*                       ^ "\n new_expl = " ^  *)
+          (*                           let res1,res2 = List.split new_expl in *)
+          (*                                 (string_of_ident_list res1 ) *)
+          (*                       ^ "\n\n") in *)
+
             let all_expl = Gen.BList.remove_dups_eq (=) (new_expl @ init_expl) in
             let new_strad_vs = Gen.BList.difference_eq (=) strad_vs new_expl in   
             let all_vars = Gen.BList.remove_dups_eq (=) (h@all_expl) in          
@@ -5680,9 +5695,23 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
             let _ = if (List.length (Gen.BList.intersect_eq (=) (all_expl@posib_impl) p))>0 then 	
               Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "post variables should not appear here"} else () in
             let nc,h2 = helper h1prm b.Iformula.formula_ext_continuation new_strad_vs in	
+
+          (* let _ = print_string ("case_normalize_struc_formula: helper1:"  *)
+          (*                       ^ "\n all_vars = " ^  *)
+          (*                           let res1,res2 = List.split all_vars in *)
+          (*                                 (string_of_ident_list res1 ) *)
+          (*                       ^ "\n\n") in *)
+
             let implvar = (*if lax_implicit then *) Gen.BList.difference_eq (=) (Iformula.unbound_heap_fv onb) all_vars (*else Gen.BList.difference_eq (=) h2 all_vars*) in
             (*let nb,ex = ilinearize_formula nb (h@implvar@all_expl) in*)
             (*let h3 = Gen.BList.difference_eq (=) h3 ex in*)
+
+          (* let _ = print_string ("case_normalize_struc_formula: helper1:"  *)
+          (*                       ^ "\n implvar = " ^  *)
+          (*                           let res1,res2 = List.split implvar in *)
+          (*                                 (string_of_ident_list res1 ) *)
+          (*                       ^ "\n\n") in *)
+
             let _ = if (List.length (Gen.BList.difference_eq (=) implvar ((Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc))))>0 then 
               Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
             let r = (Iformula.EBase ({
