@@ -2553,6 +2553,39 @@ and rename_bound_vars_x (f : formula) = match f with
 	    let resform = add_quantifiers new_qvars new_base_f in
 		resform
 
+
+(*LDK: propagate fracvar into view formula during UNFOLDING*)
+and propagate_frac_formula (f : formula) (fracvar : CP.spec_var) : formula = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	    let rf1 = propagate_frac_formula f1 fracvar in
+	    let rf2 = propagate_frac_formula f2 fracvar in
+	    let resform = mkOr rf1 rf2 pos in
+		resform
+  | Base f1 ->
+        let f1_heap = propagate_frac_h_formula f1.formula_base_heap fracvar in
+        Base({f1 with formula_base_heap = f1_heap})
+  | Exists f1 ->
+        let f1_heap = propagate_frac_h_formula f1.formula_exists_heap fracvar in
+        Exists({f1 with formula_exists_heap = f1_heap})
+
+and propagate_frac_h_formula (f : h_formula) (fracvar : CP.spec_var) : h_formula = 
+  match f with
+    | ViewNode f1 -> ViewNode({f1 with h_formula_view_frac_perm = Some fracvar})
+    | DataNode f1 -> DataNode({f1 with h_formula_data_frac_perm = Some fracvar})
+    | Star f1 ->
+	      let h1 = propagate_frac_h_formula f1.h_formula_star_h1 fracvar in
+	      let h2 = propagate_frac_h_formula f1.h_formula_star_h2 fracvar in
+	      mkStarH h1 h2 f1.h_formula_star_pos
+    | Conj f1 ->
+	      let h1 = propagate_frac_h_formula f1.h_formula_conj_h1 fracvar in
+	      let h2 = propagate_frac_h_formula f1.h_formula_conj_h2 fracvar in
+	      mkConjH h1 h2 f1.h_formula_conj_pos
+    | Phase f1 ->
+	      let h1 = propagate_frac_h_formula f1.h_formula_phase_rd fracvar in
+	      let h2 = propagate_frac_h_formula f1.h_formula_phase_rw fracvar in
+	      mkPhaseH h1 h2 f1.h_formula_phase_pos
+    | _ -> f
+
 (* for immutability *)
 (* and propagate_imm_struc_formula (sf : struc_formula) (imm : bool) : struc_formula =  *)
 (* let helper (f : ext_formula) = match f with *)
@@ -2562,8 +2595,6 @@ and rename_bound_vars_x (f : formula) = match f with
 (* 	| EAssume (x,b,y) -> EAssume (x,(substitute_flow_in_f to_flow from_flow  b),y) *)
 (* 	in *)
 (* List.map helper f	 *)
-
-
 
 and propagate_imm_formula (f : formula) (imm : bool) : formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->

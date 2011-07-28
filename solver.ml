@@ -1410,7 +1410,17 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
-  let unfolded_h = unfold_heap prog h aset v fl uf pos in
+  
+  (* let _ = print_string ("unfold_baref: before unfold_heap"  *)
+  (*                       ^ "\n h  = " ^ Cprinter.string_of_h_formula h *)
+  (*                       ^ "\n\n") in *)
+
+  let unfolded_h = unfold_heap prog h aset v fl uf pos in 
+
+  (* let _ = print_string ("unfold_baref: after unfold_heap"  *)
+  (*                       ^ "\n unfolded_h  = " ^ Cprinter.string_of_formula unfolded_h *)
+  (*                       ^ "\n\n") in *)
+
   let pure_f = mkBase HTrue p TypeTrue (mkTrueFlow ()) b pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
@@ -1425,6 +1435,13 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   else resform
 
 and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
+  Gen.Debug.no_2 "unfold_heap" 
+      Cprinter.string_of_h_formula 
+      Cprinter.string_of_spec_var_list
+      Cprinter.string_of_formula
+      (fun _ _ -> unfold_heap_x prog f aset v fl uf pos) f aset
+
+and unfold_heap_x prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
   (*  let _ = print_string("unfold heap " ^ (Cprinter.string_of_h_formula f) ^ "\n\n") in*)
   match f with
     | ViewNode ({h_formula_view_node = p;
@@ -1435,7 +1452,10 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 	  h_formula_view_unfold_num = old_uf;
 	  h_formula_view_label = v_lbl;
 	  h_formula_view_remaining_branches = brs;
-	  h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
+      h_formula_view_frac_perm = frac;
+	  h_formula_view_arguments = vs}) ->
+          (*!!Attention: there might be several nodes pointed to 
+            by the same pointer as long as they are empty*)
           let uf = old_uf+uf in
           if CP.mem p aset then
 	        match (snd prog) with
@@ -1447,10 +1467,27 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
                     let forms = match brs with 
                       | None -> formula_of_unstruc_view_f vdef
                       | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+
+                    (* let _ = print_string ("unfold_heap_x: ViewNode: None "  *)
+                    (*                       ^ "\n vdef  = " ^ Cprinter.string_of_view_decl vdef *)
+                    (*                       ^ "\n forms  = " ^ Cprinter.string_of_formula forms *)
+                    (*                       ^ "\n\n") in *)
+
 	                let renamed_view_formula = rename_bound_vars forms in
 	                let renamed_view_formula = add_unfold_num renamed_view_formula uf in
+                    (* let _ = print_string ("unfold_heap_x: ViewNode: None "  *)
+                    (*                       ^ "\n renamed_view_formula = " ^ Cprinter.string_of_formula renamed_view_formula *)
+                    (*                       ^ "\n\n") in *)
+
 		            (* propagate the immutability annotation inside the definition *)
 	                let renamed_view_formula = Cformula.propagate_imm_formula renamed_view_formula imm in
+
+		            (*if any, propagate the fractional permission inside the definition *)
+                    let renamed_view_formula = 
+                      (match frac with 
+                        | None -> renamed_view_formula
+                        | Some f -> Cformula.propagate_frac_formula renamed_view_formula f) 
+                    in
 
 	                let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
 	                  :: vdef.view_vars in
@@ -6467,8 +6504,20 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             (CF.mkFailCtx_in(Basic_Reason(mkFailContext "ensuring finite unfold" estate conseq (get_node_label lhs_node) pos,
             CF.mk_failure_must "infinite unfolding" )),NoAlias)
           else
+
+            (* let _ = print_string ("process_action_x: Context.M_unfold: before unfold_nth 1"  *)
+            (*                       ^ "\n estate = " ^ Cprinter.string_of_entail_state estate *)
+            (*                       ^ "\n\n") in *)
+
             let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
+
             let ctx1 = build_context (Ctx estate) delta1 pos in
+
+            (* let _ = print_string ("process_action_x: Context.M_unfold: after unfold_nth 1"  *)
+            (*                       ^ "\n delta1 = " ^ Cprinter.string_of_formula delta1 *)
+            (*                       ^ "\n ctx1 = " ^ Cprinter.string_of_context ctx1 *)
+            (*                       ^ "\n\n") in *)
+
 			let ctx1 = set_unsat_flag ctx1 true in
 			let res_rs, prf1 = heap_entail_one_context prog is_folding ctx1 conseq pos in
 			let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
