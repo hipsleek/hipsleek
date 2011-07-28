@@ -1263,8 +1263,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             (*>> test the pair for implication - implication result is saved in res1*)
 		  else 
 
-            (*LDK*)
-            let _ = print_string ("imply_timeout: res1 = false \n") in
+            (* (\*LDK*\) *)
+            (* let _ = print_string ("imply_timeout: res1 = false \n") in *)
 
             (res1,res2,res3) )
 		in
