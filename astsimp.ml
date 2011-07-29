@@ -70,6 +70,35 @@ let is_view_recursive (n:ident) =
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
 
+let prim_str = "relation dom(int[] a, int low, int high) == true.
+	//(dom(a,low-1,high) | dom(a,low,high+1)).
+	
+// originally idexc in many examples
+// this is to specify that a[] and b[] are identical
+// except possibly between the range [i..j]
+relation amodr(int[] a, int[] b, int i, int j) == 
+    forall(k : (i<=k & k<=j | a[k] = b[k])).
+
+int array_get_elm_at___(int[] a, int i) 
+	requires [k,t] dom(a,k,t) & k<=i & i<=t
+	ensures res = a[i];
+
+int[] update___(int[] a, int i, int v) 
+	requires [k,t] dom(a,k,t) & k<=i & i<=t 
+	ensures dom(res,k,t) & update_array(a,i,v,res);
+
+int[] aalloc___(int dim) 
+	requires true 
+	ensures dom(res,0,dim-1);"
+(* AN HOA: Add a primitive function update___.    *)
+(* 3/5 : Add aalloc for array allocation. *)
+(* Note: it is supposed to be dynamically inserted*)
+(* depending on the available array types in used.*)
+(* Similarly, aalloc should be dynamically inserted*)
+(* as well. *)
+(* AN HOA: Add relation [dom] as a primitive. *)
+
+
 (* let op_map = Hashtbl.create 19 *)
 
 (************************************************************
@@ -95,7 +124,7 @@ let prim_buffer = Buffer.create 1024
 
 (* search prog and generate all eq, neq for all the data declaration,      *)
 (* along with the ones in prim_str                                         *)
-let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
+let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list) = (* AN HOA : modify return types *)
   let rec helper (ddecls : I.data_decl list) =
     match ddecls with
     | ddef :: rest ->
@@ -130,15 +159,16 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
     | [] -> ()
   in
     (
+       
      (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
-
+     (*Buffer.add_string prim_buffer prim_str; (* Add primitive relations *)*)
      helper prog.I.prog_data_decls;
-
      let all_prims = Buffer.contents prim_buffer in
 
      let prog = Parser.parse_hip_string "primitives" all_prims in
 
-	 prog.I.prog_proc_decls)
+	 (* AN HOA : modify to return the list of primitive relations *)
+	 (prog.I.prog_proc_decls,prog.I.prog_rel_decls) )
      (* let input = Lexing.from_string all_prims in *)
      (* input_file_name := "primitives"; *)
      (* let prog = Iparser.program (Ilexer.tokenizer "primitives") input *)
@@ -173,6 +203,7 @@ let _ =
  *)
 let array_update_call = "update___"
 let array_access_call = "array_get_elm_at___"
+let array_allocate_call = "aalloc___"
 	  
 let get_binop_call (bop : I.bin_op) : ident =
   try Hashtbl.find op_map bop
@@ -555,6 +586,8 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.IConst _ 
   | C.Print _ 
   | C.Java _ -> e
+	(*| C.ArrayAlloc a -> C.ArrayAlloc {a with (* An Hoa *)
+		exp_aalloc_dimension = (seq_elim a.C.exp_aalloc_dimension); }*)
   | C.New _ -> e
   | C.Null _ -> e
 	| C.EmptyArray _ -> e (* An Hoa *)
@@ -628,6 +661,8 @@ let rec label_breaks lb e :I.exp = match e with
   | I.Java _ -> e
   | I.Finally b-> I.Finally {b with I.exp_finally_body = (label_breaks lb b.I.exp_finally_body)}
   | I.Member b -> I.Member {b with I.exp_member_base = (label_breaks lb  b.I.exp_member_base)}
+	(* An Hoa *)
+	| I.ArrayAlloc a -> I.ArrayAlloc {a with I.exp_aalloc_dimensions = List.map (label_breaks lb) a.I.exp_aalloc_dimensions}
   | I.New b -> I.New {b with I.exp_new_arguments = List.map (label_breaks lb)  b.I.exp_new_arguments}
   | I.Null _ -> e
   | I.Raise b -> I.Raise {b with I.exp_raise_val = match b.I.exp_raise_val with | None -> None | Some b -> Some (label_breaks lb  b)}
@@ -697,6 +732,8 @@ and need_break_continue lb ne non_generated_label :bool =
 		  | I.Finally b -> need_break_continue lb b.I.exp_finally_body true
 		  | I.Label (_,e) -> need_break_continue lb e true
 		  | I.Member b -> (need_break_continue lb  b.I.exp_member_base true)
+			(* An Hoa *)
+			| I.ArrayAlloc b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) false b.I.exp_aalloc_dimensions 
 		  | I.New b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_new_arguments
 		  | I.Null _ -> false
 		  | I.Raise b -> (match b.I.exp_raise_val with | None -> false | Some b ->(need_break_continue lb b true))
@@ -796,6 +833,8 @@ and need_break_continue lb ne non_generated_label :bool =
   | I.Finally b -> I.Finally {b with I.exp_finally_body = while_labelling b.I.exp_finally_body}
   | I.Label (pid, e) -> I.Label (pid, (while_labelling e))
   | I.Member b -> I.Member {b with I.exp_member_base = (while_labelling b.I.exp_member_base)}
+	(* An Hoa *)
+	| I.ArrayAlloc b -> I.ArrayAlloc {b with I.exp_aalloc_dimensions = List.map while_labelling b.I.exp_aalloc_dimensions}
   | I.New b -> I.New {b with I.exp_new_arguments = List.map while_labelling b.I.exp_new_arguments}
   | I.Null _ -> e
   | I.Raise b -> I.Raise {b with I.exp_raise_val = match b.I.exp_raise_val with | None -> None | Some b -> Some (while_labelling b)}
@@ -939,8 +978,10 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	    Gen.ExcNumbering.compute_hierarchy 1 ();
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in *)
-	    let prims = gen_primitives prog0 in
-	    let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
+	    let prims,prim_rels = gen_primitives prog0 in
+	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
+															(* AN HOA : adjoint the program with primitive relations *)
+															I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;} in
       (set_mingled_name prog;
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
@@ -1654,6 +1695,7 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.Java _ -> false
     | I.Label (_,e)-> all_paths_return e
     | I.Member _ -> false
+		| I.ArrayAlloc _ -> false (* An Hoa *)
     | I.New _ -> false
     | I.Null _ -> false
     | I.Return _ -> true
@@ -2486,6 +2528,22 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	      in
           (*let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in*)
           r
+		(** An Hoa : Translate the new int[x] into core language.
+		Currently only work with 1D array of integer i.e. et = "int"
+		and dims = [x] for a single expression x.		
+		TODO COMPLETE 
+		 *)
+		| I.ArrayAlloc {
+          I.exp_aalloc_etype_name = et;
+          I.exp_aalloc_dimensions = dims;
+          I.exp_aalloc_pos = pos } ->
+					(* simply translate "new int[n]" into "aalloc___(n)" *)
+					let newie = I.CallNRecv {
+						I.exp_call_nrecv_method = array_allocate_call;
+						I.exp_call_nrecv_arguments = [List.hd dims];
+						I.exp_call_nrecv_path_id = None;
+						I.exp_call_nrecv_pos = pos; }
+					in trans_exp prog proc newie
     | I.New {
           I.exp_new_class_name = c;
           I.exp_new_arguments = args;
@@ -5981,6 +6039,9 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
           Iast.Member {b with 
               Iast.exp_member_base = helper ren b.Iast.exp_member_base;
               Iast.exp_member_fields = List.map (subid ren ) b.Iast.exp_member_fields}
+		(* An Hoa *)
+		| Iast.ArrayAlloc b-> 
+          Iast.ArrayAlloc {b with Iast.exp_aalloc_dimensions = List.map (helper ren) b.Iast.exp_aalloc_dimensions}
     | Iast.New b-> 
           Iast.New {b with Iast.exp_new_arguments = List.map (helper ren) b.Iast.exp_new_arguments}
     | Iast.Return b ->  Iast.Return {b with Iast.exp_return_val = match b.Iast.exp_return_val with
@@ -6095,7 +6156,11 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
   | Iast.Label (pid,b)-> (Iast.Label (pid, fst (case_rename_var_decls b)),[])
   | Iast.Member b ->
         (Iast.Member {b with Iast.exp_member_base = fst (case_rename_var_decls b.Iast.exp_member_base)},[]) 
-  | Iast.New b->
+  (* An Hoa *)
+	| Iast.ArrayAlloc b->
+        let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_aalloc_dimensions in
+        (Iast.ArrayAlloc  {b with Iast.exp_aalloc_dimensions =nl},[])
+	| Iast.New b->
         let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_new_arguments in
         (Iast.New  {b with Iast.exp_new_arguments =nl},[])
   | Iast.Return b -> 
@@ -6275,7 +6340,10 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
         | Iast.Member b ->
               let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_member_base in
               (Iast.Member {b with Iast.exp_member_base = nb},h,p) 
-        | Iast.New b->
+        | Iast.ArrayAlloc b-> (* An Hoa *)
+              let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_aalloc_dimensions in
+              (Iast.ArrayAlloc  {b with Iast.exp_aalloc_dimensions =nl},h,p)
+				| Iast.New b->
               let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_new_arguments in
               (Iast.New  {b with Iast.exp_new_arguments =nl},h,p)
         | Iast.Return b -> 
@@ -7312,6 +7380,7 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	| Cast.Dprint e -> Cast.Dprint e
 	| Cast.FConst e -> Cast.FConst e
 	| Cast.IConst e -> Cast.IConst e
+	(*| Cast.ArrayAlloc e -> Cast.ArrayAlloc e*)
 	| Cast.New e -> Cast.New e
 	| Cast.Null e -> Cast.Null e
 	| Cast.EmptyArray e -> Cast.EmptyArray e (* An Hoa *)

@@ -496,6 +496,9 @@ let rec string_of_exp = function
 			   exp_call_recv_path_id = pid;
 			   exp_call_recv_arguments = el})-> 
           string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
+	(* An Hoa *)
+	| ArrayAlloc ({exp_aalloc_etype_name = elm_type;
+		  exp_aalloc_dimensions = dims})  -> "new " ^ elm_type ^ "[" ^ (string_of_exp_list dims ",") ^ "]"
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
   | Var ({exp_var_name = v}) -> v

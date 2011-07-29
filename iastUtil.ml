@@ -91,6 +91,9 @@ let transform_exp
       | Member b -> 
         let e1,r1 = helper n_arg b.exp_member_base in
         (Member {b with exp_member_base = e1;},r1)
+			| ArrayAlloc b -> 
+        let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+        (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
       | New b -> 
         let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
         (New {b with exp_new_arguments = el},(comb_f rl))

@@ -894,7 +894,7 @@ let rec split_disjunctions = function
 ;;
 
 let called_prover = ref ""
-let print_implication = ref false (* An Hoa *)
+
 let tp_imply_no_cache ante conseq imp_no timeout process =
 
   (* let _ = print_string ("tp_imply_no_cache: before \n") in *)
@@ -903,7 +903,6 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
-  let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq

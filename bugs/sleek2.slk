@@ -11,7 +11,7 @@ pred ll2<n> == self = null & n = 0
 pred ll3<n> == self::node<next = r> * r::ll2<n-1>
 	inv n >= 1.
 
-checkentail x::node<_, null> * z::node<> * y::ll<> |- x::ll<m> & m > 0.
+checkentail x::node<_, z> * z::node<_,y> * y::ll<n> |- x::ll<m> & m > 0.
 //print residue.
 
 //checkentail x::node<_, null> * z::node<> * y::ll<> & m = 1 |- x::ll<m>.
