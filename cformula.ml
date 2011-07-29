@@ -1054,6 +1054,11 @@ and h_add_origins (h : h_formula) origs =
   let pr2 = !print_ident_list in
   Gen.Debug.no_2 "h_add_origins" pr pr2 pr h_add_origins_a h origs
 
+and h_add_frac (h : h_formula) (fracvar:CP.spec_var) : h_formula = 
+  let pr = !print_h_formula in
+  let pr2 = !print_spec_var in
+  Gen.Debug.no_2 "h_add_frac" pr pr2 pr h_add_frac_a h fracvar
+
 and h_add_origins_a (h : h_formula) origs = 
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
@@ -1063,6 +1068,19 @@ and h_add_origins_a (h : h_formula) origs =
 		  h_formula_star_h2 = helper h2;
 		  h_formula_star_pos = pos})
     | ViewNode vn -> ViewNode {vn with h_formula_view_origins = origs @ vn.h_formula_view_origins}
+    | _ -> h 
+  in helper h
+
+and h_add_frac_a (h : h_formula) (fracvar:CP.spec_var) : h_formula= 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> ViewNode {vn with h_formula_view_frac_perm = Some fracvar}
+    | DataNode vn -> DataNode {vn with h_formula_data_frac_perm = Some fracvar}
     | _ -> h 
   in helper h
 
@@ -1131,6 +1149,18 @@ and add_origins (f : formula) origs =
 		  formula_or_pos = pos})
     | Base b -> Base ({b with formula_base_heap = h_add_origins b.formula_base_heap origs})
     | Exists e -> Exists ({e with formula_exists_heap = h_add_origins e.formula_exists_heap origs})
+  in helper f
+
+and add_frac (f : formula) (fracvar:CP.spec_var):formula = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_add_frac b.formula_base_heap fracvar})
+    | Exists e -> Exists ({e with formula_exists_heap = h_add_frac e.formula_exists_heap fracvar})
   in helper f
 
 and add_original (f : formula) original = 

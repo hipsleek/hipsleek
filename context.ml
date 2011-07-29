@@ -417,15 +417,16 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 
 
               (* (\*LDK*\) *)
-              (* let _ = print_string "I am here, before cmm = coerc_mater_match... \n" in *)
+              (* let _ = print_string "spatial_ctx_extract_x: I am here, before cmm = coerc_mater_match... \n\n" in *)
 
-              let cmm =  match frac1 with
-                    | Some fr -> coerc_mater_match prog c (fr::vs1) aset imm f
-                    | None -> coerc_mater_match prog c vs1 aset imm f
-                        in
+              (* let cmm =  match frac1 with *)
+              (*       | Some fr -> coerc_mater_match prog c (fr::vs1) aset imm f *)
+              (*       | None -> coerc_mater_match prog c vs1 aset imm f *)
+              (*           in *)
 
-              (* let cmm = coerc_mater_match prog c vs1 aset imm f in (\*LDK: error here*\) *)
-              (* let _ = print_string "I am here, after cmm = coerc_mater_match ... \n" in *)
+              let cmm = coerc_mater_match prog c vs1 aset imm f in (*LDK: currently, assume that frac perm does not effect the choice of lemmas (coercions) ???*)
+
+              (* let _ = print_string "spatial_ctx_extract_x: I am here, after cmm = coerc_mater_match ... \n\n" in *)
 
               vmm@cmm
             )

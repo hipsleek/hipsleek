@@ -2890,19 +2890,19 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
 				es_orig_conseq = conseq ;}in	
 	        let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
 
-            (* let _ = print_string ("[Debug] heap_entail_struc_init: cl_new = " ^ (Cprinter.string_of_list_context cl_new)^ "\n") in (\*LDK*\) *)
+            (* let _ = print_string ("heap_entail_struc_init: cl_new = " ^ (Cprinter.string_of_list_context cl_new)^ "\n\n") in (\*LDK*\) *)
 
             (*LDK: !!! need tracing, error might be HERE*)
             let entail_fct = fun c-> heap_entail_struc prog is_folding  has_post c conseq pos pid in
             
             (* (\*LDK*\) *)
-            (* let _ = print_string "I am here \n" in *)
+            (* let _ = print_string "\nheap_entail_struc_init: I am here \n" in *)
 
 
             let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
 
             (* (\*LDK*\) *)
-            (* let _ = print_string ("\n [Debug] heap_entail_struc_init: ans = "^(Cprinter.string_of_list_context ans)^"\n\n\n") in *)
+            (* let _ = print_string ("\nheap_entail_struc_init: ans = "^(Cprinter.string_of_list_context ans)^"\n\n\n") in *)
 
             let (ans1,prf1) = entail_fct cl_new in
             let (ans2,prf2) = heap_entail_struc prog is_folding  has_post cl_new conseq pos pid in
@@ -2922,7 +2922,7 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
     | FailCtx _ -> (cl,Failure)
     | SuccCtx cl ->
 
-            (* let _ = print_string ("\n [Debug] heap_entail_struc: cl = "^(Cprinter.string_of_context_list cl)^"\n\n\n") in (\*LDK*\) *)
+            (* let _ = print_string ("\nheap_entail_struc: cl = "^(Cprinter.string_of_context_list cl)^"\n\n\n") in (\*LDK*\) *)
 
 	      if !Globals.use_set || Gen.is_empty cl then
 
@@ -2933,7 +2933,7 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
 	        let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth "4" prog is_folding  has_post c conseq pos pid) cl in
 
             (* (\*LDK: trace below indicate failure*\) *)
-            (* let _ = print_string ("\n [Debug] heap_entail_struc: List.hd tmp1 = " *)
+            (* let _ = print_string ("\nheap_entail_struc: List.hd tmp1 = " *)
             (*                       ^ "\n list_ctx = "^(Cprinter.string_of_list_context (fst (List.hd tmp1))) *)
             (*                       ^ "\n proof = " ^ (string_of_proof (snd (List.hd tmp1))) *)
             (*                       ^"\n\n\n") in *)
@@ -3019,7 +3019,7 @@ and heap_entail_after_sat_struc prog is_folding  has_post
     | Ctx es -> 
 
         (* (\*LDK: error this way*\) *)
-        (* let _ = print_string ("\n [Debug] heap_entail_after_sat_struc: branch Ctx es \n") in *)
+        (* let _ = print_string ("\nheap_entail_after_sat_struc: Ctx es: \n\n") in *)
 
         begin
 
@@ -3551,7 +3551,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
     | Ctx es -> begin
 
         (* (\*LDK: error going this way*\) *)
-        (* let _ = print_string "dddddd \n" in *)
+        (* let _ = print_string "heap_entail_after_sat_x: dddddd \n\n" in *)
 
         Debug.devel_pprint ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"
 		^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
@@ -3628,7 +3628,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     | _ -> begin
 
         (* (\*LDK: error this way*\) *)
-        (* let _ = print_string "ffff\n" in *)
+        (* let _ = print_string "heap_entail_conjunct_lhs_x: ffff\n\n" in *)
 
         let r1,p1 =
 	      if !Globals.allow_imm (*(contains_immutable_ctx ctx) or (contains_immutable conseq)*) then
@@ -4631,10 +4631,11 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
 
 
-  (*       (\*LDK*\) *)
-  (* let _ = print_string ("heap_entail_conjunct_helper:" *)
-  (* ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) *)
-  (* ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) in *)
+    (* (\*LDK*\) *)
+    (* let _ = print_string ("heap_entail_conjunct_helper:" *)
+    (*                       ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) *)
+    (*                       ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)  *)
+    (*                       ^ "\n\n") in *)
 
 
   Debug.devel_pprint ("heap_entail_conjunct_helper:"
@@ -6676,7 +6677,6 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-
   Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
@@ -7032,6 +7032,16 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
     let coer_rhs = CF.subst tmp_rho coer_rhs in
     let lhs_heap, lhs_guard,lhs_fl, lhs_branches, _  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
+
+
+          (* (\*LDK*\) *)
+          (* let _ = print_string ("do_universal:" *)
+          (*                       ^ "\n node = " ^ (Cprinter.string_of_h_formula node) *)
+          (*                       ^ "\n lhs_heap = " ^ (Cprinter.string_of_h_formula lhs_heap) *)
+          (*                       ^ "\n") in *)
+
+
+
     match node, lhs_heap with
 	  | ViewNode ({ h_formula_view_node = p1;
 		h_formula_view_name = c1;
@@ -7043,11 +7053,20 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
 		h_formula_view_name = c2;
 		h_formula_view_remaining_branches = br2;
 		h_formula_view_frac_perm = frac2; (*LDK*)
-		h_formula_view_arguments = ps2} as h2) when CF.is_eq_view_name(*is_eq_view_spec*) h1 h2 (*c1=c2 && (br_match br1 br2) *) -> begin
+		h_formula_view_arguments = ps2} as h2) when CF.is_eq_view_name(*is_eq_view_spec*) h1 h2 (*c1=c2 && (br_match br1 br2) *) ->
+
+          (*LDK: propagate the permission in node to the lhs_heap*)
+          let h2,frac2 = (match frac1 with
+            | None -> h2,frac2
+            | Some f -> {h2 with h_formula_view_frac_perm = frac1},frac1)
+          in
+          
+          begin
 	      (* the lemma application heuristic:
 	         - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
 	         - if the flag is false, we only use coerce&distribute&match
 	      *)
+
 
 
           (* (\*LDK*\) *)
@@ -7077,7 +7096,7 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
 
           (* (\*LDK*\) *)
           (* let is_cycle = is_cycle_coer coer origs in *)
-          (* let _ = print_string ("do_universal:"  *)
+          (* let _ = print_string ("do_universal:" *)
           (*                       ^ "\n ### apply_coer = " ^ (string_of_bool apply_coer) *)
           (*                       ^ "\n ### is_cycle = " ^ (string_of_bool is_cycle) *)
           (*                       ^ "\n") in *)
@@ -7109,37 +7128,70 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
 		      (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
 		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
 
-            (*LDK*)
-		        let lhs_guard_new = match frac1,frac2 with
-                  | Some f1, Some f2 -> CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard 
-                  | None, None -> CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard
-                  | _ -> let _ = print_string "\n Error with fractional permission \n" in
-                          CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard
-                in
 
-		      (* let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
 
-            (*LDK*)
-		        let  lhs_branches_new = match frac1,frac2 with
-                  | Some f1, Some f2 ->  List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) f))) lhs_branches
-                  | None, None ->  List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches
-                  | _ -> let _ = print_string "\n Error with fractional permission \n" in
-                         List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches                          
-                in
-		      (* let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in *)
 
-                (*LDK*)
-		        let coer_rhs_new1 = match frac1,frac2 with
-                  | Some f1, Some f2 -> subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs
-                  | None, None -> subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs
-                  | _ -> let _ = print_string "\n Error with fractional permission \n" in
-                         subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs                          
-                in
-		      (* let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
+              (* (\*LDK: not neccessary because in the lemma definition, there is *)
+              (*   no fractional permission; frac2 is frac1 indeed when we propagate above *)
+              (* *\) *)
+		      (*   let lhs_guard_new = match frac1,frac2 with *)
+              (*     | Some f1, Some f2 -> CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard *)
+              (*     | None, None -> CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
+              (*     | _ -> let _ = print_string "\n Error with fractional permission \n" in *)
+              (*            CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
+              (*   in *)
+
+		      let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in
+
+              (* (\*LDK*\) *)
+              (* let is_cycle = is_cycle_coer coer origs in *)
+              (* let _ = print_string ("do_universal:" *)
+              (*                       ^ "\n ### lhs_guard = " ^ (Cprinter.string_of_pure_formula lhs_guard) *)
+              (*                       ^ "\n ### lhs_guard_new = " ^ (Cprinter.string_of_pure_formula lhs_guard_new) *)
+              (*                       ^ "\n") in *)
+
+
+            (* (\*LDK: not sure what is lhs_branches ???*\) *)
+		    (*     let  lhs_branches_new = match frac1,frac2 with *)
+            (*       | Some f1, Some f2 ->  List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) f))) lhs_branches *)
+            (*       | None, None ->  List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches *)
+            (*       | _ -> let _ = print_string "\n Error with fractional permission \n" in *)
+            (*              List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches                           *)
+            (*     in *)
+
+
+		      let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in
+
+
+                (* (\*LDK*\) *)
+		        (* let coer_rhs_new1 = match frac1,frac2 with *)
+                (*   | Some f1, Some f2 -> subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs *)
+                (*   | None, None -> subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
+                (*   | _ -> let _ = print_string "\n Error with fractional permission \n" in *)
+                (*          subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs                           *)
+                (* in *)
+
+
+		      let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
 
 
 		      (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
 		      let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+
+              (* let _ = print_string ("do_universal:" *)
+              (*                       ^ "\n ### coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new) *)
+              (*                       ^ "\n") in *)
+
+              (*add fractional permission into the body (RHS) of a coercion*)
+		      let coer_rhs_new = (match frac2 with 
+                | None -> coer_rhs_new
+                | Some f -> add_frac coer_rhs_new1 f) 
+              in
+
+              (* let _ = print_string ("do_universal: after add frac" *)
+              (*                       ^ "\n ### coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new) *)
+              (*                       ^ "\n") in *)
+
 		      let _ = reset_int2 () in
 		      (*let xpure_lhs = xpure prog f in*)
 		      (*************************************************************************************************************************************************************************)
@@ -7222,6 +7274,12 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   (******************** here it was the test for coerce&match *************************)
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
+
+  (* let _ = print_string ("rewrite_coercion_x:" *)
+  (*                       ^ "\n ### coer_lhs = " ^ (Cprinter.string_of_formula coer_lhs) *)
+  (*                       ^ "\n ### coer_rhs = " ^ (Cprinter.string_of_formula coer_rhs) *)
+  (*                       ^ "\n") in *)
+
   let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
   match node, lhs_heap with
@@ -7238,6 +7296,13 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
       h_formula_view_frac_perm = frac2; (*LDK*)
       h_formula_view_arguments = ps2} as h2) 
           when CF.is_eq_view_name(*is_eq_view_spec*) h1 h2  (* c1=c2 && (br_match br1 br2) *)-> begin
+
+          (*LDK: propagate the permission in node to the lhs_heap*)
+          let h2,frac2 = (match frac1 with
+            | None -> h2,frac2
+            | Some f -> {h2 with h_formula_view_frac_perm = frac1},frac1)
+          in
+
 	        (*************************************************************)
 	        (* replace with the coerce&match mechanism *)
 	        (*************************************************************)
@@ -7287,27 +7352,48 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 
 		      begin
 		        (* apply \rho (G)	and \rho(B) *)
-		        let lhs_guard_new = match frac1,frac2 with
-                  | Some f1, Some f2 -> CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard 
-                  | None, None -> CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard
-                  | _ -> let _ = print_string "\nError with fractional permission \n" in
-                          CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard
-                in
-		        (* let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
+
+                (* (\*LDK*\) *)
+		        (* let lhs_guard_new = match frac1,frac2 with *)
+                (*   | Some f1, Some f2 -> CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard  *)
+                (*   | None, None -> CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
+                (*   | _ -> let _ = print_string "\nError with fractional permission \n" in *)
+                (*           CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
+                (* in *)
+
+
+		        let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in
 		        (*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in*)
 
 
-		        let coer_rhs_new1 =  match frac1,frac2 with
-                  | Some f1, Some f2 ->  subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs
-                  | None, None -> subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs
-                  | _ -> let _ = print_string "\nError with fractional permission \n" in
-                         subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs
-                in
+                (* (\*LDK*\) *)
+		        (* let coer_rhs_new1 =  match frac1,frac2 with *)
+                (*   | Some f1, Some f2 ->  subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs *)
+                (*   | None, None -> subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
+                (*   | _ -> let _ = print_string "\nError with fractional permission \n" in *)
+                (*          subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
+                (* in *)
 
 
-		        (* let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
+		        let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
 		        (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
 		        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+
+              (* let _ = print_string ("rewrite_coercion:" *)
+              (*                       ^ "\n ### coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new) *)
+              (*                       ^ "\n") in *)
+
+              (*add fractional permission into the body (RHS) of a coercion*)
+		      let coer_rhs_new = (match frac2 with 
+                | None -> coer_rhs_new
+                | Some f -> add_frac coer_rhs_new1 f) 
+              in
+
+              (* let _ = print_string ("rewrite_coercion: after add frac" *)
+              (*                       ^ "\n ### coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new) *)
+              (*                       ^ "\n") in *)
+
+
 		        let _ = reset_int2 () in
 		        let xpure_lhs, xpure_lhs_b, _, memset = xpure prog f in
 		        let xpure_lhs = MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs in 
@@ -7451,15 +7537,16 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
   let ((coers1,coers2),univ_coers) = match c_opt with
     | None -> 
 
-        (* let _ = print_string "xxx, branch  1\n" in (\*LDK*\) *)
+        (* let _ = print_string "xxx, None\n" in (\*LDK*\) *)
 
         find_coercions c1 c2 prog anode ln2 
     | Some c -> 
 
         (* (\*LDK: error this way*\) *)
-        (* let _ = print_string "xxx, branch  2\n" in (\*LDK*\) *)
-        (* let _ = print_string (" c = " ^ (Cprinter.string_of_coercion c)^ "\n") in (\*LDK*\) *)
-        (* let _ = print_string (" c.coercion_univ_vars = " ^ (Cprinter.string_of_spec_var_list c.coercion_univ_vars)^ "\n") in (\*LDK*\) *)
+        (* let _ = print_string ("do_coercion_x: Some c" *)
+        (*   ^ "\n c = " ^ (Cprinter.string_of_coercion c) *)
+        (*   ^ "\n c.coercion_univ_vars = " ^ (Cprinter.string_of_spec_var_list c.coercion_univ_vars) *)
+        (*   ^ "\n\n") in *)
 
         match c.coercion_type with
         | Iast.Left -> if c.coercion_univ_vars == [] then (([c],[]),[])
@@ -7472,9 +7559,11 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
   then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
   else begin 
 
-      (* (\*LDK: error this way*\) *)
-      (* let _ = print_string ("vvv do_coercion: estate :" ^ (Cprinter.string_of_entail_state estate) ^ "\n") in *)
-      (* let _ = print_string ("vvv do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") in *)
+
+        (* let _ = print_string ("do_coercion_x: Some c" *)
+        (*                       ^ "\n estate = " ^ (Cprinter.string_of_entail_state estate) *)
+        (*                       ^ "\n do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2  *)
+        (*                       ^ "\n\n") in *)
 
 
     Debug.devel_pprint ("do_coercion: estate :" ^ (Cprinter.string_of_entail_state estate) ^ "\n") pos;
