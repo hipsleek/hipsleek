@@ -765,6 +765,7 @@ let simplify (f : CP.formula) : CP.formula =
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
+  let _ = Gen.Profiling.inc_counter ("stat_count_simpl") in
   simplify f 
 
 (* let simplify f = *)

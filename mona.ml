@@ -815,7 +815,7 @@ let get_mona_predicates_file () : string =
     mona_pred_file
   else
     begin
-        let _ = print_string ("\n WARNING: File " ^ mona_pred_file ^ " was not found in current directory. Searching in alternative path: " ^ mona_pred_file_alternative_path) in
+        (* let _ = print_string ("\n WARNING: File " ^ mona_pred_file ^ " was not found in current directory. Searching in alternative path: " ^ mona_pred_file_alternative_path) in *)
         let alternative = mona_pred_file_alternative_path ^ mona_pred_file in
         if Sys.file_exists alternative then 
           alternative
@@ -838,7 +838,7 @@ let set_process (proc: Globals.prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
+    (* let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in *)
     false
   else true
 

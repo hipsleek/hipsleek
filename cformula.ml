@@ -399,7 +399,7 @@ and isStrictConstTrue_x f = match f with
     formula_base_pure = p;
     formula_base_branches = br;
     formula_base_flow = fl;}) -> 
-        MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])&&(is_true_flow fl.formula_flow_interval)
+        MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])&&(is_top_flow fl.formula_flow_interval)
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
@@ -498,8 +498,9 @@ and non_overlapping (n1,n2) (p1,p2) : bool = n1>p2 || p1>n2
 and overlapping n p : bool = not(non_overlapping n p)
 and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
 
-and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
-and is_true_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
+and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2
+and is_top_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
+
 
 and is_sleek_mustbug_flow p: bool = (equal_flow_interval !Globals.error_flow_int p)
 and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
@@ -507,7 +508,11 @@ and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_in
 and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
 
 (*first subsumes the second*)
-and subsume_flow (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+and subsume_flow_x (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+
+and subsume_flow n p : bool = 
+  let pr1 = pr_pair string_of_int  string_of_int in
+  Gen.Debug.no_2 "subsume_flow" pr1 pr1 string_of_bool subsume_flow_x n p 
 
 and overlap_flow t1 t2 : bool = (subsume_flow t1 t2) || (subsume_flow t2 t1)
 
@@ -687,21 +692,29 @@ and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula
 	| EVariance b -> EVariance {b with formula_var_continuation = substitute_flow_in_struc_f to_flow from_flow  b.formula_var_continuation}
   in
   List.map helper f	
-	  
-(*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
+
 and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
+  let pr = !print_flow_formula in
+  let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" in
+  Gen.Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
+
+(*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
+and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
   let int1 = fl1.formula_flow_interval in
   let int2 = fl2.formula_flow_interval in
-  let r = if (is_false_flow int1) then fl1
-  else if (is_false_flow int2) then fl2
-  else match flow_tr with
-	| Flow_replace -> 
+  let r = if (is_top_flow int1) then fl2
+  else if (is_top_flow int2) then fl1
+  else 
+    match flow_tr with
+	| Flow_replace ->
 		  {	formula_flow_interval = int2;
 		  formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
 			| None,None -> None
 			| Some s,None-> Some s
 			| None, Some s -> Some s
-			| _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
+			| Some _, Some s -> Some s
+			(* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
+                  ;}
 	| Flow_combine ->
 		  if (overlapping int1 int2) then 
 			{	formula_flow_interval = intersect_flow int1 int2;
@@ -709,15 +722,17 @@ and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 			  | None,None -> None
 			  | Some s,None-> Some s
 			  | None, Some s -> Some s
-			  | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
+			  | Some s1, Some s2 -> Some (s1^"AND"^s2)
+			  (* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
+                    ;}
 		  else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
-  (*let string_of_flow_formula f c = 
-	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
+  (* let string_of_flow_formula f c =  *)
+  (*   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^ *)
+  (*   ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in *)
 
-	let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^
-	(string_of_flow_formula "f2 " fl2)^"\n"^
-	(string_of_flow_formula "r " r)^"\n") in*)
+  (*   let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^ *)
+  (*   (string_of_flow_formula "f2 " fl2)^"\n"^ *)
+  (*   (string_of_flow_formula "r " r)^"\n") in *)
   r
 
 and get_case_guard_list lbl (lst:(Cpure.b_formula * formula_label list) list) :  CP.b_formula list= 
@@ -1618,14 +1633,14 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
 and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-        let eo1 = normalize o11 f2 pos in
-        let eo2 = normalize o12 f2 pos in
+        let eo1 = normalize_x o11 f2 pos in
+        let eo2 = normalize_x o12 f2 pos in
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
 		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize f1 o21 pos in
-			  let eo2 = normalize f1 o22 pos in
+			  let eo1 = normalize_x f1 o21 pos in
+			  let eo2 = normalize_x f1 o22 pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
 			let rf1 = rename_bound_vars f1 in
@@ -1638,10 +1653,21 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			resform
 		  end
     end
+
+and normalize i (f1 : formula) (f2 : formula) (pos : loc) = 
+  Gen.Debug.no_1_num i "normalize" pr_no pr_no (fun _ -> normalize_x f1 f2 pos) f1
 	    
-and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
+and normalize_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
+  (* normalize_keep_flow f1 f2 Flow_combine pos *)
       (* todo: check if this is ok *)
+
+and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) = 
+  Gen.Debug.no_1 "normalize_replace" pr_no pr_no (fun _ -> normalize_replace_x f1 f2 pos) f1
+
+and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) = 
+  normalize_keep_flow f1 f2 Flow_replace pos
+
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
 and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -2574,14 +2600,50 @@ let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
 
 let is_may_failure (f:list_context) = (get_may_failure f) != None
 
+let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option =
+     match (get_must_es_msg_ft ft) with
+          | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft) } ) 
+          | _ ->  None
+
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
   match l with 
-  | FailCtx ft ->
-        (match (get_must_es_msg_ft ft) with
-          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ] 
-          | _ ->  l)
-  | SuccCtx _ -> l
+    | FailCtx ft ->
+          (* (match (get_must_es_msg_ft ft) with *)
+          (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+          (*   | _ ->  l) *)
+          (match (convert_must_failure_4_fail_type "" ft) with
+            | Some ctx -> SuccCtx [ctx]
+            | None -> l)
+    | SuccCtx _ -> l
 
+let convert_must_failure_to_value_orig (l:list_context) : list_context =
+ let pr = !print_list_context_short in
+  Gen.Debug.no_1 "convert_must_failure_to_value_orig" pr pr
+  (fun _ -> convert_must_failure_to_value_orig l) l
+
+(* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
+(*   ((-1,"Must Err @"^s),fme) :: e *)
+
+let add_must_err_to_pc (s:string) (fme:branch_ctx list) (e:branch_ctx list) : branch_ctx list =
+  fme @ e
+
+let convert_must_failure_4_branch_type  (s:string) ((pt,ft):branch_fail) : branch_ctx option =
+  match (convert_must_failure_4_fail_type s ft) with
+    | Some b -> Some (pt,b)
+    | None -> None
+
+let convert_must_failure_4_branch_fail_list  (s:string) (fl:branch_fail list) : (branch_ctx list * branch_fail list) =
+  List.fold_left (fun (must_l,may_l) bf ->
+      match (convert_must_failure_4_branch_type s bf) with
+        | Some r -> (r::must_l, may_l)
+        | None -> (must_l, bf::may_l)) ([],[]) fl
+
+let convert_must_failure_4_failesc_context (s:string) ((fl,e,bl):failesc_context) : failesc_context =
+  let (fme,fl) = convert_must_failure_4_branch_fail_list s fl in
+  (fl,e,add_must_err_to_pc s fme bl)
+
+let convert_must_failure_4_list_failesc_context (s:string) (l:list_failesc_context) : list_failesc_context =
+  List.map (convert_must_failure_4_failesc_context s) l
 
 
 let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
@@ -3023,6 +3085,14 @@ and or_list_context_x c1 c2 = match c1,c2 with
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
+and and_list_context c1 c2= match c1,c2 with
+  | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
+  | FailCtx t1 ,SuccCtx t2 ->
+         c1
+  | SuccCtx t1 ,FailCtx t2 ->
+      c2
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+
 (*maximising must bug with & (error information)*)
 (* and or_list_context_x c1 c2 = match c1,c2 with *)
 (*      | FailCtx t1 ,FailCtx t2 -> *)
@@ -3422,7 +3492,7 @@ and simplify_context (ctx:context):context =
 								else  ctx
 		
 and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
-	Ctx {es with es_formula = normalize es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
+	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_es_combine") in *)
@@ -4778,11 +4848,11 @@ and split_struc_formula_a (f0:struc_formula):(formula*formula) list =
 		| ECase b-> 
       let r =  List.concat (List.map (fun (c1,c2)->
 				let ll = split_struc_formula_a c2 in
-				List.map (fun (d1,d2)-> ((normalize d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
+				List.map (fun (d1,d2)-> ((normalize 4 d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
 			List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r 
 		| EBase b-> 
 				let ll = split_struc_formula_a b.formula_ext_continuation in
-				let e = List.map (fun (c1,c2)-> ((normalize c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
+				let e = List.map (fun (c1,c2)-> ((normalize 5 c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
 				let nf = ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) in
 				let e = List.map (fun (c1,c2)-> ((push_exists nf c1),(push_exists nf c2))) e in
 				e
