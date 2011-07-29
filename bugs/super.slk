@@ -5,11 +5,14 @@ pred ls<p> == self = p
 	inv true.
 
 
-checkentail a!=b |- a=b .
 
-checkentail a<b |- a=b .
 
-checkentail a>=b |- a=b .
+checkentail a::ls<b> * a::node<_,_> |- a=b .
+
+checkentail a::ls<b> * a::node<_,_> & a=b |- a=b .
+
+checkentail a::node<_,e>*e::ls<b> * a::node<_,_> & a!=b |- a=b .
+
 
 checkentail a::ls<b> * a::ls<c> * c::node<_,d> |- a=b .
 

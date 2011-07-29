@@ -2957,13 +2957,11 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 	    (filter_set tmp, prf)
       end
 
-(*
-  and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) 
-  = Gen.Debug.no_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
+and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) 
+  = Gen.Debug.ho_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
   (fun ctx -> heap_entail_conjunct_lhs_x  prog is_folding  ctx conseq pos) ctx 
-*)
 
-and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p
+(* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -2974,6 +2972,14 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     (* let rhs_flow = CF.get_flow_formula conseq in *)
     (* if CF.flow_subsume lhs_flow rhs_flow then return must_error *)
     (* else  *)
+  (* HOA TODO  : to unfold pred with duplicated roots on the LHS *)
+  (* let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in *)
+  (* let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in *)
+  (* let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in *)
+  (* let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in *)
+  (* let rhs_eqset = estate.es_rhs_eqset in *)
+  (* let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos in *)
+  (* process_action prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos *)
   match conseq with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
