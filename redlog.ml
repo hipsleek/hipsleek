@@ -1089,6 +1089,13 @@ let is_sat f sat_no =
   log DEBUG (if res then "SAT" else "UNSAT");
   res
 
+let is_sat f sat_no =
+  Gen.Debug.ho_2 "[Redlog] is_sat"
+      string_of_formula
+      (fun c -> c)
+      string_of_bool
+      is_sat f sat_no
+
 let is_valid f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula f in

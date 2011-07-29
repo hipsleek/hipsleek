@@ -1483,6 +1483,10 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
     let one_bc = List.fold_left (fun a c -> CP.mkOr a c None no_pos) (CP.mkFalse no_pos) guards in
     let bc_impl c = let r,_,_ = TP.imply_sub_no one_bc c "0" false None in r in
     let sat_subno  = ref 0 in
+
+    let _ = print_string ("pure_or: before TP.is_sat_sub_no"
+                          ^ "\n\n") in
+
     let bcg = List.filter (fun c-> 
       (not (CP.isConstTrue c))&& 
       (bc_impl c)&& 
@@ -3375,6 +3379,11 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
 	        Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
             Err.error_text = "all guard free vars must be instantiated";} in
 	      let _ = 
+
+            (*LDK*)
+            let _ = print_string (" case_coverage_x: before TP.is_sat_sub_no"
+                                  ^ "\n\n") in
+
 	        let sat = Tpdispatcher.is_sat_sub_no (Cpure.Not (all,None,no_pos)) sat_subno in
 	        if sat then 
               let s = (Cprinter.string_of_struc_formula f) in
@@ -3383,7 +3392,13 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
 	      
 	      let rec p_check (p:Cpure.formula list):bool = match p with
 	        | [] -> false 
-	        | p1::p2 -> if (List.fold_left (fun a c-> 
+	        | p1::p2 -> 
+
+            (*LDK*)
+            let _ = print_string (" case_coverage_x: p_check: before TP.is_sat_sub_no"
+                                  ^ "\n\n") in
+
+                if (List.fold_left (fun a c-> 
 				  let sat =  Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno in
 				  a ||sat) false p2 ) then true else p_check p2 in
 	      
@@ -6820,12 +6835,18 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let bf = CP.BForm (bf,None) in
       let remain_ls = Gen.BList.difference_eq eq_formula_label all_ls ls in
       if remain_ls==[] then false
-      else List.for_all 
-        (fun (o_l,o_f) -> 
-            if (Gen.BList.mem_eq eq_formula_label o_l remain_ls) then 
-              let new_f = CP.mkAnd o_f bf no_pos in not(TP.is_sat new_f "get_safe_prune_conds" false)
-            else true
-        ) orig_pf 
+      else 
+
+        let _ = print_string ("get_safe_prune_conds: before TP.is_sat"
+                              ^ "\n\n") in
+
+        List.for_all 
+            (fun (o_l,o_f) -> 
+                if (Gen.BList.mem_eq eq_formula_label o_l remain_ls) then
+                  let new_f = CP.mkAnd o_f bf no_pos in 
+                  not(TP.is_sat new_f "get_safe_prune_conds" false)
+                else true
+            ) orig_pf 
     in
     List.filter (fun (b,ls) ->safe_test b ls) pc
   in

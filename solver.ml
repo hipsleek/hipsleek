@@ -532,6 +532,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
       | Hole _ -> (MCP.mkMTrue no_pos, []) (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   let ph, pb = xpure_heap_helper prog h0 which_xpure in
+
   if (is_sat_mem_formula memset) then 
     (ph, pb,  memset)
   else (MCP.mkMFalse no_pos, pb, memset)  
@@ -2424,13 +2425,24 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 
 	      let is_ok =        
 	        if pfb = [] then 
+
+                    (*LDK*)
+              let _ = print_string ("find_unsat: before TP.is_sat_mix_sub_no"
+                                    ^ "\n\n") in
+
               TP.is_sat_mix_sub_no pf sat_subno true true
 	        else
               (*  let r = TP.is_sat_mix_sub_no npf sat_subno true true in*)
               let npf = MCP.fold_mem_lst (CP.mkTrue no_pos) false true pf in
+
+              (*LDK*)
+              let _ = print_string ("find_unsat: before TP.is_sat_sub_no"
+                                    ^ "\n\n") in
+
 		      List.fold_left (fun is_ok (label, pf1b) ->
 				  if not is_ok then false 
-				  else TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in	  
+				  else 
+                    TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in	  
 	      if is_ok then ([f],[]) else ([],[f])
     | Or ({formula_or_f1 = f1;
       formula_or_f2 = f2;
@@ -2451,10 +2463,20 @@ and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno=
   let phb = CP.merge_branches phb br in    
   if phb = [] then
     let npf = MCP.merge_mems mix ph true in
+
+  (*LDK*)
+  let _ = print_string ("is_unsat_with_branches_x:   if phb = [] ==true : before TP.is_sat_sub_no"
+                        ^ "\n\n") in
+
 	(not (TP.is_sat_mix_sub_no npf sat_subno true true))
   else
     let npf = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true mix in
     let r = List.fold_left (fun is_ok (_,pf1b)->  
+
+  (*LDK*)
+  let _ = print_string ("is_unsat_with_branches_x:   if phb = [] == false :before TP.is_sat_sub_no"
+                        ^ "\n\n") in
+
 		is_ok  && (TP.is_sat_sub_no (CP.mkAnd npf pf1b no_pos) sat_subno)) 
       true phb in
 	(not r)
@@ -5010,6 +5032,11 @@ and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
 (*maximising must bug with AND (error information)*)
 and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
   let r = ref (-9999) in
+
+  (*LDK*)
+  let _ = print_string ("check_maymust_failure_x: before TP.is_sat_sub_no"
+                        ^ "\n\n") in
+
   let is_sat f = TP.is_sat_sub_no f r in
   let find_all_failures a c = CP.find_all_failures is_sat a c in
   let find_all_failures a c = 
@@ -5197,11 +5224,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                 (*check maymust for ante0*)
 
 
-                (* (\*LDK*\) *)
-                (* let _ = print_string ("heap_entail_empty_rhs_heap_x:" *)
-                (*                       ^ "\n split_ante0  = " ^ (Cprinter.string_of_mix_formula split_ante0) *)
-                (*                       ^ "\n (cons) split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq) *)
-                (*                       ^ "\n\n") in *)
+                (*LDK*)
+                let _ = print_string ("heap_entail_empty_rhs_heap_x:"
+                                      ^ "\n split_ante0  = " ^ (Cprinter.string_of_mix_formula split_ante0)
+                                      ^ "\n (cons) split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq)
+                                      ^ "\n\n") in
+
+                      (* (\*LDK*\) *)
+                      let _ = print_string (" heap_entail_empty_rhs_heap_x: before  check_maymust_failure"
+                                            ^ "\n\n") in
 
 
                 let (fc, (contra_list, must_list, may_list)) = check_maymust_failure (MCP.pure_of_mix split_ante0) cons4 in
@@ -5209,6 +5240,20 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                   | Failure_May _ ->
                   begin
                       (*check maymust for ante1*)
+
+
+                (*LDK*)
+                      let _ = print_string ("heap_entail_empty_rhs_heap_x:"
+                                            ^ "\n split_ante1  = " ^ (Cprinter.string_of_mix_formula split_ante1)
+                                            ^ "\n (cons) split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq)
+                                            ^ "\n\n") in
+
+
+                      (* (\*LDK*\) *)
+                      let _ = print_string (" heap_entail_empty_rhs_heap_x:  Failure_May: before  check_maymust_failure"
+                                            ^ "\n\n") in
+
+
                       let (fc, (contra_list, must_list, may_list)) = check_maymust_failure (MCP.pure_of_mix split_ante1) cons4 in
                       (
                           (fc, (contra_list, must_list, may_list))
@@ -6627,6 +6672,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
               let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure rhs_disj_set_p in
               let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
               let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
+
+              (* (\*LDK*\) *)
+              let _ = print_string ("process_action_x: before TP.is_sat_sub_no"
+                                    ^ "rhs_p = " ^ (Cprinter.string_of_pure_formula rhs_p )
+                                    ^ "\n\n") in
+
               (*contradiction on RHS?*)
               if not(TP.is_sat_sub_no rhs_p r) then
                 (*contradiction on RHS*)
@@ -6642,6 +6693,11 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                 *)
                 if not(simple_imply lhs_p rhs_p) then
                   (*should check may-must here*)
+
+              (* (\*LDK*\) *)
+              let _ = print_string ("process_action_x: before  check_maymust_failure"
+                                    ^ "\n\n") in
+
                   let (fc, (contra_list, must_list, may_list)) = check_maymust_failure lhs_p rhs_p in
                    let new_estate = {
                        estate with es_formula =
@@ -7867,6 +7923,14 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	          let comb = (List.fold_left (fun a1 (c11,c12)-> a1@(List.map (fun (c21,c22)-> 
 				  ((Cpure.mkAnd c11 c21 d.formula_case_pos),c12,c22)) b.formula_case_branches) ) [] d.formula_case_branches) in
 	          let comb = List.fold_left (fun a (c1,c2,c3)-> 
+
+
+
+                  (*LDK*)
+                  let _ = print_string ("combine_struc: p_check: before TP.is_sat_sub_no"
+                                        ^ "\n\n") in
+
+
 				  let sat = Tpdispatcher.is_sat_sub_no c1 sat_subno in
 				  if sat then a
 				  else (c1,(combine_struc c2 c3))::a)[] comb in
