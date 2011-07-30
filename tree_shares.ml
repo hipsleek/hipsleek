@@ -87,3 +87,11 @@ open Globals
       | Node _ , Leaf false -> x
       | Node _ , Leaf true -> Gen.report_error no_pos "missmatch in contains" in      
    if contains x y then helper x y else bot
+   
+  let rec union x y = match x with
+	| Leaf true -> x
+	| Leaf false -> y
+	| Node (x1,x2) -> match y with
+		| Leaf true -> y
+		| Leaf false -> x
+		| Node (y1,y2) -> mkNode (union x1 y1) (union x2 y2)

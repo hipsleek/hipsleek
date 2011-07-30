@@ -27,6 +27,7 @@ let fresh_perm_var () = P.SpecVar (Named perm,fresh_name(),Unprimed)
 let mk_perm_var (a,b) = P.SpecVar (Named perm, a,b)
 
 let top_share = Ts.top
+let bot_share = Ts.bot
 
 let mkCPerm s : frac_perm = PConst s
 let mkVPerm v :frac_perm = PVar v
@@ -58,8 +59,11 @@ let is_full_frac t = Ts.stree_eq t Ts.top
 
 let isConstFperm f = match f with
   | PConst _ -> true 
-  | _ -> flalse
+  | _ -> false
 
+let isConstXFperm x f = match f with
+  | PConst s  -> Ts.stree_eq s x
+  | _ -> false
 (*let mkFullVar () : (P.spec_var * perm_formula) = 
   let nv = fresh_perm_var() in
   (nv,mkEq (mkVPerm nv) (mkPFull ()) no_pos)*)
@@ -313,11 +317,171 @@ let find_rel_constraints (f:perm_formula) desired :perm_formula =  (*TODO -> che
    let pairs = List.filter (fun (c,_) -> (List.length (Gen.BList.intersect_eq P.eq_spec_var c fixp))>0) lf_pair in
    conj_of_list (snd (List.split pairs))
    
-   
-   
-   
-   
 
+  
+let rec list_of_a_f f : P.spec_var list * ((( frac_perm*frac_perm)list * (frac_perm*frac_perm*frac_perm) list) list option)= match f with
+	| And (f1,f2,_) -> 
+		let (v1,l1),(v2,l2) = (list_of_a_f f1),(list_of_a_f f2) in
+		(match l1,l2 with
+		  | None,_ 
+		  | _,None -> ([],None)
+		  | Some r1, Some r2 ->     
+        let ll = List.map (fun (s1,f1) -> List.map (fun (s2,f2) -> (s1@s2, f1@f2)) r1 ) r2 in
+        (v1@v2, Some (List.concat ll)))
+	| Or  (f1,f2,_) ->
+		let (v1,l1),(v2,l2) = (list_of_a_f f1),(list_of_a_f f2) in
+		(match l1,l2 with
+		  | None, x -> (v2,l2)
+		  | x, None -> (v1,l1)
+		  | Some l1, Some l2 -> (v1@v2,Some (l1@l2)))
+	| Join (f1,f2,f3,_) -> ([],Some [([],[(f1,f2,f3)])])
+	| Eq  (f1,f2,_) -> ([],Some [([(f1,f2)],[])])
+    | Exists (vl,f,_) ->
+		let v1,l1 = list_of_a_f f in
+		(v1@vl,l1)
+	| PTrue _ -> ([],Some [([],[])])
+	| PFalse _ -> ([], None)
+
+exception Unsat_exception
+      
+let is_sat_p_t (lp,lt) = 
+  let triv_unsat lj = 
+	let f = eq_fperm in
+	let f1 = isConstXFperm bot_share in
+	List.iter (fun (c1,c2,c3) -> if (f c1 c3) || (f c2 c3) || (f c1 c2)|| f1 c1 || f1 c2 || f1 c3 then raise Unsat_exception else ()) lj in	 
+  let rec propag_eqs ss lj le = match le with
+    | [] -> ss,lj
+    | (c1,c2)::t -> match (c1,c2) with
+          | PConst s1, PConst s2 -> if (Ts.stree_eq s1 s2) then propag_eqs ss lj t else raise Unsat_exception
+          | PConst s, PVar v  
+          | PVar v, PConst s -> prop_subst ss (v,PConst s) lj t
+          | PVar v1, PVar v2 ->  if (P.eq_spec_var v1 v2) then propag_eqs ss lj t else prop_subst ss (v1, PVar v2) lj t
+    and prop_subst ss s lj t = 
+		let f = subst_perm_expr s in
+		let t = List.map (fun (c1,c2)-> (f c1, f c2)) t in
+		let lj= List.map (fun (c1,c2,c3) -> (f c1 , f c2, f c3)) lj in    
+		propag_eqs (s::ss) lj t in
+		
+  let rec propag_trip ss lp ln = match ln with
+		| [] -> ss,lp
+		| (c1,c2,c3)::lr -> 
+			match (c1,c2,c3) with
+				| PConst s1, PConst s2, PConst s3 -> if (Ts.can_join s1 s2) && (Ts.stree_eq s3 (Ts.join s1 s2)) then propag_trip ss lp lr else raise Unsat_exception 
+				| PConst s1, PConst s2, PVar v  -> hlp (Ts.can_join s1 s2) (v, PConst (Ts.join s1 s2)) lp lr ss
+				| PConst s1, PVar v, PConst s3
+				| PVar v, PConst s1, PConst s3   -> hlp (Ts.contains s3 s1) (v, PConst (Ts.subtract s3 s1)) lp lr ss
+				| _ -> propag_trip ss ((c1,c2,c3)::lp) lr 
+    and hlp tst s lp lr ss = 
+		if tst then 
+			let mf = List.map (fun (c1,c2,c3) -> (subst_perm_expr s c1 , subst_perm_expr s c2, subst_perm_expr s c3)) in
+			propag_trip (s::ss) (mf lp) (mf lr) 
+		else raise Unsat_exception in
+		
+  let lfv l = List.concat (List.map (fun (c1,c2,c3)-> (frac_fv c1)@(frac_fv c2)@(frac_fv c3))l) in
+  let int_consist vm vM = (Ts.contains vM vm) && (not (Ts.empty vM)) in
+	
+  let inters_restr dest src b = if Ts.contains dest src then (src,b) else ((Ts.intersect src dest),true) in
+  let union_grow dest src b = if Ts.contains src dest then (src,b) else ((Ts.union src dest),true) in
+  
+  let dom_retrieve sol (c1,c2,c3) = 
+     let hlp v = match v with | PConst s-> ((s,s),false) |PVar v -> (PMap.find v sol,true) in
+	 (hlp c1),(hlp c2),(hlp c3) in
+    
+  let upd_sol sol c1 d1 c2 d2 c3 d3 = 
+    let hlp sol c d = match c with | PConst _ -> sol | Pvar v-> PMap.add v d sol in
+    (((hlp sol c1 d1) c2 d2) c3 d3) in
+	
+  let prop_up_one (sol,b) (c1,c2,c3) =  
+    let ((d1m,d1M),b1),((d2m,d2M),b2),((d3m,d3M),b3) = dom_retrieve sol (c1,c2,c3) in
+	if not (Ts.can_join d1m d2m) then raise Unsat_exception
+	else 
+		let apb = Ts.join d1m d2m in 
+		let aub = Ts.union d1M d2M in 
+		if not (Ts.contains d3M apb) then raise Unsat_exception
+		else 
+			let d3m,b = union_grow apb d3m b in
+			let d3M,b = inters_restr aub d3M b in
+			let d1m,d2m,b = 				
+				if (Ts.contains apb d3m) then (d1m,d2m,b)
+				else if not b2 then (Ts.join d1m (Ts.intersect d3m (Ts.neg_tree apb)), d2m, true)
+				else if not b1 then (d1m, Ts.join d2m (Ts.intersect d3m (Ts.neg_tree apb)), true)
+				else (d1m,d2m,b) in
+			let d1M,d2M,b =  
+				if (Ts.contains d3M aub) then (d1M,d2M,b) 
+				else if not b2 then (Ts.intersect d1M (Ts.neg_tree d3M), d2M, true)
+        else if not b1 then (d1M, Ts.intersect d2M (Ts.neg_tree d3M), true)
+        else (d1M,d2M,b) in
+			if (int_consist d1m d1M)&&(int_consist d2m d2M)&&(int_consist d3m d3M) then 
+          (upd_sol sol c1 (d1m,d1M) c2 (d2m,d2M) c3 (d3m,d3M) , b)
+			else raise Unsat_exception in
+		  
+  let rec prop_upstream sol lc =
+	let r1,b = List.fold_left prop_up_one (sol,false) lc in
+	if b then prop_upstream r1 lc else r1 in
+		
+  let rec prop_downstream sol in
+		
+  let rec propag_cons sol lc = 	
+	let sol = prop_upstream sol lc in
+	let (sol,lc,b) = prop_downstream sol lc in
+	if b then propag_cons sol lc else sol in
+		
+  let add_subst l a = List.fold_left (fun a (v,r) -> match r with 
+		| PVar v1 -> PMap.add v (PMap.find v1 a) a 
+		| PConst s -> PMap.add v (s,s) a) a l in
+	
+  try 
+	let eq_sp, lj = propag_eqs [] lt lp in
+    let eq_st, lj = propag_trip [] [] lj in
+	let eq_s = eq_sp@eq_st in
+	triv_unsat lj; tree_unsat lj;
+	let sol = List.fold_left (fun a v-> PMap.add v (bot_share,top_share) a) (PMap.create P.cmp_spec_var) (Gen.BList.remove_dups_eq P.eq_spec_var (lfv lj)) in 
+	let sol = propag_cons sol lj in
+  let _ = test_sat sol in
+	(List.map (add_subst eq_s) sol)
+  with 
+   | Unsat_exception -> []
+   | Not_found -> (print_string "error in solver \n"; [])
+   
+let is_sat_p_t_w l = List.length (is_sat_p_t l) > 0
+   
+let is_sat f = match snd (list_of_a_f f) with 
+    | None -> false (*f formula is false*)
+    | Some l -> List.exists is_sat_p_t_w l 
+      
+(*elim exists*)(*TODO*) 
+(*try and eliminate vars from w, what can not be done return*)
+let elim_exists_perm w f1 = (w,f1) (*TODO*) 
+(*try and eliminate vars from w, what can not be done, push as existentials-eliminate them*)
+let elim_exists w f1 = f1 (*loop*) (*TODO*) 
+
+
+  (*let f = factor_comm f1 in
+  List.fold_left (fun (a1,a2) c->
+    let s,nf = get_subst_eq_f a2 c in
+    if (Util.empty s) then (w::a1,a2)
+    else (a1,apply_subs s nf)) ([],f) w *)
+    
+let elim_exists_exp_perm f = f (*TODO*) 
+let simpl_perm_formula f = f (*TODO*) 
+
+(*imply*)
+let imply f1 f2 = true (*TODO*) 
+let match_imply l_v r_v l_f r_f l_node e_vars :(bool * P.spec_var * P.spec_var * 'a * 'b * 'c) option = 
+    Some (false,l_v, r_v, l_f, r_f, l_node) (*TODO*) 
+
+(*sat*)
+    
+(*let does_match p = match p with | Some _ -> true | None -> false*)
+  
+(*let needs_split p = match p with | Some (true,_,_,_,_,_)-> true | _ -> false*)  
+   
+   
+   
+   
+   
+   (*end of todos*)
+   
 let split_universal (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_vars : P.spec_var list)(impl_inst_vars : P.spec_var list) (vvars : P.spec_var list) (pos : loc) 
       : perm_formula * perm_formula * (P.spec_var list) =
   let rec split f = match f with
@@ -352,104 +516,56 @@ let split_universal (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_var
 	let new_f = mkAnd to_ante (mkExists evars new_f pos) pos in
     (new_f,to_conseq, evars)
   else (elim_exists_exp_perm to_ante, to_conseq, evars)
-
-  
-let rec list_of_a_f f : P.spec_var list * ((( frac_perm*frac_perm)list * (frac_perm*frac_perm*frac_perm) list) list option)= match f with
-	| And (f1,f2,_) -> 
-		let (v1,l1),(v2,l2) = (list_of_a_f f1),(list_of_a_f f2) in
-		(match l1,l2 with
-		  | None,_ 
-		  | _,None -> ([],None)
-		  | Some r1, Some r2 ->     
-        let ll = List.map (fun (s1,f1) -> List.map (fun (s2,f2) -> (s1@s2, f1@f2)) r1 ) r2 in
-        (v1@v2, Some (List.concat ll)))
-	| Or  (f1,f2,_) ->
-		let (v1,l1),(v2,l2) = (list_of_a_f f1),(list_of_a_f f2) in
-		(match l1,l2 with
-		  | None, x -> (v2,l2)
-		  | x, None -> (v1,l1)
-		  | Some l1, Some l2 -> (v1@v2,Some (l1@l2)))
-	| Join (f1,f2,f3,_) -> ([],Some [([],[(f1,f2,f3)])])
-	| Eq  (f1,f2,_) -> ([],Some [([(f1,f2)],[])])
-    | Exists (vl,f,_) ->
-		let v1,l1 = list_of_a_f f in
-		(v1@vl,l1)
-	| PTrue _ -> ([],Some [([],[])])
-	| PFalse _ -> ([], None)
-
-exception Unsat_exception
-      
-let is_sat_p_t (lp,lt) = 
-  let triv_unsat lj = 
-	let f = eq_fperm in
-	List.iter (fun (c1,c2,c3) -> if (f c1 c3) || (f c2 c3) || (f c1 c2) then raise Unsat_exception else ()) lj in	 
-  let rec propag_eqs lj le = match le with
-    | [] -> lj
-    | (c1,c2)::t -> match (c1,c2) with
-          | PConst s1, PConst s2 -> if (Ts.eq_stree s1 s2) then propag_eqs lj t else raise Unsat_exception
-          | PConst s, PVar v  
-          | PVar v, PConst s -> prop_subst (v,PConst s) lj t
-          | PVar v1, PVar v2 ->  if (P.eq_spec_var v1 v2) then propag_eqs lj t else prop_subst (v1, PVar v2) lj t
-    and prop_subst s lj t = 
-		let f = subst_perm_expr s in
-		let t = List.map (fun (c1,c2)-> (f c1, f c2)) t in
-		let lj= List.map (fun (c1,c2,c3) -> (f c1 , f c2, f c3)) lj in    
-		propag_eqs lj t in
-		
-  let rec propag_trip lp ln = match ln with
-		| [] -> lp
-		| (c1,c2,c3)::lr -> 
-			match (c1,c2,c3) with
-				| PConst s1, PConst s2, PConst s3 -> if (Ts.can_join s1 s2) && (Ts.stree_eq s3 (Ts.join s1 s2)) then propag_trip lp lr else raise Unsat_exception 
-				| PConst s1, PConst s2, PVar v  -> hlp (Ts.can_join s1 s2) (v, PConst (Ts.join s1 s2)) lp lr
-				| PConst s1, PVar v, PConst s3
-				| PVar v, PConst s1, PConst s3   -> hlp (Ts.contains s3 s1) (v, PConst (Ts.subtract s3 s1)) lp lr
-				| _ -> propag_trip ((c1,c2,c3)::lp) lr 
-    and hlp tst s lp lr = 
-		if tst then 
-			let mf = List.map (fun (c1,c2,c3) -> (subst_perm_expr s c1 , subst_perm_expr s c2, subst_perm_expr s c3)) in
-			propag_trip (mf lp) (mf lr) 
-		else raise Unsat_exception in
-		
-  let sort_constraints l = 
-	let depends (c1,c2,c3)(d1,d2,d3) = if (isConstFperm d3) then false else ( eq_fperm c1 d3 || eq_fperm c2 d3) in
-	let rec splitter (lr1,lr2) l = match l with
-		| [] -> (lr1,lr2)
-		| h::t -> 
-			if (List.exists (depends h) lr2)||(List.exists (depends h) t) then splitter (lr1,h::lr2) t
-			else splitter (h::lr1,lr2) t in		
-	let rec hlp l = 
-		if l=[] then []
-		else 
-			let ind,dep = splitter l in
-			if ind=[] then raise Unsat_exception
-			else (List.rev ind)@(hlp dep) in			
-	hlp l in
-	
-  let lfv l = List.concat (List.map (fun (c1,c2,c3)-> (frac_fv c1)@(frac_fv c2)@(frac_fv c3))l) in
-	
-  try 
-    let lj = propag_trip [] (propag_eqs lt lp) in
-	triv_unsat lj;
-	let lsj = sort_constraints lj in
-	let dom_cons = List.fold_left (fun a v-> PMap.add (v,(None,None))) (PMap.create P.cmp_spec_var) (Gen.Blist.remove_dups P.eq_spec_var (lfv lj)) in 
-	(propag_cons dom_cons lsj)
-	 (*i need to construct the domains, [min, max] for all the variables and propagate all, lsj contains a sorted list of cons with 2 or 3 vars *)
-  with Unsat_exception -> false
    
-let is_sat f = match list_of_a_f f with 
-    | None -> false (*f formula is false*)
-    | Some l -> List.exists is_sat_p_t l 
-      
-  
-  
-  
-  
-  
-  
+   
+   (*start of useless code*)
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   (*
+   	
+	(*if (Ts.can_join v1m v2m)&&(Ts.contains v3M (Ts.join v2m v1m) then
+				let fmc = Ts.subtract v3M v2m in
+				let v1M,b = inters_restr fmc v1M b in
+				let v1M,b = inters_restr v3M v1M b in 
+				let v3M,b = inters_restr (Ts.union v2M v1M) v3M b in
+				let v3m,b = union_grow v2m v3m b in
+				let v3m,b = union_grow v1m v3m b in
+				let v1m,b = union_grow fmc v1m in
+				if (int_consist v1M v1m)&&(int_consist v3M v3m) then [((PMap.add v2 (v3m,v3M) (PMap.add v1 (v1m,v1M) sol)),b)]
+				else raise Unsat_exception	
+			else  raise Unsat_exception
+			
+			if (Ts.can_join v1m v2m)&& (Ts.contains v3M (Ts.join v1m v2m)) && (Ts.contains (Ts.union v1M v2M) v3m) then
+			   let v1M,b = inters_restr v3M v1M b in
+			   let v1M,b = inters_restr (Ts.substract v3M v2m) b in
+			   let v2M,b = inters_restr v3M v2M b in
+			   let v2M,b = inters_restr (Ts.substract v3M v1m) b in
+			   let v1m,b = union_grow (Ts.subtract v3m v2M) v1m b in
+			   let v2m,b = union_grow (Ts.subtract v3m v1M) v2m b in
+			   if (int_consist v1M v1m)&&(int_consist v2M v2m) then 
+					[((PMap.add v2 (v2m,v2M) (PMap.add v1 (v1m,v1M) sol)),b)]
+			   else raise Unsat_exception
+		    else raise Unsat_exception
+			
+			*)
   
   --------------------------
-  
+  (*let r = List.fold_left (fun lsol c -> List.concat (List.map (fun s -> prop_one s c) lsol)) [(sol,false)] lc in
+	List.concat (List.map (fun (c1,c2)-> if c2 then propag_cons c1 lc else [c1]) r) in*)
   
 let solve_set l_vars (lp,lt) : (P.spec_var* share) list = 
 
@@ -502,7 +618,7 @@ let solve_set l_vars (lp,lt) : (P.spec_var* share) list =
 	
   let add_to_sol sol ls = List.fold_left (fun a (v,s)-> 
       let prev = PMap.find v a in
-      if Ts.stree_eq prev Ts.bot || Ts.stree_eq prev s then PMap.add v s a else raise Unsat_exception) sol ls in 
+      if Ts.stree_eq prev bot_share || Ts.stree_eq prev s then PMap.add v s a else raise Unsat_exception) sol ls in 
   
   let rec compute_substs le : (P.spec_var * P.spec_var)list = match le with
       | [] -> []
@@ -528,7 +644,7 @@ let solve_set l_vars (lp,lt) : (P.spec_var* share) list =
       let r1, r2 = PMap.find v1 sol, PMap.find v2 sol in
       if (Ts.stree_eq r1 r2) then sol
       else 
-        match Ts.stree_eq r1 Ts.bot , Ts.stree_eq r2 Ts.bot with
+        match Ts.stree_eq r1 bot_share , Ts.stree_eq r2 bot_share with
           | true, false -> PMap.add v1 r2 sol
           | false, true -> PMap.add v2 r1 sol
           | _ -> raise Unsat_exception ) sol l_sub
@@ -563,70 +679,31 @@ let solve_system f : ((P.spec_var * share option) list list)=
 	| None -> [] (*f formula is false*)
 	| Some l ->  		
     let lfv = lafv l in
-    let sol = List.fold_left (fun a c-> PMap.add c Ts.bot a) (PMap.create P.cmp_spec_var) lfv in
+    let sol = List.fold_left (fun a c-> PMap.add c bot_share a) (PMap.create P.cmp_spec_var) lfv in
 		let r = List.map (solve_set sol) l in
 	    let r = List.filter (fun c-> match c with | [] -> false | _ ->true) r in
 		if List.length r > 0 then 
 			List.map (List.filter (fun (c1,_)-> Gen.BList.mem_eq (P.eq_spec_var c1) evl)) r
 		else [] (*no solutions*)
 	
+	
+  let sort_constraints l = 
+	let depends (c1,c2,c3)(d1,d2,d3) = if (isConstFperm d3) then false else ( eq_fperm c1 d3 || eq_fperm c2 d3) in
+	let rec splitter (lr1,lr2) l = match l with
+		| [] -> (lr1,lr2)
+		| h::t -> 
+			if (List.exists (depends h) lr2)||(List.exists (depends h) t) then splitter (lr1,h::lr2) t
+			else splitter (h::lr1,lr2) t in		
+	let rec hlp l = 
+		if l=[] then []
+		else 
+			let ind,dep = splitter l in
+			if ind=[] then raise Unsat_exception
+			else (List.rev ind)@(hlp dep) in			
+	hlp l in
+	
    
-   
-   
-   
-  
-(*elim exists*)(*TODO*) 
-(*try and eliminate vars from w, what can not be done return*)
-let elim_exists_perm w f1 = (w,f1) (*TODO*) 
-(*try and eliminate vars from w, what can not be done, push as existentials-eliminate them*)
-let elim_exists w f1 = f1 (*loop*) (*TODO*) 
-
-
-  (*let f = factor_comm f1 in
-  List.fold_left (fun (a1,a2) c->
-    let s,nf = get_subst_eq_f a2 c in
-    if (Util.empty s) then (w::a1,a2)
-    else (a1,apply_subs s nf)) ([],f) w *)
-    
-let elim_exists_exp_perm f = f (*TODO*) 
-let simpl_perm_formula f = f (*TODO*) 
-
-(*imply*)
-let imply f1 f2 = true (*TODO*) 
-let match_imply l_v r_v l_f r_f l_node e_vars :(bool * P.spec_var * P.spec_var * 'a * 'b * 'c) option = 
-    Some (false,l_v, r_v, l_f, r_f, l_node) (*TODO*) 
-
-(*sat*)
-    
-(*let does_match p = match p with | Some _ -> true | None -> false*)
-  
-(*let needs_split p = match p with | Some (true,_,_,_,_,_)-> true | _ -> false*)  
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   (*let rec normalize_to_CNF (f : perm_formula) pos : perm_formula = match f with
+   let rec normalize_to_CNF (f : perm_formula) pos : perm_formula = match f with
   | Or (f1, f2, p) ->
         let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
 	     (mkAnd conj (mkOr disj1 disj2 p) p)

@@ -188,32 +188,32 @@ hipc:
 	make clean; make hip
 
 hip.norm: decidez.vo $(MAIN_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(MAIN_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma extLib.cma $(camlp4lnorm) $(MAIN_FILES)
 #[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hip: $(MAIN_FILES_OPT) decidez.vo
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(camlp4l) $(MAIN_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa extLib.cmxa $(camlp4l) $(MAIN_FILES_OPT)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 mytop: $(MAIN_FILES) decidez.vo
-	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(MAIN_FILES)
+	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma extLib.cma $(camlp4lnorm) $(MAIN_FILES)
 
 
 hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
-	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma extLib.cma $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 
 prover.norm: $(PROVE_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(PROVE_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma extLib.cmxa $(camlp4lnorm) $(PROVE_FILES)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover: $(PROVE_FILES_OPT)
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(camlp4l) $(PROVE_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa extLib.cmxa $(camlp4l) $(PROVE_FILES_OPT)
 
 
 web: $(WEB_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(WEB_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma extLib.cma $(camlp4lnorm) $(WEB_FILES)
 
 sleekc:
 	make clean; make sleek 
@@ -225,11 +225,11 @@ xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
 sleek.norm: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(camlp4lnorm) $(SLEEK_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma extLib.cma $(camlp4lnorm) $(SLEEK_FILES)
 #	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
 sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(camlp4l) $(SLEEK_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa extLib.cmxa $(camlp4l) $(SLEEK_FILES_OPT)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa camlp4lib.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
@@ -245,7 +245,7 @@ JAVA_FILES=debug.cmo globals.cmo error.cmo \
 	java.cmo
 
 j: $(JAVA_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4l) $(JAVA_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma extLib.cma $(camlp4l) $(JAVA_FILES)
 
 decidez.vo:
 	coqtop -compile decidez
