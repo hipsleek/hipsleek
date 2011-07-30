@@ -220,7 +220,7 @@ and get_eqns_free ((r_node_pr,l_node_pr) : P.spec_var option * P.spec_var option
 			else if (P.mem v struc_expl_inst) then (tr, r,[])  
 			else (r ,tr,[]) 
 
-(*transformers*)
+(*transformers  *)
 
 let get_subst_equation_perm_formula f qvars = ([],f)
 
@@ -388,8 +388,8 @@ let is_sat_p_t (lp,lt) =
 	 (hlp c1),(hlp c2),(hlp c3) in
     
   let upd_sol sol c1 d1 c2 d2 c3 d3 = 
-    let hlp sol c d = match c with | PConst _ -> sol | Pvar v-> PMap.add v d sol in
-    (((hlp sol c1 d1) c2 d2) c3 d3) in
+    let hlp sol c d = match c with | PConst _ -> sol | PVar v-> PMap.add v d sol in
+    (hlp (hlp (hlp sol c1 d1) c2 d2) c3 d3) in
 	
   let prop_up_one (sol,b) (c1,c2,c3) =  
     let ((d1m,d1M),b1),((d2m,d2M),b2),((d3m,d3M),b3) = dom_retrieve sol (c1,c2,c3) in
@@ -419,7 +419,7 @@ let is_sat_p_t (lp,lt) =
 	let r1,b = List.fold_left prop_up_one (sol,false) lc in
 	if b then prop_upstream r1 lc else r1 in
 		
-  let rec prop_downstream sol in
+  let rec prop_downstream sol lc= (sol,lc,false) in
 		
   let rec propag_cons sol lc = 	
 	let sol = prop_upstream sol lc in
@@ -434,11 +434,11 @@ let is_sat_p_t (lp,lt) =
 	let eq_sp, lj = propag_eqs [] lt lp in
     let eq_st, lj = propag_trip [] [] lj in
 	let eq_s = eq_sp@eq_st in
-	triv_unsat lj; tree_unsat lj;
+	triv_unsat lj; 
 	let sol = List.fold_left (fun a v-> PMap.add v (bot_share,top_share) a) (PMap.create P.cmp_spec_var) (Gen.BList.remove_dups_eq P.eq_spec_var (lfv lj)) in 
 	let sol = propag_cons sol lj in
-  let _ = test_sat sol in
-	(List.map (add_subst eq_s) sol)
+ (* let _ = test_sat sol in
+	*)[(add_subst eq_s) sol]
   with 
    | Unsat_exception -> []
    | Not_found -> (print_string "error in solver \n"; [])

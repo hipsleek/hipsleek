@@ -9,8 +9,6 @@ open Cformula
 
 module P = Cpure
 module MP = Mcpure
-module Cpr = Cperm
-
 
 
 let is_short n = (n==2);;
@@ -510,12 +508,6 @@ let pure_formula_assoc_op (e:P.formula) : (string * P.formula list) option =
     | P.Or (e1,e2,_,_) -> Some (op_or_short,[e1;e2])
     | _ -> None
 
-let perm_formula_assoc_op (e:Cpr.perm_formula) : (string * Cpr.perm_formula list) option = 
-  match e with
-    | Cpr.And (e1,e2,_) -> Some (op_and_short,[e1;e2])
-    | Cpr.Or (e1,e2,_) -> Some (op_or_short,[e1;e2])
-    | _ -> None
-	
 	
 (* check if exp can be printed without a parenthesis,
      e.g. trivial expr and prefix forms *)
@@ -525,10 +517,6 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.Exists _ | P.Not _ -> true
     | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
     | P.And _ -> true 
-    | _ -> false
-
-let perm_formula_wo_paren  (e:Cpr.perm_formula) = match e with
-    | Cpr.Exists _ | Cpr.Eq _ | Cpr.Join _ | Cpr.And _ -> true 
     | _ -> false
 	
 	
@@ -797,6 +785,12 @@ let pr_mem_formula  (e : mem_formula) =
 (*     | [] -> fmt_string ";" *)
 (* ;; *)
 
+let rec pr_share_tree t = match t with
+    | Tree_shares.Leaf b-> fmt_string (if b then "*" else " ")
+    | Tree_shares.Node (t1,t2) -> pr_pair pr_share_tree pr_share_tree (t1,t2)
+    
+let string_of_share_tree t = poly_string_of_pr pr_share_tree t
+
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
   in
@@ -828,7 +822,7 @@ let rec pr_h_formula h =
           (if pid==None then fmt_string "NN " else fmt_string "SS ");
           pr_formula_label_opt pid;
           pr_spec_var sv; fmt_string "::";
-		  let s  = c ^ (match pr with | None -> "" | Some v -> ("@"^ string_of_spec_var v)) in
+		  let s  = c ^ (match pr with | None -> "" | Some v -> ("@"^ string_of_share_tree v)) in
           pr_angle s pr_spec_var svs ;		  
 	      pr_imm imm;
           (match ann with | None -> () | Some _ -> fmt_string "[]");
@@ -849,7 +843,7 @@ let rec pr_h_formula h =
           pr_formula_label_opt pid; 
           pr_spec_var sv; 
           fmt_string "::"; 
-		  let s  = c ^ (match pr with | None -> "" | Some v -> ("@"^ string_of_spec_var v)) in
+		  let s  = c ^ (match pr with | None -> "" | Some v -> ("@"^ string_of_share_tree v)) in
           pr_angle s pr_spec_var svs;
 	      pr_imm imm;
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
@@ -915,40 +909,10 @@ let pr_mix_formula_branches (f,l) = match f with
 let rec string_of_flow_formula f c = 
   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
 	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
-
-let rec pr_share_tree t = match t with
-    | Tree_shares.Leaf b-> fmt_string (if b then "*" else " ")
-    | Tree_shares.Node (t1,t2) -> pr_pair pr_share_tree pr_share_tree (t1,t2)
     
-	  
-let rec pr_frac_formula f = match f with
-	| Cpr.PVar v -> pr_spec_var v
-	| Cpr.PConst l -> pr_share_tree l
-	 	  
-let pr_perm_formula f = 
-  let rec f_b e =  pr_bracket perm_formula_wo_paren helper e 
-  and helper f = match f with
-	| Cpr.And (f1,f2,_)->
-		  let arg1 = bin_op_to_list op_and_short perm_formula_assoc_op f1 in
-          let arg2 = bin_op_to_list op_and_short perm_formula_assoc_op f2 in
-          let args = arg1@arg2 in
-          pr_list_op op_and f_b args
-	| Cpr.Or (f1,f2,_) ->
-		  let arg1 = bin_op_to_list op_or_short perm_formula_assoc_op f1 in
-          let arg2 = bin_op_to_list op_or_short perm_formula_assoc_op f2 in
-          let args = arg1@arg2 in
-          pr_list_op op_or f_b args
-	| Cpr.Join (f1,f2,f3,_) -> (pr_frac_formula f1; fmt_string "+"; pr_frac_formula f2 ; fmt_string "="; pr_frac_formula f3)
-	| Cpr.Eq (f1,f2,_) -> (pr_frac_formula f1; fmt_string "="; pr_frac_formula f2)
-	| Cpr.Exists (ql,f,_)-> fmt_string "ex("; pr_list_of_spec_var ql; fmt_string ":"; helper f; fmt_string ")"
-	| Cpr.PTrue _ -> fmt_string "T"
-	| Cpr.PFalse _ -> fmt_string "F" in
-  if (Cpr.isConstTrue f) then () else (fmt_string "[";helper f ;fmt_string "]")
-	  
-
-let pr_mix_formula_branches_perm (f,l,pr) = ((match f with
+let pr_mix_formula_branches_perm (f,l) = ((match f with
   | MCP.MemoF f -> pr_memo_pure_formula_branches (f,l)
-  | MCP.OnePF f -> pr_pure_formula_branches (f,l));fmt_string " & "; pr_perm_formula pr)
+  | MCP.OnePF f -> pr_pure_formula_branches (f,l)))
 	  
 let rec pr_formula_base e =
   match e with
@@ -958,11 +922,10 @@ let rec pr_formula_base e =
 	  formula_base_type = t;
 	  formula_base_flow = fl;
       formula_base_label = lbl;
-	  formula_base_perm = pr;
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "<NoLabel>" | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
-          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl); pr_cut_after "&"; pr_perm_formula pr
+          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -990,18 +953,14 @@ let rec pr_formula e =
 	  formula_exists_type = t;
 	  formula_exists_flow = fl;
       formula_exists_label = lbl;
-	  formula_exists_perm = pr;
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
-          fmt_string ((string_of_flow_formula "FLOW" fl) ^")");
-		  pr_perm_formula pr
+          fmt_string ((string_of_flow_formula "FLOW" fl) ^")")
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
-
-let string_of_perm_formula f  = poly_string_of_pr pr_perm_formula f
 
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
@@ -1037,8 +996,8 @@ let string_of_mix_formula (f:MP.mix_formula) : string =
 let string_of_mix_formula_branches (f,l) : string = 
   poly_string_of_pr pr_mix_formula_branches (f,l)
 
-let string_of_mix_formula_branches_perm (f,l,pr) : string = 
-  poly_string_of_pr pr_mix_formula_branches_perm (f,l,pr)
+let string_of_mix_formula_branches_perm (f,l) : string = 
+  poly_string_of_pr pr_mix_formula_branches_perm (f,l)
   
 let printer_of_pure_formula_branches (fmt: Format.formatter) (f, l) : unit =
   poly_printer_of_pr fmt pr_pure_formula_branches (f, l)

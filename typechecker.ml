@@ -164,7 +164,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	              if (CF.subsume_flow_f !n_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
 	                let t = Gen.unsome (type_of_exp rhs) in
 	                let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
-	                let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos))  (Cperm.mkTrue pos) pos in
+	                let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in
 	                let tmp_ctx1 = CF.compose_context_formula (CF.Ctx c1) link [vsv] CF.Flow_combine pos in
 	                let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
 	                let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
@@ -217,8 +217,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*     ^ "\n") in *)
           let n_pr = match pr with 
             | None -> None 
-            | Some s-> if  not !Globals.enable_frac_perm then report_error no_pos "bind: fractional permissions are disabled!!"
-              else if (CF.is_full_perm_failesc unfolded v_prim) then None else Some (Cpr.mk_perm_var (s, Primed)) in
+            | Some s-> 
+              report_error no_pos "bind: fractional permissions are disabled!!"
+            (*if  not !Globals.enable_frac_perm then 
+              else if (CF.is_full_perm_failesc unfolded v_prim) then None else Some (Cpr.mk_perm_var (s, Primed))*) in
 	        let c = string_of_typ v_t in
 	        let vdatanode = CF.DataNode ({
                             CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
@@ -335,13 +337,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                    exp_iconst_pos = pos}) ->
 	          let c_e = CP.IConst (i, pos) in
 	          let res_v = CP.Var (CP.mkRes int_type, pos) in
-	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) (Cperm.mkTrue pos) pos in
+	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
         | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
 	          let c_e = CP.FConst (f, pos) in
 	          let res_v = CP.Var (CP.mkRes float_type, pos) in
-	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) (Cperm.mkTrue pos) pos in
+	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
         | New ({exp_new_class_name = c;
@@ -362,14 +364,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_pos = pos}) in
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) (Cperm.mkTrue pos)[] pos in
+	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
           let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
 	        res
 	      end;
         | Null pos ->
 	          let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Named "", res, Unprimed)) pos) (CP.Null pos) pos in
-	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) (Cperm.mkTrue pos) pos in
+	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
 				| EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
@@ -477,14 +479,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | This ({exp_this_type = t;
                  exp_this_pos = pos}) -> 
           begin
-            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos)) (Cperm.mkTrue pos) pos in
+            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos)) pos in
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
           end
         | Var ({exp_var_type = t;
                 exp_var_name = v;
                 exp_var_pos = pos}) -> 
           begin
-            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) (Cperm.mkTrue pos) pos in
+            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
           end
         | VarDecl _ -> ctx (* nothing to do *)
@@ -499,14 +501,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in*)
 	          let nctx = match v with 
 	            | Sharp_prog_var (t,v) -> 
-		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) (Cperm.mkTrue pos) pos in
+		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
 		              let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
 		              ctx1
 	            | Sharp_finally v -> 
 		              let fct es = 
 		                let rest, b_rez = CF.get_var_type v es.CF.es_formula in
 		                if b_rez then
-                          let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos)) (Cperm.mkTrue pos) pos in
+                          let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos)) pos in
 			              if !Globals.max_renaming then CF.normalize_es vsv_f pos true es
 			              else CF.normalize_clash_es vsv_f pos true es
 		                else CF.Ctx es

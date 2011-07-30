@@ -593,3 +593,6 @@ class type ['a] incremMethodsType = object
 end
 
 
+let un_option s d = match s with
+  | Some v -> v
+  | None -> d

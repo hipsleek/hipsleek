@@ -9,7 +9,7 @@ open Gen.Basic
   module P = Ipure
   module E1 = Error
   module I = Iast
-  module Pr = Iperm
+  (*module Pr = Iperm*)
   
   module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
   
@@ -88,11 +88,7 @@ let rec split_members mbrs = match mbrs with
 	| [] -> ([], [], [])
   
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
-  
-let un_option s d = match s with
-  | Some v -> v
-  | None -> d
-  
+   
 let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p ("list contains duplicates") else l
 
 let label_formula f ofl = (match f with 
@@ -544,33 +540,22 @@ disjunctive_constr:
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
-			   F.formula_base_perm = pr;
-               F.formula_base_branches = b}) -> F.mkExists ocl h p fl pr b (get_pos_camlp4 _loc 1)
+               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
   
    ]
   ];
       
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fpc=opt_perm_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc fpc (get_pos_camlp4 _loc 1))
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fpc=opt_perm_constraints; fb= opt_branches   -> F.mkBase hc pc fc fpc fb (get_pos_camlp4 _loc 2)
+  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc  (get_pos_camlp4 _loc 1))
+   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos_camlp4 _loc 2)
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
 flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]]; 
 
-opt_perm_constraints: [[ t = OPT br_permission_constraints -> Pr.mkPFormula t]];
-
-br_permission_constraints : [[`OSQUARE;t=LIST1 one_p_const SEP `AND; `CSQUARE ->
-        if  not !Globals.enable_frac_perm then report_error no_pos "parser: fractional permissions are disabled!!"
-        else List.fold_left (fun a c-> Pr.mkAnd a c no_pos) (List.hd t) (List.tl t) ]];
-  
-one_p_const : [[t1=perm; `EQ ; t2=perm -> Pr.mkEq t1 t2 no_pos
-	| `JOIN ; `OPAREN; t1=perm; `COMMA;  t2=perm; `COMMA; t3=perm; `CPAREN -> Pr.mkJoin t1 t2 t3 no_pos]];
-
-perm : [[ `OSQUARE; t = LIST1 one_perm SEP `COMMA ;`CSQUARE -> Pr.mkCPerm t
-		| t=cid -> Pr.mkVPerm t]];
+perm : [[ `OSQUARE; t = LIST1 one_perm SEP `COMMA ;`CSQUARE -> t]];
 
 one_perm :[[ `IDENTIFIER id -> if id ="L" then PLeft else if id="R" then PRight else report_error (get_pos_camlp4 _loc 1) "only L or R as permission splits are allowed"]];
 
