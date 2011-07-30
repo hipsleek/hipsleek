@@ -220,7 +220,7 @@ and get_eqns_free ((r_node_pr,l_node_pr) : P.spec_var option * P.spec_var option
 			else if (P.mem v struc_expl_inst) then (tr, r,[])  
 			else (r ,tr,[]) 
 
-(*transformers*)
+(*transformers  *)
 
 let get_subst_equation_perm_formula f qvars = ([],f)
 
