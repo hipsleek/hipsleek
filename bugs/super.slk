@@ -4,20 +4,16 @@ pred ls<p> == self = p
 	or self::node<next = r> * r::ls<p> & self!=p
 	inv true.
 
-
-
+/* checkentail x::ls<a> * y::ls<b> * z::ls<c> * x::node<_,_> * y::node<_,_> |- true. */
 
 checkentail a::ls<b> * a::node<_,_> |- a=b .
 
-checkentail a::ls<b> * a::node<_,_> & a=b |- a=b .
+/* checkentail a::ls<b> * a::node<_,_> & a=b |- a=b . */
 
-checkentail a::node<_,e>*e::ls<b> * a::node<_,_> & a!=b |- a=b .
-
-
-checkentail a::ls<b> * a::ls<c> * c::node<_,d> |- a=b .
+/* checkentail a::node<_,e> * e::ls<b> * a::node<_,_> & a!=b |- a=b. */
 
 
-
+/* checkentail a::ls<b> * a::ls<c> * c::node<_,d> |- a=b .
 
 checkentail a::ls<c> * c::node<_,d> & a=b |- a=b .
 
@@ -27,4 +23,4 @@ checkentail a::node<_,q>*q::ls<c> * a::ls<c> * c::node<_,d> & a!=b |- a=b .
 checkentail a::node<_,q>*q::ls<c> * c::node<_,d> & a!=b & a=c |- a=b .
 
 checkentail a::node<_,q>*q::ls<c> * a::node<_,e>*e::ls<c> * c::node<_,d> 
-   & a!=b & a!=c |- a=b .
+   & a!=b & a!=c |- a=b . */
