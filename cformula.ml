@@ -2844,9 +2844,9 @@ let invert ls =
   match ls with
   | [] -> []
   | [Ctx es] -> (match es.es_must_error with
-      | None -> [Ctx {es with es_must_error = Some ("1"^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+      | None -> [Ctx {es with es_must_error = Some ("1 "^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
       | Some _ -> [Ctx {es with es_must_error = None; es_formula = goo es (mkNormalFlow())}])
-  | (Ctx es)::_ -> [Ctx {es with es_must_error = Some ("2"^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+  | (Ctx es)::_ -> [Ctx {es with es_must_error = Some ("2 "^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
   | _ -> report_error no_pos "not sure how to invert_outcome"
 
 
