@@ -3038,26 +3038,19 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                   formula_base_branches = []; 
                   formula_base_label = None;
                   formula_base_pos = no_pos } in
-		let lctx, pf = process_action prog es conseq b b action [] is_folding pos in
-		let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
+		let res = process_action prog es conseq b b action [] is_folding pos in
+		(* let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
 		let _ = print_endline (PR.string_of_entail_state es) in
 		let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
-		let _ = print_endline (PR.string_of_list_context lctx) in
-			es
+		let _ = print_endline (PR.string_of_list_context lctx) in *)
+			(res, match action with | Context.M_Nothing_to_do _ -> false | _ -> true)
 	in (* End of process_entail_state *)
 
-	(** [Internal] Process the context by unfolding the duplicated pointers **)
-	let rec process_ctx ctx = match ctx with
-		| Ctx es -> let temp = process_entail_state es in ctx
-		| OCtx (ctx1, ctx2) ->
-			let nctx1 = process_ctx ctx1 in 
-			let nctx2 = process_ctx ctx2 in
-				OCtx (nctx1, nctx2)
-	in (* End of function process_ctx *)
-
 	(* Call the internal function to do the unfolding and do the checking *)
-	let nctx = process_ctx ctx in
-	match conseq with
+	let temp,dup = match ctx with | Ctx es -> process_entail_state es in
+	if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
+		temp 
+	else match conseq with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
 	  formula_or_pos = pos1}) ->
