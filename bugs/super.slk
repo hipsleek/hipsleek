@@ -4,9 +4,27 @@ pred ls<p> == self = p
 	or self::node<next = r> * r::ls<p> & self!=p
 	inv true.
 
-/* checkentail x::ls<a> * y::ls<b> * z::ls<c> * x::node<_,_> * y::node<_,_> |- true. */
+checkentail a::ls<b> * a::ls<c> * c::node<_,d> * d::ls<e> & c!=e
+  |- true.
+print residue.
 
-checkentail a::ls<b> * a::node<_,_> |- a=b .
+checkentail a::ls<b> * a::ls<c> * c::node<_,d> * d::ls<e> & c!=e
+  |- b::ls<c> * c::ls<e>.
+  // |-true.
+
+print residue.
+
+checkentail c::node<_,d> * d::ls<e> & c!=e & a=b & a=c
+  |- b::ls<c> * c::ls<e>.
+
+
+checkentail a::node<_,r>* r::ls<c> * c::node<_,d> * 
+    d::ls<e> & a=b & a!=c & c!=e
+  |- b::ls<c> * c::ls<e>.
+
+//checkentail x::ls<a> * y::ls<b> * z::ls<c> * x::node<_,_> * y::node<_,_> |- true. 
+
+//checkentail a::ls<b> * a::node<_,_> |- a=b .
 
 /* checkentail a::ls<b> * a::node<_,_> & a=b |- a=b . */
 
