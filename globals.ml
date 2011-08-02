@@ -194,7 +194,7 @@ let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
 (* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
 let false_flow_int = (0,0)
-(*let stub_flow_int = (-3,-3)*)
+let stub_flow_int = (-3,-3)
 
 let res = "res"
 
@@ -308,6 +308,10 @@ let print_input = ref false
 let pass_global_by_value = ref false
 
 let allow_pred_spec = ref false
+
+let disable_failure_explaining = ref false
+
+let simplify_error = ref false
 
 let prune_cnt_limit = ref 2
 

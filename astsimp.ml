@@ -1904,7 +1904,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
           | [] -> {c with C.coercion_type = Iast.Right}
           | v -> 
                 let c_hd, c_guard ,c_fl ,c_b ,c_t = CF.split_components c.C.coercion_head in
-                let new_body = CF.normalize c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
+                let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
                 {c with
                     C.coercion_type = Iast.Right;
@@ -3462,7 +3462,7 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 			      Cformula.formula_ext_continuation = inner_add_pre new_pf new_branches fc;
 			  }
 	    | Cformula.EAssume (ref_vars, bf,y) ->
-	          Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
+	          Cformula.EAssume (ref_vars, (Cformula.normalize 2 bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
 		| Cformula.EVariance b -> Cformula.EVariance {b with
 			  Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
 		  }

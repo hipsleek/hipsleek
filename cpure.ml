@@ -5346,7 +5346,7 @@ let find_all_failures is_sat ante cons =
   let may_list = find_may_failures (imply is_sat) cand_pairs in
   (contra_list,must_list,may_list)
 
-let find_all_failures is_sat ante cons =
+let find_all_failures is_sat  ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
   Gen.Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
@@ -5368,8 +5368,12 @@ let check_maymust_failure is_sat ante cons =
   let pr = !print_formula in
   Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
 
-let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
-  let n_a = simpl ante in
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula =
+  let n_a =
+  if !Globals.simplify_error then
+    simpl ante
+  else ante 
+  in
   filter_ante n_a conseq
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
