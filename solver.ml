@@ -22,6 +22,9 @@ module TP = Tpdispatcher
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref false
 
+(** An Hoa : to store the number of unfolding performed on duplicated pointers **)
+let num_unfold_on_dup = ref 0
+
 let simple_imply f1 f2 = let r,_,_ = TP.imply f1 f2 "simple_imply" false None in r    
 
 let count_br_specialized prog cl = 
@@ -3046,7 +3049,11 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 		let _ = print_endline (PR.string_of_entail_state es) in
 		let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
 		let _ = print_endline (PR.string_of_list_context lctx) in *)
-			(res, match action with | Context.M_Nothing_to_do _ -> false | _ -> true)
+			(res, match action with
+					| Context.M_Nothing_to_do _ -> false
+					| _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
+							let _ = print_endline ("[heap_entail_conjunct_lhs_x] " ^ (string_of_int !num_unfold_on_dup) ^ " unfold performed!") in
+							true)
 	in (* End of process_entail_state *)
 
 	(* Call the internal function to do the unfolding and do the checking *)
