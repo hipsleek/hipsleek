@@ -10,7 +10,11 @@ pred tp<h> == self = h
 	or self::node<_,r> * r::tp<h> & self != h
 	inv true.
 
-checkentail a::tp<b> * a::tp<c> * a::tp<d> & a != b & a != c |- a = d.
+checkentail a::tp<b> * a::tp<c> * a::tp<d> & a != b & a != c 
+ |- false.
+
+checkentail a::tp<b> * a::tp<c> * a::tp<d> & a != b  
+ |- a=c & a=d.
 
 checkentail a::tp<b> * a::tp<c> * b::tp<a> |- b::tp<c>.
 
