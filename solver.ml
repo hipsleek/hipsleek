@@ -19,6 +19,9 @@ module TP = Tpdispatcher
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
 (* let crt_phase = ref (None);; *)
 
+(** An Hoa : switch to do unfolding on duplicated pointers **)
+let unfold_duplicated_pointers = ref false
+
 let simple_imply f1 f2 = let r,_,_ = TP.imply f1 f2 "simple_imply" false None in r    
 
 let count_br_specialized prog cl = 
@@ -2957,13 +2960,11 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 	    (filter_set tmp, prf)
       end
 
-(*
-  and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) 
+and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) 
   = Gen.Debug.no_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
   (fun ctx -> heap_entail_conjunct_lhs_x  prog is_folding  ctx conseq pos) ctx 
-*)
 
-and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p
+(* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -2974,7 +2975,91 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     (* let rhs_flow = CF.get_flow_formula conseq in *)
     (* if CF.flow_subsume lhs_flow rhs_flow then return must_error *)
     (* else  *)
-  match conseq with
+  (* HOA TODO  : to unfold pred with duplicated roots on the LHS *)
+
+	(*let _ = print_endline "AN HOA : CALL TO [heap_entail_conjunct_lhs_x] WITH INPUTS" in
+	let _ = print_endline ("CONTEXT = " ^ PR.string_of_context ctx) in
+	let _ = print_endline ("CONSEQ = " ^ PR.string_of_formula conseq) in*)
+
+	(** [Internal] Collect the data and view nodes in a h_formula. 
+		@return The list of all DataNode and ViewNode **)
+	let rec collect_data_view (f : h_formula) = match f with
+		| Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+		| Conj { h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+		| Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
+			List.append (collect_data_view h1) (collect_data_view h2) 
+		| DataNode _ | ViewNode _ -> [f]
+		| Hole _ | HTrue | HFalse -> []
+	in (* End of function collect_data_view *)
+
+	(** [Internal] Generate the action based on the list of node and its tail **)
+	let rec generate_action nodes = match nodes with
+		| [] 
+		| [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
+		| x::t -> let y = List.hd t in
+				if (CP.eq_spec_var (get_node_var x) (get_node_var y) &&
+							(is_view x || is_view y)) then
+				let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
+						    Context.match_res_lhs_rest = x;
+						    Context.match_res_holes = [] ;
+						    Context.match_res_type = Context.Root;
+						    Context.match_res_rhs_node = x;
+						    Context.match_res_rhs_rest = x} in
+				(* let _ = print_endline "AN HOA : START THE UNFOLDING PROCESS" in *)
+					Context.M_unfold (mr,1)
+			else generate_action t
+	in
+
+	(** [Internal] Process duplicated pointers in an entail state **)
+	let process_entail_state (es : entail_state) =
+		(* Extract the heap formula *)
+		let f = es.es_formula in
+		(* let _ = print_endline ("heap_entail_conjunct_lhs_x :: process_entail_state :: " ^ PR.string_of_formula f) in *)
+		let h = match f with
+			| Base b -> b.formula_base_heap
+			| Or _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OR formula in context!"
+			| Exists b -> b.formula_exists_heap
+		in
+		(* Collect and sort the data and view predicates *)
+		let dv = collect_data_view h in
+		let dv = List.sort (fun x y -> let xn = get_node_var x in
+							let yn = get_node_var y in
+								match (xn,yn) with
+								| (CP.SpecVar (_,_,Primed), CP.SpecVar (_,_,Unprimed)) -> 1
+								| (CP.SpecVar (_,_,Unprimed), CP.SpecVar (_,_,Primed)) -> -1
+								| (CP.SpecVar (_,xnn,_), CP.SpecVar (_,ynn,_)) -> 
+									String.compare xnn ynn
+			) dv in
+		(* let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in *)
+		(* Produce an action to perform *)
+		let action = generate_action dv in
+		(* Process the action to get the new entail state *)
+		let b = { formula_base_heap = HTrue;
+                  formula_base_pure = Mcpure.mkMTrue no_pos;
+                  formula_base_type = TypeTrue; 
+                  formula_base_flow = mkTrueFlow ();
+                  formula_base_branches = []; 
+                  formula_base_label = None;
+                  formula_base_pos = no_pos } in
+		let res = process_action prog es conseq b b action [] is_folding pos in
+		(* let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
+		let _ = print_endline (PR.string_of_entail_state es) in
+		let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
+		let _ = print_endline (PR.string_of_list_context lctx) in *)
+			(res, match action with | Context.M_Nothing_to_do _ -> false | _ -> true)
+	in (* End of process_entail_state *)
+
+	(* Call the internal function to do the unfolding and do the checking *)
+	let temp,dup = if !unfold_duplicated_pointers then
+					match ctx with 
+						| Ctx es -> process_entail_state es 
+						| OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
+				else (* Dummy result & set dup = false to do the usual checking. *)
+					((FailCtx (Trivial_Reason "Dummy list_context"), Prooftracer.TrueConseq) ,false)
+	in
+	if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
+		temp 
+	else match conseq with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
 	  formula_or_pos = pos1}) ->
