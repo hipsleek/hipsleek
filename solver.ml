@@ -19,6 +19,9 @@ module TP = Tpdispatcher
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
 (* let crt_phase = ref (None);; *)
 
+(** An Hoa : switch to do unfolding on duplicated pointers **)
+let unfold_duplicated_pointers = ref false
+
 let simple_imply f1 f2 = let r,_,_ = TP.imply f1 f2 "simple_imply" false None in r    
 
 let count_br_specialized prog cl = 
@@ -3047,7 +3050,13 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	in (* End of process_entail_state *)
 
 	(* Call the internal function to do the unfolding and do the checking *)
-	let temp,dup = match ctx with | Ctx es -> process_entail_state es in
+	let temp,dup = if !unfold_duplicated_pointers then
+					match ctx with 
+						| Ctx es -> process_entail_state es 
+						| OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
+				else (* Dummy result & set dup = false to do the usual checking. *)
+					((FailCtx (Trivial_Reason "Dummy list_context"), Prooftracer.TrueConseq) ,false)
+	in
 	if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
 		temp 
 	else match conseq with
