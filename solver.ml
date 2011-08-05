@@ -517,7 +517,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
   else (MCP.mkMFalse no_pos, pb, memset)  
 
 and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
-  Gen.Debug.ho_1 "xpure_symbolic" Cprinter.string_of_formula 
+  Gen.Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
       (fun (p1,_,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) (* (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) *)
       (fun h0 -> xpure_symbolic_x prog h0) h0
@@ -600,7 +600,7 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
     (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
     ^string_of_bool(is_sat_mem_formula p4)) 
     (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0*)
-  Gen.Debug.ho_1 
+  Gen.Debug.no_1 
     "xpure_heap_symbolic" Cprinter.string_of_h_formula 
     (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
       ^string_of_bool(is_sat_mem_formula p4)) 
@@ -636,7 +636,7 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
-  Gen.Debug.ho_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula pr
+  Gen.Debug.no_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula pr
       (fun h0 -> xpure_heap_symbolic_i_x prog h0 i) h0
 
 and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 

@@ -2,6 +2,7 @@
 open Globals
 open Printf
 open Gen.Basic
+open Gen.BList
   
 module C = Cast
   
@@ -1039,7 +1040,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   }
 
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  Gen.Debug.ho_3 "compute_view_x_formula"
+  Gen.Debug.no_3 "compute_view_x_formula"
 	Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
 	compute_view_x_formula_x prog vdef n
 	
@@ -6993,13 +6994,82 @@ and callgraph_of_prog prog : NG.t =
 and slicing_label_inference_program (prog : I.prog_decl) : I.prog_decl =
   {prog with
 	  I.prog_view_decls = List.map (fun v -> slicing_label_inference_view v) prog.I.prog_view_decls;}
-
+ 
 and slicing_label_inference_view (view : I.view_decl) : I.view_decl =
-  let inv = IP.break_pure_formula (fst view.Iast.view_invariant) in
+  let v_inv = IP.break_pure_formula (fst view.I.view_invariant) in
+  let v_form = IF.break_struc_formula view.I.view_formula in
+
+  let str_inv = pr_list (Iprinter.string_of_b_formula) v_inv in
+  let str_form = pr_list (pr_list Iprinter.string_of_b_formula) v_form in
+
+  let _ = print_string ("\nslicing_label_inference_view: inv: " ^ str_inv ^ "\n") in
+  let _ = print_string ("\nslicing_label_inference_view: form: " ^ str_form ^ "\n") in
 
   view
 
-	  
+(* Fiduccia-Mattheyses algorithm *)
+and fm_cut_size g lp =
+  let is_cut_edge e lp =
+	List.fold_left (
+	  fun acc p ->
+		if (acc && Gen.BList.subset_eq IP.eq_var e p) then false
+		else acc
+	) true lp in
+  List.fold_left (fun acc e -> if (is_cut_edge e lp) then acc + 1 else acc) 0 g
 
+and fm_fs g p v =
+  List.fold_left (
+	fun acc e -> if ((Gen.BList.intersect_eq IP.eq_var p e) = [v]) then acc + 1 else acc
+  ) 0 g
 
+and fm_te g p v =
+  List.fold_left (
+	fun acc e -> if (Gen.BList.subset_eq IP.eq_var p e) then acc + 1 else acc
+  ) 0 g
+
+and fm_gain g p v = (fm_fs g p v) - (fm_te g p v)
+
+and fm_constr g lp = true
+
+and fm_moving_cell v lp =  
+ List.map (
+   fun p ->
+	 if Gen.BList.mem_eq IP.eq_var v p then
+	   Gen.BList.difference_eq IP.eq_var p [v]
+	 else p@[v]
+ ) lp
+  
+and fm_choose_moved_cell g lp lv =
+  let (unlocked_v, _) = lv in
+  List.fold_left (
+	fun acc v ->
+	  let (v_id, v_gain) = v in
+	  match acc with
+	  | None ->
+		let nlp = fm_moving_cell v_id lp in
+		if fm_constr g nlp then Some v else None
+	  | Some (a_id, a_gain) ->
+		if v_gain < a_gain then acc
+		else
+		  let nlp = fm_moving_cell v_id lp in
+		  if fm_constr g nlp then Some v else acc
+  ) None unlocked_v
 	  
+and fm_main g lv =
+  let rec helper g lp lv =
+	let moved_v = fm_choose_moved_cell g lp lv in
+	match moved_v with
+	  | None -> [(lp, fm_cut_size g lp)]
+	  | Some v ->
+		let (v_id, v_gain) = v in
+		let nlp = fm_moving_cell v_id lp in
+		let nlv =
+		  let (unlocked_v, locked_v) = lv in
+		  let n_unlocked_v =
+			List.fold_left (
+			  fun acc ele -> if ele = v then acc else acc@[ele]
+			) [] unlocked_v in
+		  let n_locked_v = locked_v @ [v] in
+		  (n_unlocked_v, n_locked_v) in
+		[(lp, fm_cut_size g lp)] @ (helper g nlp nlv)
+  in lv

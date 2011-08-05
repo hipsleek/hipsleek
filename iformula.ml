@@ -1633,8 +1633,15 @@ let rec break_formula (f : formula) : P.b_formula list list =
 	| Base bf -> [P.break_pure_formula bf.formula_base_pure]
 	| Exists ef -> [P.break_pure_formula ef.formula_exists_pure]
 	| Or orf -> (break_formula orf.formula_or_f1) @ (break_formula orf.formula_or_f2)
-(*
+
 and break_ext_formula (f : ext_formula) : P.b_formula list list =
   match f with
-	| ECase cf  
-*)
+	| ECase cf -> List.map
+	  (fun (cond, sf) -> List.concat ([P.break_pure_formula cond] @ (break_struc_formula sf)))
+	  cf.formula_case_branches
+	| EBase bf -> [List.concat ((break_formula bf.formula_ext_base) @ (break_struc_formula bf.formula_ext_continuation))]
+	| EAssume (af, _) -> break_formula af
+	| EVariance _ -> []
+
+and break_struc_formula (f : struc_formula) : P.b_formula list list =
+  List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f

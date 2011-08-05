@@ -206,8 +206,8 @@ let common_arguments = [
 
   (* slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
-  ("--opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
-  ("--enable-slicing-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+  ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
+  ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
   ] 
 
 (* arguments/flags used only by hip *)	
