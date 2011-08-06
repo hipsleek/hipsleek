@@ -7005,8 +7005,31 @@ and slicing_label_inference_view (view : I.view_decl) : I.view_decl =
   let _ = print_string ("\nslicing_label_inference_view: inv: " ^ str_inv ^ "\n") in
   let _ = print_string ("\nslicing_label_inference_view: form: " ^ str_form ^ "\n") in
 
+  let lg = List.map (fun v -> trans_view_to_graph v) v_form in
+
+  let str_lg = pr_list (pr_list (pr_list Iprinter.string_of_var)) lg in
+
+  let _ = print_string ("\nslicing_label_inference_view: graph: " ^ str_lg ^ "\n") in
+
+  let _ = List.iter (
+	fun g ->
+	  let lv = Gen.BList.remove_dups_eq IP.eq_var (List.concat g) in
+	  let lp = fm_main g lv in
+
+	  let str_lp = pr_list (fun (p, cutsize) -> (pr_list (pr_list Iprinter.string_of_var) p) ^ (string_of_int cutsize) ^ "\n") lp in
+
+	  print_string (str_lp)
+  ) lg in  
   view
 
+and trans_view_to_graph (lbf : IP.b_formula list) =
+  List.fold_left (
+	fun acc bf ->
+	  let e = IP.bfv bf in
+	  if (List.length e) > 1 then e::acc
+	  else acc
+  ) [] lbf
+	
 (* Fiduccia-Mattheyses algorithm *)
 and fm_cut_size g lp =
   let is_cut_edge e lp =
@@ -7031,6 +7054,9 @@ and fm_gain g p v = (fm_fs g p v) - (fm_te g p v)
 
 and fm_constr g lp = true
 
+and fm_find_partition lp v =
+  List.find (fun p -> Gen.BList.mem_eq IP.eq_var v p) lp
+  
 and fm_moving_cell v lp =  
  List.map (
    fun p ->
@@ -7067,9 +7093,18 @@ and fm_main g lv =
 		  let (unlocked_v, locked_v) = lv in
 		  let n_unlocked_v =
 			List.fold_left (
-			  fun acc ele -> if ele = v then acc else acc@[ele]
+			  fun acc ele ->
+				if ele = v then acc
+				else
+				  let (e_id, _) = ele in
+				  acc@[(e_id, fm_gain g (fm_find_partition nlp e_id) e_id)]
 			) [] unlocked_v in
 		  let n_locked_v = locked_v @ [v] in
 		  (n_unlocked_v, n_locked_v) in
 		[(lp, fm_cut_size g lp)] @ (helper g nlp nlv)
-  in lv
+  in
+
+  let (lp1, lp2) = List.partition (fun (v_id, _) -> (String.length v_id) > 1) lv in
+  let lp = [lp1] @ [lp2] in
+  let unlocked_v = List.map (fun v -> (v, fm_gain g (fm_find_partition lp v) v)) lv in
+  helper g lp (unlocked_v, [])
