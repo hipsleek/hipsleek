@@ -37,3 +37,13 @@ pred ls5<p> == self::ls<p>
 // checkentail a::ls2<b> * a::node<_,_> |- a::node<_,_>.
 // goes into a loop
 
+// Non wellfounded with arithmetics
+
+pred loop<n> == r::loop<n> & self = r & n >= 0
+	or self::node<n,_> & n >= 1
+	inv true.
+
+pred loop2<n,m> == r::loop2<m+1,m> & self = r & n=m+1
+	or self::node<n,_> & n>=m
+	inv true.
+
