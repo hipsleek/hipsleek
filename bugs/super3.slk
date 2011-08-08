@@ -10,7 +10,6 @@ pred tp<h> == self = h
 	or self::node<_,r> * r::tp<h> & self != h
 	inv true.
 
-/*
 checkentail a::tp<b> * a::tp<c> * a::tp<d> & a != b & a != c 
  |- false.
 
@@ -21,23 +20,6 @@ checkentail a::tp<b> * a::tp<c> * b::tp<a> |- b::tp<c>.
 
 checkentail a::tp<b> * b::node<c,d> * c::node<e,f> * d::tp<k> 
 			* f::tp<u> * d::tp<h> & k != u & h != k |- c != d.
-*/
 
-checkentail x::node<l,r> * l::tp<a> * r::tp<b> & x != b & x != a 
-  |- x::tp<a>.
+checkentail x::node<l,r> * l::tp<a> * r::tp<b> & x != b & l != r |- x::tp<a> * x::tp<b>.
 
-checkentail x::node<l,r> * l::tp<a> * r::tp<b> & x != b & x != a 
-  |- x::tp<b>.
-
-checkentail x::node<l,r> * l::tp<a> * r::tp<b> & x != b & x != a 
-  |- x::tp<a> * x::tp<b>.
-// must-fail
-
-checkentail x::node<l,r> * l::tp<a> * r::tp<b> & x != b 
-  |- x::tp<a> * x::tp<b>.
-
-checkentail x::node<l,r> * l::tp<a> * r::tp<b> & x != b & x=a
-  |- x::tp<a> * x::tp<b>.
-
-print residue.
-// * x::tp<b>.

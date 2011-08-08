@@ -2996,12 +2996,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	in (* End of function collect_data_view *)
 
 	(** [Internal] Generate the action based on the list of node and its tail **)
-	let rec generate_action nodes = match nodes with
+	let rec generate_action nodes eset = match nodes with
 		| [] 
 		| [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
 		| x::t -> let y = List.hd t in
-				if (CP.eq_spec_var (get_node_var x) (get_node_var y) &&
-							(is_view x || is_view y)) then
+				if ((compare_sv (get_node_var x) (get_node_var y) eset = 0)
+									 && (is_view x || is_view y)) then
 				let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
 						    Context.match_res_lhs_rest = x;
 						    Context.match_res_holes = [] ;
@@ -3010,32 +3010,48 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 						    Context.match_res_rhs_rest = x} in
 				(* let _ = print_endline "AN HOA : START THE UNFOLDING PROCESS" in *)
 					Context.M_unfold (mr,1)
-			else generate_action t
-	in
+			else generate_action t eset
+	
+	(** [Internal] Compare two spec var syntactically. **)
+	and compare_sv_syntax xn yn = match (xn,yn) with
+								| (CP.SpecVar (_,_,Primed), CP.SpecVar (_,_,Unprimed)) -> 1
+								| (CP.SpecVar (_,_,Unprimed), CP.SpecVar (_,_,Primed)) -> -1
+								| (CP.SpecVar (_,xnn,_), CP.SpecVar (_,ynn,_)) -> 
+									String.compare xnn ynn
+	
+	(** [Internal] Compare spec var with equality taken into account **)
+	and compare_sv xn yn eset = 
+		(* let _ = print_string ("Comparing " ^ (Cprinter.string_of_spec_var xn) ^ " and " ^ (Cprinter.string_of_spec_var yn)) in *)
+		try
+			let _,xne = List.find (fun x -> CP.eq_spec_var xn (fst x)) eset in
+			let _ = List.find (fun x -> CP.eq_spec_var yn x) xne in 
+			(* let _ = print_string " --> equal" in *)
+				0
+		with
+			| Not_found -> (* let _ = print_string "\n" in *) compare_sv_syntax xn yn
+	in 
 
 	(** [Internal] Process duplicated pointers in an entail state **)
 	let process_entail_state (es : entail_state) =
 		(* Extract the heap formula *)
 		let f = es.es_formula in
 		(* let _ = print_endline ("heap_entail_conjunct_lhs_x :: process_entail_state :: " ^ PR.string_of_formula f) in *)
-		let h = match f with
-			| Base b -> b.formula_base_heap
+		let h,p = match f with
+			| Base b -> (b.formula_base_heap,b.formula_base_pure)
 			| Or _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OR formula in context!"
-			| Exists b -> b.formula_exists_heap
+			| Exists b -> (b.formula_exists_heap,b.formula_exists_pure)
 		in
+		let eqns = MCP.ptr_equations_with_null p in
+		(* let _ = List.map (fun (x,y) -> print_string ("[" ^ (Cprinter.string_of_spec_var x) ^ "," ^ (Cprinter.string_of_spec_var y) ^ "]")) eqns in *)
+		let eset = CP.EMapSV.build_eset eqns in
+		(* let _ = List.map (fun (x,y) -> print_string ("[" ^ (Cprinter.string_of_spec_var x) ^ " == " ^ (String.concat "," (List.map Cprinter.string_of_spec_var y)) ^ "]\n")) eset in
+		let _ = print_string "\n" in *)
 		(* Collect and sort the data and view predicates *)
 		let dv = collect_data_view h in
-		let dv = List.sort (fun x y -> let xn = get_node_var x in
-							let yn = get_node_var y in
-								match (xn,yn) with
-								| (CP.SpecVar (_,_,Primed), CP.SpecVar (_,_,Unprimed)) -> 1
-								| (CP.SpecVar (_,_,Unprimed), CP.SpecVar (_,_,Primed)) -> -1
-								| (CP.SpecVar (_,xnn,_), CP.SpecVar (_,ynn,_)) -> 
-									String.compare xnn ynn
-			) dv in
+		let dv = List.sort (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset) dv in
 		(* let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in *)
 		(* Produce an action to perform *)
-		let action = generate_action dv in
+		let action = generate_action dv eset in
 		(* Process the action to get the new entail state *)
 		let b = { formula_base_heap = HTrue;
                   formula_base_pure = Mcpure.mkMTrue no_pos;

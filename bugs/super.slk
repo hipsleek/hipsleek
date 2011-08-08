@@ -1,6 +1,6 @@
 data node { int val ; node next }.
 
-pred ls<p> == self = p 
+pred ls<p> == /*p::ls<p> &*/ self = p 
 	or self::node<next = r> * r::ls<p> & self!=p
 	inv true.
 
@@ -42,3 +42,7 @@ checkentail a::node<_,q>*q::ls<c> * c::node<_,d> & a!=b & a=c |- a=b .
 
 checkentail a::node<_,q>*q::ls<c> * a::node<_,e>*e::ls<c> * c::node<_,d> 
    & a!=b & a!=c |- a=b . */
+
+pred foo<n> == n = 0 or self::foo<n-1> & n > 0.
+
+//checkentail x::foo<a> * x::foo<b> |- false.
