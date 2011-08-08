@@ -821,12 +821,12 @@ let_decl:
   [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc)]];
   
 check_barrier_cmd:
-	[[ `BARRIER; `IDENTIFIER n; `COMMA; sc=integer_literal; `COMMA; thc=integer_literal;`COMMA; bc=barrier_constr -> 
-		{barrier_stc = sc; barrier_thc = thc; barrier_name = n; barrier_tr_list =bc;}]];
+	[[ `BARRIER; `IDENTIFIER n; `COMMA; thc=integer_literal;`COMMA; bc=barrier_constr -> 
+		{barrier_thc = thc; barrier_name = n; barrier_tr_list =bc;}]];
   
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   
-b_trans : [[`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE -> t]];
+b_trans : [[fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE -> (fs,ts,t)]];
   
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id

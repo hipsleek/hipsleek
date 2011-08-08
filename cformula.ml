@@ -4500,3 +4500,7 @@ let is_full_perm_failesc l v =
     | Ctx c-> helper_f c.es_formula in
   List.for_all (fun (_,_,l)-> (List.for_all(fun (_,c)-> helper c) l)) l 
    
+   
+let rec context_to_formula c = match c with 
+	| Ctx es -> es.es_formula
+	| OCtx (c1,c2) -> mkOr (context_to_formula c1) (context_to_formula c2) no_pos

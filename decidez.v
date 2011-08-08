@@ -1,5 +1,5 @@
 (* Simple tactic that tried to decide (in)equalities on Z *)
-Require Export ZArith List FSets.
+Require Export ZArith List FSets Permutation.
 Module ZSets := Make(Z_as_OT).
 
 (* ------------------------------------------------------------------------------------------------------------ *)
