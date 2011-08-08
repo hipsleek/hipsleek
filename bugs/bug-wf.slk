@@ -47,3 +47,9 @@ pred loop2<n,m> == r::loop2<m+1,m> & self = r & n=m+1
 	or self::node<n,_> & n>=m
 	inv true.
 
+// It seems to me that the current system does not really check if this
+// is really non-wellfounded! It seems only to make sure that <self> does
+// not point to the same predicate.
+pred loop3<n,m> == self::loop3<m+1,m> & n=m
+	or self::node<n,_> & n>=m
+	inv true.
