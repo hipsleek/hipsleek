@@ -1,0 +1,14 @@
+// - mutual recursion not supported
+data node2 {
+	int val; 
+	nodeprev prev;	
+	nodenext next;	
+}.
+
+data nodeprev {
+     node2 prev;
+}.
+
+data nodenext {
+     node2 next;
+}.
