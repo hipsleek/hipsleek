@@ -3865,11 +3865,13 @@ and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula =
   { Cformula.formula_flow_interval = Gen.ExcNumbering.get_hash_of_exc f0;
   Cformula.formula_flow_link = None} 
       
+and trans_frac_const f = 
+	List.fold_right (fun c a-> match c with 
+		| PLeft -> Tree_shares.Node (a, Tree_shares.Leaf false)
+		| PRight -> Tree_shares.Node (Tree_shares.Leaf false,a)) f (Tree_shares.Leaf true)
 	  
 and trans_frac_formula f = match f with
-	| Ipr.PConst f -> Cpr.PConst (List.fold_right (fun c a-> match c with 
-				| PLeft -> Tree_shares.Node (a, Tree_shares.Leaf false)
-				| PRight -> Tree_shares.Node (Tree_shares.Leaf false,a)) f (Tree_shares.Leaf true))
+	| Ipr.PConst f -> Cpr.PConst (trans_frac_const f)
 	| Ipr.PVar v-> Cpr.PVar (Cpr.mk_perm_var v)
 	 
 	  
@@ -3879,6 +3881,7 @@ and trans_perm_formula (f0:Ipr.perm_formula) : Cpr.perm_formula = match f0 with
   | Ipr.Join (f1,f2,f3,p)-> Cpr.mkJoin (trans_frac_formula f1) (trans_frac_formula f2) (trans_frac_formula f3) p
   | Ipr.Eq (f1,f2,p) -> Cpr.mkEq (trans_frac_formula f1) (trans_frac_formula f2) p
   | Ipr.Exists (l,f,p) -> Cpr.mkExists (List.map Cpr.mk_perm_var l) (trans_perm_formula f) p
+  | Ipr.Dom (v,d1,d2) -> Cpr.mkDom (Cpr.mk_perm_var v) (trans_frac_const d1) (trans_frac_const d2)
   | Ipr.PTrue p -> Cpr.PTrue p
   | Ipr.PFalse p -> Cpr.PFalse p
 
@@ -5012,12 +5015,13 @@ and gather_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 	  
 and collect_type_info_frac_perm f stab pos = match f with | Ipr.PVar (v,_)-> collect_type_info_var v stab (Named perm) pos | _ -> () 
 
-and collect_type_info_perm perm stab = match perm with
+and collect_type_info_perm perm_f stab = match perm_f with
   | Ipr.And (f1,f2,_)
   | Ipr.Or (f1,f2,_) -> (collect_type_info_perm f1 stab; collect_type_info_perm f2 stab)
   | Ipr.Join (f1,f2,f3,l) -> (collect_type_info_frac_perm f1 stab l; collect_type_info_frac_perm f2 stab l;collect_type_info_frac_perm f3 stab l)
   | Ipr.Eq (f1,f2,l) -> (collect_type_info_frac_perm f1 stab l; collect_type_info_frac_perm f2 stab l)
-  | Ipr.Exists (_, f,_)-> collect_type_info_perm f stab
+  | Ipr.Exists (_, f,_) -> collect_type_info_perm f stab
+  | Ipr.Dom ((v,_),_,_) -> collect_type_info_var v stab (Named perm) no_pos		
   | Ipr.PTrue _
   | Ipr.PFalse _ -> ()
 
@@ -5175,12 +5179,13 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
 
 and gather_type_info_frac_perm pr stab pos = match pr with | Ipr.PVar (v,_)-> let _ = gather_type_info_var v stab (Named perm) pos in () | _ -> () 
 	
-and gather_type_info_perm perm stab = match perm with
+and gather_type_info_perm perm_f stab = match perm_f with
   | Ipr.And (f1,f2,_)
   | Ipr.Or (f1,f2,_) -> (gather_type_info_perm f1 stab; gather_type_info_perm f2 stab)
   | Ipr.Join (f1,f2,f3,l) -> (gather_type_info_frac_perm f1 stab l; gather_type_info_frac_perm f2 stab l;gather_type_info_frac_perm f3 stab l)
   | Ipr.Eq (f1,f2,l) -> (gather_type_info_frac_perm f1 stab l; gather_type_info_frac_perm f2 stab l)
   | Ipr.Exists (_, f,_)-> gather_type_info_perm f stab
+  | Ipr.Dom ((v,_),_,_)-> let _ = gather_type_info_var v stab (Named perm) no_pos in ()
   | Ipr.PTrue _
   | Ipr.PFalse _ -> ()
   

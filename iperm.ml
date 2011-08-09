@@ -19,6 +19,7 @@ type perm_formula =
   | Join of (frac_perm*frac_perm*frac_perm * loc)
   | Eq of (frac_perm*frac_perm *loc)
   | Exists of ((ident * primed) list * perm_formula *loc)
+  | Dom of ((ident*primed) * perm_modifier * perm_modifier)
   | PTrue of loc
   | PFalse of loc
 
@@ -75,6 +76,7 @@ let rec fv f = match f with
   | Or (f1,f2,_) -> Gen.BList.remove_dups_eq P.eq_var ((fv f1)@(fv f2))
   | Join (f1,f2,f3,_) -> Gen.BList.remove_dups_eq P.eq_var ((frac_fv f1)@(frac_fv f2)@(frac_fv f3))
   | Eq (f1,f2,_) -> Gen.BList.remove_dups_eq P.eq_var ((frac_fv f1)@(frac_fv f2))
+  | Dom (v,_,_) -> [v]
   | Exists (l1,f1,_) -> Gen.BList.difference_eq P.eq_var (fv f1) l1
   | PTrue _ | PFalse _ -> [] 
 
@@ -108,6 +110,7 @@ let rec apply_one (fr,t) f = match f with
   | Or (f1,f2,p) -> Or (apply_one (fr,t) f1,apply_one (fr,t) f2, p)
   | Join (f1,f2,f3,p) -> Join (subst_perm (fr,t) f1, subst_perm (fr,t) f2, subst_perm (fr,t) f3, p)
   | Eq (f1,f2,p) -> Eq (subst_perm (fr,t) f1, subst_perm (fr,t) f2, p)
+  | Dom (v,d1,d2) -> Dom ((if P.eq_var v fr then t else v),d1,d2)
   | Exists (qsv,f1,p) ->  
       if List.mem (fst fr) (List.map fst qsv) then f 
       else Exists (qsv, apply_one (fr,t) f1, p)

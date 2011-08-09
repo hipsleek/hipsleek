@@ -528,7 +528,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | _ -> false
 
 let perm_formula_wo_paren  (e:Cpr.perm_formula) = match e with
-    | Cpr.Exists _ | Cpr.Eq _ | Cpr.Join _ | Cpr.And _ -> true 
+    | Cpr.Exists _ | Cpr.Eq _ | Cpr.Join _ | Cpr.And _ |Cpr.Dom _ -> true 
     | _ -> false
 	
 	
@@ -919,12 +919,14 @@ let rec string_of_flow_formula f c =
 let rec pr_share_tree t = match t with
     | Tree_shares.Leaf b-> fmt_string (if b then "*" else " ")
     | Tree_shares.Node (t1,t2) -> pr_pair pr_share_tree pr_share_tree (t1,t2)
-    
 	  
 let rec pr_frac_formula f = match f with
 	| Cpr.PVar v -> pr_spec_var v
 	| Cpr.PConst l -> pr_share_tree l
 	 	  
+let string_of_frac_formula f = poly_string_of_pr pr_frac_formula f
+let string_of_share_tree s = poly_string_of_pr pr_share_tree s
+		  
 let pr_perm_formula f = 
   let rec f_b e =  pr_bracket perm_formula_wo_paren helper e 
   and helper f = match f with
@@ -941,6 +943,7 @@ let pr_perm_formula f =
 	| Cpr.Join (f1,f2,f3,_) -> (pr_frac_formula f1; fmt_string "+"; pr_frac_formula f2 ; fmt_string "="; pr_frac_formula f3)
 	| Cpr.Eq (f1,f2,_) -> (pr_frac_formula f1; fmt_string "="; pr_frac_formula f2)
 	| Cpr.Exists (ql,f,_)-> fmt_string "ex("; pr_list_of_spec_var ql; fmt_string ":"; helper f; fmt_string ")"
+	| Cpr.Dom (v,d1,d2) -> pr_spec_var v; fmt_string " in "; pr_share_tree d1; fmt_string " ; "; pr_share_tree d2
 	| Cpr.PTrue _ -> fmt_string "T"
 	| Cpr.PFalse _ -> fmt_string "F" in
   if (Cpr.isConstTrue f) then () else (fmt_string "[";helper f ;fmt_string "]")
@@ -1859,3 +1862,7 @@ Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
+Cperm.print_perm_f := string_of_perm_formula;;
+Cperm.print_frac_f := string_of_frac_formula;;
+Cperm.print_sv := string_of_spec_var;;
+Cperm.print_share := string_of_share_tree;;

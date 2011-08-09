@@ -253,9 +253,11 @@ let string_of_perm f = match f with
 	| PLeft -> "L"
 	| PRight -> "R"
 
+let string_of_perm_const l = "[" ^(String.concat "," (List.map string_of_perm l))^"]" 
+
 let string_of_frac f = match f with
 	| IP.PVar v-> string_of_id v
-	| IP.PConst l->	"[" ^(String.concat "," (List.map string_of_perm l))^"]"
+	| IP.PConst l->	string_of_perm_const l
 
 let rec string_of_opt_frac f = match f with
  | None -> ""
@@ -282,6 +284,7 @@ let string_of_perm_formula f =
 		 s1^" = "^s2
 	  | IP.Exists (ql,f,_) ->
 		  "(EX " ^ (string_of_var_list ql) ^ " . " ^ (helper f) ^ ")"
+	  | IP.Dom (v,d1,d2) -> (string_of_id v)^" in "^(string_of_perm_const d1)^" , "^(string_of_perm_const d2)
 	  | IP.PTrue _ -> "true"
 	  | IP.PFalse _ -> "false" in
   if (IP.isConstTrue f) then "" else (" & "^(helper f))

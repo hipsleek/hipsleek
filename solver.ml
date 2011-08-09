@@ -3933,8 +3933,8 @@ and heap_entail_split_lhs_phases_x
 (* the check to fail.                     *)
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos : (list_context * proof) = 
-  Gen.Debug.loop_1_no "heap_entail_conjunct" Cprinter.string_of_formula (fun _ -> "?")
-      (fun c -> heap_entail_conjunct_x prog is_folding  ctx0 c pos) conseq
+  Gen.Debug.no_2 "heap_entail_conjunct" Cprinter.string_of_formula Cprinter.string_of_context (fun _ -> "?")
+      (fun c _-> heap_entail_conjunct_x prog is_folding  ctx0 c pos) conseq ctx0
 
 and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos : (list_context * proof) =
   (* PRE : BOTH LHS and RHS are not disjunctive *)
@@ -4730,7 +4730,7 @@ and do_match_x prog estate l_node r_node rhs is_folding pos : list_context *proo
 	
 	let new_l_pr = Cpr.mkAnd l_pr to_lhs_pr pos in
 	let new_r_pr = Cpr.mkAnd r_pr to_rhs_pr pos in
-	
+
     let new_ante = mkBase l_h new_ante_p l_t l_fl new_l_pr (CP.merge_branches l_b to_lhs_br) pos in
     let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl new_r_pr (CP.merge_branches r_b to_rhs_br) pos  in
 	let tmp_conseq = subst_pr_one_exp tmp_conseq subs_pr in
@@ -5056,20 +5056,22 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 			let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
 		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos)), NoAlias)
           else
-			let prv1, prv2 = Cpr.fresh_perm_var () , Cpr.fresh_perm_var () in
-			let n_lhs_h = mkStarH_nn lhs_rest (set_perm_h (Some prv1) lhs_node) pos in			
-			let pr_f = Cpr.mkJoin (Cpr.mkVPerm prv1) (Cpr.mkVPerm prv2) (match get_node_perm lhs_node with | [] -> Cpr.mkPFull () | v::_-> Cpr.mkVPerm v) pos in
-			let n_lhs_perm = Cpr.mkAnd lhs_b.formula_base_perm pr_f pos in			
+			let v_rest, v_consumed = Cpr.fresh_perm_var () , Cpr.fresh_perm_var () in
+			let n_lhs_perm,b = Cpr.comp_perm_split v_rest v_consumed lhs_b.formula_base_perm rhs_b.formula_base_perm (get_node_perm lhs_node) (get_node_perm rhs_node) in
+			if not b then 
+				(CF.mkFailCtx_in (Basic_Reason (mkFailContext "lhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos)), NoAlias)
+			else
+			let n_lhs_h = mkStarH_nn lhs_rest (set_perm_h (Some v_rest) lhs_node) pos in				
 			let new_estate = {estate with 
 								es_formula = Base{ lhs_b with formula_base_heap = n_lhs_h; formula_base_perm = n_lhs_perm }; 
-								es_ante_evars = [prv1;prv2]@estate.es_ante_evars } in
+								es_ante_evars = [v_rest;v_consumed]@estate.es_ante_evars } in
 			(*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
 			  if it succeeds and the flag from to_be_proven is true then make current context false*)
             let rhs_p = match to_be_proven with
               | None -> rhs_b.formula_base_pure
               | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
             let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-			let n_lhs_node = set_perm_h (Some prv2) lhs_node in
+			let n_lhs_node = set_perm_h (Some v_consumed) lhs_node in
             let res_es0, prf0 = do_match prog new_estate n_lhs_node rhs_node n_rhs_b is_folding pos in
             (res_es0,prf0)
 			
