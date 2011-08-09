@@ -2067,7 +2067,7 @@ and is_unsat_with_branches xpure_f qvars hf mix pr br pos sat_subno=
 
 and is_unsat_with_branches_x xpure_f qvars hf mix pr br pos sat_subno=
   (* let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in*)
-  if not (Cperm.is_sat pr) then false
+  if not (Cperm.is_sat pr) then true
   else
   let (ph, phb) = xpure_f hf in
   let phb = CP.merge_branches phb br in    

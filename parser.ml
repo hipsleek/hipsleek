@@ -109,8 +109,15 @@ let bf_to_var p = match p with
   
   (*intermediate representation for pure formulae*)
 type pure_double =
-  | Pure_f of P.formula
+  | Pure_f of (P.formula * Pr.perm_formula)
   | Pure_c of P.exp
+  
+let mkPure_f f = Pure_f (f,Pr.mkTrue (get_pos 1))
+  
+let frac_test f = if  not !Globals.enable_frac_perm then report_error (get_pos 1) "parser: fractional permissions are disabled!!" 
+	else Pure_f (P.mkTrue (get_pos 1) , f)
+  
+let only_pure (c1,c2) = if (Pr.isConstTrue c2) then c1 else report_error (get_pos 1) "parser: fractional permissions are dissallowed here!!" 
   
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
@@ -124,10 +131,10 @@ let apply_cexp_form1 fct form = match form with
 let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 -> (match f2 with 
-                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (P.mkBVar v (get_pos 1), None )))
+                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (P.mkBVar v (get_pos 1), None ), Pr.mkTrue no_pos))
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp in var" )
   | Pure_c f1, Pure_f f2 -> (match f1 with 
-                             | P.Var (v,_) -> Pure_f(fct (P.BForm (P.mkBVar v (get_pos 1), None )) f2)
+                             | P.Var (v,_) -> Pure_f(fct (P.BForm (P.mkBVar v (get_pos 1), None ), Pr.mkTrue no_pos) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
   | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
 
@@ -136,7 +143,7 @@ let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
 let cexp_to_pure1 fct f = match f with
-  | Pure_c f -> Pure_f (P.BForm(fct f,None))
+  | Pure_c f -> mkPure_f (P.BForm(fct f,None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
 let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
@@ -145,16 +152,16 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                in let len =  List.length tmp
                                in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                              else  P.BForm (fct f1 f2, None)
-                               in Pure_f(res) 
+                               in mkPure_f(res) 
                              | _ -> (match f2 with
                                     | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct f1 c, None)) explist
                                       in let len = List.length tmp
                                       in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                                    else P.BForm (fct f1 f2, None)
-                                      in Pure_f(res) 
-                                    | _ -> Pure_f (P.BForm(fct f1 f2,None)))
+                                      in mkPure_f(res) 
+                                    | _ -> mkPure_f (P.BForm(fct f1 f2,None)))
                              )
-  | Pure_f f1 , Pure_c f2 ->(match f1  with 
+  | Pure_f f1 , Pure_c f2 ->(match (only_pure f1)  with 
 						    | P.BForm(b,oe) -> (match b with 
                                                | P.Lt (a1, a2, _) 
                                                | P.Lte (a1, a2, _) 
@@ -162,7 +169,7 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                                | P.Gte (a1, a2, _)
                                                | P.Eq (a1, a2, _) 
                                                | P.Neq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                                 mkPure_f (P.mkAnd (P.BForm(b,oe)) tmp (get_pos 2))
                                                | _ -> report_error (get_pos 1) "error should be an equality exp" )
                             | _ -> report_error (get_pos 1) "error should be a binary exp" )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
@@ -432,17 +439,17 @@ view_decl:
   [[ vh=view_header; `EQEQ; vb=view_body; oi= opt_inv  
       -> { vh with view_formula = (fst vb); view_invariant = oi; try_case_inference = (snd vb) } ]];
 
-opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos, [])]];
+opt_inv: [[t=OPT inv -> un_option t (P.mkTrue (get_pos_camlp4 _loc 1), [])]];
 
 inv: 
-  [[`INV; pc=pure_constr; ob=opt_branches -> (pc,ob)
-   |`INV; h=ho_fct_header -> (P.mkTrue no_pos, [])]];
+  [[`INV; pc=pure_constr; ob=opt_branches -> (only_pure pc,ob)
+   |`INV; h=ho_fct_header -> (P.mkTrue (get_pos_camlp4 _loc 1), [])]];
  
 opt_branches:[[t=OPT branches -> un_option t []]];
 
 branches : [[`AND; `OSQUARE; b=LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> b ]];
 
-one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (id,pc)]];
+one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (id,(only_pure pc))]];
 
 opt_branch:[[t=OPT branch -> un_option t ""]];
 
@@ -528,7 +535,7 @@ extended_constr:
   
 impl_list:[[t=LIST1 impl -> t]];
 
-impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
+impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON -> let pc = only_pure pc in
 			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonimous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
@@ -552,23 +559,13 @@ disjunctive_constr:
   ];
       
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fpc=opt_perm_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc fpc (get_pos_camlp4 _loc 1))
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fpc=opt_perm_constraints; fb= opt_branches   -> F.mkBase hc pc fc fpc fb (get_pos_camlp4 _loc 2)
+  [[ (pc,fpc)= pure_constr ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc fpc (get_pos_camlp4 _loc 1))
+   | hc= opt_heap_constr; (pc,fpc)= opt_pure_constr;fc= opt_flow_constraints; fb= opt_branches   ->	F.mkBase hc pc fc fpc fb (get_pos_camlp4 _loc 2)
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
 flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]]; 
-
-opt_perm_constraints: [[ t = OPT br_permission_constraints -> Pr.mkPFormula t]];
-
-br_permission_constraints : [[`OSQUARE;t=LIST1 one_p_const SEP `AND; `CSQUARE ->
-        if  not !Globals.enable_frac_perm then report_error no_pos "parser: fractional permissions are disabled!!"
-        else List.fold_left (fun a c-> Pr.mkAnd a c no_pos) (List.hd t) (List.tl t) ]];
-  
-one_p_const : [[t1=perm; `EQ ; t2=perm -> Pr.mkEq t1 t2 no_pos
-	| `JOIN ; `OPAREN; t1=perm; `COMMA;  t2=perm; `COMMA; t3=perm; `CPAREN -> Pr.mkJoin t1 t2 t3 no_pos
-	| v=cid; `IN_T ; t1=ct_perm; `COMMA; t2=ct_perm -> Pr.Dom (v,t1,t2)]];
 
 ct_perm: [[`OSQUARE; t = LIST1 one_perm SEP `COMMA ;`CSQUARE ->  t]];
 	
@@ -578,7 +575,7 @@ perm : [[ t=ct_perm -> Pr.mkCPerm t
 one_perm :[[ `IDENTIFIER id -> if id ="L" then PLeft else if id="R" then PRight else report_error (get_pos_camlp4 _loc 1) "only L or R as permission splits are allowed"]];
 
 perm_annot : [[`AT; t=perm -> 
-      if  not !Globals.enable_frac_perm then report_error no_pos "parser: fractional permissions are disabled!!"
+      if  not !Globals.enable_frac_perm then report_error (get_pos_camlp4 _loc 1) "parser: fractional permissions are disabled!!"
       else t]];
  
 opt_perm_annot : [[t = OPT perm_annot -> (*Pr.mkPAnnot*) t]];
@@ -662,7 +659,7 @@ general_h_args:
 
   
               
-opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
+opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue (get_pos_camlp4 _loc 1) , Pr.mkTrue (get_pos_camlp4 _loc 1))]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr ->t]];
     
@@ -670,7 +667,7 @@ and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr ->t]];
     
 pure_constr: [[ peek_pure_out; t=cexp_w -> match t with
                     | Pure_f f -> f
-                    | Pure_c (P.Var (v,_)) ->  P.BForm (P.mkBVar v (get_pos_camlp4 _loc 1), None )
+                    | Pure_c (P.Var (v,_)) ->  (P.BForm (P.mkBVar v (get_pos_camlp4 _loc 1), None ) , Pr.mkTrue (get_pos_camlp4 _loc 1))
                     | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
 
 cexp: [[t=cexp_w -> match t with
@@ -680,13 +677,19 @@ cexp: [[t=cexp_w -> match t with
 
 cexp_w :
   [ "pure_lbl"
-    [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
+    [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun (c1,c2)-> (label_formula c1 ofl),c2) spc]   (*apply_cexp*)
   
   | "pure_or" RIGHTA
-   [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
+   [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun (c1p,c1f) (c2p,c2f)->
+												if (P.isConstFalse c1p) then (c2p,c2f)
+												else if (P.isConstFalse c2p) then (c1p,c1f)
+												else match (P.isConstTrue c1p),(P.isConstTrue c2p) with
+													| true, true -> (c1p,(Pr.mkOr c1f c2f (get_pos_camlp4 _loc 2)))
+													| _ -> if Pr.isConstTrue c1f && Pr.isConstTrue c2f then (P.mkOr c1p c2p  None (get_pos_camlp4 _loc 2), c1f)
+														   else report_error (get_pos_camlp4 _loc 2) "parser: can not mix pure with perm under the same disjunct") pc1 pc2]
   
   | "pure_and" RIGHTA
-   [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
+   [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun (c1p,c1f) (c2p,c2f)-> (P.mkAnd c1p c2p (get_pos_camlp4 _loc 2), Pr.mkAnd c1f c2f (get_pos_camlp4 _loc 2))) pc1 pc2]
 
   |"bconstrp" RIGHTA
     [  lc=SELF; `NEQ;  cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl
@@ -703,8 +706,8 @@ cexp_w :
      | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl
      | peek_try; lc=cid; `NOTIN;  cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos_camlp4 _loc 2))) cl  
      | lc=SELF; `SUBSET; cl=SELF                            -> cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
-     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None))
-     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None))  
+     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> mkPure_f (P.BForm (P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None))
+     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> mkPure_f (P.BForm (P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None))  
      | lc=SELF; `INLIST; cl=SELF                -> cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
      | lc=SELF; `NOTINLIST; cl=SELF             -> cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
      | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  
@@ -731,9 +734,10 @@ cexp_w :
    | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
    | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> (* print_string("herel"); *)apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
    | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1 
-   (* | t=cexp_w LEVEL "addit" -> t *) ]
+   (* | t=cexp_w LEVEL "addit" -> t *) 
+   ]
  
-   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c]
+   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c->  P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c ]
 
    | "addit"
      [ c1=SELF ; `PLUS; c2=SELF       -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos_camlp4 _loc 2)) c1 c2  
@@ -755,7 +759,7 @@ cexp_w :
     *  s(a,b,c) == c = a + b.
     *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
     *)  
-            Pure_f(P.BForm (P.RelForm (id, cl, get_pos_camlp4 _loc 1), None))
+            mkPure_f(P.BForm (P.RelForm (id, cl, get_pos_camlp4 _loc 1), None))
 
      | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
@@ -771,16 +775,24 @@ cexp_w :
 ]
  
    | "pure_base"
-     [ `TRUE                             -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
-     | `FALSE                            -> Pure_f (P.mkFalse (get_pos_camlp4 _loc 1))
+     [ `TRUE                             -> mkPure_f (P.mkTrue (get_pos_camlp4 _loc 1))
+     | `FALSE                            -> mkPure_f (P.mkFalse (get_pos_camlp4 _loc 1))
      | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
-                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
+                                         -> apply_pure_form1 (fun (c1,c2)-> 
+												let r1 = List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c1 ocl in 
+												let r2 = Pr.mkExists ocl c2 (get_pos_camlp4 _loc 1) in 
+												(r1,r2)) pc
      | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
-                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
-     | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 1), None ))
-     | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 2), None )) None (get_pos_camlp4 _loc 1))
-     | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
+                                         -> apply_pure_form1 (fun c-> 
+												let r1 = List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) (only_pure c) ocl in
+												(r1,Pr.mkTrue (get_pos_camlp4 _loc 1))) pc
+     | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) mkPure_f (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 1), None ))
+     | `NOT; t=cid                       -> mkPure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 2), None )) None (get_pos_camlp4 _loc 1))
+     | `NOT; `OPAREN; c= pure_constr; `CPAREN     -> mkPure_f (P.mkNot (only_pure c) None (get_pos_camlp4 _loc 1))  
     
+	| t1=perm; `EQPEQ ; t2=perm -> frac_test (Pr.mkEq t1 t2 (get_pos_camlp4 _loc 1))
+	| `JOIN ; `OPAREN; t1=perm; `COMMA;  t2=perm; `COMMA; t3=perm; `CPAREN -> frac_test (Pr.mkJoin t1 t2 t3 (get_pos_camlp4 _loc 1))
+	| v=cid; `IN_T ; t1=ct_perm; `COMMA; t2=ct_perm -> frac_test (Pr.Dom (v,t1,t2))
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
 
@@ -829,7 +841,7 @@ check_barrier_cmd:
   
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   
-b_trans : [[fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE -> (fs,ts,t)]];
+b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
   
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
@@ -972,7 +984,7 @@ rel_header:[[
 
 rel_body:[[ (* formulas { 
     ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) } *)
-	pc=pure_constr -> pc (* Only allow pure constraint in relation definition. *)
+	pc= pure_constr -> only_pure pc (* Only allow pure constraint in relation definition. *)
 ]];
 
  (*end of sleek part*)   
@@ -1139,11 +1151,11 @@ opt_escape_conditions: [[ t= OPT escape_conditions -> un_option t []]];
 
 escape_conditions: [[ `ESCAPE; `OSQUARE; t=condition_list; `CSQUARE -> t]];
 
-condition_list: [[t=pure_constr ->[t]]];
+condition_list: [[t=pure_constr ->[(only_pure t)]]];
   
 branch_list: [[t=LIST1 spec_branch -> List.rev t]];
 
-spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
+spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (only_pure pc,sl)]];
 	 
  
  (***********Proc decls ***********)

@@ -522,10 +522,11 @@ let is_sat_p_t_w2 f =
 		| None -> [([],[],[],[])]
 		| Some l -> List.map is_sat_p_t l
 	
-let is_sat f = match list_of_a_f false f with 
+let is_sat_a f = match list_of_a_f false f with 
     | None -> false (*f formula is false*)
     | Some l -> List.exists is_sat_p_t_w l 
       
+let is_sat f = Gen.Debug.no_1 "perm_is_sat" !print_perm_f string_of_bool is_sat_a f
 
 (*imply : f1|-f2*)
 
@@ -643,9 +644,7 @@ let comp_perm_split_a v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm =
 						match is_sat_p_t_w2 lhs_p_f with 
 							| (hl::[],_,_,_)::[]->
 								(try
-									print_string "nncc1\n";
 									let lm,lM = PMap.find l_var hl in
-									print_string "nncc2\n";
 									if Ts.contains lm rM then (mkAnd default addition no_pos,true) else (default,false)
 								with Not_found -> (default,false))
 							| (_,_,_,_)::[]-> (default,false)
@@ -656,7 +655,7 @@ let comp_perm_split_a v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm =
 let comp_perm_split v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm =
 	let pr1 = Gen.Basic.pr_list !print_sv in
 	let pr2 = Gen.Basic.pr_pair !print_perm_f string_of_bool in
-Gen.Debug.ho_6 "comp_pemr_split" 
+Gen.Debug.no_6 "comp_perm_split" 
 	!print_sv !print_sv !print_perm_f !print_perm_f pr1 pr1 pr2
 	(fun _ _ _ _ _ _-> comp_perm_split_a v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm) v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm
 

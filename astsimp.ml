@@ -3509,7 +3509,7 @@ and trans_var (ve, pe) stab pos =try
           Err.report_error
               {
                   Err.error_loc = pos;
-                  Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";
+                  Err.error_text = "1 couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";
               }
     | t -> CP.SpecVar (t, ve, pe)
 
@@ -3518,7 +3518,7 @@ with Not_found ->
     Err.report_error
         {
             Err.error_loc = pos;
-            Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n, could it be an unused var?\n";
+            Err.error_text = "2 couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n, could it be an unused var?\n";
         }			
         
 and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formula = 
@@ -3648,7 +3648,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let rl = Cformula.res_retrieve stab clean_res fl in
             let _ = if sep_collect then 
               (collect_type_info_pure prog (IF.flatten_branches p br) stab;
-              collect_type_info_heap prog h stab;collect_type_info_perm pr stab) else () in 					
+              collect_type_info_heap prog h stab;
+			  collect_type_info_perm pr stab) else () in 					
             let ch = linearize_formula prog f0 stab in					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
             let _ = 
@@ -3819,6 +3820,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 	
     let (new_h, type_f) = linearize_heap h pos in
     let new_h, new_p0,new_pr0,new_ev = CF.normalize_frac_heap new_h new_p in
+	List.iter (fun v-> collect_type_info_var (CP.name_of_spec_var v) stab (Named perm) pos) new_ev;
     let new_p = MCP.merge_mems  new_p new_p0 false in
     
     let new_fl = trans_flow_formula fl pos in
