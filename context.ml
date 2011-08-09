@@ -376,7 +376,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     match dr.h_formula_data_perm with
                       |  None -> (0,M_match c)
                       | _ -> if  not !Globals.enable_frac_perm then report_error no_pos " process_one_match: fractional permissions are disabled!!"
-                         else (print_string "one\n";(-1, Search_action [(1,M_match c);(1,M_split_match c)]))
+                         else ((*print_string "one\n";*)(-1, Search_action [(1,M_match c);(1,M_split_match c)]))
                   else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in

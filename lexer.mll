@@ -112,6 +112,7 @@ module Make (Token : SleekTokenS)
    ("app", APPEND);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
+	 ("barrier", BARRIER);
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);
@@ -269,6 +270,7 @@ rule tokenizer file_name = parse
   | "\"" { DOUBLEQUOTE }
   | "=" { EQ }
   | "==" { EQEQ }
+  | "=p=" { EQPEQ }
   | "==>" { ESCAPE }
   | "<-" { RIGHTARROW }
   | "<->" { EQUIV }
