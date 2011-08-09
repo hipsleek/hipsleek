@@ -308,7 +308,7 @@ let pass_global_by_value = ref false
 
 let allow_pred_spec = ref false
 
-let enable_frac_perm = ref true
+let enable_frac_perm = ref false
 
 let prune_cnt_limit = ref 2
 
