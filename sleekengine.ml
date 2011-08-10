@@ -254,6 +254,14 @@ let process_data_def ddef =
         dummy_exception() ;
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
+
+(** An Hoa : Second stage of parsing : iprog already contains the whole input.
+             We do a reparse in order to distinguish between data & enum that
+             is deferred in case of mutually dependent data definition.
+ **)
+let perform_second_parsing_stage () =
+	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
+		!cprog.C.prog_data_decls <- cddefs
 	
 let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
   | MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)

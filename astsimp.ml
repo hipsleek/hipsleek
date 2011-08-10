@@ -99,8 +99,17 @@ int[] aalloc___(int dim)
 (* AN HOA: Add relation [dom] as a primitive. *)
 
 (** An Hoa : List of undefined data types **)
-let undef_data_types = ref([] : string list)
+let undef_data_types = ref([] : (string * loc) list)
 
+
+(** An Hoa : Alias for the Scriptarguments.inter, necessary because this module
+			is compiled prior to Scriptarguments.
+ **)
+let inter = ref false
+
+
+(** An Hoa : Indicator for the parsing stage **)
+let secondpass = ref false
 
 (* let op_map = Hashtbl.create 19 *)
 
@@ -1067,10 +1076,11 @@ and sat_warnings cprog =
       
 and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 	(* Update the list of undefined data types *)
-	let _ = if List.mem ddef.I.data_name !undef_data_types then
+	(* let _ = if List.mem ddef.I.data_name !undef_data_types then
 				print_endline ("The previously undefined type " ^  ddef.I.data_name ^ " is defined!\n")
-			else () in
-	let _ = undef_data_types := List.filter (fun x -> x != ddef.I.data_name) !undef_data_types in
+			else () in *)
+	let _ = undef_data_types := List.filter (fun x -> not ((fst x) = ddef.I.data_name)) !undef_data_types in
+	(* let _ = print_endline ("Undefined : " ^ (String.concat "," !undef_data_types)) in *)
   let trans_field ((t, c), pos) : C.typed_ident =
     ((trans_type prog t pos), c)
   in
@@ -3086,14 +3096,16 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
 		            in Int
 		          with
 		            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-						let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-						let _ = undef_data_types := c :: !undef_data_types in
-							Named c 
-							(*Err.report_error
+						if (!inter || !secondpass) then
+							Err.report_error
 			                  {
 			                      Err.error_loc = pos;
 			                      Err.error_text = c ^ " is neither data nor enum type";
-			                  }*)))
+			                  }
+						else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+							let _ = undef_data_types := (c, pos) :: !undef_data_types in
+								Named c (* Store this temporarily *)
+					))
     | Array (et, _) -> Array (trans_type prog et pos, None) (* An Hoa *)
 	      (* Err.report_error
              {
