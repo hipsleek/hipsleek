@@ -934,6 +934,85 @@ and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
   (*let vl = List.map (fun v -> v.view_name) view_decls in*)
+	(* An Hoa : Implement the equality checking *)
+	(** [Internal] replaces aliases of self by it. **)
+	let rec process_eq_self_view v = { v with view_formula = process_eq_self_sf v.view_formula }
+
+	(** [Internal] replaces aliases of self in an struc_formula **)
+	and process_eq_self_sf f = List.map process_eq_self_ef f
+
+	(** [Internal] replaces aliases of self in an ext_formula **)
+	and process_eq_self_ef f = match f with
+		| F.ECase ecf -> let b = List.map (fun (x,y) -> (x,process_eq_self_sf y)) 
+								ecf.F.formula_case_branches in
+							F.ECase { ecf with F.formula_case_branches = b }
+		| F.EBase ebf -> let bf = process_formula ebf.F.formula_ext_base in
+						let ecnt = process_eq_self_sf ebf.F.formula_ext_continuation in
+							F.EBase { ebf with F.formula_ext_base = bf; 
+								F.formula_ext_continuation = ecnt }
+		| _ -> f (* Stay the same on the other cases. *)
+
+	(** [Internal] replaces aliases of self in an formula **)
+	and process_formula f = match f with
+		| F.Base fb -> F.Base { fb with 
+			F.formula_base_heap = process_pure_heap fb.F.formula_base_pure 
+													fb.F.formula_base_heap }
+		| F.Exists fe -> F.Exists { fe with 
+			F.formula_exists_heap = process_pure_heap fe.F.formula_exists_pure
+														fe.F.formula_exists_heap }
+		| F.Or fo -> let f1 = process_formula fo.F.formula_or_f1 in
+						let f2 = process_formula fo.F.formula_or_f2 in
+							F.Or { fo with F.formula_or_f1 = f1; F.formula_or_f2 = f2 }
+
+	(** [Internal] extract equalities of form self = x and replace x 
+		with self in heapreturn a new heap formula.
+	 **)
+	and process_pure_heap p h = let vars = collect_eq_self p in replace_self h vars
+	
+	and collect_eq_self p = match p with
+		| P.BForm (f,_) -> (match f with
+			| P.Eq (e1,e2,_) -> (match e1 with
+				| P.Var ((vn,vp), _) -> (if (vn = "self" && vp = Unprimed) then
+										match e2 with
+										| P.Var ((xn,xp),_) -> [(xn,xp)]
+										| _ -> [] 
+								else match e2 with
+										| P.Var (("self",Unprimed),_) -> [(vn,vp)]
+										| _ -> [])
+				| _ -> [])
+			| _ -> [])
+		| P.And (f1,f2,_) -> List.append (collect_eq_self f1) (collect_eq_self f2)
+		| P.Or _ | P.Not _ -> []
+		| P.Forall (_,f,_,_) | P.Exists (_,f,_,_) -> collect_eq_self f
+
+	and replace_self h vars = match h with
+		| F.Phase h1 -> F.Phase { h1 with
+			F.h_formula_phase_rd = replace_self h1.F.h_formula_phase_rd vars;
+			F.h_formula_phase_rw = replace_self h1.F.h_formula_phase_rw vars}
+		| F.Conj h1 -> F.Conj { h1 with
+			F.h_formula_conj_h1 = replace_self h1.F.h_formula_conj_h1 vars;
+			F.h_formula_conj_h2 = replace_self h1.F.h_formula_conj_h2 vars}
+		| F.Star h1 -> F.Star { h1 with
+			F.h_formula_star_h1 = replace_self h1.F.h_formula_star_h1 vars;
+			F.h_formula_star_h2 = replace_self h1.F.h_formula_star_h2 vars}
+		| F.HeapNode h1 -> F.HeapNode { h1 with
+			(* Replace the pointer with self if we detected it equals self *)
+			F.h_formula_heap_node = 
+				if List.mem h1.F.h_formula_heap_node vars then
+					("self",Unprimed)
+				else
+					 h1.F.h_formula_heap_node }
+		| F.HeapNode2 h1 ->F.HeapNode2 { h1 with
+			(* Replace the pointer with self if we detected it equals self *)
+			F.h_formula_heap2_node = 
+				if List.mem h1.F.h_formula_heap2_node vars then
+					("self",Unprimed)
+				else
+					 h1.F.h_formula_heap2_node }
+		| F.HTrue -> h
+		| F.HFalse -> h
+	in
+	let view_decls = List.map process_eq_self_view view_decls in
   let dl = List.map (fun v -> v.data_name) data_decls in
   let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
   let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
