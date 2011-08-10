@@ -1444,7 +1444,7 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 	                let renamed_view_formula = add_unfold_num renamed_view_formula uf in
 		            (* propagate the immutability annotation inside the definition *)
 	                let renamed_view_formula = Cformula.propagate_imm_formula renamed_view_formula imm in
-					let renamed_view_formula = Cformula.set_perm_formula renamed_view_formula pr in
+					let renamed_view_formula = Cformula.set_perm_formula renamed_view_formula (Pr.mkTrue pos) pr in
 	                let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
 	                  :: vdef.view_vars in
 	                let to_vars = v :: vs in
@@ -1740,8 +1740,8 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
-and fold_op p c vd v u loc =
-  Gen.Profiling.no_2 "fold" (fold_op_x(*debug_2*) p c vd v) u loc
+and fold_op p c vd v pr u loc =
+  Gen.Profiling.no_2 "fold" (fold_op_x(*debug_2*) p c vd v pr) u loc
 
 (* and fold_debug_2 p c vd v u loc =  *)
 (*   Gen.Debug.no_2 "fold_op " (fun c -> match c with *)
@@ -1759,19 +1759,19 @@ and fold_op p c vd v u loc =
 (**************************************************************)
 
 (* fold some constraints in ctx to view  *)
-and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) =
+and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) prx (use_case:bool) (pos : loc): (list_context * proof) =
   let pr (x,_) = Cprinter.string_of_list_context x in
   let id x = x in
   let ans = ("use-case : "^string_of_bool use_case)^"\n context:"^(Cprinter.string_of_context ctx)^"\n rhs:"^(Cprinter.string_of_h_formula view) in
-  let pr2 x = match x with
+  let pr2 x = match x with 
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
   Gen.Debug.no_2 "fold_op" 
       pr2 id pr
-      (fun _ _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc)) vd ans
+      (fun _ _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) prx (use_case:bool) (pos : loc)) vd ans
 
 
-and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
+and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) pr (use_case:bool) (pos : loc): (list_context * proof) = match view with
   | ViewNode ({ h_formula_view_node = p;
     h_formula_view_name = c;
     h_formula_view_imm = imm;
@@ -1800,20 +1800,22 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
         let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)):: vdef.view_vars in
         let to_vars = p :: vs in
         let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
-		let view_form = set_perm_struc view_form r_prm in
+		let view_form = set_perm_struc view_form pr r_prm in
+		(*let nvs = match r_prm with | None -> vs | Some v-> v::vs in*)
         let view_form = add_struc_origins view_form (get_view_origins view) in
         let view_form = CF.replace_struc_formula_label pid view_form in
         Debug.devel_pprint ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx)) pos;
         Debug.devel_pprint ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view)) pos;
         Debug.devel_pprint ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form)) pos;
         let estate = estate_of_context ctx pos in
-        let new_es = {estate with es_evars = vs (*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*)} in
-        let new_ctx = Ctx new_es in
+		let ngen,nvs = match r_prm with | None -> estate.es_gen_impl_vars,vs | Some v -> (v::estate.es_gen_impl_vars,v::vs) in 
+        let new_es = {estate with es_evars = nvs (*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*);  es_gen_impl_vars = ngen} in
+        let new_ctx = Ctx new_es in 
 	    (*let new_ctx = set_es_evars ctx vs in*)
         let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form pos None in
         (*let _ = print_string ("before fold: " ^ (Cprinter.string_of_context new_ctx)) in
           let _ = print_string ("after fold: " ^ (Cprinter.string_of_list_context rs0)) in*)
-        let tmp_vars = p :: (estate.es_evars @ vs) in
+        let tmp_vars = p :: (estate.es_evars @ nvs) in
 	    (**************************************)
 	    (*        process_one 								*)
 	    (**************************************)
@@ -2510,10 +2512,12 @@ and heap_entail_one_context_struc p i1 hp cl cs pos pid =
 
 and heap_entail_one_context_struc_nth n p i1 hp cl cs pos pid =
   let str="heap_entail_one_context_struc" in
-  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl) cs pos pid
+  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_y(*_debug*) p i1 hp cl) cs pos pid
 
-and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
-  Gen.Debug.no_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
+and heap_entail_one_context_struc_y p i1 hp cl cs pos pid =
+  let pr (x,_) = Cprinter.string_of_list_context x in
+  Gen.Debug.no_2 "heap_entail_one_context_struc" Cprinter.string_of_context Cprinter.string_of_struc_formula pr 
+    (fun cl _ -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl cs
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
@@ -3038,8 +3042,9 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula) fp:list_context =
   let pr1 = Cprinter.string_of_list_context in
   let pr2 = Cprinter.string_of_mix_formula in
-  Gen.Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
-      (fun c1 c2->move_expl_inst_ctx_list_x ctx f fp) ctx f
+  let pr3 = Cprinter.string_of_perm_formula in
+  Gen.Debug.no_3 "move_expl_inst_ctx_list" pr1 pr2 pr3 pr1 
+      (fun c1 c2 _->move_expl_inst_ctx_list_x ctx f fp) ctx f fp
 
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula) (fp:Cperm.perm_formula):list_context = 
   let fct es = 
@@ -4068,7 +4073,8 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 				                  (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
 				                  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 				                  let ctx, proof = 
-									if (Cperm.imply pr1 pr2) then heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 br2 pr2 pos 
+									let perm_impl = Cperm.imply (estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars) in
+									if (perm_impl pr1 pr2) then heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 br2 pr2 pos 
 									else (CF.mkFailCtx_in (Basic_Reason (mkFailContext "failed in entailing perm formulas" estate conseq None pos )), Failure) in
 				                  (* let new_ctx = *)
 				                  (*   if  then ((\*print_string ("YES Expl inst!!\n");*\) move_lemma_expl_inst_ctx_list ctx p2) *)
@@ -4861,7 +4867,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
         h_formula_view_pruning_conditions = r_p_cond;
         h_formula_view_pos = pos2}) -> (p2,c2,v2,pid,r_rem_brs,r_p_cond,r_perm,pos2)
       | _ -> report_error no_pos ("do_fold_w_ctx: data/view expected but instead ln2 is "^(Cprinter.string_of_h_formula ln2) ) in
-  (* let _ = print_string("in do_fold\n") in *)
+  (* let _ = print_string("in do_fold\n") in *) 
+  let r_perm_f = Cpr.solve_on rhs_pr r_perm in
   let original2 = if (is_view ln2) then (get_view_original ln2) else true in
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
@@ -4882,7 +4889,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	  h_formula_view_remaining_branches = r_rem_brs;
 	  h_formula_view_pruning_conditions = r_p_cond;
 	  h_formula_view_pos = pos2}) in
-  let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold vd (* false *) use_case pos in
+  let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold vd (* false *) r_perm_f use_case pos in
   if not (CF.isFailCtx fold_rs) then
 	let b = { formula_base_heap = resth2;
 	formula_base_pure = rhs_p;
@@ -4955,8 +4962,10 @@ and do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 and do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Gen.Debug.no_1 "do_full_fold" pr1 pr2 
-      (fun _ -> do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) rhs_node
+  let pr3 =fun b-> Cprinter.string_of_formula (CF.Base b) in
+  let pr4 = Cprinter.string_of_estate in
+  Gen.Debug.no_3 "do_full_fold" pr1 pr3 pr4 pr2 
+      (fun _ _ _-> do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) rhs_node rhs_b estate
       
 
 and push_hole_action_x a1 r1=

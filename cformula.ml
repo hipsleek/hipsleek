@@ -725,9 +725,9 @@ and normalize_frac_heap (f1:h_formula) (p:MCP.mix_formula) =
 					(h::(h_dups@h_l),p,pr2,e)
 				else 
 					if (List.exists (fun (_,_,_,_,n2,_)->(String.compare nm n2)>0) dups) then 
-							report_error no_pos ("needed unfold as normalize_heap needs to combine "^nm^" with a different node")
+							report_error no_pos ("needed unfold as normalize_heap needs to combine "^nm^" with a different node trivial to do")
 					else 
-						if (is_data h) then 
+						let _ = if (is_data h) then () else print_string " forcing joins on possibly empty predicates\n" in
 							if b|| (List.exists (fun (_,_,c,_,_,_)->c) dups) then ([HFalse],[],[],[])
 							else
 								let n_p_v = Pr.fresh_perm_var () in
@@ -735,8 +735,8 @@ and normalize_frac_heap (f1:h_formula) (p:MCP.mix_formula) =
 								let (p,h_pr) = List.fold_left (fun (a1,a2) (_,v2,_,pr2,_,args2) ->((v,v2):: (List.combine args args2)@a1, pr2::a2))([],[]) dups in	
 								let h_l,p_t,pr_t,e_t = comb_hlp rests in
 								(n_h::h_l,  p@p_t,  (n_p_v,(pr::h_pr))::pr_t,  n_p_v::e_t)
-						else
-							report_error no_pos ("needed to combine views and i'm not sure how to proceed, need an analysis of whether it strictly point to a node can be done but might be a penalty...")
+						(*else
+							report_error no_pos ("needed to combine views and i'm not sure how to proceed, need an analysis of whether it strictly point to a node can be done but might be a penalty...")*)
 			else 
 				let h_l,p,pr,e = comb_hlp rests in
 				(h::h_l,p,pr,e)	in 
@@ -4441,20 +4441,52 @@ let rec set_perm_h pr f = match f with
 	  | ViewNode h -> ViewNode {h with h_formula_view_perm = pr}
 	  | Hole _  | HTrue | HFalse -> f 
   
-let set_perm_formula f pr =    
+let rec set_perm_h_2 f = match f with
+	  | Star h-> 
+			let l1,l2 = set_perm_h_2 h.h_formula_star_h1 in
+			let r1,r2 = set_perm_h_2 h.h_formula_star_h2 in
+			(Star {h with h_formula_star_h1 = l1; h_formula_star_h2 = r1},(l2@r2))
+	  | Conj h-> 
+			let l1,l2 = set_perm_h_2 h.h_formula_conj_h1 in
+			let r1,r2 = set_perm_h_2 h.h_formula_conj_h2 in
+			(Conj {h with h_formula_conj_h1 = l1; h_formula_conj_h2 = r1},(l2@r2))
+	  | Phase h-> 
+			let l1,l2 = set_perm_h_2 h.h_formula_phase_rd in
+			let r1,r2 = set_perm_h_2 h.h_formula_phase_rw in
+			(Phase {h with h_formula_phase_rd = l1; h_formula_phase_rw = r1},(l2@r2))
+	  | DataNode h -> let v= Pr.fresh_perm_var () in (DataNode {h with h_formula_data_perm = Some v},[v])
+	  | ViewNode h -> let v= Pr.fresh_perm_var () in (ViewNode {h with h_formula_view_perm = Some v},[v])
+	  | Hole _  | HTrue | HFalse -> (f,[])
+  
+let set_opt_perm_h pr f = match pr with
+	| None -> (set_perm_h pr f,[],Pr.mkTrue no_pos)
+	| Some v -> match f with
+	  | DataNode _ | ViewNode _ | Hole _  | HTrue | HFalse -> (set_perm_h pr f,[],Pr.mkTrue no_pos)
+	  | _ ->	  
+		let r1,r2 = set_perm_h_2 f in
+		let prf = List.fold_left (fun a c-> Pr.mkAnd a (Pr.mkEq_vars c v no_pos) no_pos) (Pr.mkTrue no_pos) r2 in
+		(r1,r2,prf) 		
+  
+let set_perm_formula f prf pr =    
   let rec helper f = match f with
 	| Or f-> mkOr (helper f.formula_or_f1) (helper f.formula_or_f2) f.formula_or_pos
-	| Base b-> Base {b with formula_base_heap = set_perm_h pr b.formula_base_heap}
-	| Exists b-> Exists {b with formula_exists_heap = set_perm_h pr b.formula_exists_heap} in
-  if pr = None then f
-  else helper f
+	| Base b-> 
+		let r1,r2,r3 = set_opt_perm_h pr b.formula_base_heap in
+		let prf = Pr.mkAnd prf r3 no_pos in
+		push_exists r2 (Base {b with formula_base_heap = r1 ; formula_base_perm  = Pr.mkAnd b.formula_base_perm prf no_pos})
+	| Exists b-> 
+		let r1,r2,r3 = set_opt_perm_h pr b.formula_exists_heap in
+		let prf = Pr.mkAnd prf r3 no_pos in
+		push_exists r2 (Exists {b with formula_exists_heap = r1 ; formula_exists_perm  = Pr.mkAnd b.formula_exists_perm prf no_pos}) in
+  (*if pr = None then f
+  else*) helper f
   
-let set_perm_struc f pr = 
+let set_perm_struc f prf pr = 
 	let rec helper (f:struc_formula):struc_formula = 
 		List.map (fun f-> match f with 
-			| EBase b -> EBase {b with formula_ext_base = set_perm_formula b.formula_ext_base pr; formula_ext_continuation = helper b.formula_ext_continuation}
+			| EBase b -> EBase {b with formula_ext_base = set_perm_formula b.formula_ext_base prf pr; formula_ext_continuation = helper b.formula_ext_continuation}
 			| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)->(c1,helper c2)) b.formula_case_branches}
-		    | EAssume (vl,f,fl) -> EAssume (vl,set_perm_formula f pr,fl)
+		    | EAssume (vl,f,fl) -> EAssume (vl,set_perm_formula f prf pr,fl)
 		    | EVariance v -> EVariance {v with formula_var_continuation = helper v.formula_var_continuation} ) f in
 	if pr = None then f 
 	else helper f

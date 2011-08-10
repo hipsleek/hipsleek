@@ -376,7 +376,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     match dr.h_formula_data_perm with
                       |  None -> (0,M_match c)
                       | _ -> if  not !Globals.enable_frac_perm then report_error no_pos " process_one_match: fractional permissions are disabled!!"
-                         else ((*print_string "one\n";*)(-1, Search_action [(1,M_match c);(1,M_split_match c)]))
+                         else ((*print_string "one\n";*)(0, Search_action [(1,M_match c);(1,M_split_match c)]))
                   else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in
@@ -440,7 +440,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
       
-and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
+and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> if (is_view rhs_node && get_view_original rhs_node) then
       let r = M_base_case_fold { 
           match_res_lhs_node = HTrue; 
@@ -454,7 +454,10 @@ and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match 
   | x::[] -> process_one_match prog x 
   | _ -> (-1,Search_action (List.map (process_one_match prog) l))
 
-and sort_wt (ys: action_wt list) : action list =
+and process_matches prog lhs_h (l,(rhs_node,rhs_rest)) = (*string_of_action_wt_res test*)
+Gen.Debug.no_1 "process_matches" (fun _ ->"?") string_of_action_wt_res (process_matches_x prog lhs_h) (l,(rhs_node,rhs_rest))
+  
+and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
           let l = List.map recalibrate_wt l in
@@ -462,7 +465,7 @@ and sort_wt (ys: action_wt list) : action list =
           let h = (List.hd sl) in
           let rw = (fst h) in
           if (rw==0) then h
-          else (rw,Search_action sl)
+          else if (w==0) then (w,Search_action sl) else (rw,Search_action sl)
     | Seq_action l ->
           let l = List.map recalibrate_wt l in
           let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
@@ -472,6 +475,11 @@ and sort_wt (ys: action_wt list) : action list =
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
 
+and sort_wt al =
+	let pr  = pr_list (fun c-> (string_of_action_wt_res c) ^"\n") in
+	let pr2 = pr_list (fun c-> (string_of_action_res_simpl c)^"\n") in
+Gen.Debug.no_1 "sort_wt" pr pr2 sort_wt_x al
+  
 and pick_unfold_only ((w,a):action_wt) : action_wt list =
   match a with
     | M_unfold _ -> [(w,a)]
@@ -493,7 +501,7 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
   let r = List.map (process_matches prog lhs_h) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
-    | xs -> let ys = sort_wt r in List.hd (ys)
+    | xs -> List.hd (sort_wt r)
 
 and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let psv = Cprinter.string_of_spec_var in

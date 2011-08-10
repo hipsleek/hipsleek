@@ -492,12 +492,6 @@ let process_barrier_def_a bd =
   (*could return this as the cast barrier def*)
   if !Globals.print_core then print_string (Iprinter.string_of_bar_def bd) else () ;
   try
-   process_data_def 
-		{ I.data_name =bd.I.barrier_name;
-		  I.data_fields =[((Int,"state"),no_pos)];
-		  I.data_parent_name = "Object";
-		  I.data_invs =[];
-		  I.data_methods =[]; } ;
    if Gen.BList.check_dups_eq (fun (c1,c2,_) (d1,d2,_)-> c1=d1 && c2=d2) bd.I.barrier_tr_list then 
 		raise  (Malformed_barrier ("several descriptions for the same transition "))
    else ();	  
@@ -510,4 +504,12 @@ let process_barrier_def_a bd =
   
 let process_barrier_def bd = 
 	Gen.Debug.no_1 "process_barrier" (fun _ -> "") (fun _ -> "done") process_barrier_def_a bd
+  
+  
+let barr_data bd =
+		{ I.data_name =bd.I.barrier_name;
+		  I.data_fields =[((Int,"state"),no_pos)];
+		  I.data_parent_name = "Object";
+		  I.data_invs =[];
+		  I.data_methods =[]; }
   

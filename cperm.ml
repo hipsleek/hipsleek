@@ -58,6 +58,8 @@ let mkAnd f1 f2 pos = match f1 with
         
 let mkEq f1 f2 pos = Eq (f1,f2,pos)
 
+let mkEq_vars f1 f2 pos = if (P.eq_spec_var f1 f2) then mkTrue pos else  Eq (PVar f1,PVar f2,pos)
+
 let is_full_frac t = Ts.stree_eq t Ts.top 
 
 let isConstFperm f = match f with
@@ -439,7 +441,7 @@ let is_sat_p_t (evs,lp,lt,ld) =
 				| PConst s1, PConst s2, PConst s3 -> if (Ts.can_join s1 s2) && (Ts.stree_eq s3 (Ts.join s1 s2)) then propag_trip ss lp ld lr else raise Unsat_exception 
 				| PConst s1, PConst s2, PVar v  -> hlp (Ts.can_join s1 s2) (v, PConst (Ts.join s1 s2)) lp lr ld ss
 				| PConst s1, PVar v, PConst s3
-				| PVar v, PConst s1, PConst s3   -> hlp (Ts.contains s3 s1) (v, PConst (Ts.subtract s3 s1)) lp lr ld ss
+				| PVar v, PConst s1, PConst s3   -> hlp (Ts.contains s3 s1&& not (Ts.stree_eq s3 s1)) (v, PConst (Ts.subtract s3 s1)) lp lr ld ss
 				| _ -> propag_trip ss ((c1,c2,c3)::lp) ld lr 
     and hlp tst s lp lr ld ss = 
 		if tst then 
@@ -536,16 +538,17 @@ let svl_pr l = l_pr !print_sv l
 let eq_pr (c1,c2) = (!print_sv c1)^" = "^(!print_frac_f c2)
 let sol_pr s = PMap.foldi (fun v (d1,d2) a-> (!print_sv v)^"=["^(!print_share d1)^","^(!print_share d2)^"] ; " ^a) s ""
 
-let imply_a f1 f2 = 
-  let in_2 = fun a c-> false in (*to improve completeness, syntactic inclusion check of equation c in a*)
+let imply_a glb_evs f1 f2 = 
+  let in_2 = fun a (c1,c2)-> if (isConstFperm c2) then true else false in (*to improve completeness, syntactic inclusion check of equation c in a*)
   let in_3 = fun a c-> false in
   let dom_incomp ll rl evs = 
+	  let evs = evs @ glb_evs in 
       PMap.foldi (fun rv (rdm,rdM) a -> 
           if a then a 
-          else if (Gen.BList.mem_eq P.eq_spec_var rv evs) then a 
+          else if Gen.BList.mem_eq P.eq_spec_var rv evs then a 
           else try 
-            let rlm,rlM = PMap.find rv ll in
-            if (Ts.contains rlm rdm)&& (Ts.contains rdM rlM) then a else true
+			let rlm,rlM = PMap.find rv ll in
+            if (Ts.contains rlm rdm)&& (Ts.contains rdM rlM) then a else true 
          with Not_found -> true) rl false in
 		 
   let one_imply_one_a (f1s, f1e, f1t) (f2s, f2e, f2t, f2vs) = 
@@ -565,8 +568,9 @@ let imply_a f1 f2 =
       
   List.for_all (one_imply f2) (is_sat_p_t_w2 f1) 
   
-let imply f1 f2 = 
-  Gen.Debug.no_2 "perm imply" !print_perm_f !print_perm_f string_of_bool imply_a f1 f2 
+let imply evs f1 f2 = 
+	let pr = Gen.pr_list !print_sv in
+  Gen.Debug.no_3 "perm imply" pr !print_perm_f !print_perm_f string_of_bool imply_a evs f1 f2 
        
       
 (*elim exists*)(*TODO*) 
@@ -637,7 +641,8 @@ let comp_perm_split_a v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm =
 	  | (hr::[],_,_,_)::[]-> 
 		(try
 			let rm,rM = PMap.find r_var hr in
-			let addition = if Ts.stree_eq rm rM then mkEq (mkVPerm v_consumed) (PConst rm) no_pos else (mkDom v_consumed rm rM) in
+			let is_r_ct = Ts.stree_eq rm rM in
+			let addition = if is_r_ct then mkEq (mkVPerm v_consumed) (PConst rm) no_pos else (mkDom v_consumed rm rM) in
 				match l_perm with
 					| PConst c-> if Ts.contains c rM then (mkAnd default addition no_pos,true) else (default,false)
 					| PVar l_var -> 
@@ -645,7 +650,10 @@ let comp_perm_split_a v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm =
 							| (hl::[],_,_,_)::[]->
 								(try
 									let lm,lM = PMap.find l_var hl in
-									if Ts.contains lm rM then (mkAnd default addition no_pos,true) else (default,false)
+									if Ts.contains lm rM then 
+										if (Ts.stree_eq lM rm) then (*perfect match cannot split must consume*) (default,false)
+										else (mkAnd default addition no_pos,true) 
+									else (default,false)
 								with Not_found -> (default,false))
 							| (_,_,_,_)::[]-> (default,false)
 							| _ -> (mkFalse no_pos,true)
@@ -661,6 +669,17 @@ Gen.Debug.no_6 "comp_perm_split"
 
    
    
+let solve_on f var = match var with 
+	| None -> PTrue no_pos
+	| Some v -> match is_sat_p_t_w2 f with 
+		| (hl::[],_,_,_)::[]->
+			(try 
+				let d1,d2 = PMap.find v hl in
+				if (Ts.stree_eq d1 d2) then mkEq (PVar v) (PConst d1) no_pos else mkDom v d1 d2 
+			 with Not_found -> PTrue no_pos)
+		| _ -> PTrue no_pos
+	
+	
    
    
    
