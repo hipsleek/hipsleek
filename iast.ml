@@ -465,7 +465,7 @@ let is_var (e : exp) : bool = match e with
   | _ ->false
   
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
-	| ArrayAt e -> e.exp_arrayat_pos (* An Hoa *)
+	| ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
@@ -967,7 +967,10 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
 	(** [Internal] extract equalities of form self = x and replace x 
 		with self in heapreturn a new heap formula.
 	 **)
-	and process_pure_heap p h = let vars = collect_eq_self p in replace_self h vars
+	and process_pure_heap p h =
+		let vars = collect_eq_self p in
+		(* let _ = print_endline ("Variables equal self : " ^ (String.concat "," (List.map (fun (x,y) -> x) vars))) in *)
+			replace_self h vars
 	
 	and collect_eq_self p = match p with
 		| P.BForm (f,_) -> (match f with
@@ -1012,9 +1015,19 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
 		| F.HTrue -> h
 		| F.HFalse -> h
 	in
+	(* let _ = print_endline "BEFORE REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
+	let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
+	let view_decls_org = view_decls in
 	let view_decls = List.map process_eq_self_view view_decls in
+	(* let _ = print_endline "AFTER REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
+	let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let dl = List.map (fun v -> v.data_name) data_decls in
   let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
+  let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
+  then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
+	(* Restore the original list of view_decls and continue with the previous implementation *)
+  	let view_decls = view_decls_org in
+	let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
   let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
   then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
   rl
@@ -1050,11 +1063,14 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
     | vd::vds -> let vans = List.map (fun v -> (v,(create v.view_data_name),v.view_pt_by_self)) vds in
       let vl = syn_data_name dl [vd] in
       let vl = fixpt_data_name (vl@vans) in
+		(* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
       let _ = update_fixpt vl in
       (List.hd view_decls).view_data_name
 
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
-  List.iter (fun (v,a,tl) -> 
+  List.iter (fun (v,a,tl) ->
+		(* print_endline ("update_fixpt for " ^ v.view_name);
+		print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl 
@@ -1066,6 +1082,8 @@ and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
   let vl = fixpt_data_name vl in
+	(* An Hoa *)
+	(* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
   update_fixpt vl
 
 

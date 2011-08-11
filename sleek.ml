@@ -127,13 +127,15 @@ let parse_file (parse) (source_file : string) =
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
-	   Otherwise, we perform second round checking!
-	*)
-	if (!Astsimp.undef_data_types = []) then 
-		perform_second_parsing_stage ()
-	else let udn,udp = List.hd (List.rev !Astsimp.undef_data_types) in
-			Error.report_error { Error.error_loc = udp;
-								 Error.error_text = "Data type " ^ udn ^ " is undefined!" };
+	 * Otherwise, we perform second round checking!
+	 *)
+	let udefs = !Astsimp.undef_data_types in
+	let _ = match udefs with
+	| [] ->	perform_second_parsing_stage ()
+	| _ -> let udn,udp = List.hd (List.rev udefs) in
+			Error.report_error { Error.error_loc  = udp;
+								 Error.error_text = "Data type " ^ udn ^ " is undefined!" }
+	in ();
   convert_pred_to_cast ();
   List.iter proc_one_lemma cmds;
    List.iter proc_one_cmd cmds 
