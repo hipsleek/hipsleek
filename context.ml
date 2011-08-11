@@ -455,25 +455,28 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | MaterializedArg (mv,ms) ->
+          let uf_i = if mv.mater_full_flag then 0 else 1 in 
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
-                    | View_mater -> (* M_Nothing_to_do ("no unfold for materialised var") *)
-                        M_unfold (c,0)
+                    | View_mater -> 
+                        M_unfold (c,uf_i) (* uf_i to prevent infinite unfolding *)
                     | Coerc_mater s -> 
                         let _ = print_string "\n selected lemma" in
                         M_lemma (c,Some s)) in
-                  (match mv.mater_full_flag with
-                    | true -> (0,a1)
-                    | false -> (1,a1)
+                  (* (uf_i,a1) *)
+                  (uf_i,a1)
+                  (* (match mv.mater_full_flag with *)
+                  (*   | true -> (0,a1) *)
+                  (*   | false -> (1,a1) *)
                           (*let a2 = in
-                            Search_action (a1::a2)*))
+                            Search_action (a1::a2)*)
             | ViewNode vl, DataNode dr -> 
-                  let i = if mv.mater_full_flag then 0 else 1 in 
+                  (* let i = if mv.mater_full_flag then 0 else 1 in  *)
                   let a1 = (match ms with
-                    | View_mater -> (i,M_unfold (c,i)) 
-                    | Coerc_mater s -> (i,M_lemma (c,Some s))) in
+                    | View_mater -> (uf_i,M_unfold (c,uf_i)) 
+                    | Coerc_mater s -> (uf_i,M_lemma (c,Some s))) in
                   a1
                       (* (match mv.mater_full_flag with *)
                       (*   | true -> (0,a1) *)
@@ -482,7 +485,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                       (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
                       (* unfold to some depth *)
                       (* M_Nothing_to_do (string_of_match_res c) *)
-            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
+            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
