@@ -1706,6 +1706,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Equiv -> "<==>" ;;
 
 
+    (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
   if is_short op then s1
@@ -1714,7 +1715,8 @@ let string_of_coerc_opt op c =
   else s2
     ^"\n head match:"^c.coercion_head_view
     ^"\n body view:"^c.coercion_body_view
-    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";;
+    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
+    ^"\n univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
 
