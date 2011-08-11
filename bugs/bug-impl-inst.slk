@@ -18,14 +18,9 @@ checkentail
      |- 
       t::node<_,q,n> * self::dll_r5<p,q,t>.
 
-// explicit is more complete than implicit
+// BUG - order of implicit affect completeness!
 checkentail 
    self::node<_,p,q3> & q3=n & self=t & self!=n
      |- 
-      [q] self::dll_r5<p,q,t> * t::node<_,q,n>.
+       self::dll_r5<p,q,t> * t::node<_,q,n>.
 
-// existential is more complete than implicit
-checkentail 
-   self::node<_,p,q3> & q3=n & self=t & self!=n
-     |- 
-      (exists q: self::dll_r5<p,q,t> * t::node<_,q,n>).
