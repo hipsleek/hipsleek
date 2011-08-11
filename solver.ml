@@ -5003,7 +5003,7 @@ and do_base_case_unfold_only prog ante conseq estate anode ln2 is_folding pos rh
   let pr x = match x with 
     | None -> "None"
     | Some _ -> "Some" in
-  Gen.Debug.no_4 "do_base_case_unfold_only" 
+  Gen.Debug.ho_4 "do_base_case_unfold_only" 
       Cprinter.string_of_formula 
       Cprinter.string_of_formula 
       Cprinter.string_of_h_formula 

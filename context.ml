@@ -409,7 +409,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 and process_one_match prog (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res  in
-  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
+  Gen.Debug.ho_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -463,28 +463,17 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     | View_mater -> 
                         M_unfold (c,uf_i) (* uf_i to prevent infinite unfolding *)
                     | Coerc_mater s -> 
-                        let _ = print_string "\n selected lemma" in
+                        let _ = print_string "\n selected lemma XX" in
                         M_lemma (c,Some s)) in
-                  (* (uf_i,a1) *)
-                  (uf_i,a1)
-                  (* (match mv.mater_full_flag with *)
-                  (*   | true -> (0,a1) *)
-                  (*   | false -> (1,a1) *)
-                          (*let a2 = in
-                            Search_action (a1::a2)*)
+                  let l1 = [(1,M_base_case_unfold c)] in
+                   (-1, (Search_action ((1,a1)::l1)))
             | ViewNode vl, DataNode dr -> 
                   (* let i = if mv.mater_full_flag then 0 else 1 in  *)
                   let a1 = (match ms with
-                    | View_mater -> (uf_i,M_unfold (c,uf_i)) 
-                    | Coerc_mater s -> (uf_i,M_lemma (c,Some s))) in
-                  a1
-                      (* (match mv.mater_full_flag with *)
-                      (*   | true -> (0,a1) *)
-                      (*   | false -> (1,M_unfold (c,1)))  *)
-                      (* to prevent infinite unfolding *)
-                      (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
-                      (* unfold to some depth *)
-                      (* M_Nothing_to_do (string_of_match_res c) *)
+                    | View_mater -> (1,M_unfold (c,uf_i)) 
+                    | Coerc_mater s -> (1,M_lemma (c,Some s))) in
+                  let l1 = [(1,M_base_case_unfold c)] in
+                   (-1, (Search_action (a1::l1)))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
@@ -520,7 +509,8 @@ and sort_wt (ys: action_wt list) : action list =
           let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
           let h = (List.hd sl) in
           let rw = (fst h) in
-          if (rw==0) then h
+          (* WHY did we pick only ONE when rw==0? *)
+          if (rw==0) then h 
           else (rw,Search_action sl)
     | Seq_action l ->
           let l = List.map recalibrate_wt l in
@@ -552,7 +542,9 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
   let r = List.map (process_matches prog lhs_h) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
-    | xs -> let ys = sort_wt r in List.hd (ys)
+    | xs -> let ys = sort_wt r in 
+      List.hd (ys)
+(* Search_action (None,ys) *)
 
 and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let psv = Cprinter.string_of_spec_var in
