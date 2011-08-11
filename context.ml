@@ -459,8 +459,8 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
-                    | View_mater -> M_Nothing_to_do ("no unfold for materialised var")
-                        (* M_unfold (c,0) *)
+                    | View_mater -> (* M_Nothing_to_do ("no unfold for materialised var") *)
+                        M_unfold (c,0)
                     | Coerc_mater s -> 
                         let _ = print_string "\n selected lemma" in
                         M_lemma (c,Some s)) in
