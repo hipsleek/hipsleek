@@ -13,6 +13,7 @@ pred dll_r5<p,t,n> ==
 lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n <-> 
       self::dll_r5<p,q,t> * t::node<_,q,n>.
 
-checkentail self::dll_r5<p,t,n> & self!=n |- 
-      self::dll_r5<p,q,t> * t::node<_,q,n>.
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n
+     |- [q] t::node<_,q,n> * self::dll_r5<p,q,t>.
 
