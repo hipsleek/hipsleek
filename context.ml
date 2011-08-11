@@ -302,7 +302,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Gen.Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
+  Gen.Debug.ho_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
       
 (*
@@ -459,8 +459,11 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
-                    | View_mater -> M_unfold (c,0)
-                    | Coerc_mater s -> M_lemma (c,Some s)) in
+                    | View_mater -> M_Nothing_to_do ("no unfold for materialised var")
+                        (* M_unfold (c,0) *)
+                    | Coerc_mater s -> 
+                        let _ = print_string "\n selected lemma" in
+                        M_lemma (c,Some s)) in
                   (match mv.mater_full_flag with
                     | true -> (0,a1)
                     | false -> (1,a1)
@@ -556,7 +559,7 @@ and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^", "^(Cprinter.string_of_h_formula c2)^")") x in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_5 "compute_actions" pr0 pr pr1 pr3 pr3 pr2 (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h rhs_lst lhs_p rhs_p
+  Gen.Debug.ho_5 "compute_actions" pr0 pr pr1 pr3 pr3 pr2 (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h rhs_lst lhs_p rhs_p
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

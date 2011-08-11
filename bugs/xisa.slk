@@ -55,9 +55,9 @@ pred dll_r4<b,h,n> ==
 
 //lemma "dll3todll4" self::dll3<t> <-> t::dll4<self>.
 
-lemma "dll_r3_to_dll_r4" self::dll_r3<p,t,a> -> t::dll_r4<p,self,a>.
+//lemma "dll_r3_to_dll_r4" self::dll_r3<p,t,a> -> t::dll_r4<p,self,a>.
 
-//lemma "dll_r4_to_dll_r3" self::dll_r4<b,h,n> -> h::dll_r3<b,self,n>.
+lemma "dll_r4_to_dll_r3" self::dll_r4<b,h,n> -> h::dll_r3<b,self,n>.
 
 /*
 
@@ -107,9 +107,6 @@ print residue.
 
 */
 
-checkentail n1::dll_r4<null,n,null> |- n::dll_r3<null,n1,null>.
-// bugs ??? it does not perform lemma coercion on the RHS
-// but loop forever instead
 
 /*
 ??? BUGs
@@ -141,3 +138,8 @@ checkentail x::node<_,null,n> * n::dll_r3<x,n1,null> & x!=n1 |- n1::dll4<x>.
 print residue. // similar to the above
 
 */
+
+
+checkentail n1::dll_r4<null,n,null> |- n::dll_r3<null,n1,null>.
+// bugs ??? it does not perform lemma coercion on the RHS
+// but loop forever instead
