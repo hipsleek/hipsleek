@@ -1,0 +1,28 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+
+//lemma "U0" self::ls<p> -> self::ls<b>*b::ls<p>.
+
+//lemma "U3" self::ls<z>  <- self::ls<y>*y::ls<z> & z=null . 
+
+lemma "U4" self::ls<y> * y::ls<z> * z::node<v,w> -> self::ls<z> * z::node<v,w> .
+
+/*
+// these cases are provable
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x=y & y=z |- x::ls<z> * z::node<_,w> . 
+
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y=z |- x::ls<z> * z::node<_,w> . 
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x=y & y!=z |- x::ls<z> * z::node<_,w> . 
+*/
+
+// fail
+checkentail x::ls<y> * y::ls<z> * z::node<v,w> |- x::ls<z> * z::node<v,w>.
+
+// BUG - why a must failure of y=z
+// not provable at moment
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y!=z |- x::ls<z> * z::node<_,w> . 
+
+
