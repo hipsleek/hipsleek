@@ -8,7 +8,7 @@ data node2 {
 
 data nodeprev {
      node2 prev;
-//	nodetemp temp;
+// 	nodetemp temp;
 }.
 
 data nodenext {
