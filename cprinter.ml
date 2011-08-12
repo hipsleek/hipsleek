@@ -826,6 +826,7 @@ let rec pr_h_formula h =
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
       h_formula_view_original = original;
+      h_formula_view_lhs_case = lhs_case;
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
@@ -840,7 +841,8 @@ let rec pr_h_formula h =
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
 	  if original then fmt_string "[Orig]"
 	  else fmt_string "[Derv]";
-          pr_remaining_branches ann; 
+ 	  if lhs_case then fmt_string "[LHSCase]";
+         pr_remaining_branches ann; 
           pr_prunning_conditions ann pcond;
           fmt_close()
     | HTrue -> fmt_bool true

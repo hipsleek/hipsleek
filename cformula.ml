@@ -159,6 +159,8 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                            then c is in h_formula_view_origins. Used to avoid loopy coercions *)
                         h_formula_view_origins : ident list;
                         h_formula_view_original : bool;
+                        h_formula_view_lhs_case : bool; 
+                        (* to allow LHS case analysis prior to unfolding and lemma *)
                         h_formula_view_unfold_num : int; (* to prevent infinite unfolding *)
                         (* used to indicate a specialised view *)
                         h_formula_view_remaining_branches :  (formula_label list) option;
@@ -1063,6 +1065,18 @@ and h_add_original (h : h_formula) original =
     | _ -> h 
   in helper h
 
+and h_set_lhs_case (h : h_formula) flag = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> ViewNode {vn with h_formula_view_lhs_case = flag}
+    | _ -> h 
+  in helper h
+
 and h_add_unfold_num (h : h_formula) i = 
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
@@ -1129,7 +1143,19 @@ and add_original (f : formula) original =
     | Base b -> Base ({b with formula_base_heap = h_add_original b.formula_base_heap original})
     | Exists e -> Exists ({e with formula_exists_heap = h_add_original e.formula_exists_heap original})
   in helper f
-         
+
+and set_lhs_case (f : formula) flag = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_set_lhs_case b.formula_base_heap flag})
+    | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case e.formula_exists_heap flag})
+  in helper f
+
 
 and add_unfold_num (f : formula) uf = 
   let rec helper f = match f with

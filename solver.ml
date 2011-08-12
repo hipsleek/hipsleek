@@ -1444,9 +1444,10 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 			          let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
 	                let res_form = add_origins res_form origs in
 				    let res_form = add_original res_form original in
+				    let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)
 		            (*let res_form = struc_to_formula res_form in*)
 	                CF.replace_formula_label v_lbl res_form
-	          | Some (base , br, to_vars) -> 
+	          | Some (base , br, to_vars) -> (* base case unfold *)
 			        (* let _ = print_string "\n x\n" in*)
 	                if (List.fold_left2 (fun a c1 c2-> a&&(c1=c2)) true to_vars vs) 
 	                then  CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_branches_fl base br fl no_pos)
@@ -5283,6 +5284,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	  h_formula_view_arguments = List.tl new_v2;
 	  h_formula_view_modes = get_view_modes ln2;
 	  h_formula_view_coercible = true;
+	  h_formula_view_lhs_case = false;
 	  h_formula_view_origins = get_view_origins ln2;
 	  h_formula_view_label = pid;           (*TODO: the other alternative is to use none*)
 	  h_formula_view_remaining_branches = r_rem_brs;
