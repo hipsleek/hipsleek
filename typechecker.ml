@@ -978,4 +978,4 @@ let check_prog (prog : prog_decl) =
   end
 
 let check_prog (prog : prog_decl) =
-  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+  Gen.Debug.ho_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
