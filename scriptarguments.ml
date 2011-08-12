@@ -258,3 +258,6 @@ let sleek_arguments = common_arguments @ sleek_specific_arguments
 
 (* all arguments and flags used in the gui*)	
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments
+;;
+
+Astsimp.inter := !inter;;

@@ -54,6 +54,7 @@ let terminator = '.'
 module M = Lexer.Make(Token.Token)
 
 let parse_file (parse) (source_file : string) =
+	(* let _ = print_endline "parse_file 1" in *)
 	try
 		let cmds = parse source_file in 
 		let _ = (List.map (fun c -> (
@@ -76,6 +77,7 @@ let parse_file (parse) (source_file : string) =
       raise t)
 
 let parse_file (parse) (source_file : string) =
+	(* let _ = print_endline "parse_file 2" in *)
   let rec parse_first (cmds:command list) : (command list)  =
     try 
        parse source_file 
@@ -124,6 +126,16 @@ let parse_file (parse) (source_file : string) =
 	  | EmptyCmd -> () in
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
+	(* An Hoa : Parsing is completed. If there is undefined type, report error.
+	 * Otherwise, we perform second round checking!
+	 *)
+	let udefs = !Astsimp.undef_data_types in
+	let _ = match udefs with
+	| [] ->	perform_second_parsing_stage ()
+	| _ -> let udn,udp = List.hd (List.rev udefs) in
+			Error.report_error { Error.error_loc  = udp;
+								 Error.error_text = "Data type " ^ udn ^ " is undefined!" }
+	in ();
   convert_pred_to_cast ();
   List.iter proc_one_lemma cmds;
    List.iter proc_one_cmd cmds 
