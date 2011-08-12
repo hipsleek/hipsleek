@@ -731,18 +731,27 @@ let check_coercion (prog : prog_decl) =
     let rs, prf = heap_entail_init prog false (CF.SuccCtx [ctx]) c_rhs pos in
     let _ = PTracer.log_proof prf in
       (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
-      if not(CF.isFailCtx rs) then begin
+      if (CF.isFailCtx rs) then begin
 	Error.report_error { Error.error_loc = pos;
 			     Error.error_text = "coercion is not valid" }
-      end in
+      end 
+      else print_string ("\n Coercion proven!")
+    in
     (*TODO: find and unfold all instances of the head predicate in both sides *)
     (*let unfold_head_pred hname f0 : int = *)
+  let check_entailment c_lhs c_rhs =
+    let pr = Cprinter.string_of_formula in
+    Gen.Debug.no_2 "check_entailment" pr pr
+        (fun _ -> "?") check_entailment c_lhs c_rhs in
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
     let lhs = unfold_nth 9 (prog,None) coer.coercion_head (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let rhs = unfold_nth 10 (prog,None) coer.coercion_body (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
       check_entailment lhs rhs in
     (* check_entailment lhs coer.coercion_body in *)
+  let check_left_coercion coer =
+    Gen.Debug.no_1 "check_left_coercion" Cprinter.string_of_coercion 
+        (fun _ -> "?") check_left_coercion coer in
   let check_right_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
     let rhs = unfold_nth 11 (prog,None) coer.coercion_head (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
@@ -750,6 +759,9 @@ let check_coercion (prog : prog_decl) =
       check_entailment lhs rhs
 	(* check_entailment coer.coercion_body rhs *)
   in
+  let check_right_coercion coer =
+    Gen.Debug.no_1 "check_right_coercion" Cprinter.string_of_coercion 
+        (fun _ -> "?") check_right_coercion coer in
     ignore (List.map (fun coer -> check_left_coercion coer) prog.prog_left_coercions);
     List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 
@@ -978,4 +990,4 @@ let check_prog (prog : prog_decl) =
   end
 
 let check_prog (prog : prog_decl) =
-  Gen.Debug.ho_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 

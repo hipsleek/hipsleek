@@ -2369,6 +2369,10 @@ let isFailCtx cl = match cl with
 	| FailCtx _ -> true
 	| SuccCtx _ -> false
 
+let isFailCtx cl = 
+  Gen.Debug.no_1 "isFailCtx" 
+      !print_list_context_short string_of_bool isFailCtx cl
+
 let get_must_error_from_ctx cs = 
   match cs with 
     | [Ctx es] -> (match es.es_must_error with
