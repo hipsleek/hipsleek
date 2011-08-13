@@ -51,6 +51,7 @@ checkentail
 checkentail self::dll_r5<p,t,n> & self!=n |-
       self::dll_r5<p,q,t> * t::node<_,q,n>.
 
+//valid after adding case analysis
 checkentail 
    self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n
      |- t::node<_,q,n> * self::dll_r5<p,q,t>.

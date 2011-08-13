@@ -5242,7 +5242,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Gen.Debug.no_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
+  Gen.Debug.ho_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list pr
       (fun _ _ _ _ _ -> do_match_x prog estate l_node r_node rhs rhs_matched_set is_folding pos)
       l_node r_node estate rhs rhs_matched_set
@@ -5783,12 +5783,20 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
     (push_hole_action a r1,r2)
 
 and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
+
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.loop_1_no "process_action" pr1 pr2
-      (fun __-> process_action_x prog estate conseq lhs_b rhs_b a
-       rhs_h_matched_set is_folding pos) a
+  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+      (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
+       rhs_h_matched_set is_folding pos) a estate conseq
+
+  (* let pr1 = Context.string_of_action_res in *)
+  (* let pr2 x = Cprinter.string_of_list_context_short (fst x) in *)
+  (* (\*let pr3 = Cprinter.string_of_spec_var_list in*\) *)
+  (* Gen.Debug.loop_1_no "process_action" pr1 pr2 *)
+  (*     (fun __-> process_action_x prog estate conseq lhs_b rhs_b a *)
+  (*      rhs_h_matched_set is_folding pos) a *)
       
       
 (************************* match_all_nodes ******************)
@@ -6254,7 +6262,7 @@ and is_original_match anode ln2 =
 and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   let p1 = Cprinter.string_of_formula in
   let p2 = pr_pair string_of_bool Cprinter.string_of_formula in
-  Gen.Debug.no_3 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion
+  Gen.Debug.ho_3 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion
       p2 (fun _ _ _-> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f coer
 
 and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
@@ -6267,6 +6275,16 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   let coer_rhs = coer.coercion_body in
   let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
+
+  (* let _ = print_string ("rewrite_coercion_x:" *)
+  (*                       ^ "\n ### f = " ^ (Cprinter.string_of_formula f) *)
+  (*                       ^ "\n ### coer_lhs = " ^ (Cprinter.string_of_formula coer_lhs) *)
+  (*                       ^ "\n ### lhs_heap = " ^ (Cprinter.string_of_h_formula lhs_heap) *)
+  (*                       ^ "\n ### coer_rhs = " ^ (Cprinter.string_of_formula coer_rhs) *)
+  (*                       ^ "\n ### coer_guard = " ^ (Cprinter.string_of_pure_formula lhs_guard) *)
+  (*                       ^ "\n") in *)
+
+  (*LDK: complex LHS of the coercion is not supported*)
   match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
       h_formula_view_name = c1;
