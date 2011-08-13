@@ -305,6 +305,10 @@ and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_lin
 
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
+and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula= 
+  let mix_f = MCP.OnePF p in
+  formula_of_mix_formula mix_f pos 
+
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
   else  MCP.memoise_add_pure_P (MCP.mkMTrue pos) p  in
@@ -1077,6 +1081,22 @@ and h_set_lhs_case (h : h_formula) flag =
     | _ -> h 
   in helper h
 
+and h_set_lhs_case_of_a_view (h : h_formula) (v_name:ident) flag: h_formula = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> 
+        let name = get_node_name h in
+        if (name=v_name) then
+          ViewNode {vn with h_formula_view_lhs_case = flag}
+        else h
+    | _ -> h 
+  in helper h
+
 and h_add_unfold_num (h : h_formula) i = 
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
@@ -1156,6 +1176,30 @@ and set_lhs_case (f : formula) flag =
     | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case e.formula_exists_heap flag})
   in helper f
 
+and set_lhs_case_of_a_view (f : formula) (v_name:ident) flag : formula = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_set_lhs_case_of_a_view b.formula_base_heap v_name flag})
+    | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case_of_a_view e.formula_exists_heap v_name flag})
+  in helper f
+
+and struc_formula_set_lhs_case (f:struc_formula) (flag:bool) : struc_formula =
+  let helper (f:ext_formula) = match f with
+	| EBase b -> EBase {b with formula_ext_base = set_lhs_case b.formula_ext_base flag ; 
+		  formula_ext_continuation = struc_formula_set_lhs_case b.formula_ext_continuation flag}
+	| ECase b -> ECase {b with formula_case_branches = 
+              List.map (fun (c1,c2) -> (c1 ,(struc_formula_set_lhs_case c2 flag))) b.formula_case_branches;}
+	| EAssume (x,b,y) -> EAssume (x,(set_lhs_case b flag),y)
+	| EVariance b -> 
+        EVariance {b with 
+            formula_var_continuation = struc_formula_set_lhs_case  b.formula_var_continuation flag}
+  in
+  List.map helper f	
 
 and add_unfold_num (f : formula) uf = 
   let rec helper f = match f with

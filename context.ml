@@ -53,7 +53,7 @@ and action =
   | M_unmatched_rhs_data_node of h_formula
   | Seq_action of action_wt list
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
-  
+  | M_lhs_case of match_res
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -107,6 +107,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_unmatched_rhs_data_node h -> fmt_string ("Unmatched RHS data note: "^(string_of_h_formula h))
   | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | M_lhs_case e -> pr_mr e; fmt_string "==> LSH case analysis"
 
 and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
   fmt_string ("(Weigh:"^(string_of_int w)^")")
@@ -125,6 +126,7 @@ let string_of_match_res e = poly_string_of_pr pr_match_res e
 let action_get_holes a = match a with
   | Undefined_action e
   | M_match e
+  | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
   | M_rd_lemma e
@@ -302,7 +304,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Gen.Debug.ho_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
+  Gen.Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
       
 (*
@@ -409,7 +411,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 and process_one_match prog (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res  in
-  Gen.Debug.ho_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
+  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -450,7 +452,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                       else [] *)in
                   let src = (-1,Search_action (l1@l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
-            | DataNode dl, ViewNode vr -> (0,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
+            | DataNode dl, ViewNode vr -> (1,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
             | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
@@ -468,13 +470,34 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let l1 = [(1,M_base_case_unfold c)] in
                    (-1, (Search_action ((1,a1)::l1)))
             | ViewNode vl, DataNode dr -> 
-                  let _ = print_string "\n try LHS case analysis here!" in
+                  let _ = print_string "\n try LHS case analysis here!\n" in
+
+
                   (* let i = if mv.mater_full_flag then 0 else 1 in  *)
-                  let a1 = (match ms with
-                    | View_mater -> (1,M_unfold (c,uf_i)) 
-                    | Coerc_mater s -> (1,M_lemma (c,Some s))) in
-                  let l1 = [(1,M_base_case_unfold c)] in
-                   (-1, (Search_action (a1::l1)))
+                  (* let a1 = (match ms with *)
+                  (*   | View_mater -> (1,M_unfold (c,uf_i))  *)
+                  (*   | Coerc_mater s -> (1,M_lemma (c,Some s))) in *)
+                  
+                  let lhs_case_flag = vl.h_formula_view_lhs_case in
+
+
+                  (* let _ = print_string ("process_one_match_x:"  *)
+                  (*                       ^ "### lhs_case_flag = " ^ (string_of_bool lhs_case_flag) *)
+                  (*                       ^ "\n\n" )in *)
+                  let a2 = 
+                    (match ms with
+                      | View_mater -> (1,M_unfold (c,uf_i))
+                      | Coerc_mater s -> (1,M_lemma (c,Some s))) in
+
+                  let a1 = 
+                    if (lhs_case_flag=true) then
+                      let l1 = [(1,M_lhs_case c)] 
+                      in
+                      (-1, (Search_action (a2::l1)))
+                    else
+                      let l1 = [(1,M_base_case_unfold c)] in
+                      (-1, (Search_action (a2::l1)))
+                  in a1
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
@@ -555,7 +578,7 @@ and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^", "^(Cprinter.string_of_h_formula c2)^")") x in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_5 "compute_actions" pr0 pr pr1 pr3 pr3 pr2 (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h rhs_lst lhs_p rhs_p
+  Gen.Debug.no_5 "compute_actions" pr0 pr pr1 pr3 pr3 pr2 (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h rhs_lst lhs_p rhs_p
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with
