@@ -419,18 +419,18 @@ class ['a] stack3  =
 	method len = List.length stk
 end;;
 
-module Stack4  =
-   struct 
-    type a 
-	let push (i:'a) stk = i::!stk
-	let pop stk  = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> xs
-    let top stk  = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> x
-    let len stk : int = List.length stk
-end;;
+(* module Stack4  = *)
+(*    struct  *)
+(*     type a  *)
+(* 	let push (i:'a) stk = i::!stk *)
+(* 	let pop stk  = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> xs *)
+(*     let top stk  = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> x *)
+(*     let len stk : int = List.length stk *)
+(* end;; *)
 
 module type EQType = sig
    type a
@@ -772,10 +772,10 @@ struct
   let stk = new stack (-1) string_of_int
 
   (* pop last element from call stack of ho debug *)
-  let pop () = stk # pop
+  let pop_call () = stk # pop
 
   (* call f and pop its trace in call stack of ho debug *)
-  let pop_ho (f:'a->'b) (e:'a) : 'b =
+  let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
     let r = (try 
       (f e)
     with exc -> (stk#pop; raise exc))
@@ -787,7 +787,7 @@ struct
     String.concat "@" (List.map string_of_int h)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
-  let push (os:string) : (string * string) = 
+  let push_call (os:string) : (string * string) = 
     ctr#inc;
     let v = ctr#get in
     let _ = stk#push v in
@@ -832,11 +832,11 @@ struct
           if (a1=(List.nth args (i-1))) then helper xs
           else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in
       helper xs in
-    let s,h = push s in
+    let s,h = push_call s in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
     flush stdout;
     let r = (try
-      pop_ho f e
+      pop_aft_apply_with_exc f e
     with ex -> 
         (let _ = print_string ("\n"^h^"\n") in
         let _ = pr_args args in

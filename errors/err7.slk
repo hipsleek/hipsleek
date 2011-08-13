@@ -9,44 +9,45 @@ pred neg_ll<n> == self = null & n = 0
 	or self::node<d,r> * r::neg_ll<n - 1> & d<0
 	inv n >= 0.
 
-lemma self::pos_ll<n> & n>0 -> self::neg_ll<n>.
-//lemma self::neg_ll<n>  & n>0 ->- self::pos_ll<n> & flow __Error.
+lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __Error.
+lemma self::neg_ll<n>  & n>0 -> self::pos_ll<n> & flow __Error.
 
-//1. VALID
+//1. Entail(1)=Valid.
 checkentail x::pos_ll<n> & n<=0 |- x::neg_ll<n> .
 
-//2. should be a must failure
+//2. Entail(2)=Fail.(must)cause:213  x=null |-  x!=null (must-bug).
 checkentail x::pos_ll<n> & n<=0 |- x::neg_ll<n> & x!=null.
 
-//3. should be a must failure (not may)
+//3. Entail(3)=Fail.(must) cause:213  m=0 |-  0<m (must-bug).
 checkentail x::pos_ll<n> & n<=0 |- x::neg_ll<m> & m>0.
 
-//4. should be a must failure; 
+//4. Entail(4)=Fail.(must) cause:213  x!=null |-  x=null (must-bug).
 checkentail x::pos_ll<n> & n>0 |- x=null.
 
-// TODO
-//5. should be a must failure; but needs an unfold of RHS
+//5. Entail(5)=Fail.(must) cause:1: conseq has an incompatible flow type
 checkentail x::pos_ll<n> & n>0 |- x::neg_ll<m> & m=0.
 
-//6. VALID
+//6. Entail(6)=Valid.
 checkentail x::pos_ll<n>  |- x::pos_ll<m> .
 
-//7. should be a may failure;
+//7. Entail(7)=Fail.(may) cause:Failure_None12 -- TODO: improve msg (fc_message: failed left coercion application)
 checkentail x::pos_ll<n>  |- x::neg_ll<m> .
 
 // TODO
-//8. should be a must failure; but detected as May failure (needs an unfold of LHS)
+//8. Entail(8)=Fail.(may) cause:Failure_None12 -- TODO: improve msg
 checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
 
-// 9. OK Valid
+// 9. Entail(9)=Valid.
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n>.
 
-//10. must failure ; but detected as a May failure (needs lemma)
+//10. Entail(10)=Fail.(must) cause:1: conseq has an incompatible flow type
 checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
 
 
-//11. OK must fail
-//checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
+//11. Entail(11)=Fail.(must) cause:213  n=0 |-  0<n (must-bug).
+checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
+
+
 
 
 
@@ -63,8 +64,8 @@ Good Context: [es_formula: SS 59:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__n
 
 */
 
-//2. VALID but detected as MAY
-//checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
+//12. VALID but detected as MAY
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
 /*
 Good Context: [es_formula: SS 42:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
                es_pure: true

@@ -9,9 +9,13 @@ pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
 	inv n>=1.
 	 
-lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+//lemma self::lseg(f)<n, p> & n = a + b & a,b >=0 -> self::lseg(f)<a, r> * r::lseg(f)<b, p>.
+lemma self::lseg(1.0)<n, p> & n = a + b & a,b >=0 -> self::lseg(1.0)<a, r> * r::lseg(1.0)<b, p>.
 
-lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
+//lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
+//lemma self::ll_tail(f)<t, n> <-> self::lseg(f)<n-1, t> * t::node(f)<_, null>.
+lemma self::ll_tail(1.0)<t, n> <-> self::lseg(1.0)<n-1, t> * t::node(1.0)<_, null>.
 
 //lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
 	

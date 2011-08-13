@@ -12,7 +12,6 @@ checkentail x>3 & flow __Error |- x>0 & flow __Error.
 // 4. may-bug (weaker LHS flow)
 checkentail x>3 & flow __flow |- x>0 & flow __Error.
 
-// TODO (should be a must-bug)
 // 5. must-bug (weaker LHS flow & must-bug on value)
 checkentail x>3 & flow __flow |- x<0 & flow __Error.
 

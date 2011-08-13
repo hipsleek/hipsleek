@@ -1090,7 +1090,7 @@ let is_sat f sat_no =
   res
 
 let is_sat f sat_no =
-  Gen.Debug.ho_2 "[Redlog] is_sat"
+  Gen.Debug.no_2 "[Redlog] is_sat"
       string_of_formula
       (fun c -> c)
       string_of_bool

@@ -215,7 +215,7 @@ let main1 () =
     let _ = Gen.Profiling.push_time "Overall" in
     let _ = List.map process_source_full !Globals.source_files in
     let _ = Gen.Profiling.pop_time "Overall" in
-      (* Tpdispatcher.print_stats (); *)
+     (*  Tpdispatcher.print_stats (); *)
       ()
 
 (* let main1 () = *)
