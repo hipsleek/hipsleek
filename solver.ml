@@ -32,6 +32,13 @@ let full_perm_constraint = Mcpure.OnePF (Cpure.BForm ((Cpure.Eq (
     no_pos
 )),None))
 
+let mkFullPerm_pure  f : CP.formula = 
+  Cpure.BForm ((Cpure.Eq (
+      (Cpure.Var (f,no_pos)),
+      (Cpure.Var (full_perm_var,no_pos)),
+      no_pos
+  )),None)
+
 let simple_imply f1 f2 = let r,_,_ = TP.imply f1 f2 "simple_imply" false None in r    
 
 let count_br_specialized prog cl = 
@@ -5245,7 +5252,7 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
   and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -5358,13 +5365,13 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
 	          else new_conseq0
             in
 
-        (* (\*LDK*\) *)
-        (* let _ = print_string ("heap_entail_empty_rhs_heap_x: after" *)
-        (*                       ^ "\n new_ante0 = " ^ (Cprinter.string_of_mix_formula new_ante0) *)
-        (*                       ^ "\n new_conseq0 = " ^ (Cprinter.string_of_mix_formula new_conseq0) *)
-        (*                       (\* ^ "\n new_ante1 = " ^ (Cprinter.string_of_mix_formula new_ante1) *\) *)
-        (*                       (\* ^ "\n new_conseq1 = " ^ (Cprinter.string_of_mix_formula new_conseq1) *\) *)
-        (*                       ^ "\n\n") in *)
+        (*LDK*)
+        let _ = print_string ("heap_entail_empty_rhs_heap_x: after"
+                              ^ "\n new_ante0 = " ^ (Cprinter.string_of_mix_formula new_ante0)
+                              ^ "\n new_conseq0 = " ^ (Cprinter.string_of_mix_formula new_conseq0)
+                              (* ^ "\n new_ante1 = " ^ (Cprinter.string_of_mix_formula new_ante1) *)
+                              (* ^ "\n new_conseq1 = " ^ (Cprinter.string_of_mix_formula new_conseq1) *)
+                              ^ "\n\n") in
 
             let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)
             (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
@@ -6021,8 +6028,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (*         | Some f -> (f::r_args, r_node_name, r_var) ) *)
     (*   | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in *)
 
-    let _ = if (List.length l_args != List.length r_args) then
-          report_error no_pos "[solver.ml]: do_match:  fractional permission not match \n" in
+    (* (\*not needed*\) *)
+    (* let _ = if (List.length l_args != List.length r_args) then *)
+    (*       report_error no_pos "[solver.ml]: do_match:  fractional permission not match \n" in *)
 
     (* let l_args, l_node_name = match l_node with *)
     (*   | DataNode {h_formula_data_name = l_node_name; *)
@@ -6041,7 +6049,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       let vdef = Cast.look_up_view_def_raw prog.prog_view_decls l_node_name in
       vdef.Cast.view_labels
     with Not_found -> List.map (fun _ -> "") l_args in
-    let rho_0 = List.combine r_args l_args in (* without branch label *)
+
+
 
     (* (\*LDK*\) *)
     (* let _ = *)
@@ -6060,10 +6069,23 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
     (*LDK: using fractional permission introduces 1 more spec var
     Therfore, we need to add 1 more label*)
-    let label_list = if ((List.length label_list) != (List.length l_args)) then
-          (""::label_list)
-        else (label_list)
+    let rho_0, label_list = 
+      (match l_frac, r_frac with
+        | Some f1, Some f2 ->
+            let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+            let label_list = (""::label_list) in
+              (rho_0, label_list)
+        | _ -> let rho_0 = List.combine r_args l_args in (* without branch label *)
+               (rho_0, label_list)
+      )
     in
+
+
+    (* let rho_0 = List.combine r_args l_args in (\* without branch label *\) *)
+    (* let label_list = if ((List.length label_list) != (List.length l_args)) then *)
+    (*       (""::label_list) *)
+    (*     else (label_list) *)
+    (* in *)
 
     let rho = List.combine rho_0 label_list in (* with branch label *)
     let ((impl_tvars, ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho estate.es_ivars estate.es_gen_impl_vars pos in
@@ -6108,16 +6130,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
        create a binding between it and its LSH counterpart.
        Here, is_fracvar_from_lhs = true, and we create a binding between l_frac and r_frac which is added to to_rhs to keep the constraint at the RHS
     *)
-    let is_fracvar_from_lhs, new_exist_vars = (match r_frac with
-      | None -> (false, estate.es_evars)
-      | Some f -> if (List.mem f estate.es_evars) then
-            (false,estate.es_evars)
-          else if (List.mem f estate.es_gen_impl_vars) then
-            (false,estate.es_evars)
-          else
-            (true,f::estate.es_evars) (*if true, we have to create the binding between l_frac and r_frac*)
-    )
-    in
+    (* let is_fracvar_from_lhs, new_exist_vars = (match r_frac with *)
+    (*   | None -> (false, estate.es_evars) *)
+    (*   | Some f -> if (List.mem f estate.es_evars) then *)
+    (*         (false,estate.es_evars) *)
+    (*       else if (List.mem f estate.es_gen_impl_vars) then *)
+    (*         (false,estate.es_evars) *)
+    (*       else *)
+    (*         (true,f::estate.es_evars) (\*if true, we have to create the binding between l_frac and r_frac*\) *)
+    (* ) *)
+    (* in *)
 
     (* (\*LDK*\) *)
     (* let _ = print_string ("do_match_x: after is_fracvar_from_lhs" *)
@@ -6127,20 +6149,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_expl_vars = estate.es_gen_expl_vars@impl_tvars in
     let new_ivars = subtract estate.es_ivars ivars in
 
-    (* (\*LDK*\) *)
-    (* let _ = print_string ("do_match_x: " *)
-    (*                       ^ "\n estate.es_gen_expl_vars = " ^ (Cprinter.string_of_spec_var_list estate.es_gen_expl_vars) *)
-    (*                       ^ "\n new_impl_tvars = " ^ (Cprinter.string_of_spec_var_list new_impl_vars) *)
-    (*                       ^ "\n new_expl_tvars = " ^ (Cprinter.string_of_spec_var_list new_expl_vars) *)
-    (*                       ^ "\n new_ivars = " ^ (Cprinter.string_of_spec_var_list new_ivars) *)
-    (*                       ^ "\n new_exist_vars  = " ^ (Cprinter.string_of_spec_var_list new_exist_vars) *)
-    (*                       ^ "\n ivar_subs_to_conseq = " ^ (List.fold_left (fun str pair -> (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" ivar_subs_to_conseq) *)
-    (*                       ^ "\n other_subs = " ^ (List.fold_left (fun str temp -> *)
-    (*                           let pair = match temp with *)
-    (*                             | (vs,_) -> vs *)
-    (*                           in *)
-    (*                           (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" other_subs) *)
-    (*                       ^"\n\n") in *)
+    (*LDK*)
+    let _ = print_string ("do_match_x: "
+                          ^ "\n estate.es_gen_expl_vars = " ^ (Cprinter.string_of_spec_var_list estate.es_gen_expl_vars)
+                          ^ "\n new_impl_vars = " ^ (Cprinter.string_of_spec_var_list new_impl_vars)
+                          ^ "\n new_expl_tvars = " ^ (Cprinter.string_of_spec_var_list new_expl_vars)
+                          ^ "\n new_ivars = " ^ (Cprinter.string_of_spec_var_list new_ivars)
+                          ^ "\n new_exist_vars  = " ^ (Cprinter.string_of_spec_var_list new_exist_vars)
+                          ^ "\n ivar_subs_to_conseq = " ^ (List.fold_left (fun str pair -> (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" ivar_subs_to_conseq)
+                          ^ "\n other_subs = " ^ (List.fold_left (fun str temp ->
+                              let pair = match temp with
+                                | (vs,_) -> vs
+                              in
+                              (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" other_subs)
+                          ^"\n\n") in
 
 
     (* let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho_0 estate.es_ivars pos) in *)
@@ -6165,22 +6187,40 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (*                       ^ "\n ext_subst = " ^ (List.fold_left (fun str pair -> (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" ext_subst) *)
     (*                       ^"\n\n") in *)
 
-    (*LDK: remove fracvar from evars if it is from the LHS*)
-    let new_exist_vars = 
-      (match r_frac with
-      | None -> new_exist_vars
-      | Some f -> 
-          if (is_fracvar_from_lhs) then
-            let res = List.filter (fun v -> not (CP.eq_spec_var f v)) new_exist_vars in
-            res
-          else new_exist_vars
-    )
-    in
+    (* (\*LDK: remove fracvar from evars if it is from the LHS*\) *)
+    (* let new_exist_vars =  *)
+    (*   (match r_frac with *)
+    (*   | None -> new_exist_vars *)
+    (*   | Some f ->  *)
+    (*       if (is_fracvar_from_lhs) then *)
+    (*         let res = List.filter (fun v -> not (CP.eq_spec_var f v)) new_exist_vars in *)
+    (*         res *)
+    (*       else new_exist_vars *)
+    (* ) *)
+    (* in *)
 
     (* (\*LDK*\) *)
     (* let _ = print_string ("do_match_x: after is_fracvar_from_lhs and removed" *)
     (*                       ^ "\n new_exist_vars  = " ^ (Cprinter.string_of_spec_var_list new_exist_vars) *)
     (*                       ^"\n\n") in *)
+
+    let to_lhs, to_rhs  = match l_frac, r_frac with
+      | None, Some f2 ->
+          if (List.mem f2 new_impl_vars)
+          then
+            let f_pure = mkFullPerm_pure f2 in
+            let to_lhs = CF.add_formula_to_formula to_lhs f_pure in
+            (to_lhs,to_rhs)
+          else
+            let f_pure = mkFullPerm_pure f2 in
+            let to_rhs = CF.add_formula_to_formula to_rhs f_pure in
+            (to_lhs,to_rhs)
+      | Some f1, None ->
+            let f_pure = mkFullPerm_pure f1 in
+            let to_lhs = CF.add_formula_to_formula to_lhs f_pure in
+            (to_lhs,to_rhs)
+      | _ -> to_lhs, to_rhs
+    in
 
     let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
     let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
@@ -6213,25 +6253,25 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     and add it to pure part of RHS
       Note: we should add binding after subst_avoid_capture
     *)
-    let tmp_p2 = 
-      if (is_fracvar_from_lhs) then 
+    (* let tmp_p2 =  *)
+    (*   if (is_fracvar_from_lhs) then  *)
         
-        (match l_frac with
-          | None ->
-              (match r_frac with
-                | None -> tmp_p2
-                | Some r_f ->
-                    let _ = print_string ("[do_match_x] Warning: l_frac does not exist but r_frac does \n") in
-                    tmp_p2)
-          | Some l_f ->
-              (match r_frac with
-                | None ->
-                    let _ = print_string ("[do_match_x] Warning: l_frac exists but r_frac does not \n") in
-                    tmp_p2
-                | Some r_f ->
-                    create_bind_to_rhs tmp_p2 l_f r_f))
-      else tmp_p2
-    in
+    (*     (match l_frac with *)
+    (*       | None -> *)
+    (*           (match r_frac with *)
+    (*             | None -> tmp_p2 *)
+    (*             | Some r_f -> *)
+    (*                 let _ = print_string ("[do_match_x] Warning: l_frac does not exist but r_frac does \n") in *)
+    (*                 tmp_p2) *)
+    (*       | Some l_f -> *)
+    (*           (match r_frac with *)
+    (*             | None -> *)
+    (*                 let _ = print_string ("[do_match_x] Warning: l_frac exists but r_frac does not \n") in *)
+    (*                 tmp_p2 *)
+    (*             | Some r_f -> *)
+    (*                 create_bind_to_rhs tmp_p2 l_f r_f)) *)
+    (*   else tmp_p2 *)
+    (* in *)
 
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
     (* only add the consumed node if the node matched on the rhs is mutable *)
