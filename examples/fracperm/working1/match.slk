@@ -1,0 +1,38 @@
+/*
+LDK:
+
+Finish MATCHING described in examples/fracperm/discussion/issues.txt.
+
+Note: this is EXACT MATCHING. It doesn't deal with partial matching
+which splits and combines fractions of a same heap node.
+
+*/
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+
+
+
+checkentail x::cellp<v1> |- x::cellp<v2>.
+print residue. //valid
+
+checkentail x::cellp<v1> |- x::cellp(0.5)<v2>.
+print residue.//fail
+
+checkentail x::cellp<v1> |- x::cellp(f2)<v2>.
+print residue.//valid
+
+checkentail x::cellp(f1)<v1> |- x::cellp<v2>.
+print residue.//valid
+
+checkentail x::cellp(f1)<v1> |- x::cellp(f2)<v2>.
+print residue.
+
+checkentail x::cellp(f1)<v1> |- x::cellp(0.5)<v2>.
+print residue.
+
+checkentail x::cellp<v1> |- x::cellp(1.0)<v2>.
+print residue. //valid
+
