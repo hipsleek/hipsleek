@@ -5242,7 +5242,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Gen.Debug.ho_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
+  Gen.Debug.no_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list pr
       (fun _ _ _ _ _ -> do_match_x prog estate l_node r_node rhs rhs_matched_set is_folding pos)
       l_node r_node estate rhs rhs_matched_set
@@ -5787,7 +5787,7 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 
@@ -6532,7 +6532,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 	(*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
+  Gen.Debug.ho_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
       (fun _ _ _ -> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
       anode resth1 coer
       (* anode - LHS matched node
@@ -6556,6 +6556,9 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
   ^ "left_coercion: c1 = "
   ^ c1 ^ "\n") pos in
   let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
+    (* lhs_b -> rhs_b *)
+    (* anode |- _ *)
+    (* unfold by removing LHS head anode, and replaced with rhs_b into new_lhs to continue *)
   if ok then begin
     let new_ctx1 = build_context ctx0 new_lhs pos in
 	(* let new_ctx = set_context_formula ctx0 new_lhs in *)
@@ -6577,7 +6580,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
     (*******************************************************************************************************************************************************************************************)
 and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_4 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion
+  Gen.Debug.ho_4 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion
       Cprinter.string_of_formula_base
       (* Cprinter.string_of_formula (fun x -> x)  *)pr
       (fun _ _ _ _ -> apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos) ln2 resth2 coer  rhs_b (* conseq c2 *)
@@ -6603,6 +6606,9 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
   ^ c2 ^ "\n") pos in
   (* if is_coercible ln2 then *)
   let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
+    (* lhs_b <- rhs_b *)
+    (*  _ |- ln2 *)
+    (*  fold by removing a single RHS node ln2, and replaced with lhs_b into new_rhs with explicit instantiations *)
   if (is_coercible ln2)&&ok  then begin
     (* need to make implicit var become explicit *)
     let vl = Gen.BList.intersect_eq CP.eq_spec_var estate.es_gen_impl_vars (h_fv ln2) in
