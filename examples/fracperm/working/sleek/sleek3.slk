@@ -8,12 +8,11 @@ pred sortl<n, mi> == self = null & n = 0
 	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
 	inv n >= 0.
 
-//lemma self::sortl<n, mi> -> self::ll<n>.
-// lemma self::sortl(f)<n, mi> -> self::ll(f)<n>.
-lemma self::sortl(1.0)<n, mi> -> self::ll(1.0)<n>.
+lemma self::sortl<n, mi> -> self::ll<n>.
 
-checkentail x::sortl(1.0)<a, b> |- x::ll(1.0)<a>.
+checkentail x::sortl<a, b> |- x::ll<a>.
 print residue.
+
 
 checkentail x::sortl(1.0)<10, _> |- x::ll(1.0)<n> & n > 11.
 

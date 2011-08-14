@@ -65,12 +65,8 @@ let view_rec : (ident list) ref = ref []
 
 (* if no processed, conservatively assume a view is recursive *)
 let is_view_recursive (n:ident) = 
-
-  if (!view_scc)==[] then 
-    (report_warning no_pos "view_scc is empty : not processed yet?";
-     true)
-  else 
-    List.mem n !view_rec 
+  if (!view_scc)==[] then (report_warning no_pos "view_scc is empty : not processed yet?";true)
+  else List.mem n !view_rec 
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
 
@@ -1000,10 +996,6 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           (* let _ = I.find_empty_static_specs prog in *)
 		  let tmp_views = order_views prog.I.prog_view_decls in
 		   let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
-
-           (* let _ = print_string (": before trans_view prog" *)
-           (*                       ^ "\n\n") in *)
-
 		  let cviews = List.map (trans_view prog) tmp_views in
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
@@ -1156,11 +1148,6 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   Gen.Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
-
-  (* let _ = print_string ("trans_view:" *)
-  (*                       ^ "\n ### vdef = "^ Iprinter.string_of_view_decl vdef *)
-  (*                       ^ "\n\n") in *)
-
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
    let _ = Iformula.has_top_flow_struc view_formula1 in
@@ -1171,8 +1158,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
    H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
 
-
-
+  (*LDK*)
 
   let (inv, inv_b) = vdef.I.view_invariant in
   let _ = gather_type_info_pure prog inv stab in
@@ -1224,15 +1210,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
             | None -> Some fc) None n_un_str in
       (* TODO : This has to be generalised to mutual-recursion *)
       (* let ir = Cast.is_self_rec_rhs vdef.I.view_name cf in *)
-
-      (* let _ = print_string ("trans_view_x: before is_view_recursive" *)
-      (*                       ^ "\n\n") in *)
-
       let ir = is_view_recursive vdef.I.view_name in
-
-      (* let _ = print_string ("trans_view_x: after is_view_recursive" *)
-      (*                       ^ "\n\n") in *)
-
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -1256,7 +1234,6 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
-
       (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef)) (CF.pos_of_struc_formula cf);
       cvdef)
   )
@@ -1548,8 +1525,8 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
     let bc_impl c = let r,_,_ = TP.imply_sub_no one_bc c "0" false None in r in
     let sat_subno  = ref 0 in
 
-    (* let _ = print_string ("pure_or: before TP.is_sat_sub_no" *)
-    (*                       ^ "\n\n") in *)
+    let _ = print_string ("pure_or: before TP.is_sat_sub_no"
+                          ^ "\n\n") in
 
     let bcg = List.filter (fun c-> 
       (not (CP.isConstTrue c))&& 
@@ -1897,13 +1874,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
 
   (* let _ = print_string ("trans_one_coercion_x:" *)
   (*                       ^ "\n stab = " *)
-  (*                       ^(string_of_stab stab)^"\n\n") in *)
+  (*                       ^(string_of_stab stab)^"\n") in *)
 
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
-
-  (* let _ = print_string ("trans_one_coercion_x: after trans_formula" *)
-  (*                       ^(string_of_stab stab)^"\n\n") in *)
-
   let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
@@ -1916,15 +1889,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
 
   (* let _ = print_string ("trans_one_coercion_x:" *)
-  (*                       ^ "\n ### stab = " ^(string_of_stab stab) *)
-  (*                       ^"\n\n") in *)
+  (*                       ^ "\n stab = " *)
+  (*                       ^(string_of_stab stab)^"\n") in *)
 
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
-
-  (* let _ = print_string ("trans_one_coercion_x: after trans_formula" *)
-  (*                       ^ "\n ### c_rhs = " ^(Cprinter.string_of_formula c_rhs) *)
-  (*                       ^"\n\n") in *)
-
   let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in
   (* let c_rhs_struc = trans_struc_formula prog true lhs_fnames0 coer.I.coercion_body_struc stab false in *)
   (* let c_rhs_struc = CF.add_origs_to_node_struc self c_rhs_struc [coer.I.coercion_name] in *)
@@ -1936,19 +1904,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in *)
   (* let c_lhs_exist = trans_formula prog true ((\* self ::  *\)rhs_fnames) false coer.I.coercion_head stab false in  (\* why not lhs_fnames?*\) *)
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
-
-  (* let _ = print_string ("trans_one_coercion_x: after find_view_name" *)
-  (*                       ^ "\n ### lhs_name = " ^(Cprinter.string_of_ident lhs_name) *)
-  (*                       ^"\n\n") in *)
-
   let rhs_name =
     try find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body)
     with | _ -> "" in
-
-  (* let _ = print_string ("trans_one_coercion_x: after find_view_name" *)
-  (*                       ^ "\n ### rhs_name = " ^(Cprinter.string_of_ident rhs_name) *)
-  (*                       ^"\n\n") in *)
-
   if lhs_name = "" then
     Error.report_error
         {
@@ -1973,7 +1931,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
           | [] -> {c with C.coercion_type = Iast.Right}
           | v -> 
                 let c_hd, c_guard ,c_fl ,c_b ,c_t = CF.split_components c.C.coercion_head in
-                let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
+                let new_body = CF.normalize c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
                 {c with
                     C.coercion_type = Iast.Right;
@@ -2025,14 +1983,10 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
                       if name2 = ""
                       then name1
                       else
-                        (*LDK: allow 2 views of a same name*)
-                        if (name1=name2)
-                        then name1
-                        else
-                          Err.report_error
-			                  {
-			                      Err.error_loc = pos;
-			                      Err.error_text = v ^ " must point to only one view";
+                        Err.report_error
+			                {
+			                    Err.error_loc = pos;
+			                    Err.error_text = v ^ " must point to only one view";
 			                }
               | CF.DataNode
 		              {
@@ -3484,9 +3438,9 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
             Err.error_text = "all guard free vars must be instantiated";} in
 	      let _ = 
 
-            (* (\*LDK*\) *)
-            (* let _ = print_string (" case_coverage_x: before TP.is_sat_sub_no" *)
-            (*                       ^ "\n\n") in *)
+            (*LDK*)
+            let _ = print_string (" case_coverage_x: before TP.is_sat_sub_no"
+                                  ^ "\n\n") in
 
 	        let sat = Tpdispatcher.is_sat_sub_no (Cpure.Not (all,None,no_pos)) sat_subno in
 	        if sat then 
@@ -3498,9 +3452,9 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
 	        | [] -> false 
 	        | p1::p2 -> 
 
-            (* (\*LDK*\) *)
-            (* let _ = print_string (" case_coverage_x: p_check: before TP.is_sat_sub_no" *)
-            (*                       ^ "\n\n") in *)
+            (*LDK*)
+            let _ = print_string (" case_coverage_x: p_check: before TP.is_sat_sub_no"
+                                  ^ "\n\n") in
 
                 if (List.fold_left (fun a c-> 
 				  let sat =  Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno in
@@ -3557,7 +3511,7 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 			      Cformula.formula_ext_continuation = inner_add_pre new_pf new_branches fc;
 			  }
 	    | Cformula.EAssume (ref_vars, bf,y) ->
-	          Cformula.EAssume (ref_vars, (Cformula.normalize 2 bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
+	          Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
 		| Cformula.EVariance b -> Cformula.EVariance {b with
 			  Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
 		  }
@@ -6951,8 +6905,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       if remain_ls==[] then false
       else 
 
-        (* let _ = print_string ("get_safe_prune_conds: before TP.is_sat" *)
-        (*                       ^ "\n\n") in *)
+        let _ = print_string ("get_safe_prune_conds: before TP.is_sat"
+                              ^ "\n\n") in
 
         List.for_all 
             (fun (o_l,o_f) -> 

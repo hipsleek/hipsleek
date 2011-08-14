@@ -765,7 +765,6 @@ let simplify (f : CP.formula) : CP.formula =
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
-  let _ = Gen.Profiling.inc_counter ("stat_count_simpl") in
   simplify f 
 
 (* let simplify f = *)
@@ -1170,7 +1169,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
-  Gen.Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+  Gen.Debug.ho_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)

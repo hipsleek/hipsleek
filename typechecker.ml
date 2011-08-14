@@ -24,7 +24,7 @@ let parallelize num =
 
 let rec check_specs prog proc ctx spec_list e0 = 
 	check_specs_a prog proc ctx spec_list e0
-  (*Gen.Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
+  (*Gen.Debug.loop_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
       

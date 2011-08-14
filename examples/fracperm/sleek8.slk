@@ -5,20 +5,20 @@ pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
          inv n >= 0.
 
-lemma self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
-
 /*
+lemma self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+*/
+
 lemma "L2R" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
 lemma "R2L" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
-*/
 
+/*
 // (1)
 checkentail x::lseg(1.0)<n, p> & n = 7 |- x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n2, r2> & n1 = 3 & n2 = 4.
 print residue.
 // valid
 
-/*
 // (2)
 checkentail x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n2, p> & n1 = 3 & n2 = 4 |- x::lseg(1.0)<n, p> & n = 7.
 // valid : after lemma folding fixed
@@ -94,10 +94,10 @@ checkentail x::lseg(1.0)<n, p> & n = 7 |- x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n
 
 */
 
-/*
+
 checkentail x::lseg(1.0)<n, p> * t1::lseg(1.0)<x1, y1> & n = 6 |- t1::lseg(1.0)<x2, y2> * x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n2, p> & n1 = n2.
 // TIME OUT. WEIRD
-*/
+
 
 /*
 checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- t1::lseg<x2, y2> * x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
