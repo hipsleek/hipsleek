@@ -6,19 +6,19 @@ open Gen.Basic
 
 
 type match_res = {
-    match_res_lhs_node : h_formula; (* node from the extracted formula *)                                                                                        
+    match_res_lhs_node : h_formula; (* node from the extracted formula *)
     match_res_lhs_rest : h_formula; (* lhs formula - contains holes in place of matched immutable nodes/views *)
     match_res_holes : (h_formula * int) list; (* imm node/view that have been replaced in lhs together with their corresponding hole id *)
     match_res_type : match_type; (* indicator of what type of matching *)
     match_res_rhs_node : h_formula;
     match_res_rhs_rest : h_formula;}
-    
+
 
 (*
 type context = (h_formula (* frame with a hole *)
 		* h_formula (* formula from the hole *)
 		* int (* hole identifier*)
-		* h_formula (* node from the extracted formula *)                                                                                          
+		* h_formula (* node from the extracted formula *)
 		* match_type (* indicator of what type of macthing *)
 		* h_formula (* context - reading phase prior to hole *)
 		* (int * h_formula) list (* multiple holes with immutable terms extracted *)
@@ -305,10 +305,17 @@ and view_mater_match prog c vs1 aset imm f =
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None
   else 
-    let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
+
+    let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
+
+    (* let args = List.tl (fv_simple_formula c.coercion_head) in (\* dropping the self parameter *\) *)
 
     (* (\*LDK*\) *)
-    (* let _ = print_string ("ttt, l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs) ^ "\n") in *)
+    (* let _ = print_string ( "choose_full_mater_coercion_x:" *)
+    (*                        ^"\n ###args = " ^ (Cprinter.string_of_spec_var_list args) *)
+    (*                        ^"\n ###l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs) *)
+    (*                        ^"\n ###c.coercion_mater_vars = " ^ (Cprinter.string_of_mater_prop_list c.coercion_mater_vars) *)
+    (*                       ^ "\n") in *)
 
     let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
 
@@ -330,17 +337,19 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f
   (* TODO : how about right coercion, Cristina? *)
   let coercs = prog.prog_left_coercions in
 
-  (* let _ = print_string ("[coerc_mater_match_x]"  *)
+  (* let _ = print_string ("coerc_mater_match_x:" *)
   (*                       ^"\n l_vname = " ^ (Cprinter.string_of_ident l_vname) *)
   (*                       ^"\n  l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs) *)
   (*                       ^"\n  r_aset = " ^ (Cprinter.string_of_spec_var_list r_aset) *)
+  (*                       ^ "\n coercs = " ^ (if (coercs!=[]) then Cprinter.string_of_coercion (List.hd coercs) else "") *)
   (*                       ^ "\n") in *)
 
   let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
     | None ->  a 
     | Some t -> t::a) coercs [] in
 
-
+  (* let _ = print_string ("[coerc_mater_match_x]: here" *)
+  (*                       ^ "\n") in *)
 
   let res = List.map (fun (c,mv) -> (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c))) pos_coercs in
   (* let pos_coercs = List.fold_left  *)
@@ -412,6 +421,13 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
             (*   | None ->  *)
             (*       view_mater_match prog c vs1 aset imm f *)
             (*   in *)
+
+              (* (\*LDK*\) *)
+              (* let _ = print_string ("spatial_ctx_extract_x: ViewNode"  *)
+              (*                       ^"\n ### f = " ^ Cprinter.string_of_h_formula f *)
+              (*                       ^"\n ### vs1 = " ^ Cprinter.string_of_spec_var_list vs1 *)
+              (*                       ^"\n ### aset = " ^ Cprinter.string_of_spec_var_list aset *)
+              (*                       ^ " \n\n") in *)
 
               let vmm = view_mater_match prog c vs1 aset imm f in
 

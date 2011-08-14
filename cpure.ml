@@ -1226,8 +1226,15 @@ and subst_var_list_par sst (svs : spec_var list) = match svs with
   let f1 = subst st1 f in
   let f2 = subst st2 f1 in
   f2*)
-
 and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
+  Gen.Debug.no_3 "[cpure]subst_avoid_capture"
+      !print_svl
+      !print_svl
+      !print_formula
+      !print_formula
+      subst_avoid_capture_x fr t f
+
+and subst_avoid_capture_x (fr : spec_var list) (t : spec_var list) (f : formula) =
   let st1 = List.combine fr t in
   (* let f2 = subst st1 f in *) 
   (* changing to a parallel substitution below *)
@@ -5336,8 +5343,8 @@ let slice_formula (fl : formula list) : (spec_var list * formula list) list =
 
 let part_contradiction is_sat pairs =
 
-    let _ = print_string ("part_contradiction: before is_sat"
-                          ^ "\n\n") in
+    (* let _ = print_string ("part_contradiction: before is_sat" *)
+    (*                       ^ "\n\n") in *)
 
   let (p1,p2) = List.partition (fun (a,c) -> not(is_sat c)) pairs in
   (List.map (fun (_,c) -> (mkTrue no_pos,c) ) p1, p2)
@@ -5351,8 +5358,8 @@ let pr = !print_formula in
 *)
 let part_must_failures is_sat pairs =
 
-    let _ = print_string ("part_must_failures: before is_sat"
-                          ^ "\n\n") in
+    (* let _ = print_string ("part_must_failures: before is_sat" *)
+    (*                       ^ "\n\n") in *)
 
   List.partition (fun (a,c) ->
       let f = mkAnd a c no_pos in
@@ -5360,8 +5367,8 @@ let part_must_failures is_sat pairs =
 
 let part_must_failures is_sat pairs =
 
-    let _ = print_string ("part_must_failures: before is_sat"
-                          ^ "\n\n") in
+    (* let _ = print_string ("part_must_failures: before is_sat" *)
+    (*                       ^ "\n\n") in *)
 
   List.partition (fun (a,c) ->
       let f = mkAnd a c no_pos in
@@ -5369,8 +5376,8 @@ let part_must_failures is_sat pairs =
 
 let imply is_sat a c =
 
-    let _ = print_string ("imply: before is_sat"
-                          ^ "\n\n") in
+    (* let _ = print_string ("imply: before is_sat" *)
+    (*                       ^ "\n\n") in *)
 
   let r = mkNot_s c in
   let f = mkAnd a r no_pos in
@@ -5378,8 +5385,8 @@ let imply is_sat a c =
 
 let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
-  let _ = print_string ("refine_one_must: before is_sat"
-                        ^ "\n\n") in
+  (* let _ = print_string ("refine_one_must: before is_sat" *)
+  (*                       ^ "\n\n") in *)
 
   let cs = split_conjunctions conseq in
   let ml = List.filter (fun c ->
@@ -5390,8 +5397,8 @@ let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
 let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
-  let _ = print_string ("refine_one_must: before is_sat"
-                        ^ "\n\n") in
+  (* let _ = print_string ("refine_one_must: before is_sat" *)
+  (*                       ^ "\n\n") in *)
 
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
@@ -5400,8 +5407,8 @@ let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
 let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) list =
 
-  let _ = print_string ("refine_must: before is_sat"
-                        ^ "\n\n") in
+  (* let _ = print_string ("refine_must: before is_sat" *)
+  (*                       ^ "\n\n") in *)
 
   let rs = List.map (refine_one_must is_sat) pairs in
   List.concat rs
@@ -5415,8 +5422,8 @@ let find_may_failures imply pairs =
 
 let find_all_failures is_sat ante cons =
 
-  let _ = print_string ("find_all_failures: before is_sat"
-                        ^ "\n\n") in
+  (* let _ = print_string ("find_all_failures: before is_sat" *)
+  (*                       ^ "\n\n") in *)
 
   let cs= split_conjunctions cons in
   let cs = List.map (fun (_,ls) -> join_conjunctions ls) (slice_formula cs) in
@@ -5425,21 +5432,21 @@ let find_all_failures is_sat ante cons =
   let (must_list,cand_pairs) = part_must_failures is_sat cand_pairs in
   let must_list = refine_must is_sat must_list in
 
-  let _ = print_string ("find_all_failures: before find_may_failures (imply is_sat) cand_pairs"
-                        ^ "\n\n") in
+  (* let _ = print_string ("find_all_failures: before find_may_failures (imply is_sat) cand_pairs" *)
+  (*                       ^ "\n\n") in *)
 
   let may_list = find_may_failures (imply is_sat) cand_pairs in
   (contra_list,must_list,may_list)
 
-let find_all_failures is_sat ante cons =
+let find_all_failures is_sat  ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
   Gen.Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
 
 let find_must_failures is_sat ante cons =
 
-  let _ = print_string ("find_must_failures: before is_sat"
-                        ^ "\n\n") in
+  (* let _ = print_string ("find_must_failures: before is_sat" *)
+  (*                       ^ "\n\n") in *)
 
   let (contra_list,must_list,_) = find_all_failures is_sat ante cons in
   contra_list@must_list
@@ -5451,8 +5458,8 @@ let find_must_failures is_sat ante cons =
 
 let check_maymust_failure is_sat ante cons =
 
-  let _ = print_string ("check_maymust_failure: before is_sat"
-                        ^ "\n\n") in
+  (* let _ = print_string ("check_maymust_failure: before is_sat" *)
+  (*                       ^ "\n\n") in *)
 
   let c_l = find_must_failures is_sat ante cons in
   c_l==[]
@@ -5461,8 +5468,12 @@ let check_maymust_failure is_sat ante cons =
   let pr = !print_formula in
   Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
 
-let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
-  let n_a = simpl ante in
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula =
+  let n_a =
+  if !Globals.simplify_error then
+    simpl ante
+  else ante 
+  in
   filter_ante n_a conseq
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
