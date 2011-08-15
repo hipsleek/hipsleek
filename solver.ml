@@ -1988,7 +1988,7 @@ and entail_state_elim_exists es =
       MCP.simpl_memo_pure_formula simpl_b_formula simpl_pure_formula p (TP.simplify_a 1)
     else p in
   let simpl_fl = fl (*flows have nothing to simplify to*)in
-  let simpl_f = CF.mkExists qvar h simpl_p t simpl_fl b no_pos in
+  let simpl_f = CF.mkExists qvar h simpl_p t simpl_fl b (CF.pos_of_formula base) in
   Ctx{es with es_formula = simpl_f}   (*assuming no change in cache formula*)
 
 and elim_exists_ctx_list (ctx0 : list_context) = 

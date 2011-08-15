@@ -1,10 +1,9 @@
 
 //divbyzero
 int foo(int x, int y)
-  requires true
+  requires y>0
   ensures y=res*x;
 {
-  int a;
-  a = y/x;
-  return a;
+  dprint;
+  return y/x;
 }

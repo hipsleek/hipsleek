@@ -23,7 +23,7 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+  Gen.Debug.ho_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
       
@@ -106,7 +106,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   in	
   List.for_all do_spec_verification spec_list
 
-and check_exp prog proc ctx e0 label = Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+and check_exp prog proc ctx e0 label =
+Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
