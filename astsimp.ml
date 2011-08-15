@@ -5891,10 +5891,24 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
     Iformula.push_exists need_quant f in
   let nf = convert_struc2 prog f in
   let nf = Iformula.float_out_exps_from_heap_struc nf in
+
+  (* let _ = print_string ("case_normalize_struc_formula_x: after float_out_exps_from_heap_struc" *)
+  (*                       ^ "\n ### nf = " ^ (Iprinter.string_of_struc_formula nf) *)
+  (*                       ^ "\n\n") in *)
+
   let nf = Iformula.float_out_struc_min_max nf in
-  (*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
+
+  (* let _ = print_string ("case_normalize_struc_formula_x: after float_out_struc_min_max" *)
+  (*                       ^ "\n ### nf = " ^ (Iprinter.string_of_struc_formula nf) *)
+  (*                       ^ "\n\n") in *)
+
   let nf = Iformula.rename_bound_var_struc_formula nf in
-  (*let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula "" nf)^"\n") in*)
+
+  (* let _ = print_string ("case_normalize_struc_formula_x: after rename_bound_" *)
+  (*                       ^ "\n ### nf = " ^ (Iprinter.string_of_struc_formula nf) *)
+  (*                       ^ "\n\n") in *)
+
+
   (*convert anonym to exists*)
   let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula) strad_vs :Iformula.struc_formula* ((ident*primed)list) = 
     let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
@@ -5917,8 +5931,8 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
 			}),(Gen.BList.remove_dups_eq (=) (List.concat r2)))			
       | Iformula.EBase b->		
 
-          (* let _ = print_string ("case_normalize_struc_formula: helper1:"  *)
-          (*                       ^ "\n Input formula = " ^ Iprinter.string_of_ext_formula f  *)
+          (* let _ = print_string ("case_normalize_struc_formula: helper1:" *)
+          (*                       ^ "\n Input formula = " ^ Iprinter.string_of_ext_formula f *)
           (*                       ^ "\n\n") in *)
           
             let init_expl = b.Iformula.formula_ext_explicit_inst in
@@ -5928,12 +5942,14 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
             else true in
             let onb = convert_anonym_to_exist b.Iformula.formula_ext_base in
             let nb,h3,new_expl = case_normalize_renamed_formula prog h strad_vs onb in  
-          (* let _ = print_string ("case_normalize_struc_formula: helper1:"  *)
-          (*                       ^ "\n h = " ^  *)
+          (* let _ = print_string ("case_normalize_struc_formula: helper1:" *)
+          (*                       ^ "\n onb = " ^ (Iprinter.string_of_formula onb) *)
+          (*                       ^ "\n nb = " ^ (Iprinter.string_of_formula nb) *)
+          (*                       ^ "\n h = " ^ *)
           (*                           let res1,res2 = List.split h in *)
           (*                                 (string_of_ident_list res1 ) *)
 
-          (*                       ^ "\n new_expl = " ^  *)
+          (*                       ^ "\n new_expl = " ^ *)
           (*                           let res1,res2 = List.split new_expl in *)
           (*                                 (string_of_ident_list res1 ) *)
           (*                       ^ "\n\n") in *)

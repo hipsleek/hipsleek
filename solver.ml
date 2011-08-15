@@ -1489,14 +1489,14 @@ and unfold_heap_x prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_va
                       | None -> formula_of_unstruc_view_f vdef
                       | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
 
-                    (* let _ = print_string ("unfold_heap_x: ViewNode: None "  *)
+                    (* let _ = print_string ("unfold_heap_x: ViewNode: None " *)
                     (*                       ^ "\n vdef  = " ^ Cprinter.string_of_view_decl vdef *)
                     (*                       ^ "\n forms  = " ^ Cprinter.string_of_formula forms *)
                     (*                       ^ "\n\n") in *)
 
 	                let renamed_view_formula = rename_bound_vars forms in
 	                let renamed_view_formula = add_unfold_num renamed_view_formula uf in
-                    (* let _ = print_string ("unfold_heap_x: ViewNode: None "  *)
+                    (* let _ = print_string ("unfold_heap_x: ViewNode: before propagate " *)
                     (*                       ^ "\n renamed_view_formula = " ^ Cprinter.string_of_formula renamed_view_formula *)
                     (*                       ^ "\n\n") in *)
 
@@ -1509,6 +1509,10 @@ and unfold_heap_x prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_va
                         | None -> renamed_view_formula
                         | Some f -> Cformula.propagate_frac_formula renamed_view_formula f) 
                     in
+
+                    (* let _ = print_string ("unfold_heap_x: ViewNode: after propagate " *)
+                    (*                       ^ "\n renamed_view_formula = " ^ Cprinter.string_of_formula renamed_view_formula *)
+                    (*                       ^ "\n\n") in *)
 
 	                let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
 	                  :: vdef.view_vars in
@@ -5252,7 +5256,7 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
   and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -5365,13 +5369,13 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
 	          else new_conseq0
             in
 
-        (*LDK*)
-        let _ = print_string ("heap_entail_empty_rhs_heap_x: after"
-                              ^ "\n new_ante0 = " ^ (Cprinter.string_of_mix_formula new_ante0)
-                              ^ "\n new_conseq0 = " ^ (Cprinter.string_of_mix_formula new_conseq0)
-                              (* ^ "\n new_ante1 = " ^ (Cprinter.string_of_mix_formula new_ante1) *)
-                              (* ^ "\n new_conseq1 = " ^ (Cprinter.string_of_mix_formula new_conseq1) *)
-                              ^ "\n\n") in
+        (* (\*LDK*\) *)
+        (* let _ = print_string ("heap_entail_empty_rhs_heap_x: after" *)
+        (*                       ^ "\n new_ante0 = " ^ (Cprinter.string_of_mix_formula new_ante0) *)
+        (*                       ^ "\n new_conseq0 = " ^ (Cprinter.string_of_mix_formula new_conseq0) *)
+        (*                       (\* ^ "\n new_ante1 = " ^ (Cprinter.string_of_mix_formula new_ante1) *\) *)
+        (*                       (\* ^ "\n new_conseq1 = " ^ (Cprinter.string_of_mix_formula new_conseq1) *\) *)
+        (*                       ^ "\n\n") in *)
 
             let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)
             (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
@@ -5973,7 +5977,7 @@ and create_bind_to_rhs_x (rhs_p:MCP.mix_formula) (l_f:CP.spec_var) (r_f:CP.spec_
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Gen.Debug.ho_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
+  Gen.Debug.no_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list pr
       (fun _ _ _ _ _ -> do_match_x prog estate l_node r_node rhs rhs_matched_set is_folding pos)
       l_node r_node estate rhs rhs_matched_set
@@ -6149,20 +6153,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_expl_vars = estate.es_gen_expl_vars@impl_tvars in
     let new_ivars = subtract estate.es_ivars ivars in
 
-    (*LDK*)
-    let _ = print_string ("do_match_x: "
-                          ^ "\n estate.es_gen_expl_vars = " ^ (Cprinter.string_of_spec_var_list estate.es_gen_expl_vars)
-                          ^ "\n new_impl_vars = " ^ (Cprinter.string_of_spec_var_list new_impl_vars)
-                          ^ "\n new_expl_tvars = " ^ (Cprinter.string_of_spec_var_list new_expl_vars)
-                          ^ "\n new_ivars = " ^ (Cprinter.string_of_spec_var_list new_ivars)
-                          ^ "\n new_exist_vars  = " ^ (Cprinter.string_of_spec_var_list new_exist_vars)
-                          ^ "\n ivar_subs_to_conseq = " ^ (List.fold_left (fun str pair -> (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" ivar_subs_to_conseq)
-                          ^ "\n other_subs = " ^ (List.fold_left (fun str temp ->
-                              let pair = match temp with
-                                | (vs,_) -> vs
-                              in
-                              (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" other_subs)
-                          ^"\n\n") in
+    (* (\*LDK*\) *)
+    (* let _ = print_string ("do_match_x: " *)
+    (*                       ^ "\n estate.es_gen_expl_vars = " ^ (Cprinter.string_of_spec_var_list estate.es_gen_expl_vars) *)
+    (*                       ^ "\n new_impl_vars = " ^ (Cprinter.string_of_spec_var_list new_impl_vars) *)
+    (*                       ^ "\n new_expl_tvars = " ^ (Cprinter.string_of_spec_var_list new_expl_vars) *)
+    (*                       ^ "\n new_ivars = " ^ (Cprinter.string_of_spec_var_list new_ivars) *)
+    (*                       ^ "\n new_exist_vars  = " ^ (Cprinter.string_of_spec_var_list new_exist_vars) *)
+    (*                       ^ "\n ivar_subs_to_conseq = " ^ (List.fold_left (fun str pair -> (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" ivar_subs_to_conseq) *)
+    (*                       ^ "\n other_subs = " ^ (List.fold_left (fun str temp -> *)
+    (*                           let pair = match temp with *)
+    (*                             | (vs,_) -> vs *)
+    (*                           in *)
+    (*                           (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" other_subs) *)
+    (*                       ^"\n\n") in *)
 
 
     (* let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho_0 estate.es_ivars pos) in *)
@@ -6785,7 +6789,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             CF.mk_failure_must "infinite unfolding" )),NoAlias)
           else
 
-            (* let _ = print_string ("process_action_x: Context.M_unfold: before unfold_nth 1"  *)
+            (* let _ = print_string ("process_action_x: Context.M_unfold: before unfold_nth 1" *)
             (*                       ^ "\n estate = " ^ Cprinter.string_of_entail_state estate *)
             (*                       ^ "\n\n") in *)
 
@@ -6793,7 +6797,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
 
             let ctx1 = build_context (Ctx estate) delta1 pos in
 
-            (* let _ = print_string ("process_action_x: Context.M_unfold: after unfold_nth 1"  *)
+            (* let _ = print_string ("process_action_x: Context.M_unfold: after unfold_nth 1" *)
             (*                       ^ "\n delta1 = " ^ Cprinter.string_of_formula delta1 *)
             (*                       ^ "\n ctx1 = " ^ Cprinter.string_of_context ctx1 *)
             (*                       ^ "\n\n") in *)

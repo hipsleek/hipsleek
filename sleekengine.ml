@@ -125,22 +125,23 @@ let check_data_pred_name name :bool =
 
 let process_pred_def pdef = 
     
-  let _ = print_string ("process_pred_def:"
-                        ^ "\n\n") in
+  (* let _ = print_string ("process_pred_def:" *)
+  (*                       ^ "\n\n") in *)
 
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
 		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
+		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in        
+
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
-  let _ = print_string ("process_pred_def: before trans_view"
-                        ^ "\n\n") in
+        (* let _ = print_string ("process_pred_def: before trans_view" *)
+        (*                       ^ "\n\n") in *)
 
 		let cpdef = AS.trans_view iprog new_pdef in
 		let old_vdec = !cprog.C.prog_view_decls in
@@ -181,6 +182,12 @@ let process_pred_def_4_iast pdef =
 		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
+
+        (* let _ = print_string ("process_pred_def_4_iast:" *)
+        (*                       ^ "\n ### pdef.Iast.view_formula = " ^ (Iprinter.string_of_struc_formula pdef.Iast.view_formula) *)
+        (*                       ^ "\n ### wf = " ^ (Iprinter.string_of_struc_formula wf) *)
+        (*                       ^ "\n\n") in *)
+
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 	  with

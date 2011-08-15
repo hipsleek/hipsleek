@@ -2645,38 +2645,85 @@ and rename_bound_vars_x (f : formula) = match f with
 	    let resform = add_quantifiers new_qvars new_base_f in
 		resform
 
+and propagate_frac_formula (f : formula) (fracvar : CP.spec_var) : formula =
+  Gen.Debug.no_2 "propagate_frac_formula"
+      !print_formula
+      !print_spec_var
+      !print_formula
+      propagate_frac_formula_x f fracvar
 
 (*LDK: propagate fracvar into view formula during UNFOLDING*)
-and propagate_frac_formula (f : formula) (fracvar : CP.spec_var) : formula = match f with
+and propagate_frac_formula_x (f : formula) (fracvar : CP.spec_var) : formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	    let rf1 = propagate_frac_formula f1 fracvar in
-	    let rf2 = propagate_frac_formula f2 fracvar in
+	    let rf1 = propagate_frac_formula_x f1 fracvar in
+	    let rf2 = propagate_frac_formula_x f2 fracvar in
 	    let resform = mkOr rf1 rf2 pos in
 		resform
   | Base f1 ->
-        let f1_heap = propagate_frac_h_formula f1.formula_base_heap fracvar in
-        Base({f1 with formula_base_heap = f1_heap})
+        let f1_heap,vars = propagate_frac_h_formula f1.formula_base_heap fracvar in
+        let base_p = f1.formula_base_pure in
+        let mk_eq v = CP.mkEq (CP.mkVar v no_pos) ( CP.mkVar fracvar no_pos) no_pos in
+        let mk_eqs = List.map mk_eq vars in
+        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
+        let mk_eqs = List.map mk_BForm mk_eqs in
+        let frac_p = List.fold_left (fun res v -> CP.mkAnd v res no_pos) (CP.mkTrue no_pos) mk_eqs in
+        let frac_p = MCP.OnePF frac_p in
+        (* let _ = print_string ("propagate_frac_formula: Base" *)
+        (*                       ^ "\n ### base_p = " ^ (!print_mix_f base_p) *)
+        (*                       ^ "\n ### frac_p = " ^ (!print_mix_f frac_p) *)
+        (*                       ^ "\n\n") in *)
+        let base_p = add_mix_formula_to_mix_formula base_p frac_p in
+        Base({f1 with formula_base_heap = f1_heap; formula_base_pure = base_p})
   | Exists f1 ->
-        let f1_heap = propagate_frac_h_formula f1.formula_exists_heap fracvar in
-        Exists({f1 with formula_exists_heap = f1_heap})
+        let f1_heap,vars = propagate_frac_h_formula f1.formula_exists_heap fracvar in
+        let base_p = f1.formula_exists_pure in
+        let mk_eq v = CP.mkEq (CP.mkVar v no_pos) ( CP.mkVar fracvar no_pos) no_pos in
+        let mk_eqs = List.map mk_eq vars in
+        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
+        let mk_eqs = List.map mk_BForm mk_eqs in
+        let frac_p = List.fold_left (fun res v -> CP.mkAnd v res no_pos) (CP.mkTrue no_pos) mk_eqs in
+        let frac_p = MCP.OnePF frac_p in
+        (* let _ = print_string ("propagate_frac_formula: Exists" *)
+        (*                       ^ "\n ### base_p = " ^ (!print_mix_f base_p) *)
+        (*                       ^ "\n ### frac_p = " ^ (!print_mix_f frac_p) *)
+        (*                       ^ "\n\n") in *)
+        let base_p = add_mix_formula_to_mix_formula base_p frac_p in
+        Exists({f1 with 
+            formula_exists_qvars = List.append vars f1.formula_exists_qvars;
+            formula_exists_heap = f1_heap; 
+            formula_exists_pure = base_p})
 
-and propagate_frac_h_formula (f : h_formula) (fracvar : CP.spec_var) : h_formula = 
+(*Spec_var list to creat pure constraints: freshvar = fracvar*)
+and propagate_frac_h_formula (f : h_formula) (fracvar : CP.spec_var) : h_formula * (CP.spec_var list) = 
   match f with
-    | ViewNode f1 -> ViewNode({f1 with h_formula_view_frac_perm = Some fracvar})
-    | DataNode f1 -> DataNode({f1 with h_formula_data_frac_perm = Some fracvar})
+    | ViewNode f1 -> 
+        let fresh_var = Cpure.fresh_spec_var fracvar in
+        let vn = ViewNode({f1 with h_formula_view_frac_perm = Some fresh_var}) in
+        (vn,[fresh_var])
+    | DataNode f1 -> 
+        let fresh_var = Cpure.fresh_spec_var fracvar in
+        let dn = DataNode({f1 with h_formula_data_frac_perm = Some fresh_var}) in
+        (dn,[fresh_var])
     | Star f1 ->
-	      let h1 = propagate_frac_h_formula f1.h_formula_star_h1 fracvar in
-	      let h2 = propagate_frac_h_formula f1.h_formula_star_h2 fracvar in
-	      mkStarH h1 h2 f1.h_formula_star_pos
+	      let h1,xs1 = propagate_frac_h_formula f1.h_formula_star_h1 fracvar in
+	      let h2,xs2 = propagate_frac_h_formula f1.h_formula_star_h2 fracvar in
+	      let star = mkStarH h1 h2 f1.h_formula_star_pos in
+          let xs = List.append xs1 xs2 in
+          (star,xs)
     | Conj f1 ->
-	      let h1 = propagate_frac_h_formula f1.h_formula_conj_h1 fracvar in
-	      let h2 = propagate_frac_h_formula f1.h_formula_conj_h2 fracvar in
-	      mkConjH h1 h2 f1.h_formula_conj_pos
+	      let h1,xs1 = propagate_frac_h_formula f1.h_formula_conj_h1 fracvar in
+	      let h2,xs2 = propagate_frac_h_formula f1.h_formula_conj_h2 fracvar in
+          let conj = mkConjH h1 h2 f1.h_formula_conj_pos in
+          let xs = List.append xs1 xs2 in
+          (conj,xs)
+
     | Phase f1 ->
-	      let h1 = propagate_frac_h_formula f1.h_formula_phase_rd fracvar in
-	      let h2 = propagate_frac_h_formula f1.h_formula_phase_rw fracvar in
-	      mkPhaseH h1 h2 f1.h_formula_phase_pos
-    | _ -> f
+	      let h1,xs1 = propagate_frac_h_formula f1.h_formula_phase_rd fracvar in
+	      let h2,xs2 = propagate_frac_h_formula f1.h_formula_phase_rw fracvar in
+          let phase = mkPhaseH h1 h2 f1.h_formula_phase_pos in
+          let xs = List.append xs1 xs2 in
+          (phase,xs)
+    | _ -> (f,[])
 
 (* for immutability *)
 (* and propagate_imm_struc_formula (sf : struc_formula) (imm : bool) : struc_formula =  *)
