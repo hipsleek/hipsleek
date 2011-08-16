@@ -1006,6 +1006,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
+						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
                  F.h_formula_data_pruning_conditions = [];
@@ -1021,6 +1022,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = link_p :: to_ext;
+						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
                      F.h_formula_data_pruning_conditions = [];
@@ -1037,6 +1039,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
+								F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
                      F.h_formula_data_pruning_conditions = [];

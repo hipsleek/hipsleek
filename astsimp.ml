@@ -3690,11 +3690,20 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                       let labels = List.map (fun _ -> "") exps in
                       let hvars = match_exp (List.combine exps labels) pos in
                       let new_v = CP.SpecVar (Named c, v, p) in
+						(* An Hoa : find the holes here! *)
+						let rec collect_holes vars n = match vars with
+						| [] -> []
+						| x::t -> let th = collect_holes t (n+1) in 
+							(match x with 
+								| CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th )
+						in
+						let holes = collect_holes hvars 0 in
                       let new_h = CF.DataNode {
                           CF.h_formula_data_node = new_v;
                           CF.h_formula_data_name = c;
 		                  CF.h_formula_data_imm = imm;
 		                  CF.h_formula_data_arguments = hvars;
+							CF.h_formula_data_holes = holes; (* An Hoa : Don't know what to do *)
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;
                           CF.h_formula_data_pruning_conditions = [];

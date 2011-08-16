@@ -450,7 +450,10 @@ let string_of_typed_spec_var x =
 let string_of_spec_var x = 
 (* string_of_typed_spec_var x *)
   match x with
-    | P.SpecVar (t, id, p) -> id (* ^":"^(string_of_typ t) *) ^(match p with
+    | P.SpecVar (t, id, p) ->
+		(* An Hoa : handle printing of holes *)
+		let real_id = if (id.[0] = '#') then "#" else id in
+	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
 
@@ -809,12 +812,26 @@ let rec pr_h_formula h =
       h_formula_data_name = c;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
+		h_formula_data_holes = hs; (* An Hoa *)
       h_formula_data_pos = pos;
       h_formula_data_remaining_branches = ann;
-      h_formula_data_label = pid})->
+      h_formula_data_label = pid})-> 
+			(** [Internal] Replace the specvars at positions of holes with '-' **)
+			let rec replace_holes svl hs n = 
+				if hs = [] then svl
+				else let sv = List.hd svl in
+						match sv with
+							| CP.SpecVar (t,vn,vp) -> 
+								if (List.hd hs = n) then
+									CP.SpecVar (t,"-",vp) :: (replace_holes (List.tl svl) (List.tl hs) (n+1))
+								else
+									sv :: (replace_holes (List.tl svl) hs (n+1))
+			in
+			let svs = replace_holes svs hs 0 in
           fmt_open_hbox ();
           (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid; *)
+			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
           pr_angle c pr_spec_var svs ;
 	      pr_imm imm;

@@ -38,6 +38,9 @@ open Gen.Basic
 	| AnnMode of mode
 	| AnnType of typ
 
+(* An Hoa : Counting of holes "#" *)
+let hash_count = ref 0
+
 let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();
 				 end_pos = Parsing. symbol_end_pos ();
@@ -727,12 +730,18 @@ cexp_w :
      [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
      (* | *) `NULL                                     -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
 
+	(* An Hoa : Hole for partial structures, represented by the hash # character. *)
+	 | `HASH -> let _ = hash_count := !hash_count + 1 in 
+			Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
+
      | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; CPAREN -> (* print_string("here"); *)
     (* AnHoa: relation constraint, for instance, given the relation 
-    *  s(a,b,c) == c = a + b.
-    *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
-    *)  
-            Pure_f(P.BForm (P.RelForm (id, cl, get_pos_camlp4 _loc 1), None))
+     * s(a,b,c) == c = a + b.
+     * After this definition, we can have the relation constraint like
+     * s(x,1,x+1), s(x,y,x+y), ...
+	 * in our formula.
+     *)
+            Pure_f (P.BForm (P.RelForm (id, cl, get_pos_camlp4 _loc 1), None))
 
      | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))

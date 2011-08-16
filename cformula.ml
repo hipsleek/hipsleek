@@ -144,6 +144,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_imm : bool;
                         h_formula_data_arguments : CP.spec_var list;
+						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *)
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -1490,6 +1491,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm; 
 							h_formula_data_arguments = svs; 
+							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = pcond;
@@ -1498,6 +1500,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm;  
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
+							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
@@ -1612,6 +1615,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_data_name = c; 
     h_formula_data_imm = imm; 
 	h_formula_data_arguments = svs; 
+	h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 	h_formula_data_label = lbl;
     h_formula_data_remaining_branches = ann;
     h_formula_data_pruning_conditions = pcond;
@@ -1620,6 +1624,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
 		h_formula_data_arguments = List.map (subst_var s) svs;
+		h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;
         h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;

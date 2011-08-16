@@ -1,0 +1,13 @@
+data node {
+	int f1;
+	int f2;
+	int f3;
+	node f4;
+	node f5;	
+}.
+
+checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
+
+checkentail  x::node<m,n,#,#,#> |- x::node<m,n,a,b,c>.
+
+print residue.
