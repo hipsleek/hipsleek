@@ -3999,6 +3999,51 @@ let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isA
 (*       if (nf=n) then [List.hd(sl)] *)
 (*       else (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) *)
 
+(*remove v=v from formula*)
+let remove_true_conj_pure (p:CP.formula) =
+  let ps = CP.split_conjunctions p in
+  let ps1 = CP.remove_true_conj_eq ps in
+  let ps2 = CP.join_conjunctions ps1 in 
+  ps2
+
+(*remove v=v from formula*)
+let remove_true_conj_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula = 
+  (match f with
+    | MCP.MemoF _ -> 
+        let _ = print_string ("[cformula.ml][remove_true_conj_mix_formula] Warning: not yet support MCP.MemoF") in
+        f
+    | MCP.OnePF p_f -> (MCP.OnePF (remove_true_conj_pure p_f))
+  )
+
+(*remove v=v from formula*)
+let remove_true_conj_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
+  Gen.Debug.ho_1 "remove_true_conj_mix_formula" !print_mix_formula !print_mix_formula 
+      remove_true_conj_mix_formula_x f
+
+let remove_dupl_conj_eq_pure (p:CP.formula) =
+  let ps = CP.split_conjunctions p in
+  let ps1 = CP.remove_dupl_conj_eq ps in
+  let ps2 = CP.join_conjunctions ps1 in 
+  ps2
+
+let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula = 
+  (match f with
+    | MCP.MemoF _ -> 
+        let _ = print_string ("[cformula.ml][remove_dupl_conj_eq_mix_formula] Warning: not yet support MCP.MemoF") in
+        f
+    | MCP.OnePF p_f -> (MCP.OnePF (remove_dupl_conj_eq_pure p_f))
+  )
+
+let remove_dupl_conj_eq_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
+  Gen.Debug.ho_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
+      remove_dupl_conj_eq_mix_formula_x f
+
+
+let remove_dupl_conj_estate (estate:entail_state) : entail_state = 
+  let mix_f,rest = estate.es_pure in
+  let mix_f1 = remove_dupl_conj_eq_mix_formula mix_f in
+  {estate with es_pure=mix_f1,rest}
+
 let remove_dupl_false (sl:branch_ctx list) = 
   let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
   if nl==[] then 
@@ -4901,23 +4946,23 @@ let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b)
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
   let r =  f e in 
-    match r with
-      | Some e1 -> e1
-      | None  -> match e with	 
-	  | Star s -> Star {s with 
-			      h_formula_star_h1 = transform_h_formula f s.h_formula_star_h1;
-			      h_formula_star_h2 = transform_h_formula f s.h_formula_star_h2;}
-	  | Conj s -> Conj {s with 
-			      h_formula_conj_h1 = transform_h_formula f s.h_formula_conj_h1;
-			      h_formula_conj_h2 = transform_h_formula f s.h_formula_conj_h2;}
-	  | Phase s -> Phase {s with 
-			      h_formula_phase_rd = transform_h_formula f s.h_formula_phase_rd;
-			      h_formula_phase_rw = transform_h_formula f s.h_formula_phase_rw;}
-	  | DataNode _
-	  | ViewNode _
-	  | Hole _
-	  | HTrue
-	  | HFalse -> e
+  match r with
+    | Some e1 -> e1
+    | None  -> match e with	 
+	      | Star s -> Star {s with 
+			  h_formula_star_h1 = transform_h_formula f s.h_formula_star_h1;
+			  h_formula_star_h2 = transform_h_formula f s.h_formula_star_h2;}
+	      | Conj s -> Conj {s with 
+			  h_formula_conj_h1 = transform_h_formula f s.h_formula_conj_h1;
+			  h_formula_conj_h2 = transform_h_formula f s.h_formula_conj_h2;}
+	      | Phase s -> Phase {s with 
+			  h_formula_phase_rd = transform_h_formula f s.h_formula_phase_rd;
+			  h_formula_phase_rw = transform_h_formula f s.h_formula_phase_rw;}
+	      | DataNode _
+	      | ViewNode _
+	      | Hole _
+	      | HTrue
+	      | HFalse -> e
 
 
 (* transform formula : f_p_t : pure formula
@@ -4971,9 +5016,12 @@ Or {o with
 
   in helper f e
 
+
+
 let transform_formula f (e:formula):formula =
   let pr = !print_formula in
   Gen.Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
+
 
 (* let rec transform_formula f (e:formula):formula = *)
 (* 	let (_, f_f, f_h_f, f_p_t) = f in *)
@@ -5019,6 +5067,18 @@ let transform_formula f (e:formula):formula =
 
 
 
+let transform_formula_w_frac_x (f:formula -> formula option) (e:formula) (fracvar:CP.spec_var):formula =
+	let r =  f e in 
+	match r with
+	| Some e1 -> e1
+	| None  -> e
+
+
+let transform_formula_w_frac (f:formula -> formula option) (e:formula) (fracvar:CP.spec_var):formula =
+  let pr = !print_formula in
+  Gen.Debug.no_3 "transform_formula_w_frac" 
+      (fun _ -> "f") pr !print_spec_var pr 
+      transform_formula_w_frac_x f e fracvar
 
 let rec trans2_formula f (e:formula):formula =
 	let (f_h_f, f_p_t) = f in
@@ -5189,10 +5249,38 @@ let rec transform_ext_formula f (e:ext_formula) :ext_formula =
 							formula_var_escape_clauses = List.map (fun f -> CP.transform_formula f_p_t f) b.formula_var_escape_clauses;
 							formula_var_continuation = transform_struc_formula f b.formula_var_continuation;
 		  }
-    
+
 and transform_struc_formula f (e:struc_formula)	:struc_formula = 
 	List.map (transform_ext_formula f) e
-		
+
+let rec transform_ext_formula_w_frac f (fracvar:CP.spec_var) (e:ext_formula) :ext_formula = 
+  let (f_e_f, f_f, f_h_f, f_p_t) = f in
+	let r = f_e_f e in 
+	match r with
+	| Some e1 -> e1
+	| None -> match e with
+		| ECase c -> 
+      let br' = 
+        List.map (fun (c1,c2)-> ((CP.transform_formula f_p_t c1),(transform_struc_formula_w_frac f c2 fracvar))) c.formula_case_branches in
+      ECase {c with formula_case_branches = br';}
+		| EBase b -> EBase{b with 
+				 formula_ext_base = transform_formula_w_frac f_f b.formula_ext_base fracvar;
+				 formula_ext_continuation = transform_struc_formula_w_frac f b.formula_ext_continuation fracvar;
+				}
+		| EAssume (v,e,pid)-> EAssume (v,(transform_formula_w_frac f_f e fracvar),pid)
+		| EVariance b -> let (_, _, _, _, f_exp) = f_p_t in EVariance { b with
+							formula_var_measures = List.map (fun (expr, bound) -> match bound with
+															   | None -> ((CP.transform_exp f_exp expr), None)
+															   | Some b_expr -> ((CP.transform_exp f_exp expr), Some (CP.transform_exp f_exp b_expr))) b.formula_var_measures;
+							formula_var_escape_clauses = List.map (fun f -> CP.transform_formula f_p_t f) b.formula_var_escape_clauses;
+							formula_var_continuation = transform_struc_formula_w_frac f b.formula_var_continuation fracvar;
+		  }
+    
+
+
+and transform_struc_formula_w_frac f (e:struc_formula) (fracvar:CP.spec_var) :struc_formula =
+	List.map (transform_ext_formula_w_frac f fracvar) e
+
 let rec trans_ext_formula (e: ext_formula) (arg: 'a) f f_arg f_comb : (ext_formula * 'b) =
   let f_ext_f, f_f, f_h_formula, f_pure, f_memo = f in
   let f_ext_f_arg, f_f_arg, f_h_f_arg, f_pure_arg, f_memo_arg = f_arg in
@@ -5866,6 +5954,18 @@ and propagate_imm_struc_formula e =
   let f_p_t5 e = Some e in
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
+
+and propagate_frac_struc_formula e (fracvar:CP.spec_var)=
+  let f_e_f e = None  in
+  let f_f e = Some (propagate_frac_formula e fracvar) in
+  let f_h_f f = None in
+  let f_p_t1 e = Some e in
+  let f_p_t2 e = Some e in
+  let f_p_t3 e = Some e in
+  let f_p_t4 e = Some e in
+  let f_p_t5 e = Some e in
+  let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
+    transform_struc_formula_w_frac f e fracvar
 
 and add_origs_to_node_struc (v:string) (e : struc_formula) origs = 
   let f_e_f e = None  in

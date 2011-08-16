@@ -199,7 +199,55 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
-     
+(*LDK: check constant TRUE conjuncts of equalities, i.e. v=v *)
+let is_true_conj_eq (f1:formula) : bool =
+  match f1 with
+    | BForm (b1,_) ->
+        (match b1 with
+          | Eq (e1,e2,_) -> 
+              (match e1,e2 with
+                | Var (v1,_), Var (v2,_)-> 
+                    let b1 = eq_spec_var v1 v2 in
+                    b1
+                | _ -> false)
+          | _ -> false
+        )
+    | _ -> false
+
+(*LDK: remove duplicated conjuncts of equalities*)
+let remove_true_conj_eq (cnjlist:formula list):formula list =
+  List.filter (fun x -> not (is_true_conj_eq x)) cnjlist
+
+(*LDK: check duplicated conjuncts of equalities*)
+let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
+  match f1,f2 with
+    | BForm (b1,_),BForm (b2,_) ->
+        (match b1,b2 with
+          | Eq (e11,e12,_), Eq (e21,e22,_) -> 
+              (match e11,e12,e21,e22 with
+                | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
+                    let b1 = eq_spec_var v11 v21 in
+                    let b2 = eq_spec_var v12 v22 in
+                    let b3 = eq_spec_var v11 v22 in
+                    let b4 = eq_spec_var v12 v21 in
+                    (b1&&b2)||(b3&&b4)
+                | _ -> false)
+          | _ -> false
+        )
+    | _ -> false
+
+(*LDK: remove duplicated conjuncts of equalities*)
+let remove_dupl_conj_eq (cnjlist:formula list):formula list =
+Gen.BList.remove_dups_eq is_dupl_conj_eq cnjlist
+
+  (* let rec helper ls = *)
+  (* match ls with *)
+  (*   | [] -> ls *)
+  (*   | x::xs -> *)
+  (*       let b = is_dupl_conj_eq *)
+  (* in *)
+  (* helper cnjlist *)
+
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> Named ""
@@ -1890,6 +1938,8 @@ and list_of_irr_bformula (ls_lhs:formula list) ls_working: ((formula list)*(form
     ls_lhs,ls_working
   else
    list_of_irr_bformula new_ls_lhs_rem new_ls_working
+
+
 
 and elim_of_bformula (f0:formula) ls: formula  =
 match f0 with
