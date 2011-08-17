@@ -6,8 +6,16 @@ data node {
 	node f5;	
 }.
 
-checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
+//checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
 
-checkentail  x::node<m,n,#,#,#> |- x::node<m,n,a,b,c>.
+//print residue.
 
-print residue.
+//checkentail  x::node<m,n,#,#,#> |- x::node<m,n,a,b,c>.
+
+//print residue.
+
+checkentail x.node.f5::node<_,_,_,_,_> |- true.
+
+// The following should be translated into
+// x::node<5,#,#,#,#> * x::node<#,4,#,#,#> * x::node<#,#,#,#,x_f5> * x_f5::node<_,_,_,_,_>
+checkentail x.node.f1::int<5> * x.node.f2::int<4> * x.node.f5::node<_,_,_,_,_> |- x::node<5,4,_,_,a>.
