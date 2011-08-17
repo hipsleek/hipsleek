@@ -5135,6 +5135,9 @@ let is_linear_formula f0 =
   in
   fold_formula f0 (nonef, f_bf, f_e) and_list
 
+let is_linear_formula f0 =
+  Gen.Debug.ho_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+
 let is_linear_exp e0 =
   let f e =
     if is_bag e || is_list e then 
