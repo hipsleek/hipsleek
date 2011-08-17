@@ -6,22 +6,32 @@ data node {
 	node f5;	
 }.
 
-//checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
+checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
+print residue.
 
-//print residue.
+checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- false.
+// BUG : should fail
+// need normalization so that LHS is not false
 
-//checkentail  x::node<m,n,#,#,#> |- x::node<m,n,a,b,c>.
 
-//print residue.
+checkentail  x::node<m,n,#,#,#> |- x::node<m,n,a,b,c>.
+// BUG : should fail
+// need to check that LHS is bigger than RHS
 
-checkentail x.f5::<a> * x.f4::<b> |- x::node<#,#,#,u,v>.
+print residue.
 
-checkentail x.f5::node<_,_,_,_,_> * x.f4::node<_,_,_,_,_> |- false.
+//checkentail x.f5::<a> * x.f4::<b> |- x::node<#,#,#,u,v>.
+//checkentail x.node.f5::<a> * x.node.f4::<b> |- x::node<#,#,#,u,v>.
+// should translate to below:
+checkentail  x::node<#,#,#,#,a> * x::node<#,#,#,b,#> |- x::node<#,#,#,u,v>.
 
-checkentail x.node.f5::node<_,_,_,_,_> * x.node.f4::node<_,_,_,_,_> |- true.
 
-// The following should be translated into
+//checkentail x.f1::<5> * x.f2::<4> * x.f5::<_> |- x::node<5,4,#,#,a>.
+// should translate to below:
+checkentail  x::node<5,#,#,#,#> * x::node<#,#,#,4,#> 
+  * x::node<#,#,#,#,_>  |- x::node<5,4,#,#,a>.
+
+
+// The following should be translated into ??
 // x::node<5,#,#,#,#> * x::node<#,4,#,#,#> * x::node<#,#,#,#,x_f5> * x_f5::node<_,_,_,_,_>
 //checkentail x.node.f1::infer<5> * x.node.f2::infer<4> * x.node.f5::node<_,_,_,_,_> |- x::node<5,4,_,_,a>.
-
-checkentail x.f1::<5> * x.f2::<4> * x.f5::<_> |- x::node<5,4,#,#,a>.
