@@ -477,15 +477,15 @@ view_header:
 cid: 
   [[ 
      `IDENTIFIER t; `PRIME	 	-> (* print_string ("primed id:"^t^"\n"); *) (t, Primed)
-   | `IDENTIFIER t; e=OPT idext	-> print_string ("cid: "^t^(un_option e "")^"\n"); (t ^ (un_option e ""), Unprimed)
+   | `IDENTIFIER t	-> (* print_string ("cid: "^t^"\n"); *) (t,Unprimed)
    | `RES _                 	-> (res, Unprimed)
    | `SELFT _               	-> (self, Unprimed)
    | `THIS _               		-> (this, Unprimed)]];
 
 (** An Hoa : Access extension. For example: in "x.node.value", ".node.value" is the idext **)
-idext:
+(* idext:
 	[[ `DOT; `IDENTIFIER t 				-> "." ^ t
-	| `DOT; `IDENTIFIER t; u=idext 		-> "." ^ t ^ u]];
+	| `DOT; `IDENTIFIER t; u=idext 		-> "." ^ t ^ u]]; *)
 
 view_body:
   [[ t = formulas -> ((F.subst_stub_flow_struc top_flow (fst t)),(snd t))
@@ -614,7 +614,7 @@ heap_wr:
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
   ]];
  
-simple2:  [[ t= opt_type_var_list; `LT -> let _ = print_endline "PASSED simple2." in ()]];
+simple2:  [[ t= opt_type_var_list; `LT -> (* let _ = print_endline "PASSED simple2." in *)()]];
    
 simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
@@ -628,7 +628,7 @@ simple_heap_constr:
     (match hl with
         | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> let _ = print_endline (fst c) in let _ = print_endline id in
+  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
