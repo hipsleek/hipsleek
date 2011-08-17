@@ -14,8 +14,14 @@ data node {
 
 //print residue.
 
+checkentail x.f5::<a> * x.f4::<b> |- x::node<#,#,#,u,v>.
+
+checkentail x.f5::node<_,_,_,_,_> * x.f4::node<_,_,_,_,_> |- false.
+
 checkentail x.node.f5::node<_,_,_,_,_> * x.node.f4::node<_,_,_,_,_> |- true.
 
 // The following should be translated into
 // x::node<5,#,#,#,#> * x::node<#,4,#,#,#> * x::node<#,#,#,#,x_f5> * x_f5::node<_,_,_,_,_>
-checkentail x.node.f1::infer<5> * x.node.f2::infer<4> * x.node.f5::node<_,_,_,_,_> |- x::node<5,4,_,_,a>.
+//checkentail x.node.f1::infer<5> * x.node.f2::infer<4> * x.node.f5::node<_,_,_,_,_> |- x::node<5,4,_,_,a>.
+
+checkentail x.f1::<5> * x.f2::<4> * x.f5::<_> |- x::node<5,4,#,#,a>.
