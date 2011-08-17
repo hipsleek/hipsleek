@@ -124,7 +124,8 @@ let check_data_pred_name name :bool =
 (*   end *)
 
 let process_pred_def pdef = 
-    
+  (* TODO : how come this method not called? *)
+  let _ = print_string "process pred def??\n" in
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
@@ -136,6 +137,7 @@ let process_pred_def pdef =
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
+		let _ = if !Globals.print_input then print_string (Iprinter.string_of_view_decl new_pdef ^"\n") else () in
 		let cpdef = AS.trans_view iprog new_pdef in
 		let old_vdec = !cprog.C.prog_view_decls in
 		!cprog.C.prog_view_decls <- (cpdef :: !cprog.C.prog_view_decls);
@@ -159,6 +161,7 @@ let process_pred_def pdef =
     let n_cpdef = {n_cpdef with 
         C.view_formula =  Solver.prune_pred_struc !cprog true n_cpdef.C.view_formula ;
         C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds !cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
+        let _ = if !Globals.print_input then print_string "TODO : print input AST here(2)!" in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		!cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
@@ -197,6 +200,7 @@ let convert_pred_to_cast () =
   let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then AS.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else cprog4 in
+  let _ = if !Globals.print_input then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if !Globals.print_core then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5
 
@@ -246,6 +250,7 @@ let process_data_def ddef =
 	(* let _ = Iast.build_exc_hierarchy true iprog in *)
 	(* let _ = Gen.ExcNumbering.compute_hierarchy 2 () in *)
 	let cddef = AS.trans_data iprog ddef in
+	let _ = if !Globals.print_input then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	  !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls
       with
@@ -351,6 +356,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
   (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
+  let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
@@ -421,6 +427,8 @@ let process_lemma ldef =
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  (* TODO : WN print input_ast *)
+  let _ = if !Globals.print_input then print_string "TODO : print input AST here(3)!" in
   let _ = if !Globals.print_core then 
     print_string ((Cprinter.string_of_coerc_decl_list l2r) ^"\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
 	!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;

@@ -6618,18 +6618,18 @@ and transform_null (eqs) :(CP.b_formula list) = List.map (fun c-> match c with
   | Cpure.Lte _ -> c
   | Cpure.Eq (e1,e2,l) -> 
 		if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		  if (Cpure.is_zero e2) then Cpure.Eq (e1,(Cpure.Null l),l)
+		  if (Cpure.is_zero_int e2) then Cpure.Eq (e1,(Cpure.Null l),l)
 		  else Cpure.Neq (e1,(Cpure.Null l),l)
 		else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		  if (Cpure.is_zero e1) then Cpure.Eq (e2,(Cpure.Null l),l)
+		  if (Cpure.is_zero_int e1) then Cpure.Eq (e2,(Cpure.Null l),l)
 		  else Cpure.Neq (e2,(Cpure.Null l),l)
 		else c
   | Cpure.Neq (e1,e2,l)-> 
 		if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		  if (Cpure.is_zero e2) then Cpure.Neq (e1,(Cpure.Null l),l)
+		  if (Cpure.is_zero_int e2) then Cpure.Neq (e1,(Cpure.Null l),l)
 		  else c
 		else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		  if (Cpure.is_zero e1) then Cpure.Neq (e2,(Cpure.Null l),l)
+		  if (Cpure.is_zero_int e1) then Cpure.Neq (e2,(Cpure.Null l),l)
 		  else c
 		else c
   | _ -> c

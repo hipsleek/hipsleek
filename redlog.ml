@@ -433,7 +433,7 @@ let rec is_linear_formula f0 =
         (is_linear_formula f1) && (is_linear_formula f2)
 
 let is_linear_formula f0 =
-  Gen.Debug.ho_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 let has_var_exp e0 =
   let f e = match e with

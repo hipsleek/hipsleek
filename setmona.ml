@@ -495,8 +495,8 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 	| [] -> failwith ("flatten_list: es0 should be nonempty.")
 	| [e] -> (e, mkTrue no_pos, [])
 	| e1 :: e2 :: rest -> begin
-		if is_zero e1 then flatten_list (e2 :: rest)
-		else if is_zero e2 then flatten_list (e1 :: rest)  
+		if is_zero_int e1 then flatten_list (e2 :: rest)
+		else if is_zero_int e2 then flatten_list (e1 :: rest)  
 		else
 		  let pos = pos_of_exp e1 in
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in

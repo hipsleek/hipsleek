@@ -398,8 +398,11 @@ and is_null (e : exp) : bool = match e with
   | Null _ -> true
   | _ -> false
 
-and is_zero (e : exp) : bool = match e with
+and is_zero_int (e : exp) : bool = match e with
   | IConst (0, _) -> true
+  | _ -> false
+
+and is_zero_float (e : exp) : bool = match e with
   | FConst (0.0, _) -> true
   | _ -> false
 
@@ -2998,11 +3001,12 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
              (None, (Some ( IConst (- v, l))))
            else (None, None)
     | FConst (v, l) ->
-          if v > 0.0 then
+          if v >= 0.0 then
             ((Some e), None)
-          else if v < 0.0 then
+          else 
+            (* if v < 0.0 then *)
             ((None, (Some (FConst (-. v, l)))))
-          else (None, None)
+          (* else (None, None) *)
     |  Add (e1, e2, l) ->
            let (ts1, tm1) = split_sums e1 in
            let (ts2, tm2) = split_sums e2 in
@@ -3248,7 +3252,11 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
 	|  ArrayAt (a, i, l) -> ArrayAt (a, purge_mult i, l) (* An Hoa *)
 
-and b_form_simplify (b:b_formula) :b_formula = 
+and b_form_simplify (pf : b_formula) :  b_formula =   
+  Gen.Debug.no_1 "b_form_simplify " !print_b_formula !print_b_formula 
+      b_form_simplify_x pf
+
+and b_form_simplify_x (b:b_formula) :b_formula = 
   let do_all e1 e2 l =
 	let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
@@ -3924,7 +3932,8 @@ and norm_exp (e:exp) =
     | Mult (e1,e2,l) -> 
           let e1=helper e1 in 
           let e2=helper e2 in
-          if (is_zero e1 || is_zero e2) then IConst(0,l)
+          if (is_zero_int e1 || is_zero_int e2) then IConst(0,l)
+          else if (is_zero_float e1 || is_zero_float e2) then FConst(0.0,l)
           else two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l
     | Div (e1,e2,l) -> if is_one e2 then e1 else Div (helper e1,helper e2,l)
     | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
@@ -5136,7 +5145,7 @@ let is_linear_formula f0 =
   fold_formula f0 (nonef, f_bf, f_e) and_list
 
 let is_linear_formula f0 =
-  Gen.Debug.ho_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 let is_linear_exp e0 =
   let f e =
