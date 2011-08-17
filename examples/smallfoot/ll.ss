@@ -301,3 +301,10 @@ void list_filter(node x, int v)
                    }
         }
 }
+
+/*void testtest(ref node x)
+requires x::ll<n> & n > 0
+ensures x'::ll<n-1>;
+{
+x = x.next;
+}*/
