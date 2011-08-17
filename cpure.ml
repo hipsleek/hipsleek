@@ -103,6 +103,8 @@ let full_name_of_spec_var (sv : spec_var) : ident = match sv with
 let type_of_spec_var (sv : spec_var) : typ = match sv with
   | SpecVar (t, _, _) -> t
 
+let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
+
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
 

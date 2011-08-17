@@ -66,6 +66,10 @@ type mode =
 
 let proving_loc : (loc option) ref = ref None
 
+let is_float_type (t:typ) = match t with
+  | Float -> true
+  | _ -> false
+
 let set_proving_loc p =
   proving_loc := Some p
 

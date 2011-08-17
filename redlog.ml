@@ -4,6 +4,7 @@
  *)
 
 open Globals
+open Gen.Basic
 module CP = Cpure
 
 (* options *)
@@ -434,6 +435,38 @@ let rec is_linear_formula f0 =
 
 let is_linear_formula f0 =
   Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+
+let rec is_float_exp exp = 
+  match exp with
+  | CP.Var (v,_) -> CP.is_float_var v (* check type *)
+  | CP.FConst v -> true
+  | CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) | CP.Mult (e1, e2, _) -> (is_float_exp e1) || (is_float_exp e2)
+  | CP.Div (e1, e2, _) -> true
+      (* Omega don't accept / operator, we have to manually transform the formula *)
+      (*
+      (match e2 with
+        | CP.IConst _ -> is_linear_exp e1
+        | _ -> false)
+      *)
+  | _ -> false
+
+let is_float_bformula b = 
+  match b with
+  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
+  | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
+  | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _)
+      -> (is_float_exp e1) || (is_float_exp e2)
+  | CP.EqMax (e1, e2, e3, _) | CP.EqMin (e1, e2, e3, _)
+      -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
+  | _ -> false
+
+let rec is_float_formula f0 = 
+  match f0 with
+    | CP.BForm (b,_) -> is_float_bformula b
+    | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
+        is_float_formula f;
+    | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
+        (is_float_formula f1) || (is_float_formula f2)
 
 let has_var_exp e0 =
   let f e = match e with
@@ -925,6 +958,10 @@ let elim_exist_quantifier f =
   let f = elim_exists_with_ineq f in 
   f
 
+let elim_exist_quantifier f =
+  Gen.Debug.ho_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
+
+
 (*********************************
  * formula normalization stuffs
  * *******************************)
@@ -1075,21 +1112,33 @@ let imply ante conseq imp_no =
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
+let simplify_with_redlog (f: CP.formula) : CP.formula  =
+  if (is_float_formula f) then
+    (* do a manual existential elimination *)
+    elim_exist_quantifier f
+  else 
+    let rlf = rl_of_formula (normalize_formula f) in
+    let _ = send_cmd "rlset pasf" in
+    let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in 
+    let _ = send_cmd "rlset ofsf" in
+    let lexbuf = Lexing.from_string redlog_result in
+    let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
+    simpler_f
+
+let simplify_with_redlog (f: CP.formula) : CP.formula  =
+  (* let pr = pr_pair !print_formula string_of_bool in *)
+  Gen.Debug.ho_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
+
 let simplify (f: CP.formula) : CP.formula =
   if is_linear_formula f then 
     Omega.simplify f 
-  else if !no_simplify then 
+  else if (!no_simplify) then 
     f
    else
     try
-      let rlf = rl_of_formula (normalize_formula f) in
-      let _ = send_cmd "rlset pasf" in
-      let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in
-      let _ = send_cmd "rlset ofsf" in
-      let lexbuf = Lexing.from_string redlog_result in
-      let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
+      let simpler_f = simplify_with_redlog f in
       let simpler_f = 
-        if is_linear_formula simpler_f then
+        if (is_linear_formula simpler_f) then
           Omega.simplify simpler_f
         else
           simpler_f
