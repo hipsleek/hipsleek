@@ -653,6 +653,10 @@ let find_bound_b_formula v b0 =
   else (None, None)
 
 let rec find_bound v f0 =
+  if CP.is_float_var v 
+  then (* do not give bound for floating point type *)
+    (None,None)
+  else 
   let f0 = strengthen_formula f0 in (* replace gt,lt with gte,lte to be able to find bound *)
   match f0 with
   | CP.And (f1, f2, _) ->
@@ -934,6 +938,7 @@ and elim_exists_max f0 =
   in elim_exists_helper core f0
   
 let rec elim_exists_with_ineq f0 =
+  (* caveat : do not hanlde for float *)
   let core qvar qf lbl pos =
     let min, max = find_bound qvar qf in
     begin
@@ -949,6 +954,11 @@ let rec elim_exists_with_ineq f0 =
       | _ -> f0
     end
   in elim_exists_helper core f0
+
+let elim_exists_with_ineq f =
+  Gen.Debug.ho_1 "elim_exists_with_ineq"
+   !print_formula !print_formula elim_exists_with_ineq f
+
 
 let elim_exist_quantifier f =
   let _ = incr ee_call_count in

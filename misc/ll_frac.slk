@@ -1,9 +1,9 @@
 data node { int val ; node next }.
 
 
-pred lf<n,f> == self = null & n=0 & 0.0<f<=1.0
+pred lf<n,f> == (exists g:self = null & n=0 & 0.0<f<=1.5 & 0<=g<=1)
 	or self::node<next = r> * r::lf<n - 1,f>
-	inv n >= 0 & 0.0<f<=1.0 .
+	inv n >= 0 & 0.0<f<=1.5 .
 /*
 pred lf<n,f> == self = null & n=0 & 0.1<f<=1.0
 	or self::node<next = r> * r::lf<n - 1,f>
