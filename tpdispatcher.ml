@@ -25,7 +25,9 @@ type tp_type =
   | Redlog
   | RM (* Redlog and Mona *)
 
-let tp = ref OmegaCalc
+(* let tp = ref OmegaCalc *)
+let tp = ref Redlog
+
 let proof_no = ref 0
 let provers_process = ref None
 
