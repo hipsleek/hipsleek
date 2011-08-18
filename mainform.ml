@@ -12,7 +12,14 @@ module FU = FileUtil
 module SH = SleekHelper
 module TP = Tpdispatcher
 
-let create_residue_view () =
+let create_context_view () =
+  let view = GText.view
+    ~editable:false
+    ~wrap_mode:`WORD
+    () in
+  view
+
+let create_proof_view () =
   let view = GText.view
     ~editable:false
     ~wrap_mode:`WORD
@@ -33,39 +40,27 @@ class mainwindow () =
 
     (* gui components *)
     val source_view = new sleek_source_view ()
-    val entailment_list = new entailment_list ()
-    val residue_view = create_residue_view ()
+    val entailment_list = create_proof_view ()(*new entailment_list ()*)
+    val residue_view = create_context_view ()
     (* data *)
     val mutable current_file = None
     val mutable original_digest = ""
     val mutable debug_log_window = None
     val mutable prover_log_window = None
-      
+
     initializer
       (* initialize components *)
-      let residue_panel =
-        let label = GMisc.label 
-          ~text:"Residue and Contexts:" 
-          ~xalign:0.0 ~yalign:0.0
-          ~xpad:5 ~ypad:5
-          () in
-        let residue_scrolled = create_scrolled_win residue_view in
-        let vbox = GPack.vbox () in
-        vbox#pack ~expand:false label#coerce;
-        vbox#pack ~expand:true residue_scrolled#coerce;
-        vbox
-      in
-      let entail_panel =
+      let proof_panel =
         let list_scrolled = create_scrolled_win entailment_list in
-        let buttons = GPack.button_box 
+        let buttons = GPack.button_box
           `HORIZONTAL ~layout:`START
           ~border_width:10
           () in
         let check_btn = GButton.button
-          ~label:"Check Entailment"
+          ~label:"Save proof"
           ~packing:buttons#add
           () in
-        ignore (check_btn#connect#clicked ~callback:(self#check_selected_entailment ~force:true));
+        ignore (check_btn#connect#clicked ~callback:(self#save_current_proof(*check_selected_entailment*) ~force:true));
         let show_debug_log_btn = GButton.button
           ~label:"Show Debug Log"
           ~packing:buttons#add
@@ -79,17 +74,29 @@ class mainwindow () =
         let vbox = GPack.vbox () in
         vbox#pack ~expand:true list_scrolled#coerce;
         vbox#pack ~expand:false buttons#coerce;
-        let hpaned = GPack.paned `HORIZONTAL () in
-        hpaned#set_position 580;
+        vbox
+      in
+      let context_panel =
+        let label = GMisc.label
+          ~text:"Context:"
+          ~xalign:0.0 ~yalign:0.0
+          ~xpad:5 ~ypad:5
+          () in
+        let residue_scrolled = create_scrolled_win residue_view in
+        let vbox = GPack.vbox () in
+        vbox#pack ~expand:false label#coerce;
+        vbox#pack ~expand:true residue_scrolled#coerce;
+         let hpaned = GPack.paned `VERTICAL () in
+        hpaned#set_position 380;
         hpaned#pack1 vbox#coerce;
-        hpaned#pack2 ~resize:true ~shrink:true residue_panel#coerce;
+        hpaned#pack2 ~resize:true ~shrink:true proof_panel#coerce;
         hpaned
       in
       let main_panel =
-        let vpaned = GPack.paned `VERTICAL () in
-        vpaned#set_position 450;
+        let vpaned = GPack.paned `HORIZONTAL () in
+        vpaned#set_position 550;
         vpaned#pack1 ~resize:true ~shrink:true source_view#coerce;
-        vpaned#pack2 entail_panel#coerce;
+        vpaned#pack2 context_panel#coerce;
         vpaned
       in
       (* arrange components on main window *)
@@ -107,12 +114,13 @@ class mainwindow () =
         ~callback:self#source_changed_handler);
       ignore (source_view#connect#undo ~callback:self#source_changed_handler);
       ignore (source_view#connect#redo ~callback:self#source_changed_handler);
+(*
       ignore (source_view#event#connect#focus_out
         ~callback:(fun _ -> self#update_entailment_list (); false));
       ignore (entailment_list#selection#connect#changed
         ~callback:self#check_selected_entailment);
       entailment_list#set_checkall_handler self#run_all_handler;
-
+*)
 
     (** Setup UIManager for creating Menubar and Toolbar *)
     method setup_ui_manager () =
@@ -216,7 +224,7 @@ class mainwindow () =
       source_view#source_buffer#set_modified false;
       source_view#source_buffer#end_not_undoable_action ();
       self#update_original_digest ();
-      entailment_list#update_source new_src;
+(*      entailment_list#update_source new_src;*)
       residue_view#buffer#set_text ""
       
     method private string_of_current_file () =
@@ -263,6 +271,9 @@ class mainwindow () =
       let tp_name = TP.name_of_tp tp in
       log (Printf.sprintf "Use %s as backend prover." tp_name)
 
+    method save_current_proof ?(force=false) () =
+      ()
+(*
     method check_selected_entailment ?(force=false) () =
       let entail = entailment_list#get_selected_entailment () in
       match entail with
@@ -277,7 +288,7 @@ class mainwindow () =
             residue_view#buffer#set_text residue
           end
         end
-
+*)
     method show_debug_log () =
       let log = Debug.get_debug_log () in
       let win = match debug_log_window with
@@ -362,14 +373,14 @@ class mainwindow () =
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
       let src = self#get_text () in
-      entailment_list#check_all (fun e -> fst (SH.checkentail src e));
+   (*   entailment_list#check_all (fun e -> fst (SH.checkentail src e));*)
       source_view#hl_all_entailement ()
 
     (* Source buffer modified *)
     method private source_changed_handler () =
       self#update_win_title ();
       source_view#clear_highlight ()
-
+(*
     method private update_entailment_list () =
       entailment_list#misc#set_sensitive true;
       let source = self#get_text () in
@@ -377,7 +388,7 @@ class mainwindow () =
       if entailment_list#source_digest <> digest then begin
         entailment_list#update_source (self#get_text ())
       end
-
+*)
     method private quit () =
       if self#file_closing_check () then
         let _ = GMain.quit () in
