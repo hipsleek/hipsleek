@@ -1579,13 +1579,11 @@ let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula *
     let f,r = trans_formula e arg pf pa f_comb in
     (OnePF f,r)
     
-    
+(*find constraints in f that related to specvar in v_l*)    
 let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
   | MemoF f -> 
 MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
-  | OnePF f -> OnePF (find_rel_constraints f v_l)
-
-
+  | OnePF f -> OnePF (Cpure.find_rel_constraints f v_l)
   
   
 let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; memo_group_aset=[]}) f

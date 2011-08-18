@@ -4017,15 +4017,15 @@ let remove_true_conj_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
 
 (*remove v=v from formula*)
 let remove_true_conj_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
-  Gen.Debug.ho_1 "remove_true_conj_mix_formula" !print_mix_formula !print_mix_formula 
+  Gen.Debug.no_1 "remove_true_conj_mix_formula" !print_mix_formula !print_mix_formula 
       remove_true_conj_mix_formula_x f
-
+(*remove v=v from formula*)
 let remove_dupl_conj_eq_pure (p:CP.formula) =
   let ps = CP.split_conjunctions p in
   let ps1 = CP.remove_dupl_conj_eq ps in
   let ps2 = CP.join_conjunctions ps1 in 
   ps2
-
+(*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula = 
   (match f with
     | MCP.MemoF _ -> 
@@ -4033,12 +4033,30 @@ let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
         f
     | MCP.OnePF p_f -> (MCP.OnePF (remove_dupl_conj_eq_pure p_f))
   )
-
+(*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
-  Gen.Debug.ho_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
+  Gen.Debug.no_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
       remove_dupl_conj_eq_mix_formula_x f
 
+(*remove v=v from formula*)
+let remove_dupl_conj_eq_formula_x (f:formula):formula = 
+  let rec helper f = 
+  match f with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+        Or ({formula_or_f1 = helper f1; formula_or_f2 = helper f2; formula_or_pos = pos})
+    | Base b ->
+        let new_p = remove_dupl_conj_eq_mix_formula b.formula_base_pure in
+        Base {b with formula_base_pure=new_p}
+    | Exists b ->
+         let new_p = remove_dupl_conj_eq_mix_formula b.formula_exists_pure in
+        Exists {b with formula_exists_pure=new_p}
+  in helper f
+(*remove v=v from formula*)
+let remove_dupl_conj_eq_formula (f:formula):formula = 
+  Gen.Debug.no_1 "remove_dupl_conj_eq_formula" !print_formula !print_formula 
+      remove_dupl_conj_eq_formula_x f
 
+(*remove v=v from formula*)
 let remove_dupl_conj_estate (estate:entail_state) : entail_state = 
   let mix_f,rest = estate.es_pure in
   let mix_f1 = remove_dupl_conj_eq_mix_formula mix_f in

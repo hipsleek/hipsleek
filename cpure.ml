@@ -2540,12 +2540,14 @@ let rec break_implication (ante : formula) (conseq : formula) : ((formula * form
 (**************************************************************)
 (**************************************************************)
 
+(*find constraints in f that related to specvar in v_l*)  
 let find_rel_constraints (f:formula) desired :formula = 
  if desired=[] then (mkTrue no_pos)
  else 
    let lf = split_conjunctions f in
    let lf_pair = List.map (fun c-> ((fv c),c)) lf in
    let var_list = fst (List.split lf_pair) in
+   (*LDK: repeatedly collect vars that relate to desired vars*)
    let rec helper (fl:spec_var list) : spec_var list = 
     let nl = List.filter (fun c-> (Gen.BList.intersect_eq (=) c fl)!=[]) var_list in
     let nl = List.concat nl in
