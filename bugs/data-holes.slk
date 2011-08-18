@@ -6,6 +6,14 @@ data node {
 	node f5;	
 }.
 
+// The following syntactically are equivalent
+checkentail x.f5 = a |- x::node<#,#,#,#,a>.
+checkentail x::node<#,#,#,#,a> |- x.f5 = a.
+
+// So are the following
+checkentail x.f5::node<a,b,c,d,e> |- x::node<_,_,_,_,p> * p::node<a,b,c,d,e>.
+checkentail x::node<_,_,_,_,p> * p::node<a,b,c,d,e> |- x.f5::node<a,b,c,d,e>. 
+
 checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
 print residue.
 
