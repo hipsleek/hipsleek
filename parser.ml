@@ -632,6 +632,16 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)
+	(* An Hoa : Abbreviated syntax *)
+  | peek_heap; c=cid; `COLONCOLON; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+    (match hl with
+        | ([],t) -> F.mkHeapNode2 c "_to_infer_" true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c "_to_infer_" true false false false t ofl (get_pos_camlp4 _loc 2))
+  | peek_heap; c=cid; `COLONCOLON; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
+    (match hal with
+      | ([],t) -> F.mkHeapNode2 c "_to_infer_" false false false false t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c "_to_infer_" false false false false t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
