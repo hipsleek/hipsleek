@@ -41,6 +41,9 @@ open Gen.Basic
 (* An Hoa : Counting of holes "#" *)
 let hash_count = ref 0
 
+(* An Hoa : Generic data type for the abbreviated syntax x.f::<a> *)
+let generic_pointer_type_name = "_GENERIC_POINTER_"
+
 let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();
 				 end_pos = Parsing. symbol_end_pos ();
@@ -633,15 +636,15 @@ simple_heap_constr:
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)
-	(* An Hoa : Abbreviated syntax *)
+	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
   | peek_heap; c=cid; `COLONCOLON; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
     (match hl with
-        | ([],t) -> F.mkHeapNode2 c "_to_infer_" true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c "_to_infer_" true false false false t ofl (get_pos_camlp4 _loc 2))
+        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name true false false false t ofl (get_pos_camlp4 _loc 2))
   | peek_heap; c=cid; `COLONCOLON; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c "_to_infer_" false false false false t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c "_to_infer_" false false false false t ofl (get_pos_camlp4 _loc 2))
+      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   

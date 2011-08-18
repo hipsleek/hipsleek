@@ -822,6 +822,12 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
 
 (* look up functions *)
 
+(** An Hoa:
+ *  Returns a list of data types which possess a field_name specified.
+ *  TODO : IMPLEMENT
+ **)
+let look_up_types_containing_field (defs : data_decl list) (field_name : ident) = []
+
 let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def pos rest name
   | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}

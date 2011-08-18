@@ -3703,7 +3703,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                           CF.h_formula_data_name = c;
 		                  CF.h_formula_data_imm = imm;
 		                  CF.h_formula_data_arguments = hvars;
-							CF.h_formula_data_holes = holes; (* An Hoa : Don't know what to do *)
+							CF.h_formula_data_holes = holes; (* An Hoa : Set the hole *)
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;
                           CF.h_formula_data_pruning_conditions = [];
@@ -5109,7 +5109,61 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_arguments = ies;
                 IF.h_formula_heap_pos = pos
 	        } ->
-	      let dname =
+			let _ = print_endline ("[gather_type_info_heap_x] : " ^ Iprinter.string_of_h_formula h0) in
+			(* An Hoa : WORKING POSITION Deal with the generic pointer! *)
+			if (c = Parser.generic_pointer_type_name) then 
+				(* Assumptions:
+				 * (i)  ies to contain a single argument, namely the value of the pointer
+				 * (ii) the head of the heap node is of form "V[.TypeOfV].FieldAccess"
+				 *      where [.TypeOfV] is optional type of V. If it is present, it is
+				 *      the type of V pointer. Otherwise, we try to find this information
+				 *      based on its fields.
+				 * (iii) Temporarily assume that only one field; the case of inline fields
+				 *      will be dealt with later.
+				 *)
+				(* Step 1: Extract the main variable i.e. the root of the pointer *)
+				let _ = print_endline ("Pointer = " ^ v) in
+				let tokens = Str.split (Str.regexp "\.") v in
+				let _ = print_endline ("Tokens: [" ^ (String.concat "," tokens) ^ "]") in
+				let rootptr = List.hd tokens in
+				(* Step 2: Determine the type of [rootptr] and the field by looking 
+				 * up the current state of stab & information supplied by the user.
+				 *)
+				let s = List.nth tokens 1 in
+				let type_found,type_rootptr = try (* looking up in the list of data types *)
+					(* Good user provides type for [rootptr] ==> done! *)
+					let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
+					let _ = print_endline ("Root pointer type found: " ^ ddef.I.data_name) in
+						(true, Named ddef.I.data_name)
+				with 
+					| Not_found -> (false, UNK) (* Lazy user ==> perform type reasoning! *) in
+				(* After this, if type_found = false then we know that 
+				 * s is a name of field of some data type
+				 *)
+				let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
+				else try (* looking up in the collected types table for [rootptr] *)
+					let vi = H.find stab rootptr in
+					match vi.sv_info_kind with
+						| UNK -> (false,UNK)
+						| _ -> (true,vi.sv_info_kind) (* type of [rootptr] is known ==> done! *)
+				with
+					| Not_found -> (false,UNK) in
+				let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
+				else (* inferring the type from the name of the field *)
+					let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
+						if (List.length dts = 1) then
+							(* the field uniquely determines the data type ==> done! *)
+							(false, UNK)
+						else
+							(false, UNK) in
+				(* Step 3: Collect the remaining type information *)
+				if type_found then
+					(* Know the type of rootptr ==> Know the type of the field *)
+					()
+				else ()
+			else
+	      let dname = (* An Hoa : Leave the generic pointer alone! *)
+			if (c = Parser.generic_pointer_type_name) then c else
             (try
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
               in
@@ -5155,6 +5209,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                        Err.error_loc = pos;
 			                        Err.error_text = c ^ " is neither 2 a data nor view name";
 			                    })) in
+			(** [Internal function] **)
 	      let check_ie ie t =
             (match t with
               | Bool ->
@@ -5181,7 +5236,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
             Gen.Debug.no_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ
                 (fun _ _ _ -> check_ie ie t) ie t stab
           in 
-	      (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)
+			(* An Hoa : back to main function [gather_type_info_heap_x] *)
+		  (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)
           (if not (dname = "")
           then let _ = gather_type_info_var v stab ( (Named dname)) pos in ()
           else ();
