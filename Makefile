@@ -27,15 +27,35 @@ TMP_FILES_PATH = /tmp/$(shell id -un)/prover_tmp_files
 all: hip sleek decidez.vo prover
 #hip sleek prover prdebug decidez.vo
 
+gui: sleekgui decidez.vo
+
 norm: hip.norm sleek.norm  prover.norm decidez.vo
 
 rest: hip.norm sleek.norm prover.norm prdebug decidez.vo
 
 opt: hip sleek prover
 
+gEntailmentList.cmo: gProcList.cmo gEntailmentList.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gEntailmentList.ml
+
+gSourceViewX.cmo: gUtil.cmo gSourceViewX.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gSourceViewX.ml
+
+gUtil.cmo: gUtil.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gUtil.ml
+
+gProcList.cmo: gUtil.cmo gProcList.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gProcList.ml
+
+gLogViewWindow.cmo: gUtil.cmo gLogViewWindow.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gLogViewWindow.ml
+
+gsleek.cmo: gEntailmentList.cmo gSourceViewX.cmo gUtil.cmo gsleek.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gsleek.ml
+
 lexer.ml: lexer.mll token.ml
 	$(OCAMLLEX) lexer.mll
- 
+
 # dependencies of parser.ml needs to be manually specified
 parser.cmo: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
 	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
@@ -53,6 +73,15 @@ ocparser.cmo ocparser.ml: ocparser.mly
 oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLLEX) oclexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
+
+iparser.cmo iparser.ml: iparser.mly
+	$(OCAMLYACC) $(OCAMLYACCFLAGS) iparser.mly
+	rm iparser.mli
+	$(OCAMLC) $(OCAMLFLAGS) -c -g iparser.ml
+
+ilexer.cmo ilexer.ml: ilexer.mll iparser.ml
+	$(OCAMLLEX) ilexer.mll
+	$(OCAMLC) $(OCAMLFLAGS) -c -g ilexer.ml
 
 rlparser.cmo rlparser.ml: rlparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) rlparser.mly
@@ -136,6 +165,35 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 	sleekengine.cmo \
 	scriptarguments.cmo \
 	sleek.cmo
+
+SLEEK_GUI_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
+	iformula.cmo iast.cmo \
+	iprinter.cmo \
+  iastUtil.cmo \
+	rlparser.cmo rllexer.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+    net.cmo \
+	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
+  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
+  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
+	prooftracer.cmo context.cmo solver.cmo \
+	drawing.cmo \
+	env.cmo checks.cmo \
+	inliner.cmo \
+	astsimp.cmo \
+	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
+	typechecker.cmo \
+	xmlfront.cmo nativefront.cmo \
+	sleekengine.cmo \
+	scriptarguments.cmo \
+	sleek.cmo \
+	iparser.cmo ilexer.cmo \
+	gUtil.cmo \
+	gSourceViewX.cmo gProcList.cmo gLogViewWindow.cmo \
+	gEntailmentList.cmo \
+	gsleek.cmo
 
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
 
@@ -230,6 +288,9 @@ sleek.norm: xml/xml-light.cma decidez.vo $(SLEEK_FILES)
 
 sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(camlp4l) $(SLEEK_FILES_OPT)
+
+sleekgui: xml/xml-light.cma $(SLEEK_GUI_FILES) decidez.vo
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma xml/xml-light.cma $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma $(SLEEK_GUI_FILES)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa camlp4lib.cmxa $(SLEEK_FILES:*.cmo=*.cmx)

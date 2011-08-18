@@ -3,6 +3,7 @@
 
   open Globals
   open Iast
+  open Gen.Basic
 
   module F = Iformula
   module P = Ipure
@@ -1110,7 +1111,6 @@ bconstr
 ;
 
 /* constraint expressions */
---->line 1098
 cexp
   : additive_cexp { $1 }
   /* bags */
@@ -2236,17 +2236,17 @@ cast_expression
 		| _ -> report_error (get_pos 2) ("Expecting a type")
 	}
   | OPAREN INT CPAREN unary_expression { 
-		Cast { exp_cast_target_type = Prim Int;
+		Cast { exp_cast_target_type = Int;
 			   exp_cast_body = $4;
 			   exp_cast_pos = get_pos 1 }
 	  }
   | OPAREN BOOL CPAREN unary_expression { 
-		Cast { exp_cast_target_type = Prim Bool;
+		Cast { exp_cast_target_type = Bool;
 			   exp_cast_body = $4;
 			   exp_cast_pos = get_pos 1 }
 	  }
   | OPAREN FLOAT CPAREN unary_expression { 
-		Cast { exp_cast_target_type = Prim Float;
+		Cast { exp_cast_target_type = Float;
 			   exp_cast_body = $4;
 			   exp_cast_pos = get_pos 1 }
 	  }

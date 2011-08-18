@@ -211,6 +211,7 @@ let initialize () =
   ignore (GtkMain.Main.init ());
   Debug.devel_debug_on := true;
   Debug.log_devel_debug := true;
+(*
   Globals.reporter := (fun loc msg ->
     let pos = {
       SourceUtil.start_char = loc.start_pos.Lexing.pos_cnum;
@@ -220,6 +221,7 @@ let initialize () =
     } in
     raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
   );
+*)
   (*TP.enable_log_for_all_provers ();*)
   TP.start_prover ()
 
@@ -300,8 +302,10 @@ module SleekHelper = struct
     parse_checkentail_result res, res
 
   let parse_command_list (src: string) : SC.command list =
-    let lexbuf = Lexing.from_string src in
-    Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf
+    let lexbuf = Stream.of_string src in
+    Parser.parse_sleek "editor_buffer" lexbuf
+    (* let lexbuf = Lexing.from_string src in
+    Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf*)
 
   let process_cmd cmd = match cmd with
     | SC.DataDef ddef -> 
