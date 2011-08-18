@@ -50,7 +50,10 @@ gProcList.cmo: gUtil.cmo gProcList.ml
 gLogViewWindow.cmo: gUtil.cmo gLogViewWindow.ml
 	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gLogViewWindow.ml
 
-gsleek.cmo: gEntailmentList.cmo gSourceViewX.cmo gUtil.cmo gsleek.ml
+mainform.cmo: gEntailmentList.cmo gSourceViewX.cmo gUtil.cmo resource.cmo mainform.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma mainform.ml
+
+gsleek.cmo: mainform.cmo gsleek.ml
 	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gsleek.ml
 
 lexer.ml: lexer.mll token.ml
@@ -182,7 +185,8 @@ SLEEK_GUI_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils
 	sleek.cmo \
 	gUtil.cmo \
 	gSourceViewX.cmo gProcList.cmo gLogViewWindow.cmo \
-	gEntailmentList.cmo \
+	gEntailmentList.cmo resource.cmo \
+	mainform.cmo \
 	gsleek.cmo
 
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
