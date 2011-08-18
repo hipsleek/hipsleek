@@ -9,7 +9,7 @@ module CP = Cpure
 
 (* options *)
 let is_presburger = ref false
-let no_pseudo_ops = ref false
+let no_pseudo_ops = ref true
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref false
