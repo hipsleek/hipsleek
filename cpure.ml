@@ -133,6 +133,37 @@ let is_int_str_aux (n:int) (s:string) : bool =
     if (p=const_prefix) then true
     else false
 
+let rec is_float_exp exp = 
+  match exp with
+  | Var (v,_) -> is_float_var v (* check type *)
+  | FConst v -> true
+  | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _) -> (is_float_exp e1) || (is_float_exp e2)
+  | Div (e1, e2, _) -> true
+      (* Omega don't accept / operator, we have to manually transform the formula *)
+      (*
+      (match e2 with
+        | IConst _ -> is_linear_exp e1
+        | _ -> false)
+      *)
+  | _ -> false
+
+let is_float_bformula b = 
+  match b with
+  | Lt (e1, e2, _) | Lte (e1, e2, _) 
+  | Gt (e1, e2, _) | Gte (e1, e2, _)
+  | Eq (e1, e2, _) | Neq (e1, e2, _)
+      -> (is_float_exp e1) || (is_float_exp e2)
+  | EqMax (e1, e2, e3, _) | EqMin (e1, e2, e3, _)
+      -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
+  | _ -> false
+
+let rec is_float_formula f0 = 
+  match f0 with
+    | BForm (b,_) -> is_float_bformula b
+    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) ->
+        is_float_formula f;
+    | And (f1, f2, _) | Or (f1, f2, _,_) ->
+        (is_float_formula f1) || (is_float_formula f2)
 
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =

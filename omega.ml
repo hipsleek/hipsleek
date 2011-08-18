@@ -106,15 +106,18 @@ and omega_of_b_formula b = match b with
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
+  | _ -> failwith ("Omega.omega_of_b_formula: bag or list constraint")
  
-and omega_of_formula f  = match f with
+and omega_of_formula f  =
+  let rec helper f = 
+    match f with
   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
-  | And (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2 ) ^ ")"
-  | Or (p1, p2,_ , _) -> 	"(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
-  | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula p) ^ ")) "	
-  | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
-  | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
+  | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
+  | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+  | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	
+  | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+  | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+  in helper f
 
 
 let omegacalc = "oc"(* TODO: fix oc path *)

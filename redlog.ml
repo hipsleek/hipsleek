@@ -150,11 +150,18 @@ let send_and_receive f =
       | ex ->
         print_endline (Printexc.to_string ex);
         restart "Reduce crashed or something really bad happenned!";
-        ""
+        "1"
   else
-    ""
+    (restart "redlog has not started!!";
+    "2")
 
 	(* send formula to reduce/redlog and receive result *)
+
+
+let send_and_receive f =
+  Gen.Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
+      send_and_receive f
+
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
   if res = "true$" then
@@ -163,6 +170,10 @@ let check_formula f =
     Some false
   else
     None
+
+let check_formula f =
+  Gen.Debug.no_1 "check_formula" (fun s -> s) 
+      (pr_option string_of_bool) check_formula f 
 
 (* 
  * run func and return its result together with running time 
@@ -436,37 +447,6 @@ let rec is_linear_formula f0 =
 let is_linear_formula f0 =
   Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
-let rec is_float_exp exp = 
-  match exp with
-  | CP.Var (v,_) -> CP.is_float_var v (* check type *)
-  | CP.FConst v -> true
-  | CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) | CP.Mult (e1, e2, _) -> (is_float_exp e1) || (is_float_exp e2)
-  | CP.Div (e1, e2, _) -> true
-      (* Omega don't accept / operator, we have to manually transform the formula *)
-      (*
-      (match e2 with
-        | CP.IConst _ -> is_linear_exp e1
-        | _ -> false)
-      *)
-  | _ -> false
-
-let is_float_bformula b = 
-  match b with
-  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
-  | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
-  | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _)
-      -> (is_float_exp e1) || (is_float_exp e2)
-  | CP.EqMax (e1, e2, e3, _) | CP.EqMin (e1, e2, e3, _)
-      -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
-  | _ -> false
-
-let rec is_float_formula f0 = 
-  match f0 with
-    | CP.BForm (b,_) -> is_float_bformula b
-    | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
-        is_float_formula f;
-    | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
-        (is_float_formula f1) || (is_float_formula f2)
 
 let has_var_exp e0 =
   let f e = match e with
@@ -956,7 +936,7 @@ let rec elim_exists_with_ineq f0 =
   in elim_exists_helper core f0
 
 let elim_exists_with_ineq f =
-  Gen.Debug.ho_1 "elim_exists_with_ineq"
+  Gen.Debug.no_1 "elim_exists_with_ineq"
    !print_formula !print_formula elim_exists_with_ineq f
 
 
@@ -969,7 +949,7 @@ let elim_exist_quantifier f =
   f
 
 let elim_exist_quantifier f =
-  Gen.Debug.ho_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
+  Gen.Debug.no_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
 
 
 (*********************************
@@ -1029,7 +1009,9 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
-    let sf = if !no_pseudo_ops then f else strengthen_formula f in
+    let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
+    then f 
+    else strengthen_formula f in
     let frl = rl_of_formula sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
     let runner () = check_formula rl_input in
@@ -1038,6 +1020,11 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
     let res, time = call_redlog proc in
     let sat = options_to_bool (Some res) true in (* default is SAT *)
     (sat, time)
+
+let is_sat_no_cache f sat_no =
+  Gen.Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
+      (fun (b,_) -> string_of_bool b)
+      (fun _ -> is_sat_no_cache f sat_no) f 
 
 let is_sat f sat_no =
   let sf = simplify_var_name (normalize_formula f) in
@@ -1062,6 +1049,10 @@ let is_sat f sat_no =
   log DEBUG (if res then "SAT" else "UNSAT");
   res
 
+let is_sat f sat_no =
+  Gen.Debug.no_1 "is_sat (redlog)" !print_formula string_of_bool 
+      (fun _ -> is_sat f sat_no) f 
+
 let is_valid f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula f in
@@ -1079,7 +1070,7 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
-    let wf = if !no_pseudo_ops then f else weaken_formula f in
+    let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
     is_valid wf imp_no    in
    let res = 
     if is_linear_formula f then
@@ -1123,7 +1114,7 @@ let imply ante conseq imp_no =
   res
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
-  if (is_float_formula f) then
+  if (CP.is_float_formula f) then
     (* do a manual existential elimination *)
     elim_exist_quantifier f
   else 
@@ -1137,7 +1128,7 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)
-  Gen.Debug.ho_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
+  Gen.Debug.no_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
 
 let simplify (f: CP.formula) : CP.formula =
   if is_linear_formula f then 
