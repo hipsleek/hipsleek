@@ -74,15 +74,6 @@ oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLLEX) oclexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
 
-iparser.cmo iparser.ml: iparser.mly
-	$(OCAMLYACC) $(OCAMLYACCFLAGS) iparser.mly
-	rm iparser.mli
-	$(OCAMLC) $(OCAMLFLAGS) -c -g iparser.ml
-
-ilexer.cmo ilexer.ml: ilexer.mll iparser.ml
-	$(OCAMLLEX) ilexer.mll
-	$(OCAMLC) $(OCAMLFLAGS) -c -g ilexer.ml
-
 rlparser.cmo rlparser.ml: rlparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) rlparser.mly
 	rm rlparser.mli
@@ -189,7 +180,6 @@ SLEEK_GUI_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils
 	sleekengine.cmo \
 	scriptarguments.cmo \
 	sleek.cmo \
-	iparser.cmo ilexer.cmo \
 	gUtil.cmo \
 	gSourceViewX.cmo gProcList.cmo gLogViewWindow.cmo \
 	gEntailmentList.cmo \

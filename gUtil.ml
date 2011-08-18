@@ -173,7 +173,8 @@ module SourceUtil = struct
     in
     let lexbuf = Lexing.from_string src in
     try
-      let prog = Iparser.program (Ilexer.tokenizer "editor_buffer") lexbuf in
+      (*let prog = Iparser.program (Ilexer.tokenizer "editor_buffer") lexbuf in*)
+      let prog = Parser.parse_hip "editor_buffer" (Stream.of_string src) in
       let procs = prog.Iast.prog_proc_decls in
       List.rev_map parse procs
     with Parsing.Parse_error ->
