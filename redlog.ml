@@ -4,12 +4,13 @@
  *)
 
 open Globals
+open Gen.Basic
 module CP = Cpure
 
 
 (* options *)
 let is_presburger = ref false
-let no_pseudo_ops = ref false
+let no_pseudo_ops = ref true
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref false
@@ -40,6 +41,8 @@ let cached_count = ref 0
 let prompt_regexp = Str.regexp "^[0-9]+:$"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+
+let print_formula = ref (fun (c:CP.formula) -> "cpure printer has not been initialized")
 
 
 (**********************
@@ -148,11 +151,18 @@ let send_and_receive f =
       | ex ->
         print_endline (Printexc.to_string ex);
         restart "Reduce crashed or something really bad happenned!";
-        ""
+        "1"
   else
-    ""
+    (restart "redlog has not started!!";
+    "2")
 
 	(* send formula to reduce/redlog and receive result *)
+
+
+let send_and_receive f =
+  Gen.Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
+      send_and_receive f
+
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
   if res = "true$" then
@@ -161,6 +171,10 @@ let check_formula f =
     Some false
   else
     None
+
+let check_formula f =
+  Gen.Debug.no_1 "check_formula" (fun s -> s) 
+      (pr_option string_of_bool) check_formula f 
 
 (* 
  * run func and return its result together with running time 
@@ -431,6 +445,10 @@ let rec is_linear_formula f0 =
     | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
         (is_linear_formula f1) && (is_linear_formula f2)
 
+let is_linear_formula f0 =
+  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
+
+
 let has_var_exp e0 =
   let f e = match e with
     | CP.Var _ -> Some true
@@ -694,6 +712,10 @@ let find_bound_b_formula v b0 =
   else (None, None)
 
 let rec find_bound v f0 =
+  if CP.is_float_var v 
+  then (* do not give bound for floating point type *)
+    (None,None)
+  else 
   let f0 = strengthen_formula f0 in (* replace gt,lt with gte,lte to be able to find bound *)
   match f0 with
   | CP.And (f1, f2, _) ->
@@ -975,6 +997,7 @@ and elim_exists_max f0 =
   in elim_exists_helper core f0
   
 let rec elim_exists_with_ineq f0 =
+  (* caveat : do not hanlde for float *)
   let core qvar qf lbl pos =
     let min, max = find_bound qvar qf in
     begin
@@ -991,6 +1014,11 @@ let rec elim_exists_with_ineq f0 =
     end
   in elim_exists_helper core f0
 
+let elim_exists_with_ineq f =
+  Gen.Debug.no_1 "elim_exists_with_ineq"
+   !print_formula !print_formula elim_exists_with_ineq f
+
+
 let elim_exist_quantifier f =
   let _ = incr ee_call_count in
   let f = elim_exists_with_eq f in
@@ -998,6 +1026,10 @@ let elim_exist_quantifier f =
   let f = elim_exists_max f in
   let f = elim_exists_with_ineq f in 
   f
+
+let elim_exist_quantifier f =
+  Gen.Debug.no_1 "elim_exist_quantifier" !print_formula !print_formula elim_exist_quantifier f
+
 
 (*********************************
  * formula normalization stuffs
@@ -1056,7 +1088,9 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
-    let sf = if !no_pseudo_ops then f else strengthen_formula f in
+    let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
+    then f 
+    else strengthen_formula f in
     let frl = rl_of_formula sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
     let runner () = check_formula rl_input in
@@ -1065,6 +1099,11 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
     let res, time = call_redlog proc in
     let sat = options_to_bool (Some res) true in (* default is SAT *)
     (sat, time)
+
+let is_sat_no_cache f sat_no =
+  Gen.Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
+      (fun (b,_) -> string_of_bool b)
+      (fun _ -> is_sat_no_cache f sat_no) f 
 
 let is_sat f sat_no =
   let sf = simplify_var_name (normalize_formula f) in
@@ -1117,12 +1156,11 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
-    (*   (\*LDK*\) *)
+    let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
     (* let _ = print_string ("[Redlog] imply_no_cache: " *)
     (*                       ^ "\n f = " ^ (string_of_formula f) *)
     (*                       ^ "\n\n") in *)
 
-    let wf = if !no_pseudo_ops then f else weaken_formula f 
     in
     (* let _ = print_string ("[Redlog] imply_no_cache: " *)
     (*                       ^ "\n (weakened) wf = " ^ (string_of_formula wf) *)
@@ -1212,21 +1250,33 @@ let imply ante conseq imp_no =
   Gen.Debug.no_3 "[Redlog] imply" string_of_formula string_of_formula (fun c -> c) string_of_bool imply ante conseq imp_no
 
 
+let simplify_with_redlog (f: CP.formula) : CP.formula  =
+  if (CP.is_float_formula f) then
+    (* do a manual existential elimination *)
+    elim_exist_quantifier f
+  else 
+    let rlf = rl_of_formula (normalize_formula f) in
+    let _ = send_cmd "rlset pasf" in
+    let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in 
+    let _ = send_cmd "rlset ofsf" in
+    let lexbuf = Lexing.from_string redlog_result in
+    let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
+    simpler_f
+
+let simplify_with_redlog (f: CP.formula) : CP.formula  =
+  (* let pr = pr_pair !print_formula string_of_bool in *)
+  Gen.Debug.no_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
+
 let simplify (f: CP.formula) : CP.formula =
   if is_linear_formula f then 
     Omega.simplify f 
-  else if !no_simplify then 
+  else if (!no_simplify) then 
     f
    else
     try
-      let rlf = rl_of_formula (normalize_formula f) in
-      let _ = send_cmd "rlset pasf" in
-      let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in
-      let _ = send_cmd "rlset ofsf" in
-      let lexbuf = Lexing.from_string redlog_result in
-      let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
+      let simpler_f = simplify_with_redlog f in
       let simpler_f = 
-        if is_linear_formula simpler_f then
+        if (is_linear_formula simpler_f) then
           Omega.simplify simpler_f
         else
           simpler_f

@@ -575,7 +575,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Null l -> fmt_string "null"
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
-    | P.FConst (f, l) -> fmt_float f
+    | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           pr_list_op op_add f_b args
@@ -1905,6 +1905,7 @@ Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
+Redlog.print_formula := string_of_pure_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_mix_f := string_of_mix_formula;;

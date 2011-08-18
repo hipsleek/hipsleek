@@ -107,6 +107,8 @@ let full_name_of_spec_var (sv : spec_var) : ident = match sv with
 let type_of_spec_var (sv : spec_var) : typ = match sv with
   | SpecVar (t, _, _) -> t
 
+let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
+
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
 
@@ -135,6 +137,37 @@ let is_int_str_aux (n:int) (s:string) : bool =
     if (p=const_prefix) then true
     else false
 
+let rec is_float_exp exp = 
+  match exp with
+  | Var (v,_) -> is_float_var v (* check type *)
+  | FConst v -> true
+  | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _) -> (is_float_exp e1) || (is_float_exp e2)
+  | Div (e1, e2, _) -> true
+      (* Omega don't accept / operator, we have to manually transform the formula *)
+      (*
+      (match e2 with
+        | IConst _ -> is_linear_exp e1
+        | _ -> false)
+      *)
+  | _ -> false
+
+let is_float_bformula b = 
+  match b with
+  | Lt (e1, e2, _) | Lte (e1, e2, _) 
+  | Gt (e1, e2, _) | Gte (e1, e2, _)
+  | Eq (e1, e2, _) | Neq (e1, e2, _)
+      -> (is_float_exp e1) || (is_float_exp e2)
+  | EqMax (e1, e2, e3, _) | EqMin (e1, e2, e3, _)
+      -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
+  | _ -> false
+
+let rec is_float_formula f0 = 
+  match f0 with
+    | BForm (b,_) -> is_float_bformula b
+    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) ->
+        is_float_formula f;
+    | And (f1, f2, _) | Or (f1, f2, _,_) ->
+        (is_float_formula f1) || (is_float_formula f2)
 
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =
@@ -458,8 +491,11 @@ and is_null (e : exp) : bool = match e with
   | Null _ -> true
   | _ -> false
 
-and is_zero (e : exp) : bool = match e with
+and is_zero_int (e : exp) : bool = match e with
   | IConst (0, _) -> true
+  | _ -> false
+
+and is_zero_float (e : exp) : bool = match e with
   | FConst (0.0, _) -> true
 
   (* (\*LDK*\) *)
@@ -3078,11 +3114,12 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
              (None, (Some ( IConst (- v, l))))
            else (None, None)
     | FConst (v, l) ->
-          if v > 0.0 then
+          if v >= 0.0 then
             ((Some e), None)
-          else if v < 0.0 then
+          else 
+            (* if v < 0.0 then *)
             ((None, (Some (FConst (-. v, l)))))
-          else (None, None)
+          (* else (None, None) *)
     |  Add (e1, e2, l) ->
            let (ts1, tm1) = split_sums e1 in
            let (ts2, tm2) = split_sums e2 in
@@ -3328,7 +3365,11 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
 	|  ArrayAt (a, i, l) -> ArrayAt (a, purge_mult i, l) (* An Hoa *)
 
-and b_form_simplify (b:b_formula) :b_formula = 
+and b_form_simplify (pf : b_formula) :  b_formula =   
+  Gen.Debug.no_1 "b_form_simplify " !print_b_formula !print_b_formula 
+      b_form_simplify_x pf
+
+and b_form_simplify_x (b:b_formula) :b_formula = 
   let do_all e1 e2 l =
 	let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
@@ -4018,7 +4059,8 @@ and norm_exp (e:exp) =
     | Mult (e1,e2,l) -> 
           let e1=helper e1 in 
           let e2=helper e2 in
-          if (is_zero e1 || is_zero e2) then IConst(0,l)
+          if (is_zero_int e1 || is_zero_int e2) then IConst(0,l)
+          else if (is_zero_float e1 || is_zero_float e2) then FConst(0.0,l)
           else two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l
     | Div (e1,e2,l) -> if is_one e2 then e1 else Div (helper e1,helper e2,l)
     | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
@@ -5242,6 +5284,9 @@ let is_linear_formula f0 =
       | _ -> None
   in
   fold_formula f0 (nonef, f_bf, f_e) and_list
+
+let is_linear_formula f0 =
+  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 let is_linear_exp e0 =
   let f e =

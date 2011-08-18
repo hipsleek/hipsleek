@@ -25,7 +25,9 @@ type tp_type =
   | Redlog
   | RM (* Redlog and Mona *)
 
-let tp = ref OmegaCalc
+(* let tp = ref OmegaCalc *)
+let tp = ref Redlog
+
 let proof_no = ref 0
 let provers_process = ref None
 
@@ -595,11 +597,13 @@ let simplify_var_name (e: CP.formula) : CP.formula =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   match !tp with
-  | OmegaCalc ->
-      begin
-        (Omega.is_sat f sat_no);
-      end
-  | CvcLite -> Cvclite.is_sat f sat_no
+    | OmegaCalc ->
+          if (CP.is_float_formula f) then (Redlog.is_sat f sat_no)
+          else
+            begin
+              (Omega.is_sat f sat_no);
+            end
+    | CvcLite -> Cvclite.is_sat f sat_no
     | Cvc3 -> 
           begin
             match !provers_process with
@@ -607,64 +611,64 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
               | _ -> Cvc3.is_sat f sat_no
                     (* Cvc3.is_sat f sat_no *)
           end
-  | Z3 -> Smtsolver.is_sat f sat_no
-  | Isabelle -> Isabelle.is_sat f sat_no
-  | Coq -> (*Coq.is_sat f sat_no*)
-      if (is_list_constraint f) then
-        begin
-          (Coq.is_sat f sat_no);
-        end
-      else
-        begin
-          (Omega.is_sat f sat_no);
-        end
-  | Mona | MonaH -> Mona.is_sat f sat_no
-  | CO -> 
-      begin
-        let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
-        match result1 with
-        | Some f -> f
-        | None ->
-            omega_count := !omega_count + 1;
-            (Omega.is_sat f sat_no)
-      end
-  | CM -> 
-      begin
-        if (is_bag_constraint f) then
-          (Mona.is_sat f sat_no)
-        else
-          let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
-          match result1 with
-          | Some f -> f
-          | None ->
-              omega_count := !omega_count + 1;
-              (Omega.is_sat f sat_no)
-      end
-  | OM ->
-      if (is_bag_constraint f) then
-        begin
-          (Mona.is_sat f sat_no);
-        end
-      else
-        begin
-          (Omega.is_sat f sat_no);
-        end
-  | OI ->
-      if (is_bag_constraint f) then
-        begin
-          (Isabelle.is_sat f sat_no);
-        end
-      else
-        begin
-          (Omega.is_sat f sat_no);
-        end
-  | SetMONA -> Setmona.is_sat f
-  | Redlog -> Redlog.is_sat f sat_no
-  | RM ->
-      if (is_bag_constraint f) then
-        Mona.is_sat f sat_no
-      else
-        Redlog.is_sat f sat_no
+    | Z3 -> Smtsolver.is_sat f sat_no
+    | Isabelle -> Isabelle.is_sat f sat_no
+    | Coq -> (*Coq.is_sat f sat_no*)
+          if (is_list_constraint f) then
+            begin
+              (Coq.is_sat f sat_no);
+            end
+          else
+            begin
+              (Omega.is_sat f sat_no);
+            end
+    | Mona | MonaH -> Mona.is_sat f sat_no
+    | CO -> 
+          begin
+            let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
+            match result1 with
+              | Some f -> f
+              | None ->
+                    omega_count := !omega_count + 1;
+                    (Omega.is_sat f sat_no)
+          end
+    | CM -> 
+          begin
+            if (is_bag_constraint f) then
+              (Mona.is_sat f sat_no)
+            else
+              let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
+              match result1 with
+                | Some f -> f
+                | None ->
+                      omega_count := !omega_count + 1;
+                      (Omega.is_sat f sat_no)
+          end
+    | OM ->
+          if (is_bag_constraint f) then
+            begin
+              (Mona.is_sat f sat_no);
+            end
+          else
+            begin
+              (Omega.is_sat f sat_no);
+            end
+    | OI ->
+          if (is_bag_constraint f) then
+            begin
+              (Isabelle.is_sat f sat_no);
+            end
+          else
+            begin
+              (Omega.is_sat f sat_no);
+            end
+    | SetMONA -> Setmona.is_sat f
+    | Redlog -> Redlog.is_sat f sat_no
+    | RM ->
+          if (is_bag_constraint f) then
+            Mona.is_sat f sat_no
+          else
+            Redlog.is_sat f sat_no
 
 let tp_is_sat_no_cache_debug f sat_no =
   Gen.Debug.no_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
@@ -905,62 +909,66 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
   match !tp with
-  | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
-  | CvcLite -> Cvclite.imply ante conseq
+    | OmegaCalc -> 
+          if (CP.is_float_formula ante) || (CP.is_float_formula conseq) 
+          then  Redlog.imply ante conseq imp_no
+          else
+            (Omega.imply ante conseq (imp_no^"XX") timeout)
+    | CvcLite -> Cvclite.imply ante conseq
     | Cvc3 -> begin
-          match process with
-            | Some (Some proc, _) -> Cvc3.imply_increm process ante conseq imp_no
-            | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
-            (* Cvc3.imply ante conseq imp_no *)
+        match process with
+          | Some (Some proc, _) -> Cvc3.imply_increm process ante conseq imp_no
+          | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
+                (* Cvc3.imply ante conseq imp_no *)
       end
-  | Z3 -> Smtsolver.imply ante conseq
-  | Isabelle -> Isabelle.imply ante conseq imp_no
+    | Z3 -> Smtsolver.imply ante conseq
+    | Isabelle -> Isabelle.imply ante conseq imp_no
     | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
 		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-  | Mona | MonaH -> Mona.imply ante conseq imp_no 
-  | CO -> 
-      begin
+    | Mona | MonaH -> Mona.imply ante conseq imp_no 
+    | CO -> 
+          begin
             let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
-        match result1 with
-        | Some f -> f
-        | None -> (* CVC Lite is not sure is this case, try Omega *)
-            omega_count := !omega_count + 1;
-            Omega.imply ante conseq imp_no timeout
-      end
-  | CM -> 
-      begin
-        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          Mona.imply ante conseq imp_no
-        else
+            match result1 with
+              | Some f -> f
+              | None -> (* CVC Lite is not sure is this case, try Omega *)
+                    omega_count := !omega_count + 1;
+                    Omega.imply ante conseq imp_no timeout
+          end
+    | CM -> 
+          begin
+            if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+              Mona.imply ante conseq imp_no
+            else
               let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
-          match result1 with
-          | Some f -> f
-          | None -> (* CVC Lite is not sure is this case, try Omega *)
-              omega_count := !omega_count + 1;
-              Omega.imply ante conseq imp_no timeout
-      end
-  | OM ->
-	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(called_prover :="mona " ; Mona.imply ante conseq imp_no)
-	  else
-		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-  | OI ->
-      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-        (Isabelle.imply ante conseq imp_no)
-      else
-        (Omega.imply ante conseq imp_no timeout)
-  | SetMONA -> Setmona.imply ante conseq 
+              match result1 with
+                | Some f -> f
+                | None -> (* CVC Lite is not sure is this case, try Omega *)
+                      omega_count := !omega_count + 1;
+                      Omega.imply ante conseq imp_no timeout
+          end
+    | OM ->
+	      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+		    (called_prover :="mona " ; Mona.imply ante conseq imp_no)
+	      else
+		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
+    | OI ->
+          if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+            (Isabelle.imply ante conseq imp_no)
+          else
+            (Omega.imply ante conseq imp_no timeout)
+    | SetMONA -> Setmona.imply ante conseq 
   | Redlog -> 
       (* let _ = print_string ("tp_imply_no_cache: Redlog \n") in *)
       Redlog.imply ante conseq imp_no 
-  | RM -> 
-      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-        Mona.imply ante conseq imp_no
-      else
-        Redlog.imply ante conseq imp_no
+    | RM -> 
+          if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+            Mona.imply ante conseq imp_no
+          else
+            Redlog.imply ante conseq imp_no
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   Gen.Debug.no_5 "tp_imply_no_cache" 
@@ -1464,7 +1472,7 @@ let is_sat_sub_no_with_slicing (f:CP.formula) sat_subno : bool =
   List.fold_left (fun a f -> if not a then a else is_sat_sub_no_c f sat_subno false) true n_f_l 
 
 
-let is_sat_sub_no_debug (f : CP.formula) sat_subno : bool =  
+let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
   Gen.Debug.no_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 
@@ -1510,6 +1518,7 @@ let print_stats () =
 
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
+  Redlog.start ();
   match !tp with
   | Coq -> begin
       Coq.start ();
@@ -1518,7 +1527,7 @@ let start_prover () =
   | Redlog | RM -> 
       begin
       (* print_string "[Debug] start_prover: inside \n"; (\*LDK*\) *)
-      Redlog.start ();
+      (* Redlog.start (); *)
 	  Omega.start ();
 	 end
   | Cvc3 -> 

@@ -36,6 +36,8 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
+	  ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
+		"Do unfolding when there are duplicated pointers."); (* An Hoa *)
 	  ("--ahwytdi", Arg.Set Smtsolver.try_induction,
 		"Try induction in case of failure implication."); (* An Hoa *)
     ("--smtimply", Arg.Set Smtsolver.print_implication,
@@ -159,7 +161,7 @@ let common_arguments = [
 	"<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
 	("--decrprio",Arg.Set Tpdispatcher.decr_priority , 
 	"use a decreasing priority scheme");
-	("--rl-no-pseudo-ops", Arg.Set Redlog.no_pseudo_ops, 
+	("--rl-no-pseudo-ops", Arg.Clear Redlog.no_pseudo_ops, 
 	"Do not pseudo-strengthen/weaken formulas before send to Redlog");
 	("--rl-no-ee", Arg.Set Redlog.no_elim_exists, 
 	"Do not try to eliminate existential quantifier with Redlog");
@@ -256,3 +258,6 @@ let sleek_arguments = common_arguments @ sleek_specific_arguments
 
 (* all arguments and flags used in the gui*)	
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments
+;;
+
+Astsimp.inter := !inter;;

@@ -124,7 +124,7 @@ let check_data_pred_name name :bool =
 (*   end *)
 
 let process_pred_def pdef = 
-    
+  (* TODO : how come this method not called? *)
   (* let _ = print_string ("process_pred_def:" *)
   (*                       ^ "\n\n") in *)
 
@@ -141,8 +141,9 @@ let process_pred_def pdef =
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
         (* let _ = print_string ("process_pred_def: before trans_view" *)
-        (*                       ^ "\n\n") in *)
-
+       (*                       ^ "\n\n") in *)
+		let _ = if !Globals.print_input then print_string (Iprinter.string_of_view_decl new_pdef ^"\n") else () in
+ 
 		let cpdef = AS.trans_view iprog new_pdef in
 		let old_vdec = !cprog.C.prog_view_decls in
 		!cprog.C.prog_view_decls <- (cpdef :: !cprog.C.prog_view_decls);
@@ -166,6 +167,7 @@ let process_pred_def pdef =
     let n_cpdef = {n_cpdef with 
         C.view_formula =  Solver.prune_pred_struc !cprog true n_cpdef.C.view_formula ;
         C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds !cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
+        let _ = if !Globals.print_input then print_string "TODO : print input AST here(2)!" in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		!cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
@@ -221,6 +223,7 @@ let convert_pred_to_cast () =
   let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then AS.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else cprog4 in
+  let _ = if !Globals.print_input then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if !Globals.print_core then print_string (Cprinter.string_of_program cprog5) else () in
   (* let _ = print_string ("convert_pred_to_cast: end" *)
   (*                       ^ "\n\n") in *)
@@ -272,6 +275,7 @@ let process_data_def ddef =
 	(* let _ = Iast.build_exc_hierarchy true iprog in *)
 	(* let _ = Gen.ExcNumbering.compute_hierarchy 2 () in *)
 	let cddef = AS.trans_data iprog ddef in
+	let _ = if !Globals.print_input then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	  !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls
       with
@@ -280,6 +284,14 @@ let process_data_def ddef =
         dummy_exception() ;
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
+
+(** An Hoa : Second stage of parsing : iprog already contains the whole input.
+             We do a reparse in order to distinguish between data & enum that
+             is deferred in case of mutually dependent data definition.
+ **)
+let perform_second_parsing_stage () =
+	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
+		!cprog.C.prog_data_decls <- cddefs
 	
 let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
   let rec helper (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
@@ -514,7 +526,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
   (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
-
+  let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
   (* let _ = print_string ("\n ctx = "^(Cprinter.string_of_context ctx)^"\n\n\n") in *)
 
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
@@ -567,7 +579,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
         in
         print_string (num_id^"=Fail."^s^"\n")
         (*if !Globals.print_err_sleek then *)
-          ;print_string ("printing here: "^(Cprinter.string_of_list_context rs))
+          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
     else
       begin
@@ -619,6 +631,8 @@ let process_lemma ldef =
 
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  (* TODO : WN print input_ast *)
+  let _ = if !Globals.print_input then print_string "TODO : print input AST here(3)!" in
   let _ = if !Globals.print_core then 
     print_string ((Cprinter.string_of_coerc_decl_list l2r) ^"\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
 	!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;

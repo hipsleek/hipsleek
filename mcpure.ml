@@ -1450,6 +1450,7 @@ let merge_mems_debug f1 f2 slice_dup =
   | MemoF f -> ptr_equations_aux_mp with_null f
   | OnePF f -> pure_ptr_equations f
  
+(* type: mix_formula -> (Cpure.EMapSV.elem * Cpure.EMapSV.elem) list *)
  let ptr_equations_with_null f = ptr_equations_aux true f
  
  let ptr_equations_with_null f = 
