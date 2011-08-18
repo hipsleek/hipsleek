@@ -260,6 +260,7 @@ let omega_subst_lst = ref ([]: (string*string*typ) list)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_formula_list = ref (fun (c:formula list) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 
@@ -1833,16 +1834,47 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
    TODO : push exists inside where possible..
 *)
-and list_of_conjs (f0 : formula) : formula list =
-  let rec helper f conjs = match f with
-    | And (f1, f2, pos) ->
-          let tmp1 = helper f2 conjs in
-          let tmp2 = helper f1 tmp1 in
-          tmp2
-    | _ -> f :: conjs
-  in
-  helper f0 []
+(* and list_of_conjs_x (f0 : formula) : formula list = *)
+(*   let rec helper f conjs = match f with *)
+(*     | And (f1, f2, pos) -> *)
+(*           let tmp1 = helper f2 conjs in *)
+(*           let tmp2 = helper f1 tmp1 in *)
+(*           tmp2 *)
+(*     | _ -> f :: conjs *)
+(*   in *)
+(*   helper f0 [] *)
 
+(* push exists inside where possible..*)
+and list_of_conjs_x (f0 : formula) : formula list =
+  (*lists of conjs: bounded AND not bounded by evars*)
+  let rec helper f (evars:spec_var list): formula list * formula list =
+    match f with
+      | And (f1, f2, pos) ->
+          let _,tmp1_wo = helper f1 [] in
+          let _,tmp2_wo = helper f2 [] in
+          let tmp = tmp1_wo@tmp2_wo in
+          let l1,l2 = List.partition (fun f0 -> ((Gen.BList.intersect_eq (=) (fv f0) evars) !=[])) tmp in
+          (l1,l2)
+      | Exists (v,f,lbl,pos) ->
+          let conjs_w, conjs_wo = helper f [v] in
+          let cnj = join_conjunctions conjs_w in
+          let exists_f = mkExists [v] cnj lbl pos in
+          let fl = exists_f::conjs_wo in
+          let l1,l2 = List.partition (fun f0 -> ((Gen.BList.intersect_eq (=) (fv f0) evars) !=[])) fl in
+          (l1,l2)
+      | _ ->
+          let vars = fv f in
+          if ((Gen.BList.intersect_eq (=) vars evars) !=[])
+          then ([f],[]) (*f bound by existential evars*)
+          else ([],[f])
+  in
+  let res1, res2 = helper f0 [] in
+  res2
+
+and list_of_conjs (f0 : formula) : formula list =
+  Gen.Debug.no_1 "list_of_conjs" 
+      !print_formula !print_formula_list
+      list_of_conjs_x f0
 (******************)
 (*collect all bformula of f0*)
 and list_of_bformula (f0:formula) ls: formula list =

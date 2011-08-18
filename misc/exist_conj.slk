@@ -1,0 +1,57 @@
+/*
+LDK:
+
+Some trace from 
+sleekex/examples/working/sleek$ ../../../sleek sleek7.slk
+
+//OLD
+list_of_conjs@171
+list_of_conjs inp1 : exists1(b_171:0<=b_171 & r_182=p & (b_171+3)<=n & 1<=n)
+list_of_conjs@171 EXIT out :[ exists1(b_171:0<=b_171 & r_182=p & (b_171+3)<=n & 1<=n)]
+
+//NEW
+list_of_conjs@172
+list_of_conjs inp1 : exists1(b_171:0<=b_171 & (b_171+3)<=n) & r_182=p & 1<=n
+list_of_conjs@172 EXIT out :[ exists1(b_171:0<=b_171 & (b_171+3)<=n) ; r_182=p ; 1<=n]
+
+
+//OLD
+list_of_conjs@539
+list_of_conjs inp1 : 0<=b_450 & exists1(n1:exists1(n2:exists1(n3:n1<=1 & n2<=2 & 5<=n3 & n=b_450+
+n1 & 0<=n1 & b_450=b_483+n3+n2 & 0<=n2 & 0<=(b_483+n3) & 0<=n3)))
+list_of_conjs@539 EXIT out :[ 0<=b_450 ; exists1(n1:exists1(n2:exists1(n3:n1<=1 & n2<=2 & 5<=n3 & n=b_450+n1 & 
+0<=n1 & b_450=b_483+n3+n2 & 0<=n2 & 0<=(b_483+n3) & 0<=n3)))]
+
+//NEW
+list_of_conjs@547
+list_of_conjs inp1 : 0<=b_450 & exists1(n1:exists1(n2:exists1(n3:n1<=1 & n2<=2 & 5<=n3 & n=b_450+
+n1 & 0<=n1 & b_450=b_483+n3+n2 & 0<=n2 & 0<=(b_483+n3) & 0<=n3)))
+list_of_conjs@547 EXIT out :[ 0<=b_450 ; exists1(n1:n1<=1 & n=b_450+n1 & 0<=n1) ; exists1(n2:exists1(n3:5<=n3 & b_450=b_483+n3+n2 & 0<=(b_483+n3) & 0<=n3) & 
+n2<=2 & 0<=n2)]
+
+
+
+//OLD
+list_of_conjs@549
+list_of_conjs inp1 : exists1(b_483:0<=b_483 & (b_483+5)<=n & 0<=n)
+list_of_conjs@549 EXIT out :[ exists1(b_483:0<=b_483 & (b_483+5)<=n & 0<=n)]
+
+//NEW
+list_of_conjs@557
+list_of_conjs inp1 : exists1(b_483:0<=b_483 & (b_483+5)<=n & 0<=n)
+list_of_conjs@557 EXIT out :[ exists1(b_483:0<=b_483 & (b_483+5)<=n) ; 0<=n]
+
+
+
+//OLD
+ist_of_conjs@891
+list_of_conjs inp1 : exists1(b_769:0<=b_769 & 0<=5 & 0<=3 & 0<=(5+b_769) & n=3+b_769+5)
+list_of_conjs@891 EXIT out :[ exists1(b_769:0<=b_769 & 0<=5 & 0<=3 & 0<=(5+b_769) & n=3+b_769+5)]
+
+
+//NEW
+list_of_conjs@905
+list_of_conjs inp1 : exists1(b_769:0<=b_769 & 0<=5 & 0<=3 & 0<=(5+b_769) & n=3+b_769+5)
+list_of_conjs@905 EXIT out :[ exists1(b_769:0<=b_769 & 0<=(5+b_769) & n=3+b_769+5) ; 0<=5 ; 0<=3]
+
+*/
