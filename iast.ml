@@ -824,9 +824,17 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
 
 (** An Hoa:
  *  Returns a list of data types which possess a field_name specified.
- *  TODO : IMPLEMENT
  **)
-let look_up_types_containing_field (defs : data_decl list) (field_name : ident) = []
+let rec look_up_types_containing_field (defs : data_decl list) (field_name : ident) = 
+	match defs with
+	| [] -> []
+	| d::t -> let temp = look_up_types_containing_field t field_name in
+				if (List.exists (fun x -> let extr_field = snd (fst x) in 
+											extr_field = field_name) 
+						d.data_fields) then
+					d.data_name :: temp
+				else temp
+(* An Hoa : End *)
 
 let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def pos rest name
@@ -1695,3 +1703,12 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_coercion_decls = [];}
         in new_prims
   | hd::tl -> append_iprims_list hd tl
+
+(**
+ * An Hoa : Find the type of the field with indicated name in ddef
+ * TODO extend to a list of access
+ **)
+let get_type_of_field (ddef : data_decl) field_name =
+	let tids = List.map fst ddef.data_fields in
+	let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
+		fst field_typed_id

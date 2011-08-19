@@ -5136,7 +5136,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 					let _ = print_endline ("Root pointer type found: " ^ ddef.I.data_name) in
 						(true, Named ddef.I.data_name)
 				with 
-					| Not_found -> (false, UNK) (* Lazy user ==> perform type reasoning! *) in
+					| Not_found -> (false,UNK) (* Lazy user ==> perform type reasoning! *) in
 				(* After this, if type_found = false then we know that 
 				 * s is a name of field of some data type
 				 *)
@@ -5153,17 +5153,24 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 					let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
 						if (List.length dts = 1) then
 							(* the field uniquely determines the data type ==> done! *)
-							(false, UNK)
+							let _ = print_endline ("Only type " ^ (List.hd dts) ^ " has field " ^ s) in
+							(true,Named (List.hd dts))
 						else
-							(false, UNK) in
+							(false,UNK) in
 				(* Step 3: Collect the remaining type information *)
 				if type_found then
 					(* Know the type of rootptr ==> Know the type of the field *)
-					()
+					let _ = H.add stab rootptr { sv_info_kind = type_rootptr; id = 0 } in
+					(* Filter out user type indication *)
+					let tokens = List.filter (fun x -> try let _ = I.look_up_data_def_raw prog.I.prog_data_decls x in false with | Not_found -> true) tokens in
+					(* Get the type of the field which is the type of the pointer *)
+					let ddef = I.look_up_data_def_raw prog.I.prog_data_decls (match type_rootptr with | Named c -> c | _ -> failwith "FAILURE!") in
+					let field_name = List.nth tokens 1 in
+					let t = I.get_type_of_field ddef field_name in
+					let _ = gather_type_info_exp (List.hd ies) stab t in ()
 				else ()
-			else
-	      let dname = (* An Hoa : Leave the generic pointer alone! *)
-			if (c = Parser.generic_pointer_type_name) then c else
+			else (* End dealing with generic ptr, continue what the original system did *)
+	      let dname = 
             (try
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
               in
