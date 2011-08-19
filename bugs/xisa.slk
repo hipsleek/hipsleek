@@ -35,29 +35,35 @@ pred dll3<t> == self=null & t=null
   or self::dll_r3<null,t,null>
   inv true.
 
-pred dll_r3<p,t,a> == 
-  self::node<_,p,a> & self=t
-  or self::node<_,p,n> * n::dll_r3<self,t,a> & self!=t
-  inv true.
+// BUG : t is also a bag of address here!
+pred dll_r3<p,t,n> == 
+  self::node<_,p,n> & self=t
+  or self::node<_,p,q> * q::dll_r3<self,t,n> & self!=t
+  inv self!=null & t!=null.
+
+lemma "dll_r3_tail" self::dll_r3<p,t,n> & self!=t <-> 
+      self::dll_r3<p,q,t> * t::node<_,q,n>.
 
 
 pred dll4<h> == self=h & h=null
   or self::dll_r4<null,h,null>
   inv true.
 
-pred dll_r4<b,h,n> ==
-  self::node<_,b,n> & self=h
-  or self::node<_,p,n> * p::dll_r4<b,h,self> & self!=h
+pred dll_r4<p,h,n> ==
+  self::node<_,p,n> & self=h
+  or self::node<_,q,n> * q::dll_r4<p,h,self> & self!=h
   inv true.
+
+
 
 
 ////lemma "ht2tail" self::ll_ht<n, h, t> <-> self::ll_tail<n+1,t>.
 
 //lemma "dll3todll4" self::dll3<t> <-> t::dll4<self>.
 
-lemma "dll_r3_to_dll_r4" self::dll_r3<p,t,a> -> t::dll_r4<p,self,a>.
+//lemma "dll_r3_to_dll_r4" self::dll_r3<p,t,a> -> t::dll_r4<p,self,a>.
 
-//lemma "dll_r4_to_dll_r3" self::dll_r4<b,h,n> -> h::dll_r3<b,self,n>.
+lemma "dll_r4_to_dll_r3" self::dll_r4<b,h,n> -> h::dll_r3<b,self,n>.
 
 /*
 
@@ -107,9 +113,6 @@ print residue.
 
 */
 
-checkentail n1::dll_r4<null,n,null> |- n::dll_r3<null,n1,null>.
-// bugs ??? it does not perform lemma coercion on the RHS
-// but loop forever instead
 
 /*
 ??? BUGs
@@ -140,4 +143,103 @@ print residue.
 checkentail x::node<_,null,n> * n::dll_r3<x,n1,null> & x!=n1 |- n1::dll4<x>.
 print residue. // similar to the above
 
+*/
+
+
+//checkentail n1::dll_r4<null,n,null> |- n::dll_r3<null,n1,null>.
+// bugs ??? it does not perform lemma coercion on the RHS
+// but loop forever instead
+
+checkentail self::node<_,b,n> & self=h
+  or self::node<_,p,n> * p::dll_r4<b,h,self> & self!=h
+  |- h::dll_r3<b,self,n>.
+
+
+checkentail self::node<_,b,n> & self=h
+  |- h::dll_r3<b,self,n>.
+
+
+checkentail 
+  self::node<_,p,n> * p::dll_r4<b,h,self> & self!=h
+  |- h::dll_r3<b,self,n>.
+
+checkentail x::dll_r3<p,t,n> & x!=t |- t::node<_,a,b>.
+print residue.
+
+
+
+checkentail
+ self::node<_,p,q2> * 
+  q2::dll_r3<self,q3,t> * t::node<_,q3,n> & self!=q3
+  & self!=t & q2!=t & self!=q2
+ |-      t::node<_,q,n> * self::dll_r3<p,q,t>.
+
+
+checkentail
+ self::node<_,p,q2> * 
+  q2::dll_r3<self,q3,t> 
+  & self!=t & q2!=t & self!=q2 //& self!=q3 //wrong must-bug
+ |-      self::dll_r3<p,q3,t>.
+
+checkentail
+ self::node<_,p,q2> * 
+  q2::dll_r3<self,q3,t> 
+  & self!=t & q2!=t & self!=q2 & self!=q3 
+ |-      self::dll_r3<p,q3,t>.
+
+
+checkentail self::node<_,p,q2> * q2::dll_r3<self,q3,t> & self!=q3
+  |- self::dll_r3<p,q3,t>.
+
+
+checkentail
+ self::node<_,p,q2> * q2::dll_r3<self,t,n> & self!=t & q2=t
+ |-      self::dll_r3<p,q,t> * t::node<_,q,n>.
+
+checkentail
+ self::node<_,p,q2> * q2::dll_r3<self,t,n> & self!=t & q2!=t & self!=q2
+ |-      self::dll_r3<p,q,t> * t::node<_,q,n>.
+
+
+pred dll_r5<p,t,n> == 
+  self=n & p=t
+  or self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
+  inv true.
+
+
+lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n <-> 
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+
+checkentail self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n |-
+      t::node<_,q,n> * self::dll_r5<p,q,t>.
+/*
+//base
+checkentail self::node<_,p,q3> & q3=n & self=t & self!=n|-
+     t::node<_,q,n> *  self::dll_r5<p,q,t> .
+
+//inductive
+checkentail self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n &q3!=n |-
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+*/
+/*
+checkentail self::node<_,p,q3> &
+q3=t & self=n & self!=t & self=q
+ |-
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+
+*/
+
+
+/*
+
+checkentail self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=t & q3=t  |-
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+checkentail self::node<_,p,q3> & self!=t & q3=t  |-
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+checkentail self::node<_,p,q3> & self!=t & q3=t & self!=q |-
+      self::node<_,p,q4> * q4::dll_r5<self,q,t> * t::node<_,q,n>. 
 */

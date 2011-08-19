@@ -19,8 +19,8 @@ checkentail x::ls<z> |- x::ls<y>*y::ls<z> .
 
 
 checkentail 
-    self = z 
-	or self::node<_,r> * r::ls<z> & self!=z
+    x = z 
+	or x::node<_,r> * r::ls<z> & x!=z
 |- x::ls<y>*y::ls<z> .
 
 

@@ -53,7 +53,7 @@ and action =
   | M_unmatched_rhs_data_node of h_formula
   | Seq_action of action_wt list
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
-  
+  | M_lhs_case of match_res
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -107,6 +107,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_unmatched_rhs_data_node h -> fmt_string ("Unmatched RHS data note: "^(string_of_h_formula h))
   | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | M_lhs_case e -> pr_mr e; fmt_string "==> LSH case analysis"
 
 and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
   fmt_string ("(Weigh:"^(string_of_int w)^")")
@@ -125,6 +126,7 @@ let string_of_match_res e = poly_string_of_pr pr_match_res e
 let action_get_holes a = match a with
   | Undefined_action e
   | M_match e
+  | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
   | M_rd_lemma e
@@ -450,36 +452,54 @@ and process_one_match_x prog (c:match_res) :action_wt =
                       else [] *)in
                   let src = (-1,Search_action (l1@l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
-            | DataNode dl, ViewNode vr -> (0,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
+            | DataNode dl, ViewNode vr -> (1,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
             | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | MaterializedArg (mv,ms) ->
+        let _ = print_string "\n materialized args  analysis here!\n" in   
+          let uf_i = if mv.mater_full_flag then 0 else 1 in 
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
-                    | View_mater -> M_unfold (c,0)
-                    | Coerc_mater s -> M_lemma (c,Some s)) in
-                  (match mv.mater_full_flag with
-                    | true -> (0,a1)
-                    | false -> (1,a1)
-                          (*let a2 = in
-                            Search_action (a1::a2)*))
+                    | View_mater -> 
+                        M_unfold (c,uf_i) (* uf_i to prevent infinite unfolding *)
+                    | Coerc_mater s -> 
+                        let _ = print_string "\n selected lemma XX" in
+                        M_lemma (c,Some s)) in
+                  let l1 = [(1,M_base_case_unfold c)] in
+                   (-1, (Search_action ((1,a1)::l1)))
             | ViewNode vl, DataNode dr -> 
-                  let i = if mv.mater_full_flag then 0 else 1 in 
-                  let a1 = (match ms with
-                    | View_mater -> (i,M_unfold (c,i)) 
-                    | Coerc_mater s -> (i,M_lemma (c,Some s))) in
-                  a1
-                      (* (match mv.mater_full_flag with *)
-                      (*   | true -> (0,a1) *)
-                      (*   | false -> (1,M_unfold (c,1)))  *)
-                      (* to prevent infinite unfolding *)
-                      (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
-                      (* unfold to some depth *)
-                      (* M_Nothing_to_do (string_of_match_res c) *)
-            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
+                  let _ = print_string "\n try LHS case analysis here!\n" in
+
+
+                  (* let i = if mv.mater_full_flag then 0 else 1 in  *)
+                  (* let a1 = (match ms with *)
+                  (*   | View_mater -> (1,M_unfold (c,uf_i))  *)
+                  (*   | Coerc_mater s -> (1,M_lemma (c,Some s))) in *)
+                  
+                  let lhs_case_flag = vl.h_formula_view_lhs_case in
+
+
+                  (* let _ = print_string ("process_one_match_x:"  *)
+                  (*                       ^ "### lhs_case_flag = " ^ (string_of_bool lhs_case_flag) *)
+                  (*                       ^ "\n\n" )in *)
+                  let a2 = 
+                    (match ms with
+                      | View_mater -> (1,M_unfold (c,uf_i))
+                      | Coerc_mater s -> (1,M_lemma (c,Some s))) in
+
+                  let a1 = 
+                    if (lhs_case_flag=true) then
+                      let l1 = [(1,M_lhs_case c)] 
+                      in
+                      (-1, (Search_action (a2::l1)))
+                    else
+                      let l1 = [(1,M_base_case_unfold c)] in
+                      (-1, (Search_action (a2::l1)))
+                  in a1
+            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
@@ -514,7 +534,8 @@ and sort_wt (ys: action_wt list) : action list =
           let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
           let h = (List.hd sl) in
           let rw = (fst h) in
-          if (rw==0) then h
+          (* WHY did we pick only ONE when rw==0? *)
+          if (rw==0) then h 
           else (rw,Search_action sl)
     | Seq_action l ->
           let l = List.map recalibrate_wt l in
@@ -546,7 +567,9 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
   let r = List.map (process_matches prog lhs_h) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
-    | xs -> let ys = sort_wt r in List.hd (ys)
+    | xs -> let ys = sort_wt r in 
+      List.hd (ys)
+(* Search_action (None,ys) *)
 
 and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let psv = Cprinter.string_of_spec_var in
