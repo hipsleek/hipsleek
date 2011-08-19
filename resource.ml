@@ -32,6 +32,7 @@ let string_tool_bar = ref ("<toolbar name='ToolBar'>\
       <separator/>\
       <toolitem action='NextA'/>\
       <toolitem action='UpA'/>\
-      <toolitem action='NextE'/>\
-      <toolitem action='UpB'/>\
+      <toolitem action='NextToE'/>\
+      <toolitem action='UpToB'/>\
+      <toolitem action='JumpTo'/>\
     </toolbar>":string)

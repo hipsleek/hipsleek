@@ -7,10 +7,10 @@ open Resource
 open GSourceViewX
 open GUtil
 
+module HDL = Mainform_hdl
 module SU = SourceUtil
 module FU = FileUtil
 module SH = SleekHelper
-module TP = Tpdispatcher
 
 let create_context_view () =
   let view = GText.view
@@ -62,12 +62,12 @@ class mainwindow () =
           () in
         ignore (check_btn#connect#clicked ~callback:(self#save_current_proof(*check_selected_entailment*) ~force:true));
         let show_debug_log_btn = GButton.button
-          ~label:"Show Debug Log"
+          ~label:"Debug Log"
           ~packing:buttons#add
           () in
         ignore (show_debug_log_btn#connect#clicked ~callback:self#show_debug_log);
         let show_prover_log_btn = GButton.button
-          ~label:"Show Prover Log"
+          ~label:"Prover Log"
           ~packing:buttons#add
           () in
         ignore (show_prover_log_btn#connect#clicked ~callback:self#show_prover_log);
@@ -150,10 +150,12 @@ class mainwindow () =
           ~callback:(fun _ -> self#hdl_next_action ());
         a "UpA" ~stock:`GO_UP ~tooltip:"Up"
           ~callback:(fun _ -> self#hdl_up_action ());
-         a "NextE" ~stock:`GOTO_LAST ~tooltip:"Down to the end"
+         a "NextToE" ~stock:`GOTO_LAST ~tooltip:"Down to the end"
           ~callback:(fun _ -> self#hdl_to_last ());
-        a "UpB" ~stock:`GOTO_FIRST ~tooltip:"Up to beginning"
+        a "UpToB" ~stock:`GOTO_FIRST ~tooltip:"Up to beginning"
           ~callback:(fun _ -> self#hdl_to_first ());
+        a "JumpTo" ~stock:`JUMP_TO ~tooltip:"Jump to current point"
+          ~callback:(fun _ -> self#hdl_jump_to ());
         ta "EPS" ~label:"Specialization"
           ~callback:(fun act -> Globals.allow_pred_spec := act#get_active);
         ta "EAP" ~label:"Prunning"
@@ -273,11 +275,7 @@ class mainwindow () =
       original_digest <> digest
 
     method set_theorem_prover id =
-      let provers = [TP.OmegaCalc; TP.Mona; TP.Redlog] in
-      let tp = List.nth provers id in
-      TP.change_prover tp;
-      let tp_name = TP.name_of_tp tp in
-      log (Printf.sprintf "Use %s as backend prover." tp_name)
+      HDL.set_theorem_prover id
 
     method save_current_proof ?(force=false) () =
       ()
@@ -419,5 +417,10 @@ class mainwindow () =
      method private hdl_to_first () =
         let _ = print_endline "back to the beginning" in
        ()
+
+     method private hdl_jump_to () =
+        let _ = print_endline "jump to current point" in
+       ()
+
 
   end

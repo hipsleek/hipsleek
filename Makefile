@@ -50,7 +50,10 @@ gProcList.cmo: gUtil.cmo gProcList.ml
 gLogViewWindow.cmo: gUtil.cmo gLogViewWindow.ml
 	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma gLogViewWindow.ml
 
-mainform.cmo: gEntailmentList.cmo gSourceViewX.cmo gUtil.cmo resource.cmo mainform.ml
+mainform_hdl.cmo: gEntailmentList.cmo gSourceViewX.cmo gUtil.cmo resource.cmo mainform_hdl.ml
+	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma mainform_hdl.ml
+
+mainform.cmo: gEntailmentList.cmo gSourceViewX.cmo gUtil.cmo resource.cmo mainform_hdl.cmo mainform.ml
 	$(OCAMLC) -g -c $@ $(GUIOCAMLFLAGS)  $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma mainform.ml
 
 gsleek.cmo: mainform.cmo gsleek.ml
@@ -186,6 +189,7 @@ SLEEK_GUI_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils
 	gUtil.cmo \
 	gSourceViewX.cmo gProcList.cmo gLogViewWindow.cmo \
 	gEntailmentList.cmo resource.cmo \
+	mainform_hdl.cmo \
 	mainform.cmo \
 	gsleek.cmo
 
