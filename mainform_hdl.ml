@@ -3,6 +3,7 @@ open GEntailmentList
 open Resource
 open GSourceViewX
 open GUtil
+open GUtil_sleek
 
 module SU = SourceUtil
 module FU = FileUtil
