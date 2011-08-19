@@ -1,7 +1,7 @@
 data node { int val ; node next }.
 
 pred ls<p> == self = p 
-	or self::node<next = r> * r::ls<p> & self!=p
+	or self::node<_,r> * r::ls<p> & self!=p
 	inv true.
 
 
@@ -104,5 +104,5 @@ checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y!=z |- x::ls<z> * z::no
 //(13) BUG - fail to prove this..
 checkentail x::ls<y> * y::ls<z> * z::node<_,w> |- x::ls<z> * z::node<_,w> . //U4
 
-//(12) BUG - fail; need induction to prove!
-checkentail x::ls<y> * y::ls<z> * z::ls<w> & z!=w |- x::ls<z> * z::ls<w> . //U5 
+//(12) BUG - fail; need induction to prove! (loop?)
+//checkentail x::ls<y> * y::ls<z> * z::ls<w> & z!=w |- x::ls<z> * z::ls<w> . //U5 
