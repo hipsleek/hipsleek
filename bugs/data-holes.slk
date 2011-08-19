@@ -6,8 +6,11 @@ data node {
 	node f5;	
 }.
 
+data node2 {
+	int f1;
+}.
 
-checkentail x.node.f5::<a> * x.f4::<b> |- x::node<#,#,#,u,v>.
+checkentail x.f1::<1> * x.node.f5::<a> * x.f4::<b> |- x::node<#,#,#,u,v>.
 
 
 

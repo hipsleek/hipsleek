@@ -479,8 +479,8 @@ view_header:
 (** An Hoa : Modify the rules to capture the extensional identifiers **)
 cid: 
   [[ 
-     `IDENTIFIER t; `PRIME	 	-> (* print_string ("primed id:"^t^"\n"); *) (t, Primed)
-   | `IDENTIFIER t	-> (* print_string ("cid: "^t^"\n"); *) (t,Unprimed)
+     (* `IDENTIFIER t; `PRIME	 	-> (* print_string ("primed id:"^t^"\n"); *) (t, Primed) *)
+   `IDENTIFIER t	-> (* print_string ("cid: "^t^"\n"); *) (t,Unprimed)
    | `RES _                 	-> (res, Unprimed)
    | `SELFT _               	-> (self, Unprimed)
    | `THIS _               		-> (this, Unprimed)]];

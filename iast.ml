@@ -1712,3 +1712,26 @@ let get_type_of_field (ddef : data_decl) field_name =
 	let tids = List.map fst ddef.data_fields in
 	let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
 		fst field_typed_id
+
+
+(**
+ * An Hoa : Check if an identifier is a name for some data type
+ **)
+let is_data_type_identifier (ddefs : data_decl list) id =
+	List.exists (fun x -> x.data_name = id) ddefs
+
+
+(**
+ * An Hoa : Check if an identifier is NOT a name for some data type
+ **)
+let is_not_data_type_identifier (ddefs : data_decl list) id =
+	not (is_data_type_identifier ddefs id)
+
+
+(**
+ * An Hoa : Compute the relative position location of a field with respect to the root.
+ * TODO : Implement & Extend
+ **)
+let get_field_relative_position (ddef : data_decl) accessed_field =
+	let args = ddef.data_fields in
+		[]
