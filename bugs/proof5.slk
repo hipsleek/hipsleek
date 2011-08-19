@@ -1,0 +1,26 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<_,r> * r::ls<p> & self!=p
+	inv true.
+lemma self::ls<p> -> self::ls<b>*b::ls<p>.
+
+// seems a bug handling lemma below!
+//lemma self::ls<z>  <- self::ls<y>*y::ls<z> & z=null . 
+
+//lemma self::ls<z>  <- self::ls<y>*y::ls<z> & z=null.
+
+//lemma self::ll<z>  <- self::ls<z> & z=nil.
+
+
+// bug below!
+checkentail x::ls<z> |- x::ls<y>*y::ls<z> .
+
+
+
+checkentail 
+    x = z 
+	or x::node<_,r> * r::ls<z> & x!=z
+|- x::ls<y>*y::ls<z> .
+
+
