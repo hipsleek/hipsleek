@@ -1844,32 +1844,53 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
 (*   in *)
 (*   helper f0 [] *)
 
+(* (\* push exists inside where possible..*\) *)
+(* and list_of_conjs_x (f0 : formula) : formula list = *)
+(*   (\*lists of conjs: bounded AND not bounded by evars*\) *)
+(*   let rec helper f (evars:spec_var list): formula list * formula list = *)
+(*     match f with *)
+(*       | And (f1, f2, pos) -> *)
+(*           let _,tmp1_wo = helper f1 [] in *)
+(*           let _,tmp2_wo = helper f2 [] in *)
+(*           let tmp = tmp1_wo@tmp2_wo in *)
+(*           let l1,l2 = List.partition (fun f0 -> ((Gen.BList.intersect_eq (=) (fv f0) evars) !=[])) tmp in *)
+(*           (l1,l2) *)
+(*       | Exists (v,f,lbl,pos) -> *)
+(*           let conjs_w, conjs_wo = helper f [v] in *)
+(*           let cnj = join_conjunctions conjs_w in *)
+(*           let exists_f = mkExists [v] cnj lbl pos in *)
+(*           let fl = exists_f::conjs_wo in *)
+(*           let l1,l2 = List.partition (fun f0 -> ((Gen.BList.intersect_eq (=) (fv f0) evars) !=[])) fl in *)
+(*           (l1,l2) *)
+(*       | _ -> *)
+(*           let vars = fv f in *)
+(*           if ((Gen.BList.intersect_eq (=) vars evars) !=[]) *)
+(*           then ([f],[]) (\*f bound by existential evars*\) *)
+(*           else ([],[f]) *)
+(*   in *)
+(*   let res1, res2 = helper f0 [] in *)
+(*   res2 *)
+
 (* push exists inside where possible..*)
 and list_of_conjs_x (f0 : formula) : formula list =
   (*lists of conjs: bounded AND not bounded by evars*)
-  let rec helper f (evars:spec_var list): formula list * formula list =
+  let rec helper f : formula list =
     match f with
       | And (f1, f2, pos) ->
-          let _,tmp1_wo = helper f1 [] in
-          let _,tmp2_wo = helper f2 [] in
-          let tmp = tmp1_wo@tmp2_wo in
-          let l1,l2 = List.partition (fun f0 -> ((Gen.BList.intersect_eq (=) (fv f0) evars) !=[])) tmp in
-          (l1,l2)
+          let conjs1 = helper f1 in
+          let conjs2 = helper f2 in
+          conjs1@conjs2
       | Exists (v,f,lbl,pos) ->
-          let conjs_w, conjs_wo = helper f [v] in
-          let cnj = join_conjunctions conjs_w in
+          let conjs = helper f in
+          let l1,l2 = List.partition (fun f0 -> mem v (fv f0)) conjs in
+          let cnj = join_conjunctions l1 in
           let exists_f = mkExists [v] cnj lbl pos in
-          let fl = exists_f::conjs_wo in
-          let l1,l2 = List.partition (fun f0 -> ((Gen.BList.intersect_eq (=) (fv f0) evars) !=[])) fl in
-          (l1,l2)
-      | _ ->
-          let vars = fv f in
-          if ((Gen.BList.intersect_eq (=) vars evars) !=[])
-          then ([f],[]) (*f bound by existential evars*)
-          else ([],[f])
+          let fl = exists_f::l2 in
+          fl
+      | _ -> [f]
   in
-  let res1, res2 = helper f0 [] in
-  res2
+  let res = helper f0 in
+  res
 
 and list_of_conjs (f0 : formula) : formula list =
   Gen.Debug.no_1 "list_of_conjs" 
