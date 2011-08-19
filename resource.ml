@@ -1,5 +1,6 @@
 
 let strinng_title = ref ("Sleek": string)
+let string_default_file_name = ref ("Unsaved Document": string)
 
 let string_menu_bar = ref ("<menubar name='MenuBar'>\
       <menu action='FileMenu'>\

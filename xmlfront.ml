@@ -31,5 +31,5 @@ let parse (input : string) : command =
 	match Xml.tag xml with
 	  | "class" -> 
 		  let data_decl = to_data xml in
-			DataDef data_decl
+			DataDef (data_decl, no_pos)
 	  | _ -> failwith ("Not supported tag: " ^ Xml.tag xml)

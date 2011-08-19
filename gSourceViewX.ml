@@ -3,6 +3,7 @@
  *)
 
 open GUtil
+open GUtil_sleek
 open SourceUtil
 
 class source_view ?(text = "") () =
@@ -124,7 +125,9 @@ class sleek_source_view ?(text = "") () =
 
   object (self)
     inherit source_view ~text () as super
-    
+
+    val current_file = new sleek_file_info
+
     initializer
       super#source_buffer#set_language (Some (get_sleek_lang ()));
       super#source_buffer#set_highlight_syntax true;
@@ -139,6 +142,22 @@ class sleek_source_view ?(text = "") () =
       let src = self#source_buffer#get_text () in
       let e_list = parse_entailment_list src in
       List.iter (fun e -> super#hl_segment e.pos) e_list
+
+    method get_current_file_name():string=
+    current_file#get_file_name
+
+    (*result src of file*)
+    method load_new_file (fname:string):string=
+      let (cur_pos, src) = current_file#load_new_file fname in
+      (*highlight cur_pos*)
+
+      src
+
+    method create_new_file ():string=
+      let (cur_pos, src) = current_file#create_new_file () in
+      (*highlight cur_pos*)
+
+      src
 
   end
 

@@ -40,11 +40,10 @@ class mainwindow () =
     inherit GWindow.window win#as_window as super
 
     (* gui components *)
-    val source_view = new sleek_source_view ()
+    val slk_view = new sleek_source_view ()
     val entailment_list = create_proof_view ()(*new entailment_list ()*)
     val context_view = create_context_view ()
     (* data *)
-    val mutable current_file = None
     val mutable original_digest = ""
     val mutable debug_log_window = None
     val mutable prover_log_window = None
@@ -96,7 +95,7 @@ class mainwindow () =
       let main_panel =
         let hpaned = GPack.paned `HORIZONTAL () in
         hpaned#set_position 550;
-        hpaned#pack1 ~resize:true ~shrink:true source_view#coerce;
+        hpaned#pack1 ~resize:true ~shrink:true slk_view#coerce;
         hpaned#pack2 context_panel#coerce;
         hpaned
       in
@@ -111,12 +110,12 @@ class mainwindow () =
 
       (* set event handlers *)
       ignore (self#event#connect#delete ~callback:(fun _ -> self#quit ()));
-      ignore (source_view#source_buffer#connect#end_user_action
+      ignore (slk_view#source_buffer#connect#end_user_action
         ~callback:self#source_changed_handler);
-      ignore (source_view#connect#undo ~callback:self#source_changed_handler);
-      ignore (source_view#connect#redo ~callback:self#source_changed_handler);
+      ignore (slk_view#connect#undo ~callback:self#source_changed_handler);
+      ignore (slk_view#connect#redo ~callback:self#source_changed_handler);
 (*
-      ignore (source_view#event#connect#focus_out
+      ignore (slk_view#event#connect#focus_out
         ~callback:(fun _ -> self#update_entailment_list (); false));
       ignore (entailment_list#selection#connect#changed
         ~callback:self#check_selected_entailment);
@@ -136,7 +135,7 @@ class mainwindow () =
         a "ProversMenu" ~label:"_Provers";
         a "HelpMenu" ~label:"_Help";
         a "New" ~stock:`NEW ~tooltip:"New file"
-          ~callback:(fun _ -> ignore (self#newfile_handler ()));
+          ~callback:(fun _ -> ignore (self#new_file_handler ()));
         a "Open" ~stock:`OPEN ~tooltip:"Open file"
           ~callback:(fun _ -> ignore (self#open_handler ()));
         a "Save" ~stock:`SAVE ~tooltip:"Save"
@@ -148,15 +147,15 @@ class mainwindow () =
         a "Execute" ~stock:`EXECUTE ~tooltip:"Check all entailments"
           ~callback:(fun _ -> self#run_all_handler ());
         a "NextA" ~stock:`GO_DOWN ~tooltip:"Down"
-          ~callback:(fun _ -> self#hdl_next_action ());
+          ~callback:(fun _ -> self#next_action_handler ());
         a "UpA" ~stock:`GO_UP ~tooltip:"Up"
-          ~callback:(fun _ -> self#hdl_up_action ());
+          ~callback:(fun _ -> self#up_action_handler ());
          a "NextToE" ~stock:`GOTO_LAST ~tooltip:"Down to the end"
-          ~callback:(fun _ -> self#hdl_to_last ());
+          ~callback:(fun _ -> self#move_to_last_handler ());
         a "UpToB" ~stock:`GOTO_FIRST ~tooltip:"Up to beginning"
-          ~callback:(fun _ -> self#hdl_to_first ());
+          ~callback:(fun _ -> self#back_to_first_handler ());
         a "JumpTo" ~stock:`JUMP_TO ~tooltip:"Jump to current point"
-          ~callback:(fun _ -> self#hdl_jump_to ());
+          ~callback:(fun _ -> self#jump_to_handler ());
         ta "EPS" ~label:"Specialization"
           ~callback:(fun act -> Globals.allow_pred_spec := act#get_active);
         ta "EAP" ~label:"Prunning"
@@ -188,9 +187,10 @@ class mainwindow () =
         ~action ~title
         ~parent:self 
         () in
-      let dir = match current_file with
-        | Some name -> Filename.dirname name
-        | None -> Filename.current_dir_name
+      let current_name = slk_view#get_current_file_name() in
+      let dir = if (current_name = !string_default_file_name) || (current_name = "")
+          then Filename.current_dir_name
+          else Filename.dirname current_name
       in
       ignore (dialog#set_current_folder dir);
       dialog#add_button_stock `CANCEL `CANCEL;
@@ -208,12 +208,12 @@ class mainwindow () =
        saving of modified document *)
     method ask_for_saving () =
       let fname = Filename.basename (self#string_of_current_file ()) in
-      let save_msg = match current_file with
-        | Some _ -> "Save"
-        | None -> "Save as..."
+      let current_name = slk_view#get_current_file_name() in
+      let save_msg = if (current_name = !string_default_file_name) || (current_name = "")
+          then "Save" else "Save as..."
       in
-      let icon = GMisc.image 
-        ~stock:`DIALOG_WARNING 
+      let icon = GMisc.image
+        ~stock:`DIALOG_WARNING
         ~icon_size:`DIALOG
         () in
       let response = GToolbox.question_box
@@ -230,28 +230,29 @@ class mainwindow () =
       in res
 
     method replace_source (new_src: string): unit =
-      source_view#source_buffer#begin_not_undoable_action ();
-      source_view#source_buffer#set_text new_src;
-      source_view#source_buffer#set_modified false;
-      source_view#source_buffer#end_not_undoable_action ();
+      slk_view#source_buffer#begin_not_undoable_action ();
+      slk_view#source_buffer#set_text new_src;
+      slk_view#source_buffer#set_modified false;
+      slk_view#source_buffer#end_not_undoable_action ();
       self#update_original_digest ();
 (*      entailment_list#update_source new_src;*)
       context_view#buffer#set_text ""
       
     method private string_of_current_file () =
+      let current_file = slk_view#get_current_file_name () in
       match current_file with
-      | Some fname -> fname
-      | None -> "Unsaved Document"
+      | "" -> !string_default_file_name
+      | fname -> fname
 
     method file_closing_check (): bool =
-      if source_view#source_buffer#modified then
+      if slk_view#source_buffer#modified then
         self#ask_for_saving ()
       else
         true
 
     method open_file (fname: string): unit =
-      current_file <- (Some fname);
-      self#replace_source (FU.read_from_file fname);
+      let src = slk_view#load_new_file fname in
+      self#replace_source src;
       self#update_win_title ()
 
     method update_win_title () =
@@ -266,7 +267,7 @@ class mainwindow () =
       let title = prefix ^ fname ^ " - Sleek" in
       self#set_title title;
         
-    method get_text () = source_view#source_buffer#get_text ()
+    method get_text () = slk_view#source_buffer#get_text ()
 
     method update_original_digest () =
       original_digest <- Digest.string (self#get_text ())
@@ -340,11 +341,11 @@ class mainwindow () =
      * Actions handlers 
      *********************)
 
-    method private newfile_handler () =
+    method private new_file_handler () =
       if self#file_closing_check () then begin
-        current_file <- None;
-        self#update_win_title ();
-        self#replace_source ""
+          let src = slk_view#create_new_file() in
+          self#update_win_title ();
+          self#replace_source src
       end
 
     (* Toolbar's Open button clicked *)
@@ -368,25 +369,28 @@ class mainwindow () =
      * return false if user don't select a file to save *)
     method private save_handler () : bool =
       let text = self#get_text () in
+      let current_file = slk_view#get_current_file_name () in
       match current_file with
-      | Some name ->
-          (if self#source_modified then self#save text name; true)
-      | None ->
-          let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
-          match fname with
-          | None -> false
-          | Some fname -> (self#save text fname; true)
+      | "" ->
+          begin
+              let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
+              match fname with
+                | None -> false
+                | Some fname -> (self#save text fname; true)
+          end
+      | fname -> (if self#source_modified then self#save text fname; true)
+
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
       let src = self#get_text () in
    (*   entailment_list#check_all (fun e -> fst (SH.checkentail src e));*)
-      source_view#hl_all_entailement ()
+      slk_view#hl_all_entailement ()
 
     (* Source buffer modified *)
     method private source_changed_handler () =
       self#update_win_title ();
-      source_view#clear_highlight ()
+      slk_view#clear_highlight ()
 (*
     method private update_entailment_list () =
       entailment_list#misc#set_sensitive true;
@@ -403,23 +407,23 @@ class mainwindow () =
       else
         true
 
-     method private hdl_next_action () =
+     method private next_action_handler () =
        let _ = print_endline "next action" in
        ()
 
-     method private hdl_up_action () =
+     method private up_action_handler () =
         let _ = print_endline "back" in
        ()
 
-     method private hdl_to_last () =
+     method private move_to_last_handler () =
         let _ = print_endline "move to the end" in
        ()
 
-     method private hdl_to_first () =
+     method private back_to_first_handler () =
         let _ = print_endline "back to the beginning" in
        ()
 
-     method private hdl_jump_to () =
+     method private jump_to_handler () =
         let _ = print_endline "jump to current point" in
        ()
 

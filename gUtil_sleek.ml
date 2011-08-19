@@ -5,62 +5,10 @@ open GUtil
 module TP = Tpdispatcher
 module SE = Sleekengine
 module SC = Sleekcommons
+module FU = FileUtil
 (**/**)
 
-class step_info =
 
-object (self)
-  val mutable pos = no_pos
-  val mutable id = -1
-  val mutable name = ""
-  (*pre/post/es*)
-
-end
-
-class cmd_info =
-
-object (self)
-  val mutable cmd = SC.EmptyCmd (*kind of cmd*)
-  val mutable pos = no_pos (*positions of cmd in file*)
-  val steps = Hashtbl.create 512
-  val mutable int = -1 (*current step*)
-
-  (*methods*)
-  method set c p =
-    cmd <- c;
-    pos <- p
-
-  method get_cmd = cmd
-
-  method get_pos = pos
-
-  method next_step =
-  (*check the ability to move forward- entailment is complete or not*)
-
-  (*if current step != -1, get current step. If can not move return a exception*)
-
-  (*call to move one step*)
-
-  (*increase current step number, add new step to hashtbl*)
-
-  (*return new step*)
-
-  ()
-
-  method back_step =
-  (*if current step != -1, 0 a exception*)
-
-  (*decrease current step number, extract prev. step from hashtbl*)
-
-  (*return prev. step*)
-  ()
-
-  method get_current_proofs=
-  (*travel all steps, for each get its name/proof*)
-
-  ()
-
-end
 (**
    Helper for interacting with Sleek script
    Command calling, process management, parsing of result,...
@@ -144,13 +92,13 @@ module SleekHelper = struct
     Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf*)
 
   let process_cmd cmd = match cmd with
-    | SC.DataDef ddef -> 
+    | SC.DataDef (ddef,_) -> 
         log "processing data def";
         SE.process_data_def ddef; None
-    | SC.PredDef pdef -> 
+    | SC.PredDef (pdef,_) -> 
         log "processing pred def";
         SE.process_pred_def pdef; None
-    | SC.EntailCheck (iante, iconseq) -> 
+    | SC.EntailCheck (iante, iconseq,_) -> 
         log "processing entail check"; 
         Some (SE.run_entail_check iante iconseq)
     | SC.CaptureResidue lvar -> 
@@ -159,7 +107,7 @@ module SleekHelper = struct
     | SC.LemmaDef ldef -> 
         log "processing lemmad def";
         SE.process_lemma ldef; None
-    | SC.PrintCmd pcmd -> 
+    | SC.PrintCmd (pcmd,_) -> 
         log "processing print cmd";
         SE.process_print_command pcmd; None
     | SC.LetDef (lvar, lbody) -> 
@@ -200,3 +148,158 @@ module SleekHelper = struct
       false, (Printexc.to_string e) ^ "\n" ^ (Printexc.get_backtrace ())
 
 end (* SleekHelper *)
+
+class step_info =
+
+object (self)
+  val mutable pos = no_pos
+  val mutable id = -1
+  val mutable name = ""
+  (*lhs/rhs/es*)
+
+  method set i p n=
+    id <- i;
+    pos <- p;
+    name <- n
+
+  method get_id = id
+
+  method get_name = name
+
+  method get_pos = pos
+
+end
+
+class cmd_info =
+
+object (self)
+  val mutable cmd = SC.EmptyCmd (*kind of cmd*)
+  val mutable pos = no_pos (*positions of cmd in file*)
+  val steps = Hashtbl.create 512
+  val mutable cur_step = -1 (*current step*)
+
+  (*methods*)
+  method set c p =
+    cmd <- c;
+    pos <- p
+
+  method get = (cmd,pos)
+
+  method get_cmd = cmd
+
+  method get_pos = pos
+
+  method reset ()=
+    cmd <- SC.EmptyCmd;
+    pos <- no_pos;
+    Hashtbl.clear steps;
+    cur_step <- -1;
+    ()
+
+  method next_step =
+  (*check the ability to move forward- entailment is complete or not*)
+
+  (*if current step != -1, get current step. If can not move return a exception*)
+
+  (*call to move one step*)
+
+  (*increase current step number, add new step to hashtbl*)
+
+  (*return new step*)
+
+  ()
+
+  method back_step =
+  (*if current step != -1, 0 a exception*)
+
+  (*decrease current step number, extract prev. step from hashtbl*)
+
+  (*return prev. step*)
+  ()
+
+  method get_current_proofs=
+  (*travel all steps, for each get its name/proof*)
+
+  ()
+
+end
+
+class sleek_file_info =
+
+object (self)
+  val mutable file_name = ""
+  val mutable current_pos = -1
+  val mutable total_line = 0
+  val mutable current_cmd = new cmd_info
+  val cmds = Hashtbl.create 128
+
+  method set addr p n=
+    file_name <- addr;
+    current_pos <- p;
+    total_line <- n
+
+  method set_current_pos p = current_pos <- p
+
+   method set_current_cmd cmd = current_cmd <- cmd
+
+  method get_file_name = file_name
+
+  method get_current_pos = current_pos
+
+  method get_current_cmd = current_cmd
+
+  method get_total_line = total_line
+
+  (*return current pos + src*)
+  method load_new_file (fname:string):(int*string)=
+    (*reset old content*)
+    
+    (*load file, src = file contend*)
+    let src = FU.read_from_file fname in
+    (*let cmds = parse_all src*)
+    let cmds = SleekHelper.parse_command_list src in
+    (*add all cmds into cmd*)
+    
+    file_name <- fname;
+    (*set current line = first line of text; current cmd = first cmd*)
+    (0,src)
+
+  (*return current pos + src*)
+  method create_new_file ():(int*string)=
+   begin
+    file_name <- "";
+    current_pos <- 0;
+    total_line <- 0;
+    current_cmd#reset();
+
+    (current_pos,"")
+   end
+
+  method move_next_step (p:int)=
+   (*res = new pos, new cmd*)
+
+  ()
+
+  method move_prev_step (p:int)=
+   (*res = new pos, new cmd*)
+
+  ()
+
+  method move_next_cmd (p:int)=
+   (*res = new pos, new cmd*)
+
+  ()
+
+  method move_prev_cmd (p:int)=
+   (*res = new pos, new cmd*)
+
+  ()
+
+  method move_to_current_point (p:int)=
+
+  ()
+
+  method get_proofs (cmd:cmd_info)=
+   true
+
+end

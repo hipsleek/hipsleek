@@ -59,13 +59,13 @@ let parse_file (parse) (source_file : string) =
 		let cmds = parse source_file in 
 		let _ = (List.map (fun c -> (
 							match c with
-								 | DataDef ddef -> process_data_def ddef
-								 | PredDef pdef -> process_pred_def pdef
+								 | DataDef (ddef,_) -> process_data_def ddef
+								 | PredDef (pdef,_) -> process_pred_def pdef
                  | RelDef rdef -> process_rel_def rdef
-								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+								 | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
-								 | PrintCmd pcmd -> process_print_command pcmd
+								 | PrintCmd (pcmd,_) -> process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
                  | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
 								 | EmptyCmd -> ())) cmds) in ()
@@ -88,8 +88,8 @@ let parse_file (parse) (source_file : string) =
             raise t) in
   let proc_one_def c = 
     match c with
-	  | DataDef ddef -> process_data_def ddef
-	  | PredDef pdef -> process_pred_def_4_iast pdef
+	  | DataDef (ddef,_) -> process_data_def ddef
+	  | PredDef (pdef,_) -> process_pred_def_4_iast pdef
       | RelDef rdef -> process_rel_def rdef
 	  | LemmaDef _
 	  | CaptureResidue _
@@ -112,9 +112,9 @@ let parse_file (parse) (source_file : string) =
 	  | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
-	  | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+	  | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
-	  | PrintCmd pcmd -> process_print_command pcmd
+	  | PrintCmd (pcmd,_) -> process_print_command pcmd
 	  | LetDef (lvar, lbody) -> put_var lvar lbody
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
@@ -181,13 +181,13 @@ let main () =
                   let cmd = parse cts in
                   (* let _ = print_endline ("xxx_after parse"^cts) in *)
                   (match cmd with
-                     | DataDef ddef -> process_data_def ddef
-                     | PredDef pdef -> process_pred_def pdef
+                     | DataDef (ddef,_) -> process_data_def ddef
+                     | PredDef (pdef,_) -> process_pred_def pdef
                      | RelDef rdef -> process_rel_def rdef
-                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef -> process_lemma ldef
-                     | PrintCmd pcmd -> process_print_command pcmd
+                     | PrintCmd (pcmd,_) -> process_print_command pcmd
                      | LetDef (lvar, lbody) -> put_var lvar lbody
                      | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
                      | EmptyCmd -> ());

@@ -375,14 +375,14 @@ command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
-    [[  t=data_decl           -> DataDef t
-      | `PRED;t=view_decl     -> PredDef t
+    [[  t=data_decl           -> DataDef (t,get_pos_camlp4 _loc 1)
+      | `PRED;t=view_decl     -> PredDef (t,get_pos_camlp4 _loc 1)
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
       | t=captureresidue_cmd  -> CaptureResidue t
-      | t=print_cmd           -> PrintCmd t
+      | t=print_cmd           -> PrintCmd (t,get_pos_camlp4 _loc 1)
       | t=time_cmd            -> t]];
   
 data_decl:
@@ -780,7 +780,7 @@ opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
 
 checkentail_cmd:
-  [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
+  [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, get_pos_camlp4 _loc 1)]];
   
 captureresidue_cmd:
   [[ `CAPTURERESIDUE; `DOLLAR; `IDENTIFIER id -> id ]];

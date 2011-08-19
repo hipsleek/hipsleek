@@ -34,14 +34,14 @@ module H = Hashtbl
 exception SLEEK_Exception
 
 type command =
-  | DataDef of I.data_decl
-  | PredDef of I.view_decl
+  | DataDef of (I.data_decl*loc)
+  | PredDef of (I.view_decl*loc)
   | RelDef of I.rel_decl (* An Hoa *)
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
-  | EntailCheck of (meta_formula * meta_formula)
+  | EntailCheck of (meta_formula * meta_formula*loc)
   | CaptureResidue of ident
-  | PrintCmd of print_cmd
+  | PrintCmd of (print_cmd*loc)
   | Time of (bool*string*loc)
   | EmptyCmd 
 
