@@ -29,4 +29,9 @@ let string_tool_bar = ref ("<toolbar name='ToolBar'>\
       <toolitem action='Save'/>\
       <separator/>\
       <toolitem action='Execute'/>\
+      <separator/>\
+      <toolitem action='NextA'/>\
+      <toolitem action='UpA'/>\
+      <toolitem action='NextE'/>\
+      <toolitem action='UpB'/>\
     </toolbar>":string)

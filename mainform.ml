@@ -41,7 +41,7 @@ class mainwindow () =
     (* gui components *)
     val source_view = new sleek_source_view ()
     val entailment_list = create_proof_view ()(*new entailment_list ()*)
-    val residue_view = create_context_view ()
+    val context_view = create_context_view ()
     (* data *)
     val mutable current_file = None
     val mutable original_digest = ""
@@ -82,22 +82,22 @@ class mainwindow () =
           ~xalign:0.0 ~yalign:0.0
           ~xpad:5 ~ypad:5
           () in
-        let residue_scrolled = create_scrolled_win residue_view in
+        let context_scrolled = create_scrolled_win context_view in
         let vbox = GPack.vbox () in
         vbox#pack ~expand:false label#coerce;
-        vbox#pack ~expand:true residue_scrolled#coerce;
-         let hpaned = GPack.paned `VERTICAL () in
-        hpaned#set_position 380;
-        hpaned#pack1 vbox#coerce;
-        hpaned#pack2 ~resize:true ~shrink:true proof_panel#coerce;
-        hpaned
+        vbox#pack ~expand:true context_scrolled#coerce;
+         let vpaned = GPack.paned `VERTICAL () in
+        vpaned#set_position 380;
+        vpaned#pack1 vbox#coerce;
+        vpaned#pack2 ~resize:true ~shrink:true proof_panel#coerce;
+        vpaned
       in
       let main_panel =
-        let vpaned = GPack.paned `HORIZONTAL () in
-        vpaned#set_position 550;
-        vpaned#pack1 ~resize:true ~shrink:true source_view#coerce;
-        vpaned#pack2 context_panel#coerce;
-        vpaned
+        let hpaned = GPack.paned `HORIZONTAL () in
+        hpaned#set_position 550;
+        hpaned#pack1 ~resize:true ~shrink:true source_view#coerce;
+        hpaned#pack2 context_panel#coerce;
+        hpaned
       in
       (* arrange components on main window *)
       let ui = self#setup_ui_manager () in
@@ -146,6 +146,14 @@ class mainwindow () =
           ~callback:(fun _ -> ignore (self#show_about_dialog ()));
         a "Execute" ~stock:`EXECUTE ~tooltip:"Check all entailments"
           ~callback:(fun _ -> self#run_all_handler ());
+        a "NextA" ~stock:`GO_DOWN ~tooltip:"Down"
+          ~callback:(fun _ -> self#hdl_next_action ());
+        a "UpA" ~stock:`GO_UP ~tooltip:"Up"
+          ~callback:(fun _ -> self#hdl_up_action ());
+         a "NextE" ~stock:`GOTO_LAST ~tooltip:"Down to the end"
+          ~callback:(fun _ -> self#hdl_to_last ());
+        a "UpB" ~stock:`GOTO_FIRST ~tooltip:"Up to beginning"
+          ~callback:(fun _ -> self#hdl_to_first ());
         ta "EPS" ~label:"Specialization"
           ~callback:(fun act -> Globals.allow_pred_spec := act#get_active);
         ta "EAP" ~label:"Prunning"
@@ -225,7 +233,7 @@ class mainwindow () =
       source_view#source_buffer#end_not_undoable_action ();
       self#update_original_digest ();
 (*      entailment_list#update_source new_src;*)
-      residue_view#buffer#set_text ""
+      context_view#buffer#set_text ""
       
     method private string_of_current_file () =
       match current_file with
@@ -395,5 +403,21 @@ class mainwindow () =
         false
       else
         true
+
+     method private hdl_next_action () =
+       let _ = print_endline "next action" in
+       ()
+
+     method private hdl_up_action () =
+        let _ = print_endline "back" in
+       ()
+
+     method private hdl_to_last () =
+        let _ = print_endline "move to the end" in
+       ()
+
+     method private hdl_to_first () =
+        let _ = print_endline "back to the beginning" in
+       ()
 
   end
