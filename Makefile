@@ -191,7 +191,6 @@ SLEEK_GUI_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils
 	xmlfront.cmo nativefront.cmo \
 	sleekengine.cmo \
 	scriptarguments.cmo \
-	sleek.cmo \
 	gUtil.cmo \
 	gUtil_sleek.cmo gUtil_hip.cmo \
 	gSourceViewX.cmo gProcList.cmo gLogViewWindow.cmo \

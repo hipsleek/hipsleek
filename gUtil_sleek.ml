@@ -92,25 +92,25 @@ module SleekHelper = struct
     Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf*)
 
   let process_cmd cmd = match cmd with
-    | SC.DataDef (ddef,_) -> 
+    | SC.DataDef (ddef,_) ->
         log "processing data def";
         SE.process_data_def ddef; None
-    | SC.PredDef (pdef,_) -> 
+    | SC.PredDef (pdef,_) ->
         log "processing pred def";
         SE.process_pred_def pdef; None
-    | SC.EntailCheck (iante, iconseq,_) -> 
-        log "processing entail check"; 
+    | SC.EntailCheck (iante, iconseq,_) ->
+        log "processing entail check";
         Some (SE.run_entail_check iante iconseq)
-    | SC.CaptureResidue lvar -> 
+    | SC.CaptureResidue (lvar,_) ->
         log "processing capture residue";
         SE.process_capture_residue lvar; None
-    | SC.LemmaDef ldef -> 
+    | SC.LemmaDef (ldef,_) ->
         log "processing lemmad def";
         SE.process_lemma ldef; None
-    | SC.PrintCmd (pcmd,_) -> 
+    | SC.PrintCmd (pcmd,_) ->
         log "processing print cmd";
         SE.process_print_command pcmd; None
-    | SC.LetDef (lvar, lbody) -> 
+    | SC.LetDef (lvar, lbody,_) ->
         log "processing let def";
         SC.put_var lvar lbody; None
     | SC.Time (b,s,_) -> None
@@ -174,25 +174,38 @@ class cmd_info =
 
 object (self)
   val mutable cmd = SC.EmptyCmd (*kind of cmd*)
-  val mutable pos = no_pos (*positions of cmd in file*)
-  val steps = Hashtbl.create 512
+  val mutable pos = -1 (*start line number in file*)
+  val mutable steps = ([]: step_info list) (*Hashtbl.create 512*)
   val mutable cur_step = -1 (*current step*)
 
   (*methods*)
-  method set c p =
+  method set_init c p =
     cmd <- c;
-    pos <- p
+    pos <- p;
+    cur_step <- 1
+
+  method set_all c p cs ss=
+    cmd <- c;
+    pos <- p;
+    cur_step <- cs;
+    steps <- ss
 
   method get = (cmd,pos)
 
   method get_cmd = cmd
 
-  method get_pos = pos
+  method get_current_step = cur_step
+
+  method get_steps():(step_info list) = steps
+
+  method get_pos = SC.pos_of_command cmd
+
+  method string_of_cmd():string= (SC.string_of_command cmd) ^" at "^(string_of_int pos) ^ "#" ^ (string_of_int cur_step)
 
   method reset ()=
     cmd <- SC.EmptyCmd;
-    pos <- no_pos;
-    Hashtbl.clear steps;
+    pos <- -1;
+    steps <- [];
     cur_step <- -1;
     ()
 
@@ -228,51 +241,76 @@ class sleek_file_info =
 
 object (self)
   val mutable file_name = ""
-  val mutable current_pos = -1
+  val mutable current_line_pos = -1 (*line number*)
   val mutable total_line = 0
   val mutable current_cmd = new cmd_info
-  val cmds = Hashtbl.create 128
+  (*val cmds = Hashtbl.create 128*)
+  val mutable cmds = ([] : cmd_info list)
+  val mutable lines_pos = ([]: (int*int) list)
 
   method set addr p n=
     file_name <- addr;
-    current_pos <- p;
+    current_line_pos <- p;
     total_line <- n
 
-  method set_current_pos p = current_pos <- p
+  method set_current_line_pos p = current_line_pos <- p
 
    method set_current_cmd cmd = current_cmd <- cmd
 
   method get_file_name = file_name
 
-  method get_current_pos = current_pos
+  method get_current_line_pos = current_line_pos
 
   method get_current_cmd = current_cmd
 
+  method get_list_cmds():(cmd_info list) =
+    (*Hashtbl.fold (fun a b ls-> b::ls) cmds []*)
+    cmds
+
   method get_total_line = total_line
+
+  method get_lines_map = lines_pos
+
+  method private build_cmds cmds:(cmd_info list)=
+    let helper cmd:cmd_info=
+      let pos = SC.pos_of_command cmd in
+      let lnum = SourceUtil.get_line_num pos in
+      let c = new cmd_info in
+        c#set_init cmd lnum;
+      c
+    in List.map helper cmds
 
   (*return current pos + src*)
   method load_new_file (fname:string):(int*string)=
     (*reset old content*)
-    
+
     (*load file, src = file contend*)
     let src = FU.read_from_file fname in
     (*let cmds = parse_all src*)
-    let cmds = SleekHelper.parse_command_list src in
-    (*add all cmds into cmd*)
-    
+    let ls_cmds = SleekHelper.parse_command_list src in
+    (*parse lines position in src*)
+    lines_pos <- (SourceUtil.get_lines_positions src);
+    (*let _ = print_endline (SourceUtil.string_of_lines lines_pos) in*)
+    (*add all cmds into cmds*)
+    cmds <- self#build_cmds ls_cmds;
     file_name <- fname;
     (*set current line = first line of text; current cmd = first cmd*)
-    (0,src)
+    let temp = List.hd cmds in
+    current_cmd <- temp;
+    (*let _ = print_endline (current_cmd#string_of_cmd()) in*)
+    current_line_pos <- SourceUtil.get_line_num current_cmd#get_pos;
+    (*let _ = print_endline (string_of_int current_line_pos) in*)
+    (current_line_pos,src)
 
   (*return current pos + src*)
   method create_new_file ():(int*string)=
    begin
     file_name <- "";
-    current_pos <- 0;
+    current_line_pos <- 1;
     total_line <- 0;
     current_cmd#reset();
 
-    (current_pos,"")
+    (current_line_pos,"")
    end
 
   method move_next_step (p:int)=

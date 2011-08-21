@@ -36,11 +36,11 @@ exception SLEEK_Exception
 type command =
   | DataDef of (I.data_decl*loc)
   | PredDef of (I.view_decl*loc)
-  | RelDef of I.rel_decl (* An Hoa *)
-  | LemmaDef of I.coercion_decl
-  | LetDef of (ident * meta_formula)
+  | RelDef of (I.rel_decl*loc) (* An Hoa *)
+  | LemmaDef of (I.coercion_decl*loc)
+  | LetDef of (ident * meta_formula * loc)
   | EntailCheck of (meta_formula * meta_formula*loc)
-  | CaptureResidue of ident
+  | CaptureResidue of (ident*loc)
   | PrintCmd of (print_cmd*loc)
   | Time of (bool*string*loc)
   | EmptyCmd 
@@ -71,15 +71,27 @@ let var_tab : var_table_t = H.create 10240
 
 let string_of_command c = match c with
   | DataDef _ -> "DataDef"
-  | PredDef _ -> "PredDef" 
-  | RelDef  _ -> "RelDef"  
+  | PredDef _ -> "PredDef"
+  | RelDef  _ -> "RelDef"
   | LemmaDef  _ -> "LemmaDef"
-  | LetDef  _ -> "LetDef"   
-  | EntailCheck _ -> "EntailCheck" 
-  | CaptureResidue _ -> "CaptureResidue"  
-  | PrintCmd _ -> "PrintCmd"  
+  | LetDef  _ -> "LetDef"
+  | EntailCheck _ -> "EntailCheck"
+  | CaptureResidue _ -> "CaptureResidue"
+  | PrintCmd _ -> "PrintCmd"
   | Time _ -> "Time"
   | EmptyCmd -> "EmptyCmd"
+
+let pos_of_command c = match c with
+  | DataDef (_,p) -> p
+  | PredDef (_,p) -> p
+  | RelDef  (_,p) -> p
+  | LemmaDef (_,p) -> p
+  | LetDef  (_,_,p) -> p
+  | EntailCheck (_,_,p) -> p
+  | CaptureResidue (_,p) -> p
+  | PrintCmd (_,p) -> p
+  | Time (_,_,p) -> p
+  | EmptyCmd -> no_pos
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
 

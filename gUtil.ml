@@ -100,7 +100,35 @@ module SourceUtil = struct
         pos::(new_line_pos (pos+1))
       with Not_found | Invalid_argument _ -> []
     in
-    new_line_pos 0
+    new_line_pos 1
+
+  (** return a map of all line in src *)
+  let get_lines_positions (src: string) : (int*int) list =
+    let new_line_re = Str.regexp "^" in
+    let rec new_line_pos (start: int): (int*int) list =
+      try
+        let pos = Str.search_forward new_line_re src start in
+        (start, pos)::(new_line_pos (pos+1))
+      with Not_found | Invalid_argument _ -> []
+    in
+    (new_line_pos 0)
+
+  let get_line_pos lnum m=
+   List.nth m lnum
+
+  let get_line_num (p:loc):int= p.start_pos.Lexing.pos_lnum
+
+  let string_of_line_pos lnum m=
+    let(s,e) = List.nth m lnum in
+    ("line " ^ (string_of_int lnum)^ ":" ^ (string_of_int s)^"->" ^ (string_of_int e))
+
+  let string_of_lines m=
+    let rec helper l all_lines=
+      match all_lines with
+        | [] -> ""
+        | (s,e)::xs -> ("line " ^ (string_of_int l)^ ":" ^ (string_of_int s)^"->" ^ (string_of_int e)
+          ^ "\n") ^ (helper (l+1) xs)
+    in helper 0 m
 
   (** map a position to it's line number,
      based on a list of positions of new line chars
@@ -221,10 +249,10 @@ let initialize () =
   );
 *)
   (*TP.enable_log_for_all_provers ();*)
-  TP.start_prover ()
+  (*TP.start_prover*) ()
 
 let finalize () =
-  TP.stop_prover ()
+  (*TP.stop_prover*) ()
 
 
 

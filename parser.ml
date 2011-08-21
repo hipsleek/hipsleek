@@ -377,11 +377,11 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef (t,get_pos_camlp4 _loc 1)
       | `PRED;t=view_decl     -> PredDef (t,get_pos_camlp4 _loc 1)
-      | t = rel_decl          -> RelDef t
-      | `LEMMA;t= coercion_decl -> LemmaDef t
+      | t = rel_decl          -> RelDef (t,get_pos_camlp4 _loc 1)
+      | `LEMMA;t= coercion_decl -> LemmaDef (t,get_pos_camlp4 _loc 1)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
-      | t=captureresidue_cmd  -> CaptureResidue t
+      | t=captureresidue_cmd  -> CaptureResidue (t,get_pos_camlp4 _loc 1)
       | t=print_cmd           -> PrintCmd (t,get_pos_camlp4 _loc 1)
       | t=time_cmd            -> t]];
   
@@ -798,7 +798,7 @@ time_cmd:
    | `DTIME; `OFF; `IDENTIFIER id  -> Time(false, id, get_pos_camlp4 _loc 1)]];
 
 let_decl:
-  [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc)]];
+  [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc, get_pos_camlp4 _loc 1)]];
   
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id

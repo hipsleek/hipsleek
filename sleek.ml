@@ -61,13 +61,13 @@ let parse_file (parse) (source_file : string) =
 							match c with
 								 | DataDef (ddef,_) -> process_data_def ddef
 								 | PredDef (pdef,_) -> process_pred_def pdef
-                 | RelDef rdef -> process_rel_def rdef
+                                 | RelDef (rdef,_) -> process_rel_def rdef
 								 | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
-								 | CaptureResidue lvar -> process_capture_residue lvar
-								 | LemmaDef ldef -> process_lemma ldef
+								 | CaptureResidue (lvar,_) -> process_capture_residue lvar
+								 | LemmaDef (ldef,_) -> process_lemma ldef
 								 | PrintCmd (pcmd,_) -> process_print_command pcmd
-								 | LetDef (lvar, lbody) -> put_var lvar lbody
-                 | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
+								 | LetDef (lvar, lbody, _) -> put_var lvar lbody
+                                 | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
 								 | EmptyCmd -> ())) cmds) in ()
 	with
 	  | End_of_file ->
@@ -90,7 +90,7 @@ let parse_file (parse) (source_file : string) =
     match c with
 	  | DataDef (ddef,_) -> process_data_def ddef
 	  | PredDef (pdef,_) -> process_pred_def_4_iast pdef
-      | RelDef rdef -> process_rel_def rdef
+      | RelDef (rdef,_) -> process_rel_def rdef
 	  | LemmaDef _
 	  | CaptureResidue _
 	  | LetDef _
@@ -100,7 +100,7 @@ let parse_file (parse) (source_file : string) =
 	  | EmptyCmd -> () in
   let proc_one_lemma c = 
     match c with
-	  | LemmaDef ldef -> process_lemma ldef
+	  | LemmaDef (ldef,_) -> process_lemma ldef
 	  | DataDef _
 	  | PredDef _
       | RelDef _
@@ -113,9 +113,9 @@ let parse_file (parse) (source_file : string) =
   let proc_one_cmd c = 
     match c with
 	  | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
-	  | CaptureResidue lvar -> process_capture_residue lvar
+	  | CaptureResidue (lvar,_) -> process_capture_residue lvar
 	  | PrintCmd (pcmd,_) -> process_print_command pcmd
-	  | LetDef (lvar, lbody) -> put_var lvar lbody
+	  | LetDef (lvar, lbody,_) -> put_var lvar lbody
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
@@ -183,12 +183,12 @@ let main () =
                   (match cmd with
                      | DataDef (ddef,_) -> process_data_def ddef
                      | PredDef (pdef,_) -> process_pred_def pdef
-                     | RelDef rdef -> process_rel_def rdef
+                     | RelDef (rdef,_) -> process_rel_def rdef
                      | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
-                     | CaptureResidue lvar -> process_capture_residue lvar
-                     | LemmaDef ldef -> process_lemma ldef
+                     | CaptureResidue (lvar,_) -> process_capture_residue lvar
+                     | LemmaDef (ldef,_) -> process_lemma ldef
                      | PrintCmd (pcmd,_) -> process_print_command pcmd
-                     | LetDef (lvar, lbody) -> put_var lvar lbody
+                     | LetDef (lvar, lbody,_) -> put_var lvar lbody
                      | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
                      | EmptyCmd -> ());
                   Buffer.clear buffer;

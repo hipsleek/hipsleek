@@ -2,6 +2,7 @@
    Extended source view
  *)
 
+open Globals
 open GUtil
 open GUtil_sleek
 open SourceUtil
@@ -22,9 +23,10 @@ class source_view ?(text = "") () =
     initializer
       status_lbl#set_use_markup true;
       delegate#set_show_line_numbers true;
-      (*delegate#set_highlight_current_line true;*)
+      delegate#set_highlight_current_line true;
       delegate#set_auto_indent true;
       delegate#set_tab_width 4;
+      (*elegate#set_accepts_tab true;*)
       delegate#set_insert_spaces_instead_of_tabs true;
       delegate#misc#modify_font_by_name font_name;
       delegate#set_show_line_marks true;
@@ -55,26 +57,31 @@ class source_view ?(text = "") () =
       status_lbl#misc#hide ();
       status_lbl#set_label ""
 
-    method private create_mark (category: string) (pos: seg_pos) =
-      let start = self#source_buffer#get_iter_at_char pos.start_char in
+    method private create_mark (category: string) (bpos: int)=
+      let start = self#source_buffer#get_iter_at_char bpos in
       ignore (self#source_buffer#create_source_mark ~category start)
 
-    method private apply_tag (tag: string) (pos: seg_pos) =
-      let start = self#source_buffer#get_iter_at_char pos.start_char in
-      let stop = self#source_buffer#get_iter_at_char pos.stop_char in
+    method private apply_tag (tag: string) (bpos: int) (epos: int) =
+      let start = self#source_buffer#get_iter_at_char bpos in
+      let stop = self#source_buffer#get_iter_at_char  epos in
       self#source_buffer#apply_tag_by_name tag start stop
 
     (** highlight part of the source and scroll to it *)
-    method hl_segment ?(clear_previous_highlight = false) ?(scroll = false) (pos: seg_pos) =
+    method hl_segment_x ?(clear_previous_highlight = false) ?(scroll = false) (bpos: int) (epos: int) =
       if clear_previous_highlight then self#clear_highlight ();
-      self#create_mark highlight pos;
-      self#apply_tag highlight pos;
-      if scroll then self#scroll_to_pos pos
+      self#create_mark highlight bpos;
+      self#apply_tag highlight bpos epos;
+      if scroll then self#scroll_to_pos bpos
 
-    method hl_error ?(msg = "Error in source document") ?(mark = true) (pos: seg_pos) =
-      if mark then self#create_mark error pos;
-      self#apply_tag error pos;
-      self#scroll_to_pos pos;
+    method hl_segment ?(clear_previous_highlight = false) ?(scroll = false) (bpos: int) (epos: int) =
+      let pr = string_of_int in
+      Gen.Debug.no_2 "hl_segment " pr pr (fun () -> "out") (fun _ _ -> self#hl_segment_x ~clear_previous_highlight
+          ~scroll bpos epos) bpos epos
+
+    method hl_error ?(msg = "Error in source document") ?(mark = true) (bpos: int) (epos: int) =
+      if mark then self#create_mark error bpos;
+      self#apply_tag error bpos epos;
+      self#scroll_to_pos bpos;
       if msg <> "" then
         let msg = Printf.sprintf 
           "<span font_variant='smallcaps' font_weight='bold' color='#fff' bgcolor='#b24c40'>  %s  </span>"
@@ -92,8 +99,8 @@ class source_view ?(text = "") () =
       self#source_buffer#remove_source_marks ~category:highlight ~start ~stop ();
 
     (** scroll the view window to given position *)
-    method scroll_to_pos (pos: seg_pos) =
-      let iter = self#source_buffer#get_iter_at_char pos.start_char in
+    method scroll_to_pos (bpos: int) =
+      let iter = self#source_buffer#get_iter_at_char bpos in
       ignore (delegate#scroll_to_iter
         ~use_align:true ~yalign:0.5 iter)
 
@@ -132,25 +139,37 @@ class sleek_source_view ?(text = "") () =
       super#source_buffer#set_language (Some (get_sleek_lang ()));
       super#source_buffer#set_highlight_syntax true;
 
-    (** highlight checkentail command
+      (** highlight a line
        by applying checkentail tag on that part of source code *)
-    method hl_entailment (e: entailment): unit =
-      super#hl_segment ~clear_previous_highlight:true ~scroll:true e.pos
+    method highlight_line (line_num: int): unit =
+      let (b, e) = SourceUtil.get_line_pos line_num current_file#get_lines_map in
+      (*let _ = print_endline ("b: "^(string_of_int b)) in*)
+      super#hl_segment ~clear_previous_highlight:true ~scroll:true b e
 
-    (** highlight all checkentail commands *)
-    method hl_all_entailement () : unit =
-      let src = self#source_buffer#get_text () in
-      let e_list = parse_entailment_list src in
-      List.iter (fun e -> super#hl_segment e.pos) e_list
+     (** highlight cmd
+       by applying checkentail tag on that part of source code *)
+    method highlight_cmd (cmd: cmd_info): unit =
+      let m = current_file#get_lines_map in
+      let pos = cmd#get_pos in
+      let (b1, _) = SourceUtil.get_line_pos pos.start_pos.Lexing.pos_lnum m in
+      let (_,e2) = SourceUtil.get_line_pos pos.end_pos.Lexing.pos_lnum m in
+      super#hl_segment ~clear_previous_highlight:true ~scroll:true b1 e2
 
+(*
+    (** highlight all commands *)
+    method hl_all_cmd () : unit =
+      List.iter self#hl_cmd current_file
+*)
     method get_current_file_name():string=
     current_file#get_file_name
 
     (*result src of file*)
     method load_new_file (fname:string):string=
-      let (cur_pos, src) = current_file#load_new_file fname in
+      let (cur_line_pos, src) = current_file#load_new_file fname in
+      (*replace source*)
+      self#replace_source src;
       (*highlight cur_pos*)
-
+      self#highlight_line cur_line_pos;
       src
 
     method create_new_file ():string=
@@ -158,6 +177,12 @@ class sleek_source_view ?(text = "") () =
       (*highlight cur_pos*)
 
       src
+
+    method replace_source (new_src: string): unit =
+      self#source_buffer#begin_not_undoable_action ();
+      self#source_buffer#set_text new_src;
+      self#source_buffer#set_modified false;
+      self#source_buffer#end_not_undoable_action ();
 
   end
 
@@ -186,7 +211,7 @@ class hip_source_view ?(text = "") () =
       super#source_buffer#set_highlight_syntax true;
 
     method hl_proc (p: procedure): unit =
-      super#hl_segment ~clear_previous_highlight:true ~scroll:true p.pos
+      super#hl_segment ~clear_previous_highlight:true ~scroll:true 2 10
 
   end
 

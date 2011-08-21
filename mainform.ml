@@ -229,15 +229,11 @@ class mainwindow () =
         | _ -> false
       in res
 
-    method replace_source (new_src: string): unit =
-      slk_view#source_buffer#begin_not_undoable_action ();
-      slk_view#source_buffer#set_text new_src;
-      slk_view#source_buffer#set_modified false;
-      slk_view#source_buffer#end_not_undoable_action ();
+    method source_changed (new_src: string): unit =
       self#update_original_digest ();
 (*      entailment_list#update_source new_src;*)
       context_view#buffer#set_text ""
-      
+
     method private string_of_current_file () =
       let current_file = slk_view#get_current_file_name () in
       match current_file with
@@ -252,7 +248,7 @@ class mainwindow () =
 
     method open_file (fname: string): unit =
       let src = slk_view#load_new_file fname in
-      self#replace_source src;
+      self#source_changed src;
       self#update_win_title ()
 
     method update_win_title () =
@@ -327,7 +323,7 @@ class mainwindow () =
       win#present ()
 
     method show_about_dialog () =
-        let dialog = GWindow.about_dialog 
+        let dialog = GWindow.about_dialog
           ~name:"HIP/Sleek"
           ~authors:["Wei Ngan Chin"; "Huu Hai Nguyen"; "Cristina David"; "Cristian Gherghina"]
           ~version:"1.0"
@@ -338,14 +334,15 @@ class mainwindow () =
         dialog#show ()
 
     (*********************
-     * Actions handlers 
+     * Actions handlers
      *********************)
 
     method private new_file_handler () =
       if self#file_closing_check () then begin
           let src = slk_view#create_new_file() in
           self#update_win_title ();
-          self#replace_source src
+          slk_view#replace_source src;
+          self#source_changed src
       end
 
     (* Toolbar's Open button clicked *)
@@ -383,9 +380,12 @@ class mainwindow () =
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
-      let src = self#get_text () in
-   (*   entailment_list#check_all (fun e -> fst (SH.checkentail src e));*)
-      slk_view#hl_all_entailement ()
+    (*  let src = self#get_text () in
+    (*  entailment_list#check_all (fun e -> fst (SH.checkentail src e));*)
+      if src == "" then () else
+        slk_view#hl_all_cmd ()
+    *)
+      ()
 
     (* Source buffer modified *)
     method private source_changed_handler () =
