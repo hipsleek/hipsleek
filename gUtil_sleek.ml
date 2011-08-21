@@ -243,10 +243,10 @@ object (self)
   val mutable file_name = ""
   val mutable current_line_pos = -1 (*line number*)
   val mutable total_line = 0
-  val mutable current_cmd = new cmd_info
+  val mutable current_cmd = (-1:int) (*the order in cmd*)
   (*val cmds = Hashtbl.create 128*)
   val mutable cmds = ([] : cmd_info list)
-  val mutable lines_pos = ([]: (int*int) list)
+  val mutable lines_pos = ([]: (int*int) list) (*mapping from line number -> begin char, end char*)
 
   method set addr p n=
     file_name <- addr;
@@ -271,6 +271,8 @@ object (self)
 
   method get_lines_map = lines_pos
 
+  method private get_cmds_size():int= List.length cmds
+
   method private build_cmds cmds:(cmd_info list)=
     let helper cmd:cmd_info=
       let pos = SC.pos_of_command cmd in
@@ -290,15 +292,17 @@ object (self)
     let ls_cmds = SleekHelper.parse_command_list src in
     (*parse lines position in src*)
     lines_pos <- (SourceUtil.get_lines_positions src);
+    total_line <- List.length lines_pos;
     (*let _ = print_endline (SourceUtil.string_of_lines lines_pos) in*)
     (*add all cmds into cmds*)
     cmds <- self#build_cmds ls_cmds;
     file_name <- fname;
     (*set current line = first line of text; current cmd = first cmd*)
     let temp = List.hd cmds in
-    current_cmd <- temp;
+    current_cmd <- 0;
+    let temp = List.nth cmds current_cmd in
     (*let _ = print_endline (current_cmd#string_of_cmd()) in*)
-    current_line_pos <- SourceUtil.get_line_num current_cmd#get_pos;
+    current_line_pos <- SourceUtil.get_line_num temp#get_pos;
     (*let _ = print_endline (string_of_int current_line_pos) in*)
     (current_line_pos,src)
 
@@ -308,7 +312,7 @@ object (self)
     file_name <- "";
     current_line_pos <- 1;
     total_line <- 0;
-    current_cmd#reset();
+    current_cmd<-0;
 
     (current_line_pos,"")
    end
@@ -323,15 +327,33 @@ object (self)
 
   ()
 
-  method move_next_cmd (p:int)=
+  method move_to_next_cmd ():int=
    (*res = new pos, new cmd*)
+    if current_cmd < self#get_cmds_size() then
+      begin
+          (*run remain of entailemt process*)
+          
+          current_cmd <- current_cmd + 1;
+          let temp = List.nth cmds current_cmd in
+    (*let _ = print_endline (current_cmd#string_of_cmd()) in*)
+          current_line_pos <- SourceUtil.get_line_num temp#get_pos;
+          current_line_pos
+      end
+    else
+      current_line_pos
 
-  ()
-
-  method move_prev_cmd (p:int)=
+  method back_to_prev_cmd():int=
    (*res = new pos, new cmd*)
-
-  ()
+    if current_cmd > 0 then
+      begin
+          current_cmd <- current_cmd - 1;
+          let temp = List.nth cmds current_cmd in
+    (*let _ = print_endline (current_cmd#string_of_cmd()) in*)
+          current_line_pos <- SourceUtil.get_line_num temp#get_pos;
+          current_line_pos
+      end
+    else
+      current_line_pos
 
   method move_to_current_point (p:int)=
 

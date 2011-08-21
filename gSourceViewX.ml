@@ -184,6 +184,18 @@ class sleek_source_view ?(text = "") () =
       self#source_buffer#set_modified false;
       self#source_buffer#end_not_undoable_action ();
 
+   method move_to_next_cmd ():unit=
+   (*res = new pos, new cmd*)
+     let cur_line_pos= current_file#move_to_next_cmd() in
+     self#highlight_line cur_line_pos;
+     ()
+
+  method back_to_prev_cmd ():unit=
+   (*res = new pos, new cmd*)
+    let cur_line_pos= current_file#back_to_prev_cmd() in
+     self#highlight_line cur_line_pos;
+    ()
+
   end
 
 

@@ -416,12 +416,12 @@ class mainwindow () =
        ()
 
      method private move_to_last_handler () =
-        let _ = print_endline "move to the end" in
-       ()
+        let _ = print_endline "move to next command" in
+        slk_view#move_to_next_cmd()
 
      method private back_to_first_handler () =
-        let _ = print_endline "back to the beginning" in
-       ()
+        let _ = print_endline "back to previous command" in
+        slk_view#back_to_prev_cmd()
 
      method private jump_to_handler () =
         let _ = print_endline "jump to current point" in
