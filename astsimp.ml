@@ -1215,6 +1215,15 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       (* TODO : This has to be generalised to mutual-recursion *)
       (* let ir = Cast.is_self_rec_rhs vdef.I.view_name cf in *)
       let ir = is_view_recursive vdef.I.view_name in
+
+      (* let _ = print_string ("trans_view: " *)
+      (*                       ^ "\n ### cf = " ^ (Cprinter.string_of_struc_formula cf) *)
+      (*                       ^"\n\n") in *)
+      (*set h_formula_view_lhs_case_flag of the RHS to false*)
+      let cf = CF.struc_formula_set_lhs_case cf false in
+      (* let _ = print_string ("trans_view: " *)
+      (*                       ^ "\n ### cf = " ^ (Cprinter.string_of_struc_formula cf) *)
+      (*                       ^"\n\n") in *)
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -1863,7 +1872,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -1931,9 +1940,33 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_body = new_body;
                     C.coercion_univ_vars = [];} in
         match coer.I.coercion_type with
-          | I.Left -> ([ c_coer ], [])
-          | I.Equiv -> ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer])
-          | I.Right -> ([], [ change_univ c_coer]))
+          | I.Left -> 
+              let c_coer = {c_coer with 
+                      C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true;
+                      C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
+              in
+              ([ c_coer ], [])
+          | I.Equiv -> 
+              let c_coer = {c_coer with 
+                  C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true; 
+                  C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
+              in
+              let c_coer1 = {c_coer with 
+                  C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
+                  C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
+              in
+              ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer1]) (*??? try*)
+          | I.Right -> 
+              let c_coer = {c_coer with 
+                      C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
+                      C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
+              in
+              ([], [ change_univ c_coer]))
+
+        (* match coer.I.coercion_type with *)
+        (*   | I.Left -> ([ c_coer ], []) *)
+        (*   | I.Equiv -> ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer]) *)
+        (*   | I.Right -> ([], [ change_univ c_coer])) *)
 
 and find_view_name (f0 : CF.formula) (v : ident) pos =
   match f0 with

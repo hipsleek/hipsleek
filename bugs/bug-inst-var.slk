@@ -29,3 +29,11 @@ checkentail
    self::node<_,p,q3> & q3=n & self=t & self!=n
      |- 
       (exists q: self::dll_r5<p,q,t> * t::node<_,q,n>).
+
+checkentail 
+   self::node<_,p,q3> & q3=n & self=t & self!=n
+     |- [q] self::dll_r5<p,q,t>.
+
+checkentail 
+   self::node<_,p,q3> & q3=n & self=t & self!=n
+     |- (exists q: self::dll_r5<p,q,t>).

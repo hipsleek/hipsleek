@@ -1400,6 +1400,14 @@ let pr_prune_invariants l = (fun c-> pr_seq "," (fun (c1,(ba,c2))->
 
 let string_of_prune_invariants p : string = poly_string_of_pr pr_prune_invariants p
 
+let pr_view_base_case bc = 
+    (match bc with
+	  | None -> ()
+      | Some (s1,(s3,s2)) -> 
+            pr_vwrap "base case: "
+	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) ()
+    )
+
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
@@ -1446,6 +1454,8 @@ let pr_prune_invs inv_lst =
           ("{"^s^"} -> ["^d^"]")) c) inv_lst))
 
 let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
+
+let string_of_view_base_case (bc:(P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option): string =  poly_string_of_pr pr_view_base_case bc
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
 
