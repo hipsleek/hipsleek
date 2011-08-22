@@ -104,7 +104,6 @@ module SleekHelper = struct
     begin
         (*log ("process command: " ^ (String.concat "\n" (List.map SC.string_of_command cmds)));*)
         log ("process command: " ^ SC.string_of_command cmd);
-        wrap_exists_implicit_explicit := false ;
     (*  process_cmd_line ();*)
         Tpdispatcher.start_prover ();
         Gen.Profiling.push_time "Overall";
@@ -271,6 +270,7 @@ object (self)
   val mutable current_cmd_idx = (-1:int) (*the order in cmd*)
   (*val cmds = Hashtbl.create 128*)
   val mutable cmds = ([] : cmd_info list)
+  val mutable decl_cmds = ([] : cmd_info list)
   val mutable lines_pos = ([]: (int*int) list) (*mapping from line number -> begin char, end char*)
 
   method set addr p n=
@@ -291,6 +291,10 @@ object (self)
   method get_list_cmds():(cmd_info list) =
     (*Hashtbl.fold (fun a b ls-> b::ls) cmds []*)
     cmds
+
+  method get_decl_cmds():(cmd_info list) =
+    (*Hashtbl.fold (fun a b ls-> b::ls) cmds []*)
+    decl_cmds
 
   method get_total_line = total_line
 
@@ -314,6 +318,7 @@ object (self)
     (*reset old content*)
     let _ = SE.clear_all () in
     (*inbuilt data*)
+    wrap_exists_implicit_explicit := false ;
     let _ = SE.main_init() in
 
     (*load file, src = file contend*)
@@ -325,7 +330,11 @@ object (self)
     total_line <- List.length lines_pos;
     (*let _ = print_endline (SourceUtil.string_of_lines lines_pos) in*)
     (*add all cmds into cmds*)
-    cmds <- self#build_cmds ls_cmds;
+    let cmds1, cmds2 = List.partition SE.is_decl_cmd ls_cmds in
+    let cmds12 = self#build_cmds cmds1 in
+    decl_cmds <- cmds12 ;
+    let cmds22 = self#build_cmds cmds2 in
+    cmds <- cmds22;
     file_name <- fname;
     (*set current line = first line of text; current cmd = first cmd*)
     current_cmd_idx <- 0;
@@ -362,6 +371,14 @@ object (self)
      let temp = self#get_current_cmd () in
      let slk_cmd = temp#get_cmd in
      SleekHelper.process_cmd slk_cmd
+
+  method process_cmd(c:cmd_info):(string*string)=
+     let slk_cmd = c#get_cmd in
+     SleekHelper.process_cmd slk_cmd
+
+  method process_cmds (cmds:cmd_info list):(string*string)=
+    let (ls, prf) = List.split (List.map self#process_cmd cmds) in
+    (String.concat "\n" ls, String.concat "\n" prf)
 
   method move_to_next_cmd ():int=
    (*res = new pos, new cmd*)

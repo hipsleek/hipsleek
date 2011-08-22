@@ -254,6 +254,8 @@ class mainwindow () =
     method open_file (fname: string): unit =
       let src = slk_view#load_new_file fname in
       self#source_changed src;
+      let ctxs, prfs =  slk_view#process_decl_cmd() in
+      (self#update_ctx_prf_view ctxs prfs);
       self#update_win_title ()
 
     method update_win_title () =
@@ -382,10 +384,7 @@ class mainwindow () =
           end
       | fname -> (if self#source_modified then self#save text fname; true)
 
-
-    (* Toolbar's Run all button clicked or Validity column header clicked *)
-    method private exec_handler () =
-      let ctx,prf=slk_view#exec_current_cmd() in
+    method private update_ctx_prf_view ctx prf:unit=
       if String.length (ctx^prf)>0 then
         begin
             context_view#buffer#set_text ctx;
@@ -393,6 +392,11 @@ class mainwindow () =
             ()
         end
       else ()
+
+    (* Toolbar's Run all button clicked or Validity column header clicked *)
+    method private exec_handler () =
+      let ctxs,prfs=slk_view#exec_current_cmd() in
+      (self#update_ctx_prf_view ctxs prfs)
     (*  let src = self#get_text () in
     (*  entailment_list#check_all (fun e -> fst (SH.checkentail src e));*)
       if src == "" then () else

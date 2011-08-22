@@ -173,7 +173,12 @@ class sleek_source_view ?(text = "") () =
       (*highlight cur_pos*)
       self#highlight_line cur_line_pos;
       is_accessible <- true;
-      src
+      (src)
+
+    method process_decl_cmd():(string*string)=
+      (*exec all decl cmds*)
+      let ctxs, prfs = current_file#process_cmds (current_file#get_decl_cmds()) in
+      (ctxs, prfs)
 
     method create_new_file ():string=
       let (cur_pos, src) = current_file#create_new_file () in

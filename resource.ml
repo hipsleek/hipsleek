@@ -35,6 +35,7 @@ let string_tool_bar = ref ("<toolbar name='ToolBar'>\
       <toolitem action='UpA'/>\
       <toolitem action='ForwardA'/>\
       <toolitem action='BackA'/>\
+      <separator/>\
       <toolitem action='NextToE'/>\
       <toolitem action='UpToB'/>\
       <toolitem action='JumpTo'/>\
