@@ -92,7 +92,7 @@ let parse_file (parse) (source_file : string) =
 	  | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
-	  | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
+	  | EntailCheck (iante, iconseq,_) -> let _ = process_entail_check iante iconseq in ()
 	  | CaptureResidue (lvar,_) -> process_capture_residue lvar
 	  | PrintCmd (pcmd,_) -> process_print_command pcmd
 	  | LetDef (lvar, lbody,_) -> put_var lvar lbody
@@ -154,7 +154,7 @@ let main () =
                      | DataDef (ddef,_) -> process_data_def ddef
                      | PredDef (pdef,_) -> process_pred_def pdef
                      | RelDef (rdef,_) -> process_rel_def rdef
-                     | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
+                     | EntailCheck (iante, iconseq,_) -> let _ = process_entail_check iante iconseq in ()
                      | CaptureResidue (lvar,_) -> process_capture_residue lvar
                      | LemmaDef (ldef,_) -> process_lemma ldef
                      | PrintCmd (pcmd,_) -> process_print_command pcmd
