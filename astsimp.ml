@@ -408,7 +408,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
         let ddef =
           I.look_up_data_def h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
             h0.IF.h_formula_heap2_name in
-        let params = List.map (fun ((t, v), p) -> v) ddef.I.data_fields in
+        let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
         let hargs = match_args params h0.IF.h_formula_heap2_arguments in
         let h =
           {
@@ -1081,7 +1081,11 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 			else () in *)
 	let _ = undef_data_types := List.filter (fun x -> not ((fst x) = ddef.I.data_name)) !undef_data_types in
 	(* let _ = print_endline ("Undefined : " ^ (String.concat "," !undef_data_types)) in *)
-  let trans_field ((t, c), pos) : C.typed_ident =
+	(** 
+	 * An Hoa [22/08/2011] : translate field with inline consideration.
+	 * TODO implement
+	 **)
+  let trans_field ((t, c), pos, il) : C.typed_ident =
     ((trans_type prog t pos), c)
   in
   {
@@ -2247,8 +2251,9 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     E.var_alpha = alpha;
                                     E.var_type = ti;})) 
                                 vs
-                                (List.map fst (List.map fst ddef.I.data_fields)) in
-                              let vs_types = List.map (fun fld -> trans_type prog (fst (fst fld)) (snd fld)) ddef.I.data_fields in
+								(* An Hoa [22/08/2011] : Convert hard code of data fields typ extraction into *)
+                                (List.map I.get_field_typ ddef.I.data_fields) in
+                              let vs_types = List.map (fun fld -> trans_type prog (I.get_field_typ fld) (I.get_field_pos fld)) ddef.I.data_fields in
                               let vt = trans_type prog vi.E.var_type pos in
                               let (ce, te) = trans_exp prog proc e in
                               let _ = E.pop_scope ()in
@@ -2533,7 +2538,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_new_pos = pos } ->
           let data_def = I.look_up_data_def pos prog.I.prog_data_decls c in
           let all_fields = I.look_up_all_fields prog data_def in
-          let field_types = List.map (fun f -> fst (fst f)) all_fields in
+          let field_types = List.map I.get_field_typ all_fields in
           let nargs = List.length args in
           if ( != ) nargs (List.length field_types) then
             Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match";}
@@ -3156,8 +3161,8 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                     if (snd f) = fn then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
                     else (tmp, (fresh_fn :: new_rest))) in
           let all_fields = I.look_up_all_fields prog ddef in
-          let field_types = List.map (fun f -> trans_type prog (fst (fst f)) pos) all_fields in
-          let (tmp1, fresh_names) = gen_names f (List.map fst all_fields)	in
+          let field_types = List.map (fun f -> trans_type prog (I.get_field_typ f) pos) all_fields in
+          let (tmp1, fresh_names) = gen_names f (List.map I.get_field_typed_id all_fields) in
           if not (Gen.is_some tmp1) then
             Err.report_error {
                 Err.error_loc = pos;
@@ -3217,10 +3222,10 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
                       then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
                       else (tmp, (fresh_fn :: new_rest)) in
             let field_types =
-              List.map (fun f -> trans_type prog (fst (fst f)) pos)
+              List.map (fun f -> trans_type prog (I.get_field_typ f) pos)
                   ddef.I.data_fields in
             let (tmp1, fresh_names) =
-              gen_names f (List.map fst ddef.I.data_fields)
+              gen_names f (List.map I.get_field_typed_id ddef.I.data_fields)
             in
             if not (Gen.is_some tmp1)
             then
@@ -3661,7 +3666,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
               IF.h_formula_heap_pos = pos;
               IF.h_formula_heap_label = pi;} ->
 				(* An Hoa : Handle field access *)
-				if (c = Parser.generic_pointer_type_name || String.contains v '.') then
+				(* if (c = Parser.generic_pointer_type_name || String.contains v '.') then
 					let tokens = Str.split (Str.regexp "\.") v in
 					let tokens = List.filter I.is_not_data_type_identifier tokens in
 					let rootptr = List.hd tokens in
@@ -3688,7 +3693,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 							CF.h_formula_data_pruning_conditions = [];
 							CF.h_formula_data_pos = pos; } in
 						(result_heap, CF.TypeTrue)
-				else (* Not a field access, proceed with the original code *)
+				else (* Not a field access, proceed with the original code *) *)
               (try
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
                 let labels = vdef.I.view_labels in
@@ -5061,7 +5066,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
 		    if (List.length ies) = (List.length fields)
 		    then
               (let typs =
-                List.map (fun f -> trans_type prog (fst (fst f)) pos)
+                List.map (fun f -> trans_type prog (I.get_field_typ f) pos)
                     fields in
               let _ = List.fold_left2 check_ie stab ies typs in ())
 		    else
@@ -5285,7 +5290,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 		    if (List.length ies) = (List.length fields)
 		    then
               (let typs =
-                List.map (fun f -> trans_type prog (fst (fst f)) pos)
+                List.map (fun f -> trans_type prog (I.get_field_typ f) pos)
                     fields in
               let _ = List.map2 check_ie ies typs in ())
 		    else
@@ -6095,7 +6100,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
 				  Some nc)},h,p)
 
 and case_normalize_data prog (f:Iast.data_decl):Iast.data_decl =
-  let h = List.map (fun (c1,_)-> ((snd c1),Unprimed) ) f.Iast.data_fields in  
+  let h = List.map (fun f -> (I.get_field_name f,Unprimed) ) f.Iast.data_fields in  
   {f with Iast.data_invs = List.map (case_normalize_formula prog h) f.Iast.data_invs}
 
 and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl = 

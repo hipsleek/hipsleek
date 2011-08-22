@@ -11,12 +11,12 @@ let no_field_duplication_within_class (c : I.data_decl) : bool =
   let flag = ref true in 
     begin
       List.iter
-	(fun t1 ->
+	(fun t1 -> let f1 = I.get_field_name t1 in (* An Hoa [22/08/2011] : modify to use function instead of hard code field name extraction *)
 	  (List.iter
-	     (fun t2 ->
-	       if (!flag = true) && (t1 != t2) && ((snd (fst t1)) = (snd (fst t2))) then
+	     (fun t2 ->	let f2 = I.get_field_name t2 in (* An Hoa [22/08/2011] : modify to use function instead of hard code field name extraction *)
+	       if (!flag = true) && (t1 != t2) && (f1 = f2) then
 		 begin
-		   print_string ("Field " ^ (snd (fst t1)) ^ " from class " ^ c.I.data_name ^ " is duplicated \n");
+		   print_string ("Field " ^ f1 ^ " from class " ^ c.I.data_name ^ " is duplicated \n");
 		   flag := false;
 		 end  		 
 	     ) c.I.data_fields
@@ -128,15 +128,15 @@ let no_field_hiding (prog : I.prog_decl) : bool =
   begin
     List.iter
       (fun t1 -> (* t1 is a class *)
-	(List.iter
-	  (fun t2 -> (* t2 is a field *)
+	(List.iter (* An Hoa [22/08/2011] : Add let f2 and let f4 instead of hard code *)
+	  (fun t2 -> let f2 = I.get_field_name t2 in (* t2 is a field *)
 	    (List.iter
 	      (fun t3 -> (* t3 is a class *)
 		(List.iter
-		   (fun t4 -> (* t4 is a field *)
-		     if !flag && t1 != t3 && (inherits prog t1 t3) && (snd (fst t2)) = (snd (fst t4)) then 
+		   (fun t4 -> let f4 = I.get_field_name t4 in (* t4 is a field *)
+		     if !flag && t1 != t3 && (inherits prog t1 t3) && (f2 = f4) then 
 		       begin
-			 print_string ("Field " ^ (snd (fst t2)) ^ " from class " ^ t3.I.data_name ^ " is hidden by a declaration in class " ^ t1.I.data_name ^ "\n");
+			 print_string ("Field " ^ f2 ^ " from class " ^ t3.I.data_name ^ " is hidden by a declaration in class " ^ t1.I.data_name ^ "\n");
 			 flag := false;
 		       end  
                   )

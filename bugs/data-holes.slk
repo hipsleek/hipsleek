@@ -12,8 +12,6 @@ data node2 {
 
 checkentail x.f1::<1> * x.node.f5::<a> * x.f4::<b> |- x::node<#,#,#,u,v>.
 
-
-
 //checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
 //print residue.
 

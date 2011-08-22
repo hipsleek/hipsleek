@@ -414,19 +414,33 @@ data_body:
 
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1)]
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false)]
+ 	|  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false)]
   |   
        t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
-			if List.mem n (List.map (fun f -> snd (fst f)) fl) then
+			if List.mem n (List.map get_field_name fl) then
 				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t, n), get_pos_camlp4 _loc 3) :: fl )
+				((t, n), get_pos_camlp4 _loc 3, false) :: fl )
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
-			(if List.mem n (List.map (fun f -> snd (fst f)) fl) then
+			(if List.mem n (List.map get_field_name fl) then
 				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t1, n), get_pos_camlp4 _loc 3) :: fl ) ]];
+				((t1, n), get_pos_camlp4 _loc 3, false) :: fl )]
+	(* An Hoa [22/08/2011] Inline fields extension*)
+	| "inline fields" [
+	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true)]
+ 	| `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true)]
+	| `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
+			if List.mem n (List.map get_field_name fl) then
+				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+			else
+				((t, n), get_pos_camlp4 _loc 3, true) :: fl )
+	| `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
+			(if List.mem n (List.map get_field_name fl) then
+				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+			else
+				((t1, n), get_pos_camlp4 _loc 3, true) :: fl )]];
 
 (* one_field:   *)
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
@@ -1048,6 +1062,8 @@ global_var_decl:
 class_decl:
   [[ `CLASS; `IDENTIFIER id; par=OPT extends; `OBRACE; ml=member_list_opt; `CBRACE ->
       let t1, t2, t3 = split_members ml in
+		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
+		let t1 = List.map (fun (t, p) -> (t, p, false)) t1 in
       let cdef = { data_name = id;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
@@ -1061,7 +1077,7 @@ extends: [[`EXTENDS; `IDENTIFIER id -> id]];
 member_list_opt: [[t = LIST0 member SEP `SEMICOLON -> t]];
 
 member:
- [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2)
+ [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2) 
   | `INV;  dc=disjunctive_constr -> Inv (F.subst_stub_flow top_flow dc) 
   | pd=proc_decl -> Method pd
   | cd=constructor_decl -> Method cd]];

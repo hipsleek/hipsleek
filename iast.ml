@@ -26,7 +26,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;
-		  data_fields : (typed_ident * loc) list;
+		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 		  data_parent_name : ident;
 		  data_invs : F.formula list;
 		  data_methods : proc_decl list }
@@ -820,6 +820,41 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
   (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) : unit =
   fold_exp_args_imp e arg imp f f_args f_imp voidf ()
 
+(** An Hoa [22/08/2011] Extract information from a field declaration of data **)
+
+(**
+ * An Hoa : get the typed identifier from a field declaration
+ **)
+let get_field_typed_id d =
+	match d with
+		| (tid,_,_) -> tid
+
+(**
+ * An Hoa : Extract the field name from a field declaration
+ **)
+let get_field_name f = snd (get_field_typed_id f)
+
+(**
+ * An Hoa : Extract the field name from a field declaration
+ **)
+let get_field_typ f = fst (get_field_typed_id f)
+
+(**
+ * An Hoa : Extract the field position from a field declaration
+ **)
+let get_field_pos f =
+	match f with
+		| (_,p,_) -> p 
+
+(**
+ * An Hoa : Check if a field is an inline field 
+ **)
+let is_inline_field f =
+	match f with
+		| (_,_,inline) -> inline
+
+(** An Hoa [22/08/2011] : End of information extracting functions from field declaration **)
+
 (* look up functions *)
 
 (** An Hoa:
@@ -829,9 +864,7 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 	match defs with
 	| [] -> []
 	| d::t -> let temp = look_up_types_containing_field t field_name in
-				if (List.exists (fun x -> let extr_field = snd (fst x) in 
-											extr_field = field_name) 
-						d.data_fields) then
+				if (List.exists (fun x -> (get_field_name x) = field_name) d.data_fields) then
 					d.data_name :: temp
 				else temp
 (* An Hoa : End *)
@@ -897,7 +930,7 @@ and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = ma
         let cparent_decl = List.find (fun t -> (String.compare t.data_name c.data_parent_name) = 0) prog.prog_data_decls in
         c.data_methods @ (look_up_all_methods prog cparent_decl)  
 
-and look_up_all_fields (prog : prog_decl) (c : data_decl) : (typed_ident * loc) list = 
+and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
   let current_fields = c.data_fields in
   if (String.compare c.data_name "Object") = 0 then
 	[]
@@ -1704,12 +1737,14 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
         in new_prims
   | hd::tl -> append_iprims_list hd tl
 
+
+
 (**
  * An Hoa : Find the type of the field with indicated name in ddef
  * TODO extend to a list of access
  **)
 let get_type_of_field (ddef : data_decl) field_name =
-	let tids = List.map fst ddef.data_fields in
+	let tids = List.map get_field_typed_id ddef.data_fields in
 	let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
 		fst field_typed_id
 

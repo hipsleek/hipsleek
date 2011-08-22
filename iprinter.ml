@@ -570,8 +570,8 @@ and
 ;;
 
 (* pretty printing for one data declaration*)
-let string_of_decl (d, pos) = match d with 
-  | (t, i)             -> (string_of_typ t) ^ " " ^ i 
+let string_of_decl (d, pos, il) = match d with (* An Hoa [22/08/2011] Add inline component *)
+  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i
 ;;           
 
 (* function to print a list of typed _ident *) 
@@ -690,7 +690,7 @@ let rec string_of_global_var_decl_list l =
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
   let field_str = String.concat ";\n" 
-	(List.map (fun f -> ((string_of_typ (fst (fst f))) ^ " " ^ (snd (fst f)))) cdef.data_fields) in
+	(List.map (fun f -> ((* An Hoa [22/08/2011] : convert hard coded information extraction to function calls to make code extensible *) (string_of_typ (get_field_typ f)) ^ " " ^ (get_field_name f))) cdef.data_fields) in
   let inv_str = String.concat ";\n" (List.map (fun i -> "inv " ^ (string_of_formula i)) cdef.data_invs) in
 	"class " ^ cdef.data_name ^ " extends " ^ cdef.data_parent_name ^ " {\n"
 	^ field_str ^ "\n" ^ inv_str ^ "\n" ^ meth_str ^ "\n}"

@@ -1,0 +1,9 @@
+data pair {
+	int x;
+	int y;
+}.
+
+data quadruple {
+	inline pair p1;
+	pair p2;
+}.

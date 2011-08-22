@@ -139,7 +139,7 @@ and split_params_mode (view_vars : CP.spec_var list) (modes : mode list) : (CP.s
    field_vars : spec vars to be converted to fields
    pbvars : partially bound output parameters
 *)
-and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos : (typed_ident * loc) list =
+and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
   (* generator for in and fully bound out parameters *)
   let rec helper vvars = match vvars with
 	| var :: rest1 -> begin
@@ -151,7 +151,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 		  | p -> p in
 		let t = ityp_of_ctyp (CP.type_of_spec_var var) in
 		(* An Hoa END *)
-		let fld = ((t, CP.name_of_spec_var var), pos) in
+		let fld = ((t, CP.name_of_spec_var var), pos, false) in (* An Hoa : Add [false] for inline record. TODO revise *)
 		fld :: rest_result
 	end
 	| [] -> [] in
@@ -159,7 +159,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
   let rec helper2 (CP.SpecVar (t, v, p)) =
 	let cls_name = aug_class_name t in
 	let atype = Named cls_name in
-	((atype, v), pos) in
+	((atype, v), pos, false)  (* An Hoa : Add [false] for inline record. TODO revise *) in 
   let pb_fields = List.map helper2 pbvars in
   let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
@@ -1789,7 +1789,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let combined_exp, disj_procs, pbvars = 
 	gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
 	(* generate fields *)
-  let fields = ((Named vdef.C.view_data_name, self), pos) 
+  let fields = ((Named vdef.C.view_data_name, self), pos, false) (* An Hoa : add [false] for inline record. TODO revise *) 
 	:: (gen_fields vdef.C.view_vars pbvars pos) in
 	(* parameters for traverse *)
   let check_proc = { proc_name = "traverse";
@@ -1909,7 +1909,8 @@ and gen_partially_bound_types (pbvars : CP.spec_var list) pos : data_decl list =
 and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_decl list = match t with
   | Named c ->
 	  let cls_aug = c ^ "Aug" in
-	  let fields = [((Bool, "bound"), pos); ((Named (string_of_typ t), "val"), pos)] in
+		(* An Hoa : Add [false] for inline record. TODO revise *)
+	  let fields = [((Bool, "bound"), pos, false); ((Named (string_of_typ t), "val"), pos, false)] in
 	  let ddef = { data_name = cls_aug;
 				   data_fields = fields;
 				   data_parent_name = "Object";
