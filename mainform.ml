@@ -146,7 +146,7 @@ class mainwindow () =
         a "About" ~label:"_About" ~tooltip:"About HIP/Sleek"
           ~callback:(fun _ -> ignore (self#show_about_dialog ()));
         a "Execute" ~stock:`EXECUTE ~tooltip:"Check all entailments"
-          ~callback:(fun _ -> self#run_all_handler ());
+          ~callback:(fun _ -> self#exec_handler ());
         a "NextA" ~stock:`GO_DOWN ~tooltip:"Down"
           ~callback:(fun _ -> self#next_action_handler ());
         a "UpA" ~stock:`GO_UP ~tooltip:"Up"
@@ -384,13 +384,21 @@ class mainwindow () =
 
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
-    method private run_all_handler () =
+    method private exec_handler () =
+      let ctx,prf=slk_view#exec_current_cmd() in
+      if String.length (ctx^prf)>0 then
+        begin
+            context_view#buffer#set_text ctx;
+            proof_view#buffer#set_text prf;
+            ()
+        end
+      else ()
     (*  let src = self#get_text () in
     (*  entailment_list#check_all (fun e -> fst (SH.checkentail src e));*)
       if src == "" then () else
         slk_view#hl_all_cmd ()
-    *)
       ()
+    *)
 
     (* Source buffer modified *)
     method private source_changed_handler () =
@@ -422,14 +430,15 @@ class mainwindow () =
 
       method private go_forward_action_handler () =
        let _ = print_endline "next command" in
-       let ctx,prf=slk_view#move_to_next_cmd() in
+       slk_view#move_to_next_cmd()
+       (*let ctx,prf=slk_view#move_to_next_cmd() in
        if String.length (ctx^prf)>0 then
          begin
              context_view#buffer#set_text ctx;
              proof_view#buffer#set_text prf;
              ()
          end
-       else ()
+       else ()*)
 
      method private go_back_action_handler () =
         let _ = print_endline "previous command" in

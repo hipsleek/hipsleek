@@ -189,19 +189,21 @@ class sleek_source_view ?(text = "") () =
       self#source_buffer#set_modified false;
       self#source_buffer#end_not_undoable_action ();
 
-   method move_to_next_cmd ():(string*string)=
+    method exec_current_cmd():(string*string)=
+    (*process current cmd to the end*)
+    (*get context string * proof string*)
+    let rs, prf = current_file#process_remain_current_cmd() in
+           (rs,prf)
+
+   method move_to_next_cmd ():unit=
    (*res = new pos, new cmd*)
      if self#is_valid_document () then
        begin
-           (*process current cmd to the end*)
-           (*get context string * proof string*)
-           let rs, prf = current_file#process_remain_current_cmd() in
            (*move to next cmd*)
            let cur_line_pos= current_file#move_to_next_cmd() in
-           self#highlight_line cur_line_pos;
-           (rs,prf)
+           self#highlight_line cur_line_pos
        end
-     else ("","")
+     else ()
 
   method back_to_prev_cmd ():unit=
    (*res = new pos, new cmd*)
