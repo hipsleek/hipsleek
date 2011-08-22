@@ -513,25 +513,33 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
   let conseq = Solver.prune_pred_struc !cprog true conseq in
 
-  (* (\*LDK: cformula of ante and conseq*\) *)
-  (* let _ = print_string ("run_entail_check:" *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-  (*                       ^"\n\n") in *)
+  (*LDK: cformula of ante and conseq*)
+  let _ = print_string ("run_entail_check:"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n") in
 
 
 
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
+
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
-  (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
+  (* let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in *)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
   let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
   (* let _ = print_string ("\n ctx = "^(Cprinter.string_of_context ctx)^"\n\n\n") in *)
 
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
 
+
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*LDK:exception in entail check is thrawn here*)
+
+  (* (\*LDK: cformula of ante and conseq*\) *)
+  (* let _ = print_string ("run_entail_check:" *)
+  (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
+  (*                       ^"\n\n") in *)
+
   (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then

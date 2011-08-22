@@ -1161,7 +1161,6 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     (*                       ^ "\n f = " ^ (string_of_formula f) *)
     (*                       ^ "\n\n") in *)
 
-    in
     (* let _ = print_string ("[Redlog] imply_no_cache: " *)
     (*                       ^ "\n (weakened) wf = " ^ (string_of_formula wf) *)
     (*                       ^ "\n\n") in *)

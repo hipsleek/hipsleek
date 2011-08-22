@@ -557,10 +557,12 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
       | Hole _ -> (MCP.mkMTrue no_pos, []) (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   let ph, pb = xpure_heap_helper prog h0 which_xpure in
+  (ph, pb,  memset)
 
-  if (is_sat_mem_formula memset) then 
-    (ph, pb,  memset)
-  else (MCP.mkMFalse no_pos, pb, memset)  
+  (* (\*LDK: temporary disable UNSAT BAGA check*\) *)
+  (* if (is_sat_mem_formula memset) then  *)
+  (*   (ph, pb,  memset) *)
+  (* else (MCP.mkMFalse no_pos, pb, memset)   *)
 
 and xpure_symbolic_debug (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Gen.Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
@@ -2528,8 +2530,8 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 	      let _ = reset_int2 () in
 	      let pf, pfb, _, _ = xpure prog f in
 
-	      let is_ok =        
-	        if pfb = [] then 
+	      let is_ok =
+	        if pfb = [] then
 
                     (*LDK*)
               (* let _ = print_string ("find_unsat: before TP.is_sat_mix_sub_no" *)
@@ -2558,20 +2560,24 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 
 and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
   Gen.Debug.no_2 "is_unsat_with_branches" 
-      (fun h -> (Cprinter.string_of_h_formula h)^"\n"^Cprinter.string_of_mix_formula(fst( xpure_f hf)))
-      Cprinter.string_of_mix_formula string_of_bool
+      (fun h -> 
+          "\n hf = "  ^ (Cprinter.string_of_h_formula h)
+          ^"\n xpure_f hf = " ^ Cprinter.string_of_mix_formula(fst( xpure_f hf)))
+      Cprinter.string_of_mix_formula
+      string_of_bool
       (fun hf mix -> is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno) hf mix
 
 and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno=
   (* let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in*)
+  (*LDK*)
   let (ph, phb) = xpure_f hf in
   let phb = CP.merge_branches phb br in    
   if phb = [] then
     let npf = MCP.merge_mems mix ph true in
 
   (* (\*LDK*\) *)
-  (* let _ = print_string ("is_unsat_with_branches_x:   if phb = [] ==true : before TP.is_sat_sub_no" *)
-  (*                       ^ "\n\n") in *)
+  (*   let _ = print_string ("is_unsat_with_branches_x:   if phb = [] ==true : before TP.is_sat_sub_no" *)
+  (*                         ^ "\n\n") in *)
 
 	(not (TP.is_sat_mix_sub_no npf sat_subno true true))
   else
@@ -2593,13 +2599,14 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	  formula_base_pure = p;
 	  formula_base_branches = br;
 	  formula_base_pos = pos}) ->
-          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) [] h p br pos sat_subno
+        is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) [] h p br pos sat_subno
     | Exists ({ formula_exists_qvars = qvars;
       formula_exists_heap = qh;
       formula_exists_pure = qp;
       formula_exists_branches = br;
       formula_exists_pos = pos}) ->
-          is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) qvars qh qp br pos sat_subno
+          is_unsat_with_branches (fun f-> 
+              let a,b,_,_ = xpure_heap 1 prog f 1 in (a,b)) qvars qh qp br pos sat_subno
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
@@ -2621,7 +2628,7 @@ and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_stat
   let f = es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
-  if not b then Ctx{es with es_unsat_flag = true } else 
+  if not b then Ctx{es with es_unsat_flag = true } else
 	false_ctx (flow_formula_of_formula es.es_formula) no_pos
 
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula= match f with
