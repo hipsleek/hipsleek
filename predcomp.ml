@@ -1055,7 +1055,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
       let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in
       let pname = CP.name_of_spec_var p in
       let vnames = List.map CP.name_of_spec_var (List.tl (List.tl vs)) in
-      let field_names = List.map snd ddef.C.data_fields in
+      let field_names = List.map C.get_field_name ddef.C.data_fields in
       let helper v f = 
 	(* 
 	   v : exists. var, f: corresponding field, 

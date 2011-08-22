@@ -1702,8 +1702,8 @@ let rec string_of_exp = function
 
 
 (* pretty printing for one data declaration*)
-let string_of_decl d = match d with 
-  | (t, id) -> (string_of_typ t) ^ " " ^ id 
+let string_of_decl d = (* An Hoa : un-hard-code *)
+  (if is_inline_field d then "inline " else "") ^ (string_of_typ (get_field_typ d)) ^ " " ^ (get_field_name d) 
 ;;
 
 (* function to print a list of typed_ident *) 
@@ -1756,7 +1756,7 @@ let string_of_coerc c = string_of_coercion c ;;
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
   let locstr = (string_of_full_loc p.proc_loc)  
-  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
+  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list (List.map (fun x-> (x,false)) p.proc_args) (* An Hoa [22/08/2011] : attach dummy [false]-inline record *) ",") ^ ")\n" 
       ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
       ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
       ^ (if Gen.is_empty p.proc_by_name_params then "" 

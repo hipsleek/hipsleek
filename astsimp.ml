@@ -1083,10 +1083,9 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 	(* let _ = print_endline ("Undefined : " ^ (String.concat "," !undef_data_types)) in *)
 	(** 
 	 * An Hoa [22/08/2011] : translate field with inline consideration.
-	 * TODO implement
 	 **)
-  let trans_field ((t, c), pos, il) : C.typed_ident =
-    ((trans_type prog t pos), c)
+  let trans_field ((t, c), pos, il) =
+    (((trans_type prog t pos), c), il)
   in
   {
       C.data_name = ddef.I.data_name;

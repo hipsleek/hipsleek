@@ -28,7 +28,7 @@ and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(
 	
 and data_decl = { 
     data_name : ident;
-    data_fields : typed_ident list;
+    data_fields : (typed_ident * bool) list; (* An Hoa [22/08/2011] : Add a bool record to indicate whether a field is [inline]; inlined fields must be of typ [Named c]. *)
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -353,6 +353,18 @@ let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+
+(** An Hoa [22/08/2011] Extract data field information **)
+
+let get_field_typed_id f = match f with | (tid,_) -> tid
+
+let get_field_typ f = fst (get_field_typed_id f)
+
+let get_field_name f = snd (get_field_typed_id f)
+
+let is_inline_field f = match f with | (_,il) -> il
+
+(** An Hoa [22/08/2011] End **)
 
 let is_simple_formula x = true
 (* transform each proc by a map function *)

@@ -7,3 +7,8 @@ data quadruple {
 	inline pair p1;
 	pair p2;
 }.
+
+data octuple {
+	inline quadruple q1;
+	inline quadruple q2;
+}.
