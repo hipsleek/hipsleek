@@ -725,7 +725,9 @@ let check_data (prog : prog_decl) (cdef : data_decl) =
   List.map (check_proc_wrapper prog) cdef.data_methods
 
 let check_coercion (prog : prog_decl) =
+  let _ = print_string "\ncheck_coercion 0\n" in
   let check_entailment c_lhs c_rhs =
+    let _ = print_string "check_entailment" in
     let pos = CF.pos_of_formula c_lhs in
     let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) pos) c_lhs pos in
     let rs, prf = heap_entail_init prog false (CF.SuccCtx [ctx]) c_rhs pos in
@@ -741,7 +743,7 @@ let check_coercion (prog : prog_decl) =
     (*let unfold_head_pred hname f0 : int = *)
   let check_entailment c_lhs c_rhs =
     let pr = Cprinter.string_of_formula in
-    Gen.Debug.no_2 "check_entailment" pr pr
+    Gen.Debug.ho_2 "check_entailment" pr pr
         (fun _ -> "?") check_entailment c_lhs c_rhs in
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
@@ -750,7 +752,7 @@ let check_coercion (prog : prog_decl) =
       check_entailment lhs rhs in
     (* check_entailment lhs coer.coercion_body in *)
   let check_left_coercion coer =
-    Gen.Debug.no_1 "check_left_coercion" Cprinter.string_of_coercion 
+    Gen.Debug.ho_1 "check_left_coercion" Cprinter.string_of_coercion 
         (fun _ -> "?") check_left_coercion coer in
   let check_right_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
@@ -760,10 +762,12 @@ let check_coercion (prog : prog_decl) =
 	(* check_entailment coer.coercion_body rhs *)
   in
   let check_right_coercion coer =
-    Gen.Debug.no_1 "check_right_coercion" Cprinter.string_of_coercion 
+    Gen.Debug.ho_1 "check_right_coercion" Cprinter.string_of_coercion 
         (fun _ -> "?") check_right_coercion coer in
-    ignore (List.map (fun coer -> check_left_coercion coer) prog.prog_left_coercions);
-    List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
+  let _ = print_string ("\n!!!! ll=" ^ string_of_int(List.length prog.prog_left_coercions)) in
+  let _ = print_string ("\n!!!! lr=" ^ string_of_int(List.length prog.prog_right_coercions)) in
+  List.map (fun coer -> check_left_coercion coer) prog.prog_left_coercions;
+  List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 
 
 let rec size (expr : exp) =
@@ -957,7 +961,8 @@ let check_prog (prog : prog_decl) =
     raise Not_found);
 *) if !Globals.check_coercions then begin
     print_string "Checking coercions... ";
-    ignore (check_coercion prog);
+    (* ignore (check_coercion prog); *)
+    check_coercion prog;
     print_string "DONE."
   end else begin
     ignore (List.map (check_data prog) prog.prog_data_decls);

@@ -1158,7 +1158,7 @@ let __ocaml_lex_tables = {
 }
 
 let rec tokenizer file_name lexbuf =
-  __ocaml_lex_tokenizer_rec file_name lexbuf 0
+    __ocaml_lex_tokenizer_rec file_name lexbuf 0
 and __ocaml_lex_tokenizer_rec file_name lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
@@ -1404,7 +1404,7 @@ let
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_tokenizer_rec file_name lexbuf __ocaml_lex_state
 
 and line_comment file_name lexbuf =
-  __ocaml_lex_line_comment_rec file_name lexbuf 87
+    __ocaml_lex_line_comment_rec file_name lexbuf 87
 and __ocaml_lex_line_comment_rec file_name lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->

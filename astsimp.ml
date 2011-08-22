@@ -1863,7 +1863,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :

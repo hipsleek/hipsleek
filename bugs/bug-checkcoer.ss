@@ -21,7 +21,7 @@ ll<n> == self=null & n=0
 
 coercion self::sll<n, sm, lg> -> self::ll<n>;
 
-coercion self::sll<n, sm, lg> <- self::ll<n>;
+//coercion self::sll<n, sm, lg> <- self::ll<n>;
 
 
 node id2(node xs)

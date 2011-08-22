@@ -64,7 +64,7 @@ let parse_file (parse) (source_file : string) =
                  | RelDef rdef -> process_rel_def rdef
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
-								 | LemmaDef ldef -> process_lemma ldef
+								 | LemmaDef ldef -> let _ = "\n!!!!!   lemma  !!!!\n" in process_lemma ldef
 								 | PrintCmd pcmd -> process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
                  | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
@@ -77,7 +77,7 @@ let parse_file (parse) (source_file : string) =
       raise t)
 
 let parse_file (parse) (source_file : string) =
-	(* let _ = print_endline "parse_file 2" in *)
+  let _ = print_endline "parse_file 2" in
   let rec parse_first (cmds:command list) : (command list)  =
     try 
        parse source_file 
