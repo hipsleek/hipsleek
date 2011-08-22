@@ -261,3 +261,4 @@ let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arg
 ;;
 
 Astsimp.inter := !inter;;
+

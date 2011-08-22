@@ -41,7 +41,8 @@ class mainwindow () =
 
     (* gui components *)
     val slk_view = new sleek_source_view ()
-    val entailment_list = create_proof_view ()(*new entailment_list ()*)
+   (* val entailment_list = new entailment_list ()*)
+    val proof_view = create_proof_view ()
     val context_view = create_context_view ()
     (* data *)
     val mutable original_digest = ""
@@ -51,7 +52,7 @@ class mainwindow () =
     initializer
       (* initialize components *)
       let proof_panel =
-        let list_scrolled = create_scrolled_win entailment_list in
+        let list_scrolled = create_scrolled_win proof_view in
         let buttons = GPack.button_box
           `HORIZONTAL ~layout:`START
           ~border_width:10
@@ -150,6 +151,10 @@ class mainwindow () =
           ~callback:(fun _ -> self#next_action_handler ());
         a "UpA" ~stock:`GO_UP ~tooltip:"Up"
           ~callback:(fun _ -> self#up_action_handler ());
+         a "ForwardA" ~stock:`GO_FORWARD ~tooltip:"Next"
+          ~callback:(fun _ -> self#go_forward_action_handler ());
+        a "BackA" ~stock:`GO_BACK ~tooltip:"Back"
+          ~callback:(fun _ -> self#go_back_action_handler ());
          a "NextToE" ~stock:`GOTO_LAST ~tooltip:"Down to the end"
           ~callback:(fun _ -> self#move_to_last_handler ());
         a "UpToB" ~stock:`GOTO_FIRST ~tooltip:"Up to beginning"
@@ -408,23 +413,38 @@ class mainwindow () =
         true
 
      method private next_action_handler () =
-       let _ = print_endline "next action" in
+       let _ = print_endline "next step. not implemented yet" in
        ()
 
      method private up_action_handler () =
-        let _ = print_endline "back" in
+        let _ = print_endline "previous step. not implemented yet" in
        ()
 
-     method private move_to_last_handler () =
-        let _ = print_endline "move to next command" in
-        slk_view#move_to_next_cmd()
+      method private go_forward_action_handler () =
+       let _ = print_endline "next command" in
+       let ctx,prf=slk_view#move_to_next_cmd() in
+       if String.length (ctx^prf)>0 then
+         begin
+             context_view#buffer#set_text ctx;
+             proof_view#buffer#set_text prf;
+             ()
+         end
+       else ()
 
-     method private back_to_first_handler () =
-        let _ = print_endline "back to previous command" in
+     method private go_back_action_handler () =
+        let _ = print_endline "previous command" in
         slk_view#back_to_prev_cmd()
 
+     method private move_to_last_handler () =
+        let _ = print_endline "move to the end. not implemented yet" in
+        ()
+
+     method private back_to_first_handler () =
+        let _ = print_endline "back to the beginning. not implemented yet" in
+        ()
+
      method private jump_to_handler () =
-        let _ = print_endline "jump to current point" in
+        let _ = print_endline "jump to current point. not implemented yet" in
        ()
 
 

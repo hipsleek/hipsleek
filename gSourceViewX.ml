@@ -133,7 +133,8 @@ class sleek_source_view ?(text = "") () =
   object (self)
     inherit source_view ~text () as super
 
-    val current_file = new sleek_file_info
+    val mutable current_file = new sleek_file_info;
+    val mutable is_accessible = false
 
     initializer
       super#source_buffer#set_language (Some (get_sleek_lang ()));
@@ -165,11 +166,13 @@ class sleek_source_view ?(text = "") () =
 
     (*result src of file*)
     method load_new_file (fname:string):string=
+      is_accessible <- false;
       let (cur_line_pos, src) = current_file#load_new_file fname in
       (*replace source*)
       self#replace_source src;
       (*highlight cur_pos*)
       self#highlight_line cur_line_pos;
+      is_accessible <- true;
       src
 
     method create_new_file ():string=
@@ -178,23 +181,37 @@ class sleek_source_view ?(text = "") () =
 
       src
 
+    method private is_valid_document (): bool= is_accessible
+   
     method replace_source (new_src: string): unit =
       self#source_buffer#begin_not_undoable_action ();
       self#source_buffer#set_text new_src;
       self#source_buffer#set_modified false;
       self#source_buffer#end_not_undoable_action ();
 
-   method move_to_next_cmd ():unit=
+   method move_to_next_cmd ():(string*string)=
    (*res = new pos, new cmd*)
-     let cur_line_pos= current_file#move_to_next_cmd() in
-     self#highlight_line cur_line_pos;
-     ()
+     if self#is_valid_document () then
+       begin
+           (*process current cmd to the end*)
+           (*get context string * proof string*)
+           let rs, prf = current_file#process_remain_current_cmd() in
+           (*move to next cmd*)
+           let cur_line_pos= current_file#move_to_next_cmd() in
+           self#highlight_line cur_line_pos;
+           (rs,prf)
+       end
+     else ("","")
 
   method back_to_prev_cmd ():unit=
    (*res = new pos, new cmd*)
-    let cur_line_pos= current_file#back_to_prev_cmd() in
-     self#highlight_line cur_line_pos;
-    ()
+   if self#is_valid_document () then
+     begin
+         let cur_line_pos= current_file#back_to_prev_cmd() in
+         self#highlight_line cur_line_pos;
+         ()
+     end
+   else ()
 
   end
 

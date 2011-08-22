@@ -1747,7 +1747,7 @@ let string_of_proc_decl p =
       ^ (match p.proc_body with 
         | Some e -> (string_of_exp e) ^ "\n\n"
 	    | None -> "") ^ locstr^"\n"
-;; 
+;;
 
 let string_of_proc_decl i p =
   Gen.Debug.no_1_num  i "string_of_proc_decl " (fun p -> p.proc_name) (fun x -> x) string_of_proc_decl p

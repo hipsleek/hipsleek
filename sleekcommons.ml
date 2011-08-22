@@ -122,3 +122,11 @@ let clear_var_table () = H.clear var_tab
   | LetForm lf -> lf
   | 
 *)
+
+(*moved from sleek.ml to share between cmd-line and GUI version*)
+let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
+
+let source_files = ref ([] : string list)
+
+let set_source_file arg = 
+  source_files := arg :: !source_files

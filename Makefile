@@ -10,7 +10,7 @@ GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS=  $(INCLUDES) # add other options for ocamlc here
-GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
+GUIOCAMLFLAGS= $(OCAMLFLAGS) -annot $(GUIINCLUDES) #
 OCAMLOPTFLAGS= -annot $(INCLUDES) # add other options for ocamlopt here
 # removed -p from above as it seems related to profiling..
 OCAMLYACC=ocamlyacc
@@ -165,8 +165,8 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
 	xmlfront.cmo nativefront.cmo \
-	sleekengine.cmo \
 	scriptarguments.cmo \
+	sleekengine.cmo \
 	sleek.cmo
 
 SLEEK_GUI_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
@@ -189,8 +189,8 @@ SLEEK_GUI_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
 	xmlfront.cmo nativefront.cmo \
-	sleekengine.cmo \
 	scriptarguments.cmo \
+	sleekengine.cmo \
 	gUtil.cmo \
 	gUtil_sleek.cmo gUtil_hip.cmo \
 	gSourceViewX.cmo gProcList.cmo gLogViewWindow.cmo \

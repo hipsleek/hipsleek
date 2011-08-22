@@ -32,43 +32,23 @@ module XF = Xmlfront
 module NF = Nativefront
 
 
-let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
-
-let source_files = ref ([] : string list)
-
-let set_source_file arg = 
-  source_files := arg :: !source_files
-
 let print_version () =
   print_string ("SLEEK: A Separation Logic Entailment Checker");
   print_string ("Prototype version.");
   (*  print_string ("Copyright (C) 2005-2007 by Nguyen Huu Hai, Singapore-MIT Alliance."); *)
   print_string ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.")
 
-let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
-
-let inter = Scriptarguments.inter
-
 let prompt = ref "SLEEK> "
 let terminator = '.'
 module M = Lexer.Make(Token.Token)
+
+let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
 let parse_file (parse) (source_file : string) =
 	(* let _ = print_endline "parse_file 1" in *)
 	try
 		let cmds = parse source_file in 
-		let _ = (List.map (fun c -> (
-							match c with
-								 | DataDef (ddef,_) -> process_data_def ddef
-								 | PredDef (pdef,_) -> process_pred_def pdef
-                                 | RelDef (rdef,_) -> process_rel_def rdef
-								 | EntailCheck (iante, iconseq,_) -> process_entail_check iante iconseq
-								 | CaptureResidue (lvar,_) -> process_capture_residue lvar
-								 | LemmaDef (ldef,_) -> process_lemma ldef
-								 | PrintCmd (pcmd,_) -> process_print_command pcmd
-								 | LetDef (lvar, lbody, _) -> put_var lvar lbody
-                                 | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
-								 | EmptyCmd -> ())) cmds) in ()
+		Sleekengine.process_cmds cmds
 	with
 	  | End_of_file ->
 		  print_string ("\n")
@@ -141,19 +121,8 @@ let parse_file (parse) (source_file : string) =
    List.iter proc_one_cmd cmds 
 
 
-let main () = 
-  let iprog = { I.prog_data_decls = [iobj_def];
-                I.prog_global_var_decls = [];
-                I.prog_enum_decls = [];
-                I.prog_view_decls = [];
-                I.prog_rel_decls = [];
-                I.prog_proc_decls = [];
-                I.prog_coercion_decls = [];
-                I.prog_hopred_decls = [];
-  } in
-  let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-  let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = Gen.ExcNumbering.compute_hierarchy 3 () in
+let main () =
+  let _ = Sleekengine.main_init() in
   (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in *)
   let quit = ref false in
   let parse x =
@@ -163,9 +132,10 @@ let main () =
   (* let parse x = Gen.Debug.no_1 "parse" pr_id string_of_command parse x in *)
   let buffer = Buffer.create 10240 in
     try
-      if (!inter) then 
+        let inter =  !Scriptarguments.inter in
+      if (inter) then 
         while not (!quit) do
-          if !inter then (* check for interactivity *)
+          if inter then (* check for interactivity *)
             print_string !prompt;
           let input = read_line () in
           match input with
@@ -192,19 +162,19 @@ let main () =
                      | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
                      | EmptyCmd -> ());
                   Buffer.clear buffer;
-                  if !inter then
+                  if inter then
                       prompt := "SLEEK> "
                 with
                   | _ -> dummy_exception();
                 print_string ("Error.\n");
                 Buffer.clear buffer;
-                if !inter then prompt := "SLEEK> "
-              with 
+                if inter then prompt := "SLEEK> "
+              with
                 | SLEEK_Exception
                 | Not_found -> dummy_exception();
               Buffer.add_string buffer input;
               Buffer.add_char buffer '\n';
-              if !inter then prompt := "- "
+              if inter then prompt := "- "
         done
       else 
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
@@ -225,7 +195,7 @@ let _ =
     main ();
     Gen.Profiling.pop_time "Overall";
     let _ = 
-      if (!Globals.profiling && not !inter) then 
+      if (!Globals.profiling && not !Scriptarguments.inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
     Tpdispatcher.stop_prover ();
     print_string "\n")

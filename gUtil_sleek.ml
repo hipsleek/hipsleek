@@ -7,7 +7,7 @@ module SE = Sleekengine
 module SC = Sleekcommons
 module FU = FileUtil
 (**/**)
-
+module M = Lexer.Make(Token.Token)
 
 (**
    Helper for interacting with Sleek script
@@ -86,12 +86,36 @@ module SleekHelper = struct
     parse_checkentail_result res, res
 
   let parse_command_list (src: string) : SC.command list =
-    let lexbuf = Stream.of_string src in
-    Parser.parse_sleek "editor_buffer" lexbuf
+    try
+        let lexbuf = Stream.of_string src in
+        Parser.parse_sleek "editor_buffer" lexbuf
     (* let lexbuf = Lexing.from_string src in
     Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf*)
+    with
+	  | End_of_file ->
+		  print_string ("\n"); []
+      | M.Loc.Exc_located (l,t)-> 
+          (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+           raise t)
 
-  let process_cmd cmd = match cmd with
+(*  let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments SC.set_source_file SC.usage_msg*)
+
+  let process_cmd cmd:(string*string) =
+    begin
+        (*log ("process command: " ^ (String.concat "\n" (List.map SC.string_of_command cmds)));*)
+        log ("process command: " ^ SC.string_of_command cmd);
+        wrap_exists_implicit_explicit := false ;
+    (*  process_cmd_line ();*)
+        Tpdispatcher.start_prover ();
+        Gen.Profiling.push_time "Overall";
+        let res = Sleekengine.process_cmd_with_string cmd in
+        Gen.Profiling.pop_time "Overall";
+        Tpdispatcher.stop_prover ();
+        res
+    end
+
+(*
+    match cmd with
     | SC.DataDef (ddef,_) ->
         log "processing data def";
         SE.process_data_def ddef; None
@@ -115,7 +139,8 @@ module SleekHelper = struct
         SC.put_var lvar lbody; None
     | SC.Time (b,s,_) -> None
     | SC.EmptyCmd -> None
-
+*)
+(*
   let checkentail src e =
     try
       log ("Checking entailment: " ^ (string_of_entailment e));
@@ -146,7 +171,7 @@ module SleekHelper = struct
       res, info
     with exn as e ->
       false, (Printexc.to_string e) ^ "\n" ^ (Printexc.get_backtrace ())
-
+*)
 end (* SleekHelper *)
 
 class step_info =
@@ -243,7 +268,7 @@ object (self)
   val mutable file_name = ""
   val mutable current_line_pos = -1 (*line number*)
   val mutable total_line = 0
-  val mutable current_cmd = (-1:int) (*the order in cmd*)
+  val mutable current_cmd_idx = (-1:int) (*the order in cmd*)
   (*val cmds = Hashtbl.create 128*)
   val mutable cmds = ([] : cmd_info list)
   val mutable lines_pos = ([]: (int*int) list) (*mapping from line number -> begin char, end char*)
@@ -255,13 +280,13 @@ object (self)
 
   method set_current_line_pos p = current_line_pos <- p
 
-   method set_current_cmd cmd = current_cmd <- cmd
+   method set_current_cmd cmd_idx = current_cmd_idx <- cmd_idx
 
   method get_file_name = file_name
 
   method get_current_line_pos = current_line_pos
 
-  method get_current_cmd = current_cmd
+  method get_current_cmd_idx = current_cmd_idx
 
   method get_list_cmds():(cmd_info list) =
     (*Hashtbl.fold (fun a b ls-> b::ls) cmds []*)
@@ -272,6 +297,8 @@ object (self)
   method get_lines_map = lines_pos
 
   method private get_cmds_size():int= List.length cmds
+
+  method private get_current_cmd():cmd_info = List.nth cmds current_cmd_idx
 
   method private build_cmds cmds:(cmd_info list)=
     let helper cmd:cmd_info=
@@ -285,6 +312,9 @@ object (self)
   (*return current pos + src*)
   method load_new_file (fname:string):(int*string)=
     (*reset old content*)
+    let _ = SE.clear_all () in
+    (*inbuilt data*)
+    let _ = SE.main_init() in
 
     (*load file, src = file contend*)
     let src = FU.read_from_file fname in
@@ -298,9 +328,8 @@ object (self)
     cmds <- self#build_cmds ls_cmds;
     file_name <- fname;
     (*set current line = first line of text; current cmd = first cmd*)
-    let temp = List.hd cmds in
-    current_cmd <- 0;
-    let temp = List.nth cmds current_cmd in
+    current_cmd_idx <- 0;
+    let temp = List.nth cmds current_cmd_idx in
     (*let _ = print_endline (current_cmd#string_of_cmd()) in*)
     current_line_pos <- SourceUtil.get_line_num temp#get_pos;
     (*let _ = print_endline (string_of_int current_line_pos) in*)
@@ -312,7 +341,7 @@ object (self)
     file_name <- "";
     current_line_pos <- 1;
     total_line <- 0;
-    current_cmd<-0;
+    current_cmd_idx<-0;
 
     (current_line_pos,"")
    end
@@ -327,15 +356,20 @@ object (self)
 
   ()
 
+  (*return ctx*prf *)
+  method process_remain_current_cmd():(string*string)=
+    (*run remain of entailemt process*)
+     let temp = self#get_current_cmd () in
+     let slk_cmd = temp#get_cmd in
+     SleekHelper.process_cmd slk_cmd
+
   method move_to_next_cmd ():int=
    (*res = new pos, new cmd*)
-    if current_cmd < self#get_cmds_size() then
+    if current_cmd_idx < (self#get_cmds_size()-1) then
       begin
-          (*run remain of entailemt process*)
-          
-          current_cmd <- current_cmd + 1;
-          let temp = List.nth cmds current_cmd in
+          current_cmd_idx <- current_cmd_idx + 1;
     (*let _ = print_endline (current_cmd#string_of_cmd()) in*)
+          let temp = self#get_current_cmd() in
           current_line_pos <- SourceUtil.get_line_num temp#get_pos;
           current_line_pos
       end
@@ -344,10 +378,10 @@ object (self)
 
   method back_to_prev_cmd():int=
    (*res = new pos, new cmd*)
-    if current_cmd > 0 then
+    if current_cmd_idx > 0 then
       begin
-          current_cmd <- current_cmd - 1;
-          let temp = List.nth cmds current_cmd in
+          current_cmd_idx <- current_cmd_idx - 1;
+          let temp = self#get_current_cmd () in
     (*let _ = print_endline (current_cmd#string_of_cmd()) in*)
           current_line_pos <- SourceUtil.get_line_num temp#get_pos;
           current_line_pos

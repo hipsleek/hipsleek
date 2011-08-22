@@ -101,12 +101,10 @@ int[] aalloc___(int dim)
 (** An Hoa : List of undefined data types **)
 let undef_data_types = ref([] : (string * loc) list)
 
-
 (** An Hoa : Alias for the Scriptarguments.inter, necessary because this module
 			is compiled prior to Scriptarguments.
  **)
 let inter = ref false
-
 
 (** An Hoa : Indicator for the parsing stage **)
 let secondpass = ref false

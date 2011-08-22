@@ -77,6 +77,21 @@ let clear_all () =
   clear_cprog ();
   residues := None
 
+let main_init ()=
+  let iprog = { I.prog_data_decls = [iobj_def];
+                I.prog_global_var_decls = [];
+                I.prog_enum_decls = [];
+                I.prog_view_decls = [];
+                I.prog_rel_decls = [];
+                I.prog_proc_decls = [];
+                I.prog_coercion_decls = [];
+                I.prog_hopred_decls = [];
+              } in
+  let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+  let _ = Iast.build_exc_hierarchy true iprog in
+  let _ = Gen.ExcNumbering.compute_hierarchy 3 () in
+  iprog
+
 let check_data_pred_name name : bool =
   try 
 	let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in
@@ -355,7 +370,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
   (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
-  let rs1, _ = 
+  let rs1, prf =
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
         (CF.SuccCtx[ctx]) conseq no_pos None
@@ -372,12 +387,13 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs)))
   in
-  (res, rs)
+  (res, rs,prf)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
-    let valid, rs = run_entail_check iante0 iconseq0 in
+    let valid, rs,prf = run_entail_check iante0 iconseq0 in
     let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+    let _ = 
     if not valid then
       begin
         let s =
@@ -390,19 +406,20 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
           )
            else ""
         in
-        print_string (num_id^"=Fail."^s^"\n")
+        let _ = print_string (num_id^"=Fail."^s^"\n") in ()
         (*if !Globals.print_err_sleek then *)
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
     else
       begin
-	      print_string (num_id^"=Valid.\n")
+	      let _ = print_string (num_id^"=Valid.\n") in ()
            (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
+    in Some (rs,prf)
   with _ ->
     Printexc.print_backtrace stdout;
-    dummy_exception() ; 
-    print_string "exception in entail check\n"
+    dummy_exception() ;
+    let _ = print_string "exception in entail check\n" in None
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -450,3 +467,41 @@ let get_residue () =
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 
+(*moved from sleek.ml to share between cmd-line and GUI version*)
+let process_cmds (cmds) =
+	(* let _ = print_endline "parse_file 1" in *)
+  let _ = (List.map (fun c -> (
+	  match c with
+		| DataDef (ddef,_) -> process_data_def ddef
+		| PredDef (pdef,_) -> process_pred_def pdef
+        | RelDef (rdef,_) -> process_rel_def rdef
+		| EntailCheck (iante, iconseq,_) -> let _ = process_entail_check iante iconseq in ()
+		| CaptureResidue (lvar,_) -> process_capture_residue lvar
+		| LemmaDef (ldef,_) -> process_lemma ldef
+		| PrintCmd (pcmd,_) -> process_print_command pcmd
+		| LetDef (lvar, lbody, _) -> put_var lvar lbody
+        | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
+		| EmptyCmd -> ())) cmds)
+  in ()
+
+let process_cmd_with_string cmd =
+  let (rs,prf) =
+	match cmd with
+	  | DataDef (ddef,_) -> (process_data_def ddef; (ddef.I.data_name ^ " is defined.", ""))
+	  | PredDef (pdef,_) -> (process_pred_def pdef; pdef.I.view_name ^ " is defined.", "")
+      | RelDef (rdef,_) -> (process_rel_def rdef; ("", ""))
+	  | EntailCheck (iante, iconseq,_) ->
+          let res = process_entail_check iante iconseq in
+          let sctx,sprf =
+            match res with
+              | None -> ("","")
+              | Some (rs,prf) -> ((Cprinter.string_of_list_context rs), (Prooftracer.string_of_proof prf))
+          in
+          (sctx,sprf)
+	  | CaptureResidue (lvar,_) -> (process_capture_residue lvar; ("",""))
+	  | LemmaDef (ldef,_) -> (process_lemma ldef;("", ""))
+	  | PrintCmd (pcmd,_) -> (process_print_command pcmd;("",""))
+	  | LetDef (lvar, lbody, _) -> (put_var lvar lbody; ("", ""))
+      | Time (b,s,_) -> (if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ("",""))
+	  | EmptyCmd -> ("Nothing to do", "")
+  in (rs,prf)

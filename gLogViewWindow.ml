@@ -23,7 +23,7 @@ class log_view_window ?(title="Log") log () =
 
     initializer
       status_lbl#set_use_markup true;
-      let h_separator = GMisc.separator `HORIZONTAL () in
+      (*let h_separator = GMisc.separator `HORIZONTAL () in*)
       let v_separator = GMisc.separator `VERTICAL () in
       let log_panel = GUtil.create_scrolled_win log_view in
       log_view#buffer#set_text log;
