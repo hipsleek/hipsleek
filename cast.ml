@@ -28,8 +28,18 @@ and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(
 	
 and data_decl = { 
     data_name : ident;
-    data_fields : (typed_ident * bool) list; (* An Hoa [22/08/2011] : Add a bool record to indicate whether a field is [inline]; inlined fields must be of typ [Named c]. *)
-    data_parent_name : ident;
+	(* An Hoa [22/08/2011] : Augment each field with a bool record to indicate whether a field is [inline]; inlined fields must be of typ [Named c]. *)
+    data_fields : (typed_ident * bool) list;
+	(* An Hoa [22/08/2011] : Associate each field access sequence with the offset and length.
+	 * For example, data pair { int x; int y; } and data quad { inline pair p1; pair p2 } then inside quad, we store [ ("p1.x",(0,1)) , ("p2.y",(1,1)) , ("p1",(0,2)) , ("p2",(3,1))] so that when we have x.p1.x::<a>, we know that x::quad<a,#,#> without additional computations.
+	 * TODO implement
+	 *)
+	(* data_access_indices : (ident * (int * int)) list; *)
+	(* An Hoa [22/08/2011] : The number of pointers of this data structure. This is in fact the size of the data structure. 
+	 * TODO implement
+	 *)
+	(* data_num_pointers : int; *)
+	data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
     

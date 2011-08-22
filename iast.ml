@@ -1764,9 +1764,36 @@ let is_not_data_type_identifier (ddefs : data_decl list) id =
 
 
 (**
- * An Hoa : Compute the relative position location of a field with respect to the root.
+ * An Hoa : Compute the actual number of pointer of a data type.
+ **)
+let rec get_data_num_pointers ddefs data_name =
+	try 
+		let ddef = look_up_data_def_raw ddefs data_name in
+			(* take the sum of the number of pointer of each type : inline field must be substituted; for non-inline field just count 1 *)
+			List.fold_left (fun a f -> 
+								let fs = if (is_inline_field f) then 
+											(get_data_num_pointers ddefs (string_of_typ (get_field_typ f))) 
+										else 1 
+								in a + fs) 0 ddef.data_fields
+	with
+		| Not_found -> failwith "[get_data_num_pointers] call with non-existing data type."
+
+
+(**
+ * An Hoa : Compute the size of a field
+ **)
+(*and get_field_num_ptrs prog data_name f = 
+	if (is_inline_field f) then 
+		(get_data_num_pointers prog (string_of_typ (get_field_typ f))) 
+	else 1 *)
+	
+
+(**
+ * An Hoa : Compute the offset of the pointer to a field with respect to the root.
  * TODO : Implement & Extend
  **)
-let get_field_relative_position (ddef : data_decl) accessed_field =
-	let args = ddef.data_fields in
-		[]
+let rec get_field_offset ddefs data_name accessed_field =
+	let helper i fl = match fl with
+		| [] -> failwith ("The data type " ^ data_name ^ " does not have the field " ^ accessed_field)
+		| f::r -> 0 in 0
+	(* helper 0 [] *)

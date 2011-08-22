@@ -3665,22 +3665,32 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
               IF.h_formula_heap_pos = pos;
               IF.h_formula_heap_label = pi;} ->
 				(* An Hoa : Handle field access *)
-				(* if (c = Parser.generic_pointer_type_name || String.contains v '.') then
+				(* ASSUMPTIONS: exps ARE ALL VARIABLES i.e. I.Var AFTER float_out_exp PRE-PROCESSING! *)
+				if (c = Parser.generic_pointer_type_name || String.contains v '.') then
 					let tokens = Str.split (Str.regexp "\.") v in
-					let tokens = List.filter I.is_not_data_type_identifier tokens in
+					let tokens = List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens in
 					let rootptr = List.hd tokens in
-					let rpsi = H.get stab rootptr in
+					let rpsi = H.find stab rootptr in
 					let rootptr_type = rpsi.sv_info_kind in
 					let rootptr_type_name = match rootptr_type with | Named c -> c | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.") in
 					let rootptr, p = let rl = String.length rootptr in
-										if rootptr.[rl-1] = ''' then
-											(String.substring rootptr 0 (rl - 1), Primed)
+										if rootptr.[rl-1] = '\'' then
+											(String.sub rootptr 0 (rl - 1), Primed)
 										else
-											(rootptr, Unprimed) in
+											(rootptr, Unprimed) in 
 					let accessed_field = List.nth tokens 1 in
-					let ddef = try I.look_up_data_def_raw prog.I.data_decls with | _ -> failwith "Exception!" in
-					let field_partial_positions = I.get_field_positions ddef accessed_field in
-					(* An Hoa : WORKING *)
+					let ddef = try I.look_up_data_def_raw prog.I.prog_data_decls rootptr_type_name
+								with | _ -> failwith "Exception!" in
+					let field_partial_positions = I.get_field_offset prog.I.prog_data_decls rootptr_type_name accessed_field in
+					let num_ptrs = 0 (*I.get_data_num_pointers prog ddef.I.data_name*) in
+					(* An Hoa : WORKING The rest are copied from the original code with modification to account for the holes *)
+					let labels = List.map (fun _ -> "") exps in
+					let hvars = match_exp (List.combine exps labels) pos in
+					(* [Internal] Extends hvars with holes and collect the list of holes! *)
+					let rec extend_and_collect_holes vs field_position num_ptrs = 
+						(vs,[]) in
+					(* [Internal] End of function <extend_and_collect_holes> *)
+					let hvars, holes = extend_and_collect_holes hvars field_partial_positions num_ptrs in
 					let result_heap = CF.DataNode {
 							CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 							CF.h_formula_data_name = rootptr_type_name;
@@ -3691,8 +3701,9 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 							CF.h_formula_data_remaining_branches = None;
 							CF.h_formula_data_pruning_conditions = [];
 							CF.h_formula_data_pos = pos; } in
+					let _ = print_endline ("==>" ^ (Cprinter.string_of_h_formula result_heap)) in
 						(result_heap, CF.TypeTrue)
-				else (* Not a field access, proceed with the original code *) *)
+				else (* Not a field access, proceed with the original code *)
               (try
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
                 let labels = vdef.I.view_labels in
