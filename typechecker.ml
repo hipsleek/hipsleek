@@ -133,7 +133,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assert_pos = pos}) -> 
               begin
 	            let s1 = snd post_start_label in
-	            if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ctx
+                (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
+	            if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
 	            else
                   let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
 	              let new_ctx = match c1_o with
