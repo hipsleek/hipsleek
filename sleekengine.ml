@@ -514,7 +514,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let conseq = Solver.prune_pred_struc !cprog true conseq in
 
   (*LDK: cformula of ante and conseq*)
-  let _ = print_string ("run_entail_check:"
+  let _ = print_string ("\nrun_entail_check:"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n") in

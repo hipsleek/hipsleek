@@ -7041,6 +7041,24 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
     (* let _ = print_string ("process_action_x:" *)
     (*                       ^ "action = " ^ (Context.string_of_action a) *)
     (*                       ^ "\n\n") in *)
+    
+  (*add tracing into the entailment state*)
+    let action_name:string = match a with
+      | Context.Undefined_action e -> "==> Undefined_action"
+      | Context.M_match e -> "==> Match"
+      | Context.M_fold e ->  "==> Fold"
+      | Context.M_unfold (e,i) -> ("==> Unfold "^(string_of_int i))
+      | Context.M_base_case_unfold e ->  "==> Base case unfold"
+      | Context.M_base_case_fold e ->   "==> Base case fold"
+      | Context.M_rd_lemma e ->  "==> Right distributive lemma"
+      | Context.M_lemma (e,s) ->  ((match s with | None -> "any lemma" | Some c-> (Cprinter.string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
+      | Context.M_Nothing_to_do s ->  ("==> Nothing "^s)
+      | Context.M_unmatched_rhs_data_node h ->  ("==> Unmatched RHS data note: ")
+      | Context.Seq_action l -> "==> seq:"
+      | Context.Search_action l -> "==> search:"
+    in
+    let estate = {estate with es_trace = action_name::estate.es_trace} in
+
 
   let r1,r2 = match a with
     | Context.M_match {
@@ -7274,7 +7292,7 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   (* let pr2 x = Cprinter.string_of_list_context_short (fst x) in *)
   let pr2 x = Cprinter.string_of_list_context (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 
@@ -7604,9 +7622,9 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
 *)
 and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_2 "do_universal"  Cprinter.string_of_h_formula Cprinter.string_of_formula pr 
-      (fun _ _ -> do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos)
-      node rest_of_lhs
+  Gen.Debug.ho_3 "do_universal"  Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula pr 
+      (fun _ _ _ -> do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos)
+      node rest_of_lhs conseq
 
 and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
   begin
@@ -7660,48 +7678,48 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
           (*   | Some f -> {h2 with h_formula_view_frac_perm = frac1},frac1) *)
           (* in *)
 
-          (*
-            LDK:
-            In order to support lemma with fractional permission.
-            We consider 4 cases:
-          *)
-          let is_propagated, h2,frac2,frac_to_lhs =
-            (match frac1,frac2 with
-              | None , None -> 
-                  (*processing w/o fractional permission*)
-                  false, h2,frac2, Mcpure.OnePF (Cpure.BForm 
-                                        ((Cpure.BConst (true,no_pos))
-                                        , None))
-              | Some f1, None ->
-                  (*lemma w/o frac perm. 
-                    We propagate fractional permission from view node to lemma node*)
-                  true, 
-                  {h2 with h_formula_view_frac_perm = frac1},
-                  frac1, 
-                  Mcpure.OnePF (Cpure.BForm 
-                       ((Cpure.BConst (true,no_pos))
-                               , None))
-              | None, Some f2 -> 
-                  (*heap w/o frac perm but lemma w/ frac perm
-                    add f2=FULL to the ANTE
-                  *)
-                  let frac_p = Mcpure.OnePF (Cpure.BForm ( (Cpure.Eq (
-                      (Cpure.Var (f2,no_pos)),
-                      (Cpure.Var (full_perm_var,no_pos)),
-                      no_pos
-                  )),None)) in
-                  false, h2,frac2, frac_p
-              | Some f1, Some f2 -> 
-                  (*matching frac perms between heap node and lemma node *)
-                  (*add f1=f2 to the ANTE *)
-                  let frac_p = Mcpure.OnePF (Cpure.BForm ( (Cpure.Eq (
-                      (Cpure.Var (f2,no_pos)),
-                      (Cpure.Var (f1,no_pos)),
-                      no_pos
-                  )),None)) in
-                  false, h2,frac2,frac_p
-            ) 
-          in
+          (* (\* *)
+          (*   LDK: *)
+          (*   In order to support lemma with fractional permission. *)
+          (*   We consider 4 cases: *)
+          (* *\) *)
+          (* let is_propagated, h2,frac2,frac_to_lhs = *)
+          (*   (match frac1,frac2 with *)
+          (*     | None , None ->  *)
+          (*         (\*processing w/o fractional permission*\) *)
+          (*         false, h2,frac2, Mcpure.OnePF (Cpure.BForm  *)
+          (*                               ((Cpure.BConst (true,no_pos)) *)
+          (*                               , None)) *)
+          (*     | Some f1, None -> *)
+          (*         (\*lemma w/o frac perm.  *)
+          (*           We propagate fractional permission from view node to lemma node*\) *)
+          (*         true,  *)
+          (*         {h2 with h_formula_view_frac_perm = frac1}, *)
+          (*         frac1,  *)
+          (*         Mcpure.OnePF (Cpure.BForm  *)
+          (*              ((Cpure.BConst (true,no_pos)) *)
+          (*                      , None)) *)
+          (*     | None, Some f2 ->  *)
+          (*         (\*heap w/o frac perm but lemma w/ frac perm *)
+          (*           add f2=FULL to the ANTE *)
+          (*         *\) *)
+          (*         let frac_p = Mcpure.OnePF (Cpure.BForm ( (Cpure.Eq ( *)
+          (*             (Cpure.Var (f2,no_pos)), *)
+          (*             (Cpure.Var (full_perm_var,no_pos)), *)
+          (*             no_pos *)
+          (*         )),None)) in *)
+          (*         false, h2,frac2, frac_p *)
+          (*     | Some f1, Some f2 ->  *)
+          (*         (\*matching frac perms between heap node and lemma node *\) *)
+          (*         (\*add f1=f2 to the ANTE *\) *)
+          (*         let frac_p = Mcpure.OnePF (Cpure.BForm ( (Cpure.Eq ( *)
+          (*             (Cpure.Var (f2,no_pos)), *)
+          (*             (Cpure.Var (f1,no_pos)), *)
+          (*             no_pos *)
+          (*         )),None)) in *)
+          (*         false, h2,frac2,frac_p *)
+          (*   )  *)
+          (* in *)
           
           begin
 	      (* the lemma application heuristic:
@@ -7736,12 +7754,12 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
 		  (*           (\* &&  *\)(not(!enable_distribution) 		(\* distributive coercion is not allowed *\) *)
 		  (*   	    or not(is_distributive coer))))) 	(\* coercion is not distributive *\) *)
 
-          (* (\*LDK*\) *)
-          (* let is_cycle = is_cycle_coer coer origs in *)
-          (* let _ = print_string ("do_universal:" *)
-          (*                       ^ "\n ### apply_coer = " ^ (string_of_bool apply_coer) *)
-          (*                       ^ "\n ### is_cycle = " ^ (string_of_bool is_cycle) *)
-          (*                       ^ "\n") in *)
+          (*LDK*)
+          let is_cycle = is_cycle_coer coer origs in
+          let _ = print_string ("do_universal:"
+                                ^ "\n ### apply_coer = " ^ (string_of_bool apply_coer)
+                                ^ "\n ### is_cycle = " ^ (string_of_bool is_cycle)
+                                ^ "\n") in
 
 
           if (not(apply_coer) or (is_cycle_coer coer origs))
@@ -7771,20 +7789,32 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
 		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
 
 
-                (*LDK: !!! This trick with fractional permission only apply for
-                cases w/o instantiation of frac vars. If there is some
-                instantiation, greater careful binding between f1 and f2
-                is needed*)
+                (* (\*LDK: !!! This trick with fractional permission only apply for *)
+                (* cases w/o instantiation of frac vars. If there is some *)
+                (* instantiation, greater careful binding between f1 and f2 *)
+                (* is needed*\) *)
+		        (* let lhs_guard_new = match frac1,frac2 with *)
+                (*   | Some f1, Some f2 -> *)
+                (*       if (is_propagated) then *)
+                (*         CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
+                (*       else *)
+                (*       CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard *)
+                (*   | None, Some f2 ->  *)
+                (*       let _ = print_string "[do_universal] Warning: Error with fractional permission \n" in *)
+                (*       CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
+                (*   | _ ->  *)
+                (*       CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
+                (* in *)
+
+
 		        let lhs_guard_new = match frac1,frac2 with
                   | Some f1, Some f2 ->
-                      if (is_propagated) then
-                        CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard
-                      else
                       CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard
-                  | None, Some f2 -> 
-                      let _ = print_string "[do_universal] Warning: Error with fractional permission \n" in
-                      CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard
-                  | _ -> 
+                  | Some f1, None ->
+                      CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard
+                  | None, Some f2 ->
+                      CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard
+                  | None, None ->
                       CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard
                 in
 
@@ -7799,40 +7829,64 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
               (*                       ^ "\n") in *)
 
 
-                (*LDK: not sure what is lhs_branches ???*)
-		        let  lhs_branches_new = match frac1,frac2 with
-                  | Some f1, Some f2 ->  
-                      if (is_propagated) then
-                        List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches
-                      else
-                        List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) f))) lhs_branches
+                (* (\*LDK: not sure what is lhs_branches ???*\) *)
+		        (* let  lhs_branches_new = match frac1,frac2 with *)
+                (*   | Some f1, Some f2 ->   *)
+                (*       if (is_propagated) then *)
+                (*         List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches *)
+                (*       else *)
+                (*         List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) f))) lhs_branches *)
 
-                  | None, Some f2 -> 
-                      let _ = print_string "[do_universal] Warning: Error with fractional permission \n" in
-                      List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches
-                  | _ ->  
-                      List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches
-                in
+                (*   | None, Some f2 ->  *)
+                (*       let _ = print_string "[do_universal] Warning: Error with fractional permission \n" in *)
+                (*       List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches *)
+                (*   | _ ->   *)
+                (*       List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches *)
+                (* in *)
+
+
+		        let lhs_branches_new = match frac1,frac2 with
+                  | Some f1, Some f2 ->
+                      List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (f1::ps1)) f))) lhs_branches
+                  | Some f1, None ->
+                      List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) f))) lhs_branches
+                  | None, Some f2 ->
+                      List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) f))) lhs_branches
+                  | None, None -> 
+                      List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in
 
 
 		      (* let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in *)
 
 
+                (* (\*LDK*\) *)
+		        (* let coer_rhs_new1 = match frac1,frac2 with *)
+                (*   | Some f1, Some f2 ->  *)
+                (*       if (is_propagated) then *)
+                (*         subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
+                (*       else *)
+                (*         subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs *)
+                (*   | None, Some f2 ->  *)
+                (*       let _ = print_string "[do_universal] Warning: Error with fractional permission \n" in *)
+                (*       subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
+                (*   | _ ->  *)
+                (*       subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
+
+                (* in *)
+
+
                 (*LDK*)
 		        let coer_rhs_new1 = match frac1,frac2 with
                   | Some f1, Some f2 -> 
-                      if (is_propagated) then
-                        subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs
-                      else
-                        subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs
+                      subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs
+                  | Some f1, None -> 
+                      subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs
                   | None, Some f2 -> 
-                      let _ = print_string "[do_universal] Warning: Error with fractional permission \n" in
-                      subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs
-                  | _ -> 
+                      subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs
+                  | None, None -> 
                       subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs
 
                 in
-
 
 		      (* let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
 
@@ -7851,18 +7905,18 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
               (* in *)
 
 
-              let coer_rhs_new = 
-                match frac1,frac2 with
-                  | None , None -> coer_rhs_new
-                  | None, Some f2 -> 
-                      let _ = print_string ("[do_universal_x] Warning: fractional permission not matched\n") in
-                      coer_rhs_new
-                  | Some f, _ ->
-                      if (is_propagated) then
-                        (add_frac coer_rhs_new1 f)
-                      else
-                        coer_rhs_new
-              in
+              (* let coer_rhs_new =  *)
+              (*   match frac1,frac2 with *)
+              (*     | None , None -> coer_rhs_new *)
+              (*     | None, Some f2 ->  *)
+              (*         let _ = print_string ("[do_universal_x] Warning: fractional permission not matched\n") in *)
+              (*         coer_rhs_new *)
+              (*     | Some f, _ -> *)
+              (*         if (is_propagated) then *)
+              (*           (add_frac coer_rhs_new1 f) *)
+              (*         else *)
+              (*           coer_rhs_new *)
+              (* in *)
 
               (* let _ = print_string ("do_universal: after add frac" *)
               (*                       ^ "\n ### coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new) *)
@@ -7878,17 +7932,17 @@ and do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is
 		      (*let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in
 		        let _ = print_string("guard: " ^ (Cprinter.string_of_pure_formula guard_to_check) ^ "\n") in*)
 
-              let _ = print_string ("do_universal: before add_rhspure_to_formula_ext_bas"
-                                    ^ "\n ### rest_of_lhs = " ^ (Cprinter.string_of_formula rest_of_lhs)
-                                    ^ "\n") in
+              (* let _ = print_string ("do_universal: before add_rhspure_to_formula_ext_bas" *)
+              (*                       ^ "\n ### rest_of_lhs = " ^ (Cprinter.string_of_formula rest_of_lhs) *)
+              (*                       ^ "\n") in *)
 
-              (*LDK: add frac perm constraint*)
-              let rest_of_lhs = CF.add_mix_formula_to_formula rest_of_lhs frac_to_lhs in
+              (* (\*LDK: add frac perm constraint*\) *)
+              (* let rest_of_lhs = CF.add_mix_formula_to_formula rest_of_lhs frac_to_lhs in *)
 
-              let _ = print_string ("do_universal: after add_rhspure_to_formula_ext_bas"
-                                    ^ "\n ### rest_of_lhs = " ^ (Cprinter.string_of_formula rest_of_lhs)
-                                    ^ "\n ### coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)
-                                    ^ "\n") in
+              (* let _ = print_string ("do_universal: after add_rhspure_to_formula_ext_bas" *)
+              (*                       ^ "\n ### rest_of_lhs = " ^ (Cprinter.string_of_formula rest_of_lhs) *)
+              (*                       ^ "\n ### coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new) *)
+              (*                       ^ "\n") in *)
 
 		      let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
 		      (* add the guard to the consequent  - however, the guard check is delayed *)

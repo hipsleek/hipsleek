@@ -1129,6 +1129,9 @@ let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_f
   (* if String.length(hdr)>7 then *)
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
+let pr_es_trace (trace:string list) : unit = 
+  let s = List.fold_left (fun str x -> x ^ " ; " ^ str) "" trace in
+  fmt_string s
 
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
@@ -1155,6 +1158,7 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
 	| None -> "None"
 	| Some i -> string_of_int i)) es.es_var_label;
+  pr_vwrap "es_trace: " pr_es_trace es.es_trace;
   fmt_close ()
 
 
@@ -1765,6 +1769,7 @@ let string_of_coerc_opt op c =
   else s2
     ^"\n head match:"^c.coercion_head_view
     ^"\n body view:"^c.coercion_body_view
+    ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;

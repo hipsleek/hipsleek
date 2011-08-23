@@ -3054,8 +3054,9 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
-  es_must_error : (string * fail_type) option
+  es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
+  es_trace : string list (*LDK: to keep track of past operations: match,fold...*)
 }
 
 and context = 
@@ -3610,6 +3611,7 @@ let rec empty_es flowt pos =
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
   es_must_error = None;
+  es_trace = [];
 
 }
 
