@@ -1741,12 +1741,28 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
 
 (**
  * An Hoa : Find the type of the field with indicated name in ddef
- * TODO extend to a list of access
  **)
-let get_type_of_field (ddef : data_decl) field_name =
+let get_type_of_field ddef field_name =
 	let tids = List.map get_field_typed_id ddef.data_fields in
 	let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
 		fst field_typed_id
+
+
+(**
+ * An Hoa : Traversal a list of access to get the type.
+ **)
+let rec get_type_of_field_seq ddefs root_type field_seq =
+	let _ = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in
+	match field_seq with
+		| [] -> root_type
+		| f::t -> (match root_type with
+			| Named c -> (try
+					let ddef = look_up_data_def_raw ddefs c in
+					let ft = get_type_of_field ddef f in
+						get_type_of_field_seq ddefs ft t
+				with
+					| Not_found -> let _ = print_endline "FAIL 1" in failwith "[get_type_of_field_seq] type not found!")
+			| _ -> let _ = print_endline "FAIL 2" in failwith ("[get_type_of_field_seq] " ^ (string_of_typ root_type) ^ " is not a compound type"))
 
 
 (**
@@ -1762,38 +1778,79 @@ let is_data_type_identifier (ddefs : data_decl list) id =
 let is_not_data_type_identifier (ddefs : data_decl list) id =
 	not (is_data_type_identifier ddefs id)
 
+(**
+ * An Hoa : Compute the size of a typ in memory.
+ *          Each primitive type count 1 while compound data type is the sum of
+ *          its component. Inline types should be expanded.
+ **)
+let rec compute_typ_size ddefs t =
+	match t with
+		| Named data_name -> (try 
+				let ddef = look_up_data_def_raw ddefs data_name in
+					List.fold_left (fun a f -> 
+						let fs = if (is_inline_field f) then 
+							compute_typ_size ddefs (get_field_typ f) 
+						else 1 in a + fs) 0 ddef.data_fields
+			with | Not_found -> 
+				(* let _ = print_endline ("[compute_typ_size] failure on input type " ^ data_name) in *)
+					failwith ("[compute_data_num_pointers] input type does not exist."))
+		| _ -> 1
+
 
 (**
- * An Hoa : Compute the actual number of pointer of a data type.
+ * An Hoa : Get the number of pointers by looking up the corresponding record 
+ *          in data_dec instead of doing the full recursive computation. This
+ *          caching of information is to reduce the workload.
+ * TODO implement
  **)
-let rec get_data_num_pointers ddefs data_name =
-	try 
-		let ddef = look_up_data_def_raw ddefs data_name in
-			(* take the sum of the number of pointer of each type : inline field must be substituted; for non-inline field just count 1 *)
-			List.fold_left (fun a f -> 
-								let fs = if (is_inline_field f) then 
-											(get_data_num_pointers ddefs (string_of_typ (get_field_typ f))) 
-										else 1 
-								in a + fs) 0 ddef.data_fields
-	with
-		| Not_found -> failwith "[get_data_num_pointers] call with non-existing data type."
-
-
-(**
- * An Hoa : Compute the size of a field
- **)
-(*and get_field_num_ptrs prog data_name f = 
-	if (is_inline_field f) then 
-		(get_data_num_pointers prog (string_of_typ (get_field_typ f))) 
-	else 1 *)
-	
+let get_typ_size = compute_typ_size
 
 (**
  * An Hoa : Compute the offset of the pointer to a field with respect to the root.
- * TODO : Implement & Extend
  **)
-let rec get_field_offset ddefs data_name accessed_field =
-	let helper i fl = match fl with
-		| [] -> failwith ("The data type " ^ data_name ^ " does not have the field " ^ accessed_field)
-		| f::r -> 0 in 0
-	(* helper 0 [] *)
+let rec compute_field_offset ddefs data_name accessed_field =
+	try 
+		(* let _ = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
+		let found = ref false in
+		let ddef = look_up_data_def_raw ddefs data_name in
+		(* Accumulate the offset along the way *)
+		let offset = List.fold_left (fun a f -> 
+										if (!found) then a (* Once found, just keep constant*)
+										else let fn = get_field_name f in 
+											let ft = get_field_typ f in
+											if (fn = accessed_field) then (* Found the field *)
+												begin found := true; a end
+											else (* Accumulate *)
+												a + (get_typ_size ddefs ft))
+									0 ddef.data_fields in
+		(* The field is not really a field of the data type ==> raise error. *)
+		if (not !found) then (* let _ = print_endline "[compute_field_offset] failure" in *)
+			failwith ("[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field)
+		else
+			(* let _ = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
+				offset
+	with
+		| Not_found -> (* let _ = print_endline "[compute_field_offset] Failure" in *) failwith "[compute_field_offset] is call with non-existing data type."
+
+
+(**
+ * An Hoa : Compute the offset of the pointer indicated by a field sequence with
+ *          respect to the root (that points to a type with name data_name)
+ * TODO implement
+ **)
+and compute_field_seq_offset ddefs data_name field_sequence = 
+	(* let _ = print_endline ("[compute_field_seq_offset] : input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
+	let dname = ref data_name in
+		List.fold_left (fun a field_name ->
+							let offset = compute_field_offset ddefs !dname field_name in
+							(* Update the dname to the data type of the field_name *)
+							try
+								let ddef = look_up_data_def_raw ddefs !dname in
+								let field_type = get_type_of_field ddef field_name in
+								begin
+									dname := string_of_typ field_type;
+									a + offset
+								end
+							with
+								| Not_found -> (* let _ = print_endline ("[compute_field_seq_offset] " ^ !dname ^ " does not exists!") in *) failwith ("[compute_field_seq_offset]: " ^ !dname ^ " does not exists!"))
+						0 field_sequence

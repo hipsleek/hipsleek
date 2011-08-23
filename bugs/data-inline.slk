@@ -13,4 +13,10 @@ data octuple {
 	inline quadruple q2;
 }.
 
-checkentail v.quadruple.p1.x::<a> |- true.
+/* checkentail v.quadruple.p1.x::<a> |- true.
+
+checkentail v.octuple.q2.p1.x::<a> |- true.
+
+checkentail v.octuple.q2.p1.y::<a> |- true. */
+
+checkentail v.octuple.q2.p1.y::<5> |- true.

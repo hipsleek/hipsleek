@@ -3665,10 +3665,11 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
               IF.h_formula_heap_pos = pos;
               IF.h_formula_heap_label = pi;} ->
 				(* An Hoa : Handle field access *)
-				(* ASSUMPTIONS: exps ARE ALL VARIABLES i.e. I.Var AFTER float_out_exp PRE-PROCESSING! *)
+				(* ASSUMPTIONS detected: exps ARE ALL VARIABLES i.e. I.Var AFTER float_out_exp PRE-PROCESSING! *)
 				if (c = Parser.generic_pointer_type_name || String.contains v '.') then
 					let tokens = Str.split (Str.regexp "\.") v in
-					let tokens = List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens in
+					let field_access_seq = List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens in
+					let field_access_seq = List.tl field_access_seq in (* get rid of the root pointer as well *)
 					let rootptr = List.hd tokens in
 					let rpsi = H.find stab rootptr in
 					let rootptr_type = rpsi.sv_info_kind in
@@ -3678,19 +3679,20 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 											(String.sub rootptr 0 (rl - 1), Primed)
 										else
 											(rootptr, Unprimed) in 
-					let accessed_field = List.nth tokens 1 in
-					let ddef = try I.look_up_data_def_raw prog.I.prog_data_decls rootptr_type_name
-								with | _ -> failwith "Exception!" in
-					let field_partial_positions = I.get_field_offset prog.I.prog_data_decls rootptr_type_name accessed_field in
-					let num_ptrs = 0 (*I.get_data_num_pointers prog ddef.I.data_name*) in
+					let field_offset = I.compute_field_seq_offset prog.I.prog_data_decls rootptr_type_name field_access_seq in
+					(* let _ = print_endline ("Field access offset = " ^ (string_of_int field_offset)) in *)
+					let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
+					(* let _ = print_endline ("Type " ^ rootptr_type_name ^ " consists of " ^ (string_of_int num_ptrs) ^ " pointers.") in *) 
 					(* An Hoa : WORKING The rest are copied from the original code with modification to account for the holes *)
 					let labels = List.map (fun _ -> "") exps in
 					let hvars = match_exp (List.combine exps labels) pos in
-					(* [Internal] Extends hvars with holes and collect the list of holes! *)
-					let rec extend_and_collect_holes vs field_position num_ptrs = 
+					(* [Internal] Extends hvars with holes and collect the list of holes! 
+					 * TODO implement
+					 *)
+					let rec extend_and_collect_holes vs offset num_ptrs = 
 						(vs,[]) in
 					(* [Internal] End of function <extend_and_collect_holes> *)
-					let hvars, holes = extend_and_collect_holes hvars field_partial_positions num_ptrs in
+					let hvars, holes = extend_and_collect_holes hvars field_offset num_ptrs in
 					let result_heap = CF.DataNode {
 							CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 							CF.h_formula_data_name = rootptr_type_name;
@@ -5153,7 +5155,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_arguments = ies;
                 IF.h_formula_heap_pos = pos
 	        } ->
-			let _ = print_endline ("[gather_type_info_heap_x] : " ^ Iprinter.string_of_h_formula h0) in
+			let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in
 			(* An Hoa : WORKING POSITION Deal with the generic pointer! *)
 			if (c = Parser.generic_pointer_type_name) then 
 				(* Assumptions:
@@ -5166,9 +5168,9 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 				 *      will be dealt with later.
 				 *)
 				(* Step 1: Extract the main variable i.e. the root of the pointer *)
-				let _ = print_endline ("Pointer = " ^ v) in
+				let _ = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in
 				let tokens = Str.split (Str.regexp "\.") v in
-				let _ = print_endline ("Tokens: [" ^ (String.concat "," tokens) ^ "]") in
+				let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in
 				let rootptr = List.hd tokens in
 				(* Step 2: Determine the type of [rootptr] and the field by looking 
 				 * up the current state of stab & information supplied by the user.
@@ -5177,7 +5179,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 				let type_found,type_rootptr = try (* looking up in the list of data types *)
 					(* Good user provides type for [rootptr] ==> done! *)
 					let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
-					let _ = print_endline ("Root pointer type found: " ^ ddef.I.data_name) in
+					let _ = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in
 						(true, Named ddef.I.data_name)
 				with 
 					| Not_found -> (false,UNK) (* Lazy user ==> perform type reasoning! *) in
@@ -5197,7 +5199,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 					let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
 						if (List.length dts = 1) then
 							(* the field uniquely determines the data type ==> done! *)
-							let _ = print_endline ("Only type " ^ (List.hd dts) ^ " has field " ^ s) in
+							(* let _ = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
 							(true,Named (List.hd dts))
 						else
 							(false,UNK) in
@@ -5205,14 +5207,12 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 				if type_found then
 					(* Know the type of rootptr ==> Know the type of the field *)
 					let _ = H.add stab rootptr { sv_info_kind = type_rootptr; id = 0 } in
-					(* Filter out user type indication *)
-					let tokens = List.filter (fun x -> try let _ = I.look_up_data_def_raw prog.I.prog_data_decls x in false with | Not_found -> true) tokens in
+					(* Filter out user type indication, List.tl to remove the root as well *)
+					let field_access_seq = List.tl (List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens) in
 					(* Get the type of the field which is the type of the pointer *)
-					let ddef = I.look_up_data_def_raw prog.I.prog_data_decls (match type_rootptr with | Named c -> c | _ -> failwith "FAILURE!") in
-					let field_name = List.nth tokens 1 in
-					let t = I.get_type_of_field ddef field_name in
-					let _ = print_endline ("Pointer data type found : " ^ (string_of_typ t)) in
-					let _ = gather_type_info_exp (List.hd ies) stab t in ()
+					let ptr_type = I.get_type_of_field_seq prog.I.prog_data_decls type_rootptr field_access_seq in
+					let _ = print_endline ("[gather_type_info_heap_x] pointer type found = " ^ (string_of_typ ptr_type)) in
+					let _ = gather_type_info_exp (List.hd ies) stab ptr_type in ()
 				else ()
 			else (* End dealing with generic ptr, continue what the original system did *)
 	      let dname = 
