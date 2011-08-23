@@ -1752,7 +1752,7 @@ let get_type_of_field ddef field_name =
  * An Hoa : Traversal a list of access to get the type.
  **)
 let rec get_type_of_field_seq ddefs root_type field_seq =
-	let _ = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in
+	(* let _ = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in *)
 	match field_seq with
 		| [] -> root_type
 		| f::t -> (match root_type with
@@ -1761,8 +1761,8 @@ let rec get_type_of_field_seq ddefs root_type field_seq =
 					let ft = get_type_of_field ddef f in
 						get_type_of_field_seq ddefs ft t
 				with
-					| Not_found -> let _ = print_endline "FAIL 1" in failwith "[get_type_of_field_seq] type not found!")
-			| _ -> let _ = print_endline "FAIL 2" in failwith ("[get_type_of_field_seq] " ^ (string_of_typ root_type) ^ " is not a compound type"))
+					| Not_found -> (* let _ = print_endline "FAIL 1" in *) failwith "[get_type_of_field_seq] type not found!")
+			| _ -> (* let _ = print_endline "FAIL 2" in *) failwith ("[get_type_of_field_seq] " ^ (string_of_typ root_type) ^ " is not a compound type"))
 
 
 (**
@@ -1801,7 +1801,6 @@ let rec compute_typ_size ddefs t =
  * An Hoa : Get the number of pointers by looking up the corresponding record 
  *          in data_dec instead of doing the full recursive computation. This
  *          caching of information is to reduce the workload.
- * TODO implement
  **)
 let get_typ_size = compute_typ_size
 
@@ -1836,7 +1835,6 @@ let rec compute_field_offset ddefs data_name accessed_field =
 (**
  * An Hoa : Compute the offset of the pointer indicated by a field sequence with
  *          respect to the root (that points to a type with name data_name)
- * TODO implement
  **)
 and compute_field_seq_offset ddefs data_name field_sequence = 
 	(* let _ = print_endline ("[compute_field_seq_offset] : input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
