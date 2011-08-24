@@ -1266,28 +1266,59 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)
   Gen.Debug.no_1 "simplify_with_redlog" !print_formula !print_formula simplify_with_redlog f
 
+(*Note: a linear formula is passed to Omega only when
+it is not a float formula.
+Omega may perform unsound approximation with real numbers
+such as f=f1+f2&f1>0&f2>0 => f>=2
+*)
 let simplify (f: CP.formula) : CP.formula =
-  if is_linear_formula f then 
-    Omega.simplify f 
-  else if (!no_simplify) then 
-    f
-   else
-    try
-      let simpler_f = simplify_with_redlog f in
-      let simpler_f = 
-        if (is_linear_formula simpler_f) then
-          Omega.simplify simpler_f
-        else
-          simpler_f
-      in
-      log DEBUG "\n#simplify";
-      log DEBUG ("original: " ^ (string_of_formula f));
-      log DEBUG ("simplified: " ^ (string_of_formula simpler_f));
-      simpler_f
-    with _ as e -> 
-      log ERROR "Error while simplifying with redlog";
-      log ERROR (Printexc.to_string e);
+  if (is_linear_formula f  && not (CP.is_float_formula f)) then
+    Omega.simplify f
+  else
+    if (!no_simplify) then
       f
+    else
+      try
+          let simpler_f = simplify_with_redlog f in
+          let simpler_f =
+            if ( (is_linear_formula simpler_f) && not (CP.is_float_formula f)) then
+              Omega.simplify simpler_f
+            else
+              simpler_f
+          in
+          log DEBUG "\n#simplify";
+          log DEBUG ("original: " ^ (string_of_formula f));
+          log DEBUG ("simplified: " ^ (string_of_formula simpler_f));
+          simpler_f
+      with _ as e ->
+          log ERROR "Error while simplifying with redlog";
+          log ERROR (Printexc.to_string e);
+          f
+
+(* (\*LDK: this is not correct because a floating point formula *)
+(* can also be linear formula; therefore it is passed to Omega.simplify*\) *)
+(* let simplify (f: CP.formula) : CP.formula = *)
+(*   if is_linear_formula f then *)
+(*     Omega.simplify f *)
+(*   else if (!no_simplify) then *)
+(*     f *)
+(*   else *)
+(*     try *)
+(*       let simpler_f = simplify_with_redlog f in *)
+(*       let simpler_f = *)
+(*         if (is_linear_formula simpler_f) then *)
+(*           Omega.simplify simpler_f *)
+(*         else *)
+(*           simpler_f *)
+(*       in *)
+(*       log DEBUG "\n#simplify"; *)
+(*       log DEBUG ("original: " ^ (string_of_formula f)); *)
+(*       log DEBUG ("simplified: " ^ (string_of_formula simpler_f)); *)
+(*       simpler_f *)
+(*     with _ as e -> *)
+(*       log ERROR "Error while simplifying with redlog"; *)
+(*       log ERROR (Printexc.to_string e); *)
+(*       f *)
 
 (* unimplemented *)
 

@@ -783,7 +783,7 @@ let simplify (f:CP.formula): CP.formula =
 
 let simplify (f:CP.formula): CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
-  Gen.Debug.no_1 "simplify" pr pr simplify f
+  Gen.Debug.ho_1 "simplify" pr pr simplify f
 
 
 

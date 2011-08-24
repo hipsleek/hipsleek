@@ -2225,8 +2225,10 @@ and elim_exists_with_ineq (f0: formula): formula =
 
 
 
+
+
 (* eliminate exists with the help of v=exp *)
-and elim_exists (f0 : formula) : formula = 
+and elim_exists_x (f0 : formula) : formula = 
   let rec helper f0 =
     match f0 with
       | Exists (qvar, qf, lbl, pos) -> begin
@@ -2286,6 +2288,9 @@ and elim_exists (f0 : formula) : formula =
         end
       | BForm _ -> f0 in
   helper f0
+
+and elim_exists (f0 : formula) : formula = 
+  Gen.Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
 
 (* (\* pretty printing for types *\) *)
 (* let rec string_of_typ = function  *)
