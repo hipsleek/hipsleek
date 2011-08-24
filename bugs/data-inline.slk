@@ -17,6 +17,8 @@ data octuple {
 
 checkentail v.octuple.q2.p1.x::<a> |- true.
 
-checkentail v.octuple.q2.p1.y::<a> |- true. */
+checkentail v.octuple.q2.p1.y::<a> |- true.
 
-checkentail v.octuple.q2.p1.y::<5> |- true.
+checkentail v.octuple.q2.p1.y::<5> |- true. */
+
+checkentail v.octuple.q2.p1.x::<5> * v.octuple.q2.p1.y::<4>|- true.

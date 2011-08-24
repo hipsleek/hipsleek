@@ -1744,8 +1744,11 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
  **)
 let get_type_of_field ddef field_name =
 	let tids = List.map get_field_typed_id ddef.data_fields in
-	let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
-		fst field_typed_id
+	try
+		let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
+			fst field_typed_id
+	with
+		| Not_found -> UNK
 
 
 (**
@@ -1759,10 +1762,12 @@ let rec get_type_of_field_seq ddefs root_type field_seq =
 			| Named c -> (try
 					let ddef = look_up_data_def_raw ddefs c in
 					let ft = get_type_of_field ddef f in
-						get_type_of_field_seq ddefs ft t
+						(match ft with
+							| UNK -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Compound type " ^ c ^ " has no field " ^ f ^ "!" }
+							| _ -> get_type_of_field_seq ddefs ft t)
 				with
-					| Not_found -> (* let _ = print_endline "FAIL 1" in *) failwith "[get_type_of_field_seq] type not found!")
-			| _ -> (* let _ = print_endline "FAIL 2" in *) failwith ("[get_type_of_field_seq] " ^ (string_of_typ root_type) ^ " is not a compound type"))
+					| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Either data type " ^ c ^ " cannot be found!" })
+			| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] " ^ (string_of_typ root_type) ^ " is not a compound type!" })
 
 
 (**
@@ -1791,9 +1796,7 @@ let rec compute_typ_size ddefs t =
 						let fs = if (is_inline_field f) then 
 							compute_typ_size ddefs (get_field_typ f) 
 						else 1 in a + fs) 0 ddef.data_fields
-			with | Not_found -> 
-				(* let _ = print_endline ("[compute_typ_size] failure on input type " ^ data_name) in *)
-					failwith ("[compute_data_num_pointers] input type does not exist."))
+			with | Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_data_num_pointers] input type does not exist."})
 		| _ -> 1
 
 
@@ -1823,13 +1826,14 @@ let rec compute_field_offset ddefs data_name accessed_field =
 												a + (get_typ_size ddefs ft))
 									0 ddef.data_fields in
 		(* The field is not really a field of the data type ==> raise error. *)
-		if (not !found) then (* let _ = print_endline "[compute_field_offset] failure" in *)
-			failwith ("[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field)
-		else
+		if (not !found) then 
+			Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field }	
+			failwith ()
+		else 
 			(* let _ = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
 				offset
 	with
-		| Not_found -> (* let _ = print_endline "[compute_field_offset] Failure" in *) failwith "[compute_field_offset] is call with non-existing data type."
+		| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] is call with non-existing data type." }
 
 
 (**
@@ -1850,5 +1854,5 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 									a + offset
 								end
 							with
-								| Not_found -> (* let _ = print_endline ("[compute_field_seq_offset] " ^ !dname ^ " does not exists!") in *) failwith ("[compute_field_seq_offset]: " ^ !dname ^ " does not exists!"))
+								| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_seq_offset]: " ^ !dname ^ " does not exists!" } )
 						0 field_sequence

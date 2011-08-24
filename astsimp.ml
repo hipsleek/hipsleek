@@ -3582,7 +3582,6 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
           (f0 : IF.formula) stab (clean_res:bool)) stab quantify clean_res fvars f0
 
-(* AN HOA : TODO CHECK *)
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let rec helper f0 =
