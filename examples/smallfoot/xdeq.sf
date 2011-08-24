@@ -1,0 +1,114 @@
+d,l;
+
+init() {
+  front = new();
+  back = new();
+  front->l = prev ^ back;
+  back->l = next ^ front;
+  f = back;
+  n = back;
+  p = front;
+  b = front;
+} [front|->l:prev ^ f * back|->l:next ^ b]
+
+resource xdeq (n,p) [front==p * back==n * xlseg(f,n,p,b)]
+
+getf(x;) [front|->l:prev ^ f] {
+  local t, old_f;
+  /* get old_f from previous dummy link and deallocate it */
+  t = front->l;
+  old_f = prev ^ t;
+  dispose(front);
+  /* reestablish correspondence between process-local and invariant variables */
+  prev = front;
+  /* split new dummy link off front */
+  with xdeq when(old_f!=n) {
+    t = f->l;
+    f = t ^ p;
+    p = old_f;
+    front = p;
+  }
+  /* return datum */
+  x = front->d;
+} [front|->l:prev ^ f]
+
+putf(x) [front|->l:prev ^ f] {
+  local t, new_p, old_f;
+  /* allocate new dummy link */
+  new_p = new();
+  new_p->l = prev ^ front;
+  /* store datum in previous dummy link, and link to new dummy link */
+  front->d = x;
+  t = front->l;
+  old_f = prev ^ t;
+  front->l = new_p ^ old_f;
+  /* move previous dummy link into buffer */
+  with xdeq when(n!=front) { /* guard should be true */
+    f = front;
+    p = new_p;
+    front = p;
+  }
+} [front|->l:prev ^ f]
+
+procf(x) [front|->l:prev ^ f] {
+  local nondet;
+  if(nondet==0) {
+    getf(x;);
+  } else {
+    putf(x);
+  }
+  procf(x);
+} [false]
+
+getb(x;) [back|->l:next ^ b] {
+  local t, old_b;
+  /* get old_b from previous dummy link and deallocate it */
+  t = back->l;
+  old_b = next ^ t;
+  dispose(back);
+  /* reestablish correspondence between process-local and invariant variables */
+  next = back;
+  /* split new dummy link off back */
+  with xdeq when(old_b!=p) {
+    t = b->l;
+    b = t ^ n;
+    n = old_b;
+    back = n;
+  }
+  /* return datum */
+  x = back->d;
+} [back|->l:next ^ b]
+
+putb(x) [back|->l:next ^ b] {
+  local t, new_n, old_p, old_b;
+  /* allocate new dummy link */
+  new_n = new();
+  new_n->l = next ^ back;
+  /* store datum in previous dummy link, and link to new dummy link */
+  back->d = x;
+  t = back->l;
+  old_b = t ^ next;
+  back->l = new_n ^ old_b;
+  /* move previous dummy link into buffer */
+  with xdeq when(p!=back) { /* guard should be true */
+    b = back;
+    n = new_n;
+    back = n;
+  }
+} [back|->l:next ^ b]
+
+procb(x) [back|->l:next ^ b] {
+  local nondet;
+  if(nondet==0) {
+    getb(x;);
+  } else {
+    putb(x);
+  }
+  procb(x);
+} [false]
+
+main() [front|->l:prev ^ f * back|->l:next ^ b] {
+  procf(42) || procb(13);
+  dispose(front);
+  dispose(back);
+}

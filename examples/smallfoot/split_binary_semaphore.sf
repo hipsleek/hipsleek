@@ -1,0 +1,31 @@
+c;
+
+init() { b = new(); free = 1; busy = 0; }
+
+resource free (free) [if free==0 then emp else b|->] 
+
+resource busy (busy) [if busy==0 then emp else b|->]
+
+produce(m;) {}
+
+producer() {
+    local m;
+    produce(m;);
+    with free when (free==1) free = 0;
+    b->c = m;
+    with busy when (true) busy = 1;
+    producer();
+} 
+
+consume(n) {}
+
+consumer() {
+    local n;
+    with busy when (busy==1) busy = 0;
+    n = b->c;
+    with free when (free==0) free = 1;
+    consume(n);
+    consumer();
+}
+
+main() { producer() || consumer(); }

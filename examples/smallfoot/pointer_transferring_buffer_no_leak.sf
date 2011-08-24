@@ -1,0 +1,31 @@
+init() { full = 0; start = 1; finish = 0; } [start==1]
+
+resource buf (c,full)
+  [if full==1
+   then (if start==1 then false else finish==0 * c|->)
+   else (if start==1 then finish==0 else finish==1)]
+
+put(x) [start==1 * x|->] {
+  with buf when (full==0) { c = x; full = 1; start = 0; }
+} [emp]
+
+get(y;) [emp] {
+  with buf when (full==1) { y = c; full = 0; finish = 1; }
+} [y|->]
+
+putter() [start==1] {
+  local x;
+  x = new();
+  put(x);
+}
+
+getter() {
+  local y;
+  get(y;);
+  /* use y */
+  dispose(y);
+}
+
+main() [start==1] {
+  putter() || getter();
+}
