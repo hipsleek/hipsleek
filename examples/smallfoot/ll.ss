@@ -282,6 +282,50 @@ void list_insert(node x, int v)
         }
 }
 
+/*function to insert a node into a singly linked list being sorted  */
+/*NOT WORKING*/
+/*void list_insert2(ref node x, int v)
+        requires x::ll<n> & n>=0
+        ensures x'::ll<n+1>;                                                                                                                                
+{
+        node tmp;                                                                                                                                
+        if(x == null)
+               x = new node (v, null); 
+        else
+        {
+                if(v > x.val) { 
+                        list_insert2(x.next,v);//fails here                                                                                                  
+                }
+                else {
+                        tmp = x;                                                                                                                     
+                        x = new node(v,tmp);                                                                                                                
+                }
+        }
+}*/
+
+/*function to insert a node into a singly linked list being sorted  */
+node list_insert3(node x, int v)
+        requires x::ll<n> & n>=0
+        ensures res::ll<n+1>;                                                                                                                                 
+{
+        node tmp;                                                                                                                                            
+        if(x == null)
+               x = new node (v, null);                                                                                                                       
+        else
+        {
+                if(v > x.val) {
+                        tmp = list_insert3(x.next,v);                                                                                             
+                       x.next = tmp;
+                }
+                else {
+                        tmp = x;                                                                                                                             
+                        x = new node(v,tmp);                                                                                                                 
+                }
+        }
+        return x;
+}
+
+
 
 /*function to remove the first node which has value v in singly linked list*/
 void list_remove(node x, int v)
@@ -289,34 +333,75 @@ void list_remove(node x, int v)
         ensures x::ll<m> & m <= n;
 {
         if(x.next != null) {
-                   if(x.next.val == v) 
+                   if(x.next.val == v) {
+                            node tmp = x.next;
                             x.next = x.next.next;
+                            dispose(tmp);
+                   }
                    else {
                             list_remove(x.next, v);
                    }
         }
 }
 
-/*function to remove all nodes which have value v in singly linked list*/
-void list_filter(node x, int v)
-        requires x::ll<n> & n > 0// & x.val != v
-        ensures x::ll<m> & m <= n;                                              
+/*function to remove the first node which has value v in nullable singly linked list*/
+node list_remove2(node x, int v)
+        requires x::ll<n> & n >= 0
+        ensures res::ll<m> & m <= n;                                                                                                                         
 {
-        if(x.next != null) {
-                   if(x.next.val == v){
-                            x.next = x.next.next;  
-                            if (x.next != null)
-                                      list_remove(x.next, v);
+        node tmp;
+        if(x != null) {
+                   if(x.val == v) {
+                            tmp = x;                                                                                                               
+                            x = x.next;                                                                                                            
+                            dispose(tmp);                                                                                                                    
                    }
                    else {
-                            list_remove(x.next, v);                             
+                            tmp = list_remove2(x.next, v);                                                                                                  
+                            x.next = tmp;
                    }
         }
+        return x;
 }
 
-/*void testtest(ref node x)
-requires x::ll<n> & n > 0
-ensures x'::ll<n-1>;
+/*function to remove all nodes which have value v in singly linked list*/
+//WRONG
+/*void list_filter(node x, int v)
+        requires x::ll<n> & n > 0
+        ensures x::ll<m> & m <= n;                                              
 {
-x = x.next;
+        node tmp;
+        if(x.next != null) {
+                   if(x.next.val == v){
+                            tmp = x.next.next;
+                            dispose(x.next);
+                            x.next = tmp;  
+                            if (x.next != null)
+                                      list_filter(x.next, v);//wrong here
+                   }
+                   else {
+                            list_filter(x.next, v);                             
+                   }
+        }
 }*/
+
+/*function to remove all nodes which have value v in nullable singly linked list*/
+node list_filter2(node x, int v)
+        requires x::ll<n> & n >= 0
+        ensures res::ll<m> & m <= n;                                                                                                                        
+{
+        node tmp;
+        if(x != null) {
+                   if(x.val == v){
+                            tmp = x.next;                                                                                                            
+                            dispose(x);
+                            x = tmp;
+                            x = list_filter2(x,v);
+                   }                          
+                   else{                                                                           
+                            tmp = list_filter2(x.next, v);                                                                                                  
+                            x.next = tmp;
+                   }                   
+        }
+        return x;
+}

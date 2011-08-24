@@ -18,6 +18,10 @@ lseg<p, n> == self=p & n=0
            inv n>=0;
 */
 
+void dispose(node x)
+          requires x::node<_,_>
+          ensures true;
+
 /*function to insert new node at the rear*/
 void append(node x, int v)
           requires x::queue<n> & n > 0
@@ -30,9 +34,11 @@ void append(node x, int v)
 }
 
 /*function to remove a node at front*/
-void serve(node x)
+void serve(ref node x)
           requires x::queue<n> & n > 1 
-          ensures x::queue<n-1>;
+          ensures x'::queue<n-1>;
 {
-         x.next = x.next.next;
+         node tmp = x;
+         x = x.next;
+         dispose(tmp);
 }
