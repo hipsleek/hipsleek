@@ -328,6 +328,9 @@ void delete(ref node2 x, int a)
 
 /*************************************************************/
 /*****************SMALLFOOT EXAMPLES**************************/
+void dispose(node2 x)
+        requires x::node2<_,_,_>
+        ensures true;
 
 node2 tree_copy (node2 x)
         requires x::tree<m,n>
@@ -342,4 +345,16 @@ node2 tree_copy (node2 x)
                   tmp = new node2(x.val, tl, tr);
         }
         return tmp;
+}
+
+void tree_deallocate(node2 x)
+        requires x::tree<m,n>
+        ensures true;
+{
+        if(x != null){
+              tree_deallocate(x.left);
+              tree_deallocate(x.right);
+              dispose(x);
+        }
+         
 }
