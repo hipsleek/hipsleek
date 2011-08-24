@@ -407,7 +407,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
-  Gen.Debug.ho_2 "process_entail_check" pr pr (fun _ -> "?")process_entail_check iante0 iconseq0 
+  Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?")process_entail_check iante0 iconseq0 
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -448,18 +448,22 @@ let check_coercion (coer: C.coercion_decl) =
   (* in *)
   (* let check_entailment c_lhs c_rhs = *)
   (*   let pr = Cprinter.string_of_formula in *)
-  (*   Gen.Debug.ho_2 "check_entailment" pr pr *)
+  (*   Gen.Debug.no_2 "check_entailment" pr pr *)
   (*       (fun _ -> "?") check_entailment c_lhs c_rhs in *)
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.C.coercion_head in
 	let _ = print_string ("\nlhs : " ^ (Cprinter.string_of_formula coer.C.coercion_head) ^ "\n") in
 	let _ = print_string ("\nrhs : " ^ (Cprinter.string_of_formula coer.C.coercion_body) ^ "\n") in
-    let lhs = Solver.unfold_nth 9 (!cprog,None) coer.C.coercion_head (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+    let lhs = CF.add_original coer.C.coercion_head true in
+	let _ = print_string ("\nlhs : " ^ (Cprinter.string_of_formula lhs) ^ "\n") in
+    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let rhs = (* Solver.unfold_nth 10 (!cprog,None) *) coer.C.coercion_body (* (CP.SpecVar (Named "", self, Unprimed)) true 0 pos *) in
+    let rhs = CF.add_original rhs true in
+	let _ = print_string ("\nrhs : " ^ (Cprinter.string_of_formula rhs) ^ "\n") in
     process_entail_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs) in
   (* check_entailment lhs rhs  in*)
   let check_left_coercion coer =
-    Gen.Debug.ho_1 "check_left_coercion" Cprinter.string_of_coercion 
+    Gen.Debug.no_1 "check_left_coercion" Cprinter.string_of_coercion 
         (fun _ -> "?") check_left_coercion coer in
   check_left_coercion coer
 
@@ -472,8 +476,6 @@ let process_lemma ldef =
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
-  let _ = if !Globals.print_core then 
-    print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   let _ = if !Globals.check_coercions then begin
     (
         match l2r with
