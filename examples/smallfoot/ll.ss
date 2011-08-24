@@ -7,6 +7,9 @@ data node {
 	node next;	
 }
 
+void dispose(node x)
+  requires x::node<_,_>
+  ensures true;
 
 /* view for a singly linked list */
 
@@ -14,6 +17,15 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
+void delete_list(node x)
+   requires x::ll<n>
+   ensures true;
+{
+  if (x!=null) {
+    delete_list(x.next);
+    dispose(x);
+  } 
+}
 	
 	
 /*ll1<S> == self = null & S = {} 

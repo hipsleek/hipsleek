@@ -1,0 +1,31 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+  or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+pred hd<n> == self = null & n = 0
+	or self::node<_, r> * r::cll<self, n-1>  
+	inv n >= 0.
+
+lemma self::cll<p,n> <- self::cll<q,n-1>*q::node<_,p> .
+
+checkentail x::cll<p,n> * p::node<_,q> |- x::cll<q,n+1>.
+
+checkentail x::node<_,q> * q::cll<p,n> & x!=p |- x::cll<p,n+1>.
+
+//checkentail x::node<_,q> * q::cll<p,n> |- x::cll<p,n+1>.
+
+
+// checkentail x::cll<q,n-1>*q::node<_,p> |- self::cll<p,n> . //LOOP
+
+checkentail x::cll<q,n-1>*q::node<_,p> |- x::cll<p,n> .
+
+checkentail q::node<_,p> & x = q & n = 1
+  or x::node<_, r> * r::cll<q, n-2> * q::node<_,p> & x != q 
+  |- x::cll<p,m> .
+

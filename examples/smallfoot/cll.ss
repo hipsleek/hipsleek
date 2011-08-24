@@ -8,7 +8,7 @@ data node {
 
 /* view for singly linked circular lists */
 cll<p, n> == self = p & n = 0
-	or self::node<_, r> * r::cll<p, n-1> & self != p  
+  or self::node<_, r> * r::cll<p, n-1> & self != p  
 	inv n >= 0;
 
 hd<n> == self = null & n = 0
@@ -137,5 +137,6 @@ void enqueue (ref node x, int v)
        tmp = new node(v,x.next);
        x.next = tmp;
        node t = x.next;
-//       x = t;       //why fails here
+       //       x = t;       //why fails here
+       // need a lemma here?
 }
