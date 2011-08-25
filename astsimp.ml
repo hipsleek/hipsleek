@@ -3643,7 +3643,10 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
 		      else ())
             else () in
 	        (Cformula.res_replace stab rl clean_res fl);ch) 
-  in helper f0
+  in (* An Hoa : Add measure to combine partial heaps into a single heap *)
+	let cf = helper f0 in
+	let cf = CF.merge_partial_heaps cf in
+		cf
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
