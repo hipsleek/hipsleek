@@ -5113,21 +5113,21 @@ let rec merge_partial_heaps f = match f with
 					Exists { fe with formula_exists_heap = nh }
 
 and merge_partial_h_formula f = 
-	let _ = print_endline ("[merge_partial_h_formula] input = { " ^ (!print_h_formula f) ^ " }") in 
+	(* let _ = print_endline ("[merge_partial_h_formula] input = { " ^ (!print_h_formula f) ^ " }") in *)
 	let sc = split_star_h f in
-	let _ = print_endline ("[merge_partial_h_formula] split separation conjunction = { " ^ (String.concat " ; " (List.map !print_h_formula sc)) ^ " }") in
+	(* let _ = print_endline ("[merge_partial_h_formula] split separation conjunction = { " ^ (String.concat " ; " (List.map !print_h_formula sc)) ^ " }") in *)
 	let dns,vns = List.partition is_data sc in
-	let _ = print_endline ("[merge_partial_h_formula] data nodes = " ^ (string_of_set !print_h_formula dns)) in
-	let _ = print_endline ("[merge_partial_h_formula] other nodes = " ^ (string_of_set !print_h_formula vns)) in
+	(* let _ = print_endline ("[merge_partial_h_formula] data nodes = " ^ (string_of_set !print_h_formula dns)) in *)
+	(* let _ = print_endline ("[merge_partial_h_formula] other nodes = " ^ (string_of_set !print_h_formula vns)) in *)
 	(* Collect the data pointers *)
 	let dnrootptrs = List.map get_ptr_from_data dns in
 	let dnrootptrs = Gen.BList.remove_dups_eq CP.eq_spec_var dnrootptrs in
 	(* Partition the data nodes into groups of same pointer *)
 	let dnodespart = List.map (fun x -> List.filter (fun y -> CP.eq_spec_var (get_ptr_from_data y) x) dns) dnrootptrs in
-	let _ = print_endline ("[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in
+	(* let _ = print_endline ("[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in *)
 	(* Merge the data nodes in each group *)
 	let merged_data_nodes = List.map merge_data_nodes_common_ptr dnodespart in
-	let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in
+	(* let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in *)
 	(* Combine the parts to get the result *)
 	let f = combine_star_h (List.append merged_data_nodes vns) in
 		f
@@ -5187,16 +5187,18 @@ and merge_two_nodes dn1 dn2 =
 							let is_hole_specvar sv = 
 								let svname = CP.name_of_spec_var sv in
 									svname.[0] = '#' in
-							(* [Internal] Combine two spec_var *)
+							(* [Internal] Select the non-hole spec_var. *)
 							let combine_vars sv1 sv2 =
-								if (is_hole_specvar sv1) then sv2 else sv1
-							in 
-							let not_clashed = true in
+								if (is_hole_specvar sv1) then (sv2,true) 
+								else if (is_hole_specvar sv2) then (sv1,true)
+								else (sv1,false)
+							in
+							let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
+							let not_clashed = List.for_all (fun x -> x) not_clashes in
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
 										h_formula_data_imm = i1;
-										h_formula_data_arguments = 
-												List.map2 combine_vars args1 args2;
+										h_formula_data_arguments = args;
 										h_formula_data_holes = 
 												Gen.BList.intersect_eq (=) holes1 holes2;
 										h_formula_data_label = lb1;
