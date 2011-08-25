@@ -849,9 +849,10 @@ let rec pr_h_formula h =
           fmt_string "::"; 
           pr_angle c pr_spec_var svs;
 	      pr_imm imm;
-          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
-	  if original then fmt_string "[Orig]"
-	  else fmt_string "[Derv]";
+          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+	      if original then fmt_string "[Orig]"
+	      else fmt_string "[Derv]";
           pr_remaining_branches ann; 
           pr_prunning_conditions ann pcond;
           fmt_close()

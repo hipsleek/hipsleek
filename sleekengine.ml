@@ -471,7 +471,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*add default full permission = 1.0 to ante; 
     need to add type of full perm to stab
   *)
-  let ante = CF.add_mix_formula_to_formula ante Solver.full_perm_constraint in
+  let ante = CF.add_mix_formula_to_formula Solver.full_perm_constraint ante  in
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab Solver.full_perm_var_name vk in
 

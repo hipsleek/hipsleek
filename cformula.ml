@@ -1095,7 +1095,7 @@ and h_add_frac (h : h_formula) (fracvar:CP.spec_var) : h_formula =
   let pr2 = !print_spec_var in
   Gen.Debug.no_2 "h_add_frac" pr pr2 pr h_add_frac_a h fracvar
 
-and h_add_origins_a (h : h_formula) origs = 
+and h_add_origins_a (h : h_formula) origs =
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
@@ -1104,7 +1104,7 @@ and h_add_origins_a (h : h_formula) origs =
 		  h_formula_star_h2 = helper h2;
 		  h_formula_star_pos = pos})
     | ViewNode vn -> ViewNode {vn with h_formula_view_origins = origs @ vn.h_formula_view_origins}
-    | _ -> h 
+    | _ -> h
   in helper h
 
 and h_add_frac_a (h : h_formula) (fracvar:CP.spec_var) : h_formula= 
@@ -1173,6 +1173,100 @@ and add_origs_to_node (v:string) (f : formula) origs =
 		  formula_or_pos = pos})
     | Base b -> Base ({b with formula_base_heap = h_add_origs_to_node v b.formula_base_heap origs})
     | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_node v e.formula_exists_heap origs})
+  in helper f
+
+(*the first matched node has orgins and its view_original=false
+, other nodes have their view_original=false*)
+(* and h_add_origs_to_first_node (v : string) (h : h_formula) origs =  *)
+(*   (\*return a pair (is_first,h_formula), where is_first indicates *)
+(*     whether the first matched node is in the h_formula*\) *)
+(*   let rec helper h found_first: (bool * h_formula)= match h with *)
+(*     | Star ({h_formula_star_h1 = h1; *)
+(* 	         h_formula_star_h2 = h2; *)
+(* 	         h_formula_star_pos = pos}) -> *)
+(*         let  (is_first1,star_h1) = helper h1 found_first in *)
+(*         let is_first2,star_h2 = *)
+(*           if ((not is_first1) && not (found_first)) then *)
+(*             let is_first2, star_h2 =  helper h2 false in *)
+(*             (is_first2,star_h2) *)
+(*           else *)
+(*             (\*first node found somewhere*\) *)
+(*             let _,star_h2 =  helper h2 true in *)
+(*             (true,star_h2) *)
+(*         in *)
+(*         is_first2,star_h2 *)
+(*     | ViewNode vn ->  *)
+(*         if (((CP.name_of_spec_var vn.h_formula_view_node) = v) && (not found_first)) then *)
+(*           (\*if it is the first matched node: *)
+(*             - add origs to its view_origins *)
+(*             - set view_original= false*\) *)
+(* 	      (true, *)
+(*            ViewNode {vn with  *)
+(* 	           h_formula_view_origins = origs @ vn.h_formula_view_origins; *)
+(* 	           (\* set the view to be derived *\) *)
+(* 	           h_formula_view_original = false}) *)
+
+(*         else *)
+(*           (\*otherwise, its origins unchange but its view_original=false*\) *)
+(* 	      (false, ViewNode {vn with h_formula_view_original = false}) *)
+(*     | _ -> (false,h) *)
+(*   in  *)
+(*   let _, h1 = helper h false in *)
+(*   h1 *)
+
+(*the first matched node has orgins and its view_original=false
+, other nodes are untouched*)
+
+and h_add_origs_to_first_node (v : string) (h : h_formula) origs =
+  (*return a pair (is_first,h_formula), where is_first indicates
+    whether the first matched node is in the h_formula*)
+  let rec helper h : (bool * h_formula)= match h with
+    | Star ({h_formula_star_h1 = h1;
+	         h_formula_star_h2 = h2;
+	         h_formula_star_pos = pos}) ->
+        let  (is_first1,star_h1) = helper h1 in
+        let is_first2,star_h2 =
+          if (is_first1) then
+            (*found the first node, h2 untouched*)
+            (true,h2)
+          else
+            (*otherwise, try with h2*)
+            let is_first2, star_h2 =  helper h2 in
+            (is_first2,star_h2)
+        in (is_first2,
+            Star ({
+                h_formula_star_h1 = star_h1;
+		        h_formula_star_h2 = star_h2;
+		        h_formula_star_pos = pos}))
+    | ViewNode vn ->
+        if ((CP.name_of_spec_var vn.h_formula_view_node) = v) then
+          (*if it is the first matched node:
+            - add origs to its view_origins
+            - set view_original= false*)
+	      (true,
+           ViewNode {vn with
+	           h_formula_view_origins = origs @ vn.h_formula_view_origins;
+	           (* set the view to be derived *)
+	           h_formula_view_original = false})
+
+        else
+          (*otherwise, untouched*)
+	      (false,ViewNode vn)
+    | _ -> (false,h )
+  in
+  let _, h1 = helper h  in
+  h1
+
+and add_origs_to_first_node (v:string) (f : formula) origs = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_add_origs_to_first_node v b.formula_base_heap origs})
+    | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_first_node v e.formula_exists_heap origs})
   in helper f
 
 and add_origins (f : formula) origs = 
@@ -1564,7 +1658,7 @@ and add_mix_formula_to_struc_formula_x  (f : struc_formula) (rhs_p: MCP.mix_form
         (*                       ^ "\n\n") in *)
 
 
-        let ext_base = add_mix_formula_to_formula ext_base rhs_p in
+        let ext_base = add_mix_formula_to_formula rhs_p ext_base  in
 
         (* let _ = print_string ("ttt, add_rhspure_to_struc_formula_x: after add_rhspure_to_formula_ext_base \n") in *)
 
@@ -1701,15 +1795,15 @@ and apply_one_struc_w_frac  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : st
 
 
 (*LDK : add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *)
-and add_mix_formula_to_formula (ext_base:formula) (rhs_p: MCP.mix_formula) : formula =
-  Gen.Debug.no_2 "add_mix_formula_to_formula_x" !print_formula !print_mix_formula
+and add_mix_formula_to_formula  (rhs_p: MCP.mix_formula) (ext_base:formula) : formula =
+  Gen.Debug.no_2 "add_mix_formula_to_formula_x" !print_mix_formula !print_formula
       !print_formula
-      add_mix_formula_to_formula_x ext_base rhs_p
+      add_mix_formula_to_formula_x rhs_p ext_base 
 
-and add_mix_formula_to_formula_x (ext_base:formula) (rhs_p: MCP.mix_formula) : formula=
+and add_mix_formula_to_formula_x (rhs_p: MCP.mix_formula) (ext_base:formula)  : formula=
   match ext_base with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-        Or ({formula_or_f1 = add_mix_formula_to_formula_x f1 rhs_p; formula_or_f2 =  add_mix_formula_to_formula_x f2 rhs_p; formula_or_pos = pos})
+        Or ({formula_or_f1 = add_mix_formula_to_formula_x rhs_p f1 ; formula_or_f2 =  add_mix_formula_to_formula_x rhs_p f2 ; formula_or_pos = pos})
 
     | Base ({  formula_base_heap = qh;
 			   formula_base_pure = qp;
@@ -4409,13 +4503,23 @@ and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_
 	
 (* 17.05.2008 -- *)
 
+(* and formula_of_context ctx0 = match ctx0 with *)
+(*   | OCtx (c1, c2) -> *)
+(* 	  let f1 = formula_of_context c1 in *)
+(* 	  let f2 = formula_of_context c2 in *)
+(* 		mkOr f1 f2 no_pos *)
+(*   | Ctx es -> es.es_formula *)
+ 
+(*LDK: add es_pure into residue*)
 and formula_of_context ctx0 = match ctx0 with
   | OCtx (c1, c2) ->
 	  let f1 = formula_of_context c1 in
 	  let f2 = formula_of_context c2 in
 		mkOr f1 f2 no_pos
-  | Ctx es -> es.es_formula
-  
+  | Ctx es -> 
+      let mix_f,_ = es.es_pure in
+      add_mix_formula_to_formula mix_f es.es_formula
+ 
 (* -- added 16.05.2008 *)  
 and formula_of_list_context (ctx : list_context) : formula =  match ctx with
   | FailCtx _ -> mkTrue (mkTrueFlow()) no_pos
