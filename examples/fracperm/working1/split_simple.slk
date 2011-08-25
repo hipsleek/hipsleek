@@ -1,0 +1,114 @@
+data node { int val ; node next }.
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+
+pred ll<n> == self = null & n = 0
+     or self::node<next = r> * r::ll<n - 1>
+     inv n>=0.
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv n>=1.
+	 
+
+lemma "tail2lseg" self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
+
+
+//lemma self::cellp(f)<v> & 0<f<=1 & 0<f1<=1 & 0<f2<=1 & f=f1+f2  -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+lemma self::cellp(f)<v> & f=f1+f2 &f1>0 & f2>0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+
+
+//lemma "R2L" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "L2R" self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+//(1)
+checkentail x::cellp(f1)<v1> |- x::cell(f2)<v2>.
+print residue. //valid
+
+//(2)
+checkentail x::cellp<v1> |- x::cell(f2)<v2>.
+print residue. //valid
+
+//(3)
+checkentail x::cellp(1.0)<v1> |-  x::cellp(f1)<v1>.
+print residue. //valid & correct, 3 residues
+
+//(4)
+checkentail x::cellp(1.0)<v1> |-  x::cellp(0.5)<v1>.
+print residue. //valid & residue is correct after adding instatiating ivars
+
+//(5)
+checkentail x::cellp(1/2)<v1> |-  x::cellp(3/4)<v1>.
+print residue. //fail
+
+//(6)
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r> & n1=1.
+print residue. // valid
+
+//(7)
+checkentail x::cellp(1.0)<v1> |-  x::cellp(0.5)<v1>.
+//print residue. //valid
+
+//(8)
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<3, r> * r::lseg<4,r1>.
+print residue. // valid
+
+//(9)
+checkentail x::cellp(1.0)<v> |-  x::cellp(f1)<v> & f1=0.2.
+print residue. //valid
+
+//(10)
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<2, r> * r::lseg<4,r1>.
+print residue. // valid
+
+//(11)
+checkentail x::cellp(1.0)<v1> |-  x::cellp(0.4)<v1> * x::cellp(0.5)<v1>.
+print residue. //valid
+
+//(12)
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<4, r> * r::lseg<4,r1>.
+print residue. //fail
+
+//(13)
+checkentail x::cellp(1.0)<v1> |-  x::cellp(0.6)<v1> * x::cellp(0.5)<v1>.
+print residue. //fail
+
+//(14)
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r> * r::lseg<n2,r1> * r1::lseg<n3,q> & n1=1 & n2=2 & n3=4.
+print residue. // valid
+
+//(15)
+checkentail x::cellp(1.0)<v> |-  x::cellp(f1)<v> * x::cellp(f2)<v> * x::cellp(f3)<v> & f1=0.2 & f2=0.3 & f3=0.5 .
+print residue. //valid
+
+//(16)
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r> * r::lseg<n2,r1> * r1::lseg<n3,q> & n1=1 & n2=2 & n3=3.
+print residue. // valid
+
+//(17)
+checkentail x::cellp(1.0)<v> |-  x::cellp(f1)<v> * x::cellp(f2)<v> * x::cellp(f3)<v> & f1=0.2 & f2=0.3 & f3=0.4 .
+print residue. //valid
+
+//(18)
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r> * r::lseg<n2,r1> * r1::lseg<n3,q> & n1=1 & n2=2 & n3=5.
+print residue. // fail
+
+//(19)
+checkentail x::cellp(1.0)<v> |-  x::cellp(f1)<v> * x::cellp(f2)<v> * x::cellp(f3)<v> & f1=0.2 & f2=0.3 & f3=0.6 .
+print residue. //fail
+
+//(20)
+checkentail x::ll_tail<r3, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
+print residue.// valid
+
+//(21)
+checkentail x::ll_tail<p, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
+print residue. // valid with r3=p

@@ -7123,6 +7123,14 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
       
 and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
 
+
+	let _ = Debug.devel_pprint ("process_action:"
+                                ^ "\n ### action = " ^ (Context.string_of_action_res a)
+                                ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state estate)
+                                ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
+                                ^ "\n\n")  pos in 
+
+
     (* (\* (\\*LDK*\\) *\) *)
     (* let _ = print_string ("process_action_x:" *)
     (*                       ^ "action = " ^ (Context.string_of_action a) *)
@@ -8652,10 +8660,10 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
 
   let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
   
-  let _ = print_string ( "apply_left_coercion: after rewrite_coercion" 
-                         ^ "\n ### ok = "^ (string_of_bool ok)
-                         ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs)
-                         ^ "\n\n") in
+  (* let _ = print_string ( "apply_left_coercion: after rewrite_coercion"  *)
+  (*                        ^ "\n ### ok = "^ (string_of_bool ok) *)
+  (*                        ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs) *)
+  (*                        ^ "\n\n") in *)
 
   (* let _ = print_string ("qqq, ok = "^(string_of_bool ok) ^ "\n") in *)
 

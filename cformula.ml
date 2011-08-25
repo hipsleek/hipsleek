@@ -1175,72 +1175,35 @@ and add_origs_to_node (v:string) (f : formula) origs =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_node v e.formula_exists_heap origs})
   in helper f
 
-(*the first matched node has orgins and its view_original=false
-, other nodes have their view_original=false*)
-(* and h_add_origs_to_first_node (v : string) (h : h_formula) origs =  *)
-(*   (\*return a pair (is_first,h_formula), where is_first indicates *)
-(*     whether the first matched node is in the h_formula*\) *)
-(*   let rec helper h found_first: (bool * h_formula)= match h with *)
-(*     | Star ({h_formula_star_h1 = h1; *)
-(* 	         h_formula_star_h2 = h2; *)
-(* 	         h_formula_star_pos = pos}) -> *)
-(*         let  (is_first1,star_h1) = helper h1 found_first in *)
-(*         let is_first2,star_h2 = *)
-(*           if ((not is_first1) && not (found_first)) then *)
-(*             let is_first2, star_h2 =  helper h2 false in *)
-(*             (is_first2,star_h2) *)
-(*           else *)
-(*             (\*first node found somewhere*\) *)
-(*             let _,star_h2 =  helper h2 true in *)
-(*             (true,star_h2) *)
-(*         in *)
-(*         is_first2,star_h2 *)
-(*     | ViewNode vn ->  *)
-(*         if (((CP.name_of_spec_var vn.h_formula_view_node) = v) && (not found_first)) then *)
-(*           (\*if it is the first matched node: *)
-(*             - add origs to its view_origins *)
-(*             - set view_original= false*\) *)
-(* 	      (true, *)
-(*            ViewNode {vn with  *)
-(* 	           h_formula_view_origins = origs @ vn.h_formula_view_origins; *)
-(* 	           (\* set the view to be derived *\) *)
-(* 	           h_formula_view_original = false}) *)
+(* the first matched node has orgins and its view_original=false *)
+(* , other nodes have their view_original=false *)
 
-(*         else *)
-(*           (\*otherwise, its origins unchange but its view_original=false*\) *)
-(* 	      (false, ViewNode {vn with h_formula_view_original = false}) *)
-(*     | _ -> (false,h) *)
-(*   in  *)
-(*   let _, h1 = helper h false in *)
-(*   h1 *)
-
-(*the first matched node has orgins and its view_original=false
-, other nodes are untouched*)
-
-and h_add_origs_to_first_node (v : string) (h : h_formula) origs =
+(*ln: lhs name: name of heap node in the head of an coercion*)
+and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
   (*return a pair (is_first,h_formula), where is_first indicates
     whether the first matched node is in the h_formula*)
-  let rec helper h : (bool * h_formula)= match h with
+  let rec helper h found_first: (bool * h_formula)= match h with
     | Star ({h_formula_star_h1 = h1;
 	         h_formula_star_h2 = h2;
 	         h_formula_star_pos = pos}) ->
-        let  (is_first1,star_h1) = helper h1 in
+        let  (is_first1,star_h1) = helper h1 found_first in
         let is_first2,star_h2 =
-          if (is_first1) then
-            (*found the first node, h2 untouched*)
-            (true,h2)
-          else
-            (*otherwise, try with h2*)
-            let is_first2, star_h2 =  helper h2 in
+          if ((not is_first1) && not (found_first)) then
+            let is_first2, star_h2 =  helper h2 false in
             (is_first2,star_h2)
-        in (is_first2,
-            Star ({
-                h_formula_star_h1 = star_h1;
-		        h_formula_star_h2 = star_h2;
-		        h_formula_star_pos = pos}))
+          else
+            (*first node found somewhere*)
+            let _,star_h2 =  helper h2 true in
+            (true,star_h2)
+        in
+        is_first2, Star ({
+            h_formula_star_h1 = star_h1;
+		    h_formula_star_h2 = star_h2;
+		    h_formula_star_pos = pos})
     | ViewNode vn ->
-        if ((CP.name_of_spec_var vn.h_formula_view_node) = v) then
-          (*if it is the first matched node:
+        if (((CP.name_of_spec_var vn.h_formula_view_node) = v) && (not found_first) && vn.h_formula_view_name=ln) then
+          (*if it is the first matched node (same pointer name, 
+            same view name and first_node not found):
             - add origs to its view_origins
             - set view_original= false*)
 	      (true,
@@ -1250,14 +1213,57 @@ and h_add_origs_to_first_node (v : string) (h : h_formula) origs =
 	           h_formula_view_original = false})
 
         else
-          (*otherwise, untouched*)
-	      (false,ViewNode vn)
-    | _ -> (false,h )
+          (*otherwise, its origins unchange but its view_original=false*)
+	      (false, ViewNode {vn with h_formula_view_original = false})
+    | _ -> (false,h)
   in
-  let _, h1 = helper h  in
+  let _, h1 = helper h false in
   h1
 
-and add_origs_to_first_node (v:string) (f : formula) origs = 
+(*the first matched node has orgins and its view_original=false
+, other nodes are untouched*)
+(* and h_add_origs_to_first_node (v : string) (h : h_formula) origs = *)
+(*   (\*return a pair (is_first,h_formula), where is_first indicates *)
+(*     whether the first matched node is in the h_formula*\) *)
+(*   let rec helper h : (bool * h_formula)= match h with *)
+(*     | Star ({h_formula_star_h1 = h1; *)
+(* 	         h_formula_star_h2 = h2; *)
+(* 	         h_formula_star_pos = pos}) -> *)
+(*         let  (is_first1,star_h1) = helper h1 in *)
+(*         let is_first2,star_h2 = *)
+(*           if (is_first1) then *)
+(*             (\*found the first node, h2 untouched*\) *)
+(*             (true,h2) *)
+(*           else *)
+(*             (\*otherwise, try with h2*\) *)
+(*             let is_first2, star_h2 =  helper h2 in *)
+(*             (is_first2,star_h2) *)
+(*         in (is_first2, *)
+(*             Star ({ *)
+(*                 h_formula_star_h1 = star_h1; *)
+(* 		        h_formula_star_h2 = star_h2; *)
+(* 		        h_formula_star_pos = pos})) *)
+(*     | ViewNode vn -> *)
+(*         if ((CP.name_of_spec_var vn.h_formula_view_node) = v) then *)
+(*           (\*if it is the first matched node: *)
+(*             - add origs to its view_origins *)
+(*             - set view_original= false*\) *)
+(* 	      (true, *)
+(*            ViewNode {vn with *)
+(* 	           h_formula_view_origins = origs @ vn.h_formula_view_origins; *)
+(* 	           (\* set the view to be derived *\) *)
+(* 	           h_formula_view_original = false}) *)
+
+(*         else *)
+(*           (\*otherwise, untouched*\) *)
+(* 	      (false,ViewNode vn) *)
+(*     | _ -> (false,h ) *)
+(*   in *)
+(*   let _, h1 = helper h  in *)
+(*   h1 *)
+
+(*ln: lhs name: name of heap node in the head of an coercion*)
+and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
@@ -1265,8 +1271,8 @@ and add_origs_to_first_node (v:string) (f : formula) origs =
 	      Or ({formula_or_f1 = helper f1;
 		  formula_or_f2 = helper f2;
 		  formula_or_pos = pos})
-    | Base b -> Base ({b with formula_base_heap = h_add_origs_to_first_node v b.formula_base_heap origs})
-    | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_first_node v e.formula_exists_heap origs})
+    | Base b -> Base ({b with formula_base_heap = h_add_origs_to_first_node v ln b.formula_base_heap origs})
+    | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_first_node v ln e.formula_exists_heap origs})
   in helper f
 
 and add_origins (f : formula) origs = 

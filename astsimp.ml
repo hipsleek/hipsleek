@@ -1947,10 +1947,19 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*                       ^ "\n ### c_rhs = " ^(Cprinter.string_of_formula c_rhs) *)
   (*                       ^"\n\n") in *)
 
+  (*pass lhs_heap into add_origs *)
+  let lhs_heap ,_,_,_, _  = Cformula.split_components c_lhs in
+  let lhs_view_name = match lhs_heap with
+    | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
+    | _ -> 
+        let _ = print_string "[astsimp] Warning: lhs node of a coercion is not a view node" in ""
+  in
   (*LDK: In the body of a coercions, there may be multiple nodes with
   a same name with self => only add [coercion_name] to origins of the
   first node*)
-  let c_rhs = CF.add_origs_to_first_node self c_rhs [coer.I.coercion_name] in
+  let c_rhs = CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] in
+
+  (* let c_rhs = CF.add_origs_to_first_node self c_rhs [coer.I.coercion_name] in *)
 
   (* let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in *)
   (* let c_rhs_struc = trans_struc_formula prog true lhs_fnames0 coer.I.coercion_body_struc stab false in *)
