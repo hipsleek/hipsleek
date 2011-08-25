@@ -1080,16 +1080,46 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 				print_endline ("The previously undefined type " ^  ddef.I.data_name ^ " is defined!\n")
 			else () in *)
 	let _ = undef_data_types := List.filter (fun x -> not ((fst x) = ddef.I.data_name)) !undef_data_types in
+	(**
+	 * [Internal] An Hoa : add a prefix k to a field declaration f
+	 **)
+	let augment_field_with_prefix f k = match f with
+		| ((t,id),p,i) -> ((t,k ^ id),p,i)
+	in
 	(* let _ = print_endline ("Undefined : " ^ (String.concat "," !undef_data_types)) in *)
+	(**
+	 * [Internal] An Hoa : expand the inline fields. This is just the fixed point computation.
+	 * Input: A list of Iast fields. Output: A list of Iast fields without inline.
+	 **)
+	let rec expand_inline_fields fls =
+		if (List.exists I.is_inline_field fls) then
+			let flse = List.map (fun fld -> if (I.is_inline_field fld) then
+											let fn  = I.get_field_name fld in
+											let ft = I.get_field_typ fld in
+											try
+												let ddef = I.look_up_data_def_raw prog.I.prog_data_decls (string_of_typ ft) in
+												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.I.data_fields in
+													fld_fs
+											with
+												| Not_found -> failwith "Type not found!"
+										else [fld]) fls in
+			let flse = List.flatten flse in
+				expand_inline_fields flse
+		else fls
+	in
 	(** 
 	 * An Hoa [22/08/2011] : translate field with inline consideration.
 	 **)
   let trans_field ((t, c), pos, il) =
-    (((trans_type prog t pos), c), il)
+    ((trans_type prog t pos), c)
   in
+	(* let _ = print_endline ("[trans_data] translate data type { " ^ ddef.I.data_name ^ " }") in
+	let temp = expand_inline_fields ddef.I.data_fields in
+	let _ = print_endline "[trans_data] expand inline fields result :" in
+	let _ = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
   {
       C.data_name = ddef.I.data_name;
-      C.data_fields = List.map trans_field ddef.I.data_fields;
+      C.data_fields = List.map trans_field (expand_inline_fields ddef.I.data_fields);
       C.data_parent_name = ddef.I.data_parent_name;
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];

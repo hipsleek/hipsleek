@@ -28,17 +28,7 @@ and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(
 	
 and data_decl = { 
     data_name : ident;
-	(* An Hoa [22/08/2011] : Augment each field with a bool record to indicate whether a field is [inline]; inlined fields must be of typ [Named c]. *)
-    data_fields : (typed_ident * bool) list;
-	(* An Hoa [22/08/2011] : Associate each field access sequence with the offset and length.
-	 * For example, data pair { int x; int y; } and data quad { inline pair p1; pair p2 } then inside quad, we store [ ("p1.x",(0,1)) , ("p2.y",(1,1)) , ("p1",(0,2)) , ("p2",(3,1))] so that when we have x.p1.x::<a>, we know that x::quad<a,#,#> without additional computations.
-	 * TODO implement
-	 *)
-	(* data_access_indices : (ident * (int * int)) list; *)
-	(* An Hoa [22/08/2011] : The number of pointers of this data structure. This is in fact the size of the data structure. 
-	 * TODO implement
-	 *)
-	(* data_num_pointers : int; *)
+    data_fields : typed_ident list;
 	data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -366,13 +356,9 @@ let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
-let get_field_typed_id f = match f with | (tid,_) -> tid
+let get_field_typ f = fst f
 
-let get_field_typ f = fst (get_field_typed_id f)
-
-let get_field_name f = snd (get_field_typed_id f)
-
-let is_inline_field f = match f with | (_,il) -> il
+let get_field_name f = snd f
 
 (** An Hoa [22/08/2011] End **)
 
