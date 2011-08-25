@@ -452,8 +452,6 @@ let check_coercion (coer: C.coercion_decl) =
   (*       (fun _ -> "?") check_entailment c_lhs c_rhs in *)
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.C.coercion_head in
-	let _ = print_string ("\nlhs : " ^ (Cprinter.string_of_formula coer.C.coercion_head) ^ "\n") in
-	let _ = print_string ("\nrhs : " ^ (Cprinter.string_of_formula coer.C.coercion_body) ^ "\n") in
     let lhs = CF.add_original coer.C.coercion_head true in
 	let _ = print_string ("\nlhs : " ^ (Cprinter.string_of_formula lhs) ^ "\n") in
     let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in

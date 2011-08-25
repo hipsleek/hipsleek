@@ -133,7 +133,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assert_pos = pos}) -> 
               begin
 	            let s1 = snd post_start_label in
-	            if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ctx
+                (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
+	            if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
 	            else
                   let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
 	              let new_ctx = match c1_o with
@@ -725,25 +726,25 @@ let check_data (prog : prog_decl) (cdef : data_decl) =
   List.map (check_proc_wrapper prog) cdef.data_methods
 
 let check_coercion (prog : prog_decl) =
-  let _ = print_string "\ncheck_coercion 0\n" in
+  (* let _ = print_string "\ncheck_coercion 0\n" in *)
   let check_entailment c_lhs c_rhs =
-    let _ = print_string "check_entailment" in
     let pos = CF.pos_of_formula c_lhs in
     let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) pos) c_lhs pos in
     let rs, prf = heap_entail_init prog false (CF.SuccCtx [ctx]) c_rhs pos in
     let _ = PTracer.log_proof prf in
-      (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
-      if (CF.isFailCtx rs) then begin
-	Error.report_error { Error.error_loc = pos;
-			     Error.error_text = "coercion is not valid" }
-      end 
-      else print_string ("\n Coercion proven!")
-    in
+    (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
+    if not (CF.isFailCtx rs) then begin
+	  Error.report_error { Error.error_loc = pos;
+	  Error.error_text = "coercion is not valid" }
+    end else 
+    print_string "\nCoercion is valid\n"
+  in
+    
     (*TODO: find and unfold all instances of the head predicate in both sides *)
     (*let unfold_head_pred hname f0 : int = *)
   let check_entailment c_lhs c_rhs =
     let pr = Cprinter.string_of_formula in
-    Gen.Debug.no_2 "check_entailment" pr pr
+    Gen.Debug.ho_2 "check_entailment" pr pr
         (fun _ -> "?") check_entailment c_lhs c_rhs in
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
