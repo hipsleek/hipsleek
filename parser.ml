@@ -1643,8 +1643,22 @@ primary_expression_no_parenthesis :
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}
 			
   | peek_array_type; t = arrayaccess_expression -> t   (* An Hoa *)]
-  | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *) Var { exp_var_name = id; exp_var_pos = get_pos_camlp4 _loc 1 }
-
+	(** An Hoa [26/08/2011] Fix the variable field access **)
+  | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *)
+		let pos = get_pos_camlp4 _loc 1 in
+		let res = if (String.contains id '.') then (* Identifier contains "." ==> this must be field access. TODO must merge the field access to match the core representation! *)
+				let flds = Str.split (Str.regexp "\\.") id in
+				(* let _ = print_endline "Member field access" in *)
+					Member {
+						exp_member_base = Var { exp_var_name = List.hd flds;
+												exp_var_pos = pos };
+						exp_member_fields = List.tl flds;
+						exp_member_path_id = None;
+						exp_member_pos = pos } 
+			else (* let _ = print_endline "Simple variable" in *)
+				Var { exp_var_name = id; exp_var_pos = pos } in
+		(* let _ = print_endline ("Parsed expression at " ^ (string_of_loc pos) ^ ": { " ^ (Iprinter.string_of_exp res) ^ " }") in *)
+			res
 ]];
 
 (* An Hoa : array access expression *)
