@@ -494,7 +494,10 @@ view_header:
 cid: 
   [[ 
      (* `IDENTIFIER t; `PRIME	 	-> (* print_string ("primed id:"^t^"\n"); *) (t, Primed) *)
-   `IDENTIFIER t	-> (* print_string ("cid: "^t^"\n"); *) (t,Unprimed)
+   `IDENTIFIER t	-> (* print_string ("cid: "^t^"\n"); *)
+						if String.contains t '\'' then (* Remove the primed in the identifier *)
+							(Str.global_replace (Str.regexp "[']") "" t,Primed) 
+						else (t,Unprimed)
    | `RES _                 	-> (res, Unprimed)
    | `SELFT _               	-> (self, Unprimed)
    | `THIS _               		-> (this, Unprimed)]];
