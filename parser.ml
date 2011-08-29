@@ -17,14 +17,16 @@ open Gen.Basic
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-    | Hopred of hopred_decl
-		
+  | Hopred of hopred_decl
+  | Barrier of barrier_decl	
+	
   type decl = 
     | Type of type_decl
     | Rel of rel_decl (* An Hoa *)
     | Global_var of exp_var_decl
     | Proc of proc_decl
     | Coercion of coercion_decl
+    
 		
   type member = 
 	| Field of (typed_ident * loc)
@@ -389,7 +391,7 @@ non_empty_command:
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=time_cmd            -> t
-	  | t=check_barrier_cmd	  -> CheckBarrierCmd t ]];
+	    | t=barrier_def	        -> CheckBarrierCmd t ]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -835,7 +837,7 @@ time_cmd:
 let_decl:
   [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc)]];
   
-check_barrier_cmd:
+barrier_def:
 	[[ `BARRIER; `IDENTIFIER n; `COMMA; thc=integer_literal;`COMMA; bc=barrier_constr -> 
 		{barrier_thc = thc; barrier_name = n; barrier_tr_list =bc;}]];
   
@@ -999,6 +1001,7 @@ hprogn:
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
       let hopred_defs = ref ([] : hopred_decl list) in
+      let bar_defs = ref ([] : barrier_decl list) in
       let choose d = match d with
         | Type tdef -> begin
           match tdef with
@@ -1006,11 +1009,12 @@ hprogn:
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
+          | Barrier bdef -> bar_defs := bdef :: !bar_defs
           end
         | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
-      | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+        | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
 					data_fields = [];
@@ -1030,7 +1034,8 @@ hprogn:
       prog_rel_decls = !rel_defs; (* An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;} ]];
+      prog_hopred_decls = !hopred_defs;
+      prog_barrier_decls = !bar_defs;} ]];
 
 opt_decl_list: [[t=LIST0 decl -> t]];
   
@@ -1046,7 +1051,8 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
-   | h=hopred_decl-> Hopred h ]];
+   | h=hopred_decl-> Hopred h 
+   | b=barrier_def ; `SEMICOLON   -> Barrier b]];
 
    
 (***************** Global_variable **************)
@@ -1278,6 +1284,7 @@ valid_declaration_statement:
   | t=debug_statement -> t
   | t=time_statement -> t
   | t=bind_statement -> t
+  | t= barr_def -> t
   | t=unfold_statement -> t]
   | [t= empty_statement -> t]
 ];
@@ -1285,6 +1292,8 @@ valid_declaration_statement:
 empty_statement: [[`SEMICOLON -> Empty (get_pos_camlp4 _loc 1) ]];
 
 unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos_camlp4 _loc 1 }]];
+
+barr_def : [[`BARRIER; `IDENTIFIER t -> Barrier_cmd (t,get_pos_camlp4 _loc 1)]];
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas -> 

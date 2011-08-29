@@ -1,9 +1,9 @@
-/*data cl {int val;}.
+data cl {int val;}.
 data cl2 {int val;}.
 data cl3 {int val;}.
 
 checkentail x::cl<n> & n > 3 |- x::cl<m> & m > 2.
-//valid
+//valid 
 checkentail x::cl<n> & n > 1 |- x::cl<m> & m > 2.
 //fail
 checkentail x::cl<_> |- x::cl<_>.
@@ -16,44 +16,46 @@ checkentail x::cl@[L]<_> |- x::cl@[R]<_>.
 //fail
 checkentail x::cl<_> |- x::cl@[R]<_>.
 print residue.
-//valid
+//valid x(L)
 checkentail x::cl<_> |- x::cl@[L]<_>.
 print residue.
-//valid
+//valid x(R)
 
 checkentail x::cl@[L,R]<_> |- x::cl<_>.
 //fail
 checkentail x::cl@[R,R]<_> |- x::cl[L,R]<_>.
 //fail
 checkentail x::cl@v<_> |- x::cl@v<_>.
-//valid
+print residue.
+//valid empty
 
 checkentail x::cl@v1<_> |- x::cl@v<_>. 
-//valid
+print residue.
+//valid v1=v or v1>v
 
 checkentail x::cl@[R]<_> |- x::cl@[R,L]<_>.
 print residue.
-//valid
+//valid x(R,R)
 
 checkentail x::cl@[L]<_> * x::cl@[R]<_>|- x::cl<_>.
-//valid
+//valid empty
 
 checkentail x::cl@[L]<_> * x::cl@[R]<_>|- x::cl@v<_>.
 print residue.
-//valid
+//valid v=full or v<full
 
 checkentail x::cl@[L]<_> * x::cl@[R]<_>|- x::cl@v<_> & join([L],[R,L],v).
 print residue.
-//valid
+//valid v=L+(R,L) x[RR]
 
 checkentail x::cl@[L]<_> * x::cl@[R]<_>|- x::cl@v<_> & join ([L],[R,L],v).
-//valid
+//valid 
 
 checkentail x::cl@[L]<_> * x::cl@[R]<_>|- x::cl@v<_> & join ([R],[R,L],v).
 //fail
 
 checkentail x::cl@v<_> &join ([L],[L,R],v)|- x::cl@v<_> & join ([R],[R,L],v).
-//valid
+//valid (contradiction)
 
 checkentail x::cl@[L]<_> * x::cl@[R]<_>|- 1>2.
 //fail
@@ -87,69 +89,71 @@ barrier b2n, 2, [(0,1,[
  (1,3,[
  requires x1::cl@[L]<A>*x2::cl@[L]<B>*i::cl@[L]<T>*self::b2n@[L]<1>& T>=30 ensures x1::cl@[L]<A>*x2::cl@[L]<B>*i::cl<T>*self::b2n@[L]<3> & T>=30;, 
  requires x1::cl@[R]<A>*x2::cl@[R]<B>*i::cl@[R]<T>*self::b2n@[R]<1>& T>=30 ensures x1::cl@[R]<A>*x2::cl@[R]<B>         *self::b2n@[R]<3>;])].
- */
+ 
 
  data node { int val ; node next }.
 
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
-/*
+
  checkentail x::ll<n> |- x::node<_,_>.
  //fail
  
  checkentail x::ll<n> |- x::ll<m>.
- //valid
+ print residue.
+ //valid n=m
  
  checkentail x::ll@v<n> |- x::ll@v<m>.
- //valid
+ print residue.
+ //valid n=m
  
  checkentail x::ll@[R]<n> |- x::ll@[R,R]<m>.
  print residue.
- //valid
+ //valid x: RL
  
   checkentail x::ll@[R]<n> & n>0 |- x::node<_,_>.
  //fail
  
  checkentail x::ll@[R]<n> & n>0 |- x::node@[R]<_,_>.
  print residue.
- //valid
+ //valid ll[R](n-1)
  
  checkentail x::ll@[R]<n> & n>0 |- x::node@[R,R]<_,_>.
  print residue.
- //valid
+ //valid x:[R,L] * ll R (n-1)
  
  checkentail x::ll@[R]<n> & n>0 |- x::node@v<_,_>.
  print residue.
- //valid
- */
+ //valid v=R ll (n-1) or v<R x(R-v) ll (n-1)
+ 
  checkentail x::node@[R]<_,q>*q::ll<n> |- x::ll<m>.
  //fail
  
  checkentail x::node<_,q>*q::ll<n> |- x::ll<m>. 
  print residue.
- //valid
+ //valid n+1=m
  
  checkentail x::node<_,q>*q::ll<n> |- x::node@v<_,q>*q::ll@v<n>.
  print residue.
- //valid
+ //valid v = full or v<full x(1-v) q (1-v) ll -> missing?
  
  checkentail x::node<_,q>*q::ll<n> |- x::ll@[R]<m>. 
  print residue.
- // valid
+ // valid x L q L m=n+1
 
  checkentail x::node@[R]<_,q>*q::ll@[R]<n> |- x::ll@[R]<m>. 
  print residue.
- // valid
+ // valid m=n+1
  
  
  checkentail x::node@[R]<_,q>*q::ll<n> |- x::ll@[R]<m>. 
  print residue.
- // valid
+ // valid q::ll [L]
  
  checkentail x::node<_,q>*q::ll@[R]<n> |- x::ll@[R]<m>. 
  print residue.
- // valid
+ // valid x[L] node
  
  checkentail x::node<_,q>*q::ll@[R]<n> |- x::ll@[L]<m>. 
   //fail

@@ -310,6 +310,7 @@ and exp = (* expressions keep their types *)
 	    (* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
   | Assign of exp_assign
+  | Barrier_cmd of exp_var
   | BConst of exp_bconst
   | Bind of exp_bind
   | Block of exp_block
@@ -439,6 +440,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | SCall _
 	          | This _
 	          | Time _
+            | Barrier_cmd _
 	          | Var _
 	          | VarDecl _
 	          | Unfold _
@@ -600,6 +602,7 @@ let rec type_of_exp (e : exp) = match e with
 	(*| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)*)
 	(*| ArrayMod _ -> Some void_type (* An Hoa *)*)
   | Assign _ -> Some void_type
+  | Barrier_cmd _ -> None
   | BConst _ -> Some bool_type
   | Bind ({exp_bind_type = t; 
 		   exp_bind_bound_var = _; 
@@ -903,6 +906,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | This _ -> []
   | Time _ -> []
   | Var _ -> []
+  | Barrier_cmd _ -> []
   | VarDecl _ -> []
   | Unit _ -> []
   | While ({exp_while_condition = _;
@@ -1132,6 +1136,7 @@ and exp_to_check (e:exp) :bool = match e with
   | While _ 
   | This _
   | Var _
+  | Barrier_cmd _
   | Null _
   | EmptyArray _ (* An Hoa : NO IDEA *)
   | New _
@@ -1145,6 +1150,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
 	(*| ArrayAt b -> b.exp_arrayat_pos (* An Hoa *)*)
 	(*| ArrayMod b -> b.exp_arraymod_pos (* An Hoa *)*)
   | CheckRef b -> b.exp_check_ref_pos
+  | Barrier_cmd b -> b.exp_var_pos
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos
   | Cast b -> b.exp_cast_pos

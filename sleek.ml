@@ -141,6 +141,7 @@ let main () =
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
+                I.prog_barrier_decls = [];
   } in
   let _ = Iast.build_exc_hierarchy true iprog in
   let _ = Gen.ExcNumbering.c_h () in

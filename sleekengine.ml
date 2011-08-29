@@ -36,7 +36,8 @@ let iprog = { I.prog_data_decls = [iobj_def];
         I.prog_rel_decls = [];
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
-              I.prog_hopred_decls = [];
+        I.prog_hopred_decls = [];
+        I.prog_barrier_decls = [];
 }
 
 let cobj_def = { C.data_name = "Object";

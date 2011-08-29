@@ -736,6 +736,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Unit _ -> e 
   | C.Unfold _ -> e
   | C.Var _ -> e
+  | C.Barrier_cmd _ -> e
   | C.VarDecl _ -> e
   | C.While b -> C.While {b with Cast.exp_while_body = seq_elim b.Cast.exp_while_body}
    
@@ -795,6 +796,7 @@ let rec label_breaks lb e :I.exp = match e with
 				I.exp_finally_clause = List.map (label_breaks lb) b.I.exp_finally_clause;}
   | I.Unary b -> I.Unary {b with I.exp_unary_exp = (label_breaks lb  b.I.exp_unary_exp)}
   | I.Unfold _ -> e
+  | I.Barrier_cmd _ -> e
   | I.Var _ -> e
   | I.VarDecl b -> I.VarDecl {b with I.exp_var_decl_decls = List.map (fun (a,b,c)-> (a,(match b with | None -> None | Some b-> Some (label_breaks lb  b)),c)) b.I.exp_var_decl_decls}
   | I.While b -> e(*I.While {b with I.exp_while_condition = (label_breaks lb  b.I.exp_while_condition);	 I.exp_while_body = (label_breaks lb  b.I.exp_while_body);}	*)
@@ -863,7 +865,8 @@ and need_break_continue lb ne non_generated_label :bool =
 		  | I.Unary b -> (need_break_continue lb b.I.exp_unary_exp true)
 		  | I.Unfold _ -> false
 		  | I.Var _ -> false
-		  | I.VarDecl b -> List.fold_left (fun a (_,b,_)-> match b with | None -> a | Some b-> a||(need_break_continue lb b true)) false b.I.exp_var_decl_decls
+		  | I.Barrier_cmd _ -> false
+      | I.VarDecl b -> List.fold_left (fun a (_,b,_)-> match b with | None -> a | Some b-> a||(need_break_continue lb b true)) false b.I.exp_var_decl_decls
 		  | I.While b -> begin 
 		    (match b.I.exp_while_jump_label with
 					| I.NoJumpLabel -> ()
@@ -998,6 +1001,7 @@ and need_break_continue lb ne non_generated_label :bool =
   | I.Unary b -> I.Unary {b with I.exp_unary_exp = (while_labelling b.I.exp_unary_exp)}
   | I.Unfold _ -> e
   | I.Var _ -> e
+  | I.Barrier_cmd _ -> e
   | I.VarDecl b -> I.VarDecl {b with I.exp_var_decl_decls = List.map (fun (a,b,c)-> (a,(match b with | None -> None |Some b-> Some(while_labelling b)),c)) b.I.exp_var_decl_decls}
   | I.While b -> 
 				let nl1 = fresh_branch_point_id "" in
@@ -1750,6 +1754,7 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.Block e -> all_paths_return e.I.exp_block_body
     | I.BoolLit _ -> false
     | I.Break _ -> false
+    | I.Barrier_cmd _ -> false
     | I.CallNRecv _ -> false
     | I.CallRecv _ -> false
     | I.Cast _ -> false
@@ -2802,6 +2807,19 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_iconst_val = ei.E.enum_value;
                         C.exp_iconst_pos = pos; }), ct)
           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
+    | I.Barrier_cmd (v,pos) -> (try
+            let vinfo_tmp = E.look_up v in
+            match vinfo_tmp with
+              | E.VarInfo vi ->
+                    let ct = trans_type prog vi.E.var_type pos in
+                    (*let _ = print_string ("llok bf: "^v^" after: "^vi.E.var_alpha^"\n") in*)
+                    ((C.Barrier_cmd {
+                        C.exp_var_type = ct;
+                        C.exp_var_name = vi.E.var_alpha;
+                        C.exp_var_pos = pos; }), ct)
+              | E.ConstInfo _
+              | E.EnumInfo _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " type mismatch"; }
+          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; }) 
     | I.VarDecl {
           I.exp_var_decl_type = t;
           I.exp_var_decl_decls = decls;
@@ -5805,6 +5823,7 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
     | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
+    | Iast.Barrier_cmd (b,l) -> Iast.Barrier_cmd (subid ren b,l)
     | Iast.While b-> 
           let nw = match b.Iast.exp_while_wrappings with
             | None -> None
@@ -5862,7 +5881,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
             
   | Iast.Continue _  | Iast.Debug _ | Iast.Dprint _ | Iast.Empty _ 
   | Iast.FloatLit _  | Iast.IntLit _  | Iast.Java _  | Iast.BoolLit _
-  | Iast.Null _   | Iast.Unfold _  | Iast.Var _ | Iast.This _  | Iast.Time _
+  | Iast.Null _   | Iast.Unfold _  | Iast.Var _ | Iast.Barrier_cmd _ | Iast.This _  | Iast.Time _
   | Iast.Break _ -> (f,[])
         
   | Iast.CallNRecv b ->
@@ -6031,6 +6050,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
         | Iast.Null _  
         | Iast.Unfold _ 
         | Iast.Var _
+        | Iast.Barrier_cmd _
         | Iast.This _ 
         | Iast.Time _
         | Iast.Break _ -> (f,h,p)
@@ -6181,14 +6201,15 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
   let coer1 = List.map (case_normalize_coerc prog) prog.Iast.prog_coercion_decls in	 
-  {  Iast.prog_data_decls = cdata;
-  Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
-  Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
-  Iast.prog_view_decls = tmp_views;
-  Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
-  Iast.prog_proc_decls = procs1;
-  Iast.prog_coercion_decls = coer1;
-  Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;     
+  { Iast.prog_data_decls = cdata;
+    Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
+    Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
+    Iast.prog_view_decls = tmp_views;
+    Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
+    Iast.prog_proc_decls = procs1;
+    Iast.prog_coercion_decls = coer1;
+    Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;  
+    Iast.prog_barrier_decls = prog.Iast.prog_barrier_decls;
   }
 
 and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list) 
@@ -6956,6 +6977,7 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	| Cast.This e -> Cast.This e
 	| Cast.Time e -> Cast.Time e
 	| Cast.Var e -> Cast.Var e
+  | Cast.Barrier_cmd e -> Cast.Barrier_cmd e
 	| Cast.VarDecl e -> Cast.VarDecl e
 	| Cast.Unfold e -> Cast.Unfold e
 	| Cast.Unit e -> Cast.Unit e

@@ -18,7 +18,7 @@ type typed_ident = (typ * ident)
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
-				  (* mutable prog_barrier_decls : barrier_decl list;*)
+                   prog_barrier_decls : barrier_decl list;
                    mutable prog_view_decls : view_decl list;
                    mutable prog_rel_decls : rel_decl list; 
                    mutable prog_hopred_decls : hopred_decl list;
@@ -340,6 +340,7 @@ and exp =
 	| ArrayAt of exp_arrayat (* An Hoa *)
   | Assert of exp_assert
   | Assign of exp_assign
+  | Barrier_cmd of (ident*loc)
   | Binary of exp_binary
   | Bind of exp_bind
   | Block of exp_block
@@ -461,6 +462,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
+  | Barrier_cmd (_,p) -> p
   | Binary e -> e.exp_binary_pos
   | Bind e -> e.exp_bind_pos
   | Block e -> e.exp_block_pos
@@ -643,6 +645,7 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | This _ 
           | Time _ 
           | Unfold _ 
+          | Barrier_cmd _
           | Var _ -> (e,zero)
 					| ArrayAt b -> (* An Hoa *)
 								let e1,r1 = helper n_arg b.exp_arrayat_index in
@@ -1284,6 +1287,7 @@ let rec label_e e =
 			  exp_assign_lhs = label_e e.exp_assign_lhs;
 			  exp_assign_rhs = label_e e.exp_assign_rhs;
 			  exp_assign_path_id = nl;}
+    | Barrier_cmd _ -> e
     | Binary e -> 
 		  let nl = fresh_branch_point_id "" in
 		  iast_label_table:= (nl,"binary",[],e.exp_binary_pos) ::!iast_label_table;

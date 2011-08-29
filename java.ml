@@ -291,6 +291,7 @@ and java_of_exp = function
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el}) -> 
 	  "new " ^ id ^ "(" ^ (String.concat ", " (List.map java_of_exp el)) ^ ")" 
+  | Barrier_cmd (v,_) -> "barrier "^v^";"
   | Var ({exp_var_name = v}) -> v
   | Member ({exp_member_base = e;
 			 exp_member_fields = idl}) -> 

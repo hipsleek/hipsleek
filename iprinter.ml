@@ -534,6 +534,7 @@ let rec string_of_exp = function
   | Assign ({exp_assign_op = op;
 			 exp_assign_lhs = e1;
 			 exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
+  | Barrier_cmd (v,_) -> "barrier "^v
   | Cond ({exp_cond_condition = e1;
 		   exp_cond_then_arm = e2;
 		   exp_cond_path_id = pid;

@@ -38,6 +38,7 @@ let transform_exp
       | This _ 
       | Time _ 
       | Unfold _ 
+      | Barrier_cmd _
       | Var _ -> (e,zero)
 			| ArrayAt b -> (* An Hoa *)
 				let e1,r1 = helper n_arg b.exp_arrayat_index  in

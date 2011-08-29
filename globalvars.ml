@@ -321,6 +321,11 @@ let rec find_read_write_global_var
 		else
 		  (IdentSet.empty, IdentSet.empty)
 	  end
+  | I.Barrier_cmd (v,_) -> if (IdentSet.mem v global_vars) then
+		  let r = IdentSet.diff (IdentSet.singleton v) local_vars in
+		  (r, IdentSet.empty)
+		else
+		  (IdentSet.empty, IdentSet.empty)
   | I.VarDecl e ->
 	  begin
 		let exp_list = List.map get_exp_var e.I.exp_var_decl_decls in
@@ -536,6 +541,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.This _
   | I.Time _ 
   | I.Unfold _
+  | I.Barrier_cmd _
   | I.Var _ -> 
 	  exp
   | I.Label (p,b)-> I.Label (p, extend_body temp_procs b)
@@ -704,6 +710,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   | I.Time _ 
   | I.Unfold _
   | I.Var _
+  | I.Barrier_cmd _
   | I.VarDecl _ -> 
 	  exp
   | I.Label (p,b) -> I.Label (p, check_and_change global_vars b)

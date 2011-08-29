@@ -56,7 +56,12 @@ let mkAnd f1 f2 pos = match f1 with
         | PFalse _ -> f2 
         | _ -> And (f1,f2,pos)
         
-let mkEq f1 f2 pos = Eq (f1,f2,pos)
+let eq_fperm v1 v2  = match v1,v2 with
+  | PVar v1,PVar v2 -> P.eq_spec_var v1 v2 
+  | PConst c1,PConst c2 -> Ts.stree_eq c1 c2
+  | _ -> false
+        
+let mkEq f1 f2 pos = if (eq_fperm f1 f2)  then PTrue pos else Eq (f1,f2,pos)
 
 let mkEq_vars f1 f2 pos = if (P.eq_spec_var f1 f2) then mkTrue pos else  Eq (PVar f1,PVar f2,pos)
 
@@ -110,7 +115,7 @@ let rec apply_one_gen (fr,t) f f_s= match f with
   | And (f1,f2,p) -> mkAnd (apply_one_gen (fr,t) f1 f_s) (apply_one_gen (fr,t) f2 f_s ) p
   | Or (f1,f2,p) -> Or (apply_one_gen (fr,t) f1 f_s ,apply_one_gen (fr,t) f2 f_s , p)
   | Join (f1,f2,f3,p) -> Join (f_s (fr,t) f1, f_s (fr,t) f2, f_s (fr,t) f3, p)
-  | Eq (f1,f2,p) -> Eq (f_s (fr,t) f1, f_s (fr,t) f2, p)
+  | Eq (f1,f2,p) -> mkEq (f_s (fr,t) f1) (f_s (fr,t) f2)  p
   | Dom (v,d1,d2) -> (match f_s (fr,t) (PVar v) with
 	 | PVar v-> Dom (v,d1,d2)
 	 | PConst v-> if Ts.contains d2 v && Ts.contains v d1 then PTrue no_pos else PFalse no_pos)
@@ -150,12 +155,7 @@ and apply_subs (sst : (P.spec_var * 'b) list) (f : perm_formula) : perm_formula 
         else (v::av, apply_subs sst af) ) ([],f1) qsv in
       Exists (nv,nf,p)
   | _ -> f 
-  
-let eq_fperm v1 v2  = match v1,v2 with
-  | PVar v1,PVar v2 -> P.eq_spec_var v1 v2 
-  | PConst c1,PConst c2 -> Ts.stree_eq c1 c2
-  | _ -> false
-  
+    
 let cmp_fperm v1 v2 = match v1,v2 with
   | PVar v1,PVar v2 -> P.cmp_spec_var v1 v2 
   | PConst c1,PConst c2 -> Ts.stree_cmp c1 c2
@@ -451,7 +451,7 @@ let is_sat_p_t (evs,lp,lt,ld) =
 		else raise Unsat_exception in
 		
   let lfv l = List.concat (List.map (fun (c1,c2,c3)-> (frac_fv c1)@(frac_fv c2)@(frac_fv c3))l) in
-  let lfv2 l = List.concat (List.map (fun (c1,c2)-> c1::(frac_fv c2))l) in
+  (*let lfv2 l = List.concat (List.map (fun (c1,c2)-> c1::(frac_fv c2))l) in*)
   let int_consist vm vM = (Ts.contains vM vm) && (not (Ts.empty vM)) in
 	
   let inters_restr dest src b = if Ts.contains dest src then (src,b) else ((Ts.intersect src dest),true) in
@@ -573,25 +573,46 @@ let imply evs f1 f2 =
   Gen.Debug.no_3 "perm imply" pr !print_perm_f !print_perm_f string_of_bool imply_a evs f1 f2 
        
       
-(*elim exists*)(*TODO*) 
+(*elim exists*)
+(*solves f, returns vars without a unique value, and pairs of vars and values*)
+ 
+      
+
+let solve_for_l w f = match w with
+  | [] -> (w,[])
+  | _ -> match is_sat_p_t_w2 f with 
+		| (hl::[],_,_,_)::[]->
+     (* let aset_l = aset_list w f in*)
+      List.fold_left (fun (a1,a2) v -> 
+        try 
+          let d1,d2 = PMap.find v hl in 
+          if (Ts.stree_eq d1 d2) then (a1, (v,PConst d1)::a2)
+          else (*match ex_subst aset_l v with| Some v1 -> (a1, (v,v1)::a2)| _ ->*)
+            (v::a1,a2) 
+         with Not_found -> (v::a1,a2) 
+        ) ([],[]) w 
+		| _ -> (w,[])
+    
 (*try and eliminate vars from w, what can not be done return*)
 let elim_exists_perm w f1 = 
-  (*let sol = is_sat_p_t f1 in *)
- (w,f1) (*TODO*) 
+  let l1, l2 = solve_for_l w f1 in
+  (l1,(List.fold_left (fun a c-> apply_one_exp c a)f1 l2)) 
+  
 (*try and eliminate vars from w, what can not be done, push as existentials-eliminate them*)
-let elim_exists w f1 = (mkExists w f1 no_pos) (*loop*) (*TODO*) 
-
-
-  (*let f = factor_comm f1 in
-  List.fold_left (fun (a1,a2) c->
-    let s,nf = get_subst_eq_f a2 c in
-    if (Util.empty s) then (w::a1,a2)
-    else (a1,apply_subs s nf)) ([],f) w *)
+let elim_pr_exists w f1 = 
+  let l1, l2 = solve_for_l w f1 in
+  (mkExists l1 (List.fold_left (fun a c-> apply_one_exp c a)f1 l2) no_pos) 
     
-let elim_exists_exp_perm f = f (*TODO*) 
-let simpl_perm_formula f = f (*TODO*) 
- 
-   
+let rec elim_exists_exp_perm f = match f with 
+  | And (f1,f2,l) -> mkAnd (elim_exists_exp_perm f1) (elim_exists_exp_perm f2) l
+  | Or  (f1,f2,l) -> mkOr (elim_exists_exp_perm f1) (elim_exists_exp_perm f2) l
+  | Exists (vl,f,_) -> elim_pr_exists vl f      
+  | Join _
+  | Eq _  
+  | Dom _
+  | PTrue _
+  | PFalse _ -> f
+
    
    (*end of todos*)
    
@@ -1008,5 +1029,28 @@ let to_numbers lj =
 	let n3,cnt,lm = search cnt lm c3 in
 	((n1,n2,n3)::lr,lm,cnt)) ([], PMap.create cmp_fperm,1) lj in
    (r,lm) in
-	  
+(*let rec aset_list l f = 
+   let rec get_eqs f = 
+     List.fold_left (fun (a1,a2) c -> match c with
+         | Eq (f1,f2,_)-> ((f1,f2)::a1,a2)
+         | Exists (vl,f,_) -> 
+            let r1,r2 = get_eqs f in
+             (r1::a1,vl@r2@a2)
+         | _ -> a1,a2 )([],[])(list_of_conjs f) in
+  let l1,l2 = get_eqs f in
+  let l2 = w@l2 in
+  let r = List.fold_left (fun a (v1,v2)->
+     try
+       let l1 = List.partition () a in
+  
+   ) [] l1 in
+  List.map (List.filter (fun v-> not (List.exists (eq_fperm l2) v))) r
+
+
+let ex_subst l v = try
+  let l = List.find (List.exists (eq_fperm v)) l in
+  Some (List.find (fun c-> not (eq_fperm v c)) l)
+with Not_found -> None 
+  *)	
+  
  *)

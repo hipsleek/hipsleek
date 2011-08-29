@@ -1840,7 +1840,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
 				  let (es_p, es_br, es_pr) = es.es_pure in
 		          let tmp_pure = 
 					let p,b = elim_exists_pure w (es_p,es_br) true pos in
-					let pr = Cpr.elim_exists w es_pr in
+					let pr = Cpr.elim_pr_exists w es_pr in
 					(p,b,pr) in
 		          let res_rs = Ctx {es with es_evars = estate.es_evars;
 				      es_pure = tmp_pure; es_prior_steps = (ss @ es.es_prior_steps);} in
@@ -2309,8 +2309,10 @@ and elim_exists (f0:formula) : formula =
   | Or ({ formula_or_f1 = f1;formula_or_f2 = f2;formula_or_pos = pos}) -> mkOr (helper f1) (helper f2) pos
   | Base _ -> f0
   | Exists e->
-        let rqv, pp1 = Cperm.elim_exists_perm e.formula_exists_qvars e.formula_exists_perm in
-			mkExists rqv e.formula_exists_heap e.formula_exists_pure e.formula_exists_type e.formula_exists_flow pp1 e.formula_exists_branches e.formula_exists_pos in 
+        let hfv = h_fv e.formula_exists_heap in
+        let l2,l1 = List.partition (fun v-> List.exists (CP.eq_spec_var v) hfv) e.formula_exists_qvars in
+        let rqv, pp1 = Cperm.elim_exists_perm l1 e.formula_exists_perm in
+			mkExists (rqv@l2) e.formula_exists_heap e.formula_exists_pure e.formula_exists_type e.formula_exists_flow pp1 e.formula_exists_branches e.formula_exists_pos in 
    elim_pure_exists (helper f0)   
 	 
 
@@ -3051,7 +3053,7 @@ and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula) (fp:Cperm.pe
     let f = MCP.find_rel_constraints f (es.es_gen_expl_vars@es.es_gen_impl_vars) in
 	let pr = Cperm.find_rel_constraints fp (es.es_gen_expl_vars@es.es_gen_impl_vars) in
     let nf = 
-      let f2,f2pr = if (es.es_evars = []) then f,pr else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos),(Cperm.elim_exists es.es_evars pr) in
+      let f2,f2pr = if (es.es_evars = []) then f,pr else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos),(Cperm.elim_pr_exists es.es_evars pr) in
       CF.mkStar es.es_formula (formula_of_mix_formula f2 f2pr no_pos) Flow_combine no_pos in
     (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
     Ctx {es with
@@ -5983,8 +5985,10 @@ and elim_exists_exp (f0 : formula) : (formula) =
   | Or ({ formula_or_f1 = f1;formula_or_f2 = f2;formula_or_pos = pos}) -> mkOr (perm_helper f1) (perm_helper f2) pos
   | Base _ -> f0
   | Exists e->
-        let rqv, pp1 = Cperm.elim_exists_perm e.formula_exists_qvars e.formula_exists_perm in
-        mkExists rqv e.formula_exists_heap e.formula_exists_pure e.formula_exists_type e.formula_exists_flow pp1 e.formula_exists_branches e.formula_exists_pos in   
+        let hfv = h_fv e.formula_exists_heap in
+        let l2,l1 = List.partition (fun v-> List.exists (CP.eq_spec_var v) hfv) e.formula_exists_qvars in
+        let rqv, pp1 = Cperm.elim_exists_perm l1 e.formula_exists_perm in
+        mkExists (rqv@l2) e.formula_exists_heap e.formula_exists_pure e.formula_exists_type e.formula_exists_flow pp1 e.formula_exists_branches e.formula_exists_pos in   
   let f, flag = elim_exists_exp_loop f0 in
   if flag then (elim_exists_exp f)
   else perm_helper f 
