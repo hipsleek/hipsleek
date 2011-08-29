@@ -380,6 +380,16 @@ let flatten_branches p br =
   List.fold_left (fun p (l, f) -> P.And (p, f,no_pos)) p br
 ;;
 
+
+(**
+ * An Hoa : function to extract the root of a quantified id.
+ **)
+let extract_var_from_id (id,p) =
+	let ids = Str.split (Str.regexp "\\.") id in
+	let var = List.hd ids in
+		(var,p)
+;;
+
 let rec h_fv (f:h_formula):(ident*primed) list = match f with   
   | Conj ({h_formula_conj_h1 = h1; 
 	   h_formula_conj_h2 = h2; 
@@ -390,10 +400,10 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | Star ({h_formula_star_h1 = h1; 
 	   h_formula_star_h2 = h2; 
 	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
-  | HeapNode {h_formula_heap_node = name ; 
-	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map Ipure.afv b)))
+  | HeapNode {h_formula_heap_node = name ; (* An Hoa : problem detected and fix - name is a quantified id so that we need to extract the real information inside *)
+	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) ((extract_var_from_id name):: (List.concat (List.map Ipure.afv b)))
   | HeapNode2 { h_formula_heap2_node = name ;
-		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
+		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) ((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
   | HTrue -> [] 
   | HFalse -> [] 
 ;;

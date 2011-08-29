@@ -1091,13 +1091,17 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 	let temp = expand_inline_fields ddef.I.data_fields in
 	let _ = print_endline "[trans_data] expand inline fields result :" in
 	let _ = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
-  {
+  let res = {
       C.data_name = ddef.I.data_name;
       C.data_fields = List.map trans_field (I.expand_inline_fields prog ddef.I.data_fields);
       C.data_parent_name = ddef.I.data_parent_name;
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];
-  }
+  } in
+	let _ = print_endline ("[trans_data] output = " ^ (Cprinter.string_of_data_decl res)) in
+		res
+
+
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
         (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
@@ -3522,7 +3526,8 @@ and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : iden
 and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
-    (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
+	(* let _ = print_endline "trans_I2C_struc_formula_x" in *)
+    (* let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in *)
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
       | Iformula.EAssume (b,y)->	(*add res, self*)
             (*let _ = H.add stab res { sv_info_kind = cret_type; } in*)
@@ -3650,6 +3655,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   in (* An Hoa : Add measure to combine partial heaps into a single heap *)
 	let cf = helper f0 in
 	let cf = CF.merge_partial_heaps cf in
+	(* let _ = print_endline ("[trans_formula] output = " ^ (Cprinter.string_of_formula cf)) in *)
 		cf
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
