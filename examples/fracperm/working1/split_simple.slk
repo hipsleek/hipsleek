@@ -21,25 +21,26 @@ pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 lemma "tail2lseg" self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
 
 
-//lemma self::cellp(f)<v> & 0<f<=1 & 0<f1<=1 & 0<f2<=1 & f=f1+f2  -> self::cellp(f1)<v> * self::cellp(f2)<v>.
-lemma self::cellp(f)<v> & f=f1+f2 &f1>0 & f2>0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
-
+//lemma "split1" self::cellp(f)<v> & 0<f<=1 & f=f1+f2 & f1>0 & f2>0  -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+//lemma "split3" self::cellp(f)<v> & f=f1+f2 & 1.0>f1>0.0 & 1.0>f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
 
 //lemma "R2L" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
 
 lemma "L2R" self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
 
+
 //(1)
-checkentail x::cellp(f1)<v1> |- x::cell(f2)<v2>.
-print residue. //valid
+checkentail x::cellp(f1)<v> |- x::cellp(f2)<v2>.
+print residue. //valid, only MATCH
 
 //(2)
-checkentail x::cellp<v1> |- x::cell(f2)<v2>.
-print residue. //valid
+checkentail x::cellp<v1> |- x::cellp(f2)<v2>.
+print residue. //valid, only MATCH
 
 //(3)
 checkentail x::cellp(1.0)<v1> |-  x::cellp(f1)<v1>.
-print residue. //valid & correct, 3 residues
+print residue. //valid, 2 residues
 
 //(4)
 checkentail x::cellp(1.0)<v1> |-  x::cellp(0.5)<v1>.
@@ -55,7 +56,7 @@ print residue. // valid
 
 //(7)
 checkentail x::cellp(1.0)<v1> |-  x::cellp(0.5)<v1>.
-//print residue. //valid
+print residue. //valid
 
 //(8)
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<3, r> * r::lseg<4,r1>.
@@ -112,3 +113,17 @@ print residue.// valid
 //(21)
 checkentail x::ll_tail<p, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
 print residue. // valid with r3=p
+
+//(22)
+checkentail x::cellp(f1)<v> & 0.0<f2 & f1>f2 |- x::cellp(f2)<v2>.
+print residue. //valid, only SPLIT
+
+//(23)
+checkentail x::cellp<v1> & 1>f2>0|- x::cellp(f2)<v2>.
+print residue. //valid, only SPLIT
+
+//(24)
+checkentail x::cellp<v1>  |- x::cellp(f2)<v2> & 1>=f2>0.
+print residue. //valid, both MATCH and SPLIT
+
+

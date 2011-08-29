@@ -5789,20 +5789,40 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     match f with
       | IF.HeapNode2 b -> Error.report_error {Error.error_loc = b.Iformula.h_formula_heap2_pos; Error.error_text = "malfunction: heap node 2 still present"}  
       | IF.HeapNode b ->
-	        let pos = b.Iformula.h_formula_heap_pos in
-	        let labels = try
-	          let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
-	          vdef.I.view_labels
-	        with
-	          | Not_found ->List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments in	
-	        let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
-	          Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
-	        in
-	        let (new_used_names, hvars, evars, (link_f, link_f_br)) =
-	          match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
-	        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-	        let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars}
-	        in (new_used_names, evars, new_h, (link_f, link_f_br))
+	      let pos = b.Iformula.h_formula_heap_pos in
+	      let labels = try
+	                       let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
+	                       vdef.I.view_labels
+	          with
+	            | Not_found ->
+                    List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments
+          in
+	      let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
+	            Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
+	      in
+	      let (new_used_names, hvars, evars, (link_f, link_f_br)) =
+
+                  (*if add frac perm if any*)
+                  match b.Iformula.h_formula_heap_frac_perm with
+                    | Some f ->
+	                    match_exp used_names (List.combine (f::b.Iformula.h_formula_heap_arguments) (""::labels)) pos
+                    | None ->
+	                    match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos
+          in
+	      (* let (new_used_names, hvars, evars, (link_f, link_f_br)) = *)
+	      (*   match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in *)
+	      let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
+
+          (*split frac perm if any*)
+          let frac_var,hvars = match b.Iformula.h_formula_heap_frac_perm with
+            | Some _ -> (Some (List.hd hvars), List.tl hvars)
+            | None -> (None,hvars)
+          in
+
+	      let new_h = IF.HeapNode{ b with 
+              IF.h_formula_heap_arguments = hvars;
+              IF.h_formula_heap_frac_perm = frac_var;}
+	      in (new_used_names, evars, new_h, (link_f, link_f_br))
       | IF.Star
 	          {
 	              IF.h_formula_star_h1 = f1;
@@ -5857,8 +5877,11 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
         (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
     let pr1 = Iprinter.string_of_h_formula in
     let pr2 (_,_,h,(p,_)) = (Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
-    Gen.Debug.no_1 "linearize_heap" pr1 pr2 
-        (fun _ -> linearize_heap used_names f) f  in
+    let pr0 (vs:((ident*primed) list))= 
+      let idents, _ = List.split vs in
+      (string_of_ident_list idents) in
+    Gen.Debug.no_2 "linearize_heap" pr0 pr1 pr2 
+        (fun _ _ -> linearize_heap used_names f) used_names f  in
   let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
     let heap = Iformula.normalize_h_formula heap in 
@@ -5934,12 +5957,14 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
   let nf = Iformula.float_out_exps_from_heap_struc nf in
 
   (* let _ = print_string ("case_normalize_struc_formula_x: after float_out_exps_from_heap_struc" *)
+  (*                       ^ "\n ### f = " ^ (Iprinter.string_of_struc_formula f) *)
   (*                       ^ "\n ### nf = " ^ (Iprinter.string_of_struc_formula nf) *)
   (*                       ^ "\n\n") in *)
 
   let nf = Iformula.float_out_struc_min_max nf in
 
   (* let _ = print_string ("case_normalize_struc_formula_x: after float_out_struc_min_max" *)
+  (*                       ^ "\n ### f = " ^ (Iprinter.string_of_struc_formula f) *)
   (*                       ^ "\n ### nf = " ^ (Iprinter.string_of_struc_formula nf) *)
   (*                       ^ "\n\n") in *)
 

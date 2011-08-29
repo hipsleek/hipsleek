@@ -816,6 +816,12 @@ and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   else
     BForm ((Eq (Var (sv1, pos), Var (sv2, pos), pos)),None)
 
+and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
+  if eq_spec_var sv1 sv2 then
+    mkTrue pos
+  else
+    BForm ((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None)
+
 and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkFalse pos

@@ -2776,7 +2776,7 @@ and subs_to_inst_vars (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (
   (* let pr_lf xs = pr_list Cprinter.string_of_pure_formula xs in *)
   let pr2 xs = pr_list (fun (c,_) -> pr_pair pr_sv pr_sv c) xs in
   let pr_r ((l1,l2,s1),s2)  = "("^(pr_svl l1)^","^(pr_svl l2)^","^(pr_subs s1)^","^(pr2 s2)^")" in
-  Gen.Debug.no_2 "subs_to_inst_vars" pr2 pr_svl pr_r (fun _ _ -> subs_to_inst_vars_x st ivars impl_vars pos) st ivars 
+  Gen.Debug.no_3 "subs_to_inst_vars" pr2 pr_svl pr_svl pr_r (fun _ _ _-> subs_to_inst_vars_x st ivars impl_vars pos) st ivars impl_vars
 
 and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (ivars : CP.spec_var list) 
       (impl_vars: CP.spec_var list) pos 
@@ -6593,6 +6593,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       | Some f1, None ->
             (* let f_pure = mkFullPerm_pure f1 in *)
             (* let to_lhs = CF.add_formula_to_formula to_lhs f_pure in *)
+            (to_lhs,to_rhs)
+      | Some f1, Some f2 ->
+            (*should prove that |- f1>=f2*)
+            (* let f_pure = CP.mkGteVar f1 f2 no_pos in *)
+            (* let to_rhs = CF.add_formula_to_formula to_rhs f_pure in *)
             (to_lhs,to_rhs)
       | _ -> to_lhs, to_rhs
     in
