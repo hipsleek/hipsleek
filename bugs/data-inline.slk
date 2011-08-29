@@ -28,4 +28,4 @@ checkentail v.octuple.q2.p1.x::<5> * a::pair<_,_> * v.octuple.q2.p1.y::<4>|- tru
 checkentail v.octuple.q2.p1.x::<5> * v.octuple.q2.p1.x::<k>|- true.
 
 // The following fails in translation
-checkentail v.octuple.q2.p1.x::<5> * v::octuple<#,#,#,k,#,#>|- true.
+checkentail v.octuple.q2.p1.x::<5> * v::octuple<#,#,#,#,k,#>|- true.

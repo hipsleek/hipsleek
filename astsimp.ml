@@ -1080,33 +1080,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 				print_endline ("The previously undefined type " ^  ddef.I.data_name ^ " is defined!\n")
 			else () in *)
 	let _ = undef_data_types := List.filter (fun x -> not ((fst x) = ddef.I.data_name)) !undef_data_types in
-	(**
-	 * [Internal] An Hoa : add a prefix k to a field declaration f
-	 **)
-	let augment_field_with_prefix f k = match f with
-		| ((t,id),p,i) -> ((t,k ^ id),p,i)
-	in
 	(* let _ = print_endline ("Undefined : " ^ (String.concat "," !undef_data_types)) in *)
-	(**
-	 * [Internal] An Hoa : expand the inline fields. This is just the fixed point computation.
-	 * Input: A list of Iast fields. Output: A list of Iast fields without inline.
-	 **)
-	let rec expand_inline_fields fls =
-		if (List.exists I.is_inline_field fls) then
-			let flse = List.map (fun fld -> if (I.is_inline_field fld) then
-											let fn  = I.get_field_name fld in
-											let ft = I.get_field_typ fld in
-											try
-												let ddef = I.look_up_data_def_raw prog.I.prog_data_decls (string_of_typ ft) in
-												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.I.data_fields in
-													fld_fs
-											with
-												| Not_found -> failwith "Type not found!"
-										else [fld]) fls in
-			let flse = List.flatten flse in
-				expand_inline_fields flse
-		else fls
-	in
 	(** 
 	 * An Hoa [22/08/2011] : translate field with inline consideration.
 	 **)
@@ -1119,7 +1093,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 	let _ = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
   {
       C.data_name = ddef.I.data_name;
-      C.data_fields = List.map trans_field (expand_inline_fields ddef.I.data_fields);
+      C.data_fields = List.map trans_field (I.expand_inline_fields prog ddef.I.data_fields);
       C.data_parent_name = ddef.I.data_parent_name;
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];
@@ -3704,7 +3678,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 				(* An Hoa : Handle field access *)
 				(* ASSUMPTIONS detected: exps ARE ALL VARIABLES i.e. I.Var AFTER float_out_exp PRE-PROCESSING! *)
 				if (c = Parser.generic_pointer_type_name || String.contains v '.') then
-					let tokens = Str.split (Str.regexp "\.") v in
+					let tokens = Str.split (Str.regexp "\\.") v in
 					let field_access_seq = List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens in
 					let field_access_seq = List.tl field_access_seq in (* get rid of the root pointer as well *)
 					let rootptr = List.hd tokens in
@@ -5124,7 +5098,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
           (try
             let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
             let fields = I.look_up_all_fields prog ddef
-            in
+            in (* An Hoa : Temp printing *)
 		    if (List.length ies) = (List.length fields)
 		    then
               (let typs =
@@ -5137,7 +5111,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
                       Err.error_loc = pos;
                       Err.error_text =
 			              "number of arguments for data " ^
-                              (c ^ " does not match");
+                              (c ^ " does not match") (* ^ " : " ^ (string_of_int (List.length ies)) ^ " =/= " ^ (string_of_int (List.length fields)) *);
                   }
           with
             | Not_found ->
@@ -5219,7 +5193,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 				 *)
 				(* Step 1: Extract the main variable i.e. the root of the pointer *)
 				(* let _ = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in *)
-				let tokens = Str.split (Str.regexp "\.") v in
+				let tokens = Str.split (Str.regexp "\\.") v in
 				(* let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
 				let rootptr = List.hd tokens in
 				(* Step 2: Determine the type of [rootptr] and the field by looking 
@@ -5345,8 +5319,10 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
           else ();
           (try
             let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
-            let fields = I.look_up_all_fields prog ddef
-            in
+			(* An Hoa : problem detected - have to expand the inline fields as well. *)
+            let fields = I.look_up_all_fields prog ddef in
+			let fields = I.expand_inline_fields prog fields
+            in 
 		    if (List.length ies) = (List.length fields)
 		    then
               (let typs =
@@ -5359,7 +5335,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                       Err.error_loc = pos;
                       Err.error_text =
 			              "number of arguments for data " ^
-                              (c ^ " does not match");
+                              (c ^ " does not match") (* ^ " : " ^ (string_of_int (List.length ies)) ^ " =/= " ^ (string_of_int (List.length fields)) *);
                   }
           with
             | Not_found ->

@@ -1856,3 +1856,29 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 							with
 								| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_seq_offset]: " ^ !dname ^ " does not exists!" } )
 						0 field_sequence
+
+
+(**
+ * An Hoa : expand the inline fields. This is just the fixed point computation.
+ * Input: A list of Iast fields. Output: A list of Iast fields without inline.
+ **)
+let rec expand_inline_fields prog fls =
+	(** [Internal] An Hoa : add a prefix k to a field declaration f **)
+	let augment_field_with_prefix f k = match f with
+		| ((t,id),p,i) -> ((t,k ^ id),p,i)
+	in
+	if (List.exists is_inline_field fls) then
+		let flse = List.map (fun fld -> if (is_inline_field fld) then
+											let fn  = get_field_name fld in
+											let ft = get_field_typ fld in
+											try
+												let ddef = look_up_data_def_raw prog.prog_data_decls (string_of_typ ft) in
+												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
+													fld_fs
+											with
+												| Not_found -> failwith "[expand_inline_fields] type not found!"
+										else [fld]) fls in
+		let flse = List.flatten flse in
+			expand_inline_fields prog flse
+	else fls
+
