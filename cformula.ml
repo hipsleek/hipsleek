@@ -1276,6 +1276,11 @@ and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs =
   in helper f
 
 and add_origins (f : formula) origs = 
+  let pr = !print_formula in
+  let pr2 = !print_ident_list in
+  Gen.Debug.no_2 "add_origins" pr pr2 pr add_origins_a f origs
+
+and add_origins_a (f : formula) origs = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;

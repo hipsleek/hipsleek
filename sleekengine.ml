@@ -663,7 +663,9 @@ match pcmd0 with
 	  if pcmd = "residue" then
       match !residues with
         | None -> print_string ": no residue \n"
-        | Some s -> print_string ((Cprinter.string_of_list_formula 
+        (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+        (*       (CF.list_formula_of_list_context s))^"\n") *)
+        | Some s -> print_string ((Cprinter.string_of_numbered_list_formula
               (CF.list_formula_of_list_context s))^"\n")
 		else
 			print_string ("unsupported print command: " ^ pcmd)

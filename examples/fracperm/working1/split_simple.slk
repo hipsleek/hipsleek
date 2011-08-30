@@ -29,6 +29,10 @@ lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v
 
 lemma "L2R" self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
 
+// more precise lemmas to keep the invariant with the entailment.
+//lemma "split1" self::cellp(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cellp(f1)<v> * self::cellp(f2)<v> & 0.0<f<=1.0 .
+//lemma "L2R" self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p> & n>=0.
+//lemma "split3" self::cellp(f)<v> & f=f1+f2 & 1.0>f1>0.0 & 1.0>f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v> & 0.0<f<=1.0.
 
 //(1)
 checkentail x::cellp(f1)<v> |- x::cellp(f2)<v2>.

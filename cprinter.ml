@@ -993,6 +993,19 @@ let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_
 
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
 
+let rec pr_numbered_list_formula (e:list_formula) (count:int) =
+  match e with
+    | [] -> ""
+    | x::xs -> 
+        begin
+            print_string ("<" ^ (string_of_int count) ^ ">");
+            pr_formula x;
+            print_string "\n";
+            pr_numbered_list_formula xs (count+1);
+        end
+
+let string_of_numbered_list_formula (e:list_formula) : string =  pr_numbered_list_formula e 1
+
 let string_of_list_f (f:'a->string) (e:'a list) : string =  
   "["^(String.concat "," (List.map f e))^"]"
 
@@ -1131,7 +1144,7 @@ let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_f
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
 let pr_es_trace (trace:string list) : unit = 
-  let s = List.fold_left (fun str x -> x ^ " ; " ^ str) "" trace in
+  let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
 let pr_estate (es : entail_state) =
