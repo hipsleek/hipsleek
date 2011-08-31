@@ -58,5 +58,5 @@ print residue. //valid, COMBINE
 
 checkentail x::cellp(0.4)<v1> * x::cellp(0.3)<v1>  |- x::cellp(f)<v>.
 print residue. //valid, COMBINE
-// succeeds with 6 answers
-// lossless combine --> would succeed with one false prestate
+// succeeds with 8 answers
+// lossless combine --> would succeed with 2 answers
