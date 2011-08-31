@@ -2514,14 +2514,17 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_fields = fs;
           I.exp_member_path_id = pid;
           I.exp_member_pos = pos } -> 
-          (*let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in*)
+          (* let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in *)
+			(* An Hoa : compact the field access sequence *)
+			let et = snd (trans_exp prog proc e) in
+			let fs = compact_field_access_sequence prog et fs in
           let r = 
 	        if (!Globals.allow_imm) then
 	          flatten_to_bind prog proc e (List.rev fs) None pid true pos
 	        else
 	          flatten_to_bind prog proc e (List.rev fs) None pid false pos
 	      in
-          (*let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in*)
+          (* let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in *)
           r
 		(** An Hoa : Translate the new int[x] into core language.
 		Currently only work with 1D array of integer i.e. et = "int"
@@ -3142,13 +3145,25 @@ and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
  * The member access q.p1.x expression is parsed as Member { base = q, fields = [p1,x] }
  * We need to compact it to Member { base = q, fields = [p1.x] } because after expansion,
  * "p1.x" is a field of q. So q.p2.x is still Member { base = q, fields = [p2,x] }
- * TODO implement
  **)
 and compact_field_access_sequence prog root_type field_seq =
-	let current_type = ref root_type in 
-	let r = List.fold_left (fun fsq x -> if fsq = [] then [x] 
-							else fsq) [] field_seq in
-		r
+	(* let _ = print_endline ("[compact_field_access_sequence] input = { " ^ (string_of_typ root_type) ^ " ; { " ^ (String.concat " ; " field_seq) ^ " } }") in *)
+	(* [Internal] Folding function: 
+	 * cfsq = current folding sequence; cf = accumulated field
+	 * ct = current type; fn = field name
+	 * Output : next state of (cfsq,cf,ct)
+	 *)
+	let fold_function (cfsq,cf,ct) fn = 
+		let f = I.get_field_from_typ prog.I.prog_data_decls ct fn in
+		let ncf = cf ^ (if cf = "" then "" else ".") ^ fn in
+		let nct = I.get_field_typ f in
+			if (I.is_inline_field f) then
+				(cfsq,ncf,nct)
+			else
+				(List.append cfsq [ncf],"",nct) in
+	let res,remainding_inline_field,_ = List.fold_left fold_function ([],"",root_type) field_seq in
+	(* let _ = print_endline ("[compact_field_access_sequence] output = { " ^ (String.concat " ; " res) ^ " }") in *)
+		res
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) pos =

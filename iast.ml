@@ -1765,6 +1765,15 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
         in new_prims
   | hd::tl -> append_iprims_list hd tl
 
+(**
+ * An Hoa : Find the field with field_name of compound data structure with name data_name
+ **)
+let get_field_from_typ ddefs data_typ field_name = match data_typ with
+	| Named data_name -> 
+		let ddef = look_up_data_def_raw ddefs data_name in
+		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
+			field
+	| _ -> failwith ((string_of_typ data_typ) ^ " is not a compound data type.")
 
 
 (**
