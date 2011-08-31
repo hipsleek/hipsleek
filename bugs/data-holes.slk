@@ -12,36 +12,20 @@ data node2 {
 
 checkentail x.f1::<1> * x.node.f5::<a> * x.f4::<b> |- x::node<r,#,#,u,v>.
 print residue.
-/*
- checking:  EXISTS(flted_13_30: x::node<flted_13_30,-,-,b,->@M & flted_13_30=1 &
-{FLOW,(27,27)=__norm}) |-  EBase exists (E)[](I)[r; #; #; u; v](ex)[]x::node<r,-,-,u,v>@M & true &
-       {FLOW,(27,27)=__norm}
-Entail(1)=Valid.
- true & r=1 & u=b & v=# & {FLOW,(27,27)=__norm}
-// What happend to x.f4::<b> ?
-
-*/
 
 checkentail x.f1::<1> * x.f5::<a> * x.node.f4::<b> |- x::node<r,#,#,u,v>.
 print residue.
 
-/*
- checking:  EXISTS(flted_17_41: x::node<flted_17_41,-,-,b,->@M & flted_17_41=1 &
-{FLOW,(27,27)=__norm}) |-  EBase exists (E)[](I)[r; #; #; u; v](ex)[]x::node<r,-,-,u,v>@M & true &
-       {FLOW,(27,27)=__norm}
-Entail(2)=Valid.
- true & r=1 & u=b & v=# & {FLOW,(27,27)=__norm}
-
-// What happend to x.f4::<b> ?
-*/
 
 
 checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- x::node<m,n,a,b,c>.
 print residue.
 
 checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- false.
-// BUG : should fail
-// need normalization so that LHS is not false
+// OK to fail
+
+checkentail  x::node<m,n,o,#,#> * x::node<#,#,a,b,c> |- false.
+// OK
 
 
 checkentail  x::node<m,n,#,#,#> |- x::node<m,n,a,b,c>.
