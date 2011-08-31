@@ -838,8 +838,8 @@ let_decl:
   [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc)]];
   
 barrier_def:
-	[[ `BARRIER; `IDENTIFIER n; `COMMA; thc=integer_literal;`COMMA; bc=barrier_constr -> 
-		{barrier_thc = thc; barrier_name = n; barrier_tr_list =bc;}]];
+	[[ `BARRIER; `IDENTIFIER n; `COMMA; thc=integer_literal;`COMMA; shv=LIST0 id ;`COMMA; bc=barrier_constr -> 
+		{barrier_thc = thc; barrier_name = n; barrier_shared_vars = shv; barrier_tr_list =bc;}]];
   
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   

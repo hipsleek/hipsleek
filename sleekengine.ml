@@ -51,7 +51,8 @@ let cprog = ref { C.prog_data_decls = [];
 				C.prog_rel_decls = []; (* An Hoa *)
 			  C.prog_proc_decls = [];
 			  C.prog_left_coercions = [];
-			  C.prog_right_coercions = [] }
+			  C.prog_right_coercions = [];
+			  C.prog_barrier_decls = []}
 
 let residues = ref (None : CF.list_context option)
 
@@ -421,96 +422,17 @@ let get_residue () =
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 	
-exception Malformed_barrier of string
 
 let process_barrier_def_a bd = 
-	(*aux es *)
-	let f_gen_base st v prf = 
-	  let st_v = CP.SpecVar (Int,fresh_name (),Unprimed) in
-	  let h = CF.DataNode {
-						CF.h_formula_data_node = CP.SpecVar (Named bd.I.barrier_name, self,Unprimed);
-                        CF.h_formula_data_name = bd.I.barrier_name;
-                        CF.h_formula_data_imm = false;
-						CF.h_formula_data_perm = Some v;
-                        CF.h_formula_data_arguments = [st_v];
-                        CF.h_formula_data_label = None; 
-                        CF.h_formula_data_remaining_branches = None ;
-                        CF.h_formula_data_pruning_conditions = [] ;
-                        CF.h_formula_data_pos = no_pos } in
-	  let p = Mcpure.mix_of_pure (CP.mkEqVarInt st_v st no_pos) in
-		CF.mkExists [v] h p CF.TypeTrue (CF.mkTrueFlow ()) prf [] no_pos in
-	let f_gen st = f_gen_base st (CPr.fresh_perm_var ()) (CPr.mkTrue no_pos) in
-	let f_gen_tot st = 
-		let v = CPr.fresh_perm_var () in
-		f_gen_base st v (CPr.mkEq (CPr.PVar v) (CPr.PConst CPr.top_share) no_pos) in
-				
-	let one_entail f1 f2 = 
-		let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) no_pos) f1 no_pos in
-		(*let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula f1)^" |- "^(Cprinter.string_of_formula f2)^"\n") else () in*)
-		let rs1, _ = Solver.heap_entail_init !cprog false (CF.SuccCtx[ctx]) f2 no_pos in
-		CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-	
-	let one_ctx_entail c1 c2 =
-		let c2 = match c2 with | CF.SuccCtx l -> List.hd l | _ ->raise (Malformed_barrier "error in check") in
-		(CF.isFailCtx (fst (Solver.heap_entail_init !cprog false c1 (CF.context_to_formula c2) no_pos))) in
-	(*end auxes*)
-	  	
-  let prep_t fs ts specl = 
-    let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
-	(*	print_string ("transition: "^t_str^"\n"); flush stdout;*)
-	let fl = List.map (fun i_f-> 
-	    let wf,_ = AS.case_normalize_struc_formula iprog [] [] i_f false true [] in
-		let res = AS.trans_I2C_struc_formula iprog false [] wf ( H.create 103) false (*(Cpure.Prim Void) [] *) in
-		Solver.prune_pred_struc !cprog true res ) specl in
-	let pres, posts = List.split (List.map (fun f-> match CF.split_struc_formula f with
-	  | (p1,p2)::[] -> 
-		  if Solver.unsat_base_nth "0" !cprog (ref 0) p1 then raise  (Malformed_barrier (" unsat pre for transition "^t_str ))
-		  else if Solver.unsat_base_nth "0" !cprog (ref 0) p2 then raise  (Malformed_barrier (" unsat post for transition  "^t_str))
-		  else (*checks: each contain a barrier fs in pre and ts in post*)
-		   if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
-		   else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
-		   else (*check precision P * P = false , shold be redundant at this point*)
-			if Solver.unsat_base_nth "0" !cprog (ref 0) (CF.mkStar p1 p1 CF.Flow_combine no_pos) then (p1,p2)  
-			else raise  (Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
-	  | _ -> raise  (Malformed_barrier " disjunctive specification?")) fl) in
-	(*the pre sum totals full barrier fs get residue F1*)
-	let tot_pre = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) pres in
-	if Solver.unsat_base_nth "0" !cprog (ref 0) tot_pre then raise  (Malformed_barrier (" contradiction in pres for transition "^t_str ))
-	else
-		let fpre = one_entail tot_pre (f_gen_tot fs) in
-		if CF.isFailCtx fpre then  raise  (Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
-		else (*the post sum totals full barrier ts get residue F2*)
-			let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
-			if Solver.unsat_base_nth "0" !cprog (ref 0) tot_post then raise (Malformed_barrier (" contradiction in post for transition "^t_str ))
-			else 
-				let fpost = one_entail tot_post (f_gen_tot ts) in
-				if CF.isFailCtx fpost then  raise  (Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
-				else (*show F1 = F2*)
-				let r = (one_ctx_entail fpre fpost) && (one_ctx_entail fpost fpre) in
-				if r then (fs,ts,fl) 
-				else  raise (Malformed_barrier (" frames do not match "^t_str )) in
-		
-  (*could return this as the cast barrier def*)
-  if !Globals.print_core then print_string (Iprinter.string_of_bar_def bd) else () ;
-  try
-   if Gen.BList.check_dups_eq (fun (c1,c2,_) (d1,d2,_)-> c1=d1 && c2=d2) bd.I.barrier_tr_list then 
-		raise  (Malformed_barrier ("several descriptions for the same transition "))
-   else ();	  
-  let _  = List.map (fun (fs,ts,specl)-> 
-    if (List.length specl)<> bd.I.barrier_thc then 	raise  (Malformed_barrier (" eroneous thread specification number for transition : "^(string_of_int fs)^"->"^(string_of_int ts))) 
-	else prep_t fs ts specl ) bd.I.barrier_tr_list in
-   print_string ("Barrrier "^bd.I.barrier_name^" Success\n")
-  with 
-	| Malformed_barrier s -> print_string ("Barrrier "^bd.I.barrier_name^" Fail: "^s^"\n")
-  
+    if !Globals.print_core then print_string (Iprinter.string_of_bar_def bd) else () ;
+	 try
+	    let bd = AS.case_normalize_barrier iprog bd in
+		let cbd = AS.trans_bdecl iprog bd in
+		AS.check_barrier_wf !cprog cbd;
+		print_string ("Barrrier "^bd.I.barrier_name^" Success\n")
+	 with 
+		| Error.Malformed_barrier s -> print_string ("Barrrier "^bd.I.barrier_name^" Fail: "^s^"\n")
+    
 let process_barrier_def bd = 
 	Gen.Debug.no_1 "process_barrier" (fun _ -> "") (fun _ -> "done") process_barrier_def_a bd
-  
-  
-let barr_data bd =
-		{ I.data_name =bd.I.barrier_name;
-		  I.data_fields =[((Int,"state"),no_pos)];
-		  I.data_parent_name = "Object";
-		  I.data_invs =[];
-		  I.data_methods =[]; }
   

@@ -1447,6 +1447,16 @@ let pr_view_decl v =
   fmt_close_box ();
   pr_mem:=true
 
+let pr_barrier_decl v = 
+	fmt_open_vbox 1;
+    wrap_box ("B",0) (fun ()-> "barrier "^v.barrier_name ^" = ") ();
+	fmt_cut (); wrap_box ("B",0) pr_struc_formula v.barrier_def; 
+	pr_vwrap  "th_cnt: "  pr_int v.barrier_thc;
+	pr_vwrap  "shared_vars: "   pr_list_of_spec_var v.barrier_shared_vars;
+	pr_vwrap  "transitions:" 
+	(pr_seq "\n" (fun (f,t,sp)-> pr_int f; fmt_string "->";pr_int t; fmt_string " :"; pr_seq "\n" pr_struc_formula sp)) v.barrier_tr_list;
+	fmt_close_box ()
+	
 let pr_prune_invs inv_lst = 
   "prune invs: " ^ (String.concat "," (List.map 
       (fun c-> (fun (c1,c2)-> 
@@ -1457,6 +1467,8 @@ let pr_prune_invs inv_lst =
 let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
+
+let string_of_barrier_decl (v:Cast.barrier_decl): string  = poly_string_of_pr pr_barrier_decl v
 
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
@@ -1798,9 +1810,16 @@ let rec string_of_coerc_decl_list l = match l with
   | h::t -> (string_of_coerc h) ^ "\n" ^ (string_of_coerc_decl_list t)
 ;;
 
+let rec string_of_barrier_decl_list l = match l with 
+  | [] -> ""
+  | h::[] -> (string_of_barrier_decl h) 
+  | h::t -> (string_of_barrier_decl h) ^ "\n" ^ (string_of_barrier_decl_list t)
+;;
+
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
   (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"

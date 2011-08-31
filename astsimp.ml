@@ -1050,8 +1050,16 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
 	
+let barr_data bd =
+		{ I.data_name =bd.I.barrier_name;
+		  I.data_fields =[((Int,"state"),no_pos)];
+		  I.data_parent_name = "Object";
+		  I.data_invs =[];
+		  I.data_methods =[]; }
 
 let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
+  let bdata =  List.map barr_data prog3.I.prog_barrier_decls in
+  let prog3 = {prog3 with I.prog_data_decls = bdata @ prog3.I.prog_data_decls} in
   let _ = I.build_exc_hierarchy false prog3 in
   let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
   let prog2 = { prog3 with I.prog_data_decls = 
@@ -1092,6 +1100,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
 		  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
 		  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
+		  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
 		  let cprog =   {
@@ -1101,6 +1110,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
               C.prog_proc_decls = cprocs;
               C.prog_left_coercions = l2r_coers;
               C.prog_right_coercions = r2l_coers;
+			  C.prog_barrier_decls = bdecls;
           } in
 	      let cprog1 = { cprog with			
 			  C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
@@ -1108,7 +1118,8 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
           (ignore (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews);
       ignore (List.map (fun vdef -> set_materialized_prop vdef) cviews);
           ignore (C.build_hierarchy cprog1);
-      let cprog1 = fill_base_case cprog1 in
+		  let cprog1 = fill_base_case cprog1 in
+		  let _ = List.map (check_barrier_wf cprog) bdecls in
           let cprog2 = sat_warnings cprog1 in        
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
           let cprog4 = (add_pre_to_cprog cprog3) in
@@ -1229,6 +1240,96 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
     )
   else ()
 
+and check_barrier_wf prog bd = 
+	(*aux es *)
+	let f_gen_base st v prf = 
+	  let st_v = CP.SpecVar (Int,fresh_name (),Unprimed) in
+	  let h = CF.DataNode {
+						CF.h_formula_data_node = CP.SpecVar (Named bd.C.barrier_name, self,Unprimed);
+                        CF.h_formula_data_name = bd.C.barrier_name;
+                        CF.h_formula_data_imm = false;
+						CF.h_formula_data_perm = Some v;
+                        CF.h_formula_data_arguments = [st_v];
+                        CF.h_formula_data_label = None; 
+                        CF.h_formula_data_remaining_branches = None ;
+                        CF.h_formula_data_pruning_conditions = [] ;
+                        CF.h_formula_data_pos = no_pos } in
+	  let p = Mcpure.mix_of_pure (CP.mkEqVarInt st_v st no_pos) in
+		CF.mkExists [v] h p CF.TypeTrue (CF.mkTrueFlow ()) prf [] no_pos in
+	let f_gen st = f_gen_base st (Cpr.fresh_perm_var ()) (Cpr.mkTrue no_pos) in
+	let f_gen_tot st = 
+		let v = Cpr.fresh_perm_var () in
+		f_gen_base st v (Cpr.mkEq (Cpr.PVar v) (Cpr.PConst Cpr.top_share) no_pos) in
+				
+	let one_entail f1 f2 = 
+		let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) no_pos) f1 no_pos in
+		(*let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula f1)^" |- "^(Cprinter.string_of_formula f2)^"\n") else () in*)
+		let rs1, _ = Solver.heap_entail_init prog false (CF.SuccCtx[ctx]) f2 no_pos in
+		CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+	
+	let one_ctx_entail c1 c2 =
+		let c2 = match c2 with | CF.SuccCtx l -> List.hd l | _ ->raise (Err.Malformed_barrier "error in check") in
+		(CF.isFailCtx (fst (Solver.heap_entail_init prog false c1 (CF.context_to_formula c2) no_pos))) in
+	(*end auxes*)
+	  	
+  let prep_t (fs,ts,fl) = 
+    let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
+	(*	print_string ("transition: "^t_str^"\n"); flush stdout;*)
+	let pres, posts = List.split (List.map (fun f-> match CF.split_struc_formula f with
+	  | (p1,p2)::[] -> 
+		  if Solver.unsat_base_nth "0" prog (ref 0) p1 then raise  (Err.Malformed_barrier (" unsat pre for transition "^t_str ))
+		  else if Solver.unsat_base_nth "0" prog (ref 0) p2 then raise  (Err.Malformed_barrier (" unsat post for transition  "^t_str))
+		  else (*checks: each contain a barrier fs in pre and ts in post*)
+		   if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Err.Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
+		   else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Err.Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
+		   else (*check precision P * P = false , shold be redundant at this point*)
+			if Solver.unsat_base_nth "0" prog (ref 0) (CF.mkStar p1 p1 CF.Flow_combine no_pos) then (p1,p2)  
+			else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
+	  | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
+	(*the pre sum totals full barrier fs get residue F1*)
+	let tot_pre = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) pres in
+	if Solver.unsat_base_nth "0" prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
+	else
+		let fpre = one_entail tot_pre (f_gen_tot fs) in
+		if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
+		else (*the post sum totals full barrier ts get residue F2*)
+			let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
+			if Solver.unsat_base_nth "0" prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
+			else 
+				let fpost = one_entail tot_post (f_gen_tot ts) in
+				if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
+				else (*show F1 = F2*)
+				let r = (one_ctx_entail fpre fpost) && (one_ctx_entail fpost fpre) in
+				if r then () 
+				else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in
+   List.iter prep_t bd.C.barrier_tr_list
+
+				
+and trans_bdecl prog bd = 
+  if Gen.BList.check_dups_eq (fun (c1,c2,_) (d1,d2,_)-> c1=d1 && c2=d2) bd.I.barrier_tr_list then 
+	  raise  (Err.Malformed_barrier ("several descriptions for the same transition "))
+   else (); 
+   (*thread count consistency*)
+  List.iter (fun (fs,ts,specl)-> if (List.length specl)<> bd.I.barrier_thc then 	
+		raise  (Err.Malformed_barrier (" eroneous thread specification number for transition : "^(string_of_int fs)^"->"^(string_of_int ts))) 
+	else ()) bd.I.barrier_tr_list;
+  let stab = H.create 103 in
+  H.add stab self { sv_info_kind = (Named bd.I.barrier_name);id = fresh_int () };
+  let vl = self::bd.I.barrier_shared_vars in
+  let fct f = 
+	 (*let _ = Iformula.has_top_flow_struc f in*)
+	 trans_I2C_struc_formula prog true vl f stab false in
+  let l = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list in
+  let r = {
+	C.barrier_thc = bd.I.barrier_thc;
+	C.barrier_name = bd.I.barrier_name;
+	C.barrier_shared_vars = List.map (fun c-> trans_var (c,Unprimed) stab no_pos) bd.I.barrier_shared_vars;
+	C.barrier_tr_list = l;
+	C.barrier_def = List.concat (List.map (fun (_,_,l)->List.concat l) l);} in
+  r
+  
+  
+  
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
@@ -6187,6 +6288,13 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
       Iast.proc_body = nb;
   }
 
+and case_normalize_barrier prog bd = 
+   let lv = self::bd.I.barrier_shared_vars in
+   let u = List.map (fun c-> (c,Unprimed)) lv in
+   let p = List.map (fun c-> (c,Primed)) lv in
+   let fct f = fst (case_normalize_struc_formula prog u p f false false []) in
+  {bd with I.barrier_tr_list = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list}
+    
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
@@ -6209,7 +6317,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
     Iast.prog_proc_decls = procs1;
     Iast.prog_coercion_decls = coer1;
     Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;  
-    Iast.prog_barrier_decls = prog.Iast.prog_barrier_decls;
+    Iast.prog_barrier_decls = List.map (case_normalize_barrier prog) prog.Iast.prog_barrier_decls;
   }
 
 and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list) 
@@ -6686,10 +6794,18 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
       C.data_methods = List.map proc_spec c.C.data_methods;}) prog_views_pruned.C.prog_data_decls in*)
     let l_coerc = List.concat (List.map (coerc_spec prog_views_pruned true) prog_views_pruned.C.prog_left_coercions) in
     let r_coerc = List.concat (List.map (coerc_spec prog_views_pruned false) prog_views_pruned.C.prog_right_coercions) in
+	let prune_bdecl prog bd = 
+		let tr = List.map (fun (f,t,sp)-> 
+		  let psp = List.map (Solver.prune_pred_struc prog true) sp in
+		  (f,t,psp)) bd.C.barrier_tr_list in
+		let bdf = List.concat (List.map (fun (_,_,l)-> List.concat l) tr) in
+		{bd with C.barrier_tr_list = tr; C.barrier_def = bdf} in
+	let bars = List.map (prune_bdecl prog_views_pruned) prog_views_pruned.C.prog_barrier_decls in
     let r = { prog_views_pruned with 
         C.prog_proc_decls  = procs;(* C.prog_data_decls = datas;*)
         C.prog_left_coercions  = l_coerc;
-        C.prog_right_coercions = r_coerc;} in
+        C.prog_right_coercions = r_coerc;
+		C.prog_barrier_decls = bars;} in
     Gen.Profiling.pop_time "pred_inference" ;r
         
 

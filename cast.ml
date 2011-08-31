@@ -22,7 +22,8 @@ and prog_decl = {
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 	prog_proc_decls : proc_decl list;
 	mutable prog_left_coercions : coercion_decl list;
-	mutable prog_right_coercions : coercion_decl list; }
+	mutable prog_right_coercions : coercion_decl list;
+    prog_barrier_decls : barrier_decl list}
 	
 and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
 	
@@ -32,7 +33,15 @@ and data_decl = {
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
-    
+
+and barrier_decl = {
+	barrier_thc : int;
+	barrier_name : ident;
+	barrier_shared_vars : P.spec_var list;
+	barrier_tr_list : (int*int* F.struc_formula list) list ;
+	barrier_def: F.struc_formula ;
+	}
+	
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
     
 and mater_property = {
@@ -768,6 +777,15 @@ let rec look_up_proc_def pos (procs : proc_decl list) (name : string) = match pr
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = "procedure " ^ name ^ " is not found"}
 
+let rec look_up_bar_def pos (bars : barrier_decl list) (name : string) = match bars with
+  | p :: rest ->
+      if p.barrier_name = name then
+		p
+      else
+		look_up_bar_def pos rest name
+  | [] -> Error.report_error {Error.error_loc = pos;
+							  Error.error_text = "barrier " ^ name ^ " is not found"}
+							  
 let rec look_up_proc_def_no_mingling pos (procs : proc_decl list) (name : string) = match procs with
   | p :: rest ->
 	  if unmingle_name p.proc_name = name then p

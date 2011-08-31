@@ -43,3 +43,6 @@ let report_warning e =
     flush stdout
   end else ()
   (* failwith "Error detected : error.ml B" *)
+
+exception Malformed_barrier of string
+  

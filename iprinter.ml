@@ -752,7 +752,8 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
 
 let string_of_bar_def bd = 
 let pr_trans (s,d,l) = "("^(string_of_int s)^"->"^(string_of_int d)^",[{ "^(String.concat "}\n{" (List.map string_of_struc_formula l)^"}")^")" in
-"barrier: "^bd.barrier_name^" with "^(string_of_int bd.barrier_thc)^" threads \n transitions: \n ["^(String.concat "\n " (List.map pr_trans bd.barrier_tr_list))^ "]\n";;
+"barrier: "^bd.barrier_name^" with "^(string_of_int bd.barrier_thc)^" threads \n shared vars: "^ (String.concat " " bd.barrier_shared_vars) ^
+"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans bd.barrier_tr_list))^ "]\n";;
 
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;

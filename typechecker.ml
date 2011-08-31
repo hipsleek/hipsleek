@@ -182,6 +182,39 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let f = CF.formula_of_pure_N tmp2 pos in
 	        CF.normalize_max_renaming_list_failesc_context f pos true ctx 
 	      end
+		| Barrier_cmd ({exp_var_type = q;
+                exp_var_name = v;
+                exp_var_pos = pos}) -> 
+				let _ = set_proving_loc pos in
+				(match q with
+				 | Named t->
+					let bd = look_up_bar_def pos prog.prog_barrier_decls t in
+					  let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
+						let stripped_spec = CF.strip_variance org_spec in
+						let renamed_spec = 
+							if !Globals.max_renaming then (Cformula.rename_struc_bound_vars stripped_spec(*org_spec*))
+							else (Cformula.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context sctx)) in
+						let pv = CP.SpecVar(q,v,Primed) in
+						let uv = CP.SpecVar(q,v,Unprimed) in
+						let l = [(CP.SpecVar (q,self,Unprimed),uv);(CP.SpecVar (q,self,Primed),pv)] in
+						let renamed_spec = CF.subst_struc l renamed_spec in
+						let pre2 = CF.subst_struc_pre [(uv, pv)] renamed_spec in
+						let new_spec = (Cprinter.string_of_struc_formula pre2) in
+						let to_print = "Proving precondition in a barrier call for spec:\n" ^ new_spec in
+						Debug.devel_pprint (to_print^"\n") pos;
+						let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos None in
+						let _ = PTracer.log_proof prf in
+						if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
+							Debug.print_info "barrier call" (to_print^" has failed \n") pos else () ; rs in	        
+					let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
+					let _ = Cprinter.string_of_list_failesc_context in
+					let pr2 = Cprinter.summary_list_failesc_context in
+					let pr3 = Cprinter.string_of_struc_formula in
+					Gen.Debug.loop_2_no "barrier_check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
+					let res = if(CF.isFailListFailescCtx ctx) then ctx
+                    else check_pre_post proc.proc_static_specs_with_pre ctx in		
+					res
+				 | _ -> report_error no_pos "barrier: type mismatch expecting barrier type found other!!")
         | Bind ({ exp_bind_type = body_t;
                   exp_bind_bound_var = (v_t, v);
                   exp_bind_fields = lvars;
@@ -388,16 +421,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
 			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
 			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: org_spec" ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n") in*)
-			  let stripped_spec = if ir then org_spec else
-				let rec strip_variance ls = match ls with
-				  | [] -> []
-				  | spec::rest -> match spec with
-					  | Cformula.EVariance e -> (strip_variance e.Cformula.formula_var_continuation)@(strip_variance rest)
-					  | Cformula.EBase b -> (Cformula.EBase {b with Cformula.formula_ext_continuation = strip_variance b.Cformula.formula_ext_continuation})::(strip_variance rest)
-					  | Cformula.ECase c -> (Cformula.ECase {c with Cformula.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.Cformula.formula_case_branches})::(strip_variance rest)
-					  | _ -> spec::(strip_variance rest)
-				in strip_variance org_spec
-			  in
+			  let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in
 			  (*let _ = print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "stripped_spec: " ^ (Cprinter.string_of_struc_formula stripped_spec) ^ "\n") in*)
 			  (* org_spec -> stripped_spec *)
 	          (* free vars = linking vars that appear both in pre and are not formal arguments *)

@@ -66,7 +66,7 @@ let parse_file (parse) (source_file : string) =
 								 | PrintCmd pcmd -> process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
 								 | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
-								 | CheckBarrierCmd bd-> (process_data_def (barr_data bd); process_barrier_def bd )
+								 | CheckBarrierCmd bd-> (process_data_def (AS.barr_data bd); process_barrier_def bd )
 								 | EmptyCmd -> ())) cmds) in ()
 	with
 	  | End_of_file ->
@@ -89,7 +89,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
       | RelDef rdef -> process_rel_def rdef
-	  | CheckBarrierCmd bd -> process_data_def (barr_data bd)
+	  | CheckBarrierCmd bd -> process_data_def (AS.barr_data bd)
 	  | LemmaDef _
 	  | CaptureResidue _
 	  | LetDef _
@@ -176,7 +176,7 @@ let main () =
                      | RelDef rdef -> process_rel_def rdef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
-					 | CheckBarrierCmd bd-> (process_data_def (barr_data bd) ; process_barrier_def bd)
+					 | CheckBarrierCmd bd-> (process_data_def (AS.barr_data bd) ; process_barrier_def bd)
                      | LemmaDef ldef -> process_lemma ldef
                      | PrintCmd pcmd -> process_print_command pcmd
                      | LetDef (lvar, lbody) -> put_var lvar lbody

@@ -4536,3 +4536,14 @@ let is_full_perm_failesc l v =
 let rec context_to_formula c = match c with 
 	| Ctx es -> es.es_formula
 	| OCtx (c1,c2) -> mkOr (context_to_formula c1) (context_to_formula c2) no_pos
+	
+	
+let rec strip_variance ls = match ls with
+	| [] -> []
+	| spec::rest -> match spec with
+		| EVariance e -> (strip_variance e.formula_var_continuation)@(strip_variance rest)
+		| EBase b -> 
+		(EBase {b with formula_ext_continuation = strip_variance b.formula_ext_continuation})::(strip_variance rest)
+		| ECase c -> 
+			(ECase {c with formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.formula_case_branches})::(strip_variance rest)
+		| _ -> spec::(strip_variance rest)

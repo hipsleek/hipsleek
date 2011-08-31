@@ -63,7 +63,7 @@ checkentail x::cl@[L]<_> * x::cl@[R]<_>|- 1>2.
 checkentail x::cl@[L]<_> * x::cl@[L,R]<_>|- 1>2.
 //valid 
  
-barrier b1n, 2, [(0,1,[
+barrier b1n, 2,x1 x2 y1 y2 ,[(0,1,[
  requires x1::cl@[L]<A>*x2::cl@[L]<B>*y1::cl@[L]<C>*y2::cl@[L]<D>*i::cl@[L]<T>*self::b1n@[L]<0> ensures x1::cl@[L]<A>*x2::cl@[L]<B>*y1::cl<C>*i::cl@[L]<T>*self::b1n@[L]<1>;,
  requires x1::cl@[R]<A>*x2::cl@[R]<B>*y1::cl@[R]<C>*y2::cl@[R]<D>*i::cl@[R]<T>*self::b1n@[R]<0> ensures x1::cl@[R]<A>*x2::cl@[R]<B>*y2::cl<D>*i::cl@[R]<T>*self::b1n@[R]<1>;]),	
  (1,2,[
@@ -77,7 +77,7 @@ barrier b1n, 2, [(0,1,[
  requires x1::cl@[R]<A>*x2::cl@[R]<B>*i::cl@[R]<T>*self::b1n@[R]<1>& T>=30 ensures x1::cl@[R]<A>*x2::cl@[R]<B>         *self::b1n@[R]<3>;])].
  
   
-barrier b2n, 2, [(0,1,[
+barrier b2n, 2, x1 x2 y1 y2,[(0,1,[
  requires x1::cl@[L]<A>*x2::cl@[L]<B>*y1::cl@[L]<C>*y2::cl@[L]<D>*i::cl@[L]<T>*self::b2n@[L]<0> ensures x1::cl@[L]<A>*x2::cl@[L]<B>*y1::cl<C>*i::cl@[L]<T>*self::b2n@[L]<1>;,
  requires x1::cl@[R]<A>*x2::cl@[R]<B>*y1::cl@[R]<C>*y2::cl@[R]<D>*i::cl@[R]<T>*self::b2n@[R]<0> ensures x1::cl@[R]<A>*x2::cl@[R]<B>*y2::cl<D>*i::cl@[R]<T>*self::b2n@[R]<1>;]),	
  (1,2,[

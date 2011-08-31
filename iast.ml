@@ -72,6 +72,7 @@ and hopred_decl = { hopred_name : ident;
 and barrier_decl = {
 	barrier_thc : int;
 	barrier_name : ident;
+	barrier_shared_vars : ident list;
 	barrier_tr_list : (int*int* Iformula.struc_formula list) list ;
 	}
 
