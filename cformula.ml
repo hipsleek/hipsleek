@@ -145,6 +145,9 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_imm : bool;
 
                         h_formula_data_frac_perm : CP.spec_var option; (*CP.exp;*) (*LDK: fractional permission*)
+                        (*added to support fractional splitting of data nodes*)
+                        h_formula_data_origins : ident list;
+                        h_formula_data_original : bool;
 
                         h_formula_data_arguments : CP.spec_var list;
                         h_formula_data_label : formula_label option;
@@ -252,6 +255,12 @@ let extr_formula_base e = match e with
       formula_base_type = t;
       formula_base_flow = fl;
       formula_base_branches = br;} -> (h,p,t,fl,br) 
+
+let is_eq_node_name a b = (a=b)
+
+let is_eq_data_name a b =
+  match a,b with
+    | {h_formula_data_name = c1;}, {h_formula_data_name = c2;}-> c1=c2
 
 let is_eq_view_name a b =
   match a,b with
@@ -1104,10 +1113,11 @@ and h_add_origins_a (h : h_formula) origs =
 		  h_formula_star_h2 = helper h2;
 		  h_formula_star_pos = pos})
     | ViewNode vn -> ViewNode {vn with h_formula_view_origins = origs @ vn.h_formula_view_origins}
+    | DataNode dn -> DataNode {dn with h_formula_data_origins = origs @ dn.h_formula_data_origins}
     | _ -> h
   in helper h
 
-and h_add_frac_a (h : h_formula) (fracvar:CP.spec_var) : h_formula= 
+and h_add_frac_a (h : h_formula) (fracvar:CP.spec_var) : h_formula=
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
@@ -1117,7 +1127,7 @@ and h_add_frac_a (h : h_formula) (fracvar:CP.spec_var) : h_formula=
 		  h_formula_star_pos = pos})
     | ViewNode vn -> ViewNode {vn with h_formula_view_frac_perm = Some fracvar}
     | DataNode vn -> DataNode {vn with h_formula_data_frac_perm = Some fracvar}
-    | _ -> h 
+    | _ -> h
   in helper h
 
 and h_add_original (h : h_formula) original = 
@@ -1129,6 +1139,7 @@ and h_add_original (h : h_formula) original =
 		  h_formula_star_h2 = helper h2;
 		  h_formula_star_pos = pos})
     | ViewNode vn -> ViewNode {vn with h_formula_view_original = original}
+    | DataNode dn -> DataNode {dn with h_formula_data_original = original}
     | _ -> h 
   in helper h
 
@@ -1147,19 +1158,27 @@ and h_add_unfold_num (h : h_formula) i =
 and h_add_origs_to_node (v : string) (h : h_formula) origs = 
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
-	  h_formula_star_h2 = h2;
-	  h_formula_star_pos = pos}) ->
-	      Star ({h_formula_star_h1 = helper h1;
-		  h_formula_star_h2 = helper h2;
-		  h_formula_star_pos = pos})
+	         h_formula_star_h2 = h2;
+	         h_formula_star_pos = pos}) ->
+	    Star ({h_formula_star_h1 = helper h1;
+		       h_formula_star_h2 = helper h2;
+		       h_formula_star_pos = pos})
     | ViewNode vn -> if not((CP.name_of_spec_var vn.h_formula_view_node) = v) then
-	ViewNode {vn with 
-	  h_formula_view_original = false}
-      else
-	ViewNode {vn with 
-	  h_formula_view_origins = origs @ vn.h_formula_view_origins;
-	  (* set the view to be derived *)
-	  h_formula_view_original = false}
+	      ViewNode {vn with 
+	          h_formula_view_original = false}
+        else
+	      ViewNode {vn with 
+	          h_formula_view_origins = origs @ vn.h_formula_view_origins;
+	          (* set the view to be derived *)
+	          h_formula_view_original = false}
+    | DataNode dn -> if not((CP.name_of_spec_var dn.h_formula_data_node) = v) then
+	      DataNode {dn with 
+	          h_formula_data_original = false}
+        else
+	      DataNode {dn with 
+	          h_formula_data_origins = origs @ dn.h_formula_data_origins;
+	          (* set the view to be derived *)
+	          h_formula_data_original = false}
     | _ -> h 
   in helper h  
   
@@ -1215,6 +1234,21 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
         else
           (*otherwise, its origins unchange but its view_original=false*)
 	      (false, ViewNode {vn with h_formula_view_original = false})
+    | DataNode dn ->
+        if (((CP.name_of_spec_var dn.h_formula_data_node) = v) && (not found_first) && dn.h_formula_data_name=ln) then
+          (*if it is the first matched node (same pointer name, 
+            same view name and first_node not found):
+            - add origs to its view_origins
+            - set view_original= false*)
+	      (true,
+           DataNode {dn with
+	           h_formula_data_origins = origs @ dn.h_formula_data_origins;
+	           (* set the view to be derived *)
+	           h_formula_data_original = false})
+
+        else
+          (*otherwise, its origins unchange but its view_original=false*)
+	      (false, DataNode {dn with h_formula_data_original = false})
     | _ -> (false,h)
   in
   let _, h1 = helper h false in
@@ -2056,6 +2090,8 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_imm = imm; 
 							h_formula_data_frac_perm = frac; (*LDK*)
 							h_formula_data_arguments = svs; 
+							h_formula_data_origins = orgs;
+							h_formula_data_original = original;
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = pcond;
@@ -2065,6 +2101,8 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_imm = imm;  
 							h_formula_data_frac_perm = map_opt (CP.subst_var_par sst) frac;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
+							h_formula_data_origins = orgs;
+							h_formula_data_original = original;
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
@@ -2327,6 +2365,8 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_data_name = c; 
     h_formula_data_imm = imm; 
     h_formula_data_frac_perm = frac; (*LDK*)
+	h_formula_data_origins = orgs;
+	h_formula_data_original = original;
 	h_formula_data_arguments = svs; 
 	h_formula_data_label = lbl;
     h_formula_data_remaining_branches = ann;
@@ -2344,6 +2384,8 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
     	h_formula_data_frac_perm = map_opt (subst_var s) frac;  (*LDK*)
+	    h_formula_data_origins = orgs;
+	    h_formula_data_original = original;
 		h_formula_data_arguments = List.map (subst_var s) svs;
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;
@@ -2419,6 +2461,8 @@ and h_apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formu
 	h_formula_data_name = c; 
     h_formula_data_imm = imm; 
     h_formula_data_frac_perm = frac; (*LDK*)
+	h_formula_data_origins = orgs;
+	h_formula_data_original = original;
 	h_formula_data_arguments = svs; 
 	h_formula_data_label = lbl;
     h_formula_data_remaining_branches = ann;
@@ -2439,6 +2483,8 @@ and h_apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formu
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
     	h_formula_data_frac_perm = map_opt (subst_var s) frac1;  (*LDK*)
+	    h_formula_data_origins = orgs;
+	    h_formula_data_original = original;
 		h_formula_data_arguments = List.map (subst_var s) svs;
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;
@@ -6090,7 +6136,8 @@ and propagate_imm_struc_formula e =
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
 
-and propagate_frac_struc_formula e (fracvar:CP.spec_var)=
+
+let propagate_frac_struc_formula_x e (fracvar:CP.spec_var)=
   let f_e_f e = None  in
   let f_f e = Some (propagate_frac_formula e fracvar) in
   let f_h_f f = None in
@@ -6101,6 +6148,12 @@ and propagate_frac_struc_formula e (fracvar:CP.spec_var)=
   let f_p_t5 e = Some e in
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula_w_frac f e fracvar
+
+let propagate_frac_struc_formula e (fracvar:CP.spec_var)=
+  Gen.Debug.ho_2 "propagate_frac_struc_formula" 
+      !print_struc_formula !print_spec_var !print_struc_formula 
+      propagate_frac_struc_formula_x  e fracvar
+
 
 and add_origs_to_node_struc (v:string) (e : struc_formula) origs = 
   let f_e_f e = None  in

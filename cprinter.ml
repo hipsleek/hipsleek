@@ -818,6 +818,8 @@ let rec pr_h_formula h =
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
       h_formula_data_frac_perm = frac; (*LDK*)
+      h_formula_data_origins = origs;
+      h_formula_data_original = original;
       h_formula_data_pos = pos;
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
@@ -828,6 +830,10 @@ let rec pr_h_formula h =
           pr_spec_var sv; fmt_string "::";
           pr_angle c pr_spec_var svs ;
 	      pr_imm imm;
+          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+	      if original then fmt_string "[Orig]"
+	      else fmt_string "[Derv]";
           (match ann with | None -> () | Some _ -> fmt_string "[]");
           fmt_close();
     | ViewNode ({h_formula_view_node = sv; 

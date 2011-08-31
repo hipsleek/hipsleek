@@ -1012,6 +1012,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_frac_perm = subnode.F.h_formula_data_frac_perm; (*LDK*)
+							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							   F.h_formula_data_original = subnode.F.h_formula_data_original;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
@@ -1028,6 +1030,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_frac_perm = subnode.F.h_formula_data_frac_perm; (*LDK*)
+							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							             F.h_formula_data_original = subnode.F.h_formula_data_original;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
@@ -1045,6 +1049,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_frac_perm = subnode.F.h_formula_data_frac_perm;
+							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							             F.h_formula_data_original = subnode.F.h_formula_data_original;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;

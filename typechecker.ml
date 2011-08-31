@@ -238,6 +238,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_imm = imm;
 			    CF.h_formula_data_frac_perm = None; (*LDK: belong to HIP, deal later ???*)
+			    CF.h_formula_data_origins = []; (*deal later ???*)
+			    CF.h_formula_data_original = true; (*deal later ???*)
                 CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_remaining_branches = None;
@@ -378,7 +380,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res, Unprimed);
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_imm = false;
-		        CF.h_formula_data_frac_perm = None; (*LDK*)
+		        CF.h_formula_data_frac_perm = None; (*LDK: deal later*)
+			    CF.h_formula_data_origins = []; (*deal later ???*)
+			    CF.h_formula_data_original = true; (*deal later ???*)
+
                 CF.h_formula_data_arguments =(*type_var :: ext_var :: *) heap_args;
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];

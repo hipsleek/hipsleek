@@ -1951,8 +1951,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let lhs_heap ,_,_,_, _  = Cformula.split_components c_lhs in
   let lhs_view_name = match lhs_heap with
     | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
+    | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
     | _ -> 
-        let _ = print_string "[astsimp] Warning: lhs node of a coercion is not a view node" in ""
+        let _ = print_string "[astsimp] Warning: lhs node of a coercion is neither a view node nor a data node" in ""
   in
   (*LDK: In the body of a coercions, there may be multiple nodes with
   a same name with self => only add [coercion_name] to origins of the
@@ -1971,14 +1972,18 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let c_rhs = CF.push_exists ex_vars c_rhs in
   (* let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in *)
   (* let c_lhs_exist = trans_formula prog true ((\* self ::  *\)rhs_fnames) false coer.I.coercion_head stab false in  (\* why not lhs_fnames?*\) *)
-  let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
 
+  (*find both data node and view node*)
+  let lhs_name = find_node_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
+  (* let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in *)
   (* let _ = print_string ("trans_one_coercion_x: after find_view_name" *)
   (*                       ^ "\n ### lhs_name = " ^(Cprinter.string_of_ident lhs_name) *)
   (*                       ^"\n\n") in *)
 
   let rhs_name =
-    try find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body)
+    (*find both data node and view node*)
+    try find_node_name c_rhs self (IF.pos_of_formula coer.I.coercion_body)
+    (* try find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
     with | _ -> "" in
 
   (* let _ = print_string ("trans_one_coercion_x: after find_view_name" *)
@@ -2021,7 +2026,91 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
           | I.Equiv -> ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer])
           | I.Right -> ([], [ change_univ c_coer]))
 
-and find_view_name (f0 : CF.formula) (v : ident) pos =
+(* and find_view_name (f0 : CF.formula) (v : ident) pos = *)
+(*   match f0 with *)
+(*     | CF.Base { *)
+(*           CF.formula_base_heap = h; *)
+(*           CF.formula_base_pure = _; *)
+(*           CF.formula_base_pos = _ }  *)
+(*     | CF.Exists { *)
+(* 		  CF.formula_exists_qvars = _; *)
+(* 		  CF.formula_exists_heap = h; *)
+(* 		  CF.formula_exists_pure = _; *)
+(*           CF.formula_exists_pos = _ } -> *)
+(* 	      let rec find_view_heap h0 = *)
+(*             (match h0 with *)
+(*               | CF.Star *)
+(* 		              { *)
+(* 		                  CF.h_formula_star_h1 = h1; *)
+(* 		                  CF.h_formula_star_h2 = h2; *)
+(* 		                  CF.h_formula_star_pos = _ *)
+(* 		              }  *)
+(*               | CF.Conj *)
+(* 		              { *)
+(* 		                  CF.h_formula_conj_h1 = h1; *)
+(* 		                  CF.h_formula_conj_h2 = h2; *)
+(* 		                  CF.h_formula_conj_pos = _ *)
+(* 		              }  *)
+(*               | CF.Phase *)
+(* 		              { *)
+(* 		                  CF.h_formula_phase_rd = h1; *)
+(* 		                  CF.h_formula_phase_rw = h2; *)
+(* 		                  CF.h_formula_phase_pos = _ *)
+(* 		              } -> *)
+(* 		            let name1 = find_view_heap h1 in *)
+(* 		            let name2 = find_view_heap h2 *)
+(* 		            in *)
+(* 		            if name1 = "" *)
+(* 		            then name2 *)
+(* 		            else *)
+(*                       if name2 = "" *)
+(*                       then name1 *)
+(*                       else *)
+(*                         (\*LDK: allow 2 views of a same name*\) *)
+(*                         if (name1=name2) *)
+(*                         then name1 *)
+(*                         else *)
+(*                           Err.report_error *)
+(* 			                  { *)
+(* 			                      Err.error_loc = pos; *)
+(* 			                      Err.error_text = v ^ " must point to only one view"; *)
+(* 			                } *)
+(*               | CF.DataNode *)
+(* 		              { *)
+(* 		                  CF.h_formula_data_node = p; *)
+(* 		                  CF.h_formula_data_name = c; *)
+(* 		                  CF.h_formula_data_frac_perm = _; (\*LDK*\) *)
+(* 		                  CF.h_formula_data_arguments = _; *)
+(* 		                  CF.h_formula_data_pos = _ *)
+(* 		              } -> *)
+(* 		            if (CP.name_of_spec_var p) = v *)
+(* 		            then *)
+(* 		              Err.report_error *)
+(*                           { *)
+(*                               Err.error_loc = pos; *)
+(*                               Err.error_text = v ^ " must point to a view"; *)
+(*                           } *)
+(* 		            else "" *)
+(*               | CF.ViewNode *)
+(* 		              { *)
+(* 		                  CF.h_formula_view_node = p; *)
+(* 		                  CF.h_formula_view_name = c; *)
+(* 		                  CF.h_formula_view_frac_perm = _; (\*LDK*\) *)
+(* 		                  CF.h_formula_view_arguments = _; *)
+(* 		                  CF.h_formula_view_pos = _ *)
+(* 		              } -> if (CP.name_of_spec_var p) = v then c else "" *)
+(*               | CF.HTrue | CF.HFalse | CF.Hole _ -> "") *)
+(* 	      in find_view_heap h *)
+(*     | CF.Or _ -> *)
+(* 	      Err.report_error *)
+(*               { *)
+(*                   Err.error_loc = pos; *)
+(*                   Err.error_text = *)
+(*                       "Pre- and post-conditions of coercion rules must not be disjunctive"; *)
+(*               } *)
+
+(*LDK: find both view name and data name*)
+and find_node_name (f0 : CF.formula) (v : ident) pos =
   match f0 with
     | CF.Base {
           CF.formula_base_heap = h;
@@ -2032,7 +2121,7 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		  CF.formula_exists_heap = h;
 		  CF.formula_exists_pure = _;
           CF.formula_exists_pos = _ } ->
-	      let rec find_view_heap h0 =
+	      let rec find_heap_node h0 =
             (match h0 with
               | CF.Star
 		              {
@@ -2052,8 +2141,8 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_phase_rw = h2;
 		                  CF.h_formula_phase_pos = _
 		              } ->
-		            let name1 = find_view_heap h1 in
-		            let name2 = find_view_heap h2
+		            let name1 = find_heap_node h1 in
+		            let name2 = find_heap_node h2
 		            in
 		            if name1 = ""
 		            then name2
@@ -2078,14 +2167,14 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_data_arguments = _;
 		                  CF.h_formula_data_pos = _
 		              } ->
-		            if (CP.name_of_spec_var p) = v
-		            then
-		              Err.report_error
-                          {
-                              Err.error_loc = pos;
-                              Err.error_text = v ^ " must point to a view";
-                          }
-		            else ""
+		            if (CP.name_of_spec_var p) = v then c else ""
+		            (* then *)
+		            (*   Err.report_error *)
+                    (*       { *)
+                    (*           Err.error_loc = pos; *)
+                    (*           Err.error_text = v ^ " must point to a view"; *)
+                    (*       } *)
+		            (* else "" *)
               | CF.ViewNode
 		              {
 		                  CF.h_formula_view_node = p;
@@ -2095,7 +2184,7 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_view_pos = _
 		              } -> if (CP.name_of_spec_var p) = v then c else ""
               | CF.HTrue | CF.HFalse | CF.Hole _ -> "")
-	      in find_view_heap h
+	      in find_heap_node h
     | CF.Or _ ->
 	      Err.report_error
               {
@@ -3899,6 +3988,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       let hvars = match_exp (List.combine exps labels) pos in
                       let new_v = CP.SpecVar (Named c, v, p) in
 
+
                       (*LDK: linearize frac permission as a spec var*)
                       let fracvar = match frac with 
                         | None -> None
@@ -3914,6 +4004,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                           CF.h_formula_data_name = c;
 		                  CF.h_formula_data_imm = imm;
 		                  CF.h_formula_data_frac_perm = fracvar; (*LDK*)
+                          CF.h_formula_data_origins = [];
+		                  CF.h_formula_data_original = true;
 		                  CF.h_formula_data_arguments = hvars;
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;

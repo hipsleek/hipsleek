@@ -521,8 +521,31 @@ and process_one_match_x prog (c:match_res) :action_wt =
     | Root ->
           (match lhs_node,rhs_node with
             | DataNode dl, DataNode dr -> 
-                  if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c)
-                  else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))
+                let l2 =
+                  if ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 && 
+                             ((dl.h_formula_data_original==false && (dl.h_formula_data_origins!=[])) 
+                              || ((dr.h_formula_data_original==false && dr.h_formula_data_origins!=[])))) then [(0,M_match c)]
+                  else 
+                    if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(1,M_match c)]
+                    else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
+                in
+                let l3 = if (dl.h_formula_data_original || dr.h_formula_data_original)
+                    then 
+                      begin
+                          let left_ls = look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name in
+                          let right_ls = look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name in
+                          let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                          let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
+                          if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
+                          else left_act@right_act
+                      end
+                    else [] in
+                let src = (-1,Search_action (l2@l3)) in
+                src
+
+            (* | DataNode dl, DataNode dr ->  *)
+            (*       if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c) *)
+            (*       else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c))) *)
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in
                   let l2 = 
