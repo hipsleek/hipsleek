@@ -1093,7 +1093,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 	let _ = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
   let res = {
       C.data_name = ddef.I.data_name;
-      C.data_fields = List.map trans_field (I.expand_inline_fields prog ddef.I.data_fields);
+      C.data_fields = List.map trans_field (I.expand_inline_fields prog.I.prog_data_decls ddef.I.data_fields);
       C.data_parent_name = ddef.I.data_parent_name;
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];
@@ -3134,6 +3134,22 @@ and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
       (fun _ -> "?")
       (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
 
+(**
+ * An Hoa : compact field access by combining inline fields. For example, given
+ * data pair { int x; int y; }
+ * data quad { inline pair p1; pair p2; }
+ * Suppose that q is of type quad.
+ * The member access q.p1.x expression is parsed as Member { base = q, fields = [p1,x] }
+ * We need to compact it to Member { base = q, fields = [p1.x] } because after expansion,
+ * "p1.x" is a field of q. So q.p2.x is still Member { base = q, fields = [p2,x] }
+ * TODO implement
+ **)
+and compact_field_access_sequence prog root_type field_seq =
+	let current_type = ref root_type in 
+	let r = List.fold_left (fun fsq x -> if fsq = [] then [x] 
+							else fsq) [] field_seq in
+		r
+
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) pos =
   match rev_fs with
@@ -3669,7 +3685,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
             let hvars = e_hvars :: rest_hvars in
 	        hvars
       | [] -> [] in
-  let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =    
+  let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) = 
+	(* let _ = print_endline ("[linearize_heap] input = { " ^ (Iprinter.string_of_h_formula f) ^ " }") in *)
     let res = 
       match f with
         | IF.HeapNode2 h2 -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = "malfunction with convert to heap node"; }
@@ -3820,6 +3837,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
         | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
         | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
     in 
+    (* let _ = print_endline ("[linearize_heap] output = { " ^ (Cprinter.string_of_h_formula (fst res)) ^ " }") in *)
     (* let normalized_res = CF.normalize_h_formula (fst res) in *)
     (* let _ = print_string("f = " ^ (Cprinter.string_of_h_formula (fst res)) ^ "\n") in *)
     (* let _ = print_string("normalize f = " ^ (Cprinter.string_of_h_formula normalized_res) ^ "\n") in *)
@@ -5325,9 +5343,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
           else ();
           (try
             let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
-			(* An Hoa : problem detected - have to expand the inline fields as well. *)
-            let fields = I.look_up_all_fields prog ddef in
-			let fields = I.expand_inline_fields prog fields
+			(* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
+            let fields = I.look_up_all_fields prog ddef
             in 
 		    if (List.length ies) = (List.length fields)
 		    then

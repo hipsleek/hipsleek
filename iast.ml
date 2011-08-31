@@ -855,6 +855,8 @@ let is_inline_field f =
 
 (** An Hoa [22/08/2011] : End of information extracting functions from field declaration **)
 
+
+
 (* look up functions *)
 
 (** An Hoa:
@@ -930,8 +932,34 @@ and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = ma
         let cparent_decl = List.find (fun t -> (String.compare t.data_name c.data_parent_name) = 0) prog.prog_data_decls in
         c.data_methods @ (look_up_all_methods prog cparent_decl)  
 
+(**
+ * An Hoa : expand the inline fields. This is just the fixed point computation.
+ * Input: A list of Iast fields. Output: A list of Iast fields without inline.
+ **)
+and expand_inline_fields ddefs fls =
+	(** [Internal] An Hoa : add a prefix k to a field declaration f **)
+	let augment_field_with_prefix f k = match f with
+		| ((t,id),p,i) -> ((t,k ^ id),p,i)
+	in
+	if (List.exists is_inline_field fls) then
+		let flse = List.map (fun fld -> if (is_inline_field fld) then
+											let fn  = get_field_name fld in
+											let ft = get_field_typ fld in
+											try
+												let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
+												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
+													fld_fs
+											with
+												| Not_found -> failwith "[expand_inline_fields] type not found!"
+										else [fld]) fls in
+		let flse = List.flatten flse in
+			expand_inline_fields ddefs flse
+	else fls
+
 and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
   let current_fields = c.data_fields in
+	(* An Hoa : expand the inline fields *)
+	let current_fields = expand_inline_fields prog.prog_data_decls current_fields in
   if (String.compare c.data_name "Object") = 0 then
 	[]
   else
@@ -1788,16 +1816,19 @@ let is_not_data_type_identifier (ddefs : data_decl list) id =
  *          Each primitive type count 1 while compound data type is the sum of
  *          its component. Inline types should be expanded.
  **)
-let rec compute_typ_size ddefs t =
-	match t with
+let rec compute_typ_size ddefs t = 
+	(* let _ = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
+	let res = match t with
 		| Named data_name -> (try 
 				let ddef = look_up_data_def_raw ddefs data_name in
 					List.fold_left (fun a f -> 
 						let fs = if (is_inline_field f) then 
 							compute_typ_size ddefs (get_field_typ f) 
 						else 1 in a + fs) 0 ddef.data_fields
-			with | Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_data_num_pointers] input type does not exist."})
-		| _ -> 1
+			with | Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_typ_size] input type does not exist."})
+		| _ -> 1 in
+	(* let _ = print_endline ("[compute_typ_size] output = " ^ (string_of_int res)) in *)
+		res
 
 
 (**
@@ -1822,8 +1853,9 @@ let rec compute_field_offset ddefs data_name accessed_field =
 											let ft = get_field_typ f in
 											if (fn = accessed_field) then (* Found the field *)
 												begin found := true; a end
-											else (* Accumulate *)
-												a + (get_typ_size ddefs ft))
+											else if (is_inline_field f) then (* Accumulate *)
+												a + (get_typ_size ddefs ft)
+											else a + 1)
 									0 ddef.data_fields in
 		(* The field is not really a field of the data type ==> raise error. *)
 		if (not !found) then 
@@ -1841,8 +1873,9 @@ let rec compute_field_offset ddefs data_name accessed_field =
  *          respect to the root (that points to a type with name data_name)
  **)
 and compute_field_seq_offset ddefs data_name field_sequence = 
-	(* let _ = print_endline ("[compute_field_seq_offset] : input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
+	(* let _ = print_endline ("[compute_field_seq_offset] input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
 	let dname = ref data_name in
+	let res = 
 		List.fold_left (fun a field_name ->
 							let offset = compute_field_offset ddefs !dname field_name in
 							(* Update the dname to the data type of the field_name *)
@@ -1855,30 +1888,9 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 								end
 							with
 								| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_seq_offset]: " ^ !dname ^ " does not exists!" } )
-						0 field_sequence
+						0 field_sequence in
+	(* let _ = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
+		res
 
 
-(**
- * An Hoa : expand the inline fields. This is just the fixed point computation.
- * Input: A list of Iast fields. Output: A list of Iast fields without inline.
- **)
-let rec expand_inline_fields prog fls =
-	(** [Internal] An Hoa : add a prefix k to a field declaration f **)
-	let augment_field_with_prefix f k = match f with
-		| ((t,id),p,i) -> ((t,k ^ id),p,i)
-	in
-	if (List.exists is_inline_field fls) then
-		let flse = List.map (fun fld -> if (is_inline_field fld) then
-											let fn  = get_field_name fld in
-											let ft = get_field_typ fld in
-											try
-												let ddef = look_up_data_def_raw prog.prog_data_decls (string_of_typ ft) in
-												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
-													fld_fs
-											with
-												| Not_found -> failwith "[expand_inline_fields] type not found!"
-										else [fld]) fls in
-		let flse = List.flatten flse in
-			expand_inline_fields prog flse
-	else fls
 

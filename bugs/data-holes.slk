@@ -67,3 +67,5 @@ Entail(5)=Valid.
 // should translate to below:
 //checkentail  x::node<5,#,#,#,#> * x::node<#,4,#,#,#> 
 //  * x::node<#,#,#,#,_>  |- x::node<5,4,#,#,a>.
+
+checkentail x.f2::<1> * x.f3::<2> * x.f4::<a> * x.f5::<b> |- true.
