@@ -2042,6 +2042,18 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 
         (* (\* (\\* sub actual view vars (to_vars)  into vars (fr_var) of view def (renamed_view_formula) *\\) *\) *)
         let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
+        (*propagate constraint on univ_vars into view_form*)
+        let uni_vars = vdef.view_uni_vars in
+        let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
+        let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
+        let view_form = add_mix_formula_to_struc_formula to_fold_view view_form 
+in
+        let view_form = (match frac with
+          | None -> view_form
+          | Some fracvar ->
+              let to_fold_view = MCP.find_rel_constraints rhs_p [fracvar] in
+              add_mix_formula_to_struc_formula to_fold_view view_form)
+        in
 
         let _  = print_string ("\nfold_op_x1: before add_struc_origins"
                                ^ ("\n view_form = " ^ (Cprinter.string_of_struc_formula view_form))
@@ -4004,12 +4016,12 @@ and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context
       let nf = 
         let f2 = if (es.es_evars = []) then f else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
 
-        let _ = print_string ("move_expl_inst_ctx_list:"
-                              ^ "\n ### es.es_gen_expl_vars = " ^ (Cprinter.string_of_spec_var_list es.es_gen_expl_vars)
-                              ^ "\n ### es.es_gen_impl_vars = " ^ (Cprinter.string_of_spec_var_list es.es_gen_impl_vars)
-                              ^ "\n ### f = " ^ (Cprinter.string_of_mix_formula f)
-                              ^ "\n ### f2 = " ^ (Cprinter.string_of_mix_formula f2)
-                              ^ "\n\n") in
+        (* let _ = print_string ("move_expl_inst_ctx_list:" *)
+        (*                       ^ "\n ### es.es_gen_expl_vars = " ^ (Cprinter.string_of_spec_var_list es.es_gen_expl_vars) *)
+        (*                       ^ "\n ### es.es_gen_impl_vars = " ^ (Cprinter.string_of_spec_var_list es.es_gen_impl_vars) *)
+        (*                       ^ "\n ### f = " ^ (Cprinter.string_of_mix_formula f) *)
+        (*                       ^ "\n ### f2 = " ^ (Cprinter.string_of_mix_formula f2) *)
+        (*                       ^ "\n\n") in *)
 
         (**)
         CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in

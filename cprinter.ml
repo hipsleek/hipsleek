@@ -1490,6 +1490,7 @@ let pr_view_decl v =
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
+  pr_vwrap  "uni_vars: " fmt_string (string_of_spec_var_list v.view_uni_vars);
   pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with 
     | None -> ()

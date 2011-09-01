@@ -46,6 +46,7 @@ and view_decl = {
     view_name : ident; 
     view_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
+    view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : branch_label list;
     view_modes : mode list;
     mutable view_partially_bound_vars : bool list;
@@ -722,7 +723,7 @@ let collect_rhs_view (n:ident) (f:F.struc_formula) : (ident * ident list) =
   let id x = x in
   let pr1 x = x in
   let pr2 = pr_pair id (pr_list id) in 
-  Gen.Debug.no_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
+  Gen.Debug.ho_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
 
 let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
   let  (_,ns) = collect_rhs_view lhs rhs in

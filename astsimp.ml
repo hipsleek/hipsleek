@@ -542,6 +542,19 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
+
+
+    (* let _ = print_string ("convert_struc2:" *)
+    (*                       ^"\n ### view_rec = " ^ (string_of_ident_list !view_rec) *)
+    (*                       ^"\n ### view_scc = " ^  *)
+    (*                           let rec helper l = *)
+    (*                             match l with *)
+    (*                               |x::xs -> (string_of_ident_list x) ^ "||" ^ helper xs *)
+    (*                               | [] -> "" *)
+    (*                           in *)
+    (*                                 helper !view_scc *)
+    (*                       ^"\n\n") in *)
+
     if not(mr==[]) 
      then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
     g
@@ -948,6 +961,151 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
 
+(*find and add uni_vars to view*)
+(*if the view is recursive, only consider its view_vars
+otherwise, go into its heap node and 
+find all possible uni_vars*)
+let rec add_uni_vars_to_view_x cprog (l2r_coers:C.coercion_decl list) (view:C.view_decl) : C.view_decl =
+  let view_vars = view.C.view_vars in
+  let look_up_one_x (coer:C.coercion_decl) (view:C.view_decl): CP.spec_var list =
+    let coer_uni_vars = coer.C.coercion_univ_vars in
+    if (coer_uni_vars=[]) then []
+    else
+      let rec process_h_formula (h_f:CF.h_formula):CP.spec_var list = 
+        match h_f with
+          | CF.ViewNode vn ->
+              (* let _ = print_string "\n process_h_formula: CF.ViewNode \n" in *)
+              (* let _ = print_string ("\n process_h_formula:" *)
+              (*                       ^"\n ### vn = " ^ (Cprinter.string_of_ident vn.CF.h_formula_view_name) *)
+              (*                       ^"\n ### view.view_name = " ^ (Cprinter.string_of_ident view.C.view_name) *)
+              (*                       ^ "\n\n") in *)
+              if ((String.compare vn.CF.h_formula_view_name view.C.view_name)!=0) then []
+              else
+                let args = vn.CF.h_formula_view_arguments in
+                (* let _ = print_string ("\n process_h_formula:" *)
+                (*                       ^"\n ### coer_uni_vars = " ^ (Cprinter.string_of_spec_var_list coer_uni_vars) *)
+                (*                       ^"\n ### args = " ^ (Cprinter.string_of_spec_var_list args) *)
+                (*                       ^"\n ### view_vars = " ^ (Cprinter.string_of_spec_var_list view_vars) *)
+                (* ^ "\n\n") in *)
+            (*at this point |view_vars| = |args|*)
+                let rec helper args view_vars =
+                  match args, view_vars with
+                    | arg::argvs, var::vars ->
+                        let res = helper argvs vars in
+                        if (List.mem arg coer_uni_vars) then var::res
+                        else res
+                    | _ -> []
+                in
+                helper args view_vars
+          | CF.Star {  CF.h_formula_star_h1 = h1;
+                       CF.h_formula_star_h2 = h2}
+              -> 
+              (* let _ = print_string "\n process_h_formula: CF.Star \n" in *)
+              let vars1 =  process_h_formula h1 in
+              let vars2 =  process_h_formula h2 in
+              CP.remove_dups_svl vars1@vars2
+              
+          | _ -> 
+              (* let _ = print_string "\n process_h_formula: [] \n" in *)
+              []
+      in
+      let body = coer.C.coercion_body in
+      match body with
+        | CF.Base {CF.formula_base_heap = h}
+        | CF.Exists {CF.formula_exists_heap = h} ->
+            (* let _ = print_string "\n process_h_formula: CF.Exists \n" in *)
+            process_h_formula h
+        | _ -> []
+  in 
+  let look_up_one (coer:C.coercion_decl) (view:C.view_decl): CP.spec_var list =
+    Gen.Debug.no_2 "look_up_one"
+        Cprinter.string_of_coercion
+        Cprinter.string_of_view_decl
+        Cprinter.string_of_spec_var_list
+        look_up_one_x coer view
+  in
+  let res = List.map (fun coer -> look_up_one coer view) l2r_coers in
+  let res1 = List.flatten res in
+  (* let _ = print_string ("\n add_uni_vars_to_view:" *)
+  (*                       ^"\n ### res1 = " ^ (Cprinter.string_of_spec_var_list res1) *)
+  (*                       ^ "\n\n") in *)
+  let uni_vars = CP.remove_dups_svl res1 in
+  (* let _ = print_string ("\n add_uni_vars_to_view:" *)
+  (*                       ^"\n ### uni_vars = " ^ (Cprinter.string_of_spec_var_list uni_vars) *)
+  (*                       ^ "\n\n") in *)
+  if (view.C.view_is_rec) then {view with C.view_uni_vars = uni_vars}
+  else
+    let rec process_struc_formula (f:CF.struc_formula):CP.spec_var list =
+      let rec process_ext_formula (f:CF.ext_formula):CP.spec_var list =
+        match f with
+          | CF.EBase e ->
+            (*find all possible universal vars from a h_formula*)
+              let rec process_h_formula (h_f:CF.h_formula):CP.spec_var list = 
+                match h_f with
+                  | CF.ViewNode vn ->
+                      if ((String.compare vn.CF.h_formula_view_name view.C.view_name)=0) then []
+                      else
+                        let vdef = Cast.look_up_view_def_raw cprog.C.prog_view_decls vn.CF.h_formula_view_name in
+                        let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
+                        let vdef_uni_vars = vdef.C.view_uni_vars in
+                        let fr = vdef.C.view_vars in
+                        let t = vn.CF.h_formula_view_arguments in
+                        let vdef_uni_vars = CP.subst_var_list_avoid_capture fr t vdef_uni_vars in
+                        vdef_uni_vars
+                  | CF.Star {  CF.h_formula_star_h1 = h1;
+                               CF.h_formula_star_h2 = h2}
+                      -> 
+                      let vars1 =  process_h_formula h1 in
+                      let vars2 =  process_h_formula h2 in
+                      CP.remove_dups_svl vars1@vars2
+                  | _ -> []
+              in
+              let vars1 = 
+                match e.CF.formula_ext_base with
+                  | CF.Base {CF.formula_base_heap = h;
+                             CF.formula_base_pure = p}
+                  | CF.Exists {CF.formula_exists_heap = h;
+                               CF.formula_exists_pure = p} ->
+                      let vars = process_h_formula h in
+                      (match vars with
+                        | [] -> []
+                        | v::vs -> 
+                            let xs = MCP.find_closure_mix_formula v p in
+                            let xs = Gen.BList.intersect_eq CP.eq_spec_var xs view_vars in xs)
+                (*vars is the set of all possible uni_vars in all nodes*)
+                  | _ -> []
+              in
+              let vars2 = process_struc_formula e.CF.formula_ext_continuation in
+              let vars = vars1@vars2 in
+              let vars = CP.remove_dups_svl vars in
+              vars
+          | _ ->
+              let _ = print_string "[add_uni_vars_to_view] Warning: only handle EBase \n" in
+              []
+      in
+      let xs = List.map process_ext_formula f in
+      let xs = List.flatten xs in
+      let xs = CP.remove_dups_svl xs in
+      xs
+
+    in
+    let vars = process_struc_formula view.C.view_formula in
+    let vars = vars@uni_vars in
+    let vars = CP.remove_dups_svl vars in
+    {view with C.view_uni_vars = vars}
+
+
+
+
+(*find and add uni_vars to view*)
+let add_uni_vars_to_view cprog (l2r_coers:C.coercion_decl list) (view:C.view_decl) : C.view_decl =
+  Gen.Debug.ho_2 "add_uni_vars_to_view"
+      Cprinter.string_of_coerc_decl_list
+      Cprinter.string_of_view_decl
+      Cprinter.string_of_view_decl
+      (fun _ _ -> add_uni_vars_to_view_x cprog l2r_coers view) l2r_coers view
+
+(*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   let _ = (Gen.ExcNumbering.add_edge "Object" "") in
   let _ = (Gen.ExcNumbering.add_edge "String" "Object") in
@@ -1026,6 +1184,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 		  let cprocs = !loop_procs @ cprocs1 in
 		  let (l2r_coers, r2l_coers) = trans_coercions prog in
+          (* let cviews = List.map (add_uni_vars_to_view prog l2r_coers) cviews in (\*why this is not called ???*\) *)
 		  let cprog =   {
               C.prog_data_decls = cdata;
               C.prog_view_decls = cviews;
@@ -1034,14 +1193,14 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
               C.prog_left_coercions = l2r_coers;
               C.prog_right_coercions = r2l_coers;
           } in
-	      let cprog1 = { cprog with			
+	      let cprog1 = { cprog with
 			  C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
-			  C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
+			  C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in
           (ignore (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews);
       ignore (List.map (fun vdef -> set_materialized_prop vdef) cviews);
           ignore (C.build_hierarchy cprog1);
       let cprog1 = fill_base_case cprog1 in
-          let cprog2 = sat_warnings cprog1 in        
+          let cprog2 = sat_warnings cprog1 in
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
@@ -1254,6 +1413,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
+          C.view_uni_vars = [];
           C.view_labels = vdef.I.view_labels;
           C.view_modes = vdef.I.view_modes;
           C.view_partially_bound_vars = [];
@@ -1904,7 +2064,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
   (* let pr x = "?" in *)
   (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)

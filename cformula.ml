@@ -1579,7 +1579,7 @@ and subst_struc_avoid_capture_w_frac (fr : CP.spec_var list) (t : CP.spec_var li
 
 and subst_struc_avoid_capture_w_frac_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula) (fracvar: CP.spec_var)  (rhs_p : MCP.mix_formula) :struc_formula =
 
-  let f' =  add_mix_formula_to_struc_formula f rhs_p in
+  let f' =  add_mix_formula_to_struc_formula rhs_p f in
   let fresh_fr = CP.fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
@@ -1679,13 +1679,13 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
   List.map helper f
 
 (*LDK: add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *)
-and add_mix_formula_to_struc_formula  (f : struc_formula) (rhs_p: MCP.mix_formula): struc_formula =
-  Gen.Debug.no_2 "add_mix_formula_to_struc_formula"
-      !print_struc_formula !print_mix_formula !print_struc_formula
-      add_mix_formula_to_struc_formula_x f rhs_p
+and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formula): struc_formula =
+  Gen.Debug.ho_2 "add_mix_formula_to_struc_formula"
+      !print_mix_formula !print_struc_formula !print_struc_formula
+      add_mix_formula_to_struc_formula_x rhs_p f 
 
 (*LDK: only heap need fractional permision spec var (frac) *)
-and add_mix_formula_to_struc_formula_x  (f : struc_formula) (rhs_p: MCP.mix_formula): struc_formula =
+and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formula) : struc_formula =
   let rec helper (f:ext_formula):(ext_formula) = match f with
 	| ECase b ->
         let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for ECase not added") in
@@ -1707,7 +1707,7 @@ and add_mix_formula_to_struc_formula_x  (f : struc_formula) (rhs_p: MCP.mix_form
 
         (* let _ = print_string ("ttt, add_rhspure_to_struc_formula_x: after add_rhspure_to_formula_ext_base \n") in *)
 
-        let ext_cont_f = (add_mix_formula_to_struc_formula_x b.formula_ext_continuation rhs_p) in
+        let ext_cont_f = (add_mix_formula_to_struc_formula_x rhs_p b.formula_ext_continuation) in
         let res_f =
 		  EBase ({
 			  formula_ext_explicit_inst = b.formula_ext_explicit_inst;
@@ -1724,7 +1724,7 @@ and add_mix_formula_to_struc_formula_x  (f : struc_formula) (rhs_p: MCP.mix_form
                 let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for EAssume not added") in
                 f
 	| EVariance b ->
-        let cont = add_mix_formula_to_struc_formula_x b.formula_var_continuation rhs_p in
+        let cont = add_mix_formula_to_struc_formula_x rhs_p b.formula_var_continuation in
         let res =
         EVariance ({ b with
 		  formula_var_measures = b.formula_var_measures;

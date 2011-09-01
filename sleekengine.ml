@@ -169,6 +169,9 @@ let process_pred_def pdef =
         C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds !cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
         let _ = if !Globals.print_input then print_string "TODO : print input AST here(2)!" in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
+
+        (* let n_cpdef = Astsimp.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions n_cpdef in (\*why this is not call by SLEEK ???*\) *)
+
 		!cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
@@ -213,8 +216,7 @@ let convert_pred_to_cast () =
   (* let _ = print_string ("convert_pred_to_cast: after trans_view" *)
   (*                       ^ "\n\n") in *)
 
-
-
+  (* let cviews = List.map (Astsimp.add_uni_vars_to_view !cprog.C.prog_left_coercions) cviews in (\*this may not be a correct place ???*\) *)
   let _ = !cprog.C.prog_view_decls <- cviews in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) in
   let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews) in
