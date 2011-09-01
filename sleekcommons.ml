@@ -90,7 +90,7 @@ let string_of_meta_formula (mf : meta_formula) =
 	match mf with
   | MetaVar i -> i
   | MetaForm f -> Iprinter.string_of_formula f
-  | MetaFormCF cf -> Cprinter.string_of_formula cf
+  | MetaFormCF cf ->  Cprinter.string_of_formula cf
   | MetaFormLCF lf -> "" (* TODO Implement *)
   | MetaEForm sf -> Iprinter.string_of_struc_formula sf
   | MetaCompose _ -> "" (* TODO Implement *)

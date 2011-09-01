@@ -1152,6 +1152,30 @@ and add_origins (f : formula) origs =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_origins e.formula_exists_heap origs})
   in helper f
 
+and h_reset_origins (h : h_formula) = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> ViewNode {vn with h_formula_view_origins = []}
+    | _ -> h 
+  in helper h
+
+and reset_origins (f : formula) = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_reset_origins b.formula_base_heap})
+    | Exists e -> Exists ({e with formula_exists_heap = h_reset_origins e.formula_exists_heap})
+  in helper f
+
 and add_original (f : formula) original = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;

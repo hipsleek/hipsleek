@@ -445,7 +445,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
                     else left_act@right_act
                   end
-                  else [] in
+                  else  [] in
                   let l4 = []
                     (*if get_view_original rhs_node then 
                       [M_base_case_fold c] 

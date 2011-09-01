@@ -744,7 +744,7 @@ let check_coercion (prog : prog_decl) =
     (*let unfold_head_pred hname f0 : int = *)
   let check_entailment c_lhs c_rhs =
     let pr = Cprinter.string_of_formula in
-    Gen.Debug.ho_2 "check_entailment" pr pr
+    Gen.Debug.no_2 "check_entailment" pr pr
         (fun _ -> "?") check_entailment c_lhs c_rhs in
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
@@ -765,8 +765,6 @@ let check_coercion (prog : prog_decl) =
   let check_right_coercion coer =
     Gen.Debug.no_1 "check_right_coercion" Cprinter.string_of_coercion 
         (fun _ -> "?") check_right_coercion coer in
-  let _ = print_string ("\n!!!! ll=" ^ string_of_int(List.length prog.prog_left_coercions)) in
-  let _ = print_string ("\n!!!! lr=" ^ string_of_int(List.length prog.prog_right_coercions)) in
   List.map (fun coer -> check_left_coercion coer) prog.prog_left_coercions;
   List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 

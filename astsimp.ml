@@ -1871,8 +1871,9 @@ and trans_coercions (prog : I.prog_decl) :
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
-  let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  let pr2 = Iprinter.string_of_coerc_decl in
+  let pr3 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
+  Gen.Debug.no_2 "trans_one_coercion" pr pr2 pr3 (fun _ _ -> trans_one_coercion_x prog coer) prog coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -4763,8 +4764,6 @@ and collect_type_info_bag_x (e0 : IP.exp) stab =
       | IP.Bag ([], pos) -> ()
       | IP.BagUnion ((a :: rest), pos) ->
 	        (helper a;
-            (* andreeac *)
-            
 	        helper (IP.BagUnion (rest, pos)))
       | IP.BagUnion ([], pos) -> ()
       | IP.BagIntersect ((a :: rest), pos) ->

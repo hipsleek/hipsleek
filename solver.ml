@@ -2451,9 +2451,9 @@ and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_
   let f2 = CF.list_context_is_eq_flow cl !n_flow_int in
   if f1 && f2 then
     begin
-     let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in
-     let (ans,prf) = heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid in
-     (CF.invert_outcome ans,prf)
+      let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in
+      let (ans,prf) = heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid in
+      (CF.invert_outcome ans,prf)
     end
   else
     heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid 
@@ -5662,7 +5662,6 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;
       } -> 
-          (* let _ = print_string ("!!! do_coercion should try directly right lemmas ") in *)
           let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
           (r1,Search r2)
     | Context.M_lemma  ({

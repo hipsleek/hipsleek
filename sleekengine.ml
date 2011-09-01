@@ -263,7 +263,7 @@ let perform_second_parsing_stage () =
 	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
 		!cprog.C.prog_data_decls <- cddefs
 	
-let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
+let rec meta_to_struc_formula_x (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
   | MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)
   | MetaFormLCF mf -> (Cformula.formula_to_struc_formula (List.hd mf))
   | MetaForm mf -> 
@@ -274,7 +274,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaVar mvar -> begin
       try 
         let mf = get_var mvar in
-          meta_to_struc_formula mf quant fv_idents stab
+          meta_to_struc_formula_x mf quant fv_idents stab
       with
         | Not_found ->
           dummy_exception() ;
@@ -282,8 +282,8 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
           raise SLEEK_Exception
       end
   | MetaCompose (vs, mf1, mf2) -> begin
-      let cf1 = meta_to_struc_formula mf1 quant fv_idents stab in
-      let cf2 = meta_to_struc_formula mf2 quant fv_idents stab in
+      let cf1 = meta_to_struc_formula_x mf1 quant fv_idents stab in
+      let cf2 = meta_to_struc_formula_x mf2 quant fv_idents stab in
       let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
       let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
       res
@@ -293,8 +293,16 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p b false true [] in
       let res = AS.trans_I2C_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
-      (*let _ = print_string (" before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in*)
+      (* let _ = print_string ("\n1 before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in *)
+      (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
+      (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
       res
+
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula =
+  let pr1 = string_of_meta_formula in
+  let pr2 = string_of_bool in
+  let pr3 = Cprinter.string_of_struc_formula in 
+  Gen.Debug.no_2 "meta_to_struc_formula" pr1 pr2 pr3 (fun _ _ -> meta_to_struc_formula_x mf0 quant fv_idents stab) mf0 quant
 
 (* An Hoa : DETECT THAT EITHER OF 
 AS.case_normalize_formula iprog h mf
@@ -337,7 +345,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(* An Hoa : PRINT OUT THE INPUT *)
 		(*  let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in *)
 		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
-		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in  *)
+		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   let _ = residues := None in
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in    
@@ -349,7 +357,6 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
-  (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
@@ -374,11 +381,9 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   in
   (res, rs)
 
-let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let _ = print_string ("\n !!!! Process_entail_check\n") in
+let entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (num_id: string) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
-    let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
     if not valid then
       begin
         let s =
@@ -391,13 +396,13 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
                 )
           else ""
         in
-        print_string (num_id^"=Fail."^s^"\n")
+        print_string (num_id^": Fail. "^s^"\n")
             (*if !Globals.print_err_sleek then *)
             (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
     else
       begin
-	    print_string (num_id^"=Valid.\n")
+	    print_string (num_id^": Valid.\n")
             (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
   with _ ->
@@ -406,8 +411,16 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
       print_string "exception in entail check\n"
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+  entail_check iante0 iconseq0 num_id
+
+let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
-  Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?")process_entail_check iante0 iconseq0 
+  Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
+
+let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
+  let num_id = "Lemma "^ lemma_name in
+  entail_check iante0 iconseq0 num_id
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -431,61 +444,48 @@ let process_lemma_old ldef =
   ignore (!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions);
   !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions
 
-let check_coercion (coer: C.coercion_decl) =
-  let _ = print_string "\ncheck_coercion 0\n" in
-  (* let check_entailment c_lhs c_rhs = *)
-  (*   let _ = print_string "check_entailment" in *)
-  (*   let pos = CF.pos_of_formula c_lhs in *)
-  (*   let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) pos) c_lhs pos in *)
-  (*   let rs, prf = Solver.heap_entail_init !cprog false (CF.SuccCtx [ctx]) c_rhs pos in *)
-  (*   let _ = Prooftracer.log_proof prf in *)
-  (*   (\* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *\) *)
-  (*   if (CF.isFailCtx rs) then begin *)
-  (*     Error.report_error { Error.error_loc = pos; *)
-  (*     Error.error_text = "coercion is not valid" } *)
-  (*   end  *)
-  (*   else print_string ("\n Coercion proven!") *)
-  (* in *)
-  (* let check_entailment c_lhs c_rhs = *)
-  (*   let pr = Cprinter.string_of_formula in *)
-  (*   Gen.Debug.no_2 "check_entailment" pr pr *)
-  (*       (fun _ -> "?") check_entailment c_lhs c_rhs in *)
-  let check_left_coercion coer =
+let check_coercion coer lhs rhs =
     let pos = CF.pos_of_formula coer.C.coercion_head in
+    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
+    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
     let lhs = CF.add_original coer.C.coercion_head true in
-	let _ = print_string ("\nlhs : " ^ (Cprinter.string_of_formula lhs) ^ "\n") in
+    let lhs = CF.reset_origins lhs in
     let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let rhs = (* Solver.unfold_nth 10 (!cprog,None) *) coer.C.coercion_body (* (CP.SpecVar (Named "", self, Unprimed)) true 0 pos *) in
+    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in 
+    let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in 
     let rhs = CF.add_original rhs true in
-	let _ = print_string ("\nrhs : " ^ (Cprinter.string_of_formula rhs) ^ "\n") in
-    process_entail_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs) in
-  (* check_entailment lhs rhs  in*)
-  let check_left_coercion coer =
-    Gen.Debug.no_1 "check_left_coercion" Cprinter.string_of_coercion 
-        (fun _ -> "?") check_left_coercion coer in
-  check_left_coercion coer
+    let rhs = CF.reset_origins rhs in
+    process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs)  coer.C.coercion_name 
+  
+let check_left_coercion coer =
+  let lhs = CF.add_original coer.C.coercion_head true in
+  let rhs = coer.C.coercion_body in
+  check_coercion coer lhs rhs
+
+let check_right_coercion coer =
+  let rhs = CF.add_original coer.C.coercion_head true in
+  let lhs = coer.C.coercion_body in
+  check_coercion coer lhs rhs 
 
 
 let process_lemma ldef =
-  let _ = print_string "\n ############ process lemma ########## \n" in
-  let ldef = Astsimp.case_normalize_coerc iprog ldef in
+  let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
   let _ = if !Globals.print_core then 
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
-  let _ = if !Globals.check_coercions then begin
-    (
-        match l2r with
-          | [] -> false
-          | h::[] -> 
-                check_coercion h;
-                true);
-    ()
-  end
-  in
   !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
-  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions
+  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
+  if !Globals.check_coercions then begin
+        let rec helper coercs check_coerc = match coercs with
+          | [] -> ()
+          | coerc::[] -> check_coerc coerc
+          | coerc::lst -> check_coerc coerc; helper lst check_coerc
+        in
+        helper l2r check_left_coercion;
+        helper r2l check_right_coercion
+  end
 
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->
