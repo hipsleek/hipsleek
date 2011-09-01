@@ -1004,9 +1004,9 @@ let rec pr_numbered_list_formula (e:list_formula) (count:int) =
     | [] -> ""
     | x::xs -> 
         begin
-            print_string ("<" ^ (string_of_int count) ^ ">");
+            fmt_string ("<" ^ (string_of_int count) ^ ">");
             pr_formula x;
-            print_string "\n";
+            fmt_print_newline ();
             pr_numbered_list_formula xs (count+1);
         end
 

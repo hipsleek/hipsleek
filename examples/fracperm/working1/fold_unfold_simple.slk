@@ -25,7 +25,7 @@ print residue. //valid, 1 residue
 
 //(4)
 checkentail x::cell(0.6)<1> |-  x::cellp(f)<1>.
-print residue. //valid, 1 residue
+print residue. //valid, 2 residue
 
 //(5)
 checkentail x::cell(1.0)<v1> |-  x::cellp(0.4)<v1> * x::cell(0.5)<v1>.
@@ -43,4 +43,10 @@ print residue. //valid, 1 residue
 checkentail x::cellp(1.0)<v1> |-  x::cell(0.4)<v1> * x::cellp(0.5)<v1>.
 print residue. //valid, 1 residue
 
+/*
+WARNING: Found formula with existential quantified var(s), result may be unsound
+! (Imply #47) for redlog!!! do_coercion should try directly lemma: splitCell
 
+Could this warning be suppressed if we are indeed proving for 
+fractional.
+*/

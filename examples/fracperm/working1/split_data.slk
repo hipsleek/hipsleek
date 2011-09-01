@@ -18,7 +18,7 @@ checkentail x::cell<v1> |- x::cell(f2)<v2>.
 print residue. //valid, MATCH and SPLIT
 
 //(3)
-checkentail x::cell(1.0)<v1> |-  x::cell(f1)<v1>.
+checkentail x::cell(1.0)<v1> |-  x::cell(f1)<v1> & f1>=1.0.
 print residue. //valid, 2 residues MATCH and SPLIT
 
 //(4)
@@ -65,6 +65,14 @@ print residue. //valid, only SPLIT
 checkentail x::cell<v1>  |- x::cell(f2)<v2> & 1>=f2>0.
 print residue. //valid, both MATCH and SPLIT
 
+//(15)
+checkentail x::cell(f1)<v1>  |- x::cell(f2)<v2> & f2=0.5.
+print residue. //invalid
 
+//(16)
+checkentail x::cell(f1)<v1>  |- x::cell(f2)<v2> & 1.0>=f2>0.0.
+print residue. //valid, both MATCH and SPLIT (2 answer)
 
-
+//(17)
+checkentail x::cell(f1)<v1>  |- x::cell(f2)<v2> & 0.5>=f2>0.0.
+print residue. //valid, both MATCH and SPLIT (1 answer)
