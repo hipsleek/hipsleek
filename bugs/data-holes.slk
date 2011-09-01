@@ -58,5 +58,5 @@ checkentail  x::node<m,n,#,#,#> |- x::node<m1,n1,a,b,c>.
 // need to check that LHS is bigger than RHS
 print residue.
 
-checkentail  x::node<m,n,#,#,#> |- x::node<m1,#,#,#,#>.
+checkentail  x::node<m,n,#,#,#> * y::node<m,n,#,#,#> |- x::node<m1,#,#,#,#>.
 print residue.

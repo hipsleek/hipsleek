@@ -5117,6 +5117,9 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
+	(* print_endline ("[do_match] LHS = "^ (Cprinter.string_of_entail_state estate)); *)
+	(* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
+	(* print_endline ("[do_match] using " ^ (Cprinter.string_of_h_formula l_node) ^ " to prove " ^ (Cprinter.string_of_h_formula r_node)); *)
   Debug.devel_pprint ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node)) pos;
@@ -5130,8 +5133,40 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       | DataNode {h_formula_data_name = r_node_name; h_formula_data_arguments = r_args; h_formula_data_node = r_var}
       | ViewNode {h_formula_view_name = r_node_name; h_formula_view_arguments = r_args; h_formula_view_node = r_var} -> (r_args, r_node_name, r_var) 
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
+	(* An Hoa : found out that the current design of do_match will eventually remove both nodes. Here, I detected that l_h & r_h captures the heap part. In order to capture the remaining part, we need to update l_h and r_h with the remaining of the l_node and r_node after matching (respectively. *)
     let l_h,l_p,l_fl,l_b,l_t = split_components estate.es_formula in
     let r_h,r_p,r_fl,r_b,r_t = split_components rhs in
+	(* An Hoa : match l_node and r_node and push the remain to l_h, r_h *)
+	let l_h,r_h = match (l_node,r_node) with
+		| (DataNode dnl, DataNode dnr) -> (* let _ = print_endline ("[do_match] An Hoa Implementation : Push remains of data node matching to the lhs and rhs") in *)
+									let new_args = List.combine l_args r_args in
+									(* [Internal] function to cancel out two variables *)
+									let hole = CP.SpecVar (UNK,"#",Unprimed) in
+									let cancel_fun (x,y) = if (CP.is_hole_spec_var x || CP.is_hole_spec_var y) then 
+											(* 3 cases : (#,v) ; (#,#) ; (v,#) *) (x,y)
+										else (* (v,v) *) (hole,hole) in
+ 									let new_args = List.map cancel_fun new_args in
+									let new_l_args, new_r_args = List.split new_args in
+									(* let _ = print_endline ("[do_match] cancelled lhs node = { " ^ (PR.string_of_spec_var_list new_l_args) ^ " } ==> " ^ (if CF.is_empty new_l_args then "empty" else "add to lhs")) in *)
+									(* let _ = print_endline ("[do_match] cancelled rhs node = { " ^ (PR.string_of_spec_var_list new_r_args) ^ " } ==> " ^ (if CF.is_empty new_r_args then "empty" else "add to rhs")) in *)
+									let new_l_holes = CF.compute_holes_list new_l_args in
+									let new_r_holes = CF.compute_holes_list new_r_args in
+									(* let _ = print_endline ("[do_match] lhs holes = { " ^ (String.concat "," (List.map string_of_int new_l_holes)) ^ " }") in *)
+									(* let _ = print_endline ("[do_match] rhs holes = { " ^ (String.concat "," (List.map string_of_int new_r_holes)) ^ " }") in *)
+									let new_l_h = if (CF.is_empty new_l_args) then l_h 
+										else let rem_l = DataNode { dnl with
+													h_formula_data_arguments = new_l_args;
+													h_formula_data_holes = new_l_holes;
+												} in mkStarH l_h rem_l no_pos in
+									let new_r_h = if (CF.is_empty new_r_args) then r_h 
+										else let rem_r = DataNode { dnr with
+													h_formula_data_arguments = new_r_args;
+													h_formula_data_holes = new_r_holes;
+												} in mkStarH r_h rem_r no_pos in
+										(new_l_h,new_r_h)
+		| _ -> (l_h,r_h) (* No change if we are not matching data node against data node *)
+	in
+	(* An Hoa : end added code *)
     let label_list = try 
       let vdef = Cast.look_up_view_def_raw prog.prog_view_decls l_node_name in
       vdef.Cast.view_labels
@@ -5156,6 +5191,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
     let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
     let new_ante = mkBase l_h new_ante_p l_t l_fl (CP.merge_branches l_b to_lhs_br) pos in
+	(* An Hoa : Fix new_ante *)
     let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl (CP.merge_branches r_b to_rhs_br) pos  in
 
     let lhs_vars = ((CP.fv to_lhs) @(List.concat (List.map (fun (_,c)-> CP.fv c) to_lhs_br))) in
@@ -5166,6 +5202,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
     let tmp_h2, tmp_p2, tmp_fl2, tmp_b2, _ = split_components tmp_conseq' in
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
+	(* An Hoa : fix the new_conseq here *)
     (* only add the consumed node if the node matched on the rhs is mutable *)
     let new_consumed = 
       if not(get_imm r_node)
@@ -5191,6 +5228,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         es_success_pts = n_es_succ; 
 		(* es_subst = ((fst estate.es_subst)@r_subs, (snd estate.es_subst)@l_sub); *)
 	} in
+	(* An Hoa : trace detected: need to change the left hand side before this point which forces to change the new_ante at an earlier check point *)
+	(* let _ = print_endline ("[do_match] New LHS = "^ (Cprinter.string_of_entail_state estate)) in *)
     (* let new_subst = (obtain_subst expl_inst) in *)
     (* apply the explicit instantiations to the consequent *)
     (* let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in *)

@@ -1098,7 +1098,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];
   } in
-	let _ = print_endline ("[trans_data] output = " ^ (Cprinter.string_of_data_decl res)) in
+	(* let _ = print_endline ("[trans_data] output = " ^ (Cprinter.string_of_data_decl res)) in *)
 		res
 
 

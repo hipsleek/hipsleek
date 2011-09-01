@@ -5217,3 +5217,25 @@ and merge_two_nodes dn1 dn2 =
 	| HTrue -> dn2
 	| HFalse -> HFalse
 	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn1)) }
+
+
+(**
+ * An Hoa : Create a list [x,x+1,...,x+n-1]
+ **)
+let rec first_naturals n x = if n = 0 then [] 
+	else x :: (first_naturals (n-1) (x+1))
+
+
+(**
+ * An Hoa : Compute the indices of holes in a list of spec vars.
+ **)
+let compute_holes_list svs = 
+	let temp = first_naturals (List.length svs) 0 in
+	let res = List.map2 (fun x y -> if (CP.is_hole_spec_var x) then [y] else []) svs temp in
+	let res = List.flatten res in
+		res
+
+(**
+ * An Hoa : Check if svs contain a non-hole variable.
+ **)
+let is_empty svs = List.for_all CP.is_hole_spec_var svs

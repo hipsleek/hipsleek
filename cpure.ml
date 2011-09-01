@@ -5379,3 +5379,6 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula in
   Gen.Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq 
+
+let is_hole_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n.[0] = '#'
