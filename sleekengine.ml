@@ -446,31 +446,31 @@ let process_lemma_old ldef =
 
 let check_coercion coer lhs rhs =
     let pos = CF.pos_of_formula coer.C.coercion_head in
-    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
     let lhs = CF.reset_origins lhs in
-    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
-    let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
     let rhs = CF.add_original rhs true in
     let rhs = CF.reset_origins rhs in
+    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
+    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
+    let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
     process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs) coer.C.coercion_name
 
 let check_coercion coer lhs rhs =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun _ -> "?") (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
+  Gen.Debug.ho_3 "check_coercion" pr1 pr2 pr2 (fun _ -> "?") (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
 let check_left_coercion coer =
-  let lhs =coer.C.coercion_head in
-  let rhs = coer.C.coercion_body in
-  check_coercion coer lhs rhs
+  let ent_lhs =coer.C.coercion_head in
+  let ent_rhs = coer.C.coercion_body in
+  check_coercion coer ent_lhs ent_rhs
 
 let check_right_coercion coer =
-  let rhs = coer.C.coercion_head in
-  let lhs = coer.C.coercion_body in
-  check_coercion coer lhs rhs 
+  let ent_rhs = coer.C.coercion_head in
+  let ent_lhs = coer.C.coercion_body in
+  check_coercion coer ent_lhs ent_rhs 
 
 
 let process_lemma ldef =
