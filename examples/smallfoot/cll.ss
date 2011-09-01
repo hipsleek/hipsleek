@@ -128,6 +128,7 @@ void push(node x, int v)
        x.next = tmp;
 }
 
+coercion self::cll<p,n> <- self::cll<q,n-1> * q::node<_,p>;
 /*function to insert new node at the rear*/
 void enqueue (ref node x, int v)
        requires x::hd<n> & n > 0
@@ -136,7 +137,6 @@ void enqueue (ref node x, int v)
        node tmp;
        tmp = new node(v,x.next);
        x.next = tmp;
-       node t = x.next;
-       //       x = t;       //why fails here
+       x = x.next;       //why fails here
        // need a lemma here?
 }
