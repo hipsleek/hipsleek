@@ -723,7 +723,7 @@ let collect_rhs_view (n:ident) (f:F.struc_formula) : (ident * ident list) =
   let id x = x in
   let pr1 x = x in
   let pr2 = pr_pair id (pr_list id) in 
-  Gen.Debug.ho_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
+  Gen.Debug.no_1 "collect_rhs_view" pr1 pr2 (fun _ -> collect_rhs_view n f) n
 
 let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
   let  (_,ns) = collect_rhs_view lhs rhs in

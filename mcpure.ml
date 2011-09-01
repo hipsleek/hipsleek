@@ -1617,7 +1617,7 @@ let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list =
   find_closure v vv
 
 let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list = 
-  Gen.Debug.ho_2 "find_closure_mix_formula" 
+  Gen.Debug.no_2 "find_closure_mix_formula" 
       !print_sv_f
       !print_mix_f
       !print_sv_l_f

@@ -1625,7 +1625,7 @@ and split_universal(* _debug *) ((f0 : CP.formula), f0b) (evars : CP.spec_var li
       (vvars : CP.spec_var list) (pos : loc) 
       =
   let vv = evars (*impl_inst_vars*) in
-  Gen.Debug.ho_2 "split_universal" 
+  Gen.Debug.no_2 "split_universal" 
       (fun (f,_)->Cprinter.string_of_pure_formula f)
       (fun _ -> 
           ("\n ### evars = " ^ Cprinter.string_of_spec_var_list evars)
@@ -1958,7 +1958,7 @@ and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula
   let pr2 x = match x with
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
-  Gen.Debug.ho_2 "fold_op" 
+  Gen.Debug.no_2 "fold_op" 
       pr2 id pr
       (fun _ _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula) (use_case:bool) (pos : loc)) vd ans
 
@@ -2015,19 +2015,19 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
             | Some f -> Cformula.propagate_frac_struc_formula renamed_view_formula f)
         in
 
-	    (*LDK*)
-        let _  = print_string ("\nfold_op_x1:"
-                               ^ ("\n renamed_view_formula = " ^ (Cprinter.string_of_struc_formula renamed_view_formula))
-                               ^ ("\n vdef = " ^ (Cprinter.string_of_view_decl vdef))
-                               ^ "\n\n") in
+	    (* (\*LDK*\) *)
+        (* let _  = print_string ("\nfold_op_x1:" *)
+        (*                        ^ ("\n renamed_view_formula = " ^ (Cprinter.string_of_struc_formula renamed_view_formula)) *)
+        (*                        ^ ("\n vdef = " ^ (Cprinter.string_of_view_decl vdef)) *)
+        (*                        ^ "\n\n") in *)
 
         let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)):: vdef.view_vars in
         let to_vars = p :: vs in
 
-        let _  = print_string ("\nfold_op_x1:"
-                               ^ ("\n fr_vars = " ^ (Cprinter.string_of_spec_var_list fr_vars))
-                               ^ ("\n to_vars = " ^ (Cprinter.string_of_spec_var_list to_vars))
-                               ^ "\n\n") in
+        (* let _  = print_string ("\nfold_op_x1:" *)
+        (*                        ^ ("\n fr_vars = " ^ (Cprinter.string_of_spec_var_list fr_vars)) *)
+        (*                        ^ ("\n to_vars = " ^ (Cprinter.string_of_spec_var_list to_vars)) *)
+        (*                        ^ "\n\n") in *)
 
         (* let view_form = (match frac with *)
         (*   | None -> subst_struc_avoid_capture fr_vars to_vars renamed_view_formula *)
@@ -2055,21 +2055,21 @@ in
               add_mix_formula_to_struc_formula to_fold_view view_form)
         in
 
-        let _  = print_string ("\nfold_op_x1: before add_struc_origins"
-                               ^ ("\n view_form = " ^ (Cprinter.string_of_struc_formula view_form))
-                               ^ "\n\n") in
+        (* let _  = print_string ("\nfold_op_x1: before add_struc_origins" *)
+        (*                        ^ ("\n view_form = " ^ (Cprinter.string_of_struc_formula view_form)) *)
+        (*                        ^ "\n\n") in *)
 
         let view_form = add_struc_origins view_form (get_view_origins view) in
 
-        let _  = print_string ("\nfold_op_x1: after add_struc_origins, before replace_struc_formula_label"
-                               ^ ("\n view_form = " ^ (Cprinter.string_of_struc_formula view_form))
-                               ^ "\n\n") in
+        (* let _  = print_string ("\nfold_op_x1: after add_struc_origins, before replace_struc_formula_label" *)
+        (*                        ^ ("\n view_form = " ^ (Cprinter.string_of_struc_formula view_form)) *)
+        (*                        ^ "\n\n") in *)
 
         let view_form = CF.replace_struc_formula_label pid view_form in
 
-        let _  = print_string ("\nfold_op_x1: after CF.replace_struc_formula_label"
-                               ^ ("\n view_form = " ^ (Cprinter.string_of_struc_formula view_form))
-                               ^ "\n\n") in
+        (* let _  = print_string ("\nfold_op_x1: after CF.replace_struc_formula_label" *)
+        (*                        ^ ("\n view_form = " ^ (Cprinter.string_of_struc_formula view_form)) *)
+        (*                        ^ "\n\n") in *)
 
 
         Debug.devel_pprint ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx)) pos;
@@ -2092,17 +2092,28 @@ in
 
         (*LDK: IMPORTANT
           if frac var is an existential variable, transfer it into folded view*)
-        let new_es_vars = (match frac with
-          | None -> vs
-          | Some f -> f::vs
-              (* if (List.mem f estate.es_evars) *)
-              (* then *)
-              (*   (f::vs) *)
-              (* else *)
-              (*   vs *)
-        )
-        in
-        let new_es = {estate with es_evars = new_es_vars} in
+        (* let new_es_vars = (match frac with *)
+        (*   | None -> vs *)
+        (*   | Some f -> f::vs *)
+        (*       (\* if (List.mem f estate.es_evars) *\) *)
+        (*       (\* then *\) *)
+        (*       (\*   (f::vs) *\) *)
+        (*       (\* else *\) *)
+        (*       (\*   vs *\) *)
+        (* ) *)
+        (* in *)
+
+
+        (*LDK: propagate es_vars from the estate to FOLD context
+        to avoid proving es_vars as universal vars when finishing FOLDING*)
+        (*Because we propagate some pure constrains into view formula 
+          when FOLDING. we also have to propagate es_vars from the 
+          estate into FOLDING context to avoid. Is it SOUND? Indeed, 
+          we need to propagate es_vars whose constraints are propagated 
+          into view formula when FOLDING.*)
+        (* let new_es = {estate with es_evars = estate.es_evars@new_es_vars} in *)
+
+        let new_es = {estate with es_evars = estate.es_evars@vs} in
 
         (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in (\*LDK: ??? should we add frac perm into it*\) *)
 
@@ -2120,8 +2131,8 @@ in
 
         let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form pos None in
 
-         let _ = print_string ("fold_op_x1: after heap_entail_one_context_struc_nth: "
-                               ^ (Cprinter.string_of_list_context rs0) ^ "\n\n") in
+         (* let _ = print_string ("fold_op_x1: after heap_entail_one_context_struc_nth: " *)
+         (*                       ^ (Cprinter.string_of_list_context rs0) ^ "\n\n") in *)
 
 
         let tmp_vars = match frac with
@@ -2190,7 +2201,7 @@ in
 		          res_rs in
         let process_one (ss:CF.steps) fold_rs1 = 
           let pr = Cprinter.string_of_context  in
-          Gen.Debug.ho_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
+          Gen.Debug.no_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
 
 	    let res = match rs0 with
           | FailCtx _ -> rs0
@@ -2355,7 +2366,7 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
   (* let pr1 = Cprinter.string_of_list_context_short in *)
   let pr1 = Cprinter.string_of_list_context in
   let pr2 x = pr1 (fst x) in
-  Gen.Debug.ho_3 "process_fold_result" 
+  Gen.Debug.no_3 "process_fold_result" 
       Cprinter.string_of_entail_state 
       pr1 
       Cprinter.string_of_formula_base
@@ -2476,7 +2487,7 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
   let process_one (ss:CF.steps) fold_rs1 = 
     let pr1 = Cprinter.string_of_context  in
     let pr2 (c,_) = Cprinter.string_of_list_context c in
-    Gen.Debug.ho_1 "process_fold_result: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
+    Gen.Debug.no_1 "process_fold_result: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
   match fold_rs0 with
     | FailCtx _ -> report_error no_pos ("process_fold_result: FailCtx encountered solver.ml\n")
     | SuccCtx fold_rs0 -> 
@@ -4005,7 +4016,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
   let pr1 = Cprinter.string_of_list_context in
   let pr2 = Cprinter.string_of_mix_formula in
-  Gen.Debug.ho_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
+  Gen.Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
       move_expl_inst_ctx_list_x ctx f
 
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
@@ -5301,13 +5312,13 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 				                  let new_ctx = move_expl_inst_ctx_list ctx p2 in
 
 
-                                  (*LDK: trace below indicate good contex*)
-                                  let _ = print_string ("\n heap_entail_conjunct: after heap_entail_empty_rhs_heap"
-                                                        ^ "\n (before move_expl_inst_ctx_list) ctx = "^(Cprinter.string_of_list_context ctx)
-                                                        ^ "\n (before move_expl_inst_ctx_list) (rhs pure) p2 = "^(Cprinter.string_of_mix_formula p2)
-                                                        ^ "\n (after) new_ctx = "^(Cprinter.string_of_list_context new_ctx)
-                                                        ^ "\n proof = " ^ (string_of_proof proof)
-                                                        ^"\n\n\n") in
+                                  (* (\*LDK: trace below indicate good contex*\) *)
+                                  (* let _ = print_string ("\n heap_entail_conjunct: after heap_entail_empty_rhs_heap" *)
+                                  (*                       ^ "\n (before move_expl_inst_ctx_list) ctx = "^(Cprinter.string_of_list_context ctx) *)
+                                  (*                       ^ "\n (before move_expl_inst_ctx_list) (rhs pure) p2 = "^(Cprinter.string_of_mix_formula p2) *)
+                                  (*                       ^ "\n (after) new_ctx = "^(Cprinter.string_of_list_context new_ctx) *)
+                                  (*                       ^ "\n proof = " ^ (string_of_proof proof) *)
+                                  (*                       ^"\n\n\n") in *)
 
 
 
@@ -5697,8 +5708,16 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
             let m_lhs = MCP.combine_mix_branch branch_id (lhs_p, lhs_b) in
             let tmp2 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
             let tmp3 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h1, xpure_lhs_h1_b)) true in
-            let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
-            
+
+            let exist_vars = if (is_folding) then 
+                  (*LDK: avoid proving constraints related to implicit inst variables when folding*)
+                  estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars@estate.es_gen_impl_vars 
+                else
+                  estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *)
+in
+
+            (* let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(\* @estate.es_gen_impl_vars *\) in *)
+
         (* (\* (\\*LDK*\\) *\) *)
         (* let _ = print_string ("heap_entail_empty_rhs_heap_x: " *)
         (*                       ^ "\n exist_vars = " ^ (Cprinter.string_of_spec_var_list exist_vars) *)
@@ -7472,7 +7491,7 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   (* let pr2 x = Cprinter.string_of_list_context_short (fst x) in *)
   let pr2 x = Cprinter.string_of_list_context (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 

@@ -1680,7 +1680,7 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 
 (*LDK: add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formula): struc_formula =
-  Gen.Debug.ho_2 "add_mix_formula_to_struc_formula"
+  Gen.Debug.no_2 "add_mix_formula_to_struc_formula"
       !print_mix_formula !print_struc_formula !print_struc_formula
       add_mix_formula_to_struc_formula_x rhs_p f 
 
@@ -6150,7 +6150,7 @@ let propagate_frac_struc_formula_x e (fracvar:CP.spec_var)=
     transform_struc_formula_w_frac f e fracvar
 
 let propagate_frac_struc_formula e (fracvar:CP.spec_var)=
-  Gen.Debug.ho_2 "propagate_frac_struc_formula" 
+  Gen.Debug.no_2 "propagate_frac_struc_formula" 
       !print_struc_formula !print_spec_var !print_struc_formula 
       propagate_frac_struc_formula_x  e fracvar
 

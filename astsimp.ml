@@ -1099,7 +1099,7 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:C.coercion_decl list) (view:C.vi
 
 (*find and add uni_vars to view*)
 let add_uni_vars_to_view cprog (l2r_coers:C.coercion_decl list) (view:C.view_decl) : C.view_decl =
-  Gen.Debug.ho_2 "add_uni_vars_to_view"
+  Gen.Debug.no_2 "add_uni_vars_to_view"
       Cprinter.string_of_coerc_decl_list
       Cprinter.string_of_view_decl
       Cprinter.string_of_view_decl
@@ -2064,7 +2064,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
   (* let pr x = "?" in *)
   (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
