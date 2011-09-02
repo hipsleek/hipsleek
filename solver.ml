@@ -5181,6 +5181,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_ivars = subtract estate.es_ivars ivars in
     (* let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho_0 estate.es_ivars pos) in *)
     (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
+	(* An Hoa : strip all the pair of equality involving # *)
+	let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)) other_subs in
     let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
       get_eqns_free other_subs new_exist_vars impl_tvars (* estate.es_evars *) (* estate.es_expl_vars@ *) estate.es_gen_expl_vars pos in
     (*********************************************************************)
