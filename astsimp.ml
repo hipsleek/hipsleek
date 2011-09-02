@@ -2544,12 +2544,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_fields = fs;
           I.exp_member_path_id = pid;
           I.exp_member_pos = pos } -> 
-          (* let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in *)
+           let _ = print_endline ("[trans_exp] case Member : input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in
 			(* An Hoa : compact the field access sequence *)
 			let et = snd (trans_exp prog proc e) in
-			let fs,rem,remt = compact_field_access_sequence prog et fs in
-			if rem != "" then
-				failwith "[trans_exp] on member exp expect non-inline field access"
+			let fs,rem,_ = compact_field_access_sequence prog et fs in
+			if not (rem = "") then
+				failwith ("[trans_exp] expect non-inline field access but still got {" ^ rem ^ "}")
 			else
           let r = 
 	        if (!Globals.allow_imm) then

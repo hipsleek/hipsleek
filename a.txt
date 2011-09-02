@@ -1,220 +1,21 @@
 Starting Omega... 
 
- checking:  x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm} |-  EBase exists (E)[](I)[a1; b1; c1; d1; e1](ex)[]x::node<a1,b1,c1,d1,e1>@M &
-       a=b & {FLOW,(27,27)=__norm}
+ checking:  EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
+{FLOW,(27,27)=__norm}) |-  EBase exists (E)[](I)[m1; e; f](ex)[]x::node<m1,-,-,e,f>@M & e=f &
+       {FLOW,(27,27)=__norm}
 
 
 !!!:0: 0: [entail:0][post:0]SAT #1
 
-!!!:0: 0: [entail:0][post:0] x=1
-
-!!!:0: 0: [entail:0][post:0]heap_entail_struc_init:
-ctx:
- 
-Good Context: [es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
-               es_pure: true
-               es_heap: true
-               es_aux_conseq: true
-               es_must_error: None
-               es_var_label: None]
-
-conseq:
- EBase exists (E)[](I)[a1; b1; c1; d1; e1](ex)[]x::node<a1,b1,c1,d1,e1>@M &
-       a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_one_context_struc:
-ctx:
- es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- EBase exists (E)[](I)[a1; b1; c1; d1; e1](ex)[]x::node<a1,b1,c1,d1,e1>@M &
-       a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
-context:
- es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- EBase exists (E)[](I)[a1; b1; c1; d1; e1](ex)[]x::node<a1,b1,c1,d1,e1>@M &
-       a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_one_context:
-ctx:
- es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_gen_impl_vars: [a1; b1; c1; d1; e1]
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- x::node<a1,b1,c1,d1,e1>@M & a=b & {FLOW,(27,27)=__norm}
-
-
-!!!:0: 0: [entail:0][post:0]heap_entail_after_sat: invoking heap_entail_conjunct_lhs
-context:
- es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_gen_impl_vars: [a1; b1; c1; d1; e1]
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- x::node<a1,b1,c1,d1,e1>@M & a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_conjunct:
-context:
- es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_gen_impl_vars: [a1; b1; c1; d1; e1]
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- x::node<a1,b1,c1,d1,e1>@M & a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_conjunct_helper:
-context:
- es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_gen_impl_vars: [a1; b1; c1; d1; e1]
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- x::node<a1,b1,c1,d1,e1>@M & a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_conjunct_helper: conseq has an non-empty heap component
-context:
- es_formula: x::node<a,b,c,d,e>@M & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_gen_impl_vars: [a1; b1; c1; d1; e1]
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- x::node<a1,b1,c1,d1,e1>@M & a=b & {FLOW,(27,27)=__norm}[do_match] input LHS =  es_formula: true & true & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_gen_impl_vars: [a1; b1; c1; d1; e1]
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-[do_match] RHS =  true & a=b & {FLOW,(27,27)=__norm}
-[do_match] matching  x::node<a,b,c,d,e>@M |-  x::node<a1,b1,c1,d1,e1>@M
-
-
-!!!:0: 0: [entail:0][post:0]do_match: using  x::node<a,b,c,d,e>@M to prove  x::node<a1,b1,c1,d1,e1>@M[do_match] output LHS =  true & a1=a & b1=b & c1=c & d1=d & e1=e & {FLOW,(27,27)=__norm}
-[do_match] output RHS =  true & a=b & {FLOW,(27,27)=__norm}
-
-
-!!!:0: 0: [entail:0][post:0]do_match (after): LHS:  true & a1=a & b1=b & c1=c & d1=d & e1=e & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]do_match (after): RHS: true & a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_conjunct:
-context:
- es_formula: true & a1=a & b1=b & c1=c & d1=d & e1=e & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: x::node<a,b,c,d,e>@M
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- true & a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_conjunct_helper:
-context:
- es_formula: true & a1=a & b1=b & c1=c & d1=d & e1=e & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: x::node<a,b,c,d,e>@M
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- true & a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]heap_entail_conjunct_helper: conseq has an empty heap component
-context:
- es_formula: true & a1=a & b1=b & c1=c & d1=d & e1=e & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: x::node<a,b,c,d,e>@M
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-conseq:
- true & a=b & {FLOW,(27,27)=__norm}
-
-!!!:0: 0: [entail:0][post:0]simplify the consequent with omega
-
-!!!:0: 0: [entail:0][post:0]IMP #1
-
-!!!:0: 0: [entail:0][post:0]IMP #2
-
-!!!:0: 0: [entail:0][post:0]ante:  a1=a & b1=b & c1=c & d1=d & e1=e & x=1
-
-!!!:0: 0: [entail:0][post:0]conseq:  a=b
-
-!!!:0: 0: [entail:0][post:0]IMP #3
-
-!!!:0: 0: [entail:0][post:0]ante:  a1=a & b1=b & c1=c & d1=d & e1=e
-
-!!!:0: 0: [entail:0][post:0]conseq:  a=b
-
-!!!:0: 0: [entail:0][post:0]SAT #4
-
-!!!:0: 0: [entail:0][post:0] a=b
-
-!!!:0: 0: [entail:0][post:0]SAT #5
-
-!!!:0: 0: [entail:0][post:0] a1=a & b1=b & a=b
-
-!!!:0: 0: [entail:0][post:0]SAT #6
-
-!!!:0: 0: [entail:0][post:0] a1=a & b1=b & a!=b
-
-!!!:0: 0: [entail:0][post:0]SAT #7
-
-!!!:0: 0: [entail:0][post:0] a=b
-
-!!!:0: 0: [entail:0][post:0]SAT #8
-
-!!!:0: 0: [entail:0][post:0] a1=a & b1=b & a=b
-
-!!!:0: 0: [entail:0][post:0]SAT #9
-
-!!!:0: 0: [entail:0][post:0] a1=a & b1=b & a!=b
-
-!!!:0: 0: [entail:0][post:0]heap_entail_empty_rhs_heap: formula is not valid
-Entail(1)=Fail.(may) cause:213  a1=a & b1=b |-  a=b (may-bug).
-
- checking:  EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * y::node<m_42,n_43,-,-,->@M &
-m_42=m & n_43=n & {FLOW,(27,27)=__norm}) |-  EBase exists (E)[](I)[m1](ex)[]x::node<m1,-,-,-,->@M & a=b &
-       {FLOW,(27,27)=__norm}
-
-
-!!!:0: 0: [entail:0][post:0]SAT #10
-
-!!!:0: 0: [entail:0][post:0] m_42=m & n_43=n & x=1 & y=2
+!!!:0: 0: [entail:0][post:0] a_29=a & m_30=m & n_31=n & x=1 & y=2
 
 !!!:0: 0: [entail:0][post:0]heap_entail_struc_init:
 ctx:
  
 Good Context: [es_formula: 
-                EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * 
-                y::node<m_42,n_43,-,-,->@M & m_42=m & n_43=n &
+                EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+                y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
                 {FLOW,(27,27)=__norm})
                es_pure: true
                es_heap: true
@@ -223,200 +24,194 @@ Good Context: [es_formula:
                es_var_label: None]
 
 conseq:
- EBase exists (E)[](I)[m1](ex)[]x::node<m1,-,-,-,->@M & a=b &
+ EBase exists (E)[](I)[m1; e; f](ex)[]x::node<m1,-,-,e,f>@M & e=f &
        {FLOW,(27,27)=__norm}
 
 !!!:0: 0: [entail:0][post:0]heap_entail_one_context_struc:
 ctx:
  es_formula: 
-  EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * y::node<m_42,n_43,-,-,->@M &
-  m_42=m & n_43=n & {FLOW,(27,27)=__norm})
+  EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+  y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
+  {FLOW,(27,27)=__norm})
  es_pure: true
  es_heap: true
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- EBase exists (E)[](I)[m1](ex)[]x::node<m1,-,-,-,->@M & a=b &
+ EBase exists (E)[](I)[m1; e; f](ex)[]x::node<m1,-,-,e,f>@M & e=f &
        {FLOW,(27,27)=__norm}
 
 !!!:0: 0: [entail:0][post:0]heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
 context:
  es_formula: 
-  EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * y::node<m_42,n_43,-,-,->@M &
-  m_42=m & n_43=n & {FLOW,(27,27)=__norm})
+  EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+  y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
+  {FLOW,(27,27)=__norm})
  es_pure: true
  es_heap: true
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- EBase exists (E)[](I)[m1](ex)[]x::node<m1,-,-,-,->@M & a=b &
+ EBase exists (E)[](I)[m1; e; f](ex)[]x::node<m1,-,-,e,f>@M & e=f &
        {FLOW,(27,27)=__norm}
 
 !!!:0: 0: [entail:0][post:0]heap_entail_one_context:
 ctx:
  es_formula: 
-  EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * y::node<m_42,n_43,-,-,->@M &
-  m_42=m & n_43=n & {FLOW,(27,27)=__norm})
+  EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+  y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
+  {FLOW,(27,27)=__norm})
  es_pure: true
  es_heap: true
- es_gen_impl_vars: [m1]
+ es_gen_impl_vars: [m1; e; f]
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- x::node<m1,-,-,-,->@M & a=b & {FLOW,(27,27)=__norm}
+ x::node<m1,-,-,e,f>@M & e=f & {FLOW,(27,27)=__norm}
 
 
 !!!:0: 0: [entail:0][post:0]heap_entail_after_sat: invoking heap_entail_conjunct_lhs
 context:
  es_formula: 
-  EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * y::node<m_42,n_43,-,-,->@M &
-  m_42=m & n_43=n & {FLOW,(27,27)=__norm})
+  EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+  y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
+  {FLOW,(27,27)=__norm})
  es_pure: true
  es_heap: true
- es_gen_impl_vars: [m1]
+ es_gen_impl_vars: [m1; e; f]
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- x::node<m1,-,-,-,->@M & a=b & {FLOW,(27,27)=__norm}
+ x::node<m1,-,-,e,f>@M & e=f & {FLOW,(27,27)=__norm}
 
 !!!:0: 0: [entail:0][post:0]heap_entail_conjunct:
 context:
  es_formula: 
-  EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * y::node<m_42,n_43,-,-,->@M &
-  m_42=m & n_43=n & {FLOW,(27,27)=__norm})
+  EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+  y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
+  {FLOW,(27,27)=__norm})
  es_pure: true
  es_heap: true
- es_gen_impl_vars: [m1]
+ es_gen_impl_vars: [m1; e; f]
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- x::node<m1,-,-,-,->@M & a=b & {FLOW,(27,27)=__norm}
+ x::node<m1,-,-,e,f>@M & e=f & {FLOW,(27,27)=__norm}
 
 !!!:0: 0: [entail:0][post:0]heap_entail_conjunct_helper:
 context:
  es_formula: 
-  EXISTS(m_42,n_43: x::node<m,n,-,a,b>@M * y::node<m_42,n_43,-,-,->@M &
-  m_42=m & n_43=n & {FLOW,(27,27)=__norm})
+  EXISTS(a_29,m_30,n_31: x::node<m,n,-,a,a_29>@M * 
+  y::node<m_30,n_31,-,-,->@M & a_29=a & m_30=m & n_31=n &
+  {FLOW,(27,27)=__norm})
  es_pure: true
  es_heap: true
- es_gen_impl_vars: [m1]
+ es_gen_impl_vars: [m1; e; f]
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- x::node<m1,-,-,-,->@M & a=b & {FLOW,(27,27)=__norm}
+ x::node<m1,-,-,e,f>@M & e=f & {FLOW,(27,27)=__norm}
 
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]heap_entail_conjunct_helper:
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]heap_entail_conjunct_helper:
 context:
  es_formula: 
-  x::node<m,n,-,a,b>@M * y::node<m_65,n_66,-,-,->@M & m_65=m & n_66=n &
-  {FLOW,(27,27)=__norm}
+  x::node<m,n,-,a,a_54>@M * y::node<m_55,n_56,-,-,->@M & a_54=a & m_55=m & 
+  n_56=n & {FLOW,(27,27)=__norm}
  es_pure: true
  es_heap: true
- es_gen_impl_vars: [m1]
+ es_gen_impl_vars: [m1; e; f]
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- x::node<m1,-,-,-,->@M & a=b & {FLOW,(27,27)=__norm}
+ x::node<m1,-,-,e,f>@M & e=f & {FLOW,(27,27)=__norm}
 
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]heap_entail_conjunct_helper: conseq has an non-empty heap component
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]heap_entail_conjunct_helper: conseq has an non-empty heap component
 context:
  es_formula: 
-  x::node<m,n,-,a,b>@M * y::node<m_65,n_66,-,-,->@M & m_65=m & n_66=n &
-  {FLOW,(27,27)=__norm}
+  x::node<m,n,-,a,a_54>@M * y::node<m_55,n_56,-,-,->@M & a_54=a & m_55=m & 
+  n_56=n & {FLOW,(27,27)=__norm}
  es_pure: true
  es_heap: true
- es_gen_impl_vars: [m1]
+ es_gen_impl_vars: [m1; e; f]
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- x::node<m1,-,-,-,->@M & a=b & {FLOW,(27,27)=__norm}[do_match] input LHS =  es_formula: y::node<m_65,n_66,-,-,->@M & m_65=m & n_66=n & {FLOW,(27,27)=__norm}
- es_pure: true
- es_heap: true
- es_gen_impl_vars: [m1]
- es_aux_conseq: true
- es_must_error: None
- es_var_label: None
-[do_match] RHS =  true & a=b & {FLOW,(27,27)=__norm}
-[do_match] matching  x::node<m,n,-,a,b>@M |-  x::node<m1,-,-,-,->@M
+ x::node<m1,-,-,e,f>@M & e=f & {FLOW,(27,27)=__norm}
 
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]do_match: using  x::node<m,n,-,a,a_54>@M to prove  x::node<m1,-,-,e,f>@M
 
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]do_match: using  x::node<m,n,-,a,b>@M to prove  x::node<m1,-,-,-,->@M[do_match] output LHS =  y::node<m_65,n_66,-,-,->@M * x::node<-,n,-,a,b>@M & m_65=m & n_66=n & m1=m &
-{FLOW,(27,27)=__norm}
-[do_match] output RHS =  true & a=b & {FLOW,(27,27)=__norm}
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]do_match (after): LHS:  y::node<m_55,n_56,-,-,->@M & a_54=a & m_55=m & n_56=n & m1=m & e=a & 
+f=a_54 & {FLOW,(27,27)=__norm}
 
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]do_match (after): RHS: true & e=f & {FLOW,(27,27)=__norm}
 
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]do_match (after): LHS:  y::node<m_65,n_66,-,-,->@M * x::node<-,n,-,a,b>@M & m_65=m & n_66=n & m1=m &
-{FLOW,(27,27)=__norm}
-
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]do_match (after): RHS: true & a=b & {FLOW,(27,27)=__norm}
-
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]heap_entail_conjunct:
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]heap_entail_conjunct:
 context:
  es_formula: 
-  y::node<m_65,n_66,-,-,->@M * x::node<-,n,-,a,b>@M & m_65=m & n_66=n & 
-  m1=m & {FLOW,(27,27)=__norm}
+  y::node<m_55,n_56,-,-,->@M & a_54=a & m_55=m & n_56=n & m1=m & e=a & 
+  f=a_54 & {FLOW,(27,27)=__norm}
  es_pure: true
- es_heap: x::node<m,n,-,a,b>@M
+ es_heap: x::node<m,n,-,a,a_54>@M
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- true & a=b & {FLOW,(27,27)=__norm}
+ true & e=f & {FLOW,(27,27)=__norm}
 
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]heap_entail_conjunct_helper:
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]heap_entail_conjunct_helper:
 context:
  es_formula: 
-  y::node<m_65,n_66,-,-,->@M * x::node<-,n,-,a,b>@M & m_65=m & n_66=n & 
-  m1=m & {FLOW,(27,27)=__norm}
+  y::node<m_55,n_56,-,-,->@M & a_54=a & m_55=m & n_56=n & m1=m & e=a & 
+  f=a_54 & {FLOW,(27,27)=__norm}
  es_pure: true
- es_heap: x::node<m,n,-,a,b>@M
+ es_heap: x::node<m,n,-,a,a_54>@M
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- true & a=b & {FLOW,(27,27)=__norm}
+ true & e=f & {FLOW,(27,27)=__norm}
 
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]heap_entail_conjunct_helper: conseq has an empty heap component
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]heap_entail_conjunct_helper: conseq has an empty heap component
 context:
  es_formula: 
-  y::node<m_65,n_66,-,-,->@M * x::node<-,n,-,a,b>@M & m_65=m & n_66=n & 
-  m1=m & {FLOW,(27,27)=__norm}
+  y::node<m_55,n_56,-,-,->@M & a_54=a & m_55=m & n_56=n & m1=m & e=a & 
+  f=a_54 & {FLOW,(27,27)=__norm}
  es_pure: true
- es_heap: x::node<m,n,-,a,b>@M
+ es_heap: x::node<m,n,-,a,a_54>@M
  es_aux_conseq: true
  es_must_error: None
  es_var_label: None
 conseq:
- true & a=b & {FLOW,(27,27)=__norm}
+ true & e=f & {FLOW,(27,27)=__norm}
 
 !!!:0: 0: [entail:0][post:0]simplify the consequent with omega
 
+!!!:0: 0: [entail:0][post:0]IMP #1
+
 !!!:0: 0: [entail:0][post:0]IMP #2
 
-!!!:0: 0: [entail:0][post:0]IMP #11
+!!!:0: 0: [entail:0][post:0]ante:  a_54=a & m_55=m & n_56=n & m1=m & e=a & f=a_54 & y=1 & x=2
 
-!!!:0: 0: [entail:0][post:0]ante:  false
+!!!:0: 0: [entail:0][post:0]conseq:  e=f
 
-!!!:0: 0: [entail:0][post:0]conseq:  a=b
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]heap_entail_empty_heap: formula is valid
 
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]heap_entail_empty_heap: formula is valid
-
-!!!bugs/data-holes.slk:41: 13: [entail:0][post:0]heap_entail_empty_heap: res_ctx:
+!!!bugs/dh1.slk:17: 13: [entail:0][post:0]heap_entail_empty_heap: res_ctx:
  es_formula: 
-  y::node<m_65,n_66,-,-,->@M * x::node<-,n,-,a,b>@M & m_65=m & n_66=n & 
-  m1=m & {FLOW,(27,27)=__norm}
+  y::node<m_55,n_56,-,-,->@M & a_54=a & m_55=m & n_56=n & m1=m & e=a & 
+  f=a_54 & {FLOW,(27,27)=__norm}
  es_pure: true
- es_heap: x::node<m,n,-,a,b>@M
+ es_heap: x::node<m,n,-,a,a_54>@M
  es_aux_conseq: true
  es_must_error: None
- es_var_label: NoneEntail(2)=Valid.
- y::node<m,n,-,-,->@M * x::node<-,n,-,a,b>@M & m1=m & {FLOW,(27,27)=__norm}
-Stop Omega... 5 invocations 
+ es_var_label: NoneEntail(1)=Valid.
+ y::node<m,n,-,-,->@M & m1=m & e=a & f=a & {FLOW,(27,27)=__norm}
+Stop Omega... 2 invocations 

@@ -2139,7 +2139,7 @@ and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evar
   let pr_st l  = pr_list (fun (c,_)-> pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var c) l in
   let pr_st2 l  = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) l in
   let pr ((lhs,_),(rhs,_),s) = (pr_pair pr_p pr_p (lhs,rhs))^"subst:"^(pr_st2 s) in
-  Gen.Debug.ho_3 "get_eqns_free" pr_st pr_svl pr_svl  pr (fun _ _ _ -> get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
+  Gen.Debug.no_3 "get_eqns_free" pr_st pr_svl pr_svl  pr (fun _ _ _ -> get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
       (struc_expl_inst : CP.spec_var list) pos) st evars expl_inst
 
 (* extracts those involve free vars from a set of equations  - here free means that it is not existential and it is not meant for explicit instantiation *)
@@ -5117,9 +5117,9 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
-	print_endline ("[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate));
-	print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs));
-	print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node));
+	(* print_endline ("[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
+	(* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
+	(* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
   Debug.devel_pprint ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node)) pos;
@@ -5137,35 +5137,36 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let l_h,l_p,l_fl,l_b,l_t = split_components estate.es_formula in
     let r_h,r_p,r_fl,r_b,r_t = split_components rhs in
 	(* An Hoa : match l_node and r_node and push the remain to l_h, r_h *)
-	let l_h,r_h = match (l_node,r_node) with
+	let rem_l_node,r_h = match (l_node,r_node) with
 		| (DataNode dnl, DataNode dnr) -> (* let _ = print_endline ("[do_match] An Hoa Implementation : Push remains of data node matching to the lhs and rhs") in *)
-									let new_args = List.combine l_args r_args in
-									(* [Internal] function to cancel out two variables *)
-									let hole = CP.SpecVar (UNK,"#",Unprimed) in
-									let cancel_fun (x,y) = if (CP.is_hole_spec_var x || CP.is_hole_spec_var y) then 
-											(* 3 cases : (#,v) ; (#,#) ; (v,#) *) (x,y)
-										else (* (v,v) *) (hole,hole) in
- 									let new_args = List.map cancel_fun new_args in
-									let new_l_args, new_r_args = List.split new_args in
-									(* let _ = print_endline ("[do_match] cancelled lhs node = { " ^ (PR.string_of_spec_var_list new_l_args) ^ " } ==> " ^ (if CF.is_empty new_l_args then "empty" else "add to lhs")) in *)
-									(* let _ = print_endline ("[do_match] cancelled rhs node = { " ^ (PR.string_of_spec_var_list new_r_args) ^ " } ==> " ^ (if CF.is_empty new_r_args then "empty" else "add to rhs")) in *)
-									let new_l_holes = CF.compute_holes_list new_l_args in
-									let new_r_holes = CF.compute_holes_list new_r_args in
-									(* let _ = print_endline ("[do_match] lhs holes = { " ^ (String.concat "," (List.map string_of_int new_l_holes)) ^ " }") in *)
-									(* let _ = print_endline ("[do_match] rhs holes = { " ^ (String.concat "," (List.map string_of_int new_r_holes)) ^ " }") in *)
-									(* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)
-									let new_l_h = l_h (* if (CF.is_empty new_l_args) then l_h 
-										else let rem_l = DataNode { dnl with
-													h_formula_data_arguments = new_l_args;
-													h_formula_data_holes = new_l_holes;
-												} in mkStarH l_h rem_l no_pos *) in
-									let new_r_h = if (CF.is_empty new_r_args) then r_h 
-										else let rem_r = DataNode { dnr with
-													h_formula_data_arguments = new_r_args;
-													h_formula_data_holes = new_r_holes;
-												} in mkStarH r_h rem_r no_pos in
-										(new_l_h,new_r_h)
-		| _ -> (l_h,r_h) (* No change if we are not matching data node against data node *)
+			let new_args = List.combine l_args r_args in
+			let hole = CP.SpecVar (UNK,"#",Unprimed) in
+			(* [Internal] function to cancel out two variables *)
+			let cancel_fun (x,y) = if (CP.is_hole_spec_var x || CP.is_hole_spec_var y) then 
+					(* 3 cases : (#,v) ; (#,#) ; (v,#) *) (x,y)
+				else (* (v,v) *) (hole,hole) in
+ 			let new_args = List.map cancel_fun new_args in
+			let new_l_args,new_r_args = List.split new_args in
+			(* let _ = print_endline ("[do_match] cancelled lhs node = { " ^ (PR.string_of_spec_var_list new_l_args) ^ " } ==> " ^ (if CF.is_empty new_l_args then "empty" else "add to lhs")) in *)
+			(* let _ = print_endline ("[do_match] cancelled rhs node = { " ^ (PR.string_of_spec_var_list new_r_args) ^ " } ==> " ^ (if CF.is_empty new_r_args then "empty" else "add to rhs")) in *)
+			let new_l_holes = CF.compute_holes_list new_l_args in
+			let new_r_holes = CF.compute_holes_list new_r_args in
+			(* let _ = print_endline ("[do_match] lhs holes = { " ^ (String.concat "," (List.map string_of_int new_l_holes)) ^ " }") in *)
+			(* let _ = print_endline ("[do_match] rhs holes = { " ^ (String.concat "," (List.map string_of_int new_r_holes)) ^ " }") in *)
+			(* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)
+			let rem_l_node = if (CF.is_empty new_l_args) then HTrue
+				else DataNode { dnl with
+								h_formula_data_arguments = new_l_args;
+								h_formula_data_holes = new_l_holes; } in
+			let rem_r_node = if (CF.is_empty new_r_args) then HTrue 
+				else DataNode { dnr with
+								h_formula_data_arguments = new_r_args;
+								h_formula_data_holes = new_r_holes;	} in
+			let new_r_h = match rem_r_node with
+							| HTrue -> r_h
+							| _ -> mkStarH r_h rem_r_node no_pos in
+				(rem_l_node,new_r_h)
+		| _ -> (HTrue,r_h) (* No change if we are not matching data node against data node *)
 	in
 	(* An Hoa : end added code *)
     let label_list = try 
@@ -5210,7 +5211,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_consumed = 
       if not(get_imm r_node)
       then mkStarH l_node estate.es_heap pos 
-      else  estate.es_heap
+      else (* An Hoa : push remainder of l_node after matching to heap *)
+		match rem_l_node with 
+		| HTrue -> estate.es_heap
+		| _ -> mkStarH rem_l_node estate.es_heap pos 
     in
     let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
       |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
@@ -5240,8 +5244,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_es' = new_es in (* {new_es with (\* es_evars = new_es.es_evars @ (snd new_subst); *\) es_must_match = false} in *)
     let new_es = pop_exists_estate ivars (* (fst new_subst) *) new_es' in
     let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
-	print_endline ("[do_match] output LHS = " ^ (Cprinter.string_of_context_short new_ctx));
-    print_endline ("[do_match] output RHS = " ^ (Cprinter.string_of_formula new_conseq));
+	(* print_endline ("[do_match] output LHS = " ^ (Cprinter.string_of_context_short new_ctx)); *)
+	(* print_endline ("[do_match] output RHS = " ^ (Cprinter.string_of_formula new_conseq)); *)
     Debug.devel_pprint ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx)) pos;
     Debug.devel_pprint ("do_match (after): RHS:"
 	^ (Cprinter.string_of_formula new_conseq)) pos;
