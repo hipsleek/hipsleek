@@ -2099,7 +2099,37 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_assign_rhs = rhs;
           I.exp_assign_path_id = pid;
           I.exp_assign_pos = pos_a	} ->
-		  (* let _ = print_string ("trans_exp :: case Assign with lhs = " ^ Iprinter.string_of_exp lhs ^ " and rhs = " ^ Iprinter.string_of_exp rhs ^ "\n") in *)
+			(* An Hoa : WORKING *)
+		  let _ = print_endline ("[trans_exp] assignment input = { " ^ Iprinter.string_of_exp lhs ^ " , " ^ Iprinter.string_of_exp rhs ^ " }") in
+			(* An Hoa : pre-process the inline field access *)
+			(* let is_member_exp e = match e with | I.Member _ -> true | _ -> false in
+			(* [Internal] function to expand an expression with a list of field access *)
+			let rec produce_member_exps base fseqs = match base with
+				| I.Member{	I.exp_member_base = base_e;
+							I.exp_member_fields = fs;
+							I.exp_member_path_id = pid;
+							I.exp_member_pos = pos } ->
+					List.map (fun x -> I.Member {	I.exp_member_base = base_e;
+													I.exp_member_fields = List.append fs x;
+													I.exp_member_path_id = pid;
+													I.exp_member_pos = pos}) fseqs
+				| Var _ -> List.map (fun x -> I.Member {I.exp_member_base = base;
+														I.exp_member_fields = x;
+														I.exp_member_path_id = no_pid;
+														I.exp_member_pos = no_pos }) fseqs 
+			in
+			if (is_member_exp lhs) then
+				match lhs with
+					| I.Member lhs1 ->
+						let fs,remf,remt = compact_field_access_sequence ddefs in
+						let fields = I.get_all_fields ddefs remt in
+						let erhs = produce_member_exps rhs fields in
+						let fields = List.map (fun x -> String.concat remf (I.get_field_name x)) fields in
+						let nlhs = I.Member {lhs1 with I.exp_member_fields = fs} in
+						let elhs = produce_member_exps nlhs fields in
+							(* output the sequence elhs{i} = erhs{i} *)
+			(* else if (is_member_exp rhs) then *)
+			else *) (* An Hoa : end of additional pre-processing, continue as usual *)
           (match aop with
             | I.OpAssign ->
                   (match lhs with
@@ -2517,7 +2547,10 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           (* let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in *)
 			(* An Hoa : compact the field access sequence *)
 			let et = snd (trans_exp prog proc e) in
-			let fs = compact_field_access_sequence prog et fs in
+			let fs,rem,remt = compact_field_access_sequence prog et fs in
+			if rem != "" then
+				failwith "[trans_exp] on member exp expect non-inline field access"
+			else
           let r = 
 	        if (!Globals.allow_imm) then
 	          flatten_to_bind prog proc e (List.rev fs) None pid true pos
@@ -3161,7 +3194,7 @@ and compact_field_access_sequence prog root_type field_seq =
 				(cfsq,ncf,nct)
 			else
 				(List.append cfsq [ncf],"",nct) in
-	let res,remainding_inline_field,_ = List.fold_left fold_function ([],"",root_type) field_seq in
+	let res = List.fold_left fold_function ([],"",root_type) field_seq in
 	(* let _ = print_endline ("[compact_field_access_sequence] output = { " ^ (String.concat " ; " res) ^ " }") in *)
 		res
 
@@ -3732,7 +3765,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 					(* let _ = print_endline ("Field access offset = " ^ (string_of_int field_offset)) in *)
 					let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
 					(* let _ = print_endline ("Type " ^ rootptr_type_name ^ " consists of " ^ (string_of_int num_ptrs) ^ " pointers.") in *) 
-					(* An Hoa : WORKING The rest are copied from the original code with modification to account for the holes *)
+					(* An Hoa : The rest are copied from the original code with modification to account for the holes *)
 					let labels = List.map (fun _ -> "") exps in
 					let hvars = match_exp (List.combine exps labels) pos in
 					(* [Internal] Create a list [x,x+1,...,x+n-1] *)
@@ -5219,7 +5252,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_pos = pos
 	        } ->
 			(* let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
-			(* An Hoa : WORKING POSITION Deal with the generic pointer! *)
+			(* An Hoa : Deal with the generic pointer! *)
 			if (c = Parser.generic_pointer_type_name) then 
 				(* Assumptions:
 				 * (i)  ies to contain a single argument, namely the value of the pointer

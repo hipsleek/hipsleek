@@ -10,7 +10,10 @@ open Gen.Basic
 (* spec var *)
 type spec_var =
   | SpecVar of (typ * ident * primed)
-  
+
+let is_hole_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n.[0] = '#'
+
 	(** An Hoa : Array whose elements are all of type typ.
       In principle, this is 1D array. To have higher 
 			dimensional array, but we need to use nested arrays.
@@ -330,7 +333,7 @@ and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
 
 and afv (af : exp) : spec_var list = match af with
   | Null _ -> []
-  | Var (sv, _) -> [sv]
+  | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
   | IConst _ -> []
   | FConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
@@ -5380,5 +5383,4 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
   let pr = !print_formula in
   Gen.Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq 
 
-let is_hole_spec_var sv = match sv with
-	| SpecVar (_,n,_) -> n.[0] = '#'
+
