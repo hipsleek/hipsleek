@@ -5153,11 +5153,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 									let new_r_holes = CF.compute_holes_list new_r_args in
 									(* let _ = print_endline ("[do_match] lhs holes = { " ^ (String.concat "," (List.map string_of_int new_l_holes)) ^ " }") in *)
 									(* let _ = print_endline ("[do_match] rhs holes = { " ^ (String.concat "," (List.map string_of_int new_r_holes)) ^ " }") in *)
-									let new_l_h = if (CF.is_empty new_l_args) then l_h 
+									(* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)
+									let new_l_h = l_h (* if (CF.is_empty new_l_args) then l_h 
 										else let rem_l = DataNode { dnl with
 													h_formula_data_arguments = new_l_args;
 													h_formula_data_holes = new_l_holes;
-												} in mkStarH l_h rem_l no_pos in
+												} in mkStarH l_h rem_l no_pos *) in
 									let new_r_h = if (CF.is_empty new_r_args) then r_h 
 										else let rem_r = DataNode { dnr with
 													h_formula_data_arguments = new_r_args;
@@ -5204,7 +5205,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
     let tmp_h2, tmp_p2, tmp_fl2, tmp_b2, _ = split_components tmp_conseq' in
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
-	(* An Hoa : fix the new_conseq here *)
+	(* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
     (* only add the consumed node if the node matched on the rhs is mutable *)
     let new_consumed = 
       if not(get_imm r_node)
