@@ -494,6 +494,24 @@ let rec has_existential_quantifier f0 negation_bounded =
       (has_existential_quantifier f2 negation_bounded)
   | CP.BForm _ -> false
 
+let rec has_existential_quantifier_of_int f0 negation_bounded =
+  match f0 with 
+  | CP.Exists (_, f, _, _) -> 
+      if ( (not negation_bounded) && (not (CP.is_float_formula f))) then 
+        true
+      else
+        has_existential_quantifier_of_int f negation_bounded 
+  | CP.Forall (_, f, _, _) ->
+      if (negation_bounded && (not (CP.is_float_formula f)) )then
+        true
+      else
+        has_existential_quantifier_of_int f negation_bounded
+  | CP.Not (f, _,  _) -> has_existential_quantifier_of_int f (not negation_bounded)
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
+      (has_existential_quantifier_of_int f1 negation_bounded) ||
+      (has_existential_quantifier_of_int f2 negation_bounded)
+  | CP.BForm _ -> false
+
 let has_exists2 f0 =
   let f_f neg_bounded e = match e with
     | CP.Exists _ -> if not neg_bounded then Some true else None
@@ -1152,59 +1170,40 @@ let is_valid f imp_no =
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   let has_eq f = has_existential_quantifier f false in
+  let has_eq_int f = has_existential_quantifier_of_int f false in
   let elim_eq f =
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
     let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
-    (* let _ = print_string ("[Redlog] imply_no_cache: " *)
-    (*                       ^ "\n f = " ^ (string_of_formula f) *)
-    (*                       ^ "\n\n") in *)
-
-    (* let _ = print_string ("[Redlog] imply_no_cache: " *)
-    (*                       ^ "\n (weakened) wf = " ^ (string_of_formula wf) *)
-    (*                       ^ "\n\n") in *)
-    is_valid wf imp_no    
+    is_valid wf imp_no
   in
-   let res = 
+  let res = 
     if is_linear_formula f then
-
       (* (\*LDK*\) *)
       (* let _ = print_string ("[Redlog] imply_no_cache: is_linear_formula = true \n") in *)
-
       call_omega (lazy (Omega.is_valid f !timeout))
-      (* (is_valid f imp_no) *)
+    (* (is_valid f imp_no) *)
     else
-      (* (\*LDK*\) *)
-      (* let _ = print_string ("[Redlog] imply_no_cache: is_linear_formula = false \n") in *)
-
       if has_eq f then
-
-      (* (\*LDK*\) *)
-      (*   let _ = print_string ("[Redlog] imply_no_cache: has_eq f  = true \n") in *)
-
+        (*try to eliminate existential variables if applicable*)
         let eef = elim_eq f in
-        if (has_eq eef) then
-          let _ = if (not (CP.is_float_formula f)) then
-          (*This warning should only appear when we are proving 
-            integer formula using redlog ???*)
-          (print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog"))
-          in
-          valid eef
+        if (has_eq_int eef) then
+          begin
+              (* If there is exist quantified over integers, issue the warning*)
+              (print_string ("\n[Redlog] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog\n"));
+              valid eef
+          end
         else
           let _ = incr success_ee_count in
           valid eef
       else 
-
-        (* (\*LDK*\) *)
-        (* let _ = print_string ("[Redlog] imply_no_cache: has_eq f  = false \n") in *)
-
         valid f
   in
   res
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
-  Gen.Debug.ho_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
+  Gen.Debug.no_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
 
 let imply ante conseq imp_no =
 
