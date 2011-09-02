@@ -2100,9 +2100,9 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_assign_path_id = pid;
           I.exp_assign_pos = pos_a	} ->
 			(* An Hoa : WORKING *)
-		  let _ = print_endline ("[trans_exp] assignment input = { " ^ Iprinter.string_of_exp lhs ^ " , " ^ Iprinter.string_of_exp rhs ^ " }") in
+		  (*let _ = print_endline ("[trans_exp] assignment input = { " ^ Iprinter.string_of_exp lhs ^ " , " ^ Iprinter.string_of_exp rhs ^ " }") in
 			(* An Hoa : pre-process the inline field access *)
-			(* let is_member_exp e = match e with | I.Member _ -> true | _ -> false in
+			let is_member_exp e = match e with | I.Member _ -> true | _ -> false in
 			(* [Internal] function to expand an expression with a list of field access *)
 			let rec produce_member_exps base fseqs = match base with
 				| I.Member{	I.exp_member_base = base_e;

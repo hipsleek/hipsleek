@@ -5117,9 +5117,9 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
-	(* print_endline ("[do_match] LHS = "^ (Cprinter.string_of_entail_state estate)); *)
-	(* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
-	(* print_endline ("[do_match] using " ^ (Cprinter.string_of_h_formula l_node) ^ " to prove " ^ (Cprinter.string_of_h_formula r_node)); *)
+	print_endline ("[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate));
+	print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs));
+	print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node));
   Debug.devel_pprint ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node)) pos;
@@ -5237,6 +5237,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_es' = new_es in (* {new_es with (\* es_evars = new_es.es_evars @ (snd new_subst); *\) es_must_match = false} in *)
     let new_es = pop_exists_estate ivars (* (fst new_subst) *) new_es' in
     let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
+	print_endline ("[do_match] output LHS = " ^ (Cprinter.string_of_context_short new_ctx));
+    print_endline ("[do_match] output RHS = " ^ (Cprinter.string_of_formula new_conseq));
     Debug.devel_pprint ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx)) pos;
     Debug.devel_pprint ("do_match (after): RHS:"
 	^ (Cprinter.string_of_formula new_conseq)) pos;
