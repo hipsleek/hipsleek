@@ -37,7 +37,11 @@ checkentail  x::node<m,n,o,#,#> * x::node<#,#,a,b,c> |- false.
 //print residue.
 
 checkentail x::node<a,b,c,d,e> |- x::node<a1,b1,c1,d1,e1> & a = b.
-
+/*
 checkentail  x::node<m,n,#,a,b> * y::node<m,n,#,#,#> 
   |- x::node<m1,#,#,#,#> & a=b.
 print residue.
+*/
+
+checkentail  x::node<a1,a2,a3,a4,a5>
+  |- x::node<m1,m2,m3,m4,m5> .
