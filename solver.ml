@@ -2761,8 +2761,8 @@ and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evar
   let pr_st l  = pr_list (fun (c,_)-> pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var c) l in
   let pr_st2 l  = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) l in
   let pr ((lhs,_),(rhs,_),s) = (pr_pair pr_p pr_p (lhs,rhs))^"subst:"^(pr_st2 s) in
-  Gen.Debug.no_3 "get_eqns_free" pr_st pr_svl pr_svl  pr (fun _ _ _ -> get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
-      (struc_expl_inst : CP.spec_var list) pos) st evars expl_inst
+  Gen.Debug.no_4 "get_eqns_free" pr_st pr_svl pr_svl pr_svl pr (fun _ _ _ _ -> get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
+      (struc_expl_inst : CP.spec_var list) pos) st evars expl_inst struc_expl_inst
 
 (* extracts those involve free vars from a set of equations  - here free means that it is not existential and it is not meant for explicit instantiation *)
 (*NOTE: should (fr,t) be added for (CP.mem fr expl_inst)*)
@@ -5711,7 +5711,9 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
 
             let exist_vars = if (is_folding) then 
                   (*LDK: avoid proving constraints related to implicit inst variables when folding*)
-                  estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars@estate.es_gen_impl_vars 
+                  (*??? avoid proving expl_vars as well*)
+                  estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars  *)
+                  (* estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars@estate.es_gen_impl_vars  *)
                 else
                   estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *)
 in
@@ -6556,6 +6558,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* in *)
 
     let rho = List.combine rho_0 label_list in (* with branch label *)
+    (*impl_tvars are impl_vars that are replaced by ivars in rho. 
+      A pair (impl_var,ivar) belong to rho => 
+        impl_var belongs to impl_tvars
+        ivar belongs to ivars
+        (ivar,impl_var) belongs to ivar_subs_to_conseq
+    *)
     let ((impl_tvars, ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho estate.es_ivars estate.es_gen_impl_vars pos in
 
     (* (\*LDK*\) *)
@@ -6636,6 +6644,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho_0 estate.es_ivars pos) in *)
     (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
 
+    (*Only instantiate an RHS impl_var to LHS if 
+      it is not matched with an ivar of LHS.
+      if it is matched, it becomes expl_inst in new_expl_ins.
+
+      Note: other_subs will never contain any impl_tvars because 
+      of the pre-processed subs_to_inst_vars*)
     let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
       get_eqns_free other_subs new_exist_vars impl_tvars (* estate.es_evars *) (* estate.es_expl_vars@ *) estate.es_gen_expl_vars pos in
     (*********************************************************************)
@@ -6673,7 +6687,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (*                       ^ "\n new_exist_vars  = " ^ (Cprinter.string_of_spec_var_list new_exist_vars) *)
     (*                       ^"\n\n") in *)
 
-    (*?? should be considered*)
+    (*??? should be re-considered*)
+    (*impl instatiation of frac vars*)
     let to_lhs, to_rhs  = match l_frac, r_frac with
       | None, Some f2 ->
           if (List.mem f2 new_impl_vars)
