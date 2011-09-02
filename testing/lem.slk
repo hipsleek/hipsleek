@@ -7,6 +7,8 @@ pred ls<p> == self = p
 
 lemma self::ls<p>  -> self::ls<r> * r::ls<p>.
 
+// self::ls<p> * p::node<a,b>   <- self::ls<r> * r::ls<p> * p::node<a,b>.
+
 lemma self::ls<p>  <- self::ls<r> * r::ls<p> * p::node<_,_>@I.
 
 checkentail x::ls<p> |- x::ls<r1> * r1::ls<p>.
@@ -19,8 +21,6 @@ print residue.
 checkentail x::ls<r>*r::ls<p> |- x::ls<p>.
 print residue.
 
-checkentail x::ls<r>*r::ls<p>*p::node<a,b> |- x::ls<p>.
-print residue.
 
 checkentail x::ls<r>*r::ls<p>*p::node<a,b>@I |- x::ls<p>.
 print residue.
@@ -31,7 +31,22 @@ or x::node<_,q> * q::ls<r> * r::ls<p>*p::node<a,b>@I & x!=r
  |- x::ls<p>.
 print residue.
 
+checkentail x::ls<p>*p::node<a,b> & x = r 
+or x::node<_,q> * q::ls<r> * r::ls<p>*p::node<a,b> & x!=r
+ |- x::ls<p>*p::node<c,d>.
+print residue.
 
+checkentail x::ls<p>*p::node<a,b> & x = r 
+ |- x::ls<p>*p::node<c,d>.
+print residue.
 
+checkentail x::node<_,q> * q::ls<r> * r::ls<p>*p::node<a,b> & x!=r 
+ |- x::ls<s> * s::node<a,b> & s=p.
+// completeness bug here! should succeed.
+print residue.
+
+checkentail x::ls<r>*r::ls<p> * p::node<a,b> 
+   |- x::ls<p>  .
+print residue.
 
 
