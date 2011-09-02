@@ -447,6 +447,7 @@ and is_complex_heap (h : h_formula) : bool = match h with
 
 and is_coercible_x (h : h_formula) : bool = match h with
   | ViewNode ({h_formula_view_coercible = c}) -> c
+  | DataNode _ -> true (*LDK: assume that all data nodes are coercible*)
   | _ -> false
 
 and is_coercible (h : h_formula) : bool =

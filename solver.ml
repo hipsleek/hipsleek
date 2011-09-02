@@ -521,7 +521,9 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
                    h_formula_data_frac_perm = frac;
 		h_formula_data_pos = pos}) ->
             let i = fresh_int2 () in
-            let non_null = CP.mkEqVarInt p i pos in
+            (*LDK: not check for alias*)
+            let non_null = CP.mkTrue pos in
+            (* let non_null = CP.mkEqVarInt p i pos in *)
             (*LDK: add fractional invariant 0<f<=1, if applicable*)
             (match frac with
               | None ->
@@ -8276,13 +8278,27 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
       (* h_formula_view_original = original; (*LDK: unused*) *)
       h_formula_view_remaining_branches = br1;
       h_formula_view_frac_perm = frac1; (*LDK*)
-      h_formula_view_arguments = ps1} as h1),
+      h_formula_view_arguments = ps1} (* as h1 *)),
 	  ViewNode ({ h_formula_view_node = p2;
       h_formula_view_name = c2;
       h_formula_view_remaining_branches = br2;
       h_formula_view_frac_perm = frac2; (*LDK*)
-      h_formula_view_arguments = ps2} as h2) 
-          when CF.is_eq_view_name(*is_eq_view_spec*) h1 h2  (* c1=c2 && (br_match br1 br2) *)-> begin
+      h_formula_view_arguments = ps2} (* as h2 *)) 
+          (* when CF.is_eq_view_name(\*is_eq_view_spec*\) h1 h2  (\* c1=c2 && (br_match br1 br2) *\)->  *)
+
+	  | DataNode ({ h_formula_data_node = p1;
+	    h_formula_data_name = c1;
+	    h_formula_data_origins = origs;
+	    h_formula_data_remaining_branches = br1;
+	    h_formula_data_frac_perm = frac1; (*LDK*)
+	    h_formula_data_arguments = ps1} (* as h1 *)),
+        DataNode ({ h_formula_data_node = p2;
+	    h_formula_data_name = c2;
+	    h_formula_data_remaining_branches = br2;
+	    h_formula_data_frac_perm = frac2; (*LDK*)
+	    h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
+
+begin
 
           (* (\*LDK: propagate the permission in node to the lhs_heap*\) *)
           (* let h2,frac2 = (match frac1 with *)
@@ -8509,24 +8525,35 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 			      (true, new_f)
 		        else if !Globals.case_split then 
                   begin
-                      (*LDK: not yet handle frac perm in this case*)
-		              (*
-		                Doing case splitting based on the guard.
-		              *)
-		              Debug.devel_pprint
-		                  ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
-		              let neg_guard = CP.mkNot lhs_guard_new None pos in
-                      let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
-		              let f0 = normalize 10 f (formula_of_heap node pos) pos in
-		              let f1 = normalize 11 f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
+                      (*LDK: 
+                        - Not yet handle frac perm in this case
+                        - case_split is probably for view nodes only
+                      *)
+
+                      match node with
+                        | ViewNode h1 ->
+
+		                    (*
+		                      Doing case splitting based on the guard.
+		                    *)
+		                    Debug.devel_pprint
+		                        ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
+		                    let neg_guard = CP.mkNot lhs_guard_new None pos in
+                            let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
+		                    let f0 = normalize 10 f (formula_of_heap node pos) pos in
+		                    let f1 = normalize 11 f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 			          (* unfold the case with the negation of the guard. *)
-		              let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
-		              let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
+		                    let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
+		                    let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			          (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
-		              let new_f = mkOr f1 f2 pos in
+		                    let new_f = mkOr f1 f2 pos in
 			          (* if (not(!Globals.lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
 			          (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
-			          (true, new_f)
+			                (true, new_f)
+                        | _ -> 
+                            let _ = print_string ("[Solver.ml] Warning: This case not yet handled properly \n") in
+		                    let new_f = normalize_replace f coer_rhs_new pos in
+			                (true, new_f)
 		          end 
                 else 
                   begin
