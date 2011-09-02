@@ -1184,9 +1184,13 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
       (*   let _ = print_string ("[Redlog] imply_no_cache: has_eq f  = true \n") in *)
 
         let eef = elim_eq f in
-        if has_eq eef then
-          (print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog");
-          valid eef)
+        if (has_eq eef) then
+          let _ = if (not (CP.is_float_formula f)) then
+          (*This warning should only appear when we are proving 
+            integer formula using redlog ???*)
+          (print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog"))
+          in
+          valid eef
         else
           let _ = incr success_ee_count in
           valid eef
@@ -1200,7 +1204,7 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   res
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
-  Gen.Debug.no_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
+  Gen.Debug.ho_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
 
 let imply ante conseq imp_no =
 
