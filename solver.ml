@@ -822,6 +822,104 @@ and prune_pred_struc_x prog (simp_b:bool) f =
   (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
   List.map helper f
 
+
+and normalize_frac_heap prog (f:formula) = 
+					let rec m_find (f:h_formula list->bool) (l:h_formula list list) = match l with 
+						| [] -> ([],[])
+						| h::t -> 
+							if (f h) then (h,t) 
+							else let r,l = m_find f t in (r,h::l) in
+					let unfold_filter l = 
+						if (List.exists is_view l)&&(List.exists is_data l) then List.filter is_view l
+						else [] in
+					let rec h_a_grp_f aset l :(h_formula list list) = match l with 
+					   | [] -> []
+					   | h::t -> 
+						 let v = get_node_var h in
+						 let a = v::(MCP.get_aset aset v) in
+						 let t = h_a_grp_f aset t in
+						 let lha, lhna = m_find (fun c-> Gen.BList.mem_eq CP.eq_spec_var (get_node_var (List.hd c)) a) t in
+						 (h::lha):: lhna in	
+					let rec perm_folder (h,l) = match l with
+						| v1::v2::[]-> 
+							let pv1 = Pr.mkVPerm v1 in
+							let pv2 = Pr.mkVPerm v2 in
+							(Pr.mkJoin pv1 pv2 (Pr.mkVPerm h) no_pos,[])
+						| v1::t-> 
+							let pv1 = Pr.mkVPerm v1 in
+							let n_e = Pr.fresh_perm_var () in
+							let rf,rev = perm_folder (n_e,t) in
+							let nf = Pr.mkAnd rf (Pr.mkJoin pv1 (Pr.mkVPerm n_e) (Pr.mkVPerm h) no_pos) no_pos in
+							(nf,n_e::rev)
+						| _-> report_error no_pos ("perm_folder: must have at least two nodes to merge")	in
+		let comb_hlp pos (ih,ip,ipr,iqv) l= match l with
+		    | [] -> report_error no_pos ("normalize_frac_heap: must have at least one node in the aliased list")
+			| h::[] -> (mkStarH_nn h ih pos,ip,ipr,iqv)
+			| h::dups -> 
+				if (List.exists (fun c->[]=(get_node_perm c))l) then (HFalse,ip,ipr,iqv)
+				else 
+					let n_p_v = Pr.fresh_perm_var () in
+					let n_h = set_perm_node (Some n_p_v) h in
+					let v = get_node_var h in
+					let args = v::(get_node_args h) in
+					let p,lpr = List.fold_left (fun (a1,a2) c ->
+						let lv = (get_node_var c)::(get_node_args c) in
+						let lp = List.fold_left2  (fun a v1 v2-> CP.mkAnd a (CP.mkEqVar v1 v2 pos) pos) a1 args lv in
+					   (lp,(get_node_perm h)@a2)) (ip,get_node_perm h) dups in	
+					let npr,n_e = perm_folder (n_p_v,lpr) in
+					let n_h = mkStarH_nn n_h ih pos in
+					let npr = Pr.mkAnd ipr npr pos in
+					(n_h, p, npr , n_p_v::n_e@iqv) in 
+		  let comb_hlp_l l f n_simpl_h :formula= 
+			let (qv, h, p, t, fl, pr, br, lbl, pos) = all_components f in	 
+			let nh,np,npr,qv = List.fold_left (comb_hlp pos) (n_simpl_h,CP.mkTrue pos,pr,qv) l in
+			let np =  MCP.memoise_add_pure_N p np in
+			mkExists_w_lbl qv nh np t fl npr br pos lbl in
+				
+		  let appl_comb_lemmas f w_lem h_alias_grp n_simpl_h :formula= 
+			print_string "could have used a lemma for joining these predicates, for now join trivially";
+			comb_hlp_l h_alias_grp f n_simpl_h  in
+				
+  if  not !Globals.enable_frac_perm then f
+  else 
+	 let (qv, h, p, t, fl, pr, br, lbl, pos) = all_components f in	 
+     let aset = MCP.comp_aliases p in
+	 let l1 = split_h h in
+	 let simpl_h, n_simpl_h = List.partition (fun c-> match c with | DataNode _ | ViewNode _ -> true | _ -> false) l1 in
+	 let n_simpl_h = star_list n_simpl_h pos in
+	 let h_alias_grp = h_a_grp_f aset simpl_h in	 
+	 let n_unfold_l = List.concat (List.map unfold_filter h_alias_grp) in
+	 if n_unfold_l <>[] then 
+		let nf = List.fold_left (fun a c-> unfold_nth 8 (prog,None) a (get_node_var c) true 0 pos) f n_unfold_l in
+		normalize_frac_formula prog nf 
+	 else 
+		let w_lem, wo_lem = List.partition (fun l -> 
+			let hn,t = get_node_name (List.hd l), List.tl l in
+			List.exists (fun c -> (String.compare hn (get_node_name c))<>0) t) h_alias_grp in
+		if w_lem <>[] then 
+			let nf = appl_comb_lemmas f w_lem h_alias_grp n_simpl_h in
+			normalize_frac_formula prog nf 
+		else 
+		  let f = comb_hlp_l h_alias_grp f n_simpl_h in
+		  if List.exists (fun c-> (List.length c) >1) h_alias_grp then  normalize_frac_formula prog f
+		  else f
+  
+and normalize_frac_formula prog f = match f with
+ | Or b -> mkOr (normalize_frac_formula prog b.formula_or_f1) (normalize_frac_formula prog b.formula_or_f2) b.formula_or_pos
+ | Base b -> normalize_frac_heap prog f
+ | Exists e -> normalize_frac_heap prog f
+  
+and normalize_frac_struc prog f = 
+	let hlp f = match f with
+		| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,normalize_frac_struc prog c2)) b.formula_case_branches;}
+		| EBase b->  EBase{b with 
+			formula_ext_base = normalize_frac_formula prog b.formula_ext_base; 
+			formula_ext_continuation = normalize_frac_struc prog b.formula_ext_continuation }
+		| EAssume (l,f,lbl) -> EAssume (l,normalize_frac_formula prog f, lbl)
+		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
+	List.map hlp f
+  
+  
 and prune_preds_x prog (simp_b:bool) (f:formula):formula =   
   let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
@@ -838,22 +936,26 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
               (*Or {o with formula_or_f1 = f1; formula_or_f2 = f2;}*)
     | Exists e ->    
           let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in 
-          let rh, rp0,rpr0,nev0 = normalize_frac_heap rh rp in
-          let rp = f_p_simp (MCP.merge_mems rp rp0 false) in  
-          let rpr = Cpr.mkAnd rpr0 e.formula_exists_perm no_pos in
-          mkExists_w_lbl (e.formula_exists_qvars@nev0) rh rp 
-              e.formula_exists_type e.formula_exists_flow rpr
-              e.formula_exists_branches e.formula_exists_pos e.formula_exists_label
+		  let rp = f_p_simp rp in  
+		  let f = mkExists_w_lbl e.formula_exists_qvars rh rp e.formula_exists_type e.formula_exists_flow e.formula_exists_perm 
+              e.formula_exists_branches e.formula_exists_pos e.formula_exists_label in
               (*Exists {e with formula_exists_pure = rp; formula_exists_heap = rh}*)
+		  normalize_frac_formula prog f
+          (*let rh, rp0,rpr0,nev0 = normalize_--frac_heap rh rp in let rp = f_p_simp (MCP.merge_mems rp rp0 false) in  
+			let rpr = Cpr.mkAnd rpr0 e.formula_exists_perm no_pos in
+          mkExists_w_lbl (e.formula_exists_qvars@nev0) rh rp e.formula_exists_type e.formula_exists_flow rpr e.formula_exists_branches e.formula_exists_pos e.formula_exists_label (*Exists {e with formula_exists_pure = rp; formula_exists_heap = rh}*)*)
     | Base b ->
           let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
-          let rh, rp0,rpr0,nev0 = normalize_frac_heap rh rp in
+		  let rp = f_p_simp rp in
+          let f = mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_perm b.formula_base_branches b.formula_base_pos b.formula_base_label in
+		  normalize_frac_formula prog f
+		  (*let rh, rp0,rpr0,nev0 = normalize_frac_heap rh rp in
           let rp = f_p_simp (MCP.merge_mems rp rp0 false) in
           let rpr = Cpr.mkAnd rpr0 b.formula_base_perm no_pos in
           if (List.length nev0 =0) then 
             mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow rpr b.formula_base_branches b.formula_base_pos b.formula_base_label
           else mkExists_w_lbl nev0 rh rp b.formula_base_type b.formula_base_flow rpr
-              b.formula_base_branches b.formula_base_pos b.formula_base_label in
+              b.formula_base_branches b.formula_base_pos b.formula_base_label *) in
   if not !Globals.allow_pred_spec then f
   else 
     (
@@ -4157,9 +4259,10 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
   let lhs_b = r.formula_base_branches in
   let _ = reset_int2 () in
   let hx = mkStarH_nn lhs_h estate.es_heap pos in
-  let nhx,npx,_,_ = normalize_frac_heap hx lhs_p in
-  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog nhx 1 npx in
-  let tmp0 = MCP.merge_mems lhs_p npx false in
+  if not (is_h_normalized hx lhs_p) then report_error no_pos "xpure_imply: xpuring a non normalized formula" else () ;
+  (*let nhx,npx,_,_ = normalize_--frac_heap hx lhs_p in*)
+  let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog (*nhx*) hx 1 (*npx*) lhs_p in
+  let tmp0 = lhs_p (*MCP.merge_mems lhs_p npx lhs_p false*) in
   let tmp1 = MCP.merge_mems tmp0 xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
@@ -4206,11 +4309,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let lhs_b = lhs.formula_base_branches in
   let _ = reset_int2 () in
   let hx = mkStarH_nn lhs_h estate.es_heap pos in
-  let curr_lhs_h,curr_lhs_p,_,_ = normalize_frac_heap hx lhs_p in
+  if not (is_h_normalized hx lhs_p) then report_error no_pos "heap_entail_empty_rhs_heap: xpuring a non normalized formula" else () ;
+  let curr_lhs_h= hx in
+  (*let curr_lhs_h,curr_lhs_p,_,_ = normalize_--frac_heap hx lhs_p in*)
   let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap 5 prog curr_lhs_h 0 lhs_p in
   let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap 5 prog curr_lhs_h 1 lhs_p in
-  let xpure_lhs_h0 = MCP.merge_mems xpure_lhs_h0 curr_lhs_p false in
-  let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 curr_lhs_p false in
+  (*let xpure_lhs_h0 = MCP.merge_mems xpure_lhs_h0 curr_lhs_p false in
+  let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 curr_lhs_p false in*)
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
@@ -6230,4 +6335,4 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
     Gen.Profiling.pop_time "entail_prune";
     heap_entail_failesc_prefix_init prog is_folding  false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)
   end
-
+  

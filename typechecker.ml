@@ -212,7 +212,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 					let pr3 = Cprinter.string_of_struc_formula in
 					Gen.Debug.loop_2_no "barrier_check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
 					let res = if(CF.isFailListFailescCtx ctx) then ctx
-                    else check_pre_post proc.proc_static_specs_with_pre ctx in		
+                    else check_pre_post bd.barrier_def ctx in		
 					res
 				 | _ -> report_error no_pos "barrier: type mismatch expecting barrier type found other!!")
         | Bind ({ exp_bind_type = body_t;
