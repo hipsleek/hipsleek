@@ -2024,6 +2024,7 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       trans_exp_type =
+	(* let _ = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
   match ie with
     | I.Label (pid, e)-> 
           let e1,t1 = (trans_exp prog proc e) in
@@ -2100,7 +2101,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_assign_path_id = pid;
           I.exp_assign_pos = pos_a	} ->
 			(* An Hoa : WORKING *)
-		  (*let _ = print_endline ("[trans_exp] assignment input = { " ^ Iprinter.string_of_exp lhs ^ " , " ^ Iprinter.string_of_exp rhs ^ " }") in
+		  (* let _ = print_endline ("[trans_exp] assignment input = { " ^ Iprinter.string_of_exp lhs ^ " , " ^ Iprinter.string_of_exp rhs ^ " }") in *)
 			(* An Hoa : pre-process the inline field access *)
 			let is_member_exp e = match e with | I.Member _ -> true | _ -> false in
 			(* [Internal] function to expand an expression with a list of field access *)
@@ -2110,26 +2111,61 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							I.exp_member_path_id = pid;
 							I.exp_member_pos = pos } ->
 					List.map (fun x -> I.Member {	I.exp_member_base = base_e;
-													I.exp_member_fields = List.append fs x;
+													I.exp_member_fields = List.append fs [x];
 													I.exp_member_path_id = pid;
 													I.exp_member_pos = pos}) fseqs
-				| Var _ -> List.map (fun x -> I.Member {I.exp_member_base = base;
-														I.exp_member_fields = x;
-														I.exp_member_path_id = no_pid;
+				| I.Var _ -> List.map (fun x -> I.Member {I.exp_member_base = base;
+														I.exp_member_fields = [x];
+														I.exp_member_path_id = pid;
 														I.exp_member_pos = no_pos }) fseqs 
-			in
-			if (is_member_exp lhs) then
-				match lhs with
-					| I.Member lhs1 ->
-						let fs,remf,remt = compact_field_access_sequence ddefs in
-						let fields = I.get_all_fields ddefs remt in
-						let erhs = produce_member_exps rhs fields in
-						let fields = List.map (fun x -> String.concat remf (I.get_field_name x)) fields in
-						let nlhs = I.Member {lhs1 with I.exp_member_fields = fs} in
-						let elhs = produce_member_exps nlhs fields in
-							(* output the sequence elhs{i} = erhs{i} *)
-			(* else if (is_member_exp rhs) then *)
-			else *) (* An Hoa : end of additional pre-processing, continue as usual *)
+			in (* compute the list of field accesses that {lhs = rhs} should be expanded into *)
+			let expand_field_list = 
+				if (is_member_exp lhs) then
+					match lhs with
+						| I.Member {
+							I.exp_member_base = bl;
+							I.exp_member_fields = fl;
+							I.exp_member_path_id = pidl;
+							I.exp_member_pos = posl } ->
+							let _,lhst = trans_exp prog proc bl in
+							let fs,remf,remt = compact_field_access_sequence prog lhst fl in
+								if (remf = "") then [] 
+								else I.look_up_all_fields prog (match remt with
+									| Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+									| _ -> failwith "ERror!")
+				else if (is_member_exp rhs) then
+					match rhs with
+						| I.Member {
+							I.exp_member_base = br;
+							I.exp_member_fields = fr;
+							I.exp_member_path_id = pidr;
+							I.exp_member_pos = posr } ->
+							let _,rhst = trans_exp prog proc br in
+							let fs,remf,remt = compact_field_access_sequence prog rhst fr in
+								if (remf = "") then []
+								else I.look_up_all_fields prog (match remt with
+									| Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+									| _ -> failwith "ERror!")
+				else []
+			in 
+			let expand_field_list = List.map I.get_field_name expand_field_list in
+			if (expand_field_list != []) then (* inline type --> expand into a sequence *)
+				(* let _ = print_endline ("[trans_exp] expand the inline field of lhs and rhs { " ^ String.concat " , " expand_field_list ^ " }") in *)
+				let lhss = produce_member_exps lhs expand_field_list in
+				let rhss = produce_member_exps rhs expand_field_list in
+				let assignments = List.map2 (fun x y -> I.Assign {
+													I.exp_assign_op = aop;
+													I.exp_assign_lhs = x;
+													I.exp_assign_rhs = y;
+													I.exp_assign_path_id = pid;
+													I.exp_assign_pos = pos_a }) lhss rhss in
+				let expanded_exp = List.fold_left (fun x y -> I.Seq {
+													I.exp_seq_exp1 = x;
+													I.exp_seq_exp2 = y;
+													I.exp_seq_pos = pos_a }) 
+												(I.Empty no_pos) assignments in
+					trans_exp prog proc expanded_exp
+			else (* An Hoa : end of additional pre-processing, continue as usual *)
           (match aop with
             | I.OpAssign ->
                   (match lhs with
@@ -2185,6 +2221,13 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           I.exp_member_fields = fs;
                           I.exp_member_path_id = pid;
                           I.exp_member_pos = pos } ->
+							(* An Hoa : fix this case with inline field access *)
+							let _,lhst = trans_exp prog proc base_e in
+							let fs,remf,_ = compact_field_access_sequence prog lhst fs in
+								if not (remf = "") then
+									failwith "[trans_exp] expect non inline field access"
+								else
+							(* An Hoa : end *)
                           let (rhs_c, rhs_t) = trans_exp prog proc rhs in
                           let (fn, new_var) =
                             (match rhs_c with
@@ -2544,12 +2587,11 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_fields = fs;
           I.exp_member_path_id = pid;
           I.exp_member_pos = pos } -> 
-           let _ = print_endline ("[trans_exp] case Member : input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in
-			(* An Hoa : compact the field access sequence *)
+           	(* An Hoa : compact the field access sequence *)
 			let et = snd (trans_exp prog proc e) in
 			let fs,rem,_ = compact_field_access_sequence prog et fs in
 			if not (rem = "") then
-				failwith ("[trans_exp] expect non-inline field access but still got {" ^ rem ^ "}")
+				failwith ("[trans_exp] expect non-inline field access but still got { " ^ rem ^ " }")
 			else
           let r = 
 	        if (!Globals.allow_imm) then
