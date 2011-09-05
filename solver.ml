@@ -5137,7 +5137,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let l_h,l_p,l_fl,l_b,l_t = split_components estate.es_formula in
     let r_h,r_p,r_fl,r_b,r_t = split_components rhs in
 	(* An Hoa : match l_node and r_node and push the remain to l_h, r_h *)
-	let rem_l_node,r_h = match (l_node,r_node) with
+	let rem_l_node,rem_r_node = match (l_node,r_node) with
 		| (DataNode dnl, DataNode dnr) -> (* let _ = print_endline ("[do_match] An Hoa Implementation : Push remains of data node matching to the lhs and rhs") in *)
 			let new_args = List.combine l_args r_args in
 			let hole = CP.SpecVar (UNK,"#",Unprimed) in
@@ -5162,12 +5162,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 				else DataNode { dnr with
 								h_formula_data_arguments = new_r_args;
 								h_formula_data_holes = new_r_holes;	} in
-			let new_r_h = match rem_r_node with
+			(* let new_r_h = match rem_r_node with
 							| HTrue -> r_h
-							| _ -> mkStarH r_h rem_r_node no_pos in
-				(rem_l_node,new_r_h)
-		| _ -> (HTrue,r_h) (* No change if we are not matching data node against data node *)
+							| _ -> mkStarH r_h rem_r_node no_pos in *)
+				(rem_l_node,rem_r_node)
+		| _ -> (HTrue,HTrue) (* No change if we are not matching data node against data node *)
 	in
+	(* let _ = print_endline ("[do_match] remaining l_node and r_node = { " ^ PR.string_of_h_formula rem_l_node ^ " ; " ^ PR.string_of_h_formula rem_r_node ^ " }") in *)
+	match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
+		| DataNode _ -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cannot match LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, 
+  CF.mk_failure_must "99")), NoAlias)
+		| _ -> 
 	(* An Hoa : end added code *)
     let label_list = try 
       let vdef = Cast.look_up_view_def_raw prog.prog_view_decls l_node_name in
@@ -5194,8 +5199,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (********************************************************************)
     let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
     let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
+	(* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
+	let l_h = match rem_l_node with
+		| HTrue -> l_h
+		| _ -> mkStarH rem_l_node l_h pos
+	in
+	(* let _ = print_endline ("[do_match] new lhs = " ^ PR.string_of_h_formula l_h) in *)
     let new_ante = mkBase l_h new_ante_p l_t l_fl (CP.merge_branches l_b to_lhs_br) pos in
-	(* An Hoa : Fix new_ante *)
+	(* An Hoa : fix new_ante *)
     let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl (CP.merge_branches r_b to_rhs_br) pos  in
 
     let lhs_vars = ((CP.fv to_lhs) @(List.concat (List.map (fun (_,c)-> CP.fv c) to_lhs_br))) in
@@ -5211,12 +5222,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_consumed = 
       if not(get_imm r_node)
       then mkStarH l_node estate.es_heap pos 
-      else (* An Hoa : push remainder of l_node after matching to heap *)
+      else (* An Hoa : put l_node to the consumed heap portion if the matching leaves no remainder of l_node *)
 		match rem_l_node with 
-		| HTrue -> estate.es_heap
-		| _ -> mkStarH rem_l_node estate.es_heap pos 
+		| HTrue -> mkStarH l_node estate.es_heap pos 
+		| _ -> estate.es_heap  
     in
-    let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
+	(* let _ = print_endline ("[do_match] new consumed heap = " ^ PR.string_of_h_formula new_consumed) in *)
+	let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
       |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
       |None, Some s2 -> (estate.es_residue_pts,estate.es_success_pts)
       |Some s1, None -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),estate.es_success_pts)
