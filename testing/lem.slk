@@ -11,12 +11,12 @@ lemma self::ls<p>  -> self::ls<r> * r::ls<p>.
 
 lemma self::ls<p>  <- self::ls<r> * r::ls<p> * p::node<_,_>@I.
 
-checkentail x::ls<p> |- x::ls<r1> * r1::ls<p>.
-print residue.
+//checkentail x::ls<p> |- x::ls<r1> * r1::ls<p>.
+//print residue.
 // valid
 
-checkentail x::ls<p> |- x::ls<r1>.
-print residue.
+//checkentail x::ls<p> |- x::ls<r1>.
+//print residue.
 
 checkentail x::ls<r>*r::ls<p> |- x::ls<p>.
 print residue.
@@ -47,6 +47,10 @@ print residue.
 
 checkentail x::ls<r>*r::ls<p> * p::node<a,b> 
    |- x::ls<p>  .
+print residue.
+
+checkentail x::ls<r>*r::ls<p> * p::node<a,b> 
+   |- x::ls<p> * p::node<a,b> .
 print residue.
 
 
