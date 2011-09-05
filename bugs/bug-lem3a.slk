@@ -7,10 +7,18 @@ pred lseg<n, p> == self = p & n = 0
 
 //lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
-lemma self::lseg<n, p> <-> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+//lemma "G1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+//lemma "G2" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+//lemma "F1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+// OK to fail
+
+lemma "F2" self::lseg<n, p> <- (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+//Lemma F2: Valid. --> Bug?
+
 
 //lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
-
 
 checkentail x::lseg<n1, r> * r::node<_,p> |- x::lseg<u, p1> & p1=p.
 // true & r_810=p & r_810=p1 & u=0+1+n1 & {FLOW,(143,144)=__norm,}
@@ -26,3 +34,15 @@ Valid.
  EXISTS(b_365,a_364: true & n1=b_365+a_364 & r_412=p & r_412=p1 & u=0+1+
  b_365+a_364 & {FLOW,(143,144)=__norm,}) 
 */
+
+checkentail  x::lseg<a, r> * r::lseg<b, p> & n=a+b+2 
+   |- x::lseg<n, p>.
+
+checkentail  
+   r::lseg<b, p> & n=a+b+2 & x = r & a = 0
+ or x::node<_,q> * q::lseg<a - 1, r> * r::lseg<b, p> & n=a+b+2 
+   |- x::lseg<n, p>.
+
+// manual proof fails for "F2", so why did it succeed 
+// in check-coercion?
+
