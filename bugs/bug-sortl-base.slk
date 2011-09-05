@@ -4,32 +4,25 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-pred sortl<n, mi> == self::node<mi,null> & n=1
+pred sortl<n, mi> == self=null & n=0
 	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
-	inv n >= 1 & self!=null.
+	inv n >= 0.
+// bad definition since it works for only self==null
+
+pred sort2<n, mi> == self=null & n=0
+	or self::node<mi, null> & n=1
+	or self::node<mi, r> * r::sort2<n - 1, k> & mi <= k & n>1
+	inv n >= 0.
+// good definition since it works for all sorted list
+
+// Question : How to distinguish bad definitions?
+
 
 //lemma self::sortl<n, mi> -> self::ll<n>.
 
-lemma self::sortl<n, mi> -> self::ll<n> & n>0.
+lemma self::sort2<n, mi> -> self::ll<n>.
 
 
-//lemma self::ll<n> -> self::sortl<n, mi>.
-
-//lemma self::ll<n> -> self::sortl<n, mi>.
-
-/*
-checkentail
-    x = null & n = 0 & n>0
-	or x::node<_,null> & n=1  & n>0
-	or x::node<_,r> * r::node<_,r2> * r2::ll<n - 2> & n>0
-    |- (exists mi: x::sortl<n, mi>) .
-*/
-
-
-checkentail
-    x::node<mi,null> & n=1
-	or x::node<mi, r> * r::sortl<n - 1, k> & mi <= k
-    |- x::ll<n> & n>0.
 
 /*
 checkentail
@@ -40,8 +33,23 @@ checkentail
     |- x::sortl<n, mi> .
 */
 
-//checkentail x::node<5,q1>*q1::node<4,null> |- x::sortl<n,m1>.
-//print residue.
+checkentail x::node<4,q1>*q1::node<5,null> |- x::sortl<n,m1>.
+print residue.
+
+checkentail x::node<5,null> |- x::sortl<n,m1>.
+print residue.
+
+checkentail x=null |- x::sortl<n,m1>.
+print residue.
+
+checkentail x::node<4,q1>*q1::node<5,null> |- x::sort2<n,m1>.
+print residue.
+
+checkentail x::node<5,null> |- x::sort2<n,m1>.
+print residue.
+
+checkentail x=null |- x::sort2<n,m1>.
+print residue.
 
 /*checkentail 
     x = null & n = 0
