@@ -424,7 +424,7 @@ let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   let pr = string_of_meta_formula in
-  Gen.Debug.ho_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
+  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -452,9 +452,9 @@ let check_coercion coer lhs rhs =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
-    (* let lhs = CF.reset_origins lhs in *)
+    let lhs = CF.reset_origins lhs in
     let rhs = CF.add_original rhs true in
-    (* let rhs = CF.reset_origins rhs in *)
+    let rhs = CF.reset_origins rhs in
     let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
     let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
     let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
@@ -464,7 +464,7 @@ let check_coercion coer lhs rhs =
 let check_coercion coer lhs rhs =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.ho_3 "check_coercion" pr1 pr2 pr2 (fun _ -> "?") (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
+  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun _ -> "?") (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
 let check_left_coercion coer =
   let ent_lhs =coer.C.coercion_head in
@@ -479,7 +479,7 @@ let check_right_coercion coer =
 
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
-  let _ = print_string ("\n process_lemma: " ^ (Iprinter.string_of_coerc_decl ldef)) in
+  (* let _ = print_string ("\n process_lemma: " ^ (Iprinter.string_of_coerc_decl ldef)) in *)
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
   let _ = if !Globals.print_core then 
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in

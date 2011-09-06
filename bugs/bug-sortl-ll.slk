@@ -10,7 +10,7 @@ pred sortl<n, mi> == self::node<mi,null> & n=1
 
 //lemma self::sortl<n, mi> -> self::ll<n>.
 
-lemma self::sortl<n, mi> -> self::ll<n> & n>0.
+lemma self::sortl<n, mi> <- self::ll<n>.
 
 
 //lemma self::ll<n> -> self::sortl<n, mi>.

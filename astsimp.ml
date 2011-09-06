@@ -1883,7 +1883,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let _ = collect_type_info_formula prog coer.I.coercion_body stab false in
   (*let _ = print_string ("\n"^(string_of_stab stab)^"\n") in*)
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
-  (* let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in (\* andreeac *\) *)
+  let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in (* andreeac *)
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
     let h, p, _,_, _ = CF.split_components c_lhs in
@@ -1894,7 +1894,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let univ_vars = compute_univ () in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
-  (* let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in (\* andreeac *\) *)
+  let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in (* andreeac *)
   (* let c_rhs_struc = trans_struc_formula prog true lhs_fnames0 coer.I.coercion_body_struc stab false in *)
   (* let c_rhs_struc = CF.add_origs_to_node_struc self c_rhs_struc [coer.I.coercion_name] in *)
   (* free vars in RHS but not LHS *)
