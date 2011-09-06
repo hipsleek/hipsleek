@@ -11,13 +11,13 @@ pred lseg<n, p> == self = p & n = 0
 
 //lemma "G2" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
 
-lemma "F1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+//lemma "F1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
 // OK to fail
 
 lemma "F2" self::lseg<n, p> <- (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
 //Lemma F2: Valid. --> Bug?
 
-lemma "F3" (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2) -> self::lseg<n, p> .
+//lemma "F3" (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2) -> self::lseg<n, p>.
 
 
 //lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
