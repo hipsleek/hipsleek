@@ -158,3 +158,16 @@ pred ll<n> == self = null & n = 0
  checkentail x::node<_,q>*q::ll@[R]<n> |- x::ll@[L]<m>. 
   //fail
 
+checkentail x::cl@[L]<_> * x::cl@[L]<_> |- false.
+
+checkentail x::cl@[L]<_> * y::cl@[L]<_> |- x!=y.
+
+checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x!=y.
+  // unsound!
+
+checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x=y.
+  // ok to fail
+
+
+checkentail x::cl@[L]<_> * y::cl@[R]<_> |- true.
+print residue.
