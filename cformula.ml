@@ -197,6 +197,7 @@ let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 let print_ext_formula = ref(fun (c:ext_formula) -> "printer not initialized")
+
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list l = match l with 
@@ -698,72 +699,6 @@ and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_form
   mkBase_w_lbl h p t fl pr b pos None
    
 
-and normalize_frac_heap (f1:h_formula) (p:MCP.mix_formula) = 
-  if  not !Globals.enable_frac_perm then (f1,MCP.mkMTrue no_pos, Pr.mkTrue no_pos, [])
-  else 
-     let aset = MCP.comp_aliases p in
-	 let l1 = split_h f1 in
-	 let l1,l_n_simple = 
-		List.fold_left (fun (a1,a2) c-> match c with 
-			| DataNode{h_formula_data_node = d ; h_formula_data_perm = p;h_formula_data_name= n; h_formula_data_arguments = a}
-			| ViewNode{h_formula_view_node = d ; h_formula_view_perm = p;h_formula_view_name= n; h_formula_view_arguments = a}-> 
-				((c,d,(match p with | None -> true | Some _-> false),p,n,a)::a1,a2)
-			| _ -> (a1,c::a2)) ([],[]) l1 in
-	 let rec comb_hlp 
-		(l:(h_formula * CP.spec_var * bool * CP.spec_var option * string * CP.spec_var list)list) 
-		: (h_formula list *(CP.spec_var * CP.spec_var) list * (CP.spec_var * CP.spec_var option list) list * CP.spec_var list)= match l with
-		| []-> ([],[],[],[])
-		| (h,v,b,pr,nm,args)::t -> 		
-			let a = MCP.get_aset aset v in
-			let dups,rests = match a with 
-				| []-> List.partition ( fun (_,c,_,_,_,_)-> CP.eq_spec_var v c) t 
-				| _ -> List.partition ( fun (_,c,_,_,_,_)-> Gen.BList.mem_eq CP.eq_spec_var c a) t in
-			if (List.length dups)>0 then 
-				if b&&(List.for_all (fun (_,_,c,_,_,_)->c) dups) then 
-					let h_l,p,pr2,e = comb_hlp rests in
-					let h_dups = List.map (fun (a,_,_,_,_,_)-> a) dups in
-					(h::(h_dups@h_l),p,pr2,e)
-				else 
-					if (List.exists (fun (_,_,_,_,n2,_)->(String.compare nm n2)>0) dups) then 
-							report_error no_pos ("needed unfold as normalize_heap needs to combine "^nm^" with a different node trivial to do")
-					else 
-						let _ = if (is_data h) then () else print_string " forcing joins on possibly empty predicates\n" in
-							if b|| (List.exists (fun (_,_,c,_,_,_)->c) dups) then ([HFalse],[],[],[])
-							else
-								let n_p_v = Pr.fresh_perm_var () in
-								let n_h = set_perm_node (Some n_p_v) h in
-								let (p,h_pr) = List.fold_left (fun (a1,a2) (_,v2,_,pr2,_,args2) ->((v,v2):: (List.combine args args2)@a1, pr2::a2))([],[]) dups in	
-								let h_l,p_t,pr_t,e_t = comb_hlp rests in
-								(n_h::h_l,  p@p_t,  (n_p_v,(pr::h_pr))::pr_t,  n_p_v::e_t)
-						(*else
-							report_error no_pos ("needed to combine views and i'm not sure how to proceed, need an analysis of whether it strictly point to a node can be done but might be a penalty...")*)
-			else 
-				let h_l,p,pr,e = comb_hlp rests in
-				(h::h_l,p,pr,e)	in 
-	let n_h_l, p, pr, e_l = comb_hlp l1 in
-	let n_h = star_list (n_h_l@l_n_simple) no_pos in
-	let n_p = MCP.mix_of_pure (List.fold_left (fun a (c1,c2)-> CP.mkAnd a (CP.mkEqVar c1 c2 no_pos) no_pos) (CP.mkTrue no_pos) p) in
-	let opt_sv2pvar f= match f with
-		| None -> Pr.mkPFull ()
-		| Some v-> Pr.mkVPerm v in
-		
-	let rec perm_folder (h,l) = match l with
-		| v1::v2::[]-> 
-			let pv1 = opt_sv2pvar v1 in
-			let pv2 = opt_sv2pvar v2 in
-			(Pr.mkJoin pv1 pv2 (Pr.mkVPerm h) no_pos,[])
-		| v1::t-> 
-			let pv1 = opt_sv2pvar v1 in
-			let n_e = Pr.fresh_perm_var () in
-			let rf,rev = perm_folder (n_e,t) in
-			let nf = Pr.mkAnd rf (Pr.mkJoin pv1 (Pr.mkVPerm n_e) (Pr.mkVPerm h) no_pos) no_pos in
-			(nf,n_e::rev)
-		| _-> report_error no_pos ("perm_folder: must have at least two nodes to merge")	in
-	let n_pr,n_e = List.split (List.map perm_folder pr) in
-	let n_pr = List.fold_left (fun a c-> Pr.mkAnd a c no_pos) (Pr.mkTrue no_pos) n_pr in 
-	(n_h,n_p,n_pr,e_l@(List.concat n_e))
-  
-  
 and is_h_normalized f1 p = 
 	if  not !Globals.enable_frac_perm then true
   else 
@@ -846,17 +781,13 @@ and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h2, p2, fl2, pr2, b2, t2 = split_components f2 in
   let p = MCP.merge_mems p1 p2 true in
   let h = mkStarH_nn h1 h2 pos in
-  let h, np, npr,ne = normalize_frac_heap h p in
-  let p = MCP.merge_mems p np false in
   let t = mkAndType t1 t2 in
-  let b = CP.merge_branches b1 b2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
   let pr = Pr.mkAnd pr1 pr2 pos in
-  let pr = Pr.mkAnd pr npr pos in
-  match ne with
-    | [] -> mkBase h p t fl pr b pos
-    | _ -> mkExists ne h p t fl pr b pos 
-      
+  let b = CP.merge_branches b1 b2 in
+  let f = mkBase h p t fl pr b pos in
+  (*normalize_++frac_formula*) f
+        
 and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
   if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
   else if (isAnyConstTrue f1) then (f2,true)
@@ -905,17 +836,12 @@ and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 	    report_error no_pos "[cformula.ml, mkstar_combine]: at least one of the formulae combined should not contain phases"
   in
   let p,_ = combine_and_pure f1 p1 p2 in
-  let h,np,npr,ne = normalize_frac_heap h p in
-  let p = MCP.merge_mems p np false in
-  (* let h = mkStarHh h1 h2 pos in *)
   let t = mkAndType t1 t2 in
-  let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
   let pr = Pr.mkAnd pr1 pr2 pos in
-  let pr = Pr.mkAnd pr npr pos in
-  match ne with
-    | [] -> mkBase h p t fl pr b pos
-    | _ -> mkExists ne h p t fl pr b pos 
+  let b = CP.merge_branches b1 b2 in
+  let f = mkBase h p t fl pr b pos in
+  (*normalize_++frac_formula*) f
   
 	  
 and mkConj_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
@@ -973,6 +899,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
     formula_exists_branches = b;
     formula_exists_label = lbl;
 	formula_exists_pos = pos})
+	
 and is_true (h : h_formula) = match h with
   | HTrue _ -> true
   | _ -> false
@@ -1675,6 +1602,16 @@ and split_components (f : formula) =
 			Err.error_text = "split_components: don't expect EXISTS"}*)
     | Or ({formula_or_pos = pos}) -> 
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
+			  
+and all_components (f:formula) = (*the above misses some *)
+	if (isAnyConstFalse f) then ([],HFalse,(MCP.mkMFalse no_pos),TypeFalse,(flow_formula_of_formula f),Pr.mkFalse no_pos ,[],None, no_pos)
+	else match f with
+	 | Base b -> ([], b.formula_base_heap, b.formula_base_pure, b.formula_base_type, b.formula_base_flow, b.formula_base_perm,
+								b.formula_base_branches, b.formula_base_label, b.formula_base_pos)
+	 | Exists e -> (e.formula_exists_qvars, e.formula_exists_heap, e.formula_exists_pure, e.formula_exists_type,
+						e.formula_exists_flow, e.formula_exists_perm, e.formula_exists_branches, e.formula_exists_label, e.formula_exists_pos)
+	 | Or ({formula_or_pos = pos}) ->  Err.report_error {Err.error_loc = pos;Err.error_text = "all_components: don't expect OR"}
+			  
 			  
 and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 
