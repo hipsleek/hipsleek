@@ -5166,7 +5166,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 							| HTrue -> r_h
 							| _ -> mkStarH r_h rem_r_node no_pos in *)
 				(rem_l_node,rem_r_node)
-		| _ -> (HTrue,HTrue) (* No change if we are not matching data node against data node *)
+		| _ -> (HFalse,HTrue) (* rem_l_node = HFalse only if the input are not data nodes. No change if we are not matching data node against data node *)
 	in
 	(* let _ = print_endline ("[do_match] remaining l_node and r_node = { " ^ PR.string_of_h_formula rem_l_node ^ " ; " ^ PR.string_of_h_formula rem_r_node ^ " }") in *)
 	match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
@@ -5201,7 +5201,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
 	(* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
 	let l_h = match rem_l_node with
-		| HTrue -> l_h
+		| HTrue | HFalse -> l_h
 		| _ -> mkStarH rem_l_node l_h pos
 	in
 	(* let _ = print_endline ("[do_match] new lhs = " ^ PR.string_of_h_formula l_h) in *)
@@ -5225,7 +5225,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       else (* An Hoa : put l_node to the consumed heap portion if the matching leaves no remainder of l_node *)
 		match rem_l_node with 
 		| HTrue -> mkStarH l_node estate.es_heap pos 
-		| _ -> estate.es_heap  
+		| _ -> estate.es_heap
     in
 	(* let _ = print_endline ("[do_match] new consumed heap = " ^ PR.string_of_h_formula new_consumed) in *)
 	let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
