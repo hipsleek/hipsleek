@@ -14,12 +14,13 @@ data nodenext {
 }.
 
 /*
+// partial field instantiation? see C ptrs?
 pred dll2<> == self=null
   or self.prev::null * self::dll_r2<>
   inv true.
-pred dll_r2<> == self.next::n *
-  (n=null or n.prev::self * n::dll_r2<>)
-  inv true.
+pred dll_r2<> == self.next::n & n=null
+  or self.next::n * n.prev::self * n::dll_r2<>)
+  inv self!=null.
 */
 
 pred dll2<> == self=null

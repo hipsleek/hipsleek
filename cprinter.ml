@@ -644,7 +644,7 @@ let rec pr_b_formula (e:P.b_formula) =
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
-let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s2)
+let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
@@ -843,6 +843,7 @@ let rec pr_h_formula h =
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
       h_formula_view_original = original;
+      h_formula_view_lhs_case = lhs_case;
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
@@ -857,7 +858,8 @@ let rec pr_h_formula h =
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
 	  if original then fmt_string "[Orig]"
 	  else fmt_string "[Derv]";
-          pr_remaining_branches ann; 
+ 	  if lhs_case then fmt_string "[LHSCase]";
+         pr_remaining_branches ann; 
           pr_prunning_conditions ann pcond;
           fmt_close()
     | HTrue -> fmt_bool true
@@ -1415,6 +1417,14 @@ let pr_prune_invariants l = (fun c-> pr_seq "," (fun (c1,(ba,c2))->
 
 let string_of_prune_invariants p : string = poly_string_of_pr pr_prune_invariants p
 
+let pr_view_base_case bc = 
+    (match bc with
+	  | None -> ()
+      | Some (s1,(s3,s2)) -> 
+            pr_vwrap "base case: "
+	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) ()
+    )
+
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
@@ -1461,6 +1471,8 @@ let pr_prune_invs inv_lst =
           ("{"^s^"} -> ["^d^"]")) c) inv_lst))
 
 let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
+
+let string_of_view_base_case (bc:(P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option): string =  poly_string_of_pr pr_view_base_case bc
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
 
@@ -1723,6 +1735,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Equiv -> "<==>" ;;
 
 
+    (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
   if is_short op then s1
@@ -1731,7 +1744,8 @@ let string_of_coerc_opt op c =
   else s2
     ^"\n head match:"^c.coercion_head_view
     ^"\n body view:"^c.coercion_body_view
-    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";;
+    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
+    ^"\n univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
 
