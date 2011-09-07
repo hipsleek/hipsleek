@@ -29,7 +29,7 @@ and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(
 and data_decl = { 
     data_name : ident;
     data_fields : typed_ident list;
-    data_parent_name : ident;
+	data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
     
@@ -353,6 +353,14 @@ let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+
+(** An Hoa [22/08/2011] Extract data field information **)
+
+let get_field_typ f = fst f
+
+let get_field_name f = snd f
+
+(** An Hoa [22/08/2011] End **)
 
 let is_simple_formula x = true
 (* transform each proc by a map function *)
@@ -1006,6 +1014,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
+						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
                  F.h_formula_data_pruning_conditions = [];
@@ -1021,6 +1030,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = link_p :: to_ext;
+						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
                      F.h_formula_data_pruning_conditions = [];
@@ -1037,6 +1047,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
+								F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
                      F.h_formula_data_pruning_conditions = [];

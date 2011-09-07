@@ -144,6 +144,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_imm : bool;
                         h_formula_data_arguments : CP.spec_var list;
+						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *)
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -1560,6 +1561,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm; 
 							h_formula_data_arguments = svs; 
+							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = pcond;
@@ -1568,6 +1570,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm;  
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
+							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
@@ -1682,6 +1685,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_data_name = c; 
     h_formula_data_imm = imm; 
 	h_formula_data_arguments = svs; 
+	h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 	h_formula_data_label = lbl;
     h_formula_data_remaining_branches = ann;
     h_formula_data_pruning_conditions = pcond;
@@ -1690,6 +1694,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
 		h_formula_data_arguments = List.map (subst_var s) svs;
+		h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;
         h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
@@ -5151,3 +5156,156 @@ and extr_lhs_b (es:entail_state) =
   formula_base_label = None;
   formula_base_pos = no_pos } in
   b1
+
+
+(**
+ * An Hoa : general function to print a collection.
+ **)
+let string_of_set so s = "{ " ^ (String.concat " ; " (List.map so s)) ^ " }"
+
+
+(**
+ * An Hoa : Merge the partial heaps into a single heap node
+ * For instance, 
+ *         h::node<#,#,a> * h::node<#,b,#>
+ * reduces to h::node<#,b,a> while
+ *         h::node<#,#,a> * h::node<#,#,b>
+ * is transformed to False.
+ * TODO implement
+ **)
+let rec merge_partial_heaps f = match f with
+	| Base fb -> let nh = merge_partial_h_formula fb.formula_base_heap in
+					Base { fb with formula_base_heap = nh }
+	| Or fo -> 	let nf1 = merge_partial_heaps fo.formula_or_f1 in
+				let nf2 = merge_partial_heaps fo.formula_or_f2 in
+					Or { fo with formula_or_f1 = nf1; formula_or_f2 = nf2; }
+	| Exists fe -> let nh = merge_partial_h_formula fe.formula_exists_heap in
+					Exists { fe with formula_exists_heap = nh }
+
+and merge_partial_h_formula f = 
+	(* let _ = print_endline ("[merge_partial_h_formula] input = { " ^ (!print_h_formula f) ^ " }") in *)
+	let sc = split_star_h f in
+	(* let _ = print_endline ("[merge_partial_h_formula] split separation conjunction = { " ^ (String.concat " ; " (List.map !print_h_formula sc)) ^ " }") in *)
+	let dns,vns = List.partition is_data sc in
+	(* let _ = print_endline ("[merge_partial_h_formula] data nodes = " ^ (string_of_set !print_h_formula dns)) in
+	let _ = print_endline ("[merge_partial_h_formula] other nodes = " ^ (string_of_set !print_h_formula vns)) in *)
+	(* Collect the data pointers *)
+	let dnrootptrs = List.map get_ptr_from_data dns in
+	let dnrootptrs = Gen.BList.remove_dups_eq CP.eq_spec_var dnrootptrs in
+	(* Partition the data nodes into groups of same pointer *)
+	let dnodespart = List.map (fun x -> List.filter (fun y -> CP.eq_spec_var (get_ptr_from_data y) x) dns) dnrootptrs in
+	(* let _ = print_endline ("[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in *)
+	(* Merge the data nodes in each group *)
+	let merged_data_nodes = List.map merge_data_nodes_common_ptr dnodespart in
+	(* let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in *)
+	(* Combine the parts to get the result *)
+	let f = combine_star_h (List.append merged_data_nodes vns) in
+		f
+
+
+(**
+ * An Hoa : Splitting a h_formula by breaking the separation conjunction.
+ **)
+and split_star_h f = match f with
+	| Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2; } ->
+		List.append (split_star_h h1) (split_star_h h2)
+	| _ -> [f]
+
+
+(**
+ * An Hoa : Reverse operation of split_star_h i.e. combining nodes into a h_formula.
+ * TODO express using fold_left instead.
+ **)
+and combine_star_h cs = match cs with
+	| [] -> HTrue
+	| h::t -> mkStarH h (combine_star_h t) no_pos
+
+
+(**
+ * An Hoa : Merge a list of data nodes with a common root pointer into either
+ *          a single data node or HFalse if there is a clash (and HTrue if
+ *          we are merging nothing. This case SHOULD NOT happen.)
+ **)
+and merge_data_nodes_common_ptr dns = 
+	List.fold_left merge_two_nodes HTrue dns
+
+
+(**
+ * An Hoa : Supplementary function to merge two data nodes.
+ **)
+and merge_two_nodes dn1 dn2 =
+	match dn1 with
+	| DataNode { h_formula_data_node = dnsv1;
+		h_formula_data_name = n1;
+		h_formula_data_imm = i1;
+		h_formula_data_arguments = args1;
+		h_formula_data_holes = holes1;
+		h_formula_data_label = lb1;
+		h_formula_data_remaining_branches = br1;
+		h_formula_data_pruning_conditions = pc1;
+		h_formula_data_pos = pos1 } -> (match dn2 with
+			| DataNode { h_formula_data_node = dnsv2;
+						h_formula_data_name = n2;
+						h_formula_data_imm = i2;
+						h_formula_data_arguments = args2;
+						h_formula_data_holes = holes2;
+						h_formula_data_label = lb2;
+						h_formula_data_remaining_branches = br2;
+						h_formula_data_pruning_conditions = pc2;
+						h_formula_data_pos = pos2 } -> 
+							(* [Internal] Check if a spec_var is a hole spec_var. *)
+							let is_hole_specvar sv = 
+								let svname = CP.name_of_spec_var sv in
+									svname.[0] = '#' in
+							(* [Internal] Select the non-hole spec_var. *)
+							let combine_vars sv1 sv2 =
+								if (is_hole_specvar sv1) then (sv2,true) 
+								else if (is_hole_specvar sv2) then (sv1,true)
+								else (sv1,false)
+							in
+							let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
+							let not_clashed = List.for_all (fun x -> x) not_clashes in
+							let res = DataNode { h_formula_data_node = dnsv1;
+										h_formula_data_name = n1;
+										h_formula_data_imm = i1;
+										h_formula_data_arguments = args;
+										h_formula_data_holes = 
+												Gen.BList.intersect_eq (=) holes1 holes2;
+										h_formula_data_label = lb1;
+										h_formula_data_remaining_branches = 
+											(match br1 with
+												| None -> br2
+												| Some l1 -> (match br2 with
+																| None -> br1
+																| Some l2 -> Some (List.append l1 l2)));
+										h_formula_data_pruning_conditions = List.append pc1 pc2;
+										h_formula_data_pos = no_pos } in 
+								if not_clashed then res else HFalse
+			| HTrue -> dn1
+			| HFalse -> HFalse
+			| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn2))} )
+	| HTrue -> dn2
+	| HFalse -> HFalse
+	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn1)) }
+
+
+(**
+ * An Hoa : Create a list [x,x+1,...,x+n-1]
+ **)
+let rec first_naturals n x = if n = 0 then [] 
+	else x :: (first_naturals (n-1) (x+1))
+
+
+(**
+ * An Hoa : Compute the indices of holes in a list of spec vars.
+ **)
+let compute_holes_list svs = 
+	let temp = first_naturals (List.length svs) 0 in
+	let res = List.map2 (fun x y -> if (CP.is_hole_spec_var x) then [y] else []) svs temp in
+	let res = List.flatten res in
+		res
+
+(**
+ * An Hoa : Check if svs contain a non-hole variable.
+ **)
+let is_empty svs = List.for_all CP.is_hole_spec_var svs

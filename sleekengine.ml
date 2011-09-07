@@ -349,7 +349,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
-  (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
+  let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
@@ -376,6 +376,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
+	(* let _ = print_endline ("Entailment checking:\n" ^ (string_of_meta_formula iante0) ^ " |- " ^ (string_of_meta_formula iconseq0)) in *)
     let valid, rs = run_entail_check iante0 iconseq0 in
     let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
     if not valid then

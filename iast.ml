@@ -26,7 +26,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;
-		  data_fields : (typed_ident * loc) list;
+		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 		  data_parent_name : ident;
 		  data_invs : F.formula list;
 		  data_methods : proc_decl list }
@@ -820,7 +820,56 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
   (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) : unit =
   fold_exp_args_imp e arg imp f f_args f_imp voidf ()
 
+(** An Hoa [22/08/2011] Extract information from a field declaration of data **)
+
+(**
+ * An Hoa : get the typed identifier from a field declaration
+ **)
+let get_field_typed_id d =
+	match d with
+		| (tid,_,_) -> tid
+
+(**
+ * An Hoa : Extract the field name from a field declaration
+ **)
+let get_field_name f = snd (get_field_typed_id f)
+
+(**
+ * An Hoa : Extract the field name from a field declaration
+ **)
+let get_field_typ f = fst (get_field_typed_id f)
+
+(**
+ * An Hoa : Extract the field position from a field declaration
+ **)
+let get_field_pos f =
+	match f with
+		| (_,p,_) -> p 
+
+(**
+ * An Hoa : Check if a field is an inline field 
+ **)
+let is_inline_field f =
+	match f with
+		| (_,_,inline) -> inline
+
+(** An Hoa [22/08/2011] : End of information extracting functions from field declaration **)
+
+
+
 (* look up functions *)
+
+(** An Hoa:
+ *  Returns a list of data types which possess a field_name specified.
+ **)
+let rec look_up_types_containing_field (defs : data_decl list) (field_name : ident) = 
+	match defs with
+	| [] -> []
+	| d::t -> let temp = look_up_types_containing_field t field_name in
+				if (List.exists (fun x -> (get_field_name x) = field_name) d.data_fields) then
+					d.data_name :: temp
+				else temp
+(* An Hoa : End *)
 
 let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def pos rest name
@@ -883,8 +932,34 @@ and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = ma
         let cparent_decl = List.find (fun t -> (String.compare t.data_name c.data_parent_name) = 0) prog.prog_data_decls in
         c.data_methods @ (look_up_all_methods prog cparent_decl)  
 
-and look_up_all_fields (prog : prog_decl) (c : data_decl) : (typed_ident * loc) list = 
+(**
+ * An Hoa : expand the inline fields. This is just the fixed point computation.
+ * Input: A list of Iast fields. Output: A list of Iast fields without inline.
+ **)
+and expand_inline_fields ddefs fls =
+	(** [Internal] An Hoa : add a prefix k to a field declaration f **)
+	let augment_field_with_prefix f k = match f with
+		| ((t,id),p,i) -> ((t,k ^ id),p,i)
+	in
+	if (List.exists is_inline_field fls) then
+		let flse = List.map (fun fld -> if (is_inline_field fld) then
+											let fn  = get_field_name fld in
+											let ft = get_field_typ fld in
+											try
+												let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
+												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
+													fld_fs
+											with
+												| Not_found -> failwith "[expand_inline_fields] type not found!"
+										else [fld]) fls in
+		let flse = List.flatten flse in
+			expand_inline_fields ddefs flse
+	else fls
+
+and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
   let current_fields = c.data_fields in
+	(* An Hoa : expand the inline fields *)
+	let current_fields = expand_inline_fields prog.prog_data_decls current_fields in
   if (String.compare c.data_name "Object") = 0 then
 	[]
   else
@@ -1689,3 +1764,142 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_coercion_decls = [];}
         in new_prims
   | hd::tl -> append_iprims_list hd tl
+
+(**
+ * An Hoa : Find the field with field_name of compound data structure with name data_name
+ **)
+let get_field_from_typ ddefs data_typ field_name = match data_typ with
+	| Named data_name -> 
+		let ddef = look_up_data_def_raw ddefs data_name in
+		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
+			field
+	| _ -> failwith ((string_of_typ data_typ) ^ " is not a compound data type.")
+
+
+(**
+ * An Hoa : Find the type of the field with indicated name in ddef
+ **)
+let get_type_of_field ddef field_name =
+	let tids = List.map get_field_typed_id ddef.data_fields in
+	try
+		let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
+			fst field_typed_id
+	with
+		| Not_found -> UNK
+
+
+(**
+ * An Hoa : Traversal a list of access to get the type.
+ **)
+let rec get_type_of_field_seq ddefs root_type field_seq =
+	(* let _ = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in *)
+	match field_seq with
+		| [] -> root_type
+		| f::t -> (match root_type with
+			| Named c -> (try
+					let ddef = look_up_data_def_raw ddefs c in
+					let ft = get_type_of_field ddef f in
+						(match ft with
+							| UNK -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Compound type " ^ c ^ " has no field " ^ f ^ "!" }
+							| _ -> get_type_of_field_seq ddefs ft t)
+				with
+					| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Either data type " ^ c ^ " cannot be found!" })
+			| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] " ^ (string_of_typ root_type) ^ " is not a compound type!" })
+
+
+(**
+ * An Hoa : Check if an identifier is a name for some data type
+ **)
+let is_data_type_identifier (ddefs : data_decl list) id =
+	List.exists (fun x -> x.data_name = id) ddefs
+
+
+(**
+ * An Hoa : Check if an identifier is NOT a name for some data type
+ **)
+let is_not_data_type_identifier (ddefs : data_decl list) id =
+	not (is_data_type_identifier ddefs id)
+
+(**
+ * An Hoa : Compute the size of a typ in memory.
+ *          Each primitive type count 1 while compound data type is the sum of
+ *          its component. Inline types should be expanded.
+ **)
+let rec compute_typ_size ddefs t = 
+	(* let _ = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
+	let res = match t with
+		| Named data_name -> (try 
+				let ddef = look_up_data_def_raw ddefs data_name in
+					List.fold_left (fun a f -> 
+						let fs = if (is_inline_field f) then 
+							compute_typ_size ddefs (get_field_typ f) 
+						else 1 in a + fs) 0 ddef.data_fields
+			with | Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_typ_size] input type does not exist."})
+		| _ -> 1 in
+	(* let _ = print_endline ("[compute_typ_size] output = " ^ (string_of_int res)) in *)
+		res
+
+
+(**
+ * An Hoa : Get the number of pointers by looking up the corresponding record 
+ *          in data_dec instead of doing the full recursive computation. This
+ *          caching of information is to reduce the workload.
+ **)
+let get_typ_size = compute_typ_size
+
+(**
+ * An Hoa : Compute the offset of the pointer to a field with respect to the root.
+ **)
+let rec compute_field_offset ddefs data_name accessed_field =
+	try 
+		(* let _ = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
+		let found = ref false in
+		let ddef = look_up_data_def_raw ddefs data_name in
+		(* Accumulate the offset along the way *)
+		let offset = List.fold_left (fun a f -> 
+										if (!found) then a (* Once found, just keep constant*)
+										else let fn = get_field_name f in 
+											let ft = get_field_typ f in
+											if (fn = accessed_field) then (* Found the field *)
+												begin found := true; a end
+											else if (is_inline_field f) then (* Accumulate *)
+												a + (get_typ_size ddefs ft)
+											else a + 1)
+									0 ddef.data_fields in
+		(* The field is not really a field of the data type ==> raise error. *)
+		if (not !found) then 
+			Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field }	
+			failwith ()
+		else 
+			(* let _ = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
+				offset
+	with
+		| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] is call with non-existing data type." }
+
+
+(**
+ * An Hoa : Compute the offset of the pointer indicated by a field sequence with
+ *          respect to the root (that points to a type with name data_name)
+ **)
+and compute_field_seq_offset ddefs data_name field_sequence = 
+	(* let _ = print_endline ("[compute_field_seq_offset] input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
+	let dname = ref data_name in
+	let res = 
+		List.fold_left (fun a field_name ->
+							let offset = compute_field_offset ddefs !dname field_name in
+							(* Update the dname to the data type of the field_name *)
+							try
+								let ddef = look_up_data_def_raw ddefs !dname in
+								let field_type = get_type_of_field ddef field_name in
+								begin
+									dname := string_of_typ field_type;
+									a + offset
+								end
+							with
+								| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_seq_offset]: " ^ !dname ^ " does not exists!" } )
+						0 field_sequence in
+	(* let _ = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
+		res
+
+
+
