@@ -2,8 +2,14 @@ data node { int val ; node next }.
 
 
 pred lseg<n, p> == self = p & n = 0
+         or self::node<next = p> & n=1
+         inv n >= 0.
+
+/*
+pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
          inv n >= 0.
+*/
 
 //lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
@@ -48,3 +54,16 @@ checkentail
 // manual proof fails for "F2", so why did it succeed 
 // in check-coercion?
 
+checkentail  
+   r::lseg<b, p> & n=a+b+2 & x = r & a = 0
+   |- x::lseg<n, p>.
+
+checkentail  
+   (exists r,a,b: r::lseg<b, p> & n=a+b+2 & x = r & a = 0 & flow __flow)
+   |- x::lseg<n, p> & flow __flow.
+
+/*
+checkentail
+ x::node<_,q> * q::lseg<a - 1, r> * r::lseg<b, p> & n=a+b+2 
+   |- x::lseg<n, p>.
+*/

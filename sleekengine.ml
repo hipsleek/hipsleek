@@ -302,7 +302,7 @@ let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_f
   let pr1 = string_of_meta_formula in
   let pr2 = string_of_bool in
   let pr3 = Cprinter.string_of_struc_formula in 
-  Gen.Debug.no_2 "meta_to_struc_formula" pr1 pr2 pr3 (fun _ _ -> meta_to_struc_formula_x mf0 quant fv_idents stab) mf0 quant
+  Gen.Debug.ho_2 "meta_to_struc_formula" pr1 pr2 pr3 (fun _ _ -> meta_to_struc_formula_x mf0 quant fv_idents stab) mf0 quant
 
 (* An Hoa : DETECT THAT EITHER OF 
 AS.case_normalize_formula iprog h mf
@@ -381,6 +381,11 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   in
   (res, rs)
 
+let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  Gen.Debug.ho_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+
 let entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (num_id: string) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
@@ -419,12 +424,12 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
-  let num_id = "Lemma "^ lemma_name in
+  let num_id = "Checking Lemma "^ lemma_name in
   entail_check iante0 iconseq0 num_id
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   let pr = string_of_meta_formula in
-  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
+  Gen.Debug.ho_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
