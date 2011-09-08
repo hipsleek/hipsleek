@@ -11,7 +11,11 @@ pred lseg<n, p> == self = p & n = 0
          inv n >= 0.
 */
 
-//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+//checkentail x::node<1,y> * y::node<1,z> * z::node<2,null> |- x::lseg<3,null> .
+
+//checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
 //lemma "G1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
 
@@ -20,7 +24,7 @@ pred lseg<n, p> == self = p & n = 0
 //lemma "F1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
 // OK to fail
 
-lemma "F2" self::lseg<n, p> <- (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+//lemma "F2" self::lseg<n, p> <- (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
 //Lemma F2: Valid. --> Bug?
 
 //lemma "F3" (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2) -> self::lseg<n, p>.
@@ -45,7 +49,9 @@ Valid.
 /*
 checkentail  x::lseg<a, r> * r::lseg<b, p> & n=a+b+2 
    |- x::lseg<n, p>.
+*/
 
+/*
 checkentail  
    r::lseg<b, p> & n=a+b+2 & x = r & a = 0
  or x::node<_,q> * q::lseg<a - 1, r> * r::lseg<b, p> & n=a+b+2 
@@ -53,7 +59,7 @@ checkentail
 */
 // manual proof fails for "F2", so why did it succeed 
 // in check-coercion?
-
+/*
 checkentail  
    r::lseg<b, p> & n=a+b+2 & x = r & a = 0
    |- x::lseg<n, p>.
@@ -61,7 +67,7 @@ checkentail
 checkentail  
    (exists r,a,b: r::lseg<b, p> & n=a+b+2 & x = r & a = 0 & flow __flow)
    |- x::lseg<n, p> & flow __flow.
-
+*/
 /*
 checkentail
  x::node<_,q> * q::lseg<a - 1, r> * r::lseg<b, p> & n=a+b+2 
