@@ -1901,7 +1901,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let p = List.map (fun c-> (c,Primed)) lhs_fnames in
   let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula coer.I.coercion_body) false true [] in
   let quant = false in
-  let c_rhs_norm = trans_I2C_struc_formula prog quant lhs_fnames wf stab false in
+  let cs_rhs_norm = trans_I2C_struc_formula prog quant lhs_fnames wf stab false in
+  let c_rhs_norm = CF.struc_to_formula cs_rhs_norm in
 
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   (* let rhs_fnames = [] in *)

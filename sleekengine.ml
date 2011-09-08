@@ -473,7 +473,7 @@ let check_coercion coer lhs rhs =
 
 let check_left_coercion coer =
   let ent_lhs =coer.C.coercion_head in
-  let ent_rhs = coer.C.coercion_body in
+  let ent_rhs = coer.C.coercion_body_norm in
   check_coercion coer ent_lhs ent_rhs
 
 let check_right_coercion coer =
