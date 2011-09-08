@@ -109,6 +109,7 @@ and coercion_decl = {
     coercion_type : coercion_type;
     coercion_name : ident;
     coercion_head : F.formula;
+    coercion_head_norm : F.struc_formula;
     coercion_body : F.formula;
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)

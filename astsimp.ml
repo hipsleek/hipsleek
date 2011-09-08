@@ -1895,6 +1895,13 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
   let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in (* andreeac *)
+  (* let fv_rhs = List.map CP.name_of_spec_var (CF.fv c_rhs) in *)
+  (* let h = List.map (fun c-> (c,Unprimed)) fv_rhs in *)
+  (* let p = List.map (fun c-> (c,Primed)) fv_rhs in *)
+  (* let wf,_ = case_normalize_struc_formula prog h p c_lhs false true [] in *)
+  (* let quant = false in *)
+  (* let c_lhs_norm = trans_I2C_struc_formula prog quant fv_rhs wf stab false in *)
+
   (* let c_rhs_struc = trans_struc_formula prog true lhs_fnames0 coer.I.coercion_body_struc stab false in *)
   (* let c_rhs_struc = CF.add_origs_to_node_struc self c_rhs_struc [coer.I.coercion_name] in *)
   (* free vars in RHS but not LHS *)
@@ -1921,6 +1928,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         let c_coer ={ C.coercion_type = coer.I.coercion_type;
         C.coercion_name = coer.I.coercion_name;
         C.coercion_head = c_lhs;
+        C.coercion_head_norm = [];
         C.coercion_body = c_rhs;
         C.coercion_univ_vars = univ_vars;
         (* C.coercion_head_exist = c_lhs_exist; *)
