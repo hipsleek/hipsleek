@@ -580,13 +580,13 @@ $output_file = "log";
 					["sleek1.slk","Fail."],
 					["sleek10.slk","Valid.Fail."],
 					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-					["sleek3.slk","Valid.Fail.Valid."],
+					["sleek3.slk","Valid.Valid.Fail.Valid."],
 					["sleek4.slk","Valid.Valid."],
 					["sleek6.slk","Valid.Valid."],
-					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+					["sleek7.slk","Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
                   # slow in sleek8.slk due to search
-				  ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-					["sleek9.slk","Valid.Fail.Valid.Valid."],
+				  ["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+					["sleek9.slk","Valid.Valid.Valid.Valid.Fail.Valid.Valid."],
                                         ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
 			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
 			                ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
@@ -726,6 +726,9 @@ sub sleek_process_file  {
           print "Starting sleek tests:\n";
           $exempl_path_full = "$exempl_path/sleek";
       }
+      #to be removed after fixing --check-coercions will be enabled by default:
+      $script_arguments = $script_arguments." --check-coercions";
+      #
       $t_list = $sleek_files{$param};	
       foreach $test (@{$t_list})
 			{
