@@ -1,0 +1,5 @@
+data cl {int val;}.
+checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x!=y.
+checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x=y.
+checkentail x::cl@[L]<_> * y::cl@[L,R]<_> |- x!=y.
+checkentail x::cl@[L]<_> * y::cl@[L,R]<_> |- x=y.
