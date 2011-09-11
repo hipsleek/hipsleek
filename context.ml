@@ -43,6 +43,7 @@ and match_type =
 and action = 
   | M_match of match_res
   | M_split_match of match_res
+  | M_r_split_match of match_res
   | M_fold of match_res
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
@@ -97,6 +98,7 @@ let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "==> Undefined_action"
   | M_match e -> pr_mr e; fmt_string "==> Match"
   | M_split_match e -> pr_mr e; fmt_string "==> Split&Match"
+  | M_r_split_match e -> pr_mr e; fmt_string "==> RSplit&Match"
   | M_fold e -> pr_mr e; fmt_string "==> Fold"
   | M_unfold (e,i) -> pr_mr e; fmt_string ("==> Unfold "^(string_of_int i))
   | M_base_case_unfold e -> pr_mr e; fmt_string "==> Base case unfold"
@@ -126,6 +128,7 @@ let action_get_holes a = match a with
   | Undefined_action e
   | M_match e
   | M_split_match e
+  | M_r_split_match e
   | M_fold e
   | M_unfold (e,_)
   | M_rd_lemma e
@@ -374,18 +377,20 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | DataNode dl, DataNode dr -> 
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then 
                     match dr.h_formula_data_perm with
-                      |  None -> (0,M_match c)
+                      |  None -> if  not !Globals.enable_frac_perm then (0,M_match c)
+                        else (0, Search_action [(1,M_match c);(1,M_r_split_match c)])
                       | _ -> if  not !Globals.enable_frac_perm then report_error no_pos " process_one_match: fractional permissions are disabled!!"
-                         else ((*print_string "one\n";*)(0, Search_action [(1,M_match c);(1,M_split_match c)]))
+                         else ((*print_string "one\n";*)(0, Search_action [(1,M_match c);(1,M_split_match c);(1,M_r_split_match c)]))
                   else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
                   let l1 = [(1,M_base_case_unfold c)] in
                   let l2 = 
                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then 
                        match vr.h_formula_view_perm with
-                        | None -> [(1,M_match c)]
+                        | None -> if  not !Globals.enable_frac_perm then [(1,M_match c)]
+                          else (print_string"two\n";[(1,M_match c);(1,M_r_split_match c)] )
                         | _ -> if  not !Globals.enable_frac_perm then report_error no_pos "process_one_match: fractional permissions are disabled!!"
-                         else (print_string"two\n";[(1,M_match c);(1,M_split_match c)] )
+                         else (print_string"two\n";[(1,M_match c);(1,M_split_match c);(1,M_r_split_match c)] )
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
                     else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
                     else []

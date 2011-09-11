@@ -1151,7 +1151,7 @@ struct
       (* module BG = Baga(Elt) *)
   let eq = Elt.eq
   let intersect = Elt.intersect
-  let disj = Debug.ho_2 "disjSet disj " Elt.string_of Elt.string_of string_of_bool Elt.disj
+  let disj = Debug.no_2 "disjSet disj " Elt.string_of Elt.string_of string_of_bool Elt.disj
 
   module BL_EQ = BListEQ(Elt)
   open BL_EQ
@@ -1171,7 +1171,7 @@ struct
   let singleton_dset (e:ptr) : dpart = [[e]]
 
   let is_dupl_dset (xs:dpart) : bool = 
-    List.exists (check_dups) xs
+    List.exists (check_dups_eq (fun x y -> eq x y & disj x y)) xs
 
   (* returns a list of difference sets for element e *)
   let find_diff (eq:'a->'a->bool) (s: dpart) (e:ptr) : dpart =

@@ -531,14 +531,19 @@ let is_sat_a f = match list_of_a_f false f with
       
 let is_sat f = Gen.Debug.no_1 "perm_is_sat" !print_perm_f string_of_bool is_sat_a f
 
+let solve_once2 f = match is_sat_p_t_w2 f with 
+		| (hl::[],_,_,_)::[]-> Some hl
+		| _ -> None
+      
 let solve_once f = 
   if not !Globals.enable_frac_perm then None
   else Some (match is_sat_p_t_w2 f with 
 		| (hl::[],_,_,_)::[]-> hl
 		| _ -> (PMap.create P.cmp_spec_var))
+
       
 let solve_once f =
-  Gen.Debug.ho_1 "solve_once" !print_perm_f (fun c-> match c with | None -> "None" | _ -> "Some")
+  Gen.Debug.no_1 "solve_once" !print_perm_f (fun c-> match c with | None -> "None" | _ -> "Some")
    solve_once f
       
 let stub_sol :(P.spec_var,(Ts.stree*Ts.stree)) PMap.t option = 
@@ -600,7 +605,7 @@ let imply evs f1 f2 =
 let var_2_prop_var pr_sol (v:P.spec_var) pv = (v,(P.type_of_spec_var v, get_perm_sol pr_sol pv))
     
 let var_2_prop_var pr_sol v pv=
-  Gen.Debug.ho_2 "var_2_prop_var" !print_sv (Gen.pr_option !print_sv) (fun (_,(_,f))-> Ts.string_of_tree_share f) (var_2_prop_var pr_sol) v pv
+  Gen.Debug.no_2 "var_2_prop_var" !print_sv (Gen.pr_option !print_sv) (fun (_,(_,f))-> Ts.string_of_tree_share f) (var_2_prop_var pr_sol) v pv
 
 let var_2_prop_var_list pr_sol vl pv =
   let perm  = get_perm_sol pr_sol pv in
@@ -683,41 +688,50 @@ let split_universal (f0 : perm_formula) (evars : P.spec_var list) (expl_inst_var
     (new_f,to_conseq, evars)
   else (elim_exists_exp_perm to_ante, to_conseq, evars)
    
-   
-   
-let comp_perm_split_a v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm = 
-	let l_perm = (match l_perm with | [] -> mkPFull () | v::_-> mkVPerm v) in
-	let r_var = (match r_perm with | [] -> failwith "this case should not lead to a split" | v::_-> v) in
-	let default = mkAnd lhs_p_f (mkJoin (mkVPerm v_rest) (mkVPerm v_consumed) l_perm no_pos) no_pos in
-	match is_sat_p_t_w2 rhs_p_f with
-	  | (hr::[],_,_,_)::[]-> 
-		(try
-			let rm,rM = PMap.find r_var hr in
-			let is_r_ct = Ts.stree_eq rm rM in
-			let addition = if is_r_ct then mkEq (mkVPerm v_consumed) (PConst rm) no_pos else (mkDom v_consumed rm rM) in
-				match l_perm with
-					| PConst c-> if Ts.contains c rM then (mkAnd default addition no_pos,true) else (default,false)
-					| PVar l_var -> 
-						match is_sat_p_t_w2 lhs_p_f with 
-							| (hl::[],_,_,_)::[]->
-								(try
-									let lm,lM = PMap.find l_var hl in
-									if Ts.contains lm rM then 
-										if (Ts.stree_eq lM rm) then (*perfect match cannot split must consume*) (default,false)
-										else (mkAnd default addition no_pos,true) 
-									else (default,false)
-								with Not_found -> (default,false))
-							| (_,_,_,_)::[]-> (default,false)
-							| _ -> (mkFalse no_pos,true)
-		with Not_found -> (default,true))
-	  | _ -> (default,true)
+    
+let comp_perm_split_a lsp v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm = 
+  let both_fs = mkAnd lhs_p_f rhs_p_f no_pos in
+  try 
+    let (rm,rM),rp,rk = match r_perm with 
+      | [] -> (top_share,top_share), PConst top_share,true
+      | v::_->  match solve_once2 both_fs with
+        | None -> raise Not_found
+        | Some l-> try
+          (PMap.find v l),PVar v,true
+          with Not_found -> (bot_share,top_share), PVar v,false in
+    let (lm,lM),lp,lk = match l_perm with 
+      | [] -> (top_share,top_share),PConst top_share,true
+      | v::_-> match solve_once2 lhs_p_f with
+        | None -> raise Not_found
+        | Some l -> try
+          (PMap.find v l),PVar v, true
+          with Not_found -> (bot_share, top_share),PVar v,false in
+    (*let _ = print_string ("lm:"^(!print_share lm)^ " lM: "^(!print_share lM)^" lk "^(string_of_bool lk)^"\n") in
+    let _ = print_string ("rm:"^(!print_share rm)^ " rM: "^(!print_share rM)^" rk "^(string_of_bool rk)^"\n") in
+    *)if lsp then 
+      if (Ts.contains lm rM || (not rk)) then 
+        if (Ts.stree_eq lM rm) then (*perfect match cannot split must consume*) (lhs_p_f,rhs_p_f,0)
+        else (*split on left*)
+          let default = mkAnd lhs_p_f (mkJoin (mkVPerm v_rest) (mkVPerm v_consumed) lp no_pos) no_pos in 
+          let addition = if Ts.stree_eq rm rM then 
+                            mkEq (mkVPerm v_consumed) (PConst rm) no_pos 
+                         else (mkDom v_consumed rm rM) in
+          (mkAnd default addition no_pos,rhs_p_f,1) 
+      else (lhs_p_f,rhs_p_f,0) 
+    else (*split on right*)
+    if not lsp & (Ts.contains rm lM || (lk & not rk)) then 
+      let default = mkJoin (mkVPerm v_rest) (mkVPerm v_consumed) rp no_pos in 
+      (lhs_p_f,default, -1)
+    else (lhs_p_f,rhs_p_f,0)
+  with Not_found -> (lhs_p_f,rhs_p_f,0)
+  
 	  
-let comp_perm_split v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm =
+let comp_perm_split lsp v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm =
 	let pr1 = Gen.Basic.pr_list !print_sv in
-	let pr2 = Gen.Basic.pr_pair !print_perm_f string_of_bool in
+	let pr2 = Gen.Basic.pr_triple !print_perm_f !print_perm_f string_of_int in
 Gen.Debug.no_6 "comp_perm_split" 
 	!print_sv !print_sv !print_perm_f !print_perm_f pr1 pr1 pr2
-	(fun _ _ _ _ _ _-> comp_perm_split_a v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm) v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm
+	(fun _ _ _ _ _ _-> comp_perm_split_a lsp v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm) v_rest v_consumed lhs_p_f rhs_p_f l_perm r_perm
 
    
    

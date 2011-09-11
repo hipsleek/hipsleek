@@ -360,7 +360,7 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_lab
 
 and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) p pr
   : (MCP.mix_formula * (branch_label * CP.formula) list * CP.BagaSV.baga* CF.mem_formula)= 
-  Gen.Debug.ho_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int 
+  Gen.Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int 
   (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) 
   (fun _ _ -> xpure_heap_x prog h0 which_xpure p pr) h0 which_xpure
 
@@ -649,8 +649,8 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i p prf: (MCP.mix_
       (fun h0 -> xpure_heap_symbolic_i_x prog h0 i p prf) h0
 
 and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no p pr_sol: (MCP.mix_formula * (branch_label * CP.formula) list * CP.BagaSV.baga) = 
-  if not (is_h_normalized h0 p) then report_error no_pos "xpure_heap_symbolic_i: xpuring a non normalized formula"
-  else
+  (*if not (is_h_normalized h0 p) then report_error no_pos "xpure_heap_symbolic_i: xpuring a non normalized formula"
+  else*)
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
 	  h_formula_data_label = lbl;
@@ -914,7 +914,7 @@ and normalize_frac_heap prog (f:formula) =
 		  let appl_comb_lemmas f w_lem h_alias_grp n_simpl_h :formula= 
         print_string "could have used a lemma for joining these predicates, for now join trivially";
         comb_hlp_l h_alias_grp f n_simpl_h  in
-				
+  let _ = 
   if  not !Globals.enable_frac_perm then f
   else 
 	 let (qv, h, p, t, fl, pr, br, lbl, pos) = all_components f in	 
@@ -937,7 +937,8 @@ and normalize_frac_heap prog (f:formula) =
 		else 
 		  let f = comb_hlp_l h_alias_grp f n_simpl_h in
 		  if List.exists (fun c-> (List.length c) >1) h_alias_grp then  normalize_frac_formula prog f
-		  else f
+		  else f in
+    f
   
 and normalize_frac_heap_w prog h p = 
    if  not !Globals.enable_frac_perm then (h,Cpr.mkTrue no_pos, MCP.mkMTrue no_pos,[])
@@ -4312,7 +4313,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
   let _ = reset_int2 () in
   let hx = mkStarH_nn lhs_h estate.es_heap pos in
   let hx,_,_,_ = normalize_frac_heap_w prog hx lhs_p in
-  if not (is_h_normalized hx lhs_p) then report_error no_pos "xpure_imply: xpuring a non normalized formula" else () ;
+ (* if not (is_h_normalized hx lhs_p) then report_error no_pos "xpure_imply: xpuring a non normalized formula" else () ;*)
   (*let nhx,npx,_,_ = normalize_--frac_heap hx lhs_p in*)
   let pr_sol = Cpr.solve_once lhs_pr in
   let xpure_lhs_h, xpure_lhs_h_b, _, memset = xpure_heap 4 prog (*nhx*) hx 1 (*npx*) lhs_p pr_sol in
@@ -4364,7 +4365,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let _ = reset_int2 () in
   let hx = mkStarH_nn lhs_h estate.es_heap pos in
   let hx,_,_,_ = normalize_frac_heap_w prog hx lhs_p in
-  if not (is_h_normalized hx lhs_p) then report_error no_pos "heap_entail_empty_rhs_heap: xpuring a non normalized formula" else () ;
+  (*if not (is_h_normalized hx lhs_p) then report_error no_pos "heap_entail_empty_rhs_heap: xpuring a non normalized formula" else () ;*)
   let curr_lhs_h= hx in
   (*let curr_lhs_h,curr_lhs_p,_,_ = normalize_--frac_heap hx lhs_p in*)
   let pr_sol = Cpr.solve_once lhs_pr in
@@ -4510,7 +4511,7 @@ and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
            {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
 and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
-  Gen.Debug.ho_3 "solve_ineq_pure_formula "
+  Gen.Debug.no_3 "solve_ineq_pure_formula "
       (Cprinter.string_of_pure_formula)
       (Cprinter.string_of_mem_formula) 
       (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
@@ -4588,7 +4589,7 @@ and solve_ineq_b_formula_x sem_eq memset conseq : Cpure.formula =
     | _ -> CP.BForm(conseq, None)	
 	      (* todo: could actually solve more types of b_formulae *)
 and solve_ineq_b_formula sem_eq memset conseq  = 
- Gen.Debug.ho_2 "solve_ineq_b_formula" Cprinter.string_of_mem_formula Cprinter.string_of_b_formula Cprinter.string_of_pure_formula
+ Gen.Debug.no_2 "solve_ineq_b_formula" Cprinter.string_of_mem_formula Cprinter.string_of_b_formula Cprinter.string_of_pure_formula
   (fun _ _ -> solve_ineq_b_formula_x sem_eq memset conseq) memset conseq
 (************************************* 
                                        - methods for implication discharging
@@ -5228,14 +5229,15 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           Context.match_res_lhs_rest = lhs_rest;
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
-			let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos)), NoAlias)
-          else
 			let v_rest, v_consumed = Cpr.fresh_perm_var () , Cpr.fresh_perm_var () in
-			let n_lhs_perm,b = Cpr.comp_perm_split v_rest v_consumed lhs_b.formula_base_perm rhs_b.formula_base_perm (get_node_perm lhs_node) (get_node_perm rhs_node) in
-			if not b then 
+			let n_lhs_perm,_,b = Cpr.comp_perm_split true v_rest v_consumed lhs_b.formula_base_perm rhs_b.formula_base_perm (get_node_perm lhs_node) (get_node_perm rhs_node) in
+			if b<=0 then 
 				(CF.mkFailCtx_in (Basic_Reason (mkFailContext "lhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos)), NoAlias)
 			else
+        let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
+        if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos)), NoAlias)
+        else
+
 			let n_lhs_h = mkStarH_nn lhs_rest (set_perm_h (Some v_rest) lhs_node) pos in				
 			let new_estate = {estate with 
 								es_formula = Base{ lhs_b with formula_base_heap = n_lhs_h; formula_base_perm = n_lhs_perm }; 
@@ -5249,7 +5251,47 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 			let n_lhs_node = set_perm_h (Some v_consumed) lhs_node in
             let res_es0, prf0 = do_match prog new_estate n_lhs_node rhs_node n_rhs_b is_folding pos in
             (res_es0,prf0)
-			
+| Context.M_r_split_match {
+          Context.match_res_lhs_node = lhs_node;
+          Context.match_res_lhs_rest = lhs_rest;
+          Context.match_res_rhs_node = rhs_node;
+          Context.match_res_rhs_rest = rhs_rest;} ->
+			let v_rest, v_consumed = Cpr.fresh_perm_var () , Cpr.fresh_perm_var () in
+			let l_p,r_f,b = Cpr.comp_perm_split false v_rest v_consumed lhs_b.formula_base_perm rhs_b.formula_base_perm (get_node_perm lhs_node) (get_node_perm rhs_node) in
+			if b>=0 then 
+				(CF.mkFailCtx_in (Basic_Reason (mkFailContext "rhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos)), NoAlias)
+			else
+        let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
+        if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos)), NoAlias)
+        else
+
+			let n_rhs_h = mkStarH_nn rhs_rest (set_perm_h (Some v_rest) rhs_node) pos in	
+      let comp_vars v_r v_c r_p evs impl expl =
+        match r_p with
+          | [] -> (v_r::(v_c::evs), impl, expl, l_p, Cpr.mkAnd rhs_b.formula_base_perm r_f no_pos)
+          | v::_ -> 
+            let nevs = if (Gen.BList.mem_eq (CP.eq_spec_var v) evs then v_r::v_c::evs else evs in
+            if (Gen.BList.mem_eq (CP.eq_spec_var v) expl then  
+              (nevs, impl, v_r::v_c::expl, l_p, Cpr.mkAnd rhs_b.formula_base_perm r_f no_pos)
+            else if (Gen.BList.mem_eq (CP.eq_spec_var v) impl then  
+              (nevs, v_r::v_c::impl, expl, Cpr.mkAnd l_p r_f no_pos, rhs_b.b_formula_base_perm)
+            else (nevs, impl, expl, l_p, Cpr.mkAnd rhs_b.formula_base_perm r_f no_pos)  in
+      let evars, impl, expl,l_p,r_p = comp_vars v_rest v_consumed (get_node_perm rhs_node) estate.es_evars estate.es_gen_impl_vars estate.es_gen_expl_vars in 
+			let new_estate = {estate with 
+								es_formula = Base{ lhs_b with formula_base_heap = lhs_rest; formula_base_perm = l_p }; 
+								es_evars = evars;
+                es_gen_impl_vars = impl; 
+                es_gen_expl_vars = expl; (*[v_rest;v_consumed]@estate.es_evars;*)} in
+			(*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
+			  if it succeeds and the flag from to_be_proven is true then make current context false*)
+            let rhs_p = match to_be_proven with
+              | None -> rhs_b.formula_base_pure
+              | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
+            let n_rhs_b = Base {rhs_b with formula_base_heap = n_rhs_h;formula_base_pure = rhs_p; formula_base_perm = r_p} in
+            let n_rhs_node = set_perm_h (Some v_consumed) rhs_node in
+            let res_es0, prf0 = do_match prog new_estate lhs_node n_rhs_node n_rhs_b is_folding pos in
+            (res_es0,prf0)
+            
     | Context.M_fold {
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} -> 
