@@ -718,7 +718,9 @@ and is_h_normalized f1 p =
 			if (List.length dups)=0 then ex_alias_dups rests
 			else if b&&(List.for_all snd dups) then ex_alias_dups rests 
 			else false in
-	 ex_alias_dups l1
+   let r = ex_alias_dups l1 in
+   (if r then () else print_string ("not norm:"^(!print_h_formula f1)^" & "^(!MCP.print_mix_f p)^"\n"));
+   r
 	 
   
 (*and mkStarHh (f1 : h_formula) (f2 : h_formula) asets (pos : loc) = match f1 with

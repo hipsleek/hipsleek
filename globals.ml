@@ -132,8 +132,7 @@ let rec sub_type (t1 : typ) (t2 : typ) =
     | Float, NUM        -> true
     | p1, p2 -> p1=p2
 ;;
-
-
+ 
 let rec s_i_list l c = match l with 
   | [] -> ""
   | h::[] -> h 

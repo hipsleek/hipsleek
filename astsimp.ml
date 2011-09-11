@@ -1118,11 +1118,11 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
           (ignore (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews);
       ignore (List.map (fun vdef -> set_materialized_prop vdef) cviews);
           ignore (C.build_hierarchy cprog1);
-		  let cprog1 = fill_base_case cprog1 in
-		  let _ = List.map (check_barrier_wf cprog) bdecls in
+          let cprog1 = fill_base_case cprog1 in
           let cprog2 = sat_warnings cprog1 in        
           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
-		  let cprog3 = normalize_fracs cprog3 in
+          let cprog3 = normalize_fracs cprog3 in
+          let _ = List.map (check_barrier_wf cprog3) cprog3.C.prog_barrier_decls in      
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 	      let c = (mark_recursive_call prog cprog5) in 
@@ -1183,7 +1183,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
         (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
          let (xform', xform_b, addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
-         let addr_vars = CP.remove_dups_svl addr_vars' in
+         let addr_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.map fst addr_vars') in
 	(*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
 	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
 	  (Cprinter.string_of_pure_formula xform')^"\n\n\n");flush stdout in	*)
@@ -1284,17 +1284,21 @@ and check_barrier_wf prog bd =
 		   if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Err.Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
 		   else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Err.Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
 		   else (*check precision P * P = false , shold be redundant at this point*)
-			if Solver.unsat_base_nth "0" prog (ref 0) (CF.mkStar p1 p1 CF.Flow_combine no_pos) then (p1,p2)  
+        let f = Solver.normalize_frac_formula prog (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
+			if Solver.unsat_base_nth "0" prog (ref 0) f then (p1,p2)  
 			else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
 	  | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
 	(*the pre sum totals full barrier fs get residue F1*)
 	let tot_pre = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) pres in
+  let tot_pre = Solver.normalize_frac_formula prog tot_pre in
+  (*let _ = print_string (Cprinter.string_of_formula tot_pre) in *)
 	if Solver.unsat_base_nth "0" prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
 	else
 		let fpre = one_entail tot_pre (f_gen_tot fs) in
 		if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
 		else (*the post sum totals full barrier ts get residue F2*)
 			let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
+      let tot_post = Solver.normalize_frac_formula prog tot_post in
 			if Solver.unsat_base_nth "0" prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
 			else 
 				let fpost = one_entail tot_post (f_gen_tot ts) in
@@ -6584,13 +6588,14 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
 
   let pick_pures_x (lst:(CF.formula * Globals.formula_label) list) vl
-        uinv : (Globals.formula_label * (Solver.CP.spec_var list * CP.b_formula list)) list = 
+        uinv : (Globals.formula_label * (CP.BagaSV.baga * CP.b_formula list)) list = 
 	let uinvc = MCP.fold_mem_lst (CP.mkTrue no_pos) true true (MCP.MemoF uinv) in	 
 	let uinvl = filter_pure_conj_list (fst (get_pure_conj_list uinvc)) in
 	(*let _ = print_string ("init inv:" ^(pr_list Cprinter.string_of_b_formula uinvl)) in*)
     let split_one_branch ((b,lbl):(CF.formula * Globals.formula_label)) = 
-      let h,p,_,_, b,_ = CF.split_components b in
-      let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 p in
+      let h,p,_,pr, b,_ = CF.split_components b in
+      let pr = Cpr.solve_once pr in
+      let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 p pr in
       let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
       let xp = MCP.fold_mem_lst fbr true true cm in
       let all_p = MCP.fold_mem_lst xp true true p in
@@ -6608,7 +6613,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       (all_p,(lbl,ba,r@uinv2)) in
     let split_br = List.map split_one_branch lst in 
 
-    let collect_constr (f,(lbl,ba,pl)) : (Globals.formula_label * (Solver.CP.spec_var list * CP.b_formula list)) =  
+    let collect_constr (f,(lbl,ba,pl)) : (Globals.formula_label * (CP.BagaSV.baga * CP.b_formula list)) =  
       let n_c = List.fold_left (fun a (_,(l,_,fl))  ->  
           if ((fst l)=(fst lbl)) then a else 
             let l_neg = List.map (fun c-> CP.mkNot_norm (CP.BForm (c,None)) None no_pos) fl in 
@@ -6636,7 +6641,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (*     let pures1,ba =  *)
   (*   	  let h,p,_,b,_ = CF.split_components c in *)
   (*         (\*let (cm,br) = (Solver.xpure_heap cp h 0) in *\) *)
-  (*         let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in *)
+  (*         let cm,br,ba = Solver.xpure_heap_symxbolic_i cp h 0 in *)
   (*         let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in *)
   (*         let xp = MCP.fold_mem_lst fbr true true cm in *)
   (*         (MCP.fold_mem_lst xp true true p,ba) in *)
@@ -6659,7 +6664,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (*r -> list of triples, one for each disjunct(propagated constraints, initial formula , label)*)
   let guard_list = pick_pures init_form_lst v_l u_inv in
   let invariant_list = compute_invariants v_l guard_list in  
-  let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(CP.BagaSV.conj_baga v_l b1,MCP.memo_norm_wrapper c2))) invariant_list in
+  let v_l_prop = List.map Cpr.var_2_prop_var_top v_l in
+  let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(CP.BagaSV.intersect v_l_prop b1,MCP.memo_norm_wrapper c2))) invariant_list in
   let ungrouped_g_l = List.concat (List.map (fun (lbl, (_,c_l))-> List.map (fun c-> (lbl,c)) c_l) guard_list) in
   let ungrouped_b_l = List.map (fun (lbl, (b,_))-> (b,lbl)) guard_list in
   let prune_conds = List.fold_left (fun a (f_lbl, constr)-> 
@@ -6810,6 +6816,12 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
     Gen.Profiling.pop_time "pred_inference" ;r
         
 
+and normalize_barr_decl cprog p = 
+		let nfs = Solver.normalize_frac_struc cprog in
+    let l  = List.map (fun (f,t,fl) -> (f,t,List.map nfs fl)) p.C.barrier_tr_list in
+		let bd = List.concat (List.map (fun (_,_,l)->List.concat l) l) in
+		{ p with C.barrier_tr_list = l; C.barrier_def = bd;}
+        
 and normalize_fracs cprog  = 
 	let nff = Solver.normalize_frac_formula cprog in
 	let nfs = Solver.normalize_frac_struc cprog in
@@ -6865,18 +6877,13 @@ and normalize_fracs cprog  =
 			C.coercion_head = nff p.C.coercion_head;
 			C.coercion_body = nff p.C.coercion_body;} in
 	
-	let normalize_barr_decl p = 
-		let l  = List.map (fun (f,t,fl) -> (f,t,List.map nfs fl)) p.C.barrier_tr_list in
-		let bd = List.concat (List.map (fun (_,_,l)->List.concat l) l) in
-		{ p with C.barrier_tr_list = l; C.barrier_def = bd;} in
-	
 	{ cprog with 
 		C.prog_data_decls = List.map normalize_fracs_data cprog.C.prog_data_decls;
 		C.prog_view_decls = List.map normalize_fracs_pred cprog.C.prog_view_decls;
 		C.prog_proc_decls = List.map normalize_fracs_proc cprog.C.prog_proc_decls;
 		C.prog_left_coercions = List.map normalize_coerc_decl cprog.C.prog_left_coercions;
 		C.prog_right_coercions = List.map normalize_coerc_decl cprog.C.prog_right_coercions;
-		C.prog_barrier_decls = List.map normalize_barr_decl cprog.C.prog_barrier_decls;
+		C.prog_barrier_decls = List.map (normalize_barr_decl cprog) cprog.C.prog_barrier_decls;
 	}	
 		
 and line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_rel*(int* Cpure.b_formula *(Cpure.spec_var list))) list)

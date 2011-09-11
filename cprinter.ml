@@ -775,13 +775,18 @@ let pr_prunning_conditions cnd pcond = match cnd with
                     "( " ; pr_b_formula c; fmt_string" )->"; pr_formula_label_list c2;)
                     pcond;fmt_string "]") pcond *)
 
-let string_of_ms (m:(P.spec_var list) list) : string =
+let pr_ptrSV_list l = 
+  let str_pair (a,(_,b)) = "("^(string_of_spec_var a)^","^(Tree_shares.string_of_tree_share b)^")" in
+  fmt_string ("["^(String.concat "," (List.map str_pair l))^"]")
+    
+let string_of_ptrSV_list l = poly_string_of_pr pr_ptrSV_list l
+  
+let string_of_ms (m:((P.spec_var*('a*Tree_shares.stree)) list) list) : string =
   let wrap s1 = "["^s1^"]" in
-  let ls = List.map (fun l -> wrap (String.concat "," (List.map string_of_spec_var l))) m in
+  let ls = List.map (fun l -> string_of_ptrSV_list l) m in
   wrap (String.concat ";" ls)
 
-let pr_mem_formula  (e : mem_formula) = 
-  fmt_string (string_of_ms e.mem_formula_mset)
+let pr_mem_formula  (e : mem_formula) = fmt_string (string_of_ms e.mem_formula_mset)
 
 (** print a mem formula to formatter *)
 (* let rec pr_mem_formula  (e : mem_formula) =  *)
@@ -1403,7 +1408,7 @@ let string_of_mater_prop_list l : string = poly_string_of_pr pr_mater_prop_list 
 
 let pr_prune_invariants l = (fun c-> pr_seq "," (fun (c1,(ba,c2))-> 
       let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
-      let b = string_of_spec_var_list ba in
+      let b = string_of_ptrSV_list ba in
       let d = String.concat ";" (List.map string_of_b_formula c2) in
       fmt_string ("{"^s^"} -> {"^b^"} ["^d^"]")) c) l
 
@@ -1427,7 +1432,7 @@ let pr_view_decl v =
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
-  pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
+  pr_vwrap  "bag of addr: " pr_ptrSV_list v.view_baga;
   (match v.view_raw_base_case with 
     | None -> ()
     | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
@@ -1437,7 +1442,7 @@ let pr_view_decl v =
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
   pr_vwrap  "prune baga conditions: " 
     (fun c-> fmt_string 
-        (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.view_prune_conditions_baga;
+        (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_ptrSV_list bl)^")-"^(string_of_int lbl)) c))) v.view_prune_conditions_baga;
   let i = string_of_int(List.length v.view_prune_invariants) in
   pr_vwrap  ("prune invs:"^i^":") (* (fun c-> pr_seq "," (fun (c1,(ba,c2))->  *)
       (* let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in *)
@@ -1882,6 +1887,7 @@ Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
+Cast.print_mix_formula := string_of_mix_formula ;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Cperm.print_perm_f := string_of_perm_formula;;

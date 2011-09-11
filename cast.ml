@@ -737,16 +737,19 @@ let is_rec_view_def prog (name : ident) : bool =
    (* let _ = collect_rhs_view vdef in *)
    vdef.view_is_rec
 
-let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+let look_up_view_baga prog (c : ident) (root:P.PtrSV.t) (args:P.BagaSV.baga) : P.BagaSV.baga = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
   (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
   let from_svs = P.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
   let to_svs = root :: args in
-  P.subst_var_list_avoid_capture from_svs to_svs ba
+  Gen.BList.list_substs (fun b a-> P.eq_spec_var (fst a) (fst b)) (List.combine from_svs to_svs) ba
+  (*P.subst_var_list_avoid_capture from_svs to_svs ba*)
 
-let look_up_view_baga  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-      Gen.Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+let look_up_view_baga  prog (c : ident) (root:P.PtrSV.t) (args:P.BagaSV.baga) : P.BagaSV.baga = 
+    let pr_ptrSV = pr_pair !print_sv (fun (_,c)-> Tree_shares.string_of_tree_share c) in
+      let print_r = Gen.pr_list pr_ptrSV in
+      Gen.Debug.no_2 "look_up_view_baga" pr_ptrSV print_r print_r
       (fun r a ->  look_up_view_baga prog c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
@@ -833,10 +836,11 @@ let lookup_view_invs_with_subs rem_br v_def zip  =
     List.map (P.b_apply_subs zip) v
   with | Not_found -> []
 
-let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
+let lookup_view_baga_with_subs rem_br v_def from_v to_v = 
   try 
     let v=fst(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
-    P.subst_var_list_avoid_capture from_v to_v v
+    Gen.BList.list_substs (fun b a-> P.eq_spec_var (fst a) (fst b)) (List.combine from_v to_v) v
+    (*P.subst_var_list_avoid_capture from_v to_v v*)
   with | Not_found -> []
 
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 

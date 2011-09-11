@@ -7,6 +7,8 @@
 open Globals
 open Gen.Basic
 
+module Ts = Tree_shares
+
 (* spec var *)
 type spec_var =
   | SpecVar of (typ * ident * primed)
@@ -1941,17 +1943,27 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
-(* (\* pretty printing for types *\) *)
-(* let rec string_of_typ = function  *)
-(*   | t -> string_of_prim_type t  *)
-(*   | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot) *)
-(*   | Array (et, _) -> (string_of_typ et) ^ "[]" (\* An Hoa *\) *)
 
 let string_of_spec_var (sv: spec_var) = match sv with
     | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
  
 let string_of_spec_var_type (sv: spec_var) = match sv with
     | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")^":"^(string_of_typ t)
+ 
+ 
+(*module Ptr =
+    functor (Elt:Gen.EQ_TYPE) ->
+struct
+  include Elt
+  type tlist = t list
+  type ef = t -> t -> bool
+  module X = Gen.BListEQ(Elt)
+  (*let overlap_eq eq = eq
+  let intersect_eq eq (x:tlist)  (y:tlist) = Gen.BList.intersect_eq eq x y*)
+  let overlap = eq
+  let intersect (x:tlist)  (y:tlist) = X.intersect x y
+  let star_union x y = x@y
+end;;*)
  
 module SV =
 struct 
@@ -1960,21 +1972,62 @@ struct
   let string_of = string_of_spec_var
 end;;
 
-module Ptr =
+module Type_prop = 
+  struct
+      type t=typ
+      let eq t1 t2 = (t1=t2)
+      let are_disj t1 t2 = match t1,t2 with
+         | UNK,_
+         | _,UNK -> true
+         | _,_ -> 
+          if t1=t2 then false
+          else true
+      let star_t t1 t2 = true (*decide if to keep the first arg*)
+      let and_t t1 t2 = sub_type t1 t2
+      let or_t t1 t2 = sub_type t2 t1 
+      let string_of = string_of_typ
+    end;;
+
+module Frac_prop = 
+  struct
+      type t=Ts.stree
+      let eq = Ts.stree_eq
+      let are_disj t1 t2 = not (Ts.can_join t1 t2) 
+      let star_t t1 t2 = true (*decide if to keep the first arg*)
+      let and_t t1 t2 = Ts.contains t1 t2
+      let or_t t1 t2 = Ts.contains t2 t1 
+      let string_of = Ts.string_of_tree_share
+    end;;
+    
+module TFProp = Gen.Mem_prop_comb (Type_prop) (Frac_prop)
+
+module Ptr_prop =
     functor (Elt:Gen.EQ_TYPE) ->
+    functor (Prop:Gen.MEM_PROP) ->
 struct
-  include Elt
+  (*include Elt*)
+  type t = Elt.t*Prop.t
   type tlist = t list
   type ef = t -> t -> bool
-  module X = Gen.BListEQ(Elt)
-  let overlap_eq eq = eq
-  let intersect_eq eq (x:tlist)  (y:tlist) = Gen.BList.intersect_eq eq x y
-  let overlap = eq
-  let intersect (x:tlist)  (y:tlist) = X.intersect x y
+  let eq (f1,s1) (f2,s2) = Elt.eq f1 f2 (*& not (Prop.are_disj s1 s2)*)
+  let overlap  = eq
+  let disj x y = Prop.are_disj (snd x) (snd y)
+  let strong_eq (f1,s1) (f2,s2) = Elt.eq f1 f2 & Prop.eq s1 s2
+  
+  let string_of (f,s) = "("^(Elt.string_of f)^" , "^(Prop.string_of s)^")"
+  
+  let or_t (f1,s1) (f2,s2) = Elt.eq f1 f2 & (Prop.or_t s1 s2)
+  let and_t (f1,s1) (f2,s2) = Elt.eq f1 f2 & not (Prop.and_t s1 s2)
+  
+  let intersect = Gen.BList.intersect_rel or_t strong_eq
+  let and_union x y = 
+      List.filter (fun c-> List.for_all (fun d-> not (and_t d c)) y) x @ 
+      List.filter (fun c-> List.for_all (fun d-> not (and_t d c)) x) y
   let star_union x y = x@y
 end;;
 
-module PtrSV = Ptr(SV);;
+
+module PtrSV = Ptr_prop(SV)(TFProp);;
 
 module BagaSV = Gen.Baga(PtrSV);;
 module EMapSV = Gen.EqMap(SV);;

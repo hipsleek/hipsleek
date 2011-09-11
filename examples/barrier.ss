@@ -159,15 +159,16 @@ pred ll<n> == self = null & n = 0
   //fail
 
 checkentail x::cl@[L]<_> * x::cl@[L]<_> |- false.
+// valid
 
 checkentail x::cl@[L]<_> * y::cl@[L]<_> |- x!=y.
-
+// valid
 checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x!=y.
-  // unsound!
+  // valid - unsound!
 
 checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x=y.
-  // ok to fail
-
+  // fail
 
 checkentail x::cl@[L]<_> * y::cl@[R]<_> |- true.
 print residue.
+// valid

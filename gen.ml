@@ -277,8 +277,12 @@ struct
     List.exists (fun e -> eq x e) ls
 
   let intersect_eq eq l1 l2 =
-    List.filter (fun x -> List.exists (eq x) l2) l1  
+    List.filter (fun x -> List.exists (eq x) l2) l1
 
+  (*intersect gen rel*)
+  let intersect_rel rel eq l1 l2 = 
+    remove_dups_eq eq ((List.filter (fun x-> List.exists (fun c-> rel x c) l2) l1)@(List.filter (fun x-> List.exists (rel x) l1) l2))
+    
   let difference_eq eq l1 l2 =
     List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
@@ -303,7 +307,13 @@ struct
     | x::xs -> match f x with
         | None -> list_find f xs
         | Some s -> Some s
-
+  
+  let rec list_substs eq sst l = 
+    List.map (fun v-> 
+      try 
+        snd (List.find (eq v) sst)
+      with Not_found -> v) l 
+        
 end;;
 
 module BListEQ =
@@ -998,6 +1008,31 @@ struct
   let no_eff_6_opt  _ _ _ _ _ _ _ _ _ _ f = f
 end;;
 
+module type MEM_PROP = 
+    sig
+      type t
+      val eq: t->t->bool
+      val are_disj: t->t-> bool
+      val star_t : t->t->bool (*decide if to keep the first arg*)
+      val and_t : t->t->bool
+      val or_t : t->t->bool
+      val string_of : t -> string
+    end;;
+
+module Mem_prop_comb = 
+ functor (P1:MEM_PROP) ->
+ functor (P2:MEM_PROP) ->
+ struct
+   type t = (P1.t*P2.t)
+   let eq (f1,s1) (f2,s2) = (P1.eq f1 f2)&(P2.eq s1 s2)
+   let are_disj (f1,s1) (f2,s2) = 
+      if P1.are_disj f1 f2 then true 
+      else P2.are_disj s1 s2        
+   let star_t (f1,s1) (f2,s2) = (P1.star_t f1 f2) & (P2.star_t s1 s2)
+   let and_t (f1,s1) (f2,s2) = (P1.and_t f1 f2) & (P2.and_t s1 s2)
+   let or_t (f1,s1) (f2,s2) = (P1.or_t f1 f2) & (P2.or_t s1 s2)
+   let string_of (f,s) = "("^(P1.string_of f)^","^(P2.string_of s)^")"
+  end;;
 
 module type MEM_TYPE =
 sig
@@ -1008,10 +1043,11 @@ sig
   val overlap : t -> t -> bool
   val intersect : tlist -> tlist -> tlist (* /\ *)
     (* under approx or-ing *)
-  val overlap_eq : ef -> t -> t -> bool
-  val intersect_eq : ef -> tlist -> tlist -> tlist (* /\ *)
+ (* val overlap_eq : ef -> t -> t -> bool
+  val intersect_eq : ef -> tlist -> tlist -> tlist (* /\ *)*)
   val star_union : tlist -> tlist -> tlist (* @ *)
-    (* combine by star, without normalization *)
+  (* combine by star, without normalization *)
+  val and_union : tlist -> tlist -> tlist (* @ *)    
   val string_of : t -> string
 end;;
 
@@ -1021,7 +1057,8 @@ sig
   type ef = t -> t -> bool
   type tlist = t list
   val eq : ef
-  val intersect_eq : ef -> tlist -> tlist -> tlist
+  val disj : ef
+  (*val intersect_eq : ef -> tlist -> tlist -> tlist*)
   val intersect : tlist -> tlist -> tlist
   val string_of : t -> string
 end;;
@@ -1036,10 +1073,9 @@ module type EQ_PTR_TYPE =
       val intersect : tlist -> tlist -> tlist
       val intersect_eq : ef -> tlist -> tlist -> tlist
     end;;
-
-
+        
 module Baga =
-    functor (Elt : MEM_TYPE) ->
+    functor (Elt : MEM_TYPE ) ->
 struct
   type ptr = Elt.t
   type baga = ptr list
@@ -1048,9 +1084,10 @@ struct
   let eq = Elt.eq
   let overlap = Elt.overlap
   let intersect = Elt.intersect
-  let overlap_eq = Elt.overlap_eq
-  let intersect_eq = Elt.intersect_eq
+  (*let overlap_eq = Elt.overlap_eq
+  let intersect_eq = Elt.intersect_eq*)
   let star_union = Elt.star_union
+  let and_union = Elt.and_union
 
   (* need a semantic overlap operator that takes
      aliasing into account *)
@@ -1058,17 +1095,22 @@ struct
   (* a singleton bag *)
   let singleton_baga (e:ptr) : baga = [e]
 
-  let rec is_dupl_baga_eq eq (xs:baga) : bool = 
+ (* let rec is_dupl_baga_eq eq (xs:baga) : bool = 
     match xs with
       | [] -> false
       | x::xs1 -> match xs1 with
           | [] -> false
-          | _ -> if (List.exists (overlap_eq eq x) xs1) then true else is_dupl_baga_eq eq xs1
+          | _ -> if (List.exists (overlap_eq eq x) xs1) then true else is_dupl_baga_eq eq xs1*)
 
-  let is_dupl_baga (xs:baga) : bool = is_dupl_baga_eq eq xs
+  let rec is_dupl_baga (xs:baga) : bool = 
+    match xs with
+      | [] -> false
+      | x::xs1 -> match xs1 with
+          | [] -> false
+          | _ -> if (List.exists (overlap x) xs1) then true else is_dupl_baga xs1
 
   (* false result denotes contradiction *)
-  let is_sat_baga_eq eq (xs:baga) : bool = not(is_dupl_baga_eq eq xs)
+  (*let is_sat_baga_eq eq (xs:baga) : bool = not(is_dupl_baga_eq eq xs)*)
 
   (* false result denotes contradiction *)
   let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
@@ -1083,19 +1125,20 @@ struct
   let star_baga (x:baga) (y:baga) : baga = star_union x y
 
   (* conjunction of two bag of addresses *)
-  let conj_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys
+  (*let conj_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys*)
 
   (* conjunction of two bag of addresses *)
-  let conj_baga (xs:baga) (ys:baga) : baga = intersect xs ys
+  let conj_baga (xs:baga) (ys:baga) : baga = and_union xs ys
 
   (* disjunction of two bag of addresses *)
   let or_baga (xs:baga) (ys:baga) : baga = intersect xs ys
 
   (* disjunction of two bag of addresses *)
-  let or_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys
+  (*let or_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys*)
 
 
 end;;
+
 
 module DisjSet =
     functor (Elt : PTR_TYPE) ->
@@ -1108,6 +1151,7 @@ struct
       (* module BG = Baga(Elt) *)
   let eq = Elt.eq
   let intersect = Elt.intersect
+  let disj = Debug.ho_2 "disjSet disj " Elt.string_of Elt.string_of string_of_bool Elt.disj
 
   module BL_EQ = BListEQ(Elt)
   open BL_EQ
@@ -1141,10 +1185,13 @@ struct
   let is_disj (eq:'a->'a->bool) (s: dpart)  (x:ptr) (y:ptr) : bool =
     if (eq x y) then false 
     else
-      let l1 = find_diff eq s x in
-      let l2 = find_diff eq s y in
-      (overlap_q l1 l2)
-
+      List.exists (fun l-> 
+        try
+          let vx = List.find (eq x) l in
+          let vy = List.find (eq y) l in
+          disj vx vy
+        with Not_found -> false ) s
+    
   (* returns s1/\s2 *)
   let merge_disj_set (s1: dpart) (s2: dpart): dpart =
     s1@s2

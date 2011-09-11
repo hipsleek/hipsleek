@@ -159,8 +159,8 @@ let process_pred_def pdef =
 		let n_cpdef = AS.view_prune_inv_inference !cprog cpdef in
     !cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
     let n_cpdef = {n_cpdef with 
-        C.view_formula =  Solver.prune_pred_struc !cprog true n_cpdef.C.view_formula ;
-        C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds !cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
+        C.view_formula =  Solver.normalize_frac_struc !cprog (Solver.prune_pred_struc !cprog true n_cpdef.C.view_formula) ;
+        C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.normalize_frac_formula !cprog (Solver.prune_preds !cprog true c1),c2)) n_cpdef.C.view_un_struc_formula;}in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		!cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
@@ -340,11 +340,11 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in    
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Solver.normalize_frac_formula !cprog (Solver.prune_preds !cprog true ante) in
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
-  let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let conseq = Solver.normalize_frac_struc !cprog (Solver.prune_pred_struc !cprog true conseq) in
   (*let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int !top_flow_int conseq ) in*)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
@@ -428,6 +428,7 @@ let process_barrier_def_a bd =
 	 try
 	    let bd = AS.case_normalize_barrier iprog bd in
 		let cbd = AS.trans_bdecl iprog bd in
+    let cbd = AS.normalize_barr_decl !cprog cbd in
 		AS.check_barrier_wf !cprog cbd;
 		print_string ("Barrrier "^bd.I.barrier_name^" Success\n")
 	 with 

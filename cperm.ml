@@ -1,4 +1,5 @@
 open Globals
+
 module P = Cpure
 module Ts = Tree_shares
 
@@ -530,6 +531,20 @@ let is_sat_a f = match list_of_a_f false f with
       
 let is_sat f = Gen.Debug.no_1 "perm_is_sat" !print_perm_f string_of_bool is_sat_a f
 
+let solve_once f = 
+  if not !Globals.enable_frac_perm then None
+  else Some (match is_sat_p_t_w2 f with 
+		| (hl::[],_,_,_)::[]-> hl
+		| _ -> (PMap.create P.cmp_spec_var))
+      
+let solve_once f =
+  Gen.Debug.ho_1 "solve_once" !print_perm_f (fun c-> match c with | None -> "None" | _ -> "Some")
+   solve_once f
+      
+let stub_sol :(P.spec_var,(Ts.stree*Ts.stree)) PMap.t option = 
+  if not !Globals.enable_frac_perm then None
+  else Some (PMap.create P.cmp_spec_var)
+
 (*imply : f1|-f2*)
 
 let trip_pr (c1,c2,c3) = (!print_frac_f c1) ^ "=" ^ (String.concat "+" (List.map !print_sv c2))^"+" ^(!print_share c3)	
@@ -576,8 +591,24 @@ let imply evs f1 f2 =
 (*elim exists*)
 (*solves f, returns vars without a unique value, and pairs of vars and values*)
  
-      
+ let get_perm_sol pr_sol pv = match pr_sol with
+  | None -> Tree_shares.top
+  | Some l -> match pv with 
+    | None -> Tree_shares.top
+    | Some pv -> try fst (PMap.find pv l) with Not_found-> Tree_shares.bot 
+ 
+let var_2_prop_var pr_sol (v:P.spec_var) pv = (v,(P.type_of_spec_var v, get_perm_sol pr_sol pv))
+    
+let var_2_prop_var pr_sol v pv=
+  Gen.Debug.ho_2 "var_2_prop_var" !print_sv (Gen.pr_option !print_sv) (fun (_,(_,f))-> Ts.string_of_tree_share f) (var_2_prop_var pr_sol) v pv
 
+let var_2_prop_var_list pr_sol vl pv =
+  let perm  = get_perm_sol pr_sol pv in
+  List.map (fun v-> (v,(P.type_of_spec_var v, perm))) vl
+  
+let var_2_prop_var_bot (v:P.spec_var) = (v,(P.type_of_spec_var v, Tree_shares.bot))
+let var_2_prop_var_top (v:P.spec_var) = (v,(P.type_of_spec_var v, Tree_shares.top))
+ 
 let solve_for_l w f = match w with
   | [] -> (w,[])
   | _ -> match is_sat_p_t_w2 f with 
