@@ -6,9 +6,7 @@ open Globals
     
   let top = Leaf true
   let bot = Leaf false
-  let leftTree = Node ((Leaf true), (Leaf false))  
-  let rightTree = Node ((Leaf false), (Leaf true))
-  
+    
   let mkNode l r = match l,r with
     | Leaf b1, Leaf b2 when b1==b2 -> Leaf b1
     | _ -> Node(l,r)
@@ -95,3 +93,6 @@ open Globals
 		| Leaf true -> y
 		| Leaf false -> x
 		| Node (y1,y2) -> mkNode (union x1 y1) (union x2 y2)
+    
+    (*let leftTree = Node ((Leaf true), (Leaf false))  
+  let rightTree = Node ((Leaf false), (Leaf true))*)

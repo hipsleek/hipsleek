@@ -5268,13 +5268,13 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 			let n_rhs_h = mkStarH_nn rhs_rest (set_perm_h (Some v_rest) rhs_node) pos in	
       let comp_vars v_r v_c r_p evs impl expl =
         match r_p with
-          | [] -> (v_r::(v_c::evs), impl, expl, l_p, Cpr.mkAnd rhs_b.formula_base_perm r_f no_pos)
+          | [] -> (v_r::v_c::evs, impl, expl, l_p, Cpr.mkAnd rhs_b.formula_base_perm r_f no_pos)
           | v::_ -> 
-            let nevs = if (Gen.BList.mem_eq (CP.eq_spec_var v) evs then v_r::v_c::evs else evs in
-            if (Gen.BList.mem_eq (CP.eq_spec_var v) expl then  
+            let nevs = if (Gen.BList.mem_eq CP.eq_spec_var v evs) then v_r::v_c::evs else evs in
+            if (Gen.BList.mem_eq CP.eq_spec_var v expl) then  
               (nevs, impl, v_r::v_c::expl, l_p, Cpr.mkAnd rhs_b.formula_base_perm r_f no_pos)
-            else if (Gen.BList.mem_eq (CP.eq_spec_var v) impl then  
-              (nevs, v_r::v_c::impl, expl, Cpr.mkAnd l_p r_f no_pos, rhs_b.b_formula_base_perm)
+            else if (Gen.BList.mem_eq CP.eq_spec_var v impl) then  
+              (nevs, v_r::v_c::impl, expl, Cpr.mkAnd l_p r_f no_pos, rhs_b.formula_base_perm)
             else (nevs, impl, expl, l_p, Cpr.mkAnd rhs_b.formula_base_perm r_f no_pos)  in
       let evars, impl, expl,l_p,r_p = comp_vars v_rest v_consumed (get_node_perm rhs_node) estate.es_evars estate.es_gen_impl_vars estate.es_gen_expl_vars in 
 			let new_estate = {estate with 

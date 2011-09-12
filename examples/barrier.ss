@@ -164,7 +164,7 @@ checkentail x::cl@[L]<_> * x::cl@[L]<_> |- false.
 checkentail x::cl@[L]<_> * y::cl@[L]<_> |- x!=y.
 // valid
 checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x!=y.
-  // valid - unsound!
+  // fail
 
 checkentail x::cl@[L]<_> * y::cl@[R]<_> |- x=y.
   // fail

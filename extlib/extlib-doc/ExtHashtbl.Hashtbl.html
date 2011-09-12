@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="ExtHashtbl.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="BitSet" rel="Chapter" href="BitSet.html">
+<link title="Dllist" rel="Chapter" href="Dllist.html">
+<link title="DynArray" rel="Chapter" href="DynArray.html">
+<link title="Enum" rel="Chapter" href="Enum.html">
+<link title="ExtArray" rel="Chapter" href="ExtArray.html">
+<link title="ExtHashtbl" rel="Chapter" href="ExtHashtbl.html">
+<link title="ExtList" rel="Chapter" href="ExtList.html">
+<link title="ExtString" rel="Chapter" href="ExtString.html">
+<link title="Global" rel="Chapter" href="Global.html">
+<link title="IO" rel="Chapter" href="IO.html">
+<link title="OptParse" rel="Chapter" href="OptParse.html">
+<link title="Option" rel="Chapter" href="Option.html">
+<link title="PMap" rel="Chapter" href="PMap.html">
+<link title="RefList" rel="Chapter" href="RefList.html">
+<link title="Std" rel="Chapter" href="Std.html">
+<link title="UChar" rel="Chapter" href="UChar.html">
+<link title="UTF8" rel="Chapter" href="UTF8.html">
+<link title="Unzip" rel="Chapter" href="Unzip.html"><link title="New Functions" rel="Section" href="#6_NewFunctions">
+<link title="Older Functions" rel="Section" href="#6_OlderFunctions">
+<title>ExtHashtbl.Hashtbl</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="ExtHashtbl.html">Up</a>
+&nbsp;</div>
+<center><h1>Module <a href="type_ExtHashtbl.Hashtbl.html">ExtHashtbl.Hashtbl</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> Hashtbl: <code class="code">sig</code> <a href="ExtHashtbl.Hashtbl.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type">('a, 'b)</code> t</span> = <code class="type">('a, 'b) Hashtbl.t</code> </pre>
+<div class="info">
+The type of a hashtable.<br>
+</div>
+
+<br>
+<span id="6_NewFunctions"><h6>New Functions</h6></span><br>
+<pre><span id="VALexists"><span class="keyword">val</span> exists</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> bool</code></pre><div class="info">
+<code class="code">exists h k</code> returns true is at least one item with key <code class="code">k</code> is
+		found in the hashtable.<br>
+</div>
+<pre><span id="VALkeys"><span class="keyword">val</span> keys</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a <a href="Enum.html#TYPEt">Enum.t</a></code></pre><div class="info">
+Return an enumeration of all the keys of a hashtable.
+	    If the key is in the Hashtable multiple times, all occurrences
+	    will be returned.<br>
+</div>
+<pre><span id="VALvalues"><span class="keyword">val</span> values</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'b <a href="Enum.html#TYPEt">Enum.t</a></code></pre><div class="info">
+Return an enumeration of all the values of a hashtable.<br>
+</div>
+<pre><span id="VALenum"><span class="keyword">val</span> enum</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> ('a * 'b) <a href="Enum.html#TYPEt">Enum.t</a></code></pre><div class="info">
+Return an enumeration of (key,value) pairs of a hashtable.<br>
+</div>
+<pre><span id="VALof_enum"><span class="keyword">val</span> of_enum</span> : <code class="type">('a * 'b) <a href="Enum.html#TYPEt">Enum.t</a> -> ('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a></code></pre><div class="info">
+Create a hashtable from a (key,value) enumeration.<br>
+</div>
+<pre><span id="VALfind_default"><span class="keyword">val</span> find_default</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> 'b -> 'b</code></pre><div class="info">
+Find a binding for the key, and return a default
+	    value if not found<br>
+</div>
+<pre><span id="VALfind_option"><span class="keyword">val</span> find_option</span> : <code class="type">('a, 'b) Hashtbl.t -> 'a -> 'b option</code></pre><div class="info">
+Find a binding for the key, or return <code class="code">None</code> if no
+		value is found<br>
+</div>
+<pre><span id="VALremove_all"><span class="keyword">val</span> remove_all</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> unit</code></pre><div class="info">
+Remove all bindings for the given key<br>
+</div>
+<pre><span id="VALmap"><span class="keyword">val</span> map</span> : <code class="type">('a -> 'b) -> ('c, 'a) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> ('c, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a></code></pre><div class="info">
+<code class="code">map f x</code> creates a new hashtable with the same
+	    keys as <code class="code">x</code>, but with the function <code class="code">f</code> applied to
+		all the values<br>
+</div>
+<pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> int</code></pre><div class="info">
+Return the number of elements inserted into the Hashtbl 
+		(including duplicates)<br>
+</div>
+<br>
+<span id="6_OlderFunctions"><h6>Older Functions</h6></span><br>
+<br>
+Please refer to the Ocaml Manual for documentation of these
+		functions. (note : functor support removed to avoid code
+		duplication).<br>
+<pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">int -> ('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a></code></pre><pre><span id="VALclear"><span class="keyword">val</span> clear</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> unit</code></pre><pre><span id="VALadd"><span class="keyword">val</span> add</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> 'b -> unit</code></pre><pre><span id="VALcopy"><span class="keyword">val</span> copy</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> ('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a></code></pre><pre><span id="VALfind"><span class="keyword">val</span> find</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> 'b</code></pre><pre><span id="VALfind_all"><span class="keyword">val</span> find_all</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> 'b list</code></pre><pre><span id="VALmem"><span class="keyword">val</span> mem</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> bool</code></pre><pre><span id="VALremove"><span class="keyword">val</span> remove</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> unit</code></pre><pre><span id="VALreplace"><span class="keyword">val</span> replace</span> : <code class="type">('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'a -> 'b -> unit</code></pre><pre><span id="VALiter"><span class="keyword">val</span> iter</span> : <code class="type">('a -> 'b -> unit) -> ('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> unit</code></pre><pre><span id="VALfold"><span class="keyword">val</span> fold</span> : <code class="type">('a -> 'b -> 'c -> 'c) -> ('a, 'b) <a href="ExtHashtbl.Hashtbl.html#TYPEt">t</a> -> 'c -> 'c</code></pre><pre><span id="VALhash"><span class="keyword">val</span> hash</span> : <code class="type">'a -> int</code></pre></body></html>

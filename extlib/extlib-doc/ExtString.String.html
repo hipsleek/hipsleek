@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="ExtString.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Base64" rel="Chapter" href="Base64.html">
+<link title="BitSet" rel="Chapter" href="BitSet.html">
+<link title="Dllist" rel="Chapter" href="Dllist.html">
+<link title="DynArray" rel="Chapter" href="DynArray.html">
+<link title="Enum" rel="Chapter" href="Enum.html">
+<link title="ExtArray" rel="Chapter" href="ExtArray.html">
+<link title="ExtHashtbl" rel="Chapter" href="ExtHashtbl.html">
+<link title="ExtList" rel="Chapter" href="ExtList.html">
+<link title="ExtString" rel="Chapter" href="ExtString.html">
+<link title="Global" rel="Chapter" href="Global.html">
+<link title="IO" rel="Chapter" href="IO.html">
+<link title="OptParse" rel="Chapter" href="OptParse.html">
+<link title="Option" rel="Chapter" href="Option.html">
+<link title="PMap" rel="Chapter" href="PMap.html">
+<link title="RefList" rel="Chapter" href="RefList.html">
+<link title="Std" rel="Chapter" href="Std.html">
+<link title="UChar" rel="Chapter" href="UChar.html">
+<link title="UTF8" rel="Chapter" href="UTF8.html">
+<link title="Unzip" rel="Chapter" href="Unzip.html"><link title="New Functions" rel="Section" href="#6_NewFunctions">
+<link title="Older Functions" rel="Section" href="#6_OlderFunctions">
+<title>ExtString.String</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="ExtString.html">Up</a>
+&nbsp;</div>
+<center><h1>Module <a href="type_ExtString.String.html">ExtString.String</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> String: <code class="code">sig</code> <a href="ExtString.String.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<br>
+<span id="6_NewFunctions"><h6>New Functions</h6></span><br>
+<pre><span id="VALinit"><span class="keyword">val</span> init</span> : <code class="type">int -> (int -> char) -> string</code></pre><div class="info">
+<code class="code">init l f</code> returns the string of length <code class="code">l</code> with the chars
+		f 0 , f 1 , f 2 ... f (l-1).<br>
+</div>
+<pre><span id="VALfind"><span class="keyword">val</span> find</span> : <code class="type">string -> string -> int</code></pre><div class="info">
+<code class="code">find s x</code> returns the starting index of the string <code class="code">x</code>
+	    within the string <code class="code">s</code> or raises <code class="code">Invalid_string</code> if <code class="code">x</code>
+	    is not a substring of <code class="code">s</code>.<br>
+</div>
+<pre><span id="VALsplit"><span class="keyword">val</span> split</span> : <code class="type">string -> string -> string * string</code></pre><div class="info">
+<code class="code">split s sep</code> splits the string <code class="code">s</code> between the first
+		occurrence of <code class="code">sep</code>.
+	    raises <code class="code">Invalid_string</code> if the separator is not found.<br>
+</div>
+<pre><span id="VALnsplit"><span class="keyword">val</span> nsplit</span> : <code class="type">string -> string -> string list</code></pre><div class="info">
+<code class="code">nsplit s sep</code> splits the string <code class="code">s</code> into a list of strings
+		which are separated by <code class="code">sep</code>.<br>
+</div>
+<pre><span id="VALjoin"><span class="keyword">val</span> join</span> : <code class="type">string -> string list -> string</code></pre><div class="info">
+Same as <code class="code">concat</code><br>
+</div>
+<pre><span id="VALslice"><span class="keyword">val</span> slice</span> : <code class="type">?first:int -> ?last:int -> string -> string</code></pre><div class="info">
+<code class="code">slice ?first ?last s</code> returns a "slice" of the string
+          which corresponds to the characters <code class="code">s.[first]</code>,
+          <code class="code">s.[first+1]</code>, ..., <code class="code">s[last-1]</code>. Note that the character at
+          index <code class="code">last</code> is <b>not</b> included! If <code class="code">first</code> is omitted it
+          defaults to the start of the string, i.e. index 0, and if
+          <code class="code">last</code> is omitted is defaults to point just past the end of
+          <code class="code">s</code>, i.e. <code class="code">length s</code>.  Thus, <code class="code">slice s</code> is equivalent to
+          <code class="code">copy s</code>.
+<p>
+
+          Negative indexes are interpreted as counting from the end of
+          the string. For example, <code class="code">slice ~last:-2 s</code> will return the
+          string <code class="code">s</code>, but without the last two characters.
+<p>
+
+          This function <b>never</b> raises any exceptions. If the
+          indexes are out of bounds they are automatically clipped.<br>
+</div>
+<pre><span id="VALlchop"><span class="keyword">val</span> lchop</span> : <code class="type">string -> string</code></pre><div class="info">
+Returns the same string but without the first character.
+	    does nothing if the string is empty.<br>
+</div>
+<pre><span id="VALrchop"><span class="keyword">val</span> rchop</span> : <code class="type">string -> string</code></pre><div class="info">
+Returns the same string but without the last character.
+	   does nothing if the string is empty.<br>
+</div>
+<pre><span id="VALof_int"><span class="keyword">val</span> of_int</span> : <code class="type">int -> string</code></pre><div class="info">
+Returns the string representation of an int.<br>
+</div>
+<pre><span id="VALof_float"><span class="keyword">val</span> of_float</span> : <code class="type">float -> string</code></pre><div class="info">
+Returns the string representation of an float.<br>
+</div>
+<pre><span id="VALof_char"><span class="keyword">val</span> of_char</span> : <code class="type">char -> string</code></pre><div class="info">
+Returns a string containing one given character.<br>
+</div>
+<pre><span id="VALto_int"><span class="keyword">val</span> to_int</span> : <code class="type">string -> int</code></pre><div class="info">
+Returns the integer represented by the given string or
+	    raises <code class="code">Invalid_string</code> if the string does not represent an integer.<br>
+</div>
+<pre><span id="VALto_float"><span class="keyword">val</span> to_float</span> : <code class="type">string -> float</code></pre><div class="info">
+Returns the float represented by the given string or
+	    raises Invalid_string if the string does not represent a float.<br>
+</div>
+<pre><span id="VALends_with"><span class="keyword">val</span> ends_with</span> : <code class="type">string -> string -> bool</code></pre><div class="info">
+<code class="code">ends_with s x</code> returns true if the string <code class="code">s</code> is ending with <code class="code">x</code>.<br>
+</div>
+<pre><span id="VALstarts_with"><span class="keyword">val</span> starts_with</span> : <code class="type">string -> string -> bool</code></pre><div class="info">
+<code class="code">starts_with s x</code> return true if <code class="code">s</code> is starting with <code class="code">x</code>.<br>
+</div>
+<pre><span id="VALenum"><span class="keyword">val</span> enum</span> : <code class="type">string -> char <a href="Enum.html#TYPEt">Enum.t</a></code></pre><div class="info">
+Returns an enumeration of the characters of a string.<br>
+</div>
+<pre><span id="VALof_enum"><span class="keyword">val</span> of_enum</span> : <code class="type">char <a href="Enum.html#TYPEt">Enum.t</a> -> string</code></pre><div class="info">
+Creates a string from a character enumeration.<br>
+</div>
+<pre><span id="VALmap"><span class="keyword">val</span> map</span> : <code class="type">(char -> char) -> string -> string</code></pre><div class="info">
+<code class="code">map f s</code> returns a string where all characters <code class="code">c</code> in <code class="code">s</code> have been
+		replaced by <code class="code">f c</code>. *<br>
+</div>
+<pre><span id="VALfold_left"><span class="keyword">val</span> fold_left</span> : <code class="type">('a -> char -> 'a) -> 'a -> string -> 'a</code></pre><div class="info">
+<code class="code">fold_left f a s</code> is
+	      <code class="code">f (... (f (f a s.[0]) s.[1]) ...) s.[n-1]</code><br>
+</div>
+<pre><span id="VALfold_right"><span class="keyword">val</span> fold_right</span> : <code class="type">(char -> 'a -> 'a) -> string -> 'a -> 'a</code></pre><div class="info">
+<code class="code">fold_right f s b</code> is
+	      <code class="code">f s.[0] (f s.[1] (... (f s.[n-1] b) ...))</code><br>
+</div>
+<pre><span id="VALexplode"><span class="keyword">val</span> explode</span> : <code class="type">string -> char list</code></pre><div class="info">
+<code class="code">explode s</code> returns the list of characters in the string <code class="code">s</code>.<br>
+</div>
+<pre><span id="VALimplode"><span class="keyword">val</span> implode</span> : <code class="type">char list -> string</code></pre><div class="info">
+<code class="code">implode cs</code> returns a string resulting from concatenating
+	      the characters in the list <code class="code">cs</code>.<br>
+</div>
+<pre><span id="VALstrip"><span class="keyword">val</span> strip</span> : <code class="type">?chars:string -> string -> string</code></pre><div class="info">
+Returns the string without the chars if they are at the beginning or
+		at the end of the string. By default chars are " \t\r\n".<br>
+</div>
+<pre><span id="VALexists"><span class="keyword">val</span> exists</span> : <code class="type">string -> string -> bool</code></pre><div class="info">
+<code class="code">exists str sub</code> returns true if <code class="code">sub</code> is a substring of <code class="code">str</code> or
+		false otherwise.<br>
+</div>
+<pre><span id="VALreplace_chars"><span class="keyword">val</span> replace_chars</span> : <code class="type">(char -> string) -> string -> string</code></pre><div class="info">
+<code class="code">replace_chars f s</code> returns a string where all chars <code class="code">c</code> of <code class="code">s</code> have been
+		replaced by the string returned by <code class="code">f c</code>.<br>
+</div>
+<pre><span id="VALreplace"><span class="keyword">val</span> replace</span> : <code class="type">str:string -> sub:string -> by:string -> bool * string</code></pre><div class="info">
+<code class="code">replace ~str ~sub ~by</code> returns a tuple constisting of a boolean
+		and a string where the first occurrence of the string <code class="code">sub</code>
+		within <code class="code">str</code> has been replaced by the string <code class="code">by</code>. The boolean
+		is true if a subtitution has taken place.<br>
+</div>
+<br>
+<span id="6_OlderFunctions"><h6>Older Functions</h6></span><br>
+<br>
+Please refer to the Ocaml Manual for documentation of these
+		functions.<br>
+<pre><span id="VALlength"><span class="keyword">val</span> length</span> : <code class="type">string -> int</code></pre><pre><span id="VALget"><span class="keyword">val</span> get</span> : <code class="type">string -> int -> char</code></pre><pre><span id="VALset"><span class="keyword">val</span> set</span> : <code class="type">string -> int -> char -> unit</code></pre><pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">int -> string</code></pre><pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">int -> char -> string</code></pre><pre><span id="VALcopy"><span class="keyword">val</span> copy</span> : <code class="type">string -> string</code></pre><pre><span id="VALsub"><span class="keyword">val</span> sub</span> : <code class="type">string -> int -> int -> string</code></pre><pre><span id="VALfill"><span class="keyword">val</span> fill</span> : <code class="type">string -> int -> int -> char -> unit</code></pre><pre><span id="VALblit"><span class="keyword">val</span> blit</span> : <code class="type">string -> int -> string -> int -> int -> unit</code></pre><pre><span id="VALconcat"><span class="keyword">val</span> concat</span> : <code class="type">string -> string list -> string</code></pre><pre><span id="VALiter"><span class="keyword">val</span> iter</span> : <code class="type">(char -> unit) -> string -> unit</code></pre><pre><span id="VALescaped"><span class="keyword">val</span> escaped</span> : <code class="type">string -> string</code></pre><pre><span id="VALindex"><span class="keyword">val</span> index</span> : <code class="type">string -> char -> int</code></pre><pre><span id="VALrindex"><span class="keyword">val</span> rindex</span> : <code class="type">string -> char -> int</code></pre><pre><span id="VALindex_from"><span class="keyword">val</span> index_from</span> : <code class="type">string -> int -> char -> int</code></pre><pre><span id="VALrindex_from"><span class="keyword">val</span> rindex_from</span> : <code class="type">string -> int -> char -> int</code></pre><pre><span id="VALcontains"><span class="keyword">val</span> contains</span> : <code class="type">string -> char -> bool</code></pre><pre><span id="VALcontains_from"><span class="keyword">val</span> contains_from</span> : <code class="type">string -> int -> char -> bool</code></pre><pre><span id="VALrcontains_from"><span class="keyword">val</span> rcontains_from</span> : <code class="type">string -> int -> char -> bool</code></pre><pre><span id="VALuppercase"><span class="keyword">val</span> uppercase</span> : <code class="type">string -> string</code></pre><pre><span id="VALlowercase"><span class="keyword">val</span> lowercase</span> : <code class="type">string -> string</code></pre><pre><span id="VALcapitalize"><span class="keyword">val</span> capitalize</span> : <code class="type">string -> string</code></pre><pre><span id="VALuncapitalize"><span class="keyword">val</span> uncapitalize</span> : <code class="type">string -> string</code></pre><pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">string</code> </pre>
+
+<pre><span id="VALcompare"><span class="keyword">val</span> compare</span> : <code class="type"><a href="ExtString.String.html#TYPEt">t</a> -> <a href="ExtString.String.html#TYPEt">t</a> -> int</code></pre></body></html>
