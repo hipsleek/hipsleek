@@ -1,1 +1,1 @@
-cperm needs extlib to be copied to /usr/local/lib/ocaml 
+cperm needs extlib to be compiled (run make in the extlib folder) and then copied to /usr/local/lib/ocaml 
