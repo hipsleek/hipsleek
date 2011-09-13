@@ -457,7 +457,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | MaterializedArg (mv,ms) ->
-        let _ = print_string "\n materialized args  analysis here!\n" in   
+        (* let _ = print_string "\n materialized args  analysis here!\n" in  *)  
           let uf_i = if mv.mater_full_flag then 0 else 1 in 
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
@@ -471,7 +471,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let l1 = [(1,M_base_case_unfold c)] in
                    (-1, (Search_action ((1,a1)::l1)))
             | ViewNode vl, DataNode dr -> 
-                  let _ = print_string "\n try LHS case analysis here!\n" in
+                  (* let _ = print_string "\n try LHS case analysis here!\n" in *)
 
 
                   (* let i = if mv.mater_full_flag then 0 else 1 in  *)

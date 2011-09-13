@@ -64,7 +64,7 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--check-coercions", Arg.Set Globals.check_coercions,
+	("--disable-check-coercions", Arg.Clear Globals.check_coercions,
 	"Check coercion validity");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");

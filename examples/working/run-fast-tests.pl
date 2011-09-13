@@ -727,7 +727,7 @@ sub sleek_process_file  {
           $exempl_path_full = "$exempl_path/sleek";
       }
       #to be removed after fixing --check-coercions will be enabled by default:
-      $script_arguments = $script_arguments." --check-coercions";
+      #$script_arguments = $script_arguments." --check-coercions";
       #
       $t_list = $sleek_files{$param};	
       foreach $test (@{$t_list})
