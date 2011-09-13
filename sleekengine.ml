@@ -386,72 +386,61 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
   Gen.Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
-let entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (num_id: string) =
-  try 
-    let valid, rs = run_entail_check iante0 iconseq0 in
-    if not valid then
-      begin
-        let s =
-          if not !Globals.disable_failure_explaining then
-            match CF.get_must_failure rs with
-              | Some s -> "(must) cause:"^s 
-              | _ -> (match CF.get_may_failure rs with
-                  | Some s -> "(may) cause:"^s
-                  | None -> "INCONSISTENCY : expected failure but success instead"
-                )
-          else ""
-        in
-        print_string (num_id^": Fail. "^s^"\n")
-            (*if !Globals.print_err_sleek then *)
-            (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
-      end
-    else
-      begin
-	    print_string (num_id^": Valid.\n")
-            (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
-      end
-  with _ ->
-      Printexc.print_backtrace stdout;
-      dummy_exception() ; 
-      print_string "exception in entail check\n"
+let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+  if not valid then
+    begin
+      let s =
+        if not !Globals.disable_failure_explaining then
+          match CF.get_must_failure residue with
+            | Some s -> "(must) cause:"^s 
+            | _ -> (match CF.get_may_failure residue with
+                | Some s -> "(may) cause:"^s
+                | None -> "INCONSISTENCY : expected failure but success instead"
+              )
+        else ""
+      in
+      print_string (num_id^": Fail. "^s^"\n")
+          (*if !Globals.print_err_sleek then *)
+          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
+    end
+  else
+    begin
+	  print_string (num_id^": Valid.\n")
+          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
+    end  
+
+let print_exc (check_id: string) =
+  Printexc.print_backtrace stdout;
+  dummy_exception() ; 
+  print_string ("exception in " ^ check_id ^ " check\n")
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let num_id = "Entail("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
-  entail_check iante0 iconseq0 num_id
+  let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+  try 
+    let valid, rs = run_entail_check iante0 iconseq0 in
+    print_entail_result valid rs num_id
+  with _ -> print_exc num_id
+
+let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
+  try 
+    run_entail_check iante0 iconseq0
+  with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
+      let rs = (CF.FailCtx (CF.Trivial_Reason " exception in lemma proving ")) in
+      (false, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
-  let num_id = "Checking Lemma "^ lemma_name in
-  entail_check iante0 iconseq0 num_id
-
-let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   let pr = string_of_meta_formula in
   Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
-let old_process_capture_residue (lvar : ident) = 
-	let flist = match !residues with 
-      | None -> (CF.mkTrue (CF.mkTrueFlow()) no_pos)
-      | Some s -> CF.formula_of_list_context s in
-		put_var lvar (Sleekcommons.MetaFormCF flist)
-		
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some s -> CF.list_formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
-
-let process_lemma_old ldef =
-  let ldef = Astsimp.case_normalize_coerc iprog ldef in
-  let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
-  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
-  let _ = if !Globals.print_core then 
-    print_string ((Cprinter.string_of_coerc_decl_list l2r) ^"\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
-  ignore (!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions);
-  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions
 
 let check_coercion coer lhs rhs =
     let pos = CF.pos_of_formula coer.C.coercion_head in
@@ -469,7 +458,7 @@ let check_coercion coer lhs rhs =
 let check_coercion coer lhs rhs =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun _ -> "?") (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
+  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun valid rs -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
 let check_left_coercion coer =
   let ent_lhs =coer.C.coercion_head in
@@ -483,7 +472,6 @@ let check_right_coercion coer =
 
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
-  (* let _ = print_string ("\n process_lemma: " ^ (Iprinter.string_of_coerc_decl ldef)) in *)
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
   let _ = if !Globals.print_core then 
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
@@ -492,14 +480,39 @@ let process_lemma ldef =
   !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
   !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
   if !Globals.check_coercions then begin
-        let rec helper coercs check_coerc = match coercs with
-          | [] -> ()
-          | coerc::[] -> check_coerc coerc
-          | coerc::lst -> check_coerc coerc; helper lst check_coerc
-        in
-        helper l2r check_left_coercion;
-        helper r2l check_right_coercion
+    let helper coercs check_coerc = match coercs with
+      | [] -> (true, None)
+      | coerc::[] -> let (valid, rs) = check_coerc coerc in (valid, Some rs)
+      | _ -> let _ = print_string "\n[sleekengine.ml] error at process_lemma: list of coercions should have max length of 1 \n" in 
+        (false, None)
+    in
+    let valid_l2r, rs_l2r = helper l2r check_left_coercion in
+    let valid_r2l, rs_r2l = helper r2l check_right_coercion in
+    let residues = match (rs_l2r, rs_r2l) with
+      | (None, None) -> CF.FailCtx (CF.Trivial_Reason " empty residue")
+      | (None, Some rs) 
+      | (Some rs, None) -> rs
+      | (Some rs1, Some rs2) -> CF.list_context_union rs1 rs2
+    in
+    let valid = valid_l2r && valid_r2l in
+    let num_id = "Checking lemma \""^ (ldef.I.coercion_name) ^"\"" in
+    if valid then 
+      print_entail_result valid residues num_id
+    else begin
+      let num_id0 = 
+        match ldef.I.coercion_type with
+          | I.Equiv -> 
+                if (valid_l2r == false) then " (left-to-right) "
+                else  " (right-to-left) "
+          | _ -> "" 
+      in
+      print_entail_result valid residues (num_id^num_id0)
+    end;
   end
+
+let process_lemma ldef =
+  Gen.Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
+
 
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->
