@@ -775,6 +775,7 @@ let simplify (f : CP.formula) : CP.formula =
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
+  let _ = Gen.Profiling.inc_counter ("stat_count_simpl") in
   simplify f 
 
 (* let simplify f = *)
@@ -907,7 +908,7 @@ let rec split_disjunctions = function
 ;;
 
 let called_prover = ref ""
-let print_implication = ref false (* An Hoa *)
+
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"

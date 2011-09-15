@@ -252,7 +252,7 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
 
  (** invoke pr_args_gen  *)   
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
-  pr_args_gen (fun () -> fmt_string (open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
+  pr_args_gen (fun () -> fmt_string (op^open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
 
  (** invoke pr_args_gen and print nothing when xs  is empty  *)      
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
@@ -450,7 +450,10 @@ let string_of_typed_spec_var x =
 let string_of_spec_var x = 
 (* string_of_typed_spec_var x *)
   match x with
-    | P.SpecVar (t, id, p) -> id (* ^":"^(string_of_typ t) *) ^(match p with
+    | P.SpecVar (t, id, p) ->
+		(* An Hoa : handle printing of holes *)
+		let real_id = if (id.[0] = '#') then "#" else id in
+	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
 
@@ -654,7 +657,7 @@ let rec pr_b_formula (e:P.b_formula) =
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
-let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s2)
+let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
@@ -822,12 +825,26 @@ let rec pr_h_formula h =
       h_formula_data_name = c;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
+		h_formula_data_holes = hs; (* An Hoa *)
       h_formula_data_pos = pos;
       h_formula_data_remaining_branches = ann;
-      h_formula_data_label = pid})->
+      h_formula_data_label = pid})-> 
+			(** [Internal] Replace the specvars at positions of holes with '-' **)
+			let rec replace_holes svl hs n = 
+				if hs = [] then svl
+				else let sv = List.hd svl in
+						match sv with
+							| CP.SpecVar (t,vn,vp) -> 
+								if (List.hd hs = n) then
+									CP.SpecVar (t,"-",vp) :: (replace_holes (List.tl svl) (List.tl hs) (n+1))
+								else
+									sv :: (replace_holes (List.tl svl) hs (n+1))
+			in
+			let svs = replace_holes svs hs 0 in
           fmt_open_hbox ();
           (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid; *)
+			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
           pr_angle c pr_spec_var svs ;
 	      pr_imm imm;
@@ -839,6 +856,7 @@ let rec pr_h_formula h =
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
       h_formula_view_original = original;
+      h_formula_view_lhs_case = lhs_case;
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
@@ -853,7 +871,8 @@ let rec pr_h_formula h =
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
 	  if original then fmt_string "[Orig]"
 	  else fmt_string "[Derv]";
-          pr_remaining_branches ann; 
+ 	  if lhs_case then fmt_string "[LHSCase]";
+         pr_remaining_branches ann; 
           pr_prunning_conditions ann pcond;
           fmt_close()
     | HTrue -> fmt_bool true
@@ -915,7 +934,7 @@ let pr_mix_formula_branches (f,l) = match f with
 
 let rec string_of_flow_formula f c = 
   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
+	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
 let rec pr_formula_base e =
   match e with
@@ -1417,6 +1436,14 @@ let pr_prune_invariants l = (fun c-> pr_seq "," (fun (c1,(ba,c2))->
 
 let string_of_prune_invariants p : string = poly_string_of_pr pr_prune_invariants p
 
+let pr_view_base_case bc = 
+    (match bc with
+	  | None -> ()
+      | Some (s1,(s3,s2)) -> 
+            pr_vwrap "base case: "
+	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) ()
+    )
+
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
@@ -1463,6 +1490,8 @@ let pr_prune_invs inv_lst =
           ("{"^s^"} -> ["^d^"]")) c) inv_lst))
 
 let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
+
+let string_of_view_base_case (bc:(P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option): string =  poly_string_of_pr pr_view_base_case bc
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
 
@@ -1704,8 +1733,8 @@ let rec string_of_exp = function
 
 
 (* pretty printing for one data declaration*)
-let string_of_decl d = match d with 
-  | (t, id) -> (string_of_typ t) ^ " " ^ id 
+let string_of_decl d = (* An Hoa : un-hard-code *)
+  (string_of_typ (get_field_typ d)) ^ " " ^ (get_field_name d) 
 ;;
 
 (* function to print a list of typed_ident *) 
@@ -1725,6 +1754,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Equiv -> "<==>" ;;
 
 
+    (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
   if is_short op then s1
@@ -1733,7 +1763,8 @@ let string_of_coerc_opt op c =
   else s2
     ^"\n head match:"^c.coercion_head_view
     ^"\n body view:"^c.coercion_body_view
-    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";;
+    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
+    ^"\n univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
 

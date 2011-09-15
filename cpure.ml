@@ -10,7 +10,17 @@ open Gen.Basic
 (* spec var *)
 type spec_var =
   | SpecVar of (typ * ident * primed)
-  
+
+let is_hole_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n.[0] = '#'
+
+	(** An Hoa : Array whose elements are all of type typ.
+      In principle, this is 1D array. To have higher 
+			dimensional array, but we need to use nested arrays.
+			It seems inefficient to me; but simpler to do!
+	 *)
+  (* | Array of typ  *)
+
 type formula =
   | BForm of (b_formula *(formula_label option))
   | And of (formula * formula * loc)
@@ -331,7 +341,7 @@ and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
 and afv (af : exp) : spec_var list =
   match af with
   | Null _ -> []
-  | Var (sv, _) -> [sv]
+  | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
   | IConst _ -> []
   | FConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
@@ -2250,12 +2260,27 @@ struct
   type tlist = t list
   type ef = t -> t -> bool
   module X = Gen.BListEQ(Elt)
+  let sat x = true
   let overlap_eq eq = eq
   let intersect_eq eq (x:tlist)  (y:tlist) = Gen.BList.intersect_eq eq x y
   let overlap = eq
   let intersect (x:tlist)  (y:tlist) = X.intersect x y
   let star_union x y = x@y
 end;;
+
+(* module CnjBag = *)
+(*     functor (Elt:Gen.EQ_TYPE) -> *)
+(* struct *)
+(*   include Elt *)
+(*   type tlist = (t list) list *)
+(*   type ef = t -> t -> bool *)
+(*   module X = Gen.BListEQ(Elt) *)
+(*   let overlap_eq eq = eq *)
+(*   let intersect_eq eq (x:tlist)  (y:tlist) = Gen.BList.intersect_eq eq x y *)
+(*   let overlap = eq *)
+(*   let intersect (x:tlist)  (y:tlist) = X.intersect x y *)
+(*   let star_union x y = x@y *)
+(* end;; *)
 
 module PtrSV = Ptr(SV);;
 
@@ -5441,7 +5466,7 @@ let find_all_failures is_sat ante cons =
   let may_list = find_may_failures (imply is_sat) cand_pairs in
   (contra_list,must_list,may_list)
 
-let find_all_failures is_sat ante cons =
+let find_all_failures is_sat  ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
   Gen.Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
@@ -5463,18 +5488,22 @@ let check_maymust_failure is_sat ante cons =
   let pr = !print_formula in
   Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
 
-let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
-  let n_a = simpl ante in
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula =
+  let n_a =
+  if !Globals.simplify_error then
+    simpl ante
+  else ante 
+  in
   filter_ante n_a conseq
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula in
   Gen.Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq
 
-(*==================================================
-Forced slicing
-===================================================*)
-
+(*=================================================*)
+(* Forced Slicing                                  *)	
+(*=================================================*)
+	
 (* For assigning <IL> fields after doing simplify *)
 let rec break_formula (f: formula) : b_formula list =
   match f with

@@ -254,6 +254,14 @@ let process_data_def ddef =
         dummy_exception() ;
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
+
+(** An Hoa : Second stage of parsing : iprog already contains the whole input.
+             We do a reparse in order to distinguish between data & enum that
+             is deferred in case of mutually dependent data definition.
+ **)
+let perform_second_parsing_stage () =
+	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
+		!cprog.C.prog_data_decls <- cddefs
 	
 let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
   | MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)
@@ -341,44 +349,57 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
-  (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
+  let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
   (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
-  let rs1, _ = Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
-    (CF.SuccCtx[ctx]) conseq no_pos None in
+  let rs1, _ = 
+  if not !Globals.disable_failure_explaining then
+    Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+  else
+     Solver.heap_entail_struc_init !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+  in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   (*let _ = print_endline ( (Cprinter.string_of_list_context rs)) in*)
   residues := Some rs;
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   flush stdout;
-  let res = ((not (CF.isFailCtx_gen rs))) in
+  let res =
+    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
+    else ((not (CF.isFailCtx rs)))
+  in
   (res, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let index = (sleek_proof_counter#inc_and_get) in
   try 
+	(* let _ = print_endline ("Entailment checking:\n" ^ (string_of_meta_formula iante0) ^ " |- " ^ (string_of_meta_formula iconseq0)) in *)
     let valid, rs = run_entail_check iante0 iconseq0 in
     let num_id = "Entail("^(string_of_int index)^")" in
     if not valid then
       begin
-        let s = match CF.get_must_failure rs with
+        let s =
+           if not !Globals.disable_failure_explaining then
+             match CF.get_must_failure rs with
           | Some s -> "(must) cause:"^s 
           | _ -> (match CF.get_may_failure rs with
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
           )
+           else ""
         in
         print_string (num_id^"=Fail."^s^"\n")
         (*if !Globals.print_err_sleek then *)
-         (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
+          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
     else
       begin
 	      print_string (num_id^"=Valid.\n")
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
+           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
   with _ ->
     Printexc.print_backtrace stdout;

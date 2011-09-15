@@ -36,7 +36,8 @@ let print_original_solver_output = ref false
 let timeout = ref 10.0
 let prover_pid = ref 0
 let prover_process = ref {name = "smtsolver"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
-
+let suppress_print_implication = ref false
+let print_implication = ref false
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 
 (**
@@ -97,7 +98,9 @@ let rec is_linear_formula f0 = match f0 with
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
       (is_linear_formula f1) && (is_linear_formula f2)
 
-let rec get_formula_of_rel_with_name rn rdefs = match rdefs with
+let rec get_formula_of_rel_with_name rn rdefs =
+  (*if (rn = "dom") then (mkTrue Globals.no_pos) else*)
+  match rdefs with
 	| [] -> failwith ("Relation " ^ rn ^ " is not found!")
 	| h :: t -> match h with RelDefn (r,_,f) -> if (r = rn) then f else get_formula_of_rel_with_name rn t
 		
@@ -226,7 +229,7 @@ let rec smt_of_typ t =
         Error.error_text = "unexpected UNKNOWN type"}
 	  | NUM | Void | (BagT _) | (TVar _) | List _ -> 
           Error.report_error {Error.error_loc = no_pos; 
-                              Error.error_text = "spec not supported for SMT"} (* Fail! *)
+            Error.error_text = "spec not supported for SMT"} (* Fail! *)
       | Named _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ string_of_typ t) *)
       | Array (et, _) -> "(Array Int " ^ smt_of_typ et ^ ")"
 
@@ -381,6 +384,10 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
     | [] -> ""
     | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () " ^ (smt_of_typ (extract_type var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
   in 
+	(* An Hoa : split /\ into small asserts *)
+	let ante_clauses = CP.split_conjunctions ante in
+	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x StringSet.empty) ^")\n") ante_clauses in
+	let ante_str = String.concat "" ante_strs in
 	let rds = (List.map smt_of_rel_def used_rels_defs) in
 	let rel_def_df = (String.concat "" (List.map fst rds)) in
 	let rel_def_ax = (String.concat "" (List.map snd rds)) in
@@ -389,7 +396,7 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
 		(*"(declare-fun update_array ((Array Int Int) Int Int (Array Int Int)) Bool)" ^
 		"(assert (forall (a (Array Int Int)) (i Int) (v Int) (r (Array Int Int)) 
 		         (= (update_array a i v r) (= r (store a i v)))))" ^*)
-    "(assert " ^ ante ^ ")\n" ^
+    ante_str (*"(assert " ^ ante ^ ")\n"*) ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")
 	
@@ -434,7 +441,7 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
 	let used_rels_defs = List.map (fun x -> match x with | RelDefn (rn,_,_) -> if List.mem rn used_rels then [x] else []) !rel_defs in
 	let used_rels_defs = List.concat used_rels_defs in
 	let res = match prover with
-    | Z3 ->  to_smt_v2 ante_str conseq_str logic all_fv used_rels_defs
+    | Z3 ->  to_smt_v2 ante (* An Hoa : pass the ante instead of ante_str! *) conseq_str logic all_fv used_rels_defs
     | Cvc3 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
   in res
 
@@ -482,6 +489,115 @@ let run prover input =
   remove_file outfile;
   res
 
+(** An Hoa
+ * Switch to choose whether to do induction.
+ *)
+let try_induction = ref false
+let max_induction_level = ref 0
+
+(** An Hoa
+ * Select the candidates to do induction on. Just find all
+ * relation dom(_,low,high) that appears and collect the 
+ * { high - low } such that ante |- low <= high.
+ *)
+let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.formula) : (CP.exp list) =
+	(*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
+	match conseq with
+		| CP.BForm (b,_) -> (let (p, _) = b in match p with
+			| CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos]
+			| _ -> [])
+  	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+  	| CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+  	| CP.Not (f,_,_) -> (collect_induction_value_candidates ante f)
+  	| CP.Forall _ | CP.Exists _ -> []
+	 
+(** An Hoa
+ * Select the value to do induction on.
+ * A simple approach : induct on the length of an array.
+ *)
+and choose_induction_value (ante : CP.formula) (conseq : CP.formula) (vals : CP.exp list) : CP.exp =
+	(* TODO Implement the main heuristic here! *)	
+	List.hd vals
+
+(** An Hoa
+ * Create a variable totally different from the ones in vlist.
+ *)
+and create_induction_var (vlist : CP.spec_var list) : CP.spec_var =
+	(*let _ = print_string "create_induction_var\n" in*)
+	(* We select the appropriate variable with name "omg_i"*)
+	(* with i minimal natural number such that omg_i is not in vlist *)
+	let rec create_induction_var_helper vlist i = match vlist with
+		| [] -> i
+		| hd :: tl -> 
+			let v = CP.SpecVar (Int,"omg_" ^ (string_of_int i),Unprimed) in
+			if List.mem v vlist then
+				create_induction_var_helper tl (i+1)
+			else 
+				create_induction_var_helper tl i
+	in let i = create_induction_var_helper vlist 0 in
+		CP.SpecVar (Int,"omg_" ^ (string_of_int i),Unprimed)
+		
+(** An Hoa
+ * Generate the base case, induction hypothesis and induction case
+ * for a formula phi(v,v_1,v_2,...) with new induction variable v.
+ * v = expression of v_1,v_2,...
+ *)
+(*and gen_induction_formulas (f : formula) (indval : exp) : 
+													 (formula * formula * formula) =
+	let p = fv f in (* collect free variables in f *)
+	let v = create_induction_var p in (* create induction variable *)
+	let fv = mkAnd f (mkEqExp (mkVar v no_pos) indval no_pos) no_pos in (* fv(v) = f /\ (v = indval) *)
+	let f0 = apply_one_term (v, mkIConst 0 no_pos) fv in (* base case fv[v/0] *)
+	let fhyp = mkForall p fv None no_pos in (* induction hypothesis, add universal quantifiers to all free variables in f *)
+	let fvp1 = apply_one_term (v, mkAdd (mkVar v no_pos) (mkIConst 1 no_pos) no_pos) fv in (* inductive case fv[v/v+1], we try to prove fhyp --> fv[v/v+1] *)
+		(f0, fhyp, fvp1)*)
+
+(** An Hoa
+ * Generate the base case, induction hypothesis and induction case
+ * for Ante -> Conseq
+ *)
+and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : CP.exp) : 
+													 ((CP.formula * CP.formula) * (CP.formula * CP.formula)) =
+  (*let _ = print_string "An Hoa :: gen_induction_formulas\n" in*)
+  let p = CP.fv ante @ CP.fv conseq in
+	let v = create_induction_var p in 
+	(*let _ = print_string ("Inductiom variable = " ^ (string_of_spec_var v) ^ "\n") in*)
+	let ante = CP.mkAnd (CP.mkEqExp (CP.mkVar v no_pos) indval no_pos) ante no_pos in
+	(* base case ante /\ v = 0 --> conseq *)
+	let ante0 = CP.apply_one_term (v, CP.mkIConst 0 no_pos) ante in
+	(*let _ = print_string ("Base case: ante = "  ^ (!print_pure ante0) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
+	(* ante --> conseq *)
+	let aimpc = (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
+	(* induction hypothesis = \forall {v_i} : (ante -> conseq) with v_i in p *)
+	let indhyp = CP.mkForall p aimpc None no_pos in
+	(*let _ = print_string ("Induction hypothesis: ante = "  ^ (!print_pure indhyp) ^ "\n") in*)
+	let vp1 = CP.mkAdd (CP.mkVar v no_pos) (CP.mkIConst 1 no_pos) no_pos in
+	(* induction case: induction hypothesis /\ ante(v+1) --> conseq(v+1) *)
+	let ante1 = CP.mkAnd indhyp (CP.apply_one_term (v, vp1) ante) no_pos in
+	let conseq1 = CP.apply_one_term (v, vp1) conseq in
+	(*let _ = print_string ("Inductive case: ante = "  ^ (!print_pure ante1) ^ "\nconseq = " ^ (!print_pure conseq1) ^ "\n") in*)
+		((ante0,conseq),(ante1,conseq1))
+	
+		
+(** An Hoa
+ * Check implication with induction heuristic.
+ *)
+and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: smtprover) : bool =
+	(*let _ = print_string ("An Hoa :: smt_imply_with_induction : ante = "  ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
+	let vals = collect_induction_value_candidates ante (CP.mkAnd ante conseq no_pos) in
+	if (vals = []) then false (* No possible value to do induction on *)
+	else
+		let indval = choose_induction_value ante conseq vals in
+		let bc,ic = gen_induction_formulas ante conseq indval in
+		let a0 = fst bc in
+		let c0 = snd bc in
+		(* check the base case first *)
+		let bcv = smt_imply a0 c0 prover in
+			if bcv then (* base case is valid *)
+				let a1 = fst ic in
+				let c1 = snd ic in
+				smt_imply a1 c1 prover (* check induction case *)
+			else false
 (**
  * Test for validity
  * To check the implication P -> Q, we check the satisfiability of
@@ -490,14 +606,25 @@ let run prover input =
  * If it is unsatisfiable, the original implication is true.
  * We also consider unknown is the same as sat
  *)
-let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   try
       let input = to_smt ante (Some conseq) prover in
-	  let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
       let output = run prover input in
-	  let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in
       let res = output = "unsat" in
+	(* Only do printing in case there is no suppression and output is not unsat *)
+	(*let _ = print_string (string_of_bool !suppress_print_implication) in*)
+	let _ = if (not !suppress_print_implication) && (not res) then
+						let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
+						let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
+						let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in ()
+	in if res then
       res
+		else 
+			(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in*) 
+			if (!try_induction) then
+				smt_imply_with_induction ante conseq prover
+			else 
+				false
   with 
     |Procutils.PrvComms.Timeout ->
 	    begin
@@ -519,7 +646,8 @@ let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
-let imply ante conseq = smt_imply ante conseq Z3
+let imply ante conseq = (*let _ = print_string "Come to imply\n" in*)
+	smt_imply ante conseq Z3
 
 (**
  * Test for satisfiability
@@ -528,9 +656,9 @@ let imply ante conseq = smt_imply ante conseq Z3
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   try
       let input = to_smt f None prover in
-	  let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
+	(*let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in*)
       let output = run prover input in
-	  let _ = if !print_original_solver_output then print_string ("=2=> SMT output : " ^ output ^ "\n") in
+	(*let _ = if !print_original_solver_output then print_string ("==> SMT output : " ^ output ^ "\n") in*)
       let res = output = "unsat" in
       not res
   with 

@@ -1,0 +1,896 @@
+
+These are a set of examples from POPL 2011 paper
+on precise container analysis; collected by Asankhaya.
+
+
+==================== EXAMPLES USED IN CASE STUDY===================
+
+
+
+
+1) Vector copy
+===============
+
+
+using namespace spec;
+
+/*
+ * We copy elements of a vector v1 to another vector v2,
+ * and assert that v1 and v2 contain the same elements
+ * at the same positions.
+ */
+
+void test()
+{
+  vector<int> v1;
+
+
+  v1.push_back(4);
+  v1.push_back(67);
+  v1.push_back(23);
+  v1.push_back(54);
+  v1.push_back(2);
+
+  vector<int> v2;
+  
+  vector<int>::iterator it = v1.begin();
+
+
+  for(; it!= v1.end(); it++)
+  {
+    int cur = *it;
+    v2.push_back(cur);
+  }
+
+
+  it = v1.begin();
+  vector<int>::iterator it2 = v2.begin();
+
+
+  for(; it!= v1.end(); it++, it2++)
+  {
+      int v1_elem = *it;
+      int v2_elem = *it2;
+  
+      static_assert(v1_elem == v2_elem);
+  }
+  
+
+}
+
+================================================================================================================
+
+2) Map copy
+===========
+
+
+/*
+ * We insert every key,value pair in map m
+ * in another map m2, and assert that m2 contains
+ * every key in m and that the value associated with this key
+ * are the same in m and m2.
+ */
+
+using namespace spec;
+
+
+void bar()
+{
+  map<int, string> m;
+
+
+  m[3] = "aa";
+  m[4] = "bb";
+  m[5] = "cc";
+  m[43] = "ff";
+  m[54] = "kl";
+
+
+  map<int, string> m2;
+
+  map<int, string>::iterator it = m.begin();
+ 
+
+ for(; it!= m.end(); it++)
+  {
+    int k= it->first;
+    string v = it->second;
+    m2[k] = v;
+  }
+
+  it = m.begin();
+
+  for(; it!= m.end(); it++)
+  {
+    int k1= it->first;
+    string v2 = it->second;
+
+
+    static_assert(m2[k1] == v2);
+  }
+
+
+}
+
+============================================================================================================
+
+3) Reverse mapping
+====================
+
+
+/*
+  * For map m, we build a reverse map 
+  * reverse_m such that for each key k that
+  * is associated with value v in m, reverse_m
+  * containg an entry with key v and value k.
+ */
+
+
+using namespace spec;
+
+
+
+void bar()
+{
+  map<int, int> m;
+  m[3] = 4;
+  m[4] = 34;
+  m[5] = 23;
+  m[43] = 24;
+  m[54] = 56;
+
+
+  map<int, int> reverse_m;
+
+  map<int, int>::iterator it = m.begin();
+
+  for(; it!= m.end(); it++)
+  {
+    int k= it->first;
+    int v = it->second;
+    reverse_m[v] = k;
+  }
+
+
+  it = m.begin();
+
+  for(; it!= m.end(); it++)
+  {
+    int k1= it->first;
+    int v2 = it->second;
+
+    static_assert(reverse_m[v2] == k1);
+  }
+
+
+}
+
+========================================================================================================
+
+4) Example from Introduction
+=============================
+
+
+/*
+ * In this example, student_scores is a mapping
+ * from each student to a vector storing this
+ * student's score on the i'th exam.
+ *
+ * Using the map student_scores, we build
+ * a different mapping exam_scores, which
+ * maps the i'th exam to a map from students
+ * to their grades on this exam. Since
+ * exam numbers are consecutive, exam_scores
+ * is implemented as a vector.
+ *
+ * Finally, we assert that the exam_scores
+ * contains the correct information.
+ */
+
+
+using namespace spec;
+
+#define NUM_EXAMS 2
+
+#define JOE "joe"
+#define MARY "mary"
+
+
+
+void bar()
+{
+
+
+  map<string, vector<int> > student_scores;
+  vector<map<string, int> > exam_scores;
+
+  student_scores[JOE].push_back(66);
+  student_scores[JOE].push_back(77);
+
+  student_scores[MARY].push_back(88);
+  student_scores[MARY].push_back(99);
+
+  for(int i=0; i<2; i++)
+  {
+    map<string, int> t;
+    exam_scores.push_back(t);
+  }
+
+ map<string, vector<int> >::iterator it = student_scores.begin();
+
+ for(; it!= student_scores.end(); it++)
+  {
+    string student = it->first;
+    vector<int>& scores_vec = it->second;
+
+    for(int i=0; i<2; i++)
+    {
+      map<string, int>& t = exam_scores[i];
+      t[student] = scores_vec[i];
+    }
+
+  }
+
+  int joe_1 = exam_scores[0][JOE];
+  int joe_2 = exam_scores[1][JOE];
+  int mary_1 = exam_scores[0][MARY];
+  int mary_2 = exam_scores[1][MARY];
+
+
+  static_assert(joe_1 == 66);
+  static_assert(joe_2 == 77);
+  static_assert(mary_1 == 88);
+  static_assert(mary_2 == 99);
+ 
+
+}
+
+
+
+==============================================================================================================
+
+5) Set containing map keys:
+============================
+
+
+/*
+ * We collect all the keys in map m in a set called "keys" and
+ * assert that "keys" contains exactly the keys in m.
+*/
+
+using namespace spec;
+
+
+
+void test()
+{
+
+  map<string, int> m;
+
+  m["aa"] = 8;
+  m["fg"] = 19;
+  m["zzz"] = 98;
+
+
+  set<string> keys;
+
+  map<string,int>::iterator it = m.begin();
+
+  for(; it!= m.end(); it++)
+  {
+    string s = it->first;
+    keys.insert(s);
+  }
+
+
+  static_assert(keys.count("aa") > 0);
+  static_assert(keys.count("fg") > 0);
+  static_assert(keys.count("zzz") > 0);
+  static_assert(keys.count("abc") == 0);
+
+}
+
+==============================================================================================================
+
+6) Map of lists:
+=================
+
+
+/*
+ * We build a map from strings to a list of ints,
+ * and assert various properties that should hold 
+ * about the nested lists as well as the elements
+ * of the nested lists.
+*/
+
+
+using namespace spec;
+
+
+void test()
+{
+
+  map<string, list<int>* > m;
+
+  list<int>* l1 = new list<int>();
+
+  l1->push_back(3);
+  l1->push_front(7);
+  l1->push_back(45);
+
+  list<int>* l2 = new list<int>();
+
+  l2->push_back(34);
+  l2->push_front(23);
+  l2->push_front(2);
+
+  list<int>* l3 = new list<int>();
+
+  l3->push_front(3);
+  l3->push_front(56);
+  l3->push_back(24);
+
+  m["aa"] = l1;
+  m["bb"] = l2;
+  m["cc"] = l3;
+
+
+  m["bb"]->pop_front();
+  m["cc"]->pop_back();
+
+
+  static_assert(l1->size() == 3);
+  static_assert(l2->size() == 2);
+  static_assert(l3->size() == l2->size());
+
+  static_assert(m["aa"]->front() == 7);
+  static_assert(m["bb"]->front() == 23);
+  static_assert(m["cc"]->back() == 3);
+
+}
+
+==============================================================================================================
+
+7) Vector of sets:
+==================
+
+
+/*
+ * We build a vector of sets (some of which are aliases), 
+ * insert and erase various elements in the nested sets,
+ * and assert properties that should hold about elements
+ * of nested sets.
+*/
+
+
+
+using namespace spec;
+
+
+
+
+void test()
+{
+
+  vector<set<int>* > v;
+
+  set<int>* s1 = new set<int>();
+
+  s1->insert(2);
+  s1->insert(9);
+  s1->insert(24);
+  s1->insert(11);
+
+  set<int>* s2 = new set<int>();
+
+  s2->insert(32);
+  s2->insert(11);
+  s2->insert(45);
+  s2->insert(23);
+
+
+  v.push_back(s1);
+  v.push_back(s2);
+  v.push_back(s2);
+
+  static_assert(v.size() == 3);
+
+
+  static_assert(v[0]->count(9)>0);
+
+  v[2]->erase(11);
+
+  static_assert(v[1]->count(11) == 0);
+  static_assert(v[1]->count(45) > 0);
+  static_assert(v[0]->count(11) > 0);
+
+
+}
+
+==============================================================================================================
+
+8) Multimap
+===========
+
+using namespace spec;
+
+
+void bar()
+{
+
+  map<string, set<int> > m;
+
+  m["a"].insert(1);
+  m["c"].insert(2);
+  m["b"].insert(3);
+  m["b"].insert(4);
+  m["a"].insert(5);
+  m["b"].insert(6);
+
+  static_assert(m["a"].size() == 2);
+  static_assert(m["b"].size() == 3);
+  static_assert(m["c"].size() == 1);
+
+  static_assert(m["a"].count(1) > 0);
+  static_assert(m["b"].count(1) == 0);
+  static_assert(m["b"].count(4) > 0);
+  static_assert(m["c"].count(2) >0);
+  
+}
+
+==============================================================================================================
+9) Stack Queue Relationship
+===========================
+
+
+
+using namespace spec;
+
+
+void bar(int size)
+{
+
+  assume(size >= 1);
+
+  stack<int> s;
+  queue<int> q;
+
+  for(int i=0; i<size; i++)
+  {
+    s.push(i);
+    q.push(i);
+  }
+
+  int stack_first = s.top();
+  int queue_first = q.front();
+
+  static_assert(stack_first == size-1);
+
+  static_assert(queue_first == 0);
+  
+  
+  
+}
+
+
+===============================================================================================================
+10) Singelton pattern corrrectness
+==================================
+
+
+/*
+ * The Singleton class implements a get_shared method for points, 
+ * such that the result of get_shared is a point with the same
+ * x and y coordinates is such a point exists, otherwise, it
+ * is the same point. 
+ * The check_correctness function in Singleton asserts the functional 
+ * correctness of the get_shared method.
+ */
+
+using namespace spec;
+
+
+class Point
+{
+  private:
+    int x;
+    int y;
+
+
+  public:
+    Point()
+    {
+      x = 0;
+      y = 0;
+    };
+
+    Point(int x, int y)
+    {
+    this->x = x;
+    this->y = y;
+    }
+
+    int get_x()
+    {
+      return x;
+    };
+
+
+    int get_y()
+    {
+      return y;
+    };
+
+
+   bool operator==(const Point& other)
+   {
+      return x == other.x && y ==other.y;
+   }
+
+};
+
+
+class Singleton
+{
+  private:
+    set<Point*> points;
+
+
+  public:
+
+    Point* get_shared(Point* p)
+    {
+      Point* existing = NULL;
+      set<Point*>::iterator it = points.begin();
+
+
+      for(; it!= points.end(); it++)
+      {
+	Point* cur = *it;
+	  if(*cur == *p) {
+	  existing = cur;
+	  break;
+	}
+     }
+
+
+     if(existing == NULL) {
+      points.insert(p);
+      return p;
+     }
+
+     else {
+      delete p;
+      return existing;
+     }
+
+    };
+
+
+  void check_correctness(int x, int y)
+  {
+      Point* p = new Point(x, y);
+      Point* shared_p = get_shared(p);
+
+      if(shared_p != p) {
+	static_assert(shared_p->get_x() == x);
+	static_assert(shared_p->get_y() == y);
+      }
+
+  }
+
+};
+
+
+===============================================================================================================
+11) Prove map values non-null
+=============================
+
+
+/*
+ * In this example, we only insert non-null values to 
+ * a map and assert that the map only contains
+ * non-null values.
+ */
+
+
+
+using namespace spec;
+
+class Point
+{
+  private:
+    int x;
+    int y;
+
+
+  public:
+
+    Point()
+    {
+      x = 0;
+      y = 0;
+    };
+
+    Point(int x, int y)
+    {
+	this->x = x;
+	this->y = y;
+    }
+};
+
+
+void test(int size)
+{
+
+  map<int, Point*> m;
+
+  m[55] = new Point(55, 0);
+  m[23] = new Point(34, 23);
+  m[4] = new Point(8, 9);
+  m[12] = new Point(45, 5);
+
+  map<int, Point*>::iterator it = m.begin();
+
+  for(; it!= m.end(); it++)
+  {
+    Point* p = it->second;
+    static_assert(p != NULL);
+  }
+
+
+}
+
+
+===============================================================================================================
+12) Prove non-aliasing between vector elements
+==============================================
+
+
+
+/*
+ * In this example, the Point objects we insert in
+ * vector v do not alias each other. 
+ * The assertion checkes that any pair of elements
+ * in v have different addresses.
+ */
+
+
+
+using namespace spec;
+
+class Point
+{
+  private:
+    int x;
+    int y;
+
+
+  public:
+    Point()
+    {
+      x = 0;
+      y = 0;
+    };
+
+    Point(int x, int y)
+    {
+	this->x = x;
+	this->y = y;
+    }
+};
+
+
+void test(int size)
+{
+
+  vector<Point*> v;
+
+
+  for(int i=0; i < size; i++)
+  {
+      v.push_back(new Point());
+  }
+
+  vector<Point*>::iterator it = v.begin();
+
+  for(; it!= v.end(); it++)
+  {
+    Point* p1 = *it;
+
+
+    vector<Point*>::iterator it2 = it;
+    it2++;	
+
+    for(; it2!= v.end(); it2++)
+    {
+      Point* p2 = *it2;
+
+      static_assert(p1 != p2);
+    }
+
+  }
+ 
+
+
+}
+
+
+===============================================================================================================
+13) List containing key,value pairs of a map
+============================================
+
+
+
+/*
+ * The list kv_pairs stores all the key, value pairs in map m.
+ * We check functional correctness by asserting:
+ * (i) For every pair<k, v> in list kv_pairs, the value
+       associated with key k is indeed v, and
+ * (ii) For any key "some_key" that is not in map m,
+        the list also does not contain a pair with this key.
+*/
+
+
+using namespace spec;
+
+int unknown();
+
+
+void test()
+{
+
+  map<int, int> m;
+
+  m[45] = 8;
+  m[23] = 19;
+  m[454] = 98;
+  m[256] = 35;
+
+
+  list<pair<int, int> > kv_pairs;
+
+  map<int,int>::iterator it = m.begin();
+
+
+  for(; it!= m.end(); it++)
+  {
+    int key = it->first;
+    int val = it->second;
+
+    pair<int, int> p(key, val);
+    kv_pairs.push_front(p);
+  }
+
+  list<pair<int, int> >::iterator it2 = kv_pairs.begin();
+
+
+  for(;it2!= kv_pairs.end(); it2++)
+  {
+    pair<int, int> p = *it2;
+    int k = p.first;
+    int v = p.second;
+
+    static_assert(m[k] == v);
+  }
+
+
+  int some_key = unknown();
+
+
+  if(m.count(some_key) == 0) {
+
+    it2 = kv_pairs.begin();
+    for(;it2!= kv_pairs.end(); it2++)
+    {
+      int k = it->first;
+      int v = it->second;
+
+      static_assert(k!=some_key);
+    }
+
+  }
+
+}
+
+
+
+===============================================================================================================
+14) Set containing map keys with non-null values 
+================================================
+
+/*
+ * We collect all the keys in map m in set keys and
+ * assert that s contains exactly the keys in m.
+*/
+
+
+using namespace spec;
+
+
+
+void test()
+{
+
+  map<string, int> m;
+
+
+  m["aa"] = 8;
+  m["fg"] = 19;
+  m["zzz"] = 98;
+
+
+  set<string> keys;
+
+  map<string,int>::iterator it = m.begin();
+
+  for(; it!= m.end(); it++)
+  {
+    string s = it->first;
+    keys.insert(s);
+  }
+
+  static_assert(keys.count("aa") > 0);
+  static_assert(keys.count("fg") > 0);
+  static_assert(keys.count("zzz") > 0);
+  static_assert(keys.count("abc") == 0);
+
+
+}
+
+
+
+===============================================================================================================
+15) Relationship between keys and values in map
+===============================================
+
+/* 
+ * In this example, insert elements with
+ * constant keys "aa", "bb", and "cc", and
+ * a symbolic key s. We assert various
+ * facts about the key-value relationships,
+ * depending on whether s is distinct from 
+ * "aa", "bb", and "cc". 
+ */
+
+using namespace spec;
+
+
+void bar(string s)
+{
+
+
+  map<string, int> m;
+  m["aa"] = 3;
+  m["bb"] = 9;
+  m["cc"] = 34;
+  m[s] = 56;
+
+  m.erase("cc");
+
+  if(s != "aa") {
+    static_assert(m["aa"] == 3);
+  }
+  else {
+    static_assert(m["aa"] == 56);
+  }
+
+ if(s!= "bb") {
+    static_assert(m["bb"] == 9);
+ }
+ else {
+    static_assert(m["bb"] == 56); 
+ }
+
+  static_assert(m.count("cc") == 0);
+
+  if(s != "cc") {
+    static_assert(m[s] == 56);
+  }
+
+  else {
+    static_assert(m[s] == 0);
+  }
+
+}
+

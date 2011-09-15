@@ -1,0 +1,68 @@
+// - mutual recursion and partial inst
+data node2 {
+	int val; 
+	nodeprev prev;	
+	nodenext next;
+}.
+
+data nodeprev {
+     node2 prev;
+}.
+
+data nodenext {
+     node2 next;
+}.
+
+/*
+// partial field instantiation? see C ptrs?
+pred dll2<> == self=null
+  or self.prev::null * self::dll_r2<>
+  inv true.
+pred dll_r2<> == self.next::n & n=null
+  or self.next::n * n.prev::self * n::dll_r2<>)
+  inv self!=null.
+*/
+
+pred dll2<> == self=null
+  or self::node2<_,p,n>*p::nodeprev<null>*n::dll_r2<self>
+  inv true.
+pred dll_r2<prev> == self::nodenext<n> & n=null
+  or self::nodenext<n> * n::node2<_,p1,n1>
+     * p1::nodeprev<prev> * n1::dll_r2<n>
+  inv self!=null.
+
+checkentail x::node2<_,p,q>*p::nodeprev<null>*q::nodenext<null>
+  |- x::dll2<>.// - mutual recursion and partial inst
+data node2 {
+	int val; 
+	nodeprev prev;	
+	nodenext next;
+}.
+
+data nodeprev {
+     node2 prev;
+}.
+
+data nodenext {
+     node2 next;
+}.
+
+/*
+pred dll2<> == self=null
+  or self.prev::null * self::dll_r2<>
+  inv true.
+pred dll_r2<> == self.next::n *
+  (n=null or n.prev::self * n::dll_r2<>)
+  inv true.
+*/
+
+pred dll2<> == self=null
+  or self::node2<_,p,n>*p::nodeprev<null>*n::dll_r2<self>
+  inv true.
+pred dll_r2<prev> == self::nodenext<n> & n=null
+  or self::nodenext<n> * n::node2<_,p1,n1>
+     * p1::nodeprev<prev> * n1::dll_r2<n>
+  inv self!=null.
+
+checkentail x::node2<_,p,q>*p::nodeprev<null>*q::nodenext<null>
+  |- x::dll2<>.

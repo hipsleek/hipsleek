@@ -29,7 +29,7 @@ and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(
 and data_decl = { 
     data_name : ident;
     data_fields : typed_ident list;
-    data_parent_name : ident;
+	data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
     
@@ -304,7 +304,7 @@ and exp = (* expressions keep their types *)
   | Label of exp_label
   | CheckRef of exp_check_ref
   | Java of exp_java
-        (* standard expressions *)
+  (* standard expressions *)
 	    (* | ArrayAt of exp_arrayat (* An Hoa *) *)
 	    (* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
@@ -326,6 +326,7 @@ and exp = (* expressions keep their types *)
         *)
   | ICall of exp_icall
   | IConst of exp_iconst
+	(*| ArrayAlloc of exp_aalloc *) (* An Hoa *)
   | New of exp_new
   | Null of loc
   | EmptyArray of exp_emparray (* An Hoa : add empty array as default value for array declaration *)
@@ -352,6 +353,14 @@ let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+
+(** An Hoa [22/08/2011] Extract data field information **)
+
+let get_field_typ f = fst f
+
+let get_field_name f = snd f
+
+(** An Hoa [22/08/2011] End **)
 
 let is_simple_formula x = true
 (* transform each proc by a map function *)
@@ -431,6 +440,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | FConst _
 	          | ICall _
 	          | IConst _
+						(* | ArrayAlloc _ *) (* An Hoa *)
 	          | New _
 	          | Null _
 						| EmptyArray _ (* An Hoa *)
@@ -628,6 +638,10 @@ let rec type_of_exp (e : exp) = match e with
 	  (*| FieldRead (t, _, _, _) -> Some t*)
 	  (*| FieldWrite _ -> Some Void*)
   | IConst _ -> Some int_type
+	(* An Hoa *)
+	(* | ArrayAlloc ({exp_aalloc_etype = t; 
+		  exp_aalloc_dimension = _; 
+		  exp_aalloc_pos = _}) -> Some (P.Array t) *)
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
@@ -887,6 +901,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_icall_arguments = _;
 			exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
   | IConst _ -> []
+	(*| ArrayAlloc _ -> []*)
   | New _ -> []
   | Null _ -> []
 	| EmptyArray _ -> [] (* An Hoa : empty array has no callee *)
@@ -999,6 +1014,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
+						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
                  F.h_formula_data_pruning_conditions = [];
@@ -1014,6 +1030,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = link_p :: to_ext;
+						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
                      F.h_formula_data_pruning_conditions = [];
@@ -1030,6 +1047,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
+								F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
                      F.h_formula_data_pruning_conditions = [];
@@ -1131,6 +1149,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Var _
   | Null _
   | EmptyArray _ (* An Hoa : NO IDEA *)
+	(*| ArrayAlloc _*) (* An Hoa : NO IDEA *)
   | New _
   | Sharp _
   | SCall _
@@ -1179,60 +1198,67 @@ let get_catch_of_exp e = match e with
   
   
 let rec check_proper_return cret_type exc_list f = 
-	let overlap_flow_type fl res_t = match res_t with 
-		| Named ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
-		| _ -> false in
-	let rec check_proper_return_f f0 = match f0 with
+  let overlap_flow_type fl res_t = match res_t with 
+	| Named ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
+	| _ -> false in
+  let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
-		let res_t,b_rez = F.get_result_type f0 in
-		let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-		if b_rez then
+		  let res_t,b_rez = F.get_result_type f0 in
+		  let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
+		  if b_rez then
 			if (F.equal_flow_interval !n_flow_int fl_int) then 
-				if not (sub_type res_t cret_type) then 					
-					Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
-				else ()
-			else 
-				if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
-				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
-				else if not(overlap_flow_type fl_int res_t) then
-				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
-				else ()			
-		else 
+			  if not (sub_type res_t cret_type) then 					
+				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
+			  else ()
+			else if not (List.exists (fun c-> 
+                let _ =print_endline "XX" in F.subsume_flow c fl_int) exc_list) then
+			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type is not covered by the throw list";}
+			else if not(overlap_flow_type fl_int res_t) then
+			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
+			else ()			
+		  else 
 			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
-									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
+			  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
 			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
-				Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
+			  Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()
 	| F.Exists b->
-		let res_t,b_rez = F.get_result_type f0 in
-		let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
-		if b_rez then
+		  let res_t,b_rez = F.get_result_type f0 in
+		  let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
+		  if b_rez then
 			if (F.equal_flow_interval !n_flow_int fl_int) then 
-				if not (sub_type res_t cret_type) then 					
-					Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
-				else ()
+			  if not (sub_type res_t cret_type) then 					
+				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
+			  else ()
 			else 
-				if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
+			  if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
-				else if not(overlap_flow_type fl_int res_t) then
+			  else if not(overlap_flow_type fl_int res_t) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
-				else ()			
-		else 
+			  else ()			
+		  else 
 			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
-									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			 if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
-				Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
+			   (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
+			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
+			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
-	let helper f0 = match f0 with 
-		| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
-		| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
-		| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
-		| F.EVariance b -> ()
-		in
-	List.iter helper f
+  let helper f0 = match f0 with 
+	| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
+	| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
+	| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
+	| F.EVariance b -> ()
+  in
+  List.iter helper f
 
-  
+ 
+(* type: Globals.typ -> Globals.nflow list -> F.struc_formula -> unit *)
+let check_proper_return cret_type exc_list f = 
+  let pr1 = pr_list pr_no in
+  let pr2 = !print_struc_formula in
+  Gen.Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
+(* TODO : res must be consistent with flow outcome *)
+
 let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
 
 

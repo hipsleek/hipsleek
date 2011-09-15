@@ -144,6 +144,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_imm : bool;
                         h_formula_data_arguments : CP.spec_var list;
+						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *)
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -159,6 +160,8 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                            then c is in h_formula_view_origins. Used to avoid loopy coercions *)
                         h_formula_view_origins : ident list;
                         h_formula_view_original : bool;
+                        h_formula_view_lhs_case : bool; 
+                        (* to allow LHS case analysis prior to unfolding and lemma *)
                         h_formula_view_unfold_num : int; (* to prevent infinite unfolding *)
                         (* used to indicate a specialised view *)
                         h_formula_view_remaining_branches :  (formula_label list) option;
@@ -303,6 +306,10 @@ and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_lin
 
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
+and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula= 
+  let mix_f = MCP.OnePF p in
+  formula_of_mix_formula mix_f pos 
+
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
   else  MCP.memoise_add_pure_P (MCP.mkMTrue pos) p  in
@@ -399,7 +406,7 @@ and isStrictConstTrue_x f = match f with
     formula_base_pure = p;
     formula_base_branches = br;
     formula_base_flow = fl;}) -> 
-        MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])&&(is_true_flow fl.formula_flow_interval)
+        MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])&&(is_top_flow fl.formula_flow_interval)
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
@@ -498,8 +505,9 @@ and non_overlapping (n1,n2) (p1,p2) : bool = n1>p2 || p1>n2
 and overlapping n p : bool = not(non_overlapping n p)
 and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
 
-and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
-and is_true_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
+and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2
+and is_top_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
+
 
 and is_sleek_mustbug_flow p: bool = (equal_flow_interval !Globals.error_flow_int p)
 and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
@@ -507,7 +515,11 @@ and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_in
 and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
 
 (*first subsumes the second*)
-and subsume_flow (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+and subsume_flow_x (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+
+and subsume_flow n p : bool = 
+  let pr1 = pr_pair string_of_int  string_of_int in
+  Gen.Debug.no_2 "subsume_flow" pr1 pr1 string_of_bool subsume_flow_x n p 
 
 and overlap_flow t1 t2 : bool = (subsume_flow t1 t2) || (subsume_flow t2 t1)
 
@@ -687,21 +699,29 @@ and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula
 	| EVariance b -> EVariance {b with formula_var_continuation = substitute_flow_in_struc_f to_flow from_flow  b.formula_var_continuation}
   in
   List.map helper f	
-	  
-(*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
+
 and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
+  let pr = !print_flow_formula in
+  let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" in
+  Gen.Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
+
+(*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
+and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
   let int1 = fl1.formula_flow_interval in
   let int2 = fl2.formula_flow_interval in
-  let r = if (is_false_flow int1) then fl1
-  else if (is_false_flow int2) then fl2
-  else match flow_tr with
-	| Flow_replace -> 
+  let r = if (is_top_flow int1) then fl2
+  else if (is_top_flow int2) then fl1
+  else 
+    match flow_tr with
+	| Flow_replace ->
 		  {	formula_flow_interval = int2;
 		  formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
 			| None,None -> None
 			| Some s,None-> Some s
 			| None, Some s -> Some s
-			| _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
+			| Some _, Some s -> Some s
+			(* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
+                  ;}
 	| Flow_combine ->
 		  if (overlapping int1 int2) then 
 			{	formula_flow_interval = intersect_flow int1 int2;
@@ -709,15 +729,17 @@ and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 			  | None,None -> None
 			  | Some s,None-> Some s
 			  | None, Some s -> Some s
-			  | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
+			  | Some s1, Some s2 -> Some (s1^"AND"^s2)
+			  (* | _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: cannot and two flows with two links"} *)
+                    ;}
 		  else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
-  (*let string_of_flow_formula f c = 
-	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
+  (* let string_of_flow_formula f c =  *)
+  (*   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^ *)
+  (*   ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in *)
 
-	let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^
-	(string_of_flow_formula "f2 " fl2)^"\n"^
-	(string_of_flow_formula "r " r)^"\n") in*)
+  (*   let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^ *)
+  (*   (string_of_flow_formula "f2 " fl2)^"\n"^ *)
+  (*   (string_of_flow_formula "r " r)^"\n") in *)
   r
 
 and get_case_guard_list lbl (lst:(Cpure.b_formula * formula_label list) list) :  CP.b_formula list= 
@@ -956,7 +978,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
     formula_exists_label = lbl;
 	formula_exists_pos = pos})
 and is_true (h : h_formula) = match h with
-  | HTrue _ -> true
+  | HTrue -> true
   | _ -> false
 
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) b (pos : loc) = 
@@ -1048,6 +1070,34 @@ and h_add_original (h : h_formula) original =
     | _ -> h 
   in helper h
 
+and h_set_lhs_case (h : h_formula) flag = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> ViewNode {vn with h_formula_view_lhs_case = flag}
+    | _ -> h 
+  in helper h
+
+and h_set_lhs_case_of_a_view (h : h_formula) (v_name:ident) flag: h_formula = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> 
+        let name = get_node_name h in
+        if (name=v_name) then
+          ViewNode {vn with h_formula_view_lhs_case = flag}
+        else h
+    | _ -> h 
+  in helper h
+
 and h_add_unfold_num (h : h_formula) i = 
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
@@ -1114,7 +1164,43 @@ and add_original (f : formula) original =
     | Base b -> Base ({b with formula_base_heap = h_add_original b.formula_base_heap original})
     | Exists e -> Exists ({e with formula_exists_heap = h_add_original e.formula_exists_heap original})
   in helper f
-         
+
+and set_lhs_case (f : formula) flag = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_set_lhs_case b.formula_base_heap flag})
+    | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case e.formula_exists_heap flag})
+  in helper f
+
+and set_lhs_case_of_a_view (f : formula) (v_name:ident) flag : formula = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_set_lhs_case_of_a_view b.formula_base_heap v_name flag})
+    | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case_of_a_view e.formula_exists_heap v_name flag})
+  in helper f
+
+and struc_formula_set_lhs_case (f:struc_formula) (flag:bool) : struc_formula =
+  let helper (f:ext_formula) = match f with
+	| EBase b -> EBase {b with formula_ext_base = set_lhs_case b.formula_ext_base flag ; 
+		  formula_ext_continuation = struc_formula_set_lhs_case b.formula_ext_continuation flag}
+	| ECase b -> ECase {b with formula_case_branches = 
+              List.map (fun (c1,c2) -> (c1 ,(struc_formula_set_lhs_case c2 flag))) b.formula_case_branches;}
+	| EAssume (x,b,y) -> EAssume (x,(set_lhs_case b flag),y)
+	| EVariance b -> 
+        EVariance {b with 
+            formula_var_continuation = struc_formula_set_lhs_case  b.formula_var_continuation flag}
+  in
+  List.map helper f	
 
 and add_unfold_num (f : formula) uf = 
   let rec helper f = match f with
@@ -1475,6 +1561,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm; 
 							h_formula_data_arguments = svs; 
+							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = pcond;
@@ -1483,6 +1570,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_name = c; 
 							h_formula_data_imm = imm;  
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
+							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_label = lbl;
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
@@ -1597,6 +1685,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_data_name = c; 
     h_formula_data_imm = imm; 
 	h_formula_data_arguments = svs; 
+	h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 	h_formula_data_label = lbl;
     h_formula_data_remaining_branches = ann;
     h_formula_data_pruning_conditions = pcond;
@@ -1605,6 +1694,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 		h_formula_data_name = c; 
     	h_formula_data_imm = imm;  
 		h_formula_data_arguments = List.map (subst_var s) svs;
+		h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;
         h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
@@ -1618,14 +1708,14 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
 and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-        let eo1 = normalize o11 f2 pos in
-        let eo2 = normalize o12 f2 pos in
+        let eo1 = normalize_x o11 f2 pos in
+        let eo2 = normalize_x o12 f2 pos in
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
 		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize f1 o21 pos in
-			  let eo2 = normalize f1 o22 pos in
+			  let eo1 = normalize_x f1 o21 pos in
+			  let eo2 = normalize_x f1 o22 pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
 			let rf1 = rename_bound_vars f1 in
@@ -1638,10 +1728,21 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			resform
 		  end
     end
+
+and normalize i (f1 : formula) (f2 : formula) (pos : loc) = 
+  Gen.Debug.no_1_num i "normalize" pr_no pr_no (fun _ -> normalize_x f1 f2 pos) f1
 	    
-and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
+and normalize_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
+  (* normalize_keep_flow f1 f2 Flow_combine pos *)
       (* todo: check if this is ok *)
+
+and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) = 
+  Gen.Debug.no_1 "normalize_replace" pr_no pr_no (fun _ -> normalize_replace_x f1 f2 pos) f1
+
+and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) = 
+  normalize_keep_flow f1 f2 Flow_replace pos
+
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
 and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -2574,14 +2675,50 @@ let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
 
 let is_may_failure (f:list_context) = (get_may_failure f) != None
 
+let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option =
+     match (get_must_es_msg_ft ft) with
+          | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft) } ) 
+          | _ ->  None
+
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
   match l with 
-  | FailCtx ft ->
-        (match (get_must_es_msg_ft ft) with
-          | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ] 
-          | _ ->  l)
-  | SuccCtx _ -> l
+    | FailCtx ft ->
+          (* (match (get_must_es_msg_ft ft) with *)
+          (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
+          (*   | _ ->  l) *)
+          (match (convert_must_failure_4_fail_type "" ft) with
+            | Some ctx -> SuccCtx [ctx]
+            | None -> l)
+    | SuccCtx _ -> l
 
+let convert_must_failure_to_value_orig (l:list_context) : list_context =
+ let pr = !print_list_context_short in
+  Gen.Debug.no_1 "convert_must_failure_to_value_orig" pr pr
+  (fun _ -> convert_must_failure_to_value_orig l) l
+
+(* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
+(*   ((-1,"Must Err @"^s),fme) :: e *)
+
+let add_must_err_to_pc (s:string) (fme:branch_ctx list) (e:branch_ctx list) : branch_ctx list =
+  fme @ e
+
+let convert_must_failure_4_branch_type  (s:string) ((pt,ft):branch_fail) : branch_ctx option =
+  match (convert_must_failure_4_fail_type s ft) with
+    | Some b -> Some (pt,b)
+    | None -> None
+
+let convert_must_failure_4_branch_fail_list  (s:string) (fl:branch_fail list) : (branch_ctx list * branch_fail list) =
+  List.fold_left (fun (must_l,may_l) bf ->
+      match (convert_must_failure_4_branch_type s bf) with
+        | Some r -> (r::must_l, may_l)
+        | None -> (must_l, bf::may_l)) ([],[]) fl
+
+let convert_must_failure_4_failesc_context (s:string) ((fl,e,bl):failesc_context) : failesc_context =
+  let (fme,fl) = convert_must_failure_4_branch_fail_list s fl in
+  (fl,e,add_must_err_to_pc s fme bl)
+
+let convert_must_failure_4_list_failesc_context (s:string) (l:list_failesc_context) : list_failesc_context =
+  List.map (convert_must_failure_4_failesc_context s) l
 
 
 let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
@@ -3023,6 +3160,14 @@ and or_list_context_x c1 c2 = match c1,c2 with
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
+and and_list_context c1 c2= match c1,c2 with
+  | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
+  | FailCtx t1 ,SuccCtx t2 ->
+         c1
+  | SuccCtx t1 ,FailCtx t2 ->
+      c2
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+
 (*maximising must bug with & (error information)*)
 (* and or_list_context_x c1 c2 = match c1,c2 with *)
 (*      | FailCtx t1 ,FailCtx t2 -> *)
@@ -3422,7 +3567,7 @@ and simplify_context (ctx:context):context =
 								else  ctx
 		
 and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
-	Ctx {es with es_formula = normalize es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
+	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_es_combine") in *)
@@ -4778,11 +4923,11 @@ and split_struc_formula_a (f0:struc_formula):(formula*formula) list =
 		| ECase b-> 
       let r =  List.concat (List.map (fun (c1,c2)->
 				let ll = split_struc_formula_a c2 in
-				List.map (fun (d1,d2)-> ((normalize d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
+				List.map (fun (d1,d2)-> ((normalize 4 d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
 			List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r 
 		| EBase b-> 
 				let ll = split_struc_formula_a b.formula_ext_continuation in
-				let e = List.map (fun (c1,c2)-> ((normalize c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
+				let e = List.map (fun (c1,c2)-> ((normalize 5 c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
 				let nf = ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) in
 				let e = List.map (fun (c1,c2)-> ((push_exists nf c1),(push_exists nf c2))) e in
 				e
@@ -5011,3 +5156,156 @@ and extr_lhs_b (es:entail_state) =
   formula_base_label = None;
   formula_base_pos = no_pos } in
   b1
+
+
+(**
+ * An Hoa : general function to print a collection.
+ **)
+let string_of_set so s = "{ " ^ (String.concat " ; " (List.map so s)) ^ " }"
+
+
+(**
+ * An Hoa : Merge the partial heaps into a single heap node
+ * For instance, 
+ *         h::node<#,#,a> * h::node<#,b,#>
+ * reduces to h::node<#,b,a> while
+ *         h::node<#,#,a> * h::node<#,#,b>
+ * is transformed to False.
+ * TODO implement
+ **)
+let rec merge_partial_heaps f = match f with
+	| Base fb -> let nh = merge_partial_h_formula fb.formula_base_heap in
+					Base { fb with formula_base_heap = nh }
+	| Or fo -> 	let nf1 = merge_partial_heaps fo.formula_or_f1 in
+				let nf2 = merge_partial_heaps fo.formula_or_f2 in
+					Or { fo with formula_or_f1 = nf1; formula_or_f2 = nf2; }
+	| Exists fe -> let nh = merge_partial_h_formula fe.formula_exists_heap in
+					Exists { fe with formula_exists_heap = nh }
+
+and merge_partial_h_formula f = 
+	(* let _ = print_endline ("[merge_partial_h_formula] input = { " ^ (!print_h_formula f) ^ " }") in *)
+	let sc = split_star_h f in
+	(* let _ = print_endline ("[merge_partial_h_formula] split separation conjunction = { " ^ (String.concat " ; " (List.map !print_h_formula sc)) ^ " }") in *)
+	let dns,vns = List.partition is_data sc in
+	(* let _ = print_endline ("[merge_partial_h_formula] data nodes = " ^ (string_of_set !print_h_formula dns)) in
+	let _ = print_endline ("[merge_partial_h_formula] other nodes = " ^ (string_of_set !print_h_formula vns)) in *)
+	(* Collect the data pointers *)
+	let dnrootptrs = List.map get_ptr_from_data dns in
+	let dnrootptrs = Gen.BList.remove_dups_eq CP.eq_spec_var dnrootptrs in
+	(* Partition the data nodes into groups of same pointer *)
+	let dnodespart = List.map (fun x -> List.filter (fun y -> CP.eq_spec_var (get_ptr_from_data y) x) dns) dnrootptrs in
+	(* let _ = print_endline ("[merge_partial_h_formula] grouped data nodes = " ^ (string_of_set (fun x -> string_of_set !print_h_formula x) dnodespart)) in *)
+	(* Merge the data nodes in each group *)
+	let merged_data_nodes = List.map merge_data_nodes_common_ptr dnodespart in
+	(* let _ = print_endline ("[merge_partial_h_formula] merged data nodes = " ^ (string_of_set !print_h_formula merged_data_nodes)) in *)
+	(* Combine the parts to get the result *)
+	let f = combine_star_h (List.append merged_data_nodes vns) in
+		f
+
+
+(**
+ * An Hoa : Splitting a h_formula by breaking the separation conjunction.
+ **)
+and split_star_h f = match f with
+	| Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2; } ->
+		List.append (split_star_h h1) (split_star_h h2)
+	| _ -> [f]
+
+
+(**
+ * An Hoa : Reverse operation of split_star_h i.e. combining nodes into a h_formula.
+ * TODO express using fold_left instead.
+ **)
+and combine_star_h cs = match cs with
+	| [] -> HTrue
+	| h::t -> mkStarH h (combine_star_h t) no_pos
+
+
+(**
+ * An Hoa : Merge a list of data nodes with a common root pointer into either
+ *          a single data node or HFalse if there is a clash (and HTrue if
+ *          we are merging nothing. This case SHOULD NOT happen.)
+ **)
+and merge_data_nodes_common_ptr dns = 
+	List.fold_left merge_two_nodes HTrue dns
+
+
+(**
+ * An Hoa : Supplementary function to merge two data nodes.
+ **)
+and merge_two_nodes dn1 dn2 =
+	match dn1 with
+	| DataNode { h_formula_data_node = dnsv1;
+		h_formula_data_name = n1;
+		h_formula_data_imm = i1;
+		h_formula_data_arguments = args1;
+		h_formula_data_holes = holes1;
+		h_formula_data_label = lb1;
+		h_formula_data_remaining_branches = br1;
+		h_formula_data_pruning_conditions = pc1;
+		h_formula_data_pos = pos1 } -> (match dn2 with
+			| DataNode { h_formula_data_node = dnsv2;
+						h_formula_data_name = n2;
+						h_formula_data_imm = i2;
+						h_formula_data_arguments = args2;
+						h_formula_data_holes = holes2;
+						h_formula_data_label = lb2;
+						h_formula_data_remaining_branches = br2;
+						h_formula_data_pruning_conditions = pc2;
+						h_formula_data_pos = pos2 } -> 
+							(* [Internal] Check if a spec_var is a hole spec_var. *)
+							let is_hole_specvar sv = 
+								let svname = CP.name_of_spec_var sv in
+									svname.[0] = '#' in
+							(* [Internal] Select the non-hole spec_var. *)
+							let combine_vars sv1 sv2 =
+								if (is_hole_specvar sv1) then (sv2,true) 
+								else if (is_hole_specvar sv2) then (sv1,true)
+								else (sv1,false)
+							in
+							let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
+							let not_clashed = List.for_all (fun x -> x) not_clashes in
+							let res = DataNode { h_formula_data_node = dnsv1;
+										h_formula_data_name = n1;
+										h_formula_data_imm = i1;
+										h_formula_data_arguments = args;
+										h_formula_data_holes = 
+												Gen.BList.intersect_eq (=) holes1 holes2;
+										h_formula_data_label = lb1;
+										h_formula_data_remaining_branches = 
+											(match br1 with
+												| None -> br2
+												| Some l1 -> (match br2 with
+																| None -> br1
+																| Some l2 -> Some (List.append l1 l2)));
+										h_formula_data_pruning_conditions = List.append pc1 pc2;
+										h_formula_data_pos = no_pos } in 
+								if not_clashed then res else HFalse
+			| HTrue -> dn1
+			| HFalse -> HFalse
+			| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn2))} )
+	| HTrue -> dn2
+	| HFalse -> HFalse
+	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("[merge_two_nodes] Expect either HTrue or a DataNode but get " ^ (!print_h_formula dn1)) }
+
+
+(**
+ * An Hoa : Create a list [x,x+1,...,x+n-1]
+ **)
+let rec first_naturals n x = if n = 0 then [] 
+	else x :: (first_naturals (n-1) (x+1))
+
+
+(**
+ * An Hoa : Compute the indices of holes in a list of spec vars.
+ **)
+let compute_holes_list svs = 
+	let temp = first_naturals (List.length svs) 0 in
+	let res = List.map2 (fun x y -> if (CP.is_hole_spec_var x) then [y] else []) svs temp in
+	let res = List.flatten res in
+		res
+
+(**
+ * An Hoa : Check if svs contain a non-hole variable.
+ **)
+let is_empty svs = List.for_all CP.is_hole_spec_var svs

@@ -152,7 +152,8 @@ and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
 
 and afv (af : exp) : (ident * primed) list = match af with
   | Null _ -> []
-  | Var (sv, _) -> [sv]
+  | Var (sv, _) -> let id = fst sv in
+						if (id.[0] = '#') then [] else [sv]
   | IConst _ -> []
   | FConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2

@@ -1,0 +1,67 @@
+data node {
+	int val; 
+	node prev;	
+	node next;	
+}.
+
+pred dll1<> == self::dll_r1<null>
+  inv true.
+
+pred dll_r1<p> == self=null
+  or self::node<_,p,r> * r::dll_r1<self>   
+  inv true.
+
+/*
+Example below cannot be captured since there
+isn't a way to split the fields in our system.
+
+pred dll2<> == self=null
+  or self.prev::null * self::dll_r2<>
+  inv true.
+pred dll_r2<> == self.next::n *
+  (n=null or n.prev::self * n::dll_r2<>)
+  inv true.
+
+
+pred dll2<> == self=null
+  or self::node<_,null,p> * p::dll_r2<self>
+  inv true.
+pred dll_r2<p> == self=null
+  or self::node<_,p,n> * n::dll_r2<self>
+  inv true.
+*/
+
+pred dll3<t> == self=null & t=null
+  or self::dll_r3<null,t,null>
+  inv true.
+
+// BUG : t is also a bag of address here!
+pred dll_r3<p,t,n> == 
+  self::node<_,p,n> & self=t
+  or self::node<_,p,q> * q::dll_r3<self,t,n> & self!=t
+  inv self!=null & t!=null.
+
+lemma "dll_r3_tail" self::dll_r3<p,t,n> & self!=t <-> 
+      self::dll_r3<p,q,t> * t::node<_,q,n>.
+
+pred dll4<h> == self=h & h=null
+  or self::dll_r4<null,h,null>
+  inv true.
+
+pred dll_r4<p,h,n> ==
+  self::node<_,p,n> & self=h
+  or self::node<_,q,n> * q::dll_r4<p,h,self> & self!=h
+  inv true.
+
+
+
+////lemma "ht2tail" self::ll_ht<n, h, t> <-> self::ll_tail<n+1,t>.
+
+//lemma "dll3todll4" self::dll3<t> <-> t::dll4<self>.
+
+//lemma "dll_r3_to_dll_r4" self::dll_r3<p,t,a> -> t::dll_r4<p,self,a>.
+
+//lemma "dll_r4_to_dll_r3" self::dll_r4<b,h,n> -> h::dll_r3<b,self,n>.
+
+checkentail n1::dll_r4<null,n,null> |- n::dll_r3<null,n1,null>.
+

@@ -38,6 +38,12 @@ open Gen.Basic
 	| AnnMode of mode
 	| AnnType of typ
 
+(* An Hoa : Counting of holes "#" *)
+let hash_count = ref 0
+
+(* An Hoa : Generic data type for the abbreviated syntax x.f::<a> *)
+let generic_pointer_type_name = "_GENERIC_POINTER_"
+
 let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();
 				 end_pos = Parsing. symbol_end_pos ();
@@ -248,6 +254,9 @@ let peek_try =
           | [FLOAT,_;IDENTIFIER n,_] -> ()
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
+          | [INT,_;OSQUARE,_] -> ()
+          | [FLOAT,_;OSQUARE,_] -> ()
+          | [BOOL,_;OSQUARE,_] -> ()
           |  _ -> raise Stream.Failure)
 
  (* let peek_ensures =  *)
@@ -425,19 +434,33 @@ data_body:
 
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1)]
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false)]
+ 	|  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false)]
   |   
        t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
-			if List.mem n (List.map (fun f -> snd (fst f)) fl) then
+			if List.mem n (List.map get_field_name fl) then
 				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t, n), get_pos_camlp4 _loc 3) :: fl )
+				((t, n), get_pos_camlp4 _loc 3, false) :: fl )
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
-			(if List.mem n (List.map (fun f -> snd (fst f)) fl) then
+			(if List.mem n (List.map get_field_name fl) then
 				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t1, n), get_pos_camlp4 _loc 3) :: fl ) ]];
+				((t1, n), get_pos_camlp4 _loc 3, false) :: fl )]
+	(* An Hoa [22/08/2011] Inline fields extension*)
+	| "inline fields" [
+	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true)]
+ 	| `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true)]
+	| `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
+			if List.mem n (List.map get_field_name fl) then
+				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+			else
+				((t, n), get_pos_camlp4 _loc 3, true) :: fl )
+	| `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
+			(if List.mem n (List.map get_field_name fl) then
+				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+			else
+				((t1, n), get_pos_camlp4 _loc 3, true) :: fl )]];
 
 (* one_field:   *)
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
@@ -487,13 +510,22 @@ view_header:
           try_case_inference = false;
 			}]];
       
+(** An Hoa : Modify the rules to capture the extensional identifiers **)
 cid: 
   [[ 
-     `IDENTIFIER t; `PRIME -> (* print_string ("primed id:"^t^"\n"); *)(t, Primed)
-   | `IDENTIFIER t         -> (* print_string ("id:"^t^"\n"); *)(t, Unprimed)
-   | `RES _                 -> (res, Unprimed)
-   | `SELFT _               -> (self, Unprimed)
-   | `THIS _               -> (this, Unprimed) ]];
+     (* `IDENTIFIER t; `PRIME	 	-> (* print_string ("primed id:"^t^"\n"); *) (t, Primed) *)
+   `IDENTIFIER t	-> (* print_string ("cid: "^t^"\n"); *)
+						if String.contains t '\'' then (* Remove the primed in the identifier *)
+							(Str.global_replace (Str.regexp "[']") "" t,Primed) 
+						else (t,Unprimed)
+   | `RES _                 	-> (res, Unprimed)
+   | `SELFT _               	-> (self, Unprimed)
+   | `THIS _               		-> (this, Unprimed)]];
+
+(** An Hoa : Access extension. For example: in "x.node.value", ".node.value" is the idext **)
+(* idext:
+	[[ `DOT; `IDENTIFIER t 				-> "." ^ t
+	| `DOT; `IDENTIFIER t; u=idext 		-> "." ^ t ^ u]]; *)
 
 view_body:
   [[ t = formulas -> ((F.subst_stub_flow_struc top_flow (fst t)),(snd t))
@@ -622,7 +654,7 @@ heap_wr:
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
   ]];
  
-simple2:  [[ t= opt_type_var_list; `LT -> ()]];
+simple2:  [[ t= opt_type_var_list; `LT -> (* let _ = print_endline "PASSED simple2." in *)()]];
    
 simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
@@ -636,10 +668,20 @@ simple_heap_constr:
     (match hl with
         | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
+  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)
+	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
+  | peek_heap; c=cid; `COLONCOLON; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+    (match hl with
+        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name true false false false t ofl (get_pos_camlp4 _loc 2))
+  | peek_heap; c=cid; `COLONCOLON; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
+    (match hal with
+      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
@@ -782,11 +824,17 @@ cexp_w :
      [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
      (* | *) `NULL                                     -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
 
+	(* An Hoa : Hole for partial structures, represented by the hash # character. *)
+	 | `HASH -> let _ = hash_count := !hash_count + 1 in 
+			Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
+
      | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; CPAREN -> (* print_string("here"); *)
     (* AnHoa: relation constraint, for instance, given the relation 
-    *  s(a,b,c) == c = a + b.
-    *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
-    *)  
+     * s(a,b,c) == c = a + b.
+     * After this definition, we can have the relation constraint like
+     * s(x,1,x+1), s(x,y,x+y), ...
+	 * in our formula.
+     *)
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
 
      | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
@@ -870,10 +918,13 @@ coercion_decl:
       { coercion_type = cd;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
-        (* coercion_head = (F.subst_stub_flow top_flow dc1); *)
-        (* coercion_body = (F.subst_stub_flow top_flow dc2); *)
-        coercion_head = (F.subst_stub_flow n_flow dc1);
-        coercion_body = (F.subst_stub_flow n_flow dc2);
+        (* coercion_head = dc1; *)
+        (* coercion_body = dc2; *)
+        (* must remove stub flow from formula - replace with top_flow *)
+        coercion_head = (F.subst_stub_flow top_flow dc1);
+        coercion_body = (F.subst_stub_flow top_flow dc2);
+        (* coercion_head = (F.subst_stub_flow n_flow dc1); *)
+        (* coercion_body = (F.subst_stub_flow n_flow dc2); *)
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 })}]];
@@ -1072,6 +1123,8 @@ global_var_decl:
 class_decl:
   [[ `CLASS; `IDENTIFIER id; par=OPT extends; `OBRACE; ml=member_list_opt; `CBRACE ->
       let t1, t2, t3 = split_members ml in
+		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
+		let t1 = List.map (fun (t, p) -> (t, p, false)) t1 in
       let cdef = { data_name = id;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
@@ -1085,7 +1138,7 @@ extends: [[`EXTENDS; `IDENTIFIER id -> id]];
 member_list_opt: [[t = LIST0 member SEP `SEMICOLON -> t]];
 
 member:
- [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2)
+ [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2) 
   | `INV;  dc=disjunctive_constr -> Inv (F.subst_stub_flow top_flow dc) 
   | pd=proc_decl -> Method pd
   | cd=constructor_decl -> Method cd]];
@@ -1252,9 +1305,9 @@ declaration_statement:
   [[peek_try_declarest; t=local_variable_declaration -> t
    | peek_try_declarest; t=local_constant_declaration -> t]];
 
-local_variable_type: [[ t= typ -> t]];
+local_variable_type: [[ t= typ ->  t]];
 
-local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators ->  mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]];
+local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators -> mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]]; 
 
 local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_declarators ->  mkConstDecl lvt cd (get_pos_camlp4 _loc 1)]];
 	
@@ -1651,8 +1704,22 @@ primary_expression_no_parenthesis :
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}
 			
   | peek_array_type; t = arrayaccess_expression -> t   (* An Hoa *)]
-  | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *) Var { exp_var_name = id; exp_var_pos = get_pos_camlp4 _loc 1 }
-
+	(** An Hoa [26/08/2011] Fix the variable field access **)
+  | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *)
+		let pos = get_pos_camlp4 _loc 1 in
+		let res = if (String.contains id '.') then (* Identifier contains "." ==> this must be field access. *)
+				let flds = Str.split (Str.regexp "\\.") id in
+				(* let _ = print_endline "Member field access" in *)
+					Member {
+						exp_member_base = Var { exp_var_name = List.hd flds;
+												exp_var_pos = pos };
+						exp_member_fields = List.tl flds; (* TODO merge the field access to match the core representation! *)
+						exp_member_path_id = None;
+						exp_member_pos = pos } 
+			else (* let _ = print_endline "Simple variable" in *)
+				Var { exp_var_name = id; exp_var_pos = pos } in
+		(* let _ = print_endline ("Parsed expression at " ^ (string_of_loc pos) ^ ": { " ^ (Iprinter.string_of_exp res) ^ " }") in *)
+			res
 ]];
 
 (* An Hoa : array access expression *)

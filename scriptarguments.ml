@@ -36,7 +36,11 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+	  ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
+		"Do unfolding when there are duplicated pointers."); (* An Hoa *)
+	  ("--ahwytdi", Arg.Set Smtsolver.try_induction,
+		"Try induction in case of failure implication."); (* An Hoa *)
+    ("--smtimply", Arg.Set Smtsolver.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)
     ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
     "Print the original output given by the SMT solver."); (* An Hoa *)
@@ -177,6 +181,9 @@ let common_arguments = [
 	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
     ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
     ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+    ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining");
+    ("--refine-error", Arg.Set Globals.simplify_error,
+	"Simplify the error");
     (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
     (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
     *)
@@ -258,3 +265,6 @@ let sleek_arguments = common_arguments @ sleek_specific_arguments
 
 (* all arguments and flags used in the gui*)	
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments
+;;
+
+Astsimp.inter := !inter;;
