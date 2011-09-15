@@ -1243,6 +1243,15 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 
 and check_barrier_wf prog bd = 
 	(*aux es *)
+  let rec group_tr l =  match l with
+    | [] -> []
+    | (hf,ht,hp)::t -> 
+      let u,l = List.partition (fun (fl,_,_)-> fl=hf) t in
+      let u = hp::(List.map (fun (_,_,c)->c) u) in
+      let u = List.map (List.map (fun c-> 
+        let pres = List.map fst (CF.split_struc_formula c) in
+        List.fold_left (fun a c-> CF.mkOr a c no_pos) (CF.mkFalse (CF.mkFalseFlow) no_pos) pres)) u in 
+      (hf,u)::(group_tr l) in
 	let f_gen_base st v prf = 
 	  let st_v = CP.SpecVar (Int,fresh_name (),Unprimed) in
 	  let h = CF.DataNode {
@@ -1307,7 +1316,18 @@ and check_barrier_wf prog bd =
 				let r = (one_ctx_entail fpre fpost) && (one_ctx_entail fpost fpre) in
 				if r then () 
 				else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in
-   List.iter prep_t bd.C.barrier_tr_list
+  		
+  let prep_grp (st,l) = 
+    let incomp f1 f2 = if  Solver.unsat_base_nth "0" prog (ref 0) (CF.mkStar f1 f2 CF.Flow_combine no_pos) then () 
+      else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st))) in
+	  let rec check_one p1 p2 = List.iter (fun c1 -> List.iter (incomp c1) p1) p2 in 
+    let rec helper l = match l with
+    | [] -> ()
+    | p::r -> helper r ; List.iter (check_one p) r in
+    helper l in
+    
+   List.iter prep_t bd.C.barrier_tr_list;
+   List.iter prep_grp (group_tr bd.C.barrier_tr_list)
 
 				
 and trans_bdecl prog bd = 
