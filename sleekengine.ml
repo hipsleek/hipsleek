@@ -384,7 +384,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Gen.Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+  Gen.Debug.ho_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   if not valid then
@@ -434,7 +434,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   let pr = string_of_meta_formula in
-  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
+  Gen.Debug.ho_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -458,7 +458,7 @@ let check_coercion coer lhs rhs =
 let check_coercion coer lhs rhs =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun valid rs -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
+  Gen.Debug.ho_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
 let check_left_coercion coer =
   let ent_lhs =coer.C.coercion_head in
@@ -499,7 +499,7 @@ let process_lemma ldef =
     if valid then 
       print_entail_result valid residues num_id
     else begin
-      let num_id0 = 
+      let num_id0  = 
         match ldef.I.coercion_type with
           | I.Equiv -> 
                 if (valid_l2r == false) then " (left-to-right) "
