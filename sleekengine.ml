@@ -433,7 +433,7 @@ let process_capture_residue (lvar : ident) =
       | Some s -> CF.list_formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
-let process_lemma ldef =
+let process_lemma_s ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
@@ -444,6 +444,18 @@ let process_lemma ldef =
 	!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
 	!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
    str
+
+let process_lemma ldef =
+  let ldef = Astsimp.case_normalize_coerc iprog ldef in
+  let l2r, r2l = AS.trans_one_coercion iprog ldef in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  let str = ((Cprinter.string_of_coerc_decl_list l2r) ^"\n"^ (Cprinter.string_of_coerc_decl_list r2l)) in
+    let _ = if !Globals.print_core then
+    print_string (str ^"\n") else () in
+	!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
+	!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
+   ()
 
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->
@@ -501,7 +513,7 @@ let process_cmd_with_string cmd =
           in
           (sctx,sprf)
 	  | CaptureResidue (lvar,_) -> (process_capture_residue lvar; ("",""))
-	  | LemmaDef (ldef,_) -> let str = process_lemma ldef in (str, "")
+	  | LemmaDef (ldef,_) -> let str = process_lemma_s ldef in (str, "")
 	  | PrintCmd (pcmd,_) -> (process_print_command pcmd;("",""))
 	  | LetDef (lvar, lbody, _) -> (put_var lvar lbody; ("", ""))
       | Time (b,s,_) -> (if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ("",""))
