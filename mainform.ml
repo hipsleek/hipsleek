@@ -434,15 +434,17 @@ class mainwindow () =
 
       method private go_forward_action_handler () =
        let _ = print_endline "next command" in
-       slk_view#move_to_next_cmd()
-       (*let ctx,prf=slk_view#move_to_next_cmd() in
+
+       let ctx,prf=slk_view#exec_current_cmd() in
+       let _ =
        if String.length (ctx^prf)>0 then
          begin
              context_view#buffer#set_text ctx;
              proof_view#buffer#set_text prf;
              ()
          end
-       else ()*)
+       else () in
+       slk_view#move_to_next_cmd()
 
      method private go_back_action_handler () =
         let _ = print_endline "previous command" in
