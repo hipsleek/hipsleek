@@ -4450,18 +4450,18 @@ let rec replace_perm_formula f pr = match f with
 	| Exists f-> Exists {f with formula_exists_perm = pr}
 	| Or f -> Or{f with formula_or_f1 = replace_perm_formula f.formula_or_f1 pr; formula_or_f2 = replace_perm_formula f.formula_or_f2 pr}
 	
-	 
-let is_full_perm_failesc l v =
+	 (*
+let is_full_perm_failesc l v1 =
   let rec find_h_node h a = match h with
     | Star h-> (find_h_node h.h_formula_star_h1 a)||(find_h_node h.h_formula_star_h2 a)
     | DataNode {h_formula_data_node=v ; h_formula_data_perm=p}
     | ViewNode {h_formula_view_node=v ; h_formula_view_perm=p}-> 
       (match p with 
-          | None -> true 
-          | Some _ -> if (List.exists (CP.eq_spec_var v) a) then false else true)
-    | _ -> true in
+          | None -> false 
+          | Some _ -> if (List.exists (CP.same_name_spec_var v) a) then true else false)
+    | _ -> false in
   let rec helper_f f = match f with
-    | Or c-> (helper_f c.formula_or_f1)&& (helper_f c.formula_or_f2)
+    | Or c-> (helper_f c.formula_or_f1) && (helper_f c.formula_or_f2)
     | Base {formula_base_heap=h; formula_base_pure = p}
     | Exists {formula_exists_heap=h; formula_exists_pure = p} ->
         let asets = MCP.get_aset (MCP.comp_aliases p) v in
@@ -4470,7 +4470,7 @@ let is_full_perm_failesc l v =
     | OCtx (c1,c2)-> (helper c1)&&(helper c2)
     | Ctx c-> helper_f c.es_formula in
   List.for_all (fun (_,_,l)-> (List.for_all(fun (_,c)-> helper c) l)) l 
-   
+   *)
    
 let rec context_to_formula c = match c with 
 	| Ctx es -> es.es_formula

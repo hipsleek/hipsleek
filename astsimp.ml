@@ -2437,8 +2437,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_bind_fields = List.combine vs_types vs;
                                   C.exp_bind_body = ce;
                                   C.exp_bind_imm = false; (* can it be true? *)
-								  C.exp_bind_perm = None;
-				                  C.exp_bind_pos = pos;
+                                  C.exp_bind_perm = None;
+                                  C.exp_bind_pos = pos;
                                   C.exp_bind_path_id = pid; }), te)))
                       | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
                       | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
@@ -3290,19 +3290,18 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
              } *)
     | p -> p
 
-and flatten_to_bind_debug prog proc b r rhs_o pid imm need_full pos =
+and flatten_to_bind prog proc b r rhs_o pid imm need_full pos =
   Gen.Debug.no_2 "flatten_to_bind " 
       (Iprinter.string_of_exp) 
-      (fun x -> match x with
-        | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
-      (fun _ -> "?")
-      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm need_full pos) b rhs_o
+      (fun x -> match x with | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
+      (fun (c,_) -> Cprinter.string_of_exp c)
+      (fun b rhs_o -> flatten_to_bind_a prog proc b r rhs_o pid imm need_full pos) b rhs_o
 
-and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
+and flatten_to_bind_a prog proc (base : I.exp) (rev_fs : ident list)
       (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) need_full pos =
   match rev_fs with
     | f :: rest ->
-          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm need_full pos in
+          let (cbase, base_t) = flatten_to_bind_a prog proc base rest None pid imm need_full pos in
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)

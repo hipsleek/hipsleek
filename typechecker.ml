@@ -251,7 +251,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let n_pr = match pr with 
             | None -> None 
             | Some s-> if  not !Globals.enable_frac_perm then report_error no_pos "bind: fractional permissions are disabled!!"
-              else if (CF.is_full_perm_failesc unfolded v_prim) then None else Some (Cpr.mk_perm_var (s, Primed)) in
+              else (*if (CF.is_full_perm_failesc unfolded v_prim) then None else*) Some (Cpr.mk_perm_var (s, Primed)) in
 	        let c = string_of_typ v_t in
 	        let vdatanode = CF.DataNode ({
                             CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);

@@ -1009,6 +1009,9 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
+and same_name_spec_var sv1 sv2 : bool = match sv1,sv2 with
+  | SpecVar (_, v1, _), SpecVar (_, v2, _) -> String.compare v1 v2 = 0
+  
 and name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
