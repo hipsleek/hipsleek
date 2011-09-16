@@ -55,23 +55,28 @@ checkentail
 checkentail t::node<_, null> & x = t & m = 0  & m=n-1 & x!=null
     or 
 
-*/
-
 checkentail
   x::lseg<n-1, t> * t::node<_, null> & x!=null |-
   x::ll_tail<t, n>.
+
+*/
 
 /*
 checkentail
     x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 & x!=null 
   |- x::node<_, null> & t=x & n=1.
-*/
 
 checkentail
     x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 & x!=null
    |- x::node<_, r1> * r1::ll_tail<t, n-1> & r1!=null.
 
+*/
+
 
 checkentail x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> 
-    & m=n-1 & x!=null
-    |- x::ll_tail<t, n>.
+    & m=n-1 
+    |- x::ll_tail<t, n> .
+
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 & x!=null
+   |- x::node<_, r1> * r1::ll_tail<t, n-1> & r1!=null.
