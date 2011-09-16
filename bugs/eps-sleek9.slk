@@ -19,21 +19,6 @@ lemma self::ll_tail<t, n> ->
 lemma self::ll_tail<t, n> <- 
   self::lseg<n-1, t> * t::node<_, null> & self!=null.
 
-// Problem (1)
-// (i) strengthen given invariant?
-// (ii) can eps be improved further?
-
-/*
-lemma self::ll_tail<t, n> -> self::lseg<n-1, t> * t::node<_, null>.
-
-lemma self::ll_tail<t, n> <- self::lseg<n-1, t> * t::node<_, null>.
-*/
-
-
-// Problem (2) complex LHS
-//lemma self::lseg<n-1, t> * t::node<_, null> -> self::ll_tail<t, n>.
-// complex LHS. not allowed at moment.
-// but currently accepted
 
 //lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
 
@@ -75,9 +60,6 @@ checkentail t::node<_, null> & x = t & m = 0  & m=n-1 & x!=null
 checkentail
   x::lseg<n-1, t> * t::node<_, null> & x!=null |-
   x::ll_tail<t, n>.
-
-
-
 
 /*
 checkentail
