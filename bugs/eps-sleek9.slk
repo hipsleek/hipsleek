@@ -14,8 +14,15 @@ lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>
 lemma self::ll_tail<t, n> -> 
   self::lseg<n-1, t> * t::node<_, null> & self!=null.
 
+// eps cannot handle self!=null
+checkentail self::lseg<n-1, t> * t::node<_, null> |- self!=null.
+
+checkentail self::lseg<n-1, t> * t::node<_, null> |- t!=null.
+
+checkentail self::lseg<n-1, t> * t::node<_, null> |- n>0.
 
 // Problem (3) :: self!=null cause --eps to fail ??
+// 
 lemma self::ll_tail<t, n> <- 
   self::lseg<n-1, t> * t::node<_, null> & self!=null.
 
