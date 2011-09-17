@@ -539,7 +539,7 @@ let __ocaml_lex_tables = {
 }
 
 let rec tokenizer lexbuf =
-    __ocaml_lex_tokenizer_rec lexbuf 0
+  __ocaml_lex_tokenizer_rec lexbuf 0
 and __ocaml_lex_tokenizer_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->

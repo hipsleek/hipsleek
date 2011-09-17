@@ -473,7 +473,7 @@ let check_right_coercion coer =
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = Solver.prune_preds !cprog true l2r in
+  (* let l2r = Solver.prune_preds !cprog true l2r in *)
   let _ = if !Globals.print_core then 
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
