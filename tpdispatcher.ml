@@ -24,6 +24,7 @@ type tp_type =
   | Z3
   | Redlog
   | RM (* Redlog and Mona *)
+  | ZM (* Z3 and Mona *)
 
 let tp = ref OmegaCalc
 let proof_no = ref 0
@@ -345,6 +346,8 @@ let set_tp tp_str =
     (tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "rm" then
     tp := RM
+  else if tp_str = "zm" then
+    tp := ZM
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else
@@ -367,6 +370,7 @@ let string_of_tp tp = match tp with
   | Z3 -> "z3"
   | Redlog -> "redlog"
   | RM -> "rm"
+  | ZM -> "zm"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -384,6 +388,7 @@ let name_of_tp tp = match tp with
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
   | RM -> "Redlog and Mona"
+  | ZM -> "Z3 and Mona"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -392,6 +397,7 @@ let log_file_of_tp tp = match tp with
   | Mona -> "allinput.mona"
   | Coq -> "allinput.v"
   | Redlog -> "allinput.rl"
+  | Z3 -> "allinput.z3"
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -667,6 +673,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         Mona.is_sat f sat_no
       else
         Redlog.is_sat f sat_no
+  | ZM ->
+	  if (is_bag_constraint f) then
+        Mona.is_sat f sat_no
+      else
+		Smtsolver.is_sat f sat_no
 
 let tp_is_sat_no_cache(*_debug*) f sat_no =
   Gen.Debug.no_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
@@ -755,6 +766,11 @@ let simplify (f : CP.formula) : CP.formula =
                 Mona.simplify f
               else
                 Redlog.simplify f
+		| ZM -> 
+              if is_bag_constraint f then
+                Mona.simplify f
+              else
+                Smtsolver.simplify f
         | _ -> Omega.simplify f in
       Gen.Profiling.pop_time "simplify";
 	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
@@ -845,6 +861,11 @@ let hull (f : CP.formula) : CP.formula = match !tp with
         Mona.hull f
       else
         Redlog.hull f
+  | ZM ->
+      if is_bag_constraint f then
+        Mona.hull f
+      else
+        Smtsolver.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -878,6 +899,9 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | RM ->
       if is_bag_constraint f then Mona.pairwisecheck f
       else Redlog.pairwisecheck f
+  | ZM ->
+      if is_bag_constraint f then Mona.pairwisecheck f
+      else Smtsolver.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -908,7 +932,7 @@ let rec split_disjunctions = function
 ;;
 
 let called_prover = ref ""
-
+let print_implication = ref false 
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
@@ -971,6 +995,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         Mona.imply ante conseq imp_no
       else
         Redlog.imply ante conseq imp_no
+  | ZM -> 
+      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+        Mona.imply ante conseq imp_no
+      else
+        Smtsolver.imply ante conseq
   in let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n" ^ "res: " ^ (string_of_bool r) ^ "\n") in
   r
 ;;

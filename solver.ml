@@ -576,8 +576,8 @@ and xpure_symbolic_x (prog : prog_decl) (f0 : formula) :
           let sqvars = (* List.map CP.to_int_var *) qvars in
           let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' sqvars in
 
-		  let _ = print_string ("\nxpure_symbolic: qp: " ^ (Cprinter.string_of_mix_formula qp) ^ "\n") in
-		  let _ = print_string ("\nxpure_symbolic: pqh: " ^ (Cprinter.string_of_mix_formula pqh) ^ "\n") in
+		  (*let _ = print_string ("\nxpure_symbolic: qp: " ^ (Cprinter.string_of_mix_formula qp) ^ "\n") in
+		  let _ = print_string ("\nxpure_symbolic: pqh: " ^ (Cprinter.string_of_mix_formula pqh) ^ "\n") in*)
 		  
           let tmp1 = MCP.merge_mems qp pqh true in
           let res_form = MCP.memo_pure_push_exists sqvars tmp1 in
@@ -2589,7 +2589,7 @@ and heap_entail_conjunct_lhs_struc
       p is_folding  has_post ctx conseq 
       pos pid : (list_context * proof) = 
   let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
-  Gen.Debug.no_2 "heap_entail_conjunct_lhs_struc"
+  Gen.Debug.ho_2 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula)
       (fun (a,b) -> Cprinter.string_of_list_context a)
       (fun ctx conseq -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq pos pid) ctx conseq
@@ -4430,7 +4430,7 @@ and build_and_failures (failure_code:string) ((contra_list, must_list, may_list)
  *)
 and extract_relations (f : CP.formula) : (CP.b_formula list) =
 	match f with
-		| CP.BForm (b, _) -> (match b with
+		| CP.BForm (b, _) -> (let (p, _) = b in match p with
 			| CP.RelForm _ -> [b]
 			| _ -> [])
 		| CP.And (f1, f2,_) -> (extract_relations f1) @ (extract_relations f2)
@@ -4441,7 +4441,7 @@ and extract_relations (f : CP.formula) : (CP.b_formula list) =
  *)
 and extract_equality (f : CP.formula) : CP.formula =
 	match f with
-		| CP.BForm (b, _) -> (match b with
+		| CP.BForm (b, _) -> (let (p, _) = b in match p with
 			| CP.Eq _ -> f 
 			| _ -> CP.mkTrue no_pos)
 		| CP.And (f1, f2, _) -> CP.mkAnd (extract_equality f1) (extract_equality f2) no_pos
@@ -4484,8 +4484,8 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 	let _ = List.map (fun (x,y) -> print_string ("(" ^ Cprinter.string_of_b_formula x ^ "," ^ Cprinter.string_of_b_formula y ^ "\n")) pr in*)
 	(* Internal function rel_match to perform matching of two relations *)
 	let rel_match  (vars : CP.spec_var list) (rpair : CP.b_formula * CP.b_formula) : CP.formula =
-		let r1 = fst rpair in
-		let r2 = snd rpair in
+		let (r1, _) = fst rpair in
+		let (r2, _) = snd rpair in
 		(*let _ = print_string ("rel_match :: on " ^ "{" ^ Cprinter.string_of_b_formula r1 ^ "," ^ Cprinter.string_of_b_formula r2 ^ "}\n") in*)
 		(match r1 with
 			| CP.RelForm (rn1, args1, _) -> (match r2 with
