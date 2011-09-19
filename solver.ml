@@ -3009,7 +3009,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	in (* End of function collect_data_view *)
 
 	(** [Internal] Generate the action based on the list of node and its tail **)
-	let rec generate_action nodes eset = match nodes with
+	let rec generate_action_x nodes eset = match nodes with
 		| [] 
 		| [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
 		| x::t -> let y = List.hd t in
@@ -3023,8 +3023,13 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 						    Context.match_res_rhs_rest = x} in
 				(* let _ = print_endline "AN HOA : START THE UNFOLDING PROCESS" in *)
 					Context.M_unfold (mr,1)
-			else generate_action t eset
-	
+			else generate_action_x t eset
+ 
+    and generate_action nodes eset = 
+      let pr = pr_list Cprinter.string_of_h_formula in
+      let pr_2 = Context.string_of_action_res_simpl in
+      Gen.Debug.ho_1 "generate_action" pr pr_2 (fun _ -> generate_action_x nodes eset) nodes
+
 	(** [Internal] Compare two spec var syntactically. **)
 	and compare_sv_syntax xn yn = match (xn,yn) with
 								| (CP.SpecVar (_,_,Primed), CP.SpecVar (_,_,Unprimed)) -> 1
@@ -5648,7 +5653,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let rhs_eqset = estate.es_rhs_eqset in
    (0,Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst no_pos)
 
-and process_unfold prog estate conseq a is_folding pos has_post pid =
+and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   match a with
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) ->
           let lhs_var = get_node_var lhs_node in
@@ -5659,6 +5664,15 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
 			let prf = mkUnfold_no_conseq (Ctx estate) lhs_node prf1 in
 			(res_rs, prf)
     | _ -> report_error no_pos ("process_unfold - expecting just unfold operation")
+
+
+and process_unfold prog estate conseq a is_folding pos has_post pid =
+  let pr1 = Context.string_of_action_res_simpl in
+  let pr2 x = Cprinter.string_of_list_context_short (fst x) in
+  (*let pr3 = Cprinter.string_of_spec_var_list in*)
+  Gen.Debug.ho_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
+      (fun __ _ -> process_unfold_x prog estate conseq a is_folding pos has_post pid)
+       a estate 
       
 and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
   let r1,r2 = match a with
@@ -5861,10 +5875,10 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
 
 and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
 
-  let pr1 = Context.string_of_action_res in
+  let pr1 = Context.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 
