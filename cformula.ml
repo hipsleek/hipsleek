@@ -1745,16 +1745,16 @@ and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) =
 
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
-and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-        let eo1 = normalize_combine_star o11 f2 pos in
-        let eo2 = normalize_combine_star o12 f2 pos in
+        let eo1 = normalize_combine_star_x o11 f2 pos in
+        let eo2 = normalize_combine_star_x o12 f2 pos in
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
 		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize_combine_star f1 o21 pos in
-			  let eo2 = normalize_combine_star f1 o22 pos in
+			  let eo1 = normalize_combine_star_x f1 o21 pos in
+			  let eo2 = normalize_combine_star_x f1 o22 pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
 			let rf1 = rename_bound_vars f1 in
@@ -1767,6 +1767,12 @@ and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = match f1 
 			resform
 		  end
     end
+
+and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = 
+  let pr = !print_formula in
+  Gen.Debug.no_2 "normalize_combine_star" pr pr pr 
+      (fun _ _ -> normalize_combine_star_x f1 f2 pos) f1 f2
+
 
 and normalize_combine_conj (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
