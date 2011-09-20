@@ -2156,7 +2156,7 @@ let merge_mems_debug f1 f2 slice_dup =
    let pr1 = !print_mix_f in
    let pr_elem = Cpure.SV.string_of in
    let pr2 = pr_list (pr_pair pr_elem pr_elem) in
-   Gen.Debug.ho_1 "ptr_equations_with_null" pr1 pr2 ptr_equations_with_null f
+   Gen.Debug.no_1 "ptr_equations_with_null" pr1 pr2 ptr_equations_with_null f
 
 let ptr_equations_without_null f = ptr_equations_aux false f
 

@@ -600,7 +600,7 @@ and xpure_symbolic_x (prog : prog_decl) (f0 : formula) :
 
 
 and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
-  (*Gen.Debug.ho_1_opt 
+  (*Gen.Debug.no_1_opt 
     (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) 
     "xpure_heap_symbolic" Cprinter.string_of_h_formula 
     (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
@@ -1379,7 +1379,7 @@ and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.s
   (* unfold_x prog f v already_unsat pos *)
   let pr = Cprinter.string_of_formula in
   let prs = Cprinter.string_of_spec_var in
-  Gen.Debug.ho_3_num n "unfold" string_of_bool prs pr pr 
+  Gen.Debug.no_3_num n "unfold" string_of_bool prs pr pr 
       (fun _ _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat v f
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula = match f with
@@ -2591,7 +2591,7 @@ and heap_entail_conjunct_lhs_struc
       p is_folding  has_post ctx conseq 
       pos pid : (list_context * proof) = 
   let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
-  Gen.Debug.ho_2 "heap_entail_conjunct_lhs_struc"
+  Gen.Debug.no_2 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula)
       (fun (a,b) -> Cprinter.string_of_list_context a)
       (fun ctx conseq -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq pos pid) ctx conseq
@@ -3047,7 +3047,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
       let pr = pr_list Cprinter.string_of_h_formula in
 	  let pr_1 = P.EMapSV.string_of in
       let pr_2 = Context.string_of_action_res_simpl in
-      Gen.Debug.ho_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
+      Gen.Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
 	(** [Internal] Compare two spec var syntactically. **)
 	and compare_sv_syntax xn yn = match (xn,yn) with
@@ -3110,7 +3110,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 			(res, match action with
 					| Context.M_Nothing_to_do _ -> false
 					| _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
-							let _ = print_endline ("[heap_entail_conjunct_lhs_x] " ^ (string_of_int !num_unfold_on_dup) ^ " unfold performed!") in
+							(* let _ = print_endline ("[heap_entail_conjunct_lhs_x] " ^ (string_of_int !num_unfold_on_dup) ^ " unfold performed!") in *)
 							true)
 	in (* End of process_entail_state *)
 
@@ -5694,7 +5694,7 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
   let pr1 = Context.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
+  Gen.Debug.no_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
       (fun __ _ -> process_unfold_x prog estate conseq a is_folding pos has_post pid)
        a estate 
       
@@ -5902,7 +5902,7 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   let pr1 = Context.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 
