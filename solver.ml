@@ -3014,24 +3014,40 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	let rec generate_action_x nodes eset = match nodes with
 		| [] 
 		| [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
-		| x::t -> let y = List.hd t in
-				(*if ((compare_sv (get_node_var x) (get_node_var y) eset = 0)*)
-				if ((CP.eq_spec_var_aset eset (get_node_var x) (get_node_var y))
-									 && (is_view x || is_view y)) then
-				let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
-						    Context.match_res_lhs_rest = x;
-						    Context.match_res_holes = [] ;
-						    Context.match_res_type = Context.Root;
-						    Context.match_res_rhs_node = x;
-						    Context.match_res_rhs_rest = x} in
-				(* let _ = print_endline "AN HOA : START THE UNFOLDING PROCESS" in *)
-					Context.M_unfold (mr,1)
-			else generate_action t eset
- 
+		| x::t ->
+		  (*
+		  let y = List.hd t in
+		  (*if ((compare_sv (get_node_var x) (get_node_var y) eset = 0)*)
+		  if ((CP.eq_spec_var_aset eset (get_node_var x) (get_node_var y))
+			  && (is_view x || is_view y)) then
+			let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
+					   Context.match_res_lhs_rest = x;
+					   Context.match_res_holes = [] ;
+					   Context.match_res_type = Context.Root;
+					   Context.match_res_rhs_node = x;
+					   Context.match_res_rhs_rest = x} in
+					(* let _ = print_endline "AN HOA : START THE UNFOLDING PROCESS" in *)
+			Context.M_unfold (mr,1)
+		  else generate_action t eset
+		  *)
+		  try
+			let y = List.find (fun e -> (CP.eq_spec_var_aset eset (get_node_var x) (get_node_var e)) && (is_view x || is_view e)) t in
+			let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
+					   Context.match_res_lhs_rest = x;
+					   Context.match_res_holes = [] ;
+					   Context.match_res_type = Context.Root;
+					   Context.match_res_rhs_node = x;
+					   Context.match_res_rhs_rest = x} in
+			Context.M_unfold (mr,1)
+		  with
+			| Not_found -> generate_action t eset
+		  
+			
     and generate_action nodes eset = 
       let pr = pr_list Cprinter.string_of_h_formula in
+	  let pr_1 = P.EMapSV.string_of in
       let pr_2 = Context.string_of_action_res_simpl in
-      Gen.Debug.ho_1 "generate_action" pr pr_2 (fun _ -> generate_action_x nodes eset) nodes
+      Gen.Debug.ho_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
 	(** [Internal] Compare two spec var syntactically. **)
 	and compare_sv_syntax xn yn = match (xn,yn) with
@@ -3041,8 +3057,10 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 									String.compare xnn ynn
 	
 	(** [Internal] Compare spec var with equality taken into account **)
-	and compare_sv xn yn eset = 
+	and compare_sv xn yn eset =
+	  (*CP.eq_spec_var_aset eset xn yn*)
 		(* let _ = print_string ("Comparing " ^ (Cprinter.string_of_spec_var xn) ^ " and " ^ (Cprinter.string_of_spec_var yn)) in *)
+	    
 		try
 			let _,xne = List.find (fun x -> CP.eq_spec_var xn (fst x)) eset in
 			let _ = List.find (fun x -> CP.eq_spec_var yn x) xne in 
@@ -3050,6 +3068,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 				0
 		with
 			| Not_found -> (* let _ = print_string "\n" in *) compare_sv_syntax xn yn
+		
 	in 
 
 	(** [Internal] Process duplicated pointers in an entail state **)
@@ -3069,7 +3088,9 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 		let _ = print_string "\n" in *)
 		(* Collect and sort the data and view predicates *)
 		let dv = collect_data_view h in
-		let dv = List.sort (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset) dv in
+		let dv = List.sort
+		  (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset)
+		  dv in
 		(* let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in *)
 		(* Produce an action to perform *)
 		let action = generate_action dv eset in
