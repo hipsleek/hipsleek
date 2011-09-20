@@ -358,7 +358,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
-  let _ = if !Globals.print_core then print_string ("\ncheck_entail:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
   (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
@@ -473,11 +473,10 @@ let check_right_coercion coer =
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  (* let l2r = Solver.prune_preds !cprog true l2r in *)
-  let _ = if !Globals.print_core then 
-    print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  let _ = if !Globals.print_core then 
+    print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
   !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
   if !Globals.check_coercions then begin

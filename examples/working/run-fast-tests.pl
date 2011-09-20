@@ -609,7 +609,13 @@ $output_file = "log";
               ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
               ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
               ["imm/imm4.slk","Valid.Fail."],
-              ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]
+              ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "lemmas"=>[["lemmas/lemma_check01.slk", "Valid.Fail.Fail."],
+              ["lemmas/lemma_check02.slk", "Fail.Valid."],
+              ["lemmas/lemma_check03.slk", "Valid.Valid.Fail."],
+              ["lemmas/lemma_check04.slk", "Valid.Fail.Fail."],
+              ["lemmas/lemma_check06.slk", "Valid.Valid.Valid.Fail.Fail.Fail."]]
+
     );
 
 if($timings){
@@ -739,9 +745,9 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
+      $exempl_path_full = "$exempl_path/sleek";
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
-          $exempl_path_full = "$exempl_path/sleek";
       }
       if ($script_arguments=~"--disable-check-coercions"){
           $param =~ s/sleek/sleek_wo_lemma_check/;
