@@ -4408,7 +4408,7 @@ and build_and_failures (failure_code:string) ((contra_list, must_list, may_list)
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
     match oft with
       | Some ft -> FailCtx ft
-      | None -> report_error no_pos "Solver.build_and_failures: should a failure here"
+      | None -> report_error no_pos "Solver.build_and_failures: should be a failure here"
   else
     let msg = "failed in entailing pure formula(s) in conseq" in
     CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg))
