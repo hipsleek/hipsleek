@@ -3015,7 +3015,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 		| [] 
 		| [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
 		| x::t -> let y = List.hd t in
-				if ((compare_sv (get_node_var x) (get_node_var y) eset = 0)
+				(*if ((compare_sv (get_node_var x) (get_node_var y) eset = 0)*)
+				if ((CP.eq_spec_var_aset eset (get_node_var x) (get_node_var y))
 									 && (is_view x || is_view y)) then
 				let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
 						    Context.match_res_lhs_rest = x;
@@ -3025,7 +3026,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 						    Context.match_res_rhs_rest = x} in
 				(* let _ = print_endline "AN HOA : START THE UNFOLDING PROCESS" in *)
 					Context.M_unfold (mr,1)
-			else generate_action_x t eset
+			else generate_action t eset
  
     and generate_action nodes eset = 
       let pr = pr_list Cprinter.string_of_h_formula in
