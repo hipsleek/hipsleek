@@ -24,8 +24,14 @@ checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> & n1 = 8.
 
 Problem : using Omega for existential simplification 
           of mona formula is unsound
-Solution : turn off Omega simplification 
+Solution (i) turn off Omega simplification 
            when mona prover is being used.
+
+Solution (ii) add v>=0 for each exists found
+prior to sending to Omega when dealing with mona prover.
+ e.g exists1(b_92:n=b_92+8)
+ --transform to--> exists1(b_92:n=b_92+8 & b_92>=0)
+
 
 */
 
