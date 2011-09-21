@@ -736,7 +736,14 @@ let simplify (f : CP.formula) : CP.formula =
               if (is_list_constraint f) then
                 (Coq.simplify f)
               else (Omega.simplify f)
-        | Mona | MonaH (* -> Mona.simplify f *)
+        | Mona | MonaH (* -> Mona.simplify f *) ->
+            if (is_bag_constraint f) then
+                (Mona.simplify f)
+            else
+              (* exist x, f0 ->  eexist x, x>0 /\ f0*)
+              let f1 = CP.add_gte_0 f in
+              let f=(Omega.simplify f1) 
+              in CP.arith_simplify 12 f
         | OM ->
               if (is_bag_constraint f) then
                 (Mona.simplify f)

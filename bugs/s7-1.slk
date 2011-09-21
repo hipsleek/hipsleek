@@ -40,4 +40,4 @@ imply_timeout@69 EXIT out :false
 
 */
 
-checkentail n=-1 |- n>=0.
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.

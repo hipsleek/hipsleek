@@ -36,3 +36,7 @@ prior to sending to Omega when dealing with mona prover.
 */
 
 
+
+//checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> & n1 = 8.

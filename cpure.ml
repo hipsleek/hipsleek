@@ -2176,6 +2176,47 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
+(* exist x, f0 ->  eexist x, x>0 /\ f0*)
+let add_gte_0 (f0 : formula): (formula)=
+  let mkGte_f spec_var zero lbl pos=
+    BForm ((mkGte (Var (spec_var, pos)) zero pos), lbl) in
+ let rec helper f0 =
+    match f0 with
+      | Exists (qvar, qf, lbl, pos) ->
+          begin
+	          let zero = IConst (0, pos) in
+              (*list of gte of existential variables*)
+              let gtes = List.map (fun v -> mkGte_f v zero lbl pos) [qvar] in
+              (*list -> and formula*)
+              let and_formulas = List.fold_left (fun f1 f2 -> mkAnd f1 f2 pos) qf gtes in
+              mkExists [qvar] and_formulas lbl pos
+          end
+      | And (f1, f2, pos) -> begin
+	      let ef1 = helper f1 in
+	      let ef2 = helper f2 in
+	      let res = mkAnd ef1 ef2 pos in
+	      res
+        end
+      | Or (f1, f2, lbl, pos) -> begin
+	      let ef1 = helper f1 in
+	      let ef2 = helper f2 in
+	      let res = mkOr ef1 ef2 lbl pos in
+	      res
+        end
+      | Not (f1, lbl, pos) -> begin
+	      let ef1 = helper f1 in
+	      let res = mkNot ef1 lbl pos in
+	      res
+        end
+      | Forall (qvar, qf, lbl, pos) -> begin
+	      let eqf = helper qf in
+	      let res = mkForall [qvar] eqf lbl pos in
+	      res
+        end
+      | BForm _ -> f0 in
+  helper f0
+
+
 (* (\* pretty printing for types *\) *)
 (* let rec string_of_typ = function  *)
 (*   | t -> string_of_prim_type t  *)
@@ -5167,8 +5208,6 @@ let is_linear_exp e0 =
       | _ -> None
   in
   fold_exp e0 f and_list
-
-
 
 let inner_simplify simpl f =
   let f_f e = match e with
