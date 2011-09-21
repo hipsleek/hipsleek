@@ -18,9 +18,11 @@ fail for -tp mona
 */
 
 // 9
-checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.
+//checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.
 // invalid-exception
 
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> & n1 = 8.
 /*
 mona succeeded below! as mona was not called.
 Instead, Omega simplify was called instead.
@@ -40,4 +42,6 @@ imply_timeout@69 EXIT out :false
 
 */
 
-checkentail n=-1 |- n>=0.
+// checkentail n=-1 & n>=0  |- n>=0.
+
+//checkentail n=7  |- (exists a: a+8=n & a>=0).
