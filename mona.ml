@@ -1063,7 +1063,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Gen.Debug.ho_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  Gen.Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   imply ante conseq imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =

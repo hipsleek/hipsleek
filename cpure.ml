@@ -2227,7 +2227,7 @@ let add_gte0_for_mona (f0 : formula): (formula)=
 
 let add_gte0_for_mona (f0 : formula): (formula)=
   let pr = !print_formula in
-  Gen.Debug.ho_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
+  Gen.Debug.no_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
 
 
 (* (\* pretty printing for types *\) *)

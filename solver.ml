@@ -4342,7 +4342,7 @@ and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
   let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr2 = pr_pair (Cprinter.string_of_failure_kind) (pr_triple pr3 pr3 pr3) in
-  Gen.Debug.ho_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
+  Gen.Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
 
 (*maximising must bug with AND (error information)*)
 and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
@@ -4354,7 +4354,7 @@ and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
       let pr1 = Cprinter.string_of_pure_formula in
       let pr2 = pr_list (pr_pair pr1 pr1) in
       let pr3 = pr_triple pr2 pr2 pr2 in
-      Gen.Debug.ho_2 "find_all_failures" pr1 pr1 pr3 find_all_failures a c in
+      Gen.Debug.no_2 "find_all_failures" pr1 pr1 pr3 find_all_failures a c in
     let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
   (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
      otherwise MUST failure *)
@@ -4377,7 +4377,7 @@ let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr4 = pr_triple pr3 pr3 pr3 in
   let pr2 = (fun _ -> "OUT") in
-  Gen.Debug.ho_1 "build_and_failures" pr4 pr2 
+  Gen.Debug.no_1 "build_and_failures" pr4 pr2 
       (fun triple_list -> build_and_failures_x failure_code triple_list fail_ctx_template)
      (contra_list, must_list, may_list)
 
@@ -4524,7 +4524,7 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
