@@ -2176,21 +2176,30 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
-(* exist x, f0 ->  eexist x, x>0 /\ f0*)
-let add_gte_0 (f0 : formula): (formula)=
-  let mkGte_f spec_var zero lbl pos=
-    BForm ((mkGte (Var (spec_var, pos)) zero pos), lbl) in
- let rec helper f0 =
+(*
+add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
+add_gte_0@144 EXIT out : exists(b_113:0<=b_113 & 
+  exists(b_128:0<=b_128 & (b_128+2)<=b_113 & (9+b_113)<=n))
+*)
+(* exists x: f0 ->  exists x: x>=0 /\ f0*)
+(* this pre-processing is needed for mona *)
+(* prior to sending a formula for Omega to simplify *)
+let add_gte0_for_mona (f0 : formula): (formula)=
+  let mkGte_f spec_var lbl pos=
+	let zero = IConst (0, pos) in
+    BForm ((mkLte zero (Var (spec_var, no_pos)) pos), lbl) in
+  let rec helper f0 =
     match f0 with
       | Exists (qvar, qf, lbl, pos) ->
-          begin
-	          let zero = IConst (0, pos) in
-              (*list of gte of existential variables*)
-              let gtes = List.map (fun v -> mkGte_f v zero lbl pos) [qvar] in
-              (*list -> and formula*)
-              let and_formulas = List.fold_left (fun f1 f2 -> mkAnd f1 f2 pos) qf gtes in
-              mkExists [qvar] and_formulas lbl pos
-          end
+            begin
+              let qf = helper qf in
+              if (type_of_spec_var qvar)==Int then
+                let gtes = mkGte_f qvar lbl no_pos in
+                let and_formulas = mkAnd gtes qf pos in
+                mkExists [qvar] and_formulas lbl pos
+              else
+                mkExists [qvar] qf lbl pos
+            end
       | And (f1, f2, pos) -> begin
 	      let ef1 = helper f1 in
 	      let ef2 = helper f2 in
@@ -2215,6 +2224,10 @@ let add_gte_0 (f0 : formula): (formula)=
         end
       | BForm _ -> f0 in
   helper f0
+
+let add_gte0_for_mona (f0 : formula): (formula)=
+  let pr = !print_formula in
+  Gen.Debug.ho_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
 
 
 (* (\* pretty printing for types *\) *)

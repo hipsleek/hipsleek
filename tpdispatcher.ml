@@ -741,7 +741,7 @@ let simplify (f : CP.formula) : CP.formula =
                 (Mona.simplify f)
             else
               (* exist x, f0 ->  eexist x, x>0 /\ f0*)
-              let f1 = CP.add_gte_0 f in
+              let f1 = CP.add_gte0_for_mona f in
               let f=(Omega.simplify f1) 
               in CP.arith_simplify 12 f
         | OM ->
