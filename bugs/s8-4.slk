@@ -1,0 +1,38 @@
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0 & n>=0
+         or self::node<next = r> * r::lseg<n - 1, p> & n>=0
+//          & self!=p
+         inv n >= 0.
+
+pred db<n,r> == self::node<next = r> & r=null & n=1
+         or self::node<next = r> * r::db<n - 1,r1> 
+//          & self!=p
+         inv self!=null & n >= 1.
+/*
+  prune conditions: {
+[r=null->,[3::]; 1=n->,[3::]; 1!=n->,[4::]; null!=r->,[4::]]}
+
+Extra constraints (maybe not)..
+ shouldn't self!=null be removed for (3) and (4)
+ while n>=n should be removed for {4}?
+
+  prune invs:3:
+   ,[{4,3} -> {self} [ 1<=n; self!=null]; 
+   {4} -> {self,r} [ 1<=n; 1!=n; null!=r; self!=null]; 
+   {3} -> {self} [ r=null; 1=n; self!=null]]
+
+*/
+
+pred dbn<n> == self::node<next = r> & r=null & n=1
+         or self::node<next = r> * r::dbn<n - 1> 
+//          & self!=p
+         inv self!=null & n >= 1.
+
+
+// the db example shows that extra parameters can be
+// added predicate to allow more aggressive pruning
+
+checkentail x::db<n,null> |- n=1.
+
+

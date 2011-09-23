@@ -6348,7 +6348,7 @@ and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list)
       = 
   let pr1 = pr_list (fun (bf,fl) -> Cprinter.string_of_b_formula bf) in
   let pr ls = pr_list (fun (x,_)->Cprinter.string_of_formula x) ls in
-  Gen.Debug.ho_2 "prune_inv_inference_formula" Cprinter.string_of_spec_var_list pr
+  Gen.Debug.no_2 "prune_inv_inference_formula" Cprinter.string_of_spec_var_list pr
       (fun (lb,_,r) -> pr1 lb)
       (fun _ _ -> prune_inv_inference_formula_x cp v_l init_form_lst u_baga u_inv pos) v_l init_form_lst
 
@@ -6780,7 +6780,7 @@ type: (CF.formula * Globals.formula_label) list ->
     in Gen.BList.string_of_f (Gen.string_of_pair pr_fl pr ) l in
     let pr2 x= Cprinter.string_of_mix_formula (MCP.MemoF x) in
     let pr3 = pr_list (pr_pair Cprinter.string_of_formula pr_fl) in
-    Gen.Debug.ho_3 "pick_pures" pr3 pr0 pr2 pr1 (fun _ _ _ -> pick_pures lst vl uinv) lst vl uinv in
+    Gen.Debug.no_3 "pick_pures" pr3 pr0 pr2 pr1 (fun _ _ _ -> pick_pures lst vl uinv) lst vl uinv in
 
   let sel_prune_conds (ugl:(formula_label * CP.b_formula) list) : ((CP.b_formula * formula_label list) list) =
     let prune_conds = List.fold_left (fun a (f_lbl, constr)->
@@ -6795,7 +6795,7 @@ type: (CF.formula * Globals.formula_label) list ->
     let pr_fl x = Cprinter.string_of_formula_label x "" in
     let pr1 = pr_list (pr_pair pr_fl (Cprinter.string_of_b_formula)) in
     let pr2 = pr_list (pr_pair (Cprinter.string_of_b_formula) (pr_list pr_fl)) in
-    Gen.Debug.ho_1 "sel_prune_conds" pr1 pr2 sel_prune_conds ugl
+    Gen.Debug.no_1 "sel_prune_conds" pr1 pr2 sel_prune_conds ugl
   in
 
   let get_safe_prune_conds (pc:(CP.b_formula * formula_label list) list) (orig_pf:(formula_label * CP.formula) list)
@@ -6824,21 +6824,21 @@ type: (CF.formula * Globals.formula_label) list ->
       else List.for_all 
         (fun (o_l,o_f) -> 
               let new_f = CP.mkAnd o_f bf no_pos   
-       in not(TP.is_sat new_f "get_safe_prune_conds" false)
+       in (TP.is_sat new_f "get_safe_prune_conds" false)
         ) remain_ls
      end
      in
     let safe_test bf ls = 
      let pr1 = Cprinter.string_of_b_formula in
      let pr2 ls = string_of_int (List.length ls) in
-     Gen.Debug.ho_2 "safe_test" pr1 pr2 string_of_bool safe_test bf ls in
+     Gen.Debug.no_2 "safe_test" pr1 pr2 string_of_bool safe_test bf ls in
     List.filter (fun (b,ls) ->safe_test b ls) pc
   in
 
   let get_safe_prune_conds (pc:(CP.b_formula * formula_label list) list) (orig_pf:(formula_label * CP.formula) list)
         : (CP.b_formula * formula_label list) list = 
     let pr = pr_list (pr_pair Cprinter.string_of_b_formula (pr_list Cprinter.string_of_formula_label_only)) in
-    Gen.Debug.ho_1 "get_safe_prune_conds" pr pr (fun _ -> get_safe_prune_conds pc orig_pf) pc
+    Gen.Debug.no_1 "get_safe_prune_conds" pr pr (fun _ -> get_safe_prune_conds pc orig_pf) pc
   in
 
   (* let _ = pick_pures init_form_lst v_l u_inv in *)
@@ -6889,7 +6889,7 @@ type: (CF.formula * Globals.formula_label) list ->
 
 and view_prune_inv_inference cp vd =  
   let pr = Cprinter.string_of_view_decl in
-  Gen.Debug.ho_1 "view_prune_inv_inference" pr pr
+  Gen.Debug.no_1 "view_prune_inv_inference" pr pr
       (fun _ -> view_prune_inv_inference_x cp vd) vd
 
 and view_prune_inv_inference_x cp vd =  

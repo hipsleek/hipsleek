@@ -24,5 +24,10 @@ pick_pures selected correct conditions:sel_prune_conds@4@2@1
 so did sel_prune_conds:
   sel_prune_conds@4 EXIT out :[( 0=n,[1::]),( p=self,[1::]),( 0!=n,[2::]),( self!=null,[2::])]
 
- 
+fixed safe_test method! 
 */
+
+checkentail x::lseg<n, p> & x!=p |- x!=null.
+checkentail x::lseg<n, p> & x!=p |- x=null.
+checkentail x::lseg<n, p> & x!=p |- n=0.
+checkentail x::lseg<n, p> & x!=p |- n>0.
