@@ -6801,29 +6801,29 @@ type: (CF.formula * Globals.formula_label) list ->
   let get_safe_prune_conds (pc:(CP.b_formula * formula_label list) list) (orig_pf:(formula_label * CP.formula) list)
         : (CP.b_formula * formula_label list) list = 
     let all_ls = List.map fst orig_pf in
-    (* let safe_test bf ls =  *)
+    (* let safe_test bf ls = *)
     (*   let bf = CP.BForm (bf,None) in *)
     (*   let remain_ls = Gen.BList.difference_eq eq_formula_label all_ls ls in *)
     (*   if remain_ls==[] then false *)
-    (*   else List.for_all  *)
-    (*     (fun (o_l,o_f) ->  *)
-    (*         if (Gen.BList.mem_eq eq_formula_label o_l remain_ls) then  *)
+    (*   else List.for_all *)
+    (*     (fun (o_l,o_f) -> *)
+    (*         if (Gen.BList.mem_eq eq_formula_label o_l remain_ls) then *)
     (*           let new_f = CP.mkAnd o_f bf no_pos in not(TP.is_sat new_f "get_safe_prune_conds" false) *)
     (*         else true *)
-    (*     ) orig_pf  *)
+    (*     ) orig_pf *)
     (* in *)
-    let safe_test bf ls = 
+    let safe_test bf ls =
       let neg_bf = CP.mkNot_b_norm  bf in
       match neg_bf with
      | None -> false
-     | Some bf -> 
+     | Some bf ->
      begin
       let bf = CP.BForm (bf,None) in
       let remain_ls = Gen.BList.difference_eq (fun (f,_) -> eq_formula_label f) orig_pf ls in
       if remain_ls==[] then false
-      else List.for_all 
-        (fun (o_l,o_f) -> 
-              let new_f = CP.mkAnd o_f bf no_pos   
+      else List.for_all
+        (fun (o_l,o_f) ->
+              let new_f = CP.mkAnd o_f bf no_pos
        in (TP.is_sat new_f "get_safe_prune_conds" false)
         ) remain_ls
      end
