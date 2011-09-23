@@ -4707,7 +4707,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	  		(SuccCtx[res_ctx], prf)
 		end
   end else begin
-      let _ = print_flush ("locle" ^ (string_of_bool r_rez)) in
+      (* let _ = print_flush ("locle" ^ (string_of_bool r_rez)) in *)
     Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
     (*compute lub of estate.es_formula and current fc_flow*)
     (*
@@ -5756,7 +5756,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           *)
           (* check LHS to see if null -> must error else may error *)
           let (mix_rf,br,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
-          let _ = print_flush "UNMATCHED RHS" in
+          (* let _ = print_flush "UNMATCHED RHS" in *)
          (*
           (*let (mix_lf,bl,lsvl,mem_lf) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in*)
           let pr = Cprinter.string_of_spec_var_list in

@@ -6801,17 +6801,37 @@ type: (CF.formula * Globals.formula_label) list ->
   let get_safe_prune_conds (pc:(CP.b_formula * formula_label list) list) (orig_pf:(formula_label * CP.formula) list)
         : (CP.b_formula * formula_label list) list = 
     let all_ls = List.map fst orig_pf in
+    (* let safe_test bf ls =  *)
+    (*   let bf = CP.BForm (bf,None) in *)
+    (*   let remain_ls = Gen.BList.difference_eq eq_formula_label all_ls ls in *)
+    (*   if remain_ls==[] then false *)
+    (*   else List.for_all  *)
+    (*     (fun (o_l,o_f) ->  *)
+    (*         if (Gen.BList.mem_eq eq_formula_label o_l remain_ls) then  *)
+    (*           let new_f = CP.mkAnd o_f bf no_pos in not(TP.is_sat new_f "get_safe_prune_conds" false) *)
+    (*         else true *)
+    (*     ) orig_pf  *)
+    (* in *)
     let safe_test bf ls = 
+      let neg_bf = CP.mkNot_b_norm  bf in
+      match neg_bf with
+     | None -> false
+     | Some bf -> 
+     begin
       let bf = CP.BForm (bf,None) in
-      let remain_ls = Gen.BList.difference_eq eq_formula_label all_ls ls in
+      let remain_ls = Gen.BList.difference_eq (fun (f,_) -> eq_formula_label f) orig_pf ls in
       if remain_ls==[] then false
       else List.for_all 
         (fun (o_l,o_f) -> 
-            if (Gen.BList.mem_eq eq_formula_label o_l remain_ls) then 
-              let new_f = CP.mkAnd o_f bf no_pos in not(TP.is_sat new_f "get_safe_prune_conds" false)
-            else true
-        ) orig_pf 
-    in
+              let new_f = CP.mkAnd o_f bf no_pos   
+       in not(TP.is_sat new_f "get_safe_prune_conds" false)
+        ) remain_ls
+     end
+     in
+    let safe_test bf ls = 
+     let pr1 = Cprinter.string_of_b_formula in
+     let pr2 ls = string_of_int (List.length ls) in
+     Gen.Debug.ho_2 "safe_test" pr1 pr2 string_of_bool safe_test bf ls in
     List.filter (fun (b,ls) ->safe_test b ls) pc
   in
 
