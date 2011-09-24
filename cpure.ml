@@ -2176,6 +2176,60 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
+(*
+add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
+add_gte_0@144 EXIT out : exists(b_113:0<=b_113 & 
+  exists(b_128:0<=b_128 & (b_128+2)<=b_113 & (9+b_113)<=n))
+*)
+(* exists x: f0 ->  exists x: x>=0 /\ f0*)
+(* this pre-processing is needed for mona *)
+(* prior to sending a formula for Omega to simplify *)
+let add_gte0_for_mona (f0 : formula): (formula)=
+  let mkGte_f spec_var lbl pos=
+	let zero = IConst (0, pos) in
+    BForm ((mkLte zero (Var (spec_var, no_pos)) pos), lbl) in
+  let rec helper f0 =
+    match f0 with
+      | Exists (qvar, qf, lbl, pos) ->
+            begin
+              let qf = helper qf in
+              if (type_of_spec_var qvar)==Int then
+                let gtes = mkGte_f qvar lbl no_pos in
+                let and_formulas = mkAnd gtes qf pos in
+                mkExists [qvar] and_formulas lbl pos
+              else
+                mkExists [qvar] qf lbl pos
+            end
+      | And (f1, f2, pos) -> begin
+	      let ef1 = helper f1 in
+	      let ef2 = helper f2 in
+	      let res = mkAnd ef1 ef2 pos in
+	      res
+        end
+      | Or (f1, f2, lbl, pos) -> begin
+	      let ef1 = helper f1 in
+	      let ef2 = helper f2 in
+	      let res = mkOr ef1 ef2 lbl pos in
+	      res
+        end
+      | Not (f1, lbl, pos) -> begin
+	      let ef1 = helper f1 in
+	      let res = mkNot ef1 lbl pos in
+	      res
+        end
+      | Forall (qvar, qf, lbl, pos) -> begin
+	      let eqf = helper qf in
+	      let res = mkForall [qvar] eqf lbl pos in
+	      res
+        end
+      | BForm _ -> f0 in
+  helper f0
+
+let add_gte0_for_mona (f0 : formula): (formula)=
+  let pr = !print_formula in
+  Gen.Debug.no_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
+
+
 (* (\* pretty printing for types *\) *)
 (* let rec string_of_typ = function  *)
 (*   | t -> string_of_prim_type t  *)
@@ -5167,8 +5221,6 @@ let is_linear_exp e0 =
       | _ -> None
   in
   fold_exp e0 f and_list
-
-
 
 let inner_simplify simpl f =
   let f_f e = match e with

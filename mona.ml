@@ -1061,6 +1061,11 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   else
     imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no
 
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  imply ante conseq imp_no
+
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");

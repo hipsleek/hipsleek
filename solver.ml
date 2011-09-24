@@ -4372,9 +4372,18 @@ and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
   else
     (CF.mk_failure_may_raw "", ([], [], [(ante, cons)]))
 
+and build_and_failures (failure_code:string) ((contra_list, must_list, may_list) :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context=
+let pr1 = Cprinter.string_of_pure_formula in
+  let pr3 = pr_list (pr_pair pr1 pr1) in
+  let pr4 = pr_triple pr3 pr3 pr3 in
+  let pr2 = (fun _ -> "OUT") in
+  Gen.Debug.no_1 "build_and_failures" pr4 pr2 
+      (fun triple_list -> build_and_failures_x failure_code triple_list fail_ctx_template)
+     (contra_list, must_list, may_list)
+
 (*maximising must bug with AND (error information)*)
 (* to return fail_type with AND_reason *)
-and build_and_failures (failure_code:string) ((contra_list, must_list, may_list) :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context=
+and build_and_failures_x (failure_code:string) ((contra_list, must_list, may_list) :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context=
   if not !Globals.disable_failure_explaining then
     let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
     (*build must/may msg*)
@@ -4408,7 +4417,7 @@ and build_and_failures (failure_code:string) ((contra_list, must_list, may_list)
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
     match oft with
       | Some ft -> FailCtx ft
-      | None -> report_error no_pos "Solver.build_and_failures: should a failure here"
+      | None -> report_error no_pos "Solver.build_and_failures: should be a failure here"
   else
     let msg = "failed in entailing pure formula(s) in conseq" in
     CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg))
@@ -4698,6 +4707,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	  		(SuccCtx[res_ctx], prf)
 		end
   end else begin
+      (* let _ = print_flush ("locle" ^ (string_of_bool r_rez)) in *)
     Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
     (*compute lub of estate.es_formula and current fc_flow*)
     (*
@@ -5746,6 +5756,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           *)
           (* check LHS to see if null -> must error else may error *)
           let (mix_rf,br,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+          (* let _ = print_flush "UNMATCHED RHS" in *)
          (*
           (*let (mix_lf,bl,lsvl,mem_lf) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in*)
           let pr = Cprinter.string_of_spec_var_list in
