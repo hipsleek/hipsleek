@@ -4,7 +4,7 @@ data node { int val ; node next }.
 pred lseg<n, p> == self = p & n = 0 
          or self::node<next = r> * r::lseg<n - 1, p>  
 //          & self!=p
-         inv n >= 1.
+         inv n >= 0.
 
 checkentail x::lseg<n,p> |- n>=0.
 
