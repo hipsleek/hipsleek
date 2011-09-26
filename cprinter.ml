@@ -709,7 +709,7 @@ let rec pr_pure_formula  (e:P.formula) =
 	      pr_pure_formula f; fmt_string ")"
     | P.Exists (x, f, lbl, l) -> 
           pr_formula_label_opt lbl; 
-	      fmt_string "exists1("; pr_spec_var x; fmt_string ":";
+	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
 ;;
 

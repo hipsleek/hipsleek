@@ -379,7 +379,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
 	(* let _ = print_endline ("Entailment checking:\n" ^ (string_of_meta_formula iante0) ^ " |- " ^ (string_of_meta_formula iconseq0)) in *)
     let valid, rs = run_entail_check iante0 iconseq0 in
-    let num_id = "Entail("^(string_of_int index)^")" in
+    let num_id = "\nEntail("^(string_of_int index)^")" in
     if not valid then
       begin
         let s =

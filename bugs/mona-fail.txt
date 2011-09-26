@@ -1,0 +1,46 @@
+s8-1.slk
+========
+Incorrect Answer
+ failure when called with -tp mona
+
+ ERROR: File "", line 0, col 0 : Solver.build_and_failures: should be a failure here 
+ exception in entail check
+
+
+s8-2.slk
+========
+Correct Answer
+ -tp oc --> fail for both
+
+Incorrect Answer
+ -tp mona --> valid for both
+ -tp mona --eps --> valid for both
+ -tp mona --imm --> fail for both
+
+s7.slk
+======
+Incorrect Answer
+ valid for -tp mona --eps
+
+Correct Answer
+ fail for -tp oc
+ fail for -tp oc --eps
+ fail for -tp mona
+
+
+-tp mona --eps --imm
+Total number of errors: 2 in files:
+ error at: heaps.ss ripple
+error at: heaps.ss deletemax
+.
+
+Total number of errors: 2 in files:
+  sleek7.slk sleek8.slk.
+
+-tp mona --imm
+ no failures..
+
+-tp mona 
+Unexpected result with : sleek8.slk
+ERROR: File "", line 0, col 0 : Solver.build_and_failures: should be a failure here 
+exception in entail check
