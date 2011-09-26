@@ -1,0 +1,182 @@
+/usr/local/bin/mona
+/usr/local/bin/oc
+
+Processing file "msort_size_bags_0_link.ss"
+Parsing...
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+ warning msort_size_bags_0_link.ss_106_9 quantifying: S1
+
+ warning msort_size_bags_0_link.ss_84_9 quantifying: S3
+
+ warning msort_size_bags_0_link.ss_35_10 quantifying: n1 n2 S1 S2
+Checking procedure insert1$node~int... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res,r_1050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res,r_1050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1076,r_1085] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res,r_1076] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res,r_1076] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res,r_1116] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1143] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res,r_1143] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res,r_1143] 
+
+Procedure insert1$node~int SUCCESS
+Checking procedure merge1$node~node... 
+Procedure merge1$node~node SUCCESS
+Checking procedure merge_sort1$node... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[res] 
+
+Procedure merge_sort1$node SUCCESS
+Checking procedure split1$node~int... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[x'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[x'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[x'] 
+
+Procedure split1$node~int SUCCESS
+Checking procedure count1$node... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1594] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1594] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1594] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1594] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1594] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1594] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[x] 
+
+Procedure count1$node SUCCESS
+Stop Omega... 227 invocations 
+4 false contexts at: ( (91,3)  (91,10)  (87,2)  (87,9) )
+
+Total verification time: 20.44 second(s)
+	Time spent in main process: 0.74 second(s)
+	Time spent in child processes: 19.7 second(s)
+Counters: 
+ cnt_Overall = 1
+cnt_Parsing = 2
+cnt_Preprocessing = 1
+cnt_TP.imply_timeout = 375
+cnt_Translating global var = 1
+cnt_Translating to Core = 1
+cnt_add_pure = 729
+cnt_elim_exists = 59
+cnt_elim_redundant_ctr = 17
+cnt_empty_predicate_testing = 23
+cnt_entail_prune = 18
+cnt_erc_imply = 72
+cnt_fast_imply = 354
+cnt_filter_dupl_memo = 1387
+cnt_heap_entail_one_context_struc#2 = 21
+cnt_heap_entail_one_context_struc#4 = 24
+cnt_heap_entail_one_context_struc#fold = 14
+cnt_imply = 375
+cnt_imply_proc_one_full = 21
+cnt_imply_proc_one_ncplx = 83
+cnt_is_sat = 246
+cnt_memo_imply = 11
+cnt_memo_norm = 775
+cnt_method count1$node = 1
+cnt_method insert1$node~int = 1
+cnt_method merge1$node~node = 1
+cnt_method merge_sort1$node = 1
+cnt_method split1$node~int = 1
+cnt_normalize_max_renaming_list_failesc_context = 61
+cnt_pred_inference = 1
+cnt_proof_after_base_case = 1
+cnt_prune_imply = 167
+cnt_prune_preds = 121
+cnt_prune_preds_filter = 121
+cnt_simplify = 58
+cnt_slow_imply = 72
+cnt_unfold_unsat = 15
+consumed_nodes_counter = 28
+consumed_specialized_nodes = 16
+dropped_branches = 16
+false_imply_count = 272
+fast_imply_success = 13
+impl_cache_count = 346
+impl_conseq_count = 181
+impl_proof_count = 239
+imply_sem_prun_false = 155
+imply_sem_prun_true = 12
+prune_cnt = 16
+sat_cache_count = 246
+sat_proof_count = 139
+saved_unfolds = 2
+stat_count_imply = 375
+stat_count_sat = 246
+stat_disj_count_imply = 801
+stat_disj_count_sat = 343
+stat_size_count_imply = 4523
+stat_size_count_sat = 1959
+syn_memo_count = 180
+syn_memo_hit = 13
+total_unfold_disjs = 24
+true_imply_count = 103
+with_disj_cnt_0_s = 62
+with_disj_cnt_2_f = 14
+with_disj_cnt_2_s = 7
+z_stat_disj_imply = 395
+z_stat_disj_sat = 339
+
+ profile results: there where 37 keys 
+ 
+(Overall,20.42,1,20.42,[20.42],  100.%) 
+(Parsing,0.01,2,0.,[],  0.04%) 
+(Preprocessing,0.58,1,0.58,[0.58],  2.83%) 
+(TP.imply_timeout,0.,375,0.,[],  0.%) 
+(Translating global var,0.,1,0.,[],  0.%) 
+(Translating to Core,0.56,1,0.56,[0.56],  2.74%) 
+(add_pure,0.,729,0.,[],  0.%) 
+(elim_exists,0.03,59,0.,[],  0.14%) 
+(elim_redundant_ctr,0.16,17,0.,[],  0.78%) 
+(empty_predicate_testing,0.27,23,0.01,[],  1.37%) 
+(entail_prune,0.12,18,0.,[],  0.58%) 
+(erc_imply,0.16,72,0.,[],  0.78%) 
+(fast_imply,0.,354,0.,[],  0.%) 
+(filter_dupl_memo,0.,1387,0.,[],  0.%) 
+(heap_entail_one_context_struc#2,18.62,21,0.88,[1.28,1.46,3.93,10.69],  91.18%) 
+(heap_entail_one_context_struc#4,18.18,24,0.75,[1.27,1.42,3.88,10.69],  89.03%) 
+(heap_entail_one_context_struc#fold,0.24,10,0.02,[],  1.17%) 
+(imply,1.16,375,0.,[],  5.72%) 
+(imply_proc_one_full,0.04,21,0.,[],  0.19%) 
+(imply_proc_one_ncplx,0.24,83,0.,[],  1.22%) 
+(is_sat,18.93,246,0.07,[1.27,1.41,3.88,10.68],  92.65%) 
+(memo_imply,0.26,11,0.02,[],  1.32%) 
+(memo_norm,0.,775,0.,[],  0.%) 
+(method count1$node,0.27,1,0.27,[],  1.37%) 
+(method insert1$node~int,0.58,1,0.58,[0.58],  2.83%) 
+(method merge1$node~node,0.48,1,0.48,[],  2.39%) 
+(method merge_sort1$node,17.67,1,17.67,[17.67],  86.49%) 
+(method split1$node~int,0.71,1,0.71,[0.71],  3.52%) 
+(normalize_max_renaming_list_failesc_context,0.,61,0.,[],  0.%) 
+(pred_inference,0.39,1,0.39,[],  1.9%) 
+(proof_after_base_case,0.,1,0.,[],  0.%) 
+(prune_imply,0.,167,0.,[],  0.%) 
+(prune_preds,0.53,121,0.,[],  2.64%) 
+(prune_preds_filter,0.,121,0.,[],  0.%) 
+(simplify,0.03,58,0.,[],  0.19%) 
+(slow_imply,0.16,72,0.,[],  0.78%) 
+(unfold_unsat,0.04,15,0.,[],  0.19%)

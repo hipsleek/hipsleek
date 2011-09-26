@@ -1,0 +1,10 @@
+data node { int val; node left; node right; }.
+
+pred avl<n, h> ==
+	self = null & n = 0 & h = 0 
+    or self::node<v, p, q> * p::avl<n1, h1> * q::avl<n2, h2>
+	   & n = 1 + n1 + n2
+	   & h = 1 + max(h1, h2) 
+	inv n >= 0 & h >= 0 & ($ n >= h).
+
+checkentail x::avl<n,0> & n>0 |- x::node<v,lt,rt> * lt::avl<n1, h1> * rt::avl<n2, h2> & h1=h2.

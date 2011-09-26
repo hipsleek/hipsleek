@@ -1,0 +1,4732 @@
+/usr/local/bin/mona
+/usr/local/bin/oc
+
+Processing file "avl_size_height_bags_0_link.ss"
+Parsing...
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+ warning avl_size_height_bags_0_link.ss_440_10 quantifying: nn mm Sn
+
+ warning avl_size_height_bags_0_link.ss_402_10 quantifying: Sn nn
+
+ warning avl_size_height_bags_0_link.ss_371_12 quantifying: nn Sn r
+
+ warning avl_size_height_bags_0_link.ss_296_10 quantifying: Sn r
+
+ warning avl_size_height_bags_0_link.ss_215_10 quantifying: Sn r
+
+ warning avl_size_height_bags_0_link.ss_147_10 quantifying: nn Sn
+
+ warning avl_size_height_bags_0_link.ss_123_10 quantifying: S
+
+ warning avl_size_height_bags_0_link.ss_97_10 quantifying: S
+
+ warning avl_size_height_bags_0_link.ss_67_10 quantifying: S
+
+ warning avl_size_height_bags_0_link.ss_50_10 quantifying: S
+Checking procedure main$... 
+[MONA.ml]:Timeout exception SAT no :678
+
+[MONA.ml]:Timeout exception SAT no :696
+
+Procedure main$ SUCCESS
+Checking procedure delete$node~int... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_936'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_936'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_936'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_936'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_936'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4400] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+[MONA.ml]:Timeout exception SAT no :1369
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+[MONA.ml]:Timeout exception SAT no :1452
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+[MONA.ml]:Timeout exception SAT no :1764
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_5797,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+[MONA.ml]:Timeout exception IMPLY no :2583
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_1207'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_1207'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_1207'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_1207'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_1207'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6396] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+[MONA.ml]:Timeout exception SAT no :3153
+
+[MONA.ml]:Timeout exception SAT no :3209
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,p_6610,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_6610,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614,q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[a] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+[MONA.ml]:Timeout exception IMPLY no :4625
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4645,p_4641,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_4641,q_5797,p_5793,v_node_450_4403] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_450_4403,p_4061] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_475_6397,q_6614,p_6610] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+[MONA.ml]:Timeout exception IMPLY no :4752
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_7604,p_7600,v_node_475_6397,q_6614] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_4065,v_node_475_6397] 
+
+Procedure delete$node~int SUCCESS
+Checking procedure delete_top$node... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_1568'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_1568'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_1568'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_1568'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_1568'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8859] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860,q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9896,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_9054,p_9050,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_9050,q_9896,p_9892,v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_412_8860] 
+
+Procedure delete_top$node SUCCESS
+Checking procedure remove_min$node~myint... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+[MONA.ml]:Timeout exception SAT no :6822
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_1971'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_1971'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_1971'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_1971'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_1971'] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11006] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[v_node_390_11007,q_10564] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[Anon_10568] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11007] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_10564,v_node_390_11007] 
+
+Procedure remove_min$node~myint SUCCESS
+Checking procedure remove_max_add$node~myint... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11994] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526,p_11522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11526] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_11998] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_11348] 
+
+Procedure remove_max_add$node~myint SUCCESS
+Checking procedure remove_min_add$node~myint... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_15009] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14550,p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_14546] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_15005] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_14384] 
+
+Procedure remove_min_add$node~myint SUCCESS
+Checking procedure insert$node~int... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[p_17518] 
+
+[MONA.ml]:Timeout exception SAT no :10934
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522,p_17518] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_17522] 
+
+Procedure insert$node~int SUCCESS
+Checking procedure rotate_double_right$node~node~node~node~int~int~int... 
+Procedure rotate_double_right$node~node~node~node~int~int~int SUCCESS
+Checking procedure rotate_double_left$node~node~node~node~int~int~int... 
+Procedure rotate_double_left$node~node~node~node~int~int~int SUCCESS
+Checking procedure get_max$int~int... 
+Procedure get_max$int~int SUCCESS
+Checking procedure rotate_right$node~node~node~int~int... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r,lr] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r,lr] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r,lr] 
+
+Procedure rotate_right$node~node~node~int~int SUCCESS
+Checking procedure rotate_left$node~node~node~int~int... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[rl,l] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[rl,l] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[rl,l] 
+
+Procedure rotate_left$node~node~node~int~int SUCCESS
+Checking procedure height$node... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_21317,p_21313] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_21317,p_21313] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_21317,p_21313] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_21317,p_21313] 
+
+Procedure height$node SUCCESS
+Stop Omega... 4597 invocations 
+0 false contexts at: ()
+
+Total verification time: 756.36 second(s)
+	Time spent in main process: 41.43 second(s)
+	Time spent in child processes: 714.93 second(s)
+Counters: 
+ cnt_Overall = 1
+cnt_Parsing = 2
+cnt_Preprocessing = 1
+cnt_TP.imply_timeout = 11318
+cnt_Translating global var = 1
+cnt_Translating to Core = 1
+cnt_add_pure = 9838
+cnt_elim_exists = 653
+cnt_elim_redundant_ctr = 25
+cnt_empty_predicate_testing = 210
+cnt_entail_prune = 380
+cnt_erc_imply = 184
+cnt_fast_imply = 17813
+cnt_filter_dupl_memo = 18980
+cnt_heap_entail_one_context_struc#2 = 186
+cnt_heap_entail_one_context_struc#4 = 181
+cnt_heap_entail_one_context_struc#fold = 135
+cnt_imply = 11318
+cnt_imply_proc_one_full = 534
+cnt_imply_proc_one_ncplx = 1666
+cnt_is_sat = 1190
+cnt_memo_imply = 210
+cnt_memo_norm = 10021
+cnt_method delete$node~int = 1
+cnt_method delete_top$node = 1
+cnt_method get_max$int~int = 1
+cnt_method height$node = 1
+cnt_method insert$node~int = 1
+cnt_method main$ = 1
+cnt_method remove_max_add$node~myint = 1
+cnt_method remove_min$node~myint = 1
+cnt_method remove_min_add$node~myint = 1
+cnt_method rotate_double_left$node~node~node~node~int~int~int = 1
+cnt_method rotate_double_right$node~node~node~node~int~int~int = 1
+cnt_method rotate_left$node~node~node~int~int = 1
+cnt_method rotate_right$node~node~node~int~int = 1
+cnt_normalize_max_renaming_list_failesc_context = 935
+cnt_pred_inference = 1
+cnt_proof_after_base_case = 28
+cnt_prune_imply = 8710
+cnt_prune_preds = 1533
+cnt_prune_preds_filter = 1533
+cnt_simplify = 81
+cnt_slow_imply = 184
+cnt_unfold_unsat = 367
+consumed_nodes_counter = 1067
+consumed_specialized_nodes = 439
+dropped_branches = 99
+false_imply_count = 9667
+fast_imply_success = 260
+impl_cache_count = 10896
+impl_conseq_count = 2609
+impl_proof_count = 6597
+imply_sem_prun_false = 8656
+imply_sem_prun_true = 54
+prune_cnt = 99
+sat_cache_count = 1189
+sat_proof_count = 865
+saved_unfolds = 15
+stat_count_imply = 11318
+stat_count_sat = 1190
+stat_disj_count_imply = 1532384
+stat_disj_count_sat = 1057672
+stat_size_count_imply = 572981
+stat_size_count_sat = 45657
+syn_memo_count = 8970
+syn_memo_hit = 260
+total_unfold_disjs = 179
+true_imply_count = 1651
+with_disj_cnt_0_s = 1132
+with_disj_cnt_2_f = 120
+with_disj_cnt_2_s = 414
+z_stat_disj_imply = 16842
+z_stat_disj_sat = 6051
+
+ profile results: there where 45 keys 
+ 
+(Overall,756.34,1,756.34,[756.34],  100.%) 
+(Parsing,0.03,2,0.01,[],  0.%) 
+(Preprocessing,1.18,1,1.18,[1.18],  0.15%) 
+(TP.imply_timeout,0.,11318,0.,[],  0.%) 
+(Translating global var,0.01,1,0.01,[],  0.%) 
+(Translating to Core,1.12,1,1.12,[1.12],  0.14%) 
+(add_pure,0.29,9838,0.,[],  0.03%) 
+(elim_exists,0.,653,0.,[],  0.%) 
+(elim_redundant_ctr,0.2,25,0.,[],  0.02%) 
+(empty_predicate_testing,142.07,210,0.67,[0.5,0.5,0.53,0.53,0.55,0.57,0.58,0.59,0.6,0.62,0.63,0.63,0.66,0.71,0.77,0.81,0.84,0.93,1.03,1.12,1.12,1.2,1.28,1.38,1.45,1.46,1.97,2.15,2.77,2.93,3.29,3.65,4.27,4.52,4.58,5.02,5.21,5.81,6.17,6.22,6.31,7.33,11.,11.01,11.01],  18.78%) 
+(entail_prune,21.48,380,0.05,[],  2.83%) 
+(erc_imply,0.2,184,0.,[],  0.02%) 
+(fast_imply,0.07,17813,0.,[],  0.%) 
+(filter_dupl_memo,0.49,18980,0.,[],  0.06%) 
+(heap_entail_one_context_struc#2,589.77,186,3.17,[0.5,0.51,0.63,0.66,0.72,0.75,0.76,0.78,0.8,0.84,0.94,0.94,0.94,1.04,1.05,1.08,1.09,1.19,1.25,1.41,1.48,1.6,1.68,1.77,1.91,2.17,2.75,2.95,3.11,3.24,3.36,3.53,3.69,3.69,3.89,4.02,4.02,4.08,4.31,4.34,4.63,4.66,4.93,5.06,5.18,5.22,5.25,5.35,5.37,5.43,5.62,5.75,6.5,6.64,6.88,7.02,7.15,7.21,7.3,8.,8.01,8.24,8.25,8.27,8.38,8.56,9.11,10.73,10.83,11.02,11.13,11.13,11.14,11.22,11.41,12.52,12.78,13.24,13.55,15.02,15.38,20.07,26.32,28.04,33.71,34.49],  77.97%) 
+(heap_entail_one_context_struc#4,366.92,181,2.02,[0.53,0.57,0.58,0.63,0.75,0.77,0.83,0.84,0.91,0.93,0.99,1.15,1.18,1.36,1.39,1.57,1.73,1.87,2.,2.11,2.5,2.74,2.82,3.01,3.11,3.18,3.23,3.37,3.4,3.85,3.89,3.93,4.01,4.17,4.22,4.61,4.74,4.82,5.04,5.17,5.25,5.28,5.31,5.39,5.42,5.53,5.75,5.93,6.17,6.37,6.81,6.86,6.87,6.96,6.99,7.4,7.77,8.,8.,8.06,8.18,8.9,10.5,10.67,10.69,10.82,11.01,11.01,11.09,11.11,11.12,11.13],  48.51%) 
+(heap_entail_one_context_struc#fold,23.72,47,0.5,[0.81,0.89,0.9,0.97,1.05,1.08,1.14,1.27,1.37,1.42,1.5,1.52,1.56,1.57,1.81],  3.13%) 
+(imply,186.11,11318,0.01,[0.5,0.5,0.53,0.53,0.55,0.57,0.58,0.59,0.6,0.62,0.63,0.63,0.66,0.71,0.77,0.81,0.83,0.93,1.03,1.12,1.12,1.2,1.28,1.38,1.45,1.46,1.97,2.14,2.77,2.93,3.29,3.65,4.27,4.52,4.58,5.02,5.21,5.81,6.16,6.22,6.3,7.33,11.,11.01,11.01],  24.6%) 
+(imply_proc_one_full,5.09,534,0.,[],  0.67%) 
+(imply_proc_one_ncplx,7.94,1666,0.,[],  1.04%) 
+(is_sat,559.73,1190,0.47,[0.52,0.53,0.54,0.6,0.62,0.64,0.64,0.67,0.71,0.72,0.75,0.75,0.9,0.92,0.93,0.94,1.03,1.07,1.1,1.18,1.2,1.33,1.39,1.47,1.51,1.67,1.72,1.73,1.75,1.85,1.86,1.92,2.,2.,2.48,2.5,2.63,2.74,2.74,2.82,2.84,3.01,3.06,3.06,3.1,3.21,3.23,3.3,3.37,3.53,3.66,3.69,3.78,3.87,3.89,3.92,4.01,4.12,4.16,4.29,4.32,4.61,4.61,4.73,4.75,4.81,4.82,4.9,4.96,5.03,5.06,5.24,5.25,5.31,5.39,5.42,5.44,5.62,5.69,5.75,5.82,5.92,6.06,6.29,6.34,6.67,6.74,6.83,6.87,6.96,6.98,7.27,7.4,7.77,7.87,7.87,8.,8.02,8.17,8.78,8.81,8.91,10.5,10.67,10.69,10.82,10.99,11.,11.,11.,11.01,11.01,11.01,11.02,11.02],  74.%) 
+(memo_imply,139.75,210,0.66,[0.5,0.5,0.53,0.53,0.55,0.57,0.58,0.59,0.6,0.62,0.63,0.63,0.66,0.71,0.77,0.81,0.83,0.93,1.03,1.12,1.12,1.2,1.28,1.38,1.45,1.46,1.97,2.14,2.77,2.93,3.29,3.65,4.27,4.52,4.58,5.02,5.21,5.81,6.16,6.22,6.3,7.33,11.,11.01,11.01],  18.47%) 
+(memo_norm,0.,10021,0.,[],  0.%) 
+(method delete$node~int,384.31,1,384.31,[384.31],  50.81%) 
+(method delete_top$node,92.49,1,92.49,[92.49],  12.22%) 
+(method get_max$int~int,0.,1,0.,[],  0.%) 
+(method height$node,0.33,1,0.33,[],  0.04%) 
+(method insert$node~int,128.33,1,128.33,[128.33],  16.96%) 
+(method main$,49.21,1,49.21,[49.21],  6.5%) 
+(method remove_max_add$node~myint,24.03,1,24.03,[24.03],  3.17%) 
+(method remove_min$node~myint,43.66,1,43.66,[43.66],  5.77%) 
+(method remove_min_add$node~myint,24.58,1,24.58,[24.58],  3.25%) 
+(method rotate_double_left$node~node~node~node~int~int~int,2.39,1,2.39,[2.39],  0.31%) 
+(method rotate_double_right$node~node~node~node~int~int~int,2.4,1,2.4,[2.4],  0.31%) 
+(method rotate_left$node~node~node~int~int,0.37,1,0.37,[],  0.05%) 
+(method rotate_right$node~node~node~int~int,0.36,1,0.36,[],  0.04%) 
+(normalize_max_renaming_list_failesc_context,0.32,935,0.,[],  0.04%) 
+(pred_inference,0.88,1,0.88,[0.88],  0.11%) 
+(proof_after_base_case,3.85,20,0.19,[0.54,0.6],  0.5%) 
+(prune_imply,0.01,8710,0.,[],  0.%) 
+(prune_preds,33.51,1533,0.02,[],  4.43%) 
+(prune_preds_filter,0.,1533,0.,[],  0.%) 
+(simplify,0.,81,0.,[],  0.%) 
+(slow_imply,0.2,184,0.,[],  0.02%) 
+(unfold_unsat,0.,367,0.,[],  0.%)

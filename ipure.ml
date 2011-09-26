@@ -15,7 +15,10 @@ type formula =
   | Exists of ((ident * primed) * formula *(formula_label option)* loc)
 
 (* Boolean constraints *)
-and b_formula = 
+and b_formula = p_formula * ((bool * int * (exp list)) option)
+(* (is_linking, label, list of linking expressions in b_formula) *)
+
+and p_formula = 
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
   | Lt of (exp * exp * loc)
@@ -68,7 +71,6 @@ and exp =
   | ListReverse of (exp * loc)
   | ArrayAt of ((ident * primed) * exp  * loc)      (* An Hoa : array access *)
 
-
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
   |	BaseRel of (exp list * formula)
@@ -93,7 +95,9 @@ and remove_qvar qid qf =
   let qfv = fv qf in
     Gen.BList.remove_elem_eq (=) qid qfv
 
-and bfv (bf : b_formula) = match bf with
+and bfv (bf : b_formula) =
+  let (pf,_) = bf in
+  match pf with
   | BConst _ -> []
   | BVar (bv, _) -> [bv]
   | Lt (a1, a2, _) -> combine_avars a1 a2
@@ -214,11 +218,11 @@ and name_of_var (e : exp) : ident = match e with
   | _ -> failwith ("parameter to name_of_var is not a variable")
  
 and isConstTrue p = match p with
-  | BForm (BConst (true, pos),_) -> true
+  | BForm ((BConst (true, pos), _), _) -> true
   | _ -> false
 
 and isConstFalse p = match p with
-  | BForm (BConst (false, pos),_) -> true
+  | BForm ((BConst (false, pos), _), _) -> true
   | _ -> false
 
 (* smart constructor *)
@@ -284,19 +288,19 @@ and mkEq a1 a2 pos =
 	Eq (a1, a2, pos)
 
 and mkAnd f1 f2 pos = match f1 with
-  | BForm (BConst (false, _),_) -> f1
-  | BForm (BConst (true, _),_) -> f2
+  | BForm ((BConst (false, _), _), _) -> f1
+  | BForm ((BConst (true, _), _), _) -> f2
   | _ -> match f2 with
-      | BForm (BConst (false, _),_) -> f2
-      | BForm (BConst (true, _),_) -> f1
+      | BForm ((BConst (false, _), _), _) -> f2
+      | BForm ((BConst (true, _), _), _) -> f1
       | _ -> And (f1, f2, pos)
 
 and mkOr f1 f2 lbl pos = match f1 with
-  | BForm (BConst (false, _),_) -> f2
-  | BForm (BConst (true, _),_) -> f1
+  | BForm ((BConst (false, _), _), _) -> f2
+  | BForm ((BConst (true, _), _), _) -> f1
   | _ -> match f2 with
-      | BForm (BConst (false, _),_) -> f1
-      | BForm (BConst (true, _),_) -> f2
+      | BForm ((BConst (false, _), _), _) -> f1
+      | BForm ((BConst (true, _), _), _) -> f2
       | _ -> Or (f1, f2, lbl, pos)
 
 and mkEqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
@@ -304,16 +308,16 @@ and mkEqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 	  if v1 = v2 then
 		mkTrue pos
 	  else
-		BForm (Eq (ae1, ae2, pos), None)
-  | _ ->  BForm (Eq (ae1, ae2, pos), None)
+		BForm ((Eq (ae1, ae2, pos), None), None)
+  | _ ->  BForm ((Eq (ae1, ae2, pos), None), None)
 
 and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
 	  if v1 = v2 then
 		mkFalse pos
 	  else
-		BForm (Neq (ae1, ae2, pos), None)
-  | _ ->  BForm (Neq (ae1, ae2, pos), None)
+		BForm ((Neq (ae1, ae2, pos), None), None)
+  | _ ->  BForm ((Neq (ae1, ae2, pos), None), None)
 
 and mkNot f lbl pos = Not (f, lbl, pos)
 
@@ -353,9 +357,9 @@ and mkNEqualVarInt (sv : spec_var) (i : int) =
   BForm (ANeq (AVar (force_to_svar sv), IConst i))
 *)
 
-and mkTrue pos = BForm (BConst (true, pos), None)
+and mkTrue pos = BForm ((BConst (true, pos), None), None)
 
-and mkFalse pos = BForm (BConst (false, pos),None )
+and mkFalse pos = BForm ((BConst (false, pos), None) , None)
 
 and mkExists (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
   | [] -> f
@@ -405,7 +409,7 @@ and build_relation relop alist10 alist20 pos =
 
  (* An Hoa *)
 and pos_of_formula (f : formula) = match f with 
-	| BForm (b,_) -> begin match b with
+	| BForm ((pf,_),_) -> begin match pf with
 		  | BConst (_,p) | BVar (_,p)
 		  | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
 		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
@@ -482,8 +486,10 @@ and apply_one (fr, t) f = match f with
         Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
 	  else Exists (v, apply_one (fr, t) qf, lbl, pos)
   
-and b_apply_one (fr, t) bf = match bf with
-  | BConst _ -> bf
+and b_apply_one (fr, t) bf =
+  let (pf,il) = bf in
+  let npf = match pf with
+  | BConst _ -> pf
   | BVar (bv, pos) -> BVar ((if eq_var bv fr then t else bv), pos)
   | Lt (a1, a2, pos) -> Lt (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
@@ -515,7 +521,8 @@ and b_apply_one (fr, t) bf = match bf with
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | RelForm (r, args, pos) -> 
           (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
-          RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos) 
+          RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos)
+  in (npf,il)
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -602,7 +609,9 @@ and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = matc
   | Exists (_,b1,_,_)-> (look_for_anonymous_pure_formula b1)
 
 	
-and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match f with
+and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
+  let (pf,_) = f in
+  match pf with
   | BConst _ -> []
   | BVar (b1, _) -> anon_var b1
   | Lt (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -636,4 +645,67 @@ let merge_branches l1 l2 =
     with Not_found -> (branch, List.assoc branch l2)
   in
   List.map map_fun branches
+
+let rec find_lexp_formula (f: formula) ls =
+  match f with
+	| BForm (bf, _) -> find_lexp_b_formula bf ls
+	| _ -> []
+	
+and find_lexp_b_formula (bf: b_formula) ls =
+  let (pf, _) = bf in
+  match pf with
+	| BConst _
+	| BVar _ -> []
+	| Lt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Lte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Gt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Gte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Eq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Neq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| EqMax (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
+	| EqMin (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
+	| BagIn (_, e, _) -> find_lexp_exp e ls
+	| BagNotIn (_, e, _) -> find_lexp_exp e ls
+	| BagSub (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| BagMin _ | BagMax _ -> []
+	| ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListNotIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+
+and find_lexp_exp (e: exp) ls =
+  if Hashtbl.mem ls e then [e] else
+  match e with
+	| Null _
+	| Var _
+	| IConst _
+	| FConst _ -> []
+	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Div (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| BagDiff (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| List (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| ListCons (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| ListHead (e, _) -> find_lexp_exp e ls
+	| ListTail (e, _) -> find_lexp_exp e ls
+	| ListLength (e, _) -> find_lexp_exp e ls
+	| ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+	| ListReverse (e, _) -> find_lexp_exp e ls
+	| ArrayAt (_, e, _) -> find_lexp_exp e ls
 ;;
+
+let rec break_pure_formula (f: formula) : b_formula list =
+  match f with
+	| BForm (bf, _) -> [bf]
+	| And (f1, f2, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
+	| Or (f1, f2, _, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
+	| Not (f, _, _) -> break_pure_formula f
+	| Forall (_, f, _, _) -> break_pure_formula f
+	| Exists (_, f, _, _) -> break_pure_formula f

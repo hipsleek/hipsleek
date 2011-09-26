@@ -107,7 +107,9 @@ and cvcl_of_exp a = match a with
 	| CP.ArrayAt _ ->
       failwith ("Arrays are not supported in cvclite")
   
-and cvcl_of_b_formula b = match b with
+and cvcl_of_b_formula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
   (* | CP.BVar (sv, _) -> cvcl_of_spec_var sv *)
   | CP.BVar (sv, _) -> (cvcl_of_spec_var sv) ^ " = 1"
@@ -158,7 +160,7 @@ and cvcl_of_formula f = match f with
 (*	  "(NOT (" ^ (cvcl_of_formula p) ^ "))" *)
 	  begin
 		match p with
-		  | CP.BForm (CP.BVar (bv, _),_) -> (cvcl_of_spec_var bv) ^ " = 0" 
+		  | CP.BForm ((CP.BVar (bv, _), _),_) -> (cvcl_of_spec_var bv) ^ " = 0" 
 		  | _ -> "(NOT (" ^ (cvcl_of_formula p ) ^ "))"
 	  end
   | CP.Forall (sv, p,_, _) ->

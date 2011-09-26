@@ -1,0 +1,33 @@
+1. Partitioning SAT formulas or the LHS of entailments into independent groups of constraints and checking UNSAT
+   for each group -> if UNSAT then stop else continue
+2. Transform the RHS into CNF
+   For each term of the normalized RHS, choose the relevant constraints for LHS to form a sub-entailment
+
+   UNSAT(P1) or UNSAT(P2) or (P1 |- T1 /\ P2 |- T2)
+   --------------------------------------------------
+   (P1 |- T1 \/ UNSAT(P2)) /\ (P2 |- T2 \/ UNSAT(P1))
+   --------------------------------------------------
+   "P1": P1 /\ "P2": P2 |- T1 /\ T2
+
+3. In some scenarios, the LHS of a sub-entailment can be improved more by reducing redundant constraints
+   - Based on the instructions of the users
+     + The level of dependence of the entailment on its RHS's variables 
+   - Using heuristics
+     + Removing redundant constraints based on type of RHS (bag constraint, arithmetic constraint)
+
+4. Slicing for SAT checking of first-order logic
+   SAT (ex x. A) \/ SAT (ex x. B)
+   ---------------------------------(EX-OR)
+   SAT (ex x. A \/ B)
+
+   
+   ---------------------------------(EX-AND)
+   SAT (ex x. A /\ B)
+
+   
+   ---------------------------------(ALL-OR)
+   SAT (all x. A \/ B)
+
+   SAT (all x. A) /\ SAT (all x. B)
+   ---------------------------------(ALL-AND)
+   SAT (all x. A /\ B)

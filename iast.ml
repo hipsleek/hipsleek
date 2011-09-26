@@ -1048,7 +1048,7 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
 			replace_self h vars
 	
 	and collect_eq_self p = match p with
-		| P.BForm (f,_) -> (match f with
+		| P.BForm (f,_) -> (let (pf, _) = f in match pf with
 			| P.Eq (e1,e2,_) -> (match e1 with
 				| P.Var ((vn,vp), _) -> (if (vn = "self" && vp = Unprimed) then
 										match e2 with

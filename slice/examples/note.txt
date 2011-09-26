@@ -1,0 +1,106 @@
+merge_mems@206
+merge_mems inp1 : (
+(SLICE[h,h1,h2][]:
+   [(-1+h1)<=h2(IN)& <, 17, []>(-1+h2)<=h1(IN)]
+   [exists1(max_158:<, 16, []>h=max_158+1 & <, 159, []>max_158=max(h1,h2))]
+   alias set:[@]
+ SLICE[n,n1,n2][]:
+   [<, 15, []>n=1+n1+n2(IN)]
+   [true]
+   alias set:[@]))
+merge_mems inp2 : (
+(SLICE[n1,h1,p][]:
+   []
+   [null=p & 0=h1 & 0=n1 | <, 673, []>1<=h1 & <IL, 672, []>h1<=n1 & 
+    <IL, 671, []>(2*h1)<=(2+n1) & p!=null]
+   alias set:[@]
+ SLICE[self][]:
+   [self!=null(IN)]
+   [true]
+   alias set:[@]
+ SLICE[n2,h2,q][]:
+   []
+   [null=q & 0=h2 & 0=n2 | <, 673, []>1<=h2 & <IL, 672, []>h2<=n2 & 
+    <IL, 671, []>(2*h2)<=(2+n2) & q!=null]
+   alias set:[@]))
+merge_mems inp3 :true
+merge_mems@206 EXIT out : (
+(SLICE[q,p,h,h1,h2,n,n1,n2][]:
+   [(-1+h1)<=h2(IN)& <, 15, []>n=1+n1+n2(IN)& <, 17, []>(-1+h2)<=h1(IN)]
+   [(null=q & 0=h2 & 0=n2 | <, 673, []>1<=h2 & <IL, 672, []>h2<=n2 & 
+    <IL, 671, []>(2*h2)<=(2+n2) & q!=null) & (null=p & 0=h1 & 0=n1 | 
+    <, 673, []>1<=h1 & <IL, 672, []>h1<=n1 & <IL, 671, []>(2*h1)<=(2+n1) & 
+    p!=null) & exists1(max_158:<, 16, []>h=max_158+1 & 
+    <, 159, []>max_158=max(h1,h2))]
+   alias set:[@]
+ SLICE[self][]:
+   [self!=null(IN)]
+   [true]
+   alias set:[@]))
+split_mem_grp:  ((SLICE[self][]:
+     []
+     [true]
+     alias set:[@{self, null}]))
+
+=========================================
+create_memo_group@192
+create_memo_group inp1 :[]
+create_memo_group inp2 :[ null=self & 0=h & 0=n | exists1(n1:exists1(n2:<, 20, []>0<=n2 & 
+<, 15, []>n=1+n1+n2 & <, 20, []>0<=n1)) & 
+exists1(h1:exists1(h2:<, 19, []>0<=h2 & <, 17, []>(-1+h2)<=h1 & 
+<, 19, []>0<=h1 & (-1+h1)<=h2 & exists1(max_158:<, 16, []>h=max_158+1 & 
+<, 159, []>max_158=max(h1,h2)))) & 
+exists1(n1:exists1(h1:<IL, 22, []>h1<=n1)) & self!=null & 
+exists1(n2:exists1(h2:<IL, 22, []>h2<=n2))]
+create_memo_group inp3 :
+create_memo_group@192 EXIT out : (
+(SLICE[n,h,self][]:
+   []
+   [null=self & 0=h & 0=n | exists1(n1:exists1(n2:<, 20, []>0<=n2 & 
+    <, 15, []>n=1+n1+n2 & <, 20, []>0<=n1)) & 
+    exists1(h1:exists1(h2:<, 19, []>0<=h2 & <, 17, []>(-1+h2)<=h1 & 
+    <, 19, []>0<=h1 & (-1+h1)<=h2 & exists1(max_158:<, 16, []>h=max_158+1 & 
+    <, 159, []>max_158=max(h1,h2)))) & 
+    exists1(n1:exists1(h1:<IL, 22, []>h1<=n1)) & self!=null & 
+    exists1(n2:exists1(h2:<IL, 22, []>h2<=n2))]
+   alias set:[@]))
+
+==========================================
+WHY need to push exists into memo_pure
+memo_pure_push_exists_slice@192
+memo_pure_push_exists_slice inp1 :[Anon_14,p,n1,h1,q,n2,h2]
+memo_pure_push_exists_slice inp2 : (
+(SLICE[n,n1,n2][]:
+   [<, 20, []>0<=n2(IP)& <, 15, []>n=1+n1+n2(IN)& <, 20, []>0<=n1(IP)]
+   [true]
+   alias set:[@]
+ SLICE[h,h1,h2][]:
+   [<, 19, []>0<=h2(IP)& <, 17, []>(-1+h2)<=h1(IN)& <, 19, []>0<=h1(IP)& (-1+
+    h1)<=h2(IN)]
+   [exists1(max_158:<, 16, []>h=max_158+1 & <, 159, []>max_158=max(h1,h2))]
+   alias set:[@]
+ SLICE[h1,n1][h1,n1]:
+   [<IL, 22, []>h1<=n1(IP)]
+   [true]
+   alias set:[@]
+ SLICE[self][]:
+   [self!=null(IN)]
+   [true]
+   alias set:[@]
+ SLICE[h2,n2][h2,n2]:
+   [<IL, 22, []>h2<=n2(IP)]
+   [true]
+   alias set:[@]))
+memo_pure_push_exists_slice@192 EXIT out : (
+(SLICE[n,h][]:
+   []
+   [exists1(n1:exists1(h1:exists1(n2:exists1(h2:<, 20, []>0<=n2 & 
+    <, 15, []>n=1+n1+n2 & <, 20, []>0<=n1 & <, 19, []>0<=h2 & <, 17, []>(-1+
+    h2)<=h1 & <, 19, []>0<=h1 & (-1+h1)<=h2 & <IL, 22, []>h1<=n1 & 
+    <IL, 22, []>h2<=n2 & exists1(max_158:<, 16, []>h=max_158+1 & 
+    <, 159, []>max_158=max(h1,h2))))))]
+   alias set:[@]
+ SLICE[self][]:
+   [self!=null(IN)]
+   [true]
+   alias set:[@]))

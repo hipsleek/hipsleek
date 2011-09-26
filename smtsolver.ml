@@ -75,7 +75,9 @@ let rec is_linear_exp exp = match exp with
 	| CP.ArrayAt (a, i,_) -> is_linear_exp i (* v[i] is linear <==> i is linear*)
   | _ -> false
 
-let is_linear_bformula b = match b with
+let is_linear_bformula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst _ -> true
   | CP.BVar _ -> true
   | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
@@ -105,7 +107,9 @@ let rec get_formula_of_rel_with_name rn rdefs =
 (**
  * Collect the relations that we use
  *)
-let rec collect_relation_names_bformula b collected = match b with
+let rec collect_relation_names_bformula b collected =
+  let (pf,_) = b in
+  match pf with
 	| CP.RelForm (r,_,_) ->
 		if (List.mem r collected || r = "update_array") then collected
 		else (* Add r to the list of collected relations &
@@ -144,9 +148,9 @@ and collect_relation_names_formula f0 = match f0 with
  * Checking whether a formula is quantifier-free or not
  *)
 let rec is_quantifier_free_formula f0 = match f0 with
-  | CP.BForm (b,_) -> (* true *)(* An Hoa *)
+  | CP.BForm ((pf,_),_) -> (* true *)(* An Hoa *)
 		begin 
-			match b with
+			match pf with
   		| CP.RelForm _ -> false (* Contain relation ==> we need to use forall to axiomatize ==> not quantifier free! *)
 			| _ -> true 
 		end
@@ -279,7 +283,8 @@ let rec smt_of_exp a qvars =
 let rec smt_of_b_formula b qvars =
   let smt_of_spec_var v = smt_of_spec_var v (Some qvars) in
   let smt_of_exp e = smt_of_exp e qvars in
-  match b with
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
   | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
   | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -498,7 +503,7 @@ let max_induction_level = ref 0
 let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.formula) : (CP.exp list) =
 	(*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
 	match conseq with
-		| CP.BForm (b,_) -> (match b with
+		| CP.BForm (b,_) -> (let (p, _) = b in match p with
 			| CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos]
 			| _ -> [])
   	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)

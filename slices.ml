@@ -329,6 +329,7 @@ module MemoFormula =
      type v = CP.spec_var
      let join x y = {
          MP.memo_group_fv =  SpecVarSet.union x.MP.memo_group_fv y.MP.memo_group_fv;
+	     MP.memo_group_linking_vars = [];
 	     MP.memo_group_cons = x.MP.memo_group_cons @ y.MP.memo_group_cons;
          MP.memo_group_slice = x.MP.memo_group_slice @ y.MP.memo_group_slice;
          MP.memo_group_changed = x.MP.memo_group_changed || y.MP.memo_group_changed;
@@ -336,7 +337,8 @@ module MemoFormula =
      } (* and two memoised group *)
      let vars x  = x.MP.memo_group_fv  (* free vars of memoised group *)
      let unit =  { MP.memo_group_fv = [];
-	       MP.memo_group_cons = [];
+				   MP.memo_group_linking_vars = [];
+	               MP.memo_group_cons = [];
 			       MP.memo_group_slice = [];
 			       MP.memo_group_changed = false;
 			       MP.memo_group_aset = MP.empty_var_aset;}

@@ -987,7 +987,7 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
 	  let p2' = gen_bindings_pure p2 unbound_vars vmap in
 	  let p = CP.mkAnd p1' p2' pos in
 		p
-  | CP.BForm (CP.Eq (e1, e2, pos),_) -> begin
+  | CP.BForm ((CP.Eq (e1, e2, pos), il), _) -> begin
 	  if is_in_svars e1 unbound_vars then
 		let tmp = CP.name_of_spec_var (CP.to_var e1) in
 		  (* if tmp is already bound, this formula will be turned into a test. *)
@@ -1012,23 +1012,23 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
 				CP.mkTrue pos
 			  end
 	  else if is_in_svars e2 unbound_vars then
-		gen_bindings_pure (CP.BForm (CP.Eq (e2, e1, pos), None)) unbound_vars vmap
+		gen_bindings_pure (CP.BForm ((CP.Eq (e2, e1, pos), il), None)) unbound_vars vmap
 	  else
 		pure
 	end
-  | CP.BForm (CP.EqMax (e1, e2,e3, pos),_) -> begin
+  | CP.BForm ((CP.EqMax (e1, e2,e3, pos), il), _) -> begin
 	  if is_in_svars e1 unbound_vars then
 		let emax = CP.Max (e2, e3, pos) in
 		let tmp = CP.Eq (e1, emax, pos) in
-		  gen_bindings_pure (CP.BForm (tmp,None)) unbound_vars vmap
+		  gen_bindings_pure (CP.BForm ((tmp, il), None)) unbound_vars vmap
 	  else
 		pure
 	end
-  | CP.BForm (CP.EqMin (e1, e2,e3, pos),_) -> begin
+  | CP.BForm ((CP.EqMin (e1, e2,e3, pos), il), _) -> begin
 	  if is_in_svars e1 unbound_vars then
 		let emin = CP.Min (e2, e3, pos) in
 		let tmp = CP.Eq (e1, emin, pos) in
-		  gen_bindings_pure (CP.BForm (tmp,None)) unbound_vars vmap
+		  gen_bindings_pure (CP.BForm ((tmp, il), None)) unbound_vars vmap
 	  else
 		pure
 	end
@@ -1226,7 +1226,9 @@ and has_partially_bound_field (e0 : exp) (pbound_vars : CP.spec_var list) = matc
 *)
   | _ -> false
 
-and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec_var list) : exp = match bf0 with
+and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec_var list) : exp =
+  let (pf,il) = bf0 in
+  match pf with
   | CP.Eq (e1, e2, pos) -> begin
 	  let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	  let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
@@ -1864,15 +1866,15 @@ and gen_bound_params (output_vars : CP.spec_var list) (p0 : CP.formula) : CP.spe
 	  let b1 = gen_bound_params output_vars p1 in
 	  let b2 = gen_bound_params output_vars p2 in
 		b1 @ b2
-  | CP.BForm (CP.Eq (e1, e2, pos),_) -> 
+  | CP.BForm ((CP.Eq (e1, e2, pos), _), _) -> 
 	  if is_in_svars e1 output_vars && (not (is_in_svars e2 output_vars)) then
 		[CP.to_var e1]
 	  else if is_in_svars e2 output_vars && (not (is_in_svars e1 output_vars))  then
 		[CP.to_var e2]
 	  else
 		[]
-  | CP.BForm (CP.EqMax (e1, _, _, _),_)
-  | CP.BForm (CP.EqMin (e1, _, _, _),_) ->
+  | CP.BForm ((CP.EqMax (e1, _, _, _), _), _)
+  | CP.BForm ((CP.EqMin (e1, _, _, _), _), _) ->
 	  if is_in_svars e1 output_vars then
 		[CP.to_var e1]
 	  else

@@ -253,8 +253,9 @@ struct
   let disjoint_eq eq l1 l2 =
     List.for_all (fun x -> not (mem_eq eq x l2)) l1
 
-  let overlap_eq eq l1 l2 = 
-    List.exists (fun x -> (mem_eq eq x l2)) l1
+  let overlap_eq eq l1 l2 =
+	if (l2 == []) then false
+	else List.exists (fun x -> (mem_eq eq x l2)) l1
 
   let rec find_dups_eq eq n = 
     match n with
