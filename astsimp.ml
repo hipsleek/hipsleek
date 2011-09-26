@@ -1109,9 +1109,9 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 
 
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  Gen.Debug.no_3 "compute_view_x_formula"
-	Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
-	compute_view_x_formula_x prog vdef n
+  Gen.Debug.ho_eff_2 "compute_view_x_formula" [true;false]
+	Cprinter.string_of_view_decl string_of_int (fun x -> "")
+	(fun _ _ -> compute_view_x_formula_x prog vdef n) vdef n
 	
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
@@ -1146,7 +1146,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
            (vdef.C.view_x_formula <- (xform, xform_b);
             vdef.C.view_addr_vars <- addr_vars;
             vdef.C.view_baga <- (match ms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-            compute_view_x_formula prog vdef (n - 1))
+            compute_view_x_formula_x prog vdef (n - 1))
          else
            Err.report_error
              {
@@ -1201,6 +1201,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let _ = gather_type_info_pure prog inv stab in
   let _ = List.iter (fun (_,f) -> gather_type_info_pure prog f stab) inv_b in
   let pf = trans_pure_formula inv stab in
+  (* Thai : pf - user given invariant in core form *) 
   let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
   let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
   let pf = Cpure.arith_simplify 1 pf in
@@ -1253,6 +1254,10 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       (* let _ = print_string ("trans_view: " *)
       (*                       ^ "\n ### cf = " ^ (Cprinter.string_of_struc_formula cf) *)
       (*                       ^"\n\n") in *)
+      (* Thai : we can compute better pure inv named new_pf here that 
+         should be stronger than pf *)
+      (* let new_pf = compute_inv n_un_str pf in *)
+      let memo_pf = MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf in
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -1262,11 +1267,11 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_materialized_vars = mvars;
           C.view_data_name = data_name;
           C.view_formula = cf;
-          C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
+          C.view_x_formula = (memo_pf, pf_b);
           C.view_addr_vars = [];
           C.view_baga = [];
           C.view_complex_inv = None;
-          C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
+          C.view_user_inv = (memo_pf, pf_b);
           C.view_un_struc_formula = n_un_str;
                C.view_base_case = None;
                C.view_is_rec = ir;
