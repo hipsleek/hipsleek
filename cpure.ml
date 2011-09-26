@@ -21,17 +21,20 @@ let is_hole_spec_var sv = match sv with
 	 *)
   (* | Array of typ  *)
 
+
 type formula =
-  | BForm of (b_formula *(formula_label option))
+  | BForm of (b_formula  *(formula_label option))
   | And of (formula * formula * loc)
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option)* loc)
   | Forall of (spec_var * formula * (formula_label option)*loc)
   | Exists of (spec_var * formula * (formula_label option)*loc)
 
-(* Boolean constraints *)
-and b_formula = p_formula * ((bool * int * (exp list)) option)
+and bf_annot = (bool * int * (exp list))
 (* (is_linking, label, list of linking expressions in b_formula) *)
+
+(* Boolean constraints *)
+and b_formula = p_formula * (bf_annot option)
 	
 and p_formula =
   | BConst of (bool * loc)
