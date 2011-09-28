@@ -711,7 +711,7 @@ and equation_a a1 a2 f sec_order_symbol first_order_symbol vs =
   end
 
 and mona_of_formula f initial_f vs = 
-  Gen.Debug.no_2 "mona_of_formula" Cprinter.string_of_pure_formula
+  Gen.Debug.ho_2 "mona_of_formula" Cprinter.string_of_pure_formula
       Cprinter.string_of_pure_formula 
       (fun x -> x) (fun f initial_f -> mona_of_formula_x f initial_f vs) 
       f initial_f 

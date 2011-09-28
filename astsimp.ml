@@ -1109,49 +1109,83 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 
 
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  Gen.Debug.no_3 "compute_view_x_formula"
+  Gen.Debug.ho_3 "compute_view_x_formula"
 	Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
 	compute_view_x_formula_x prog vdef n
 	
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
       (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-       let (xform', xform_b, addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
-       let addr_vars = CP.remove_dups_svl addr_vars' in
-		 (*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
-		   (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
-		   (Cprinter.string_of_pure_formula xform')^"\n\n\n");flush stdout in	*)
-		 (*let xform' = TP.simplify  xform' in*)
-       let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
-	(*let _ = print_string ("\ncompute_view_x_formula: xform'" ^ (Cprinter.string_of_mix_formula xform') ^ "\n") in*)
-    (*let _  = print_string ("before memo simpl x pure: "^(Cprinter.string_of_memoised_list xform')^"\n") in
-      let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
-       let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
-	   let ctx =
-         CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
-       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
 
-	   (*let _ = print_string ("\ncompute_view_x_formula: xform" ^ (Cprinter.string_of_mix_formula xform) ^ "\n") in
-	   let _ = print_string ("\ncompute_view_x_formula: LHS (context) \n" ^ (Cprinter.string_of_context ctx) ^ "\n") in
-	   let _ = print_string ("\ncompute_view_x_formula: LHS \n" ^ (Cprinter.string_of_formula formula1) ^ "\n") in
-	   let _ = print_string ("\ncompute_view_x_formula: RHS \n" ^ (Cprinter.string_of_formula formula) ^ "\n") in*)
+	   if !do_slicing then
+		 let rec trans_formula_to_memo = function
+		   | CF.Or ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) ->
+			 let mpf1 = trans_formula_to_memo f1 in
+			 let mpf2 = trans_formula_to_memo f2 in
+			 MCP.mkOr_mems mpf1 mpf2
+		   | CF.Base ({ CF.formula_base_pure = p }) -> p
+		   | CF.Exists ({ CF.formula_exists_pure = p }) -> p
+		 in
 
-	   let (rs, _) =
-		 Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos
-       in
+		 let rec trans_exists_to_base f = match f with
+		   | CF.Or o ->
+			 let ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) = o in
+			 let nf1 = trans_exists_to_base f1 in
+			 let nf2 = trans_exists_to_base f2 in
+			 CF.Or { o with CF.formula_or_f1 = nf1; CF.formula_or_f2 = nf2 }
+		   | CF.Base _ -> f
+		   | CF.Exists ({ CF.formula_exists_qvars = qvars; CF.formula_exists_pure = p; CF.formula_exists_pos = pos }) ->
+			 let np = MCP.memo_pure_push_exists_lhs qvars p in
+			 let _ = print_string ("trans_exists_to_base: p: " ^ (Cprinter.string_of_mix_formula p) ^ "\n") in
+			 let _ = print_string ("trans_exists_to_base: np: " ^ (Cprinter.string_of_mix_formula np) ^ "\n") in
+			 CF.formula_of_mix_formula np pos
+		 in 
+
+		 let (sxform', sxform_b, saddr_vars', sms) = Solver.xpure_symbolic_slicing prog (C.formula_of_unstruc_view_f vdef) in
+		 let sxform = trans_exists_to_base sxform' in
+		 
+		 let addr_vars = CP.remove_dups_svl saddr_vars' in
+		 let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
+		 let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) sxform pos in
+		 let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
+		 
+		 let _ = if not(CF.isFailCtx rs)
+           then
+			 let pxform = trans_formula_to_memo sxform in
+			 (vdef.C.view_x_formula <- (pxform, sxform_b);
+              vdef.C.view_addr_vars <- addr_vars;
+              vdef.C.view_baga <- (match sms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
+              compute_view_x_formula prog vdef (n - 1))
+           else
+			 Err.report_error
+               {
+				 Err.error_loc = pos;
+				 Err.error_text = "view formula does not entail supplied invariant\n";} in ()
+	   else
+		 let (xform', xform_b, addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
+		 
+		 let addr_vars = CP.remove_dups_svl addr_vars' in
+		 let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+		 let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
+		 let ctx =
+		   CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
+		 let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
+  		 
+		 let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
+		 let _ = if not(CF.isFailCtx rs)
+           then
+			 (vdef.C.view_x_formula <- (xform, xform_b);
+              vdef.C.view_addr_vars <- addr_vars;
+              vdef.C.view_baga <- (match ms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
+              compute_view_x_formula prog vdef (n - 1))
+           else
+			 Err.report_error
+               {
+				 Err.error_loc = pos;
+				 Err.error_text = "view formula does not entail supplied invariant\n";} in ()
 	  (* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
       (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
-	   let _ = if not(CF.isFailCtx rs)
-         then
-           (vdef.C.view_x_formula <- (xform, xform_b);
-            vdef.C.view_addr_vars <- addr_vars;
-            vdef.C.view_baga <- (match ms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-            compute_view_x_formula prog vdef (n - 1))
-         else
-           Err.report_error
-             {
-               Err.error_loc = pos;
-               Err.error_text = "view formula does not entail supplied invariant\n";} in ()
+	   
     (* print_string ("\nAstsimp.ml: bef error") *)
       )
    else ();
@@ -1528,7 +1562,7 @@ and compute_base_case prog cf vars =
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 _ = "?" in
-  Gen.Debug.no_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Gen.Debug.ho_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
 
 and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   let mix2p = MCP.fold_mem_lst (CP.mkTrue no_pos) true true in

@@ -37,4 +37,8 @@ checkentail
 //& (x1 != x6)
 |- false.
 
-checkentail x=0 & ($ x!=y) |- y!=0. 
+checkentail x=0 & ($ x!=y) |- y!=0.
+
+checkentail x=0 & (x!=y) |- y!=0.
+
+checkentail x!=y |- y!=0. 

@@ -5561,7 +5561,8 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
 (* Forced Slicing                                  *)	
 (*=================================================*)
 	
-(* For assigning <IL> fields after doing simplify *)
+(* For assigning <IL> fields after doing simplify  
+   Used by TP.simplify to recover <IL> information *)
 let rec break_formula (f: formula) : b_formula list =
   match f with
 	| BForm (bf, _) -> [bf]
@@ -5571,7 +5572,7 @@ let rec break_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_formula f
 	| Exists (_, f, _, _) -> break_formula f
 
-let rec fv_with_slicing_label f =
+let rec fv_with_slicing_label f = (* OUT: (non-linking vars, linking vars) of formula *)
   match f with
 	| BForm (bf, _) -> bfv_with_slicing_label bf
 	| And (f1, f2, _) ->
@@ -5607,7 +5608,7 @@ and bfv_with_slicing_label bf =
 	(fun (nlv, lv) -> (pr_list !print_sv nlv) ^ (pr_list !print_sv lv))
 	bfv_with_slicing_label_x bf
 
-and bfv_with_slicing_label_x bf = (* OUT: (non-linking vars, linking vars) *)
+and bfv_with_slicing_label_x bf = (* OUT: (non-linking vars, linking vars) of b_formula *)
   let (_, sl) = bf in
   let v_bf = bfv bf in
     match sl with
