@@ -60,7 +60,7 @@ void th1_loop(cl x1, cl x2, cl y1, cl y2, cl i, bn b)
 requires x1::cl@[L]<v>*x2::cl@[L]<v>*y1::cl<_>*i::cl@[L]<a>*b::bn@[L]<1> & v=2*a -1 & a <= 30
   ensures x1::cl@[L]<v1>*x2::cl@[L]<v1>*b::bn@[L]<3>& v1=59; //2*q-1 & q>=30;
 {
-  if (i.val<30)
+  if (i.val<25)
   {                               // stage 1
     y1.val = x1.val + 2*x2.val+2;
     barrier b;                    // stage 1->2

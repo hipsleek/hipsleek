@@ -4486,3 +4486,13 @@ let rec strip_variance ls = match ls with
 		| ECase c -> 
 			(ECase {c with formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.formula_case_branches})::(strip_variance rest)
 		| _ -> spec::(strip_variance rest)
+    
+    
+let rec f_no_heap f = match f with
+  | Base f ->  not (is_complex_heap f.formula_base_heap)
+  | Exists f -> not (is_complex_heap f.formula_exists_heap)
+  | Or f -> (f_no_heap f.formula_or_f1) & (f_no_heap f.formula_or_f2)
+    
+ let rec ctx_no_heap c = match c with 
+  | Ctx e-> f_no_heap e.es_formula
+  | OCtx (c1,c2) -> (ctx_no_heap c1) & (ctx_no_heap c2)

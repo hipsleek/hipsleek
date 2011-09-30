@@ -2,9 +2,9 @@ data cl {int val;}
 
 barrier bn, 2,x1 x2 y1 y2 i,[(0,1,[
  requires x1::cl@[L]<A1>*x2::cl@[L]<B1>*y1::cl@[L]<C1>*y2::cl@[L]<D1>*i::cl@[L]<T1>*self::bn@[L]<0> 
-        ensures x1::cl@[L]<A1>*x2::cl@[L]<B1>*y1::cl<C1>*i::cl@[L]<T1>*self::bn@[L]<1> & T1 < 30;,
- requires x1::cl@[R]<A2>*x2::cl@[R]<B2>*y1::cl@[R]<C2>*y2::cl@[R]<D2>*i::cl@[R]<T2>*self::bn@[R]<0> 
-        ensures x1::cl@[R]<A2>*x2::cl@[R]<B2>*y2::cl<D2>*i::cl@[R]<T2>*self::bn@[R]<1> & T2 < 30;]),	
+        ensures x1::cl@[L]<A1>*x2::cl@[L]<B1>*y1::cl<C1>*i::cl@[L]<T1>*self::bn@[L]<1>;,
+ requires x1::cl@[R]<A2>*x2::cl@[R]<B2>*y1::cl@[R]<C2>*y2::cl@[R]<D2>*i::cl@[R]<T2>*self::bn@[R]<0>
+        ensures x1::cl@[R]<A2>*x2::cl@[R]<B2>*y2::cl<D2>*i::cl@[R]<T2>*self::bn@[R]<1>;]),	
  (1,2,[
  requires x1::cl@[L]<A>*x2::cl@[L]<A>*y1::cl<C>*i::cl@[L]<T>*self::bn@[L]<1>&T<30 & A=2*T-1 & C = 3*A+2
     ensures x1::cl<A>*y1::cl@[L]<C>*y2::cl@[L]<D>*i::cl<T>*self::bn@[L]<2>&T<30 & A=2*T-1 & D=2*A & C = 3*A+2;,
