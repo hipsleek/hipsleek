@@ -434,7 +434,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   let pr = string_of_meta_formula in
-  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
+  Gen.Debug.ho_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -455,10 +455,18 @@ let check_coercion coer lhs rhs =
     let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
     process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs) coer.C.coercion_name
 
+(*
+run_entail_check:
+ true & self_V1=p & n=0 & n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}
+ or EXISTS(p_93,Anon_94,flted_6_95,r_96: self_V1::node<Anon_94,r_96>@M * 
+    NN r_96::lseg<flted_6_95,p_93>@M[Orig] & flted_6_95+1=n & p_93=p & n=b+
+    a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}) |-  EBase EXISTS(p_70,a,r,b: NN self_V1::lseg<a,r>@M[Orig][LHSCase] * 
+       NN r::lseg<b,p_70>@M[Orig][LHSCase] & p_70=p & {FLOW,(13,28)=__flow})
+*)
 let check_coercion coer lhs rhs =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
+  Gen.Debug.ho_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
 let check_left_coercion coer =
   let ent_lhs =coer.C.coercion_head in

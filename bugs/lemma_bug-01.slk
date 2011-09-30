@@ -10,7 +10,7 @@ pred lseg<n, p> == self = p & n = 0
 
 //checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
 
-lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+ lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 // Valid
 
 /*
@@ -22,23 +22,16 @@ run_entail_check:
        b_1202=b & p_1203=p & {FLOW,(27,27)=__norm})
 */
 
-lemma "F2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+//lemma "F2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
 // Fail?
 
-//lemma "F3" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
-// Fail
 
-
-lemma "F2a" self::lseg<n, p>  <- self::lseg<a, r> * r::lseg<b, p> & n=a+b & a>=0 & b>=0.
+//lemma "F2a" self::lseg<n, p>  <- self::lseg<a, r> * r::lseg<b, p> & n=a+b & a>=0 & b>=0.
 // Valid
 
 
-//lemma "F5" self::lseg<n, p> <- (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
-
-//lemma "V6" self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
-
-
+/*
 checkentail
   self::lseg<n,p> & n=b+a & 0<=a & 0<=b 
   |- (exists r: self::lseg<a,r> * r::lseg<b,p>) .
-
+*/
