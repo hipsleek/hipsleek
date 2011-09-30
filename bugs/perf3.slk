@@ -1,0 +1,19 @@
+data node { int val ; node next }.
+ 
+pred lseg<p> == self = p 
+or self::node<_,r> * r::lseg<p> & self!=p inv true.
+
+// Goes through with added equalities 
+
+checkentail x::node<_,r> * r::lseg<p> |- x::lseg<p>.
+//Entail(1)=Fail.(may) cause:213  x=2 & (r=p | r!=p & r!=null) |-  x=p (may-bug).
+
+
+checkentail x::node<_,r> * r::lseg<p> & x!=p |- x::lseg<p>.
+//Entail(2)=Valid.
+
+
+checkentail x::node<_,r> * r::lseg<p> |- x!=r.
+
+
+checkentail x::node<_,r> * r::lseg<p> & r!=p |- x!=r.

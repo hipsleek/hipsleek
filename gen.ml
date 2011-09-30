@@ -253,8 +253,9 @@ struct
   let disjoint_eq eq l1 l2 =
     List.for_all (fun x -> not (mem_eq eq x l2)) l1
 
-  let overlap_eq eq l1 l2 = 
-    List.exists (fun x -> (mem_eq eq x l2)) l1
+  let overlap_eq eq l1 l2 =
+	if (l2 == []) then false
+	else List.exists (fun x -> (mem_eq eq x l2)) l1
 
   let rec find_dups_eq eq n = 
     match n with
@@ -1004,7 +1005,8 @@ sig
   type tlist = t list
   val eq : ef
   val overlap : t -> t -> bool
-  val intersect : tlist -> tlist -> tlist (* /\ *)
+  val sat : t -> bool
+   val intersect : tlist -> tlist -> tlist (* /\ *)
     (* under approx or-ing *)
   val overlap_eq : ef -> t -> t -> bool
   val intersect_eq : ef -> tlist -> tlist -> tlist (* /\ *)
@@ -1059,7 +1061,8 @@ struct
   let rec is_dupl_baga_eq eq (xs:baga) : bool = 
     match xs with
       | [] -> false
-      | x::xs1 -> match xs1 with
+      | x::xs1 -> if not(Elt.sat x) then true
+          else match xs1 with
           | [] -> false
           | _ -> if (List.exists (overlap_eq eq x) xs1) then true else is_dupl_baga_eq eq xs1
 

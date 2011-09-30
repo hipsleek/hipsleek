@@ -134,7 +134,9 @@ and isabelle_of_formula_exp_list l = match l with
 
 
 (* pretty printing for boolean vars *)
-and isabelle_of_b_formula b = match b with
+and isabelle_of_b_formula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " < " ^ (isabelle_of_exp a2) ^ ")"
@@ -401,7 +403,7 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
 				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
-	let answ = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
+	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None)) !Globals.sat_timeout sat_no) in
     if !log_all_flag == true then
 	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
     (not answ)

@@ -1,0 +1,18 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+         or self::node<next = r> * r::ls<p>
+         inv true.
+
+checkentail self::ls<t> * t::node<_, null> |- self!=null.
+/*
+--eps failed since only disjuctive inv of
+  xform: (([p=self | self!=null])) not used:
+Entail(1)=Fail.(may) cause:213  true |-  self!=null (may-bug).
+
+Are these useful:
+  (self=null & n=0 or self!=null & n>0)
+
+Solution : pick disj xform if it
+ has variable equality in its disjunct.
+*/

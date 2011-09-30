@@ -1845,6 +1845,7 @@ expression_statement
 statement_expression
   : invocation_expression { $1 }
   | object_creation_expression { $1 }
+	/* | array_allocation_expression { $1 } */
   | assignment_expression { $1 }
   | post_increment_expression { $1 }
   | post_decrement_expression { $1 }
@@ -1990,10 +1991,30 @@ object_or_delegate_creation_expression
 		  exp_new_arguments = $4;
 		  exp_new_pos = get_pos 1 }
   }
+	| NEW INT OSQUARE argument_list CSQUARE {
+		(*let _ = print_string "Array creation!\n" in*)
+		ArrayAlloc { exp_aalloc_etype_name = "int";
+	     exp_aalloc_dimensions = $4;
+			 exp_aalloc_pos = get_pos 1; }
+	}
 ;
+
+/**
+ An Hoa : Memory allocation.
+ */
+/*array_allocation_expression
+	/* Note that the dimension is NOT optional! */
+/*  : NEW IDENTIFIER OSQUARE argument_list CSQUARE {
+		let _ = print_string "Array creation!\n" in
+		ArrayAlloc { exp_aalloc_etype_name = $2;
+	     exp_aalloc_dimensions = $4;
+			 exp_aalloc_pos = get_pos 1; }
+	}
+;*/
 
 new_expression
   : object_or_delegate_creation_expression { $1 }
+	/* | array_allocation_expression { $1 } */
 ;
 
 opt_argument_list
@@ -2297,7 +2318,7 @@ primary_expression_no_parenthesis
   | member_name { $1 }
   | member_access { $1 }
   | invocation_expression { $1 }
-  | new_expression { $1}
+  | new_expression { $1 }
 	| arrayaccess_expression { $1 } /* An Hoa */
 ;
 

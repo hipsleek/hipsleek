@@ -1,0 +1,31 @@
+data pair {
+	int x;
+	int y;
+}.
+
+data quadruple {
+	inline pair p1;
+	pair p2;
+}.
+
+data octuple {
+	inline quadruple q1;
+	inline quadruple q2;
+}.
+
+/* checkentail v.quadruple.p1.x::<a> |- true.
+
+checkentail v.octuple.q2.p1.x::<a> |- true.
+
+checkentail v.octuple.q2.p1.y::<a> |- true.
+
+checkentail v.octuple.q2.p1.y::<5> |- true. */
+
+// Two v must be merged
+checkentail v.octuple.q2.p1.x::<5> * a::pair<_,_> * v.octuple.q2.p1.y::<4>|- true.
+
+// The heap above must be false
+checkentail v.octuple.q2.p1.x::<5> * v.octuple.q2.p1.x::<k>|- true.
+
+// The following fails in translation
+checkentail v.octuple.q2.p1.x::<5> * v::octuple<#,#,#,#,k,#>|- true.

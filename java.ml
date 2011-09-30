@@ -164,7 +164,8 @@ return true;
 
 and build_constructor (ddef : data_decl) : unit =
   let n = List.length ddef.data_fields in
-  let typs, fnames = List.split (fst (List.split ddef.data_fields)) in
+  let typs = List.map get_field_typ ddef.data_fields in
+  let fnames = List.map get_field_name ddef.data_fields in
   let pnames = fresh_names n in
   let formals = List.map2 (fun t -> fun name -> 
 							 (string_of_typ t) ^ " " ^ name) typs pnames in
@@ -185,7 +186,7 @@ and build_constructor (ddef : data_decl) : unit =
 	
 
 
-and convert_field ((t, v), l) =
+and convert_field ((t, v), l, _) =
   Buffer.add_string java_code (string_of_typ t);
   Buffer.add_string java_code (" " ^ v ^ ";\n")
 
@@ -288,6 +289,9 @@ and java_of_exp = function
 			   exp_call_recv_method = id;
 			   exp_call_recv_arguments = el}) -> 
 	  (java_of_exp recv) ^ "." ^ id ^ "(" ^ (String.concat ", " (List.map java_of_exp el)) ^ ")"
+	| ArrayAlloc ({exp_aalloc_etype_name = elm_type;
+		  exp_aalloc_dimensions = dims}) -> 
+	  "new " ^ elm_type ^ "[" ^ (String.concat ", " (List.map java_of_exp dims)) ^ "]"
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el}) -> 
 	  "new " ^ id ^ "(" ^ (String.concat ", " (List.map java_of_exp el)) ^ ")" 
