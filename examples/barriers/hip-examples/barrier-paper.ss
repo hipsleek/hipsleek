@@ -9,7 +9,7 @@ barrier bn, 2,x1 x2 y1 y2 i,[(0,1,[
  requires x1::cl@[L]<A>*x2::cl@[L]<B>*y1::cl<C>*i::cl@[L]<T>*self::bn@[L]<1>&T<30
     ensures x1::cl<A>*y1::cl@[L]<C>*y2::cl@[L]<D>*i::cl<T>*self::bn@[L]<2>&T<30 ;,
  requires x1::cl@[R]<A>*x2::cl@[R]<B>*y2::cl<D>*i::cl@[R]<T>*self::bn@[R]<1>&T<30
-    ensures x2::cl<A>*y1::cl@[R]<C>*y2::cl@[R]<D>*         self::bn@[R]<2>;]),
+    ensures x2::cl<B>*y1::cl@[R]<C>*y2::cl@[R]<D>*         self::bn@[R]<2>;]),
     
  (2,1,[
  requires x2::cl<B>*y1::cl@[R]<C>*y2::cl@[R]<D>*         self::bn@[R]<2>
@@ -19,7 +19,7 @@ barrier bn, 2,x1 x2 y1 y2 i,[(0,1,[
  
  (1,3,[
  requires x1::cl@[L]<A>*x2::cl@[L]<B>*i::cl@[L]<T>*self::bn@[L]<1>& T>=30 
-    ensures x1::cl@[L]<A>*x2::cl@[L]<B>*i::cl<T>*self::bn@[L]<3>;, 
+    ensures x1::cl@[L]<A>*x2::cl@[L]<B>*i::cl<T>*self::bn@[L]<3>& T>=30;, 
  requires x1::cl@[R]<A>*x2::cl@[R]<B>*i::cl@[R]<T>*self::bn@[R]<1>& T>=30 
     ensures x1::cl@[R]<A>*x2::cl@[R]<B>         *self::bn@[R]<3>;])];
 

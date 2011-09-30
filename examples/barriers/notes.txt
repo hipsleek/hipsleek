@@ -66,24 +66,22 @@ pre:
 Collection, straight forward, in parralle with a relaxed forward verification:
     -> at each entailment, if one of the shared is missing then add it and remember it being added
     -> for each method compute if it did any barrier calls 
-    -> construct a subset of the shared variables, with a mark of wheter : full, partial known or partial unknown permission, and pure constraints on the
-        arguments of the vars
-       S subset {shared_vars}x {F| P | P+concrete share} x pure_formula 
+    -> construct a subset of the shared variables, with a mark of wheter : full, partial known or partial unknown permission
+       S subset {shared_vars}x {F| P | P+concrete share}
 
+    -> need some backward propagation for the pure constraints? maybe it can be done in a separate step....
        
-       
-         if (x,P,f1) in S then (S\{(x,P,f1)})\/{(x,P,f/\f1)}
-         else if (x,F,f1) in S then (S\{(x,F,f1)})\/{(x,F,f/\f1)}
-         else S \/ {(x,P,f)}
-      -----------------------------------
-                add(S,(x,P,f))
+       add(S,(x,P)) = 
+         if (x,F) in S then S
+         else if (x,P c) in S then S
+         else S \/ {(x,P c)}
         
+       add(S,(x,P c1)) = 
+          if (x,F) in S then S
+          else if (x,P c2) in S then S \/{(x,P c1+c2)}
+          else S \/ {(x,P c1)}
         
-        if (x,P,f1) in S then (S\{(x,P,f1)})\/{(x,F,f/\f1)}
-                      else S \/ {(x,F,)}
-      -----------------------------------
-                add(S,(x,F,f))
-        
+       add(S,(x,F)) = S\/{(x,F)}
     
             
             S' = add(S,(x,P))
@@ -121,10 +119,14 @@ Collection, straight forward, in parralle with a relaxed forward verification:
           Phi = pre(f)
           forall i:
               if Phi |- vi::type_vi <....>  then add (S,{(x,F)})
-              else add (S,{(x,P)})
-              collect from the precondition the pure constraints on the vi arguments
+              else if Phi |- vi::type_vi @c <....> then add (S,{(x,P c)})
+              else S
          if f did a barrier call, stop 
        ----------------------- [Call]
           S|>  f(v1....v2) S'
          
+         
        
+        record the context of the verification for this barrier transition
+       ---------------------------------------------------------------------
+                          S|> barrier b 
