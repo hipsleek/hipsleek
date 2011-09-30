@@ -1,11 +1,14 @@
 (* global types and utility functions *)
 
+
+
 type ident = string
 type constant_flow = ident
 
 type nflow = (int*int)(*numeric representation of flow*)
 
-
+type bformula_label = int
+	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
 and control_path_id_strict = formula_label
@@ -194,7 +197,7 @@ let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
 (* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
 let false_flow_int = (0,0)
-(*let stub_flow_int = (-3,-3)*)
+let stub_flow_int = (-3,-3)
 
 let res = "res"
 
@@ -218,6 +221,8 @@ let pragma_list = ref ([] : string list)
 let instantiation_variants = ref 0
 
 let omega_simpl = ref true
+
+let no_simpl = ref false
 
 let source_files = ref ([] : string list)
 
@@ -309,6 +314,10 @@ let pass_global_by_value = ref false
 
 let allow_pred_spec = ref false
 
+let disable_failure_explaining = ref false
+
+let simplify_error = ref false
+
 let prune_cnt_limit = ref 2
 
 let suppress_warning_msg = ref false
@@ -342,7 +351,12 @@ let enable_incremental_proving = ref false
   let no_LHS_prop_drop = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
-  
+
+(* Options for slicing *)
+let do_slicing = ref false
+let opt_imply = ref 0
+let infer_slicing = ref false
+
 let add_count (t: int ref) = 
 	t := !t+1
 

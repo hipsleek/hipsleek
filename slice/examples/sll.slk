@@ -1,0 +1,24 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred sll<n, mi, ma> ==
+	self::node<v, q> & q = null & v = mi & mi = ma & n = 1
+	or self::node<v, q> * q::sll<n1, mi1, ma1>
+	& v = mi
+	& n = n1 + 1
+	& v <= mi1 /*mi <= mi1*/
+	& ma1 = ma
+	inv mi <= ma & n >= 1.
+
+checkentail x::sll<n, mi, ma> |- x::node<v, p> * p::ll<n-1>.
+print residue.
+
+lemma self::sll<n, mi, ma> -> self::ll<n>.
+
+checkentail x::sll<10, _, _> |- x::ll<n> & n >= 10.
+
+
+

@@ -1,0 +1,28 @@
+data node {
+	int val; 
+	node prev;	
+	node next;	
+}.
+
+
+pred dll_r5<p,t,n> == 
+  self=n & p=t
+  or self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
+  inv true.
+
+lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n -> 
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+/* OK to fail
+checkentail self::dll_r5<p,t,n>  |- 
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+// valid
+checkentail self::dll_r5<p,t,n> & self!=n |- 
+      self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+*/
+
+checkentail self::dll_r5<p,t,n> & self!=n |- 
+      t::node<_,q,n>.
+print residue.

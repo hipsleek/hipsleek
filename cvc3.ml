@@ -72,7 +72,9 @@ and cvc3_of_exp a = match a with
 	| CP.ArrayAt _ -> (* An Hoa *)
         failwith ("Arrays are not supported in cvc3")
 
-and cvc3_of_b_formula b = match b with
+and cvc3_of_b_formula b =
+  let (pf,_) = b in
+  match pf with
   (* | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)" *)
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "( 0 > 0)"
       (* | CP.BVar (sv, _) -> cvc3_of_spec_var sv *)
@@ -129,7 +131,7 @@ and cvc3_of_formula f = match f with
   | CP.Not (p,_, _) ->
 	    begin
 		  match p with
-		    | CP.BForm (CP.BVar (bv, _),_) -> (cvc3_of_spec_var bv) ^ " <= 0"
+		    | CP.BForm ((CP.BVar (bv, _), _), _) -> (cvc3_of_spec_var bv) ^ " <= 0"
 		    | _ -> "(NOT (" ^ (cvc3_of_formula p) ^ "))"
 	    end
   | CP.Forall (sv, p,_, _) ->

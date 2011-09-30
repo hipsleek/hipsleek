@@ -1,0 +1,64 @@
+data node { int val ; node next }.
+
+
+pred ls<p> == self = p 
+         or self::node<next = r> * r::ls<p> & self!=p
+         inv true.
+
+lemma self::ls<p>  -> self::ls<r> * r::ls<p>.
+
+// self::ls<p> * p::node<a,b>   <- self::ls<r> * r::ls<p> * p::node<a,b>.
+
+lemma self::ls<p>  <- self::ls<r> * r::ls<p> * p::node<_,_>@I.
+
+//checkentail x::ls<p> |- x::ls<r1> * r1::ls<p>.
+//print residue.
+// valid
+
+//checkentail x::ls<p> |- x::ls<r1>.
+//print residue.
+
+checkentail x::ls<r>*r::ls<p> |- x::ls<p>.
+print residue.
+// fails
+
+
+checkentail x::ls<r>*r::ls<p>*p::node<a,b>@I |- x::ls<p>.
+print residue.
+//valid
+
+checkentail x::ls<r>*r::ls<p>*p::node<a,b> 
+ |- x::ls<p>.
+print residue.
+//valid
+
+checkentail x::ls<r>*r::ls<p>*p::node<a,b>  
+ |- x::ls<p> *p::node<a,b>.
+print residue.
+// BUG - should be valid
+
+checkentail x::ls<p>*p::node<a,b>@I & x = r 
+or x::node<_,q> * q::ls<r> * r::ls<p>*p::node<a,b>@I & x!=r
+ |- x::ls<p>.
+print residue.
+
+checkentail x::ls<p>*p::node<a,b> & x = r 
+or x::node<_,q> * q::ls<r> * r::ls<p>*p::node<a,b> & x!=r
+ |- x::ls<p>*p::node<c,d>.
+print residue.
+
+
+checkentail x::node<_,q> * q::ls<r> * r::ls<p>*p::node<a,b> & x!=r 
+ |- x::ls<s> * s::node<a,b> & s=p.
+// completeness bug here! should succeed.
+print residue.
+
+checkentail x::ls<r>*r::ls<p> * p::node<a,b> 
+   |- x::ls<p>  .
+print residue.
+
+checkentail x::ls<r>*r::ls<p> * p::node<a,b> 
+   |- x::ls<p> * p::node<a,b> .
+print residue.
+
+

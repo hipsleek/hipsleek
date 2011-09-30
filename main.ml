@@ -107,9 +107,15 @@ let process_source_full source =
     let iprims = Iast.append_iprims_list_head iprims_list in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
+
+	(*let _ = print_string ("\nmain: intermediate_prog (1): " ^ (Iprinter.string_of_program intermediate_prog) ^ "\n") in*)
+	
     (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
 	(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
+
+	(*let _ = print_string ("\nmain: intermediate_prog (2): " ^ (Iprinter.string_of_program intermediate_prog) ^ "\n") in*)
+	
 	(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
     (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
@@ -221,7 +227,7 @@ let main1 () =
     let _ = Gen.Profiling.push_time "Overall" in
     let _ = List.map process_source_full !Globals.source_files in
     let _ = Gen.Profiling.pop_time "Overall" in
-      (* Tpdispatcher.print_stats (); *)
+     (*  Tpdispatcher.print_stats (); *)
       ()
 
 (* let main1 () = *)

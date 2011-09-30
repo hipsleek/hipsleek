@@ -139,7 +139,7 @@ and split_params_mode (view_vars : CP.spec_var list) (modes : mode list) : (CP.s
    field_vars : spec vars to be converted to fields
    pbvars : partially bound output parameters
 *)
-and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos : (typed_ident * loc) list =
+and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
   (* generator for in and fully bound out parameters *)
   let rec helper vvars = match vvars with
 	| var :: rest1 -> begin
@@ -151,7 +151,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 		  | p -> p in
 		let t = ityp_of_ctyp (CP.type_of_spec_var var) in
 		(* An Hoa END *)
-		let fld = ((t, CP.name_of_spec_var var), pos) in
+		let fld = ((t, CP.name_of_spec_var var), pos, false) in (* An Hoa : Add [false] for inline record. TODO revise *)
 		fld :: rest_result
 	end
 	| [] -> [] in
@@ -159,7 +159,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
   let rec helper2 (CP.SpecVar (t, v, p)) =
 	let cls_name = aug_class_name t in
 	let atype = Named cls_name in
-	((atype, v), pos) in
+	((atype, v), pos, false)  (* An Hoa : Add [false] for inline record. TODO revise *) in 
   let pb_fields = List.map helper2 pbvars in
   let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
@@ -987,7 +987,7 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
 	  let p2' = gen_bindings_pure p2 unbound_vars vmap in
 	  let p = CP.mkAnd p1' p2' pos in
 		p
-  | CP.BForm (CP.Eq (e1, e2, pos),_) -> begin
+  | CP.BForm ((CP.Eq (e1, e2, pos), il), _) -> begin
 	  if is_in_svars e1 unbound_vars then
 		let tmp = CP.name_of_spec_var (CP.to_var e1) in
 		  (* if tmp is already bound, this formula will be turned into a test. *)
@@ -1012,23 +1012,23 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
 				CP.mkTrue pos
 			  end
 	  else if is_in_svars e2 unbound_vars then
-		gen_bindings_pure (CP.BForm (CP.Eq (e2, e1, pos), None)) unbound_vars vmap
+		gen_bindings_pure (CP.BForm ((CP.Eq (e2, e1, pos), il), None)) unbound_vars vmap
 	  else
 		pure
 	end
-  | CP.BForm (CP.EqMax (e1, e2,e3, pos),_) -> begin
+  | CP.BForm ((CP.EqMax (e1, e2,e3, pos), il), _) -> begin
 	  if is_in_svars e1 unbound_vars then
 		let emax = CP.Max (e2, e3, pos) in
 		let tmp = CP.Eq (e1, emax, pos) in
-		  gen_bindings_pure (CP.BForm (tmp,None)) unbound_vars vmap
+		  gen_bindings_pure (CP.BForm ((tmp, il), None)) unbound_vars vmap
 	  else
 		pure
 	end
-  | CP.BForm (CP.EqMin (e1, e2,e3, pos),_) -> begin
+  | CP.BForm ((CP.EqMin (e1, e2,e3, pos), il), _) -> begin
 	  if is_in_svars e1 unbound_vars then
 		let emin = CP.Min (e2, e3, pos) in
 		let tmp = CP.Eq (e1, emin, pos) in
-		  gen_bindings_pure (CP.BForm (tmp,None)) unbound_vars vmap
+		  gen_bindings_pure (CP.BForm ((tmp, il), None)) unbound_vars vmap
 	  else
 		pure
 	end
@@ -1055,7 +1055,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
       let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in
       let pname = CP.name_of_spec_var p in
       let vnames = List.map CP.name_of_spec_var (List.tl (List.tl vs)) in
-      let field_names = List.map snd ddef.C.data_fields in
+      let field_names = List.map C.get_field_name ddef.C.data_fields in
       let helper v f = 
 	(* 
 	   v : exists. var, f: corresponding field, 
@@ -1226,7 +1226,9 @@ and has_partially_bound_field (e0 : exp) (pbound_vars : CP.spec_var list) = matc
 *)
   | _ -> false
 
-and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec_var list) : exp = match bf0 with
+and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec_var list) : exp =
+  let (pf,il) = bf0 in
+  match pf with
   | CP.Eq (e1, e2, pos) -> begin
 	  let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	  let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
@@ -1789,7 +1791,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let combined_exp, disj_procs, pbvars = 
 	gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
 	(* generate fields *)
-  let fields = ((Named vdef.C.view_data_name, self), pos) 
+  let fields = ((Named vdef.C.view_data_name, self), pos, false) (* An Hoa : add [false] for inline record. TODO revise *) 
 	:: (gen_fields vdef.C.view_vars pbvars pos) in
 	(* parameters for traverse *)
   let check_proc = { proc_name = "traverse";
@@ -1864,15 +1866,15 @@ and gen_bound_params (output_vars : CP.spec_var list) (p0 : CP.formula) : CP.spe
 	  let b1 = gen_bound_params output_vars p1 in
 	  let b2 = gen_bound_params output_vars p2 in
 		b1 @ b2
-  | CP.BForm (CP.Eq (e1, e2, pos),_) -> 
+  | CP.BForm ((CP.Eq (e1, e2, pos), _), _) -> 
 	  if is_in_svars e1 output_vars && (not (is_in_svars e2 output_vars)) then
 		[CP.to_var e1]
 	  else if is_in_svars e2 output_vars && (not (is_in_svars e1 output_vars))  then
 		[CP.to_var e2]
 	  else
 		[]
-  | CP.BForm (CP.EqMax (e1, _, _, _),_)
-  | CP.BForm (CP.EqMin (e1, _, _, _),_) ->
+  | CP.BForm ((CP.EqMax (e1, _, _, _), _), _)
+  | CP.BForm ((CP.EqMin (e1, _, _, _), _), _) ->
 	  if is_in_svars e1 output_vars then
 		[CP.to_var e1]
 	  else
@@ -1909,7 +1911,8 @@ and gen_partially_bound_types (pbvars : CP.spec_var list) pos : data_decl list =
 and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_decl list = match t with
   | Named c ->
 	  let cls_aug = c ^ "Aug" in
-	  let fields = [((Bool, "bound"), pos); ((Named (string_of_typ t), "val"), pos)] in
+		(* An Hoa : Add [false] for inline record. TODO revise *)
+	  let fields = [((Bool, "bound"), pos, false); ((Named (string_of_typ t), "val"), pos, false)] in
 	  let ddef = { data_name = cls_aug;
 				   data_fields = fields;
 				   data_parent_name = "Object";

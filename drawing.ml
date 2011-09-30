@@ -144,7 +144,7 @@ and gen_edges prog n h0 p nodes buffer =
 		   h_formula_data_arguments = args}) -> begin
 	  let tmp = List.tl (List.tl args) in
 	  let ddef = Cast.look_up_data_def no_pos prog.Cast.prog_data_decls c in
-	  let field_names = List.map snd ddef.Cast.data_fields in
+	  let field_names = List.map Cast.get_field_name ddef.Cast.data_fields in
 	    ignore (List.map2 (fun a -> fun lbl -> make_edge p a lbl) tmp field_names)
 	end
       | ViewNode ({h_formula_view_node = p;

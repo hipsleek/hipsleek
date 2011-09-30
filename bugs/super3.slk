@@ -1,0 +1,25 @@
+// A binary tree node
+data node {
+	node left;
+	node right;
+}.
+
+// A tree path to a node h
+pred tp<h> == self = h
+	or self::node<l,_> * l::tp<h> & self != h
+	or self::node<_,r> * r::tp<h> & self != h
+	inv true.
+
+checkentail a::tp<b> * a::tp<c> * a::tp<d> & a != b & a != c 
+ |- false.
+
+checkentail a::tp<b> * a::tp<c> * a::tp<d> & a != b  
+ |- a=c & a=d.
+
+checkentail a::tp<b> * a::tp<c> * b::tp<a> |- b::tp<c>.
+
+checkentail a::tp<b> * b::node<c,d> * c::node<e,f> * d::tp<k> 
+			* f::tp<u> * d::tp<h> & k != u & h != k |- c != d.
+
+checkentail x::node<l,r> * l::tp<a> * r::tp<b> & x != b & l != r |- x::tp<a> * x::tp<b>.
+

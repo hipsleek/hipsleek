@@ -62,7 +62,7 @@ int mod(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
-
+/*
 float add___(float a, float b) 
   requires true 
   ensures res = a + b;
@@ -83,7 +83,7 @@ float div___(float a, float b)
  }
 // requires b!=0.0
 // ensures ensures res = a / b;
-
+*/
 bool eq___(int a, int b) 
   case {
     a = b -> ensures res;

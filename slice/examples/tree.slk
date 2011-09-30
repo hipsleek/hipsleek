@@ -1,0 +1,13 @@
+data node { int val; node left; node right }.
+
+pred tree<h, n> ==
+	self = null & h = 0 & n = 0
+	or self::node<v, p, q> * p::tree<h1, n1> * q::tree<h2, n2>
+	& h = 1 + max(h1, h2)
+	& n = 1 + n1 + n2
+	inv h >= 0 & n >= 0 & n >= h.
+
+checkentail x::tree<h, n> & x != null |- x::node<_, l, r> * l::tree<h1, n1> * r::tree<h2, n2> & n1 + n2 >= h1 + h2 & n1 >= 0.
+print residue.
+
+

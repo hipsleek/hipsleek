@@ -1,0 +1,223 @@
+
+==================
+Linking Expression
+==================
+avl<h, b > ==
+	   self = null & h = 0 & b = 0 
+             or self::node<v, p, q> * p::avl<h1, _> * q::avl<h2, _>
+	   & h = 1 + max(h1, h2) 
+       & $[b,h1-h2] (b=h1-h2 & -1<=b<=1)  // h1-h2 is linking expression 
+ inv h >= 0 & -1 <= b <= 1 
+
+This is an example of a linking expression h1-h2
+which has already been captured by the b value. Hence,
+if h1-h2 is present in both LHS and RHS, it is sufficient
+to pick constraint involving b for proving the h1-h2 spotted
+in the RHS.
+
+Proving Invariance
+------------------
+
+ h=0 |- h>=0
+ b=0 |- -1<=b<=1
+
+h1>=0 & h2>=0 & h = 1 + max(h1, h2)  |- h>=0
+$[t] (t=h1-h2 & -1 <= t <= 1) & b = t  |- -1 <= b <= 1
+
+Entail with Unfolding
+----------------------
+
+
+  x::avl<h,0> & h>0 
+    |- x::node<v,lt,rt>*lt::avl<h1,b1>*rt::avl<h2,b2> & h1=h2
+
+  x::node<v, p, q> * p::avl<h1, _> * q::avl<h2, _>
+	   & h = 1 + max(h1, h2) 
+	   & 0 = t
+       & $[t] (t=$h1-h2$ & -1<=t<=1)  // t is linking expression -> var
+    |- x::node<v,lt,rt>*lt::avl<h1,b1>*rt::avl<h2,b2> & h1-h2=0
+
+  h = 1 + max(h1, h2) 
+	& 0 = t
+    & $[t] (t=$h1-h2$ & -1<=t<=1)  // t is linking expression -> var
+    |-  h1-h2=0
+
+  0 = t
+    & $[t] (t=$h1-h2$ & -1<=t<=1)  // t is linking expression -> var
+    |-  h1-h2=0
+
+Entail with Folding
+-------------------
+
+  x::node<v,null,null>
+    |- x::node<v,lt,rt>*lt::avl<h1,b1>*rt::avl<h2,b2> & h1=h2
+
+  h1=0 & b1=0 & h2=0 & b2=0
+    |- h1=h2
+
+  h1=0 & h2=0 
+    |- h1=h2
+
+================
+Linking Variable
+================
+
+
+pll<s, B> ==
+	   self = null & s=0 & B = {}
+  or self::node<v, p> * p::pll<s1, B1> 
+	   & $[v] (v > 0)
+	   & s = v + s1
+	   & B = union({v}, B1) 
+	inv s >= 0 & forall (x : (x notin B | x > 0)) 
+
+v is a linking variable for ctr in the LHS. When proving
+properties involving s, we may use ctrs from s and v.
+When proving properties involving B, we may use
+ctrs from B and v. When proving ctrs involving v, we
+just need ctr from v.
+
+Proving Invariant
+=================
+ s=0 |- s>=0
+ B={} |-  forall (x : (x notin B | x >= 0)) 
+
+ s1>=0  & s=v+s1 & $[v] (v > 0) |- s>=0
+
+ B = union({v}, B1) &
+   forall (x : (x notin B1 | x > 0)) 
+   & $[v] (v > 0)
+   |-  {B} forall (x : (x notin B | x > 0)) 
+
+Unfolding
+---------
+x=pll<s,B> & x!=null |- x::node<v,_> & v>0
+
+x::node<v, p> * p::pll<s1, B1> 
+	   & $[v] (v > 0)
+	   & s = v + s1
+	   & B = union({v}, B1) & x!=null
+  |- x::node<v,_> & v>0
+
+  p::pll<s1, B1> 
+	   & $[v] (v > 0)
+	   & s = v + s1
+	   & B = union({v}, B1) & x!=null
+  |- v>0
+
+  $[v] (v > 0)
+  |- v>0
+
+
+Folding
+-------
+x::node<v,null> & v=10 |- x::pll<s,B>
+
+x::node<v,null> & v=10 |- 
+	   x = null & s=0 & B = {}
+  or x::node<v, p> * p::pll<s1, B1> 
+	   & $[v] (v >= 0)
+	   & s = v + s1 
+	   & B = union({v}, B1) 
+
+x::node<v,null> & v=10 |- 
+   x::node<v, p> * p::pll<s1, B1> 
+	   & $[v] (v >= 0)
+	   & s = v + s1 
+	   & B = union({v}, B1) 
+
+ v=10 & s1=0 & B1={}  |- 
+	   v >= 0
+	   & s = v + s1 
+	   & B = union({v}, B1) 
+
+v=10 & s1=0 & B1={}  |- v>=0
+  v=10 |- v>=0
+
+v=10 & s1=0 & B1={} |- s = v + s1 
+v=10 & s1=0   |- s = v + s1 
+
+v=10 & s1=0 & B1={}  |- B = union({v}, B1)
+v=10 & B1={}  |- B = union({v}, B1)
+
+==================
+Linking constraint
+==================
+tree<h, n > ==
+	   self = null & h = 0 & n = 0 
+    or self::node<v, p, q> * p::tree<h1, n1> * q::tree<h2, n2>
+	   & h = 1 + max(h1, h2) 
+	   & n = 1+n1+n2
+ inv h >= 0 & n>=0 & $[] n>=h 
+
+Proving Invariant
+-----------------
+
+ h=0 |- h>=0
+ n=0 |- n>=0
+ h=0 & n=0 |- n>=h
+
+ h1>=0 & h2>=0 & h = 1 + max(h1, h2) |- h>=0
+
+ n1>=0 & n2>=0 & n=1+n1+n2 |- n>=0
+
+ $[](n1>=h1) & $[](n2>=h2) 
+  & n=1+n1+n2 & h = 1 + max(h1, h2)
+  & n1>=0 & n2>=0 & h1>=0 & h2>=0
+   |- n>=h
+
+Unfolding
+---------
+  x::tree<h,n> & x!=null
+   |- x::node<_,lt,rt>*lt::tree<h1,n1>*rt::tree<h2,n2>
+      & n1+n2>=h1+h2 & n1>=0
+
+  (x = null & h = 0 & n = 0 
+    or x::node<v, p, q> * p::tree<hl1, nl1> * q::tree<hl2, nl2>
+	   & h = 1 + max(h1, h2) 
+	   & n = 1+n1+n2) & x!=null
+    |- x::node<_,lt,rt>*lt::tree<h1,n1>*rt::tree<h2,n2>
+       & n1+n2>=h1+h2 & n1>=0
+
+ x::node<_,lt,rt>*lt::tree<h1,n1>*rt::tree<h2,n2>
+	   & h = 1 + max(h1, h2) 
+	   & n = 1+n1+n2
+	   & h1 >= 0 & n1>=0 & $[] n1>=h1
+	   & h2 >= 0 & n2>=0 & $[] n2>=h2
+	|- x::node<_,lt,rt>*lt::tree<h1,n1>*rt::tree<h2,n2>
+       & n1+n2>=h1+h2 & n1>=0
+
+n1>=0 |- n1>=0
+
+Because the RHS n1+n2>=h1+h2 involving both n1,h1 and n2,h2,
+we should try the constraints with $[] for the LHS fisrt. 
+$[] n1>=h1 & $[] n2>=h2 |- n1+n2>=h1+h2
+
+Unfortunately, the entailment fails and we try to put all LHS
+constraints to form the new entailment
+h1 >= 0 & n1>=0 & $[] n1>=h1
+& h2 >= 0 & n2>=0 & $[] n2>=h2 |- n1+n2>=h1+h2
+
+Folding
+-------
+  x::node<_,null,null>
+   |- x::tree<h,n> & h>0
+
+  x::node<_,null,null>
+   |-  (x = null & h = 0 & n = 0 
+    or x::node<v, p, q> * p::tree<h1, n1> * q::tree<h2, n2>
+	   & h = 1+max(h1, h2) 
+	   & n = 1+n1+n2) & h>0
+
+  x::node<_,null,null>
+   |-  x::node<v, p, q> * p::tree<h1, n1> * q::tree<h2, n2>
+	   & h = 1+max(h1, h2) 
+	   & n = 1+n1+n2 & h>0
+
+  h = 1+max(h1, h2) & n = 1+n1+n2 & h1=0 & n1=0 & h2=0 & n2=0
+      & $[] n1>=h1 & $[]n2>=h2
+   |- h>0
+
+  h = 1+max(h1, h2) &  h1=0 & h2=0 
+   |- h>0
+

@@ -1,0 +1,40 @@
+data node {
+	int val; 
+	node prev;	
+	node next;	
+}.
+
+pred dll1<> == self::dll_r1<null>
+  inv true.
+
+pred dll_r1<p> == self=null
+  or self::node<_,p,r> * r::dll_r1<self>   
+  inv true.
+
+pred dll_r5<p,t,n> == 
+  self=n & p=t
+  or self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
+  inv true.
+
+
+// need to move guard for RHS lemma
+lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n <-> 
+      self::dll_r5<p,q,t> * t::node<_,q,n> .
+
+
+/*
+lemma "dll_r5_tail" self::dll_r5<p,t,n> <- 
+      self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n .
+*/
+
+// OK to fail
+checkentail self::dll_r5<p,q,t> * t::node<_,q,n> 
+    |- self::dll_r5<p,t,n> .
+
+// should fail
+checkentail self::dll_r5<p,q,t> * t::node<_,q,n> & self=n
+    |- self::dll_r5<p,t,n> .
+
+// must succeed
+checkentail self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n
+    |- self::dll_r5<p,t,n> .
