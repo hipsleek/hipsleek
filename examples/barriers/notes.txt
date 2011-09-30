@@ -1,4 +1,9 @@
-Assuming given method, synchronization on only one barrier:
+Assuming given:
+  -> the barrier calls 
+  -> method specs (minus barrier states)
+  -> shared variables
+  -> synchronization on only one barrier
+  
  
  -> for each method, construct part of the barrier graph
  
@@ -16,4 +21,18 @@ Assuming given method, synchronization on only one barrier:
      2) loop { code ; barrier; }
           a) both the code and the barrier exited the loop 
           b) the code exited the loop, the barrier did not -> sequences of loops?
-     3) few branches
+     3) branches, with barriers
+              a) conditions on the shared vs on the private 
+                  no difference ....
+              b) can lead to split in barrier diag vs should not lead to split in barrier diag 
+                  decision taken on
+                    Splits on the next state or not? should it matter ?
+                 not really, it depends on the permissions not on the branch conditions those just give
+                  the  contradictions if needed
+              c) impossible to take a decision based on a variable that could have been changed (from previous states)
+                  
+     4) issues with compaction of the diagram, when two states should be merged?
+     
+     5) compute the most lax of the constraints?
+     
+     6) recursive functions - as loops?
