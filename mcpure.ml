@@ -110,6 +110,29 @@ let check_repatch_memo_pure l s =
     let _ = report_warning no_pos ("repatching memo_pure"^s) in
     repatch_memo_pure l
 
+let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = 
+  let f_grp, f_memo_cons, f_aset, f_slice, f_fv = f in
+  match f_grp e arg with 
+    | Some e1 -> e1
+    | None -> 
+      let new_arg = f_arg arg e in
+      let new_cons, new_rc  = List.split ((List.map (fun c -> f_memo_cons c new_arg)) e.memo_group_cons) in
+      let new_aset, new_ra = f_aset e.memo_group_aset new_arg in
+      let new_slice, new_rs = List.split ((List.map (fun c -> f_slice c new_arg)) e.memo_group_slice) in
+      let new_fv, new_rv =  List.split ((List.map (fun c -> f_fv c new_arg)) e.memo_group_fv) in
+	  let new_lv, new_rl = List.split ((List.map (fun c -> f_fv c new_arg)) e.memo_group_linking_vars) in
+      ({e with
+        memo_group_fv = new_fv;
+		memo_group_linking_vars = new_lv;
+        memo_group_cons = new_cons;
+        memo_group_slice = new_slice;
+        memo_group_aset = new_aset;}, f_comb (new_rc@new_ra@new_rs@new_rv@new_rl))
+  
+let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b) = 
+  let trans_memo_gr e = trans_memo_group e arg f f_arg f_comb in
+  let ne, vals = List.split (List.map trans_memo_gr e) in
+  (ne, f_comb vals)
+	  
 let rec mfv (m: memo_pure) : spec_var list = Gen.BList.remove_dups_eq eq_spec_var (List.concat (List.map (fun c-> c.memo_group_fv) m))
 
 
@@ -1333,16 +1356,95 @@ and memo_pure_push_exists_all fs qv f0 pos =
 (*and memo_pure_push_exists_eq_debug qv f0 pos =
   Gen.Debug.no_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
   (fun (c1,c2) -> (!print_mp_f c1)^"\n remaining: "^(String.concat ", " (List.map !print_sv_f c2)) ) memo_pure_push_exists_eq qv f0 pos*)
-      
+
 and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
   if qv==[] then c
   else
     memo_pure_push_exists_all ((fun w f p-> mkExists w f None p),false) qv c no_pos
 
-(* Do not push exists on the linking vars if the formula is in LHS *)	  
+and rename_vars_memo_pure (mp : memo_pure) arg =
+  let replace x arg = (* Replace x by its assoc in arg *)
+	try List.assoc x arg
+	with | Not_found -> x in
+  (* Do not rename a bound variable *)
+  let f_arg_f arg x =
+	match x with
+	  | Forall (sv, _, _, _) -> List.remove_assoc sv arg
+	  | Exists (sv, _, _, _) -> List.remove_assoc sv arg
+	  | _ -> arg
+  in
+  let f_arg_orig arg x = arg in
+  
+  let f_formula arg x = None in
+
+  (* Process in exp first *)
+  (* spec_var in BagIn, BagNotIn, BVar, BagMin, BagMax of b_formula *)
+  (* will be renamed later by f_b_formula_2 *)
+  let f_b_formula_1 arg x = None in
+  let f_b_formula_2 arg x = 
+	let (pf, anno) = x in 
+	match pf with
+	  | BVar (sv, l) -> Some ((BVar (replace sv arg, l), anno), None)
+	  | BagMin (sv1, sv2, l) -> Some ((BagMin (replace sv1 arg, replace sv2 arg, l), anno), None)
+	  | BagMax (sv1, sv2, l) -> Some ((BagMax (replace sv1 arg, replace sv2 arg, l), anno), None)
+	  | BagIn (sv, e, l) -> Some ((BagIn (replace sv arg, e, l), anno), None)
+	  | BagNotIn (sv, e, l) -> Some ((BagNotIn (replace sv arg, e, l), anno), None)
+	  | _ -> None
+  in
+
+  (* spec_var in ArrayAt will be renamed later by f_exp_2 *)
+  let f_exp_1 arg x =
+	match x with
+	  | Var (sv, l) -> Some (Var (replace sv arg, l), None)
+	  | _ -> None
+  in
+  let f_exp_2 arg x =
+	match x with
+	  | ArrayAt (sv, e, l) -> Some (ArrayAt(replace sv arg, e, l), None)
+	  | _ -> Some (x, None)
+  in
+  (* Do not change anything *)
+  let f_exp_3 arg x = Some (x, None) in
+
+  let f_comb _ = None in 
+  
+  let f_grp x arg = None in
+  let f_cons x arg =
+	let n_memo_formula, _ = trans_b_formula x.memo_formula arg (f_b_formula_1, f_exp_1) (f_arg_orig, f_arg_orig) f_comb in
+	let n_memo_formula, _ = trans_b_formula n_memo_formula arg (f_b_formula_1, f_exp_2) (f_arg_orig, f_arg_orig) f_comb in
+	let n_memo_formula, _ = trans_b_formula n_memo_formula arg (f_b_formula_2, f_exp_3) (f_arg_orig, f_arg_orig) f_comb in
+	({x with memo_formula = n_memo_formula}, None)
+  in
+  
+  let f_aset x arg = (EMapSV.rename_eset_with_key (fun e -> replace e arg) x, []) in
+
+  let f_slice x arg =
+	let n_x, _ = trans_formula x arg (f_formula, f_b_formula_1, f_exp_1) (f_arg_f, f_arg_orig, f_arg_orig) f_comb in
+	let n_x, _ = trans_formula n_x arg (f_formula, f_b_formula_1, f_exp_2) (f_arg_f, f_arg_orig, f_arg_orig) f_comb in
+	let n_x, _ = trans_formula n_x arg (f_formula, f_b_formula_2, f_exp_3) (f_arg_f, f_arg_orig, f_arg_orig) f_comb in
+	(n_x, None)
+  in
+  
+  let f_fv x arg = (replace x arg, None) in
+
+  let n_mp, _ = trans_memo_formula mp arg (f_grp, f_cons, f_aset, f_slice, f_fv) f_arg_orig f_comb in
+  n_mp
+	  
+(* Do not push Exists on the linking vars if the formula is in LHS *)
+(* Rename those linking vars by fresh names -> instantiation *)
 and memo_pure_push_exists_lhs (qv:spec_var list) (c:memo_pure) : memo_pure =
   let lv = List.fold_left (fun acc mg -> acc @ mg.memo_group_linking_vars) [] c in
-  memo_pure_push_exists (Gen.BList.difference_eq eq_spec_var qv lv) c
+
+  (* Rename linking vars which need to push Exists *)
+  let nlv_ex = Gen.BList.difference_eq eq_spec_var qv lv in
+  let lv_ex = Gen.BList.difference_eq eq_spec_var qv nlv_ex in
+  let n_lv_ex = List.map (fun sv -> (sv, match sv with | SpecVar (t, i, p) -> SpecVar (t, fresh_any_name i, p))) lv_ex in
+
+  let n_c = rename_vars_memo_pure c n_lv_ex in
+
+  let _ = print_string ("memo_pure_push_exists_lhs: n_c: " ^ (!print_mp_f n_c) ^ "\n") in
+    
+  memo_pure_push_exists nlv_ex n_c
 	  
 and memo_norm (l:(b_formula * (formula_label option)) list): b_formula list * formula list =
   Gen.Debug.no_1 "memo_norm" (fun l -> List.fold_left (fun a (bf,_) -> a ^ (!print_bf_f bf)) "" l)
@@ -1547,17 +1649,17 @@ let memo_check_syn_prun_debug (p,pn,br) c corr =
     memo_check_syn_prun_imply (p,pn,br) c corr
     
 let transform_memo_formula f l : memo_pure =
-  let (f_memo,f_aset, f_formula, f_b_formula, f_exp) = f in
+  let (f_memo, f_aset, f_formula, f_b_formula, f_exp) = f in
   let r = f_memo l in 
 	match r with
 	| Some e1 -> e1
-	| None  -> List.map (fun c-> {
+	| None  -> List.map (fun c -> {
       memo_group_fv = c.memo_group_fv;
 	  memo_group_linking_vars = c.memo_group_linking_vars;
       memo_group_changed = true;
-      memo_group_cons = List.map (fun c-> {c with memo_formula = transform_b_formula (f_b_formula,f_exp) c.memo_formula}) c.memo_group_cons;
+      memo_group_cons = List.map (fun c -> {c with memo_formula = transform_b_formula (f_b_formula, f_exp) c.memo_formula}) c.memo_group_cons;
       memo_group_slice = List.map (transform_formula f) c.memo_group_slice;
-      memo_group_aset = match (f_aset c.memo_group_aset) with | None -> c.memo_group_aset | Some s-> s;
+      memo_group_aset = match (f_aset c.memo_group_aset) with | None -> c.memo_group_aset | Some s -> s;
     }) l
 
 let process_cons_l (f:memoised_constraint list):formula list =
@@ -2053,27 +2155,6 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no=
 
 let reset_changed f = List.map (fun c-> {c with memo_group_changed = false}) f
   
-let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = 
-  let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in
-  match f_grp arg e with 
-    | Some e1-> e1
-    | None -> 
-      let new_arg = f_arg arg e in
-      let new_cons,new_rc  = List.split ((List.map (fun c-> f_memo_cons c new_arg)) e.memo_group_cons) in
-      let new_aset, new_ra = f_aset new_arg e.memo_group_aset in
-      let new_slice, new_rs = List.split ((List.map (fun c-> f_slice c new_arg)) e.memo_group_slice) in
-      let new_fv, new_rv =  List.split ((List.map (fun c-> f_fv c new_arg)) e.memo_group_fv) in
-      ({e with
-        memo_group_fv =new_fv;
-        memo_group_cons = new_cons;
-        memo_group_slice = new_slice;
-        memo_group_aset = new_aset;}, f_comb (new_rc@new_ra@new_rs@new_rv))
-  
-let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b) = 
-  let trans_memo_gr e = trans_memo_group e arg f f_arg f_comb in
-  let ne, vals = List.split (List.map trans_memo_gr e) in
-  (ne, f_comb vals)
- 
 type mix_formula = 
   | MemoF of memo_pure
   | OnePF of formula

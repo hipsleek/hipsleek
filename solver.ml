@@ -303,7 +303,7 @@ and formula_2_mem (f : formula) prog : CF.mem_formula =
       (fun _ -> formula_2_mem_x f prog) f
 
 and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
-  Gen.Debug.no_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
+  Gen.Debug.ho_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
       (fun f -> h_formula_2_mem f evars prog) f
 
 and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
@@ -521,6 +521,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
     (ph, pb,  memset)
   else (MCP.mkMFalse no_pos, pb, memset)  
 
+(* Return a CF.formula instead of a flatten MCP formula, the heap parts is not complex *)	
 and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
   let mset = formula_2_mem f0 prog in 
   let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (formula * (branch_label * CP.formula) list * CP.spec_var list) =
@@ -531,7 +532,7 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branc
       let ipf1, pf1b, avars1 = xpure_symbolic_helper prog f1 in
       let ipf2, pf2b, avars2 = xpure_symbolic_helper prog f2 in
       let br = CP.or_branches pf1b pf2b in
-	  let res_form = mkOr ipf1 ipf2 pos  in
+	  let res_form = mkOr ipf1 ipf2 pos in
       (res_form, br, (avars1 @ avars2))
     | Base b ->
 	  let ({ formula_base_heap = h;
@@ -542,7 +543,9 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branc
       let n_p = MCP.merge_mems p ph true in
       let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_p) in
       let rb = CP.merge_branches_with_common br fbr cf [] in   
-      let n_f0 = Base { b with formula_base_pure = n_p } in
+      (*let n_f0 = Base { b with formula_base_pure = n_p } in*)
+	  (* Set a complex heap formula to a simpler one *)
+	  let n_f0 = mkBase HTrue n_p TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
       (n_f0, rb, addrs)
     | Exists e ->
 	  let ({ formula_exists_qvars = qvars;
@@ -554,13 +557,13 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * (branc
       let sqvars = (* List.map CP.to_int_var *) qvars in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' sqvars in
 
-      let tmp1 = MCP.merge_mems qp pqh true in
+      let n_qp = MCP.merge_mems qp pqh true in
       (*let res_form = MCP.memo_arith_simplify (MCP.memo_pure_push_exists sqvars tmp1) in
 	  let n_f0 = mkBase HTrue res_form TypeTrue (mkTrueFlow ()) [] pos in*)
-
-	  let n_f0 = Exists { e with formula_exists_pure = tmp1 } in
+      (* Set a complex heap formula to a simpler one *)
+	  let n_f0 = mkExists qvars HTrue n_qp TypeTrue (mkTrueFlow ()) [] pos in
 	  
-      let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true tmp1) in
+      let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_qp) in
 
       let rb = CP.merge_branches_with_common br fbr cf sqvars in   
       (n_f0, rb, addrs)
@@ -689,10 +692,10 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
-  Gen.Debug.no_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula pr
+  Gen.Debug.ho_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula pr
       (fun h0 -> xpure_heap_symbolic_i_x prog h0 i) h0
 
-and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_i_orig (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
 	  h_formula_data_label = lbl;
@@ -755,6 +758,90 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | HTrue -> (MCP.mkMTrue no_pos, [], [])
     | Hole _ -> (MCP.mkMTrue no_pos, [], []) (* shouldn't get here *)
     | HFalse -> (MCP.mkMFalse no_pos, [], []) in
+
+  let helper h0 =
+	Gen.Debug.ho_1 "xpure_heap_symbolic_i: helper"
+	  Cprinter.string_of_h_formula
+	  (fun (mf, _, _) -> Cprinter.string_of_mix_formula mf)
+	  helper h0
+  in
+  helper h0
+
+and xpure_heap_symbolic_i_x(*slicing*) (prog : prog_decl) (h0 : h_formula) xp_no :
+	(MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+  let rec helper h0 = match h0 with
+    | DataNode ({ h_formula_data_node = p;
+				  h_formula_data_label = lbl;
+				  h_formula_data_pos = pos }) ->
+      let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
+      (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero, [], [p])
+	  (*let approx = MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero in
+	  (mkBase HTrue approx TypeTrue (mkTrueFlow ()) [] pos, [], [p])*)
+    | ViewNode ({ h_formula_view_node = p;
+				  h_formula_view_name = c;
+				  h_formula_view_arguments = vs;
+				  h_formula_view_remaining_branches = lbl_lst;
+				  h_formula_view_pos = pos}) ->
+      let ba = look_up_view_baga prog c p vs in
+      let vdef = look_up_view_def pos prog.prog_view_decls c in
+      let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+      let to_svs = p :: vs in
+      (match lbl_lst with
+        | None -> 
+          let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
+
+		  let _ = print_string ("xpure_heap_symbolic_i: vinv: " ^ (Cprinter.string_of_mix_formula vinv) ^ "\n") in
+		  
+          let from_addrs = vdef.view_addr_vars in
+          let to_addrs = CP.fresh_spec_vars from_addrs in
+          let subst_m_fun f =
+            let tmp1 = MCP.subst_avoid_capture_memo(*_debug2*) from_svs to_svs f in
+            MCP.memo_subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
+          let subst_fun f =
+            let tmp1 = CP.subst_avoid_capture from_svs to_svs f in
+            CP.subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
+                  (* let _ = print_endline ("xpure_heap_symbolic_i NONE: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in *)
+          (subst_m_fun vinv, List.map (fun (l,x) -> (l, subst_fun x)) vinv_b, ba (*to_addrs*)) 
+        | Some ls ->  
+          let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
+			      (* let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in*)
+          (MCP.mkMTrue no_pos, [], ba))
+    | Star ({ h_formula_star_h1 = h1;
+			  h_formula_star_h2 = h2;
+			  h_formula_star_pos = pos}) ->
+          (* let _ = print_endline ("xpure_heap_symbolic_i: Star") in*)
+      let ph1, b1, addrs1 = helper h1 in
+      let ph2, b2, addrs2 = helper h2 in
+          (* let all_diff = *)
+          (* 	if !no_diff then P.mkTrue no_pos *)
+          (* 	else pairwise_diff addrs1 addrs2 pos in *)
+      let tmp1 = MCP.merge_mems ph1 ph2 true in
+          (* let res_form = MCP.memoise_add_pure_N tmp1 all_diff in *)
+      (tmp1, CP.merge_branches b1 b2, addrs1 @ addrs2)
+    | Phase ({ h_formula_phase_rd = h1;
+			   h_formula_phase_rw = h2;
+			   h_formula_phase_pos = pos}) 
+    | Conj ({ h_formula_conj_h1 = h1;
+			  h_formula_conj_h2 = h2;
+			  h_formula_conj_pos = pos}) ->
+      let ph1, b1, addrs1 = helper h1 in
+      let ph2, b2, addrs2 = helper h2 in
+          (*let all_diff =
+	        if !no_diff then P.mkTrue no_pos
+	        else pairwise_diff addrs1 addrs2 pos in*)
+      let tmp1 = MCP.merge_mems ph1 ph2 true in
+          (*let res_form = MCP.memoise_add_pure_N tmp1 all_diff in*)
+      (tmp1, CP.merge_branches b1 b2, addrs1 @ addrs2)	      
+    | HTrue -> (MCP.mkMTrue no_pos, [], [])
+    | Hole _ -> (MCP.mkMTrue no_pos, [], []) (* shouldn't get here *)
+    | HFalse -> (MCP.mkMFalse no_pos, [], []) in
+
+  let helper h0 =
+	Gen.Debug.ho_1 "xpure_heap_symbolic_i: helper"
+	  Cprinter.string_of_h_formula
+	  (fun (mf, _, _) -> Cprinter.string_of_mix_formula mf)
+	  helper h0
+  in
   helper h0
 
 (* xpure of consumed precondition *)
@@ -4920,7 +5007,7 @@ and solve_ineq_memo_formula (ante : MCP.memo_pure) (memset : Cformula.mem_formul
       else None
     | _ -> None in
   let f_exp x = None in
-  let f = (f_memo,f_aset, f_formula, f_b_formula, f_exp) in
+  let f = (f_memo, f_aset, f_formula, f_b_formula, f_exp) in
   MCP.transform_memo_formula f conseq
 
 (* check whether the disjunction is of the form (x<y | y<x) which can be discharged by using the memory set *)

@@ -701,6 +701,12 @@ struct
     else Error.report_error {Error.error_loc = Globals.no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
+  let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
+    let b = is_one2one f (get_elems s) in
+    if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
+    else Error.report_error {Error.error_loc = Globals.no_pos; 
+							 Error.error_text = ("rename_eset : f is not 1-to-1 map")}
+
   (* s - from var; t - to var *)
   let norm_subs_eq (subs:epair) : epair =
     let rec add (f,t) acc = match acc with
@@ -717,16 +723,16 @@ struct
     let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
     eqlst
 
-let rename_eset_allow_clash (f:elem -> elem) (s:emap) : emap =
-  let sl = get_elems s in
-  let tl = List.map f sl in
-  if (BList.check_no_dups_eq eq tl) then
-    List.map (fun (e,k) -> (f e,k)) s
-  else
-  let s1 = List.combine sl tl in
-  let e2= norm_subs_eq s1 in
-  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
-    List.map (fun (e,k) -> (f e,k)) ns
+  let rename_eset_allow_clash (f:elem -> elem) (s:emap) : emap =
+	let sl = get_elems s in
+	let tl = List.map f sl in
+	if (BList.check_no_dups_eq eq tl) then
+      List.map (fun (e,k) -> (f e,k)) s
+	else
+	  let s1 = List.combine sl tl in
+	  let e2= norm_subs_eq s1 in
+	  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
+      List.map (fun (e,k) -> (f e,k)) ns
 
 end;;
 

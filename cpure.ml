@@ -3716,8 +3716,14 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 	  | Some e1 -> e1
 	  | None  -> let new_arg = f_b_formula_args arg e in 
         let f_comb = f_b_formula_comb e in
-		let (pf,il) = e in
-        let (npf, opt) = match pf with	  
+		let (pf, annot) = e in
+		let (nannot, opt1) = match annot with
+		  | None -> (None, f_comb [])
+		  | Some (il, lb, el) ->
+			let (nel, opt1) = List.split (List.map (fun e -> helper new_arg e) el) in
+			(Some (il, lb, nel), f_comb opt1)
+		in
+        let (npf, opt2) = match pf with	  
 	      | BConst _
 	      | BVar _ 
 	      | BagMin _ 
@@ -3788,7 +3794,7 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 							let nargs = List.map fst tmp in
 							let rs = List.map snd tmp in
                 (RelForm (r,nargs,l),f_comb rs)
-		in ((npf,il),opt)
+		in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
 
@@ -3802,81 +3808,81 @@ let map_b_formula_arg (bf: b_formula) (arg: 'a) (f_bf, f_e) f_arg : b_formula =
   fst (trans_b_formula bf arg new_f f_arg voidf)
 	
 let transform_b_formula f (e:b_formula) :b_formula = 
-	let (f_b_formula, f_exp) = f in
-	let r =  f_b_formula e in 
-	match r with
+  let (f_b_formula, f_exp) = f in
+  let r =  f_b_formula e in 
+  match r with
 	| Some e1 -> e1
 	| None  ->
 	  let (pf,il) = e in
 	  let npf = match pf with	  
-	  | BConst _
-	  | BVar _ 
-	  | BagMin _ 
-	  | BagMax _ -> pf
-	  | Lt (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Lt (ne1,ne2,l)
-	  | Lte (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Lte (ne1,ne2,l)
-	  | Gt (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Gt (ne1,ne2,l)
-	  | Gte (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Gte (ne1,ne2,l)
-	  | Eq (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Eq (ne1,ne2,l)
-	  | Neq (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Neq (ne1,ne2,l)
-	  | EqMax (e1,e2,e3,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		let ne3 = transform_exp f_exp e3 in
-		EqMax (ne1,ne2,ne3,l)	  
-	  | EqMin (e1,e2,e3,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		let ne3 = transform_exp f_exp e3 in
-		EqMin (ne1,ne2,ne3,l)
-		  (* bag formulas *)
-	  | BagIn (v,e,l)->
-		let ne1 = transform_exp f_exp e in
-		BagIn (v,ne1,l)
-	  | BagNotIn (v,e,l)->
-		let ne1 = transform_exp f_exp e in
-		BagNotIn (v,ne1,l)
-	  | BagSub (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		BagSub (ne1,ne2,l)
-    | ListIn (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListIn (ne1,ne2,l)
-    | ListNotIn (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListNotIn (ne1,ne2,l)
-    | ListAllN (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListAllN (ne1,ne2,l)
-    | ListPerm (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListPerm (ne1,ne2,l)
+		| BConst _
+		| BVar _ 
+		| BagMin _ 
+		| BagMax _ -> pf
+		| Lt (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Lt (ne1,ne2,l)
+		| Lte (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Lte (ne1,ne2,l)
+		| Gt (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Gt (ne1,ne2,l)
+		| Gte (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Gte (ne1,ne2,l)
+		| Eq (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Eq (ne1,ne2,l)
+		| Neq (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Neq (ne1,ne2,l)
+		| EqMax (e1,e2,e3,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  let ne3 = transform_exp f_exp e3 in
+		  EqMax (ne1,ne2,ne3,l)	  
+		| EqMin (e1,e2,e3,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  let ne3 = transform_exp f_exp e3 in
+		  EqMin (ne1,ne2,ne3,l)
+	  (* bag formulas *)
+		| BagIn (v,e,l)->
+		  let ne1 = transform_exp f_exp e in
+		  BagIn (v,ne1,l)
+		| BagNotIn (v,e,l)->
+		  let ne1 = transform_exp f_exp e in
+		  BagNotIn (v,ne1,l)
+		| BagSub (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  BagSub (ne1,ne2,l)
+		| ListIn (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListIn (ne1,ne2,l)
+		| ListNotIn (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListNotIn (ne1,ne2,l)
+		| ListAllN (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListAllN (ne1,ne2,l)
+		| ListPerm (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListPerm (ne1,ne2,l)
 		| RelForm (r, args, l) -> (* An Hoa *)
-			let nargs = List.map (transform_exp f_exp) args in
-			RelForm (r,nargs,l)
+		  let nargs = List.map (transform_exp f_exp) args in
+		  RelForm (r,nargs,l)
 	  in (npf,il)
 	  
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =

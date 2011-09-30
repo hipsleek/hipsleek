@@ -4132,34 +4132,34 @@ let get_node_label n =  match n with
 
 (* generic transform for heap formula *)
 let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
-      (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
+    (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
     let r =  f arg e in 
 	match r with
 	  | Some (e1,v) -> (e1,v)
 	  | None  -> let new_arg = f_args arg e in
-        match e with
-		| Star s -> 
-                let (e1,r1)=helper s.h_formula_star_h1 new_arg in
-                let (e2,r2)=helper s.h_formula_star_h2 new_arg in
-                (Star {s with h_formula_star_h1 = e1;
-			        h_formula_star_h2 = e2;},f_comb [r1;r2])
-		| Conj s -> 
-                let (e1,r1)=helper s.h_formula_conj_h1 new_arg in
-                let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
-                (Conj {s with h_formula_conj_h1 = e1;
-			        h_formula_conj_h2 = e2;},f_comb [r1;r2])
-		| Phase s -> 
-                let (e1,r1)=helper s.h_formula_phase_rd new_arg in
-                let (e2,r2)=helper s.h_formula_phase_rw new_arg in
-                (Phase {s with h_formula_phase_rd = e1;
-			        h_formula_phase_rw = e2;},f_comb [r1;r2])
+				 match e with
+				   | Star s -> 
+					 let (e1,r1)=helper s.h_formula_star_h1 new_arg in
+					 let (e2,r2)=helper s.h_formula_star_h2 new_arg in
+					 (Star {s with h_formula_star_h1 = e1;
+			           h_formula_star_h2 = e2;},f_comb [r1;r2])
+				   | Conj s -> 
+					 let (e1,r1)=helper s.h_formula_conj_h1 new_arg in
+					 let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
+					 (Conj {s with h_formula_conj_h1 = e1;
+			           h_formula_conj_h2 = e2;},f_comb [r1;r2])
+				   | Phase s -> 
+					 let (e1,r1)=helper s.h_formula_phase_rd new_arg in
+					 let (e2,r2)=helper s.h_formula_phase_rw new_arg in
+					 (Phase {s with h_formula_phase_rd = e1;
+			           h_formula_phase_rw = e2;},f_comb [r1;r2])
 
-	      | DataNode _
-	      | ViewNode _
-	      | Hole _	  
-	      | HTrue
-          | HFalse -> (e, f_comb []) 
+				   | DataNode _
+				   | ViewNode _
+				   | Hole _	  
+				   | HTrue
+				   | HFalse -> (e, f_comb []) 
   in (helper e arg)
 
 let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
@@ -4203,8 +4203,9 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 	  | HFalse -> e
 
 
-(* transform formula : f_p_t : pure formula
-   f_f : formula
+(* transform formula :
+   f_p_t : pure formula
+   f_f   : formula
    f_h_f : heap formula
 *)
 
@@ -5125,9 +5126,9 @@ let is_no_heap_ext_formula (e : ext_formula) : bool =
     let f1 _ e = Some (e, true) in
     (f1,f1,f1) in
   let f_memo = 
-    let f1 _ e = Some (e, true) in
-    let f2 e _ = (e,true) in
-    let f3 _ e = (e,[]) in
+    let f1 e _ = Some (e, true) in
+    let f2 e _ = (e, true) in
+    let f3 e _ = (e, []) in
     (f1,f2,f3,f2,f2) in
   let f_arg =
     let f1 e _ = e in

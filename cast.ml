@@ -53,6 +53,8 @@ and view_decl = {
     view_data_name : ident;
     view_formula : F.struc_formula;
     view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+	(* Use list (OR) of mix_formula to eliminate disjuncts in mix_formula *)
+	(* No slicing opt: this list contains only one element *)
     mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
