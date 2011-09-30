@@ -32,6 +32,10 @@ let parse_file_full file_name =
     (*		  let ptime2 = Unix.times () in
 		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
 			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
+		(* An Hoa *)
+		(*let _ = print_endline "Primitive relations : " in
+		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
+
 			prog 
     with
 		End_of_file -> exit 0
@@ -166,7 +170,9 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-      ignore (Typechecker.check_prog cprog);
+		(* An Hoa *)
+		(*print_endline "START VERIFICATION PROCESS!";*)
+       ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");

@@ -361,7 +361,7 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> ()
+             |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
 (* Slicing Utils *)
@@ -939,8 +939,8 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> t
-    | t=non_array_type -> t]];
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+    | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
   [[ `INT                -> int_type
@@ -1514,11 +1514,18 @@ object_or_delegate_creation_expression:
   [[ `NEW; `IDENTIFIER id; `OPAREN; al=opt_argument_list; `CPAREN ->
       New { exp_new_class_name = id;
             exp_new_arguments = al;
-            exp_new_pos = get_pos_camlp4 _loc 1 }]];
+            exp_new_pos = get_pos_camlp4 _loc 1 }
+	(* An Hoa : Array allocation. *)
+	| `NEW; `INT; `OSQUARE; al = argument_list; `CSQUARE ->
+		ArrayAlloc { exp_aalloc_etype_name = "int";
+					 exp_aalloc_dimensions = al;
+					 exp_aalloc_pos = get_pos_camlp4 _loc 1; } ]];
 
 new_expression: [[t=object_or_delegate_creation_expression -> t]];
 
 opt_argument_list : [[t= LIST0 argument SEP `COMMA -> t]];
+
+argument_list : [[t= LIST1 argument SEP `COMMA -> t]];
 
 (* opt_argument_list : [[ t = OPT argument_list -> un_option t [] ]];
 
