@@ -23,16 +23,29 @@ Assuming given:
           b) the code exited the loop, the barrier did not -> sequences of loops?
      3) branches, with barriers
               a) conditions on the shared vs on the private 
-                  no difference ....
+                  no difference ...
               b) can lead to split in barrier diag vs should not lead to split in barrier diag 
                   decision taken on
                     Splits on the next state or not? should it matter ?
                  not really, it depends on the permissions not on the branch conditions those just give
                   the  contradictions if needed
               c) impossible to take a decision based on a variable that could have been changed (from previous states)
-                  
-     4) issues with compaction of the diagram, when two states should be merged?
      
+    4a) compute the discriminant condition ...
+     
+     4) issues with compaction of the diagram, when two states should be merged?
+          
      5) compute the most lax of the constraints?
      
-     6) recursive functions - as loops?
+     6) recursive functions - as loops -> terminal state?
+     
+     
+     7) merging informations on different threads?
+          a) same program, no need for merging, should agree on everything
+          b) different programs:
+              -> graph
+                  *) always pick the more complex, a loop to a string, a split to a single successor             
+              -> specifications
+                  *) need to agree on the read groups, write groups
+                 **) split and agree on the read fractions
+                ***) manage the discriminant conditions
