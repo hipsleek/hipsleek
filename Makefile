@@ -13,6 +13,8 @@ FLAGS = $(INCLUDES),-g,-annot
 # -no-hygiene flag to disable "hygiene" rules
 OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) -no-hygiene
 
+XML = cd $(CURDIR)/xml; make all; make opt; cd ..
+
 all: native gui
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
@@ -25,18 +27,22 @@ ghip: ghip.native
 gsleek: gsleek.native
 
 hip.byte:
+	$(XML)
 	$(OCAMLBUILD) $(OB_FLAGS) main.byte
 	cp _build/main.byte hip.byte
 
 hip.native:
+	$(XML)
 	$(OCAMLBUILD) $(OB_FLAGS) main.native
 	cp _build/main.native hip
 
 sleek.byte:
+	$(XML)
 	$(OCAMLBUILD) $(OB_FLAGS) sleek.byte
 	cp _build/sleek.byte .
 
 sleek.native:
+	$(XML)
 	$(OCAMLBUILD) $(OB_FLAGS) sleek.native
 	cp _build/sleek.native sleek
 
