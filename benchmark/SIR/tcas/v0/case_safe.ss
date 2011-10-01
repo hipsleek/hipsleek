@@ -15,10 +15,12 @@ bool Non_Crossing_Biased_Descend()
    }
 {
     bool result;
-   	result = 
-	(!(Own_Above_Threat())) 
-	|| ((Own_Above_Threat()) 
-	&& (Up_Separation >= 400)); 
+    bool temp;
+	temp = Own_Above_Threat();
+	result = 
+	(!temp) //false
+	|| ((temp) //true
+	&& (Up_Separation >= 400)); //true
 
     return result;
 }
