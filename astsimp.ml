@@ -7022,7 +7022,7 @@ type: (CF.formula * Globals.formula_label) list ->
       else List.for_all
         (fun (o_l,o_f) ->
               let new_f = CP.mkAnd o_f bf no_pos
-       in (TP.is_sat new_f "get_safe_prune_conds" false)
+       in (*(TP.is_sat new_f "get_safe_prune_conds" false)*) TP.is_sat_sub_no new_f (ref 0)
         ) remain_ls
      end
      in
