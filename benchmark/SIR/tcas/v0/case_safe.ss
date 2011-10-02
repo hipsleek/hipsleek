@@ -27,9 +27,15 @@ bool Non_Crossing_Biased_Descend()
 
 bool Own_Above_Threat()
 case {
+   Other_Tracked_Alt < Own_Tracked_Alt -> ensures res & Other_Tracked_Alt'=Other_Track_Alt & Own_Tracked_Alt'=Own_Tracked_Alt;
+   Other_Tracked_Alt >= Own_Tracked_Alt -> ensures !res & Other_Tracked_Alt'=Other_Track_Alt & Own_Tracked_Alt'=Own_Tracked_Alt;
+   }
+/*
+case {
    Other_Tracked_Alt < Own_Tracked_Alt -> ensures res ;
    Other_Tracked_Alt >= Own_Tracked_Alt -> ensures !res;
    }
+*/
 {
     return (Other_Tracked_Alt < Own_Tracked_Alt);
 }
