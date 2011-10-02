@@ -638,6 +638,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 
 (* checking procedure *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+	(* An Hoa *)
+	(*let _ = print_endline ("check_proc : " ^ proc.Cast.proc_name) in*)
   let unmin_name = unmingle_name proc.proc_name in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
     && not (List.mem unmin_name !Inliner.inlined_procs)
@@ -692,6 +694,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
+	(* An Hoa *)
+	(*let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in*)
     check_proc prog proc  
   with _ as e ->
     if !Globals.check_all then begin
@@ -943,11 +947,14 @@ let variance_numbering ls g =
   in List.map (fun e -> helper e) ls
 		
 let check_prog (prog : prog_decl) =
-  if (Printexc.backtrace_status ()) then print_string "backtrace active"
-  else (* print_string "bactracke inactive"; *)
-(*    (print_string "raising\n";
-    raise Not_found);
-*) if !Globals.check_coercions then begin
+	(* An Hoa *)
+	(*let _ = print_endline "check_prog : CHECKING PROGRAM START..." in*)
+  let _ = if (Printexc.backtrace_status ()) then print_string "backtrace active"
+(* An Hoa : Bug discovered : Someone forgot to comment the "else" *)
+(*  else print_string "bactracke inactive";
+    (print_string "raising\n";
+    raise Not_found);*) in 
+ if !Globals.check_coercions then begin
     print_string "Checking coercions... ";
     ignore (check_coercion prog);
     print_string "DONE."

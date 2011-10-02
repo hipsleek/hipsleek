@@ -162,12 +162,62 @@ int pow___(int a, int b)
    requires true 
    ensures true;
 
-relation update_array(int[] a, int i, int v, int[] r) == true.
+//////////////////////////////////////////////////////////////////
+// <OLD> SPECIFICATIONS
+//////////////////////////////////////////////////////////////////
+//
+//relation update_array(int[] a, int i, int v, int[] r) == true.
+//
+//int array_get_elm_at___(int[] a, int i) 
+//   requires true 
+//   ensures res = a[i];
+//
+//int[] update___(int[] a, int i, int v) 
+//   requires true 
+//   ensures update_array(a,i,v,res);
+//
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////
+// <NEW> PRIMITIVE RELATIONS
+//////////////////////////////////////////////////////////////////
+
+// Special relation to indicate the value to do induction on
+relation induce(int value) == true.
+
+relation dom(int[] a, int low, int high) == true.
+
+relation amodr(int[] a, int[] b, int i, int j) == 
+    forall(k : (i<=k & k<=j | a[k] = b[k])).
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////
+// <NEW> PRIMITIVE FUNCTIONS
+//////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___(int[] a, int i) 
-   requires true 
-   ensures res = a[i];
+	requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+	ensures res = a[i];
 
 int[] update___(int[] a, int i, int v) 
-   requires true 
-   ensures update_array(a,i,v,res);
+	requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+	ensures dom(res,ahalb,ahaub) 
+				& update_array(a,i,v,res);
+
+int[] aalloc___(int dim) 
+	requires true 
+	ensures dom(res,0,dim-1);
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////

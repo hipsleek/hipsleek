@@ -29,16 +29,37 @@ type relation_definition =
 (**
  * Temp files used to feed input and capture output from provers
  *)
-let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
+let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let print_input = ref false
-let print_original_solver_output = ref false
-let timeout = ref 10.0
+let timeout = ref 15.0
 let prover_pid = ref 0
 let prover_process = ref {name = "smtsolver"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
-let suppress_print_implication = ref false
-let print_implication = ref false
+
+(**
+ An Hoa : control printing of SMT input code
+ *)
+let print_input = ref (false : bool)
+
+(**
+ An Hoa : control printing of SMT original output (sat, unsat, unknown)
+ *)
+let print_original_solver_output = ref (false : bool)
+
+(**
+ An Hoa : control printing of the implication problem
+ *)
+let print_implication = ref (false : bool)
+
+(**
+ An Hoa : control temporary suppression of all printing
+ *)
+let suppress_print_implication = ref (false : bool)
+
+(**
+ An Hoa : function to print formula
+ *)
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+
 
 (**
  * @author An Hoa
@@ -51,8 +72,8 @@ let rel_defs = ref ([] : relation_definition list)
  * Notice that we have to add the relation at the end in order to preserve the order of appearance of the relations.
  *)
 let add_rel_def rdef =
-	(* let rn = match rdef with RelDefn (a,_,_) -> a in
-	let _ = print_string ("Smtsolver :: add relation definition - " ^ rn ^ "\n") in *) 
+	(*let rn = match rdef with RelDefn (a,_,_) -> a in
+	let _ = print_endline ("smtsolver : add_rel_def : " ^ rn) in*)
 	rel_defs := !rel_defs @ [rdef]
 
 (******************
@@ -101,7 +122,8 @@ let rec is_linear_formula f0 = match f0 with
 let rec get_formula_of_rel_with_name rn rdefs =
   (*if (rn = "dom") then (mkTrue Globals.no_pos) else*)
   match rdefs with
-	| [] -> failwith ("Relation " ^ rn ^ " is not found!")
+	| [] -> let _ = print_endline ("Relation " ^ rn ^ " cannot be found!") in
+		failwith ("Relation " ^ rn ^ " is not found!")
 	| h :: t -> match h with RelDefn (r,_,f) -> if (r = rn) then f else get_formula_of_rel_with_name rn t
 		
 (**
@@ -222,7 +244,7 @@ let extract_name sv =
 let rec smt_of_typ t = 
 	match t with
 	  | Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
-	  | Float -> "Real"
+	  | Float -> (*"Real"*) "Int" (* Have to use int as float is not supported! *)
 	  | Int -> "Int"
       | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
@@ -504,7 +526,8 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
 	(*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
 	match conseq with
 		| CP.BForm (b,_) -> (let (p, _) = b in match p with
-			| CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos]
+			| CP.RelForm ("induce",[value],_) -> [value]
+			(* | CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos] *)
 			| _ -> [])
   	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
   	| CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
@@ -561,21 +584,21 @@ and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : C
   (*let _ = print_string "An Hoa :: gen_induction_formulas\n" in*)
   let p = CP.fv ante @ CP.fv conseq in
 	let v = create_induction_var p in 
-	(*let _ = print_string ("Inductiom variable = " ^ (string_of_spec_var v) ^ "\n") in*)
+	(* let _ = print_string ("Inductiom variable = " ^ (CP.string_of_spec_var v) ^ "\n") in *)
 	let ante = CP.mkAnd (CP.mkEqExp (CP.mkVar v no_pos) indval no_pos) ante no_pos in
 	(* base case ante /\ v = 0 --> conseq *)
 	let ante0 = CP.apply_one_term (v, CP.mkIConst 0 no_pos) ante in
-	(*let _ = print_string ("Base case: ante = "  ^ (!print_pure ante0) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
+	(* let _ = print_string ("Base case: ante = "  ^ (!print_pure ante0) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in *)
 	(* ante --> conseq *)
 	let aimpc = (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
 	(* induction hypothesis = \forall {v_i} : (ante -> conseq) with v_i in p *)
 	let indhyp = CP.mkForall p aimpc None no_pos in
-	(*let _ = print_string ("Induction hypothesis: ante = "  ^ (!print_pure indhyp) ^ "\n") in*)
+	(* let _ = print_string ("Induction hypothesis: ante = "  ^ (!print_pure indhyp) ^ "\n") in *)
 	let vp1 = CP.mkAdd (CP.mkVar v no_pos) (CP.mkIConst 1 no_pos) no_pos in
 	(* induction case: induction hypothesis /\ ante(v+1) --> conseq(v+1) *)
 	let ante1 = CP.mkAnd indhyp (CP.apply_one_term (v, vp1) ante) no_pos in
 	let conseq1 = CP.apply_one_term (v, vp1) conseq in
-	(*let _ = print_string ("Inductive case: ante = "  ^ (!print_pure ante1) ^ "\nconseq = " ^ (!print_pure conseq1) ^ "\n") in*)
+	(* let _ = print_string ("Inductive case: ante = "  ^ (!print_pure ante1) ^ "\nconseq = " ^ (!print_pure conseq1) ^ "\n") in *)
 		((ante0,conseq),(ante1,conseq1))
 	
 		
@@ -607,35 +630,46 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+	(*let _ = print_endline "smt_imply : entry" in
+	let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
   try
       let input = to_smt ante (Some conseq) prover in
       let output = run prover input in
       let res = output = "unsat" in
 	(* Only do printing in case there is no suppression and output is not unsat *)
 	(*let _ = print_string (string_of_bool !suppress_print_implication) in*)
-	let _ = if (not !suppress_print_implication) && (not res) then
+	let _ = if (not !suppress_print_implication) (*&& (not res)*) then
 						let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
 						let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
 						let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in ()
 	in if res then
       res
 		else 
-			(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in*) 
 			if (!try_induction) then
+				(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in
+				let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
 				smt_imply_with_induction ante conseq prover
 			else 
 				false
   with 
     |Procutils.PrvComms.Timeout ->
 	    begin
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
+						(* Try induction on time out as well. *)
+						if (!try_induction) then
+							let _ = print_string "An Hoa :: smt_imply : try induction\n" in
+							(*let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
+							smt_imply_with_induction ante conseq prover
+						else 
             false
 		end
     | e -> 
         begin 
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
             Unix.kill !prover_process.pid 9;
@@ -655,15 +689,17 @@ let imply ante conseq = (*let _ = print_string "Come to imply\n" in*)
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   try
-      let input = to_smt f None prover in
-	(*let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in*)
-      let output = run prover input in
-	(*let _ = if !print_original_solver_output then print_string ("==> SMT output : " ^ output ^ "\n") in*)
-      let res = output = "unsat" in
-      not res
+		(*let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in*)
+		let input = to_smt f None prover in
+		(*let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in*)
+		let output = run prover input in
+		(*let _ = if !print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in*)
+		let res = output = "unsat" in
+			not res
   with 
     |Procutils.PrvComms.Timeout ->
 	    begin
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => sat\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
@@ -672,6 +708,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 		end
     | e -> 
         begin 
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unexpected exception => sat\n"); flush stdout; 
             Unix.kill !prover_pid 9;

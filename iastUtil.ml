@@ -1221,6 +1221,8 @@ let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
+					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
           } in
   let prog = float_var_decl_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
