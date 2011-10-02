@@ -23,12 +23,12 @@ let is_hole_spec_var sv = match sv with
 
 
 type formula =
-  | BForm of (b_formula  *(formula_label option))
+  | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
   | Or of (formula * formula * (formula_label option) * loc)
-  | Not of (formula * (formula_label option)* loc)
-  | Forall of (spec_var * formula * (formula_label option)*loc)
-  | Exists of (spec_var * formula * (formula_label option)*loc)
+  | Not of (formula * (formula_label option) * loc)
+  | Forall of (spec_var * formula * (formula_label option) * loc)
+  | Exists of (spec_var * formula * (formula_label option) * loc)
 
 and bf_annot = (bool * int * (exp list))
 (* (is_linking, label, list of linking expressions in b_formula) *)
@@ -1301,7 +1301,7 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
         if (var_in_target v sst) then
           let fresh_v = fresh_spec_var v in
           Exists  (fresh_v, apply_subs sst (apply_subs [(v, fresh_v)] qf), lbl, pos)
-        else Exists  (v, apply_subs sst qf, lbl, pos)
+        else Exists (v, apply_subs sst qf, lbl, pos)
 
 
 (* cannot change to a let, why? *)
@@ -5715,17 +5715,17 @@ let rec dist_and_over_or f =
 	| And (f1, f2, _) ->
 	  let nf1 = dist_and_over_or f1 in
 	  let nf2 = dist_and_over_or f2 in
-		(match f1 with
+		(match nf1 with
 		  | Or (f11, f12, lbl, _) ->
-			let nf1 = And (nf1, f2, no_pos) in
-			let nf2 = And (nf2, f2, no_pos) in
-			Or (dist_and_over_or nf1, dist_and_over_or nf2, lbl, no_pos)
+			let nf11 = And (f11, nf2, no_pos) in
+			let nf12 = And (f12, nf2, no_pos) in
+			Or (dist_and_over_or nf11, dist_and_over_or nf12, lbl, no_pos)
 		  | _ ->
-			(match f2 with
+			(match nf2 with
 			  | Or (f21, f22, lbl, _) ->
-				let nf1 = And (f1, f21, no_pos) in
-				let nf2 = And (f1, f22, no_pos) in
-				Or (dist_and_over_or nf1, dist_and_over_or nf2, lbl, no_pos)
+				let nf21 = And (nf1, f21, no_pos) in
+				let nf22 = And (nf1, f22, no_pos) in
+				Or (dist_and_over_or nf21, dist_and_over_or nf22, lbl, no_pos)
 			  | _ -> f))
 	| Or (f1, f2, fl, loc) ->
 	  let nf1 = dist_and_over_or f1 in
@@ -5741,6 +5741,15 @@ let trans_dnf f =
   let f = dist_and_over_or f in
   f
 
+let rec dnf_to_list f =
+  let dnf_f = trans_dnf f in
+  match dnf_f with
+	| Or (f1, f2, _, _) ->
+	  let l_f1 = dnf_to_list f1 in
+	  let l_f2 = dnf_to_list f2 in
+	  l_f1 @ l_f2
+	| _ -> [dnf_f]
+  	
 let rec partition_dnf_lhs f =
   match f with
 	| BForm (bf, _) -> [[bf]]
