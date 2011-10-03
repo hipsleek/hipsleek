@@ -58,16 +58,16 @@ void initialize(ref int[] Positive_RA_Alt_Thresh)
     Positive_RA_Alt_Thresh[3] = 740;
 }
 
-int ALIM (ref int[] Positive_RA_Alt_Thresh)
+int ALIM (int i, ref int[] Positive_RA_Alt_Thresh)
     requires  dom(Positive_RA_Alt_Thresh, 0, 3) &  Positive_RA_Alt_Thresh[0] = 400 &  Positive_RA_Alt_Thresh[1] = 500 &
                  Positive_RA_Alt_Thresh[2] = 640 &  Positive_RA_Alt_Thresh[3] = 740 &
-                 Alt_Layer_Value = 0
+                 i = 0
     ensures  dom(Positive_RA_Alt_Thresh', 0, 3)  &  Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
-                 Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740 & Alt_Layer_Value' = 0 &
+                 Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740  &
      (res = 400);
 //(res = 400 | res = 500 | res = 640 | res = 740)
 {
- return Positive_RA_Alt_Thresh[Alt_Layer_Value];
+ return Positive_RA_Alt_Thresh[i];
 }
 
 /*
@@ -122,11 +122,13 @@ bool Non_Crossing_Biased_Climb(ref int[] Positive_RA_Alt_Thresh)
     upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
     if (upward_preferred)
     {
-	result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation >= ALIM(Positive_RA_Alt_Thresh))));
+      result = !(Own_Below_Threat()) || ((Own_Below_Threat()) &&
+           (!(Down_Separation >= ALIM(Alt_Layer_Value, Positive_RA_Alt_Thresh))));
     }
     else
     {
-	result = Own_Above_Threat() && (Cur_Vertical_Sep >= 300) && (Up_Separation >= ALIM(Positive_RA_Alt_Thresh));
+      result = Own_Above_Threat() && (Cur_Vertical_Sep >= 300) &&
+            (Up_Separation >= ALIM(Alt_Layer_Value, Positive_RA_Alt_Thresh));
     }
     return result;
 }
@@ -163,12 +165,12 @@ bool Non_Crossing_Biased_Descend(ref int[] Positive_RA_Alt_Thresh)
     locupward_preferred = Inhibit_Biased_Climb() > Down_Separation;
     if (locupward_preferred)
     {
-	result = Own_Below_Threat() && (Cur_Vertical_Sep >= 300) && (Down_Separation >= ALIM(Positive_RA_Alt_Thresh));
+      result = Own_Below_Threat() && (Cur_Vertical_Sep >= 300) && (Down_Separation >= ALIM(Alt_Layer_Value, Positive_RA_Alt_Thresh));
     }
     else
     {
     temp1 = Own_Above_Threat();
-	temp2 = ALIM(Positive_RA_Alt_Thresh);
+	temp2 = ALIM(Alt_Layer_Value, Positive_RA_Alt_Thresh);
 	result = 
 	!(temp1) || 
 	((temp1) && 
