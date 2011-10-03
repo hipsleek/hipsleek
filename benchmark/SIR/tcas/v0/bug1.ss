@@ -24,6 +24,35 @@ int ALIM (ref int[] Positive_RA_Alt_Thresh,  ref int Alt_Layer_Value)
  return k;
 }
 
+int ALIM2 (ref int[] arr,  int i)
+ requires  [s,b] dom(arr, s, b) & s<=i<=b 
+ ensures  arr'=arr & res=arr[i];
+{
+ int k =  arr[i];
+ return k;
+}
+
+
+int ALIM3 (int[] arr,  int i)
+ requires  [s,b] dom(arr, s, b) & s<=i<=b 
+ ensures   res=arr[i];
+{
+ int k =  arr[i];
+ return k;
+}
+
+
+int ALIM4 (ref int[] arr,  int i)
+ requires  [s,b] dom(arr, s, b) & s<=i<b 
+ ensures   res=arr[i] & arr'[i+1]=1
+              & forall (a: a=(i+1) | arr'[a]=arr[a]) ;
+{
+ arr[i+1] = 1;
+ int k =  arr[i];
+ return k;
+}
+
+
 
 /*
 global int v1;
