@@ -1,7 +1,7 @@
 relation dom(int[] a, int x, int y) == true.
-  //global int Alt_Layer_Value;	
+  // global int Alt_Layer_Value;
 
-int ALIM (ref int[] Positive_RA_Alt_Thresh, ref int Alt_Layer_Value)
+  int ALIM (ref int[] Positive_RA_Alt_Thresh,  ref int Alt_Layer_Value)
     requires  dom(Positive_RA_Alt_Thresh, 0, 3) &  Positive_RA_Alt_Thresh[0] = 400 &  Positive_RA_Alt_Thresh[1] = 500 &
                  Positive_RA_Alt_Thresh[2] = 640 &  Positive_RA_Alt_Thresh[3] = 740 &
                  Alt_Layer_Value = 0

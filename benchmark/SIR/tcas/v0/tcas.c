@@ -50,7 +50,7 @@ global bool Climb_Inhibit;		/* true/false */
 void initialize(ref int[] Positive_RA_Alt_Thresh)
     requires  dom(Positive_RA_Alt_Thresh, 0, 3)
     ensures  dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
-                 Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740;
+               Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740;
 {
     Positive_RA_Alt_Thresh[0] = 400;
     Positive_RA_Alt_Thresh[1] = 500;
@@ -58,13 +58,11 @@ void initialize(ref int[] Positive_RA_Alt_Thresh)
     Positive_RA_Alt_Thresh[3] = 740;
 }
 
-int ALIM (int i, ref int[] Positive_RA_Alt_Thresh)
+int ALIM (ref int i, int[] Positive_RA_Alt_Thresh)
     requires  dom(Positive_RA_Alt_Thresh, 0, 3) &  Positive_RA_Alt_Thresh[0] = 400 &  Positive_RA_Alt_Thresh[1] = 500 &
                  Positive_RA_Alt_Thresh[2] = 640 &  Positive_RA_Alt_Thresh[3] = 740 &
                  i = 0
-    ensures  dom(Positive_RA_Alt_Thresh', 0, 3)  &  Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
-                 Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740  &
-     (res = 400);
+    ensures  (res = 400) & (i'=0);
 //(res = 400 | res = 500 | res = 640 | res = 740)
 {
  return Positive_RA_Alt_Thresh[i];
@@ -77,16 +75,17 @@ case {
 }
 */
 
-int Inhibit_Biased_Climb ()
+int Inhibit_Biased_Climb (ref int Up_Separation, ref bool Climb_Inhibit)
   requires !Climb_Inhibit
-  ensures res = Up_Separation & Up_Separation' = Up_Separation & !Climb_Inhibit';
+  ensures res = Up_Separation & Up_Separation' = Up_Separation & Climb_Inhibit'=Climb_Inhibit;
 {
   if (Climb_Inhibit) return (Up_Separation + 100);
 	else return Up_Separation;
 //    return (Climb_Inhibit ? Up_Separation + 100 : Up_Separation);
 }
 
-bool Non_Crossing_Biased_Climb(ref int[] Positive_RA_Alt_Thresh)
+bool Non_Crossing_Biased_Climb(ref int Up_Separation,ref int Down_Separation, ref int Cur_Vertical_Sep,ref bool Climb_Inhibit,
+                               ref int Alt_Layer_Value, ref int[] Positive_RA_Alt_Thresh)
    requires  dom(Positive_RA_Alt_Thresh, 0, 3) & Positive_RA_Alt_Thresh[0] = 400 &  Positive_RA_Alt_Thresh[1] = 500 &
              Positive_RA_Alt_Thresh[2] = 640 &  Positive_RA_Alt_Thresh[3] = 740 & (Alt_Layer_Value = 0)  &
              !Climb_Inhibit & (Cur_Vertical_Sep > 600) &
@@ -96,22 +95,18 @@ bool Non_Crossing_Biased_Climb(ref int[] Positive_RA_Alt_Thresh)
        case {
          Up_Separation >= 400 ->
            ensures dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
-              Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740 &
-             (Alt_Layer_Value' = 0) & !Climb_Inhibit' & (Cur_Vertical_Sep' > 600) &
-             (Up_Separation' = Up_Separation &  Down_Separation'=Down_Separation) &
-             res;
+              Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740 & (Alt_Layer_Value' = 0) & (Alt_Layer_Value' = Alt_Layer_Value) & Climb_Inhibit'=Climb_Inhibit  & (Cur_Vertical_Sep' = Cur_Vertical_Sep) &
+             (Up_Separation' < Down_Separation') & res;
          Up_Separation < 400 ->
-           ensures dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
-              Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740 &
-             (Alt_Layer_Value' = Alt_Layer_Value) & Climb_Inhibit'= Climb_Inhibit  & (Cur_Vertical_Sep' = Cur_Vertical_Sep) &
-             (Up_Separation' = Up_Separation &  Down_Separation'=Down_Separation) &
-             !res;
+           ensures  dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 & Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740 & (Alt_Layer_Value' = 0) &
+(Alt_Layer_Value' = Alt_Layer_Value) & Climb_Inhibit'=Climb_Inhibit  & (Cur_Vertical_Sep' = Cur_Vertical_Sep) &
+             (Up_Separation' < Down_Separation') & !res;
        }
      Other_Tracked_Alt >= Own_Tracked_Alt ->
           ensures dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
-              Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740 &
+              Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740 & (Alt_Layer_Value' = 0) &
               (Alt_Layer_Value' = Alt_Layer_Value) & Climb_Inhibit'= Climb_Inhibit  & (Cur_Vertical_Sep' = Cur_Vertical_Sep) &
-             (Up_Separation' = Up_Separation &  Down_Separation'=Down_Separation) &
+             (Up_Separation' < Down_Separation') &
              !res;
    }
 {
@@ -119,7 +114,7 @@ bool Non_Crossing_Biased_Climb(ref int[] Positive_RA_Alt_Thresh)
     int upward_crossing_situation;
     bool result;
 
-    upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
+    upward_preferred = Inhibit_Biased_Climb(Up_Separation, Climb_Inhibit) > Down_Separation;
     if (upward_preferred)
     {
       result = !(Own_Below_Threat()) || ((Own_Below_Threat()) &&
@@ -162,7 +157,7 @@ bool Non_Crossing_Biased_Descend(ref int[] Positive_RA_Alt_Thresh)
     if (temp > Down_Separation) {upward_preferred = true;}
     else {upward_preferred = false;}
 */
-    locupward_preferred = Inhibit_Biased_Climb() > Down_Separation;
+    locupward_preferred = Inhibit_Biased_Climb(Up_Separation, Climb_Inhibit) > Down_Separation;
     if (locupward_preferred)
     {
       result = Own_Below_Threat() && (Cur_Vertical_Sep >= 300) && (Down_Separation >= ALIM(Alt_Layer_Value, Positive_RA_Alt_Thresh));
@@ -207,6 +202,18 @@ int alt_sep_test(ref int[] Positive_RA_Alt_Thresh)
   (Alt_Layer_Value = 0) & Own_Tracked_Alt_Rate <= 600 &
   (Other_Capability = 0) & !Climb_Inhibit & High_Confidence & (Cur_Vertical_Sep > 600) &
    (Up_Separation < Down_Separation)
+ case {
+    Own_Tracked_Alt < Other_Tracked_Alt ->
+    case{
+      Up_Separation >= 400 ->
+      Up_Separation < 400 ->
+    }
+     Own_Tracked_Alt >= Other_Tracked_Alt ->
+     case{
+      Up_Separation >= 400 ->
+      Up_Separation < 400 ->
+    }
+}
     ensures  ( res=0 | res=2 | res=3| res=1);
 {
     bool enabled, tcas_equipped, intent_not_known;
@@ -221,9 +228,10 @@ int alt_sep_test(ref int[] Positive_RA_Alt_Thresh)
     
     if (enabled && ((tcas_equipped && intent_not_known) || !tcas_equipped))
     {
-	need_upward_RA = Non_Crossing_Biased_Climb(Positive_RA_Alt_Thresh) && Own_Below_Threat();
-	need_downward_RA = Non_Crossing_Biased_Descend(Positive_RA_Alt_Thresh) && Own_Above_Threat();
-	if (need_upward_RA && need_downward_RA)
+      need_upward_RA = Non_Crossing_Biased_Climb(Up_Separation,Down_Separation, Cur_Vertical_Sep,
+                             Climb_Inhibit,Alt_Layer_Value, Positive_RA_Alt_Thresh) && Own_Below_Threat();
+	  need_downward_RA = Non_Crossing_Biased_Descend(Positive_RA_Alt_Thresh) && Own_Above_Threat();
+	  if (need_upward_RA && need_downward_RA)
         /* unreachable: requires Own_Below_Threat and Own_Above_Threat
            to both be true - that requires Own_Tracked_Alt < Other_Tracked_Alt
            and Other_Tracked_Alt < Own_Tracked_Alt, which isn't possible */
