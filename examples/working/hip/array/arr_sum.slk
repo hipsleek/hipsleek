@@ -26,15 +26,17 @@ checkentail dom(a,l,h) |- (exists b: dom(a,b,h) & b>=l).
 
 checkentail dom(a,l,h) |- (exists b: dom(a,b,h) & l<b).
 
-checkentail dom(a,l,h) & l<b |- dom(a,b,h).
 
-checkentail dom(a,l,h) & l<=b |- dom(a,b,h).
+checkentail dom(a,l,h) & b=l |- dom(a,b,h).
+
 
 checkentail dom(a,l,h) & b>=l |- dom(a,b,h).
 
 checkentail dom(a,l,h) & b>l |- dom(a,b,h).
 
-checkentail dom(a,l,h) & b=l |- dom(a,b,h).
 
+checkentail dom(a,l,h) & l<b |- dom(a,b,h).
+
+checkentail dom(a,l,h) & l<=b |- dom(a,b,h).
 
 
