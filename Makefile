@@ -11,7 +11,7 @@ INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
 FLAGS = $(INCLUDES),-g,-annot
 
 # -no-hygiene flag to disable "hygiene" rules
-OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) -no-hygiene
+OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
@@ -65,5 +65,5 @@ ghip.native:
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean 
-	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
+	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte	
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
