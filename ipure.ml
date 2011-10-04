@@ -664,8 +664,8 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| Neq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| EqMax (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
 	| EqMin (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
-	| BagIn (_, e, _) -> find_lexp_exp e ls
-	| BagNotIn (_, e, _) -> find_lexp_exp e ls
+	| BagIn (v, e, loc) -> find_lexp_exp (Var (v, loc)) ls @ find_lexp_exp e ls
+	| BagNotIn (v, e, loc) -> find_lexp_exp (Var (v, loc)) ls @ find_lexp_exp e ls
 	| BagSub (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| BagMin _ | BagMax _ -> []
 	| ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls

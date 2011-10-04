@@ -1109,7 +1109,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 
 
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  Gen.Debug.ho_3 "compute_view_x_formula"
+  Gen.Debug.no_3 "compute_view_x_formula"
 	Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
 	compute_view_x_formula_x prog vdef n
 	
@@ -1314,7 +1314,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   )
 
 and fill_one_base_case prog vd =
-  Gen.Debug.ho_1 "fill_one_base_case"
+  Gen.Debug.no_1 "fill_one_base_case"
 	Cprinter.string_of_view_decl Cprinter.string_of_view_decl
 	(fun vd -> fill_one_base_case_x prog vd) vd
 	 
@@ -1565,15 +1565,17 @@ and compute_base_case prog cf vars =
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 = pr_option (fun (p, _) -> Cprinter.string_of_pure_formula p) in
-  Gen.Debug.ho_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Gen.Debug.no_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
 
 and compute_base_case_x prog cf vars =
+(*
   if !do_slicing then
 	compute_base_case_slicing prog cf vars
   else
 	compute_base_case_orig prog cf vars
-	
+		
 and compute_base_case_orig prog cf vars = (*flatten_base_case cf s self_c_var *)
+*)
   let mix2p = MCP.fold_mem_lst (CP.mkTrue no_pos) true true in
   let pure_compose p b :CP.formula = CF.flatten_branches (mix2p p) b in
   let xpuring f = 
@@ -1581,7 +1583,7 @@ and compute_base_case_orig prog cf vars = (*flatten_base_case cf s self_c_var *)
     let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
       ([],[pure_compose xform xform_b]) in
 
-  let xpuring f = Gen.Debug.ho_1 "xpuring"
+  let xpuring f = Gen.Debug.no_1 "xpuring"
 	Cprinter.string_of_formula
 	(fun (_, ls) -> pr_list (fun e -> Cprinter.string_of_pure_formula e) ls)
 	xpuring f
@@ -1624,14 +1626,14 @@ and compute_base_case_orig prog cf vars = (*flatten_base_case cf s self_c_var *)
     match bcg with
       | []-> None
       | _ -> Some (CP.disj_of_list bcg no_pos,cases)
-     
+(*     
 and compute_base_case_slicing prog cf vars = 
   let mix2p = MCP.fold_mem_lst (CP.mkTrue no_pos) true true in
 
   let pr_branches = (fun l -> pr_list (fun (_, b) -> Cprinter.string_of_pure_formula b) l) in
   let pure_compose p b : CP.formula = CF.flatten_branches (mix2p p) b in
   let pure_compose p b : CP.formula =
-	Gen.Debug.ho_2 "pure_compose"
+	Gen.Debug.no_2 "pure_compose"
 	  Cprinter.string_of_mix_formula
 	  pr_branches
 	  Cprinter.string_of_pure_formula
@@ -1647,7 +1649,7 @@ and compute_base_case_slicing prog cf vars =
     let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
       ([],[pure_compose xform xform_b]) in
   
-  let xpuring f = Gen.Debug.ho_1 "xpuring"
+  let xpuring f = Gen.Debug.no_1 "xpuring"
 	Cprinter.string_of_formula
 	(fun (_, ls) -> pr_list (fun e -> Cprinter.string_of_pure_formula e) ls)
 	xpuring f
@@ -1676,7 +1678,7 @@ and compute_base_case_slicing prog cf vars =
 	  ((Cprinter.string_of_pure_formula pf) ^
 	  " -> " ^
 	  (Cprinter.string_of_mix_formula mixf) ^ "\n") in
-	Gen.Debug.ho_1 "compute_base_case_slicing: part"
+	Gen.Debug.no_1 "compute_base_case_slicing: part"
 	  Cprinter.string_of_formula
 	  (fun (lc, lp) -> (pr_list pr_e lc) ^ " *** " ^ (pr_list Cprinter.string_of_pure_formula lp))
 	  part f
@@ -1717,7 +1719,7 @@ and compute_base_case_slicing prog cf vars =
     match bcg with
       | []-> None
       | _ -> Some (CP.disj_of_list bcg no_pos,cases)
-     
+*)     
 and set_materialized_prop cdef =
   let args = (CP.SpecVar (Named "", self, Unprimed))::cdef.C.view_vars in
   let mvars =

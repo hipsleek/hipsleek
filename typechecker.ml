@@ -573,18 +573,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
        else *)	    
     let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)
-        
+(*        
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let ctx = list_partial_context_and_unsat_now prog ctx in *)
   let _ = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2  
+  Gen.Debug.loop_2 "check_post" Cprinter.string_of_pos pr2 pr2  
       (fun _ _ -> 
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)
           r ) pos ctx
-
+*)
+and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+  let pr = pr_list Cprinter.string_of_partial_context in
+  Gen.Debug.ho_2 "check_post" pr Cprinter.string_of_formula (fun _ -> "?")
+	(fun ctx post -> check_post_x prog proc ctx post pos pid) ctx post
+	  
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
   (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)

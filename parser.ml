@@ -144,6 +144,10 @@ let cexp_to_pure1 fct f = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), None), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
+let cexp_to_pure_slicing fct f sl = match f with
+  | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None))
+  | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
+
 let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
@@ -371,8 +375,18 @@ let rec set_il_formula f il =
 	| _ -> f
 
 and set_il_b_formula bf il =
-  let (pf, _) = bf in (pf, il)
-
+  Gen.Debug.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula
+	(fun bf -> set_il_b_formula_x bf il) bf
+	  
+and set_il_b_formula_x bf il =
+  let (pf, o_il) = bf in
+  match o_il with
+	| None -> (pf, il)
+	| Some (_, _, l_exp) ->
+	  match il with
+		| None -> bf
+		| Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
+	  
 and set_il_exp exp il =
   let (pe, _) = exp in (pe, il)				   
 				   
@@ -756,13 +770,21 @@ cexp_w :
      | lc=SELF; `GTE;    cl=SELF       ->
 	 let f = cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	   set_slicing_utils_pure_double f false
-     | peek_try; lc=cid; `IN_T;   cl=SELF                      ->
-	 let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in
+     | (*peek_try;*) lc=SELF(*cid*); `IN_T;   cl=SELF                      ->
+	 let cid, pos = match lc with
+	   | Pure_c (P.Var (t, l)) -> (t, l)
+	   | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
+	 (*let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in*)
+	 let f = cexp_to_pure1 (fun c2 -> P.BagIn (cid,c2,pos)) cl in
 	 set_slicing_utils_pure_double f false
-     | peek_try; lc=cid; `NOTIN;  cl=SELF                      ->
-	 let f = cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos_camlp4 _loc 2))) cl  in
+     | (*peek_try;*) lc=SELF(*cid*); `NOTIN;  cl=SELF                      ->
+	 let cid, pos = match lc with
+	   | Pure_c (P.Var (t, l)) -> (t, l)
+	   | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
+	 (*let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in*)
+	 let f = cexp_to_pure1 (fun c2 -> P.BagNotIn(cid,c2,pos)) cl in
 	 set_slicing_utils_pure_double f false
-     | lc=SELF; `SUBSET; cl=SELF                            ->
+	 | lc=SELF; `SUBSET; cl=SELF                            ->
 	 let f = cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	 set_slicing_utils_pure_double f false
      | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->

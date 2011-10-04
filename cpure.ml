@@ -2173,10 +2173,12 @@ and elim_exists_with_ineq (f0: formula): formula =
           mkForall [qvar] eqf lbl pos
     | BForm _ -> f0
 
-
+and elim_exists (f0 : formula) : formula =
+  let pr = !print_formula in
+  Gen.Debug.no_1 "elim_exists" pr pr elim_exists_x f0
 
 (* eliminate exists with the help of v=exp *)
-and elim_exists (f0 : formula) : formula = 
+and elim_exists_x (f0 : formula) : formula = 
   let rec helper f0 =
     match f0 with
       | Exists (qvar, qf, lbl, pos) -> begin
