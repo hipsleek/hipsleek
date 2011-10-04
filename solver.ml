@@ -2990,7 +2990,7 @@ and heap_entail (prog : prog_decl) (is_folding : bool)  (cl : list_context) (con
             (heap_entail_one_context prog is_folding  (List.hd cl) conseq pos)
 
 and heap_entail_one_context prog is_folding ctx conseq pos =
-  Gen.Debug.loop_2 "heap_entail_one_context"
+  Gen.Debug.loop_2_no "heap_entail_one_context"
 	(Cprinter.string_of_context)
 	(Cprinter.string_of_formula)
 	(fun (l,p) -> Cprinter.string_of_list_context l)
@@ -3012,7 +3012,7 @@ and heap_entail_one_context_x (prog : prog_decl) (is_folding : bool)  (ctx : con
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
-  Gen.Debug.loop_2 "heap_entail_after_sat"
+  Gen.Debug.loop_2_no "heap_entail_after_sat"
 	(Cprinter.string_of_context)
 	(Cprinter.string_of_formula)
 	(fun (l,p) -> Cprinter.string_of_list_context l)

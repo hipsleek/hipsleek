@@ -1117,7 +1117,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
   (if n > 0 then
       (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
 
-	   if !do_slicing then
+	   if !do_slicing && !multi_provers then
 		 let rec trans_formula_to_memo = function
 		   | CF.Or ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) ->
 			 let mpf1 = trans_formula_to_memo f1 in
@@ -1568,14 +1568,6 @@ and compute_base_case prog cf vars =
   Gen.Debug.no_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
 
 and compute_base_case_x prog cf vars =
-(*
-  if !do_slicing then
-	compute_base_case_slicing prog cf vars
-  else
-	compute_base_case_orig prog cf vars
-		
-and compute_base_case_orig prog cf vars = (*flatten_base_case cf s self_c_var *)
-*)
   let mix2p = MCP.fold_mem_lst (CP.mkTrue no_pos) true true in
   let pure_compose p b :CP.formula = CF.flatten_branches (mix2p p) b in
   let xpuring f = 
@@ -1626,100 +1618,7 @@ and compute_base_case_orig prog cf vars = (*flatten_base_case cf s self_c_var *)
     match bcg with
       | []-> None
       | _ -> Some (CP.disj_of_list bcg no_pos,cases)
-(*     
-and compute_base_case_slicing prog cf vars = 
-  let mix2p = MCP.fold_mem_lst (CP.mkTrue no_pos) true true in
-
-  let pr_branches = (fun l -> pr_list (fun (_, b) -> Cprinter.string_of_pure_formula b) l) in
-  let pure_compose p b : CP.formula = CF.flatten_branches (mix2p p) b in
-  let pure_compose p b : CP.formula =
-	Gen.Debug.no_2 "pure_compose"
-	  Cprinter.string_of_mix_formula
-	  pr_branches
-	  Cprinter.string_of_pure_formula
-	  pure_compose p b
-  in 
-  let xpuring f = 
-    let (xform', xform_b, _ , _) = Solver.xpure_symbolic prog f in
-
-	let (xform1, xform_b1, _ , _) = Solver.xpure_symbolic_slicing prog f in
-	let _ = print_string ("xpuring: xform1: " ^ (Cprinter.string_of_formula xform1) ^ "\n") in
-	let _ = print_string ("xpuring: xform_b1: " ^ (pr_branches xform_b1) ^ "\n") in
-	
-    let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
-      ([],[pure_compose xform xform_b]) in
-  
-  let xpuring f = Gen.Debug.no_1 "xpuring"
-	Cprinter.string_of_formula
-	(fun (_, ls) -> pr_list (fun e -> Cprinter.string_of_pure_formula e) ls)
-	xpuring f
-  in
-
-  let rec part f = match f with
-    | CF.Or b -> 
-        let (c1,c2) = part b.CF.formula_or_f1 in
-        let (d1,d2) = part b.CF.formula_or_f2 in
-          (c1@d1,c2@d2)
-    | CF.Base b -> 
-        if (CF.is_complex_heap b.CF.formula_base_heap) then xpuring f          
-        else 
-          let l1,l2 = b.CF.formula_base_pure, b.CF.formula_base_branches in
-          ([(pure_compose l1 l2 ,(l1,l2))],[])
-    | CF.Exists e -> 
-        if (CF.is_complex_heap e.CF.formula_exists_heap) then xpuring f
-        else 
-          let l1,l2,qv = e.CF.formula_exists_pure, e.CF.formula_exists_branches, e.CF.formula_exists_qvars in
-          let ppqv f = Cpure.mkExists qv f None no_pos in
-         ([(ppqv (pure_compose l1 l2), 
-          (MCP.memo_pure_push_exists qv l1, List.map (fun (c1,c2)->(c1,ppqv c2)) l2))],[]) in
-
-  let part f =
-	let pr_e (pf, (mixf, _)) =
-	  ((Cprinter.string_of_pure_formula pf) ^
-	  " -> " ^
-	  (Cprinter.string_of_mix_formula mixf) ^ "\n") in
-	Gen.Debug.no_1 "compute_base_case_slicing: part"
-	  Cprinter.string_of_formula
-	  (fun (lc, lp) -> (pr_list pr_e lc) ^ " *** " ^ (pr_list Cprinter.string_of_pure_formula lp))
-	  part f
-  in 
-  
-  let pure_or (f1p,f1b) (f2p,f2b) = (MCP.mkOr_mems f1p f2p, CP.or_branches f1b f2b) in
-
-  let sim,co = List.split (List.map (fun (c,_)-> part c) cf) in
-  let sim,co = List.concat sim, List.concat co in
-
-  let _ =
-	let pr_e (pf, (mixf, _)) =
-	  ((Cprinter.string_of_pure_formula pf) ^
-	  " -> " ^
-	  (Cprinter.string_of_mix_formula mixf) ^ "\n") in
-	print_string ("compute_base_case_slicing: sim: " ^ (pr_list pr_e sim)) in
-
-  if (sim==[]) then None 
-  else
-    let guards,cases = List.split sim in
-    let cases = List.fold_left pure_or (MCP.mkMFalse no_pos,[]) cases in  
-    let bcg = List.fold_left (fun a p -> a@(CP.split_conjunctions (TP.simplify_a (-1) p))) [] guards in
-    let bcg = Gen.BList.remove_dups_eq (CP.equalFormula_f CP.eq_spec_var) bcg in
-    let one_bc = List.fold_left (fun a c -> CP.mkOr a c None no_pos) (CP.mkFalse no_pos) guards in
-	
-	let _ = print_string ("compute_base_case_slicing: one_bc: " ^ (Cprinter.string_of_pure_formula one_bc) ^ "\n") in
-	let _ = print_string ("compute_base_case_slicing: bcg: " ^ (pr_list Cprinter.string_of_pure_formula bcg) ^ "\n") in
-
-	
-    let bc_impl c =
-	  let _ = print_string ("compute_base_case_slicing: bc_impl: c: " ^ (Cprinter.string_of_pure_formula c) ^ "\n") in
-	  let r,_,_ = TP.imply_sub_no one_bc c "0" false None in r in
-    let sat_subno  = ref 0 in
-    let bcg = List.filter (fun c-> 
-      (not (CP.isConstTrue c))&& 
-      (bc_impl c)&& 
-      List.for_all (fun d-> not (TP.is_sat_sub_no (CP.mkAnd c d no_pos) sat_subno)) co ) bcg in
-    match bcg with
-      | []-> None
-      | _ -> Some (CP.disj_of_list bcg no_pos,cases)
-*)     
+     
 and set_materialized_prop cdef =
   let args = (CP.SpecVar (Named "", self, Unprimed))::cdef.C.view_vars in
   let mvars =
@@ -7023,8 +6922,12 @@ type: (CF.formula * Globals.formula_label) list ->
       if remain_ls==[] then false
       else List.for_all
         (fun (o_l,o_f) ->
-              let new_f = CP.mkAnd o_f bf no_pos
-       in (*(TP.is_sat new_f "get_safe_prune_conds" false)*) TP.is_sat_sub_no new_f (ref 0)
+          let new_f = CP.mkAnd o_f bf no_pos
+		  in
+		  if !do_slicing && !multi_provers then
+			TP.is_sat_sub_no new_f (ref 0)
+		  else
+			TP.is_sat new_f "get_safe_prune_conds" false 
         ) remain_ls
      end
      in

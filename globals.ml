@@ -356,6 +356,7 @@ let enable_incremental_proving = ref false
 let do_slicing = ref false
 let opt_imply = ref 0
 let infer_slicing = ref false
+let multi_provers = ref false
 
 let add_count (t: int ref) = 
 	t := !t+1

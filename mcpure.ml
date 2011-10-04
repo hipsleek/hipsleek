@@ -604,14 +604,14 @@ and memo_is_member_pure p mm =
    with_disj : takes also non-atomic disjunctive ctrs
 *)
 and fold_mem_lst_to_lst_gen (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
-  Gen.Debug.ho_1 "fold_mem_lst_to_lst_gen"
+  Gen.Debug.no_1 "fold_mem_lst_to_lst_gen"
 	!print_mp_f
 	(pr_list !print_p_f_f)
 	(fun mem -> fold_mem_lst_to_lst_gen_x mem with_R with_P with_slice with_disj) mem
 	
 (* returns list of AND formulas, each slice will be a formula *)
 and fold_mem_lst_to_lst_gen_x (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
-  if !do_slicing then
+  if !do_slicing && !multi_provers then
 	fold_mem_lst_to_lst_gen_slicing mem with_R with_P with_slice with_disj
   else
 	fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj
@@ -1277,9 +1277,11 @@ and memo_pure_push_exists_slice_slicing (f_simp,do_split) (qv:spec_var list) (f0
 
   let regroup_memo_group_list mgl =
 	let overlap fv1 fv2 =
-	  let intersect = Gen.BList.intersect_eq eq_spec_var fv1 fv2 in 
-	  Gen.BList.overlap_eq eq_spec_var qv intersect
-	  (* Gen.BList.overlap_eq eq_spec_var m.memo_group_fv mg.memo_group_fv *)
+	  if !multi_provers then
+		let intersect = Gen.BList.intersect_eq eq_spec_var fv1 fv2 in
+		Gen.BList.overlap_eq eq_spec_var qv intersect
+	  else
+		Gen.BList.overlap_eq eq_spec_var fv1 fv2
 	in
 	
 	let repart acc mg =
