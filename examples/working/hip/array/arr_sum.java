@@ -20,7 +20,7 @@ int sigmaright(int[] a, int i, int j)
 		return 0;
 	else 
 	{
-		return a[i] + sigmaright(a, i+1, j);
+		return a[i-1] + sigmaright(a, i+1, j);
 	}
 }
 
