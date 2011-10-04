@@ -1,5 +1,7 @@
 relation dom(int[] a, int x, int y) == true.
-   global int Alt_Layer_Value;
+global int Alt_Layer_Value;
+
+
 
 int ALIM (ref int[] Positive_RA_Alt_Thresh,  ref int Alt_Layer_Value)
  requires  dom(Positive_RA_Alt_Thresh, 0, 3) 
@@ -20,7 +22,7 @@ int ALIM (ref int[] Positive_RA_Alt_Thresh,  ref int Alt_Layer_Value)
 //(res = 400 | res = 500 | res = 640 | res = 740)
 {
  int k =  Positive_RA_Alt_Thresh[Alt_Layer_Value];
- dprint;
+ //dprint;
  return k;
 }
 
@@ -38,6 +40,7 @@ int ALIM3 (int[] arr,  int i)
  ensures   res=arr[i];
 {
  int k =  arr[i];
+// k = AIM;
  return k;
 }
 

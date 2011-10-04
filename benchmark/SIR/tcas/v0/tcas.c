@@ -6,8 +6,7 @@
  * */
 
 //#include <stdio.h>
-//relation dom(int[] a, int x, int y) == true.
-
+relation dom(int[] a, int x, int y) == true.
 
 //#define OLEV       600		/* in feets/minute */
 //#define MAXALTDIFF 600		/* max altitude difference in feet */
@@ -46,9 +45,9 @@ global bool Climb_Inhibit;		/* true/false */
 //#define UNRESOLVED 0
 //#define UPWARD_RA 1
 //#define DOWNWARD_RA 2
-/*
+
 void initialize(ref int[] Positive_RA_Alt_Thresh)
-    requires  dom(Positive_RA_Alt_Thresh, 0, 3)
+  requires   dom(Positive_RA_Alt_Thresh, 0, 3)
     ensures  dom(Positive_RA_Alt_Thresh', 0, 3) & Positive_RA_Alt_Thresh'[0] = 400 &  Positive_RA_Alt_Thresh'[1] = 500 &
                Positive_RA_Alt_Thresh'[2] = 640 &  Positive_RA_Alt_Thresh'[3] = 740;
 {
@@ -57,73 +56,57 @@ void initialize(ref int[] Positive_RA_Alt_Thresh)
     Positive_RA_Alt_Thresh[2] = 640;
     Positive_RA_Alt_Thresh[3] = 740;
 }
-*/
 
-int ALIM ()
-  requires true
-  ensures res = 400;
+int ALIM (ref int[] arr,  int i)
+ requires  dom(arr, 0, 3) & 0<=i<=3
+ ensures  arr'=arr & res=arr[i];
 {
-  return 400;
+ int k =  arr[i];
+ return k;
 }
-/*
-int ALIM1 (int i, int[] arr)
-    requires  [s,b] dom(arr, s, b) & s <= i <= b & i = 0
-  ensures  res=arr[i];
-//(res = 400 | res = 500 | res = 640 | res = 740)
-{
-  return arr[i];
-}
-*/
-/*
-case {
-    Climb_Inhibit -> ensures res= (Up_Separation+100);
-    !Climb_Inhibit -> ensures res= Up_Separation;
-}
-*/
 
 int Inhibit_Biased_Climb ()
-  requires !Climb_Inhibit
-  ensures res = Up_Separation & Up_Separation' = Up_Separation & Climb_Inhibit'=Climb_Inhibit;
+  requires true
+ case {
+   !Climb_Inhibit -> ensures res = Up_Separation & Up_Separation' = Up_Separation & Climb_Inhibit'=Climb_Inhibit;
+   Climb_Inhibit -> ensures res = Up_Separation +100 & Up_Separation' = Up_Separation & Climb_Inhibit'=Climb_Inhibit;
+}
 {
-  if (Climb_Inhibit) return (Up_Separation + 100);
-	else return Up_Separation;
+  if (Climb_Inhibit) return (Up_Separation + 100); else return Up_Separation;
 //    return (Climb_Inhibit ? Up_Separation + 100 : Up_Separation);
 }
-/*relation:arr_cons dom(Positive_RA_Alt_Thresh, 0, 3) & Positive_RA_Alt_Thresh[0] = 400 &  Positive_RA_Alt_Thresh[1] = 500 &
-               Positive_RA_Alt_Thresh[2] = 640 &  Positive_RA_Alt_Thresh[3] = 740 & (Alt_Layer_Value = 0)  & */
 
-bool Non_Crossing_Biased_Climb()
-  requires  /*arr_cons*/ /*Alt_Layer_Value) &*/ !Climb_Inhibit & (Cur_Vertical_Sep > 600)
+bool Non_Crossing_Biased_Climb(ref int [] arr)
+  requires Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
  case {
-   (Up_Separation <= Down_Separation) ->
-   case {
-     Other_Tracked_Alt < Own_Tracked_Alt ->
-       case {
-         Up_Separation >= 400 ->
-         ensures /*arr_cons*/ /*Alt_Layer_Value) &*/ Climb_Inhibit'=Climb_Inhibit  &
-             (Up_Separation' = Up_Separation) & 
-             Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & res;
-         Up_Separation < 400 ->
-           ensures /*arr_cons*/ /*Alt_Layer_Value) &*/ Climb_Inhibit'=Climb_Inhibit &
-                  (Up_Separation' = Up_Separation) &
-                  Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
-                  !res;
+  (!Climb_Inhibit & (Up_Separation <= Down_Separation)) | (Climb_Inhibit & (Up_Separation + 100<= Down_Separation)) -> case {
+     Other_Tracked_Alt < Own_Tracked_Alt -> case {
+       Up_Separation >= arr[Alt_Layer_Value] -> case {
+           Cur_Vertical_Sep >= 300 ->
+             ensures arr'= arr & Climb_Inhibit'=Climb_Inhibit & (Up_Separation' = Up_Separation) &
+               Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & res;
+           Cur_Vertical_Sep < 300 ->
+             ensures arr'= arr & Climb_Inhibit'=Climb_Inhibit &(Up_Separation' = Up_Separation) &
+               Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & !res;
+         }
+         Up_Separation < arr[Alt_Layer_Value] ->
+           ensures arr'= arr & Climb_Inhibit'=Climb_Inhibit & (Up_Separation' = Up_Separation) &
+                  Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & !res;
        }
      Other_Tracked_Alt >= Own_Tracked_Alt ->
-        ensures /*arr_cons*/ /*Alt_Layer_Value) &*/
-             Climb_Inhibit'= Climb_Inhibit  &  
+        ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit  &
              (Up_Separation' = Up_Separation) & Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
              !res;
    }
-  Up_Separation > Down_Separation -> case {
-      Other_Tracked_Alt <= Own_Tracked_Alt -> ensures Climb_Inhibit'= Climb_Inhibit &
+  (!Climb_Inhibit & (Up_Separation > Down_Separation)) | (Climb_Inhibit & (Up_Separation +100> Down_Separation)) -> case {
+      Other_Tracked_Alt <= Own_Tracked_Alt -> ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit &
              (Up_Separation' = Up_Separation) & Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
               res;
       Other_Tracked_Alt > Own_Tracked_Alt -> case {
-         Down_Separation >= 400 -> ensures Climb_Inhibit'= Climb_Inhibit &
+         Down_Separation >= arr[Alt_Layer_Value] -> ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit &
              (Up_Separation' = Up_Separation) & Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
               !res;
-         Down_Separation < 400 -> ensures Climb_Inhibit'= Climb_Inhibit &
+         Down_Separation < arr[Alt_Layer_Value] -> ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit &
              (Up_Separation' = Up_Separation) & Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
               res;
     }
@@ -137,65 +120,63 @@ bool Non_Crossing_Biased_Climb()
     upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
     if (upward_preferred)
     {
-      result = !(Own_Below_Threat()) || ((Own_Below_Threat()) &&
-                                         (!(Down_Separation >= ALIM(/*Alt_Layer_Value, Positive_RA_Alt_Thresh*/))));
+      result = !(Own_Below_Threat())||((Own_Below_Threat())&&(!(Down_Separation >= ALIM(arr, Alt_Layer_Value))));
     }
     else
     {
-      result = Own_Above_Threat() && (Cur_Vertical_Sep >= 300) &&
-            (Up_Separation >= ALIM(/*Alt_Layer_Value, Positive_RA_Alt_Thresh*/));
+      result = Own_Above_Threat()&&(Cur_Vertical_Sep >= 300)&&(Up_Separation >= ALIM(arr, Alt_Layer_Value));
     }
     return result;
 }
 
-bool Non_Crossing_Biased_Descend()
-   requires /*arr_cons*/ /*Alt_Layer_Value) &*/ !Climb_Inhibit & (Cur_Vertical_Sep > 600)
+bool Non_Crossing_Biased_Descend(ref int [] arr)
+  requires Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
 case {
-   (Up_Separation <= Down_Separation) -> case {
+   (!Climb_Inhibit & (Up_Separation <= Down_Separation)) | (Climb_Inhibit & (Up_Separation + 100<= Down_Separation)) -> case {
        Other_Tracked_Alt < Own_Tracked_Alt-> case {
-         Up_Separation >= 400 ->
-             ensures /*arr_cons*/ /*Alt_Layer_Value) &*/ Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
-                     Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
-                     res ;
-         Up_Separation < 400 ->
-             ensures /*arr_cons*/ /*Alt_Layer_Value) &*/ Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
-                    Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
-                    !res ;
+         Up_Separation >= arr[Alt_Layer_Value] ->
+             ensures arr'= arr &  Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
+                     Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & res ;
+         Up_Separation < arr[Alt_Layer_Value] ->
+             ensures arr'= arr &  Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
+                    Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & !res ;
        }
        Other_Tracked_Alt >= Own_Tracked_Alt ->
-          ensures  /*arr_cons*/ /*Alt_Layer_Value) &*/ Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
-                   Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt &
-                   res;
+          ensures  arr'= arr & Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
+                   Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & res;
    }
-  (Up_Separation > Down_Separation) -> case {
+  (!Climb_Inhibit & (Up_Separation > Down_Separation)) | (Climb_Inhibit & (Up_Separation +100> Down_Separation))-> case {
       Other_Tracked_Alt <= Own_Tracked_Alt->
-              ensures Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
+              ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
               Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & !res;
       Other_Tracked_Alt > Own_Tracked_Alt -> case {
-        Down_Separation >= 400 ->
-                    ensures Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
-                       Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & res;
-        Down_Separation < 400 ->
-                    ensures Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
+        Down_Separation >= arr[Alt_Layer_Value] -> case {
+            Cur_Vertical_Sep >= 300->
+                ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
+                   Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & res;
+           Cur_Vertical_Sep < 300->
+                ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
+                   Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & !res;
+         }
+        Down_Separation < arr[Alt_Layer_Value] ->
+                    ensures arr'= arr & Climb_Inhibit'= Climb_Inhibit & (Up_Separation' = Up_Separation) &
                        Other_Tracked_Alt' = Other_Tracked_Alt & Own_Tracked_Alt' = Own_Tracked_Alt & !res;
       }
   }
 }
 {
-    bool locupward_preferred;
+    bool upward_preferred;
     int upward_crossing_situation;
     bool result;
-	int temp2;
 
-    locupward_preferred = Inhibit_Biased_Climb() > Down_Separation;
-    if (locupward_preferred)
+    upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
+    if (upward_preferred)
     {
-      result = Own_Below_Threat() && (Cur_Vertical_Sep >= 300) && (Down_Separation >= ALIM(/*Alt_Layer_Value, Positive_RA_Alt_Thresh*/));
+      result = Own_Below_Threat() && (Cur_Vertical_Sep >= 300) && (Down_Separation >= ALIM(arr, Alt_Layer_Value));
     }
     else
     {
-	temp2 = ALIM(/*Alt_Layer_Value, Positive_RA_Alt_Thresh*/);
-	result = !(Own_Above_Threat()) || ((Own_Above_Threat()) && (Up_Separation >= temp2));
+	result = !(Own_Above_Threat()) || ((Own_Above_Threat()) && (Up_Separation >= ALIM(arr, Alt_Layer_Value)));
     }
     return result;
 }
@@ -222,25 +203,29 @@ case {
     return (Other_Tracked_Alt < Own_Tracked_Alt);
 }
 
-int alt_sep_test(/*ref int[] Positive_RA_Alt_Thresh*/)
-  requires /*arr_cons*/ /*Alt_Layer_Value)*/ Own_Tracked_Alt_Rate <= 600 &
-  (Other_Capability = 0) & !Climb_Inhibit & High_Confidence & (Cur_Vertical_Sep > 600)
+int alt_sep_test(ref int[] arr)
+  requires Alt_Layer_Value >= 0 & Alt_Layer_Value <=3
  case {
- (Up_Separation <= Down_Separation)-> case {
-     Own_Tracked_Alt <= Other_Tracked_Alt -> ensures res=0;
-     Own_Tracked_Alt > Other_Tracked_Alt ->
-     case{
-      Up_Separation >= 400 ->  ensures res=2;
-      Up_Separation < 400 -> ensures res=0;
+  (High_Confidence & Own_Tracked_Alt_Rate <= 600 & Cur_Vertical_Sep > 600) -> case {
+    (((Other_Capability = 1)& Two_of_Three_Reports_Valid & Other_RAC = 0) | Other_Capability != 1) -> case {
+ (!Climb_Inhibit & (Up_Separation <= Down_Separation)) | (Climb_Inhibit & (Up_Separation + 100<= Down_Separation))-> case {
+     Own_Tracked_Alt <= Other_Tracked_Alt -> ensures arr'= arr & res=0;
+     Own_Tracked_Alt > Other_Tracked_Alt -> case {
+      Up_Separation >= arr[Alt_Layer_Value] ->  ensures arr'= arr & res=2;
+      Up_Separation < arr[Alt_Layer_Value] -> ensures arr'= arr & res=0;
     }
  }
- (Up_Separation > Down_Separation) -> case {
-   Own_Tracked_Alt < Other_Tracked_Alt -> case{
-      Down_Separation >= 400 -> ensures res=0;
-      Down_Separation < 400 -> ensures res=1;
+ (!Climb_Inhibit & (Up_Separation > Down_Separation)) | (Climb_Inhibit & (Up_Separation +100> Down_Separation)) -> case {
+   Own_Tracked_Alt < Other_Tracked_Alt -> case {
+      Down_Separation >= arr[Alt_Layer_Value] -> ensures arr'= arr & res=0;
+      Down_Separation < arr[Alt_Layer_Value] -> ensures arr'= arr & res=1;
    }
-     Own_Tracked_Alt >= Other_Tracked_Alt -> ensures res=0;
+     Own_Tracked_Alt >= Other_Tracked_Alt -> ensures arr'= arr & res=0;
  }
+ }
+  ((!Two_of_Three_Reports_Valid | Other_RAC != 0) & Other_Capability = 1) ->ensures arr'= arr & res = 4;
+  }
+   (!High_Confidence | Own_Tracked_Alt_Rate > 600 | Cur_Vertical_Sep <= 600) -> ensures arr'= arr & res = 4;
 }
 {
     bool enabled, tcas_equipped, intent_not_known;
@@ -254,8 +239,8 @@ int alt_sep_test(/*ref int[] Positive_RA_Alt_Thresh*/)
 
     if (enabled && ((tcas_equipped && intent_not_known) || !tcas_equipped))
     {
-      need_upward_RA = Non_Crossing_Biased_Climb(/*Positive_RA_Alt_Thresh*/) && Own_Below_Threat();
-	  need_downward_RA = Non_Crossing_Biased_Descend(/*Positive_RA_Alt_Thresh*/) && Own_Above_Threat();
+      need_upward_RA = Non_Crossing_Biased_Climb(arr) && Own_Below_Threat();
+	  need_downward_RA = Non_Crossing_Biased_Descend(arr) && Own_Above_Threat();
 	  if (need_upward_RA && need_downward_RA)
         /* unreachable: requires Own_Below_Threat and Own_Above_Threat
            to both be true - that requires Own_Tracked_Alt < Other_Tracked_Alt
@@ -272,9 +257,9 @@ int alt_sep_test(/*ref int[] Positive_RA_Alt_Thresh*/)
     return alt_sep;
 }
 
-int main(int argc /*argv,*//* ref int[] Positive_RA_Alt_Thresh*/)
-    requires  true /*dom(Positive_RA_Alt_Thresh, 0, 3)*/
-    ensures  true;
+int main(int argc /*argv,*/, ref int[] Positive_RA_Alt_Thresh)
+  requires  dom(Positive_RA_Alt_Thresh, 0, 3)
+  ensures  true;
 //int argc;
 //char *argv[];
 {
@@ -289,7 +274,7 @@ int main(int argc /*argv,*//* ref int[] Positive_RA_Alt_Thresh*/)
 	*/
 	return 1;
     }
-    //initialize(Positive_RA_Alt_Thresh);
+    initialize(Positive_RA_Alt_Thresh);
 	/*
     Cur_Vertical_Sep = atoi(argv[1]);
     High_Confidence = atoi(argv[2]);
@@ -305,16 +290,10 @@ int main(int argc /*argv,*//* ref int[] Positive_RA_Alt_Thresh*/)
     Climb_Inhibit = atoi(argv[12]);
     */
     //fprintf(stdout, "%d\n", alt_sep_test());
-    assume(Alt_Layer_Value = 0);
-    //  tcas_equipped = false
-    assume(Other_Capability = 0);
-    assume(!Climb_Inhibit);
-    //make sure enable
-    assume(High_Confidence);
-    assume (Cur_Vertical_Sep > 600);
-    assume ( Own_Tracked_Alt_Rate <= 600);
-    //assume (Up_Separation < Down_Separation);
-	alt_sep_test();
+    assume(Alt_Layer_Value >= 0 & Alt_Layer_Value <=3);
+    assume (Other_RAC >=0 & Other_RAC <=2);
+    assume (Other_Capability = 1 | Other_Capability =2);
+	alt_sep_test(Positive_RA_Alt_Thresh);
     //exit(0);
 	return 0;
 }
