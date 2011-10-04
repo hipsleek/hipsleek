@@ -14,7 +14,6 @@ module CP = Cpure
 module IF = Iformula
 module IP = Ipure
 module AS = Astsimp
-module CPr = Cperm
 
 module XF = Xmlfront
 module NF = Nativefront

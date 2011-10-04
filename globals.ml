@@ -309,6 +309,8 @@ let allow_pred_spec = ref false
 
 let enable_frac_perm = ref false
 
+let enable_frac_print = ref false
+
 let prune_cnt_limit = ref 2
 
 let suppress_warning_msg = ref false
