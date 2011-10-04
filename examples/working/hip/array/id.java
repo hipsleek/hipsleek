@@ -9,8 +9,8 @@ relation dom(int[] a, int low, int high) ==
 relation bnd(int[] a, int i, int j, int low, int high) == 
  	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
 
-relation bnd(int[] a, int i, int j, int low, int high) == 
-	bnd(a,i-1,j+1,low,high).
+// relation bnd(int[] a, int i, int j, int low, int high) == 
+// 	bnd(a,i-1,j+1,low,high).
 
 // bnd(a,i,j,low,high) & i<=s & b<=j  => bnd(a,s,b,low,high)
 void invert(ref int[] a, int i, int j
@@ -42,14 +42,21 @@ void invert(ref int[] a, int i, int j
 }
 
 
-void swap (ref int[] a, int i, int j) 
+void swap (ref int[] a, int i, int j)
+                         /*
     requires [t,k] dom(a,t,k) & t <= i &  i <= k & t <= j & j <= k 
             //& bnd(a,t,k,low,high) 
-            /* the allocation is from a[i..j] */
-	ensures dom(a',t,k) & a'[i]=a[j] & a'[j]=a[i] & 
+    	ensures dom(a',t,k) & a'[i]=a[j] & a'[j]=a[i] & 
        forall(m: m=i | m=j | a'[m]=a[m] ) //'
             //& bnd(a',t,k,low,high)//'
        ;
+                         */
+
+    requires [t,k] dom(a,t,k) & t <= i &  i <= k & t <= j & j <= k 
+	ensures dom(a',t,k);
+    requires true
+	ensures a'[i]=a[j] & a'[j]=a[i] & 
+       forall(m: m=i | m=j | a'[m]=a[m] );
 {
     int t = a[i];
     a[i] = a[j];

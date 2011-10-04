@@ -201,19 +201,38 @@ relation amodr(int[] a, int[] b, int i, int j) ==
 //////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___(int[] a, int i) 
+  /*
 	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
 	ensures res = a[i];
+  */
+  requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+  ensures true;
+  requires true
+  ensures res = a[i];
 
 int[] update___(int[] a, int i, int v) 
-	requires [ahalb,ahaub]
+/*	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
 	ensures dom(res,ahalb,ahaub) 
 				& update_array(a,i,v,res);
+*/
+
+	requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+     ensures dom(res,ahalb,ahaub);
+     requires true
+	 ensures  update_array(a,i,v,res);
+
 
 int[] aalloc___(int dim) 
 	requires true 
