@@ -49,11 +49,57 @@ Assuming given:
                   *) need to agree on the read groups, write groups
                  **) split and agree on the read fractions
                 ***) manage the discriminant conditions
-                
-                
-propag backward for the prev transition post
+  
+Stages: A) construct the graph; B) determine permission requirements  C) determine available pre's D) compute the actual splittings + discriminants
 
-graph+post in one go:
+-> initial restrictions:
+        -> focus only on the single shared memory cells  (not the entire reachable graph)
+        -> the graph can be reconstructed from the control graph? 
+            -> inefficient but works (not the most compact barrier definition)
+   
+  
+           
+A)construct the graph:
+      ->> issues: barrier aliases, multiple barrier defs, multiple barrier instances
+      ->> assuming: single barrier def, single barrier instance, initially no aliasing?
+            
+        ({},c) e (G',c', e') 
+        rename c' to c in G' and e'
+        Gr = G + G'
+  --------------------------------------------
+      (G,c, (while cnd e)) -> (Gr,c , while cnd e')
+      
+      
+      ({},c, e1) -> (G',c',e1') 
+      ({},c, e2) -> (G',c'', e2')
+        rename c'' to c' in G' end e2'
+        Gr = G + G'+G''
+  --------------------------------------------       ->> does it need to be in the same state at the end? i think it makes sense to be so , same code same expectations
+      (G,c) {if _ then e1 else e2} (Gr,c')
+      
+          G' = G + (c->c')    
+  --------------------------------------------
+        (G,c, barrier b) (G',c', barrier b //(c->c'))
+        
+        
+  --------------------------------------------
+    (G,c,e1=e2) -> (G,c,e1=e2)
+    
+    
+    m(...):= ({},ci)->(G',cf)
+    rename c to ci 
+    Gr = G+G'  -> if G' is not in G
+  --------------------------------------------
+      (G,c, m(...)) -> (Gr,cf, m(...))
+      
+      m(...) {body}
+      ({},ci,body)->(G',cf,body')
+  --------------------------------------------
+    m(...){body'}:=({},ci)->(G',cf)
+           
+           
+B) determine permission requirements     
+ post in one go:
     a) start in a state
     b) collect constraints until the next barrier is reached, these will be the post for the transition.
     c) second pass, adding the required resources (assume they are given by the barrier call), once the barrier call is reached, the state 
@@ -63,12 +109,13 @@ pre:
   collect all the posts and in each thread take what is needed from the collected resources available for reshuffling
     
  
-Collection, straight forward, in parralle with a relaxed forward verification:
-    -> at each entailment, if one of the shared is missing then add it and remember it being added
+Collection, straight forward, in parrallel with a relaxed forward verification:
+    
     -> for each method compute if it did any barrier calls 
     -> construct a subset of the shared variables, with a mark of wheter : full, partial known or partial unknown permission
        S subset {shared_vars}x {F| P | P+concrete share}
 
+    -> at each entailment, if one of the shared is missing then add it and remember it being added
     -> need some backward propagation for the pure constraints? maybe it can be done in a separate step....
        
        add(S,(x,P)) = 
@@ -115,6 +162,11 @@ Collection, straight forward, in parralle with a relaxed forward verification:
           S|> e1;e2 S'' 
        
        
+          S|> e1 S1    S|> e2 S2
+            split analysis, continue in parralele until the next barrier call
+       ----------------------- [Seq]
+          S|> if c then e1 else e2 
+            
        
           Phi = pre(f)
           forall i:
@@ -128,5 +180,8 @@ Collection, straight forward, in parralle with a relaxed forward verification:
          
        
         record the context of the verification for this barrier transition
+        record the precondition requirements for the previous barrier transition
        ---------------------------------------------------------------------
-                          S|> barrier b 
+                          S|> barrier b  {}
+                          
+                          
