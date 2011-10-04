@@ -2,6 +2,8 @@
 (******************************************)
 (* command line processing                *)
 (******************************************)
+open Gen.Basic
+
 module M = Lexer.Make(Token.Token)
 
 let to_java = ref false
@@ -44,7 +46,7 @@ let parse_file_full file_name =
       raise t)
 
 (* Parse all prelude files declared by user.*)
-let rec process_primitives file_list =
+let rec process_primitives (file_list: string list) : Iast.prog_decl list =
   match file_list with
   | [] -> []
   | hd::tl ->
@@ -52,6 +54,11 @@ let rec process_primitives file_list =
         let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
         let primitives = parse_file_full new_filename in
                 primitives :: (process_primitives tl)
+
+let process_primitives (file_list: string list) : Iast.prog_decl list =
+  let pr1 = pr_list (fun x -> x) in
+  let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
+  Gen.Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
 
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =

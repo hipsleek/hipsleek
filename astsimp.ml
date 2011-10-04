@@ -1,4 +1,4 @@
-(* Created 21 Feb 2006 Simplify Iast to Cast *)
+ (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
 open Printf
 open Gen.Basic
@@ -149,8 +149,8 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
 
      let prog = Parser.parse_hip_string "primitives" all_prims in
 		(* An Hoa : print out the primitive relations parsed -- Problem : no relation parsed! *)
-		(*let _ = print_endline "Primitive relations : " in
-		let _ = List.map (fun x -> print_endline x.I.rel_name) prog.I.prog_rel_decls in*)
+		(* let _ = print_endline "Primitive relations : " in *)
+		(* let _ = List.map (fun x -> print_endline x.I.rel_name) prog.I.prog_rel_decls in *)
 		(* An Hoa : THIS IS NOT THE PLACE THE PRIMITIVES IN prelude.ss IS ADDED! *)
 
 	 (* AN HOA : modify to return the list of primitive relations *)
@@ -164,9 +164,12 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
 	 (* prog.I.prog_proc_decls) *)
 
 
-(* let gen_primitives (prog : I.prog_decl) : I.proc_decl list = *)
-(*   let pr_no x = "?" in *)
-(*   Gen.Debug.no_1 "gen_primitives" pr_no pr_no gen_primitives prog *)
+let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list) 
+      = (* AN HOA : modify return types *)
+  let pr_no x = "?" in
+  let prd = pr_list Iprinter.string_of_proc_decl in
+   let pr = pr_pair pr_no (pr_list Iprinter.string_of_rel_decl) in
+  Gen.Debug.no_1 "gen_primitives" pr_no pr gen_primitives prog
   
 let op_map = Hashtbl.create 19
   
@@ -957,7 +960,8 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	    Gen.ExcNumbering.compute_hierarchy 1 ();
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in *)
-	    let prims,prim_rels = gen_primitives prog0 in
+	    (* let prims,prim_rels = gen_primitives prog0 in *)
+	    let prims,prim_rels = ([],[]) in
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
 															(* AN HOA : adjoint the program with primitive relations *)
 															I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;} in
@@ -2049,13 +2053,20 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
                   Err.error_text =
                       "Pre- and post-conditions of coercion rules must not be disjunctive";
               }
-
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       trans_exp_type =
+  Gen.Debug.no_1 "trans_exp"
+      Iprinter.string_of_exp
+      (pr_pair Cprinter.string_of_exp string_of_typ) 
+      (fun _ -> trans_exp_x prog proc ie) ie 
+
+and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
+      trans_exp_type =
 	(* let _ = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
+  let rec helper ie =
   match ie with
     | I.Label (pid, e)-> 
-          let e1,t1 = (trans_exp prog proc e) in
+          let e1,t1 = (helper e) in
           (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
     | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_pos = pos } ->
           ((C.Unfold {
@@ -2073,10 +2084,10 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			  I.exp_call_nrecv_arguments = [array_var; index];
 			  I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
 			  I.exp_call_nrecv_pos = pos;} in 
-	      trans_exp prog proc new_e
+	      helper new_e
               (*(try
                 let vinfo_tmp = E.look_up a in (* look up the array variable *)
-	            let ci,_ = trans_exp prog proc i in (* translate the index exp *)
+	            let ci,_ = helper i in (* translate the index exp *)
                 match vinfo_tmp with
                 | E.VarInfo vi ->
                 let ct = trans_type prog vi.E.var_type pos in
@@ -2155,7 +2166,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							I.exp_member_fields = fl;
 							I.exp_member_path_id = pidl;
 							I.exp_member_pos = posl } ->
-							let _,lhst = trans_exp prog proc bl in
+							let _,lhst = helper bl in
 							let fs,remf,remt = compact_field_access_sequence prog lhst fl in
 								if (remf = "") then [] 
 								else I.look_up_all_fields prog (match remt with
@@ -2168,7 +2179,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							I.exp_member_fields = fr;
 							I.exp_member_path_id = pidr;
 							I.exp_member_pos = posr } ->
-							let _,rhst = trans_exp prog proc br in
+							let _,rhst = helper br in
 							let fs,remf,remt = compact_field_access_sequence prog rhst fr in
 								if (remf = "") then []
 								else I.look_up_all_fields prog (match remt with
@@ -2192,7 +2203,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 													I.exp_seq_exp2 = y;
 													I.exp_seq_pos = pos_a }) 
 												(I.Empty no_pos) assignments in
-					trans_exp prog proc expanded_exp
+					helper expanded_exp
 			else (* An Hoa : end of additional pre-processing, continue as usual *)
           (match aop with
             | I.OpAssign ->
@@ -2204,7 +2215,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						  (* let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
                           if not (sub_type te2 te1) then  Err.report_error {
                               Err.error_loc = pos;
-                              Err.error_text = "lhs and rhs do not match";  }
+                              Err.error_text = "OpAssign : lhs and rhs do not match";  }
                           else
                             (let v = C.get_var ce1 in
                             let assign_e = C.Assign{
@@ -2235,9 +2246,9 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							  I.exp_assign_rhs = new_rhs;
 							  I.exp_assign_path_id = pid;
 							  I.exp_assign_pos = pos_a;} in
-			              trans_exp prog proc new_e
-							  (* let (ce1, te1) = trans_exp prog proc lhs in
-	                             let (ce2, te2) = trans_exp prog proc rhs in
+			              helper new_e
+							  (* let (ce1, te1) = helper lhs in
+	                             let (ce2, te2) = helper rhs in
 								 if not (sub_type te2 te1) then  Err.report_error {
                                  Err.error_loc = pos;
                                  Err.error_text = "lhs and rhs do not match";  }
@@ -2250,13 +2261,13 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           I.exp_member_path_id = pid;
                           I.exp_member_pos = pos } ->
 							(* An Hoa : fix this case with inline field access *)
-							let _,lhst = trans_exp prog proc base_e in
+							let _,lhst = helper base_e in
 							let fs,remf,_ = compact_field_access_sequence prog lhst fs in
 								if not (remf = "") then
 									failwith "[trans_exp] expect non inline field access"
 								else
 							(* An Hoa : end *)
-                          let (rhs_c, rhs_t) = trans_exp prog proc rhs in
+                          let (rhs_c, rhs_t) = helper rhs in
                           let (fn, new_var) =
                             (match rhs_c with
                               | C.Var { C.exp_var_name = v } -> (v, false)
@@ -2306,7 +2317,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       I.exp_assign_lhs = lhs;
                       I.exp_assign_rhs = new_rhs;
                       I.exp_assign_path_id = pid;
-                      I.exp_assign_pos = pos_a; } in trans_exp prog proc new_assign
+                      I.exp_assign_pos = pos_a; } in helper new_assign
           )
     | I.Binary {
           I.exp_binary_op = b_op;
@@ -2326,7 +2337,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_nrecv_arguments = [ e1_prim ];
                 I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                 I.exp_call_nrecv_pos = pos;}in 
-            trans_exp prog proc new_e)
+            helper new_e)
           else
             (let b_call = get_binop_call b_op in
             let new_e = I.CallNRecv {
@@ -2334,7 +2345,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_nrecv_arguments = [ e1; e2 ];
                 I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                 I.exp_call_nrecv_pos = pos; } in 
-            trans_exp prog proc new_e)
+            helper new_e)
     | I.Bind {
           I.exp_bind_bound_var = v;
           I.exp_bind_fields = vs;
@@ -2363,7 +2374,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 (List.map I.get_field_typ ddef.I.data_fields) in
                               let vs_types = List.map (fun fld -> trans_type prog (I.get_field_typ fld) (I.get_field_pos fld)) ddef.I.data_fields in
                               let vt = trans_type prog vi.E.var_type pos in
-                              let (ce, te) = trans_exp prog proc e in
+                              let (ce, te) = helper e in
                               let _ = E.pop_scope ()in
                               ((C.Bind {
                                   C.exp_bind_type = te;
@@ -2380,7 +2391,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
     | I.Block { I.exp_block_body = e; I.exp_block_pos = pos } ->
           (E.push_scope ();
-          let (ce, te) = trans_exp prog proc e in
+          let (ce, te) = helper e in
           let tmp_local_vars = E.names_on_top () in
           let local_vars = List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_local_vars in
           (E.pop_scope (); ((C.Block {
@@ -2397,7 +2408,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_call_recv_arguments = args;
           I.exp_call_recv_path_id = pi;
           I.exp_call_recv_pos = pos } ->
-          let (crecv, crecv_t) = trans_exp prog proc recv in
+          let (crecv, crecv_t) = helper recv in
           let (recv_ident, recv_init, new_recv_ident) =
             (match crecv with
               | C.Var { C.exp_var_name = v } -> (v, (C.Unit pos), false)
@@ -2412,7 +2423,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_assign_rhs = crecv;
                         C.exp_assign_pos = pos; } in
                     let seq = C.mkSeq C.void_type fdecl finit pos in (fname, seq, true)) in
-          let tmp = List.map (trans_exp prog proc) args in
+          let tmp = List.map (helper) args in
           let (cargs, cts) = List.split tmp in
           let mingled_mn = C.mingle_name mn cts in
           let class_name = string_of_typ crecv_t in
@@ -2455,7 +2466,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_call_nrecv_path_id = pi;
           I.exp_call_nrecv_pos = pos } ->
 		  (* let _ = print_string "trans_exp :: case CallNRecv\n" in *)
-          let tmp = List.map (trans_exp prog proc) args in
+          let tmp = List.map (helper) args in
           let (cargs, cts) = List.split tmp in
           let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
           let this_recv = 
@@ -2469,7 +2480,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               I.exp_call_recv_method = mingled_mn;
               I.exp_call_recv_arguments = args;
               I.exp_call_recv_path_id = pi;
-              I.exp_call_recv_pos = pos; } in trans_exp prog proc call_recv)
+              I.exp_call_recv_pos = pos; } in helper call_recv)
           else (try 
             let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
             if ( != ) (List.length args) (List.length pdef.I.proc_args) then
@@ -2478,7 +2489,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
               if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
-              else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in trans_exp prog proc inlined_exp)
+              else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
               else 
                 ( let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                 let positions = List.map I.get_exp_pos args in
@@ -2509,7 +2520,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 		      | Some x ->
 			        if (String.compare cvt c_flow)=0 then  begin
 			          E.push_scope();
-			          let new_bd, ct2 = trans_exp prog proc cb in
+			          let new_bd, ct2 = helper cb in
 			          E.pop_scope();
 			          ( C.Catch{C.exp_catch_flow_type = (Gen.ExcNumbering.get_hash_of_exc c_flow);
 			          C.exp_catch_flow_var = cfv;
@@ -2521,7 +2532,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			          let alpha = E.alpha_name x in
 			          E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (Named cvt)});
 			          (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
-			          let new_bd, ct2 = trans_exp prog proc cb in
+			          let new_bd, ct2 = helper cb in
 				      (*let _ = print_string ("\n rrr2 -> \n") in*)
 			          let ct = if (Gen.ExcNumbering.exc_sub_type cvt raisable_class) then trans_type prog (Named cvt) pos else Named cvt in
 				      E.pop_scope();
@@ -2535,7 +2546,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 					  } in (r,ct2) end
 		      | None ->  
 			        E.push_scope();
-			        let new_bd, ct2 = trans_exp prog proc cb in
+			        let new_bd, ct2 = helper cb in
 			        E.pop_scope();
 			        (C.Catch{	C.exp_catch_flow_type = Gen.ExcNumbering.get_hash_of_exc cvt;
 					C.exp_catch_flow_var = cfv;
@@ -2550,12 +2561,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_cond_path_id = pi;
           I.exp_cond_pos = pos } ->
 		  (* let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
-          let (ce1, te1) = trans_exp prog proc e1 in
+          let (ce1, te1) = helper e1 in
           if not (CP.are_same_types te1 C.bool_type) then
             Err.report_error { Error.error_loc = pos; Error.error_text = "conditional expression is not bool";}
           else
-            (let (ce2', te2) = trans_exp prog proc e2 in
-            let (ce3', te3) = trans_exp prog proc e3 in
+            (let (ce2', te2) = helper e2 in
+            let (ce3', te3) = helper e3 in
             let ce2 = insert_dummy_vars ce2' pos in
             let ce3 = insert_dummy_vars ce3' pos in
             match ce1 with
@@ -2616,7 +2627,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_path_id = pid;
           I.exp_member_pos = pos } -> 
            	(* An Hoa : compact the field access sequence *)
-			let et = snd (trans_exp prog proc e) in
+			let et = snd (helper e) in
 			let fs,rem,_ = compact_field_access_sequence prog et fs in
 			if not (rem = "") then
 				failwith ("[trans_exp] expect non-inline field access but still got { " ^ rem ^ " }")
@@ -2644,7 +2655,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						I.exp_call_nrecv_arguments = [List.hd dims];
 						I.exp_call_nrecv_path_id = None;
 						I.exp_call_nrecv_pos = pos; }
-					in trans_exp prog proc newie
+					in helper newie
     | I.New {
           I.exp_new_class_name = c;
           I.exp_new_arguments = args;
@@ -2656,7 +2667,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           if ( != ) nargs (List.length field_types) then
             Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match";}
           else
-            (let tmp = List.map (trans_exp prog proc) args in
+            (let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let parg_types = List.map (fun ft -> trans_type prog ft pos) field_types in
             if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
@@ -2695,7 +2706,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   Err.error_text = "return statement for procedures with non-void return type need a value" }
           | Some e -> 
                 let e_pos = Iast.get_exp_pos e in
-                let ce, ct = trans_exp prog proc e in
+                let ce, ct = helper e in
                 if sub_type ct cret_type then
                   let fn = (fresh_var_name (string_of_typ ct) e_pos.start_pos.Lexing.pos_lnum) in
                   let vd = C.VarDecl { 
@@ -2752,7 +2763,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       I.exp_call_nrecv_method = u_call;
                       I.exp_call_nrecv_arguments = [ e ];
                       I.exp_call_nrecv_path_id = pid;
-                      I.exp_call_nrecv_pos = pos;} in trans_exp prog proc call_e
+                      I.exp_call_nrecv_pos = pos;} in helper call_e
             | I.OpPostInc ->
                   let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                   let fn_decl = I.VarDecl{
@@ -2779,7 +2790,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       I.exp_seq_exp1 = fn_decl;
                       I.exp_seq_exp2 = seq1;
                       I.exp_seq_pos = pos; } in
-                  trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
+                  helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
             | I.OpPostDec -> 
                   let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                   let fn_decl = I.VarDecl {
@@ -2806,7 +2817,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       I.exp_seq_exp1 = fn_decl;
                       I.exp_seq_exp2 = seq1;
                       I.exp_seq_pos = pos; } in
-                  trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+                  helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | I.OpPreInc ->
                   let add1_e = I.Binary {
                       I.exp_binary_op = I.OpPlus;
@@ -2824,7 +2835,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       I.exp_seq_exp1 = assign_e;
                       I.exp_seq_exp2 = e;
                       I.exp_seq_pos = pos;} in
-                  trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+                  helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | I.OpPreDec ->
                   let sub1_e = I.Binary {
                       I.exp_binary_op = I.OpMinus;
@@ -2842,7 +2853,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       I.exp_seq_exp1 = assign_e;
                       I.exp_seq_exp2 = e;
                       I.exp_seq_pos = pos; } in
-                  trans_exp prog proc (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+                  helper (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | _ -> failwith "u_op not supported yet")
     | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } ->
           (try
@@ -2868,7 +2879,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_var_decl_decls = decls;
           I.exp_var_decl_pos = tpos } ->
           let ct = trans_type prog t tpos in
-          let rec helper ds = (match ds with
+          let rec helper2 ds = (match ds with
             | [ (v, oe, pos) ] ->
                   if E.name_clash v then
                     Err.report_error{Err.error_loc = pos;Err.error_text = v ^ " is already declared";}
@@ -2879,7 +2890,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       E.var_type = t; });
                   let init_val = match oe with
                     | Some e ->
-                          let (tmp_e, tmp_t) = trans_exp prog proc e in
+                          let (tmp_e, tmp_t) = helper e in
                           if sub_type tmp_t ct then tmp_e
                           else Err.report_error {
                               Err.error_loc = pos;
@@ -2899,15 +2910,15 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_seq_exp2 = init_e;
                       C.exp_seq_pos = pos; }))
             | (v, oe, pos) :: rest ->
-                  let crest = helper rest in
-                  let ce = helper [ (v, oe, pos) ] in
+                  let crest = helper2 rest in
+                  let ce = helper2 [ (v, oe, pos) ] in
                   C.Seq {
                       C.exp_seq_type = C.void_type;
                       C.exp_seq_exp1 = ce;
                       C.exp_seq_exp2 = crest;
                       C.exp_seq_pos = pos;}
             | [] -> failwith "trans_exp: VarDecl has an empty declaration list") in 
-          ((helper decls), C.void_type)
+          ((helper2 decls), C.void_type)
     | I.While{
           I.exp_while_condition = cond;
           I.exp_while_body = body;
@@ -2969,7 +2980,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               I.exp_call_nrecv_path_id = pi; } in
           let w_call = match wrap with
             | None -> temp_call
-            | Some e -> (*let e,et = trans_exp prog proc e in*)
+            | Some e -> (*let e,et = helper e in*)
                   match e with
                     | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
                     | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";} in
@@ -3009,7 +3020,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     C.exp_sharp_path_id = pi;}), C.void_type)
                   else
                     let e_pos = Iast.get_exp_pos oe in
-                    let ce, ct = trans_exp prog proc oe in						
+                    let ce, ct = helper oe in						
                     if Gen.ExcNumbering.exc_sub_type (string_of_typ ct) raisable_class then 							 
                       let fn = (fresh_var_name (string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
                       let vd = C.VarDecl { C.exp_var_decl_type = ct;
@@ -3059,8 +3070,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           if ((List.length fl_list)>0) then
             Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, i still found a finally clause" }
           else
-            let new_clauses = List.map (fun c-> fst(trans_exp prog proc c)) cl_list in
-            let new_body , ct1 = trans_exp prog proc body in
+            let new_clauses = List.map (fun c-> fst(helper c)) cl_list in
+            let new_body , ct1 = helper body in
             (match (List.length cl_list) with
               | 0 -> (new_body,ct1)
               | 1 -> (C.Try({ C.exp_try_type = ct1;
@@ -3135,7 +3146,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	                | Some x ->
 	                if (String.compare cvt c_flow)=0 then  begin
 		            E.push_scope();
-		            let new_bd, ct2 = trans_exp prog proc cb in
+		            let new_bd, ct2 = helper cb in
 		            E.pop_scope();
 		            {C.exp_catch_flow_type = (Gen.ExcNumbering.get_hash_of_exc c_flow);
 		            C.exp_catch_flow_var = cfv;
@@ -3147,7 +3158,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 		            let alpha = E.alpha_name x in
 		            E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
 		        (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
-		            let new_bd, ct2 = trans_exp prog proc cb in
+		            let new_bd, ct2 = helper cb in
 		        (*let _ = print_string ("\n rrr2 -> \n") in*)
 		            let ct = if (Gen.ExcNumbering.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else Named cvt in
 		            E.pop_scope();
@@ -3161,7 +3172,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			        } in r end
 	                | None ->  
 	                E.push_scope();
-	                let new_bd, ct2 = trans_exp prog proc cb in
+	                let new_bd, ct2 = helper cb in
 		            E.pop_scope();
 		            {	C.exp_catch_flow_type = Gen.ExcNumbering.get_hash_of_exc cvt;
 			        C.exp_catch_flow_var = cfv;
@@ -3171,6 +3182,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     end
 	            (*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
 	            *)
+  in helper ie
+
 and default_value (t :typ) pos : C.exp =
   match t with
     | Int -> C.IConst { C.exp_iconst_val = 0; C.exp_iconst_pos = pos; }
@@ -3617,7 +3630,7 @@ with Not_found ->
     Err.report_error
         {
             Err.error_loc = pos;
-            Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n, could it be an unused var?\n";
+            Err.error_text = "type table does not contain an entry for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n, could it be an unused var?\n";
         }			
         
 and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formula = 
@@ -4540,7 +4553,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : uni
   match p0 with
     | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
-          (gather_type_info_pure_x prog p1 stab; gather_type_info_pure_x prog p2 stab)
+          (gather_type_info_pure prog p1 stab; gather_type_info_pure prog p2 stab)
     | IP.Not (p1, _, pos) -> gather_type_info_pure_x prog p1 stab 
     | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
 	      if (H.mem stab qv) then
@@ -4556,7 +4569,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : uni
             begin
               let new_et = fresh_tvar stab in
               let vk = fresh_proc_var_kind stab new_et in
-              H.add stab qv vk; gather_type_info_pure_x prog qf stab
+              H.add stab qv vk; gather_type_info_pure prog qf stab
             end
 
 and gather_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
@@ -4566,11 +4579,16 @@ and gather_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit 
 
 (* An Hoa : add argument prog *)
 and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
+  Gen.Debug.no_eff_2 "collect_type_info_pure" [false;true] 
+      (Iprinter.string_of_pure_formula) string_of_stab (fun _ -> "()")
+      (collect_type_info_pure_x prog) p0 stab
+
+and collect_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
     | IP.BForm (b,_) -> collect_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
-          (collect_type_info_pure prog p1 stab; collect_type_info_pure prog p2 stab)
-    | IP.Not (p1, _, pos) -> collect_type_info_pure prog p1 stab 
+          (collect_type_info_pure_x prog p1 stab; collect_type_info_pure_x prog p2 stab)
+    | IP.Not (p1, _, pos) -> collect_type_info_pure_x prog p1 stab 
     | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
 	      if (H.mem stab qv) && !check_shallow_var
 	      then
@@ -4828,7 +4846,9 @@ and gather_type_info_b_formula_x prog b0 stab =
 		    let args_exp_types = List.map (fun t -> (t)) args_ctypes in
 		    let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
 		  with
-		    | Not_found -> ())
+		    | Not_found ->   
+                  failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
+          )
 		      (* An Hoa *)
 
 and guess_type_of_exp_arith a0 stab =
@@ -5036,6 +5056,7 @@ and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab : typ =
                   Err.error_loc = IP.pos_of_exp e0;
                   Err.error_text = "arithmetic is not allowed in pointer term";
               }
+
 
 (* AN HOA : TODO CHECK *)
 and collect_type_info_formula prog f0 stab filter_res = 

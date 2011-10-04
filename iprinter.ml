@@ -4,6 +4,7 @@
 open Iast
 open Globals
 open Lexing
+open Gen.Basic
 
 module F = Iformula
 module P = Ipure
@@ -178,7 +179,7 @@ let string_of_slicing_label sl =
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
-  | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
+  | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
 (* (match x with  *)
 (*     |(id, p) -> id ^ (match p with  *)
@@ -632,6 +633,12 @@ let string_of_proc_decl p =
 	^ ( "static " ^ (string_of_struc_formula  p.proc_static_specs)
 		^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
+
+let string_of_rel_decl p = 
+  let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
+    p.rel_name ^ "(" ^ (pr p.rel_typed_vars) ^ ")"
+;;
+
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
 
