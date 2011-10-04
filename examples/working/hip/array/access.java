@@ -20,8 +20,7 @@ int access (int[] a, int i)
 
 
 void swap (ref int[] a, int i, int j) 
-	requires [t,k] dom(a,t,k) 
-             & t <= i &  i <= k & t <= j & j <= k  
+	requires [t,k] dom(a,t,k) & t <= i &  i <= k & t <= j & j <= k  
             /* the allocation is from a[i..j] */
 	ensures a'[i]=a[j] & a'[j]=a[i] & 
        forall(m: m=i | m=j | a'[m]=a[m] ) ; //'
