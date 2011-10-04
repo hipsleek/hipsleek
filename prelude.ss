@@ -187,7 +187,9 @@ int pow___(int a, int b)
 // Special relation to indicate the value to do induction on
 relation induce(int value) == true.
 
-relation dom(int[] a, int low, int high) == true.
+relation dom(int[] a, int low, int high).
+
+axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
 relation amodr(int[] a, int[] b, int i, int j) == 
     forall(k : (i<=k & k<=j | a[k] = b[k])).

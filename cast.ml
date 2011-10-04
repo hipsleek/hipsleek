@@ -20,6 +20,7 @@ and prog_decl = {
     mutable prog_data_decls : data_decl list;
 	mutable prog_view_decls : view_decl list;
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
 	prog_proc_decls : proc_decl list;
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
@@ -87,6 +88,11 @@ and rel_decl = {
        rel_prune_conditions: (P.b_formula * (formula_label list)) list;
        rel_prune_invariants : (formula_label list * P.b_formula list) list ;
        rel_raw_base_case: Cformula.formula option; *)}
+
+(** An Hoa : axiom *)
+and axiom_decl = {
+		axiom_hypothesis : P.formula;
+		axiom_conclusion : P.formula; }
     
 and proc_decl = { 
     proc_name : ident;

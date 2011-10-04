@@ -19,7 +19,8 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
-                   mutable prog_rel_decls : rel_decl list; 
+                   mutable prog_rel_decls : rel_decl list; (* [4/10/2011] An hoa : axioms *)
+                   mutable prog_axiom_decls : axiom_decl list; 
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
@@ -57,6 +58,12 @@ and rel_decl = { rel_name : ident;
 		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
 		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
 		  (* try_case_inference: bool *)}
+
+(* [4/10/2011] An Hoa: axiom for pure constraints *)
+and axiom_decl = {
+			axiom_hypothesis : P.formula ;
+			axiom_conclusion : P.formula ;
+		  }
 
 and hopred_decl = { hopred_name : ident;
           hopred_mode : branch_label;
@@ -1744,7 +1751,8 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
-                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls;
+                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
+                prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
                 prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;} in
@@ -1759,6 +1767,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_enum_decls = [];
                 prog_view_decls = [];
                 prog_rel_decls = [];
+                prog_axiom_decls = [];
                 prog_hopred_decls = [];
                 prog_proc_decls = [];
                 prog_coercion_decls = [];}
@@ -1868,8 +1877,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
 									0 ddef.data_fields in
 		(* The field is not really a field of the data type ==> raise error. *)
 		if (not !found) then 
-			Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field }	
-			failwith ()
+			Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field }
 		else 
 			(* let _ = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
 				offset

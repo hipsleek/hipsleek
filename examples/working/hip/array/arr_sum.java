@@ -6,8 +6,8 @@
  * @author Vu An Hoa
  */
 
-relation dom(int[] a, int low, int high) == 
-	(dom(a,low-1,high) | dom(a,low,high+1)).
+/* relation dom(int[] a, int low, int high) == 
+	(dom(a,low-1,high) | dom(a,low,high+1)). */
 
 relation sumarray(int[] a, int i, int j, int s) == 
 	(i > j & s = 0 | i = j & s = a[i] | i < j & sumarray(a,i+1,j,s-a[i])).

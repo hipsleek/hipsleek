@@ -983,6 +983,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  let cviews = List.map (trans_view prog) tmp_views in
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 		  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
@@ -994,6 +995,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
               C.prog_data_decls = cdata;
               C.prog_view_decls = cviews;
 			  C.prog_rel_decls = crels; (* An Hoa *)
+			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
               C.prog_proc_decls = cprocs;
               C.prog_left_coercions = l2r_coers;
               C.prog_right_coercions = r2l_coers;
@@ -1272,7 +1274,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
 	(*let _ = Smtsolver.add_rel_def (Smtsolver.RelDefn (rdef.I.rel_name, rel_sv_vars, crf)) in*)
 		{C.rel_name = rdef.I.rel_name; 
   		C.rel_vars = rel_sv_vars;
-  		C.rel_formula = crf }
+  		C.rel_formula = crf; }
       (* let stab = H.create 103 in
          let view_formula1 = vdef.I.view_formula in
          let _ = Iformula.has_top_flow_struc view_formula1 in
@@ -1356,7 +1358,22 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
          )
          ) *)
       (* END : trans_rel *)
-	  
+(**
+ * An Hoa : translate an axiom 
+ *)
+and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
+	(* Collect types of variables in the formula *)
+	let stab = H.create 103 in
+	let _ = collect_type_info_pure prog adef.I.axiom_hypothesis stab in
+	let _ = collect_type_info_pure prog adef.I.axiom_conclusion stab in
+	(* Translate the hypothesis and conclusion *)
+	let chyp = trans_pure_formula adef.I.axiom_hypothesis stab in
+	let ccln = trans_pure_formula adef.I.axiom_conclusion stab in
+	let _ = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in
+		{ 	C.axiom_hypothesis = chyp;
+			C.axiom_conclusion = ccln; }
+(* END : trans_axiom *) 
+
 and rec_grp prog :ident list =
   let r = List.map (fun c-> (c.Iast.view_name, (Iformula.view_node_types_struc c.Iast.view_formula))) prog.Iast.prog_view_decls in	
   (*let vh = VH.empty in
@@ -6356,6 +6373,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
   Iast.prog_view_decls = tmp_views;
   Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
+  Iast.prog_axiom_decls = prog.Iast.prog_axiom_decls; (* [4/10/2011] An Hoa TODO implement*)
   Iast.prog_proc_decls = procs1;
   Iast.prog_coercion_decls = coer1;
   Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;     

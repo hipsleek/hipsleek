@@ -27,6 +27,13 @@ type relation_definition =
 	| RelDefn of (ident * CP.spec_var list * CP.formula)
 
 (**
+ * [4/10/2011] An Hoa : Axiom definition
+ *)
+type axiom_definition = 
+	| AxmDefn of (CP.formula * CP.formula)
+
+
+(**
  * Temp files used to feed input and capture output from provers
  *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
@@ -67,6 +74,14 @@ let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
  *)
 let rel_defs = ref ([] : relation_definition list)
 
+
+(**
+ * [4/10/2011] An Hoa
+ * Global axiom definitions. To be appended by process_axiom_def appropriately.
+ *)
+let axm_defs = ref ([] : axiom_definition list)
+
+
 (**
  * Add a new relation definition. 
  * Notice that we have to add the relation at the end in order to preserve the order of appearance of the relations.
@@ -75,6 +90,15 @@ let add_rel_def rdef =
 	(*let rn = match rdef with RelDefn (a,_,_) -> a in
 	let _ = print_endline ("smtsolver : add_rel_def : " ^ rn) in*)
 	rel_defs := !rel_defs @ [rdef]
+
+(**
+ * [4/10/2011] An Hoa : Add a new axiom definition. 
+ *)
+let add_axiom_def adef =
+	(* let h,c = match adef with AxmDefn x -> x in
+	let _ = print_endline ("[Smtsolver] add an axiom " ^ (!print_pure h) ^ " |- " ^ (!print_pure c)) in *)
+		axm_defs := !axm_defs @ [adef]
+
 
 (******************
  * Helper funcs
@@ -392,11 +416,27 @@ let smt_of_rel_def (rdef : relation_definition) =
 			let rel_signature = String.concat " " (List.map smt_of_typ (List.map extract_type rv)) in
 			let rel_typed_vars = String.concat " " (List.map smt_typed_var_of_spec_var rv) in
 			let rel_params = String.concat " " (List.map extract_name rv) in
-				(* Declare the relation in form of a function --> Bool *)
-				(* Axiomatize the relation using an assertion*)
-				("(declare-fun " ^ rn ^ " (" ^ rel_signature ^ ") Bool)\n",
-				 "(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n")
-	 		
+			(* Declare the relation in form of a function --> Bool *)
+			let rel_decl_fun = "(declare-fun " ^ rn ^ " (" ^ rel_signature ^ ") Bool)\n" in
+			(* Axiomatize the relation using an assertion*)
+
+			let rel_axiomatization_assertion = match rf with
+				| CP.BForm ((CP.BConst (true, no_pos), None), None) -> ""
+				| _ -> "(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n" in
+			(rel_decl_fun,rel_axiomatization_assertion)
+
+(**
+ * Process the axiom definition
+ * @return the string of axiom
+ *)				
+let smt_of_axiom_def (adef : axiom_definition) =
+	match adef with
+		| AxmDefn (h,c) -> 
+			let params = List.append (CP.fv h) (CP.fv c) in
+			let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
+			"(assert (forall " ^ smt_params ^ "(implies " ^ (smt_of_formula h StringSet.empty) ^ "\n" ^ (smt_of_formula c StringSet.empty) ^ ")))"
+
+
 (**
  * output for smt-lib v2.0 format
  *)
@@ -413,11 +453,14 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
 	let rds = (List.map smt_of_rel_def used_rels_defs) in
 	let rel_def_df = (String.concat "" (List.map fst rds)) in
 	let rel_def_ax = (String.concat "" (List.map snd rds)) in
+	(* let _ = if (!axm_defs = []) then print_endline "SMTSOLVER : No axiom" else print_endline ((string_of_int (List.length !axm_defs)) ^ " axioms") in *)
+	let smt_axioms_def = String.concat "" (List.map smt_of_axiom_def !axm_defs) in
 	 ("(set-logic AUFNIA" ^ (* (string_of_logic logic) ^*) ")\n" ^ 
     (decfuns fvars) ^ rel_def_df ^ rel_def_ax ^ (* Collect the declare-fun first and then do the axiomatization to prevent missing function error *)
 		(*"(declare-fun update_array ((Array Int Int) Int Int (Array Int Int)) Bool)" ^
 		"(assert (forall (a (Array Int Int)) (i Int) (v Int) (r (Array Int Int)) 
 		         (= (update_array a i v r) (= r (store a i v)))))" ^*)
+	smt_axioms_def ^ (* Add axioms *)
     ante_str (*"(assert " ^ ante ^ ")\n"*) ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")

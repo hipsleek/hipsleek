@@ -129,6 +129,7 @@ let process_source_full source =
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
 	(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
 	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
+	let _ = List.map (fun cadef -> Smtsolver.add_axiom_def (Smtsolver.AxmDefn (cadef.Cast.axiom_hypothesis,cadef.Cast.axiom_conclusion))) cprog.Cast.prog_axiom_decls in (* [4/10/2011] An Hoa : add axioms to smtsolver module *)
     (* let _ = print_string (" done-2\n"); flush stdout in *)
 	(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string ("START"^(Cprinter.string_of_program cprog)^"STARTEND") else () in

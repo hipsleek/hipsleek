@@ -37,6 +37,7 @@ type command =
   | DataDef of I.data_decl
   | PredDef of I.view_decl
   | RelDef of I.rel_decl (* An Hoa *)
+  | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)
@@ -73,6 +74,7 @@ let string_of_command c = match c with
   | DataDef _ -> "DataDef"
   | PredDef _ -> "PredDef" 
   | RelDef  _ -> "RelDef"  
+  | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck" 
