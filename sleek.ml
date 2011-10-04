@@ -208,6 +208,7 @@ let main () =
 let _ = 
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
+  Cperm.start_printing();
   if !Scriptarguments.print_version_flag then begin
 	print_version ()
   end else
@@ -219,4 +220,5 @@ let _ =
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
     Tpdispatcher.stop_prover ();
-    print_string "\n")
+    print_string "\n");
+  Cperm.stop_printing();

@@ -21,11 +21,23 @@ type perm_formula =
   | PTrue of loc
   | PFalse of loc
 
+let perm_log_name = "perm.log.tex" 
+let perm_log_file = ref (stdout)
 let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
 let print_frac_f = ref (fun (c:frac_perm)-> "printing not initialized")
 let print_sv = ref (fun (s:P.spec_var)-> "printing not initialized")
 let print_share = ref (fun (s:share)-> "printing not initialized")
-  
+let latex_of_formula = ref (fun (f:perm_formula) -> "latexing not initialized ")
+let latex_print_sv v = 
+  let s = !print_sv v in
+  let rec helper i = 
+    if (i>=0) then 
+      let c = String.get s i in 
+     (helper (i-1))^ (if c=='_' then "\\_" else if c=='\'' then "'" else Char.escaped c)
+    else "" in
+  " "^(helper ((String.length s)-1))^" "
+
+
 let fresh_perm_var () = P.SpecVar (Named perm,fresh_name(),Unprimed)
 
 let mk_perm_var (a,b) = P.SpecVar (Named perm, a,b)
@@ -529,7 +541,11 @@ let is_sat_a f = match list_of_a_f false f with
     | None -> false (*f formula is false*)
     | Some l -> List.exists is_sat_p_t_w l 
       
-let is_sat f = Gen.Debug.no_1 "perm_is_sat" !print_perm_f string_of_bool is_sat_a f
+let is_sat f = 
+  if !Globals.enable_frac_print then 
+      output_string !perm_log_file ("\n \n is\\_sat "^" \n \n \n"^(!latex_of_formula f)^"\n \n \n")
+  else ();
+  Gen.Debug.no_1 "perm_is_sat" !print_perm_f string_of_bool is_sat_a f
 
 let solve_once2 f = match is_sat_p_t_w2 f with 
 		| (hl::[],_,_,_)::[]-> Some hl
@@ -543,6 +559,9 @@ let solve_once f =
 
       
 let solve_once f =
+  if !Globals.enable_frac_print then 
+      output_string !perm_log_file ("\n \n solve "^" \n \n \n"^(!latex_of_formula f)^"\n \n \n")
+  else ();
   Gen.Debug.no_1 "solve_once" !print_perm_f (fun c-> match c with | None -> "None" | _ -> "Some")
    solve_once f
       
@@ -589,10 +608,13 @@ let imply_a glb_evs f1 f2 =
   List.for_all (one_imply f2) (is_sat_p_t_w2 f1) 
   
 let imply evs f1 f2 = 
-	let pr = Gen.pr_list !print_sv in
+  let pr = Gen.pr_list !print_sv in  
+  if !Globals.enable_frac_print then 
+      output_string !perm_log_file ("\n \n imply "^(Gen.pr_lst latex_print_sv evs)^"\n \n "^(!latex_of_formula f1)^" \n \n $\\qquad \\qquad \\vdash $ "^
+      (!latex_of_formula f2)^" \n \n \n")
+   else ();
   Gen.Debug.no_3 "perm imply" pr !print_perm_f !print_perm_f string_of_bool imply_a evs f1 f2 
-       
-      
+        
 (*elim exists*)
 (*solves f, returns vars without a unique value, and pairs of vars and values*)
  
@@ -614,7 +636,7 @@ let var_2_prop_var_list pr_sol vl pv =
 let var_2_prop_var_bot (v:P.spec_var) = (v,(P.type_of_spec_var v, Tree_shares.bot))
 let var_2_prop_var_top (v:P.spec_var) = (v,(P.type_of_spec_var v, Tree_shares.top))
  
-let solve_for_l w f = match w with
+let solve_for_l_w w f = match w with
   | [] -> (w,[])
   | _ -> match is_sat_p_t_w2 f with 
 		| (hl::[],_,_,_)::[]->
@@ -628,7 +650,14 @@ let solve_for_l w f = match w with
          with Not_found -> (v::a1,a2) 
         ) ([],[]) w 
 		| _ -> (w,[])
-    
+ 
+let solve_for_l w f = 
+	 if !Globals.enable_frac_print then 
+      output_string !perm_log_file ("\n \n solve "^(Gen.pr_lst latex_print_sv w)^"\n \n "^(!latex_of_formula f)^"\n \n \n")
+   else ();
+   solve_for_l_w w f
+ 
+ 
 (*try and eliminate vars from w, what can not be done return*)
 let elim_exists_perm w f1 = 
   let l1, l2 = solve_for_l w f1 in
@@ -735,7 +764,7 @@ Gen.Debug.no_6 "comp_perm_split"
 
    
    
-let solve_on f var = match var with 
+let solve_on_a f var = match var with 
 	| None -> PTrue no_pos
 	| Some v -> match is_sat_p_t_w2 f with 
 		| (hl::[],_,_,_)::[]->
@@ -744,10 +773,50 @@ let solve_on f var = match var with
 				if (Ts.stree_eq d1 d2) then mkEq (PVar v) (PConst d1) no_pos else mkDom v d1 d2 
 			 with Not_found -> PTrue no_pos)
 		| _ -> PTrue no_pos
-	
-	
+    
+ let solve_on f var = 
+	 if !Globals.enable_frac_print then 
+      output_string !perm_log_file ("\n \n solve "^(Gen.pr_option latex_print_sv var)^" \n \n  \n"^(!latex_of_formula f)^" \n \n")
+   else ();
+   solve_on_a f var
    
    
+let  start_printing _ = 
+    if !Globals.enable_frac_print then 
+      (perm_log_file := open_out perm_log_name;
+      output_string !perm_log_file 
+      "
+        \\documentclass{article}
+        %\\usepackage{latexsym,amsmath,amssymb,mathtools}
+        \\usepackage[nocenter]{qtree}
+        \\renewcommand{\\qtreepadding}{2pt}
+        \\renewcommand{\\qtreeunaryht}{0.5em}
+        \\newcommand{\\qleafhook}{}
+        \\begin{document}
+        ")
+    else ()
+    
+let stop_printing _ = 
+  print_string "\n STOPPPPPING\n";
+    if !Globals.enable_frac_print then 
+     (output_string !perm_log_file " \\end{document}"; flush !perm_log_file; close_out !perm_log_file)
+    else ()
+   
+let latex_of_frac f = match f with 
+  | PConst s -> Ts.latex_of_share s
+	| PVar v -> latex_print_sv v
+  
+let rec latex_of_formula_w f = match f with
+  | And (f1,f2,_) -> (latex_of_formula_w f1)^" ~\\wedge \\\\ "^(latex_of_formula_w f2)
+  | Or  (f1,f2,_) -> " ( "^(latex_of_formula_w f1)^" ) ~\\vee \\\\ ( "^(latex_of_formula_w f2)^" ) "
+  | Join (f1,f2,f3,_) -> (latex_of_frac f1)^" ~\\oplus~ "^(latex_of_frac f2) ^" ~=~ "^(latex_of_frac f3)
+  | Eq (f1,f2,_) -> (latex_of_frac f1) ^" ~=~ "^ (latex_of_frac f2)
+  | Exists (l,f,_) -> "(\\exists ~"^(String.concat " ~" (List.map latex_print_sv l))^" . ~"^(latex_of_formula_w f)^" ) "
+  | Dom (v,s1,s2) ->  (latex_print_sv v)^" ~\\in ~"^(Ts.latex_of_share s1)^" , "^(Ts.latex_of_share s2)
+  | PTrue _ -> " True "
+  | PFalse _ -> " False ";;
+
+latex_of_formula := fun f-> "$"^(latex_of_formula_w f)^"$"
    
    (*start of useless code*)
    

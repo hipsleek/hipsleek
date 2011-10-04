@@ -166,6 +166,7 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  Cperm.start_printing();
   
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
@@ -175,6 +176,7 @@ let main1 () =
     let _ = Gen.Profiling.push_time "Overall" in
     let _ = List.map process_source_full !Globals.source_files in
     let _ = Gen.Profiling.pop_time "Overall" in
+    let _ = Cperm.stop_printing () in
       (* Tpdispatcher.print_stats (); *)
       ()
 
@@ -182,6 +184,7 @@ let main1 () =
 (*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
+  Cperm.stop_printing ();
   Tpdispatcher.stop_prover ()
 
 let _ = 
@@ -195,7 +198,4 @@ let _ =
     print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError(s) detected at main \n");
-  end
-
-
-  
+  end;

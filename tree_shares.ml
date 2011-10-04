@@ -96,3 +96,7 @@ open Globals
     
     (*let leftTree = Node ((Leaf true), (Leaf false))  
   let rightTree = Node ((Leaf false), (Leaf true))*)
+  
+  let rec latex_of_share s = match s with 
+    | Leaf b -> if b then "\\bullet" else "\\circ"
+    | Node (s1,s2) -> " \\Tree [ $"^(latex_of_share s1)^"$ $"^(latex_of_share s2)^"$ ] "
