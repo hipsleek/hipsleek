@@ -1,3 +1,4 @@
+
 /**
  * Find the sum of the elements of an array. This examples
  * show two ways of computing the sum and illustrates the use
@@ -12,9 +13,6 @@ relation dom(int[] a, int low, int high) ==
 relation sumarray(int[] a, int i, int j, int s) == 
 	(i > j & s = 0 | i = j & s = a[i] | i < j & sumarray(a,i+1,j,s-a[i])).
 
-relation sumarray(int[] a, int i, int j, int s) == 
-	(i > j & s = 0 | i = j & s = a[i] | i < j & sumarray(a,i,j-1,s-a[j])).
-
 int sigmaright(int[] a, int i, int j) 
 	requires [t,k] dom(a,t,k) & t <= i & j <= k /* the allocation is from a[i..j] */
 	ensures sumarray(a,i,j,res);
@@ -27,14 +25,3 @@ int sigmaright(int[] a, int i, int j)
 	}
 }
 
-int sigmaleft(int[] a, int i, int j) 
-	requires [t,k] dom(a,t,k) & t <= i & j <= k & induce(j - i)
-	ensures sumarray(a,i,j,res);
-{
-	if (i > j)
-		return 0;
-	else 
-	{
-		return sigmaleft(a, i, j-1) + a[j];
-	}
-}
