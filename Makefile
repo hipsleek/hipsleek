@@ -4,7 +4,8 @@ OCAMLBUILD = ocamlbuild
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBS = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
+LIBS = unix,str,graph,xml-light,dynlink,camlp4lib
+LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
 INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
 
@@ -13,9 +14,12 @@ FLAGS = $(INCLUDES),-g,-annot
 # -no-hygiene flag to disable "hygiene" rules
 OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
+OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: native gui
+all: native 
+#gui
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
 gui: ghip.native gsleek.native
@@ -47,19 +51,19 @@ sleek.native:
 	cp _build/sleek.native sleek
 
 gsleek.byte:
-	$(OCAMLBUILD) $(OB_FLAGS) gsleek.byte
+	$(OCAMLBUILD) $(OBG_FLAGS) gsleek.byte
 	cp _build/gsleek.byte .
 
 gsleek.native:
-	$(OCAMLBUILD) $(OB_FLAGS) gsleek.native
+	$(OCAMLBUILD) $(OBG_FLAGS) gsleek.native
 	cp _build/gsleek.native gsleek
 
 ghip.byte:
-	$(OCAMLBUILD) $(OB_FLAGS) ghip.byte
+	$(OCAMLBUILD) $(OBG_FLAGS) ghip.byte
 	cp _build/ghip.byte .
 
 ghip.native:
-	$(OCAMLBUILD) $(OB_FLAGS) ghip.native
+	$(OCAMLBUILD) $(OBG_FLAGS) ghip.native
 	cp _build/ghip.native ghip
 
 # Clean up
