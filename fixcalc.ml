@@ -859,7 +859,7 @@ let rec pr_formula e =
       pr_h_formula h; pr_cut_after "&&" ;
       pr_mix_formula_branches(p,b); fmt_string ")";;
 
-let fixcalc = "/home/thaitm/hg-repository/fixcalc/fixcalc";;
+let fixcalc = "fixcalc";;
  
 let syscall cmd =
   let ic, oc3 = Unix.open_process cmd in
