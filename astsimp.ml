@@ -1109,9 +1109,9 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 
 
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  Gen.Debug.ho_eff_2 "compute_view_x_formula" [true;false]
-	Cprinter.string_of_view_decl string_of_int (fun x -> "")
-	(fun _ _ -> compute_view_x_formula_x prog vdef n) vdef n
+  Gen.Debug.no_3 "compute_view_x_formula"
+  Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
+  compute_view_x_formula_x prog vdef n
 	
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
@@ -1256,8 +1256,10 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       (*                       ^"\n\n") in *)
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      (* let new_pf = compute_inv n_un_str pf in *)
-      let memo_pf = MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf in
+			let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str pf in
+(*			print_endline (Cprinter.string_of_pure_formula pf ^ "a");    *)
+(*      print_endline (Cprinter.string_of_pure_formula new_pf ^ "a");*)
+      let memo_pf = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -3689,7 +3691,7 @@ and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : iden
 and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
-	(* let _ = print_endline "trans_I2C_struc_formula_x" in *)
+    (* let _ = print_endline "trans_I2C_struc_formula_x" in *)
     (* let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in *)
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
       | Iformula.EAssume (b,y)->	(*add res, self*)

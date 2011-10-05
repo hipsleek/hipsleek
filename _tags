@@ -1,2 +1,2 @@
-<{parser}.ml>: pp(camlp4of)
+<{parser,parse_fix}.ml>: pp(camlp4of)
 <xml/*.*>: not_hygienic

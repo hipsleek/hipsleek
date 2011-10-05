@@ -3,8 +3,8 @@ data node { int val ; node next }.
 
 pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
-//         inv true.
-       inv n >= 0.
+         inv true.
+//       inv n >= 0.
 
 checkentail x::lseg<n,p> |- n>=0.
 
