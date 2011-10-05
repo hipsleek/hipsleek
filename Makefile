@@ -65,5 +65,6 @@ ghip.native:
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean 
-	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte	
+	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
+	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
