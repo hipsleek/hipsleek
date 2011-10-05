@@ -3,8 +3,8 @@
  * 
  */
 
-relation dom(int[] a, int low, int high) == 
-	(dom(a,low-1,high) | dom(a,low,high+1)).
+ relation dom(int[] a, int low, int high) == 
+ 	(dom(a,low-1,high) | dom(a,low,high+1)).
 
 relation bnd(int[] a, int i, int j, int low, int high) == 
  	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
@@ -36,18 +36,24 @@ void invert(ref int[] a, int i, int j
              & bnd(a',i,j,low,high) ;//'
     }
     */
-    requires dom(a,i,j)
-    ensures dom(a',i,j);
+    // requires dom(a,i,j)
+    // ensures dom(a',i,j);
 /*
 ERROR: File "id.java", line 43, col 14 : Post condition cannot be derived by the system. 
 */
-    requires bnd(a,i,j,low,high)
+    requires //bnd(a,i,j,low,high) & 
+             dom(a,i,j)
     case {
-      i>=j -> ensures bnd(a',i,j,low,high)  & a'=a ; //'
+      i>=j -> ensures 
+               dom(a',i,j) 
+               //& bnd(a',i,j,low,high) //'
+               & a'=a //'
+               ; 
       i<j -> ensures 
-              //dom(a',i,j) & //'
-             idexc(a,a',i,j) &
-             bnd(a',i,j,low,high) ;//'
+             dom(a',i,j) & //'
+             idexc(a,a',i,j)
+             //& bnd(a',i,j,low,high) //'
+                 ;
     }
 
 {
@@ -72,9 +78,8 @@ void swap (ref int[] a, int i, int j)
                          */
 
     requires [t,k] dom(a,t,k) & t <= i &  i <= k & t <= j & j <= k 
-	ensures dom(a',t,k);//'
-    requires true
-    ensures (exists b:update_array(a,i,a[j],b) & update_array(b,j,a[i],a')); //'
+    ensures (exists b: dom(a',t,k) &
+            update_array(a,i,a[j],b) & update_array(b,j,a[i],a')); //'
     //ensures a'[i]=a[j] & a'[j]=a[i] & forall(m: m=i | m=j | a'[m]=a[m] ); //'
 
 {
