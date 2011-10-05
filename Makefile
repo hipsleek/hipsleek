@@ -4,7 +4,7 @@ OCAMLBUILD = ocamlbuild
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBS = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
+LIBS = unix,str,graph,xml-light,lablgtk,dynlink,camlp4lib
 
 INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
 
