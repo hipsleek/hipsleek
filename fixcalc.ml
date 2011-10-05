@@ -354,12 +354,12 @@ let string_of_typed_spec_var x =
 let string_of_spec_var x = 
 (* string_of_typed_spec_var x *)
   match x with
-    | P.SpecVar (t, id, p) ->
+    | P.SpecVar (t, id, p) -> id
       (* An Hoa : handle printing of holes *)
-      let real_id = if (id.[0] = '#') then "#" else id in
-      real_id (* ^":"^(string_of_typ t) *) ^ (match p with
-        | Primed -> "'"
-        | Unprimed -> "" )
+(*      let real_id = if (id.[0] = '#') then "#" else id in *)
+(*      real_id (* ^":"^(string_of_typ t) *) ^ (match p with*)
+(*        | Primed -> "'"                                   *)
+(*        | Unprimed -> "" )                                *)
 
 let string_of_imm imm = 
   if imm then "@I" else "@M"
@@ -902,7 +902,17 @@ let compute_inv name vars fml pf =
 	(*	print_string res;*)
 	(*  print_endline (Cprinter.string_of_pure_formula new_pf ^ "a");*)
 	  let check_impl = Omega.imply new_pf pf "1" 100 in
-		if check_impl then new_pf else pf
+		if check_impl then 
+		begin
+			Cprinter.fmt_string "LOG : REPLACED INV -> ";
+			Cprinter.pr_angle name (fun x -> Cprinter.fmt_string (Cprinter.string_of_typed_spec_var x)) vars;
+			Cprinter.fmt_string ("\n -> OLD: " ^ (Cprinter.string_of_pure_formula pf) ^
+        " -> NEW: " ^ (Cprinter.string_of_pure_formula new_pf));				
+(*			print_endline "INFO : Invariant of " ^ self::lseg<p,n> ^ " has been replaced*)
+(*        by a stronger inferred formula n>=0"                                      *)
+			new_pf
+		end 
+		else pf
 	end
 	else pf
 
