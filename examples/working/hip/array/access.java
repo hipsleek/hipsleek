@@ -9,6 +9,8 @@
 relation dom(int[] a, int low, int high) == 
 	(dom(a,low-1,high) | dom(a,low,high+1)).
 
+relation bnd(int[] a, int i, int j, int low, int high) == 
+	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
 
 int access (int[] a, int i) 
 	requires [t,k] dom(a,t,k) 
@@ -20,13 +22,15 @@ int access (int[] a, int i)
 
 
 void swap (ref int[] a, int i, int j) 
-	requires [t,k] dom(a,t,k) & t <= i &  i <= k & t <= j & j <= k  
+	requires [t,k,low,high] dom(a,t,k) & t <= i &  i <= k & t <= j & j <= k 
+             & bnd(a,t,k,low,high) 
             /* the allocation is from a[i..j] */
-	ensures a'[i]=a[j] & a'[j]=a[i] & 
-       forall(m: m=i | m=j | a'[m]=a[m] ) ; //'
+	ensures dom(a',t,k) & a'[i]=a[j] & a'[j]=a[i] & 
+       forall(m: m=i | m=j | a'[m]=a[m] ) //'
+             & bnd(a',t,k,low,high)//'
+       ;
 {
     int t = a[i];
     a[i] = a[j];
     a[j] = t;
 }
-
