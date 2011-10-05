@@ -19,8 +19,8 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
-                   mutable prog_rel_decls : rel_decl list; (* [4/10/2011] An hoa : axioms *)
-                   mutable prog_axiom_decls : axiom_decl list; 
+                   mutable prog_rel_decls : rel_decl list; 
+                   mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
