@@ -1366,7 +1366,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
 	let pr1 adef = Iprinter.string_of_axiom_decl_list [adef] in
 	let pr2 adef = Cprinter.string_of_axiom_decl_list [adef] in
-		Gen.Debug.ho_1 "trans_axiom" pr1 pr2 (fun x -> trans_axiom_x prog adef) adef
+		Gen.Debug.no_1 "trans_axiom" pr1 pr2 (fun x -> trans_axiom_x prog adef) adef
 
 (**
  * An Hoa : translate an axiom 

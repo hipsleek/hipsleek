@@ -734,9 +734,9 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
   try
 		(*let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in*)
 		let input = to_smt f None prover in
-		(*let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in*)
+		let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in
 		let output = run prover input in
-		(*let _ = if !print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in*)
+		let _ = if !print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in
 		let res = output = "unsat" in
 			not res
   with 
@@ -758,6 +758,10 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
             ignore (Unix.waitpid [] !prover_process.pid);
             true
         end
+
+let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+  let pr = !print_pure in
+  Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3
