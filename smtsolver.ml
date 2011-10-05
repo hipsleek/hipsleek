@@ -87,9 +87,9 @@ let axm_defs = ref ([] : axiom_definition list)
  * Notice that we have to add the relation at the end in order to preserve the order of appearance of the relations.
  *)
 let add_rel_def rdef =
-	(*let rn = match rdef with RelDefn (a,_,_) -> a in
-	let _ = print_endline ("smtsolver : add_rel_def : " ^ rn) in*)
-	rel_defs := !rel_defs @ [rdef]
+	(* let rn = match rdef with RelDefn (a,_,_) -> a in
+	let _ = print_endline ("smtsolver : add_rel_def : " ^ rn) in *)
+		rel_defs := !rel_defs @ [rdef]
 
 (**
  * [4/10/2011] An Hoa : Add a new axiom definition. 
@@ -500,8 +500,12 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
   let ante_str = smt_of_formula ante StringSet.empty in
   let conseq_str = smt_of_formula conseq StringSet.empty in
   let logic = logic_for_formulas ante conseq in
-	(* relations that appears in the ante and conseq *)
-	let used_rels = (collect_relation_names_formula ante []) @ (collect_relation_names_formula conseq []) in
+	(* relations that appears in the ante and conseq and axioms *)
+	let used_rels = (collect_relation_names_formula ante []) @ 
+					(collect_relation_names_formula conseq []) @ 
+					List.fold_left (fun x y -> match y with
+						| AxmDefn (h,c) -> x @ (collect_relation_names_formula h []) @ (collect_relation_names_formula c [])
+						) [] !axm_defs (* relations appeared in axioms *) in
 	(*let used_rels = (collect_relation_names_formula ante) @ (collect_relation_names_formula conseq) in*)
 	let used_rels_defs = List.map (fun x -> match x with | RelDefn (rn,_,_) -> if List.mem rn used_rels then [x] else []) !rel_defs in
 	let used_rels_defs = List.concat used_rels_defs in
@@ -734,9 +738,9 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
   try
 		(*let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in*)
 		let input = to_smt f None prover in
-		let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in
+		(* let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in *)
 		let output = run prover input in
-		let _ = if !print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in
+		(* let _ = if !print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in *)
 		let res = output = "unsat" in
 			not res
   with 
