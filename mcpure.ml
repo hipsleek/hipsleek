@@ -603,19 +603,21 @@ and memo_is_member_pure p mm =
    with_slice : takes the non-atomic ctrs
    with_disj : takes also non-atomic disjunctive ctrs
 *)
+
 and fold_mem_lst_to_lst_gen (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
   Gen.Debug.no_1 "fold_mem_lst_to_lst_gen"
-	!print_mp_f
+	(!print_mp_f) (*fun _ -> "?"*) (* Cause a segmentation fault if using !print_mp_f *)
 	(pr_list !print_p_f_f)
 	(fun mem -> fold_mem_lst_to_lst_gen_x mem with_R with_P with_slice with_disj) mem
 	
 (* returns list of AND formulas, each slice will be a formula *)
 and fold_mem_lst_to_lst_gen_x (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
+  (*fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj*)
   if !do_slicing && !multi_provers then
 	fold_mem_lst_to_lst_gen_slicing mem with_R with_P with_slice with_disj
   else
 	fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj
-
+  
 and fold_mem_lst_to_lst_gen_orig (mem:memo_pure) with_R with_P with_slice with_disj : formula list =	
   let rec has_disj_f c = match c with | Or _ -> true | _ -> false in			  
   let r = List.map (fun c -> 
@@ -633,10 +635,18 @@ and fold_mem_lst_to_lst_gen_orig (mem:memo_pure) with_R with_P with_slice with_d
 	asetf @ slice @ cons) mem in
   let r = List.map join_conjunctions r in
   r
-
+(*
+and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
+  Gen.Debug.no_1 "fold_mem_lst_to_lst_gen_slicing"
+	!print_mp_f
+	(pr_list !print_p_f_f)
+	(fun mem -> fold_mem_lst_to_lst_gen_slicing_x mem with_R with_P with_slice with_disj) mem
+*)	
 (* find relevant slices to fold them to a formula *)
 (* [A, B, C] -> [A /\ C, B /\ C, C] *)
 and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
+  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: mem:\n" ^ (!print_mp_f mem) ^ "\n") in*)
+  
   let rec has_disj_f c = match c with | Or _ -> true | _ -> false in
 
   let is_related mg1 mg2 =
@@ -675,9 +685,136 @@ and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice wit
 	let rel_mgs = mg::(pick_rel_constraints mg mem) in
 	filter_list_mg rel_mgs
   ) mem in
-  let r = List.map join_conjunctions r in
-  r
-      
+  let res = List.map join_conjunctions r in
+  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: res:\n" ^ (pr_list !print_p_f_f res) ^ "\n") in*)
+  res
+
+(* Find relevant slices to fold them to a formula for SAT checking                                     *)
+(* SAT(A /\ B) = SAT(A) /\ SAT(B) if fv(A) intersect fv(B) = Empty or linking vars of A and B          *)
+(* For AVL example with size, height, sum and bag properties,                                          *)
+(*   A contains size (n) and height (h) with linking constraint n>=h                                   *)
+(*   B constains sum with linking variable v                                                           *)
+(*   C constains bag with linking variable v                                                           *)
+	
+(* If C is a linking constraint of A and B: [A, B, C] -> [A /\ B /\ C]                                 *)
+(* [n1<0, n2>0, $ n1>n2] -> [n1<0 & n2>0 & n1>n2]                                                      *)	
+
+(* If C is a linking var/expr of A and B: [A, B, C] -> [A /\ C, B /\ C]                                *)
+(* [s=s1+($ v) & s>0 & s1>0, B=B1U{($ v)}, v>0] -> [s=s1+($ v) & s>0 & s1>0 & v>0, B=B1U{($ v)} & v>0] *)	
+and fold_mem_lst_to_lst_gen_for_sat_slicing (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
+  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: mem:\n" ^ (!print_mp_f mem) ^ "\n") in*)
+  
+  let has_disj_f c = match c with | Or _ -> true | _ -> false in
+
+  let memo_group_linking_vars_exps (mg : memoised_group) =
+	let cons_lv = List.fold_left (fun acc mc -> acc @ (b_formula_linking_vars_exps mc.memo_formula)) [] mg.memo_group_cons in
+	let slice_lv = List.fold_left (fun acc f -> acc @ (formula_linking_vars_exps f)) [] mg.memo_group_slice in
+	Gen.BList.remove_dups_eq eq_spec_var (cons_lv @ slice_lv)
+  in
+
+  let fv_without_linking_vars_exps mg =
+	let fv_no_lv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv (memo_group_linking_vars_exps mg) in
+	(* If all fv are linking vars then mg should be a linking constraint *)
+	if (fv_no_lv = []) then mg.memo_group_fv else fv_no_lv
+  in 
+
+  (*
+  let is_related mg1 mg2 = (* if true, mg1 and mg2 should be merged into one slice for SAT checking *)
+	let mg1_fv_no_lv = fv_without_linking_vars_exps mg1 in
+	let mg2_fv_no_lv = fv_without_linking_vars_exps mg2 in
+	Gen.BList.overlap_eq eq_spec_var mg1_fv_no_lv mg2_fv_no_lv
+  in
+  *)
+
+  let slice_memo_pure (mp : memo_pure) : (spec_var list * spec_var list * memoised_group list) list =
+	(* OUT: list of (list of fv, list of fv without linking vars, list of memo_group) *)
+	let repart acc mg = 
+      let mg_fv_no_lv = fv_without_linking_vars_exps mg in
+      let (ol, nl) = List.partition (* overlap_list, non_overlap_list with mg *)
+		(fun (_, vl, mgl) -> (Gen.BList.overlap_eq eq_spec_var vl mg_fv_no_lv)
+		) acc
+	  in
+	  let n_fvl = List.fold_left (fun a (fvl, _, _) -> a@fvl) mg.memo_group_fv ol in
+      let n_vl = List.fold_left (fun a (_, vl, _) -> a@vl) mg_fv_no_lv ol in
+      let n_mgl = List.fold_left (fun a (_, _, mgl) -> a@mgl) [mg] ol  in
+      (Gen.BList.remove_dups_eq eq_spec_var n_fvl,
+	   Gen.BList.remove_dups_eq eq_spec_var n_vl,
+	   n_mgl)::nl
+	in List.fold_left repart [] mp
+  in
+
+  let slice_linking_vars_constraints mgl =
+	(* Separate the above list of memo_group list into two parts: *)
+	(* - Need to check SAT *)
+	(* - Unneed to check SAT (constraints of linking vars) *)
+	let rec repart (unchk_l, n_l, un_l) =
+	  match unchk_l with
+		| [] -> (unchk_l, n_l, un_l)
+		| (fvl, vl, mgl)::unchk_rest ->
+		  let mgl_lv = Gen.BList.difference_eq eq_spec_var fvl vl in
+		  if (mgl_lv = []) then
+			repart (unchk_rest, (fvl, vl, mgl)::n_l, un_l)
+		  else
+			let is_related vl1 vl2 = Gen.BList.overlap_eq eq_spec_var vl1 vl2 in
+			(* Search relevant constraints in list of unchecked constraints *)
+			(* Move merged constraints into list of unneeded to check SAT constraints *)
+			let (merged_mgl1, unmerged_mgl1) = List.partition
+			  (fun (_, vl1, _) -> is_related vl1 mgl_lv) unchk_rest
+			in
+
+			(* Search relevant constraints in list of needed to check SAT constraints *)
+			(* Move merged constraints into list of unneeded to check SAT constraints *)
+			let (merged_mgl2, unmerged_mgl2) = List.partition
+			  (fun (_, vl2, _) -> is_related vl2 mgl_lv) n_l
+			in
+			
+			(* Search relevant constraints in list of unneeded to check SAT constraints *)
+			let merged_mgl3 = List.find_all
+			  (fun (_, vl3, _) -> is_related vl3 mgl_lv) un_l
+			in
+
+			let n_mgl =
+			  mgl @
+			  (List.fold_left (fun acc (_, _, mgl1) -> acc@mgl1) [] merged_mgl1) @
+			  (List.fold_left (fun acc (_, _, mgl2) -> acc@mgl2) [] merged_mgl2) @
+			  (List.fold_left (fun acc (_, _, mgl3) -> acc@mgl3) [] merged_mgl3)
+			in
+			
+			let n_unchk_l = unmerged_mgl1 in
+			let n_n_l = (fvl, vl, n_mgl)::unmerged_mgl2 in
+			let n_un_l = merged_mgl1 @ merged_mgl2 @ un_l in
+			repart (n_unchk_l, n_n_l, n_un_l)
+	in
+
+	let (_, n_l, _) = repart (mgl, [], []) in
+	n_l
+  in 
+  
+  let filter_list_mg l_mg =
+	List.map (fun mg ->
+	  let slice =
+	  if with_slice then 
+		if with_disj then mg.memo_group_slice 
+		else List.filter (fun c -> not (has_disj_f c)) mg.memo_group_slice
+	  else [] in
+	let cons = List.filter (fun c -> match c.memo_status with 
+	  | Implied_R -> with_R 
+	  | Implied_N -> true 
+	  | Implied_P-> with_P) mg.memo_group_cons in
+	let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in
+	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const mg.memo_group_aset) in
+	join_conjunctions (asetf @ slice @ cons)  
+	) l_mg
+  in
+
+  let n_l = slice_linking_vars_constraints (slice_memo_pure mem) in
+
+  let res = List.map (
+	fun (_, _, mgl) -> join_conjunctions (filter_list_mg mgl)
+  ) n_l in
+  (*let _ = print_string ("\nfold_mem_lst_to_lst_gen_slicing: res:\n" ^ (pr_list !print_p_f_f res) ^ "\n") in*)
+  res
+	
 and fold_mem_lst_to_lst mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
   
 and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj lst : formula = 
@@ -987,7 +1124,7 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
 
 	let overlap (nlv1, lv1) (nlv2, lv2) = (*Gen.BList.overlap_eq eq_spec_var nlv1 nlv2*)
 	  if (nlv1 = [] && nlv2 = []) then
-		(Gen.BList.list_equiv_eq eq_spec_var lv1 lv2)
+		(Gen.BList.list_equiv_eq eq_spec_var lv1 lv2) (* Keep the linking constraints separately *)
 	  else
 		(Gen.BList.overlap_eq eq_spec_var nlv1 nlv2) && (Gen.BList.list_equiv_eq eq_spec_var lv1 lv2)
 	in 
@@ -2039,7 +2176,7 @@ and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
-          let r = fold_mem_lst_to_lst(*_debug*) [h] !no_RHS_prop_drop false true in
+          let r = fold_mem_lst_to_lst [h] !no_RHS_prop_drop false true in
           let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
 	      if r1 then 

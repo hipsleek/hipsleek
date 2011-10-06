@@ -5580,14 +5580,14 @@ let rec break_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_formula f
 	| Exists (_, f, _, _) -> break_formula f
 
-let rec fv_with_slicing_label f = (* OUT: (non-linking vars, linking vars) of formula *)
+let rec fv_with_slicing_label f = (* OUT: (non-linking vars, linking vars) of formula *) 
   match f with
 	| BForm (bf, _) -> bfv_with_slicing_label bf
 	| And (f1, f2, _) ->
 	    let (vs1, lkl1) = fv_with_slicing_label f1 in
 	    let (vs2, lkl2) = fv_with_slicing_label f2 in
 	    let vs = Gen.BList.remove_dups_eq eq_spec_var (vs1 @ vs2) in
-	    let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in
+	    let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in (* linking vars in f1 becomes non-linking vars *)
 	    let n_lkl2 = Gen.BList.difference_eq eq_spec_var lkl2 vs1 in
 	    let lkl = Gen.BList.remove_dups_eq eq_spec_var (n_lkl1 @ n_lkl2) in
 	    (vs,lkl)
@@ -5628,6 +5628,39 @@ and bfv_with_slicing_label_x bf = (* OUT: (non-linking vars, linking vars) of b_
 		    let nlv = Gen.BList.difference_eq eq_spec_var v_bf lv in
 		    (nlv, lv)
 
+let rec formula_linking_vars_exps f =
+  match f with
+	| BForm (bf, _) -> b_formula_linking_vars_exps bf
+	| And (f1, f2, _) ->
+	    let lv1 = formula_linking_vars_exps f1 in
+	    let lv2 = formula_linking_vars_exps f2 in
+	    let u_lv = Gen.BList.remove_dups_eq eq_spec_var (lv1 @ lv2) in
+	    let i_lv = Gen.BList.intersect_eq eq_spec_var lv1 lv2 in
+		Gen.BList.difference_eq eq_spec_var u_lv i_lv (* Common linking vars will become non-linking vars *)
+	| Or (f1, f2, _, _) ->
+		let lv1 = formula_linking_vars_exps f1 in
+	    let lv2 = formula_linking_vars_exps f2 in
+	    let u_lv = Gen.BList.remove_dups_eq eq_spec_var (lv1 @ lv2) in
+	    let i_lv = Gen.BList.intersect_eq eq_spec_var lv1 lv2 in
+		Gen.BList.difference_eq eq_spec_var u_lv i_lv (* Common linking vars will become non-linking vars *)
+	| Not (f, _, _) -> formula_linking_vars_exps f
+	| Forall (sv, f, _, _) ->
+		let lv = formula_linking_vars_exps f in
+		Gen.BList.difference_eq eq_spec_var lv [sv]
+	| Exists (sv, f, _, _) ->
+	    let lv = formula_linking_vars_exps f in
+		Gen.BList.difference_eq eq_spec_var lv [sv]
+
+and b_formula_linking_vars_exps bf =
+  let (_, sl) = bf in
+  match sl with
+	| None -> []
+	| Some (il, _, el) ->
+	  if il then []
+	  else
+		let lv = List.fold_left (fun a e -> a @ (afv e)) [] el in
+		Gen.BList.remove_dups_eq eq_spec_var lv
+ 
 (* Group related vars together after filtering the <IL> formula *)
 let rec group_related_vars (bfl: b_formula list) : (spec_var list * spec_var list * b_formula list) list =
   Gen.Debug.no_1 "group_related_vars"

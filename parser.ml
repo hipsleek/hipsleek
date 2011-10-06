@@ -391,6 +391,14 @@ and set_il_exp exp il =
   let (pe, _) = exp in (pe, il)				   
 				   
 and set_slicing_utils_pure_double f il =
+  (*
+	il = true  -> Pure_f pf is a linking constraint
+	il = false -> Pure_f pf is not a linking constraint,
+	              but we need to find its linking variables
+                  or linking expressions in !F.linking_exp_list,
+	              if any. Those linking variables/expressions
+	              were added into the list at Pure_c cases.
+  *)
   if !Globals.do_slicing then
 	match f with
 	| Pure_f pf -> let ls = P.find_lexp_formula pf !F.linking_exp_list in
