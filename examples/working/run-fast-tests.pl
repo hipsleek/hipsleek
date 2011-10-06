@@ -187,7 +187,7 @@ $output_file = "log";
 		["array/arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
 		["array/arr_rev.java",1,"","arrayrev","SUCCESS"],
 		["array/arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
-		["array/arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","FAIL"] # sigmaleft requires induction
+		["array/arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
