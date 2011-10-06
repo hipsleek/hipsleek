@@ -10,10 +10,43 @@ pred lseg<n, p> == self = p & n = 0
 
 //checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
 
- lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "V2" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
 // Valid
 
 /*
+checkentail self_V1=p & n=0 & n=b+a & 0<=a & 0<=b |-  (exists a_78, b_79, p_80, r: self_V1::lseg<a_78,r> * 
+       r::lseg<b_79,p_80> & a_78=a & b_79=b & p_80=p ).
+
+checkentail (exists p_103,Anon_104,flted_6_105,
+    r_106: self_V1::node<Anon_104,r_106> * r_106::lseg<flted_6_105,p_103> & flted_6_105+1=n & p_103=p & 
+    n=b+a & 0<=a & 0<=b ) |-  (exists a_78, b_79, p_80, r: self_V1::lseg<a_78,r> * 
+       r::lseg<b_79,p_80> & a_78=a & b_79=b & p_80=p ).
+*/
+
+/*
+checkentail
+  self::lseg<n,p> & n=b+a & 0<=a & 0<=b 
+  |- (exists r: self::lseg<a,r> * r::lseg<b,p>) .
+*/
+/*
+
+true & self_V1=p & n=0 & n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}
+ or EXISTS(p_93,Anon_94,flted_6_95,r_96: self_V1::node<Anon_94,r_96>@M * 
+    NN r_96::lseg<flted_6_95,p_93>@M[Orig] & flted_6_95+1=n & p_93=p & n=b+
+    a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}) |-  EBase EXISTS(p_70,a,r,b: NN self_V1::lseg<a,r>@M[Orig][LHSCase] * 
+       NN r::lseg<b,p_70>@M[Orig][LHSCase] & p_70=p & {FLOW,(13,28)=__flow})
+
+ true & self_V1=p & n=0 & n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}
+ or EXISTS(p_103,Anon_104,flted_6_105,
+    r_106: self_V1::node<Anon_104,r_106>@M * 
+    NN r_106::lseg<flted_6_105,p_103>@M[Orig] & flted_6_105+1=n & p_103=p & 
+    n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}) |-  EBase EXISTS(a_78,b_79,p_80,r: NN self_V1::lseg<a_78,r>@M[Orig][LHSCase] * 
+       NN r::lseg<b_79,p_80>@M[Orig][LHSCase] & a_78=a & b_79=b & p_80=p &
+       {FLOW,(13,28)=__flow})
+
+
 run_entail_check:
  NN self::lseg<n,p>@M[Orig][LHSCase] & n=a+b & 0<=a & 0<=b &
 {FLOW,(27,27)=__norm} |-  EBase EXISTS(a_1201,b_1202,p_1203,
@@ -25,13 +58,18 @@ run_entail_check:
 //lemma "F2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
 // Fail?
 
+//lemma "F3" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+// Fail
+
 
 //lemma "F2a" self::lseg<n, p>  <- self::lseg<a, r> * r::lseg<b, p> & n=a+b & a>=0 & b>=0.
 // Valid
 
 
-/*
-checkentail
-  self::lseg<n,p> & n=b+a & 0<=a & 0<=b 
-  |- (exists r: self::lseg<a,r> * r::lseg<b,p>) .
-*/
+//lemma "F5" self::lseg<n, p> <- (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+
+//lemma "V6" self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+
+
+

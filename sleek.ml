@@ -62,9 +62,9 @@ let parse_file (parse) (source_file : string) =
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
                  | RelDef rdef -> process_rel_def rdef
-								 | EntailCheck (iante, iconseq) -> let _ = print_string "\n!!!!!  EntailCheck  0 !!!!\n" in process_entail_check iante iconseq
+								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
-								 | LemmaDef ldef -> let _ = print_string "\n!!!!!  LemmaDef  0 !!!!\n" in process_lemma ldef
+								 | LemmaDef ldef -> process_lemma ldef
 								 | PrintCmd pcmd -> process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
                  | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s

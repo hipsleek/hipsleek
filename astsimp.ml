@@ -1883,7 +1883,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let _ = collect_type_info_formula prog coer.I.coercion_body stab false in
   (*let _ = print_string ("\n"^(string_of_stab stab)^"\n") in*)
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
-  let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in (* andreeac *)
+  let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
     let h, p, _,_, _ = CF.split_components c_lhs in
@@ -1894,24 +1894,37 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let univ_vars = compute_univ () in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
-  let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in (* andreeac *)
+  let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in
 
   (* ======================= *)
-  let h = List.map (fun c-> (c,Unprimed)) lhs_fnames in
-  let p = List.map (fun c-> (c,Primed)) lhs_fnames in
+  (* let h, p, _,_, _ = CF.split_components c_lhs in *)
+  (* let pvars = MCP.mfv p in *)
+  (* let hvars = CF.h_fv h in *)
+  (* let h = List.map (fun c-> (CP.name_of_spec_var c,Unprimed)) hvars in *)
+  (* let p = List.map (fun c-> (CP.name_of_spec_var c,Primed)) pvars in *)
+  let h = List.map (fun c-> (c,Unprimed)) lhs_fnames0 in
+  let p = List.map (fun c-> (c,Primed)) lhs_fnames0 in
   let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula coer.I.coercion_body) false true [] in
-  let quant = false in
-  let cs_rhs_norm = trans_I2C_struc_formula prog quant lhs_fnames wf stab false in
+  let quant = true in
+  (* let fv_names = List.map (fun c -> CP.name_of_spec_var c) (Gen.BList.remove_dups_eq CP.eq_spec_var (hvars@pvars)) in *)
+  let cs_rhs_norm = trans_I2C_struc_formula prog quant (* fv_names *) lhs_fnames0 wf stab false in
   let c_rhs_norm = CF.struc_to_formula cs_rhs_norm in
 
+  (* let h, p, _,_, _ = CF.split_components c_rhs in *)
+  (* let pvars = MCP.mfv p in *)
+  (* let hvars = CF.h_fv h in *)
+  (* let h = List.map (fun c-> (CP.name_of_spec_var c,Unprimed)) hvars in *)
+  (* let p = List.map (fun c-> (CP.name_of_spec_var c,Primed)) pvars in *)
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   (* let rhs_fnames = [] in *)
   let h = List.map (fun c-> (c,Unprimed)) rhs_fnames in
   let p = List.map (fun c-> (c,Primed)) rhs_fnames in
-  let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula coer.I.coercion_head) false true [] in
+  let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula coer.I.coercion_head) false false [] in
   (* let wf = case_normalize_formula prog h coer.I.coercion_head in *)
-  let quant = false in
-  let cs_lhs_norm = trans_I2C_struc_formula prog quant lhs_fnames wf stab false in
+  let quant = true in
+  (* let fv_names = List.map (fun c -> CP.name_of_spec_var c) (Gen.BList.remove_dups_eq CP.eq_spec_var (hvars@pvars)) in *)
+  (* let fv_names = List.map (fun (c,p) -> c) (h@p) in *)
+  let cs_lhs_norm = trans_I2C_struc_formula prog quant (* fv_names  *)rhs_fnames wf stab false in
   let c_lhs_norm = CF.struc_to_formula cs_lhs_norm in
   (* let c_lhs_norm = trans_formula prog quant rhs_fnames false wf stab false in *)
 
@@ -3559,7 +3572,7 @@ and add_pre_debug prog f =
 and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.ho_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+  Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
 
@@ -5521,7 +5534,7 @@ and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) 
   let pr0 = pr_list (fun (i,p) -> i) in
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 (x,_) = pr1 x in
-  Gen.Debug.ho_3 "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) h p f
+  Gen.Debug.no_3 "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) h p f
       
 and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	

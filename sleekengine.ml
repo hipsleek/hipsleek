@@ -434,7 +434,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   let pr = string_of_meta_formula in
-  Gen.Debug.ho_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
+  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -466,7 +466,7 @@ run_entail_check:
 let check_coercion coer lhs rhs =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.ho_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
+  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
 let check_left_coercion coer =
   let ent_lhs =coer.C.coercion_head in
@@ -496,8 +496,9 @@ let process_lemma ldef =
     in
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
+    let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
     let residues = match (rs_l2r, rs_r2l) with
-      | (None, None) -> CF.FailCtx (CF.Trivial_Reason " empty residue")
+      | (None, None) -> empty_resid
       | (None, Some rs) 
       | (Some rs, None) -> rs
       | (Some rs1, Some rs2) -> CF.list_context_union rs1 rs2
@@ -507,14 +508,21 @@ let process_lemma ldef =
     if valid then 
       print_entail_result valid residues num_id
     else begin
-      let num_id0  = 
+      let num_id0, err_resid  = 
         match ldef.I.coercion_type with
-          | I.Equiv -> 
-                if (valid_l2r == false) then " (left-to-right) "
-                else  " (right-to-left) "
-          | _ -> "" 
+          | I.Equiv -> begin
+                if (valid_l2r == false) then
+                  match rs_l2r with
+                    | Some rs -> (" (left-to-right) ", rs)
+                    | None -> (" (left-to-right) ",  empty_resid)
+                else
+                  match rs_r2l with
+                    | Some rs -> (" (right-to-left) ", rs)
+                    | None -> (" (right-to-left) ",  empty_resid)
+            end
+         | _ -> ("", residues) 
       in
-      print_entail_result valid residues (num_id^num_id0)
+      print_entail_result valid err_resid (num_id^num_id0)
     end;
   end
 
@@ -537,7 +545,7 @@ let process_print_command pcmd0 = match pcmd0 with
         | None -> print_string ": no residue \n"
         | Some s -> print_string ((Cprinter.string_of_list_formula 
               (CF.list_formula_of_list_context s))^"\n")
-		else
+	  else
 			print_string ("unsupported print command: " ^ pcmd)
 
 let get_residue () =
