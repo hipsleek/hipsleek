@@ -10,19 +10,39 @@ pred lseg<n, p> == self = p & n = 0
 
 //checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
 
-lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
 
-lemma "V2" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
+//lemma "V2" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
 // Valid
 
 /*
 checkentail self_V1=p & n=0 & n=b+a & 0<=a & 0<=b |-  (exists a_78, b_79, p_80, r: self_V1::lseg<a_78,r> * 
        r::lseg<b_79,p_80> & a_78=a & b_79=b & p_80=p ).
 
-checkentail (exists p_103,Anon_104,flted_6_105,
-    r_106: self_V1::node<Anon_104,r_106> * r_106::lseg<flted_6_105,p_103> & flted_6_105+1=n & p_103=p & 
-    n=b+a & 0<=a & 0<=b ) |-  (exists a_78, b_79, p_80, r: self_V1::lseg<a_78,r> * 
-       r::lseg<b_79,p_80> & a_78=a & b_79=b & p_80=p ).
+checkentail 
+    self_V1::node<_,r_106> * r_106::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b |-  (exists r: self_V1::lseg<a,r> * r::lseg<b,p>  ).
+
+checkentail 
+    self_V1::node<_,r_106> * r_106::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b & a=0 |-  self_V1::lseg<b,p>.
+
+
+checkentail 
+    self_V1::node<_,r_106> * r_106::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b & a>0 |-  (exists r: 
+     self_V1::node<next = r1> * r1::lseg<a - 1, r> * r::lseg<b,p>  ).
+*/
+
+/*
+checkentail  (exists r_97,a_98,b_99: r_97::lseg<b_99,p> &
+ self_V1=r_97 & a_98=0 & n=b_99+a_98 & 0<=a_98 & 0<=b_99 )
+ or (exists p_111,flted_6_113,r_114,r_97,a_98,
+    b_99: self_V1::node<_,r_114> * r_114::lseg<flted_6_113,p_111> *
+    r_97::lseg<b_99,p> & flted_6_113+1=a_98 &
+    p_111=r_97 & n=b_99+a_98 & 0<=a_98 & 0<=b_99 ) |- (exists p_95,n: self_V1::lseg<n,p_95> & n=b+a & 0<=a & 0<=b & p_95=p).
+
+
 */
 
 /*
