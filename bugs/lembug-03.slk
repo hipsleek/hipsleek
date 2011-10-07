@@ -10,7 +10,7 @@ pred lseg<n, p> == self = p & n = 0
 
 //checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
 
-lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+//lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
 //lemma "V2" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
 // Valid
@@ -26,10 +26,29 @@ checkentail
 // fail
 */
 
+/*
 checkentail 
     self::node<_,r1> * r1::lseg<n-1,p> & 
-    n=b+a & 0<=a & 0<=b & a=0 |-  (exists r: r::lseg<b,p> & self=r).
+    n=b+a & 0<=a & 0<=b & a=0 |-  (exists r: r::lseg<b,p> & r=self).
 // must bug!
+
+
+@@ pick correctly but bad folding
+
+!!!bugs/lembug-03.slk:31: 35: [entail:0][post:0]do_fold: LHS ctx: self::node<Anon_29,r1>@M * SS 9::r1::lseg<flted_30_84,p>@M[Orig][LHSCase] &
+flted_30_84+1=n & n=a+b & 0<=a & 0<=b & a=0 & {FLOW,(27,27)=__norm}
+
+!!!bugs/lembug-03.slk:31: 35: [entail:0][post:0]do_fold: RHS view:  SS 8::r_87::lseg<b_85,p_86>@M[Orig]
+
+!!!bugs/lembug-03.slk:31: 35: [entail:0][post:0]do_fold: view_form:  EBase exists (E)[](I)[r_88](ex)[]EXISTS(p_89,Anon_90,
+       flted_6_91: r_87::node<Anon_90,r_88>@M * 
+       SS 8::r_88::lseg<flted_6_91,p_89>@M[Orig] & flted_6_91+1=b_85 & 
+       p_89=p_86 & {FLOW,(13,28)=__flow})
+|| EBase {1}->true & r_87=p_86 & b_85=0 & {FLOW,(13,28)=__flow}
+
+
+*/
+
 
 checkentail 
     self::node<_,r1> * r1::lseg<n-1,p> & 
