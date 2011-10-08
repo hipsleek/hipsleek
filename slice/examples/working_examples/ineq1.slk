@@ -1,0 +1,5 @@
+checkentail x1=x2 & x2=x3 & x1!=x3 |- false.
+
+checkentail x1=x2 & x2=x3 & ($ x1!=x3) |- false.
+
+checkentail x1=x2 & x2=x3 |- ($ x1=x3).
