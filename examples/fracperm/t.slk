@@ -10,14 +10,37 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-checkentail x::node<_, r> |- x!=null .
+checkentail x::ll(0.5)<n> & n=0 |- x=null.
 print residue. //EMP, valid
 
 /*
+checkentail x::ll(1.0)<n> * x::ll(1.0)<n> & n=0 |- x!=null.
+print residue. //EMP, fail
+
+checkentail x::ll(0.5)<n> & n=0 |- x!=null.
+print residue. //EMP, fail
+
+checkentail x::ll(0.5)<n> & n=0 |- x::ll(1.0)<n>.
+print residue. //EMP, valid
+
+checkentail x::ll(1.0)<n> & n=0 |- x::ll(0.5)<a> * x::ll(1.0)<b>.
+print residue. //EMP, valid
+
+checkentail x::ll(f)<n> & n=0 |- x::ll(f1)<a> * x::ll(f2)<b>.
+print residue. //EMP, valid
+
+checkentail x=null & n=0 |- x::ll(f1)<a> * x::ll(f2)<b>.
+print residue. //EMP, valid
+
+checkentail x::ll<n> & n=0 |- x::ll<a>.
+print residue. //EMP, valid
+
+checkentail x::node<_, r> |- x!=null .
+print residue. //EMP, valid
+
 //(1)
 checkentail x::node(1.0)<_, null> & m = 1 |- x::ll(1.0)<m>.
 print residue. // FOLD
-
 
 //(2)
 checkentail x::node(1.0)<_, null>         |- x::ll(1.0)<m>.

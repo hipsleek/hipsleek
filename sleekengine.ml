@@ -473,9 +473,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*add default full permission = 1.0 to ante; 
     need to add type of full perm to stab
   *)
-  let ante = CF.add_mix_formula_to_formula Solver.full_perm_constraint ante  in
+  let ante = CF.add_mix_formula_to_formula CF.full_perm_constraint ante  in
+
   let vk = AS.fresh_proc_var_kind stab Float in
-  let _ = H.add stab Solver.full_perm_var_name vk in
+  let _ = H.add stab Cformula.full_perm_var_name vk in
 
   (* let _ = print_string ("run_entail_check:" *)
   (*                       ^ "\n stab = "^(AS.string_of_stab stab) *)
@@ -521,7 +522,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
   (*                       ^"\n\n") in *)
 
-
+  let ante = CF.normalize_formula_w_frac ante in
 
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
