@@ -35,6 +35,7 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
         I.prog_rel_decls = [];
+        I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
@@ -49,6 +50,7 @@ let cobj_def = { C.data_name = "Object";
 let cprog = ref { C.prog_data_decls = [];
 			  C.prog_view_decls = [];
 				C.prog_rel_decls = []; (* An Hoa *)
+				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  C.prog_proc_decls = [];
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
@@ -234,6 +236,16 @@ let process_rel_def rdef =
   else
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
 
+
+(** An Hoa : process axiom
+ *)
+let process_axiom_def adef = begin
+	iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
+	let cadef = AS.trans_axiom iprog adef in
+		!cprog.C.prog_axiom_decls <- (cadef :: !cprog.C.prog_axiom_decls);
+	Smtsolver.add_axiom_def (Smtsolver.AxmDefn (cadef.C.axiom_hypothesis,cadef.C.axiom_conclusion));
+end
+	
 let process_data_def ddef =
   (*
     print_string (Iprinter.string_of_data_decl ddef);

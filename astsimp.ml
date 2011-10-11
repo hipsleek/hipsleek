@@ -960,8 +960,8 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	    Gen.ExcNumbering.compute_hierarchy 1 ();
         (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in *)
-	    (* let prims,prim_rels = gen_primitives prog0 in *)
-	    let prims,prim_rels = ([],[]) in
+	    let prims,prim_rels = gen_primitives prog0 in
+	    (* let prims,prim_rels = ([],[]) in *)
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
 															(* AN HOA : adjoint the program with primitive relations *)
 															I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;} in
@@ -987,6 +987,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  let cviews = List.map (trans_view prog) tmp_views in
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 		  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
@@ -998,6 +999,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
               C.prog_data_decls = cdata;
               C.prog_view_decls = cviews;
 			  C.prog_rel_decls = crels; (* An Hoa *)
+			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
               C.prog_proc_decls = cprocs;
               C.prog_left_coercions = l2r_coers;
               C.prog_right_coercions = r2l_coers;
@@ -1273,94 +1275,33 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
 	(* Need to collect the type information before translating the formula *)
 	let _ = collect_type_info_pure prog rdef.I.rel_formula stab in
 	let crf = trans_pure_formula rdef.I.rel_formula stab in
-	(*let _ = Smtsolver.add_rel_def (Smtsolver.RelDefn (rdef.I.rel_name, rel_sv_vars, crf)) in*)
+	(* let _ = Smtsolver.add_rel_def (Smtsolver.RelDefn (rdef.I.rel_name, rel_sv_vars, crf)) in *)
 		{C.rel_name = rdef.I.rel_name; 
   		C.rel_vars = rel_sv_vars;
-  		C.rel_formula = crf }
-      (* let stab = H.create 103 in
-         let view_formula1 = vdef.I.view_formula in
-         let _ = Iformula.has_top_flow_struc view_formula1 in
-      (*let recs = rec_grp prog in*)
-         let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.data_name_of_view prog.I.prog_view_decls view_formula1
-         else vdef.I.view_data_name in
-         (vdef.I.view_data_name <- data_name;
-   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
-         let cf = trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
-         let (inv, inv_b) = vdef.I.view_invariant in
-         let pf = trans_pure_formula inv stab in
-         let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
-         let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
-         let pf = Cpure.arith_simplify pf in
-         let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
-         let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
-         if (List.mem res cf_fv) || (List.mem res pf_fv) || (List.mem res pf_b_fvs) then
-         Err.report_error
-         {
-         Err.error_loc = IF.pos_of_struc_formula view_formula1;
-         Err.error_text = "res is not allowed in view definition or invariant";
-         }
-         else(
-         let pos = IF.pos_of_struc_formula view_formula1 in
-         let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_vars in
-         let self_c_var = Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed) in
-         let _ = 
-         let ffv = Gen.BList.difference_eq (=) (CF.struc_fv cf) (self_c_var::view_sv_vars) in
-         if (ffv!=[]) then 
-         Error.report_error { 
-         Err.error_loc = no_pos; 
-         Err.error_text = "error 2: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def"^vdef.I.view_name} in
-         let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
-         let _ = vdef.I.view_typed_vars <- typed_vars in
-         let mvars = [] in
-         let cf = CF.label_view cf in
-         let n_un_str =  Cformula.(*struc_to_view_un_s*) get_view_branches cf in   
-         let bc = match (compute_base_case cf) with
-         | None -> None
-         | Some s -> (flatten_base_case s self_c_var) in
-         let rec f_tr_base f = match f with
-         | CF.Base b -> 
-         if (CF.is_complex_heap b.CF.formula_base_heap) then 
-         (CF.mkFalse b.CF.formula_base_flow b.CF.formula_base_pos) 
-         else f
-         | CF.Or b -> 
-         let f1 = f_tr_base b.CF.formula_or_f1 in
-         let f2 = f_tr_base b.CF.formula_or_f2 in
-         CF.mkOr f1 f2 no_pos
-         | CF.Exists b -> 
-         if (CF.is_complex_heap b.CF.formula_exists_heap) then 
-         (CF.mkFalse b.CF.formula_exists_flow b.CF.formula_exists_pos) 
-         else f in
-         let rbc = List.fold_left (fun a (c,_)-> 
-         let fc = f_tr_base c in
-         if (CF.isAnyConstFalse fc) then a 
-         else match a with 
-         | Some f1  -> Some (CF.mkOr f1 fc no_pos)
-         | None -> Some fc) None n_un_str in
-         let cvdef ={
-         C.view_name = vdef.I.view_name;
-         C.view_vars = view_sv_vars;
-         C.view_labels = vdef.I.view_labels;
-         C.view_modes = vdef.I.view_modes;
-         C.view_partially_bound_vars = [];
-         C.view_materialized_vars = mvars;
-         C.view_data_name = data_name;
-         C.view_formula = cf;
-         C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
-         C.view_addr_vars = [];
-         C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
-         C.view_un_struc_formula = n_un_str;
-         C.view_base_case = bc;
-         C.view_case_vars = Gen.BList.intersect_eq (=) view_sv_vars (Cformula.guard_vars cf);
-         C.view_raw_base_case = rbc;
-         C.view_prune_branches = [];
-         C.view_prune_conditions = [];
-         C.view_prune_invariants = []} in
-         (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef)) (CF.pos_of_struc_formula cf);
-         cvdef)
-         )
-         ) *)
-      (* END : trans_rel *)
-	  
+  		C.rel_formula = crf; }
+(* END : trans_rel *)
+
+and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
+	let pr1 adef = Iprinter.string_of_axiom_decl_list [adef] in
+	let pr2 adef = Cprinter.string_of_axiom_decl_list [adef] in
+		Gen.Debug.no_1 "trans_axiom" pr1 pr2 (fun x -> trans_axiom_x prog adef) adef
+
+(**
+ * An Hoa : translate an axiom 
+ *)
+and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
+	(* Collect types of variables in the formula *)
+	let stab = H.create 103 in
+	let _ = collect_type_info_pure prog adef.I.axiom_hypothesis stab in
+	let _ = collect_type_info_pure prog adef.I.axiom_conclusion stab in
+	(* Translate the hypothesis and conclusion *)
+	let chyp = trans_pure_formula adef.I.axiom_hypothesis stab in
+	let ccln = trans_pure_formula adef.I.axiom_conclusion stab in
+	(* let _ = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
+		{ 	C.axiom_hypothesis = chyp;
+			C.axiom_conclusion = ccln; }
+(* END : trans_axiom *) 
+
 and rec_grp prog :ident list =
   let r = List.map (fun c-> (c.Iast.view_name, (Iformula.view_node_types_struc c.Iast.view_formula))) prog.Iast.prog_view_decls in	
   (*let vh = VH.empty in
@@ -6377,6 +6318,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
   Iast.prog_view_decls = tmp_views;
   Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
+  Iast.prog_axiom_decls = prog.Iast.prog_axiom_decls; (* [4/10/2011] An Hoa TODO implement*)
   Iast.prog_proc_decls = procs1;
   Iast.prog_coercion_decls = coer1;
   Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;     

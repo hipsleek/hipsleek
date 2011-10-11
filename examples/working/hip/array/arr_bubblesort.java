@@ -13,7 +13,8 @@ void bubblesort(ref int[] a, int i, int j)
 	requires [k,t] dom(a, k, t) & k <= i & j <= t
 	ensures sorted(a', i, j);
 {
-	if (!bubble(a, i, j)) bubblesort(a, i, j);
+	if (!bubble(a, i, j))
+		bubblesort(a, i, j);
 }
 
 // Go through array a[i..j] once and swap adjacent 
@@ -22,7 +23,7 @@ void bubblesort(ref int[] a, int i, int j)
 // a[i..j] must be sorted; and false otherwise
 bool bubble(ref int[] a , int i , int j)
 	requires [k,t] dom(a, k, t) & k <= i & j <= t
-	ensures (!res | sorted(a,i,j) & a' = a);
+	ensures dom(a', k, t) & (!res | sorted(a,i,j) & a' = a);
 {
 	if (i < j)
 	{

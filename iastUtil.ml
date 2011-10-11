@@ -84,6 +84,7 @@ let transform_exp
           exp_cond_else_arm = e3;},r)
       | Finally b ->
 	let e1,r1 = helper n_arg b.exp_finally_body in
+
 	(Finally {b with exp_finally_body=e1},r1)
       | Label (l,b) -> 
         let e1,r1 = helper n_arg b in
@@ -1223,10 +1224,11 @@ let pre_process_of_iprog iprims prog =
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
 						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
 					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
+					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
-  let prog = rename_prog prog in (* AN HOA : FAILURE DETECTED HERE! *) 
+  let prog = rename_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 2\n" in *)
   let prog = add_globalv_to_mth_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 3\n" in *)

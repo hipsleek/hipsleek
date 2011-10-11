@@ -703,6 +703,14 @@ let rec string_of_global_var_decl_list l =
   | h::t  -> (string_of_global_var_decl h) ^ "\n" ^ (string_of_global_var_decl_list t)
 ;;
 
+(* An Hoa : print relations *)
+let string_of_rel_decl_list rdecls = 
+	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+
+(* An Hoa : print axioms *)
+let string_of_axiom_decl_list adecls = 
+	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
+
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
   let field_str = String.concat ";\n" 
@@ -717,6 +725,8 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
+  (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
