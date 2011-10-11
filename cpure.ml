@@ -567,6 +567,14 @@ and should_simplify (f : formula) = match f with
   | _ -> false
         (* | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true *)
 
+and is_ineq_linking_bform (b : b_formula) : bool =
+  let (pf, il) = b in
+  match pf with
+	| Neq _ ->
+	  (match il with
+		| Some (true, _, _) -> true
+		| _ -> false)
+	| _ -> false
         
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
   match pf with

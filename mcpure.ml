@@ -617,24 +617,25 @@ and fold_mem_lst_to_lst_gen_x (mem:memo_pure) with_R with_P with_slice with_disj
 	fold_mem_lst_to_lst_gen_slicing mem with_R with_P with_slice with_disj
   else
 	fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj
+
+and fold_slice_gen (mg : memoised_group) with_R with_P with_slice with_disj : formula =
+  let rec has_disj_f c = match c with | Or _ -> true | _ -> false in
+  let slice =
+	if with_slice then 
+	  if with_disj then mg.memo_group_slice 
+	  else List.filter (fun c -> not (has_disj_f c)) mg.memo_group_slice
+	else [] in
+  let cons = List.filter (fun c -> match c.memo_status with 
+	| Implied_R -> with_R 
+	| Implied_N -> true 
+	| Implied_P-> with_P) mg.memo_group_cons in
+  let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in
+  let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const mg.memo_group_aset) in
+  join_conjunctions (asetf @ slice @ cons)
   
-and fold_mem_lst_to_lst_gen_orig (mem:memo_pure) with_R with_P with_slice with_disj : formula list =	
-  let rec has_disj_f c = match c with | Or _ -> true | _ -> false in			  
-  let r = List.map (fun c -> 
-	let slice =
-	  if with_slice then 
-		if with_disj then c.memo_group_slice 
-		else List.filter (fun c -> not (has_disj_f c)) c.memo_group_slice
-	  else [] in
-	let cons = List.filter (fun c -> match c.memo_status with 
-	  | Implied_R -> with_R 
-	  | Implied_N -> true 
-	  | Implied_P-> with_P) c.memo_group_cons in
-	let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in
-	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const c.memo_group_aset) in
-	asetf @ slice @ cons) mem in
-  let r = List.map join_conjunctions r in
-  r
+and fold_mem_lst_to_lst_gen_orig (mem:memo_pure) with_R with_P with_slice with_disj : formula list =				  
+  List.map (fun mg -> fold_slice_gen mg with_R with_P with_slice with_disj) mem
+	
 (*
 and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
   Gen.Debug.no_1 "fold_mem_lst_to_lst_gen_slicing"
@@ -2485,3 +2486,16 @@ let filter_complex_inv f = match f with
 	
 	
 let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isConstTrue b) bl)
+
+let is_ineq_linking_memo_group (mg : memoised_group) : bool =
+  List.exists (fun mc -> is_ineq_linking_bform mc.memo_formula) mg.memo_group_cons
+
+let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
+  List.exists (fun mg -> (is_ineq_linking_memo_group mg) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_fv ls)) mem
+
+let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
+  Gen.Debug.no_1 "exists_contradiction_eq"
+	!print_mp_f
+	string_of_bool
+	(fun mem -> exists_contradiction_eq mem ls) mem
+	  

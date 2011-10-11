@@ -402,7 +402,8 @@ and set_slicing_utils_pure_double f il =
   if !Globals.do_slicing then
 	match f with
 	| Pure_f pf -> let ls = P.find_lexp_formula pf !F.linking_exp_list in
-				   Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
+				   if (ls == [] && not il) then f
+				   else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
 	| Pure_c pc -> let _ = Hashtbl.add !F.linking_exp_list pc 0 in f
   else f
 				   
@@ -757,7 +758,7 @@ cexp_w :
   |"bconstrp" RIGHTA
     [  lc=SELF; `NEQ;  cl=SELF       ->
 		let f = cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-		set_slicing_utils_pure_double f false
+		set_slicing_utils_pure_double f (*false*) true
 	 | lc=SELF; `EQ;   cl=SELF  ->
 		let f = cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 		set_slicing_utils_pure_double f false

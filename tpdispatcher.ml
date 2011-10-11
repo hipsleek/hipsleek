@@ -1581,6 +1581,11 @@ let mix_imply_timeout ante0 conseq0 imp_no timeout =
     | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false None
 	| _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
+let mix_imply_timeout ante0 conseq0 imp_no timeout =
+  let pr = Cprinter.string_of_mix_formula in
+  Gen.Debug.no_2 "mix_imply_timeout" pr pr (fun (res, _, _) -> string_of_bool res)
+	(fun ante cons -> mix_imply_timeout ante cons imp_no timeout) ante0 conseq0
+
 let imply ante0 conseq0 imp_no do_cache process =
   imply_timeout ante0 conseq0 imp_no 0. do_cache process	  
 	  
@@ -1619,6 +1624,12 @@ let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
   (* Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos; *)
   sat_subno := !sat_subno + 1;
   sat
+;;
+
+let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
+  Gen.Debug.no_1 "is_sat_sub_no_c"
+	Cprinter.string_of_pure_formula string_of_bool
+	(fun f -> is_sat_sub_no_c f sat_subno do_cache) f
 ;;
 
 let is_sat_sub_no_with_slicing_orig (f:CP.formula) sat_subno : bool =  
@@ -1762,6 +1773,30 @@ let is_sat_memo_sub_no_slicing (f : MCP.memo_pure) sat_subno with_dupl with_inv 
 	let f_l = MCP.fold_mem_lst_to_lst_gen_for_sat_slicing f with_dupl with_inv true true in
 	List.fold_left (fun a f -> if not a then a else (is_sat_sub_no f sat_subno)) true f_l
 
+let rec is_sat_memo_sub_no_ineq_slicing (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+  Gen.Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
+	Cprinter.string_of_memo_pure_formula
+	string_of_bool
+	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x mem sat_subno with_dupl with_inv) mem
+
+and is_sat_memo_sub_no_ineq_slicing_x (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+  let is_sat_one_slice mg =
+	if (MCP.is_ineq_linking_memo_group mg)
+	then (* mg is a linking inequality *)
+	  true
+	else
+	  let aset = mg.memo_group_aset in
+	  let apart = EMapSV.partition aset in
+	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: apart: " ^ (pr_list Cprinter.string_of_spec_var_list apart) ^ "\n") in*)
+	  let r = List.fold_left (fun acc p -> if acc then acc else MCP.exists_contradiction_eq mem p) false apart in
+	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: r: " ^ (string_of_bool r) ^ "\n") in*)
+	  if r then false (* found an equality contradiction *)
+	  else
+		let f = MCP.fold_slice_gen mg with_dupl with_inv true true in
+		is_sat_sub_no f sat_subno
+  in
+  List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem
+
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
 (*
   (* Unmodified version *)
@@ -1775,6 +1810,8 @@ let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   (* Modified version with UNSAT optimization *)
   if !do_slicing && !multi_provers then
 	is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
+  else if !do_slicing then
+	is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
   else
 	is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
@@ -1893,7 +1930,7 @@ let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   Gen.Debug.no_1 "is_sat_memo_sub_no"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
-	(fun f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv) f
+	(fun f -> is_sat_memo_sub_no(*_new*) f sat_subno with_dupl with_inv) f
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
   | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
