@@ -4894,7 +4894,7 @@ let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_fo
           let invf2 = mkFracInv fracvary in
           (invf2::args_f)
       | _ ->
-          let _ = print_string "[cformula.ml] Warning: create_constraints_one only support data nodes" in
+          let _ = print_string "[cformula.ml] Warning: create_constraints_one only support data nodes \n" in
           []
   in
   (*combine 2 MUST-aliased nodes (x=y)*)
@@ -4920,7 +4920,7 @@ let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_fo
                           | None -> full_perm_var::res
                           | Some f -> f::res)
                     | _ -> 
-                        let _ = print_string "[cformula.ml] Warning: collect_frac_vars only support data nodes" in
+                        let _ = print_string "[cformula.ml] Warning: collect_frac_vars only support data nodes \n" in
                         res
           in 
           (*there is at least 1 element in xs*)
@@ -4941,7 +4941,7 @@ let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_fo
                       let res = add_exp t in
                       CP.Add ((CP.Var (h, no_pos)),res, no_pos)
                   | _ -> 
-                      let _ = print_string "[cformula.ml] Warning: add_exp : this can not happen" in
+                      let _ = print_string "[cformula.ml] Warning: add_exp : this can not happen \n" in
                       CP.IConst (0,no_pos)
               in
               let rhs = add_exp xs in
@@ -4973,7 +4973,7 @@ let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_fo
           final_fs@args_fs, fresh_fracvars
 
             | _ -> 
-                let _ = print_string "[cformula.ml] Warning: create_constraints only support data nodes" in
+                let _ = print_string "[cformula.ml] Warning: create_constraints only support data nodes \n" in
                 [],[]
   in
   (*processing normalization*)
@@ -4991,7 +4991,7 @@ let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_fo
                   | DataNode dn ->
                       DataNode {dn with h_formula_data_frac_perm = Some (List.hd vars1)}
                   | _ -> 
-                      let _ = print_string "[cformula.ml] Warning: create_constraints only support data nodes" in
+                      let _ = print_string "[cformula.ml] Warning: create_constraints only support data nodes \n" in
                       h)
           in
           let hs2,f2,vars2 = helper ls2 p_f in
@@ -5058,7 +5058,7 @@ let normalize_formula_w_frac_x (f:formula):formula =
                 let _ = print_string "[cformula.ml] Warning: normalize_frac not expect OR \n" in f
 
 let normalize_formula_w_frac (f:formula):formula = 
-  Gen.Debug.ho_1 "normalize_formula_w_frac" !print_formula !print_formula
+  Gen.Debug.no_1 "normalize_formula_w_frac" !print_formula !print_formula
       normalize_formula_w_frac_x f
 
 

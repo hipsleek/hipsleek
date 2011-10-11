@@ -7338,6 +7338,9 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
 
             let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
 
+            (*combining frac perms*)
+            let delta1 = CF.normalize_formula_w_frac delta1 in
+
             let ctx1 = build_context (Ctx estate) delta1 pos in
 
             (* let _ = print_string ("process_action_x: Context.M_unfold: after unfold_nth 1" *)
