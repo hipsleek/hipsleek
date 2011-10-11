@@ -466,7 +466,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     | View_mater -> 
                         M_unfold (c,uf_i) (* uf_i to prevent infinite unfolding *)
                     | Coerc_mater s -> 
-                        let _ = print_string "\n selected lemma XX" in
+                        (* let _ = print_string "\n selected lemma XX" in *)
                         M_lemma (c,Some s)) in
                   let l1 = [(1,M_base_case_unfold c)] in
                    (-1, (Search_action ((1,a1)::l1)))
