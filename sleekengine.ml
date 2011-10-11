@@ -455,14 +455,6 @@ let check_coercion coer lhs rhs =
     let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
     process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs) coer.C.coercion_name
 
-(*
-run_entail_check:
- true & self_V1=p & n=0 & n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}
- or EXISTS(p_93,Anon_94,flted_6_95,r_96: self_V1::node<Anon_94,r_96>@M * 
-    NN r_96::lseg<flted_6_95,p_93>@M[Orig] & flted_6_95+1=n & p_93=p & n=b+
-    a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}) |-  EBase EXISTS(p_70,a,r,b: NN self_V1::lseg<a,r>@M[Orig][LHSCase] * 
-       NN r::lseg<b,p_70>@M[Orig][LHSCase] & p_70=p & {FLOW,(13,28)=__flow})
-*)
 let check_coercion coer lhs rhs =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
