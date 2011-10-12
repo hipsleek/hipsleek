@@ -25,7 +25,7 @@ axiom permutation(a,b,i,j) ==> permutation(b,a,i,j).
 axiom permutation(a,b,i,j) & permutation(b,c,i,j) ==> permutation(a,c,i,j).
 
 // Composition of two disjoint permutations 
-axiom permutation(a,b,i,j) & permutation(a,b,j,k) ==> permutation(a,b,i,k).
+axiom permutation(a,b,i,j) & permutation(a,b,j+1,k) ==> permutation(a,b,i,k).
 
 // Extensionality : special case of composition
 // This special case is necessary to prove insertion sort

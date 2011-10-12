@@ -702,7 +702,10 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
     |Procutils.PrvComms.Timeout ->
 	    begin
 			Printexc.print_backtrace stdout;
-            let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from timeout exc)\n") in
+            let _ = if !print_original_solver_output then 
+				(* Why is it unsat if we return false !!! *)
+				(*print_string ("=1=> SMT output : unsat (from timeout exc)\n") in*)
+				print_string ("=1=> SMT output : unknown (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
@@ -717,7 +720,9 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
     | e -> 
         begin 
 			Printexc.print_backtrace stdout;
-            let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from exc)\n") in
+            let _ = if !print_original_solver_output then 
+				(* print_string ("=1=> SMT output : unsat (from exc)\n") in *)
+				print_string ("=1=> SMT output : unknown (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
