@@ -273,7 +273,8 @@ let rec smt_of_typ t =
       | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
-	  | NUM | Void | (BagT _) | (TVar _) | List _ -> 
+	  | NUM -> "Int" (* Use default Int for NUM *)
+	  | Void | (BagT _) | (TVar _) | List _ ->
           Error.report_error {Error.error_loc = no_pos; 
             Error.error_text = "spec not supported for SMT"} (* Fail! *)
       | Named _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ string_of_typ t) *)
@@ -437,6 +438,8 @@ let smt_of_axiom_def (adef : axiom_definition) =
 			"(assert (forall " ^ smt_params ^ "(implies " ^ (smt_of_formula h StringSet.empty) ^ "\n" ^ (smt_of_formula c StringSet.empty) ^ ")))"
 
 
+let print_typed_sv = ref (fun (x : CP.spec_var) -> "Print typed-spec-var is not initialized")
+
 (**
  * output for smt-lib v2.0 format
  *)
@@ -444,7 +447,9 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
   let rec decfuns vars = match vars with
     (* let's assume all vars are Int *)
     | [] -> ""
-    | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () " ^ (smt_of_typ (extract_type var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
+    | var::rest -> 
+		(* let _ = print_endline ("Declare variable : " ^ (!print_typed_sv var)) in *)
+		"(declare-fun " ^ (smt_of_spec_var var None) ^ " () " ^ (smt_of_typ (extract_type var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
   in 
 	(* An Hoa : split /\ into small asserts *)
 	let ante_clauses = CP.split_conjunctions ante in
@@ -677,10 +682,14 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-	(*let _ = print_endline "smt_imply : entry" in
-	let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
-      let input = to_smt ante (Some conseq) prover in
-  try
+	(* let _ = print_endline "smt_imply : entry" in *)
+	(* let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in *)
+	let input = try
+					to_smt ante (Some conseq) prover
+				with
+					| _ -> let _ = print_endline "Failure in generating SMT input." in ""
+	in
+	try
       let output = run prover input in
       let res = output = "unsat" in
 	(* Only do printing in case there is no suppression and output is not unsat *)

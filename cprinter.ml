@@ -1924,4 +1924,5 @@ Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
+Smtsolver.print_typed_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;
