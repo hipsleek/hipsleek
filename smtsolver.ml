@@ -679,8 +679,8 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
 	(*let _ = print_endline "smt_imply : entry" in
 	let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
-  try
       let input = to_smt ante (Some conseq) prover in
+  try
       let output = run prover input in
       let res = output = "unsat" in
 	(* Only do printing in case there is no suppression and output is not unsat *)
@@ -688,7 +688,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 	let _ = if (not !suppress_print_implication) (*&& (not res)*) then
 						let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
 						let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
-						let _ = if !print_original_solver_output then print_string ("=1=> [InTry] SMT output : " ^ output ^ "\nwhen we try to prove that " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n\n" ^ "\n") in ()
+						let _ = if !print_original_solver_output then print_string ("=1=> [Try] SMT output : " ^ output ^ "\n") in ()
 	in if res then
       res
 		else 
@@ -702,10 +702,12 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
     |Procutils.PrvComms.Timeout ->
 	    begin
 			Printexc.print_backtrace stdout;
-            let _ = if !print_original_solver_output then 
-				(* Why is it unsat if we return false !!! *)
-				(*print_string ("=1=> SMT output : unsat (from timeout exc)\n") in*)
-				print_string ("=1=> [TimeOut] SMT output : unknown (from timeout exc)\n" ^ "when we try to prove that " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n\n") in
+			let _ = if (not !suppress_print_implication) (*&& (not res)*) then
+				let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
+				let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
+	            	if !print_original_solver_output then 
+						print_string ("=1=> [TimeOut] SMT output : unknown (from timeout exc)\n")
+				in
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
