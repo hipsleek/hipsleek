@@ -688,7 +688,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 	let _ = if (not !suppress_print_implication) (*&& (not res)*) then
 						let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
 						let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
-						let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in ()
+						let _ = if !print_original_solver_output then print_string ("=1=> [InTry] SMT output : " ^ output ^ "\n") in ()
 	in if res then
       res
 		else 
@@ -705,7 +705,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
             let _ = if !print_original_solver_output then 
 				(* Why is it unsat if we return false !!! *)
 				(*print_string ("=1=> SMT output : unsat (from timeout exc)\n") in*)
-				print_string ("=1=> SMT output : unknown (from timeout exc)\n") in
+				print_string ("=1=> [TimeOut] SMT output : unknown (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
@@ -722,7 +722,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then 
 				(* print_string ("=1=> SMT output : unsat (from exc)\n") in *)
-				print_string ("=1=> SMT output : unknown (from exc)\n") in
+				print_string ("=1=> [OtherException] SMT output : unknown (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
