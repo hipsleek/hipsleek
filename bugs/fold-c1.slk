@@ -5,6 +5,7 @@ pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
          inv n >= 0.
 
+
 pred lseg2<n, p> == 
    case { n=0 -> [] self = p & n = 0 ;
           n!=0 -> [] (exists r2:self::node<next = r2> * r2::lseg2<n - 1, p>) ;
@@ -15,12 +16,13 @@ pred lseg2<n, p> ==
 //lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
 
-checkentail x::node<_,q>*q::node<_,nil> |- x::lseg<a,p>.
+//checkentail x::node<_,q>*q::node<_,nil> |- x::lseg<a,p>.
 
 //ent 1
 checkentail x::node<_,q>*q::node<_,nil> & a>0 |- x::lseg2<a,p>. //p? impl ex
+
 // unsound : should have failed like below
-print residue.
+//print residue.
 
 /*
 checkentail x::node<_,q>*q::node<_,nil> & a>0 |- x::lseg2<a,p> & x=p.
@@ -38,13 +40,15 @@ print residue.
 */
 
 //ent 1
+
+/*
+
 checkentail x::node<_,q>*q::node<_,nil> & a>0 or x::node<_,nil> & a=0|- 
             case { a=0 -> [] x = p & a = 0 ;
                    a!=0 -> [] (exists r2:x::node<next = r2> * r2::lseg2<a - 1, p>) ;
             }.
 
 
-/*
 
 checkentail x::node<_,q>*q::node<_,nil> & a>0 & a=0
  or x::node<_,q>*q::node<_,nil> & a>0 & a=1
