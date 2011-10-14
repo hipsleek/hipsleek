@@ -32,6 +32,26 @@ type relation_definition =
 type axiom_definition = 
 	| AxmDefn of (CP.formula * CP.formula)
 
+(**
+ * An Hoa : satisfiability output of SMT solvers
+ *)
+type sat_type = 
+	| Sat
+	| UnSat
+	| Unknown
+
+(**
+ * An Hoa : record structure to store information parsed from 
+ *          the output of the SMT solver; this is to make development
+ *          extensible.
+ *)
+type smt_output = {
+		output_text : string;			 (* solver original output string *)
+		output_text_lines : string list; (* a list of original solver output line by line *)
+		sat_result : sat_type; 		 (* satisfiability information *)
+		(* expand with other information : proof, time, error, warning, ... *)
+	}
+
 
 (**
  * Temp files used to feed input and capture output from provers
@@ -285,7 +305,7 @@ let rec smt_of_typ t =
  *)
 let smt_of_spec_var (sv : CP.spec_var) qvars =
   let getname sv = match sv with
-    | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then "'" else "")
+    | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then "primed" else "")
   in
   match qvars with
   | None -> getname sv
@@ -392,12 +412,12 @@ let rec smt_of_formula f qvars =
       (* see smt_of_spec_var for explanations of the qvars set *)
       let varname = smt_of_spec_var sv None in
       let qvars = StringSet.add varname qvars in
-      "(forall (?" ^ varname ^ " " ^ (smt_of_typ (extract_type sv)) ^ ") " (* " Int) " *) ^ (smt_of_formula p qvars) ^ ")"
+      "(forall ((?" ^ varname ^ " " ^ (smt_of_typ (extract_type sv)) ^ ")) " ^ (smt_of_formula p qvars) ^ ")"
   | CP.Exists (sv, p, _,_) ->
       (* see smt_of_spec_var for explanations of the qvars set *)
       let varname = smt_of_spec_var sv None in
       let qvars = StringSet.add varname qvars in
-      "(exists (?" ^ varname ^ " " ^ (smt_of_typ (extract_type sv)) ^ ") " (* " Int) " *) ^ (smt_of_formula p qvars) ^ ")"
+      "(exists ((?" ^ varname ^ " " ^ (smt_of_typ (extract_type sv)) ^ ")) " ^ (smt_of_formula p qvars) ^ ")"
 
 
 (* An Hoa : get the corresponding typed variable. For instance, *)
@@ -423,7 +443,7 @@ let smt_of_rel_def (rdef : relation_definition) =
 
 			let rel_axiomatization_assertion = match rf with
 				| CP.BForm ((CP.BConst (true, no_pos), None), None) -> ""
-				| _ -> "(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n" in
+				| _ -> "(assert (forall (" ^ rel_typed_vars ^ ") (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n" in
 			(rel_decl_fun,rel_axiomatization_assertion)
 
 (**
@@ -434,8 +454,11 @@ let smt_of_axiom_def (adef : axiom_definition) =
 	match adef with
 		| AxmDefn (h,c) -> 
 			let params = List.append (CP.fv h) (CP.fv c) in
+			let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
 			let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
-			"(assert (forall " ^ smt_params ^ "(implies " ^ (smt_of_formula h StringSet.empty) ^ "\n" ^ (smt_of_formula c StringSet.empty) ^ ")))"
+			"(assert (forall (" ^ smt_params ^ ") (=> " ^ 
+				(smt_of_formula h StringSet.empty) ^ " " ^ 
+				(smt_of_formula c StringSet.empty) ^ ")))\n"
 
 
 let print_typed_sv = ref (fun (x : CP.spec_var) -> "Print typed-spec-var is not initialized")
@@ -460,7 +483,7 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
 	let rel_def_ax = (String.concat "" (List.map snd rds)) in
 	(* let _ = if (!axm_defs = []) then print_endline "SMTSOLVER : No axiom" else print_endline ((string_of_int (List.length !axm_defs)) ^ " axioms") in *)
 	let smt_axioms_def = String.concat "" (List.map smt_of_axiom_def !axm_defs) in
-	 ("(set-logic AUFNIA" ^ (* (string_of_logic logic) ^*) ")\n" ^ 
+	 ("(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^ 
     (decfuns fvars) ^ rel_def_df ^ rel_def_ax ^ (* Collect the declare-fun first and then do the axiomatization to prevent missing function error *)
 		(*"(declare-fun update_array ((Array Int Int) Int Int (Array Int Int)) Bool)" ^
 		"(assert (forall (a (Array Int Int)) (i Int) (v Int) (r (Array Int Int)) 
@@ -533,11 +556,27 @@ let open_proc cmd args out_file:int  =
   | id -> id
 
 let rec get_answer chn : string =
-  let chr = input_char chn in
-      match chr with
-        |'\n' ->  ""
-        | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
-        | _ -> "" ^ get_answer chn
+	let output = collect_output chn [] in
+	let output = post_process_output output in
+		output
+
+(**
+ * An Hoa : collect all Z3's output into a list of strings (in reverse order)
+ *)
+and collect_output chn accumulated_output : string list =
+	let output = try
+					let line = input_line chn in
+						collect_output chn (line :: accumulated_output)
+				with
+					| End_of_file -> accumulated_output in
+		output
+
+(**
+ * An Hoa : post-process the solver output by removing warning, error indication, ...
+ *)
+and post_process_output output : string =
+	(* return the last line *)
+	List.nth output 0
 
 let remove_file filename =
   try
@@ -673,6 +712,27 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 				let c1 = snd ic in
 				smt_imply a1 c1 prover (* check induction case *)
 			else false
+
+(**
+ * If conseq is of form
+ *      exists a, b, ..., l : phi(a,b,...,l,...)
+ * then we return 
+ *      ({not phi(a,b,...,l,...)}, [a,b,...,l], true)
+ * Otherwise, return (conseq, [], false). The last boolean value is to indicate
+ * whether any transformation is performed.
+ *)
+and eliminate_exist (conseq : Cpure.formula) = 
+	(* Find the list under existential quantification & a formula phi(_) *)
+	let rec flatten_exists f =
+		match f with
+		| CP.Exists (v,f0,_,_) ->
+			let f1, s1 = flatten_exists f0 in
+				(f1, v :: s1)
+		| _ -> (f, []) in
+	let phi,evars = flatten_exists conseq in
+		if (evars = []) then (conseq, [], false) else (phi, evars, true)
+		
+
 (**
  * Test for validity
  * To check the implication P -> Q, we check the satisfiability of
@@ -684,6 +744,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
 	(* let _ = print_endline "smt_imply : entry" in *)
 	(* let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in *)
+	(* let conseq, evars, transformed = eliminate_exist conseq in *)
 	let input = try
 					to_smt ante (Some conseq) prover
 				with
@@ -691,7 +752,12 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 	in
 	try
       let output = run prover input in
-      let res = output = "unsat" in
+      let res = (* (transformed && output = "sat") || *) (output = "unsat") in
+	let res = if (output = "unknown") then 
+				try
+					Omega.imply ante conseq "" !timeout 
+				with | _ -> false
+		else res in
 	(* Only do printing in case there is no suppression and output is not unsat *)
 	(*let _ = print_string (string_of_bool !suppress_print_implication) in*)
 	let _ = if (not !suppress_print_implication) (*&& (not res)*) then
@@ -752,7 +818,7 @@ let imply ante conseq = (*let _ = print_string "Come to imply\n" in*)
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   try
-		(*let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in*)
+		(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in *)
 		let input = to_smt f None prover in
 		(* let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in *)
 		let output = run prover input in
@@ -774,7 +840,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unexpected exception => sat\n"); flush stdout; 
-            Unix.kill !prover_pid 9;
+            Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
             true
         end

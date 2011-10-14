@@ -175,10 +175,12 @@ $output_file = "log";
 		["array/arr_binarysearch.java",1,"","binary_search","SUCCESS"],
 		["array/arr_search_decrease_less_than_two.java",1,"","searchzero","FAIL"], # induction required
 		["array/arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["array/arr_bubblesort_perm.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
 		["array/arr_double.java",1,"","doublearr","SUCCESS"],
 		["array/arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
 		["array/arr_init.java",1,"","zinit","SUCCESS"],
 		["array/arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["array/arr_insertsort_perm.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
 		["array/arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
 		["array/arr_max.java",1,"","max_value_of_array","SUCCESS"],
 		["array/arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
@@ -187,6 +189,7 @@ $output_file = "log";
 		["array/arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
 		["array/arr_rev.java",1,"","arrayrev","SUCCESS"],
 		["array/arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["array/arr_selectionsort_perm.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
 		["array/arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
 	],
 	# END OF ARRAY TESTING EXAMPLES
