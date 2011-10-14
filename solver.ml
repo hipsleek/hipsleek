@@ -1799,7 +1799,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
         let estate = estate_of_context ctx pos in
         (* vs may contain non-existential free vars! *)
         (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in *)
-        let impl_vars = Gen.BList.intersect_eq (=) vs estate.es_gen_impl_vars in 
+        let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in 
         (* TODO : why must es_gen_impl_vars to be added to es_vars ??? *)
         let new_es = {estate with es_evars = estate.es_evars@impl_vars (*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*)} in
         (* let new_es = estate in *)
