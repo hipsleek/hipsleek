@@ -8,7 +8,7 @@ pred lseg<n, p> == self = p & n = 0
 
 pred lseg2<n, p> == 
    case { n=0 -> [] self = p & n = 0 ;
-          n!=0 -> [] (exists r2:self::node<next = r2> * r2::lseg2<n - 1, p>) ;
+          n!=0 -> [] (exists r2,b:self::node<next = r2> * r2::lseg2<b, p> & b=n-1) ;
           }
          inv n >= 0.
 
@@ -18,11 +18,24 @@ pred lseg2<n, p> ==
 
 //checkentail x::node<_,q>*q::node<_,nil> |- x::lseg<a,p>.
 
+/*
+split_universal@23@22@3
+split_universal inp1 : 0+1=a & 0=0 & q=p
+split_universal inp2 :[a_99]/Impl=[]/Expl=[]/view vars:[a_99,p]
+split_universal@23 EXIT out : q=p/ true
+
+split_universal@14@13@9@8@6@5@3
+split_universal inp1 : b_111=0 & nil=p_118 & b_111=0
+split_universal inp2 :[p_118,Anon_119,r2_120,p_106,Anon_107,r2_108,a_98,p,b_99]/Impl=[]/Expl=[]/view vars:[b_111,p_118]
+split_universal@14 EXIT out : b_111=0 & b_111=0 & exists1(p_118:nil=p_118)/ nil=p_118
+
+*/
+
 //ent 1
-checkentail x::node<_,q>*q::node<_,nil> & a>0 |- x::lseg2<a,p>. //p? impl ex
+checkentail x::node<_,q>*q::node<_,nil> & a>0 & a=1 |- x::lseg2<a,p>. //p? impl ex
 
 // unsound : should have failed like below
-//print residue.
+print residue.
 
 /*
 checkentail x::node<_,q>*q::node<_,nil> & a>0 |- x::lseg2<a,p> & x=p.
