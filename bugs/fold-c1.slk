@@ -32,7 +32,8 @@ split_universal@14 EXIT out : b_111=0 & b_111=0 & exists1(p_118:nil=p_118)/ nil=
 */
 
 //ent 1
-checkentail x::node<_,q>*q::node<_,nil> & a>0 & a=1 |- x::lseg2<a,p>. //p? impl ex
+checkentail x::node<_,q>*q::node<_,nil> & a>0 & a<=2 
+   |- x::lseg2<a,p>. //p? impl ex
 
 // unsound : should have failed like below
 print residue.
