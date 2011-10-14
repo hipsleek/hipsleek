@@ -36,9 +36,9 @@ type axiom_definition =
  * An Hoa : satisfiability output of SMT solvers
  *)
 type sat_type = 
-	| Sat
-	| UnSat
-	| Unknown
+	| Sat		(* solver returns sat *)
+	| UnSat		(* solver returns unsat *)
+	| Unknown	(* solver returns unknown or there is an exception *)
 
 (**
  * An Hoa : record structure to store information parsed from 
@@ -48,7 +48,7 @@ type sat_type =
 type smt_output = {
 		output_text : string;			 (* solver original output string *)
 		output_text_lines : string list; (* a list of original solver output line by line *)
-		sat_result : sat_type; 		 (* satisfiability information *)
+		sat_result : sat_type; 		 	 (* satisfiability information *)
 		(* expand with other information : proof, time, error, warning, ... *)
 	}
 
@@ -786,13 +786,16 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
-						(* Try induction on time out as well. *)
-						if (!try_induction) then
-							let _ = print_string "An Hoa :: smt_imply : try induction\n" in
-							(*let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
-							smt_imply_with_induction ante conseq prover
-						else 
-            false
+			(* Try induction on time out as well. *)
+				if (!try_induction) then
+					let _ = print_string "An Hoa :: smt_imply : try induction\n" in
+					(*let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
+					smt_imply_with_induction ante conseq prover
+				else 
+				try (* using omega on time out *)
+					Omega.imply ante conseq "" !timeout 
+				with | _ -> false
+            (* false *)
 		end
     | e -> 
         begin 
@@ -803,13 +806,16 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
             print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
-            false
+			try (* using omega on other exception *)
+					Omega.imply ante conseq "" !timeout 
+			with | _ -> false
+            (* false *)
         end
 
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
-let imply ante conseq = (*let _ = print_string "Come to imply\n" in*)
+let imply ante conseq = 
 	smt_imply ante conseq Z3
 
 (**
