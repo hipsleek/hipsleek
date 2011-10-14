@@ -1792,6 +1792,11 @@ and is_sat_memo_sub_no_ineq_slicing_x (mem : MCP.memo_pure) sat_subno with_dupl 
 	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: r: " ^ (string_of_bool r) ^ "\n") in*)
 	  if r then false (* found an equality contradiction *)
 	  else
+		(*
+		let related_ineq = List.find_all (fun img ->
+		  (MCP.is_ineq_linking_memo_group img) && (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
+		let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
+		*)
 		let f = MCP.fold_slice_gen mg with_dupl with_inv true true in
 		is_sat_sub_no f sat_subno
   in
