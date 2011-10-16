@@ -4218,8 +4218,6 @@ let get_sub_debug s n m =
   let _ = print_string ("get_sub out:"^r^"\n") in
   r
 
-
-
 (* get args from a bform formula *)
 let get_bform_eq_args_aux conv (bf:b_formula) =
   let (pf,_) = bf in
@@ -4232,13 +4230,24 @@ let get_bform_eq_args_aux conv (bf:b_formula) =
             | _, _ -> None)
     | _-> None     
 
+let get_bform_neq_args_aux conv (bf:b_formula) =
+  let (pf,_) = bf in
+  match pf with
+    | Neq(e1,e2,_) -> 
+          let ne1=conv e1 in 
+          let ne2=conv e2 in
+          (match ne1,ne2 with
+            | Var(v1,_),Var(v2,_) -> Some (v1,v2)
+            | _, _ -> None)
+    | _-> None     	  
+	  
 (* get arguments of an eq formula *)
 let get_bform_eq_args (bf:b_formula) =
   get_bform_eq_args_aux (fun x -> x) bf
 
 let mk_sp_const (i:int) = 
-          let n= const_prefix^(string_of_int i)
-          in SpecVar ((Int), n , Unprimed) 
+  let n= const_prefix^(string_of_int i)
+  in SpecVar ((Int), n , Unprimed) 
 
 let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
   match e with
@@ -4258,6 +4267,9 @@ let get_bform_eq_args_with_const (bf:b_formula) =
 let get_bform_eq_args_with_const_debug (bf:b_formula) =
    Gen.Debug.no_1 " get_bform_eq_args_with_const" (!print_b_formula) (fun _ -> "?") get_bform_eq_args_with_const bf
 
+let get_bform_neq_args_with_const (bf:b_formula) =
+   get_bform_neq_args_aux conv_exp_with_const bf	 
+	 
 (* form bformula assuming only vars *)
 let form_bform_eq (v1:spec_var) (v2:spec_var) =
   let conv v = Var(v,no_pos) in

@@ -1758,7 +1758,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 	is_sat_sub_no_c f sat_subno false
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
-  Gen.Debug.no_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+  Gen.Debug.ho_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno
 	
 let is_sat_memo_sub_no_orig (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
@@ -1787,17 +1787,17 @@ and is_sat_memo_sub_no_ineq_slicing_x (mem : MCP.memo_pure) sat_subno with_dupl 
 	else
 	  let aset = mg.memo_group_aset in
 	  let apart = EMapSV.partition aset in
-	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: apart: " ^ (pr_list Cprinter.string_of_spec_var_list apart) ^ "\n") in*)
+	  let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: apart: " ^ (pr_list Cprinter.string_of_spec_var_list apart) ^ "\n") in
 	  let r = List.fold_left (fun acc p -> if acc then acc else MCP.exists_contradiction_eq mem p) false apart in
 	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: r: " ^ (string_of_bool r) ^ "\n") in*)
 	  if r then false (* found an equality contradiction *)
 	  else
-		(*
 		let related_ineq = List.find_all (fun img ->
 		  (MCP.is_ineq_linking_memo_group img) && (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
 		let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
-		*)
+		(*
 		let f = MCP.fold_slice_gen mg with_dupl with_inv true true in
+		*)
 		is_sat_sub_no f sat_subno
   in
   List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem
@@ -1815,7 +1815,7 @@ let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   (* Modified version with UNSAT optimization *)
   if !do_slicing && !multi_provers then
 	is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
-  else if !do_slicing then
+  else if !do_slicing & !opt_ineq then
 	is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
   else
 	is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
@@ -1932,7 +1932,7 @@ let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool
   res
   
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
-  Gen.Debug.no_1 "is_sat_memo_sub_no"
+  Gen.Debug.ho_1 "is_sat_memo_sub_no"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
 	(fun f -> is_sat_memo_sub_no(*_new*) f sat_subno with_dupl with_inv) f
