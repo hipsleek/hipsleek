@@ -244,7 +244,12 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr2 l = pr_list string_of_match_res l in
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.loop_4_no "choose_context" pr1 pr1 pr3 pr3 pr2 
+  Gen.Debug.ho_4 "choose_context" 
+      (add_str "LHS node" pr1) 
+      (add_str "RHS node" pr1) 
+      (add_str "LHS pure" pr3) 
+      (add_str "RHS pure" pr3)
+      pr2 
       (fun _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p
 
 
@@ -509,7 +514,7 @@ and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res in
-  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+  Gen.Debug.ho_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
@@ -528,6 +533,11 @@ and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = matc
   | _ -> (-1,Search_action (List.map (process_one_match prog) l))
 
 and sort_wt (ys: action_wt list) : action list =
+  let pr = pr_list string_of_action_wt_res_simpl in
+  let pr2 = pr_list string_of_action_res in
+  Gen.Debug.ho_1 "sort_wt" pr pr2 sort_wt_x ys
+
+and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
           let l = List.map recalibrate_wt l in
@@ -571,15 +581,29 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
       List.hd (ys)
 (* Search_action (None,ys) *)
 
-and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
+and compute_actions prog es 
+      lhs_h (*lhs heap *) 
+      lhs_p (*lhs pure*) 
+      rhs_p (*rhs pure*)
+      posib_r_alias (*possible rhs variables*)
+      rhs_lst 
+      pos =
   let psv = Cprinter.string_of_spec_var in
   let pr0 = pr_list (pr_pair psv psv) in
+  (* let pr_rhs_lst = pr_list (pr_pair Cprinter.string_of_h_formula Cprinter.string_of_h_formula) in *)
   let pr = Cprinter.string_of_h_formula   in
   (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
   let pr3 = Cprinter.string_of_mix_formula in
-  let pr1 x = pr_list (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^", "^(Cprinter.string_of_h_formula c2)^")") x in
+  let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
+  let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_5 "compute_actions" pr0 pr pr1 pr3 pr3 pr2 (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h rhs_lst lhs_p rhs_p
+  Gen.Debug.ho_5 "compute_actions" pr0 
+      (add_str "LHS heap" pr) 
+      (add_str "LHS pure" pr3) 
+      (add_str "RHS cand" pr1)
+      (add_str "right alias" pr4)
+      pr2
+      (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h lhs_p rhs_lst  posib_r_alias
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with
