@@ -369,10 +369,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
-    Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
+    Solver.heap_entail_struc_init_bug_inv !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   else
-     Solver.heap_entail_struc_init !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
+     Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in

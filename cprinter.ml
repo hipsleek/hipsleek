@@ -947,7 +947,8 @@ let rec pr_formula_base e =
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
-          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl);
+          fmt_string (" LOC: " ^ (string_of_loc pos))
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -980,7 +981,8 @@ let rec pr_formula e =
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
-          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
+          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")");
+          fmt_string (" LOC: " ^ (string_of_loc pos))
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -1138,8 +1140,8 @@ let pr_estate (es : entail_state) =
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
-  pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars; 
-  pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
+  (*pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;*)
+  (*pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;*)
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
   pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
@@ -1171,9 +1173,13 @@ match e_kind with
   | Failure_None _ -> "None"
   | Failure_Valid -> "Valid"
 
+let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)
+
 let string_of_fail_explaining fe=
   fmt_open_vbox 1;
   pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
+  pr_vwrap "fe_name: " fmt_string (fe.fe_name);
+  pr_vwrap "fe_kind: " fmt_string (string_of_list_loc fe.fe_locs);
 (*  fe_sugg = struc_formula *)
   fmt_close ()
 
@@ -1184,9 +1190,9 @@ let pr_fail_estate (es:fail_context) =
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
   pr_vwrap "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
                                                    (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
-  (* pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; *)
+   pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; 
   (* pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; *)
-  (* pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)
+   (*pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)
   fmt_string "}"; 
   fmt_close ()
 

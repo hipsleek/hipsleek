@@ -2356,6 +2356,8 @@ and failure_kind =
 
 and fail_explaining = {
   fe_kind: failure_kind; (*may/must*)
+  fe_name: string;
+  fe_locs: loc list;
   (* fe_explain: string;  *)
     (* string explaining must failure *)
   (*  fe_sugg = struc_formula *)
@@ -2468,11 +2470,11 @@ let mk_failure_must_raw msg = Failure_Must msg
 
 let mk_failure_may_raw msg = Failure_May msg
 
-let mk_failure_may msg = {fe_kind = Failure_May msg;}
+let mk_failure_may msg = {fe_kind = Failure_May msg;fe_name = "" ;fe_locs=[]}
 
-let mk_failure_must msg = {fe_kind = mk_failure_must_raw msg;}
+let mk_failure_must msg name locs= {fe_kind = mk_failure_must_raw msg;fe_name = name ;fe_locs=locs}
 
-let mk_failure_none msg = {fe_kind = mk_failure_none_raw msg;}
+let mk_failure_none msg = {fe_kind = mk_failure_none_raw msg;fe_name = "" ;fe_locs=[]}
 
 let mkAnd_Reason (ft1:fail_type option) (ft2:fail_type option): fail_type option=
   match ft1, ft2 with
@@ -2906,6 +2908,7 @@ let mk_not_a_failure =
       fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
   }, {
       fe_kind = Failure_Valid;
+      fe_name = "" ;fe_locs=[]
   }
 )
 
@@ -2919,15 +2922,15 @@ let invert ls =
 		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
 		        fc_failure_pts =  []} in
             (Basic_Reason (fc_template,
-                 mk_failure_must "INCONSISTENCY : expected failure but success instead")) in
+                 mk_failure_must "INCONSISTENCY : expected failure but success instead" "" [])) in
   let goo es ff = formula_subst_flow es.es_formula ff in
   let errmsg = "Expecting Failure but Success instead" in
   match ls with
   | [] -> []
   | [Ctx es] -> (match es.es_must_error with
-      | None -> [Ctx {es with es_must_error = Some ("1"^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+      | None -> [Ctx {es with es_must_error = Some ("1 "^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
       | Some _ -> [Ctx {es with es_must_error = None; es_formula = goo es (mkNormalFlow())}])
-  | (Ctx es)::_ -> [Ctx {es with es_must_error = Some ("2"^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+  | (Ctx es)::_ -> [Ctx {es with es_must_error = Some ("2 "^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
   | _ -> report_error no_pos "not sure how to invert_outcome"
 
 
@@ -3538,7 +3541,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
 		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
 		        fc_failure_pts =  []} in
             let ft_template = (Basic_Reason (fc_template,
-                                             mk_failure_must "INCONSISTENCY : expected failure but success instead")) in
+                                             mk_failure_must "INCONSISTENCY : expected failure but success instead" "" [])) in
             let new_ctx_lst = set_must_error_from_ctx ctx_lst "INCONSISTENCY : expected failure but success instead"
               ft_template in
             SuccCtx new_ctx_lst
