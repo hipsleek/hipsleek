@@ -1015,9 +1015,9 @@ and pr_ext_formula  (e:ext_formula) =
 			  if not(Gen.is_empty(ee@ii@ei)) then
 			    begin
 				  fmt_string "exists ";
-				  pr_seq "(E)" pr_spec_var ee;
-				  pr_seq "(I)" pr_spec_var ii;
-				  pr_seq "(ex)" pr_spec_var ei;
+				  pr_seq "(Expl)" pr_spec_var ei;
+				  pr_seq "(Impl)" pr_spec_var ii;
+				  pr_seq "(ex)" pr_spec_var ee;
 			    end;
 			  pr_formula fb) fb;
           if not(Gen.is_empty(cont)) then

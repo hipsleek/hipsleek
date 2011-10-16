@@ -1539,8 +1539,8 @@ and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
 
   let conseq_fv = CP.fv to_conseq in
   let conseq_fv_b = (List.map (fun (l,f) -> CP.fv f) to_conseq_b) in
-  let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) conseq_fv in
-  let instantiate_b = List.map (fun fv_list -> List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) fv_list) conseq_fv_b in
+  let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars(*@impl_inst_vars*))) conseq_fv in
+  let instantiate_b = List.map (fun fv_list -> List.filter (fun v -> List.mem v (evars@expl_inst_vars(*@impl_inst_vars*))) fv_list) conseq_fv_b in
   let wrapped_to_conseq = List.fold_left (fun f v -> CP.Exists (v, f,None, pos)) to_conseq instantiate in
   let wrapped_to_conseq_b = 
     List.map2 (fun to_conseq instantiate -> List.fold_left (fun f v -> CP.Exists (v, f, None, pos)) to_conseq instantiate)
@@ -3163,9 +3163,13 @@ and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
 
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
   let fct es = 
-    let f = MCP.find_rel_constraints f (es.es_gen_expl_vars@es.es_gen_impl_vars) in
+	let l_inst = es.es_gen_expl_vars@es.es_gen_impl_vars in
+    let f = MCP.find_rel_constraints f l_inst in
     let nf = 
-      let f2 = if (es.es_evars = []) then f else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
+      let f2 = if (es.es_evars = []) then f else 
+		(*let wrapp_l = Gen.BList.difference_eq CP.eq_spec_var es.es_evars l_inst in*)
+		(elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
+	  let _ = print_string ("moving: "^(Cprinter.string_of_mix_formula f2)^"\n") in
       CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
     (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
     Ctx {es with
@@ -4243,6 +4247,10 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 				                  (*   if  then ((\*print_string ("YES Expl inst!!\n");*\) move_lemma_expl_inst_ctx_list ctx p2) *)
 				                  (*   else ((\*print_string ("NO Expl inst!!\n");*\) ctx ) *)
 				                  (* in *)
+                          
+                          (*this move_expl_inst call can occur at the end of folding and also 
+                          at the end of entailments of stages possibly leading to duplications of instantiations
+                          moving it would require the rhs pure to be moved as well...*)                          
 				                  let new_ctx = move_expl_inst_ctx_list ctx p2 in
 				                  (new_ctx, proof)
 				                end
