@@ -119,7 +119,8 @@ and coercion_decl = {
     (* the name of the predicate where this coercion can be applied *)
     coercion_body_view : ident;  (* used for cycles checking *)
     coercion_mater_vars : mater_property list;
-    coercion_simple_lhs :bool; (* signify if LHS is simple or complex *)
+    (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
+    coercion_lhs_type : F.formula_type; (*Simple or Complex*)
 }
 
 and coercion_type = Iast.coercion_type
@@ -127,6 +128,7 @@ and coercion_type = Iast.coercion_type
     (* | Equiv *)
     (* | Right *)
     
+
 and sharp_flow = 
   | Sharp_ct of F.flow_formula
   | Sharp_v of ident
@@ -356,7 +358,9 @@ let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialize
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
 
-let is_simple_formula x = true
+(*single node -> simple (true), otherwise -> complex (false*)
+(* let is_simple_formula x = true *)
+
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
   (f_p : proc_decl -> proc_decl) : prog_decl =

@@ -522,8 +522,6 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
   (*                       ^"\n\n") in *)
 
-  let ante = CF.normalize_formula_w_frac ante in
-
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
 
@@ -544,7 +542,7 @@ let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula an
   (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
   (*                       ^"\n\n") in *)
 
-  (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
+  let ante_flow_ff = (CF.flow_formula_of_formula ante) in
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 

@@ -2113,7 +2113,19 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
     | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
     | _ -> 
-        let _ = print_string "[astsimp] Warning: lhs node of a coercion is neither a view node nor a data node" in ""
+        (*LDK: expecting complex LHS*)
+        let hs = CF.split_star_conjunctions lhs_heap in
+        if ( (List.length hs) > 0) then
+          let head = List.hd hs in
+          match head with
+            | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
+            | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
+            | _ -> 
+                let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node \n" in 
+                ""
+        else
+          let _ = print_string "[astsimp] Warning: lhs of a coercion is neither simple or complex\n" in 
+          ""
   in
   (*LDK: In the body of a coercions, there may be multiple nodes with
   a same name with self => only add [coercion_name] to origins of the
@@ -2123,6 +2135,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* let c_rhs = CF.add_origs_to_first_node self c_rhs [coer.I.coercion_name] in *)
 
   (* let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in *)
+
   (* let c_rhs_struc = trans_struc_formula prog true lhs_fnames0 coer.I.coercion_body_struc stab false in *)
   (* let c_rhs_struc = CF.add_origs_to_node_struc self c_rhs_struc [coer.I.coercion_name] in *)
   (* free vars in RHS but not LHS *)
@@ -2169,7 +2182,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_head_view = lhs_name;
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
-        C.coercion_simple_lhs = (CF.is_simple_formula c_lhs) } in
+        (* C.coercion_simple_lhs = (CF.is_simple_formula c_lhs);  *)
+        C.coercion_lhs_type = (CF.type_of_formula c_lhs)} in
         let change_univ c = match c.C.coercion_univ_vars with
           | [] -> {c with C.coercion_type = Iast.Right}
           | v -> 

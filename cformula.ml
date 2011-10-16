@@ -14,6 +14,11 @@ module MCP = Mcpure
 
 type typed_ident = (typ * ident)
 
+and formula_type = 
+  | Simple
+  | Complex
+(*later, there can be case analysis ....*)
+
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
   	   | TypeExact of t_formula_sub_type (* for t = C *)
@@ -253,8 +258,6 @@ let mkFracInv (f:CP.spec_var) : CP.formula =
   let inv = 
     (Cpure.And (lower,upper,no_pos)) in
   inv
-
-
 
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -1206,6 +1209,7 @@ and h_add_origs_to_node (v : string) (h : h_formula) origs =
 		       h_formula_star_pos = pos})
     | ViewNode vn -> if not((CP.name_of_spec_var vn.h_formula_view_node) = v) then
 	      ViewNode {vn with 
+	          h_formula_view_origins = origs @ vn.h_formula_view_origins; (*LDK ???*)
 	          h_formula_view_original = false}
         else
 	      ViewNode {vn with 
@@ -1214,6 +1218,7 @@ and h_add_origs_to_node (v : string) (h : h_formula) origs =
 	          h_formula_view_original = false}
     | DataNode dn -> if not((CP.name_of_spec_var dn.h_formula_data_node) = v) then
 	      DataNode {dn with 
+	          h_formula_data_origins = origs @ dn.h_formula_data_origins; (*LDK ???*)
 	          h_formula_data_original = false}
         else
 	      DataNode {dn with 
@@ -1248,7 +1253,7 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 	         h_formula_star_pos = pos}) ->
         let  (is_first1,star_h1) = helper h1 found_first in
         let is_first2,star_h2 =
-          if ((not is_first1) && not (found_first)) then
+          if ((not is_first1) && (not (found_first))) then
             let is_first2, star_h2 =  helper h2 false in
             (is_first2,star_h2)
           else
@@ -1274,7 +1279,9 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 
         else
           (*otherwise, its origins unchange but its view_original=false*)
-	      (false, ViewNode {vn with h_formula_view_original = false})
+	      (false, ViewNode {vn with
+              h_formula_view_origins = origs @ vn.h_formula_view_origins;
+              h_formula_view_original = true})
     | DataNode dn ->
         if (((CP.name_of_spec_var dn.h_formula_data_node) = v) && (not found_first) && dn.h_formula_data_name=ln) then
           (*if it is the first matched node (same pointer name, 
@@ -1289,7 +1296,10 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 
         else
           (*otherwise, its origins unchange but its view_original=false*)
-	      (false, DataNode {dn with h_formula_data_original = false})
+
+	      (false, DataNode {dn with 
+	          h_formula_data_origins = origs @ dn.h_formula_data_origins;
+              h_formula_data_original = true})
     | _ -> (false,h)
   in
   let _, h1 = helper h false in
@@ -1595,6 +1605,18 @@ and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : fo
   let f2 = subst_one_by_one st2 f1 in
   f2
       
+
+and subst_avoid_capture_h (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
+  Gen.Debug.no_3 "[cformula]subst_avoid_capture_h" !print_svl !print_svl !print_h_formula !print_h_formula
+      (fun _ _ _ -> subst_avoid_capture_h_x fr t f) fr t f
+
+and subst_avoid_capture_h_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
+  let fresh_fr = CP.fresh_spec_vars fr in
+  let st1 = List.combine fr fresh_fr in
+  let st2 = List.combine fresh_fr t in
+  let f1 = subst_one_by_one_h st1 f in
+  let f2 = subst_one_by_one_h st2 f1 in
+  f2
 
 and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
   | [] -> []
@@ -2172,6 +2194,15 @@ and subst_one_by_one sst (f : formula) =
 
 and subst_one_by_one_x sst (f : formula) = match sst with
   | s :: rest -> subst_one_by_one_x rest (apply_one s f)
+  | [] -> f
+
+and subst_one_by_one_h sst (f : h_formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_h_formula in
+  Gen.Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_h_x sst f 
+
+and subst_one_by_one_h_x sst (f : h_formula) = match sst with
+  | s :: rest -> subst_one_by_one_h_x rest (h_apply_one s f)
   | [] -> f
 
 and subst_var (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
@@ -4826,12 +4857,23 @@ let join_conjunct_opt l = match l with
   | [] -> None
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
 
-let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  = 
+let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
     | [] -> None
     | x::xs -> Some (List.fold_left (fun a c -> mkStarH a c no_pos ) x xs)
 
-let split_star_conjuctions (f:h_formula): (h_formula list) =
+let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =  
+  let rec pr1 xs = 
+    match xs with
+      | [] -> ""
+      | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr1 xs1
+  in
+  let pr2 = pr_option !print_h_formula in
+  Gen.Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
+  join_star_conjunctions_opt_x hs
+
+
+let split_star_conjunctions_x (f:h_formula): (h_formula list) =
   let rec helper f = 
   match f with
   | Star({h_formula_star_h1 = h1;
@@ -4844,14 +4886,14 @@ let split_star_conjuctions (f:h_formula): (h_formula list) =
   in
   helper f
 
-let split_star_conjuctions (f:h_formula): (h_formula list) = 
+let split_star_conjunctions (f:h_formula): (h_formula list) = 
   let rec pr xs = 
     match xs with
       | [] -> ""
       | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
   in
-  Gen.Debug.no_1 "split_star_conjuctions" !print_h_formula pr
-  split_star_conjuctions f
+  Gen.Debug.no_1 "split_star_conjunctions" !print_h_formula pr
+  split_star_conjunctions_x f
 
 let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula * CP.spec_var list) =
   (*partition t into 2 list: MUST-ALIAS list w.r.t h and the rest *)
@@ -4997,7 +5039,7 @@ let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_fo
           let hs2,f2,vars2 = helper ls2 p_f in
           new_h::hs2,f1@f2,vars1@vars2
   in
-  let hs = split_star_conjuctions h in
+  let hs = split_star_conjunctions h in
   (*processing here ...*)
   let hs1,ps1,vars1 = helper hs p in
   let p1 = CP.join_conjunctions ps1 in
@@ -5057,10 +5099,25 @@ let normalize_formula_w_frac_x (f:formula):formula =
     | Or ({formula_or_pos = pos}) -> 
                 let _ = print_string "[cformula.ml] Warning: normalize_frac not expect OR \n" in f
 
+(*not used at the moment*)
 let normalize_formula_w_frac (f:formula):formula = 
   Gen.Debug.no_1 "normalize_formula_w_frac" !print_formula !print_formula
       normalize_formula_w_frac_x f
 
+let type_of_formula (f: formula) : formula_type =
+  if (isAnyConstFalse f) then Simple
+  else match f with
+    | Base b  ->
+        let h = b.formula_base_heap in
+        let hs = split_star_conjunctions h in
+        if ((List.length hs)>1) then Complex 
+        else Simple
+    | Exists e ->
+        let h = e.formula_exists_heap in
+        let hs = split_star_conjunctions h in
+        if ((List.length hs)>1) then Complex 
+        else Simple
+    | _ -> Complex
 
 
 let rec struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 

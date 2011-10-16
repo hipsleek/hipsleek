@@ -647,6 +647,7 @@ let rec pr_b_formula (e:P.b_formula) =
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
+let string_of_formula_type (t:formula_type):string = match t with | Simple -> "Simple" | _ -> "Complex"
 let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s2)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
@@ -1791,7 +1792,9 @@ let string_of_coerc_opt op c =
     ^"\n head match:"^c.coercion_head_view
     ^"\n body view:"^c.coercion_body_view
     ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
-    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";;
+    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
+    ^"\n coercion_lhs_type: "^(string_of_formula_type c.coercion_lhs_type)
+    ^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
 
