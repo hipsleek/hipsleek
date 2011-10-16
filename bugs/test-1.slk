@@ -46,16 +46,33 @@ print residue.
  Implicit instantiation below need to be
  processed in some particular order:
 */
-checkentail l::dll2<p,r,z,n> & rs=l |- l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n>.
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n>).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- [z2] l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n>.
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z1,0> * rs::dll2<z2,r,z,n> & z1=z2).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z2,0> * rs::dll2<z1,r,z,n> & z1=z2).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n> ).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+             rs::dll2<z2,r,z,n> * l::dll2<p,rs,z2,0>).
 
 /*
 However, explicit and existential instantiation
 can be done in any order:
 */
 
+/*
 checkentail l::dll2<p,r,z,n> & rs=l |- (exists z1: l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n> ).
 
 checkentail l::dll2<p,r,z,n> & rs=l |- [z1] l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n>.
-
+*/
 print residue.
 

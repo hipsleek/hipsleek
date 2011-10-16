@@ -248,7 +248,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr2 l = pr_list string_of_match_res l in
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.ho_4 "choose_context" 
+  Gen.Debug.no_4 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -527,7 +527,7 @@ and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res in
-  Gen.Debug.ho_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
@@ -548,7 +548,7 @@ and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = matc
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
   let pr2 = pr_list string_of_action_res in
-  Gen.Debug.ho_1 "sort_wt" pr pr2 sort_wt_x ys
+  Gen.Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
@@ -618,7 +618,7 @@ and compute_actions prog es
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_5 "compute_actions" pr0 
+  Gen.Debug.no_5 "compute_actions" pr0 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3) 
       (add_str "RHS cand" pr1)

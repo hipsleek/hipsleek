@@ -61,9 +61,9 @@ node2 find_nth_helper(node2 l, int j)
 */
   requires l::dll2<p,r,z,n> & n>=j & j>=1
   ensures res::dll2<z1,r,z,m> * l::dll2<p,res,z1,j-1>  & (m=n-j+1)
-    & res!=null; 
-  requires l::dll2<p,r,z,n>@I & n>=j & j>=1
-  ensures res!=null; 
+    & res!=null;
+  /* requires l::dll2<p,r,z,n>@I & n>=j & j>=1 */
+  /* ensures res!=null; */
 
 {
   if (j>1){
@@ -90,10 +90,8 @@ node2 find_nth(node2 f_list, int j)
     & res!=null; 
 */
   requires f_list::dll2<p,r,z,n> & n>=j & j>=1
-  ensures res::node2<_,_,z1,q>* q::dll2<res,r,z,m-1> 
-    * f_list::dll2<p,res,z1,j-1>  & (m=n-j+1)
-    & res!=null; 
-
+  ensures (exists z1: f_list::dll2<p,res,z1,j-1> * res::node2<_,_,z1,q>
+           * q::dll2<res,r,z,m-1> & (m=n-j+1)); 
 {
   node2 f_ele;
 
