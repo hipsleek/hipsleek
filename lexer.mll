@@ -108,6 +108,7 @@ module Make (Token : SleekTokenS)
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
 	 ("assume", ASSUME);
+	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
    ("bagmax", BAGMAX);
@@ -145,6 +146,7 @@ module Make (Token : SleekTokenS)
    ("ho_pred",HPRED);
    ("if", IF);
 	 ("in", IN_T);
+	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
 	 ("intersect", INTERSECT);
@@ -201,7 +203,8 @@ module Make (Token : SleekTokenS)
   let blank = [' ' '\009' '\012']
   let alpha = ['a'-'z' 'A'-'Z' '\223'-'\246' '\248'-'\255' '_']
   let identchar = ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '0'-'9']
-  let ident = alpha identchar*
+  let identseq = alpha identchar* (* An Hoa : a single identifier *)
+	let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
   let locname = ident
   let not_star_symbolchar = ['$' '!' '%' '&' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~' '\\']
   let symbolchar = '*' | not_star_symbolchar

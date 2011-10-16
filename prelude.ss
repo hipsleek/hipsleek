@@ -62,7 +62,7 @@ int mod(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
-
+/*
 float add___(float a, float b) 
   requires true 
   ensures res = a + b;
@@ -83,7 +83,7 @@ float div___(float a, float b)
  }
 // requires b!=0.0
 // ensures ensures res = a / b;
-
+*/
 bool eq___(int a, int b) 
   case {
     a = b -> ensures res;
@@ -162,12 +162,90 @@ int pow___(int a, int b)
    requires true 
    ensures true;
 
-relation update_array(int[] a, int i, int v, int[] r) == true.
+//////////////////////////////////////////////////////////////////
+// <OLD> SPECIFICATIONS
+//////////////////////////////////////////////////////////////////
+//
+//relation update_array(int[] a, int i, int v, int[] r) == true.
+//
+//int array_get_elm_at___(int[] a, int i) 
+//   requires true 
+//   ensures res = a[i];
+//
+//int[] update___(int[] a, int i, int v) 
+//   requires true 
+//   ensures update_array(a,i,v,res);
+//
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////
+// <NEW> PRIMITIVE RELATIONS
+//////////////////////////////////////////////////////////////////
+
+// Special relation to indicate the value to do induction on
+relation induce(int value) == true.
+
+relation dom(int[] a, int low, int high).
+
+axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
+
+relation update_array(int[] a, int i, int val, int[] r).
+
+relation amodr(int[] a, int[] b, int i, int j) == 
+    forall(k : (i<=k & k<=j | a[k] = b[k])).
+
+relation bnd(int[] a, int i, int j, int low, int high) == 
+ 	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////
+// <NEW> PRIMITIVE FUNCTIONS
+//////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___(int[] a, int i) 
-   requires true 
-   ensures res = a[i];
+  /* requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+  ensures true;
+  requires true
+  ensures res = a[i];
+	*/
+	requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+	ensures res = a[i];
 
 int[] update___(int[] a, int i, int v) 
-   requires true 
-   ensures update_array(a,i,v,res);
+//void update___(ref int[] a, int i, int v) 
+	/* requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+     ensures dom(res,ahalb,ahaub);//'
+     requires true
+	 ensures  update_array(a,i,v,res);//' 
+	*/
+     /* requires [s,b,low,high] bnd(a,s,b,low,high) & s<=i<=b & low<=v<=high */
+     /* ensures bnd(res,s,b,low,high); */
+	requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+	ensures dom(res,ahalb,ahaub) 
+				& update_array(a,i,v,res);
+
+
+
+int[] aalloc___(int dim) 
+	requires true 
+	ensures dom(res,0,dim-1);
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////

@@ -1,0 +1,312 @@
+/usr/local/bin/mona
+/usr/local/bin/oc
+
+Processing file "heaps_size_maxelem_0_link.ss"
+Parsing...
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+ warning heaps_size_maxelem_0_link.ss_350_9 quantifying: mx2
+
+ warning heaps_size_maxelem_0_link.ss_238_9 quantifying: max1 max2 mx3 mx4
+
+ warning heaps_size_maxelem_0_link.ss_195_9 quantifying: mx3 mx4 maxi
+
+ warning heaps_size_maxelem_0_link.ss_140_9 quantifying: mx2
+
+ warning heaps_size_maxelem_0_link.ss_35_9 quantifying: n1 ma
+Checking procedure deletemax$node... 
+dprint: heaps_size_maxelem_0_link.ss:365: ctx:  List of Failesc Context: [FEC(0, 1, 1) FEC(0, 1, 1)]
+
+Successful States:
+[Label: [(130:,1 ); (130:,1 )]
+ State:es_formula: 
+        EXISTS(maxi_1635: SS 408:tleft_279'::pq<tnleft_277',mx2>@M[Orig]@ rem br[{331}] * 
+        SS 407:tright_280'::pq<tnleft_277',mx2>@M[Orig]@ rem br[{331}] & (
+        ([<, 22, []>0<=m2_286][<, 22, []>0<=m1_285][377:!(v_bool_355_956')]
+         [v_boolean_355_1581][t=t' & t'!=null][0=tmp_275'][null!=l_1510]
+         [341:!(v_boolean_355_1580)]
+         [m2_1507=m2_1514 & m2_1507=0 & m2_1507=v_int_355_1579 & 
+           m2_1507=tnright_278' & m2_1507=tnleft_277' & r_1513=null & 
+           m1_1506=m1_1511 & (null=r_1513 | 0=m2_1507) & 
+           <, 36, []>tnleft_277'+tnright_278'=-1+m1_1511+tnleft_277' & 
+           <, 19, []>m2_1514+m3_1508=m1_1511 & (-1+
+           tnleft_277')<=tnright_278' & 
+           <, 37, []>tnright_278'<=tnleft_277' & 0!=n & <, 22, []>0<=n & 
+           <, 14, []>n=1+m1_1511+m2_1514 & 0!=m1_1506 & 
+           <, 20, []>0<=m3_1508 & <, 21, []>m3_1508<=1]
+         [mx2_1515=0 & mx2_1515=mx2 & mx1=mx1_1512 & d_1509=tval_276' & 
+           <, 41, []>maxi_1635=max(mx1,mx2) & <, 23, []>0<=mx1_1512 & 
+           <, 39, []>mx2<=mx1 & <, 18, []>d_1509<=mx & <, 23, []>0<=mx & 
+           <, 23, []>0<=mx2 & <, 17, []>mx2_1515<=d_1509 & 
+           <, 16, []>mx1_1512<=d_1509 & v_274'<=maxi_1635 & 
+           <, 42, []>0<=v_274']
+         [null=tleft_279'][null=tright_280'])) &
+        {FLOW,(202,202)=__norm,})
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_must_error: None
+       es_var_label: None
+       CtxORes_formula: 
+             EXISTS(maxi_1633,mx4_1632,
+             mx3_1631: SS 408:tleft_279'::pq<tnleft_277',mx3_1631>@M[Orig]@ rem br[{332}] * 
+             SS 407:tright_280'::pq<tnright_278',mx4_1632>@M[Orig]@ rem br[{332,331}] &
+             (
+             ([<, 22, []>0<=m2_286][<, 22, []>0<=m1_285]
+              [377:!(v_bool_355_956')][341:!(v_boolean_355_1582)]
+              [null!=l_1510][tmp_275'=0]
+              [mx1=mx1_1512 & d_1509=tval_276' & mx2_1515=mx2 & 
+                <, 41, []>maxi_1633=max(mx1,mx2) & <, 23, []>0<=mx & 
+                <, 39, []>mx3_1631<=mx1 & <, 23, []>0<=mx2_1515 & 
+                <, 16, []>mx1_1512<=d_1509 & <, 23, []>0<=mx4_1632 & 
+                <, 23, []>0<=mx1_1512 & <, 17, []>mx2_1515<=d_1509 & 
+                <, 40, []>mx4_1632<=mx2 & <, 18, []>d_1509<=mx & 
+                <, 23, []>0<=mx3_1631 & v_274'<=maxi_1633 & 
+                <, 42, []>0<=v_274']
+              [t'=t & t'!=null]
+              [m1_1511=m1_1506 & m2_1514=m2_1507 & <, 22, []>0<=n & 
+                <, 19, []>m2_1514+m3_1508=m1_1511 & <, 20, []>0<=m3_1508 & 
+                <, 21, []>m3_1508<=1 & (-1+tnleft_277')<=tnright_278' & 
+                <, 37, []>tnright_278'<=tnleft_277' & <, 14, []>n=1+m1_1511+
+                m2_1514 & <, 22, []>0<=m2_1507 & <, 36, []>tnleft_277'+
+                tnright_278'=-1+m1_1511+m2_1514 & 
+                <, 22, []>0<=tnright_278' & 0!=tnleft_277' & 0!=m2_1507 & 
+                0!=m1_1506 & 0!=n]
+              [null!=r_1513][358:!(v_boolean_355_1583)][null!=tleft_279'])) &
+             {FLOW,(202,202)=__norm,})
+            es_pure: (())
+            es_heap: true
+            es_aux_conseq: true
+            es_must_error: None
+            es_var_label: None],
+
+Successful States:
+[Label: [(130:,1 ); (130:,1 )]
+ State:es_formula: 
+        EXISTS(maxi_1641: SS 408:tleft_279'::pq<tnleft_277',mx2>@M[Orig]@ rem br[{331}] * 
+        SS 407:tright_280'::pq<tnleft_277',mx2>@M[Orig]@ rem br[{331}] & (
+        ([<, 22, []>0<=m2_286][<, 22, []>0<=m1_285][377:!(v_bool_355_956')]
+         [v_boolean_355_1581][r_1513=null]
+         [m2_1507=m2_1514 & m2_1507=0 & m2_1507=v_int_355_1579 & 
+           m2_1507=tnright_278' & m2_1507=tnleft_277' & m1_1506=m1_1511 & 
+           0!=n & <, 22, []>0<=n & <, 19, []>m2_1514+m3_1508=m1_1511 & 
+           <, 20, []>0<=m3_1508 & <, 21, []>m3_1508<=1 & <, 14, []>n=1+
+           m1_1511+m2_1514 & <, 37, []>tnright_278'<=tnleft_277' & 
+           0!=m1_1506 & (-1+tnleft_277')<=tnright_278' & 
+           <, 36, []>tnleft_277'+tnright_278'=-1+m1_1511+tnleft_277']
+         [t=t' & t'!=null]
+         [mx2_1515=0 & mx2_1515=mx2 & mx1=mx1_1512 & d_1509=tval_276' & 
+           <, 41, []>maxi_1641=max(mx1,mx2) & <, 23, []>0<=mx & 
+           <, 23, []>0<=mx1_1512 & <, 18, []>d_1509<=mx & <, 23, []>0<=mx2 & 
+           <, 39, []>mx2<=mx1 & <, 16, []>mx1_1512<=d_1509 & 
+           <, 17, []>mx2_1515<=d_1509 & v_274'<=maxi_1641 & 
+           <, 42, []>0<=v_274']
+         [0=tmp_275'][null!=l_1510][341:!(v_boolean_355_1580)]
+         [null=tleft_279'][null=tright_280'])) &
+        {FLOW,(202,202)=__norm,})
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_must_error: None
+       es_var_label: None
+       CtxORes_formula: 
+             EXISTS(maxi_1639,mx4_1638,
+             mx3_1637: SS 408:tleft_279'::pq<tnleft_277',mx3_1637>@M[Orig]@ rem br[{332}] * 
+             SS 407:tright_280'::pq<tnright_278',mx4_1638>@M[Orig]@ rem br[{332,331}] &
+             (
+             ([<, 22, []>0<=m2_286][<, 22, []>0<=m1_285]
+              [377:!(v_bool_355_956')][341:!(v_boolean_355_1582)]
+              [null!=l_1510][tmp_275'=0]
+              [mx1=mx1_1512 & d_1509=tval_276' & mx2_1515=mx2 & 
+                <, 41, []>maxi_1639=max(mx1,mx2) & <, 23, []>0<=mx & 
+                <, 39, []>mx3_1637<=mx1 & <, 23, []>0<=mx2_1515 & 
+                <, 16, []>mx1_1512<=d_1509 & <, 23, []>0<=mx4_1638 & 
+                <, 23, []>0<=mx1_1512 & <, 17, []>mx2_1515<=d_1509 & 
+                <, 40, []>mx4_1638<=mx2 & <, 18, []>d_1509<=mx & 
+                <, 23, []>0<=mx3_1637 & v_274'<=maxi_1639 & 
+                <, 42, []>0<=v_274']
+              [t'=t & t'!=null]
+              [m1_1511=m1_1506 & m2_1514=m2_1507 & <, 22, []>0<=n & 
+                <, 19, []>m2_1514+m3_1508=m1_1511 & <, 20, []>0<=m3_1508 & 
+                <, 21, []>m3_1508<=1 & (-1+tnleft_277')<=tnright_278' & 
+                <, 37, []>tnright_278'<=tnleft_277' & <, 14, []>n=1+m1_1511+
+                m2_1514 & <, 22, []>0<=m2_1507 & <, 36, []>tnleft_277'+
+                tnright_278'=-1+m1_1511+m2_1514 & 
+                <, 22, []>0<=tnright_278' & 0!=tnleft_277' & 0!=m2_1507 & 
+                0!=m1_1506 & 0!=n]
+              [null!=r_1513][358:!(v_boolean_355_1583)][null!=tleft_279'])) &
+             {FLOW,(202,202)=__norm,})
+            es_pure: (())
+            es_heap: true
+            es_aux_conseq: true
+            es_must_error: None
+            es_var_label: None]
+
+Procedure deletemax$node SUCCESS
+Checking procedure ripple$int~int~int~int~node~node... 
+dprint: heaps_size_maxelem_0_link.ss:282: ctx:  List of Failesc Context: [FEC(0, 1, 1)]
+
+Successful States:
+[Label: [(149:,1 ); (149:,1 ); (148:,1 ); (148:,1 ); (147:,1 ); (147:,1 ); 
+          (146:,1 ); (146:,1 )]
+ State:es_formula: 
+        SS 702:l_6259::pq<m1_6255,mx1_6261>@M[Orig]@ rem br[{332,331}] * 
+        SS 701:r_6262::pq<m2_6256,mx2_6264>@M[Orig]@ rem br[{332,331}] * 
+        SS 700:l_6314::pq<m1_6310,mx1_6316>@M[Orig]@ rem br[{332,331}] * 
+        SS 699:r_6317::pq<m2_6311,mx2_6319>@M[Orig]@ rem br[{332,331}] * 
+        l'::node<d_6258,m1_6260,m2_6263,l_6259,r_6262>@M[] * 
+        r'::node<d_6313,m1_6315,m2_6318,l_6314,r_6317>@M[] & (
+        ([596:!(v_bool_266_1145')][r=r' & r'!=null]
+         [v'=v & d=d' & <, 17, []>mx2_6319<=d_6313 & mx1<=d & 
+           <, 16, []>mx1_6316<=d_6313 & <, 23, []>0<=mx1_6316 & 
+           <, 23, []>0<=mx1 & v<=d & <, 18, []>d_6313<=mx2 & 
+           <, 23, []>0<=mx2 & <, 17, []>mx2_6264<=d_6258 & 
+           <, 23, []>0<=mx1_6261 & <, 47, []>0<=v & mx2<=d & 
+           <, 18, []>d_6258<=mx1 & <, 23, []>0<=mx2_6319 & 
+           <, 23, []>0<=mx2_6264 & <, 16, []>mx1_6261<=d_6258 & 
+           <, 149, []>(1+v')<=d_6313 & <, 149, []>(1+d_6258)<=d_6313]
+         [m2_6311=m2_6318 & m1_6310=m1_6315 & m2_6256=m2_6263 & 
+           m1_6255=m1_6260 & m2=m2' & m1=m1' & <, 44, []>m2<=m1 & 
+           <, 21, []>m3_6312<=1 & <, 19, []>m2_6263+m3_6257=m1_6260 & 
+           0!=m2' & <, 21, []>m3_6257<=1 & <, 22, []>0<=m2' & 
+           <, 19, []>m2_6318+m3_6312=m1_6315 & <, 22, []>0<=m2_6256 & 
+           <, 22, []>0<=m2_6311 & <, 20, []>0<=m3_6257 & <, 14, []>m2'=1+
+           m1_6315+m2_6318 & <, 14, []>m1'=1+m1_6260+m2_6263 & 0!=m1' & 
+           <, 20, []>0<=m3_6312 & (-1+m1)<=m2]
+         [534:!(v_bool_244_1147')][548:!(v_bool_253_1146')][l=l' & l'!=null]
+         [695:!(v_bool_278_1144')])) &
+        {FLOW,(202,202)=__norm,}
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_must_error: None
+       es_var_label: None]
+
+Procedure ripple$int~int~int~int~node~node SUCCESS
+Checking procedure deleteone$int~int~node~node... 
+Procedure deleteone$int~int~node~node SUCCESS
+Checking procedure deleteoneel$node... 
+Procedure deleteoneel$node SUCCESS
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+Stop Omega... 2073 invocations 
+1 false contexts at: ( (246,2) )
+
+Total verification time: 10.89 second(s)
+	Time spent in main process: 3. second(s)
+	Time spent in child processes: 7.89 second(s)
+Counters: 
+ cnt_--opt-imply 3 = 992
+cnt_Overall = 1
+cnt_Parsing = 2
+cnt_Preprocessing = 1
+cnt_TP.imply_timeout = 1727
+cnt_Translating global var = 1
+cnt_Translating to Core = 1
+cnt_add_pure = 1942
+cnt_elim_exists = 447
+cnt_elim_redundant_ctr = 13
+cnt_empty_predicate_testing = 97
+cnt_entail_prune = 56
+cnt_erc_imply = 93
+cnt_fast_imply = 1097
+cnt_filter_dupl_memo = 4695
+cnt_heap_entail_one_context_struc#2 = 36
+cnt_heap_entail_one_context_struc#4 = 32
+cnt_heap_entail_one_context_struc#fold = 90
+cnt_imply = 1727
+cnt_imply_proc_one_full = 122
+cnt_imply_proc_one_ncplx = 870
+cnt_is_sat = 1812
+cnt_memo_imply = 97
+cnt_memo_norm = 2085
+cnt_merge_mems_r_dups = 1969
+cnt_method deletemax$node = 1
+cnt_method deleteone$int~int~node~node = 1
+cnt_method deleteoneel$node = 1
+cnt_method insert$node~int = 1
+cnt_method ripple$int~int~int~int~node~node = 1
+cnt_normalize_max_renaming_list_failesc_context = 145
+cnt_pred_inference = 1
+cnt_proof_after_base_case = 29
+cnt_prune_imply = 534
+cnt_prune_preds = 328
+cnt_prune_preds_filter = 328
+cnt_push_exists_slicing = 789
+cnt_simplify = 454
+cnt_slow_imply = 93
+cnt_unfold_unsat = 56
+consumed_nodes_counter = 255
+consumed_specialized_nodes = 124
+dropped_branches = 57
+false_imply_count = 811
+fast_imply_success = 18
+impl_cache_count = 1645
+impl_conseq_count = 699
+impl_proof_count = 1034
+imply_sem_prun_false = 466
+imply_sem_prun_true = 68
+prune_cnt = 57
+sat_cache_count = 1812
+sat_proof_count = 585
+stat_count_imply = 1727
+stat_count_sat = 1812
+stat_disj_count_imply = 3627
+stat_disj_count_sat = 2161
+stat_size_count_imply = 26091
+stat_size_count_sat = 16740
+syn_memo_count = 552
+syn_memo_hit = 18
+total_unfold_disjs = 125
+true_imply_count = 916
+with_disj_cnt_0_s = 748
+with_disj_cnt_2_f = 70
+with_disj_cnt_2_s = 52
+z_stat_disj_imply = 1755
+z_stat_disj_sat = 2120
+
+ profile results: there where 40 keys 
+ 
+(--opt-imply 3,0.,992,0.,[],  0.%) 
+(Overall,10.88,1,10.88,[10.88],  100.%) 
+(Parsing,0.01,2,0.,[],  0.18%) 
+(Preprocessing,0.1,1,0.1,[],  0.91%) 
+(TP.imply_timeout,0.,1727,0.,[],  0.%) 
+(Translating global var,0.01,1,0.01,[],  0.09%) 
+(Translating to Core,0.07,1,0.07,[],  0.64%) 
+(add_pure,0.02,1942,0.,[],  0.27%) 
+(elim_exists,0.33,447,0.,[],  3.03%) 
+(elim_redundant_ctr,0.,13,0.,[],  0.09%) 
+(empty_predicate_testing,0.37,97,0.,[],  3.4%) 
+(entail_prune,0.23,56,0.,[],  2.11%) 
+(erc_imply,0.,93,0.,[],  0.09%) 
+(fast_imply,0.,1097,0.,[],  0.%) 
+(filter_dupl_memo,0.01,4695,0.,[],  0.18%) 
+(heap_entail_one_context_struc#2,0.56,36,0.01,[],  5.14%) 
+(heap_entail_one_context_struc#4,0.12,32,0.,[],  1.1%) 
+(heap_entail_one_context_struc#fold,1.08,58,0.01,[],  10.01%) 
+(imply,1.05,1727,0.,[],  9.74%) 
+(imply_proc_one_full,0.04,122,0.,[],  0.36%) 
+(imply_proc_one_ncplx,0.43,870,0.,[],  4.04%) 
+(is_sat,0.46,1812,0.,[],  4.31%) 
+(memo_imply,0.29,97,0.,[],  2.66%) 
+(memo_norm,0.,2085,0.,[],  0.%) 
+(merge_mems_r_dups,0.,1969,0.,[],  0.%) 
+(method deletemax$node,1.32,1,1.32,[1.32],  12.22%) 
+(method deleteone$int~int~node~node,0.05,1,0.05,[],  0.45%) 
+(method deleteoneel$node,0.34,1,0.34,[],  3.21%) 
+(method insert$node~int,0.38,1,0.38,[],  3.49%) 
+(method ripple$int~int~int~int~node~node,0.77,1,0.77,[0.77],  7.16%) 
+(normalize_max_renaming_list_failesc_context,0.02,145,0.,[],  0.18%) 
+(pred_inference,0.03,1,0.03,[],  0.27%) 
+(proof_after_base_case,0.25,22,0.01,[],  2.38%) 
+(prune_imply,0.,534,0.,[],  0.%) 
+(prune_preds,0.3,328,0.,[],  2.75%) 
+(prune_preds_filter,0.01,328,0.,[],  0.09%) 
+(push_exists_slicing,0.33,789,0.,[],  3.03%) 
+(simplify,0.49,454,0.,[],  4.5%) 
+(slow_imply,0.,93,0.,[],  0.09%) 
+(unfold_unsat,0.,56,0.,[],  0.%)

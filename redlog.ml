@@ -236,8 +236,9 @@ let rec rl_of_exp e0 =
 let rl_of_b_formula b =
   let mk_bin_exp opt e1 e2 = 
     "(" ^ (rl_of_exp e1) ^ opt ^ (rl_of_exp e2) ^ ")"
-  in 
-  match b with
+  in
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
   | CP.BVar (bv, _) -> 
       (* The following solution is just a copy of what omega.ml used. *)
@@ -311,7 +312,7 @@ let rec string_of_exp e0 =
 let string_of_b_formula bf = 
   let build_exp e1 e2 op =
     (string_of_exp e1) ^ op ^ (string_of_exp e2)
-  in match bf with
+  in let (pf,_) = bf in match pf with
     | CP.BConst (b, _) -> (string_of_bool b)
     | CP.BVar (bv, _) -> (rl_of_spec_var bv) ^ " > 0"
     | CP.Lt (e1, e2, _) -> build_exp e1 e2 " < "
@@ -356,8 +357,10 @@ let simplify_var_name (e: CP.formula) : CP.formula =
     in
     CP.SpecVar (typ, short_name, prm)
   in
-  let f_bf vnames bf = match bf with
-    | CP.BVar (sv, l) -> Some (CP.BVar (shorten_sv sv vnames, l))
+  let f_bf vnames bf =
+	let (pf,il) = bf in
+	match pf with
+    | CP.BVar (sv, l) -> Some ((CP.BVar (shorten_sv sv vnames, l)),il)
     | _ -> None
   in
   let f_e vnames e = match e with
@@ -385,7 +388,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
     | CP.Not (f1, lbl, l) ->
         CP.Not (simplify f1 vnames, lbl, l)
     | CP.BForm (bf, lbl) ->
-        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+	    CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
   in
   simplify e (Hashtbl.create 100)
 
@@ -409,8 +412,9 @@ let rec is_linear_exp exp =
       *)
   | _ -> false
 
-let is_linear_bformula b = 
-  match b with
+let is_linear_bformula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst _ -> true
   | CP.BVar _ -> true
   | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
@@ -496,14 +500,14 @@ let has_exists2 f0 =
  
  let rec strengthen_formula f0 = 
   match f0 with
-  | CP.BForm (b,lbl) -> 
-      let r = match b with
-        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
-        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
+  | CP.BForm ((pf,il),lbl) -> 
+      let r = match pf with
+        | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl)
+        | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl)
         | CP.Neq (e1, e2, l) ->
             let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
             let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)
+            CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
         | _ -> f0 
       in r
   | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
@@ -514,16 +518,19 @@ let has_exists2 f0 =
 
 
 let strengthen2 f0 =
-  let f_f f = match f with
-    | CP.BForm (CP.Neq (e1, e2, l), lbl) ->
+  let f_f f =
+	match f with
+	| CP.BForm ((CP.Neq (e1, e2, l), il), lbl) ->
         let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
         let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-        Some (CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l))
+        Some (CP.Or (CP.BForm ((lp, il), lbl), CP.BForm ((rp, il), lbl), lbl, l))
     | _ -> None
   in
-  let f_bf bf = match bf with
-    | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
-    | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
+  let f_bf bf =
+	let (pf,il) = bf in
+	match pf with
+    | CP.Lt (e1, e2, l) -> Some ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)),il)
+    | CP.Gt (e1, e2, l) -> Some ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)),il)
     | _ -> Some bf
   in
   CP.map_formula f0 (f_f, f_bf, nonef)
@@ -536,14 +543,14 @@ let strengthen2 f0 =
  
 let rec weaken_formula f0 = 
   match f0 with
-  | CP.BForm (b,lbl) ->
-      let r = match b with
-        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl)
-        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl)
+  | CP.BForm ((pf,il),lbl) ->
+      let r = match pf with
+        | CP.Lte (e1, e2, l) -> CP.BForm ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l), il),lbl)
+        | CP.Gte (e1, e2, l) -> CP.BForm ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l), il),lbl)
         | CP.Eq (e1, e2, l) ->
             let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
             let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
+            CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
         | _ -> f0 
       in r
   | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
@@ -555,15 +562,17 @@ let rec weaken_formula f0 =
   
 let weaken2 f0 =
   let f_f f = match f with
-    | CP.BForm (CP.Eq (e1, e2, l), lbl) ->
+    | CP.BForm ((CP.Eq (e1, e2, l),il), lbl) ->
         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
         let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-        Some (CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l))
+        Some (CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l))
     | _ -> None
   in
-  let f_bf bf = match bf with
-    | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
-    | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
+  let f_bf bf =
+	let (pf,il) = bf in
+	match pf with
+    | CP.Lte (e1, e2, l) -> Some ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l)),il)
+    | CP.Gte (e1, e2, l) -> Some ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l)),il)
     | _ -> Some bf
   in
   CP.map_formula f0 (f_f, f_bf, nonef)
@@ -648,7 +657,9 @@ and get_subst_min f0 v = match f0 with
   | CP.BForm bf -> get_subst_min_b_formula bf v
   | _ -> ([], f0)
 
-and get_subst_min_b_formula (bf,lbl) v = match bf with
+and get_subst_min_b_formula (bf,lbl) v =
+  let (pf,il) = bf in
+  match pf with
   | CP.EqMin (e0, e1, e2, pos) ->
     if CP.is_var e0 then
       let v0 = CP.to_var e0 in
@@ -669,7 +680,9 @@ and get_subst_max f0 v = match f0 with
   | CP.BForm bf -> get_subst_max_b_formula bf v
   | _ -> ([], f0)
   
-and get_subst_max_b_formula (bf,lbl) v = match bf with
+and get_subst_max_b_formula (bf,lbl) v =
+  let (pf,_) = bf in
+  match pf with
   | CP.EqMax (e0, e1, e2, pos) ->
     if CP.is_var e0 then
       let v0 = CP.to_var e0 in
@@ -718,7 +731,8 @@ let rec partition_by_var e v =
   | _ -> (0, Some e)
 
 let get_subst_equation_b_formula bf0 v lbl =
-  match bf0 with
+  let (pf,il) = bf0 in
+  match pf with
   | CP.Eq (e1, e2, pos) -> 
       let e = CP.Subtract (e1, e2, no_pos) in
       let with_v, without_v = partition_by_var e v in
@@ -852,8 +866,8 @@ and elim_exists_min f0 =
       let v, e1, e2 = List.hd st in
       let tmp1 = 
         CP.mkOr 
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkLte e1 e2 pos),None)) pos) pp1 pos)
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkGt e1 e2 pos),None)) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkLte e1 e2 pos), None),None)) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkGt e1 e2 pos), None),None)) pos) pp1 pos)
         None
         pos
       in
@@ -880,8 +894,8 @@ and elim_exists_max f0 =
       let v, e1, e2 = List.hd st in
       let tmp1 = 
         CP.mkOr 
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkGte e1 e2 pos),None) ) pos) pp1 pos)
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkLt e1 e2 pos),None) ) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkGte e1 e2 pos), None),None) ) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkLt e1 e2 pos), None),None) ) pos) pp1 pos)
         None
         pos
       in
@@ -923,7 +937,9 @@ let elim_exist_quantifier f =
  * formula normalization stuffs
  * *******************************)
 
-let negate_b_formula bf0 = match bf0 with
+let negate_b_formula bf0 =
+  let (pf,il) = bf0 in
+  let npf = match pf with
   | CP.BConst (b, pos) -> Some (CP.BConst (not b, pos))
   | CP.BVar (sv, pos) -> None
   | CP.Lt (e1, e2, pos) -> Some (CP.Gte (e1, e2, pos))
@@ -933,6 +949,9 @@ let negate_b_formula bf0 = match bf0 with
   | CP.Eq (e1, e2, pos) -> Some (CP.Neq (e1, e2, pos))
   | CP.Neq (e1, e2, pos) -> Some (CP.Eq (e1, e2, pos))
   | _ -> None
+  in match npf with
+	| None -> None
+	| Some pf -> Some (pf,il)
   
 let rec negate_formula f0 = match f0 with
   | CP.BForm (bf, lbl) ->

@@ -21,7 +21,7 @@ let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
-let oc_maxVars = ref 54
+let oc_maxVars = ref 256
 let print_pure = ref (fun (c:formula)-> " printing not initialized")
 
 let process = ref {name = "omega"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
@@ -75,7 +75,9 @@ let rec omega_of_exp e0 = match e0 with
   | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
   | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
 
-and omega_of_b_formula b = match b with
+and omega_of_b_formula b =
+  let (pf, _) = b in
+  match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0"
   | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)

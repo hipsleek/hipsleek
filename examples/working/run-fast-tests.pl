@@ -43,10 +43,10 @@ else
 if($prover){
 	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
-		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3');
+		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'zm' => 'zm');
 	if (!exists($provers{$prover})){
         print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
-		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', or 'z3' \n";
+		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
 }
@@ -122,7 +122,7 @@ if($timings){
     }
 
     $row = 3;
-    (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
+    (my $Second, my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
@@ -169,6 +169,27 @@ $sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
+	# AN HOA : ADDED ARRAY TESTING EXAMPLES
+	"hip_array"=>[
+		["array/arr_at.java",1,"","main","SUCCESS"],
+		["array/arr_binarysearch.java",1,"","binary_search","SUCCESS"],
+		["array/arr_search_decrease_less_than_two.java",1,"","searchzero","FAIL"], # induction required
+		["array/arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["array/arr_double.java",1,"","doublearr","SUCCESS"],
+		["array/arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
+		["array/arr_init.java",1,"","zinit","SUCCESS"],
+		["array/arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["array/arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
+		["array/arr_max.java",1,"","max_value_of_array","SUCCESS"],
+		["array/arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
+		["array/arr_new_exp.java",1,"","main","SUCCESS"],
+		["array/arr_nqueens.java",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
+		["array/arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
+		["array/arr_rev.java",1,"","arrayrev","SUCCESS"],
+		["array/arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["array/arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
+	],
+	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
     "hip_imm" =>[ 
         ["imm/bigint.ss",17, "",

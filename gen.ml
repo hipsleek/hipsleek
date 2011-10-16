@@ -53,6 +53,8 @@ struct
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
 
+ let add_str s f xs = s^(f xs)
+
   let opt_to_list o = match o with
     | None -> []
     | Some a -> [a]
@@ -253,8 +255,9 @@ struct
   let disjoint_eq eq l1 l2 =
     List.for_all (fun x -> not (mem_eq eq x l2)) l1
 
-  let overlap_eq eq l1 l2 = 
-    List.exists (fun x -> (mem_eq eq x l2)) l1
+  let overlap_eq eq l1 l2 =
+	if (l2 == []) then false
+	else List.exists (fun x -> (mem_eq eq x l2)) l1
 
   let rec find_dups_eq eq n = 
     match n with
@@ -1699,7 +1702,7 @@ struct
     Globals.error_flow_int := (get_hash_of_exc Globals.error_flow)
     (* ; Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow) *)
     (* ;Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow) *)
-    (* let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
+     ;let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()
 
   let compute_hierarchy i () =
     let pr () = string_of_exc_list 0 in

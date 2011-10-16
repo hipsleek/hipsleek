@@ -35,6 +35,7 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
         I.prog_rel_decls = [];
+        I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
               I.prog_hopred_decls = [];
@@ -49,6 +50,7 @@ let cobj_def = { C.data_name = "Object";
 let cprog = ref { C.prog_data_decls = [];
 			  C.prog_view_decls = [];
 				C.prog_rel_decls = []; (* An Hoa *)
+				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  C.prog_proc_decls = [];
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
@@ -234,6 +236,16 @@ let process_rel_def rdef =
   else
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
 
+
+(** An Hoa : process axiom
+ *)
+let process_axiom_def adef = begin
+	iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
+	let cadef = AS.trans_axiom iprog adef in
+		!cprog.C.prog_axiom_decls <- (cadef :: !cprog.C.prog_axiom_decls);
+	Smtsolver.add_axiom_def (Smtsolver.AxmDefn (cadef.C.axiom_hypothesis,cadef.C.axiom_conclusion));
+end
+	
 let process_data_def ddef =
   (*
     print_string (Iprinter.string_of_data_decl ddef);
@@ -357,6 +369,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
+  (* let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in *)
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
@@ -364,10 +377,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
-    Solver.heap_entail_struc_init_bug_inv !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
+    Solver.heap_entail_struc_init_bug_inv !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   else
-     Solver.heap_entail_struc_init !cprog false false (* (ante_flow_ff.CF.formula_flow_interval) *) 
+     Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in

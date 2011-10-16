@@ -1,7 +1,0 @@
-(set-logic AUFNIA)
-(declare-fun v_int_348_2018' () Int)
-(declare-fun h () Int)
-(assert (= v_int_348_2018' (+ 1 h)))
-(assert (<= 1 h))
-(assert (not (= v_int_348_2018' h)))
-(check-sat)

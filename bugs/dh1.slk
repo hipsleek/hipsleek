@@ -1,0 +1,41 @@
+data node {
+	int f1;
+	int f2;
+	int f3;
+	node f4;
+	node f5;	
+}.
+
+data node2 {
+	int f1;
+}.
+
+
+//checkentail  x::node<a1,a2,a3,a4,a5> |- x::node<m1,m2,m3,m4,m5> & a1=a2 .
+
+
+checkentail  x::node<m,n,#,a,a> * y::node<m,n,#,#,#> 
+  |- x::node<m1,#,#,e,f> & e=f.
+print residue.
+
+checkentail  x::node<m,n,#,a,a> * x::node<#,#,c,#,#> 
+  |- x::node<m1,#,d,e,f> & e=f.
+print residue.
+
+checkentail  x::node<#,f,#,#,#> * y::node<a,#,#,#,#> 
+  |- x!=y.
+//above should fail but proven as valid
+// BAGA needs to be refined
+
+checkentail  x::node<f,#,#,#,#> * x::node<a,#,#,#,#> 
+  |- false.
+checkentail  x::node<f,#,#,#,#> * x::node<#,b,#,#,#> 
+  |- false.
+/*
+Entail(1)=Valid.
+ y::node<m,n,-,-,->@M & m1=m & e=a & f=a & {FLOW,(27,27)=__norm}
+Stop Omega... 2 invocations 
+
+// What happened x.f2 field?
+
+*/

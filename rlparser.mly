@@ -47,7 +47,9 @@ formula:
   | OPAREN formula CPAREN { $2 }
 ;
 
-bformula:
+bformula: pformula { ($1, None) }
+
+pformula:
     TRUE { CP.BConst (true, no_pos) }
   | FALSE { CP.BConst (false, no_pos) }
   | ID { CP.mkBVar $1 Unprimed no_pos }
