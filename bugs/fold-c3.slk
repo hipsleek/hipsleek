@@ -9,7 +9,4 @@ pred lseg2<n, p> ==
          
 checkentail a=1
    |- x::lseg2<b,p> & b=1. 
-
-checkentail a=1
-   |- x::lseg2<b,p> & b=4. 
-print residue.
+ print residue.

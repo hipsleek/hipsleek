@@ -1281,7 +1281,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
 	        (r1,r2@r22,r23)
 	      else 
             (*let _ = print_string ("\n failed ante: "^(Cprinter.string_of_pure_formula  
-              (CP.fold_mem_lst (CP.mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
+              (fold_mem_lst (mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
             (r1,r2,r3)
     | [] -> (true,[],None)
 
@@ -1598,3 +1598,67 @@ let filter_complex_inv f = match f with
   
   
 let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isConstTrue b) bl)
+
+
+
+
+let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = 
+  let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in
+  match f_grp arg e with 
+    | Some e1-> e1
+    | None -> 
+      let new_arg = f_arg arg e in
+      let new_cons,new_rc  = List.split ((List.map (fun c-> f_memo_cons c new_arg)) e.memo_group_cons) in
+      let new_aset, new_ra = f_aset new_arg e.memo_group_aset in
+      let new_slice, new_rs = List.split ((List.map (fun c-> f_slice c new_arg)) e.memo_group_slice) in
+      let new_fv, new_rv =  List.split ((List.map (fun c-> f_fv c new_arg)) e.memo_group_fv) in
+      ({e with
+        memo_group_fv =new_fv;
+        memo_group_cons = new_cons;
+        memo_group_slice = new_slice;
+        memo_group_aset = new_aset;}, f_comb (new_rc@new_ra@new_rs@new_rv))
+  
+    
+ let constraint_collector p_sel f= 
+   let f_comb f = List.concat f in
+   let pf_f _ f= match f with 
+    | Or _ -> Some (f,[])
+    | _ -> None    in
+   let pf_b _ b = match p_sel b with 
+      | (false,l) -> Some (BConst (true,no_pos),l)
+      | (true,l) -> Some (b,l) in
+   let pf_e _ e = Some (e,[]) in
+   let pf_all = (pf_f,pf_b,pf_e) in
+   let p_arg = (fun _ _ ->0),(fun _ _ ->0),(fun _ _ ->0) in
+   
+   let mf_fv v _ = (v, []) in
+   let mf_slice f _ = (f,[]) in
+   let mf_aset _ f =(f,[]) in
+   let mf_memo_cons f _ = (f,[]) in
+   let mf_grp _ x = 
+         let slice,l_slice =List.split 
+            (List.map (fun f-> trans_formula f 0 pf_all p_arg f_comb) x.memo_group_slice) in
+         let l_slice = List.concat l_slice in
+         let cons,l_cons = List.fold_left (fun (a1,a2) c-> match c.memo_status with 
+                          | Implied_N ->  (match (p_sel c.memo_formula) with
+                                                | (true,l) -> (c::a1,l@a2)
+                                                | (false,l)-> (a1,l@a2))
+                          | _ -> (c::a1,a2)) ([],[]) x.memo_group_cons in
+         let aset, l_aset = 
+            let vl = EMapSV.get_equiv x.memo_group_aset in
+            List.fold_left (fun (a1,a2) (v1,v2)->
+                match p_sel (Eq (Var (v1,no_pos), Var (v2,no_pos),no_pos)) with
+                  | (true,l) -> ((v1,v2)::a1, l@a2)
+                  | (false,l) -> (a1, l@a2)) ([],[]) vl in
+         let aset = List.fold_left (fun a (x,y) -> EMapSV.add_equiv a x y) []  aset in
+         let x = {x with 
+            memo_group_fv = [];
+            memo_group_slice = slice;
+            memo_group_cons = cons;
+            memo_group_aset = aset; } in
+         Some ({x with memo_group_fv = fv_memoised_group x} ,
+        l_slice@ l_cons@ l_aset) in
+   let mf_all = (mf_grp, mf_memo_cons, mf_aset, mf_slice, mf_fv) in
+   trans_mix_formula f 0 (mf_all, pf_all) 
+    ((fun _ _ ->0) , p_arg) f_comb
+   

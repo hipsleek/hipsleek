@@ -1539,8 +1539,8 @@ and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
 
   let conseq_fv = CP.fv to_conseq in
   let conseq_fv_b = (List.map (fun (l,f) -> CP.fv f) to_conseq_b) in
-  let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) conseq_fv in
-  let instantiate_b = List.map (fun fv_list -> List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) fv_list) conseq_fv_b in
+  let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars(*@impl_inst_vars*))) conseq_fv in
+  let instantiate_b = List.map (fun fv_list -> List.filter (fun v -> List.mem v (evars@expl_inst_vars(*@impl_inst_vars*))) fv_list) conseq_fv_b in
   let wrapped_to_conseq = List.fold_left (fun f v -> CP.Exists (v, f,None, pos)) to_conseq instantiate in
   let wrapped_to_conseq_b = 
     List.map2 (fun to_conseq instantiate -> List.fold_left (fun f v -> CP.Exists (v, f, None, pos)) to_conseq instantiate)
@@ -3163,9 +3163,13 @@ and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
 
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
   let fct es = 
-    let f = MCP.find_rel_constraints f (es.es_gen_expl_vars@es.es_gen_impl_vars) in
+	let l_inst = es.es_gen_expl_vars@es.es_gen_impl_vars in
+    let f = MCP.find_rel_constraints f l_inst in
     let nf = 
-      let f2 = if (es.es_evars = []) then f else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
+      let f2 = if (es.es_evars = []) then f else 
+		(*let wrapp_l = Gen.BList.difference_eq CP.eq_spec_var es.es_evars l_inst in*)
+		(elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
+	  let _ = print_string ("moving: "^(Cprinter.string_of_mix_formula f2)^"\n") in
       CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
     (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
     Ctx {es with
@@ -4243,6 +4247,10 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 				                  (*   if  then ((\*print_string ("YES Expl inst!!\n");*\) move_lemma_expl_inst_ctx_list ctx p2) *)
 				                  (*   else ((\*print_string ("NO Expl inst!!\n");*\) ctx ) *)
 				                  (* in *)
+                          
+                          (*this move_expl_inst call can occur at the end of folding and also 
+                          at the end of entailments of stages possibly leading to duplications of instantiations
+                          moving it would require the rhs pure to be moved as well...*)                          
 				                  let new_ctx = move_expl_inst_ctx_list ctx p2 in
 				                  (new_ctx, proof)
 				                end
@@ -5363,10 +5371,11 @@ and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
-  let pr p = pr_pair pr_svl string_of_bool p in
+  let pr p = pr_triple pr_svl pr_svl string_of_bool p in
   let pr_rhs = Cprinter.string_of_mix_formula in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.ho_4(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr_rhs pr 
+  Gen.Debug.ho_4(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id 
+    Cprinter.string_of_spec_var_list pr_rhs pr 
       (fun _ _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) var_to_fold c2 v2 rhs_p
 
 (* this helper does not seem to eliminate anything *)
@@ -5381,16 +5390,51 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
 	let subs_vars = List.combine vdef.view_vars v2 in
 	let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
 	let subs_vars = (sf,var_to_fold)::subs_vars in
-	((List.map (fun (c1,c2)-> 
+	let l_args = List.map (fun (c1,c2)-> 
 		if (List.exists (comparator c1) vdef.view_case_vars) then
 		  if (List.exists (comparator c2) estate.es_evars) then
 			let paset = Context.get_aset asets c2 in
 			List.find (fun c -> not (List.exists (comparator c) estate.es_evars )) paset 
 		  else c2
 		else c2					
-	) subs_vars),true)
-  with | Not_found -> (var_to_fold::v2,false) 
+	) subs_vars in
+  let l_posib_inst = List.filter (fun (c1,_)-> List.exists (comparator c1) vdef.view_case_vars) subs_vars in
+  (l_args, snd (List.split l_posib_inst), true)
+  with | Not_found -> (var_to_fold::v2,[],false) 
 
+and inst_before_fold estate rhs_p view_vars = 
+  let pr_sv = Cprinter.string_of_spec_var in
+  let pr_1 = Cprinter.string_of_entail_state in
+  let pr_2 = Cprinter.string_of_mix_formula in
+  let pr_3 = Gen.Basic.pr_list pr_sv in
+  let pr_r = Gen.Basic.pr_triple pr_1 pr_2 (Gen.Basic.pr_list (Gen.Basic.pr_pair pr_sv pr_sv)) in
+  Gen.Debug.ho_3 "inst_before_fold"  pr_1 pr_2 pr_3 pr_r
+      (fun _ _ _ -> inst_before_fold_x estate rhs_p view_vars) estate rhs_p view_vars
+  
+and inst_before_fold_x estate rhs_p case_vars = 
+  let lhs_fv = fv estate.es_formula in
+  let rec filter b = match b with 
+      | CP.Eq (CP.Var (v,_), rhs_e, _)
+      | CP.Eq (rhs_e, CP.Var (v,_), _) ->
+            let fvars = CP.afv rhs_e in
+            if (List.exists (CP.eq_spec_var v) case_vars)&&
+               (Gen.BList.list_subset_eq CP.eq_spec_var fvars lhs_fv) then
+              if List.exists (CP.eq_spec_var v) estate.es_evars then (true, [(b,v)])
+              else (false,[(b,v)])
+            else (true,[])
+      | _ -> (true,[])in
+  let new_c,to_a = MCP.constraint_collector filter rhs_p in
+  let to_a_e,to_a_i = List.partition (fun (_,v)-> List.exists (CP.eq_spec_var v) estate.es_evars ) to_a in
+  let to_a_e,rho = List.split (List.map (fun (f,v) -> 
+        let v1 = CP.fresh_spec_var v in
+        (CP.b_subst [(v,v1)] f, (v,v1))) to_a_e) in
+  let to_a = (fst (List.split to_a_i))@to_a_e in
+  let to_a = CP.conj_of_list (List.map (fun f-> CP.BForm (f,None)) to_a) no_pos in
+  let n_es_pure = MCP.memoise_add_pure_N (fst estate.es_pure) to_a in
+  let estate1 = {estate with es_pure = (n_es_pure, snd estate.es_pure)} in
+  (estate1,new_c, rho)
+
+  
 and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos = 
   let pr2 x = match x with
     | None -> "None"
@@ -5434,8 +5478,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let original2 = if (is_view ln2) then (get_view_original ln2) else true in
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
-  let (new_v2,use_case) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
-
+  let (new_v2,posib_inst,use_case) = existential_eliminator_helper prog estate 
+              (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
   let view_to_fold = ViewNode ({  
 	  h_formula_view_node = List.hd new_v2 (*var_to_fold*);
 	  h_formula_view_name = c2;
@@ -5451,19 +5495,38 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	  h_formula_view_remaining_branches = r_rem_brs;
 	  h_formula_view_pruning_conditions = r_p_cond;
 	  h_formula_view_pos = pos2}) in
-  let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold vd (* false *) use_case pos in
+  (*instantiation before the fold operation,
+     for existential vars:
+        rho = [b->b1]
+         forall b1. D[a] & b1=a+1
+           |- \rho x::lseg<b,..> & P & b=a+1
+         ----------------------------------------------------
+         D[a] |- ex b: x::lseg<b,..> & P & b=a+1
+     for implicits: 
+        D[a] & b=a+1 |- x::lseg<b,..> & P
+       ---------------------------------------
+       D[a] |- exI b: x::lseg<b,..> & P & b=a+1  
+       
+       inst_before_fold returns the new entail state with the instantiation already moved
+       the remaining rhs pure, and a set of substitutions to be applied to the view node and the remaining conseq
+       posib_inst is the list of view args that are case vars
+  *)
+  let estate,rhs_p,rho = inst_before_fold estate rhs_p posib_inst in
+  let view_to_fold = CF.h_subst rho view_to_fold in
+  let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd (* false *) use_case pos in
   if not (CF.isFailCtx fold_rs) then
-	let b = { formula_base_heap = resth2;
-	formula_base_pure = rhs_p;
-	formula_base_type = rhs_t;
-	(* formula_base_imm = contains_immutable_h_formula resth2; *)
-	formula_base_branches = rhs_br;
-	formula_base_flow = rhs_fl;		
-	formula_base_label = None;   
-	formula_base_pos = pos } in
-	let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in
-	let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
-	(tmp, prf)
+      let b = { formula_base_heap = resth2;
+                formula_base_pure = rhs_p;
+                formula_base_type = rhs_t;
+                (* formula_base_imm = contains_immutable_h_formula resth2; *)
+                formula_base_branches = rhs_br;
+                formula_base_flow = rhs_fl;		
+                formula_base_label = None;   
+                formula_base_pos = pos } in
+      let b = match CF.subst rho (Base b) with | Base b -> b | _ -> failwith "expecting only Base" in
+      let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in
+      let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
+      (tmp, prf)
   else begin
 	Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: unable to fold:\n"
 	^ (Cprinter.string_of_context ctx0) ^ "\n"
