@@ -37,7 +37,7 @@ data SparseArray {
 	int n;
 }
 
-relation dom(int[] a, int i, int j) == true.
+//relation dom(int[] a, int i, int j) == true.
 
 relation bounded(int[] a, int i, int j, int low, int high) ==
 	forall(k : k < i | k > j | low <= a[k] <= high).

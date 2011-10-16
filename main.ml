@@ -2,6 +2,8 @@
 (******************************************)
 (* command line processing                *)
 (******************************************)
+open Gen.Basic
+
 module M = Lexer.Make(Token.Token)
 
 let to_java = ref false
@@ -44,7 +46,7 @@ let parse_file_full file_name =
       raise t)
 
 (* Parse all prelude files declared by user.*)
-let rec process_primitives file_list =
+let rec process_primitives (file_list: string list) : Iast.prog_decl list =
   match file_list with
   | [] -> []
   | hd::tl ->
@@ -52,6 +54,11 @@ let rec process_primitives file_list =
         let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
         let primitives = parse_file_full new_filename in
                 primitives :: (process_primitives tl)
+
+let process_primitives (file_list: string list) : Iast.prog_decl list =
+  let pr1 = pr_list (fun x -> x) in
+  let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
+  Gen.Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
 
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
@@ -123,8 +130,9 @@ let process_source_full source =
     let _ = print_string ("Translating to core language...\n"); flush stdout in
     (* let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in *)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
-	(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
+	(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations and " ^ (string_of_int (List.length cprog.Cast.prog_axiom_decls)) ^ " axioms in cprog.\n") in *)
 	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
+	let _ = List.map (fun cadef -> Smtsolver.add_axiom_def (Smtsolver.AxmDefn (cadef.Cast.axiom_hypothesis,cadef.Cast.axiom_conclusion))) cprog.Cast.prog_axiom_decls in (* [4/10/2011] An Hoa : add axioms to smtsolver module *)
     (* let _ = print_string (" done-2\n"); flush stdout in *)
 	(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string ("START"^(Cprinter.string_of_program cprog)^"STARTEND") else () in

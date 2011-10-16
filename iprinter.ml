@@ -4,6 +4,7 @@
 open Iast
 open Globals
 open Lexing
+open Gen.Basic
 
 module F = Iformula
 module P = Ipure
@@ -178,7 +179,7 @@ let string_of_slicing_label sl =
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
-  | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
+  | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
 (* (match x with  *)
 (*     |(id, p) -> id ^ (match p with  *)
@@ -633,6 +634,12 @@ let string_of_proc_decl p =
 		^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
 
+let string_of_rel_decl p = 
+  let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
+    p.rel_name ^ "(" ^ (pr p.rel_typed_vars) ^ ")"
+;;
+
+
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
 
 (* pretty printing for a list of data_decl *)
@@ -696,6 +703,14 @@ let rec string_of_global_var_decl_list l =
   | h::t  -> (string_of_global_var_decl h) ^ "\n" ^ (string_of_global_var_decl_list t)
 ;;
 
+(* An Hoa : print relations *)
+let string_of_rel_decl_list rdecls = 
+	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+
+(* An Hoa : print axioms *)
+let string_of_axiom_decl_list adecls = 
+	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
+
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
   let field_str = String.concat ";\n" 
@@ -710,6 +725,8 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
+  (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;

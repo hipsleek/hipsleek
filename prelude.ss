@@ -187,10 +187,17 @@ int pow___(int a, int b)
 // Special relation to indicate the value to do induction on
 relation induce(int value) == true.
 
-relation dom(int[] a, int low, int high) == true.
+relation dom(int[] a, int low, int high).
+
+axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
+
+relation update_array(int[] a, int i, int val, int[] r).
 
 relation amodr(int[] a, int[] b, int i, int j) == 
     forall(k : (i<=k & k<=j | a[k] = b[k])).
+
+relation bnd(int[] a, int i, int j, int low, int high) == 
+ 	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
@@ -201,6 +208,14 @@ relation amodr(int[] a, int[] b, int i, int j) ==
 //////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___(int[] a, int i) 
+  /* requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+  ensures true;
+  requires true
+  ensures res = a[i];
+	*/
 	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
@@ -208,12 +223,25 @@ int array_get_elm_at___(int[] a, int i)
 	ensures res = a[i];
 
 int[] update___(int[] a, int i, int v) 
+//void update___(ref int[] a, int i, int v) 
+	/* requires [ahalb,ahaub]
+				dom(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+     ensures dom(res,ahalb,ahaub);//'
+     requires true
+	 ensures  update_array(a,i,v,res);//' 
+	*/
+     /* requires [s,b,low,high] bnd(a,s,b,low,high) & s<=i<=b & low<=v<=high */
+     /* ensures bnd(res,s,b,low,high); */
 	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
 	ensures dom(res,ahalb,ahaub) 
 				& update_array(a,i,v,res);
+
+
 
 int[] aalloc___(int dim) 
 	requires true 
