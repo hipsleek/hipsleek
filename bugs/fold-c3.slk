@@ -28,4 +28,4 @@ checkentail a=1 |- x::lseg2<b,p> & b+1=a.
 // b=1+a not instantiated immediately
 // checkentail a=1 |- [b] x::lseg<b,p> & b=1+a. 
 
-print residue.
+ print residue.
