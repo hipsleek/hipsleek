@@ -597,9 +597,9 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
       let ys = sort_wt r in 
-      List.hd (ys)
+      (* List.hd (ys) *)
           (* time for runfast hip --eps --imm - 42s *)
-     (* Cond_action (r)   *)
+     Cond_action (r)
           (* time for runfast hip --eps --imm - 43s *)
 
 and compute_actions prog es 

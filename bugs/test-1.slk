@@ -41,7 +41,21 @@ print residue.
 
 // fail due to incomplete search by do_match for
 // matching predicate.
-checkentail l::dll2<p,r,z,n> & rs=l |- l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n> .
+
+/*
+ Implicit instantiation below need to be
+ processed in some particular order:
+*/
+checkentail l::dll2<p,r,z,n> & rs=l |- l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n>.
+
+/*
+However, explicit and existential instantiation
+can be done in any order:
+*/
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z1: l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n> ).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- [z1] l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n>.
 
 print residue.
 
