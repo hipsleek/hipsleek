@@ -51,6 +51,7 @@ and action =
   | Undefined_action of match_res
   | M_Nothing_to_do of string
   | M_unmatched_rhs_data_node of h_formula
+  | Cond_action of action_wt list
   | Seq_action of action_wt list
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
@@ -62,6 +63,7 @@ and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (l
 
 let is_complex_action a = match a with
   | Search_action _ 
+  | Cond_action _ 
   | Seq_action _ -> true
   | _ -> false
   
@@ -105,8 +107,9 @@ let rec pr_action_res pr_mr a = match a with
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
   | M_unmatched_rhs_data_node h -> fmt_string ("Unmatched RHS data note: "^(string_of_h_formula h))
-  | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
-  | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | Cond_action l -> fmt_string "COND:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | Seq_action l -> fmt_string "SEQ:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | Search_action l -> fmt_string "SEARCH:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | M_lhs_case e -> pr_mr e; fmt_string "==> LSH case analysis"
 
 and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
@@ -134,6 +137,7 @@ let action_get_holes a = match a with
   | M_base_case_unfold e
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
+  | Cond_action _
   | M_Nothing_to_do _  
   | M_unmatched_rhs_data_node _
   | Search_action _ ->None
@@ -424,6 +428,12 @@ and process_one_match prog (c:match_res) :action_wt =
 (* lets us know if the match is at the root pointer,  *)
 (* or at materialized args,...                        *)
 *)
+
+and norm_search_action ls = match ls with
+  | [] -> M_Nothing_to_do ("search action is empty")
+  | [(_,a)] -> a
+  | lst -> Search_action lst
+
 and process_one_match_x prog (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
@@ -434,12 +444,15 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c)
                   else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
-                  let l1 = [(1,M_base_case_unfold c)] in
+                  (* let l1 = [(1,M_base_case_unfold c)] in *)
                   let l2 = 
-                    if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] 
+                    let a1 = (1,M_base_case_unfold c) in
+                    let a2 = (1,M_match c) in
+                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(-1,Cond_action [a1;a2])]
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
                     else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
-                    else [(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))]
+                    else let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] in
+                    [(1,Cond_action lst)]
                   in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin
@@ -455,7 +468,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     (*if get_view_original rhs_node then 
                       [M_base_case_fold c] 
                       else [] *)in
-                  let src = (-1,Search_action (l1@l2@l3@l4)) in
+                  let src = (-1,norm_search_action (l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> (1,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
             | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
@@ -547,6 +560,11 @@ and sort_wt_x (ys: action_wt list) : action list =
           (* WHY did we pick only ONE when rw==0? *)
           if (rw==0) then h 
           else (rw,Search_action sl)
+    | Cond_action l (* TOCHECK : is recalibrate correct? *)
+            -> 
+          let l = List.map recalibrate_wt l in
+          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+          (rw,Cond_action l)
     | Seq_action l ->
           let l = List.map recalibrate_wt l in
           let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
@@ -559,7 +577,7 @@ and sort_wt_x (ys: action_wt list) : action list =
 and pick_unfold_only ((w,a):action_wt) : action_wt list =
   match a with
     | M_unfold _ -> [(w,a)]
-    | Seq_action l -> 
+    | Seq_action l  | Cond_action l -> 
           if l==[] then [] 
           else pick_unfold_only (List.hd l)
     | Search_action l -> List.concat (List.map pick_unfold_only l)
@@ -577,9 +595,12 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
   let r = List.map (process_matches prog lhs_h) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
-    | xs -> let ys = sort_wt r in 
+    | xs -> 
+      let ys = sort_wt r in 
       List.hd (ys)
-(* Search_action (None,ys) *)
+          (* time for runfast hip --eps --imm - 42s *)
+     (* Cond_action (r)   *)
+          (* time for runfast hip --eps --imm - 43s *)
 
 and compute_actions prog es 
       lhs_h (*lhs heap *) 

@@ -36,15 +36,12 @@ checkentail
   |- l::dll2<p,rs,z1,0> .
 print residue.
   */
-/*
-checkentail
-  l::dll2<p,r,z,n> & rs=l
-  |- rs::dll2<z1,r,z,n> * l::dll2<p,rs,z1,0> .
-*/
+
+//checkentail l::dll2<p,r,z,n> & rs=l |- rs::dll2<z1,r,z,n> * l::dll2<p,rs,z1,0> .
 
 // fail due to incomplete search by do_match for
 // matching predicate.
-checkentail
-  l::dll2<p,r,z,n> & rs=l
-  |- l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n> .
+checkentail l::dll2<p,r,z,n> & rs=l |- l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n> .
+
+print residue.
 

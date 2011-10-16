@@ -5929,6 +5929,17 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           report_warning no_pos "Sequential action - not handled";
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
               , CF.mk_failure_none "sequential action - not handled" )), NoAlias)
+    | Context.Cond_action l ->
+          let rec helper l = match l with
+           | [] ->           
+                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
+                      , CF.mk_failure_may "Cond action - none succeeded" )), NoAlias)
+           | [(_,act)] -> process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
+           | (_,act)::xs ->
+                  let (r,prf) = process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
+                  if isFailCtx r then helper xs
+                  else (r,prf)
+          in helper l
     | Context.Search_action l ->
           let r = List.map (fun (_,a1) -> process_action prog estate conseq lhs_b rhs_b a1
                rhs_h_matched_set is_folding pos) l in
