@@ -1,24 +1,12 @@
 data node { int val ; node next }.
 
 pred lseg2<n, p> == 
-   case { n=0 -> [] self = p & n = 0 ;
-          n!=0 -> [] (exists r2:self::node<next = r2> * r2::lseg2<b, p> & b=n-1) ;
+   case { n<3 -> [] self = p  ;
+          n>=3 -> [] (exists r2:self::node<next = r2> * r2::lseg2<b, p> & b=n-1) ;
           }
-         inv n >= 0.
+         inv true.
 
-
+         
 checkentail a=1
-   |- nil::lseg2<b,p>. 
+   |- x::lseg2<b,p> & b=1. 
 print residue.
-
-/*
-// why below fail but above succeeds?
-checkentail a=1
-   |- x::lseg2<b,p> & x=nil. 
-print residue.
-
-checkentail a=1
-   |- (exists x: x::lseg2<b,p> & x=nil). 
-print residue.
-*/
-
