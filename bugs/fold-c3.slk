@@ -12,7 +12,7 @@ pred lseg<n, p> ==
    inv true.
 
 // below should succeed
-//checkentail a=1 |- x::lseg2<b,p> & b+1=a. 
+checkentail a=1 |- x::lseg2<b,p> & b+1=a. 
 
 //checkentail a=1 |- x::lseg2<b,p> & b=1+a. 
 
@@ -26,6 +26,6 @@ pred lseg<n, p> ==
 // checkentail a=1 |- [b] x::lseg2<b,p> & b=1+a. 
 
 // b=1+a not instantiated immediately
- checkentail a=1 |- [b] x::lseg<b,p> & b=1+a. 
+// checkentail a=1 |- [b] x::lseg<b,p> & b=1+a. 
 
  print residue.
