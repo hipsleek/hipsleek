@@ -5413,25 +5413,42 @@ and inst_before_fold estate rhs_p view_vars =
   
 and inst_before_fold_x estate rhs_p case_vars = 
   let lhs_fv = fv estate.es_formula in
+  let of_interest = (*case_vars*) estate.es_gen_impl_vars in
+  
   let rec filter b = match b with 
-      | CP.Eq (CP.Var (v,_), rhs_e, _)
-      | CP.Eq (rhs_e, CP.Var (v,_), _) ->
-            let fvars = CP.afv rhs_e in
-            if (List.exists (CP.eq_spec_var v) case_vars)&&
-               (Gen.BList.list_subset_eq CP.eq_spec_var fvars lhs_fv) then
-              if List.exists (CP.eq_spec_var v) estate.es_evars then (true, [(b,v)])
-              else (false,[(b,v)])
+      | CP.Eq (lhs_e, rhs_e, _) ->
+            let lfv = CP.afv lhs_e in
+			let rfv = CP.afv rhs_e in
+			let l_inter = Gen.BList.intersect_eq CP.eq_spec_var lfv of_interest in
+			let r_inter = Gen.BList.intersect_eq CP.eq_spec_var rfv of_interest in
+			let v_l = l_inter@r_inter in
+			let cond = 				
+				let rec prop_e e = match e with 
+					| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ -> true
+					| CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
+					| CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
+					| CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
+					| CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ -> false in
+				((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
+				((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
+				(Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in
+			if cond then (false,[(b,List.hd v_l)]) (*the bool states if the constraint needs to be moved or not from the RHS*)
             else (true,[])
       | _ -> (true,[])in
-  let new_c,to_a = MCP.constraint_collector filter rhs_p in
+  let new_c,to_a = MCP.constraint_collector filter rhs_p in 
   let to_a_e,to_a_i = List.partition (fun (_,v)-> List.exists (CP.eq_spec_var v) estate.es_evars ) to_a in
   let to_a_e,rho = List.split (List.map (fun (f,v) -> 
         let v1 = CP.fresh_spec_var v in
         (CP.b_subst [(v,v1)] f, (v,v1))) to_a_e) in
   let to_a = (fst (List.split to_a_i))@to_a_e in
-  let to_a = CP.conj_of_list (List.map (fun f-> CP.BForm (f,None)) to_a) no_pos in
-  let n_es_pure = MCP.memoise_add_pure_N (fst estate.es_pure) to_a in
-  let estate1 = {estate with es_pure = (n_es_pure, snd estate.es_pure)} in
+  let to_a = MCP.mix_of_pure (CP.conj_of_list (List.map (fun f-> CP.BForm (f,None)) to_a) no_pos) in
+  let mv_fv = MCP.mfv to_a in
+  let estate1 = {estate with es_formula = 
+									normalize_combine estate.es_formula (formula_of_mix_formula to_a no_pos) no_pos;
+							 (*es_pure = ((MCP.memoise_add_pure_N (fst estate.es_pure) to_a), snd estate.es_pure);*) 							 
+							 (*es_gen_expl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_expl_vars mv_fv; *)
+							 es_evars = Gen.BList.difference_eq CP.eq_spec_var estate.es_evars mv_fv;
+							 es_gen_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars mv_fv;} in
   (estate1,new_c, rho)
 
   
