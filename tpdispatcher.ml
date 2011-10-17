@@ -1758,7 +1758,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 	is_sat_sub_no_c f sat_subno false
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
-  Gen.Debug.ho_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+  Gen.Debug.no_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno
 	
 let is_sat_memo_sub_no_orig (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
@@ -1787,7 +1787,7 @@ and is_sat_memo_sub_no_ineq_slicing_x (mem : MCP.memo_pure) sat_subno with_dupl 
 	else
 	  let aset = mg.memo_group_aset in
 	  let apart = EMapSV.partition aset in
-	  let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: apart: " ^ (pr_list Cprinter.string_of_spec_var_list apart) ^ "\n") in
+	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: apart: " ^ (pr_list Cprinter.string_of_spec_var_list apart) ^ "\n") in*)
 	  let r = List.fold_left (fun acc p -> if acc then acc else MCP.exists_contradiction_eq mem p) false apart in
 	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: r: " ^ (string_of_bool r) ^ "\n") in*)
 	  if r then false (* found an equality contradiction *)
@@ -1932,7 +1932,7 @@ let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool
   res
   
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
-  Gen.Debug.ho_1 "is_sat_memo_sub_no"
+  Gen.Debug.no_1 "is_sat_memo_sub_no"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
 	(fun f -> is_sat_memo_sub_no(*_new*) f sat_subno with_dupl with_inv) f
