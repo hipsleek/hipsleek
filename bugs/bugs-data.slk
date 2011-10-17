@@ -3,7 +3,7 @@ data node2 {
 	int val; 
 	nodeprev prev;	
 	nodenext next;
-//	nodetemp temp;
+	nodetemp temp;
 }.
 
 data nodeprev {

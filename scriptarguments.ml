@@ -36,10 +36,12 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-	  ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
-		"Do unfolding when there are duplicated pointers."); (* An Hoa *)
-	  ("--ahwytdi", Arg.Set Smtsolver.try_induction,
-		"Try induction in case of failure implication."); (* An Hoa *)
+    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+	"Print implication for debugging");
+	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
+	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
+	("--ahwytdi", Arg.Set Smtsolver.try_induction,
+	"Try induction in case of failure implication."); (* An Hoa *)
     ("--smtimply", Arg.Set Smtsolver.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)
     ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
@@ -48,6 +50,8 @@ let common_arguments = [
     "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
+    ("--no-simpl", Arg.Set Globals.no_simpl,
+	"Do not simplify the arithmetic constraints");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
 	"Simplify the pure part of the formulas");
 	(* ("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic, *)
@@ -64,7 +68,7 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--disable-check-coercions", Arg.Clear Globals.check_coercions,
+	("--enable-check-coercions", Arg.Set Globals.check_coercions,
 	"Check coercion validity");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
@@ -120,7 +124,7 @@ let common_arguments = [
 	"Stop checking on erroneous procedure");
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
-	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "om";
+	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
@@ -208,6 +212,11 @@ let common_arguments = [
   ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
   ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
+
+  (* slicing *)
+  ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+  ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
+  ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
   ] 
 
 (* arguments/flags used only by hip *)	

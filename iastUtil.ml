@@ -84,12 +84,12 @@ let transform_exp
           exp_cond_else_arm = e3;},r)
       | Finally b ->
 	let e1,r1 = helper n_arg b.exp_finally_body in
+
 	(Finally {b with exp_finally_body=e1},r1)
       | Label (l,b) -> 
         let e1,r1 = helper n_arg b in
         (Label (l,e1),r1)
-      | Member b -> 
-        let e1,r1 = helper n_arg b.exp_member_base in
+      | Member b -> let e1,r1 = helper n_arg b.exp_member_base in
         (Member {b with exp_member_base = e1;},r1)
 			| ArrayAlloc b -> 
         let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
@@ -550,7 +550,10 @@ let three3 (a,b,c) = c
 
 let rec check_exp_if_use_before_declare
     (e:exp) ((local,global):IS.t*IS.t) (stk:IS.t ref) : unit =
-  let f_args (local, global) stk e = (match e with
+	(* let _ = print_endline ("[check_exp_if_use_before_declare] input exp = { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+  let f_args (local, global) stk e =
+	(* let _ = print_endline ("Call f_args on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+ (match e with
     | Bind b ->
       (IS.empty, union_all [to_IS b.exp_bind_fields; !stk; global]) (* inner blk *)
     | Block b ->
@@ -569,6 +572,7 @@ let rec check_exp_if_use_before_declare
     | _ -> (local, union_all [!stk; global])) (* inner block *) 
   in
   let f_imp stk e = 
+	(* let _ = print_endline ("Call f_imp on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
     match e with
     | Seq b -> stk
     | VarDecl b ->
@@ -579,6 +583,7 @@ let rec check_exp_if_use_before_declare
     | _ -> let ef = ref IS.empty in ef
   in
   let f (local, global) stk e = 
+	(* let _ = print_endline ("Call f on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
     match e with
     | ConstDecl b ->
       let helper (v,e,_) = 
@@ -613,7 +618,7 @@ let rec check_exp_if_use_before_declare
          ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                            - pos.start_pos.Lexing.pos_bol))
          ^" is used before declared"}
-        else 
+        else (* let _ = print_endline "REPORT ERROR is_not_declared 1" in *)
           Error.report_error 
             {Err.error_loc = pos;
              Err.error_text = v ^ ", line " 
@@ -622,9 +627,9 @@ let rec check_exp_if_use_before_declare
                                - pos.start_pos.Lexing.pos_bol))
              ^" is not declared"}
       else Some ()
-      
     | Var x ->
       let v = x.exp_var_name in
+		if (String.contains v '.') then None else
       let pos = x.exp_var_pos in
       let gvs = IS.union global !stk in
       if not (IS.mem v gvs) 
@@ -639,8 +644,7 @@ let rec check_exp_if_use_before_declare
          ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                            - pos.start_pos.Lexing.pos_bol))
          ^" is used before declared"}
-        else 
-          (*let _ = print_endline ("local var:"^string_of_IS local) in*)
+        else (* let _ = print_endline "REPORT ERROR is_not_declared 2" in *)
           Error.report_error 
             {Err.error_loc = pos;
              Err.error_text = v ^ ", line " 
@@ -834,9 +838,12 @@ let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
 
 
 let rename_proc gvs proc : proc_decl = 
+	(* let _ = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
+	(* let _ = print_endline ("[rename_proc] input procedure = { " ^ (Iprinter.string_of_proc_decl proc) ^ " }") in *)
   let pv v = v.param_name in
   let pargs = to_IS (List.map pv proc.proc_args) in
   let clash_vars = IS.inter pargs gvs in
+	(* let _ = print_endline ("[rename_proc] clashed vars = { " ^ (string_of_IS clash_vars) ^ " }") in *)
   let clash_subs = new_naming (from_IS clash_vars) in
 
   let nargs = 
@@ -855,7 +862,7 @@ let rename_proc gvs proc : proc_decl =
     | None -> None
     | Some e0 -> 
       let e = rename_exp e0 (bvars,clash_subs) in
-      (*print_endline (Iprinter.string_of_exp e); *)
+      (* print_endline ("[rename_proc] procedure body after rename of clashed variables\n" ^ (Iprinter.string_of_exp e)); *)
       check_exp_if_use_before_declare e (IS.empty, IS.union nas1 gvs) (ref IS.empty); 
       Some ( e )
   in
@@ -1215,17 +1222,21 @@ let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
+					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
+					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
-  (* let _ = print_string "1\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
   let prog = rename_prog prog in
-  (* let _ = print_string "2\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] 2\n" in *)
   let prog = add_globalv_to_mth_prog prog in
-  (* let _ = print_string "3\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] 3\n" in *)
   prog
 
-let pre_process_of_iprog prog = 
-  Gen.Debug.no_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
+let pre_process_of_iprog iprims prog = 
+  let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
+  Gen.Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
 
 
 

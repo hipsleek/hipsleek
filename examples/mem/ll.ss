@@ -11,15 +11,15 @@ global int heap;
 global int stk;
 
 /* view for a singly linked list */
-
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
-// r denotes the allocated heap size of the data structure.
+// r denotes the allocated heap size of the data structure
+// n denotes the length of list
 pll<n,r> == self = null & n = 0 & r=0
   or self::node<_, q> * q::pll<n-1,r-2>  
-  inv n >= 0 & r>=0 & r=2*n;
+  inv n >= 0 & r>=0 ; // & r=2*n;
 
 // r denotes the allocated heap size of the data structure.
 rll<r> == self = null & r=0
@@ -48,7 +48,7 @@ node new_list(int n)
   requires heap>=2*n & n>=0 & stk>=4*n+4
   ensures "stack": res::ll<n> & heap'=heap-(2*n) & stk'=stk; 
   requires heap>=2*n & n>=0
-  ensures res::pll<n,r> & heap'=heap-r; //'
+  ensures res::pll<n,2*n> & heap'=heap-2*n; //'
   requires heap>=2*n & n>=0
   ensures res::rll<r> & heap'=heap-r & r=2*n; //'
 { stk = stk-4;
@@ -62,6 +62,23 @@ node new_list(int n)
  return r;
 }
 
+node twice_list(node x)
+  requires x::ll<n> & heap>=4*n & stk>=4*n+4 
+  ensures "stack":res::ll<2*n>*x::ll<n> & heap'=heap-(4*n) & stk'=stk; //'
+  requires x::rll<r> & heap>=2*r 
+  ensures res::rll<2*r>*x::rll<r> & heap'=heap-2*r; //'
+{ 
+  stk = stk-4;
+  assert "stack":stk'>=0; //'
+  node r = null;
+  if (x!=null) {
+    r = twice_list(x.next);
+    r = newnode(x.val,r);
+    r = newnode(x.val,r);
+  }
+  stk = stk+4;
+  return r;
+}
 
 void del_list(node x)
   requires x::ll<n> & stk>=3*n+3

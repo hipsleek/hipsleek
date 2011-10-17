@@ -27,18 +27,46 @@ type relation_definition =
 	| RelDefn of (ident * CP.spec_var list * CP.formula)
 
 (**
+ * [4/10/2011] An Hoa : Axiom definition
+ *)
+type axiom_definition = 
+	| AxmDefn of (CP.formula * CP.formula)
+
+
+(**
  * Temp files used to feed input and capture output from provers
  *)
-let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
+let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let print_input = ref false
-let print_original_solver_output = ref false
-let timeout = ref 10.0
+let timeout = ref 15.0
 let prover_pid = ref 0
 let prover_process = ref {name = "smtsolver"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
-let suppress_print_implication = ref false
-let print_implication = ref false
+
+(**
+ An Hoa : control printing of SMT input code
+ *)
+let print_input = ref (false : bool)
+
+(**
+ An Hoa : control printing of SMT original output (sat, unsat, unknown)
+ *)
+let print_original_solver_output = ref (false : bool)
+
+(**
+ An Hoa : control printing of the implication problem
+ *)
+let print_implication = ref (false : bool)
+
+(**
+ An Hoa : control temporary suppression of all printing
+ *)
+let suppress_print_implication = ref (false : bool)
+
+(**
+ An Hoa : function to print formula
+ *)
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+
 
 (**
  * @author An Hoa
@@ -46,14 +74,31 @@ let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
  *)
 let rel_defs = ref ([] : relation_definition list)
 
+
+(**
+ * [4/10/2011] An Hoa
+ * Global axiom definitions. To be appended by process_axiom_def appropriately.
+ *)
+let axm_defs = ref ([] : axiom_definition list)
+
+
 (**
  * Add a new relation definition. 
  * Notice that we have to add the relation at the end in order to preserve the order of appearance of the relations.
  *)
 let add_rel_def rdef =
 	(* let rn = match rdef with RelDefn (a,_,_) -> a in
-	let _ = print_string ("Smtsolver :: add relation definition - " ^ rn ^ "\n") in *) 
-	rel_defs := !rel_defs @ [rdef]
+	let _ = print_endline ("smtsolver : add_rel_def : " ^ rn) in *)
+		rel_defs := !rel_defs @ [rdef]
+
+(**
+ * [4/10/2011] An Hoa : Add a new axiom definition. 
+ *)
+let add_axiom_def adef =
+	(* let h,c = match adef with AxmDefn x -> x in
+	let _ = print_endline ("[Smtsolver] add an axiom " ^ (!print_pure h) ^ " |- " ^ (!print_pure c)) in *)
+		axm_defs := !axm_defs @ [adef]
+
 
 (******************
  * Helper funcs
@@ -75,7 +120,9 @@ let rec is_linear_exp exp = match exp with
 	| CP.ArrayAt (a, i,_) -> is_linear_exp i (* v[i] is linear <==> i is linear*)
   | _ -> false
 
-let is_linear_bformula b = match b with
+let is_linear_bformula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst _ -> true
   | CP.BVar _ -> true
   | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
@@ -99,13 +146,16 @@ let rec is_linear_formula f0 = match f0 with
 let rec get_formula_of_rel_with_name rn rdefs =
   (*if (rn = "dom") then (mkTrue Globals.no_pos) else*)
   match rdefs with
-	| [] -> failwith ("Relation " ^ rn ^ " is not found!")
+	| [] -> let _ = print_endline ("Relation " ^ rn ^ " cannot be found!") in
+		failwith ("Relation " ^ rn ^ " is not found!")
 	| h :: t -> match h with RelDefn (r,_,f) -> if (r = rn) then f else get_formula_of_rel_with_name rn t
 		
 (**
  * Collect the relations that we use
  *)
-let rec collect_relation_names_bformula b collected = match b with
+let rec collect_relation_names_bformula b collected =
+  let (pf,_) = b in
+  match pf with
 	| CP.RelForm (r,_,_) ->
 		if (List.mem r collected || r = "update_array") then collected
 		else (* Add r to the list of collected relations &
@@ -144,9 +194,9 @@ and collect_relation_names_formula f0 = match f0 with
  * Checking whether a formula is quantifier-free or not
  *)
 let rec is_quantifier_free_formula f0 = match f0 with
-  | CP.BForm (b,_) -> (* true *)(* An Hoa *)
+  | CP.BForm ((pf,_),_) -> (* true *)(* An Hoa *)
 		begin 
-			match b with
+			match pf with
   		| CP.RelForm _ -> false (* Contain relation ==> we need to use forall to axiomatize ==> not quantifier free! *)
 			| _ -> true 
 		end
@@ -218,7 +268,7 @@ let extract_name sv =
 let rec smt_of_typ t = 
 	match t with
 	  | Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
-	  | Float -> "Real"
+	  | Float -> (*"Real"*) "Int" (* Have to use int as float is not supported! *)
 	  | Int -> "Int"
       | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
@@ -279,7 +329,8 @@ let rec smt_of_exp a qvars =
 let rec smt_of_b_formula b qvars =
   let smt_of_spec_var v = smt_of_spec_var v (Some qvars) in
   let smt_of_exp e = smt_of_exp e qvars in
-  match b with
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
   | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
   | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -365,11 +416,27 @@ let smt_of_rel_def (rdef : relation_definition) =
 			let rel_signature = String.concat " " (List.map smt_of_typ (List.map extract_type rv)) in
 			let rel_typed_vars = String.concat " " (List.map smt_typed_var_of_spec_var rv) in
 			let rel_params = String.concat " " (List.map extract_name rv) in
-				(* Declare the relation in form of a function --> Bool *)
-				(* Axiomatize the relation using an assertion*)
-				("(declare-fun " ^ rn ^ " (" ^ rel_signature ^ ") Bool)\n",
-				 "(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n")
-	 		
+			(* Declare the relation in form of a function --> Bool *)
+			let rel_decl_fun = "(declare-fun " ^ rn ^ " (" ^ rel_signature ^ ") Bool)\n" in
+			(* Axiomatize the relation using an assertion*)
+
+			let rel_axiomatization_assertion = match rf with
+				| CP.BForm ((CP.BConst (true, no_pos), None), None) -> ""
+				| _ -> "(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n" in
+			(rel_decl_fun,rel_axiomatization_assertion)
+
+(**
+ * Process the axiom definition
+ * @return the string of axiom
+ *)				
+let smt_of_axiom_def (adef : axiom_definition) =
+	match adef with
+		| AxmDefn (h,c) -> 
+			let params = List.append (CP.fv h) (CP.fv c) in
+			let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
+			"(assert (forall " ^ smt_params ^ "(implies " ^ (smt_of_formula h StringSet.empty) ^ "\n" ^ (smt_of_formula c StringSet.empty) ^ ")))"
+
+
 (**
  * output for smt-lib v2.0 format
  *)
@@ -386,11 +453,14 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
 	let rds = (List.map smt_of_rel_def used_rels_defs) in
 	let rel_def_df = (String.concat "" (List.map fst rds)) in
 	let rel_def_ax = (String.concat "" (List.map snd rds)) in
+	(* let _ = if (!axm_defs = []) then print_endline "SMTSOLVER : No axiom" else print_endline ((string_of_int (List.length !axm_defs)) ^ " axioms") in *)
+	let smt_axioms_def = String.concat "" (List.map smt_of_axiom_def !axm_defs) in
 	 ("(set-logic AUFNIA" ^ (* (string_of_logic logic) ^*) ")\n" ^ 
     (decfuns fvars) ^ rel_def_df ^ rel_def_ax ^ (* Collect the declare-fun first and then do the axiomatization to prevent missing function error *)
 		(*"(declare-fun update_array ((Array Int Int) Int Int (Array Int Int)) Bool)" ^
 		"(assert (forall (a (Array Int Int)) (i Int) (v Int) (r (Array Int Int)) 
 		         (= (update_array a i v r) (= r (store a i v)))))" ^*)
+	smt_axioms_def ^ (* Add axioms *)
     ante_str (*"(assert " ^ ante ^ ")\n"*) ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")
@@ -430,8 +500,12 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
   let ante_str = smt_of_formula ante StringSet.empty in
   let conseq_str = smt_of_formula conseq StringSet.empty in
   let logic = logic_for_formulas ante conseq in
-	(* relations that appears in the ante and conseq *)
-	let used_rels = (collect_relation_names_formula ante []) @ (collect_relation_names_formula conseq []) in
+	(* relations that appears in the ante and conseq and axioms *)
+	let used_rels = (collect_relation_names_formula ante []) @ 
+					(collect_relation_names_formula conseq []) @ 
+					List.fold_left (fun x y -> match y with
+						| AxmDefn (h,c) -> x @ (collect_relation_names_formula h []) @ (collect_relation_names_formula c [])
+						) [] !axm_defs (* relations appeared in axioms *) in
 	(*let used_rels = (collect_relation_names_formula ante) @ (collect_relation_names_formula conseq) in*)
 	let used_rels_defs = List.map (fun x -> match x with | RelDefn (rn,_,_) -> if List.mem rn used_rels then [x] else []) !rel_defs in
 	let used_rels_defs = List.concat used_rels_defs in
@@ -498,8 +572,9 @@ let max_induction_level = ref 0
 let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.formula) : (CP.exp list) =
 	(*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
 	match conseq with
-		| CP.BForm (b,_) -> (match b with
-			| CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos]
+		| CP.BForm (b,_) -> (let (p, _) = b in match p with
+			| CP.RelForm ("induce",[value],_) -> [value]
+			(* | CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos] *)
 			| _ -> [])
   	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
   	| CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
@@ -556,21 +631,21 @@ and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : C
   (*let _ = print_string "An Hoa :: gen_induction_formulas\n" in*)
   let p = CP.fv ante @ CP.fv conseq in
 	let v = create_induction_var p in 
-	(*let _ = print_string ("Inductiom variable = " ^ (string_of_spec_var v) ^ "\n") in*)
+	(* let _ = print_string ("Inductiom variable = " ^ (CP.string_of_spec_var v) ^ "\n") in *)
 	let ante = CP.mkAnd (CP.mkEqExp (CP.mkVar v no_pos) indval no_pos) ante no_pos in
 	(* base case ante /\ v = 0 --> conseq *)
 	let ante0 = CP.apply_one_term (v, CP.mkIConst 0 no_pos) ante in
-	(*let _ = print_string ("Base case: ante = "  ^ (!print_pure ante0) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
+	(* let _ = print_string ("Base case: ante = "  ^ (!print_pure ante0) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in *)
 	(* ante --> conseq *)
 	let aimpc = (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
 	(* induction hypothesis = \forall {v_i} : (ante -> conseq) with v_i in p *)
 	let indhyp = CP.mkForall p aimpc None no_pos in
-	(*let _ = print_string ("Induction hypothesis: ante = "  ^ (!print_pure indhyp) ^ "\n") in*)
+	(* let _ = print_string ("Induction hypothesis: ante = "  ^ (!print_pure indhyp) ^ "\n") in *)
 	let vp1 = CP.mkAdd (CP.mkVar v no_pos) (CP.mkIConst 1 no_pos) no_pos in
 	(* induction case: induction hypothesis /\ ante(v+1) --> conseq(v+1) *)
 	let ante1 = CP.mkAnd indhyp (CP.apply_one_term (v, vp1) ante) no_pos in
 	let conseq1 = CP.apply_one_term (v, vp1) conseq in
-	(*let _ = print_string ("Inductive case: ante = "  ^ (!print_pure ante1) ^ "\nconseq = " ^ (!print_pure conseq1) ^ "\n") in*)
+	(* let _ = print_string ("Inductive case: ante = "  ^ (!print_pure ante1) ^ "\nconseq = " ^ (!print_pure conseq1) ^ "\n") in *)
 		((ante0,conseq),(ante1,conseq1))
 	
 		
@@ -602,35 +677,46 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+	(*let _ = print_endline "smt_imply : entry" in
+	let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
   try
       let input = to_smt ante (Some conseq) prover in
       let output = run prover input in
       let res = output = "unsat" in
 	(* Only do printing in case there is no suppression and output is not unsat *)
 	(*let _ = print_string (string_of_bool !suppress_print_implication) in*)
-	let _ = if (not !suppress_print_implication) && (not res) then
+	let _ = if (not !suppress_print_implication) (*&& (not res)*) then
 						let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
 						let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
 						let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in ()
 	in if res then
       res
 		else 
-			(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in*) 
 			if (!try_induction) then
+				(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in
+				let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
 				smt_imply_with_induction ante conseq prover
 			else 
 				false
   with 
     |Procutils.PrvComms.Timeout ->
 	    begin
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
+						(* Try induction on time out as well. *)
+						if (!try_induction) then
+							let _ = print_string "An Hoa :: smt_imply : try induction\n" in
+							(*let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
+							smt_imply_with_induction ante conseq prover
+						else 
             false
 		end
     | e -> 
         begin 
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
             Unix.kill !prover_process.pid 9;
@@ -650,15 +736,17 @@ let imply ante conseq = (*let _ = print_string "Come to imply\n" in*)
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   try
-      let input = to_smt f None prover in
-	(*let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in*)
-      let output = run prover input in
-	(*let _ = if !print_original_solver_output then print_string ("==> SMT output : " ^ output ^ "\n") in*)
-      let res = output = "unsat" in
-      not res
+		(*let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in*)
+		let input = to_smt f None prover in
+		(* let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in *)
+		let output = run prover input in
+		(* let _ = if !print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in *)
+		let res = output = "unsat" in
+			not res
   with 
     |Procutils.PrvComms.Timeout ->
 	    begin
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => sat\n"); flush stdout;
             Unix.kill !prover_process.pid 9;
@@ -667,12 +755,17 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 		end
     | e -> 
         begin 
+			Printexc.print_backtrace stdout;
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from exc)\n") in
             print_string ("\n[smtsolver.ml]:Unexpected exception => sat\n"); flush stdout; 
             Unix.kill !prover_pid 9;
             ignore (Unix.waitpid [] !prover_process.pid);
             true
         end
+
+let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+  let pr = !print_pure in
+  Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3

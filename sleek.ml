@@ -61,7 +61,8 @@ let parse_file (parse) (source_file : string) =
 							match c with
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
-                 | RelDef rdef -> process_rel_def rdef
+				                 | RelDef rdef -> process_rel_def rdef
+								 | AxiomDef adef -> process_axiom_def adef (* An Hoa *)
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
@@ -90,6 +91,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
       | RelDef rdef -> process_rel_def rdef
+      | AxiomDef _  (* An Hoa *)
 	  | LemmaDef _
 	  | CaptureResidue _
 	  | LetDef _
@@ -103,6 +105,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef _
 	  | PredDef _
       | RelDef _
+      | AxiomDef _ (* An Hoa *)
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
@@ -121,6 +124,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef _
 	  | PredDef _
       | RelDef _
+      | AxiomDef _ (* An Hoa *)
 	  | LemmaDef _
 	  | EmptyCmd -> () in
   let cmds = parse_first [] in
@@ -146,6 +150,7 @@ let main () =
                 I.prog_enum_decls = [];
                 I.prog_view_decls = [];
                 I.prog_rel_decls = [];
+                I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
@@ -183,6 +188,7 @@ let main () =
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
                      | RelDef rdef -> process_rel_def rdef
+                     | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) ->  process_entail_check iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef

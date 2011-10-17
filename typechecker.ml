@@ -23,7 +23,7 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-	check_specs_a prog proc ctx spec_list e0
+  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
   (*Gen.Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
@@ -39,8 +39,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 		    let mn = Cast.unmingle_name (proc.Cast.proc_name) in
             let f_formula = fun f -> None in
-		    let f_b_formula = function
-		      | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some (CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+		let f_b_formula (pf,il) = match pf with
+		  | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
 		      | _ -> None
 		    in
 		    let f_exp = function
@@ -107,7 +107,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   in	
   List.for_all do_spec_verification spec_list
 
-and check_exp prog proc ctx e0 label = Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+and check_exp prog proc ctx e0 label =
+Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
@@ -188,7 +189,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | BConst ({exp_bconst_val = b;
           exp_bconst_pos = pos}) -> begin
 	        let res_v = CP.mkRes bool_type in
-	        let tmp1 = CP.BForm (CP.BVar (res_v, pos), None) in
+	        let tmp1 = CP.BForm ((CP.BVar (res_v, pos), None), None) in
 	        let tmp2 =
 	          if b then tmp1
 	          else CP.Not (tmp1, None, pos) in
@@ -214,7 +215,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
 	        let p = CP.fresh_spec_var v_prim in
 	        let link_pv = CF.formula_of_pure_N
-	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None)) pos) pos in
+	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
 	        (*let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
 	        (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
 	        let tmp_ctx =
@@ -236,6 +237,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_imm = imm;
                 CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
+				CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];
@@ -301,7 +303,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_cond_else_arm = e2;
           exp_cond_path_id =pid;
           exp_cond_pos = pos}) -> begin
-	        let pure_cond = (CP.BForm (CP.mkBVar v Primed pos, None)) in
+	        let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
 	        let then_cond_prim = MCP.mix_of_pure pure_cond in
 	        let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
 	        let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
@@ -375,6 +377,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_imm = false;
                 CF.h_formula_data_arguments =(*type_var :: ext_var :: *) heap_args;
+				CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_label = None;
@@ -608,12 +611,12 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
     rs
   else begin
     (* get source code position of failed branches *)
-    let locs_of_failures = 
+    (*let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
-    in
-    let string_of_loc_list locs =
+    in*)
+    (*let string_of_loc_list locs =
       List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
-    in
+    in*)
     begin
 	  Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ") 
           ("Postcondition cannot be derived from context\n") pos; 
@@ -635,6 +638,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 
 (* checking procedure *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+	(* An Hoa *)
+	(*let _ = print_endline ("check_proc : " ^ proc.Cast.proc_name) in*)
   let unmin_name = unmingle_name proc.proc_name in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
     && not (List.mem unmin_name !Inliner.inlined_procs)
@@ -689,6 +694,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
+	(* An Hoa *)
+	(*let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in*)
     check_proc prog proc  
   with _ as e ->
     if !Globals.check_all then begin
@@ -958,23 +965,26 @@ let variance_numbering ls g =
   in List.map (fun e -> helper e) ls
 		
 let check_prog (prog : prog_decl) =
-  if (Printexc.backtrace_status ()) then print_string "backtrace active"
-  else (* print_string "bactracke inactive"; *)
-    (*    (print_string "raising\n";
-          raise Not_found);
-    *) let _ = if !Globals.check_coercions then begin
+	(* An Hoa *)
+	(*let _ = print_endline "check_prog : CHECKING PROGRAM START..." in*)
+  let _ = if (Printexc.backtrace_status ()) then print_string "backtrace active"
+(* An Hoa : Bug discovered : Someone forgot to comment the "else" *)
+(*  else print_string "bactracke inactive";
+    (print_string "raising\n";
+    raise Not_found);*) in 
+ if !Globals.check_coercions then begin
       print_string "Checking coercions... ";
       (* ignore (check_coercion prog); *)
       check_coercion prog;
       print_string "DONE.\n"
-    end in
+    end else begin
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
 
 	let g = build_state_trans_graph !Solver.variance_graph in
 	let cl = variance_numbering !Solver.var_checked_list g in
 	List.iter (fun (es,e) -> heap_entail_variance prog es e) cl
-	    
+	end 
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
   let num_list = numbers (List.length filtered_proc) in

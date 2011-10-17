@@ -1,11 +1,14 @@
 (* global types and utility functions *)
 
+
+
 type ident = string
 type constant_flow = ident
 
 type nflow = (int*int)(*numeric representation of flow*)
 
-
+type bformula_label = int
+	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
 and control_path_id_strict = formula_label
@@ -219,6 +222,8 @@ let instantiation_variants = ref 0
 
 let omega_simpl = ref true
 
+let no_simpl = ref false
+
 let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
@@ -271,7 +276,7 @@ let enable_norm_simp = ref false
 
 let n_xpure = ref 1
 
-let check_coercions = ref true
+let check_coercions = ref false
 
 let show_gist = ref false
 
@@ -346,7 +351,12 @@ let enable_incremental_proving = ref false
   let no_LHS_prop_drop = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
-  
+
+(* Options for slicing *)
+let do_slicing = ref false
+let opt_imply = ref 0
+let infer_slicing = ref false
+
 let add_count (t: int ref) = 
 	t := !t+1
 
