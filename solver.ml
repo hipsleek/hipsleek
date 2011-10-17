@@ -1502,7 +1502,7 @@ and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) 
       =
   let vv = evars (*impl_inst_vars*) in
-  Gen.Debug.ho_2 "split_universal" (fun (f,_)->Cprinter.string_of_pure_formula f)
+  Gen.Debug.no_2 "split_universal" (fun (f,_)->Cprinter.string_of_pure_formula f)
       (fun _ -> (Cprinter.string_of_spec_var_list evars)^"/Impl="^(Cprinter.string_of_spec_var_list impl_inst_vars)^"/Expl="^(Cprinter.string_of_spec_var_list expl_inst_vars)^"/view vars:"^ (Cprinter.string_of_spec_var_list vvars)) (fun ((f1,_),(f2,_),_) -> (Cprinter.string_of_pure_formula f1)^"/"^ (Cprinter.string_of_pure_formula f2)) (fun f vv -> split_universal_x f evars expl_inst_vars impl_inst_vars vvars pos)
       (f0,f0b) vv
       (*
@@ -1773,7 +1773,7 @@ and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) 
   let pr2 x = match x with
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
-  Gen.Debug.ho_2 "fold_op" 
+  Gen.Debug.no_2 "fold_op" 
       pr2 id pr
       (fun _ _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc)) vd ans
 
@@ -1877,7 +1877,7 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
   let pro x = pr1 (fst x) in
   let pr2 = pr_list Cprinter.string_of_spec_var in
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
-  Gen.Debug.ho_3 "process_fold_result" pr1 pr2 pr3 pro (fun _ _ _-> process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
+  Gen.Debug.no_3 "process_fold_result" pr1 pr2 pr3 pro (fun _ _ _-> process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
       fold_rs0 (p2::vs2) base2
 and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
@@ -3199,7 +3199,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
   let pr1 = Cprinter.string_of_list_context in
   let pr2 = Cprinter.string_of_mix_formula in
-  Gen.Debug.ho_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
+  Gen.Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
       move_expl_inst_ctx_list_x ctx f
 
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
@@ -5518,7 +5518,7 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
   let pr p = pr_triple pr_svl pr_svl string_of_bool p in
   let pr_rhs = Cprinter.string_of_mix_formula in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.ho_4(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id 
+  Gen.Debug.no_4(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id 
     Cprinter.string_of_spec_var_list pr_rhs pr 
       (fun _ _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) var_to_fold c2 v2 rhs_p
 
@@ -5553,7 +5553,7 @@ and inst_before_fold estate rhs_p view_vars =
   let pr_2 = Cprinter.string_of_mix_formula in
   let pr_3 = Gen.Basic.pr_list pr_sv in
   let pr_r = Gen.Basic.pr_triple pr_1 pr_2 (Gen.Basic.pr_list (Gen.Basic.pr_pair pr_sv pr_sv)) in
-  Gen.Debug.ho_3 "inst_before_fold"  pr_1 pr_2 pr_3 pr_r
+  Gen.Debug.no_3 "inst_before_fold"  pr_1 pr_2 pr_3 pr_r
       (fun _ _ _ -> inst_before_fold_x estate rhs_p view_vars) estate rhs_p view_vars
   
 and inst_before_fold_x estate rhs_p case_vars = 
@@ -5604,7 +5604,7 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
   let pr (x,_) = Cprinter.string_of_list_context x in
   let pr_c = Cprinter.string_of_context in
   let pr_es = Cprinter.string_of_entail_state in
-   Gen.Debug.ho_4(* loop_3_no *)  "do_fold_w_ctx" pr_c pr_es Cprinter.string_of_h_formula pr2 pr
+   Gen.Debug.no_4(* loop_3_no *)  "do_fold_w_ctx" pr_c pr_es Cprinter.string_of_h_formula pr2 pr
       (fun _ _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos) 
       fold_ctx estate rhs_node vd
       (*
