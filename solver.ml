@@ -5536,9 +5536,10 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
 	let subs_vars = (sf,var_to_fold)::subs_vars in
 	let l_args = List.map (fun (c1,c2)-> 
 		if (List.exists (comparator c1) vdef.view_case_vars) then
-		  if (List.exists (comparator c2) estate.es_evars) then
+          let ex_vars = estate.es_evars@estate.es_gen_impl_vars in
+		  if (List.exists (comparator c2) ex_vars) then
 			let paset = Context.get_aset asets c2 in
-			List.find (fun c -> not (List.exists (comparator c) estate.es_evars )) paset 
+			List.find (fun c -> not (List.exists (comparator c) (ex_vars) )) paset 
 		  else c2
 		else c2					
 	) subs_vars in
@@ -5639,6 +5640,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let original2 = if (is_view ln2) then (get_view_original ln2) else true in
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
+  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in
   let (new_v2,posib_inst,use_case) = existential_eliminator_helper prog estate 
               (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
   let view_to_fold = ViewNode ({  
@@ -5672,7 +5674,6 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
        the remaining rhs pure, and a set of substitutions to be applied to the view node and the remaining conseq
        posib_inst is the list of view args that are case vars
   *)
-  let estate,rhs_p,rho = inst_before_fold estate rhs_p posib_inst in
   let view_to_fold = CF.h_subst rho view_to_fold in
   let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd (* false *) use_case pos in
   if not (CF.isFailCtx fold_rs) then
