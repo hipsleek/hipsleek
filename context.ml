@@ -60,8 +60,6 @@ and action =
 
 and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
 
-let coercion_depth = ref 2
-
 let is_complex_action a = match a with
   | Search_action _ 
   | Seq_action _ -> true
@@ -550,116 +548,34 @@ and process_one_match_x prog (c:match_res) :action_wt =
             (*       if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c) *)
             (*       else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c))) *)
             | ViewNode vl, ViewNode vr -> 
-                let l1 = [(1,M_base_case_unfold c)] in
-                let l2 =
-                  if (((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0)
-                      && (
-                          ( (vl.h_formula_view_original==false) && ((List.length vl.h_formula_view_origins) >= !coercion_depth))
-                      || ( (vr.h_formula_view_original==false) && ((List.length vr.h_formula_view_origins) >= !coercion_depth))
-                      ))
-                  then [(0,M_match c)]
-                  else if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)]
-                  else 
-                    if not(is_rec_view_def prog vl.h_formula_view_name) 
-                    then [(2,M_unfold (c,0))] 
-                    else 
-                      if not(is_rec_view_def prog vr.h_formula_view_name) 
-                      then [(2,M_fold c)] 
-                      else [(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))]
-                in
-                let l3 =
-                  if ( ((List.length vl.h_formula_view_origins) >= !coercion_depth)
-                       || ((List.length vl.h_formula_view_origins) >= !coercion_depth))
-                  then []
-                  else
-                    let l3_1 = (*left lemmas*)
-                      let left_ls = 
-                        let coers = (look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name) in
-                        if (vl.h_formula_view_original==true) 
-                        (*if original -> can apply any coercion within its depth*)
-                        then coers
-                        else
-                          (*avoid cycle, keep those not create a cycle*)
-                          List.filter (fun c -> not(List.mem c.coercion_name vl.h_formula_view_origins)) coers
-                      in
-                      List.map (fun l -> (1,M_lemma (c,Some l))) left_ls
-                    in
-                    let l3_2 = (*right lemmas*)
-                      let right_ls = 
-                        let coers = (look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name) in
-                        if (vr.h_formula_view_original==true) 
-                        (*if original -> can apply any coercion within its depth*)
-                        then coers
-                        else
-                          (*avoid cycle, keep those not create a cycle*)
-                          List.filter (fun c -> not(List.mem c.coercion_name vr.h_formula_view_origins)) coers
-                      in
-                      List.map (fun l -> (1,M_lemma (c,Some l))) right_ls
-                    in
-                    l3_1@l3_2
-                in
-                let src = (-1,Search_action (l1@l2@l3)) in
-                src
-
-                  (* let l2 = *)
-                  (*   if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 && *)
-                  (*              ((vl.h_formula_view_original==false && (vl.h_formula_view_origins!=[])) *)
-                  (*               || ((vr.h_formula_view_original==false && vr.h_formula_view_origins!=[])))) then [(1,M_match c)] *)
-                  (*   else *)
-                  (*   (\* if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 && vl.h_formula_view_original==false && vl.h_formula_view_origins!=[]) then [(1,M_match c)] *\) *)
-                  (*   (\* else *\) if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] *)
-                  (*   else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] *)
-                  (*   else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] *)
-                  (*   else [(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] *)
-                  (* in *)
-                  (* let l3_1 = (\*left lemmas*\) *)
-                  (*   let left_ls =  *)
-                  (*     if ( (not(vl.h_formula_view_original)) && ((List.length vl.h_formula_view_origins) > !coercion_depth))  *)
-                  (*     then [] *)
-                  (*     else (look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name) *)
-                  (*   in *)
-                  (*     List.map (fun l -> (1,M_lemma (c,Some l))) left_ls *)
-                  (* in *)
-                  (* let l3_2 = (\*right lemmas*\) *)
-                  (*   let right_ls =  *)
-                  (*     if ((List.length vr.h_formula_view_origins) > !coercion_depth)  *)
-                  (*     then [] *)
-                  (*     else *)
-                  (*       look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in *)
-                  (*   List.map (fun l -> (1,M_lemma (c,Some l))) right_ls *)
-                  (* in *)
-                 
-                  (* let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original) *)
-                  (* then begin *)
-                  (*   (\* let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in *\) *)
-                  (*   (\* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in *\) *)
-
-                  (*   (\*We need to filter out coercion that have already performed*\) *)
-                  (*   (\* #coercions is limited to coercion_depth*\) *)
-                  (*   let left_ls =  *)
-                  (*     if ((!vl.h_formula_view_original && ((List.length vl.h_formula_view_origins) > !coercion_depth)) *)
-                  (*     then [] *)
-                  (*     else *)
-                  (*     look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in *)
-
-                  (*   let right_ls =  *)
-                  (*     if ((List.length vr.h_formula_view_origins) > !coercion_depth)  *)
-                  (*     then [] *)
-                  (*     else *)
-                  (*       look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in *)
-
-                  (*   let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in *)
-                  (*   let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in *)
-                  (*   if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (c,None))] *\) (\* only targetted lemma *\) *)
-                  (*   else left_act@right_act *)
-                  (* end *)
-                  (* else [] in *)
-                  (* let l4 = [] *)
-                  (*   (\*if get_view_original rhs_node then  *)
-                  (*     [M_base_case_fold c]  *)
-                  (*     else [] *\)in *)
-                  (* let src = (-1,Search_action (l1@l2@l3_1@l3_2@l4)) in *)
-                  (* src (\*Seq_action [l1;src]*\) *)
+                  let l1 = [(1,M_base_case_unfold c)] in
+                  let l2 = 
+                    if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 && 
+                               ((vl.h_formula_view_original==false && (vl.h_formula_view_origins!=[])) 
+                                || ((vr.h_formula_view_original==false && vr.h_formula_view_origins!=[])))) then [(0,M_match c)]
+                    else
+                    (* if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 && vl.h_formula_view_original==false && vl.h_formula_view_origins!=[]) then [(0,M_match c)] *)
+                    (* else *) if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] 
+                    else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
+                    else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
+                    else [(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))]
+                  in
+                  let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
+                  then begin
+                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in
+                    let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in
+                    let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                    let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
+                    if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
+                    else left_act@right_act
+                  end
+                  else [] in
+                  let l4 = []
+                    (*if get_view_original rhs_node then 
+                      [M_base_case_fold c] 
+                      else [] *)in
+                  let src = (-1,Search_action (l1@l2@l3@l4)) in
+                  src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> (0,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
             | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	

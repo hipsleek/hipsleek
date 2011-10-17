@@ -1279,9 +1279,10 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 
         else
           (*otherwise, its origins unchange but its view_original=false*)
-	      (false, ViewNode {vn with
-              h_formula_view_origins = origs @ vn.h_formula_view_origins;
-              h_formula_view_original = true})
+	      (false, ViewNode {vn with h_formula_view_original = false})
+	      (* (false, ViewNode {vn with *)
+          (*     h_formula_view_origins = origs @ vn.h_formula_view_origins; *)
+          (*     h_formula_view_original = true}) *)
     | DataNode dn ->
         if (((CP.name_of_spec_var dn.h_formula_data_node) = v) && (not found_first) && dn.h_formula_data_name=ln) then
           (*if it is the first matched node (same pointer name, 
@@ -1296,10 +1297,10 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 
         else
           (*otherwise, its origins unchange but its view_original=false*)
-
-	      (false, DataNode {dn with 
-	          h_formula_data_origins = origs @ dn.h_formula_data_origins;
-              h_formula_data_original = true})
+	      (false, DataNode {dn with h_formula_data_original = false})
+	      (* (false, DataNode {dn with  *)
+	      (*     h_formula_data_origins = origs @ dn.h_formula_data_origins; *)
+          (*     h_formula_data_original = true}) *)
     | _ -> (false,h)
   in
   let _, h1 = helper h false in
