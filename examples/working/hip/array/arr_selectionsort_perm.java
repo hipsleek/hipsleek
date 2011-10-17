@@ -68,6 +68,7 @@ void selection_sort(ref int[] a, int i, int j)
 		a[k] = a[j];
 		a[j] = temp;
 		assert permutation(a,a',i,j);
+		assume permutation(a,a',i,j);
 		assert upperbnd(a',i,j-1,temp');
 		assume upperbnd(a',i,j-1,temp');
 		selection_sort(a, i, j-1);
