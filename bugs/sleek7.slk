@@ -1,22 +1,44 @@
 data node { int val ; node next }.
 
 
+/*
 pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
          inv n >= 0.
+*/
 
-/*
 pred lseg<n, p> == case {
      n=0 -> [] self = p & n = 0;
      n!=0 ->  [] self::node<next = r> * r::lseg<b, p> & b=n-1 ; 
      }
      inv n >= 0.
-*/
+
 
 lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
+/*
+checkentail 
+self = p & n = 0 & n=a+b & a,b>=0
+or self::node<next = r> * r::lseg<n - 1, p> & n = a + b & a,b >=0 
+  |- self::lseg<a, r> * r::lseg<b, p>.
 
-checkentail x::lseg<n, p> & n > 1000 |- (exists r1: x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 1 & n2 <=2 ).
+checkentail self = p & n = 0 & n=a+b & a,b>=0  |- self::lseg<a, r> * r::lseg<b, p>.
+*/
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0  
+|- self::lseg<a, r> * r::lseg<b, p>.
+
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0 & a=0 
+|- r::lseg<b, p> & self=r.
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0 & a!=0 
+|- self::node<next = r2> * r2::lseg<a - 1, r> * r::lseg<b, p> .
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0 & a!=0 
+|- self::node<next = r2> * r2::lseg<am, r> * r::lseg<b, p> & am+1=a.
+
+//checkentail x::lseg<n, p> & n > 1000 |- (exists r1: x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 1 & n2 <=2 ).
 
 
 
