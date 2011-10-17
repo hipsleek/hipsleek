@@ -2503,7 +2503,7 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 	  in Gen.BList.subset_eq eq_spec_var fv ls	  
 	) mg.memo_group_cons)) mem
   *)
-
+	
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   Gen.Debug.no_1 "exists_contradiction_eq"
 	!print_mp_f
