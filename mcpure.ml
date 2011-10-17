@@ -2491,6 +2491,8 @@ let is_ineq_linking_memo_group (mg : memoised_group) : bool =
   List.exists (fun mc -> is_ineq_linking_bform mc.memo_formula) mg.memo_group_cons
 
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
+  List.exists (fun mg -> (is_ineq_linking_memo_group mg) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_fv ls)) mem
+  (*
   List.exists (fun mg ->
 	(is_ineq_linking_memo_group mg) &&
 	(List.exists (fun mc ->
@@ -2500,6 +2502,7 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 		| None -> []
 	  in Gen.BList.subset_eq eq_spec_var fv ls	  
 	) mg.memo_group_cons)) mem
+  *)
 
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   Gen.Debug.no_1 "exists_contradiction_eq"

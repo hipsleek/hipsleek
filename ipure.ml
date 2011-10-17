@@ -709,3 +709,28 @@ let rec break_pure_formula (f: formula) : b_formula list =
 	| Not (f, _, _) -> break_pure_formula f
 	| Forall (_, f, _, _) -> break_pure_formula f
 	| Exists (_, f, _, _) -> break_pure_formula f
+
+let rec contain_vars_exp (expr : exp) : bool =
+  match expr with
+  | Null _ -> false
+  | Var _ -> true
+  | IConst _ -> false
+  | FConst _ -> false
+  | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Div (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagUnion (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagIntersect (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagDiff (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | List (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | ListCons (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | ListHead (exp, _) -> contain_vars_exp exp
+  | ListTail (exp, _) -> contain_vars_exp exp
+  | ListLength (exp, _) -> contain_vars_exp exp
+  | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | ListReverse (exp, _) -> contain_vars_exp exp
+  | ArrayAt _ -> true 

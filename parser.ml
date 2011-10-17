@@ -388,7 +388,12 @@ and set_il_b_formula_x bf il =
 		| Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
 	  
 and set_il_exp exp il =
-  let (pe, _) = exp in (pe, il)				   
+  let (pe, _) = exp in (pe, il)
+
+and contain_vars_pure_double f =
+  match f with
+	| Pure_f _ -> false
+	| Pure_c pc -> P.contain_vars_exp pc
 				   
 and set_slicing_utils_pure_double f il =
   (*
@@ -757,10 +762,10 @@ cexp_w :
 
   |"bconstrp" RIGHTA
       [  lc=SELF; `NEQ;  cl=SELF       ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f (*false*) (if !opt_ineq then true else false)
+	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	  set_slicing_utils_pure_double f (*false*) (if !opt_ineq then (contain_vars_pure_double lc) && (contain_vars_pure_double cl) else false)
 	  | lc=SELF; `EQ;   cl=SELF  ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
       ]  
   | "bconstr" 
