@@ -2312,13 +2312,13 @@ let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_gr
         memo_group_aset = new_aset;}, f_comb (new_rc@new_ra@new_rs@new_rv))
   
     
- let constraint_collector p_sel f= 
+ let constraint_collector p_sel f : (mix_formula * (b_formula * spec_var) list)= 
    let f_comb f = List.concat f in
    let pf_f _ f= match f with 
     | Or _ -> Some (f,[])
     | _ -> None    in
    let pf_b _ b = match p_sel b with 
-      | (false,l) -> Some (BConst (true,no_pos),l)
+      | (false,l) -> Some ((BConst (true,no_pos),None),l)
       | (true,l) -> Some (b,l) in
    let pf_e _ e = Some (e,[]) in
    let pf_all = (pf_f,pf_b,pf_e) in
@@ -2340,7 +2340,7 @@ let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_gr
          let aset, l_aset = 
             let vl = EMapSV.get_equiv x.memo_group_aset in
             List.fold_left (fun (a1,a2) (v1,v2)->
-                match p_sel (Eq (Var (v1,no_pos), Var (v2,no_pos),no_pos)) with
+                match p_sel ((Eq (Var (v1,no_pos), Var (v2,no_pos),no_pos)),None) with
                   | (true,l) -> ((v1,v2)::a1, l@a2)
                   | (false,l) -> (a1, l@a2)) ([],[]) vl in
          let aset = List.fold_left (fun a (x,y) -> EMapSV.add_equiv a x y) []  aset in

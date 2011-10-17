@@ -5559,7 +5559,7 @@ and inst_before_fold_x estate rhs_p case_vars =
   let lhs_fv = fv estate.es_formula in
   let of_interest = (*case_vars*) estate.es_gen_impl_vars in
   
-  let rec filter b = match b with 
+  let rec filter b = match (fst b) with 
       | CP.Eq (lhs_e, rhs_e, _) ->
             let lfv = CP.afv lhs_e in
 			let rfv = CP.afv rhs_e in
