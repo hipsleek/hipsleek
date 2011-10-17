@@ -67,8 +67,8 @@ void insertelm(ref int[] a, int n)
 
 			// checking that after swapping a[n] and a[n-1], the
 			// resulting array is a permutation of the original array
-			//assert permutation(a,a',0,n);
-			//assume permutation(a,a',0,n);
+			assert permutation(a,a',0,n);
+			assume permutation(a,a',0,n);
 
 			insertelm(a,n-1);
 		}
