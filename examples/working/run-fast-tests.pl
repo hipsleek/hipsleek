@@ -190,6 +190,7 @@ $output_file = "log";
 		["array/arr_rev.java",1,"","arrayrev","SUCCESS"],
 		["array/arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
 		["array/arr_selectionsort_perm.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["array/arr_sparse.java",3,"--imm","create","SUCCESS","get","SUCCESS","setsa","SUCCESS"],
 		["array/arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
 	],
 	# END OF ARRAY TESTING EXAMPLES

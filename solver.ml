@@ -4589,12 +4589,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	 					(*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp) in
 	 					let _ = print_endline ("heap_entail_empty_rhs_heap_x : Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp) in*)
 						(* Temporarily suppress output of implication checking *)
-						let _ = (Smtsolver.suppress_print_implication := true) in
+						let _ = Smtsolver.suppress_all_output () in
 	 					let inst = pure_match evarstoi lhs_pp rhs_pp in (* Do matching! *)
 	 					let lhs_pp = CP.mkAnd lhs_pp inst no_pos in 
 	 					let lhs_p = (MCP.OnePF lhs_pp) in
 						(* Unsuppress the printing *)
-	 					let _ = (Smtsolver.suppress_print_implication := false) in
+	 					let _ = Smtsolver.unsuppress_all_output ()  in
  	 					(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
 	 						lhs_p
 	in
