@@ -548,7 +548,7 @@ and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = matc
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
   let pr2 = pr_list string_of_action_res in
-  Gen.Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
+  Gen.Debug.ho_1 "sort_wt" pr pr2 sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
@@ -557,7 +557,8 @@ and sort_wt_x (ys: action_wt list) : action list =
           let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
           let h = (List.hd sl) in
           let rw = (fst h) in
-          (* WHY did we pick only ONE when rw==0? *)
+          (* WHY did we pick only ONE when rw==0?*)
+          (*Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
           if (rw==0) then h 
           else (rw,Search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
@@ -573,6 +574,87 @@ and sort_wt_x (ys: action_wt list) : action list =
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
+
+and sort_wt_new (ys: action_wt list) : action_wt list =
+  let pr = pr_list string_of_action_wt_res_simpl in
+  Gen.Debug.ho_1 "sort_wt_new" pr pr sort_wt_new_x ys
+
+and group_equal_actions (ys: action_wt list) (running:action_wt list) (running_w: int) (rs: action_wt list):
+        (action_wt list)=
+  let pr = pr_list string_of_action_wt_res_simpl in
+  Gen.Debug.no_4 "group_equal_actions" pr pr string_of_int pr pr group_equal_actions_x ys running running_w rs
+
+and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running_w: int) (rs: action_wt list):
+        (action_wt list)=
+    match ys with
+      | [] -> let new_rs =
+                  match running with
+                    | [] -> rs
+                    | [a] -> rs @ [a]
+                    | _ -> rs @ [(running_w, Cond_action running)]
+              in new_rs
+      | (w, act)::ss ->
+          if (w > running_w) then
+            begin
+                let new_rs =
+                  match running with
+                    | [] -> rs
+                    | [a] -> rs @ [a]
+                    | _ -> rs @ [(running_w, Cond_action running)]
+                in
+                group_equal_actions ss [(w, act)] w new_rs
+            end
+          else if (w = running_w) then
+            group_equal_actions ss (running @ [(w, act)]) running_w rs
+          else
+            (*something is wrong here*)
+             report_error no_pos "context: sort_wt_new: w should be >= current weight"
+
+
+(*sorted and group euqal actions into a cond_action*)
+and sort_wt_new_x (ys: action_wt list) : action_wt list =
+  (* ys is a soted ation list
+     running: current equal action group. init = []
+     running_w: current wwight. inti = -1
+     rs: return list, init = []
+     *)
+  
+  let rec recalibrate_wt (w,a) = match a with
+    | Search_action l ->
+        let l = List.map recalibrate_wt l in
+        let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+        let h = (List.hd sl) in
+        let rw = (fst h) in
+                  (* WHY did we pick only ONE when rw==0?*)
+                  (*Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
+        if (rw==0) then h 
+        else
+          let rs = group_equal_actions sl [] (-1) [] in
+          let rs1 =
+            (
+                match rs with
+                  | [] -> (rw, a)
+                  | [act] -> act
+                  | ls -> (rw,Cond_action ls)
+            )
+          in rs1
+    | Cond_action l (* TOCHECK : is recalibrate correct? *) ->
+        let l = List.map recalibrate_wt l in
+       (  match l with
+          | [] -> (w,a)
+          | [act] -> act
+          | l->
+                  let rw = List.fold_left (fun a (w,_)-> if (a<=w) then a else w) (fst (List.hd l)) (List.tl l) in
+                  (rw,Cond_action l)
+        )
+    | Seq_action l ->
+          let l = List.map recalibrate_wt l in
+          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then a else w) (fst (List.hd l)) (List.tl l) in
+          (rw,Seq_action l)
+    | _ -> if (w == -1) then (0,a) else (w,a) in
+  let ls = List.map recalibrate_wt ys in
+  let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
+  (group_equal_actions sl [] (-1) [])
 
 and pick_unfold_only ((w,a):action_wt) : action_wt list =
   match a with
@@ -597,8 +679,12 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
  (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-      let ys = sort_wt r in 
-      List.hd (ys)
+      let ys = sort_wt r in
+      (List.hd (ys))
+   (*  match ys with
+        | [(_, act)] -> act
+        | ys -> (Cond_action ys) *)
+     (* (List.hd (ys)) *)
           (* time for runfast hip --eps --imm - 42s *)
      (* Cond_action (r) *)
           (* time for runfast hip --eps --imm - 43s *)

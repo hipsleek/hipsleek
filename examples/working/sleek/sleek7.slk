@@ -25,6 +25,7 @@ checkentail x::lseg<n, p> & n > 10 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >=
 
 // 4
 checkentail x::lseg<n, p> & n > 9 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >= 9 & n2 >= 2.
+//print residue.
 // invalid-exception
 
 // 5
@@ -52,5 +53,4 @@ checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 3.
 //print residue.
 // valid
-
 

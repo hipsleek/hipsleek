@@ -5491,7 +5491,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   process_action prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Gen.Debug.loop_3_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula
+  Gen.Debug.loop_3 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list (fun _ -> "?") (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
@@ -5702,7 +5702,7 @@ and comp_act prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let pr1 es = Cprinter.string_of_formula es.es_formula in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = Context.string_of_action_wt_res in
-  Gen.Debug.no_2 "comp_act" pr1 pr2 pr3 (fun _ _ -> comp_act_x prog estate rhs) estate rhs
+  Gen.Debug.ho_2 "comp_act" pr1 pr2 pr3 (fun _ _ -> comp_act_x prog estate rhs) estate rhs
 
 and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let rhs_b = extr_rhs_b rhs in
@@ -5937,7 +5937,11 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
            | [(_,act)] -> process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
            | (_,act)::xs ->
                   let (r,prf) = process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
-                  if isFailCtx r then helper xs
+                  if isFailCtx r then
+                    begin
+                        (*get lowest failure status among search results*)
+                    helper xs
+                    end
                   else (r,prf)
           in helper l
     | Context.Search_action l ->
