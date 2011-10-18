@@ -1,0 +1,56 @@
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     }
+     inv n >= 0.
+
+/*
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv self!=null & n>=1.
+*/
+
+pred ll_tail<tx, n> == 
+   case {
+      n=1 -> [] self::node<_, null> & tx=self ;
+      n!=1 -> [] self::node<_, r> * r::ll_tail<tx, b> & b=n-1 & r!=null;
+   } inv self!=null & n>=1.
+
+lemma "lseg" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma self::ll_tail<t, n> <- self::lseg<n-1, t> * t::node<_, null>.
+//FAIL w eps, VALID w/o eps
+
+//lemma self::lseg<n-1, t> * t::node<_, null> -> self::ll_tail<t, n>. 
+//FAIL (w & w/o eps)
+
+//lemma "lltail" self::ll_tail<t, n> -> self::lseg<n-1, t> * t::node<_, null>.
+
+lemma "lltail" self::ll_tail<t, n> <- self::lseg<n-1, t> * t::node<_, null>.
+
+//lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
+
+/*	
+// valid
+checkentail self::lseg<n-1, t> * t::node<_, null> |- self::ll_tail<t,n>.
+
+// valid
+checkentail t::node<_, null> & self=t & n-1=0 |- self::ll_tail<t,n>.
+*/
+
+// invalid?
+checkentail self::node<_,q> * q::lseg<n-2, t> * t::node<_, null> |- self::ll_tail<t,n>.
+
+checkentail self::node<_,q> * q::lseg<n-2, t> * t::node<_, null> & n=1 
+ |- self::node<_,null> & t=self.
+
+checkentail self::node<_,q> * q::lseg<n-2, t> * t::node<_, null> & n!=1
+ |- self::node<_, r> * r::ll_tail<t, b> & b=n-1 & r!=null.
