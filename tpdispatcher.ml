@@ -1758,7 +1758,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 	is_sat_sub_no_c f sat_subno false
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
-  Gen.Debug.no_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+  Gen.Debug.ho_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno
 	
 let is_sat_memo_sub_no_orig (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
@@ -1777,9 +1777,9 @@ let rec is_sat_memo_sub_no_ineq_slicing (mem : MCP.memo_pure) sat_subno with_dup
   Gen.Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
-	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x mem sat_subno with_dupl with_inv) mem
+	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x1 mem sat_subno with_dupl with_inv) mem
 
-and is_sat_memo_sub_no_ineq_slicing_x (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+and is_sat_memo_sub_no_ineq_slicing_x1 (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   let is_sat_one_slice mg =
 	if (MCP.is_ineq_linking_memo_group mg)
 	then (* mg is a linking inequality *)
@@ -1804,16 +1804,70 @@ and is_sat_memo_sub_no_ineq_slicing_x (mem : MCP.memo_pure) sat_subno with_dupl 
   in
   List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem
 
-let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
-(*
-  (* Unmodified version *)
-  is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
-*)
-(*
-  (* Modified version *)
-  is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
-*)	
+and is_sat_memo_sub_no_ineq_slicing_x2 (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+  (* Aggressive search on inequalities *)
+  let is_sat_one_slice (is_sat, mg) kb =
+	if (MCP.is_ineq_linking_memo_group mg)
+	then (* mg is a linking inequality *)
+	  (* For each fv v of a linking ineq, find all other slices that relates to v *)
+	  let (related_slices, unrelated_slices) = List.fold_left (fun (a_rs, a_urs) v ->
+		let (rs, n_urs) = List.partition (fun (_, s) ->
+		  (s != mg) &&
+		  (List.mem v s.memo_group_fv) &&
+		  not (MCP.is_ineq_linking_memo_group s)
+		) a_urs in (rs::a_rs, n_urs)
+	  ) ([], kb) mg.memo_group_fv in
+	  
+	  (* Filter slices without relationship, for example, keep x<=z and z<=y for x!=y *)
+	  let rec filter_slices ll_slices =
+		(* Only work if the initial size of ll_slices is 2 *)
+		(* Return a pair of used and unused slices *)
+		match ll_slices with
+		  | [] -> ([], [])
+		  | l_x::ll_rest ->
+			let (filtered_l_x, l_unused_x, marked_ll_rest) =
+			  List.fold_left (fun (a_l_x, a_l_ux, a_ll_rest) (is_marked, x) ->
+				if is_marked then (x::a_l_x, a_l_ux, a_ll_rest) (* x shared variables with some previous lists of slices *)
+				else
+				  (* Mark all slice which overlaps with x *)
+				  let n_ll_rest = List.map (fun l_y ->
+					List.fold_left (fun acc (is_marked, y) ->
+					  if is_marked then (is_marked, y)::acc
+					  else (Gen.BList.overlap_eq eq_spec_var x.memo_group y.memo_group_fv, y)::acc
+					) [] l_y) a_ll_rest in
+				  let n_l_x, n_l_ux =
+					if (List.exists (fun l_y -> List.exists (fun y -> Gen.BList.overlap_eq eq_spec_var x.memo_group y.memo_group_fv) l_y) a_ll_rest) then
+					  (x::a_l_x, a_l_ux)
+					else
+					  (a_l_x, x::a_l_ux)
+				  in (n_l_x, n_l_ux, n_ll_rest)
+			  ) ([], [], ll_rest) l_x
+			in
+			let r_l_x, r_l_ux = filter_slices marked_ll_rest in
+			(filtered_l_x::r_l_x, l_unused_x::r_l_ux)
+	  in
+	  let (used_slices, unused_slices) = filter_slices (List.map (fun l_x -> List.map (fun x -> (false, x)) l_x) related_slices) in
+	  let ineq_related_slices = List.concat used_slices in
+	  let (res, n_kb) = List.fold_left (fun (r, a_kb) (is_sat, x) ->
+		if not r then (r, a_kb)
+		else
+		  
+		  let f = MCP.fold_slice_gen x with_dupl with_inv true true in
+		  let r = is_sat_sub_no f sat_subno in
+		  (r, (Some r, x)::a_kb)
+	  ) (true, kb) ineq_related_slices in
+	 
+	else
+	  match is_sat with
+		| None ->
+		  let f = MCP.fold_slice_gen mg with_dupl with_inv true true in
+		  is_sat_sub_no f sat_subno
+		| Some r -> r
+	  
+  in
+  List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem	
 
+let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   (* Modified version with UNSAT optimization *)
   if !do_slicing && !multi_provers then
 	is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
@@ -1934,7 +1988,7 @@ let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool
   res
   
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
-  Gen.Debug.no_1 "is_sat_memo_sub_no"
+  Gen.Debug.ho_1 "is_sat_memo_sub_no"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
 	(fun f -> is_sat_memo_sub_no(*_new*) f sat_subno with_dupl with_inv) f
