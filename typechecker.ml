@@ -972,19 +972,20 @@ let check_prog (prog : prog_decl) =
 (*  else print_string "bactracke inactive";
     (print_string "raising\n";
     raise Not_found);*) in 
- if !Globals.check_coercions then begin
+    if !Globals.check_coercions then 
+      begin
       print_string "Checking coercions... ";
       (* ignore (check_coercion prog); *)
       check_coercion prog;
       print_string "DONE.\n"
-    end else begin
+      end;
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
 
 	let g = build_state_trans_graph !Solver.variance_graph in
 	let cl = variance_numbering !Solver.var_checked_list g in
 	List.iter (fun (es,e) -> heap_entail_variance prog es e) cl
-	end 
+	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
   let num_list = numbers (List.length filtered_proc) in
