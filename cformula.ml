@@ -174,6 +174,8 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                            then c is in h_formula_view_origins. Used to avoid loopy coercions *)
                         h_formula_view_origins : ident list;
                         h_formula_view_original : bool;
+                        h_formula_view_lhs_case : bool; 
+                        (* to allow LHS case analysis prior to unfolding and lemma *)
                         h_formula_view_unfold_num : int; (* to prevent infinite unfolding *)
                         (* used to indicate a specialised view *)
                         h_formula_view_remaining_branches :  (formula_label list) option;
@@ -495,6 +497,9 @@ and is_coercible_x (h : h_formula) : bool = match h with
 
 and is_coercible (h : h_formula) : bool =
   Gen.Debug.no_1 "is_coercible" !print_h_formula string_of_bool is_coercible_x h 
+
+
+
 
 
 (*
@@ -1187,6 +1192,35 @@ and h_add_original (h : h_formula) original =
     | _ -> h 
   in helper h
 
+and h_set_lhs_case (h : h_formula) flag = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> ViewNode {vn with h_formula_view_lhs_case = flag}
+    | _ -> h 
+  in helper h
+
+and h_set_lhs_case_of_a_view (h : h_formula) (v_name:ident) flag: h_formula = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> 
+        let name = get_node_name h in
+        if (name=v_name) then
+          ViewNode {vn with h_formula_view_lhs_case = flag}
+        else h
+    | _ -> h 
+  in helper h
+
+
 and h_add_unfold_num (h : h_formula) i = 
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;
@@ -1402,6 +1436,42 @@ and add_original (f : formula) original =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_original e.formula_exists_heap original})
   in helper f
          
+and set_lhs_case (f : formula) flag = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_set_lhs_case b.formula_base_heap flag})
+    | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case e.formula_exists_heap flag})
+  in helper f
+
+and set_lhs_case_of_a_view (f : formula) (v_name:ident) flag : formula = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_set_lhs_case_of_a_view b.formula_base_heap v_name flag})
+    | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case_of_a_view e.formula_exists_heap v_name flag})
+  in helper f
+
+and struc_formula_set_lhs_case (f:struc_formula) (flag:bool) : struc_formula =
+  let helper (f:ext_formula) = match f with
+	| EBase b -> EBase {b with formula_ext_base = set_lhs_case b.formula_ext_base flag ; 
+		  formula_ext_continuation = struc_formula_set_lhs_case b.formula_ext_continuation flag}
+	| ECase b -> ECase {b with formula_case_branches = 
+              List.map (fun (c1,c2) -> (c1 ,(struc_formula_set_lhs_case c2 flag))) b.formula_case_branches;}
+	| EAssume (x,b,y) -> EAssume (x,(set_lhs_case b flag),y)
+	| EVariance b -> 
+        EVariance {b with 
+            formula_var_continuation = struc_formula_set_lhs_case  b.formula_var_continuation flag}
+  in
+  List.map helper f	
 
 and add_unfold_num (f : formula) uf = 
   let rec helper f = match f with

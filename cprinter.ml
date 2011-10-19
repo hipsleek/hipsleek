@@ -844,6 +844,7 @@ let rec pr_h_formula h =
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
       h_formula_view_original = original;
+      h_formula_view_lhs_case = lhs_case;
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
