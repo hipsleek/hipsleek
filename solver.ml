@@ -6262,7 +6262,7 @@ and is_original_match anode ln2 =
 and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   let p1 = Cprinter.string_of_formula in
   let p2 = pr_pair string_of_bool Cprinter.string_of_formula in
-  Gen.Debug.ho_3 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion
+  Gen.Debug.no_3 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion
       p2 (fun _ _ _-> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f coer
 
 and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
@@ -6532,7 +6532,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 	(*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
+  Gen.Debug.no_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
       (fun _ _ _ -> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
       anode resth1 coer
       (* anode - LHS matched node
@@ -6580,7 +6580,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
     (*******************************************************************************************************************************************************************************************)
 and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_4 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion
+  Gen.Debug.no_4 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion
       Cprinter.string_of_formula_base
       (* Cprinter.string_of_formula (fun x -> x)  *)pr
       (fun _ _ _ _ -> apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos) ln2 resth2 coer  rhs_b (* conseq c2 *)
