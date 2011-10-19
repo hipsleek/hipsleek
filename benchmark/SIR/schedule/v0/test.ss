@@ -17,10 +17,8 @@ dll2<p,r,l,n> == self=r & p=l & n=0
   or self::node2<_,_,p,q> * q::dll2<self,r,l,n-1> // = q1 
   inv n >= 0;
 
-/*
 coercion self::dll2<p,r,l,n> & a>=0 & b>=0 & n=a+b 
-  <- self::dll2<p,q,l1,a>*q::dll2<l1,r,l,b>;
-*/
+  <-> self::dll2<p,q,l1,a>*q::dll2<l1,r,l,b>;
 
 node2 get_first(node2 x)
   requires x::dll<p, n>//::node2<a,b,p,q> * p
@@ -30,8 +28,8 @@ node2 get_first(node2 x)
 }
 
 int get_mem_count(node2 x)
-  requires x::dll2<q,r,l,n>
-  ensures x::dll2<q,r,l,n> & res=n;
+  requires x::dll2<q,r,l,n>@I
+  ensures res=n;
 
 /*-----------------------------------------------------------------------------
   find_nth
@@ -179,6 +177,8 @@ void upgrade_process_prio(int prio, int ratio, ref node2 prio_queue1, ref node2 
       {
         n = ratio;//(int) (count*ratio + 1);
         //assume(n<=count & n >= 1);
+        dprint;
+        assert src_queue'::dll2<_,_,_,nn> & nn>=n' & n'>=1;//'
         proc = find_nth(src_queue, n);
         if (proc != null) {
           src_queue = del_ele2(src_queue, n);
