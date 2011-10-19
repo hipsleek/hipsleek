@@ -3288,7 +3288,7 @@ type entail_state = {
   es_aux_conseq : CP.formula;
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
-  es_trace : string list (*LDK: to keep track of past operations: match,fold...*)
+  es_trace : string list; (*LDK: to keep track of past operations: match,fold...*)
 }
 
 and context = 
@@ -4269,7 +4269,7 @@ let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
   )
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
-  Gen.Debug.no_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
+  Gen.Debug.ho_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
       remove_dupl_conj_eq_mix_formula_x f
 
 (*remove v=v from formula*)
