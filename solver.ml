@@ -3105,6 +3105,9 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 		  *)
 		  try
 			let y = List.find (fun e -> (CP.eq_spec_var_aset eset (get_node_var x) (get_node_var e)) && (is_view x || is_view e)) t in
+
+			let _ = print_string ("\ngenerate_action: y: " ^ (Cprinter.string_of_h_formula y) ^ "\n") in
+			
 			let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
 					   Context.match_res_lhs_rest = x;
 					   Context.match_res_holes = [] ;
@@ -3120,7 +3123,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
       let pr = pr_list Cprinter.string_of_h_formula in
 	  let pr_1 = P.EMapSV.string_of in
       let pr_2 = Context.string_of_action_res_simpl in
-      Gen.Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
+      Gen.Debug.ho_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
 	(** [Internal] Compare two spec var syntactically. **)
 	and compare_sv_syntax xn yn = match (xn,yn) with
@@ -3176,10 +3179,11 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                   formula_base_label = None;
                   formula_base_pos = no_pos } in
 		let res = process_action prog es conseq b b action [] is_folding pos in
-		(* let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
+		let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
 		let _ = print_endline (PR.string_of_entail_state es) in
-		let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
-		let _ = print_endline (PR.string_of_list_context lctx) in *)
+		let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in
+		let (lctx, _) = res in
+		let _ = print_endline (PR.string_of_list_context lctx) in
 			(res, match action with
 					| Context.M_Nothing_to_do _ -> false
 					| _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
@@ -5995,7 +5999,7 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   let pr1 = Context.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 

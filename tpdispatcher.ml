@@ -2040,7 +2040,7 @@ let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool
   res
   
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
-  Gen.Debug.no_1 "is_sat_memo_sub_no"
+  Gen.Debug.ho_1 "is_sat_memo_sub_no"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
 	(fun f -> is_sat_memo_sub_no(*_new*) f sat_subno with_dupl with_inv) f
