@@ -8699,7 +8699,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
                 subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs
 
           in
-		  let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name :: *)origs) in
+		  let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name ::origs) in
           let extra_heap_new = match frac1,frac2 with
             | Some f1, Some f2 ->
                 CF.subst_avoid_capture_h (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) extra_heap
