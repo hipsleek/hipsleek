@@ -1072,7 +1072,7 @@ and create_memo_group_no_slicing (l1:(b_formula * (formula_label option)) list) 
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
   let l2 = to_slice1 @ to_slice2 @ l2 in
   let l2 = List.map (fun c-> (None, Some c)) l2 in
-  let l1 = List.map (fun c-> (Some c,None)) l1 in  
+  let l1 = List.map (fun c-> (Some c, None)) l1 in  
   let ll  = List.fold_left ( fun a f ->
 	let fv = match f with
 	  | None, Some c -> fv c
@@ -1115,8 +1115,13 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
   let l2 = to_slice1 @ to_slice2 @ l2 in
-  let l2 = List.map (fun c-> (None, Some c)) l2 in
-  let l1 = List.map (fun c-> (Some c, None)) l1 in  
+  let l2 = List.map (fun c -> (None, Some c)) l2 in
+  let l1 = List.map (fun c ->
+	let n_c =
+	  if !opt_ineq then trans_eq_bform c
+	  else c
+	in 
+	(Some n_c, None)) l1 in  
   let ll  = List.fold_left (fun a f ->
 	let (nlv,lv) = match f with
 	  | None, Some c -> fv_with_slicing_label c
@@ -2491,8 +2496,8 @@ let is_ineq_linking_memo_group (mg : memoised_group) : bool =
   List.exists (fun mc -> is_ineq_linking_bform mc.memo_formula) mg.memo_group_cons
 
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
-  List.exists (fun mg -> (is_ineq_linking_memo_group mg) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_fv ls)) mem
-  (*
+  (*List.exists (fun mg -> (is_ineq_linking_memo_group mg) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_fv ls)) mem*)
+  
   List.exists (fun mg ->
 	(is_ineq_linking_memo_group mg) &&
 	(List.exists (fun mc ->
@@ -2502,7 +2507,7 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 		| None -> []
 	  in Gen.BList.subset_eq eq_spec_var fv ls	  
 	) mg.memo_group_cons)) mem
-  *)
+  
 	
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   Gen.Debug.no_1 "exists_contradiction_eq"

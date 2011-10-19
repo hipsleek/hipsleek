@@ -575,7 +575,23 @@ and is_ineq_linking_bform (b : b_formula) : bool =
 		| Some (true, _, _) -> true
 		| _ -> false)
 	| _ -> false
-        
+
+and is_eq_linking_bform (b : b_formula) : bool =
+  let (pf, il) = b in
+  match pf with
+	| Eq _ ->
+	  (match il with
+		| Some (true, _, _) -> true
+		| _ -> false)
+	| _ -> false
+
+and trans_eq_bform (b : b_formula) : b_formula =
+  let (pf, il) = b in
+  match pf with
+	| Neq _ -> (pf, Some (true, Globals.fresh_int(), []))
+	| Eq _ -> (pf, None)
+	| _ -> b
+ 
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
   match pf with
   | BConst _  | BVar _ -> true
@@ -5817,3 +5833,4 @@ let rec partition_dnf_lhs f =
 let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
   List.filter (fun (svl,lkl,bfl) -> (*fst (check_dept fv (svl, lkl))*) true) parts
+

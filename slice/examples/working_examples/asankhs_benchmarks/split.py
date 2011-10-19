@@ -8,6 +8,7 @@ import time
 sleek_exec = '/home/chanhle/hg/slicing/sleekex/sleek'
 eps_flag = '--eps'
 slicing_flag = '--enable-slicing'
+ineq_flag = '--slc-opt-ineq'
 ufdp_flag = '--ufdp'
 
 def split_and_run (filename, fileext):
@@ -28,6 +29,7 @@ def split_and_run (filename, fileext):
 	    args.append(eps_flag)
 	    args.append(slicing_flag)
             args.append(ufdp_flag)
+            args.append(ineq_flag)
 	    args.append(fname)
 
             start_time = time.time()
