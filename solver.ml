@@ -7386,6 +7386,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
       | Context.Seq_action l -> "seq"
       | Context.Cond_action l -> "Cond"
       | Context.Search_action l -> "search"
+      | Context.M_lhs_case l -> "lhs_case"
     in
     let estate = {estate with es_trace = action_name::estate.es_trace} in
 

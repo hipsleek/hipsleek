@@ -110,6 +110,8 @@ let pr_action a = match a with
   | M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note: "^(string_of_h_formula h))
   | Seq_action l -> "seq:"
   | Search_action l -> "search:"
+  | Cond_action l -> "Cond:"
+  | M_lhs_case l -> "lhs_case:"
 
 let string_of_action a = pr_action a
 
