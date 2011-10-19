@@ -13,7 +13,7 @@ dll<p,n> == self = null & n = 0
 coercion self::dll<p,n> & a>=0 & b>=0 & n=a+b 
   <-> self::dll<q,a>*q::dll<p,b>;
 
-dll2<p,r,l,n> == self=r & p=l & n=0 
+dll2<p,r,l,n> == self=r & p=l & n=0
   or self::node2<_,_,p,q> * q::dll2<self,r,l,n-1> // = q1 
   inv n >= 0;
 
@@ -30,14 +30,8 @@ node2 get_first(node2 x)
 }
 
 int get_mem_count(node2 x)
-  requires x::dll<q,n>
-  ensures x::dll<q,n> & res=n;
-{
-  if (x==null) return 0;
-  else {
-    return (1+ get_mem_count(x.next));
-  }
-}
+  requires x::dll2<q,r,l,n>
+  ensures x::dll2<q,r,l,n> & res=n;
 
 /*-----------------------------------------------------------------------------
   find_nth
@@ -61,7 +55,7 @@ node2 find_nth_helper(node2 l, int j)
 */
   requires l::dll2<p,r,z,n> & n>=j & j>=1
   ensures res::dll2<z1,r,z,m> * l::dll2<p,res,z1,j-1>  & (m=n-j+1)
-    & res!=null;
+  & res!=null;
   /* requires l::dll2<p,r,z,n>@I & n>=j & j>=1 */
   /* ensures res!=null; */
 
@@ -148,22 +142,49 @@ node2 del_ele(node2 x, int a)
     return delete(x,a);
 }
 
-void schedule(ref node2 prio_queue1, ref node2 cur_proc)
-  requires  prio_queue1::dll<p1,n1>
- case{
-  n1 > 0 -> ensures  prio_queue1'::dll<p1,n1> * cur_proc'::dll<_, _>;
-  n1<=0 -> ensures prio_queue1'=null & cur_proc' = null;
-    }
+node2 del_ele2(node2 x, int a)
+  requires x::dll2<p,r,l, n> & n >= a & a >= 1 
+  ensures res::dll2<_,r,l, m> & m = n-1;
+
+node2 append_ele(node2 x, node2 a)
+  requires x::dll2<p,r,l, n> * a::node2<_,_,_,_> 
+  ensures res::dll2<_,r,l, m> & m = n+1;
+
+
+void upgrade_process_prio(int prio, int ratio, ref node2 prio_queue1, ref node2 prio_queue2, ref node2 prio_queue3)
+  requires prio_queue1::dll2<p1,r1,z1,n1> * prio_queue2::dll2<p2,r2,z2,n2> * prio_queue3::dll2<p3,r3,z3,n3> &
+  prio>0 & prio <=3 & ratio >=1
+  ensures true;
 {
+    int count;
     int n;
-    cur_proc = null;
-    n = get_mem_count(prio_queue1);
-    if (n > 0){
-      assert(prio_queue1 != null);
-      cur_proc = find_nth(prio_queue1, 1);
-      assert(prio_queue1 != null);
-      //dprint;
-      prio_queue1 = del_ele(prio_queue1, 0);
-      return;
+    node2 proc;
+    node2 src_queue, dest_queue;
+
+    if (prio >= /*MAXPRIO*/3)
+	return;
+    if (prio == 1) {
+      src_queue =  prio_queue1;
+      dest_queue = prio_queue2;
+    }
+    if (prio == 2) {
+      src_queue =  prio_queue2;
+      dest_queue = prio_queue3;
+    }
+    // src_queue = prio_queue[prio];
+    //dest_queue = prio_queue[prio+1];
+    count = get_mem_count(src_queue);
+
+    if (count > 0)
+      {
+        n = ratio;//(int) (count*ratio + 1);
+        //assume(n<=count & n >= 1);
+        proc = find_nth(src_queue, n);
+        if (proc != null) {
+          src_queue = del_ele2(src_queue, n);
+          /* append to appropriate prio queue */
+          proc.priority = prio;
+          dest_queue = append_ele(dest_queue, proc);
+        }
     }
 }

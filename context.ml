@@ -548,7 +548,7 @@ and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = matc
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
   let pr2 = pr_list string_of_action_res in
-  Gen.Debug.ho_1 "sort_wt" pr pr2 sort_wt_x ys
+  Gen.Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
@@ -577,7 +577,7 @@ and sort_wt_x (ys: action_wt list) : action list =
 
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
-  Gen.Debug.ho_1 "sort_wt_new" pr pr sort_wt_new_x ys
+  Gen.Debug.no_1 "sort_wt_new" pr pr sort_wt_new_x ys
 
 and group_equal_actions (ys: action_wt list) (running:action_wt list) (running_w: int) (rs: action_wt list):
         (action_wt list)=
@@ -680,7 +680,7 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
     | xs -> 
  (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
       let ys = sort_wt r in
-      (List.hd (ys))
+   (List.hd (ys))
    (*  match ys with
         | [(_, act)] -> act
         | ys -> (Cond_action ys) *)

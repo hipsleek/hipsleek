@@ -5491,7 +5491,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   process_action prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Gen.Debug.loop_3 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula
+  Gen.Debug.loop_3_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list (fun _ -> "?") (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
@@ -5702,7 +5702,7 @@ and comp_act prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let pr1 es = Cprinter.string_of_formula es.es_formula in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = Context.string_of_action_wt_res in
-  Gen.Debug.ho_2 "comp_act" pr1 pr2 pr3 (fun _ _ -> comp_act_x prog estate rhs) estate rhs
+  Gen.Debug.no_2 "comp_act" pr1 pr2 pr3 (fun _ _ -> comp_act_x prog estate rhs) estate rhs
 
 and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let rhs_b = extr_rhs_b rhs in
@@ -5732,7 +5732,7 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
   let pr1 = Context.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.no_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
+  Gen.Debug.ho_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
       (fun __ _ -> process_unfold_x prog estate conseq a is_folding pos has_post pid)
        a estate 
       
@@ -5936,13 +5936,14 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                       , CF.mk_failure_may "Cond action - none succeeded" )), NoAlias)
            | [(_,act)] -> process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
            | (_,act)::xs ->
-                  let (r,prf) = process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
-                  if isFailCtx r then
+                  let (r1,prf1) = process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
+                  if isFailCtx r1 then
                     begin
                         (*get lowest failure status among search results*)
-                    helper xs
+                        let (r2, prf2) = helper xs in
+                        combine_results (r1,prf1) (r2, prf2)
                     end
-                  else (r,prf)
+                  else (r1,prf1)
           in helper l
     | Context.Search_action l ->
           let r = List.map (fun (_,a1) -> process_action prog estate conseq lhs_b rhs_b a1
