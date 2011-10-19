@@ -3289,6 +3289,7 @@ type entail_state = {
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
   es_trace : string list; (*LDK: to keep track of past operations: match,fold...*)
+  es_is_normalizing : bool
 }
 
 and context = 
@@ -3844,6 +3845,7 @@ let rec empty_es flowt pos =
   es_aux_conseq = CP.mkTrue pos;
   es_must_error = None;
   es_trace = [];
+  es_is_normalizing = false;
 
 }
 
