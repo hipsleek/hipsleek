@@ -6346,7 +6346,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 			    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 			    fc_current_conseq = conseq;
 			    fc_failure_pts = match (get_node_label rhs_node) with | Some s-> [s] | _ -> [];},
-            CF.mk_failure_must "9999" "" [])), UnsatConseq)
+            CF.mk_failure_must "9999")), UnsatConseq)
       | Some (bc1,(base1,branches1)) -> 
 	        begin
               (*let _ = print_string ("ante: "^(Cprinter.string_of_formula ante)^"\n conseq "^(Cprinter.string_of_formula conseq)^"\n") in*)
@@ -6458,7 +6458,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 			  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 			  fc_current_conseq = conseq;
 			  fc_failure_pts = match (get_node_label rhs_node) with | Some s-> [s] | _ -> [];},
-          CF.mk_failure_must "9999" "" [])), UnsatConseq)
+          CF.mk_failure_must "9999")), UnsatConseq)
       |  Some (bc1,(base1,branches1)) ->
           (*Turn off lhs_case flag to disable further case analysis *)
           let new_ante = CF.set_lhs_case_of_a_view ante c1 false in
@@ -7384,6 +7384,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
       | Context.M_Nothing_to_do s ->  ("Nothing "^s)
       | Context.M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note")
       | Context.Seq_action l -> "seq"
+      | Context.Cond_action l -> "Cond"
       | Context.Search_action l -> "search"
     in
     let estate = {estate with es_trace = action_name::estate.es_trace} in
@@ -7648,7 +7649,7 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   (* let pr2 x = Cprinter.string_of_list_context_short (fst x) in *)
   let pr2 x = Cprinter.string_of_list_context (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 
@@ -9714,7 +9715,7 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
     in
     let process_one estate anode rest coer h p =
       let pr (c1,c2,c3,c4) = string_of_bool c1 ^ "||" ^ Cprinter.string_of_entail_state c2 in 
-      Gen.Debug.ho_5 "process_one" Cprinter.string_of_entail_state Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula  Cprinter.string_of_mix_formula pr  
+      Gen.Debug.no_5 "process_one" Cprinter.string_of_entail_state Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula  Cprinter.string_of_mix_formula pr  
           (fun _ _ _ _ _ -> process_one_x estate anode rest coer h p) estate anode rest  h p 
     in
     (*process a list of pairs (anode * rest) *)
@@ -9904,7 +9905,7 @@ let normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 let normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
 
 

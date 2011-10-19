@@ -370,6 +370,10 @@ and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_lin
 
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
+and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula= 
+  let mix_f = MCP.OnePF p in
+  formula_of_mix_formula mix_f pos 
+
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
   else  MCP.memoise_add_pure_P (MCP.mkMTrue pos) p  in
@@ -4341,7 +4345,7 @@ let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
   )
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
-  Gen.Debug.ho_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
+  Gen.Debug.no_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
       remove_dupl_conj_eq_mix_formula_x f
 
 (*remove v=v from formula*)

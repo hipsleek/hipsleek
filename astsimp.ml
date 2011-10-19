@@ -2073,7 +2073,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
   (* let pr x = "?" in *)
   (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
@@ -4188,6 +4188,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                     CF.h_formula_view_coercible = true;
                     CF.h_formula_view_origins = [];
 		            CF.h_formula_view_original = true;
+		            CF.h_formula_view_lhs_case = true;
 		            CF.h_formula_view_unfold_num = 0;
                     CF.h_formula_view_label = pi;
                     CF.h_formula_view_pruning_conditions = [];
