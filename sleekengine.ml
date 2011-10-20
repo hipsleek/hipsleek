@@ -231,6 +231,8 @@ let process_rel_def rdef =
 			let crdef = AS.trans_rel iprog rdef in !cprog.C.prog_rel_decls <- (crdef :: !cprog.C.prog_rel_decls);
 			(* Forward the relation to the smt solver. *)
 			Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.C.rel_name,crdef.C.rel_vars,crdef.C.rel_formula));
+			(* An Hoa : NEW INTERFACE *)
+			Smtsolver.add_relation crdef.C.rel_name crdef.C.rel_vars crdef.C.rel_formula;
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
@@ -244,6 +246,8 @@ let process_axiom_def adef = begin
 	let cadef = AS.trans_axiom iprog adef in
 		!cprog.C.prog_axiom_decls <- (cadef :: !cprog.C.prog_axiom_decls);
 	Smtsolver.add_axiom_def (Smtsolver.AxmDefn (cadef.C.axiom_hypothesis,cadef.C.axiom_conclusion));
+	(* An Hoa : NEW INTERFACE *)
+	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
 	
 let process_data_def ddef =

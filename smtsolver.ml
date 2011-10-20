@@ -38,19 +38,46 @@ let add_axiom_def adef =
 	let _ = print_endline ("[Smtsolver] add an axiom " ^ (!print_pure h) ^ " |- " ^ (!print_pure c)) in *)
 		axm_defs := !axm_defs @ [adef]
 
+(***************************************************************
+                  GLOBAL VARIABLES & TYPES                      
+ **************************************************************)
+
+(* An Hoa : types for relations and axioms*)
+type rel_def = {
+		rel_name : ident;
+		rel_vars : CP.spec_var list;
+		related_rels : ident list;
+		related_axioms : int list;
+	}
+
+let global_rel_defs = ref ([] : rel_def list)
+
+type axiom_type = 
+	| IMPLIES
+	| IFF
+
+type axiom_def = {
+		axiom_direction	 : axiom_type;
+		axiom_hypothesis	: CP.formula;
+		axiom_conclusion	: CP.formula;
+		related_relations : ident list;
+	}
+
+let global_axiom_defs = ref ([] : axiom_def list)
+
+(* An Hoa : record of information on a formula *)
+type formula_info = {
+		is_linear          : bool;
+		is_quantifier_free : bool;
+		contains_array     : bool;
+		relations          : ident list; (* list of relations that the formula mentions *)
+		axioms             : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
+	}
+
 
 (***************************************************************
                        FORMULA INFORMATION                      
  **************************************************************)
-
-(* An Hoa : record of information on a formula *)
-type formula_info = {
-		is_linear						: bool;
-		is_quantifier_free	 : bool;
-		contains_array			 : bool;
-		relations						: ident list;	(* list of relations that the formula mentions *)
-		axioms							 : int list;	 (* list of related axioms (in form of position in the global list of axiom definitions) *)
-	}
 
 (* An Hoa : default info, returned in most cases *)
 let default_formula_info = { 
@@ -60,22 +87,35 @@ let default_formula_info = {
 	relations = []; 
 	axioms = []; }
 
+(* Collect information about a formula f or combined information about 2 formulas *)
+let rec collect_formula_info f = 
+	let info = collect_formula_info_raw f in
+	let indirect_relations = List.flatten (List.map (fun x -> if (List.mem x.rel_name info.relations) then x.related_rels else []) !global_rel_defs) in
+	let all_relations = Gen.BList.remove_dups_eq (=) (info.relations @ indirect_relations) in
+	let all_axioms = List.flatten (List.map (fun x -> if (List.mem x.rel_name all_relations) then x.related_axioms else []) !global_rel_defs) in
+	let all_axioms = Gen.BList.remove_dups_eq (=) all_axioms in
+		{info with relations = all_relations; axioms = all_axioms;}
+
+and collect_combine_formula_info f1 f2 = 
+	compact_formula_info (combine_formula_info (collect_formula_info f1) (collect_formula_info f2))
+
 (* An Hoa : recursively collect the information based on the structure of
  * the formula. This information might not be complete due to cross reference.
- * For instance, a relation definition might refers to other relations.
- *		The information is to be corrected by the function collect_formula_info
- * implemented later.
+ * For instance, a relation definition might refers to other relations. This
+ * function is only used mainly in pre-computing information of relation and
+ * axiom definition.
+ * The information is to be corrected by the function collect_formula_info.
  *)
-let rec collect_formula_info_raw f = match f with
+and collect_formula_info_raw f = match f with
 	| CP.BForm ((b,_),_) -> collect_bformula_info b
 	| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
-		let if1 = collect_formula_info_raw f1 in
-		let if2 = collect_formula_info_raw f2 in
-			combine_formula_info if1 if2
+		collect_combine_formula_info_raw f1 f2
 	| CP.Not (f1,_,_) -> collect_formula_info_raw f1
 	| CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> 
-		let if1 = collect_formula_info_raw f1 in
-			{ if1 with is_quantifier_free = false; }
+		let if1 = collect_formula_info_raw f1 in { if1 with is_quantifier_free = false; }
+
+and collect_combine_formula_info_raw f1 f2 = 
+	combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
 
 and collect_bformula_info b = match b with
 	| CP.BConst _ | CP.BVar _ -> default_formula_info
@@ -99,9 +139,11 @@ and collect_bformula_info b = match b with
 	| CP.ListAllN _
 	| CP.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
 	| CP.RelForm (r,args,_) ->
-		let rinfo = { default_formula_info with relations = [r]; } in
-		let args_infos = List.map collect_exp_info args in
-			combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
+		if r = "update_array" then
+			default_formula_info 
+		else let rinfo = { default_formula_info with relations = [r]; } in
+			let args_infos = List.map collect_exp_info args in
+				combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
 	| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ -> default_formula_info
@@ -144,73 +186,190 @@ and combine_formula_info_list infos =
 	relations = List.flatten (List.map (fun x -> x.relations) infos);
 	axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
 
+and compact_formula_info info =
+	{ info with relations = Gen.BList.remove_dups_eq (=) info.relations;
+	            axioms = Gen.BList.remove_dups_eq (=) info.axioms; }
+
 
 (***************************************************************
                       AXIOMS AND RELATIONS                      
  **************************************************************)
 
-(* An Hoa : types for relations and axioms*)
-type rel_def = {
-		 	rel_name						: ident;
-		 	rel_vars						: CP.spec_var list;
-		rel_referenced_rels : ident list; (* list of all relations referenced by this relation *)
-		related_axioms			: int list;
-	}
-
-and axiom_type = 
-	| IMPLIES
-	| IFF
-
-and axiom_def = {
-		axiom_direction	 : axiom_type;
-		axiom_hypothesis	: CP.formula;
-		axiom_conclusion	: CP.formula;
-		related_relations : ident list;
-	}
-
-let global_rel_defs = ref ([] : rel_def list)
-
-let global_axiom_defs = ref ([] : axiom_def list)
+(* Interface function to add a new axiom *)
+let add_axiom h dir c =
+	let info = collect_combine_formula_info_raw h c in 
+	let aindex = List.length !global_axiom_defs in
+	begin
+		(* Modifying every relations appearing in h and c by
+		   1)   Add 'h dir c' as a related axiom
+		   2)   Add all other relations (appearing in h and c) to the list of related relations *)
+		global_rel_defs := List.map (fun x -> if (List.mem x.rel_name info.relations) then
+			let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ info.relations) in
+			let rs = List.filter (fun y -> not (y = x.rel_name)) rs in
+			{ x with 
+				related_rels = rs;
+				related_axioms = x.related_axioms @ [aindex]; }
+			else x) !global_rel_defs;
+		(* Add 'h dir c' to the global axioms *)
+		let new_axiom = { axiom_direction = dir;
+						axiom_hypothesis = h;
+						axiom_conclusion = c;
+						related_relations = info.relations (* TODO must we compute closure ? *) } in
+		global_axiom_defs := !global_axiom_defs @ [new_axiom];
+	end
 
 (* Interface function to add a new relation *)
-let add_relation rdef =
-	global_axiom_defs := !global_axiom_defs @ [rdef]
-
-(* Interface function to add a new axiom *)
-let add_axiom h c =
-	let new_axiom = { axiom_direction = IMPLIES; axiom_hypothesis = h; axiom_conclusion = c; related_relations = [] } in
-		global_axiom_defs := !global_axiom_defs @ [new_axiom]
-
+let add_relation rname rargs rform =
+	if (rname = "update_array") then () else
+	let rdef = { rel_name = rname; 
+				rel_vars = rargs;
+				related_rels = [];
+				related_axioms = []; }
+	in begin
+		global_rel_defs := !global_rel_defs @ [rdef];
+		(* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
+		match rform with
+		| CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
+		| _ -> (* add an axiom to describe the definition *)
+			let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
+				add_axiom h IFF rform;
+	end
 
 (***************************************************************
                          CONSOLE OUTPUT                         
  **************************************************************)
 
 type output_configuration = {
-		print_input									: bool ref; (* print generated SMT input *)
+		print_input	: bool ref; (* print generated SMT input *)
 		print_original_solver_output : bool ref; (* print solver original output *)
-		print_implication						: bool ref; (* print the implication problems sent to this smt_imply *)
-		suppress_print_implication	 : bool ref; (* temporary suppress all printing *)
+		print_implication : bool ref; (* print the implication problems sent to this smt_imply *)
+		suppress_print_implication : bool ref; (* temporary suppress all printing *)
 	}
 
 (* An Hoa : global collection of printing control switches, set by scriptarguments *)
 
 let outconfig = {
-		print_input									= ref false;
+		print_input = ref false;
 		print_original_solver_output = ref false;
-		print_implication						= ref false; 
-		suppress_print_implication	 = ref false;
+		print_implication = ref false; 
+		suppress_print_implication = ref false;
 	}
 
 (* An Hoa : pure formula printing function, to be intialized by cprinter module *)
 
-let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
 
 (* An Hoa : function to suppress and unsuppress all output of this modules *)
 
 let suppress_all_output () = outconfig.suppress_print_implication := true
 
 let unsuppress_all_output () = outconfig.suppress_print_implication := false
+
+(***************************************************************
+                            INTERACTION                         
+ **************************************************************)
+
+type sat_type = 
+	| Sat		(* solver returns sat *)
+	| UnSat		(* solver returns unsat *)
+	| Unknown	(* solver returns unknown or there is an exception *)
+
+(* An Hoa : record structure to store information parsed from the output of the SMT solver.
+ *			This change is to make development extensible in later stage.
+ *)
+type smt_output = {
+		original_output_text : string;	 (* original (command line) output text of the solver; included in order to support printing *)
+		sat_result : sat_type; (* satisfiability information *)
+		(* expand with other information : proof, time, error, warning, ... *)
+	}
+
+(* An Hoa : collect all output from a channel into a string *)
+let rec collect_output_text chn accumulated_output : string =
+	let output = try
+					let line = input_line chn in
+						collect_output_text chn (accumulated_output ^ line)
+				with
+					| End_of_file -> accumulated_output in
+		output
+
+(* An Hoa : collect all Z3's output into a list of strings *)
+and collect_output chn accumulated_output : string list =
+	let output = try
+					let line = input_line chn in
+						collect_output chn (accumulated_output @ [line])
+				with
+					| End_of_file -> accumulated_output in
+		output
+
+(* An Hoa : post-process the solver output by removing warning, error indication, ... *)
+and post_process_output output : string =
+	(* return the last line *)
+	List.nth output 0
+
+let rec get_answer chn : string =
+	let output = collect_output chn [] in
+	let output = post_process_output output in
+		output
+
+(*
+and get_response chn =
+	let text = collect_output_text chn "" in
+		parse_smt_out text
+
+and parse_smt_out s =
+	let lines = Str.split (Str.regex "\n") s in
+		List.fold_left (fun x y -> "") "" lines
+*)
+
+(* An Hoa : post-process the solver output by removing warning, error indication, ... *)
+and post_process_output output : string =
+	List.nth output (List.length output - 1)
+
+let remove_file filename =
+	try
+		Sys.remove filename;
+	with
+		| e -> ignore e
+
+type smtprover =
+	| Z3
+	| Cvc3
+	| Yices
+
+(* Global settings *)
+let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
+let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
+let timeout = ref 15.0
+let prover_pid = ref 0
+let prover_process = ref {
+	name = "smtsolver";
+	pid = 0;
+	inchannel = stdin;
+	outchannel = stdout;
+	errchannel = stdin 
+}
+
+let command_for prover =
+	match prover with
+	| Z3 -> ("z3", [|"z3"; "-smt2"; infile; ("> "^ outfile) |] )
+	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
+	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
+
+(* Runs the specified prover and returns output *)
+let run prover input =
+	let out_stream = open_out infile in
+	output_string out_stream input;
+	close_out out_stream;
+	let (cmd, cmd_arg) = command_for prover in
+	let set_process proc = prover_process := proc in
+	let fnc () = 
+		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
+			get_answer !prover_process.inchannel in
+	let res = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in
+	let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
+	remove_file infile;
+	remove_file outfile;
+		res
 
 (***************************************************************
                  GENERATE SMT INPUT FROM CPURE                  
@@ -353,159 +512,6 @@ let smt_of_axiom_def (adef : axiom_definition) =
 				(smt_of_formula h) ^ " " ^ 
 				(smt_of_formula c) ^ ")))\n"
 
-(***************************************************************
-                            INTERACTION                         
- **************************************************************)
-
-type sat_type = 
-	| Sat		(* solver returns sat *)
-	| UnSat		(* solver returns unsat *)
-	| Unknown	(* solver returns unknown or there is an exception *)
-
-(* An Hoa : record structure to store information parsed from the output of the SMT solver.
- *			This change is to make development extensible in later stage.
- *)
-type smt_output = {
-		original_output_text : string;	 (* original (command line) output text of the solver; included in order to support printing *)
-		sat_result					 : sat_type; (* satisfiability information *)
-		(* expand with other information : proof, time, error, warning, ... *)
-	}
-
-(* An Hoa : collect all output from a channel into a string *)
-let rec collect_output_text chn accumulated_output : string =
-	let output = try
-					let line = input_line chn in
-						collect_output_text chn (accumulated_output ^ line)
-				with
-					| End_of_file -> accumulated_output in
-		output
-
-(* An Hoa : collect all Z3's output into a list of strings *)
-and collect_output chn accumulated_output : string list =
-	let output = try
-					let line = input_line chn in
-						collect_output chn (accumulated_output @ [line])
-				with
-					| End_of_file -> accumulated_output in
-		output
-
-(* An Hoa : post-process the solver output by removing warning, error indication, ... *)
-and post_process_output output : string =
-	(* return the last line *)
-	List.nth output 0
-
-let rec get_answer chn : string =
-	let output = collect_output chn [] in
-	let output = post_process_output output in
-		output
-
-(*
-and get_response chn =
-	let text = collect_output_text chn "" in
-		parse_smt_out text
-
-and parse_smt_out s =
-	let lines = Str.split (Str.regex "\n") s in
-		List.fold_left (fun x y -> "") "" lines
-*)
-
-(* An Hoa : post-process the solver output by removing warning, error indication, ... *)
-and post_process_output output : string =
-	List.nth output (List.length output - 1)
-
-let remove_file filename =
-	try
-		Sys.remove filename;
-	with
-		| e -> ignore e
-
-type smtprover =
-	| Z3
-	| Cvc3
-	| Yices
-
-(* Global settings *)
-let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
-let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let timeout = ref 15.0
-let prover_pid = ref 0
-let prover_process = ref {
-	name = "smtsolver";
-	pid = 0;
-	inchannel = stdin;
-	outchannel = stdout;
-	errchannel = stdin 
-}
-let command_for prover =
-	match prover with
-	| Z3 -> ("z3", [|"z3"; "-smt2"; infile; ("> "^ outfile) |] )
-	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
-	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
-
-(* Runs the specified prover and returns output *)
-let run prover input =
-	let out_stream = open_out infile in
-	output_string out_stream input;
-	close_out out_stream;
-	let (cmd, cmd_arg) = command_for prover in
-	let set_process proc = prover_process := proc in
-	let fnc () = 
-		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
-			get_answer !prover_process.inchannel in
-	let res = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in
-	let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
-	remove_file infile;
-	remove_file outfile;
-		res
-
-
-
-
-
-
-(******************
- * Helper funcs
- ******************)
-
-(**
- * Checking whether a formula is linear or not
- *)
-let rec is_linear_exp exp = match exp with
-	| CP.Null _ | CP.Var _ | CP.IConst _ -> true
-	| CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) -> 
-			(is_linear_exp e1) && (is_linear_exp e2)
-	| CP.Mult (e1, e2, _) -> 
-			let res = match e1, e2 with
-				| CP.IConst _, _ -> is_linear_exp e2
-				| _, CP.IConst _ -> is_linear_exp e1
-				| _, _ -> false
-			in res
-	| CP.ArrayAt (a, i,_) -> is_linear_exp i (* v[i] is linear <==> i is linear*)
-	| _ -> false
-
-let is_linear_bformula b =
-	let (pf,_) = b in
-	match pf with
-	| CP.BConst _ -> true
-	| CP.BVar _ -> true
-	| CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
-	| CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
-	| CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _) -> 
-			(is_linear_exp e1) && (is_linear_exp e2)
-	| CP.EqMax (e1, e2, e3, _) | CP.EqMin (e1, e2, e3, _) -> 
-			(is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
-	| CP.RelForm (r, args, _) -> (* An Hoa : Relation is linear <==> the parameters are all linear *)
-			let al = List.map is_linear_exp args in
-				not (List.mem false al) (* Check if any of args is not linear *)
-	| _ -> false
-	
-let rec is_linear_formula f0 = match f0 with
-	| CP.BForm (b,_) -> is_linear_bformula b
-	| CP.Not (f, _, _) | CP.Forall (_, f, _, _) | CP.Exists (_, f, _, _) ->
-			is_linear_formula f;
-	| CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
-			(is_linear_formula f1) && (is_linear_formula f2)
-
 let rec get_formula_of_rel_with_name rn rdefs =
 	(*if (rn = "dom") then (mkTrue Globals.no_pos) else*)
 	match rdefs with
@@ -513,9 +519,6 @@ let rec get_formula_of_rel_with_name rn rdefs =
 		failwith ("Relation " ^ rn ^ " is not found!")
 	| h :: t -> match h with RelDefn (r,_,f) -> if (r = rn) then f else get_formula_of_rel_with_name rn t
 		
-(**
- * Collect the relations that we use
- *)
 let rec collect_relation_names_bformula b collected =
 	let (pf,_) = b in
 	match pf with
@@ -527,46 +530,14 @@ let rec collect_relation_names_bformula b collected =
 				collect_relation_names_formula (get_formula_of_rel_with_name r !rel_defs) collected
 	| _ -> collected
 
-(**
- * Collect the relations that we use
- *)
 and collect_relation_names_formula f0 collected = match f0 with
 	| CP.BForm (b, _) -> collect_relation_names_bformula b collected
 	| CP.Not (f, _, _) | CP.Forall (_,f,_,_) | CP.Exists (_,f,_,_)-> collect_relation_names_formula f collected
 	| CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
 		(* Collect from f1 first, then collect from f2 *)
 		let collected = collect_relation_names_formula f1 collected in
-			collect_relation_names_formula f2 collected 
-(*
-(**
- * Collect the relations that we use
- *)
-let rec collect_relation_names_bformula b = match b with
-	| CP.RelForm (r,_,_) -> [r]
-	| _ -> []
+			collect_relation_names_formula f2 collected
 
-and collect_relation_names_formula f0 = match f0 with
-	| CP.BForm (b, _) -> collect_relation_names_bformula b
-	| CP.Not (f, _, _) | CP.Forall (_,f,_,_) | CP.Exists (_,f,_,_)-> collect_relation_names_formula f
-	| CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
-		(* Collect from f1 first, then collect from f2 *)
-		(collect_relation_names_formula f1) @ (collect_relation_names_formula f2) *)
-
-
-(**
- * Checking whether a formula is quantifier-free or not
- *)
-let rec is_quantifier_free_formula f0 = match f0 with
-	| CP.BForm ((pf,_),_) -> (* true *)(* An Hoa *)
-		begin 
-			match pf with
-			| CP.RelForm _ -> false (* Contain relation ==> we need to use forall to axiomatize ==> not quantifier free! *)
-			| _ -> true 
-		end
-	| CP.Not (f, _, _) -> is_quantifier_free_formula f
-	| CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
-			(is_quantifier_free_formula f1) && (is_quantifier_free_formula f2)
-	| CP.Forall _ | CP.Exists _ -> false
 
 (**
  * Logic types for smt solvers
@@ -586,44 +557,49 @@ let string_of_logic logic =
 	| UFNIA -> "UFNIA"
 
 let logic_for_formulas f1 f2 =
-	let linear = (is_linear_formula f1) && (is_linear_formula f2) in
-	let quantifier_free = (is_quantifier_free_formula f1) && (is_quantifier_free_formula f2) in
+	(* let linear = (is_linear_formula f1) && (is_linear_formula f2) in
+	let quantifier_free = (is_quantifier_free_formula f1) && (is_quantifier_free_formula f2) in *)
+	let finfo = combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2) in
+	let linear = finfo.is_linear in
+	let quantifier_free = finfo.is_quantifier_free in
 	match linear, quantifier_free with
 	| true, true -> QF_LIA 
 	| false, true -> QF_NIA 
 	| true, false -> AUFLIA (* should I use UFNIA instead? *)
 	| false, false -> UFNIA
 
-(**
- * output for smt-lib v2.0 format
- *)
-let to_smt_v2 ante conseq logic fvars used_rels_defs =
-	let rec decfuns vars = match vars with
-		(* let's assume all vars are Int *)
-		| [] -> ""
-		| var::rest -> 
-		(* let _ = print_endline ("Declare variable : " ^ (!print_typed_sv var)) in *)
-		"(declare-fun " ^ (smt_of_spec_var var) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
-	in 
-	(* An Hoa : split /\ into small asserts *)
+(* output for smt-lib v2.0 format *)
+let to_smt_v2 ante conseq logic fvars =
+	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ 
+								" () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")") fvars in
+	let smt_var_decls = String.concat "\n" smt_var_decls in
+	let info = collect_combine_formula_info ante conseq in
+	let used_rels = info.relations in
+	(** relations that appears in the ante and conseq and axioms *)
+	(* let used_rels = (collect_relation_names_formula ante []) @ 
+					(collect_relation_names_formula conseq []) @ 
+					List.fold_left (fun x y -> match y with
+						| AxmDefn (h,c) -> x @ (collect_relation_names_formula h []) @ (collect_relation_names_formula c [])
+						) [] !axm_defs (* relations appeared in axioms *) in *)
+	let used_rels_defs = List.map (fun x -> match x with | RelDefn (rn,_,_) -> if List.mem rn used_rels then [x] else []) !rel_defs in
+	let used_rels_defs = List.concat used_rels_defs in
+	(** An Hoa : split /\ into small asserts *)
 	let ante_clauses = CP.split_conjunctions ante in
-	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x) ^")\n") ante_clauses in
-	let ante_str = String.concat "" ante_strs in
+	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x) ^")") ante_clauses in
+	let ante_str = String.concat "\n" ante_strs in
+	let conseq_str = smt_of_formula conseq in
 	let rds = (List.map smt_of_rel_def used_rels_defs) in
 	let rel_def_df = (String.concat "" (List.map fst rds)) in
 	let rel_def_ax = (String.concat "" (List.map snd rds)) in
-	(* let _ = if (!axm_defs = []) then print_endline "SMTSOLVER : No axiom" else print_endline ((string_of_int (List.length !axm_defs)) ^ " axioms") in *)
 	let smt_axioms_def = String.concat "" (List.map smt_of_axiom_def !axm_defs) in
 	 ("(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^ 
-		(decfuns fvars) ^ rel_def_df ^ rel_def_ax ^ (* Collect the declare-fun first and then do the axiomatization to prevent missing function error *)
+		smt_var_decls ^ rel_def_df ^ rel_def_ax ^ (* Collect the declare-fun first and then do the axiomatization to prevent missing function error *)
 	smt_axioms_def ^ (* Add axioms *)
 		ante_str (*"(assert " ^ ante ^ ")\n"*) ^
-		"(assert (not " ^ conseq ^ "))\n" ^
+		"(assert (not " ^ conseq_str ^ "))\n" ^
 		"(check-sat)\n")
 	
-(**
- * output for smt-lib v1.2 format
- *)
+(* output for smt-lib v1.2 format *)
 and to_smt_v1 ante conseq logic fvars =
 	let rec defvars vars = match vars with
 		| [] -> ""
@@ -641,9 +617,7 @@ and to_smt_v1 ante conseq logic fvars =
 		":formula (not " ^ conseq ^ ")\n" ^
 		")")
 
-(**
- * Converts a core pure formula into SMT-LIB format which can be run through various SMT provers.
- *)
+(* Converts a core pure formula into SMT-LIB format which can be run through various SMT provers. *)
 let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) : string =
 	let conseq = match conseq with
 		(* We don't have conseq part in is_sat checking *)
@@ -656,23 +630,15 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
 	let ante_str = smt_of_formula ante in
 	let conseq_str = smt_of_formula conseq in
 	let logic = logic_for_formulas ante conseq in
-	(* relations that appears in the ante and conseq and axioms *)
-	let used_rels = (collect_relation_names_formula ante []) @ 
-					(collect_relation_names_formula conseq []) @ 
-					List.fold_left (fun x y -> match y with
-						| AxmDefn (h,c) -> x @ (collect_relation_names_formula h []) @ (collect_relation_names_formula c [])
-						) [] !axm_defs (* relations appeared in axioms *) in
-	(*let used_rels = (collect_relation_names_formula ante) @ (collect_relation_names_formula conseq) in*)
-	let used_rels_defs = List.map (fun x -> match x with | RelDefn (rn,_,_) -> if List.mem rn used_rels then [x] else []) !rel_defs in
-	let used_rels_defs = List.concat used_rels_defs in
 	let res = match prover with
-		| Z3 ->	to_smt_v2 ante (* An Hoa : pass the ante instead of ante_str! *) conseq_str logic all_fv used_rels_defs
+		| Z3 ->	to_smt_v2 ante conseq logic all_fv
 		| Cvc3 | Yices ->	to_smt_v1 ante_str conseq_str logic all_fv
 	in res
 
-(** An Hoa
- * Switch to choose whether to do induction.
- *)
+(**************************************************************
+   MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY    
+ *************************************************************)
+
 let try_induction = ref false
 let max_induction_level = ref 0
 
