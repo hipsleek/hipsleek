@@ -310,7 +310,7 @@ and view_mater_match prog c vs1 aset imm f =
 
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
-  if not(c.coercion_lhs_type=Cformula.Simple && c.coercion_head_view = l_vname) then None
+  if not(c.coercion_case=Cast.Simple && c.coercion_head_view = l_vname) then None
   else 
     let _ = print_string ( "choose_full_mater_coercion_x: before \n" ) in
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
@@ -543,7 +543,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               let l3 = if (dl.h_formula_data_original || dr.h_formula_data_original)
                   then 
                     begin
-                        let left_ls = look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name in
+                        (*filtering our Normalize coercions to avoid non-termination*)
+                        let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case != Cast.Normalize) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in
                         let right_ls = look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name in
                         let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                         let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
@@ -560,17 +561,22 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
           | ViewNode vl, ViewNode vr -> 
               (* let l1 = [(1,M_base_case_unfold c)] in *)
               let l2 = 
-                    let a1 = (1,M_base_case_unfold c) in
-                    let a2 = (1,M_match c) in
-                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(-1,Cond_action [a1;a2])]
-                else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
-                else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
-                    else let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] in
-                    [(1,Cond_action lst)]
+                if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 && 
+                           ((vl.h_formula_view_original==false && (vl.h_formula_view_origins!=[])) 
+                            || ((vr.h_formula_view_original==false && vr.h_formula_view_origins!=[])))) then [(0,M_match c)] (*force a MATCH after each lemma*)
+                else
+                  let a1 = (1,M_base_case_unfold c) in
+                  let a2 = (1,M_match c) in
+                  if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(-1,Cond_action [a1;a2])]
+                  else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
+                  else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
+                  else let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] in
+                       [(1,Cond_action lst)]
               in
               let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin
-                      let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in
+                      (*filtering our Normalize coercions to avoid non-termination*)
+                      let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case != Cast.Normalize) prog.prog_left_coercions) vl.h_formula_view_name vr.h_formula_view_name in
                       let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in
                       let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in

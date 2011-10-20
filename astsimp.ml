@@ -2197,7 +2197,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
         (* C.coercion_simple_lhs = (CF.is_simple_formula c_lhs);  *)
-        C.coercion_lhs_type = (CF.type_of_formula c_lhs)} in
+        C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs)} in
         let change_univ c = match c.C.coercion_univ_vars with
           | [] -> {c with C.coercion_type = Iast.Right}
           | v -> 

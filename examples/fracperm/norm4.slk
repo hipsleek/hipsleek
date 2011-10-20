@@ -21,8 +21,8 @@ lemma "complex_lemma2" self::ll(f1)<n1> * self::ll(f2)<n2> * self::ll(f3)<n3> ->
 
 //checkentail x::ll(0.7)<n1> |- x::ll(0.6)<n1>.
 
-checkentail x::ll(0.5)<n1> * x::ll(0.2)<n1> * x::ll(0.2)<n1> |- x::ll(0.8)<n1>.
-print residue.// Valid, in 6 seconds
+//checkentail x::ll(0.5)<n1> * x::ll(0.2)<n1> * x::ll(0.2)<n1> |- x::ll(0.8)<n1>.
+//print residue.// Valid, in 6 seconds
 
-//checkentail x::ll(0.5)<n1> * x::ll(0.2)<n1> * x::ll(0.2)<n1>|- x::ll(0.8)<n1>.
-//print residue.// TOO LONG to finish
+checkentail x::ll(0.5)<n1> * x::ll(0.2)<n1> * x::ll(0.2)<n1>|- x::ll(0.8)<n1>.
+print residue.// TOO LONG to finish

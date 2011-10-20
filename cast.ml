@@ -106,6 +106,11 @@ and proc_decl = {
   would this help with lemma folding later? *)
 
 (* TODO : coercion type ->, <-, <-> just added *)
+and coercion_case =
+  | Simple
+  | Complex
+  | Normalize
+
 and coercion_decl = { 
     coercion_type : coercion_type;
     coercion_name : ident;
@@ -120,7 +125,7 @@ and coercion_decl = {
     coercion_body_view : ident;  (* used for cycles checking *)
     coercion_mater_vars : mater_property list;
     (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
-    coercion_lhs_type : F.formula_type; (*Simple or Complex*)
+    coercion_case : coercion_case; (*Simple or Complex*)
 }
 
 and coercion_type = Iast.coercion_type
@@ -845,6 +850,35 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (*   end *)
   (* | [] -> [] *)
 
+let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
+  let lhs_length = 
+    match lhs with
+      | Cformula.Base b  ->
+          let h = b.F.formula_base_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | Cformula.Exists e ->
+          let h = e.F.formula_exists_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | _ -> 1
+  in
+  let rhs_length = 
+    match rhs with
+      | F.Base b  ->
+          let h = b.F.formula_base_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | F.Exists e ->
+          let h = e.F.formula_exists_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | _ -> 1
+  in
+  if (lhs_length=1) then Simple
+  else (**)
+    if (rhs_length<lhs_length) then Normalize
+    else Complex
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers

@@ -7629,10 +7629,10 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
               , CF.mk_failure_none "sequential action - not handled" )), NoAlias)
     | Context.Cond_action l ->
           let rec helper l = match l with
-           | [] ->           
+           | [] ->
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
                       , CF.mk_failure_may "Cond action - none succeeded" )), NoAlias)
-           | [(_,act)] -> process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
+           | [(_,act)] -> process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos
            | (_,act)::xs ->
                   let (r,prf) = process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
                   if isFailCtx r then helper xs
@@ -9196,7 +9196,7 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t 
 and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
 
 
-    if (coer.coercion_lhs_type = CF.Simple) then
+    if (coer.coercion_case = Cast.Simple) then
     (*simple lemmas with simple lhs with single node*)
       let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
     (*let _ = print_string("left coercion\n") in*)
@@ -9237,7 +9237,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
 	    fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];}, CF.mk_failure_none "12")), [])
       
     else
-      (*COMPLEX lemmas with multiple nodes in the lhs*)
+      (*COMPLEX or NORMALIZING lemmas with multiple nodes in the lhs*)
 
     (* (\*LDK: ok*\) *)
     (* let _ = print_string ("mmmm, heap_entail_non_empty_rhs_heap: " *)
@@ -9877,9 +9877,10 @@ let normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
   if (isAnyConstFalse f) then f
   else
     let coers = List.filter (fun c -> 
-        match c.coercion_lhs_type with
-          | Simple -> false
-          | Complex -> true) coers
+        match c.coercion_case with
+          | Cast.Simple -> false
+          | Cast.Complex -> false
+          | Cast.Normalize -> true) coers
     in
     let rec helper f =
       match f with

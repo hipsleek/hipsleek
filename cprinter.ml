@@ -1783,6 +1783,10 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Right -> "<==="
   | Iast.Equiv -> "<==>" ;;
 
+let string_of_coercion_case (t:Cast.coercion_case) = match t with
+  | Cast.Simple -> "Simple"
+  | Cast.Complex -> "Complex"
+  | Cast.Normalize -> "Normalize"
 
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
@@ -1794,7 +1798,7 @@ let string_of_coerc_opt op c =
     ^"\n body view:"^c.coercion_body_view
     ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
-    ^"\n coercion_lhs_type: "^(string_of_formula_type c.coercion_lhs_type)
+    ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
     ^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
