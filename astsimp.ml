@@ -1901,6 +1901,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_head_norm = c_head_norm;
         C.coercion_body = c_rhs;
         C.coercion_body_norm = c_body_norm;
+        C.coercion_impl_vars = []; (* ex_vars; *)
         C.coercion_univ_vars = univ_vars;
         (* C.coercion_head_exist = c_lhs_exist; *)
         C.coercion_head_view = lhs_name;

@@ -27,6 +27,7 @@ lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>
        {FLOW,(13,28)=__flow}) LOC: sleek7.slk_17_48
 */
 
+/*
 checkentail 
 self = p & n = 0 & n=a+b & a,b>=0
 or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0 
@@ -38,6 +39,7 @@ checkentail
 self = p & n = 0 & n=a+b & a,b>=0
 or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0 
   |- self::lseg<a, r> * r::lseg<b, p>.
+*/
 
 /*
  true & self=p & n=0 & n=b+a & 0<=a & 0<=b &
@@ -52,6 +54,7 @@ or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0
 
 */
 
+/*
 checkentail self = p & n = 0 & n=a+b & a,b>=0  |- self::lseg<a, r> * r::lseg<b, p>.
 
 checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0  
@@ -68,6 +71,16 @@ checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0 & a
 |- self::node<next = r2> * r2::lseg<am, r> * r::lseg<b, p> & am+1=a.
 
 //checkentail x::lseg<n, p> & n > 1000 |- (exists r1: x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 1 & n2 <=2 ).
+*/
 
 
+checkentail 
+self = p & n = 0 & n=a+b & a,b>=0
+or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0 
+  |- (exists r: self::lseg<a, r> * r::lseg<b, p>).
 
+
+checkentail 
+self = p & n = 0 & n=a+b & a,b>=0
+or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0 
+  |- self::lseg<a, r> * r::lseg<b, p>.
