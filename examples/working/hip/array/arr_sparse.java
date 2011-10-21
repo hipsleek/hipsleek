@@ -41,8 +41,12 @@ data SparseArray {
 
 relation bounded(int[] a, int i, int j, int low, int high) ==
 	forall(k : k < i | k > j | low <= a[k] <= high).
+
+relation different_pairwise(int[] a, int i, int j) ==
+	forall(k, t : k < i | k > j | t < i | t > j | t = k | a[t] != a [k]).
 	
 relation is_sparse_array(int[] val, int[] idx, int[] bk, int n) ==
+	forall(k, t : k < 0 | k >= n | t < 0 | t >= n | t = k | bk[t] != bk[k]) & 
 	forall(i : i < 0 | i >= n | 0 <= bk[i] < 1000 & idx[bk[i]] = i).
 	
 relation is_modified(int[] val, int[] idx, int[] bk, int n, int i) ==
@@ -54,6 +58,8 @@ relation value_at(int[] val, int[] idx, int[] bk, int n, int i, int v) ==
 		!(is_modified(val, idx, bk, n, i)) & v = 0).
 	// the following property is provable in sleek:
 	// forall(u : u = v | !(value_at(val,idx,bk,n,i,u))).
+
+axiom is_sparse_array(val, idx, bk, 1000) & 0 <= i < 1000 ==> exists(t : 0 <= t < 1000 & bk[t] = i).
 			
 relation idexc(int[] val1, int[] idx1, int[] bk1, int n1, 
 			int[] val2, int[] idx2, int[] bk2, int n2, int i) ==
