@@ -448,7 +448,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let l2 = 
                     let a1 = (1,M_base_case_unfold c) in
                     let a2 = (1,M_match c) in
-                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(-1,Cond_action [a1;a2])]
+                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,Cond_action [a1;a2])]
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
                     else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
                     else let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] in
@@ -530,7 +530,7 @@ and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
   Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
-  | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
+  | [] -> let r0 = (2,M_unmatched_rhs_data_node rhs_node) in
           if (is_view rhs_node) && (get_view_original rhs_node) then
             let r = (1,M_base_case_fold { 
             match_res_lhs_node = HTrue; 
