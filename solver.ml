@@ -1822,9 +1822,9 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
 	    (*let new_ctx = set_es_evars ctx vs in*)
         let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form pos None in
         (* let rs0 = remove_impl_evars rs0 impl_vars in *)
-        let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in
-        let _ = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in
-        let _ = print_string ("\nafter fold: " ^ (Cprinter.string_of_list_context rs0)) in
+        (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
+        (* let _ = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in *)
+        (* let _ = print_string ("\nafter fold: " ^ (Cprinter.string_of_list_context rs0)) in *)
         let tmp_vars = p :: (estate.es_evars @ vs) in
 	    (**************************************)
 	    (*        process_one 								*)
@@ -3210,7 +3210,7 @@ and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context
       let f2 = if (es.es_evars = []) then f else 
 		(*let wrapp_l = Gen.BList.difference_eq CP.eq_spec_var es.es_evars l_inst in*)
 		(elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
-	  let _ = print_string ("moving: "^(Cprinter.string_of_mix_formula f2)^"\n") in
+	  (* let _ = print_string ("moving: "^(Cprinter.string_of_mix_formula f2)^"\n") in *)
       CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
     (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
     Ctx {es with
