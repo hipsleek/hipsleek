@@ -1128,7 +1128,7 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
   let l2 = List.map (fun c -> (None, Some c)) l2 in
   let l1 = List.map (fun c ->
 	let n_c =
-	  if !opt_ineq then (*trans_eq_bform c*) c
+	  if !opt_ineq then trans_eq_bform c
 	  else c
 	in 
 	(Some n_c, None)) l1 in  
