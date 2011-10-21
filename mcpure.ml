@@ -1037,17 +1037,27 @@ and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure =
 and memoise_add_pure_aux l p status : memo_pure = 
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Gen.Debug.no_2 "memoise_add_pure_aux " pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
+  Gen.Debug.no_2 "memoise_add_pure_aux" pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
 
-and memoise_add_pure_N l p = memoise_add_pure_aux(*_debug*) l p Implied_N
-and memoise_add_pure_P l p = memoise_add_pure_aux(*_debug*) l p Implied_P
+and memoise_add_pure_N l p =
+  let pr1 = !print_mp_f in
+  let pr2 = !print_p_f_f in
+  Gen.Debug.no_2 "memoise_add_pure_N" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_N_x l p) l p
+
+and memoise_add_pure_P l p =
+  let pr1 = !print_mp_f in
+  let pr2 = !print_p_f_f in
+  Gen.Debug.no_2 "memoise_add_pure_P" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_P_x l p) l p
+	
+and memoise_add_pure_N_x l p = memoise_add_pure_aux(*_debug*) l p Implied_N
+and memoise_add_pure_P_x l p = memoise_add_pure_aux(*_debug*) l p Implied_P
 
 and create_memo_group_wrapper (l1:b_formula list) status : memo_pure =
   Gen.Debug.no_2 "create_memo_group_wrapper"
 	(fun bl -> List.fold_left (fun r b -> r ^ (!print_bf_f b)) "" bl)
-	(fun s -> "") !print_mp_f create_memo_group_wrapper_a l1 status 
+	(fun s -> "") !print_mp_f create_memo_group_wrapper_x l1 status 
 	
-and create_memo_group_wrapper_a (l1:b_formula list) status : memo_pure = 
+and create_memo_group_wrapper_x (l1:b_formula list) status : memo_pure = 
   let l = List.map (fun c -> (c, None)) l1 in
   create_memo_group(*_debug*) l [] status 
 
@@ -1118,7 +1128,7 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
   let l2 = List.map (fun c -> (None, Some c)) l2 in
   let l1 = List.map (fun c ->
 	let n_c =
-	  if !opt_ineq then trans_eq_bform c
+	  if !opt_ineq then (*trans_eq_bform c*) c
 	  else c
 	in 
 	(Some n_c, None)) l1 in  

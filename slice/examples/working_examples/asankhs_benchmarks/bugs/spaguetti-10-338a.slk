@@ -17,7 +17,7 @@ checkentail
 x7::lseg<x6> * x7::lseg<x4> * x7::lseg<x3> 
   =ufdp=>
 x7=x6 & x7=x4 & x7=x3
-or x7::node<_,q2>*q2::lseg<x6> & x7!=x4 & x7=x6 & x7=x3
+or x7::node<_,q2>*q2::lseg<x4> & x7!=x4 & x7=x6 & x7=x3
 or x7::node<_,q2>*q3::lseg<x3> & x7!=x3 & x7=x6 & x7=x4
 or x7::node<_,q1>*q1::lseg<x6> & x7!=x6 & x7=x4 & x7=x3
 */

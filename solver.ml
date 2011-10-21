@@ -357,8 +357,15 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
          (*  let _ = print_endline "h_formula_2_mem: HTrue, HFalse, Hole" in*)
          {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
   in helper f
-
+  
 let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+  Gen.Debug.no_1 "xpure"
+	Cprinter.string_of_formula
+	(fun (r1, _, _, r4) ->
+	  (Cprinter.string_of_mix_formula r1) ^ "#" ^ (Cprinter.string_of_mem_formula r4))
+	(fun f0 -> xpure_x prog f0) f0
+  
+and xpure_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
   (* print_string "calling xpure"; *)
   if (!Globals.allow_imm) then xpure_symbolic prog f0
   else
@@ -2147,7 +2154,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Gen.Debug.no_1 "unsat_base" 
+  Gen.Debug.no_1 "unsat_base_nth" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
       
@@ -2162,17 +2169,30 @@ and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
   else elim_unsat_es_now prog sat_subno es
 
 and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 = Cprinter.string_of_context in
+  Gen.Debug.no_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
+  	
+and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
   if not b then Ctx{es with es_unsat_flag = true } else 
 	false_ctx (flow_formula_of_formula es.es_formula) no_pos
 
-and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula= match f with
+and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula = 
+  Gen.Debug.no_1 "elim_unsat_for_unfold" (Cprinter.string_of_formula) (Cprinter.string_of_formula)
+	(fun f -> elim_unsat_for_unfold_x prog f) f	
+  
+and elim_unsat_for_unfold_x (prog : prog_decl) (f : formula) : formula = match f with
   | Or _ -> elim_unsat_all prog f 
   | _ -> f
 
-and elim_unsat_all prog (f : formula): formula = match f with
+and elim_unsat_all prog (f : formula): formula = 
+  Gen.Debug.no_1 "elim_unsat_all" (Cprinter.string_of_formula) (Cprinter.string_of_formula)
+	(fun f -> elim_unsat_all_x prog f) f	
+	
+and elim_unsat_all_x prog (f : formula): formula = match f with
   | Base _ | Exists _ ->
         let sat_subno = ref 1 in	
         let _ = reset_int2 () in
@@ -2197,10 +2217,6 @@ and elim_unsat_all prog (f : formula): formula = match f with
         let nf1 = elim_unsat_all prog f1 in
         let nf2 = elim_unsat_all prog f2 in
 	    mkOr nf1 nf2 pos
-
-
-and elim_unsat_all_debug prog (f : formula): formula = 
-  Gen.Debug.no_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
 
 and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
       (struc_expl_inst : CP.spec_var list) pos : (CP.formula * (branch_label * CP.formula) list)*(CP.formula * (branch_label * CP.formula) list)*
@@ -3106,7 +3122,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 		  try
 			let y = List.find (fun e -> (CP.eq_spec_var_aset eset (get_node_var x) (get_node_var e)) && (is_view x || is_view e)) t in
 
-			let _ = print_string ("\ngenerate_action: y: " ^ (Cprinter.string_of_h_formula y) ^ "\n") in
+			(*let _ = print_string ("\ngenerate_action: x: " ^ (Cprinter.string_of_h_formula x) ^ "\n") in
+			let _ = print_string ("\ngenerate_action: y: " ^ (Cprinter.string_of_h_formula y) ^ "\n") in*)
 			
 			let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
 					   Context.match_res_lhs_rest = x;
@@ -3123,7 +3140,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
       let pr = pr_list Cprinter.string_of_h_formula in
 	  let pr_1 = P.EMapSV.string_of in
       let pr_2 = Context.string_of_action_res_simpl in
-      Gen.Debug.ho_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
+      Gen.Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
 	(** [Internal] Compare two spec var syntactically. **)
 	and compare_sv_syntax xn yn = match (xn,yn) with
@@ -3134,18 +3151,22 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	
 	(** [Internal] Compare spec var with equality taken into account **)
 	and compare_sv xn yn eset =
-	  (*CP.eq_spec_var_aset eset xn yn*)
-		(* let _ = print_string ("Comparing " ^ (Cprinter.string_of_spec_var xn) ^ " and " ^ (Cprinter.string_of_spec_var yn)) in *)
-	    
-		try
-			let _,xne = List.find (fun x -> CP.eq_spec_var xn (fst x)) eset in
-			let _ = List.find (fun x -> CP.eq_spec_var yn x) xne in 
-			(* let _ = print_string " --> equal" in *)
-				0
-		with
-			| Not_found -> (* let _ = print_string "\n" in *) compare_sv_syntax xn yn
-		
-	in 
+	  (* let _ = print_string ("Comparing " ^ (Cprinter.string_of_spec_var xn) ^ " and " ^ (Cprinter.string_of_spec_var yn)) in *)
+	  
+	  try
+		let _,xne = List.find (fun x -> CP.eq_spec_var xn (fst x)) eset in
+		let _ = List.find (fun x -> CP.eq_spec_var yn x) xne in 
+				(* let _ = print_string " --> equal" in *)
+		0
+	  with
+		| Not_found -> (* let _ = print_string "\n" in *) compare_sv_syntax xn yn
+	  
+	  (*
+	  if CP.eq_spec_var_aset eset xn yn then 0
+	  else compare_sv_syntax xn yn
+	  *)
+	  (*compare_sv_syntax xn yn*)
+	in
 
 	(** [Internal] Process duplicated pointers in an entail state **)
 	let process_entail_state (es : entail_state) =
@@ -3164,10 +3185,14 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 		let _ = print_string "\n" in *)
 		(* Collect and sort the data and view predicates *)
 		let dv = collect_data_view h in
+		(*let _ = print_endline ("process_entail_state: eset: " ^ (P.EMapSV.string_of eset)) in
+		let _ = print_endline ("process_entail_state: dv:") in
+		let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in*)
 		let dv = List.sort
 		  (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset)
 		  dv in
-		(* let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in *)
+		(*let _ = print_endline ("process_entail_state: sorted dv:") in
+		let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in*)
 		(* Produce an action to perform *)
 		let action = generate_action dv eset in
 		(* Process the action to get the new entail state *)
@@ -3179,11 +3204,11 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                   formula_base_label = None;
                   formula_base_pos = no_pos } in
 		let res = process_action prog es conseq b b action [] is_folding pos in
-		let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
+		(*let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
 		let _ = print_endline (PR.string_of_entail_state es) in
 		let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in
 		let (lctx, _) = res in
-		let _ = print_endline (PR.string_of_list_context lctx) in
+		let _ = print_endline (PR.string_of_list_context lctx) in*)
 			(res, match action with
 					| Context.M_Nothing_to_do _ -> false
 					| _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
@@ -5999,7 +6024,7 @@ and process_action prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_v
   let pr1 = Context.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.no_3 "process_action" pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) a estate conseq
 

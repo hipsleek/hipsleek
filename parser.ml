@@ -394,8 +394,19 @@ and contain_vars_pure_double f =
   match f with
 	| Pure_f _ -> false
 	| Pure_c pc -> P.contain_vars_exp pc
-				   
+
 and set_slicing_utils_pure_double f il =
+  let pr_pure_double = function
+	| Pure_f pf -> Iprinter.string_of_pure_formula pf
+	| Pure_c pc -> Iprinter.string_of_formula_exp pc
+  in 
+  Gen.Debug.no_2 "set_slicing_utils_pure_double"
+	pr_pure_double 
+	string_of_bool
+	pr_pure_double
+	set_slicing_utils_pure_double_x f il
+				   
+and set_slicing_utils_pure_double_x f il =
   (*
 	il = true  -> Pure_f pf is a linking constraint
 	il = false -> Pure_f pf is not a linking constraint,
@@ -406,9 +417,15 @@ and set_slicing_utils_pure_double f il =
   *)
   if !Globals.do_slicing then
 	match f with
-	| Pure_f pf -> let ls = P.find_lexp_formula pf !F.linking_exp_list in
-				   if (ls == [] && not il) then f
-				   else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
+	| Pure_f pf ->
+	  (*let ls = P.find_lexp_formula pf !F.linking_exp_list in
+		if (ls == [] && not il) then f
+		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))*)
+	  if il then Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), [])))
+	  else
+		let ls = P.find_lexp_formula pf !F.linking_exp_list in
+		if (ls == []) then f
+		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
 	| Pure_c pc -> let _ = Hashtbl.add !F.linking_exp_list pc 0 in f
   else f
 				   
