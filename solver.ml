@@ -3168,18 +3168,28 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   *)
   (*compare_sv_syntax xn yn*)
 
+  and compare_sv_old xn yn eset =
+	  if CP.eq_spec_var_aset eset xn yn then 0
+	  else -1 
+
+  (* comparing with previous method compare_sv_old *)
   and compare_sv xn yn eset =
     let pr = Cprinter.string_of_spec_var in
-	let compare_sv_old xn yn eset =
-	  if CP.eq_spec_var_aset eset xn yn then 0
-	  else -1 in
-    let sameres = (compare_sv_old xn yn eset)==(compare_sv_x xn yn eset) in
-	let compare_sv_old xn yn eset =
-      Gen.Debug.ho_2 "compare_sv_old" pr pr string_of_int (fun _ _ -> compare_sv_old xn yn eset) xn yn in
-     if sameres then compare_sv_x xn yn eset 
-    else  
-      let _ = compare_sv_old xn yn eset in
-      Gen.Debug.ho_2 "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn
+    Gen.Debug.ho_2_cmp (fun _ _ -> compare_sv_old xn yn eset) 
+        "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn
+
+  (* and compare_sv xn yn eset = *)
+  (*   let pr = Cprinter.string_of_spec_var in *)
+  (*   let compare_sv_old xn yn eset = *)
+  (*     if CP.eq_spec_var_aset eset xn yn then 0 *)
+  (*     else -1 in *)
+  (*   let sameres = (compare_sv_old xn yn eset)==(compare_sv_x xn yn eset) in *)
+  (*   let compare_sv_old xn yn eset = *)
+  (*     Gen.Debug.ho_2 "compare_sv_old" pr pr string_of_int (fun _ _ -> compare_sv_old xn yn eset) xn yn in *)
+  (*    if sameres then compare_sv_x xn yn eset  *)
+  (*   else   *)
+  (*     let _ = compare_sv_old xn yn eset in *)
+  (*     Gen.Debug.ho_2 "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn *)
   in
 
   (** [Internal] Process duplicated pointers in an entail state **)
