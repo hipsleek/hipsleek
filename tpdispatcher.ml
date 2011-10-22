@@ -544,7 +544,11 @@ let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
   ef
 	
-let filter_orig (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
+let elim_exists (f : CP.formula) : CP.formula =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "elim_exists" pr pr elim_exists f
+  
+let filter_orig (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =  
   (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
     (CP.filter_ante ante conseq, conseq)
@@ -803,6 +807,10 @@ let tp_is_sat f sat_no do_cache =
   Gen.Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat f sat_no do_cache) f
 
+let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
+    
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
   else Omega.simplify f   
@@ -1601,6 +1609,7 @@ let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
 let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
+(* CP.formula -> string -> 'a -> bool *)
 let is_sat f sat_no do_cache =
   if !external_prover then 
     match Netprover.call_prover (Sat f) with
@@ -1611,6 +1620,11 @@ let is_sat f sat_no do_cache =
     Gen.Profiling.do_1 "is_sat" (is_sat f sat_no) do_cache
   end
 ;;
+
+let is_sat f sat_no do_cache =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "is_sat" pr string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+
 
 let sat_no = ref 1
 ;;

@@ -42,11 +42,11 @@ let common_arguments = [
 	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
 	("--ahwytdi", Arg.Set Smtsolver.try_induction,
 	"Try induction in case of failure implication."); (* An Hoa *)
-    ("--smtimply", Arg.Set Smtsolver.print_implication,
+    ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-    ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
+    ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
     "Print the original output given by the SMT solver."); (* An Hoa *)
-    ("--smtinp", Arg.Set Smtsolver.print_input,
+    ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
     "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
