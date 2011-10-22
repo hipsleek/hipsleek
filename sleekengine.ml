@@ -309,6 +309,7 @@ let rec meta_to_struc_formula_x (mf0 : meta_formula) quant fv_idents stab : CF.s
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
       (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
       res
+  | MetaEFormCF b -> b (* assume it has already been normalized *)
 
 let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula =
   let pr1 = string_of_meta_formula in
@@ -351,7 +352,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
       let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
 	res
     end
-  | MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
+  | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(* An Hoa : PRINT OUT THE INPUT *)
@@ -473,10 +474,23 @@ let check_coercion coer lhs rhs =
   let pr2 = Cprinter.string_of_formula in
   Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
+let check_coercion_struc coer lhs rhs =
+    let pos = CF.pos_of_formula coer.C.coercion_head in
+    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+    let lhs = CF.add_original lhs true in
+    let lhs = CF.reset_origins lhs in
+    let rhs = CF.add_struc_original rhs true in
+    let rhs = CF.reset_struc_origins rhs in
+    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
+    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
+    let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
+    process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaEFormCF rhs) coer.C.coercion_name
+
 let check_left_coercion coer =
   let ent_lhs =coer.C.coercion_head in
   let ent_rhs = coer.C.coercion_body_norm in
-  check_coercion coer ent_lhs ent_rhs
+  check_coercion_struc coer ent_lhs ent_rhs
 
 let check_right_coercion coer =
   let ent_rhs = coer.C.coercion_head_norm in

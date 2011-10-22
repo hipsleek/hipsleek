@@ -1771,7 +1771,7 @@ let string_of_coerc_opt op c =
     ^"\n body view:"^c.coercion_body_view
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
     ^"\n head_norm: "^(string_of_formula c.coercion_head_norm)
-    ^"\n body_norm: "^(string_of_formula c.coercion_body_norm)^"\n";;
+    ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
 

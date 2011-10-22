@@ -1853,7 +1853,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula coer.I.coercion_body) false true [] in
   let quant = true in
   let cs_body_norm = trans_I2C_struc_formula prog quant (* fv_names *) lhs_fnames0 wf stab false in
-  let c_body_norm = CF.struc_to_formula cs_body_norm in
+  (* let c_body_norm = CF.struc_to_formula cs_body_norm in *)
 
 
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
@@ -1900,7 +1900,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_head = c_lhs;
         C.coercion_head_norm = c_head_norm;
         C.coercion_body = c_rhs;
-        C.coercion_body_norm = c_body_norm;
+        C.coercion_body_norm = cs_body_norm;
         C.coercion_impl_vars = []; (* ex_vars; *)
         C.coercion_univ_vars = univ_vars;
         (* C.coercion_head_exist = c_lhs_exist; *)
@@ -3646,7 +3646,12 @@ and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : iden
   let prb = string_of_bool in
   Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
-          (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
+          (f0 : IF.struc_formula) stab (sp:bool)) 
+      stab (* type table *)
+      quantify (* quantified flag *)
+      sp 
+      fvars (* free vars *)
+      f0 (*struc formula *)
 
       
 and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)

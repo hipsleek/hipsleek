@@ -8,7 +8,8 @@ pred lseg<n, p> == self = p & n = 0
 
 pred lseg<n, p> == case {
      n=0 -> [] self = p & n = 0;
-     n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+//   n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
      }
      inv n >= 0.
 
