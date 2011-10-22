@@ -3900,7 +3900,7 @@ let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
             | And (f1, f2, l) ->
                 let nf1, r1 = foldr_f new_arg f1 in
                 let nf2, r2 = foldr_f new_arg f2 in
-                (And (nf1, nf2, l), f_comb [r1; r2])
+                (mkAnd nf1 nf2 l, f_comb [r1; r2])
             | Or (f1, f2, lbl, l) ->
                 let nf1, r1 = foldr_f new_arg f1 in
                 let nf2, r2 = foldr_f new_arg f2 in

@@ -1,13 +1,13 @@
 ./_smtsolver.cmo: globals.cmo gen.cmo cpure.cmo
 ./_smtsolver.cmx: globals.cmx gen.cmx cpure.cmx
-./astsimp.cmo: tpdispatcher.cmo solver.cmo smtsolver.cmo mcpure.cmo ipure.cmo \
-    iprinter.cmo inliner.cmo iformula.cmo iastUtil.cmo iast.cmo globals.cmo \
-    gen.cmo error.cmo env.cmo debug.cmo cpure.cmo cprinter.cmo context.cmo \
-    checks.cmo cformula.cmo cast.cmo
-./astsimp.cmx: tpdispatcher.cmx solver.cmx smtsolver.cmx mcpure.cmx ipure.cmx \
-    iprinter.cmx inliner.cmx iformula.cmx iastUtil.cmx iast.cmx globals.cmx \
-    gen.cmx error.cmx env.cmx debug.cmx cpure.cmx cprinter.cmx context.cmx \
-    checks.cmx cformula.cmx cast.cmx
+./astsimp.cmo: tpdispatcher.cmo solver.cmo mcpure.cmo ipure.cmo iprinter.cmo \
+    inliner.cmo iformula.cmo iastUtil.cmo iast.cmo globals.cmo gen.cmo \
+    error.cmo env.cmo debug.cmo cpure.cmo cprinter.cmo context.cmo checks.cmo \
+    cformula.cmo cast.cmo
+./astsimp.cmx: tpdispatcher.cmx solver.cmx mcpure.cmx ipure.cmx iprinter.cmx \
+    inliner.cmx iformula.cmx iastUtil.cmx iast.cmx globals.cmx gen.cmx \
+    error.cmx env.cmx debug.cmx cpure.cmx cprinter.cmx context.cmx checks.cmx \
+    cformula.cmx cast.cmx
 ./bind_inference.cmo: globals.cmo
 ./bind_inference.cmx: globals.cmx
 ./cast.cmo: mcpure.cmo iast.cmo globals.cmo gen.cmo error.cmo cpure.cmo \
@@ -199,12 +199,12 @@
 ./sleekcommons.cmx: ipure.cmx iprinter.cmx iformula.cmx iast.cmx globals.cmx \
     cpure.cmx cprinter.cmx cformula.cmx cast.cmx
 ./sleekengine.cmo: xmlfront.cmo tpdispatcher.cmo solver.cmo smtsolver.cmo \
-    sleekcommons.cmo nativefront.cmo ipure.cmo iformula.cmo iast.cmo \
-    globals.cmo gen.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo \
+    sleekcommons.cmo nativefront.cmo ipure.cmo iprinter.cmo iformula.cmo \
+    iast.cmo globals.cmo gen.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo \
     cformula.cmo cast.cmo astsimp.cmo
 ./sleekengine.cmx: xmlfront.cmx tpdispatcher.cmx solver.cmx smtsolver.cmx \
-    sleekcommons.cmx nativefront.cmx ipure.cmx iformula.cmx iast.cmx \
-    globals.cmx gen.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx \
+    sleekcommons.cmx nativefront.cmx ipure.cmx iprinter.cmx iformula.cmx \
+    iast.cmx globals.cmx gen.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx \
     cformula.cmx cast.cmx astsimp.cmx
 ./slices.cmo: mcpure.cmo globals.cmo gen.cmo cpure.cmo cformula.cmo
 ./slices.cmx: mcpure.cmx globals.cmx gen.cmx cpure.cmx cformula.cmx

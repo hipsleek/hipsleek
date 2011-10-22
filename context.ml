@@ -448,7 +448,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let l2 = 
                     let a1 = (1,M_base_case_unfold c) in
                     let a2 = (1,M_match c) in
-                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(-1,Cond_action [a1;a2])]
+                     if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,Cond_action [a1;a2])]
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
                     else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
                     else let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] in
@@ -463,7 +463,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
                     else left_act@right_act
                   end
-                  else [] in
+                  else  [] in
                   let l4 = []
                     (*if get_view_original rhs_node then 
                       [M_base_case_fold c] 
@@ -475,7 +475,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | MaterializedArg (mv,ms) ->
-        let _ = print_string "\n materialized args  analysis here!\n" in   
+        (* let _ = print_string "\n materialized args  analysis here!\n" in  *)  
           let uf_i = if mv.mater_full_flag then 0 else 1 in 
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
@@ -484,12 +484,12 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     | View_mater -> 
                         M_unfold (c,uf_i) (* uf_i to prevent infinite unfolding *)
                     | Coerc_mater s -> 
-                        let _ = print_string "\n selected lemma XX" in
+                        (* let _ = print_string "\n selected lemma XX" in *)
                         M_lemma (c,Some s)) in
                   let l1 = [(1,M_base_case_unfold c)] in
                    (-1, (Search_action ((1,a1)::l1)))
             | ViewNode vl, DataNode dr -> 
-                  let _ = print_string "\n try LHS case analysis here!\n" in
+                  (* let _ = print_string "\n try LHS case analysis here!\n" in *)
 
 
                   (* let i = if mv.mater_full_flag then 0 else 1 in  *)
@@ -530,7 +530,7 @@ and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
   Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
-  | [] -> let r0 = (1,M_unmatched_rhs_data_node rhs_node) in
+  | [] -> let r0 = (2,M_unmatched_rhs_data_node rhs_node) in
           if (is_view rhs_node) && (get_view_original rhs_node) then
             let r = (1,M_base_case_fold { 
             match_res_lhs_node = HTrue; 

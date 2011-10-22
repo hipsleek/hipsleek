@@ -1,0 +1,31 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv self!=null & n>=1.
+	 
+//lemma self::ll_tail<t, n> -> self::lseg<n-1, t> * t::node<_, null> & self!=null.
+
+
+// Problem (2) complex LHS
+lemma self::lseg<n-1, t> * t::node<_, null> -> self::ll_tail<t, n>.
+// complex LHS. not allowed at moment.
+// but currently accepted
+
+//checkentail x::lseg<n-1, t> * t::node<_, null> |- x::ll_tail<t, n>.
+// valid
+/*
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 & x!=null
+   |- x::node<_, r1> * r1::ll_tail<t, n-1> & r1!=null.
+
+
+checkentail x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> 
+    & m=n-1 & x!=null
+    |- x::ll_tail<t, n>.
+*/
