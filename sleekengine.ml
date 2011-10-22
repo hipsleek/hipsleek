@@ -456,7 +456,7 @@ let process_capture_residue (lvar : ident) =
       | Some s -> CF.list_formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
-let check_coercion coer lhs rhs =
+let check_coercion coer lhs (rhs:CF.formula) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
@@ -474,7 +474,8 @@ let check_coercion coer lhs rhs =
   let pr2 = Cprinter.string_of_formula in
   Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
-let check_coercion_struc coer lhs rhs =
+(* below expects struc_formula for rhs *)
+let check_coercion_struc coer lhs (rhs:CF.struc_formula) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
