@@ -524,7 +524,7 @@ let process_lemma ldef =
       | (Some rs1, Some rs2) -> CF.list_context_union rs1 rs2
     in
     let valid = valid_l2r && valid_r2l in
-    let num_id = "Checking lemma \""^ (ldef.I.coercion_name) ^"\"" in
+    let num_id = "\nEntailing lemma \""^ (ldef.I.coercion_name) ^"\"" in
     if valid then 
       print_entail_result valid residues num_id
     else begin
