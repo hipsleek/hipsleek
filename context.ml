@@ -83,7 +83,7 @@ let pr_match_type (e:match_type):unit =
 let pr_match_res (c:match_res):unit =
   fmt_string "{ match_res_lhs_node "; pr_h_formula c.match_res_lhs_node;
   fmt_string "\n match_res_lhs_rest "; pr_h_formula c.match_res_lhs_rest;
-  fmt_string "\n match_res_holes "; pr_seq "" (Cprinter.pr_pair  pr_h_formula pr_int) c.match_res_holes;  
+  fmt_string "\n match_res_holes "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;  
   fmt_string "\n match_res_type "; pr_match_type c.match_res_type;
   fmt_string "\n match_res_rhs_node "; pr_h_formula c.match_res_rhs_node;
   fmt_string "\n match_res_rhs_rest "; pr_h_formula c.match_res_rhs_rest;

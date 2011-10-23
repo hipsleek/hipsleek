@@ -60,7 +60,7 @@ let fmt_close x = fmt_close_box x
 
 let pr_int i = fmt_int i
 
-let pr_pair pr_1 pr_2 (a,b) =
+let pr_pair_aux pr_1 pr_2 (a,b) =
   fmt_string "(";
   pr_1 a; fmt_string ",";
   pr_2 b; fmt_string ")"
@@ -1145,7 +1145,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
   pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
-  pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
+  pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_vwrap "es_aux_conseq: "  (pr_pure_formula) es.es_aux_conseq; 
@@ -1771,7 +1771,7 @@ let string_of_coerc_opt op c =
     ^"\n body view:"^c.coercion_body_view
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
     ^"\n head_norm: "^(string_of_formula c.coercion_head_norm)
-    ^"\n body_norm: "^(string_of_formula c.coercion_body_norm)^"\n";;
+    ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
 
@@ -1888,6 +1888,17 @@ let string_of_failure_list_failesc_context (lc: Cformula.list_failesc_context) =
 let string_of_failure_list_partial_context (lc: Cformula.list_partial_context) =  
   let lc = Cformula.keep_failure_list_partial_context lc
   in string_of_list_partial_context lc
+;;
+
+let app_sv_print xs ys =
+    (* does not seem to have redundant rhs_eq_set *)
+    begin
+    let pr = string_of_spec_var in
+    let pr2 = Gen.Basic.pr_list (Gen.Basic.pr_pair pr pr) in
+    let _ = print_string ("\n first eqn set"^(pr2 xs)) in
+    let _ = print_string ("\n second eqn set:"^(pr2 ys)) in
+    xs@ys 
+    end
 ;;
 
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;

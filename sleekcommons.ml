@@ -56,6 +56,7 @@ and meta_formula =
   | MetaFormCF of CF.formula
   | MetaFormLCF of CF.list_formula
   | MetaEForm of Iformula.struc_formula
+  | MetaEFormCF of CF.struc_formula
   | MetaCompose of (ident list * meta_formula * meta_formula)
 
 (*
@@ -95,6 +96,7 @@ let string_of_meta_formula (mf : meta_formula) =
   | MetaFormCF cf ->  "CFORM:"^Cprinter.string_of_formula cf
   | MetaFormLCF lf -> "" (* TODO Implement *)
   | MetaEForm sf -> "IFORMStruc:"^Iprinter.string_of_struc_formula sf
+  | MetaEFormCF sf -> "CFORMStruc:"^Cprinter.string_of_struc_formula sf
   | MetaCompose _ -> "" (* TODO Implement *)
 
 let clear_var_table () = H.clear var_tab
