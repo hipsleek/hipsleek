@@ -28,8 +28,8 @@ node2 get_first(node2 x)
 }
 
 int get_mem_count(node2 x)
-  requires x::dll2<q,r,l,n>@I
-  ensures res=n;
+  requires x::dll2<q,r,l,n>
+  ensures x::dll2<q,r,l,n> & res=n;
 
 /*-----------------------------------------------------------------------------
   find_nth
@@ -92,54 +92,6 @@ node2 find_nth(node2 f_list, int j)
   return f_ele;
 }
 
-
-/*-----------------------------------------------------------------------------
-  del_ele
-        deletes the old_ele from the list.
-        Note: even if list becomes empty after deletion, the list
-	      node is not deallocated.
------------------------------------------------------------------------------*/
-node2 delete(node2 x, int a)
-	requires x::dll<p, n> & n > a & a > 0 
-	ensures x::dll<p, n-1> & res=x;
-{
-	node2 tmp;
-
-	if (a == 1) 
-	{
-		if (x.next.next != null)
-		{
-			x.next.next.prev = x;
-			tmp = x.next.next;
-			x.next = tmp;
-		}
-		else
-			x.next = null;
-            }
-	else {
-		 tmp = delete(x.next, a-1);
-         x.next = tmp;
-         tmp.prev = x;
-	}
-    return x;
-}
-
-node2 del_ele(node2 x, int a)
-	requires x::dll<p, n> & n > a & a >= 0 
-	ensures res::dll<p, m> & m = n-1;
-{
-  if (a == 0){
-    node2 tmp = x.next;
-    if (tmp == null) return null;
-    else {
-      tmp.prev = x.prev;
-      x = x.next;
-      return tmp;
-    }
-  } else
-    return delete(x,a);
-}
-
 node2 del_ele2(node2 x, int a)
   requires x::dll2<p,r,l, n> & n >= a & a >= 1 
   ensures res::dll2<_,r,l, m> & m = n-1;
@@ -149,10 +101,25 @@ node2 append_ele(node2 x, node2 a)
   ensures res::dll2<_,r,l, m> & m = n+1;
 
 
-void upgrade_process_prio(int prio, int ratio, ref node2 prio_queue1, ref node2 prio_queue2, ref node2 prio_queue3)
-  requires prio_queue1::dll2<p1,r1,z1,n1> * prio_queue2::dll2<p2,r2,z2,n2> * prio_queue3::dll2<p3,r3,z3,n3> &
+void upgrade(int prio, int ratio, ref node2 prio_queue1, ref node2 prio_queue2, ref node2 prio_queue3)
+requires prio_queue1::dll2<p1,r1,z1,n1> * prio_queue2::dll2<p2,r2,z2,n2> * prio_queue3::dll2<p3,r3,z3,n3> &
   prio>0 & prio <=3 & ratio >=1
-  ensures true;
+ case {
+  prio = 1 -> case {
+    n1 > 0 -> case {
+      ratio < n1 -> ensures prio_queue1'::dll2<p1,r1,z1,n1-1> * prio_queue2'::dll2<p2,r2,z2,n2+1> * prio_queue3'::dll2<p3,r3,z3,n3>;
+      ratio >= n1 -> ensures prio_queue1'::dll2<p1,r1,z1,n1> * prio_queue2'::dll2<p2,r2,z2,n2> * prio_queue3'::dll2<p3,r3,z3,n3>; }
+    n1 <= 0 -> ensures prio_queue1'::dll2<p1,r1,z1,n1> * prio_queue2'::dll2<p2,r2,z2,n2> * prio_queue3'::dll2<p3,r3,z3,n3>;
+  }
+  prio = 2 -> case {
+      n2 > 0 -> case {
+       ratio < n2 -> ensures prio_queue1'::dll2<p1,r1,z1,n1> * prio_queue2'::dll2<p2,r2,z2,n2-1> * prio_queue3'::dll2<p3,r3,z3,n3+1>;
+       ratio >= n2 -> ensures prio_queue1'::dll2<p1,r1,z1,n1> * prio_queue2'::dll2<p2,r2,z2,n2> * prio_queue3'::dll2<p3,r3,z3,n3>;
+       }
+      n2 <= 0 -> ensures prio_queue1'::dll2<p1,r1,z1,n1> * prio_queue2'::dll2<p2,r2,z2,n2> * prio_queue3'::dll2<p3,r3,z3,n3>;
+  }
+  prio <1 | prio >2 -> ensures prio_queue1'::dll2<p1,r1,z1,n1> * prio_queue2'::dll2<p2,r2,z2,n2> * prio_queue3'::dll2<p3,r3,z3,n3>; //'
+}
 {
     int count;
     int n;
@@ -172,19 +139,22 @@ void upgrade_process_prio(int prio, int ratio, ref node2 prio_queue1, ref node2 
     // src_queue = prio_queue[prio];
     //dest_queue = prio_queue[prio+1];
     count = get_mem_count(src_queue);
-
+    dprint;
     if (count > 0)
       {
         n = ratio;//(int) (count*ratio + 1);
-        //assume(n<=count & n >= 1);
-        dprint;
-        assert src_queue'::dll2<_,_,_,nn> & nn>=n' & n'>=1;//'
+        //dprint;
+         assume (false);
         proc = find_nth(src_queue, n);
         if (proc != null) {
+           //assert src_queue'::dll2<_,_,_,nn> & nn=count;//'
           src_queue = del_ele2(src_queue, n);
-          /* append to appropriate prio queue */
+           
+          //dprint;
           proc.priority = prio;
           dest_queue = append_ele(dest_queue, proc);
         }
+ assume (false);
     }
+  assume (false);
 }
