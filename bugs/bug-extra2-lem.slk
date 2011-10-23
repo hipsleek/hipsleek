@@ -1,0 +1,22 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+         or self::node<next = r> * r::ls<p> & self!=p
+         inv true.
+
+pred ls_c<p> == case {
+     self=p -> [] self = p ;
+     self!=p ->  [] self::node<_,r> * r::ls_c<p> ; 
+     }
+     inv true.
+
+
+checkentail x::node<_,r>*r::ls<p> |- x::ls<p>.
+
+// case-rule is unsound when there are different residue.
+checkentail x::node<_,r>*r::ls_c<p> |- x::ls_c<p>.
+
+print residue.
+
+
+

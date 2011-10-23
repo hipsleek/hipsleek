@@ -1,0 +1,11 @@
+data node { int val ; node next }.
+
+
+pred ls<p> == self = p 
+         or self::node<next = r> * r::ls<p> & self!=p
+         inv true.
+
+lemma self::ls<p> <- self::ls<p>*p::node<a,null>.
+
+
+
