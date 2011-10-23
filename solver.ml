@@ -197,7 +197,7 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) opt
 
 let prune_branches_subsume prog lhs_node rhs_node = 
   let pr1 = pr_pair Cprinter.string_of_pure_formula string_of_bool in
-  let pr2 (c,d)= Cprinter.pr_pair string_of_bool (Cprinter.pr_opt pr1) in
+  let pr2 (c,d)= Cprinter.pr_pair_aux string_of_bool (Cprinter.pr_opt pr1) in
   let pr = Cprinter.string_of_h_formula in
   Gen.Debug.no_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
 
@@ -3448,10 +3448,19 @@ and heap_entail_split_rhs_phases_x
       (conseq : formula) 
       (drop_read_phase : bool)
       pos : (list_context * proof) =
+  (* let app xs ys = *)
+  (*   (\* does not seem to have redundant rhs_eq_set *\) *)
+  (*   begin *)
+  (*   (\* let pr = Cprinter.string_of_spec_var in *\) *)
+  (*   (\* let pr2 = pr_list (pr_pair pr pr) in *\) *)
+  (*   (\* let _ = print_string ("\n es_rhs_eqset:"^(pr2 xs)) in *\) *)
+  (*   (\* let _ = print_string ("\n conseq eqns:"^(pr2 ys)) in *\) *)
+  (*   xs@ys  *)
+  (*   end in *)
   let ctx_with_rhs =  (* ctx_0 in *)
 	let (h, p, fl, b, t) = CF.split_components conseq in
     let eqns = (MCP.ptr_equations_without_null p) in
-    CF.set_context (fun es -> {es with es_rhs_eqset=es.es_rhs_eqset@eqns}) ctx_0 in
+    CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns)}) ctx_0 in
   let helper ctx_00 h p (* mix pure *) (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     (* let ctx_0 = (Cformula.transform_context *)
     (* 	(fun es -> *)
@@ -3464,7 +3473,7 @@ and heap_entail_split_rhs_phases_x
     let h1, h2, h3 = split_phase(*_debug_rhs*) h in
     if(is_true h1) && (is_true h2) && (is_true h3) then
       (* no heap on the RHS *)
-      heap_entail_conjunct prog is_folding  ctx_00 conseq [] pos
+      heap_entail_conjunct prog is_folding ctx_00 conseq [] pos
     else
 
       if ((is_true h1) && (is_true h3))
@@ -3477,9 +3486,11 @@ and heap_entail_split_rhs_phases_x
 	      let new_conseq = func h3 p in
 	      if not(contains_phase h3) then
 	        (* h3 is the only non empty phase and it does not contain any nested phases *)
-	        heap_n_pure_entail prog is_folding  ctx_00 conseq (choose_not_true_heap h1 h2 h3) p func drop_read_phase pos
+	        heap_n_pure_entail prog is_folding  ctx_00  conseq (choose_not_true_heap h1 h2 h3) p func drop_read_phase pos
  	      else
-	        heap_entail_split_rhs_phases_x prog is_folding  ctx_00 new_conseq (contains_mutable new_conseq) pos
+	        heap_entail_split_rhs_phases_x prog is_folding  
+                ctx_00 
+                new_conseq (contains_mutable new_conseq) pos
 	    else
 	      let res_ctx, res_prf = 
 	        (	    
@@ -5517,16 +5528,20 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr p = pr_triple pr_svl pr_svl string_of_bool p in
   let pr_rhs = Cprinter.string_of_mix_formula in
+  let pr_es = Cprinter.string_of_entail_state in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.no_4(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id 
+  Gen.Debug.no_5(*_opt t*) "existential_eliminator_helper" pr_es Cprinter.string_of_spec_var pr_id 
     Cprinter.string_of_spec_var_list pr_rhs pr 
-      (fun _ _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) var_to_fold c2 v2 rhs_p
+      (fun _ _ _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) estate var_to_fold c2 v2 rhs_p 
 
 (* this helper does not seem to eliminate anything *)
 and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
   let pure = rhs_p in
   let ptr_eq = MCP.ptr_equations_with_null pure in
+  (* below are equality in RHS taken away during --imm option *)
+  (* let _ = print_line "Adding es_rhs_eqset into RHS ptrs" in *)
+  let ptr_eq = (* Cprinter.app_sv_print *) ptr_eq@(estate.es_rhs_eqset) in 
   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
   let asets = Context.alias_nth 9 ptr_eq in
   try
@@ -5716,6 +5731,8 @@ and  combine_results ((res_es1,prf1): list_context * Prooftracer.proof)
       
       
 and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
+  (* TODO : should we use estate as the base to perform modifications,
+     instead of starting from empty_es! *)
   let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with 
 	  es_formula = estate.es_formula;
 	  es_heap = estate.es_heap;
@@ -5728,6 +5745,7 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 	  es_success_pts = estate.es_success_pts;
 	  es_residue_pts = estate.es_residue_pts;
 	  es_id  = estate.es_id;
+	  es_rhs_eqset  = estate.es_rhs_eqset; (* needed by --imm *)
 	  es_orig_ante  = estate.es_orig_ante;
 	  es_orig_conseq = estate.es_orig_conseq;
 	  es_prior_steps = estate.es_prior_steps;

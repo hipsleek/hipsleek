@@ -2160,7 +2160,7 @@ let merge_mems_debug f1 f2 slice_dup =
 
 let ptr_equations_without_null f = ptr_equations_aux false f
 
-let ptr_equations_without_null f = 
+let ptr_equations_without_null_debug f = 
    let pr1 = !print_mix_f in
    let pr_elem = Cpure.SV.string_of in
    let pr2 = pr_list (pr_pair pr_elem pr_elem) in
