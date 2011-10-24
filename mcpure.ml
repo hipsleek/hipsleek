@@ -184,7 +184,7 @@ and filter_mem_triv lst =
 	| _ -> true) lst
 
 and group_mem_by_fv (lst: memo_pure):memo_pure =
-  Gen.Debug.no_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_x lst
+  Gen.Debug.ho_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_x lst
 	
 and group_mem_by_fv_x (lst: memo_pure):memo_pure =
   if !do_slicing then group_mem_by_fv_slicing lst
@@ -264,7 +264,7 @@ and group_mem_by_fv_slicing (lst: memo_pure):memo_pure =
 		memo_group_aset = a_l}) r  
 	  
 and regroup_memo_group (lst : memo_pure) : memo_pure =
-  Gen.Debug.no_1 "regroup_memo_group" !print_mp_f !print_mp_f regroup_memo_group_x lst
+  Gen.Debug.ho_1 "regroup_memo_group_m" !print_mp_f !print_mp_f regroup_memo_group_x lst
 
 and regroup_memo_group_x (lst : memo_pure) : memo_pure =
   if !do_slicing then regroup_memo_group_slicing lst
@@ -824,7 +824,14 @@ and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj ls
       
 and fold_mem_lst_no_disj (f_init:formula) with_dupl with_inv lst : formula =
   fold_mem_lst_gen f_init with_dupl with_inv true false lst
-  
+
+(*
+and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
+  Gen.Debug.no_2 "fold_mem_lst_m"
+	!print_p_f_f !print_mp_f !print_p_f_f
+	(fun _ _ -> fold_mem_lst_x f_init with_dupl with_inv lst) f_init lst
+*)
+	
 and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
   fold_mem_lst_gen f_init with_dupl with_inv true true lst
   
@@ -875,7 +882,7 @@ and combine_memo_branch b (f, l) =
     | s -> try memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
-  Gen.Debug.no_3 "merge_mems" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
+  Gen.Debug.ho_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
 	!print_mp_f merge_mems_x l1 l2 slice_check_dups
 	
 and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
@@ -1037,20 +1044,20 @@ and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure =
 and memoise_add_pure_aux l p status : memo_pure = 
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Gen.Debug.no_2 "memoise_add_pure_aux" pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
+  Gen.Debug.no_2 "memoise_add_pure_aux_m" pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
 
 and memoise_add_pure_N l p =
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Gen.Debug.no_2 "memoise_add_pure_N" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_N_x l p) l p
+  Gen.Debug.ho_2 "memoise_add_pure_N_m" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_N_x l p) l p
 
 and memoise_add_pure_P l p =
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Gen.Debug.no_2 "memoise_add_pure_P" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_P_x l p) l p
+  Gen.Debug.ho_2 "memoise_add_pure_P_m" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_P_x l p) l p
 	
-and memoise_add_pure_N_x l p = memoise_add_pure_aux(*_debug*) l p Implied_N
-and memoise_add_pure_P_x l p = memoise_add_pure_aux(*_debug*) l p Implied_P
+and memoise_add_pure_N_x l p = memoise_add_pure_aux l p Implied_N
+and memoise_add_pure_P_x l p = memoise_add_pure_aux l p Implied_P
 
 and create_memo_group_wrapper (l1:b_formula list) status : memo_pure =
   Gen.Debug.no_2 "create_memo_group_wrapper"
@@ -1059,7 +1066,7 @@ and create_memo_group_wrapper (l1:b_formula list) status : memo_pure =
 	
 and create_memo_group_wrapper_x (l1:b_formula list) status : memo_pure = 
   let l = List.map (fun c -> (c, None)) l1 in
-  create_memo_group(*_debug*) l [] status 
+  create_memo_group l [] status 
 
 and anon_partition (l1 : (b_formula * (formula_label option)) list) = 
   List.fold_left (fun (a1,a2) (c1,c2) -> 
@@ -1207,7 +1214,7 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
   the constraints are disjoint.
 *)
 and split_mem_grp (g:memoised_group): memo_pure =
-  Gen.Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
+  Gen.Debug.ho_1 "split_mem_grp_m" !print_mg_f !print_mp_f split_mem_grp_x g
 
 and split_mem_grp_x (g:memoised_group): memo_pure =
   if !do_slicing then split_mem_grp_slicing g
@@ -1289,7 +1296,7 @@ and split_mem_grp_slicing (g:memoised_group): memo_pure =
   been substituted and the memo_pure with the substitution performed*)
 
 and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure * spec_var list) = 
-  Gen.Debug.no_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
+  Gen.Debug.ho_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
       (fun (c, vl)-> !print_mp_f c ^"\n to be q vars: "^(!print_sv_l_f vl)) (fun qv f0 -> memo_pure_push_exists_eq_x qv f0 pos) qv f0	  
 	  
 and memo_pure_push_exists_eq_x (qv:spec_var list) (f0:memo_pure) pos : (memo_pure * spec_var list) =
@@ -1369,7 +1376,7 @@ and memo_pure_push_exists_eq_slicing (qv:spec_var list) (f0:memo_pure) pos : (me
   (r, r_v)
   
 and memo_pure_push_exists_slice (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =
-  Gen.Debug.no_2 "memo_pure_push_exists_slice" !print_sv_l_f !print_mp_f !print_mp_f
+  Gen.Debug.ho_2 "memo_pure_push_exists_slice" !print_sv_l_f !print_mp_f !print_mp_f
 	(fun qv f0 -> memo_pure_push_exists_slice_x (f_simp,do_split) qv f0 pos) qv f0
 	
 (* pushes the exists into the individual groups, picks the simple and complex constraints related to qv, combines them into
@@ -1486,17 +1493,22 @@ and memo_pure_push_exists_slice_slicing (f_simp,do_split) (qv:spec_var list) (f0
    memo_pure_push_exists_slice which picks relevant constraints
    ands them and sends them to simplify
 *)
+and memo_pure_push_exists_all fs qv f0 pos =
+  Gen.Debug.ho_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
+	!print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
+													   
 and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
   if qv==[] then f0
   else
     let (f0,nqv) = memo_pure_push_exists_eq qv f0 pos in
     memo_pure_push_exists_slice (f_simp,do_split) nqv f0 pos
-        
-and memo_pure_push_exists_all fs qv f0 pos =
-  Gen.Debug.no_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "") 
-      !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
 
-and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
+and memo_pure_push_exists (qv:spec_var list) (c:memo_pure) =
+  Gen.Debug.ho_2 "memo_pure_push_exists_m"
+	!print_svl !print_mp_f !print_mp_f
+	memo_pure_push_exists_x qv c
+
+and memo_pure_push_exists_x (qv:spec_var list) (c:memo_pure):memo_pure = 
   if qv==[] then c
   else
     memo_pure_push_exists_all ((fun w f p-> mkExists w f None p),false) qv c no_pos
@@ -2282,9 +2294,14 @@ let consistent_mix_formula (m:mix_formula) : bool =
     | OnePF _ -> true
   
 let mix_of_pure f = 
-    if (!Globals.allow_pred_spec (*or !Globals.do_slicing*)) then MemoF (memoise_add_pure_N (mkMTrue ()) f)
+    if (!Globals.allow_pred_spec or !Globals.do_slicing) then MemoF (memoise_add_pure_N (mkMTrue ()) f)
     else OnePF f
-    
+
+let mix_of_pure f =
+  Gen.Debug.no_1 "mix_of_pure"
+	!print_p_f_f !print_mix_f
+	mix_of_pure f
+	  
 let pure_of_mix f = match f with
   | OnePF f -> f
   | MemoF f -> fold_mem_lst (mkTrue no_pos) false true f 
@@ -2292,11 +2309,11 @@ let pure_of_mix f = match f with
 let mkMFalse_no_mix = mkMFalse
   
 let mkMTrue pos = 
-    if (!Globals.allow_pred_spec (*or !Globals.do_slicing*)) then  MemoF (mkMTrue pos)
+    if (!Globals.allow_pred_spec or !Globals.do_slicing) then  MemoF (mkMTrue pos)
     else OnePF (mkTrue pos)
 	  
 let mkMFalse pos = 
-    if (!Globals.allow_pred_spec (*or !Globals.do_slicing*)) then MemoF (mkMFalse pos)
+    if (!Globals.allow_pred_spec or !Globals.do_slicing) then MemoF (mkMFalse pos)
     else OnePF (mkFalse pos)  
   
 let isConstMFalse mx = match mx with
@@ -2322,7 +2339,11 @@ let memo_apply_one_exp s qp = match qp with
 let regroup_memo_group s =  match s with
   | MemoF mf -> MemoF (regroup_memo_group mf)
   | OnePF f -> s
- 
+
+let regroup_memo_group s =
+  Gen.Debug.no_1 "regroup_memo_group"
+	!print_mix_f !print_mix_f regroup_memo_group s
+	
 let mfv f = match f with
   | MemoF mf -> mfv mf
   | OnePF f -> fv f
@@ -2333,12 +2354,11 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup)
   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos)
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"}
-	
-	
-let merge_mems_debug f1 f2 slice_dup = 
-  Gen.Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
-	!print_mix_f merge_mems f1 f2 slice_dup
-	
+
+let merge_mems f1 f2 slice_dup =
+  Gen.Debug.no_2 "merge_mems"
+	!print_mix_f !print_mix_f !print_mix_f
+	(fun _ _ -> merge_mems f1 f2 slice_dup) f1 f2
 	
 let replace_mix_formula_label lb s = match s with
   | MemoF f -> MemoF (replace_memo_pure_label lb f)
@@ -2352,6 +2372,11 @@ let memo_pure_push_exists qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists qv f)
   | OnePF f -> OnePF (mkExists qv f None no_pos)
 
+let memo_pure_push_exists qv f =
+  Gen.Debug.no_2 "memo_pure_push_exists"
+	!print_svl !print_mix_f !print_mix_f
+	memo_pure_push_exists qv f
+
 let memo_pure_push_exists_lhs qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists_lhs qv f)
   | OnePF f -> OnePF (mkExists qv f None no_pos)
@@ -2362,42 +2387,58 @@ let ptr_equations_aux with_null f = match f with
 	
  (* type: mix_formula -> (Cpure.EMapSV.elem * Cpure.EMapSV.elem) list *)
 let ptr_equations_with_null f = ptr_equations_aux true f
-  
+(*  
 let ptr_equations_with_null f = 
   let pr1 = !print_mix_f in
   let pr_elem = Cpure.SV.string_of in
   let pr2 = pr_list (pr_pair pr_elem pr_elem) in
   Gen.Debug.no_1 "ptr_equations_with_null" pr1 pr2 ptr_equations_with_null f
-
+*)
 let ptr_equations_without_null f = ptr_equations_aux false f
-
+(*
 let ptr_equations_without_null f = 
    let pr1 = !print_mix_f in
    let pr_elem = Cpure.SV.string_of in
    let pr2 = pr_list (pr_pair pr_elem pr_elem) in
    Gen.Debug.no_1 "ptr_equations_without_null" pr1 pr2 ptr_equations_with_null f
-
- let filter_useless_memo_pure sim_f b fv f = match f with
+*)
+let filter_useless_memo_pure sim_f b fv f = match f with
   | MemoF f -> MemoF (filter_useless_memo_pure sim_f b fv f)
   | OnePF _ -> f
  
 let fold_mem_lst_m = fold_mem_lst
  
-let fold_mem_lst init_f with_dupl with_inv f :formula= match f with
+let fold_mem_lst init_f with_dupl with_inv f : formula= match f with
   | MemoF f -> fold_mem_lst init_f with_dupl with_inv f 
   | OnePF f -> (mkAnd init_f f no_pos)
- 
- let memoise_add_pure_N (f:mix_formula) (pf:formula) = match f with
+(*
+let fold_mem_lst init_f with_dupl with_inv f =
+  Gen.Debug.no_2 "fold_mem_lst"
+	!print_p_f_f !print_mix_f !print_p_f_f
+	(fun _ _ -> fold_mem_lst init_f with_dupl with_inv f) init_f f
+*)
+let memoise_add_pure_N (f:mix_formula) (pf:formula) = match f with
   | MemoF f -> MemoF (memoise_add_pure_N f pf)
   | OnePF f -> OnePF (mkAnd f pf no_pos)
+
+let memoise_add_pure_N (f:mix_formula) (pf:formula) =
+  Gen.Debug.no_2 "memoise_add_pure_N"
+	!print_mix_f !print_p_f_f !print_mix_f
+	memoise_add_pure_N f pf
 
 let memoise_add_pure (f:mix_formula) (pf:formula) = memoise_add_pure_N f pf
  
 let memoise_add_pure_P_m = memoise_add_pure_P
+
 let memoise_add_pure_P (f:mix_formula) (pf:formula) = match f with
   | MemoF f -> MemoF (memoise_add_pure_P f pf)
   | OnePF f -> OnePF (mkAnd f pf no_pos)
-  
+
+let memoise_add_pure_P (f:mix_formula) (pf:formula) =
+  Gen.Debug.no_2 "memoise_add_pure_P"
+	!print_mix_f !print_p_f_f !print_mix_f
+	memoise_add_pure_P f pf
+		
 let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
   | MemoF f -> MemoF (simpl_memo_pure_formula b_f_f p_f_f f tp_simp)
   | OnePF f -> OnePF ((*p_f_f*) tp_simp f)
@@ -2405,10 +2446,10 @@ let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
   | OnePF f -> OnePF (arith_simplify 6 f)
- 
+(* 
 let memo_arith_simplify_debug f = 
   Gen.Debug.no_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 
-
+*)
 let memo_is_member_pure sp f = match f with
   | MemoF f -> memo_is_member_pure sp f
   | OnePF f -> is_member_pure sp f
@@ -2518,8 +2559,7 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 		| None -> []
 	  in Gen.BList.subset_eq eq_spec_var fv ls	  
 	) mg.memo_group_cons)) mem
-  
-	
+ 
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   Gen.Debug.no_1 "exists_contradiction_eq"
 	!print_mp_f

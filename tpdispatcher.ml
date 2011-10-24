@@ -1627,7 +1627,7 @@ let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
 ;;
 
 let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
-  Gen.Debug.no_1 "is_sat_sub_no_c"
+  Gen.Debug.ho_1 "is_sat_sub_no_c"
 	Cprinter.string_of_pure_formula string_of_bool
 	(fun f -> is_sat_sub_no_c f sat_subno do_cache) f
 ;;
@@ -1752,13 +1752,15 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   (*is_sat_sub_no_c f sat_subno false*)
-  if !do_slicing && !multi_provers then
+  is_sat_sub_no_slicing f sat_subno
+  (*if !do_slicing && !multi_provers then
 	is_sat_sub_no_slicing f sat_subno
   else
 	is_sat_sub_no_c f sat_subno false
+  *)
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
-  Gen.Debug.no_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+  Gen.Debug.ho_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno
 	
 let is_sat_memo_sub_no_orig (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
@@ -1774,7 +1776,7 @@ let is_sat_memo_sub_no_slicing (f : MCP.memo_pure) sat_subno with_dupl with_inv 
 	List.fold_left (fun a f -> if not a then a else (is_sat_sub_no f sat_subno)) true f_l
 
 let rec is_sat_memo_sub_no_ineq_slicing (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
-  Gen.Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
+  Gen.Debug.ho_1 "is_sat_memo_sub_no_ineq_slicing"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
 	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x1 mem sat_subno with_dupl with_inv) mem
@@ -1928,6 +1930,12 @@ let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   else
 	is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
+let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+  Gen.Debug.ho_1 "is_sat_memo_sub_no"
+	Cprinter.string_of_memo_pure_formula
+	string_of_bool
+	(fun f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv) f	  
+	  
 let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   let memo_group_linking_vars_exps (mg : memoised_group) =
 	let cons_lv = List.fold_left (fun acc mc -> acc @ (b_formula_linking_vars_exps mc.memo_formula)) [] mg.memo_group_cons in
@@ -2039,12 +2047,6 @@ let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool
   in
   res
   
-let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
-  Gen.Debug.no_1 "is_sat_memo_sub_no"
-	Cprinter.string_of_memo_pure_formula
-	string_of_bool
-	(fun f -> is_sat_memo_sub_no(*_new*) f sat_subno with_dupl with_inv) f
-
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
   | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
   | MCP.OnePF f -> (if !do_sat_slice then is_sat_sub_no_with_slicing_orig else is_sat_sub_no) f sat_subno

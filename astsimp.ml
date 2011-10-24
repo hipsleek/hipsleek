@@ -7095,11 +7095,11 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
 
 and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =      
   Gen.Profiling.push_time "pred_inference";
-    let preds = List.map (fun c-> view_prune_inv_inference cp c) cp.C.prog_view_decls in
+    let preds = List.map (fun c -> view_prune_inv_inference cp c) cp.C.prog_view_decls in
     let prog_views_inf = {cp with C.prog_view_decls  = preds;} in
-    let preds = List.map (fun c-> 
+    let preds = List.map (fun c -> 
         let unstruc = List.map (fun (c1,c2) ->
-            (Solver.prune_preds(*_debug*) prog_views_inf true c1,c2))c.C.view_un_struc_formula in
+            (Solver.prune_preds prog_views_inf true c1,c2)) c.C.view_un_struc_formula in
         {c with 
             C.view_formula =  Cformula.erase_propagated (Solver.prune_pred_struc prog_views_inf true c.C.view_formula) ;
             C.view_un_struc_formula = unstruc;}) preds in
