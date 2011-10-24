@@ -1,5 +1,6 @@
 (* Simple tactic that tried to decide (in)equalities on Z *)
 Require Export ZArith List FSets.
+Require Import Coq.Sorting.Permutation.
 Module ZSets := Make(Z_as_OT).
 
 (* ------------------------------------------------------------------------------------------------------------ *)

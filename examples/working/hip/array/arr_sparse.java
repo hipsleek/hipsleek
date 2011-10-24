@@ -59,7 +59,7 @@ relation value_at(int[] val, int[] idx, int[] bk, int n, int i, int v) ==
 	// the following property is provable in sleek:
 	// forall(u : u = v | !(value_at(val,idx,bk,n,i,u))).
 
-axiom is_sparse_array(val, idx, bk, 1000) & 0 <= i < 1000 ==> exists(t : 0 <= t < 1000 & bk[t] = i).
+axiom is_sparse_array(val, idx, bk, 1000) & 0 <= i < 1000 ==> is_modified(val, idx, bk, 1000, i).
 			
 relation idexc(int[] val1, int[] idx1, int[] bk1, int n1, 
 			int[] val2, int[] idx2, int[] bk2, int n2, int i) ==
@@ -140,13 +140,18 @@ void setsa(SparseArray a, int i, int v)
 	int[] bk = a.back;
 	val[i] = v;
 	if (idx[i] >= a.n || idx[i] < 0) {
-//		dprint;
+		assert (!(is_modified(val',idx',bk',n,i)));
+		assume (!(is_modified(val',idx',bk',n,i)));
+		// if n = 1000 then both is_modified(val,idx,bk,n,i) and its negation holds.
 		assert n < 1000;
 		assume n < 1000;
 		idx[i] = a.n;
 		bk[a.n] = i;
 		a.n = a.n + 1;
 	} else if (bk[idx[i]] != i) {
+		assert (!(is_modified(val',idx',bk',n,i)));
+		assume (!(is_modified(val',idx',bk',n,i)));
+		// if n = 1000 then both is_modified(val,idx,bk,n,i) and its negation holds.
 		assert n < 1000;
 		assume n < 1000;
 		idx[i] = a.n;
