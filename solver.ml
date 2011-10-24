@@ -901,43 +901,47 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
   let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
   let rec fct i op oh = if (i== !Globals.prune_cnt_limit) then (op,oh)
-  else
-    let nh, mem, changed = heap_prune_preds_mix prog oh op in 
-    if changed then fct (i+1) mem nh
-    else ((match op with | MCP.MemoF f -> MCP.MemoF (MCP.reset_changed f)| _ -> op) ,oh) in
+	else
+      let nh, mem, changed = heap_prune_preds_mix prog oh op in 
+      if changed then fct (i+1) mem nh
+      else ((match op with | MCP.MemoF f -> MCP.MemoF (MCP.reset_changed f)| _ -> op) ,oh) in
   let rec helper_formulas f = match f with
     | Or o -> 
-          let f1 = helper_formulas o.formula_or_f1 in
-          let f2 = helper_formulas o.formula_or_f2 in
-          mkOr f1 f2 o.formula_or_pos
-              (*Or {o with formula_or_f1 = f1; formula_or_f2 = f2;}*)
+      let f1 = helper_formulas o.formula_or_f1 in
+      let f2 = helper_formulas o.formula_or_f2 in
+      mkOr f1 f2 o.formula_or_pos
+    (*Or {o with formula_or_f1 = f1; formula_or_f2 = f2;}*)
     | Exists e ->    
-          let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in 
-          let rp = f_p_simp rp in
-          mkExists_w_lbl e.formula_exists_qvars rh rp 
-              e.formula_exists_type e.formula_exists_flow 
-              e.formula_exists_branches e.formula_exists_pos e.formula_exists_label
-              (*Exists {e with formula_exists_pure = rp; formula_exists_heap = rh}*)
+      let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in 
+      let rp = f_p_simp rp in
+      mkExists_w_lbl e.formula_exists_qvars rh rp 
+        e.formula_exists_type e.formula_exists_flow 
+        e.formula_exists_branches e.formula_exists_pos e.formula_exists_label
+    (*Exists {e with formula_exists_pure = rp; formula_exists_heap = rh}*)
     | Base b ->
-          let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
-          let rp = f_p_simp rp in
-          mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_branches b.formula_base_pos b.formula_base_label
+      let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
+      let rp = f_p_simp rp in
+      mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_branches b.formula_base_pos b.formula_base_label
               (*Base {b with formula_base_pure = rp; formula_base_heap = rh} *) in
   if not !Globals.allow_pred_spec then f
   else 
     (
-        Gen.Profiling.push_time "prune_preds_filter";
-        let f1 = filter_formula_memo f simp_b in
-        Gen.Profiling.pop_time "prune_preds_filter";
-        Gen.Profiling.push_time "prune_preds";
-        let nf = helper_formulas f1 in   
-        Gen.Profiling.pop_time "prune_preds";
-        nf)
+      Gen.Profiling.push_time "prune_preds_filter";
+      let f1 = filter_formula_memo f simp_b in
+      Gen.Profiling.pop_time "prune_preds_filter";
+      Gen.Profiling.push_time "prune_preds";
+      let nf = helper_formulas f1 in   
+      Gen.Profiling.pop_time "prune_preds";
+      nf)
 
 and prune_preds prog (simp_b:bool) (f:formula):formula =   
   let p1 = string_of_bool in
   let p2 = Cprinter.string_of_formula in
-  Gen.Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
+  (*Gen.Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f*)
+  let prev = (fun _ _ -> f) in
+  let now = (fun _ _ -> prune_preds_x prog simp_b f) in
+  Gen.Debug.no_2_cmp prev 
+	"prune_preds" p1 p2 p2 now simp_b f
 
 and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 
@@ -989,12 +993,12 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_f
             | Some l -> (hp, old_mem, false)
             | None -> 
                   let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None) in
-                  let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None) in
+                  let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos), CP.Null no_pos,no_pos), None) in
                   let br_lbl = [(1,"")] in
                   let new_hp = DataNode{d with 
 	                  h_formula_data_remaining_branches = Some br_lbl;
 	                  h_formula_data_pruning_conditions = [ (null_form,br_lbl)];} in
-                  let new_mem = MCP.memoise_add_pure_P_m old_mem  not_null_form in
+                  let new_mem = MCP.memoise_add_pure_P_m old_mem not_null_form in
                   (new_hp, new_mem, true))           
     | ViewNode v ->   
           let v_def = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
@@ -3168,18 +3172,28 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   *)
   (*compare_sv_syntax xn yn*)
 
+  and compare_sv_old xn yn eset =
+	  if CP.eq_spec_var_aset eset xn yn then 0
+	  else -1 
+
+  (* comparing with previous method compare_sv_old *)
   and compare_sv xn yn eset =
     let pr = Cprinter.string_of_spec_var in
-	let compare_sv_old xn yn eset =
-	  if CP.eq_spec_var_aset eset xn yn then 0
-	  else -1 in
-    let sameres = (compare_sv_old xn yn eset)==(compare_sv_x xn yn eset) in
-	let compare_sv_old xn yn eset =
-      Gen.Debug.ho_2 "compare_sv_old" pr pr string_of_int (fun _ _ -> compare_sv_old xn yn eset) xn yn in
-     if sameres then compare_sv_x xn yn eset 
-    else  
-      let _ = compare_sv_old xn yn eset in
-      Gen.Debug.ho_2 "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn
+    Gen.Debug.no_2_cmp (fun _ _ -> compare_sv_old xn yn eset) 
+        "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn
+
+  (* and compare_sv xn yn eset = *)
+  (*   let pr = Cprinter.string_of_spec_var in *)
+  (*   let compare_sv_old xn yn eset = *)
+  (*     if CP.eq_spec_var_aset eset xn yn then 0 *)
+  (*     else -1 in *)
+  (*   let sameres = (compare_sv_old xn yn eset)==(compare_sv_x xn yn eset) in *)
+  (*   let compare_sv_old xn yn eset = *)
+  (*     Gen.Debug.no_2 "compare_sv_old" pr pr string_of_int (fun _ _ -> compare_sv_old xn yn eset) xn yn in *)
+  (*    if sameres then compare_sv_x xn yn eset  *)
+  (*   else   *)
+  (*     let _ = compare_sv_old xn yn eset in *)
+  (*     Gen.Debug.no_2 "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn *)
   in
 
   (** [Internal] Process duplicated pointers in an entail state **)
