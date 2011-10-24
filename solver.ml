@@ -940,7 +940,7 @@ and prune_preds prog (simp_b:bool) (f:formula):formula =
   (*Gen.Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f*)
   let prev = (fun _ _ -> f) in
   let now = (fun _ _ -> prune_preds_x prog simp_b f) in
-  Gen.Debug.ho_2_cmp prev 
+  Gen.Debug.no_2_cmp prev 
 	"prune_preds" p1 p2 p2 now simp_b f
 
 and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with

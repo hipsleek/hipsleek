@@ -184,7 +184,7 @@ and filter_mem_triv lst =
 	| _ -> true) lst
 
 and group_mem_by_fv (lst: memo_pure):memo_pure =
-  Gen.Debug.ho_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_x lst
+  Gen.Debug.no_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_x lst
 	
 and group_mem_by_fv_x (lst: memo_pure):memo_pure =
   if !do_slicing then group_mem_by_fv_slicing lst
@@ -264,7 +264,7 @@ and group_mem_by_fv_slicing (lst: memo_pure):memo_pure =
 		memo_group_aset = a_l}) r  
 	  
 and regroup_memo_group (lst : memo_pure) : memo_pure =
-  Gen.Debug.ho_1 "regroup_memo_group_m" !print_mp_f !print_mp_f regroup_memo_group_x lst
+  Gen.Debug.no_1 "regroup_memo_group_m" !print_mp_f !print_mp_f regroup_memo_group_x lst
 
 and regroup_memo_group_x (lst : memo_pure) : memo_pure =
   if !do_slicing then regroup_memo_group_slicing lst
@@ -882,7 +882,7 @@ and combine_memo_branch b (f, l) =
     | s -> try memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
-  Gen.Debug.ho_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
+  Gen.Debug.no_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
 	!print_mp_f merge_mems_x l1 l2 slice_check_dups
 	
 and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
@@ -1049,12 +1049,12 @@ and memoise_add_pure_aux l p status : memo_pure =
 and memoise_add_pure_N l p =
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Gen.Debug.ho_2 "memoise_add_pure_N_m" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_N_x l p) l p
+  Gen.Debug.no_2 "memoise_add_pure_N_m" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_N_x l p) l p
 
 and memoise_add_pure_P l p =
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Gen.Debug.ho_2 "memoise_add_pure_P_m" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_P_x l p) l p
+  Gen.Debug.no_2 "memoise_add_pure_P_m" pr1 pr2 pr1 (fun _ _ -> memoise_add_pure_P_x l p) l p
 	
 and memoise_add_pure_N_x l p = memoise_add_pure_aux l p Implied_N
 and memoise_add_pure_P_x l p = memoise_add_pure_aux l p Implied_P
@@ -1076,7 +1076,7 @@ and anon_partition (l1 : (b_formula * (formula_label option)) list) =
 and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-  Gen.Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
+  Gen.Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
 
 and create_memo_group_x (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   if !do_slicing then create_memo_group_slicing l1 l2 status
@@ -1214,7 +1214,7 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
   the constraints are disjoint.
 *)
 and split_mem_grp (g:memoised_group): memo_pure =
-  Gen.Debug.ho_1 "split_mem_grp_m" !print_mg_f !print_mp_f split_mem_grp_x g
+  Gen.Debug.no_1 "split_mem_grp_m" !print_mg_f !print_mp_f split_mem_grp_x g
 
 and split_mem_grp_x (g:memoised_group): memo_pure =
   if !do_slicing then split_mem_grp_slicing g
@@ -1296,7 +1296,7 @@ and split_mem_grp_slicing (g:memoised_group): memo_pure =
   been substituted and the memo_pure with the substitution performed*)
 
 and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure * spec_var list) = 
-  Gen.Debug.ho_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
+  Gen.Debug.no_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
       (fun (c, vl)-> !print_mp_f c ^"\n to be q vars: "^(!print_sv_l_f vl)) (fun qv f0 -> memo_pure_push_exists_eq_x qv f0 pos) qv f0	  
 	  
 and memo_pure_push_exists_eq_x (qv:spec_var list) (f0:memo_pure) pos : (memo_pure * spec_var list) =
@@ -1376,7 +1376,7 @@ and memo_pure_push_exists_eq_slicing (qv:spec_var list) (f0:memo_pure) pos : (me
   (r, r_v)
   
 and memo_pure_push_exists_slice (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =
-  Gen.Debug.ho_2 "memo_pure_push_exists_slice" !print_sv_l_f !print_mp_f !print_mp_f
+  Gen.Debug.no_2 "memo_pure_push_exists_slice" !print_sv_l_f !print_mp_f !print_mp_f
 	(fun qv f0 -> memo_pure_push_exists_slice_x (f_simp,do_split) qv f0 pos) qv f0
 	
 (* pushes the exists into the individual groups, picks the simple and complex constraints related to qv, combines them into
@@ -1494,7 +1494,7 @@ and memo_pure_push_exists_slice_slicing (f_simp,do_split) (qv:spec_var list) (f0
    ands them and sends them to simplify
 *)
 and memo_pure_push_exists_all fs qv f0 pos =
-  Gen.Debug.ho_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
+  Gen.Debug.no_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
 	!print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
 													   
 and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
@@ -1504,7 +1504,7 @@ and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pu
     memo_pure_push_exists_slice (f_simp,do_split) nqv f0 pos
 
 and memo_pure_push_exists (qv:spec_var list) (c:memo_pure) =
-  Gen.Debug.ho_2 "memo_pure_push_exists_m"
+  Gen.Debug.no_2 "memo_pure_push_exists_m"
 	!print_svl !print_mp_f !print_mp_f
 	memo_pure_push_exists_x qv c
 
