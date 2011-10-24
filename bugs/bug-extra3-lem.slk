@@ -1,6 +1,6 @@
 data node { int val ; node next }.
 
-
+// non-touching list segments that never points back into the segment
 pred ls<p> == self = p 
          or self::node<next = r> * r::ls<p> & self!=p
          inv true.
@@ -11,7 +11,7 @@ pred ls_c<p> == case {
      }
      inv true.
 
-// rightly valid with empty residue
+// rightly fail
 lemma self::ls<p> <- self::ls<r>*r::ls<p>.
 
 // valid because of non-empty residue during printing

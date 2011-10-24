@@ -1,6 +1,6 @@
 data node { int val ; node next }.
 
-
+// possibly touching list segments that can be cyclic
 pred lseg<p> == self = p 
          or self::node<next = r> * r::lseg<p> 
          inv true.

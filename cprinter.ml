@@ -947,8 +947,8 @@ let rec pr_formula_base e =
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
-          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl);
-          fmt_string (" LOC: " ^ (string_of_loc pos))
+          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -981,8 +981,8 @@ let rec pr_formula e =
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
-          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")");
-          fmt_string (" LOC: " ^ (string_of_loc pos))
+          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
+          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
