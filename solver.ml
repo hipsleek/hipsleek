@@ -3175,11 +3175,11 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	  else -1 in
     let sameres = (compare_sv_old xn yn eset)==(compare_sv_x xn yn eset) in
 	let compare_sv_old xn yn eset =
-      Gen.Debug.ho_2 "compare_sv_old" pr pr string_of_int (fun _ _ -> compare_sv_old xn yn eset) xn yn in
+      Gen.Debug.no_2 "compare_sv_old" pr pr string_of_int (fun _ _ -> compare_sv_old xn yn eset) xn yn in
      if sameres then compare_sv_x xn yn eset 
     else  
       let _ = compare_sv_old xn yn eset in
-      Gen.Debug.ho_2 "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn
+      Gen.Debug.no_2 "compare_sv" pr pr string_of_int (fun _ _ -> compare_sv_x xn yn eset) xn yn
   in
 
   (** [Internal] Process duplicated pointers in an entail state **)
