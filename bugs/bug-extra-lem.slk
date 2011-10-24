@@ -2,10 +2,17 @@ data node { int val ; node next }.
 
 
 pred ls<p> == self = p 
-         or self::node<next = r> * r::ls<p> & self!=p
+         or self::node<next = r> * r::ls<p> 
          inv true.
 
 lemma self::ls<p> <- self::ls<p>*p::node<a,null>.
 
+// checkentail self::ls<p>*p::node<a,null> |- self::ls<p>.
+
+checkentail p::node<a,null> & self = p 
+    or self::node<next = r> * r::ls<p> * p::node<a,null> |- self::ls<p>.
+
+// non-empty residues.
+print residue.
 
 

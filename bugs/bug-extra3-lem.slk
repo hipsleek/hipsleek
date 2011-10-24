@@ -1,0 +1,34 @@
+data node { int val ; node next }.
+
+
+pred ls<p> == self = p 
+         or self::node<next = r> * r::ls<p> & self!=p
+         inv true.
+
+pred ls_c<p> == case {
+     self=p -> [] self = p ;
+     self!=p ->  [] self::node<_,r> * r::ls_c<p> ; 
+     }
+     inv true.
+
+// rightly failed
+lemma self::ls<p> <- self::ls<r>*r::ls<p>.
+
+// valid because of non-empty residue during printing
+lemma self::ls_c<p> <- self::ls_c<r>*r::ls_c<p>.
+
+
+// hand-formed lemma proving
+//checkentail  self::ls_c<p> & self = r  or self::node<next = r2> * r2::ls_c<r> * r::ls_c<p> & self!=r |- self::ls_c<p>.
+// non-empty residue.
+//print residue.
+
+// valid with --imm
+// lemma self::ls<p> <- self::ls<r>*r::ls<p>*p::node<_,_>@I.
+
+// valid with --imm
+// lemma self::ls_c<p> <- self::ls<r>*r::ls_c<p>*p::node<_,_>@I.
+
+
+
+
