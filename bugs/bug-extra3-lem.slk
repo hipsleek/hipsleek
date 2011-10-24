@@ -14,7 +14,7 @@ pred ls_c<p> == case {
 // rightly fail
 lemma self::ls<p> <- self::ls<r>*r::ls<p>.
 
-// valid because of non-empty residue during printing
+// valid because of non-empty residue during proving
 lemma self::ls_c<p> <- self::ls_c<r>*r::ls_c<p>.
 
 
@@ -25,9 +25,14 @@ lemma self::ls_c<p> <- self::ls_c<r>*r::ls_c<p>.
 
 // valid with --imm
 // lemma self::ls<p> <- self::ls<r>*r::ls<p>*p::node<_,_>@I.
+// immutable @I residue
+// problem : many duplicates in residue
+// checkentail  self::ls<p> * p::node<a,b>@I & self = r  or self::node<next = r2> * r2::ls<r> * r::ls<p> * p::node<a,b>@I & self!=r |- self::ls<p>.
+// print residue.
 
 // valid with --imm
 // lemma self::ls_c<p> <- self::ls<r>*r::ls_c<p>*p::node<_,_>@I.
+
 
 
 
