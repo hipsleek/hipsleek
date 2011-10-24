@@ -1026,20 +1026,20 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
               C.prog_right_coercions = r2l_coers;
           } in
 	      let cprog1 = { cprog with			
-			  C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
-			  C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
+			C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
+			C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
           (ignore (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews);
-      ignore (List.map (fun vdef -> set_materialized_prop vdef) cviews);
-          ignore (C.build_hierarchy cprog1);
-      let cprog1 = fill_base_case cprog1 in
-          let cprog2 = sat_warnings cprog1 in        
-          let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
-          let cprog4 = (add_pre_to_cprog cprog3) in
-	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
-	      let c = (mark_recursive_call prog cprog5) in 
+		   ignore (List.map (fun vdef -> set_materialized_prop vdef) cviews);
+           ignore (C.build_hierarchy cprog1);
+		   let cprog1 = fill_base_case cprog1 in
+           let cprog2 = sat_warnings cprog1 in        
+           let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
+           let cprog4 = (add_pre_to_cprog cprog3) in
+	       let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
+	       let c = (mark_recursive_call prog cprog5) in 
           (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (12)) in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
-		  c)))
+		   c)))
 	  end)
   else   failwith "Error detected"
 

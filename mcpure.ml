@@ -1069,7 +1069,7 @@ and anon_partition (l1 : (b_formula * (formula_label option)) list) =
 and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-  Gen.Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
+  Gen.Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
 
 and create_memo_group_x (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   if !do_slicing then create_memo_group_slicing l1 l2 status
@@ -2282,7 +2282,7 @@ let consistent_mix_formula (m:mix_formula) : bool =
     | OnePF _ -> true
   
 let mix_of_pure f = 
-    if (!Globals.allow_pred_spec) then MemoF (memoise_add_pure_N (mkMTrue ()) f)
+    if (!Globals.allow_pred_spec (*or !Globals.do_slicing*)) then MemoF (memoise_add_pure_N (mkMTrue ()) f)
     else OnePF f
     
 let pure_of_mix f = match f with
@@ -2292,10 +2292,11 @@ let pure_of_mix f = match f with
 let mkMFalse_no_mix = mkMFalse
   
 let mkMTrue pos = 
-    if (!Globals.allow_pred_spec) then  MemoF (mkMTrue pos)
+    if (!Globals.allow_pred_spec (*or !Globals.do_slicing*)) then  MemoF (mkMTrue pos)
     else OnePF (mkTrue pos)
+	  
 let mkMFalse pos = 
-    if (!Globals.allow_pred_spec) then MemoF (mkMFalse pos)
+    if (!Globals.allow_pred_spec (*or !Globals.do_slicing*)) then MemoF (mkMFalse pos)
     else OnePF (mkFalse pos)  
   
 let isConstMFalse mx = match mx with

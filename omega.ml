@@ -21,7 +21,7 @@ let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
-let oc_maxVars = ref 54
+let oc_maxVars = ref 1024
 let print_pure = ref (fun (c:formula)-> " printing not initialized")
 
 let process = ref {name = "omega"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
@@ -119,7 +119,7 @@ and omega_of_formula f  = match f with
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "oc"(* TODO: fix oc path *)
+let omegacalc = "oc5"(* TODO: fix oc path *)
 (*let omegacalc = "/home/locle/workspace/hg/error_specs/sleekex/omega_modified/omega_calc/obj/oc"*)
 
 let start_with str prefix =
