@@ -11,7 +11,7 @@ pred ls_c<p> == case {
      }
      inv true.
 
-// rightly failed
+// rightly valid with empty residue
 lemma self::ls<p> <- self::ls<r>*r::ls<p>.
 
 // valid because of non-empty residue during printing
