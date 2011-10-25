@@ -4343,7 +4343,7 @@ let get_elems_eq_with_null aset =
 (* creates a false aset*)
 let mkFalse_var_aset = add_equiv_eq_with_const EMapSV.mkEmpty  (mk_sp_const 0) (mk_sp_const 3)
 
-(**)	
+(*****)	
 let get_bform_eq_vars (bf:b_formula) : (spec_var * spec_var) option =
   let (pf,_) = bf in
   match pf with
@@ -5748,3 +5748,44 @@ let rec partition_dnf_lhs f =
 let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
   List.filter (fun (svl,lkl,bfl) -> (*fst (check_dept fv (svl, lkl))*) true) parts
+
+(* An Hoa : remove primitive formula if should_elim returns true *)
+let remove_primitive should_elim e =
+	let rec elim_formula f = match f with
+		| BForm ((bf, _) , _) -> if (should_elim bf) then None else Some f
+		| Or (f1, f2, x, y) -> 
+			let nf1 = elim_formula f1 in
+			let nf2 = elim_formula f2 in
+			(match (nf1,nf2) with
+				| (None,None) -> None
+				| (None,Some _) -> nf2
+				| (Some _,None) -> nf1
+				| (Some nff1, Some nff2) -> Some (Or (nff1, nff2, x, y)))
+		| And (f1, f2, x) -> 			
+			let nf1 = elim_formula f1 in
+			let nf2 = elim_formula f2 in
+			(match (nf1,nf2) with
+				| (None,None) -> None
+				| (None,Some _) -> nf2
+				| (Some _,None) -> nf1
+				| (Some nff1, Some nff2) -> Some (And (nff1, nff2, x)))
+		| Forall (sv, f1, fl, loc) -> 
+			let nf = elim_formula f1 in
+			(match nf with
+				| None -> None
+				| Some nf1 -> Some (Forall (sv, nf1, fl, loc)))
+		| Exists (sv, f1, fl, loc) -> 
+			let nf = elim_formula f1 in
+			(match nf with
+				| None -> None
+				| Some nf1 -> Some (Exists (sv, nf1, fl, loc)))
+		| Not (f1, fl, loc) -> 
+			let nf = elim_formula f1 in
+			(match nf with
+				| None -> None
+				| Some nf1 -> Some (Not (nf1, fl, loc))) in
+	let r = elim_formula e in
+		match r with
+			| None -> mkTrue no_pos
+			| Some f -> f
+	

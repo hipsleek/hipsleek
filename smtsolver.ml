@@ -8,7 +8,7 @@ module StringSet = Set.Make(String)
                   GLOBAL VARIABLES & TYPES                      
  **************************************************************)
 
-(* An Hoa : types for relations and axioms*)
+(* Types for relations and axioms*)
 type rel_def = {
 		rel_name : ident;
 		rel_vars : CP.spec_var list;
@@ -35,7 +35,7 @@ type axiom_def = {
 (* TODO use hash table for fast retrieval *)
 let global_axiom_defs = ref ([] : axiom_def list)
 
-(* An Hoa : record of information on a formula *)
+(* Record of information on a formula *)
 type formula_info = {
 		is_linear          : bool;
 		is_quantifier_free : bool;
@@ -166,7 +166,7 @@ let rec smt_of_formula f =
                        FORMULA INFORMATION                      
  **************************************************************)
 
-(* An Hoa : default info, returned in most cases *)
+(* Default info, returned in most cases *)
 let default_formula_info = { 
 	is_linear = true; 
 	is_quantifier_free = true; 
@@ -186,7 +186,7 @@ let rec collect_formula_info f =
 and collect_combine_formula_info f1 f2 = 
 	compact_formula_info (combine_formula_info (collect_formula_info f1) (collect_formula_info f2))
 
-(* An Hoa : recursively collect the information based on the structure of
+(* Recursively collect the information based on the structure of 
  * the formula. This information might not be complete due to cross reference.
  * For instance, a relation definition might refers to other relations. This
  * function is only used mainly in pre-computing information of relation and
@@ -347,9 +347,9 @@ type sat_type =
 	| UnSat		(* solver returns unsat *)
 	| Unknown	(* solver returns unknown or there is an exception *)
 
-(* An Hoa : record structure to store information parsed from the output 
+(* Record structure to store information parsed from the output 
  * of the SMT solver.
- *			This change is to make development extensible in later stage.
+ * This change is to make development extensible in later stage.
  *)
 type smt_output = {
 		original_output_text : string list;	 (* original (command line) output text of the solver; included in order to support printing *)
@@ -363,7 +363,7 @@ let string_of_smt_output output =
 	| UnSat -> "unsat"
 	| Unknown -> "unknown|timeout"
 
-(* An Hoa : collect all Z3's output into a list of strings *)
+(* Collect all Z3's output into a list of strings *)
 let rec collect_output chn accumulated_output : string list =
 	let output = try
 					let line = input_line chn in
@@ -526,10 +526,10 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
 		| None -> CP.mkFalse no_pos
 		| Some f -> f
 	in
-	let ante_info = collect_formula_info ante in
 	let conseq_info = collect_formula_info conseq in
 	(* remove occurences of dom in ante if conseq has nothing to do with dom *)
-	(* let ante = in *)
+	let ante = if (not (List.mem "dom" conseq_info.relations)) then CP.remove_primitive (fun x -> match x with | CP.RelForm ("dom", _ , _) -> true | _ -> false) ante else ante in
+	let ante_info = collect_formula_info ante in
 	let info = combine_formula_info ante_info conseq_info in
 	let ante_fv = CP.fv ante in
 	let conseq_fv = CP.fv conseq in
@@ -552,7 +552,7 @@ type output_configuration = {
 		suppress_print_implication   : bool ref; (* temporary suppress all printing *)
 	}
 
-(* An Hoa : global collection of printing control switches, set by scriptarguments *)
+(* Global collection of printing control switches, set by scriptarguments *)
 let outconfig = {
 		print_input = ref false;
 		print_original_solver_output = ref false;
@@ -560,11 +560,11 @@ let outconfig = {
 		suppress_print_implication = ref false;
 	}
 
-(* An Hoa : pure formula printing function, to be intialized by cprinter module *)
+(* Pure formula printing function, to be intialized by cprinter module *)
 
 let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
 
-(* An Hoa : function to suppress and unsuppress all output of this modules *)
+(* Function to suppress and unsuppress all output of this modules *)
 
 let suppress_all_output () = outconfig.suppress_print_implication := true
 
@@ -589,7 +589,7 @@ let process_stdout_print ante conseq input output res =
 let try_induction = ref false
 let max_induction_level = ref 0
 
-(** An Hoa
+(** 
  * Select the candidates to do induction on. Just find all
  * relation dom(_,low,high) that appears and collect the 
  * { high - low } such that ante |- low <= high.
@@ -606,7 +606,7 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
 		| CP.Not (f,_,_) -> (collect_induction_value_candidates ante f)
 		| CP.Forall _ | CP.Exists _ -> []
 	 
-(** An Hoa
+(** 
  * Select the value to do induction on.
  * A simple approach : induct on the length of an array.
  *)
@@ -614,7 +614,7 @@ and choose_induction_value (ante : CP.formula) (conseq : CP.formula) (vals : CP.
 	(* TODO Implement the main heuristic here! *)	
 	List.hd vals
 
-(** An Hoa
+(** 
  * Create a variable totally different from the ones in vlist.
  *)
 and create_induction_var (vlist : CP.spec_var list) : CP.spec_var =
@@ -632,7 +632,7 @@ and create_induction_var (vlist : CP.spec_var list) : CP.spec_var =
 	in let i = create_induction_var_helper vlist 0 in
 		CP.SpecVar (Int,"omg_" ^ (string_of_int i),Unprimed)
 		
-(** An Hoa
+(** 
  * Generate the base case, induction hypothesis and induction case
  * for a formula phi(v,v_1,v_2,...) with new induction variable v.
  * v = expression of v_1,v_2,...
@@ -647,13 +647,13 @@ and create_induction_var (vlist : CP.spec_var list) : CP.spec_var =
 	let fvp1 = apply_one_term (v, mkAdd (mkVar v no_pos) (mkIConst 1 no_pos) no_pos) fv in (* inductive case fv[v/v+1], we try to prove fhyp --> fv[v/v+1] *)
 		(f0, fhyp, fvp1)*)
 
-(** An Hoa
+(** 
  * Generate the base case, induction hypothesis and induction case
  * for Ante -> Conseq
  *)
 and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : CP.exp) : 
 													 ((CP.formula * CP.formula) * (CP.formula * CP.formula)) =
-	(*let _ = print_string "An Hoa :: gen_induction_formulas\n" in*)
+	(*let _ = print_string "gen_induction_formulas\n" in*)
 	let p = CP.fv ante @ CP.fv conseq in
 	let v = create_induction_var p in 
 	(* let _ = print_string ("Inductiom variable = " ^ (CP.string_of_spec_var v) ^ "\n") in *)
@@ -674,11 +674,11 @@ and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : C
 		((ante0,conseq),(ante1,conseq1))
 	
 		
-(** An Hoa
+(** 
  * Check implication with induction heuristic.
  *)
 and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: smtprover) : bool =
-	(*let _ = print_string ("An Hoa :: smt_imply_with_induction : ante = "	^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
+	(*let _ = print_string (" :: smt_imply_with_induction : ante = "	^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
 	let vals = collect_induction_value_candidates ante (CP.mkAnd ante conseq no_pos) in
 	if (vals = []) then false (* No possible value to do induction on *)
 	else
