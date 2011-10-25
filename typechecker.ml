@@ -475,12 +475,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
             (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
 		      let _ = PTracer.log_proof prf in
-              (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)
-			  
               if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
-                Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-              rs in	        
-                    
+                (*Debug.print_info "procedure call" (to_print^" has failed \n") pos*)
+                let _ = print_endline ("\n Proving precondition fails at procedure call:") in
+                let _ =  print_endline ("current context at " ^ (Debug.string_of_pos pos) ^
+                                  "|- precondition of method " ^ proc.proc_name ^ " at " ^
+                                 (Debug.string_of_pos (CF.pos_of_struc_formula pre2))) in
+              print_endline ((Cprinter.string_of_list_failesc_context rs)^"\n")
+              else () ;
+              rs in
             (* Call check_pre_post with debug information *)
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
               let _ = Cprinter.string_of_list_failesc_context in
@@ -489,8 +492,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
             (*let _ = print_string ("\nAn Hoa :: Encounter function call [" ^ mn ^ "(" ^ (String.concat "," vs) ^ ")]" (*^ "with static spec :: " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs_with_pre) ^ "\n\n"*)) in*)
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
-            else check_pre_post proc.proc_static_specs_with_pre ctx in	
-		    
+            else check_pre_post proc.proc_static_specs_with_pre ctx in
             res
           end
         | Seq ({exp_seq_type = te2;
@@ -695,7 +697,7 @@ let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
 	(* An Hoa *)
-	(*let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in*)
+	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
     check_proc prog proc  
   with _ as e ->
     if !Globals.check_all then begin

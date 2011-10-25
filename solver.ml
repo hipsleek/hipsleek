@@ -5732,7 +5732,7 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
   let pr1 = Context.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
+  Gen.Debug.no_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
       (fun __ _ -> process_unfold_x prog estate conseq a is_folding pos has_post pid)
        a estate 
       

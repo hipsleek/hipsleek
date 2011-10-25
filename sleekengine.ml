@@ -394,7 +394,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     let num_id = "\nEntail("^(string_of_int index)^")" in
     if not valid then
       begin
-        let s =
+        let s = CF.extract_failure_msg rs
+          (*
            if not !Globals.disable_failure_explaining then
              match CF.get_must_failure rs with
           | Some s -> "(must) cause:"^s 
@@ -403,6 +404,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
                 | None -> "INCONSISTENCY : expected failure but success instead"
           )
            else ""
+          *)
         in
         print_string (num_id^"=Fail."^s^"\n")
         (*if !Globals.print_err_sleek then *)

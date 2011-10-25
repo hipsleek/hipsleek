@@ -2677,6 +2677,16 @@ let get_must_failure (ft:list_context) =
 	| SuccCtx cs -> get_must_error_from_ctx cs
     (* | _ -> None *)
 
+let extract_failure_msg rs=
+ if not !Globals.disable_failure_explaining then
+   match get_must_failure rs with
+     | Some s -> "(must) cause:"^s 
+     | _ -> (match get_may_failure rs with
+           | Some s -> "(may) cause:"^s
+           | None -> "INCONSISTENCY : expected failure but success instead"
+     )
+ else ""
+
 let is_may_failure_fe (f:fail_explaining) = (get_may_failure_fe f) != None
 
 let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
