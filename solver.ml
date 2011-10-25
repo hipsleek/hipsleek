@@ -1423,7 +1423,7 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
     | _ -> resform
   else resform
 
-and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
+and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
   (*  let _ = print_string("unfold heap " ^ (Cprinter.string_of_h_formula f) ^ "\n\n") in*)
   match f with
     | ViewNode ({h_formula_view_node = p;
@@ -1463,8 +1463,9 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 		            (*let res_form = struc_to_formula res_form in*)
 	                CF.replace_formula_label v_lbl res_form
 	          | Some (base , br, to_vars) -> (* base case unfold *)
-			        (* let _ = print_string "\n x\n" in*)
-	                if (List.fold_left2 (fun a c1 c2-> a&&(c1=c2)) true to_vars vs) 
+			        let flag = (List.length to_vars)==(List.length  vs) in
+                    (* TODO - possible to have diff length? *)
+	                if flag && (List.fold_left2 (fun a c1 c2-> a&&(c1=c2)) true to_vars vs) 
 	                then  CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_branches_fl base br fl no_pos)
 	                else formula_of_heap f pos
           else
@@ -5848,7 +5849,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   (* let rhs_lst = [] in *)
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
-   (0,Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst no_pos)
+   (0,Context.compute_actions_x prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst no_pos)
 
 and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   match a with
