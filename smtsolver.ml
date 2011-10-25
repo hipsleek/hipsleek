@@ -483,6 +483,7 @@ let to_smt_v2 ante conseq logic fvars info =
 	let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
 	(* Antecedent and consequence : split /\ into small asserts for easier management *)
 	let ante_clauses = CP.split_conjunctions ante in
+	let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
 	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x) ^ ")\n") ante_clauses in
 	let ante_str = String.concat "" ante_strs in
 	let conseq_str = smt_of_formula conseq in
@@ -525,7 +526,11 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
 		| None -> CP.mkFalse no_pos
 		| Some f -> f
 	in
-	let info = collect_combine_formula_info ante conseq in
+	let ante_info = collect_formula_info ante in
+	let conseq_info = collect_formula_info conseq in
+	(* remove occurences of dom in ante if conseq has nothing to do with dom *)
+	(* let ante = in *)
+	let info = combine_formula_info ante_info conseq_info in
 	let ante_fv = CP.fv ante in
 	let conseq_fv = CP.fv conseq in
 	let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
