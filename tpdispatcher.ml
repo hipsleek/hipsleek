@@ -1766,12 +1766,12 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   (*is_sat_sub_no_c f sat_subno false*)
-  is_sat_sub_no_slicing f sat_subno
-  (*if !do_slicing && !multi_provers then
+  if !is_sat_slicing then
+	is_sat_sub_no_slicing f sat_subno
+  else if !do_slicing && !multi_provers then
 	is_sat_sub_no_slicing f sat_subno
   else
 	is_sat_sub_no_c f sat_subno false
-  *)
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
   Gen.Debug.no_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)

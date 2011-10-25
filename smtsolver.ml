@@ -451,9 +451,11 @@ let prover_process = ref {
 	errchannel = stdin 
 }
 
+let path_to_z3 = "/home/chanhle/hg/slicing_z3/sleekex/z3/z3"
+  
 let command_for prover =
 	match prover with
-	| Z3 -> ("z3", [|"z3"; "-smt2"; infile; ("> "^ outfile) |] )
+	| Z3 -> ("z3", [|path_to_z3; "-smt2"; infile; ("> "^ outfile) |] )
 	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
 
@@ -507,6 +509,9 @@ let logic_for_formulas f1 f2 =
 
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
+  (*let _ = print_endline ("ante = " ^ (!print_pure ante)) in
+  let _ = print_endline ("cons = " ^ (!print_pure conseq)) in*)
+  
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in
 	let smt_var_decls = String.concat "" smt_var_decls in
