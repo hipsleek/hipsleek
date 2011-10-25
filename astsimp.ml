@@ -5780,8 +5780,8 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
     let _ = if not (List.for_all(fun (c1,c2)->c2==Unprimed)need_quant) then Err.report_error{ 
         Err.error_loc = Iformula.pos_of_formula f; 
         Err.error_text = "existential vars should not be primed"; } in
-    let _ = if (List.length need_quant)>0 then 
-      print_string ("\n warning "^(string_of_loc (Iformula.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in
+    (* let _ = if (List.length need_quant)>0 then  *)
+    (*   print_string ("\n warning "^(string_of_loc (Iformula.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in *)
     Iformula.push_exists need_quant f in
   let nf = convert_struc2 prog f in
   let nf = Iformula.float_out_exps_from_heap_struc nf in

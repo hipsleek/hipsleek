@@ -12,7 +12,7 @@ int sum_loop(int n)
 	requires n>0 ensures res=n;
 {
 	int i = 0, s = 0;
-	while (n > 0) requires true ensures n'=0 & s'=n;
+	while (n > 0) requires n>=0 & n+s ensures n'=0 & s'=n;
 	{
 		s++;
         n=n-1;
