@@ -288,7 +288,7 @@ let add_axiom h dir c =
 	let aindex = List.length !global_axiom_defs in
 	begin
 		(* Modifying every relations appearing in h and c by
-		   1)   Add 'h dir c' as a related axiom
+		   1)   Add reference to 'h dir c' as a related axiom
 		   2)   Add all other relations (appearing in h and c) to the list of related relations *)
 		global_rel_defs := List.map (fun x -> if (List.mem x.rel_name info.relations) then
 			let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ info.relations) in
@@ -336,35 +336,7 @@ let add_relation rname rargs rform =
 			let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
 				add_axiom h IFF rform;
 	end
-
-(***************************************************************
-                         CONSOLE OUTPUT                         
- **************************************************************)
-
-type output_configuration = {
-		print_input	                 : bool ref; (* print generated SMT input *)
-		print_original_solver_output : bool ref; (* print solver original output *)
-		print_implication            : bool ref; (* print the implication problems sent to this smt_imply *)
-		suppress_print_implication   : bool ref; (* temporary suppress all printing *)
-	}
-
-(* An Hoa : global collection of printing control switches, set by scriptarguments *)
-let outconfig = {
-		print_input = ref false;
-		print_original_solver_output = ref false;
-		print_implication = ref false; 
-		suppress_print_implication = ref false;
-	}
-
-(* An Hoa : pure formula printing function, to be intialized by cprinter module *)
-
-let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
-
-(* An Hoa : function to suppress and unsuppress all output of this modules *)
-
-let suppress_all_output () = outconfig.suppress_print_implication := true
-
-let unsuppress_all_output () = outconfig.suppress_print_implication := false
+	
 
 (***************************************************************
                             INTERACTION                         
@@ -380,22 +352,19 @@ type sat_type =
  *			This change is to make development extensible in later stage.
  *)
 type smt_output = {
-		original_output_text : string;	 (* original (command line) output text of the solver; included in order to support printing *)
+		original_output_text : string list;	 (* original (command line) output text of the solver; included in order to support printing *)
 		sat_result : sat_type; (* satisfiability information *)
 		(* expand with other information : proof, time, error, warning, ... *)
 	}
-
-(* An Hoa : collect all output from a channel into a string *)
-let rec collect_output_text chn accumulated_output : string =
-	let output = try
-					let line = input_line chn in
-						collect_output_text chn (accumulated_output ^ line)
-				with
-					| End_of_file -> accumulated_output in
-		output
+	
+let string_of_smt_output output =
+	match output.sat_result with
+	| Sat -> "sat"
+	| UnSat -> "unsat"
+	| Unknown -> "unknown|timeout"
 
 (* An Hoa : collect all Z3's output into a list of strings *)
-and collect_output chn accumulated_output : string list =
+let rec collect_output chn accumulated_output : string list =
 	let output = try
 					let line = input_line chn in
 						collect_output chn (accumulated_output @ [line])
@@ -403,29 +372,16 @@ and collect_output chn accumulated_output : string list =
 					| End_of_file -> accumulated_output in
 		output
 
-(* An Hoa : post-process the solver output by removing warning, error indication, ... *)
-and post_process_output output : string =
-	(* return the last line *)
-	List.nth output 0
-
-let rec get_answer chn : string =
+let sat_type_from_string r =
+	if (r = "sat") then Sat
+	else if (r = "unsat") then UnSat
+	else Unknown
+	
+let get_answer chn =
 	let output = collect_output chn [] in
-	let output = post_process_output output in
-		output
-
-(*
-and get_response chn =
-	let text = collect_output_text chn "" in
-		parse_smt_out text
-
-and parse_smt_out s =
-	let lines = Str.split (Str.regex "\n") s in
-		List.fold_left (fun x y -> "") "" lines
-*)
-
-(* An Hoa : post-process the solver output by removing warning, error indication, ... *)
-and post_process_output output : string =
-	List.nth output (List.length output - 1)
+	let solver_sat_result = List.nth output (List.length output - 1) in
+		{ original_output_text = output;
+		sat_result = sat_type_from_string solver_sat_result; }
 
 let remove_file filename =
 	try
@@ -467,11 +423,21 @@ let run prover input =
 	let fnc () = 
 		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
 			get_answer !prover_process.inchannel in
-	let res = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in
+	let res = try
+			Procutils.PrvComms.maybe_raise_timeout fnc () !timeout 
+		with
+			| _ -> begin (* exception : return the safe result to ensure soundness *)
+				Printexc.print_backtrace stdout;
+				Unix.kill !prover_process.pid 9;
+				ignore (Unix.waitpid [] !prover_process.pid);
+				{ original_output_text = []; sat_result = Unknown; }
+				end 
+	in
 	let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
 	remove_file infile;
 	remove_file outfile;
 		res
+		
 
 (***************************************************************
    GENERATE SMT INPUT FOR IMPLICATION/SATISFIABILITY CHECKING   
@@ -568,7 +534,49 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
 		| Z3 ->	to_smt_v2 ante conseq logic all_fv info
 		| Cvc3 | Yices ->	to_smt_v1 ante conseq logic all_fv
 	in res
+	
+	
+(***************************************************************
+                         CONSOLE OUTPUT                         
+ **************************************************************)
 
+type output_configuration = {
+		print_input	                 : bool ref; (* print generated SMT input *)
+		print_original_solver_output : bool ref; (* print solver original output *)
+		print_implication            : bool ref; (* print the implication problems sent to this smt_imply *)
+		suppress_print_implication   : bool ref; (* temporary suppress all printing *)
+	}
+
+(* An Hoa : global collection of printing control switches, set by scriptarguments *)
+let outconfig = {
+		print_input = ref false;
+		print_original_solver_output = ref false;
+		print_implication = ref false; 
+		suppress_print_implication = ref false;
+	}
+
+(* An Hoa : pure formula printing function, to be intialized by cprinter module *)
+
+let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
+
+(* An Hoa : function to suppress and unsuppress all output of this modules *)
+
+let suppress_all_output () = outconfig.suppress_print_implication := true
+
+let unsuppress_all_output () = outconfig.suppress_print_implication := false
+
+let process_stdout_print ante conseq input output res =
+	if (not !(outconfig.suppress_print_implication)) then
+	begin
+		if !(outconfig.print_implication) then 
+			print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
+		if !(outconfig.print_input) then 
+			print_string ("Generated SMT input :\n" ^ input);
+		if !(outconfig.print_original_solver_output) then
+			print_string ("==> SMT output : " ^ (string_of_smt_output output) ^ "\n");
+	end
+	
+	
 (**************************************************************
    MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY    
  *************************************************************)
@@ -690,75 +698,14 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-	(* let _ = print_endline "smt_imply : entry" in *)
-	(* let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in *)
-	(* let conseq, evars, transformed = eliminate_exist conseq in *)
-	let input = try
-					to_smt ante (Some conseq) prover
-				with
-					| _ -> let _ = print_endline "Failure in generating SMT input." in ""
-	in
-	try
-			let output = run prover input in
-			let res = (* (transformed && output = "sat") || *) (output = "unsat") in
-	let res = if (output = "unknown") then 
-				try
-					Omega.imply ante conseq "" !timeout 
-				with | _ -> false
-		else res in
-	(* Only do printing in case there is no suppression and output is not unsat *)
-	(*let _ = print_string (string_of_bool !!outconfig.suppress_print_implication) in*)
-	let _ = if (not !(outconfig.suppress_print_implication)) (*&& (not res)*) then
-						let _ = if !(outconfig.print_implication) then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
-						let _ = if !(outconfig.print_input) then print_string ("Generated SMT input :\n" ^ input) in
-						let _ = if !(outconfig.print_original_solver_output) then print_string ("=1=> [Try] SMT output : " ^ output ^ "\n") in ()
-	in if res then
-			res
-		else 
-			if (!try_induction) then
-				(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in
-				let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
-				smt_imply_with_induction ante conseq prover
-			else 
-				false
-	with 
-		|Procutils.PrvComms.Timeout ->
-			begin
-			Printexc.print_backtrace stdout;
-			let _ = if (not !(outconfig.suppress_print_implication)) (*&& (not res)*) then
-				let _ = if !(outconfig.print_implication) then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
-				let _ = if !(outconfig.print_input) then print_string ("Generated SMT input :\n" ^ input) in
-								if !(outconfig.print_original_solver_output) then 
-						print_string ("=1=> [TimeOut] SMT output : unknown (from timeout exc)\n")
-				in
-						print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
-						Unix.kill !prover_process.pid 9;
-						ignore (Unix.waitpid [] !prover_process.pid);
-			(* Try induction on time out as well. *)
-				if (!try_induction) then
-					let _ = print_string "An Hoa :: smt_imply : try induction\n" in
-					(*let _ = print_endline ((!print_pure ante) ^ " |- " ^ (!print_pure conseq)) in*)
-					smt_imply_with_induction ante conseq prover
-				else 
-				try (* using omega on time out *)
-					Omega.imply ante conseq "" !timeout 
-				with | _ -> false
-						(* false *)
-		end
-		| e -> 
-				begin 
-			Printexc.print_backtrace stdout;
-						let _ = if !(outconfig.print_original_solver_output) then 
-				(* print_string ("=1=> SMT output : unsat (from exc)\n") in *)
-				print_string ("=1=> [OtherException] SMT output : unknown (from exc)\n") in
-						print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
-						Unix.kill !prover_process.pid 9;
-						ignore (Unix.waitpid [] !prover_process.pid);
-			try (* using omega on other exception *)
-					Omega.imply ante conseq "" !timeout 
-			with | _ -> false
-						(* false *)
-				end
+	let input = to_smt ante (Some conseq) prover in
+	let output = run prover input in
+	let res = match output.sat_result with
+		| Sat -> false
+		| UnSat -> true
+		| Unknown -> try Omega.imply ante conseq "" !timeout with | _ -> false in
+	let _ = process_stdout_print ante conseq input output res in
+		res
 
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
@@ -771,33 +718,13 @@ let imply ante conseq =
  * We also consider unknown is the same as sat
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
-	try
-		(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f)) in *)
-		let input = to_smt f None prover in
-		(* let _ = if !print_input then print_string ("smt_is_sat : Generated SMT input :\n" ^ input) in *)
-		let output = run prover input in
-		(* let _ = if !!outconfig.print_original_solver_output then print_string ("smt_is_sat : ==> SMT output : " ^ output ^ "\n") in *)
-		let res = output = "unsat" in
-			not res
-	with 
-		|Procutils.PrvComms.Timeout ->
-			begin
-			Printexc.print_backtrace stdout;
-						let _ = if !(outconfig.print_original_solver_output) then print_string ("=2=> SMT output : sat (from timeout exc)\n") in
-						print_string ("\n[smtsolver.ml]:Timeout exception => sat\n"); flush stdout;
-						Unix.kill !prover_process.pid 9;
-						ignore (Unix.waitpid [] !prover_process.pid);
-						true
-		end
-		| e -> 
-				begin 
-			Printexc.print_backtrace stdout;
-						let _ = if !(outconfig.print_original_solver_output) then print_string ("=2=> SMT output : sat (from exc)\n") in
-						print_string ("\n[smtsolver.ml]:Unexpected exception => sat\n"); flush stdout; 
-						Unix.kill !prover_process.pid 9;
-						ignore (Unix.waitpid [] !prover_process.pid);
-						true
-				end
+	let input = to_smt f None prover in
+	let output = run prover input in
+	let res = match output.sat_result with
+		| UnSat -> false
+		| _ -> true in
+	(* let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in *)
+		res
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
 	let pr = !print_pure in
