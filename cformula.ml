@@ -1421,7 +1421,11 @@ and get_formula_pos (f : formula) = match f with
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
-  Gen.Debug.no_3 "subst_avoid_capture" !print_svl !print_svl !print_formula !print_formula
+  Gen.Debug.no_3 "subst_avoid_capture" 
+      (add_str "from vars:" !print_svl) 
+      (add_str "to vars:" !print_svl)
+      !print_formula 
+      !print_formula
       (fun _ _ _ -> subst_avoid_capture_x fr t f) fr t f
 
 and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =

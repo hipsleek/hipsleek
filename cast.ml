@@ -25,7 +25,8 @@ and prog_decl = {
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
 	
-and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
+and prog_or_branches = (prog_decl * 
+    ((MP.mix_formula * ((string*P.formula)list)*(ident * (P.spec_var list))) option) )
 	
 and data_decl = { 
     data_name : ident;
@@ -362,6 +363,7 @@ let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -704,6 +706,12 @@ let unmingle_name (m : ident) =
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] -> raise Not_found
+
+let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
+  let pr = fun x -> x in
+  let pr_out = !print_view_decl in
+  Gen.Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+
 
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with

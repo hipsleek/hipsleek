@@ -947,8 +947,8 @@ let rec pr_formula_base e =
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
-          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl);
-          fmt_string (" LOC: " ^ (string_of_loc pos))
+          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -981,8 +981,8 @@ let rec pr_formula e =
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
-          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")");
-          fmt_string (" LOC: " ^ (string_of_loc pos))
+          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
+          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -1847,6 +1847,16 @@ let rec string_of_coerc_decl_list l = match l with
   | h::t -> (string_of_coerc h) ^ "\n" ^ (string_of_coerc_decl_list t)
 ;;
 
+let string_of_prog_or_branches ((prg,br):prog_or_branches) =
+  match br with 
+    | None -> "None"
+    | Some (mf,lf,(i,lv)) -> ((string_of_mix_formula mf)
+          ^ "\n branches:"^(Gen.Basic.pr_list (fun (_,f) -> string_of_pure_formula f) lf)
+          ^ "\n pred:"^i
+          ^ "\n to_vars:"^(Gen.Basic.pr_list string_of_spec_var lv)
+      )
+;;
+
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
@@ -1940,6 +1950,7 @@ Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
+Cast.print_view_decl := string_of_view_decl;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Coq.print_p_f_f := string_of_pure_formula ;;
