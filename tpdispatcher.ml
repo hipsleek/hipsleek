@@ -1751,8 +1751,8 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 	(fun f -> is_sat_sub_no_slicing f sat_subno) f
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
-  (*is_sat_sub_no_c f sat_subno false*)
-  is_sat_sub_no_slicing f sat_subno
+  is_sat_sub_no_c f sat_subno false
+  (*is_sat_sub_no_slicing f sat_subno*)
   (*if !do_slicing && !multi_provers then
 	is_sat_sub_no_slicing f sat_subno
   else
