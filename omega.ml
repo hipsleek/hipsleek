@@ -119,7 +119,9 @@ and omega_of_formula f  = match f with
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "oc5"(* TODO: fix oc path *)
+let omegacalc = "oc"
+let modified_omegacalc = "/usr/local/bin/oc5"
+(* TODO: fix oc path *)
 (*let omegacalc = "/home/locle/workspace/hg/error_specs/sleekex/omega_modified/omega_calc/obj/oc"*)
 
 let start_with str prefix =
@@ -145,7 +147,12 @@ let start() =
   if not !is_omega_running then begin
       print_string "Starting Omega... \n"; flush stdout;
       last_test_number := !test_number;
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
+	  let path_to_omega =
+		if Sys.file_exists modified_omegacalc then
+		  let _ = print_string "Using modified Omega... \n"; flush stdout; in
+		  modified_omegacalc
+		else omegacalc in
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", path_to_omega, [||]) set_process prelude in
       is_omega_running := true;
   end
 
