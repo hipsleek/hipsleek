@@ -4226,6 +4226,10 @@ and must_unify_x (k1 : typ) (k2 : typ) stab pos : typ  =
       ^" and "^(string_of_typ (get_type_entire stab k2))^" are inconsistent")
 
 and must_unify_expect (k1 : typ) (k2 : typ) stab pos : typ  =
+  let pr = string_of_typ in
+  Gen.Debug.no_2 "must_unify_expect" pr pr pr (fun _ _ -> must_unify_expect_x k1 k2 stab pos) k1 k2
+
+and must_unify_expect_x (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_expect k1 k2 stab in
   match k with
     | Some r -> r
@@ -4630,13 +4634,18 @@ and gather_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit 
       (gather_type_info_pure_x prog) p0 stab
 
 
-(* An Hoa : add argument prog *)
+(* not executed*)
 and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
+  Gen.Debug.no_eff_2 "collect_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_stab (fun _ -> "()")
+      (collect_type_info_pure_x prog) p0 stab
+
+(* An Hoa : add argument prog *)
+and collect_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
     | IP.BForm (b,_) -> collect_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
-          (collect_type_info_pure prog p1 stab; collect_type_info_pure prog p2 stab)
-    | IP.Not (p1, _, pos) -> collect_type_info_pure prog p1 stab 
+          (collect_type_info_pure_x prog p1 stab; collect_type_info_pure_x prog p2 stab)
+    | IP.Not (p1, _, pos) -> collect_type_info_pure_x prog p1 stab 
     | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
 	      if (H.mem stab qv) && !check_shallow_var
 	      then
@@ -4645,7 +4654,7 @@ and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit
                     Err.error_loc = pos;
                     Err.error_text = qv ^ " shadows outer name";
                 }
-	      else collect_type_info_pure prog qf stab
+	      else collect_type_info_pure_x prog qf stab
 
 
 and collect_type_info_b_formula prog b0 stab =
@@ -4834,6 +4843,9 @@ and gather_type_info_b_formula_x prog b0 stab =
           let new_et = fresh_tvar stab in
 	      let t1 = gather_type_info_exp a1 stab new_et in (* tvar, Int, Float *)
 	      let t2 = gather_type_info_exp a2 stab new_et in
+          (* TODO : broken unifier! in case last one gives better type *)
+          (* see examples/working/bll.ss *)
+	      let t1 = gather_type_info_exp a1 stab new_et in 
           let t1 = must_unify_expect t1 NUM stab pos in
           let t2 = must_unify_expect t2 NUM stab pos in
           let _ = must_unify t1 t2 stab pos  in (* UNK, Int, Float, TVar *) 
@@ -4843,6 +4855,9 @@ and gather_type_info_b_formula_x prog b0 stab =
 	      let t1 = gather_type_info_exp a1 stab new_et in (* tvar, Int, Float *)
 	      let t2 = gather_type_info_exp a2 stab new_et in
 	      let t3 = gather_type_info_exp a3 stab new_et in (* tvar, Int, Float *)
+          (* TODO : broken unifier! in case last one gives better type *)
+	      let t1 = gather_type_info_exp a1 stab new_et in 
+	      let t2 = gather_type_info_exp a2 stab new_et in
           let t1 = must_unify_expect t1 NUM stab pos in
           let t2 = must_unify_expect t2 NUM stab pos in
           let t3 = must_unify_expect t3 NUM stab pos in
@@ -4865,6 +4880,8 @@ and gather_type_info_b_formula_x prog b0 stab =
           let new_et = fresh_tvar stab in
 	      let t1 = gather_type_info_exp a1 stab new_et in (* tvar, Int, Float *)
 	      let t2 = gather_type_info_exp a2 stab new_et in
+          (* TODO : broken unifier! in case last one gives better type *)
+	      let t1 = gather_type_info_exp a1 stab new_et in 
           let _ = must_unify t1 t2 stab pos  in (* UNK, Int, Float, TVar *)
           ()
     | IP.BagMax ((v1, p1), (v2, p2), pos) 
