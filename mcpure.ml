@@ -882,7 +882,7 @@ and combine_memo_branch b (f, l) =
     | s -> try memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
-  Gen.Debug.no_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
+  Gen.Debug.ho_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
 	!print_mp_f merge_mems_x l1 l2 slice_check_dups
 	
 and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
@@ -1044,7 +1044,7 @@ and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure =
 and memoise_add_pure_aux l p status : memo_pure = 
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
-  Gen.Debug.no_2 "memoise_add_pure_aux_m" pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
+  Gen.Debug.ho_2 "memoise_add_pure_aux_m" pr1 pr2 pr1 (fun _ _ ->  memoise_add_pure_aux_x l p status) l p
 
 and memoise_add_pure_N l p =
   let pr1 = !print_mp_f in
@@ -1076,7 +1076,7 @@ and anon_partition (l1 : (b_formula * (formula_label option)) list) =
 and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-  Gen.Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
+  Gen.Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
 
 and create_memo_group_x (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   if !do_slicing then create_memo_group_slicing l1 l2 status
@@ -2285,6 +2285,7 @@ let reset_changed f = List.map (fun c-> {c with memo_group_changed = false}) f
 type mix_formula = 
   | MemoF of memo_pure
   | OnePF of formula
+  | DisjMemoF of memo_pure list
   
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
 
