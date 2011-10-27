@@ -1615,7 +1615,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
 		  if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
-	| ArrayAt (a,i,_) -> (name_of_spec_var a) ^ "[" ^ (get_head i) ^ "]" (* An Hoa *)    
+	| ArrayAt (a,i,_) -> (name_of_spec_var a) ^ "[" ^ (String.concat "," (List.map get_head i)) ^ "]" (* An Hoa *)    
   in
   
   let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) in
@@ -1664,7 +1664,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | ListLength (e,l)-> ListLength(norm_expr e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_expr e), l)    
     | ListReverse (e,l)-> ListReverse(norm_expr e, l)
-	| ArrayAt (a,i,l) -> ArrayAt (a, norm_expr i, l) (* An Hoa *)
+	| ArrayAt (a,i,l) -> ArrayAt (a, List.map norm_expr i, l) (* An Hoa *)
 	      
   and cons_lsts (e:exp) (disc:int) cons1 cons2 (nel:exp) : exp=     
     let lp,ln = get_lists e disc in

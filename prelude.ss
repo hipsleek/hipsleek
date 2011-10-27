@@ -222,7 +222,7 @@ int array_get_elm_at___(int[] a, int i)
 				& i <= ahaub
 	ensures res = a[i];
 
-int[] update___(int[] a, int i, int v) 
+int[] update___(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 

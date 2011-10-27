@@ -1089,8 +1089,13 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			(Ipure.ListReverse (ne1, l), np1)
 	(* An Hoa : get rid of min/max in a[i] *)
   | Ipure.ArrayAt (a, i, l) ->
-			let ne, np = float_out_exp_min_max i in
-			(Ipure.ArrayAt (a, ne, l), np)
+  			let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+			let r = List.fold_left (fun a c -> match (a, c) with
+				  	| None, None -> None
+					| Some p, None -> Some p
+					| None, Some p -> Some p
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+			(Ipure.ArrayAt (a, ne1, l), r)
 
 and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		

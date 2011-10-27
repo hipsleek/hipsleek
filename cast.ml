@@ -143,7 +143,7 @@ and sharp_val =
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
-   exp_arrayat_array_name : ident; (* Name of the array *)
+   exp_arrayat_array_base : ident; (* Name of the array *)
    exp_arrayat_index : exp; (* Integer valued expression for the index *)
    exp_arrayat_pos : loc; } *)
 
@@ -869,7 +869,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Assert _ -> []
 	(* AN HOA *)
 	(*| ArrayAt ({exp_arrayat_type = _;
-			 exp_arrayat_array_name = _;
+			 exp_arrayat_array_base = _;
 			 exp_arrayat_index = e;
 			 exp_arrayat_pos = _; }) -> callees_of_exp e*)
 	(*| ArrayMod ({exp_arraymod_lhs = l;
