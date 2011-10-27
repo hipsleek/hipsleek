@@ -95,7 +95,8 @@ let rec smt_of_exp a =
 	| CP.ListLength _
 	| CP.ListAppend _
 	| CP.ListReverse _ -> failwith ("[smtsolver.ml]: ERROR in constraints (lists should not appear here)")
-	| CP.ArrayAt (a, i, l) -> "(select " ^ (smt_of_spec_var a) ^ " " ^ (smt_of_exp i) ^ ")"
+	| CP.ArrayAt (a, i, l) -> 
+		"(select " ^ (smt_of_spec_var a) ^ " " ^ (String.concat " " (List.map smt_of_exp i)) ^ ")"
 
 let rec smt_of_b_formula b =
 	let (pf,_) = b in
@@ -254,7 +255,7 @@ and collect_exp_info e = match e with
 	| CP.ListLength _
 	| CP.ListAppend _
 	| CP.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-	| CP.ArrayAt (_,i,_) -> collect_exp_info i
+	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =
 	{is_linear = if1.is_linear && if2.is_linear;
