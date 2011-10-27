@@ -704,14 +704,24 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-	let input = to_smt ante (Some conseq) prover in
-	let output = run prover input in
-	let res = match output.sat_result with
-		| Sat -> false
-		| UnSat -> true
-		| Unknown -> try Omega.imply ante conseq "" !timeout with | _ -> false in
-	let _ = process_stdout_print ante conseq input output res in
+	let res, should_run_smt = if (has_exists conseq) then
+		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
+	else (false, true) in
+	if (should_run_smt) then
+		let input = to_smt ante (Some conseq) prover in
+		let output = run prover input in
+		let res = match output.sat_result with
+			| Sat -> false
+			| UnSat -> true
+			| Unknown -> try Omega.imply ante conseq "" !timeout with | _ -> false in
+		let _ = process_stdout_print ante conseq input output res in
+			res
+	else
 		res
+		
+and has_exists conseq = match conseq with
+	| CP.Exists _ -> true
+	| _ -> false
 
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
