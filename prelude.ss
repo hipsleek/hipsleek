@@ -93,12 +93,12 @@ bool eq___(bool a, bool b)
   case {
     a = b -> ensures res;
     a != b -> ensures !res;}
-
+/*
 bool eq___(float a, float b) 
   case {
     a = b -> ensures res;
     a != b -> ensures !res;}
-
+*/
 bool neq___(int a, int b) 
   case {
     a = b -> ensures !res;
@@ -107,43 +107,43 @@ bool neq___(int a, int b)
 bool neq___(bool a, bool b) case {
     a = b -> ensures !res;
     a != b -> ensures res;}
-
+/*
 bool neq___(float a, float b) case {
     a = b -> ensures !res;
     a != b -> ensures res;}
-
+*/
 bool lt___(int a, int b) case {
     a <  b -> ensures  res;
     a >= b -> ensures !res;}
-
+/*
 bool lt___(float a, float b) case {
     a <  b -> ensures  res;
     a >= b -> ensures !res;}
-
+*/
 bool lte___(int a, int b) case {
     a <= b -> ensures  res;
     a >  b -> ensures !res;}
-
+/*
 bool lte___(float a, float b) case {
     a <= b -> ensures  res;
     a >  b -> ensures !res;}
-
+*/
 bool gt___(int a, int b) case {
     a >  b -> ensures  res;
     a <= b -> ensures !res;}
-
+/*
 bool gt___(float a, float b) case {
     a >  b -> ensures  res;
     a <= b -> ensures !res;}
-
+*/
 bool gte___(int a, int b) case {
     a >= b -> ensures  res;
     a <  b -> ensures !res;}
-
+/*
 bool gte___(float a, float b) case {
     a >= b -> ensures  res;
     a <  b -> ensures !res;}
-
+*/
 bool land___(bool a, bool b) case {
   a -> case { b -> ensures res; 
               !b -> ensures !res;}

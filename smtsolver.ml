@@ -408,23 +408,23 @@ let prover_process = ref {
 	errchannel = stdin 
 }
 
-let path_to_z3 = "/home/chanhle/hg/slicing_z3/sleekex/z3/z3"
+let path_to_z3 = "/home/chanhle/hg/slicing_z3/sleekex/z3/z3/bin/z3" (*"z3"*)
   
 let command_for prover =
 	match prover with
-	| Z3 -> ("z3", [|path_to_z3; "-smt2"; infile; ("> "^ outfile) |] )
-	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
-	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
+	| Z3 -> ("z3", path_to_z3, [|"z3"; "-smt2"; infile; ("> "^ outfile)|] )
+	| Cvc3 -> ("cvc3", "cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
+	| Yices -> ("yices", "yices", [|"yices"; infile; ("> "^ outfile)|])
 
 (* Runs the specified prover and returns output *)
 let run prover input =
 	let out_stream = open_out infile in
 	output_string out_stream input;
 	close_out out_stream;
-	let (cmd, cmd_arg) = command_for prover in
+	let (cmd, path, cmd_arg) = command_for prover in
 	let set_process proc = prover_process := proc in
 	let fnc () = 
-		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
+		let _ = Procutils.PrvComms.start false stdout (cmd, path, cmd_arg) set_process (fun () -> ()) in
 			get_answer !prover_process.inchannel in
 	let res = try
 			Procutils.PrvComms.maybe_raise_timeout fnc () !timeout 
@@ -744,7 +744,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 	let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
-	(* let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in *)
+	(*let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in*)
 		res
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
