@@ -5616,36 +5616,70 @@ let rec break_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_formula f
 	| Exists (_, f, _, _) -> break_formula f
 
-let rec fv_with_slicing_label f = (* OUT: (non-linking vars, linking vars) of formula *) 
+let rec fv_with_slicing_label_old f = (* OUT: (non-linking vars, linking vars) of formula *) 
   match f with
 	| BForm (bf, _) -> bfv_with_slicing_label bf
 	| And (f1, f2, _) ->
-	    let (vs1, lkl1) = fv_with_slicing_label f1 in
-	    let (vs2, lkl2) = fv_with_slicing_label f2 in
+	    let (vs1, lkl1) = fv_with_slicing_label_old f1 in
+	    let (vs2, lkl2) = fv_with_slicing_label_old f2 in
 	    let vs = Gen.BList.remove_dups_eq eq_spec_var (vs1 @ vs2) in
-	    let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in (* linking vars in f1 becomes non-linking vars *)
+	    let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in (* linking vars in f1 becomes non-linking vars -- NOT GOOD *)
 	    let n_lkl2 = Gen.BList.difference_eq eq_spec_var lkl2 vs1 in
 	    let lkl = Gen.BList.remove_dups_eq eq_spec_var (n_lkl1 @ n_lkl2) in
 	    (vs,lkl)
 	| Or (f1, f2, _, _) ->
-		let (vs1, lkl1) = fv_with_slicing_label f1 in
-		let (vs2, lkl2) = fv_with_slicing_label f2 in
+		let (vs1, lkl1) = fv_with_slicing_label_old f1 in
+		let (vs2, lkl2) = fv_with_slicing_label_old f2 in
 		let vs = Gen.BList.remove_dups_eq eq_spec_var (vs1 @ vs2) in
 		let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in
 		let n_lkl2 = Gen.BList.difference_eq eq_spec_var lkl2 vs1 in
 		let lkl = Gen.BList.remove_dups_eq eq_spec_var (n_lkl1 @ n_lkl2) in
 		(vs,lkl)
-	| Not (f, _, _) -> fv_with_slicing_label f
+	| Not (f, _, _) -> fv_with_slicing_label_old f
 	| Forall (sv, f, _, _) ->
-		let (vs, lkl) = fv_with_slicing_label f in
+		let (vs, lkl) = fv_with_slicing_label_old f in
 		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
 		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
 		(n_vs, n_lkl)
 	| Exists (sv, f, _, _) ->
-		let (vs, lkl) = fv_with_slicing_label f in
+		let (vs, lkl) = fv_with_slicing_label_old f in
 		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
 		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
 		(n_vs, n_lkl)
+
+and fv_with_slicing_label_new f = (* OUT: (non-linking vars, linking vars) of formula *) 
+  match f with
+	| BForm (bf, _) -> bfv_with_slicing_label bf
+	| And (f1, f2, _) ->
+	    let (vs1, lkl1) = fv_with_slicing_label_new f1 in
+	    let (vs2, lkl2) = fv_with_slicing_label_new f2 in
+	    let lkl = Gen.BList.remove_dups_eq eq_spec_var (lkl1 @ lkl2) in (* non-linking vars should be maintained *)
+	    let n_vs1 = Gen.BList.difference_eq eq_spec_var vs1 lkl2 in 
+	    let n_vs2 = Gen.BList.difference_eq eq_spec_var vs2 lkl1 in
+	    let vs = Gen.BList.remove_dups_eq eq_spec_var (n_vs1 @ n_vs2) in
+	    (vs,lkl)
+	| Or (f1, f2, _, _) ->
+		let (vs1, lkl1) = fv_with_slicing_label_new f1 in
+		let (vs2, lkl2) = fv_with_slicing_label_new f2 in
+		let lkl = Gen.BList.remove_dups_eq eq_spec_var (lkl1 @ lkl2) in
+		let n_vs1 = Gen.BList.difference_eq eq_spec_var vs1 lkl2 in
+		let n_vs2 = Gen.BList.difference_eq eq_spec_var vs2 lkl1 in
+		let vs = Gen.BList.remove_dups_eq eq_spec_var (n_vs1 @ n_vs2) in
+		(vs,lkl)
+	| Not (f, _, _) -> fv_with_slicing_label_new f
+	| Forall (sv, f, _, _) ->
+		let (vs, lkl) = fv_with_slicing_label_new f in
+		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+		(n_vs, n_lkl)
+	| Exists (sv, f, _, _) ->
+		let (vs, lkl) = fv_with_slicing_label_new f in
+		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+		(n_vs, n_lkl)
+
+and fv_with_slicing_label f =
+  fv_with_slicing_label_new f
 
 and bfv_with_slicing_label bf =
   Gen.Debug.no_1 "bfv_with_slicing_label" !print_b_formula
