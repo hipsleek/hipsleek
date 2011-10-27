@@ -2285,6 +2285,7 @@ let reset_changed f = List.map (fun c-> {c with memo_group_changed = false}) f
 type mix_formula = 
   | MemoF of memo_pure
   | OnePF of formula
+  | DisjMemoF of memo_pure list
   
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
 
