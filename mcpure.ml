@@ -2285,7 +2285,7 @@ let reset_changed f = List.map (fun c-> {c with memo_group_changed = false}) f
 type mix_formula = 
   | MemoF of memo_pure
   | OnePF of formula
-  | DisjMemoF of memo_pure list
+  (*| DisjMemoF of memo_pure list*)
   
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
 
@@ -2555,10 +2555,13 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 	(is_ineq_linking_memo_group mg) &&
 	(List.exists (fun mc ->
 	  let bf = mc.memo_formula in
-	  let fv = match (get_bform_neq_args_with_const bf) with
+	  (*let fv = match (get_bform_neq_args_with_const bf) with
 		| Some (v1, v2) -> [v1; v2]
 		| None -> []
-	  in Gen.BList.subset_eq eq_spec_var fv ls	  
+	  in Gen.BList.subset_eq eq_spec_var fv ls*)
+	  match (get_bform_neq_args_with_const bf) with
+		| Some (v1, v2) -> Gen.BList.subset_eq eq_spec_var [v1; v2] ls 
+		| None -> false
 	) mg.memo_group_cons)) mem
  
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =

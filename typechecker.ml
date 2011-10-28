@@ -77,7 +77,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	  | Cformula.EAssume (x,b,y) ->
             let _ = set_post_pos (CF.pos_of_formula b) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
-	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
+	        let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in
 	        if (Cformula.isAnyFalseCtx ctx1) then
 		      let _ = print_string ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 				  (Cprinter.string_of_context_short ctx)) in 
