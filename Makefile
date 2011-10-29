@@ -148,7 +148,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 	rlparser.cmo rllexer.cmo \
   ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo\
+	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \

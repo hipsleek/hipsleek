@@ -2133,6 +2133,9 @@ let start_prover () =
 	  Mona.start();
 	  Omega.start();
 	end
+  | Z3 ->
+      Smtsolver.start();
+      Omega.start()
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2160,11 +2163,14 @@ let stop_prover () =
 	        Omega.stop();
 	      end
     | Mona -> Mona.stop();
-	| OM ->
+    | OM ->
 	  begin
 		Mona.stop();
 		Omega.stop();
 	  end
+    | Z3 ->
+      Smtsolver.stop();
+      Omega.stop()	  
     | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096
