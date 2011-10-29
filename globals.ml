@@ -284,7 +284,7 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
-let enable_sat_statistics = ref false
+(* let enable_sat_statistics = ref false *)
 
 let wrap_exists_implicit_explicit = ref false
 
@@ -300,7 +300,7 @@ let print_err_sleek = ref false
 
 let enable_prune_cache = ref true
 
-let enable_counters = ref true
+let enable_counters = ref false
 
 let enable_fast_imply = ref false
 

@@ -1212,7 +1212,7 @@ object (self)
   method string_of : string= 
     let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
     let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
-    "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+    "Counters: \n"^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
 end;;
 
 class task_table =
@@ -1240,7 +1240,7 @@ object
             else "")^"],  "^(fp (t/.ot))^"%)") in
         ((a1+1),r) 
     ) (0,"") str_list in
-    print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) 
+    print_string ("\nProfiling Results: " ^(string_of_int cnt)^" keys."^str^"\n" ) 
 end;;
 
 
@@ -1270,7 +1270,8 @@ struct
 
   let push_time msg = 
     if (!Globals.profiling) then
-      (inc_counter ("cnt_"^msg);
+      (
+      (* inc_counter ("cnt_"^msg); *)
       let timer = get_time () in
 	  profiling_stack#push (msg, timer,true) )
 	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
@@ -1296,6 +1297,11 @@ struct
     else ()
 
  let print_info () = if (!Globals.profiling) then  tasks # print else ()
+
+ let print_counters_info () =
+      if !Globals.enable_counters then
+        print_string (string_of_counters ())
+      else () 
 
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
     try

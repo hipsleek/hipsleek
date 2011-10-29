@@ -243,7 +243,11 @@ let finalize () =
 let _ = 
   try
     main1 ();
-    let _ = print_string (Gen.Profiling.string_of_counters ()) in
+    (* let _ =  *)
+    (*   if !Global.enable_counters then *)
+    (*     print_string (Gen.Profiling.string_of_counters ()) *)
+    (*   else () in *)
+    let _ = Gen.Profiling.print_counters_info () in
     let _ = Gen.Profiling.print_info () in
     ()
   with _ as e -> begin

@@ -39,8 +39,8 @@ void append(node x, node y)
 //  requires x::lseg<p,n>@I * p::node<v,null>
 //  ensures p::node<v,y>;
 
-//  requires x::ll<n> * y::ll<m> & n>0
-//  ensures x::ll<n+m>;
+  requires x::ll<n> * y::ll<m> & x!=null //& n>0
+  ensures x::ll<n+m>;
 
 //  requires x::lseg<p,n> * p::node<v,null>
 //  ensures x::lseg<p,n> * p::node<v,y>;
@@ -48,8 +48,8 @@ void append(node x, node y)
   requires x::lseg<null, n> & x!=null 
   ensures x::lseg<y, n> ;
 
-/*  requires x::lseg<null, n> & y=x & x!=null
-  ensures x::cll<n>; */
+  requires x::lseg<null, n> & y=x & x!=null
+  ensures x::cll<n>; 
 
 {
 	if (x.next!=null) {

@@ -143,10 +143,13 @@ let common_arguments = [
 	"<host:port>: use external prover via socket");
 	("--prover", Arg.String Tpdispatcher.set_tp, 
 	"<p,q,..> comma-separated list of provers to try in parallel");
-	("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, 
-	"enable sat statistics");
-	("--epi", Arg.Set Globals.profiling, 
+	(* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
+	(* "enable sat statistics"); *)
+	("--ep-stat", Arg.Set Globals.profiling, 
 	"enable profiling statistics");
+    ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
+	("--e-stat", (Arg.Set Globals.profiling; Arg.Set Globals.enable_counters), 
+	"enable all statistics");
 	("--sbc", Arg.Set Globals.enable_syn_base_case, 
 	"use only syntactic base case detection");
 	("--eci", Arg.Set Globals.enable_case_inference,
@@ -194,7 +197,6 @@ let common_arguments = [
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
     ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
-    ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
     ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");

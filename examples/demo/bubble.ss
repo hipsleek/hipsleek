@@ -32,9 +32,9 @@ bool bubble(node xs)
 	ensures xs::sll<n, s, l> & !res
     or  xs::ll<n> & res;
 
-/*	requires xs::ll1<S> & S != {}
+	requires xs::ll1<S> & S != {}
 	ensures xs::sll1<S> & !res
-    or  xs::ll1<S> & res ;*/
+    or  xs::ll1<S> & res ;
 
 {
 	int aux, tmp1;
