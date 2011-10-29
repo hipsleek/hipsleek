@@ -1,4 +1,4 @@
-heap_entail_struc_list_failesc_context_init (* called in Typechecker.check_exp *)
+heap_entail_struc_list_failesc_context_init (* called in Typechecker.check_exp *) (* f = heap_entail_one_context_struc_nth *)
 	|-> heap_entail_failesc_prefix_init 
 		|-> heap_entail_agressive_prunning  
 			|-> heap_entail_struc_list_failesc_context (* called in Typechecker *)
@@ -6,7 +6,7 @@ heap_entail_struc_list_failesc_context_init (* called in Typechecker.check_exp *
 					|-> heap_entail_one_context_struc_nth
 						|-> heap_entail_one_context_struc_x
 							|-> heap_entail_after_sat_struc (* OCtx *)
-								|-> heap_entail_conjunct_lhs_struc
+								|-> heap_entail_conjunct_lhs_struc (* work on struc_formula *)
 									|-> heap_entail_one_context
 										|-> heap_entail_after_sat (* OCtx *)
 											|-> heap_entail_conjunct_lhs = heap_entail_conjunct_lhs_x

@@ -77,7 +77,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	  | Cformula.EAssume (x,b,y) ->
             let _ = set_post_pos (CF.pos_of_formula b) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
-	        let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in
+	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
 	        if (Cformula.isAnyFalseCtx ctx1) then
 		      let _ = print_string ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 				  (Cprinter.string_of_context_short ctx)) in 
@@ -107,7 +107,13 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   in	
   List.for_all do_spec_verification spec_list
 
-and check_exp prog proc ctx e0 label = Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+and check_exp prog proc ctx e0 label =
+  Gen.Debug.no_3 "check_exp"
+	(fun proc -> proc.proc_name)
+	(Cprinter.string_of_list_failesc_context)
+	(Cprinter.string_of_exp)
+	(Cprinter.string_of_list_failesc_context)
+	(fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
@@ -441,6 +447,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			    let _ = String.blit mn 0 new_mn 0 l in
 			    let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
 			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
+
+			  (*let _ = print_string ("\ncheck_pre_post: sctx: " ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
 			  let sctx = List.map
 				(fun fctx -> let (lb,estk,lbctx) = fctx in
 				let nlbctx = List.map
@@ -448,6 +456,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				  let nctx = CF.transform_context
 					(fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst}) ctx in (pt,nctx)) lbctx in
 				(lb,estk,nlbctx)) sctx in
+			  (*let _ = print_string ("\ncheck_pre_post: sctx': " ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
 
 			  
 			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec1: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
@@ -471,7 +480,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                 (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;
-	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+			  (*let _ = print_string (to_print ^ "\n") in*)
+			  let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
             (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
 		      let _ = PTracer.log_proof prf in
               (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)

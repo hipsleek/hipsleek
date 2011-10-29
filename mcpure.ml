@@ -988,7 +988,7 @@ and merge_mems_nx_slicing (l1: memo_pure) (l2: memo_pure) slice_check_dups : mem
 		  let merged, un_merged = List.partition
 			(fun d -> 
 			  let dfv = Gen.BList.difference_eq eq_spec_var d.memo_group_fv d.memo_group_linking_vars in (* ignore linking vars *)
-			(*(List.length(Gen.BList.intersect_eq eq_spec_var dfv cfv))>0) a in*)
+			  (*(List.length(Gen.BList.intersect_eq eq_spec_var dfv cfv))>0) a in*)
 			  Gen.BList.overlap_eq eq_spec_var dfv cfv) a in
   let n1, n5, n2, n3, n4 = List.fold_left
 	(fun (a1,a5,a2,a3,a4) d ->
@@ -1023,7 +1023,7 @@ and merge_mems_nx_slicing (l1: memo_pure) (l2: memo_pure) slice_check_dups : mem
 	  }
 	else c in
   ng::un_merged) l2 l1 in
-  r
+r
       
 and memoise_add_failed_memo (l:memo_pure) (p:b_formula) : memo_pure = 
   merge_mems l (create_memo_group_wrapper [p] Implied_R) false
@@ -1757,8 +1757,29 @@ let memo_change_status cons l =
     ) grp lcns
   ) l
   
-let memo_find_relevant_slice fv l = List.find (fun d -> Gen.BList.subset_eq eq_spec_var fv d.memo_group_fv) l 
+let memo_find_relevant_slice_orig fv l = List.find (fun d -> Gen.BList.subset_eq eq_spec_var fv d.memo_group_fv) l
 
+let memo_find_relevant_slice_slicing fv l =
+  let rs = List.find (fun d -> Gen.BList.subset_eq eq_spec_var fv d.memo_group_fv) l in
+  List.fold_left (fun acc s ->
+	{ memo_group_fv = acc.memo_group_fv @ s.memo_group_fv;
+	  memo_group_linking_vars = [];
+	  memo_group_cons = acc.memo_group_cons @ s.memo_group_cons;
+	  memo_group_slice = acc.memo_group_slice @ s.memo_group_slice;
+	  memo_group_changed = acc.memo_group_changed || s.memo_group_changed;
+	  memo_group_aset = EMapSV.merge_eset acc.memo_group_aset s.memo_group_aset;
+	}
+  ) rs l
+
+let memo_find_relevant_slice fv l =
+  memo_find_relevant_slice_orig fv l
+  (*
+  if !do_slicing then
+	memo_find_relevant_slice_slicing fv l
+  else
+	memo_find_relevant_slice_orig fv l
+  *)
+  
 let memo_find_relevant_slices fv l = List.filter (fun d ->  Gen.BList.overlap_eq eq_spec_var fv d.memo_group_fv) l
 
 let memo_get_asets fv l = 
@@ -2563,6 +2584,7 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 		| Some (v1, v2) -> Gen.BList.subset_eq eq_spec_var [v1; v2] ls 
 		| None -> false
 	) mg.memo_group_cons)) mem
+  
  
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   Gen.Debug.no_1 "exists_contradiction_eq"
