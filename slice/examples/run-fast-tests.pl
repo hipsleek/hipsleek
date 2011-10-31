@@ -23,7 +23,9 @@ GetOptions( "stop"  => \$stop,
             "term" => \$term,
             "lists" => \$lists,
 			"slicing" => \$slicing,
-			"small" => \$small
+			"small" => \$small,
+			"pldi" => \$pldi,
+			"stat" => \$stat
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
@@ -93,7 +95,11 @@ if($home21){
 
 if($timings){
     my $parser = new Spreadsheet::ParseExcel::SaveParser;
-    $timings_logfile = "timings_log.xls";
+    if ($pldi) {
+		$timings_logfile = "timings_log_pldi.xls";
+	} else {
+		$timings_logfile = "timings_log.xls";
+	}
     if(-e "$timings_logfile") {#check for file existance
         $book = $parser->Parse("$timings_logfile") #open file for appending
             or die "File $timings_logfile was not found";
@@ -811,6 +817,118 @@ $output_file = "log";
           "decrease2","SUCCESS",
 		  "main","SUCCESS"
 		 ]
+	],
+	"pldi" => [
+		["bigint-unique-zero.ss", 18, "-tp redlog",
+		 "div_with_remainder", "SUCCESS",
+		 "compare_int", "SUCCESS",
+		 "compare", "SUCCESS",
+		 "is_equal", "SUCCESS",
+		 "is_zero", "SUCCESS",
+		 "karatsuba_mult", "SUCCESS",
+		 "mult", "SUCCESS",
+		 "shift_left", "SUCCESS",
+		 "mult_c", "SUCCESS",
+		 "sub", "SUCCESS",
+		 "sub_c", "SUCCESS",
+		 "sub_one_digit", "SUCCESS",
+		 "add", "SUCCESS",
+		 "add_c", "SUCCESS",
+		 "add_one_digit", "SUCCESS",
+		 "bigint_of", "SUCCESS",
+		 "int_value", "SUCCESS",
+		 "clone", "SUCCESS"
+		],
+		["avl_size_height.ss", 12, "",  
+			"height", "SUCCESS",
+			"rotate_left", "SUCCESS",
+			"rotate_right", "SUCCESS",
+			"get_max", "SUCCESS",
+			"rotate_double_left", "SUCCESS",
+			"rotate_double_right", "SUCCESS",
+			"build_avl1", "SUCCESS",
+			"build_avl2", "SUCCESS",
+			"insert", "SUCCESS",
+			"insert_inline", "SUCCESS",
+			"merge", "SUCCESS",
+			"remove_min","SUCCESS"
+			#"delete","SUCCESS"
+		],
+		["avl_size_height_bal.ss", 7, "",  
+			"height", "SUCCESS",
+			"get_max", "SUCCESS",
+			"insert", "SUCCESS",
+			"double_left_child", "SUCCESS",
+			"double_right_child", "SUCCESS",
+			"rotate_left_child", "SUCCESS",
+			"rotate_right_child", "SUCCESS"
+		],
+		["avl_size_height_bags.ss", 13, "-tp om",  
+			"height", "SUCCESS",
+			"rotate_left", "SUCCESS",
+			"rotate_right", "SUCCESS",
+			"get_max", "SUCCESS",
+			"rotate_double_left", "SUCCESS",
+			"rotate_double_right", "SUCCESS",
+			"insert", "SUCCESS",
+			"remove_min_add", "SUCCESS",
+			"remove_max_add", "SUCCESS",
+			"remove_min", "SUCCESS",
+			"delete_top", "SUCCESS",
+			"delete", "SUCCESS",
+			"main","SUCCESS"
+		],
+		["bsort_size_bags.ss", 2, "-tp om",  
+			"bsort", "SUCCESS",
+			"bubble", "SUCCESS"
+		],
+		["qsort_size_bags.ss", 3, "-tp om",  
+			"qsort1", "SUCCESS",
+			"append_bll1", "SUCCESS",
+		    "partition1", "SUCCESS"
+		],
+		["msort_size_bags.ss", 5, "-tp om",  
+			"insert1", "SUCCESS",
+			"merge1", "SUCCESS",
+		    "merge_sort1", "SUCCESS",
+		    "split1", "SUCCESS",
+		    "count1", "SUCCESS"
+		],
+		["complete_size_minheight.ss", 5, "",  
+			"insert", "SUCCESS",
+			"min_height", "SUCCESS",
+		    "height", "SUCCESS",
+		    "minim", "SUCCESS",
+		    "maxim", "SUCCESS"
+		],
+		["heaps_size_maxelem.ss", 5, "",  
+			"deletemax", "SUCCESS",
+			"ripple", "SUCCESS",
+		    "deleteone", "SUCCESS",
+		    "deleteoneel", "SUCCESS",
+		    "insert", "SUCCESS"
+		],
+		["rb_size_height.ss", 19, "",
+		    "insert", "SUCCESS",
+		    "del", "SUCCESS",
+		    "remove_min", "SUCCESS",
+		    "del_2r", "SUCCESS",
+		    "del_2", "SUCCESS",
+		    "del_3r", "SUCCESS",
+		    "del_3", "SUCCESS",
+		    "del_4r", "SUCCESS",
+		    "del_4", "SUCCESS",
+		    "del_5r", "SUCCESS",
+		    "del_5", "SUCCESS",
+		    "del_6r", "SUCCESS",
+		    "del_6", "SUCCESS",
+		    "is_black", "SUCCESS",
+		    "is_red", "SUCCESS",
+		    "case_2r", "SUCCESS",
+		    "rotate_case_3r", "SUCCESS",
+		    "case_2", "SUCCESS",
+		    "rotate_case_3", "SUCCESS"
+		]
 	]
     );
 
@@ -931,7 +1049,10 @@ sub hip_process_file {
         }elsif ("$param" =~ "small") {
             $exempl_path_full = "$exempl_path/slicing_small_examples";
             print "Starting slicing tests for small examples:\n";
-        }
+        }elsif ("$param" =~ "pldi") {
+            $exempl_path_full = "$exempl_path/pldi_benchs";
+            print "Starting automatic slicing experiment for PLDI paper:\n";
+		}
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
 		{
@@ -959,6 +1080,15 @@ sub hip_process_file {
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
             }
+			if($stat) {
+				open TMP, ">", "temp" or die ("Could not open temp.\n");
+				open STAT, ">", "$exempl_path_full/$test->[0].stat" or die ("Could not open stat file.\n");
+				print TMP "$output";
+				$stat_info = `grep stat_ < temp`;
+				print STAT $stat_info;
+				close (TMP);
+				close (STAT);
+			}
         }
     }
 }

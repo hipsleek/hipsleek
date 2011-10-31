@@ -325,6 +325,7 @@ let get_vars_formula (p : formula):(bool * string list) =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
+  Gen.Profiling.inc_counter "stat_omega_count_sat";
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
@@ -371,6 +372,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
+	let _ = Gen.Profiling.inc_counter "stat_omega_count_valid" in
       let safe,pvars = get_vars_formula pe in
       if not safe then true else
         begin
@@ -412,6 +414,7 @@ let is_valid (pe : formula) timeout: bool =
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) (timeout:float) : bool =
   (*print_endline "LOCLE: imply";*)
+  Gen.Profiling.inc_counter "stat_omega_count_imply";
   incr test_number;
   (*
     let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
