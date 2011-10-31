@@ -20,6 +20,7 @@ and prog_decl = {
     mutable prog_data_decls : data_decl list;
 	mutable prog_view_decls : view_decl list;
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
 	prog_proc_decls : proc_decl list;
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
@@ -87,6 +88,11 @@ and rel_decl = {
        rel_prune_conditions: (P.b_formula * (formula_label list)) list;
        rel_prune_invariants : (formula_label list * P.b_formula list) list ;
        rel_raw_base_case: Cformula.formula option; *)}
+
+(** An Hoa : axiom *)
+and axiom_decl = {
+		axiom_hypothesis : P.formula;
+		axiom_conclusion : P.formula; }
     
 and proc_decl = { 
     proc_name : ident;
@@ -137,7 +143,7 @@ and sharp_val =
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
-   exp_arrayat_array_name : ident; (* Name of the array *)
+   exp_arrayat_array_base : ident; (* Name of the array *)
    exp_arrayat_index : exp; (* Integer valued expression for the index *)
    exp_arrayat_pos : loc; } *)
 
@@ -863,7 +869,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Assert _ -> []
 	(* AN HOA *)
 	(*| ArrayAt ({exp_arrayat_type = _;
-			 exp_arrayat_array_name = _;
+			 exp_arrayat_array_base = _;
 			 exp_arrayat_index = e;
 			 exp_arrayat_pos = _; }) -> callees_of_exp e*)
 	(*| ArrayMod ({exp_arraymod_lhs = l;

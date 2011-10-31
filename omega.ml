@@ -410,7 +410,7 @@ let is_valid (pe : formula) timeout: bool =
         end
   end
 
-let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+let imply (ante : formula) (conseq : formula) (imp_no : string) (timeout:float) : bool =
   (*print_endline "LOCLE: imply";*)
   incr test_number;
   (*

@@ -93,7 +93,7 @@ if($home21){
 
 if($timings){
     my $parser = new Spreadsheet::ParseExcel::SaveParser;
-    $timings_logfile = "timings_log.xls";
+    $timings_logfile = "timings_log_avl.xls";
     if(-e "$timings_logfile") {#check for file existance
         $book = $parser->Parse("$timings_logfile") #open file for appending
             or die "File $timings_logfile was not found";

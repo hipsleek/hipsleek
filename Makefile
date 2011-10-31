@@ -9,7 +9,7 @@ INCLUDES=-I ./xml -I +ocamlgraph -I +camlp4
 GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
-OCAMLFLAGS=  $(INCLUDES) # add other options for ocamlc here
+OCAMLFLAGS=  $(INCLUDES) -g# add other options for ocamlc here
 GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
 OCAMLOPTFLAGS= -annot $(INCLUDES) -g # add other options for ocamlopt here
 # removed -p from above as it seems related to profiling..
@@ -148,7 +148,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo
 	rlparser.cmo rllexer.cmo \
   ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo\
+	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \

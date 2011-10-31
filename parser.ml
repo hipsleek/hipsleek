@@ -21,6 +21,7 @@ open Gen.Basic
   type decl = 
     | Type of type_decl
     | Rel of rel_decl (* An Hoa *)
+    | Axm of axiom_decl (* An Hoa *)
     | Global_var of exp_var_decl
     | Proc of proc_decl
     | Coercion of coercion_decl
@@ -365,7 +366,7 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> ()
+             |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
 (* Slicing Utils *)
@@ -450,6 +451,7 @@ non_empty_command:
       | `PRED;t=view_decl     -> PredDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
+	  | `AXIOM;t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
       | t=captureresidue_cmd  -> CaptureResidue t
@@ -895,8 +897,7 @@ cexp_w :
       | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
-      |  i=cid; `OSQUARE; c=cexp; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
-
+     |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
       | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
         -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
       | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
@@ -992,8 +993,8 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> t
-    | t=non_array_type -> t]];
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+    | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
   [[ `INT                -> int_type
@@ -1074,8 +1075,9 @@ opt_fct_list:[[ t = OPT fct_list -> []]];
 
 (************ An Hoa :: Relations ************)
 rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
-	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *)}
-  
+	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *) }
+	(* [4/10/2011] allow for declaration of relation without body; such relations are constant true and need to be axiomatized using axioms declarations. *)
+	| rh=rel_header -> rh
   | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
 ]];
 
@@ -1096,13 +1098,18 @@ rel_header:[[
 		let modes = get_modes anns in *)
 		  { rel_name = id;
 			rel_typed_vars = tl;
-			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
-			}
+			rel_formula = P.mkTrue no_pos; (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)}
 ]];
 
 rel_body:[[ (* formulas { 
     ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) } *)
 	pc=pure_constr -> pc (* Only allow pure constraint in relation definition. *)
+]];
+
+axiom_decl:[[
+	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
+		{ axiom_hypothesis = lhs;
+		  axiom_conclusion = rhs; }
 ]];
 
  (*end of sleek part*)   
@@ -1114,6 +1121,7 @@ hprogn:
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
 	  let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
+	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
       let hopred_defs = ref ([] : hopred_decl list) in
@@ -1126,6 +1134,7 @@ hprogn:
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
           end
         | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
+        | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
       | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
@@ -1146,6 +1155,7 @@ hprogn:
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
       prog_rel_decls = !rel_defs; (* An Hoa *)
+      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
       prog_hopred_decls = !hopred_defs;} ]];
@@ -1155,6 +1165,7 @@ opt_decl_list: [[t=LIST0 decl -> t]];
 decl:
   [[ t=type_decl                  -> Type t
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
+  |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  p=proc_decl                  -> Proc p
   | `COERCION; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
@@ -1567,11 +1578,18 @@ object_or_delegate_creation_expression:
   [[ `NEW; `IDENTIFIER id; `OPAREN; al=opt_argument_list; `CPAREN ->
       New { exp_new_class_name = id;
             exp_new_arguments = al;
-            exp_new_pos = get_pos_camlp4 _loc 1 }]];
+            exp_new_pos = get_pos_camlp4 _loc 1 }
+	(* An Hoa : Array allocation. *)
+	| `NEW; `INT; `OSQUARE; al = argument_list; `CSQUARE ->
+		ArrayAlloc { exp_aalloc_etype_name = "int";
+					 exp_aalloc_dimensions = al;
+					 exp_aalloc_pos = get_pos_camlp4 _loc 1; } ]];
 
 new_expression: [[t=object_or_delegate_creation_expression -> t]];
 
 opt_argument_list : [[t= LIST0 argument SEP `COMMA -> t]];
+
+argument_list : [[t= LIST1 argument SEP `COMMA -> t]];
 
 (* opt_argument_list : [[ t = OPT argument_list -> un_option t [] ]];
 
@@ -1744,6 +1762,10 @@ primary_expression :
 parenthesized_expression : [[`OPAREN; e= expression; `CPAREN -> e]];
 
 primary_expression_no_parenthesis :
+	[[ peek_array_type; t = arrayaccess_expression -> t
+	|  t = primary_expression_no_array_no_parenthesis -> t ]];
+
+primary_expression_no_array_no_parenthesis :
  [[ t= literal -> t
   (*| t= member_access -> t*)
   (*| t= member_name -> t*) 
@@ -1754,10 +1776,8 @@ primary_expression_no_parenthesis :
            exp_member_pos = get_pos_camlp4 _loc 3 }
   | t = invocation_expression -> t
   | t = new_expression -> t
-  | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}
-			
-  | peek_array_type; t = arrayaccess_expression -> t   (* An Hoa *)]
-	(** An Hoa [26/08/2011] Fix the variable field access **)
+  | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1} 
+  ]
   | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *)
 		let pos = get_pos_camlp4 _loc 1 in
 		let res = if (String.contains id '.') then (* Identifier contains "." ==> this must be field access. *)
@@ -1777,9 +1797,9 @@ primary_expression_no_parenthesis :
 
 (* An Hoa : array access expression *)
 arrayaccess_expression:[[
-             `IDENTIFIER id; `OSQUARE; ex=expression; `CSQUARE ->
+             id=primary_expression_no_array_no_parenthesis; `OSQUARE; ex = LIST1 expression SEP `COMMA; `CSQUARE ->
 			ArrayAt { 
-				exp_arrayat_array_name = id; 
+				exp_arrayat_array_base = id; 
 				exp_arrayat_index = ex; 
 				exp_arrayat_pos = get_pos_camlp4 _loc 1 }
 	         ]];
@@ -1787,7 +1807,7 @@ arrayaccess_expression:[[
 (*  [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos_camlp4 _loc 1 } *)
 (*   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}]]; *)
  
- (*end of hip part*)
+(*end of hip part*)
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s

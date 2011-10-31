@@ -108,6 +108,7 @@ module Make (Token : SleekTokenS)
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
 	 ("assume", ASSUME);
+	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
    ("bagmax", BAGMAX);

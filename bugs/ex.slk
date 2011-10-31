@@ -1,0 +1,9 @@
+checkentail y=1 |- (exists x: x=1).
+
+checkentail y=1 |- x=1.
+
+checkentail y=1 |- (exists x1: x=1 & x1>0).
+
+checkentail y=1 |- x<1 | x>=1.
+
+checkentail y=1 |- (exists x: x=1 & x=2).

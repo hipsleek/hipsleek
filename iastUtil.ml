@@ -40,8 +40,8 @@ let transform_exp
       | Unfold _ 
       | Var _ -> (e,zero)
 			| ArrayAt b -> (* An Hoa *)
-				let e1,r1 = helper n_arg b.exp_arrayat_index  in
-				(ArrayAt { b with exp_arrayat_index = e1;},r1)
+				let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+				(ArrayAt { b with exp_arrayat_index = il;},(comb_f rl))
       | Assign b ->
         let e1,r1 = helper n_arg b.exp_assign_lhs  in
         let e2,r2 = helper n_arg b.exp_assign_rhs  in
@@ -84,6 +84,7 @@ let transform_exp
           exp_cond_else_arm = e3;},r)
       | Finally b ->
 	let e1,r1 = helper n_arg b.exp_finally_body in
+
 	(Finally {b with exp_finally_body=e1},r1)
       | Label (l,b) -> 
         let e1,r1 = helper n_arg b in
@@ -1221,17 +1222,21 @@ let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
+					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
+					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
-  let prog = rename_prog prog in (* AN HOA : FAILURE DETECTED HERE! *) 
+  let prog = rename_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 2\n" in *)
   let prog = add_globalv_to_mth_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 3\n" in *)
   prog
 
-let pre_process_of_iprog prog = 
-  Gen.Debug.no_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
+let pre_process_of_iprog iprims prog = 
+  let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
+  Gen.Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
 
 
 

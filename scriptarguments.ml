@@ -42,11 +42,11 @@ let common_arguments = [
 	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
 	("--ahwytdi", Arg.Set Smtsolver.try_induction,
 	"Try induction in case of failure implication."); (* An Hoa *)
-    ("--smtimply", Arg.Set Smtsolver.print_implication,
+    ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-    ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
+    ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
     "Print the original output given by the SMT solver."); (* An Hoa *)
-    ("--smtinp", Arg.Set Smtsolver.print_input,
+    ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
     "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
@@ -92,6 +92,8 @@ let common_arguments = [
 	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
+    ("--log-z3", Arg.Set Smtsolver.log_all_flag,
+	"Log all formulae sent to z3 in file allinput.z3");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
 	"Log all formulae sent to Isabelle in file allinput.thy");
 	("--log-coq", Arg.Set Coq.log_all_flag,

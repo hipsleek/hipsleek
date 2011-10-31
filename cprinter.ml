@@ -571,7 +571,7 @@ let rec pr_formula_exp (e:P.exp) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
     | P.Null l -> fmt_string "null"
-    | P.Var (x, l) -> fmt_string (string_of_spec_var x)
+    | P.Var (x, l) -> fmt_string (string_of_spec_var x) (*string_of_typed_spec_var*)
     | P.IConst (i, l) -> fmt_int i
     | P.FConst (f, l) -> fmt_float f
     | P.Add (e1, e2, l) -> 
@@ -606,7 +606,13 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
-		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
+		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
+		match i with
+			| [] -> ()
+			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
+		in fmt_string  ("]") (* An Hoa *)
+;;
 
 let pr_slicing_label sl =
   match sl with
@@ -652,7 +658,10 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-			| P.RelForm (r, args, l) -> fmt_string (r ^ "("); let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) args in fmt_string ")" (* An Hoa *) 
+			| P.RelForm (r, args, l) -> fmt_string (r ^ "("); match args with
+				| [] -> ()
+				| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+										let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
 ;;
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
@@ -1621,7 +1630,7 @@ let rec string_of_exp = function
 	        str1 ^ " " ^ str2
 	      end in
 	    string_of_formula_label pid s 
-	(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_name = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+	(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
       a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
 	(*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
       (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
@@ -1826,6 +1835,14 @@ let rec string_of_view_decl_list l = match l with
   | h::t -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
 ;;
 
+(* An Hoa : print relations *)
+let string_of_rel_decl_list rdecls = 
+	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+
+(* An Hoa : print axioms *)
+let string_of_axiom_decl_list adecls = 
+	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
+
 let rec string_of_coerc_decl_list l = match l with
   | [] -> ""
   | h::[] -> string_of_coerc h
@@ -1835,6 +1852,8 @@ let rec string_of_coerc_decl_list l = match l with
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
   (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
