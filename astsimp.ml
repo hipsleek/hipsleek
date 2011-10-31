@@ -3143,9 +3143,10 @@ and default_value (t :typ) pos : C.exp =
     | List _ ->
           failwith "default_value: list can only be used for constraints"
     | Named c -> C.Null pos
-	| Array (t, _) -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos} 
-		  (* An Hoa : TODO add empty array *)
-		  (* failwith "default_value: array cannot be used here!"*)
+	| Array (t, d) ->
+		C.EmptyArray { C.exp_emparray_type = t; 
+						C.exp_emparray_dim = d; 
+						C.exp_emparray_pos = pos}
 
 and sub_type_x (t1 : typ) (t2 : typ) =
   let it1 = trans_type_back t1 in
@@ -3387,7 +3388,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 and trans_type_back (te : typ) : typ =
   match te with 
     | Named n -> Named n 
-    | Array (t, _) -> Array (trans_type_back t, None) (* An Hoa *) 
+    | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
     | p -> p 
 
 and trans_args (args : (C.exp * typ * loc) list) :
@@ -4076,8 +4077,8 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
     | IP.ArrayAt ((a, p), ind, pos) ->
 		let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
-		let rank = List.length ind in (* currently only support int type array *)
-			CP.ArrayAt (CP.SpecVar ((Array (C.int_type, Some rank)), a, p), cpind, pos)
+		let dim = List.length ind in (* currently only support int type array *)
+			CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -4085,12 +4086,7 @@ and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
     | e :: rest -> (trans_pure_exp e stab) :: (trans_pure_exp_list rest stab)
 
 
-and dim_unify d1 d2 =
-  match d1,d2 with
-    | _, None -> Some None
-    | None, _ -> Some None
-    | Some l1, Some l2 -> if (l1==l2) then Some (Some l1)
-      else None
+and dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) stab pos : typ  =
   let pr = string_of_typ in
@@ -4429,13 +4425,13 @@ and gather_type_info_exp_x a0 stab et =
           (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array *)
 		  (* and hence, accessing the element at position i, we get the value of expected_type *)
 		  (* Furthermore, the expression of the index must be of type integer. *)
-		  let rank = List.length idx in
-          let new_et = Array (et, Some rank) in
+		  let dim = List.length idx in
+          let new_et = Array (et, dim) in
           let lt = gather_type_info_var a stab new_et pos in
           let _ = List.map (fun i -> gather_type_info_exp_x i stab Int) idx in
           (match lt with
             | Array (r,_) -> r
-            | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int rank) ^ " but given " ^ (string_of_typ lt)))
+            | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
 		      (* let a_exp_type = match et with *)
 		      (*   | UNK -> UNK *)
 		      (*   | t -> Array (t, None) *)
@@ -4845,7 +4841,7 @@ and collect_type_info_arith a0 stab expected_type =
 		  (* Furthermore, the expression of the index must be of type integer.*)
 		  let a_exp_type = match expected_type with
 			| UNK -> UNK
-			| t -> Array (t, Some (List.length idx))
+			| t -> Array (t, List.length idx)
 		  in
 		  collect_type_info_var a stab a_exp_type pos;
 		  let _ = List.map (fun i -> collect_type_info_arith i stab (C.int_type)) idx in ()

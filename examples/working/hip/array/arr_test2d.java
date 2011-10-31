@@ -5,7 +5,7 @@
 	
 void main() {
 	int[,] A;
-	A[1,1] = 5;
-	int x = A[1,1];
-	assert x = 5;
+	A[1,2] = 5;
+	int x = A[1,2];
+	assert x' = 5;
 }

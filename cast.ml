@@ -269,8 +269,9 @@ and exp_var = { exp_var_type : typ;
     exp_var_name : ident;
     exp_var_pos : loc }
 
-(* An Hoa : Empty array - only for initialization purpose *)		
+(* An Hoa : Empty array - only for initialization purpose *)
 and exp_emparray = { exp_emparray_type : typ;
+	exp_emparray_dim : int;
     exp_emparray_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
@@ -652,7 +653,7 @@ let rec type_of_exp (e : exp) = match e with
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
   | Null _ -> Some (Named "")
-	| EmptyArray b -> Some (Array (b.exp_emparray_type, None)) (* An Hoa *)
+	| EmptyArray b -> Some (Array (b.exp_emparray_type, b.exp_emparray_dim)) (* An Hoa *)
   | Print _ -> None
  (* | Return ({exp_return_type = t; 
 			 exp_return_val = _; 

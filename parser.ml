@@ -951,7 +951,7 @@ non_array_type:
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
-  | *) t=non_array_type; r=rank_specifier -> (* let _ = print_endline ("Array of dimension " ^ (string_of_int r)) in *) Array (t, Some r)]];
+  | *) t=non_array_type; r=rank_specifier -> Array (t, r)]];
 
 rank_specifier:
   [[`OSQUARE; c = OPT comma_list; `CSQUARE -> un_option c 1]];
