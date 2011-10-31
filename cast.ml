@@ -147,7 +147,7 @@ and sharp_val =
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
-   exp_arrayat_array_name : ident; (* Name of the array *)
+   exp_arrayat_array_base : ident; (* Name of the array *)
    exp_arrayat_index : exp; (* Integer valued expression for the index *)
    exp_arrayat_pos : loc; } *)
 
@@ -273,8 +273,9 @@ and exp_var = { exp_var_type : typ;
     exp_var_name : ident;
     exp_var_pos : loc }
 
-(* An Hoa : Empty array - only for initialization purpose *)		
+(* An Hoa : Empty array - only for initialization purpose *)
 and exp_emparray = { exp_emparray_type : typ;
+	exp_emparray_dim : int;
     exp_emparray_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
@@ -657,7 +658,7 @@ let rec type_of_exp (e : exp) = match e with
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
   | Null _ -> Some (Named "")
-	| EmptyArray b -> Some (Array (b.exp_emparray_type, None)) (* An Hoa *)
+	| EmptyArray b -> Some (Array (b.exp_emparray_type, b.exp_emparray_dim)) (* An Hoa *)
   | Print _ -> None
  (* | Return ({exp_return_type = t; 
 			 exp_return_val = _; 
@@ -880,7 +881,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Assert _ -> []
 	(* AN HOA *)
 	(*| ArrayAt ({exp_arrayat_type = _;
-			 exp_arrayat_array_name = _;
+			 exp_arrayat_array_base = _;
 			 exp_arrayat_index = e;
 			 exp_arrayat_pos = _; }) -> callees_of_exp e*)
 	(*| ArrayMod ({exp_arraymod_lhs = l;

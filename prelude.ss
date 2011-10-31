@@ -191,7 +191,9 @@ relation dom(int[] a, int low, int high).
 
 axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
-relation update_array(int[] a, int i, int val, int[] r).
+relation update_array_1d(int[] a, int[] r, int val, int i).
+
+relation update_array_2d(int[,] a, int[,] r, int val, int i, int j).
 
 relation amodr(int[] a, int[] b, int i, int j) == 
     forall(k : (i<=k & k<=j | a[k] = b[k])).
@@ -207,7 +209,7 @@ relation bnd(int[] a, int i, int j, int low, int high) ==
 // <NEW> PRIMITIVE FUNCTIONS
 //////////////////////////////////////////////////////////////////
 
-int array_get_elm_at___(int[] a, int i) 
+int array_get_elm_at___1d(int[] a, int i) 
   /* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
@@ -222,7 +224,12 @@ int array_get_elm_at___(int[] a, int i)
 				& i <= ahaub
 	ensures res = a[i];
 
-int[] update___(int[] a, int i, int v) 
+// 2D array access
+int array_get_elm_at___2d(int[,] a, int i, int j) 
+	requires true
+	ensures res = a[i,j];
+
+int[] update___1d(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
@@ -239,9 +246,11 @@ int[] update___(int[] a, int i, int v)
 				& ahalb <= i 
 				& i <= ahaub
 	ensures dom(res,ahalb,ahaub) 
-				& update_array(a,i,v,res);
+				& update_array_1d(a,res,v,i);
 
-
+int[,] update___2d(int v, int[,] a, int i, int j)
+	requires true
+	ensures update_array_2d(a,res,v,i,j);
 
 int[] aalloc___(int dim) 
 	requires true 
