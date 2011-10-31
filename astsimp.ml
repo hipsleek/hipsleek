@@ -2018,8 +2018,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	| I.ArrayAt { I.exp_arrayat_array_base = a; 
 	  I.exp_arrayat_index = index;
 	  I.exp_arrayat_pos = pos } ->
+	  	let r = List.length index in
 		  let new_e = I.CallNRecv {
-			  I.exp_call_nrecv_method = array_access_call; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+			  I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
 			  I.exp_call_nrecv_arguments = a :: index;
 			  I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
 			  I.exp_call_nrecv_pos = pos;} in 
@@ -2173,18 +2174,19 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 					| I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
 						  (* Array variable *)
 						  (* let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in *)
+						  let r = List.length index in
 						  let new_rhs = I.CallNRecv {
-			                  I.exp_call_nrecv_method = array_update_call; (* Update call *)
+			                  I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
 							  (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
 			                  I.exp_call_nrecv_arguments = rhs :: a :: index;
 			                  I.exp_call_nrecv_path_id = pid;
-			                  I.exp_call_nrecv_pos = I.get_exp_pos rhs;} in 
+			                  I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
 						  let new_e = I.Assign {
 							  I.exp_assign_op = I.OpAssign;
 		   					  I.exp_assign_lhs = a; (* new_lhs; *)
 							  I.exp_assign_rhs = new_rhs;
 							  I.exp_assign_path_id = pid;
-							  I.exp_assign_pos = pos_a;} in
+							  I.exp_assign_pos = pos_a; } in
 			              helper new_e
 							  (* let (ce1, te1) = helper lhs in
 	                             let (ce2, te2) = helper rhs in
@@ -2446,7 +2448,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     C.exp_block_body = seq_1;
                     C.exp_block_local_vars = local_vars;
                     C.exp_block_pos = pos; }),ret_ct)))
-          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");})
+          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");})
     | I.Catch { I.exp_catch_var = cv;
 	  I.exp_catch_flow_type = cvt;
 	  I.exp_catch_flow_var = cfv;
@@ -3176,12 +3178,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
 							let _ = undef_data_types := (c, pos) :: !undef_data_types in
 								Named c (* Store this temporarily *)
 					))
-    | Array (et, _) -> Array (trans_type prog et pos, None) (* An Hoa *)
-	      (* Err.report_error
-             {
-             Err.error_loc = pos;
-             Err.error_text = "trans_type: array is not supported yet";
-             } *)
+    | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
 and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
@@ -3430,9 +3427,6 @@ and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =
     | Named c ->
 	      (try let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c in "int"
 	      with | Not_found -> c)
-    | Array (t,_) ->  (* An Hoa *) 
-		  (get_type_name_for_mingling prog t ^ "[]")
-	          (* failwith "get_type_name_for_mingling: array is not supported yet" *)
     |t -> string_of_typ t
 
 and mingle_name_enum prog (m : ident) (targs : typ list) =
@@ -3444,8 +3438,7 @@ and set_mingled_name (prog : I.prog_decl) =
   let rec helper1 (pdecls : I.proc_decl list) =
     match pdecls with
       | pdef :: rest ->
-            let ptypes = List.map (fun p -> p.I.param_type) pdef.I.proc_args
-            in
+            let ptypes = List.map (fun p -> p.I.param_type) pdef.I.proc_args in
             (pdef.I.proc_mingled_name <-
                 mingle_name_enum prog pdef.I.proc_name ptypes;
             helper1 rest)
@@ -4046,9 +4039,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.ListPerm (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.ListPerm (pe1, pe2, pos)
-    | IP.RelForm (r, args, pos) ->
-          let cpargs = trans_pure_exp_list args stab in
-          CP.RelForm (r, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
+    | IP.RelForm (r, args, pos) ->    
+    	(* Match types of arguments with relation signature *)
+		let cpargs = trans_pure_exp_list args stab in
+			CP.RelForm (r, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
   in
   match sl with
 	| None -> (npf, None)
@@ -4080,11 +4074,10 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
     | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp e stab, pos)
     | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e stab, pos)
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
-    | IP.ArrayAt ((a, p), ind, pos) -> 
-          (* An Hoa : translate IP.ArrayAt to CP.ArrayAt *)
-          let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
-          (* Currently, only allow single dimensional array of int => TODO Use the correct type *)
-          CP.ArrayAt (CP.SpecVar ((Array (C.int_type, None)), a, p), cpind, pos)
+    | IP.ArrayAt ((a, p), ind, pos) ->
+		let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
+		let rank = List.length ind in (* currently only support int type array *)
+			CP.ArrayAt (CP.SpecVar ((Array (C.int_type, Some rank)), a, p), cpind, pos)
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -4433,15 +4426,16 @@ and gather_type_info_exp_x a0 stab et =
           let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
           BagT t
     | IP.ArrayAt ((a,p),idx,pos) -> (* t[] -> int -> t *)
-          (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array*)
-		  (* and hence, accessing the element at position i, we get the value of expected_type*)
-		  (* Furthermore, the expression of the index must be of type integer.*)
-          let new_et = Array (et,None) in
+          (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array *)
+		  (* and hence, accessing the element at position i, we get the value of expected_type *)
+		  (* Furthermore, the expression of the index must be of type integer. *)
+		  let rank = List.length idx in
+          let new_et = Array (et, Some rank) in
           let lt = gather_type_info_var a stab new_et pos in
           let _ = List.map (fun i -> gather_type_info_exp_x i stab Int) idx in
           (match lt with
             | Array (r,_) -> r
-            | _ ->  failwith ("gather_type_info_exp: expecting Array type but obtained "^(string_of_typ lt)))
+            | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int rank) ^ " but given " ^ (string_of_typ lt)))
 		      (* let a_exp_type = match et with *)
 		      (*   | UNK -> UNK *)
 		      (*   | t -> Array (t, None) *)
@@ -4851,7 +4845,7 @@ and collect_type_info_arith a0 stab expected_type =
 		  (* Furthermore, the expression of the index must be of type integer.*)
 		  let a_exp_type = match expected_type with
 			| UNK -> UNK
-			| t -> Array (t, None)
+			| t -> Array (t, Some (List.length idx))
 		  in
 		  collect_type_info_var a stab a_exp_type pos;
 		  let _ = List.map (fun i -> collect_type_info_arith i stab (C.int_type)) idx in ()

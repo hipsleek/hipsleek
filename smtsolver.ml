@@ -49,6 +49,11 @@ type formula_info = {
             TRANSLATE CPURE FORMULA TO SMT FORMULA              
  **************************************************************)
 
+(* Construct [f(1) ... f(n)] *)
+let rec generate_list n f =
+	if (n = 0) then []
+	else (generate_list (n-1) f) @ [f n]
+	
 let rec smt_of_typ t = 
 	match t with
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
@@ -62,7 +67,8 @@ let rec smt_of_typ t =
 			Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "spec not supported for SMT"}
 		| Named _ -> "Int" (* objects and records are just pointers *)
-		| Array (et, _) -> "(Array Int " ^ smt_of_typ et ^ ")"
+		| Array (et, r) -> let r = match r with | None -> 1 | Some k -> k in
+			"(Array " ^ (String.concat " " (generate_list r (fun _ -> "Int"))) ^ " " ^ smt_of_typ et ^ ")"
 
 let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")

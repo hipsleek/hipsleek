@@ -915,7 +915,8 @@ and look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs 
 		  look_up_proc_def_raw rest name
   | [] -> raise Not_found
 	    
-and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = match procs with
+and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = 
+	match procs with
   | p :: rest ->
         if p.proc_mingled_name = name then
 		  p

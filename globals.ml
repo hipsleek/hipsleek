@@ -91,7 +91,10 @@ let rec string_of_typ = function
   | List t        -> "list("^(string_of_typ t)^")"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
-  | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
+  | Array (et, r) -> (* An Hoa *)
+	let r = match r with | None -> 1 | Some i -> i in
+	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
+		(string_of_typ et) ^ (repeat r)
 ;;
 
 let subs_tvar_in_typ t (i:int) nt =

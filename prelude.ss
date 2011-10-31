@@ -193,6 +193,8 @@ axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
 relation update_array(int[] a, int i, int val, int[] r).
 
+relation update_array_2d(int[,] a, int i, int j, int val, int[,] r).
+
 relation amodr(int[] a, int[] b, int i, int j) == 
     forall(k : (i<=k & k<=j | a[k] = b[k])).
 
@@ -222,6 +224,11 @@ int array_get_elm_at___(int[] a, int i)
 				& i <= ahaub
 	ensures res = a[i];
 
+// 2D array access
+int array_get_elm_at___2d(int[,] a, int i, int j) 
+	requires true
+	ensures res = a[i,j];
+
 int[] update___(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]
@@ -241,7 +248,9 @@ int[] update___(int v, int[] a, int i)
 	ensures dom(res,ahalb,ahaub) 
 				& update_array(a,i,v,res);
 
-
+int[,] update___2d(int v, int[,] a, int i, int j)
+	requires true
+	ensures update_array_2d(a,i,j,v,res);
 
 int[] aalloc___(int dim) 
 	requires true 

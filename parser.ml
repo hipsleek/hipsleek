@@ -950,13 +950,13 @@ non_array_type:
    | `IDENTIFIER id      -> Named id ]];  
 
 array_type:
-  [[ t=array_type; r=rank_specifier -> Array (int_type, None)
-  |  t=non_array_type; r=rank_specifier -> Array (int_type, None)]];
+  [[ (* t=array_type; r=rank_specifier -> Array (t, None)
+  | *) t=non_array_type; r=rank_specifier -> (* let _ = print_endline ("Array of dimension " ^ (string_of_int r)) in *) Array (t, Some r)]];
 
 rank_specifier:
-  [[`OSQUARE; OPT comma_list; `CSQUARE -> ()]];
+  [[`OSQUARE; c = OPT comma_list; `CSQUARE -> un_option c 1]];
 
-comma_list: [[`COMMA; SELF ->()]];
+comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
   
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
 
