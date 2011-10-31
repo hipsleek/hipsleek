@@ -946,7 +946,7 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
 	match prog.I.prog_global_var_decls with
 	  [] -> prog
 	| _ ->
-		let _ = find_read_write_global_var_all_procs prog in 
+		let _ = find_read_write_global_var_all_procs prog in
 		let temp_decls1 = List.map resolve_name_conflict prog.I.prog_proc_decls in
 		let temp_decls2 = List.map (extend_args prog.I.prog_global_var_decls) temp_decls1 in
 		let new_proc_decls = List.map (extend_proc temp_decls2) temp_decls2 in

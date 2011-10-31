@@ -1,0 +1,27 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred ls<p,n> == self = p & n = 0 
+  or self::node<_, q> * q::ls<p, n-1> // = q1 
+  inv n >= 0.
+
+
+
+checkentail x::ls<p,n> & x=null |- x::ls<y,m> .
+
+
+checkentail x::ls<y,a>*y::ls<p,b> & a=0 |- x::ls<p,m> .
+
+
+checkentail x::ls<y,a>*y::ls<p,b>  |- x::ls<p,m> .
+
+checkentail x::ls<y,a>*y::ls<p,b>  |- x::ls<p1,m> .
+
+checkentail x::ls<y,a>*y::ls<p,b> & y=null |- x::ls<p,m> .
+
+checkentail x::ls<y,a>*y::ls<p,b> & y=null |- x::ls<p1,m> .
+
+
+print residue.

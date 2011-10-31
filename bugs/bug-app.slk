@@ -1,0 +1,14 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, q> * q::lseg<p, n-1>
+	inv n>=0.
+
+
+checkentail x::node<c1,q>*q::lseg<r,n>*r::node<c2,null> & v=q
+  |- r::node<b,null>*v::lseg<r2,a>.
+
+print residue.
