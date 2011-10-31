@@ -510,7 +510,13 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
-		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
+		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
+		match i with
+			| [] -> ()
+			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
+		in fmt_string  ("]") (* An Hoa *)
+;;
 
 let pr_slicing_label sl =
   match sl with
