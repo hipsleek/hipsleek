@@ -30,41 +30,40 @@ sleek: sleek.native
 ghip: ghip.native
 gsleek: gsleek.native
 
-hip.byte:
+xml: 
 	$(XML)
-	$(OCAMLBUILD) $(OB_FLAGS) main.byte
-	cp _build/main.byte hip.byte
+
+hip.byte:
+	@ocamlbuild $(OB_FLAGS) main.byte
+	cp -u _build/main.byte p-hip
 
 hip.native:
-	$(XML)
-	$(OCAMLBUILD) $(OB_FLAGS) main.native
-	cp _build/main.native hip
+	@ocamlbuild $(OB_FLAGS) main.native
+	cp -u _build/main.native hip
 
 sleek.byte:
-	$(XML)
-	$(OCAMLBUILD) $(OB_FLAGS) sleek.byte
-	cp _build/sleek.byte .
+	@ocamlbuild $(OB_FLAGS) sleek.byte
+	cp -u _build/sleek.byte p-sleek
 
 sleek.native:
-	$(XML)
-	$(OCAMLBUILD) $(OB_FLAGS) sleek.native
-	cp _build/sleek.native sleek
+	@ocamlbuild $(OB_FLAGS) sleek.native
+	cp -u _build/sleek.native sleek
 
 gsleek.byte:
-	$(OCAMLBUILD) $(OBG_FLAGS) gsleek.byte
-	cp _build/gsleek.byte .
+	@ocamlbuild $(OBG_FLAGS) gsleek.byte
+	cp -u _build/gsleek.byte p-gsleek
 
 gsleek.native:
-	$(OCAMLBUILD) $(OBG_FLAGS) gsleek.native
-	cp _build/gsleek.native gsleek
+	@ocamlbuild $(OBG_FLAGS) gsleek.native
+	cp -u _build/gsleek.native gsleek
 
 ghip.byte:
-	$(OCAMLBUILD) $(OBG_FLAGS) ghip.byte
-	cp _build/ghip.byte .
+	@ocamlbuild $(OBG_FLAGS) ghip.byte
+	cp -u _build/ghip.byte p-ghip
 
 ghip.native:
-	$(OCAMLBUILD) $(OBG_FLAGS) ghip.native
-	cp _build/ghip.native ghip
+	@ocamlbuild $(OBG_FLAGS) ghip.native
+	cp -u _build/ghip.native ghip
 
 # Clean up
 clean:
