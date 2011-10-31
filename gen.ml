@@ -53,6 +53,8 @@ struct
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
 
+ let add_str s f xs = s^(f xs)
+
   let opt_to_list o = match o with
     | None -> []
     | Some a -> [a]
@@ -1210,7 +1212,7 @@ object (self)
   method string_of : string= 
     let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
     let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
-    "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+    "Counters: \n"^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
 end;;
 
 class task_table =
@@ -1238,7 +1240,7 @@ object
             else "")^"],  "^(fp (t/.ot))^"%)") in
         ((a1+1),r) 
     ) (0,"") str_list in
-    print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) 
+    print_string ("\nProfiling Results: " ^(string_of_int cnt)^" keys."^str^"\n" ) 
 end;;
 
 
@@ -1268,7 +1270,8 @@ struct
 
   let push_time msg = 
     if (!Globals.profiling) then
-      (inc_counter ("cnt_"^msg);
+      (
+      (* inc_counter ("cnt_"^msg); *)
       let timer = get_time () in
 	  profiling_stack#push (msg, timer,true) )
 	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
@@ -1294,6 +1297,11 @@ struct
     else ()
 
  let print_info () = if (!Globals.profiling) then  tasks # print else ()
+
+ let print_counters_info () =
+      if !Globals.enable_counters then
+        print_string (string_of_counters ())
+      else () 
 
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
     try
@@ -1700,7 +1708,7 @@ struct
     Globals.error_flow_int := (get_hash_of_exc Globals.error_flow)
     (* ; Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow) *)
     (* ;Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow) *)
-    (* let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
+    (* ;let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
 
   let compute_hierarchy i () =
     let pr () = string_of_exc_list 0 in

@@ -122,7 +122,7 @@ if($timings){
     }
 
     $row = 3;
-    (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
+    (my $Second, my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
@@ -169,6 +169,27 @@ $sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
+	# AN HOA : ADDED ARRAY TESTING EXAMPLES
+	"hip_array"=>[
+		["array/arr_at.java",1,"","main","SUCCESS"],
+		["array/arr_binarysearch.java",1,"","binary_search","SUCCESS"],
+		["array/arr_search_decrease_less_than_two.java",1,"","searchzero","FAIL"], # induction required
+		["array/arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["array/arr_double.java",1,"","doublearr","SUCCESS"],
+		["array/arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
+		["array/arr_init.java",1,"","zinit","SUCCESS"],
+		["array/arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["array/arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
+		["array/arr_max.java",1,"","max_value_of_array","SUCCESS"],
+		["array/arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
+		["array/arr_new_exp.java",1,"","main","SUCCESS"],
+		["array/arr_nqueens.java",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
+		["array/arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
+		["array/arr_rev.java",1,"","arrayrev","SUCCESS"],
+		["array/arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["array/arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
+	],
+	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
     "hip_imm" =>[ 
         ["imm/bigint.ss",17, "",
@@ -574,26 +595,49 @@ $output_file = "log";
     ]
     );
 
-# list of file, string with result of each entailment....
+# list of file, string with result of each entailment&lemma....
 %sleek_files=(
-		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-					["sleek1.slk","Fail."],
-					["sleek10.slk","Valid.Fail."],
-					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-					["sleek3.slk","Valid.Fail.Valid."],
-					["sleek4.slk","Valid.Valid."],
-					["sleek6.slk","Valid.Valid."],
-					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-                  # slow in sleek8.slk due to search
-				  ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-					["sleek9.slk","Valid.Fail.Valid.Valid."],
-                                        ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-			                ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-			                ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-			                ["imm/imm4.slk","Valid.Fail."],
-			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
-			);
+    "sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
+                      ["sleek1.slk","Fail."],
+                      ["sleek10.slk","Valid.Fail."],
+                      ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+                      ["sleek3.slk","Valid.Valid.Fail.Valid."],
+                      ["sleek4.slk","Valid.Valid."],
+                      ["sleek6.slk","Valid.Valid."],
+                      ["sleek7.slk","Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+                      # slow in sleek8.slk due to search
+                      ["sleek8.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["sleek9.slk","Valid.Valid.Valid.Fail.Valid.Valid."],
+                      ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
+                      #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
+                      ["imm/imm4.slk","Valid.Fail."],
+                      ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "sleek_wo_lemma_check"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
+              ["sleek1.slk","Fail."],
+              ["sleek10.slk","Valid.Fail."],
+              ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+              ["sleek3.slk","Valid.Fail.Valid."],
+              ["sleek4.slk","Valid.Valid."],
+              ["sleek6.slk","Valid.Valid."],
+              ["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+              # slow in sleek8.slk due to search
+              ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+              ["sleek9.slk","Valid.Fail.Valid.Valid."],
+              ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
+              #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+              ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
+              ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
+              ["imm/imm4.slk","Valid.Fail."],
+              ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "lemmas"=>[["lemmas/lemma_check01.slk", "Valid.Valid.Fail."],
+              ["lemmas/lemma_check02.slk", "Fail.Valid."],
+              ["lemmas/lemma_check03.slk", "Valid.Valid.Fail."],
+              ["lemmas/lemma_check04.slk", "Valid.Fail.Fail."],
+              ["lemmas/lemma_check06.slk", "Valid.Valid.Valid.Fail.Fail.Fail."]]
+
+    );
 
 if($timings){
     $mainSum = 0.0;
@@ -722,11 +766,14 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
+      $exempl_path_full = "$exempl_path/sleek";
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
-          $exempl_path_full = "$exempl_path/sleek";
       }
-      $t_list = $sleek_files{$param};	
+      if ($script_arguments=~"--disable-check-coercions"){
+          $param =~ s/sleek/sleek_wo_lemma_check/;
+      }
+      $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
 			{
 			print "Checking $test->[0]\n";

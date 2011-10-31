@@ -20,11 +20,13 @@ and prog_decl = {
     mutable prog_data_decls : data_decl list;
 	mutable prog_view_decls : view_decl list;
 	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
 	prog_proc_decls : proc_decl list;
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
 	
-and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
+and prog_or_branches = (prog_decl * 
+    ((MP.mix_formula * ((string*P.formula)list)*(ident * (P.spec_var list))) option) )
 	
 and data_decl = { 
     data_name : ident;
@@ -51,7 +53,7 @@ and view_decl = {
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
-    view_formula : F.struc_formula;
+    view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
     mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
@@ -87,6 +89,11 @@ and rel_decl = {
        rel_prune_conditions: (P.b_formula * (formula_label list)) list;
        rel_prune_invariants : (formula_label list * P.b_formula list) list ;
        rel_raw_base_case: Cformula.formula option; *)}
+
+(** An Hoa : axiom *)
+and axiom_decl = {
+		axiom_hypothesis : P.formula;
+		axiom_conclusion : P.formula; }
     
 and proc_decl = { 
     proc_name : ident;
@@ -109,7 +116,10 @@ and coercion_decl = {
     coercion_type : coercion_type;
     coercion_name : ident;
     coercion_head : F.formula;
+    coercion_head_norm : F.formula;
     coercion_body : F.formula;
+    coercion_body_norm : F.struc_formula;
+    coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)
     (* coercion_head_exist : F.formula;   *)
@@ -353,6 +363,7 @@ let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -695,6 +706,12 @@ let unmingle_name (m : ident) =
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] -> raise Not_found
+
+let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
+  let pr = fun x -> x in
+  let pr_out = !print_view_decl in
+  Gen.Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+
 
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with

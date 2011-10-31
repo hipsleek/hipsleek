@@ -60,7 +60,7 @@ let fmt_close x = fmt_close_box x
 
 let pr_int i = fmt_int i
 
-let pr_pair pr_1 pr_2 (a,b) =
+let pr_pair_aux pr_1 pr_2 (a,b) =
   fmt_string "(";
   pr_1 a; fmt_string ",";
   pr_2 b; fmt_string ")"
@@ -948,6 +948,7 @@ let rec pr_formula_base e =
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -980,7 +981,8 @@ let rec pr_formula e =
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
-          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
+          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
+          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -1051,9 +1053,9 @@ and pr_ext_formula  (e:ext_formula) =
 			  if not(Gen.is_empty(ee@ii@ei)) then
 			    begin
 				  fmt_string "exists ";
-				  pr_seq "(E)" pr_spec_var ee;
-				  pr_seq "(I)" pr_spec_var ii;
-				  pr_seq "(ex)" pr_spec_var ei;
+				  pr_seq "(Expl)" pr_spec_var ei;
+				  pr_seq "(Impl)" pr_spec_var ii;
+				  pr_seq "(ex)" pr_spec_var ee;
 			    end;
 			  pr_formula fb) fb;
           if not(Gen.is_empty(cont)) then
@@ -1138,12 +1140,12 @@ let pr_estate (es : entail_state) =
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
-  pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars; 
-  pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
+  (*pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;*)
+  (*pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;*)
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
   pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
-  pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
+  pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_vwrap "es_aux_conseq: "  (pr_pure_formula) es.es_aux_conseq; 
@@ -1171,9 +1173,13 @@ match e_kind with
   | Failure_None _ -> "None"
   | Failure_Valid -> "Valid"
 
+let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)
+
 let string_of_fail_explaining fe=
   fmt_open_vbox 1;
   pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
+  pr_vwrap "fe_name: " fmt_string (fe.fe_name);
+  pr_vwrap "fe_kind: " fmt_string (string_of_list_loc fe.fe_locs);
 (*  fe_sugg = struc_formula *)
   fmt_close ()
 
@@ -1184,9 +1190,9 @@ let pr_fail_estate (es:fail_context) =
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
   pr_vwrap "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
                                                    (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
-  (* pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; *)
+   pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; 
   (* pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; *)
-  (* pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)
+   (*pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)
   fmt_string "}"; 
   fmt_close ()
 
@@ -1764,7 +1770,8 @@ let string_of_coerc_opt op c =
     ^"\n head match:"^c.coercion_head_view
     ^"\n body view:"^c.coercion_body_view
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
-    ^"\n univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)^"\n";;
+    ^"\n head_norm: "^(string_of_formula c.coercion_head_norm)
+    ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
 
@@ -1826,15 +1833,35 @@ let rec string_of_view_decl_list l = match l with
   | h::t -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
 ;;
 
+(* An Hoa : print relations *)
+let string_of_rel_decl_list rdecls = 
+	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+
+(* An Hoa : print axioms *)
+let string_of_axiom_decl_list adecls = 
+	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
+
 let rec string_of_coerc_decl_list l = match l with
   | [] -> ""
   | h::[] -> string_of_coerc h
   | h::t -> (string_of_coerc h) ^ "\n" ^ (string_of_coerc_decl_list t)
 ;;
 
+let string_of_prog_or_branches ((prg,br):prog_or_branches) =
+  match br with 
+    | None -> "None"
+    | Some (mf,lf,(i,lv)) -> ((string_of_mix_formula mf)
+          ^ "\n branches:"^(Gen.Basic.pr_list (fun (_,f) -> string_of_pure_formula f) lf)
+          ^ "\n pred:"^i
+          ^ "\n to_vars:"^(Gen.Basic.pr_list string_of_spec_var lv)
+      )
+;;
+
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
   (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
@@ -1871,6 +1898,17 @@ let string_of_failure_list_failesc_context (lc: Cformula.list_failesc_context) =
 let string_of_failure_list_partial_context (lc: Cformula.list_partial_context) =  
   let lc = Cformula.keep_failure_list_partial_context lc
   in string_of_list_partial_context lc
+;;
+
+let app_sv_print xs ys =
+    (* does not seem to have redundant rhs_eq_set *)
+    begin
+    let pr = string_of_spec_var in
+    let pr2 = Gen.Basic.pr_list (Gen.Basic.pr_pair pr pr) in
+    let _ = print_string ("\n first eqn set"^(pr2 xs)) in
+    let _ = print_string ("\n second eqn set:"^(pr2 ys)) in
+    xs@ys 
+    end
 ;;
 
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
@@ -1912,6 +1950,7 @@ Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
+Cast.print_view_decl := string_of_view_decl;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Coq.print_p_f_f := string_of_pure_formula ;;
