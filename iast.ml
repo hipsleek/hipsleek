@@ -186,14 +186,14 @@ and assign_op =
 
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
-and exp_arrayat = { exp_arrayat_array_name : ident;
-	     exp_arrayat_index : exp;
-			 exp_arrayat_pos : loc; }
+and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a single ident to exp to support expressions like x.A[i] for a data structure that has an array as a field *)
+					exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
+					exp_arrayat_pos : loc; }
 
 (* An Hoa : array memory allocation expression *)
-and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
-	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
-			 exp_aalloc_pos : loc; }
+and exp_aalloc = { exp_aalloc_etype_name : ident;		(* Name of the base element *)
+					exp_aalloc_dimensions : exp list;	(* List of size for each dimensions *)
+					exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
@@ -661,8 +661,8 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | Unfold _ 
           | Var _ -> (e,zero)
 					| ArrayAt b -> (* An Hoa *)
-								let e1,r1 = helper n_arg b.exp_arrayat_index in
-								(ArrayAt {b with exp_arrayat_index = e1},r1)
+					 			let el,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+								(ArrayAt {b with exp_arrayat_index = el},comb_f rl)
           | Assign b ->
                 let e1,r1 = helper n_arg b.exp_assign_lhs  in
                 let e2,r2 = helper n_arg b.exp_assign_rhs  in
@@ -915,7 +915,8 @@ and look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs 
 		  look_up_proc_def_raw rest name
   | [] -> raise Not_found
 	    
-and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = match procs with
+and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = 
+	match procs with
   | p :: rest ->
         if p.proc_mingled_name = name then
 		  p
