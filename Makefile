@@ -30,30 +30,32 @@ sleek: sleek.native
 ghip: ghip.native
 gsleek: gsleek.native
 
-xml: 
+xml: xml/xml-light.cma
+
+xml/xml-light.cma:
 	$(XML)
 
-hip.byte:
+hip.byte: xml
 	@ocamlbuild $(OB_FLAGS) main.byte
 	cp -u _build/main.byte p-hip
 
-hip.native:
+hip.native: xml
 	@ocamlbuild $(OB_FLAGS) main.native
 	cp -u _build/main.native hip
 
-sleek.byte:
+sleek.byte: xml
 	@ocamlbuild $(OB_FLAGS) sleek.byte
 	cp -u _build/sleek.byte p-sleek
 
-sleek.native:
+sleek.native: xml
 	@ocamlbuild $(OB_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
 
-gsleek.byte:
+gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
 	cp -u _build/gsleek.byte p-gsleek
 
-gsleek.native:
+gsleek.native: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.native
 	cp -u _build/gsleek.native gsleek
 
