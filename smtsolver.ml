@@ -518,7 +518,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Gen.Debug.ho_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Gen.Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 
@@ -790,7 +790,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let res, should_run_smt = if (((*has_exists*)Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
-		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
+		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (true, false)
 	else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
@@ -821,7 +821,7 @@ let imply ante conseq =
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
-		try (Omega.is_sat f sat_no, false) with | _ -> (false, true)
+		try (Omega.is_sat f sat_no, false) with | _ -> (true, false)
 	else (false, true) in
 	if (should_run_smt) then
 	let input = to_smt f None prover in
@@ -848,7 +848,10 @@ let is_sat f sat_no =
 (**
  * To be implemented
  *)
-let simplify (f: CP.formula) : CP.formula = f
+let simplify (f: CP.formula) : CP.formula = (*f*)
+ (* let _ = print_endline "locle: simplify" in *)
+  try (Omega.simplify f) with | _ -> f
+
 let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
 
