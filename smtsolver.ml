@@ -368,8 +368,11 @@ let string_of_smt_output output =
 (* Collect all Z3's output into a list of strings *)
 let rec collect_output chn accumulated_output : string list =
 	let output = try
-					let line = input_line chn in
-						collect_output chn (accumulated_output @ [line])
+					 let line = input_line chn in
+                     (*let _ = print_endline ("locle2" ^ line) in*)
+                     if ((String.length line) > 5) then (*something diff sat and unsat, retry-may lead to timeout here*)
+					 collect_output chn (accumulated_output @ [line])
+                    else accumulated_output @ [line]
 				with
 					| End_of_file -> accumulated_output in
 		output
@@ -381,9 +384,10 @@ let sat_type_from_string r =
 
 let get_answer chn =
 	let output = collect_output chn [] in
-	let solver_sat_result = List.nth output (List.length output - 1) in
-		{ original_output_text = output;
-		sat_result = sat_type_from_string solver_sat_result; }
+    let solver_sat_result = List.nth output (List.length output - 1) in
+	{ original_output_text = output;
+	  sat_result = sat_type_from_string solver_sat_result; }
+
 
 let remove_file filename =
 	try
@@ -417,34 +421,49 @@ let log_all_flag = ref false
 let z3_restart_interval = ref (-1)
 let log_all = open_out ("allinput.z3")
 
-let path_to_z3 = "/home/locle/workspaces/hg/slicing_z3/sleekex/z3iw/z3/bin/z3" (*"z3"*)
+let path_to_z3 = "z3.3" (*"z3"*)
 
 (*let command_for prover ("z3", path_to_z3, [|"z3"; "-smt2"; infile; ("> "^ outfile)|] )*)
 
 let set_process (proc: Globals.prover_process_t) = 
   prover_process := proc
 
-let prelude () = ()
+let rec prelude () = ()
 (*
   begin
-  (*let finished = ref false in
-  while not !finished do*)
-    let line = input_line (! prover_process.inchannel) in
-	  (*let _ = print_endline line in *)
+ (* let line = input_line (! prover_process.inchannel) in
+	  let _ = print_endline line in
 	(if !log_all_flag then
-          output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") );
-    (*if (start_with line "#") then finished := true;*)
-  (*done*)
+          output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") ); *)
+  (*set logic*)
+   let init_str = "(set-logic AUFNIA)\n" in
+
+   output_string (!prover_process.outchannel) init_str;
+   flush (!prover_process.outchannel);
+
+ (* let finished = ref false in
+  while not !finished do
+ *)
+ (*   let line = input_line (! prover_process.inchannel) in
+	  let _ = print_endline line in
+	(if !log_all_flag then
+          output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") );*)
+(*
+    if ((String.length line)>=0) then finished := true;
+  done
+*)
  end
 *)
 
 (* start z3 system in a separated process and load redlog package *)
-let start() =
+and start() =
   if not !is_z3_running then begin
-      print_string "Starting ... \n"; flush stdout;
+      print_string "Starting z3... \n"; flush stdout;
       last_test_number := !test_number;
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("z3", path_to_z3, [|path_to_z3; "-smt2";"-si"|]) set_process prelude in
+      (*("z312", path_to_z3, [|path_to_z3; "-smt2";"-si"|])*)
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("z312", path_to_z3, [|path_to_z3;"-smt2"; "-si"|]) set_process prelude in
       is_z3_running := true;
+   (*   let  _ = print_endline "locle: start" in ()*)
   end
 
 (* stop Z3 system *)
@@ -480,12 +499,12 @@ let check_formula f timeout =
       let fnc f = 
         (*let _ = print_endline "check" in*)
         let _ = incr z3_call_count in
-        let new_f = 
-        (*  if String.length f > 1024 then
-	        (Gen.break_lines f)
-          else *)
-	        f
+        (*due to global stack - incremental, push current env into a stack before working and
+        removing it after that. may be improved *)
+        let new_f =
+          "(push)\n" ^ f ^ "(pop)\n"
         in
+      (*  let _ = print_endline ("locle: check " ^ new_f) in*)
         output_string (!prover_process.outchannel) new_f;
         flush (!prover_process.outchannel);
 
@@ -499,7 +518,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Gen.Debug.ho_2 "check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Gen.Debug.no_2 "check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 
@@ -554,16 +573,17 @@ let to_smt_v2 ante conseq logic fvars info =
 	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x) ^ ")\n") ante_clauses in
 	let ante_str = String.concat "" ante_strs in
 	let conseq_str = smt_of_formula conseq in
-		("(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^ 
-			";Variables declarations\n" ^ 
+		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^ *)
+			(*";Variables declarations\n" ^ *)
 				smt_var_decls ^
-			";Relations declarations\n" ^ 
+			(* ";Relations declarations\n" ^ *)
 				rel_decls ^
-			";Axioms assertions\n" ^ 
+			(*";Axioms assertions\n" ^ *)
 				axiom_asserts ^
-			";Antecedent\n" ^ 
+			(*";Antecedent\n" ^ *)
 				ante_str ^
-			";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
+			(*";Negation of Consequence\n" ^*)
+           "(assert (not " ^ conseq_str ^ "))\n" ^
 			"(check-sat)\n")
 	
 (* output for smt-lib v1.2 format *)
@@ -792,7 +812,7 @@ and has_exists conseq = match conseq with
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq =
-  let _ = print_endline "imply" in
+  (*let _ = print_endline "imply" in*)
 	smt_imply ante conseq Z3
 
 (**
@@ -814,7 +834,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover): bool =
 
 (* see imply *)
 let is_sat f sat_no =
-   let _ = print_endline "sat" in
+ (*  let _ = print_endline "locle: sat" in*)
   smt_is_sat f sat_no Z3
 
 (* let is_sat f sat_no = Gen.Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
