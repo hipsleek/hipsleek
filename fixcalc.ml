@@ -27,11 +27,11 @@ let op_eq = "="
 let op_neq = "!=" 
 
 let list_iter op f xs = 
-	f (List.hd xs); List.iter (fun x -> fmt_string op; f x;) (List.tl xs);;
+  f (List.hd xs); List.iter (fun x -> fmt_string op; f x;) (List.tl xs);;
 let pr_square f xs = 
-	fmt_string "[self"; List.iter (fun x -> fmt_string ","; f x;) xs; fmt_string "]";;
+  fmt_string "[self"; List.iter (fun x -> fmt_string ","; f x;) xs; fmt_string "]";;
 let pr_bracket f xs s = 
-	fmt_string ("(" ^ s); List.iter (fun x -> fmt_string ","; f x;) xs; fmt_string ")";;
+  fmt_string ("(" ^ s); List.iter (fun x -> fmt_string ","; f x;) xs; fmt_string ")";;
 
 
 let string_of_spec_var x = match x with
@@ -70,30 +70,30 @@ let rec fixcalc_of_b_formula b =
 
 let rec fixcalc_of_pure_formula f = match f with
   | P.BForm (b,_) ->
-		fixcalc_of_b_formula b;
+    fixcalc_of_b_formula b;
   | P.And (p1, p2, _) ->
-		fmt_string "("; fixcalc_of_pure_formula p1; fmt_string " && "; 
-		fixcalc_of_pure_formula p2; fmt_string ")"
+    fmt_string "("; fixcalc_of_pure_formula p1; fmt_string " && "; 
+    fixcalc_of_pure_formula p2; fmt_string ")"
   | P.Or (p1, p2,_ , _) ->
-		failwith ("Fixcalc.fixcalc_of_pure_formula: Not supported Or-formula")
+    failwith ("Fixcalc.fixcalc_of_pure_formula: Not supported Or-formula")
   | P.Not (p,_ , _) ->
-		failwith ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
+    failwith ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
   | P.Forall (sv, p,_ , _) ->
-		fmt_string " (forall ("; fixcalc_of_spec_var sv; fmt_string ":"; 
-		fixcalc_of_pure_formula p; fmt_string ")) "
+    fmt_string " (forall ("; fixcalc_of_spec_var sv; fmt_string ":"; 
+    fixcalc_of_pure_formula p; fmt_string ")) "
   | P.Exists (sv, p,_ , _) ->
-		fmt_string " (exists ("; fixcalc_of_spec_var sv; fmt_string ":"; 
-		fixcalc_of_pure_formula p; fmt_string ")) "
+    fmt_string " (exists ("; fixcalc_of_spec_var sv; fmt_string ":"; 
+    fixcalc_of_pure_formula p; fmt_string ")) "
 
 let rec fixcalc_of_cformula f = match f with
   | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
     fmt_string "("; fixcalc_of_cformula h1; fmt_string " && "; 
-		fixcalc_of_cformula h2; fmt_string ")"
+    fixcalc_of_cformula h2; fmt_string ")"
   | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
-		failwith ("Fixcalc.fixcalc_of_cformula: Not supported Phase-formula")
+    failwith ("Fixcalc.fixcalc_of_cformula: Not supported Phase-formula")
   | Conj ({h_formula_conj_h1 = h1; h_formula_conj_h2 = h2; h_formula_conj_pos = pos}) -> 
     fmt_string "("; fixcalc_of_cformula h1; fmt_string " || "; 
-		fixcalc_of_cformula h2; fmt_string ")"
+    fixcalc_of_cformula h2; fmt_string ")"
   | DataNode ({h_formula_data_node = sv; h_formula_data_name = c;
     h_formula_data_imm = imm; h_formula_data_arguments = svs;
     h_formula_data_holes = hs; h_formula_data_pos = pos;
@@ -101,8 +101,8 @@ let rec fixcalc_of_cformula f = match f with
     let _ = match sv with
       | P.SpecVar (t, "self", p) -> fmt_string "self > 0"
       | _ -> 
-				fmt_string c; pr_bracket (fun x -> fixcalc_of_spec_var x) svs (string_of_spec_var sv);
-		in ()
+	fmt_string c; pr_bracket (fun x -> fixcalc_of_spec_var x) svs (string_of_spec_var sv);
+    in ()
   | ViewNode ({h_formula_view_node = sv; h_formula_view_name = c; 
     h_formula_view_imm = imm; h_formula_view_arguments = svs; 
     h_formula_view_origins = origs; h_formula_view_original = original;
@@ -112,14 +112,14 @@ let rec fixcalc_of_cformula f = match f with
     let _ = match sv with
       | P.SpecVar (t, "self", p) -> fmt_string "self > 0";
       | _ -> 
-				fmt_string c; pr_bracket (fun x -> fixcalc_of_spec_var x) svs (string_of_spec_var sv);
+	fmt_string c; pr_bracket (fun x -> fixcalc_of_spec_var x) svs (string_of_spec_var sv);
     in ()
   | HTrue -> fmt_string "True"
   | HFalse -> fmt_string "False"
   | Hole m -> failwith ("Fixcalc.fixcalc_of_cformula: Not supported Hole-formula")
 
-let  pr_memo_pure_formula_branches (f, l) = ()
-let  pr_pure_formula_branches (f, l) = fixcalc_of_pure_formula f
+let pr_memo_pure_formula_branches (f, l) = ()
+let pr_pure_formula_branches (f, l) = fixcalc_of_pure_formula f
 
 let pr_mix_formula_branches (f,l) = match f with
   | MCP.MemoF f -> pr_memo_pure_formula_branches (f,l)
@@ -127,19 +127,19 @@ let pr_mix_formula_branches (f,l) = match f with
 
 let rec fixcalc_of_formula e = match e with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
-		failwith ("Fixcalc.fixcalc_of_formula: Not supported Or-formula")
+    failwith ("Fixcalc.fixcalc_of_formula: Not supported Or-formula")
   | Base ({formula_base_heap = h; formula_base_pure = p; 
-	  formula_base_branches = b; formula_base_type = t;
+    formula_base_branches = b; formula_base_type = t;
     formula_base_flow = fl; formula_base_label = lbl; formula_base_pos = pos}) ->
     fmt_string "("; fixcalc_of_cformula h ; fmt_string " && " ; 
-		pr_mix_formula_branches(p,b); fmt_string ")"
+    pr_mix_formula_branches(p,b); fmt_string ")"
   | Exists ({formula_exists_qvars = svs; formula_exists_heap = h; 
-	  formula_exists_pure = p; formula_exists_branches = b;
+    formula_exists_pure = p; formula_exists_branches = b;
     formula_exists_type = t; formula_exists_flow = fl; 
-		formula_exists_label = lbl; formula_exists_pos = pos}) ->
+    formula_exists_label = lbl; formula_exists_pos = pos}) ->
     fmt_string " exists ("; list_iter "," (fun x -> fixcalc_of_spec_var x) svs;
-		fmt_string ": "; fixcalc_of_cformula h; fmt_string " && " ; 
-		pr_mix_formula_branches(p,b); fmt_string ")"
+    fmt_string ": "; fixcalc_of_cformula h; fmt_string " && " ; 
+    pr_mix_formula_branches(p,b); fmt_string ")"
 
 let compute_inv name vars fml pf =
   let syscall cmd =
@@ -147,10 +147,10 @@ let compute_inv name vars fml pf =
   let buf = Buffer.create 16 in
   (try while true do Buffer.add_channel buf ic 1 done with End_of_file -> ());
   let _ = Unix.close_process (ic, oc3) in (Buffer.contents buf) 
-	in 
-	if !Globals.do_infer_inv then
+  in 
+  if !Globals.do_infer_inv then
   begin
-		fmt_string (name ^ ":=" ^ "{");
+    fmt_string (name ^ ":=" ^ "{");
     pr_square (fun x -> fixcalc_of_spec_var x) vars; 
     fmt_string " -> [] -> []: ";
     list_iter " || " (fun (c,_)-> fixcalc_of_formula c) fml;
