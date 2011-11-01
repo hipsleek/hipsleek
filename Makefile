@@ -7,8 +7,7 @@ JOBS = 0
 LIBS = unix,str,graph,xml-light,dynlink,camlp4lib
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,+lablgtk2,-I,+camlp4
-#INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
 
 FLAGS = $(INCLUDES),-g,-annot
 
@@ -31,30 +30,32 @@ sleek: sleek.native
 ghip: ghip.native
 gsleek: gsleek.native
 
-xml: 
+xml: xml/xml-light.cma
+
+xml/xml-light.cma:
 	$(XML)
 
-hip.byte:
+hip.byte: xml
 	@ocamlbuild $(OB_FLAGS) main.byte
 	cp -u _build/main.byte p-hip
 
-hip.native:
+hip.native: xml
 	@ocamlbuild $(OB_FLAGS) main.native
 	cp -u _build/main.native hip
 
-sleek.byte:
+sleek.byte: xml
 	@ocamlbuild $(OB_FLAGS) sleek.byte
 	cp -u _build/sleek.byte p-sleek
 
-sleek.native:
+sleek.native: xml
 	@ocamlbuild $(OB_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
 
-gsleek.byte:
+gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
 	cp -u _build/gsleek.byte p-gsleek
 
-gsleek.native:
+gsleek.native: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.native
 	cp -u _build/gsleek.native gsleek
 
@@ -72,21 +73,6 @@ clean:
 	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
 	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
-
-hygience:
-	rm -f omega_original/omega_lib/obj/*.a
-	rm -f omega_original/code_gen/obj/*.a
-	rm -f xml/xml_lexer.ml
-	rm -f xml/xml_parser.ml
-	rm -f xml/xml_parser.mli
-	rm -f xml/*.o
-	rm -f xml/*.a
-	rm -f xml/*.cmo
-	rm -f xml/*.cmi
-	rm -f xml/*.cmx
-	rm -f xml/*.cma
-	rm -f xml/*.cmxa
-
 
 
 

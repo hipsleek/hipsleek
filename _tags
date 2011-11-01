@@ -1,0 +1,4 @@
+<{parser,parse_fix}.ml>: pp(camlp4of)
+<xml/*.*>: not_hygienic
+<omega_original/*/obj/*.*>: not_hygienic
+<omega_modified/*/obj/*.*>: not_hygienic
