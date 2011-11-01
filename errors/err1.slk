@@ -1,4 +1,4 @@
-
+/*
 data node { int val ; node next }.
 
 pred ll<n> == self = null & n = 0
@@ -54,4 +54,7 @@ print residue.
 //12. must failure. cause:22  n=1 |-  n<1 (must-bug).
 checkentail n = 1 |- n < 1.
 print residue.
+
+*/
+checkentail n = 1 |- (exists m: m < 1).
 

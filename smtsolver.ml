@@ -370,7 +370,7 @@ let rec collect_output chn accumulated_output : string list =
 	let output = try
 					 let line = input_line chn in
                      (*let _ = print_endline ("locle2" ^ line) in*)
-                     if ((String.length line) > 5) then (*something diff sat and unsat, retry-may lead to timeout here*)
+                     if ((String.length line) > 5) then (*something diff to sat and unsat, retry-may lead to timeout here*)
 					 collect_output chn (accumulated_output @ [line])
                     else accumulated_output @ [line]
 				with
@@ -518,7 +518,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Gen.Debug.no_2 "check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Gen.Debug.ho_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 
@@ -789,7 +789,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-	let res, should_run_smt = if (has_exists conseq) then
+  let res, should_run_smt = if (((*has_exists*)Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
 	else (false, true) in
 	if (should_run_smt) then
@@ -803,11 +803,11 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 			res
 	else
 		res
-		
+(*
 and has_exists conseq = match conseq with
 	| CP.Exists _ -> true
 	| _ -> false
-
+*)
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
@@ -820,6 +820,10 @@ let imply ante conseq =
  * We also consider unknown is the same as sat
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+  let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
+		try (Omega.is_sat f sat_no, false) with | _ -> (false, true)
+	else (false, true) in
+	if (should_run_smt) then
 	let input = to_smt f None prover in
 	let output = check_formula input !timeout in
 	let res = match output.sat_result with
@@ -827,6 +831,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 		| _ -> true in
 	(*let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in*)
 		res
+    else res
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover): bool =
 	let pr = !print_pure in
