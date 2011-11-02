@@ -39,10 +39,15 @@ axiom nonneg(A,n) & i = j & k >= 0 ==> ksdist(A,n,i,j,k,0).
 
 axiom nokpath(A,n,i,j,k,n-1) ==> !(kpath(A,n,i,j,k)).
 
+axiom ksdist(A,n,i,j,k,d) & nonneg(A,n) ==> d >= 0.
+
+//axiom true ==> nokpath(A,n,i,j,k,-1).
+
 axiom A[i,v] = 0 & nokpath(A,n,i,j,k,v-1) ==> nokpath(A,n,i,j,k,v).
 
 axiom A[i,v] = 0 & ksdistvia(A,n,i,j,k,d,v-1) ==> ksdistvia(A,n,i,j,k,d,v).
 
+/*
 // Compute shortest distance s --> e via <= k edges; 
 // -1 if there is no path from s --> e within k edges
 int sdk(int[,] A, int n, int s, int e, int k)
@@ -64,7 +69,7 @@ int sdkhelper(int[,] A, int n, int s, int e, int k, int v, int m)
 		m < 0 -> requires nokpath(A,n,s,e,k,v-1)
 				ensures (res >= 0 & ksdist(A,n,s,e,k,res) | res < 0 & !(kpath(A,n,s,e,k)));
 		m >= 0 -> requires ksdistvia(A,n,s,e,k,m,v - 1)
-				ensures (res >= 0 & ksdist(A,n,s,e,k,res) | res < 0 & !(kpath(A,n,s,e,k)));
+				ensures res >= 0 & ksdist(A,n,s,e,k,res);
 	}
 {
 	if (v < n) {
@@ -80,6 +85,52 @@ int sdkhelper(int[,] A, int n, int s, int e, int k, int v, int m)
 		assume m' < 0 | m' >= 0 & ksdistvia(A,n,s,e,k,m',v);
 		return sdkhelper(A, n, s, e, k, v + 1, m);
 	}
-	assume false;
+
+	return m;
+}
+*/
+
+// S[0..vmax] contains k-shortest-distance from v-->e
+// S[v] < 0 when there is no k-path v-->e
+relation allksdist(int[,] A, int n, int e, int k, int[] S, int vmax) ==
+	forall(v : v < 0 | v > vmax | S[v] < 0 & !(kpath(A,n,v,e,k)) | ksdist(A,n,v,e,k,S[v])).
+
+void dpsdk(int[,] A, int n, int e, int k, ref int[] S, int v)
+	requires nonneg(A,n) & dom(S,0,n-1) & allksdist(A,n,e,k,S,v-1) & 
+			0 <= e < n & n >= 0 & k >= 0  & 0 <= v <= n
+	ensures allksdist(A,n,e,k,S',n-1) & dom(S',0,n-1);
+{
+	if (v < n) {
+		if (v == e)
+			S[v] = 0;
+		else if (k == 0)
+			S[v] = -1;
+		else {
+			int[] T = new int[n];
+			dpsdk(A,n,e,k-1,T,0);
+			S[v] = dpsdkfindmin(A,n,e,k,T,v,0,-1);
+		}
+		dpsdk(A, n, e, k, S, v + 1);
+	}
+}
+
+int dpsdkfindmin(int[,] A, int n, int e, int k, int[] T, int v, int u, int m)
+	requires nonneg(A,n) & dom(T,0,n-1) & allksdist(A,n,e,k-1,T,n-1) & 
+			0 <= e < n & n >= 0 & k > 0  & 0 <= v <= n & 0 <= u <= n & v!=e
+	case {
+		m < 0 -> requires nokpath(A,n,v,e,k,u-1)
+				ensures (res >= 0 & ksdist(A,n,v,e,k,res) | res < 0 & !(kpath(A,n,v,e,k)));
+		m >= 0 -> requires ksdistvia(A, n, v, e, k, m, u - 1)
+			ensures ksdist(A, n, v, e, k, res);
+	}
+{
+	if (u < n) {
+		if (A[v,u] > 0 && T[u] >= 0) {
+			if (m < 0 || m >= 0 && m < A[v,u] + T[u])
+				m = A[v,u] + T[u];
+		}
+		assume m' < 0 | m' >= 0 & ksdistvia(A,n,v,e,k,m',u);
+		return dpsdkfindmin(A, n, e, k, T, v, u + 1, m);
+	}
 	return m;
 }

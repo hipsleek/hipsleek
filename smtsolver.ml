@@ -582,16 +582,20 @@ let outconfig = {
 
 (* Pure formula printing function, to be intialized by cprinter module *)
 
-let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
+let print_pure = ref (fun (c:CP.formula) -> " printing not initialized");;
 
 (* Function to suppress and unsuppress all output of this modules *)
 
-let suppress_all_output () = outconfig.suppress_print_implication := true
+let suppress_all_output () = outconfig.suppress_print_implication := true;;
 
-let unsuppress_all_output () = outconfig.suppress_print_implication := false
+let unsuppress_all_output () = outconfig.suppress_print_implication := false;;
+
+let smt_should_print_stdout op =
+	(*let r = match op.sat_result with | UnSat -> false | _ -> true in
+		r && *) (not !(outconfig.suppress_print_implication))
 
 let process_stdout_print ante conseq input output res =
-	if (not !(outconfig.suppress_print_implication)) then
+	if (smt_should_print_stdout output) then
 	begin
 		if !(outconfig.print_implication) then 
 			print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
