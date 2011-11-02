@@ -45,6 +45,7 @@ let rec fixcalc_of_exp e = match e with
   | P.IConst (i, l) -> fmt_int i
   | P.FConst (f, l) -> fmt_float f
   | P.Add (e1, e2, l) -> fixcalc_of_exp e1; fmt_string "+"; fixcalc_of_exp e2 
+  | P.Subtract (e1, e2, l) -> fixcalc_of_exp e1; fmt_string "-("; fixcalc_of_exp e2; fmt_string ")"
   | _ -> failwith ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
 let rec fixcalc_of_b_formula b =
@@ -60,11 +61,11 @@ let rec fixcalc_of_b_formula b =
     | P.Eq (P.Null _, P.Var(P.SpecVar (_,"self",_),_), l) -> fmt_string "self <= 0";
     | P.Eq (e1, e2, l) -> fixcalc_of_exp e1; fmt_string op_eq ; fixcalc_of_exp e2
     | P.Neq (P.Var(P.SpecVar (_,"self",_),_), e2, l) -> 
-      fmt_string "("; fmt_string "("; fmt_string "self < "; fixcalc_of_exp e2; 
-      fmt_string ") || (self > "; fixcalc_of_exp e2; fmt_string ")"; fmt_string ")";
+      fmt_string "(("; fmt_string "self < "; fixcalc_of_exp e2; 
+      fmt_string ") || (self > "; fixcalc_of_exp e2; fmt_string "))"
     | P.Neq (e2, P.Var(P.SpecVar (_,"self",_),_), l) -> 
-      fmt_string "("; fmt_string "("; fmt_string "self < "; fixcalc_of_exp e2; 
-      fmt_string ") || (self > "; fixcalc_of_exp e2; fmt_string ")"; fmt_string ")";
+      fmt_string "(("; fmt_string "self < "; fixcalc_of_exp e2; 
+      fmt_string ") || (self > "; fixcalc_of_exp e2; fmt_string "))"
     | P.Neq (e1, e2, l) -> fixcalc_of_exp e1; fmt_string op_neq ; fixcalc_of_exp e2
     | _ -> failwith ("Fixcalc.fixcalc_of_b_formula: Not supported bformula")
 
@@ -100,8 +101,8 @@ let rec fixcalc_of_cformula f = match f with
     h_formula_data_remaining_branches = ann; h_formula_data_label = pid})-> 
     let _ = match sv with
       | P.SpecVar (t, "self", p) -> fmt_string "self > 0"
-      | _ -> 
-	fmt_string c; pr_bracket (fun x -> fixcalc_of_spec_var x) svs (string_of_spec_var sv);
+      | _ ->
+        fmt_string c; pr_bracket fixcalc_of_spec_var svs (string_of_spec_var sv);
     in ()
   | ViewNode ({h_formula_view_node = sv; h_formula_view_name = c; 
     h_formula_view_imm = imm; h_formula_view_arguments = svs; 
@@ -111,8 +112,8 @@ let rec fixcalc_of_cformula f = match f with
     h_formula_view_pos =pos}) ->
     let _ = match sv with
       | P.SpecVar (t, "self", p) -> fmt_string "self > 0";
-      | _ -> 
-	fmt_string c; pr_bracket (fun x -> fixcalc_of_spec_var x) svs (string_of_spec_var sv);
+      | _ ->
+        fmt_string c; pr_bracket fixcalc_of_spec_var svs (string_of_spec_var sv);
     in ()
   | HTrue -> fmt_string "True"
   | HFalse -> fmt_string "False"
@@ -137,7 +138,7 @@ let rec fixcalc_of_formula e = match e with
     formula_exists_pure = p; formula_exists_branches = b;
     formula_exists_type = t; formula_exists_flow = fl; 
     formula_exists_label = lbl; formula_exists_pos = pos}) ->
-    fmt_string " exists ("; list_iter "," (fun x -> fixcalc_of_spec_var x) svs;
+    fmt_string " exists ("; list_iter "," fixcalc_of_spec_var svs;
     fmt_string ": "; fixcalc_of_cformula h; fmt_string " && " ; 
     pr_mix_formula_branches(p,b); fmt_string ")"
 
@@ -151,7 +152,7 @@ let compute_inv name vars fml pf =
   if !Globals.do_infer_inv then
   begin
     fmt_string (name ^ ":=" ^ "{");
-    pr_square (fun x -> fixcalc_of_spec_var x) vars; 
+    pr_square fixcalc_of_spec_var vars; 
     fmt_string " -> [] -> []: ";
     list_iter " || " (fun (c,_)-> fixcalc_of_formula c) fml;
     Printf.fprintf (!oc) "\n};\n\nFix1:=bottomup(%s,1,SimHeur);\nFix1;\n\n" name;
