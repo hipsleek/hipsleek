@@ -799,6 +799,10 @@ let send_cmd_with_answer str =
   let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !timeout in
   answ
 
+let send_cmd_with_answer str =
+  let pr = fun f -> f in
+  Gen.Debug.ho_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
+	
 (* modify mona for not sending answers *)
 let send_cmd_no_answer str =
   (* let _ = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)

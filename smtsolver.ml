@@ -848,9 +848,9 @@ let is_sat f sat_no =
 (**
  * To be implemented
  *)
-let simplify (f: CP.formula) : CP.formula = (*f*)
+let simplify (f: CP.formula) : CP.formula = f
  (* let _ = print_endline "locle: simplify" in *)
-  try (Omega.simplify f) with | _ -> f
+ (* try (Omega.simplify f) with | _ -> f *)
 
 let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
