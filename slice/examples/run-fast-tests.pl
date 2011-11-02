@@ -929,6 +929,153 @@ $output_file = "log";
 		    "case_2", "SUCCESS",
 		    "rotate_case_3", "SUCCESS"
 		]
+	],
+	"pomega" => [
+		["avl_size_height.ss", 12, "",  
+			"height", "SUCCESS",
+			"rotate_left", "SUCCESS",
+			"rotate_right", "SUCCESS",
+			"get_max", "SUCCESS",
+			"rotate_double_left", "SUCCESS",
+			"rotate_double_right", "SUCCESS",
+			"build_avl1", "SUCCESS",
+			"build_avl2", "SUCCESS",
+			"insert", "SUCCESS",
+			"insert_inline", "SUCCESS",
+			"merge", "SUCCESS",
+			"remove_min","SUCCESS"
+			#"delete","SUCCESS"
+		],
+		["avl_size_height_bal.ss", 7, "",  
+			"height", "SUCCESS",
+			"get_max", "SUCCESS",
+			"insert", "SUCCESS",
+			"double_left_child", "SUCCESS",
+			"double_right_child", "SUCCESS",
+			"rotate_left_child", "SUCCESS",
+			"rotate_right_child", "SUCCESS"
+		],
+		["bsort_size_sorted.ss", 2, "",  
+			"bsort", "SUCCESS",
+			"bubble", "SUCCESS"
+		],
+		["qsort_size_sorted.ss", 3, "",  
+			"qsort1", "SUCCESS",
+			"append_bll", "SUCCESS",
+		    "partition1", "SUCCESS"
+		],
+		["isort_size_sorted.ss", 2, "",  
+			"insertion_sort", "SUCCESS",
+			"insert", "SUCCESS"
+		],
+		["ssort_size_sorted.ss", 3, "",  
+			"selection_sort", "SUCCESS",
+			"delete_min", "SUCCESS",
+		    "find_min", "SUCCESS"
+		],
+		["msort_size_sorted.ss", 5, "",  
+			"insert1", "SUCCESS",
+			"merge1", "SUCCESS",
+		    "merge_sort1", "SUCCESS",
+		    "split1", "SUCCESS",
+		    "count1", "SUCCESS"
+		],
+		["ll_size_interval.ss", 11, "",  
+			"reverse", "SUCCESS",
+			"delete", "SUCCESS",
+		    "insert", "SUCCESS",
+		    "get_next_next", "SUCCESS",
+		    "set_null", "SUCCESS",
+			"set_next", "SUCCESS",
+			"get_next", "SUCCESS",
+			"ret_first", "SUCCESS",
+			"append", "SUCCESS",
+			"append2", "SUCCESS",
+			"append3", "SUCCESS"
+		],
+		["sll_size_sorted.ss", 6, "",  
+			"id", "SUCCESS",
+			"insertion_sort", "SUCCESS",
+		    "get_tail", "SUCCESS",
+		    "delete", "SUCCESS",
+		    "insert2", "SUCCESS",
+			"insert", "SUCCESS"
+		],
+		["dll_size_interval.ss", 6, "",  
+			"append2", "SUCCESS",
+			"append1", "SUCCESS",
+		    "append", "SUCCESS",
+		    "delete1", "SUCCESS",
+		    "delete", "SUCCESS",
+			"insert", "SUCCESS"
+		],
+		["complete_size_minheight.ss", 5, "",  
+			"insert", "SUCCESS",
+			"min_height", "SUCCESS",
+		    "height", "SUCCESS",
+		    "minim", "SUCCESS",
+		    "maxim", "SUCCESS"
+		],
+		["heaps_size_maxelem.ss", 5, "",  
+			"deletemax", "SUCCESS",
+			"ripple", "SUCCESS",
+		    "deleteone", "SUCCESS",
+		    "deleteoneel", "SUCCESS",
+		    "insert", "SUCCESS"
+		],
+		["bst_size_height.ss", 6, "",  
+			"delete", "SUCCESS",
+			"remove_min", "SUCCESS",
+		    "insert", "SUCCESS",
+		    "flatten", "SUCCESS",
+		    "count", "SUCCESS",
+			"append", "SUCCESS"
+		],
+		["perfect_size_height.ss", 5, "",  
+			"insert", "SUCCESS",
+			"height", "SUCCESS",
+		    "maxim", "SUCCESS",
+		    "create", "SUCCESS",
+		    "simple_insert", "SUCCESS"
+		],
+		["rb_size_height.ss", 19, "",
+		    "insert", "SUCCESS",
+		    "del", "SUCCESS",
+		    "remove_min", "SUCCESS",
+		    "del_2r", "SUCCESS",
+		    "del_2", "SUCCESS",
+		    "del_3r", "SUCCESS",
+		    "del_3", "SUCCESS",
+		    "del_4r", "SUCCESS",
+		    "del_4", "SUCCESS",
+		    "del_5r", "SUCCESS",
+		    "del_5", "SUCCESS",
+		    "del_6r", "SUCCESS",
+		    "del_6", "SUCCESS",
+		    "is_black", "SUCCESS",
+		    "is_red", "SUCCESS",
+		    "case_2r", "SUCCESS",
+		    "rotate_case_3r", "SUCCESS",
+		    "case_2", "SUCCESS",
+		    "rotate_case_3", "SUCCESS"
+		]
+	],
+	"pomega" => [
+		["avl_size_height_bags.ss", 13, "-tp om",  
+			"height", "SUCCESS",
+			"rotate_left", "SUCCESS",
+			"rotate_right", "SUCCESS",
+			"get_max", "SUCCESS",
+			"rotate_double_left", "SUCCESS",
+			"rotate_double_right", "SUCCESS",
+			"insert", "SUCCESS",
+			"remove_min_add", "SUCCESS",
+			"remove_max_add", "SUCCESS",
+			"remove_min", "SUCCESS",
+			"delete_top", "SUCCESS",
+			"delete", "SUCCESS",
+			"main","SUCCESS"
+		],
 	]
     );
 
@@ -1052,6 +1199,9 @@ sub hip_process_file {
         }elsif ("$param" =~ "pldi") {
             $exempl_path_full = "$exempl_path/pldi_benchs";
             print "Starting automatic slicing experiment for PLDI paper:\n";
+		}elsif ("$param" =~ "pomega") {
+            $exempl_path_full = "$exempl_path/pldi_benchs/omega";
+            print "Starting automatic slicing experiment for PLDI paper on Omega:\n";
 		}
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
