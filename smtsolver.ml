@@ -59,7 +59,13 @@ let rec smt_of_typ t =
 			Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "unexpected UNKNOWN type"}
 		| NUM -> "Int" (* Use default Int for NUM *)
-		| Void | (BagT _) | (TVar _) | List _ ->
+        | BagT _ -> Error.report_error {Error.error_loc = no_pos; 
+			Error.error_text = "BAG spec not supported for SMT"}
+        |  List _ -> Error.report_error {Error.error_loc = no_pos; 
+			Error.error_text = "LIST spec not supported for SMT"}
+        |  TVar _ -> Error.report_error {Error.error_loc = no_pos; 
+			Error.error_text = "TVar spec not supported for SMT"}
+		| Void(* | (BagT _) *)(*| (TVar _)*) (*| List _*) ->
 			Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "spec not supported for SMT"}
 		| Named _ -> "Int" (* objects and records are just pointers *)
@@ -789,11 +795,17 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+  (*let _ = print_endline ("ante: " ^(!print_pure ante)) in
+  let _ = print_endline ("conseq: " ^(!print_pure conseq)) in *)
   let res, should_run_smt = if (((*has_exists*)Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (true, false)
 	else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
+    (*    let new_input =
+    if ((Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
+      ("(set-option :mbqi true)\n" ^ input)
+    else input in*)
 		let output =  check_formula input !timeout in
 		let res = match output.sat_result with
 			| Sat -> false
@@ -820,11 +832,16 @@ let imply ante conseq =
  * We also consider unknown is the same as sat
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+  (*let _ = print_endline ("is_sat: " ^(!print_pure f)) in*)
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
 		try (Omega.is_sat f sat_no, false) with | _ -> (true, false)
 	else (false, true) in
 	if (should_run_smt) then
 	let input = to_smt f None prover in
+(*    let new_input =
+    if (Cpure.contains_exists f) then
+      ("(set-option :mbqi true)\n" ^ input)
+    else input in *)
 	let output = check_formula input !timeout in
 	let res = match output.sat_result with
 		| UnSat -> false

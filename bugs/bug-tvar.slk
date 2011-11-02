@@ -1,0 +1,8 @@
+
+data node { int val ; node next }.
+ 
+pred lseg<p> == self = p 
+or self::node<_,r> * r::lseg<p> & self!=p inv true.
+
+//Entail(1)=Fail.(must) cause:213  true |-  false (RHS: contradiction).
+checkentail x9::lseg<x6> & x10 != x12 & x1 != x3 & x1 != x4 & x1 != x11 & x9 != x10 & x3 != x4 |- false.
