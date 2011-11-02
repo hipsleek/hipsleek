@@ -1780,15 +1780,18 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 let is_sat_memo_sub_no_orig (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
   if !f_2_slice then (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
-  else not (List.fold_left (fun a c -> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)
+  else
+	(*not (List.fold_left (fun a c -> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)*)
+	not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_slicing (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   if (not (is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv)) then (* One slice is UNSAT *)
 	false
   else
 	let f_l = MCP.fold_mem_lst_to_lst_gen_for_sat_slicing f with_dupl with_inv true true in
-	List.fold_left (fun a f -> if not a then a else (is_sat_sub_no f sat_subno)) true f_l
-
+	(*List.fold_left (fun a f -> if not a then a else (is_sat_sub_no f sat_subno)) true f_l*)
+	not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_l)
+	  
 let rec is_sat_memo_sub_no_ineq_slicing (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   Gen.Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
 	Cprinter.string_of_memo_pure_formula
