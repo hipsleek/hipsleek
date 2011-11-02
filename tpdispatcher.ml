@@ -540,6 +540,42 @@ let is_mix_list_constraint f = match f with
 let elim_exists_flag = ref true
 let filtering_flag = ref true
 
+let disj_cnt a c s =
+  if (!Globals.enable_counters) then
+	begin
+	  let rec p_f_size f = match f with
+		| CP.BForm _ -> 1
+		| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
+
+	  let rec or_f_size f = match f with
+		| CP.BForm _ -> 1
+		| CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
+		| CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
+     (*Gen.Profiling.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
+       Gen.Profiling.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
+       Gen.Profiling.inc_counter "imply_count";
+       Gen.Profiling.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
+      let rec add_or_f_size f = match f with
+		| CP.BForm _ -> 0
+		| CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
+		| CP.Or (f1,f2,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
+      match c with
+		| None -> 
+          Gen.Profiling.inc_counter ("stat_count_"^s);
+          Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a));
+          Gen.Profiling.add_to_counter ("stat_disj_count_"^s) (or_f_size a);
+          Gen.Profiling.add_to_counter ("stat_size_count_"^s) (p_f_size a)
+		| Some c-> 
+          Gen.Profiling.inc_counter ("stat_count_"^s);
+          Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a)); 
+          Gen.Profiling.add_to_counter ("stat_disj_count_"^s) ((or_f_size a)+(or_f_size c));
+          Gen.Profiling.add_to_counter ("stat_size_count_"^s) ((p_f_size a)+(p_f_size c)) ;
+    end
+  else ()
+
 let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
   ef
@@ -684,10 +720,11 @@ let simplify_var_name (e: CP.formula) : CP.formula =
   simplify e (Hashtbl.create 100)
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
+  let _ = disj_cnt f None "sat_no_cache" in
   match !tp with
 	| OmegaCalc ->
       begin
-        (Omega.is_sat f sat_no);
+        Omega.is_sat f sat_no;
       end
 	| CvcLite -> Cvclite.is_sat f sat_no
     | Cvc3 -> 
@@ -749,7 +786,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           (Omega.is_sat f sat_no);
         end
 	| SetMONA -> Setmona.is_sat f
-	| Redlog -> Redlog.is_sat f sat_no
+	| Redlog ->
+	  Redlog.is_sat f sat_no
 	| RM ->
       if (is_bag_constraint f) then
         Mona.is_sat f sat_no
@@ -1039,6 +1077,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
+
+  let _ = disj_cnt ante (Some conseq) "imply_no_cache" in
   
   let r = match !tp with
 	| OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
@@ -1514,42 +1554,6 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let _ = Gen.Profiling.pop_time s in
   if res1  then Gen.Profiling.inc_counter "true_imply_count" else Gen.Profiling.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
-
-let disj_cnt a c s =
-  if (!Globals.enable_counters) then
-	begin
-	  let rec p_f_size f = match f with
-		| CP.BForm _ -> 1
-		| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
-		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
-
-	  let rec or_f_size f = match f with
-		| CP.BForm _ -> 1
-		| CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
-		| CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
-		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
-     (*Gen.Profiling.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
-       Gen.Profiling.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
-       Gen.Profiling.inc_counter "imply_count";
-       Gen.Profiling.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
-      let rec add_or_f_size f = match f with
-		| CP.BForm _ -> 0
-		| CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
-		| CP.Or (f1,f2,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
-		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
-      match c with
-		| None -> 
-          Gen.Profiling.inc_counter ("stat_count_"^s);
-          Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a));
-          Gen.Profiling.add_to_counter ("stat_disj_count_"^s) (or_f_size a);
-          Gen.Profiling.add_to_counter ("stat_size_count_"^s) (p_f_size a)
-		| Some c-> 
-          Gen.Profiling.inc_counter ("stat_count_"^s);
-          Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a)); 
-          Gen.Profiling.add_to_counter ("stat_disj_count_"^s) ((or_f_size a)+(or_f_size c));
-          Gen.Profiling.add_to_counter ("stat_size_count_"^s) ((p_f_size a)+(p_f_size c)) ;
-    end
-  else ()
 
 let imply_timeout a c i t dc process =
   disj_cnt a (Some c) "imply";

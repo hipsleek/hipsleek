@@ -995,6 +995,7 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
+	let _ = Gen.Profiling.inc_counter "stat_redlog_count_sat" in
     let sf = if !no_pseudo_ops then f else strengthen_formula f in
     let frl = rl_of_formula sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
@@ -1019,7 +1020,8 @@ let is_sat f sat_no =
         incr cached_count;
         log DEBUG "Cached.";
         res
-      with Not_found -> 
+      with Not_found ->
+		let _ = Gen.Profiling.inc_counter "sat_proof_count_no_cache_redlog" in
         let res, time = is_sat_no_cache f sat_no in
         let _ = if time > cache_threshold then
           Hashtbl.add !sat_cache fstring res 
@@ -1051,6 +1053,7 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     if is_linear_formula f then
       call_omega (lazy (Omega.is_valid f !timeout))
     else
+	  let _ = Gen.Profiling.inc_counter "stat_redlog_count_imply" in
       if has_eq f then
         let eef = elim_eq f in
         if has_eq eef then
@@ -1080,6 +1083,7 @@ let imply ante conseq imp_no =
         log DEBUG "Cached.";
         res
       with Not_found ->
+		let _ = Gen.Profiling.inc_counter "imply_proof_count_no_cache_redlog" in
         let res, time = imply_no_cache f imp_no in
         let _ = if time > cache_threshold then
           Hashtbl.add !impl_cache fstring res
