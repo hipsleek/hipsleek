@@ -786,6 +786,8 @@ let rec get_answer chn : string =
         | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
         | _ -> "" ^ get_answer chn
 
+let get_answer chn =
+  Gen.Debug.no_1 "get_answer" (fun _ -> "") (fun f -> f) get_answer chn
 
 let send_cmd_with_answer str =
   if!log_all_flag==true then
@@ -798,6 +800,10 @@ let send_cmd_with_answer str =
   in 
   let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !timeout in
   answ
+
+let send_cmd_with_answer str =
+  let pr = fun f -> f in
+  Gen.Debug.no_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
 
 (* modify mona for not sending answers *)
 let send_cmd_no_answer str =

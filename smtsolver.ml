@@ -499,7 +499,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Gen.Debug.ho_2 "check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Gen.Debug.no_2 "check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 
