@@ -8,42 +8,96 @@
  * 
  * The recurrence relation for Levenshtein edit distance is:
  * 
- * ed(s[0..],t[0..]) = ed(s[1..],t[1..])                            
- *                          if s[0] = t[0]
- *                   = 1 + min{ed(s[1..],t[1..]), ed(s[1..],t), ed(s,t[1..])}
+ * ed(s[0..n],t[0..m]) = m + n if either n or m is 0 i.e. one of s, t is empty
+ *                     = ed(s[0..n-1],t[0..m-1])
+ *                          if s[n] = t[m]
+ *                     = 1 + min{ed(s[0..n-1],t[0..m-1]),  substitute s[m] --> t[n] & then transform s[0..n-1] --> t[0..m-1]
+                                 ed(s[0..n-1],t[0..m]),    delete s[n] & transform s[0..n-1] --> t[0..m]
+                                 ed(s[0..n],t[0..m-1])     insert t[m] & transform s[0..n] --> t[0..m-1] }
  *                          otherwise
  *         
- * In the restricted version, the formula is
+ * In the restricted version, the formula is fairly similar
  * 
- * ed(s[0..],t[0..]) = ed(s[1..],t[1..])
- *                          if s[0] = t[0]
- *                   = 1 + min{ed(s[1..],t), ed(s,t[1..])
- *                          otherwise
+ * ed(s[0..n],t[0..m]) = max(m,n,0)            if either n or m is < 0 i.e. one of s, t is empty
+                       = ed(s[0..n-1],t[0..m-1])                                  if s[n] = t[m]
+ *                     = 1 + min{ed(s[0..n-1],t[0..m]), ed(s[0..n],t[0..m-1])     otherwise
  *         
  * Reference: Edition distance
  * http://proval.lri.fr/gallery/distance.en.html
  * 
  * @author Vu An Hoa
  */
+ 
+// the content of a[i..j] is identical to b[u..v]
+relation identical(int[] a, int i, int j, int[] b, int u, int v) ==
+	i - j = v - u & forall(k : k < i | k > j | a[k] = b[u + k - i]).
 
-// d is POSSIBLE distance between w1[i1..j1] and w2[i2..j2]
-// <==> there is a sequence of modification w1 --> w2
-relation dist(int[] w1, int i1, int j1,
-				int[] w2, int i2, int j2, int d) ==
-	(i1 > j1 & i2 > j2 & d = 0 | ).
-//	| dist_add_left :
-//	    forall w1 w2: word, n:int.
-//	    dist w1 w2 n -> forall a:a. dist (Cons a w1) w2 (n + 1)
-//	| dist_add_right :
-//	    forall w1 w2: word, n:int.
-//	    dist w1 w2 n -> forall a:a. dist w1 (Cons a w2) (n + 1)
-//	| dist_context :
-//	    forall w1 w2: word, n:int.
-//	    dist w1 w2 n -> forall a:a. dist (Cons a w1) (Cons a w2) n
+// d is a distance between two words
+relation dist(int[] w1, int l1, int[] w2, int l2, int d).
 
-relation min_dist(int[] w1, int[] w2, int d) ==
-	dist(w1,w2,d) & forall(m: (!(dist(w1,w2,m) | d <= m))).
+relation min_dist(int[] w1, int l1, int[] w2, int l2, int d) ==
+	dist(w1,l1,w2,l2,d) & forall(m : !(dist(w1,l1,w2,l2,m)) | d <= m).
+	
+// DEFINING AXIOMS
+	
+// base case {d = 0} : w1 and w2 are identical
+axiom l1 = l2 & identical(w1,1,l1,w2,1,l2) ==> dist(w1,l1,w2,l2,0).
 
+// base case {d = 1} : w2 is obtained by either inserting/deleting an element of w1
+axiom l1 = l2 + 1 & 1 <= i <= l1 & identical(w1,1,i-1,w2,1,i-1) 
+			& identical(w1,i+1,l1,w2,i,l2) ==> dist(w1,l1,w2,l2,1).
+axiom l2 = l1 + 1 & 1 <= i <= l2 & identical(w1,1,i-1,w2,1,i-1) 
+			& identical(w1,i,l1,w2,i+1,l2) ==> dist(w1,l1,w2,l2,1).
+
+// induction : (transitivity/additivity) if one can edit w1 --> w2 and w2 --> w3 in
+// d and e steps then one can edit w1 --> w3 in d + e steps
+axiom dist(w1,l1,w2,l2,d) & dist(w2,l2,w3,l3,e) ==> dist(w1,l1,w3,l3,d+e).
+
+// THEOREMS AND CONSEQUENCES
+
+// (optional theorem) symmetry due to symmetry between insert/delete; proof by induction on d
+axiom dist(w1,l1,w2,l2,d) ==> dist(w2,l2,w1,l1,d).
+axiom dist(w1,l1,w2,l2,d) ==> dist(w1,l1,w2,l2+1,d+1).
+axiom dist(w1,l1,w2,l2,d) ==> dist(w1,l1+1,w2,l2,d+1).
+axiom dist(w1,l1,w2,l2,d) & w1[l1+1] = w2[l2+1] ==> dist(w1,l1+1,w2,l2+1,d).
+// one of the word is empty
+axiom true ==> dist(w1,0,w2,l2,l2).
+axiom true ==> dist(w1,l1,w2,0,l1).
+
+// Theorem : Number of edits must be at least the difference in the lengths.
+// Why ? Because each edit adjusts the length of the source by 1 and hence, it 
+// requires at least |l1-l2| edits to transform a string of length l1 to a
+// string of length l2
+axiom dist(w1,l1,w2,l2,d) ==> d >= l1 - l2 & d >= l2 - l1.
+
+// Consequences of the above theorem:
+//axiom true ==> min_dist(w1,0,w2,l2,l2).
+//axiom true ==> min_dist(w1,l1,w2,0,l1).
+
+// Compute smallest number of edits to transform s[1..n] to t[1..m] recursively
+int edrec(int[] s, int n, int[] t, int m)
+	variance (0) [m + n]
+	requires dom(s,1,n) & dom(t,1,m) & n >= 0 & m >= 0
+	ensures dist(s, n, t, m, res);
+	//ensures min_dist(s, n, t, m, res);
+{
+	// either s or t is empty ==> delete entire or insert entire t to s to get t
+	if (n == 0 || m == 0)
+		return m + n;
+	// otherwise: both s and t are not empty m, n > 0
+	else if (s[n] == t[m])
+		return edrec(s,n-1,t,m-1);
+	else {
+		int d1 = 1 + edrec(s,n-1,t,m);
+		int d2 = 1 + edrec(s,n,t,m-1);
+		if (d1 < d2)
+			return d1;
+		else
+			return d2;
+	}
+}
+
+/*
 // Compute the edit distance between s and t
 int editdist(int[] s, int n1, int[] t, int n2)
 //Pre: { length w1 = n1 and length w2 = n2 and length t = n2+1 }
@@ -80,5 +134,5 @@ int editdist(int[] s, int n1, int[] t, int n2)
     }
     return temp[0];
 }
-
+*/
 

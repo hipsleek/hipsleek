@@ -33,3 +33,13 @@ int sigmaleft(int[] a, int i, int j)
 	else 
 		return sigmaleft(a, i, j-1) + a[j];
 }
+
+int sigmaleftdifferentdom(int[] a, int i, int j) 
+	requires dom(a,i,j)
+	ensures sumarray(a,i,j,res);
+{
+	if (i > j)
+		return 0;
+	else 
+		return sigmaleftdifferentdom(a, i, j-1) + a[j];
+}
