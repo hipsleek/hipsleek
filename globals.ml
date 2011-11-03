@@ -161,12 +161,16 @@ let push_opt_val_rev opt v = match opt with
 
 (* global constants *)
 
-let no_pos = 
-	let no_pos1 = { Lexing.pos_fname = "";
+let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_lnum = 0;
 				   Lexing.pos_bol = 0; 
-				   Lexing.pos_cnum = 0 } in
+				   Lexing.pos_cnum = 0 } 
+
+let no_pos = 
 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
+
+let set_file_proc_name p file_name proc_name=
+  {p with start_pos = {p.start_pos with Lexing.pos_fname = file_name ^ ":" ^ proc_name}}
 
 let post_pos = ref no_pos
 let set_post_pos p = post_pos := p
@@ -279,6 +283,8 @@ let n_xpure = ref 1
 let check_coercions = ref false
 
 let show_gist = ref false
+
+let trace_failure = ref false
 
 let trace_all = ref false
 

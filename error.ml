@@ -11,6 +11,8 @@ type error = {
   error_text : string
 }
 
+exception Theorem_prover of (string * string)
+
 (*
 let all_errors : error list ref = ref []
 

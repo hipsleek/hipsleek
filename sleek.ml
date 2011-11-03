@@ -220,9 +220,12 @@ let main () =
 (* let main () =  *)
 (*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
-let _ = 
-  wrap_exists_implicit_explicit := false ;
+let _ =
+   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
+  let _ = Printexc.record_backtrace !Globals.trace_failure in
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
   if !Scriptarguments.print_version_flag then begin
 	print_version ()
   end else

@@ -228,7 +228,11 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
-  
+
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
+  let _ = Printexc.record_backtrace !Globals.trace_failure in
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
+
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
       Globals.procs_verified := ["f3"];

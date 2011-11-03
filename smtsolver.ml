@@ -56,15 +56,16 @@ let rec smt_of_typ t =
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
 		| Int -> "Int"
 		| UNK -> 	
-			Error.report_error {Error.error_loc = no_pos; 
+			Error.report_error {Error.error_loc = set_file_proc_name no_pos "smtsolver.ml" "smt_of_typ";
 			Error.error_text = "unexpected UNKNOWN type"}
 		| NUM -> "Int" (* Use default Int for NUM *)
         | BagT _ -> Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "BAG spec not supported for SMT"}
         |  List _ -> Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "LIST spec not supported for SMT"}
-        |  TVar _ -> "Int"
-            (*Error.report_error {Error.error_loc = no_pos; 
+        |  TVar _ -> (*"Int"*)
+            raise (Error.Theorem_prover ("Z3", "TVar spec not supported for SMT"))
+           (* Error.report_error {Error.error_loc = set_file_proc_name no_pos "smtsolver.ml" "smt_of_typ";
 			Error.error_text = "TVar spec not supported for SMT"} *)
 		| Void(* | (BagT _) *)(*| (TVar _)*) (*| List _*) ->
 			Error.report_error {Error.error_loc = no_pos; 
