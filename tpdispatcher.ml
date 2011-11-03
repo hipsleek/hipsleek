@@ -47,6 +47,47 @@ let decr_priority = ref false
 let set_priority = ref false
 let prio_list = ref []
 
+let string_of_prover prover = match prover with
+	| OmegaCalc -> "Omega Calculator"
+	| CvcLite -> "CVC Lite"
+	| Cvc3 -> "CVC3"
+	| CO  -> ""
+	| Isabelle -> "Isabelle"
+	| Mona -> "Mona"
+	| MonaH -> ""
+	| OM -> ""
+	| OI -> ""
+	| SetMONA -> ""
+	| CM  -> ""
+	| Coq -> "Coq"
+	| Z3 -> "Z3"
+	| Redlog -> "RedLog"
+	| RM -> ""
+	| ZM -> ""
+
+
+(* An Hoa : Global variables to allow the prover interface to pass message to this interface *)
+
+let generated_prover_input = ref "_input_not_set_"
+
+let prover_original_output = ref "_output_not_set_"
+
+let set_generated_prover_input inp =
+	generated_prover_input := inp;;
+	
+let get_generated_prover_input () = !generated_prover_input;;
+	
+let set_prover_original_output oup = 
+	prover_original_output := oup;;
+	
+let get_prover_original_output () = !prover_original_output;;
+
+Smtsolver.set_generated_prover_input := set_generated_prover_input;;
+Smtsolver.set_prover_original_output := set_prover_original_output;;
+Omega.set_generated_prover_input := set_generated_prover_input;;
+Omega.set_prover_original_output := set_prover_original_output;;
+(* An Hoa : end *)
+
 module Netprover = struct
   let debuglevel = 0 
   let trace f s = if debuglevel <= 1 then (prerr_string (Printf.sprintf "\n%d: %s: %s" (Unix.getpid ()) f s); flush stderr) else ()
@@ -950,11 +991,8 @@ let called_prover = ref ""
 let print_implication = ref false 
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
-  (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
-     ^(Cprinter.string_of_pure_formula conseq)^"\n") in
-  *)
-  (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
-  
+  let _ = if (!print_proof || !print_brief_proof) then 
+  	print_endline ("\n>>> CHECKING VERIFICATION CONDITION USING " ^ (string_of_prover !tp) ^ " >>>\n\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
   let r = match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
@@ -1015,8 +1053,20 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         Mona.imply ante conseq imp_no
       else
         Smtsolver.imply ante conseq
-  in let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n" ^ "res: " ^ (string_of_bool r) ^ "\n") in
-  r
+  in
+	let _ = if (!print_proof || !print_brief_proof) then
+			begin
+				if (not !print_brief_proof) then
+				begin
+					print_endline (">>> " ^ (string_of_prover !tp) ^ " INPUT GENERATED >>>");
+					print_endline (get_generated_prover_input ());
+					print_endline (">>> " ^ (string_of_prover !tp) ^ " ORIGINAL OUTPUT >>>");
+					print_endline (get_prover_original_output ());
+				end;
+				print_endline (">>> VERDICT : " ^ (if r then "VALID" else "INVALID") ^ " >>>");
+			end
+	in
+		r
 ;;
 (*
 let tp_imply_no_cache ante conseq imp_no timeout process =
@@ -1605,4 +1655,4 @@ let clear_prover_log () = Buffer.clear prover_log
 let change_prover prover =
   clear_prover_log ();
   tp := prover;
-  start_prover ()
+  start_prover ();;

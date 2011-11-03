@@ -75,8 +75,6 @@ let set_proving_loc p =
 let clear_proving_loc () =
   proving_loc := None
 
-
-
 (* pretty printing for types *)
 let rec string_of_typ = function 
    (* may be based on types used !! *)
@@ -605,4 +603,6 @@ class type ['a] incremMethodsType = object
   (* method add_to_context: 'a -> unit *)
 end
 
-
+(* An Hoa : option to print proof *)
+let print_proof = ref false
+let print_brief_proof = ref false

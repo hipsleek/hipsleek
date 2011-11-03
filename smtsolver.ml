@@ -3,6 +3,8 @@ module CP = Cpure
 
 module StringSet = Set.Make(String)
 
+let set_generated_prover_input = ref (fun _ -> ())
+let set_prover_original_output = ref (fun _ -> ())
 
 (***************************************************************
                   GLOBAL VARIABLES & TYPES                      
@@ -517,7 +519,7 @@ let to_smt_v2 ante conseq logic fvars info =
 			";Antecedent\n" ^ 
 				ante_str ^
 			";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
-			"(check-sat)\n")
+			"(check-sat)")
 	
 (* output for smt-lib v1.2 format *)
 and to_smt_v1 ante conseq logic fvars =
@@ -736,7 +738,9 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 	else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
+		let _ = !set_generated_prover_input input in
 		let output = run prover input in
+		let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 		let res = match output.sat_result with
 			| Sat -> false
 			| UnSat -> true

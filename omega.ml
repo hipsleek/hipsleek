@@ -5,6 +5,9 @@ open Globals
 open Gen.Basic
 open Cpure
 
+let set_generated_prover_input = ref (fun _ -> ())
+let set_prover_original_output = ref (fun _ -> ())
+
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
 let timeout = ref 15.0 (* default timeout is 15 seconds *)
@@ -241,6 +244,8 @@ let check_formula f timeout =
         
         let result = ref true in
         let str = read_last_line_from_in_channel (!process.inchannel) in
+        (* An Hoa : set original output *)
+        let _ = !set_prover_original_output str in
         let n = String.length str in
         if n > 7 then
           begin
@@ -373,7 +378,8 @@ let is_valid (pe : formula) timeout: bool =
             let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
     (*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-
+			(* An Hoa : set generated input *)
+			let _ = !set_generated_prover_input fomega in
             if !log_all_flag then begin
                 (*output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
                 output_string log_all (Gen.new_line_str^"#is_valid" ^Gen.new_line_str);

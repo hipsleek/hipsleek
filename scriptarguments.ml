@@ -36,6 +36,10 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
+	("-wbpf", Arg.Set Globals.print_brief_proof,
+	"Print all (and only) the verification condition generated.");
+	("-wpf", Arg.Set Globals.print_proof,
+	"Print all the verification conditions, the input to external prover and its output.");
     ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
 	"Print implication for debugging");
 	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
