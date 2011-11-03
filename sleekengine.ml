@@ -414,10 +414,9 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	      print_string (num_id^"=Valid.\n")
            (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
       end
-  with _ ->
-    Printexc.print_backtrace stdout;
-    dummy_exception() ; 
-    print_string "exception in entail check\n"
+  with e ->
+      let _ =  Error.process_exct(e)in
+      print_string "exception in entail check\n"
 
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
