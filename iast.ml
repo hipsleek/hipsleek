@@ -20,13 +20,14 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
                    mutable prog_rel_decls : rel_decl list; 
+                   mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;
-		  data_fields : (typed_ident * loc) list;
+		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 		  data_parent_name : ident;
 		  data_invs : F.formula list;
 		  data_methods : proc_decl list }
@@ -57,6 +58,12 @@ and rel_decl = { rel_name : ident;
 		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
 		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
 		  (* try_case_inference: bool *)}
+
+(* [4/10/2011] An Hoa: axiom for pure constraints *)
+and axiom_decl = {
+			axiom_hypothesis : P.formula ;
+			axiom_conclusion : P.formula ;
+		  }
 
 and hopred_decl = { hopred_name : ident;
           hopred_mode : branch_label;
@@ -179,9 +186,14 @@ and assign_op =
 
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
-and exp_arrayat = { exp_arrayat_array_name : ident;
-	     exp_arrayat_index : exp;
-			 exp_arrayat_pos : loc; }
+and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a single ident to exp to support expressions like x.A[i] for a data structure that has an array as a field *)
+					exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
+					exp_arrayat_pos : loc; }
+
+(* (\* An Hoa : array memory allocation expression *\) *)
+(* and exp_aalloc = { exp_aalloc_etype_name : ident;		(\* Name of the base element *\) *)
+(* 					exp_aalloc_dimensions : exp list;	(\* List of size for each dimensions *\) *)
+(* 					exp_aalloc_pos : loc; } *)
 
 (* An Hoa : array memory allocation expression *)
 and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
@@ -465,7 +477,7 @@ let is_var (e : exp) : bool = match e with
   | _ ->false
   
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
-	| ArrayAt e -> e.exp_arrayat_pos (* An Hoa *)
+	| ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
@@ -654,8 +666,8 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | Unfold _ 
           | Var _ -> (e,zero)
 					| ArrayAt b -> (* An Hoa *)
-								let e1,r1 = helper n_arg b.exp_arrayat_index in
-								(ArrayAt {b with exp_arrayat_index = e1},r1)
+					 			let el,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+								(ArrayAt {b with exp_arrayat_index = el},comb_f rl)
           | Assign b ->
                 let e1,r1 = helper n_arg b.exp_assign_lhs  in
                 let e2,r2 = helper n_arg b.exp_assign_rhs  in
@@ -820,7 +832,56 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
   (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) : unit =
   fold_exp_args_imp e arg imp f f_args f_imp voidf ()
 
+(** An Hoa [22/08/2011] Extract information from a field declaration of data **)
+
+(**
+ * An Hoa : get the typed identifier from a field declaration
+ **)
+let get_field_typed_id d =
+	match d with
+		| (tid,_,_) -> tid
+
+(**
+ * An Hoa : Extract the field name from a field declaration
+ **)
+let get_field_name f = snd (get_field_typed_id f)
+
+(**
+ * An Hoa : Extract the field name from a field declaration
+ **)
+let get_field_typ f = fst (get_field_typed_id f)
+
+(**
+ * An Hoa : Extract the field position from a field declaration
+ **)
+let get_field_pos f =
+	match f with
+		| (_,p,_) -> p 
+
+(**
+ * An Hoa : Check if a field is an inline field 
+ **)
+let is_inline_field f =
+	match f with
+		| (_,_,inline) -> inline
+
+(** An Hoa [22/08/2011] : End of information extracting functions from field declaration **)
+
+
+
 (* look up functions *)
+
+(** An Hoa:
+ *  Returns a list of data types which possess a field_name specified.
+ **)
+let rec look_up_types_containing_field (defs : data_decl list) (field_name : ident) = 
+	match defs with
+	| [] -> []
+	| d::t -> let temp = look_up_types_containing_field t field_name in
+				if (List.exists (fun x -> (get_field_name x) = field_name) d.data_fields) then
+					d.data_name :: temp
+				else temp
+(* An Hoa : End *)
 
 let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def pos rest name
@@ -859,7 +920,8 @@ and look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs 
 		  look_up_proc_def_raw rest name
   | [] -> raise Not_found
 	    
-and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = match procs with
+and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = 
+	match procs with
   | p :: rest ->
         if p.proc_mingled_name = name then
 		  p
@@ -883,8 +945,34 @@ and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = ma
         let cparent_decl = List.find (fun t -> (String.compare t.data_name c.data_parent_name) = 0) prog.prog_data_decls in
         c.data_methods @ (look_up_all_methods prog cparent_decl)  
 
-and look_up_all_fields (prog : prog_decl) (c : data_decl) : (typed_ident * loc) list = 
+(**
+ * An Hoa : expand the inline fields. This is just the fixed point computation.
+ * Input: A list of Iast fields. Output: A list of Iast fields without inline.
+ **)
+and expand_inline_fields ddefs fls =
+	(** [Internal] An Hoa : add a prefix k to a field declaration f **)
+	let augment_field_with_prefix f k = match f with
+		| ((t,id),p,i) -> ((t,k ^ id),p,i)
+	in
+	if (List.exists is_inline_field fls) then
+		let flse = List.map (fun fld -> if (is_inline_field fld) then
+											let fn  = get_field_name fld in
+											let ft = get_field_typ fld in
+											try
+												let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
+												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
+													fld_fs
+											with
+												| Not_found -> failwith "[expand_inline_fields] type not found!"
+										else [fld]) fls in
+		let flse = List.flatten flse in
+			expand_inline_fields ddefs flse
+	else fls
+
+and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
   let current_fields = c.data_fields in
+	(* An Hoa : expand the inline fields *)
+	let current_fields = expand_inline_fields prog.prog_data_decls current_fields in
   if (String.compare c.data_name "Object") = 0 then
 	[]
   else
@@ -934,8 +1022,100 @@ and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
   (*let vl = List.map (fun v -> v.view_name) view_decls in*)
+	(* An Hoa : Implement the equality checking *)
+	(** [Internal] replaces aliases of self by it. **)
+	let rec process_eq_self_view v = { v with view_formula = process_eq_self_sf v.view_formula }
+
+	(** [Internal] replaces aliases of self in an struc_formula **)
+	and process_eq_self_sf f = List.map process_eq_self_ef f
+
+	(** [Internal] replaces aliases of self in an ext_formula **)
+	and process_eq_self_ef f = match f with
+		| F.ECase ecf -> let b = List.map (fun (x,y) -> (x,process_eq_self_sf y)) 
+								ecf.F.formula_case_branches in
+							F.ECase { ecf with F.formula_case_branches = b }
+		| F.EBase ebf -> let bf = process_formula ebf.F.formula_ext_base in
+						let ecnt = process_eq_self_sf ebf.F.formula_ext_continuation in
+							F.EBase { ebf with F.formula_ext_base = bf; 
+								F.formula_ext_continuation = ecnt }
+		| _ -> f (* Stay the same on the other cases. *)
+
+	(** [Internal] replaces aliases of self in an formula **)
+	and process_formula f = match f with
+		| F.Base fb -> F.Base { fb with 
+			F.formula_base_heap = process_pure_heap fb.F.formula_base_pure 
+													fb.F.formula_base_heap }
+		| F.Exists fe -> F.Exists { fe with 
+			F.formula_exists_heap = process_pure_heap fe.F.formula_exists_pure
+														fe.F.formula_exists_heap }
+		| F.Or fo -> let f1 = process_formula fo.F.formula_or_f1 in
+						let f2 = process_formula fo.F.formula_or_f2 in
+							F.Or { fo with F.formula_or_f1 = f1; F.formula_or_f2 = f2 }
+
+	(** [Internal] extract equalities of form self = x and replace x 
+		with self in heapreturn a new heap formula.
+	 **)
+	and process_pure_heap p h =
+		let vars = collect_eq_self p in
+		(* let _ = print_endline ("Variables equal self : " ^ (String.concat "," (List.map (fun (x,y) -> x) vars))) in *)
+			replace_self h vars
+	
+	and collect_eq_self p = match p with
+		| P.BForm (f,_) -> (let (pf, _) = f in match pf with
+			| P.Eq (e1,e2,_) -> (match e1 with
+				| P.Var ((vn,vp), _) -> (if (vn = "self" && vp = Unprimed) then
+										match e2 with
+										| P.Var ((xn,xp),_) -> [(xn,xp)]
+										| _ -> [] 
+								else match e2 with
+										| P.Var (("self",Unprimed),_) -> [(vn,vp)]
+										| _ -> [])
+				| _ -> [])
+			| _ -> [])
+		| P.And (f1,f2,_) -> List.append (collect_eq_self f1) (collect_eq_self f2)
+		| P.Or _ | P.Not _ -> []
+		| P.Forall (_,f,_,_) | P.Exists (_,f,_,_) -> collect_eq_self f
+
+	and replace_self h vars = match h with
+		| F.Phase h1 -> F.Phase { h1 with
+			F.h_formula_phase_rd = replace_self h1.F.h_formula_phase_rd vars;
+			F.h_formula_phase_rw = replace_self h1.F.h_formula_phase_rw vars}
+		| F.Conj h1 -> F.Conj { h1 with
+			F.h_formula_conj_h1 = replace_self h1.F.h_formula_conj_h1 vars;
+			F.h_formula_conj_h2 = replace_self h1.F.h_formula_conj_h2 vars}
+		| F.Star h1 -> F.Star { h1 with
+			F.h_formula_star_h1 = replace_self h1.F.h_formula_star_h1 vars;
+			F.h_formula_star_h2 = replace_self h1.F.h_formula_star_h2 vars}
+		| F.HeapNode h1 -> F.HeapNode { h1 with
+			(* Replace the pointer with self if we detected it equals self *)
+			F.h_formula_heap_node = 
+				if List.mem h1.F.h_formula_heap_node vars then
+					("self",Unprimed)
+				else
+					 h1.F.h_formula_heap_node }
+		| F.HeapNode2 h1 ->F.HeapNode2 { h1 with
+			(* Replace the pointer with self if we detected it equals self *)
+			F.h_formula_heap2_node = 
+				if List.mem h1.F.h_formula_heap2_node vars then
+					("self",Unprimed)
+				else
+					 h1.F.h_formula_heap2_node }
+		| F.HTrue -> h
+		| F.HFalse -> h
+	in
+	(* let _ = print_endline "BEFORE REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
+	let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
+	let view_decls_org = view_decls in
+	let view_decls = List.map process_eq_self_view view_decls in
+	(* let _ = print_endline "AFTER REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
+	let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let dl = List.map (fun v -> v.data_name) data_decls in
   let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
+  let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
+  then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
+	(* Restore the original list of view_decls and continue with the previous implementation *)
+  	let view_decls = view_decls_org in
+	let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
   let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
   then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
   rl
@@ -971,11 +1151,14 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
     | vd::vds -> let vans = List.map (fun v -> (v,(create v.view_data_name),v.view_pt_by_self)) vds in
       let vl = syn_data_name dl [vd] in
       let vl = fixpt_data_name (vl@vans) in
+		(* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
       let _ = update_fixpt vl in
       (List.hd view_decls).view_data_name
 
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
-  List.iter (fun (v,a,tl) -> 
+  List.iter (fun (v,a,tl) ->
+		(* print_endline ("update_fixpt for " ^ v.view_name);
+		print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl 
@@ -987,6 +1170,8 @@ and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
   let vl = fixpt_data_name vl in
+	(* An Hoa *)
+	(* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
   update_fixpt vl
 
 
@@ -1572,7 +1757,8 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
                 prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
                 prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
-                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls;
+                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
+                prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
                 prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;} in
@@ -1587,8 +1773,147 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_enum_decls = [];
                 prog_view_decls = [];
                 prog_rel_decls = [];
+                prog_axiom_decls = [];
                 prog_hopred_decls = [];
                 prog_proc_decls = [];
                 prog_coercion_decls = [];}
         in new_prims
   | hd::tl -> append_iprims_list hd tl
+
+(**
+ * An Hoa : Find the field with field_name of compound data structure with name data_name
+ **)
+let get_field_from_typ ddefs data_typ field_name = match data_typ with
+	| Named data_name -> 
+		let ddef = look_up_data_def_raw ddefs data_name in
+		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
+			field
+	| _ -> failwith ((string_of_typ data_typ) ^ " is not a compound data type.")
+
+
+(**
+ * An Hoa : Find the type of the field with indicated name in ddef
+ **)
+let get_type_of_field ddef field_name =
+	let tids = List.map get_field_typed_id ddef.data_fields in
+	try
+		let field_typed_id = List.find (fun x -> (snd x = field_name)) tids in
+			fst field_typed_id
+	with
+		| Not_found -> UNK
+
+
+(**
+ * An Hoa : Traversal a list of access to get the type.
+ **)
+let rec get_type_of_field_seq ddefs root_type field_seq =
+	(* let _ = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in *)
+	match field_seq with
+		| [] -> root_type
+		| f::t -> (match root_type with
+			| Named c -> (try
+					let ddef = look_up_data_def_raw ddefs c in
+					let ft = get_type_of_field ddef f in
+						(match ft with
+							| UNK -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Compound type " ^ c ^ " has no field " ^ f ^ "!" }
+							| _ -> get_type_of_field_seq ddefs ft t)
+				with
+					| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Either data type " ^ c ^ " cannot be found!" })
+			| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] " ^ (string_of_typ root_type) ^ " is not a compound type!" })
+
+
+(**
+ * An Hoa : Check if an identifier is a name for some data type
+ **)
+let is_data_type_identifier (ddefs : data_decl list) id =
+	List.exists (fun x -> x.data_name = id) ddefs
+
+
+(**
+ * An Hoa : Check if an identifier is NOT a name for some data type
+ **)
+let is_not_data_type_identifier (ddefs : data_decl list) id =
+	not (is_data_type_identifier ddefs id)
+
+(**
+ * An Hoa : Compute the size of a typ in memory.
+ *          Each primitive type count 1 while compound data type is the sum of
+ *          its component. Inline types should be expanded.
+ **)
+let rec compute_typ_size ddefs t = 
+	(* let _ = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
+	let res = match t with
+		| Named data_name -> (try 
+				let ddef = look_up_data_def_raw ddefs data_name in
+					List.fold_left (fun a f -> 
+						let fs = if (is_inline_field f) then 
+							compute_typ_size ddefs (get_field_typ f) 
+						else 1 in a + fs) 0 ddef.data_fields
+			with | Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_typ_size] input type does not exist."})
+		| _ -> 1 in
+	(* let _ = print_endline ("[compute_typ_size] output = " ^ (string_of_int res)) in *)
+		res
+
+
+(**
+ * An Hoa : Get the number of pointers by looking up the corresponding record 
+ *          in data_dec instead of doing the full recursive computation. This
+ *          caching of information is to reduce the workload.
+ **)
+let get_typ_size = compute_typ_size
+
+(**
+ * An Hoa : Compute the offset of the pointer to a field with respect to the root.
+ **)
+let rec compute_field_offset ddefs data_name accessed_field =
+	try 
+		(* let _ = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
+		let found = ref false in
+		let ddef = look_up_data_def_raw ddefs data_name in
+		(* Accumulate the offset along the way *)
+		let offset = List.fold_left (fun a f -> 
+										if (!found) then a (* Once found, just keep constant*)
+										else let fn = get_field_name f in 
+											let ft = get_field_typ f in
+											if (fn = accessed_field) then (* Found the field *)
+												begin found := true; a end
+											else if (is_inline_field f) then (* Accumulate *)
+												a + (get_typ_size ddefs ft)
+											else a + 1)
+									0 ddef.data_fields in
+		(* The field is not really a field of the data type ==> raise error. *)
+		if (not !found) then 
+			Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field }
+		else 
+			(* let _ = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
+				offset
+	with
+		| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] is call with non-existing data type." }
+
+
+(**
+ * An Hoa : Compute the offset of the pointer indicated by a field sequence with
+ *          respect to the root (that points to a type with name data_name)
+ **)
+and compute_field_seq_offset ddefs data_name field_sequence = 
+	(* let _ = print_endline ("[compute_field_seq_offset] input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
+	let dname = ref data_name in
+	let res = 
+		List.fold_left (fun a field_name ->
+							let offset = compute_field_offset ddefs !dname field_name in
+							(* Update the dname to the data type of the field_name *)
+							try
+								let ddef = look_up_data_def_raw ddefs !dname in
+								let field_type = get_type_of_field ddef field_name in
+								begin
+									dname := string_of_typ field_type;
+									a + offset
+								end
+							with
+								| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_seq_offset]: " ^ !dname ^ " does not exists!" } )
+						0 field_sequence in
+	(* let _ = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
+		res
+
+
+

@@ -4,6 +4,7 @@
 open Iast
 open Globals
 open Lexing
+open Gen.Basic
 
 module F = Iformula
 module P = Ipure
@@ -146,7 +147,7 @@ let rec string_of_formula_exp = function
           a ^ (match p with 
                 | Primed -> "'["
                 | Unprimed -> "[") 
-          ^ (string_of_formula_exp i) ^ "]"
+          ^ (string_of_formula_exp_list i) ^ "]"
   | P.Bag (el, l)		-> "Bag("^(string_of_formula_exp_list el) ^ ")"
   | P.BagUnion (el, l)		-> "BagUnion("^(string_of_formula_exp_list el) ^ ")"
   | P.BagIntersect (el, l)		-> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
@@ -178,7 +179,7 @@ let string_of_slicing_label sl =
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
-  | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
+  | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
 (* (match x with  *)
 (*     |(id, p) -> id ^ (match p with  *)
@@ -350,7 +351,7 @@ let rec string_of_ext_formula = function
 			Iformula.formula_case_branches  =  case_list ;
 		} -> 
 			let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^ 		
-		( List.fold_left  (fun a c -> a ^" "^(string_of_ext_formula c )) "" c2)^"\n") "" case_list in
+		( List.fold_left  (fun a c -> a ^" "^(string_of_ext_formula c )) "" c2)^"\n") "ECase:\n" case_list in
 			("case{"^impl^"}")
 	|Iformula.EBase {
 		 	Iformula.formula_ext_implicit_inst = ii;
@@ -362,8 +363,8 @@ let rec string_of_ext_formula = function
 				let l2 = List.fold_left (fun a c -> a^" "^ string_of_var c) "" ei in
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
-				"["^l1^"]["^l2^"]"^b^" "^c
-	| Iformula.EAssume (b,(n1,n2))-> "EAssume "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
+	| Iformula.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
     | Iformula.EVariance {
 			Iformula.formula_var_label = label;
 			Iformula.formula_var_measures = measures;
@@ -381,7 +382,9 @@ let rec string_of_ext_formula = function
 		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
 ;;
 
-let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
+let string_of_struc_formula d =  List.fold_left  (fun a c ->
+  let sep = if a = "" then "" else "||" in
+  a ^ "\n" ^ sep ^ "\n" ^ (string_of_ext_formula c)) "" d 
 ;;
 (*
 let rec string_of_spec = function
@@ -432,9 +435,9 @@ let need_parenthesis2 = function
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
-	| ArrayAt ({exp_arrayat_array_name = a;
+	| ArrayAt ({exp_arrayat_array_base = a;
 	     exp_arrayat_index = e}) ->
-				a ^ "[" ^ (string_of_exp e) ^ "]" (* An Hoa *)
+				(string_of_exp a) ^ "[" ^ (string_of_exp_list e ",") ^ "]" (* An Hoa *)
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
   | Label ((pid,_),e) -> 
@@ -493,7 +496,7 @@ let rec string_of_exp = function
 		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
   | Var ({exp_var_name = v}) -> v
   | Member ({exp_member_base = e;
-			 exp_member_fields = idl})-> (string_of_exp e) ^ "." ^ (concatenate_string_list idl ".")
+			 exp_member_fields = idl})-> (* An Hoa *) "member access " ^ (string_of_exp e) ^ "~~>" ^ (concatenate_string_list idl "~~>")
   | Assign ({exp_assign_op = op;
 			 exp_assign_lhs = e1;
 			 exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
@@ -577,8 +580,8 @@ and
 ;;
 
 (* pretty printing for one data declaration*)
-let string_of_decl (d, pos) = match d with 
-  | (t, i)             -> (string_of_typ t) ^ " " ^ i 
+let string_of_decl (d, pos, il) = match d with (* An Hoa [22/08/2011] Add inline component *)
+  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i
 ;;           
 
 (* function to print a list of typed _ident *) 
@@ -630,6 +633,12 @@ let string_of_proc_decl p =
 	^ ( "static " ^ (string_of_struc_formula  p.proc_static_specs)
 		^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
+
+let string_of_rel_decl p = 
+  let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
+    p.rel_name ^ "(" ^ (pr p.rel_typed_vars) ^ ")"
+;;
+
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
 
@@ -694,10 +703,18 @@ let rec string_of_global_var_decl_list l =
   | h::t  -> (string_of_global_var_decl h) ^ "\n" ^ (string_of_global_var_decl_list t)
 ;;
 
+(* An Hoa : print relations *)
+let string_of_rel_decl_list rdecls = 
+	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+
+(* An Hoa : print axioms *)
+let string_of_axiom_decl_list adecls = 
+	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
+
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
   let field_str = String.concat ";\n" 
-	(List.map (fun f -> ((string_of_typ (fst (fst f))) ^ " " ^ (snd (fst f)))) cdef.data_fields) in
+	(List.map (fun f -> ((* An Hoa [22/08/2011] : convert hard coded information extraction to function calls to make code extensible *) (string_of_typ (get_field_typ f)) ^ " " ^ (get_field_name f))) cdef.data_fields) in
   let inv_str = String.concat ";\n" (List.map (fun i -> "inv " ^ (string_of_formula i)) cdef.data_invs) in
 	"class " ^ cdef.data_name ^ " extends " ^ cdef.data_parent_name ^ " {\n"
 	^ field_str ^ "\n" ^ inv_str ^ "\n" ^ meth_str ^ "\n}"
@@ -708,6 +725,8 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
+  (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;

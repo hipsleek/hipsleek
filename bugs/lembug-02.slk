@@ -1,0 +1,64 @@
+//Valid.Fail.Fail
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+//checkentail x::node<1,y> * y::node<1,z> * z::node<2,null> |- x::lseg<3,null> .
+
+//checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
+
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma "V2" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
+// Valid
+
+//lemma "V1_r1" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma "V1_r11" self::lseg<n, p> & n = a + b +1 & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+checkentail (exists p_102,Anon_103,flted_6_104,r_105: self_V1_r11::node<Anon_103,r_105> * 
+            r_105::lseg<flted_6_104,p_102> & flted_6_104+1=n & p_102=p & n=1+a+b & 0<=a & 0<=b) 
+                  |-  (exists r: self_V1_r11::lseg<a,r> * r::lseg<b,p>).
+*/
+
+//lemma "V1_r12" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b +1 & a,b >=0.
+
+/*
+lemma "V1_r2" self::lseg<n, p>  <- self::lseg<a, r> * r::lseg<b, p> & n = a + b  & a,b >=0.
+
+lemma "V1_r3" self::lseg<n, p>  <- (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0).
+*/
+
+/*
+checkentail  (exists r_97,a_98,b_99: r_97::lseg<b_99,p> &
+ self_V1=r_97 & a_98=0 & n=b_99+a_98 & 0<=a_98 & 0<=b_99 )
+ |- (exists p_95,n: self_V1::lseg<n,p_95> & n=b+a & 0<=a & 0<=b & p_95=p). 
+
+checkentail (exists p_111,flted_6_113,r_114,r_97,a_98,
+    b_99: self_V1::node<_,r_114> * r_114::lseg<flted_6_113,p_111> *
+    r_97::lseg<b_99,p> & flted_6_113+1=a_98 &
+    p_111=r_97 & n=b_99+a_98 & 0<=a_98 & 0<=b_99 ) |- (exists p_95,n: self_V1::lseg<n,p_95> & n=b+a & 0<=a & 0<=b & p_95=p).
+*/
+
+
+/*
+run_entail_check:
+ EXISTS(p_102,Anon_103,flted_6_104,
+r_105: self_V1_r11::node<Anon_103,r_105>@M * 
+NN r_105::lseg<flted_6_104,p_102>@M[Orig] & flted_6_104+1=n & p_102=p & n=1+
+a+b & 0<=a & 0<=b & {FLOW,(13,28)=__flow}) |-  EBase EXISTS(r: NN self_V1_r11::lseg<a,r>@M[Orig] * 
+       NN r::lseg<b,p>@M[Orig] & true & {FLOW,(13,28)=__flow})
+
+
+EXISTS(p_163,Anon_164,flted_6_165,
+r_166: self_V1_r11::node<Anon_164,r_166>@M * 
+NN r_166::lseg<flted_6_165,p_163>@M[Orig][LHSCase] & 1+flted_6_165=n & 
+p_163=p & n=b+1+a & 0<=a & 0<=b & {FLOW,(27,27)=__norm}) |-  EBase EXISTS(a_183,b_184,p_185,
+       r_182: NN self_V1_r11::lseg<a_183,r_182>@M[Orig][LHSCase] * 
+       NN r_182::lseg<b_184,p_185>@M[Orig][LHSCase] & a_183=a & b_184=b & 
+       p_185=p & {FLOW,(27,27)=__norm})
+*/

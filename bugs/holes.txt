@@ -1,0 +1,52 @@
+In C, we may have nested data structures 
+such as:
+
+  data pair {
+    int x;
+    int y;
+  }
+
+  data quad {
+     // & denotes inlining
+     &pair p1;
+     pair p2;
+  }
+
+With this, we may state our
+data structure point-to, as follows:
+
+ q::quad<pair<x1,y1>,p> * p::pair<x2,y2>
+
+which would be flattened:
+
+ q::quad<x1,y1,p> * p::pair<x2,y2>
+
+ q.p1::pair<a,b>
+  would be translated to q::quad<a,b,#>
+
+ q.p1.x::<a>
+  would be translated to q::quad<a,#,#>
+
+ q.p2::<b>
+  would be translated to q::quad<#,#,b>
+
+=====================================
+
+ q.p1::pair<a,b> & w=q.p1  |- w::pair<c,d>
+ 
+
+ q::quad<a,b,#> & w=q.p1  |- w::pair<c,d>
+
+
+ q::quad<a,b,#> & w=q.p1  |- q::quad<c,d,#>
+
+
+ w::pair<c,d>  & w=q.p1  |- q::quad<a,b,#>
+
+ q::quad<c,d,#>  & w=q.p1  |- q::quad<a,b,#>
+
+==========================================
+
+ pointer arithmetic
+
+ extend idea to multidimensional arrays

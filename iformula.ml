@@ -385,6 +385,16 @@ let flatten_branches p br =
   List.fold_left (fun p (l, f) -> P.And (p, f,no_pos)) p br
 ;;
 
+
+(**
+ * An Hoa : function to extract the root of a quantified id.
+ **)
+let extract_var_from_id (id,p) =
+	let ids = Str.split (Str.regexp "\\.") id in
+	let var = List.hd ids in
+		(var,p)
+;;
+
 let rec h_fv (f:h_formula):(ident*primed) list = match f with   
   | Conj ({h_formula_conj_h1 = h1; 
 	   h_formula_conj_h2 = h2; 
@@ -395,10 +405,10 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | Star ({h_formula_star_h1 = h1; 
 	   h_formula_star_h2 = h2; 
 	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
-  | HeapNode {h_formula_heap_node = name ; 
-	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map Ipure.afv b)))
+  | HeapNode {h_formula_heap_node = name ; (* An Hoa : problem detected and fix - name is a quantified id so that we need to extract the real information inside *)
+	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) ((extract_var_from_id name):: (List.concat (List.map Ipure.afv b)))
   | HeapNode2 { h_formula_heap2_node = name ;
-		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
+		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) ((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
   | HTrue -> [] 
   | HFalse -> [] 
 ;;
@@ -562,6 +572,18 @@ let formula_to_struc_formula (f:formula):struc_formula =
 		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
 	(helper f);;
 
+(* split a conjunction into heap constraints, pure pointer constraints, *)
+(* and Presburger constraints *)
+let split_components (f : formula) =  match f with
+    | Base ({formula_base_heap = h; 
+	  formula_base_pure = p; 
+      formula_base_branches = b;
+	  formula_base_flow =fl }) -> (h, p, fl, b)
+    | Exists ({formula_exists_heap = h; 
+	  formula_exists_pure = p; 
+	  formula_exists_flow = fl;
+      formula_exists_branches = br }) -> (h, p, fl, br)
+    | _ -> failwith ("split_components: don't expect OR")
 
 let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 
@@ -1079,8 +1101,13 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			(Ipure.ListReverse (ne1, l), np1)
 	(* An Hoa : get rid of min/max in a[i] *)
   | Ipure.ArrayAt (a, i, l) ->
-			let ne, np = float_out_exp_min_max i in
-			(Ipure.ArrayAt (a, ne, l), np)
+  			let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+			let r = List.fold_left (fun a c -> match (a, c) with
+				  	| None, None -> None
+					| Some p, None -> Some p
+					| None, Some p -> Some p
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+			(Ipure.ArrayAt (a, ne1, l), r)
 
 and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		
@@ -1628,3 +1655,20 @@ and insert_rd_phase (f : h_formula) (rd_phase : h_formula) : h_formula =
 		  h_formula_phase_pos = no_pos;
 		})
 
+let rec break_formula (f : formula) : P.b_formula list list =
+  match f with
+	| Base bf -> [P.break_pure_formula bf.formula_base_pure]
+	| Exists ef -> [P.break_pure_formula ef.formula_exists_pure]
+	| Or orf -> (break_formula orf.formula_or_f1) @ (break_formula orf.formula_or_f2)
+
+and break_ext_formula (f : ext_formula) : P.b_formula list list =
+  match f with
+	| ECase cf -> List.map
+	  (fun (cond, sf) -> List.concat ([P.break_pure_formula cond] @ (break_struc_formula sf)))
+	  cf.formula_case_branches
+	| EBase bf -> [List.concat ((break_formula bf.formula_ext_base) @ (break_struc_formula bf.formula_ext_continuation))]
+	| EAssume (af, _) -> break_formula af
+	| EVariance _ -> []
+
+and break_struc_formula (f : struc_formula) : P.b_formula list list =
+  List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f

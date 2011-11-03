@@ -54,13 +54,15 @@ let terminator = '.'
 module M = Lexer.Make(Token.Token)
 
 let parse_file (parse) (source_file : string) =
+	(* let _ = print_endline "parse_file 1" in *)
 	try
 		let cmds = parse source_file in 
 		let _ = (List.map (fun c -> (
 							match c with
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
-                 | RelDef rdef -> process_rel_def rdef
+				                 | RelDef rdef -> process_rel_def rdef
+								 | AxiomDef adef -> process_axiom_def adef (* An Hoa *)
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
@@ -89,6 +91,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
       | RelDef rdef -> process_rel_def rdef
+      | AxiomDef _  (* An Hoa *)
 	  | LemmaDef _
 	  | CaptureResidue _
 	  | LetDef _
@@ -102,6 +105,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef _
 	  | PredDef _
       | RelDef _
+      | AxiomDef _ (* An Hoa *)
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
@@ -120,10 +124,21 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef _
 	  | PredDef _
       | RelDef _
+      | AxiomDef _ (* An Hoa *)
 	  | LemmaDef _
 	  | EmptyCmd -> () in
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
+	(* An Hoa : Parsing is completed. If there is undefined type, report error.
+	 * Otherwise, we perform second round checking!
+	 *)
+	let udefs = !Astsimp.undef_data_types in
+	let _ = match udefs with
+	| [] ->	perform_second_parsing_stage ()
+	| _ -> let udn,udp = List.hd (List.rev udefs) in
+			Error.report_error { Error.error_loc  = udp;
+								 Error.error_text = "Data type " ^ udn ^ " is undefined!" }
+	in ();
   convert_pred_to_cast ();
   List.iter proc_one_lemma cmds;
    List.iter proc_one_cmd cmds 
@@ -135,6 +150,7 @@ let main () =
                 I.prog_enum_decls = [];
                 I.prog_view_decls = [];
                 I.prog_rel_decls = [];
+                I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
@@ -172,9 +188,10 @@ let main () =
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
                      | RelDef rdef -> process_rel_def rdef
-                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | AxiomDef adef -> process_axiom_def adef
+                     | EntailCheck (iante, iconseq) ->  process_entail_check iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
-                     | LemmaDef ldef -> process_lemma ldef
+                     | LemmaDef ldef ->   process_lemma ldef
                      | PrintCmd pcmd -> process_print_command pcmd
                      | LetDef (lvar, lbody) -> put_var lvar lbody
                      | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s

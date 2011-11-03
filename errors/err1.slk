@@ -5,6 +5,12 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
+/*
+checkentail x::node<_,_> |- x::ll<n> & n =1.
+
+checkentail x::ll<n> & n =1  |- x::node<_,_>.
+*/
+
 //1. must failure. cause:22  n=1 |-  5<n (must-bug).
 //checkentail n = 1 |- n > 5 & flow __Err.
 

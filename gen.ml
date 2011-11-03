@@ -53,6 +53,8 @@ struct
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
 
+ let add_str s f xs = s^(f xs)
+
   let opt_to_list o = match o with
     | None -> []
     | Some a -> [a]
@@ -417,18 +419,18 @@ class ['a] stack3  =
 	method len = List.length stk
 end;;
 
-module Stack4  =
-   struct 
-    type a 
-	let push (i:'a) stk = i::!stk
-	let pop stk  = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> xs
-    let top stk  = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> x
-    let len stk : int = List.length stk
-end;;
+(* module Stack4  = *)
+(*    struct  *)
+(*     type a  *)
+(* 	let push (i:'a) stk = i::!stk *)
+(* 	let pop stk  = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> xs *)
+(*     let top stk  = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> x *)
+(*     let len stk : int = List.length stk *)
+(* end;; *)
 
 module type EQType = sig
    type a
@@ -770,10 +772,10 @@ struct
   let stk = new stack (-1) string_of_int
 
   (* pop last element from call stack of ho debug *)
-  let pop () = stk # pop
+  let pop_call () = stk # pop
 
   (* call f and pop its trace in call stack of ho debug *)
-  let pop_ho (f:'a->'b) (e:'a) : 'b =
+  let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
     let r = (try 
       (f e)
     with exc -> (stk#pop; raise exc))
@@ -785,7 +787,7 @@ struct
     String.concat "@" (List.map string_of_int h)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
-  let push (os:string) : (string * string) = 
+  let push_call (os:string) : (string * string) = 
     ctr#inc;
     let v = ctr#get in
     let _ = stk#push v in
@@ -830,11 +832,11 @@ struct
           if (a1=(List.nth args (i-1))) then helper xs
           else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in
       helper xs in
-    let s,h = push s in
+    let s,h = push_call s in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
     flush stdout;
     let r = (try
-      pop_ho f e
+      pop_aft_apply_with_exc f e
     with ex -> 
         (let _ = print_string ("\n"^h^"\n") in
         let _ = pr_args args in
@@ -1005,7 +1007,8 @@ sig
   type tlist = t list
   val eq : ef
   val overlap : t -> t -> bool
-  val intersect : tlist -> tlist -> tlist (* /\ *)
+  val sat : t -> bool
+   val intersect : tlist -> tlist -> tlist (* /\ *)
     (* under approx or-ing *)
   val overlap_eq : ef -> t -> t -> bool
   val intersect_eq : ef -> tlist -> tlist -> tlist (* /\ *)
@@ -1060,7 +1063,8 @@ struct
   let rec is_dupl_baga_eq eq (xs:baga) : bool = 
     match xs with
       | [] -> false
-      | x::xs1 -> match xs1 with
+      | x::xs1 -> if not(Elt.sat x) then true
+          else match xs1 with
           | [] -> false
           | _ -> if (List.exists (overlap_eq eq x) xs1) then true else is_dupl_baga_eq eq xs1
 
@@ -1208,7 +1212,7 @@ object (self)
   method string_of : string= 
     let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
     let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
-    "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+    "Counters: \n"^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
 end;;
 
 class task_table =
@@ -1236,7 +1240,7 @@ object
             else "")^"],  "^(fp (t/.ot))^"%)") in
         ((a1+1),r) 
     ) (0,"") str_list in
-    print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) 
+    print_string ("\nProfiling Results: " ^(string_of_int cnt)^" keys."^str^"\n" ) 
 end;;
 
 
@@ -1266,7 +1270,8 @@ struct
 
   let push_time msg = 
     if (!Globals.profiling) then
-      (inc_counter ("cnt_"^msg);
+      (
+      (* inc_counter ("cnt_"^msg); *)
       let timer = get_time () in
 	  profiling_stack#push (msg, timer,true) )
 	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
@@ -1292,6 +1297,11 @@ struct
     else ()
 
  let print_info () = if (!Globals.profiling) then  tasks # print else ()
+
+ let print_counters_info () =
+      if !Globals.enable_counters then
+        print_string (string_of_counters ())
+      else () 
 
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
     try
@@ -1698,7 +1708,7 @@ struct
     Globals.error_flow_int := (get_hash_of_exc Globals.error_flow)
     (* ; Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow) *)
     (* ;Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow) *)
-    (* let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
+    (* ;let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
 
   let compute_hierarchy i () =
     let pr () = string_of_exc_list 0 in

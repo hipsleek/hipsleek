@@ -2,577 +2,578 @@ Fdecidez
 R76 Coq.ZArith.ZArith <> <> lib
 R83 Coq.Lists.List <> <> lib
 R88 Coq.FSets.FSets <> <> lib
-R111 Coq.FSets.FSetAVL <> <> modtype
-R116 Coq.FSets.OrderedTypeEx <> <> modtype
-mod 102 <> ZSets
-prf 249 <> cons_eq_nil
-R321 Coq.Init.Logic "A <-> B" not
-R310 Coq.Init.Logic "x = y" not
-R305 Coq.Lists.List "x :: y" not
-R314 Coq.Lists.List <> nil constr
-R325 Coq.Init.Logic <> False ind
-R294 Coq.Lists.List <> list ind
-R410 Coq.Lists.List <> nil_cons thm
-R410 Coq.Lists.List <> nil_cons thm
-prf 459 <> nil_eq_cons
-R531 Coq.Init.Logic "A <-> B" not
-R520 Coq.Init.Logic "x = y" not
-R515 Coq.Lists.List <> nil constr
-R526 Coq.Lists.List "x :: y" not
-R535 Coq.Init.Logic <> False ind
-R504 Coq.Lists.List <> list ind
-R605 Coq.Lists.List <> nil_cons thm
-R605 Coq.Lists.List <> nil_cons thm
-prf 654 <> cons_eq_cons
-R731 Coq.Init.Logic "A <-> B" not
-R721 Coq.Init.Logic "x = y" not
-R715 Coq.Lists.List "x :: y" not
-R725 Coq.Lists.List "x :: y" not
-R738 Coq.Init.Logic "x = y" not
-R704 Coq.Lists.List <> list ind
-R704 Coq.Lists.List <> list ind
-prf 867 <> simpl_x_cons_app
-R946 Coq.Init.Logic "x = y" not
-R938 Coq.Lists.List "x ++ y" not
-R933 Coq.Lists.List "x :: y" not
-R950 Coq.Lists.List "x :: y" not
-R956 Coq.Lists.List "x ++ y" not
-R913 Coq.Lists.List <> list ind
-R913 Coq.Lists.List <> list ind
-R993 Coq.Init.Logic <> refl_equal constr
-R993 Coq.Init.Logic <> refl_equal constr
-prf 1017 <> simpl_app_nil
-R1079 Coq.Init.Logic "x = y" not
-R1067 Coq.Lists.List "x ++ y" not
-R1072 Coq.Lists.List <> nil constr
-R1056 Coq.Lists.List <> list ind
-R1116 Coq.Lists.List <> app_nil_end thm
-R1116 Coq.Lists.List <> app_nil_end thm
-prf 1141 <> simpl_nil_app
-R1203 Coq.Init.Logic "x = y" not
-R1196 Coq.Lists.List "x ++ y" not
-R1191 Coq.Lists.List <> nil constr
-R1180 Coq.Lists.List <> list ind
-R1238 Coq.Init.Logic <> refl_equal constr
-R1238 Coq.Init.Logic <> refl_equal constr
-prf 1262 <> list_app_eq_nil
-R1336 Coq.Init.Logic "A <-> B" not
-R1325 Coq.Init.Logic "x = y" not
-R1319 Coq.Lists.List "x ++ y" not
-R1329 Coq.Lists.List <> nil constr
-R1354 Coq.Init.Logic "A /\ B" not
-R1343 Coq.Init.Logic "x = y" not
-R1347 Coq.Lists.List <> nil constr
-R1360 Coq.Init.Logic "x = y" not
-R1364 Coq.Lists.List <> nil constr
-R1307 Coq.Lists.List <> list ind
-R1307 Coq.Lists.List <> list ind
-R1430 Coq.Lists.List <> app_eq_nil thm
-R1430 Coq.Lists.List <> app_eq_nil thm
-R1496 Coq.Init.Logic <> refl_equal constr
-R1496 Coq.Init.Logic <> refl_equal constr
-prf 1520 <> nil_eq_list_app
-R1594 Coq.Init.Logic "A <-> B" not
-R1581 Coq.Init.Logic "x = y" not
-R1576 Coq.Lists.List <> nil constr
-R1588 Coq.Lists.List "x ++ y" not
-R1612 Coq.Init.Logic "A /\ B" not
-R1601 Coq.Init.Logic "x = y" not
-R1605 Coq.Lists.List <> nil constr
-R1618 Coq.Init.Logic "x = y" not
-R1622 Coq.Lists.List <> nil constr
-R1565 Coq.Lists.List <> list ind
-R1565 Coq.Lists.List <> list ind
-R1703 Coq.Lists.List <> app_eq_nil thm
-R1703 Coq.Lists.List <> app_eq_nil thm
-R1769 Coq.Init.Logic <> refl_equal constr
-R1769 Coq.Init.Logic <> refl_equal constr
-prf 1793 <> simpl_head_cons
-R1867 Coq.Init.Logic "x = y" not
-R1853 Coq.Lists.List <> hd def
-R1861 Coq.Lists.List "x :: y" not
-R1834 Coq.Lists.List <> list ind
-R1902 Coq.Init.Logic <> refl_equal constr
-R1902 Coq.Init.Logic <> refl_equal constr
-prf 1926 <> simpl_tail_nil
-R1976 Coq.Init.Logic "x = y" not
-R1962 Coq.Lists.List <> tail def
-R1969 Coq.Lists.List <> nil constr
-R1980 Coq.Lists.List <> nil constr
-R2018 Coq.Init.Logic <> refl_equal constr
-R2018 Coq.Init.Logic <> refl_equal constr
-prf 2042 <> simpl_tail_cons
-R2114 Coq.Init.Logic "x = y" not
-R2100 Coq.Lists.List <> tail def
-R2108 Coq.Lists.List "x :: y" not
-R2083 Coq.Lists.List <> list ind
-R2149 Coq.Init.Logic <> refl_equal constr
-R2149 Coq.Init.Logic <> refl_equal constr
-prf 2173 <> simpl_length_nil
-R2227 Coq.Init.Logic "x = y" not
-R2211 Coq.Lists.List <> length def
-R2220 Coq.Lists.List <> nil constr
-R2229 Coq.Init.Datatypes "" not
-R2262 Coq.Init.Logic <> refl_equal constr
-R2262 Coq.Init.Logic <> refl_equal constr
-prf 2286 <> simpl_length_not_nil
-R2355 Coq.Init.Logic "A <-> B" not
-R2343 Coq.Init.Logic "x <> y" not
-R2348 Coq.Lists.List <> nil constr
-R2370 Coq.Init.Peano "x > y" not
-R2359 Coq.Lists.List <> length def
-R2372 Coq.Init.Datatypes "" not
-R2332 Coq.Lists.List <> list ind
-prf 2405 <> simpl_length_cons
-R2481 Coq.Init.Logic "x = y" not
-R2465 Coq.Lists.List <> length def
-R2475 Coq.Lists.List "x :: y" not
-R2485 Coq.Init.Peano "n + m" not
-R2483 Coq.Init.Datatypes "" not
-R2487 Coq.Lists.List <> length def
-R2448 Coq.Lists.List <> list ind
-R2527 Coq.Init.Logic <> refl_equal constr
-R2527 Coq.Init.Logic <> refl_equal constr
-prf 2551 <> simpl_rev_nil
-R2599 Coq.Init.Logic "x = y" not
-R2586 Coq.Lists.List <> rev def
-R2592 Coq.Lists.List <> nil constr
-R2603 Coq.Lists.List <> nil constr
-R2641 Coq.Init.Logic <> refl_equal constr
-R2641 Coq.Init.Logic <> refl_equal constr
-prf 2665 <> simpl_rev_cons
-R2734 Coq.Init.Logic "x = y" not
-R2722 Coq.Lists.List <> rev def
-R2728 Coq.Lists.List "x :: y" not
-R2742 Coq.Lists.List "x ++ y" not
-R2736 Coq.Lists.List <> rev def
-R2747 Coq.Lists.List "x :: y" not
-R2752 Coq.Lists.List <> nil constr
-R2705 Coq.Lists.List <> list ind
-R2790 Coq.Init.Logic <> refl_equal constr
-R2790 Coq.Init.Logic <> refl_equal constr
-prf 2814 <> in_x_cons
-R2882 Coq.Init.Logic "A <-> B" not
-R2868 Coq.Lists.List <> In def
-R2876 Coq.Lists.List "x :: y" not
-R2892 Coq.Init.Logic "A \/ B" not
-R2888 Coq.Init.Logic "x = y" not
-R2895 Coq.Lists.List <> In def
-R2859 Coq.Lists.List <> list ind
-R3019 Coq.Lists.List <> Permutation_nil thm
-R3037 Coq.Lists.List <> Permutation_nil_cons thm
-R3061 Coq.Lists.List <> Permutation_refl thm
-R3080 Coq.Lists.List <> Permutation_sym thm
-R3098 Coq.Lists.List <> Permutation_trans thm
-R3118 Coq.Lists.List <> Permutation_in thm
-R3135 Coq.Lists.List <> Permutation_app thm
-R3153 Coq.Lists.List <> Permutation_app_swap thm
-R3176 Coq.Lists.List <> Permutation_cons_app thm
-R3199 Coq.Lists.List <> Permutation_length thm
-R3220 Coq.Lists.List <> Permutation_rev thm
-R3238 Coq.Lists.List <> Permutation_app_inv thm
-R3260 Coq.Lists.List <> Permutation_cons_inv thm
-R3283 Coq.Lists.List <> Permutation_cons_app_inv thm
-R3310 Coq.Lists.List <> Permutation_app_inv_l thm
-R3334 Coq.Lists.List <> Permutation_app_inv_r thm
-prf 3496 <> count_occ_le_len
-R3567 Coq.Init.Peano "n <= m" not
-R3544 Coq.Lists.List <> count_occ def
-R3554 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R3570 Coq.Lists.List <> length def
-R3540 Coq.ZArith.BinInt <> Z ind
-R3527 Coq.Lists.List <> list ind
-R3532 Coq.ZArith.BinInt <> Z ind
-R3642 Coq.Init.Peano <> le_n constr
-R3642 Coq.Init.Peano <> le_n constr
-R3659 Coq.Lists.List <> length def
-R3669 Coq.Lists.List "x :: y" not
-R3689 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R3659 Coq.Lists.List <> length def
-R3669 Coq.Lists.List "x :: y" not
-R3689 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R3751 Coq.Lists.List <> count_occ_cons_eq thm
-R3751 Coq.Lists.List <> count_occ_cons_eq thm
-R3816 Coq.Lists.List <> count_occ_cons_neq thm
-R3816 Coq.Lists.List <> count_occ_cons_neq thm
-prf 3881 <> count_occ_cons_eq_len
-R3999 Coq.Init.Logic "A /\ B" not
-R3995 Coq.Init.Logic "x = y" not
-R4025 Coq.Init.Logic "x = y" not
-R4002 Coq.Lists.List <> count_occ def
-R4012 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R4027 Coq.Lists.List <> length def
-R3972 Coq.Init.Logic "x = y" not
-R3942 Coq.Lists.List <> count_occ def
-R3964 Coq.Lists.List "x :: y" not
-R3952 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R3974 Coq.Lists.List <> length def
-R3984 Coq.Lists.List "x :: y" not
-R3938 Coq.ZArith.BinInt <> Z ind
-R3925 Coq.Lists.List <> list ind
-R3930 Coq.ZArith.BinInt <> Z ind
-R3917 Coq.ZArith.BinInt <> Z ind
-R4069 Coq.Lists.List <> length def
-R4079 Coq.Lists.List "x :: y" not
-R4104 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R4069 Coq.Lists.List <> length def
-R4079 Coq.Lists.List "x :: y" not
-R4104 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R4196 Coq.Lists.List <> count_occ_cons_eq thm
-R4196 Coq.Lists.List <> count_occ_cons_eq thm
-R4241 Coq.Init.Peano <> eq_add_S thm
-R4241 Coq.Init.Peano <> eq_add_S thm
-R4290 Coq.Lists.List <> count_occ_cons_neq thm
-R4290 Coq.Lists.List <> count_occ_cons_neq thm
-R4333 decidez <> count_occ_le_len thm
-R4333 decidez <> count_occ_le_len thm
-def 4406 <> alln
-R4458 Coq.Init.Logic "x = y" not
-R4435 Coq.Lists.List <> count_occ def
-R4445 Coq.ZArith.ZArith_dec <> Z_eq_dec def
-R4460 Coq.Lists.List <> length def
-R4429 Coq.ZArith.BinInt <> Z ind
-R4416 Coq.Lists.List <> list ind
-R4421 Coq.ZArith.BinInt <> Z ind
-prf 4479 <> alln_nil
-R4506 decidez <> alln def
-R4513 Coq.Lists.List <> nil constr
-R4517 Coq.ZArith.BinInt <> Z ind
-R4502 Coq.ZArith.BinInt <> Z ind
-R4567 Coq.Init.Logic <> refl_equal constr
-R4567 Coq.Init.Logic <> refl_equal constr
-prf 4593 <> alln_cons
-R4658 Coq.Init.Logic "A <-> B" not
-R4642 decidez <> alln def
-R4650 Coq.Lists.List "x :: y" not
-R4668 Coq.Init.Logic "A /\ B" not
-R4664 Coq.Init.Logic "x = y" not
-R4671 decidez <> alln def
-R4638 Coq.ZArith.BinInt <> Z ind
-R4625 Coq.Lists.List <> list ind
-R4630 Coq.ZArith.BinInt <> Z ind
-R4617 Coq.ZArith.BinInt <> Z ind
-R4748 decidez <> count_occ_cons_eq_len thm
-R4748 decidez <> count_occ_cons_eq_len thm
-R4888 Coq.Lists.List <> count_occ_cons_eq thm
-R4888 Coq.Lists.List <> count_occ_cons_eq thm
-R4920 Coq.Lists.List <> length def
-R4930 Coq.Lists.List "x :: y" not
-R4920 Coq.Lists.List <> length def
-R4930 Coq.Lists.List "x :: y" not
-prf 4986 <> alln_app
-R5059 Coq.Init.Logic "A <-> B" not
-R5041 decidez <> alln def
-R5050 Coq.Lists.List "x ++ y" not
-R5073 Coq.Init.Logic "A /\ B" not
-R5063 decidez <> alln def
-R5076 decidez <> alln def
-R5037 Coq.ZArith.BinInt <> Z ind
-R5024 Coq.Lists.List <> list ind
-R5029 Coq.ZArith.BinInt <> Z ind
-R5010 Coq.Lists.List <> list ind
-R5015 Coq.ZArith.BinInt <> Z ind
-R5197 decidez <> alln_nil thm
-R5197 decidez <> alln_nil thm
-R5250 decidez <> alln_cons thm
-R5250 decidez <> alln_cons thm
-R5346 decidez <> alln_cons thm
-R5346 decidez <> alln_cons thm
-R5521 decidez <> alln_cons thm
-R5540 decidez <> alln_cons thm
-R5521 decidez <> alln_cons thm
-R5540 decidez <> alln_cons thm
-prf 5653 <> alln_rev
-R5708 Coq.Init.Logic "A <-> B" not
-R5693 decidez <> alln def
-R5699 Coq.Lists.List <> rev def
-R5712 decidez <> alln def
-R5689 Coq.ZArith.BinInt <> Z ind
-R5676 Coq.Lists.List <> list ind
-R5681 Coq.ZArith.BinInt <> Z ind
-R5803 decidez <> alln_nil thm
-R5803 decidez <> alln_nil thm
-R5853 Coq.Lists.List "x ++ y" not
-R5847 Coq.Lists.List <> rev def
-R5858 Coq.Lists.List "x :: y" not
-R5861 Coq.Lists.List <> nil constr
-R5827 Coq.Lists.List <> rev def
-R5834 Coq.Lists.List "x :: y" not
-R5880 decidez <> alln_app thm
-R5923 decidez <> alln_cons thm
-R5853 Coq.Lists.List "x ++ y" not
-R5847 Coq.Lists.List <> rev def
-R5858 Coq.Lists.List "x :: y" not
-R5861 Coq.Lists.List <> nil constr
-R5827 Coq.Lists.List <> rev def
-R5834 Coq.Lists.List "x :: y" not
-R5880 decidez <> alln_app thm
-R5923 decidez <> alln_cons thm
-R5957 decidez <> alln_cons thm
-R5957 decidez <> alln_cons thm
-R6108 decidez <> alln_cons thm
-R6178 Coq.Lists.List "x ++ y" not
-R6172 Coq.Lists.List <> rev def
-R6183 Coq.Lists.List "x :: y" not
-R6186 Coq.Lists.List <> nil constr
-R6152 Coq.Lists.List <> rev def
-R6159 Coq.Lists.List "x :: y" not
-R6200 decidez <> alln_app thm
-R6108 decidez <> alln_cons thm
-R6178 Coq.Lists.List "x ++ y" not
-R6172 Coq.Lists.List <> rev def
-R6183 Coq.Lists.List "x :: y" not
-R6186 Coq.Lists.List <> nil constr
-R6152 Coq.Lists.List <> rev def
-R6159 Coq.Lists.List "x :: y" not
-R6200 decidez <> alln_app thm
-R6261 decidez <> alln_cons thm
-R6261 decidez <> alln_cons thm
-R6315 decidez <> alln_nil thm
-R6315 decidez <> alln_nil thm
-R6344 decidez <> alln_nil thm
-R6532 decidez <> cons_eq_nil thm
-R6546 decidez <> nil_eq_cons thm
-R6560 decidez <> cons_eq_cons thm
-R6575 Coq.Lists.List <> rev_unit thm
-R6586 Coq.Lists.List <> app_ass thm
-R6596 decidez <> simpl_x_cons_app thm
-R6615 decidez <> simpl_app_nil thm
-R6631 decidez <> simpl_nil_app thm
-R6647 decidez <> list_app_eq_nil thm
-R6665 decidez <> nil_eq_list_app thm
-R6683 decidez <> simpl_head_cons thm
-R6701 decidez <> simpl_tail_nil thm
-R6718 decidez <> simpl_tail_cons thm
-R6736 decidez <> simpl_length_nil thm
-R6755 decidez <> simpl_length_cons thm
-R6775 Coq.Lists.List <> app_length thm
-R6788 Coq.Lists.List <> rev_length thm
-R6801 decidez <> simpl_rev_nil thm
-R6817 decidez <> simpl_rev_cons thm
-R6834 Coq.Lists.List <> distr_rev thm
-R6846 Coq.Lists.List <> rev_involutive thm
-R6863 Coq.ZArith.Znat <> inj_0 thm
-R6871 Coq.ZArith.Znat <> inj_S thm
-R6879 Coq.ZArith.Znat <> inj_plus thm
-R6890 decidez <> in_x_cons thm
-R6902 decidez <> alln_cons thm
-R6914 decidez <> alln_app thm
-R6925 decidez <> alln_rev thm
-R7130 Coq.Init.Logic "x = y" not
-R7125 Coq.Lists.List "x :: y" not
-R7134 Coq.Lists.List <> nil constr
-R7138 Coq.ZArith.BinInt <> Z ind
-R7198 Coq.Init.Logic "x = y" not
-R7193 Coq.Lists.List <> nil constr
-R7197 Coq.ZArith.BinInt <> Z ind
-R7204 Coq.Lists.List "x :: y" not
-R7267 Coq.Init.Logic "x = y" not
-R7262 Coq.Lists.List "x :: y" not
-R7272 Coq.Lists.List "x :: y" not
-R7328 Coq.Lists.List <> rev def
-R7336 Coq.Lists.List "x ++ y" not
-R7342 Coq.Lists.List "x :: y" not
-R7347 Coq.Lists.List <> nil constr
-R7351 Coq.ZArith.BinInt <> Z ind
-R7413 Coq.Lists.List "x ++ y" not
-R7407 Coq.Lists.List "x ++ y" not
-R7478 Coq.Lists.List "x ++ y" not
-R7472 Coq.Lists.List "x :: y" not
-R7545 Coq.Lists.List "x ++ y" not
-R7550 Coq.Lists.List <> nil constr
-R7554 Coq.ZArith.BinInt <> Z ind
-R7616 Coq.Lists.List "x ++ y" not
-R7611 Coq.Lists.List <> nil constr
-R7615 Coq.ZArith.BinInt <> Z ind
-R7687 Coq.Init.Logic "x = y" not
-R7680 Coq.Lists.List "x ++ y" not
-R7691 Coq.Lists.List <> nil constr
-R7695 Coq.ZArith.BinInt <> Z ind
-R7759 Coq.Init.Logic "x = y" not
-R7754 Coq.Lists.List <> nil constr
-R7758 Coq.ZArith.BinInt <> Z ind
-R7767 Coq.Lists.List "x ++ y" not
-R7828 Coq.Lists.List <> hd def
-R7839 Coq.Lists.List "x :: y" not
-R7831 Coq.ZArith.BinInt "" not
-R7900 Coq.Lists.List <> tail def
-R7907 Coq.Lists.List <> nil constr
-R7911 Coq.ZArith.BinInt <> Z ind
-R7967 Coq.Lists.List <> tail def
-R7976 Coq.Lists.List "x :: y" not
-R8037 Coq.Lists.List <> length def
-R8046 Coq.Lists.List <> nil constr
-R8050 Coq.ZArith.BinInt <> Z ind
-R8108 Coq.Lists.List <> length def
-R8119 Coq.Lists.List "x :: y" not
-R8182 Coq.Lists.List <> length def
-R8194 Coq.Lists.List "x ++ y" not
-R8251 Coq.Lists.List <> length def
-R8259 Coq.Lists.List <> rev def
-R8316 Coq.Lists.List <> rev def
-R8322 Coq.Lists.List <> nil constr
-R8326 Coq.ZArith.BinInt <> Z ind
-R8381 Coq.Lists.List <> rev def
-R8389 Coq.Lists.List "x :: y" not
-R8449 Coq.Lists.List <> rev def
-R8458 Coq.Lists.List "x ++ y" not
-R8514 Coq.Lists.List <> rev def
-R8519 Coq.Lists.List <> rev def
-R8580 Coq.ZArith.BinInt <> Z_of_nat def
-R8589 Coq.Init.Datatypes "" not
-R8668 Coq.ZArith.BinInt <> Z_of_nat def
-R8678 Coq.Init.Datatypes <> S constr
-R8765 Coq.ZArith.BinInt <> Z_of_nat def
-R8779 Coq.Init.Peano "n + m" not
-R8833 Coq.Lists.List <> In def
-R8843 Coq.Lists.List "x :: y" not
-R8898 decidez <> alln def
-R8907 Coq.Lists.List "x :: y" not
-R8965 decidez <> alln def
-R8975 Coq.Lists.List "x ++ y" not
-R9033 decidez <> alln def
-R9039 Coq.Lists.List <> rev def
-R9110 Coq.Init.Logic "x = y" not
-R9105 Coq.Lists.List "x :: y" not
-R9114 Coq.Lists.List <> nil constr
-R9118 Coq.ZArith.BinInt <> Z ind
-R9214 Coq.Init.Logic "x = y" not
-R9209 Coq.Lists.List <> nil constr
-R9213 Coq.ZArith.BinInt <> Z ind
-R9220 Coq.Lists.List "x :: y" not
-R9314 Coq.Init.Logic "x = y" not
-R9309 Coq.Lists.List "x :: y" not
-R9319 Coq.Lists.List "x :: y" not
-R9377 Coq.Lists.List <> rev def
-R9385 Coq.Lists.List "x ++ y" not
-R9391 Coq.Lists.List "x :: y" not
-R9396 Coq.Lists.List <> nil constr
-R9400 Coq.ZArith.BinInt <> Z ind
-R9464 Coq.Lists.List "x ++ y" not
-R9458 Coq.Lists.List "x ++ y" not
-R9531 Coq.Lists.List "x ++ y" not
-R9525 Coq.Lists.List "x :: y" not
-R9600 Coq.Lists.List "x ++ y" not
-R9605 Coq.Lists.List <> nil constr
-R9609 Coq.ZArith.BinInt <> Z ind
-R9673 Coq.Lists.List "x ++ y" not
-R9668 Coq.Lists.List <> nil constr
-R9672 Coq.ZArith.BinInt <> Z ind
-R9746 Coq.Init.Logic "x = y" not
-R9739 Coq.Lists.List "x ++ y" not
-R9750 Coq.Lists.List <> nil constr
-R9754 Coq.ZArith.BinInt <> Z ind
-R9820 Coq.Init.Logic "x = y" not
-R9815 Coq.Lists.List <> nil constr
-R9819 Coq.ZArith.BinInt <> Z ind
-R9828 Coq.Lists.List "x ++ y" not
-R9891 Coq.Lists.List <> hd def
-R9902 Coq.Lists.List "x :: y" not
-R9894 Coq.ZArith.BinInt "" not
-R9965 Coq.Lists.List <> tail def
-R9972 Coq.Lists.List <> nil constr
-R9976 Coq.ZArith.BinInt <> Z ind
-R10034 Coq.Lists.List <> tail def
-R10043 Coq.Lists.List "x :: y" not
-R10106 Coq.Lists.List <> length def
-R10115 Coq.Lists.List <> nil constr
-R10119 Coq.ZArith.BinInt <> Z ind
-R10179 Coq.Lists.List <> length def
-R10190 Coq.Lists.List "x :: y" not
-R10255 Coq.Lists.List <> length def
-R10267 Coq.Lists.List "x ++ y" not
-R10326 Coq.Lists.List <> length def
-R10334 Coq.Lists.List <> rev def
-R10393 Coq.Lists.List <> rev def
-R10399 Coq.Lists.List <> nil constr
-R10403 Coq.ZArith.BinInt <> Z ind
-R10460 Coq.Lists.List <> rev def
-R10468 Coq.Lists.List "x :: y" not
-R10530 Coq.Lists.List <> rev def
-R10539 Coq.Lists.List "x ++ y" not
-R10597 Coq.Lists.List <> rev def
-R10602 Coq.Lists.List <> rev def
-R10665 Coq.ZArith.BinInt <> Z_of_nat def
-R10674 Coq.Init.Datatypes "" not
-R10752 Coq.ZArith.BinInt <> Z_of_nat def
-R10762 Coq.Init.Datatypes <> S constr
-R10848 Coq.ZArith.BinInt <> Z_of_nat def
-R10862 Coq.Init.Peano "n + m" not
-R10918 Coq.Lists.List <> In def
-R10928 Coq.Lists.List "x :: y" not
-R10985 decidez <> alln def
-R10994 Coq.Lists.List "x :: y" not
-R11054 decidez <> alln def
-R11064 Coq.Lists.List "x ++ y" not
-R11124 decidez <> alln def
-R11130 Coq.Lists.List <> rev def
-R11158 decidez <> alln_rev thm
-R11092 decidez <> alln_app thm
-R11021 decidez <> alln_cons thm
-R10952 decidez <> in_x_cons thm
-R10886 Coq.ZArith.Znat <> inj_plus thm
-R10784 Coq.ZArith.BinInt <> Z_of_nat def
-R10794 Coq.Init.Datatypes <> S constr
-R10692 Coq.ZArith.BinInt <> Z_of_nat def
-R10701 Coq.Init.Datatypes "" not
-R10627 Coq.Lists.List <> rev_involutive thm
-R10564 Coq.Lists.List <> distr_rev thm
-R10492 decidez <> simpl_rev_cons thm
-R10423 decidez <> simpl_rev_nil thm
-R10359 Coq.Lists.List <> rev_length thm
-R10292 Coq.Lists.List <> app_length thm
-R10214 decidez <> simpl_length_cons thm
-R10139 decidez <> simpl_length_nil thm
-R10067 decidez <> simpl_tail_cons thm
-R9996 decidez <> simpl_tail_nil thm
-R9926 decidez <> simpl_head_cons thm
-R9852 decidez <> nil_eq_list_app thm
-R9774 decidez <> list_app_eq_nil thm
-R9698 decidez <> simpl_nil_app thm
-R9629 decidez <> simpl_app_nil thm
-R9557 decidez <> simpl_x_cons_app thm
-R9490 Coq.Lists.List <> app_ass thm
-R9421 Coq.Lists.List <> rev_unit thm
-R9341 decidez <> cons_eq_cons thm
-R9247 decidez <> nil_eq_cons thm
-R9143 decidez <> cons_eq_nil thm
-R9062 decidez <> alln_rev thm
-R8998 decidez <> alln_app thm
-R8929 decidez <> alln_cons thm
-R8862 decidez <> in_x_cons thm
-R8798 Coq.ZArith.Znat <> inj_plus thm
-R8695 Coq.ZArith.BinInt <> Z_of_nat def
-R8705 Coq.Init.Datatypes <> S constr
-R8602 Coq.ZArith.BinInt <> Z_of_nat def
-R8611 Coq.Init.Datatypes "" not
-R8539 Coq.Lists.List <> rev_involutive thm
-R8478 Coq.Lists.List <> distr_rev thm
-R8408 decidez <> simpl_rev_cons thm
-R8341 decidez <> simpl_rev_nil thm
-R8279 Coq.Lists.List <> rev_length thm
-R8214 Coq.Lists.List <> app_length thm
-R8138 decidez <> simpl_length_cons thm
-R8065 decidez <> simpl_length_nil thm
-R7995 decidez <> simpl_tail_cons thm
-R7926 decidez <> simpl_tail_nil thm
-R7858 decidez <> simpl_head_cons thm
-R7786 decidez <> nil_eq_list_app thm
-R7710 decidez <> list_app_eq_nil thm
-R7636 decidez <> simpl_nil_app thm
-R7569 decidez <> simpl_app_nil thm
-R7499 decidez <> simpl_x_cons_app thm
-R7434 Coq.Lists.List <> app_ass thm
-R7367 Coq.Lists.List <> rev_unit thm
-R7289 decidez <> cons_eq_cons thm
-R7221 decidez <> nil_eq_cons thm
-R7153 decidez <> cons_eq_nil thm
-R11389 Coq.Init.Logic "~ x" not
-R11442 Coq.Init.Logic "'exists' x : t , p" not
-R11491 Coq.Init.Logic "A /\ B" not
-R11527 Coq.Init.Logic "A \/ B" not
-R11563 Coq.Init.Logic "A /\ B" not
-R11588 Coq.Init.Logic "A \/ B" not
-R11656 Coq.Init.Logic <> False ind
-R11726 Coq.Init.Logic <> ex ind
-R12028 Coq.Init.Logic <> False ind
+R110 Coq.Sorting.Permutation <> <> lib
+R151 Coq.FSets.FSetAVL <> <> modtype
+R156 Coq.FSets.OrderedTypeEx <> <> modtype
+mod 142 <> ZSets
+prf 289 <> cons_eq_nil
+R361 Coq.Init.Logic "A <-> B" not
+R350 Coq.Init.Logic "x = y" not
+R345 Coq.Lists.List "x :: y" not
+R354 Coq.Lists.List <> nil constr
+R365 Coq.Init.Logic <> False ind
+R334 Coq.Lists.List <> list ind
+R450 Coq.Lists.List <> nil_cons thm
+R450 Coq.Lists.List <> nil_cons thm
+prf 499 <> nil_eq_cons
+R571 Coq.Init.Logic "A <-> B" not
+R560 Coq.Init.Logic "x = y" not
+R555 Coq.Lists.List <> nil constr
+R566 Coq.Lists.List "x :: y" not
+R575 Coq.Init.Logic <> False ind
+R544 Coq.Lists.List <> list ind
+R645 Coq.Lists.List <> nil_cons thm
+R645 Coq.Lists.List <> nil_cons thm
+prf 694 <> cons_eq_cons
+R771 Coq.Init.Logic "A <-> B" not
+R761 Coq.Init.Logic "x = y" not
+R755 Coq.Lists.List "x :: y" not
+R765 Coq.Lists.List "x :: y" not
+R778 Coq.Init.Logic "x = y" not
+R744 Coq.Lists.List <> list ind
+R744 Coq.Lists.List <> list ind
+prf 907 <> simpl_x_cons_app
+R986 Coq.Init.Logic "x = y" not
+R978 Coq.Lists.List "x ++ y" not
+R973 Coq.Lists.List "x :: y" not
+R990 Coq.Lists.List "x :: y" not
+R996 Coq.Lists.List "x ++ y" not
+R953 Coq.Lists.List <> list ind
+R953 Coq.Lists.List <> list ind
+R1033 Coq.Init.Logic <> refl_equal constr
+R1033 Coq.Init.Logic <> refl_equal constr
+prf 1057 <> simpl_app_nil
+R1119 Coq.Init.Logic "x = y" not
+R1107 Coq.Lists.List "x ++ y" not
+R1112 Coq.Lists.List <> nil constr
+R1096 Coq.Lists.List <> list ind
+R1156 Coq.Lists.List <> app_nil_end thm
+R1156 Coq.Lists.List <> app_nil_end thm
+prf 1181 <> simpl_nil_app
+R1243 Coq.Init.Logic "x = y" not
+R1236 Coq.Lists.List "x ++ y" not
+R1231 Coq.Lists.List <> nil constr
+R1220 Coq.Lists.List <> list ind
+R1278 Coq.Init.Logic <> refl_equal constr
+R1278 Coq.Init.Logic <> refl_equal constr
+prf 1302 <> list_app_eq_nil
+R1376 Coq.Init.Logic "A <-> B" not
+R1365 Coq.Init.Logic "x = y" not
+R1359 Coq.Lists.List "x ++ y" not
+R1369 Coq.Lists.List <> nil constr
+R1394 Coq.Init.Logic "A /\ B" not
+R1383 Coq.Init.Logic "x = y" not
+R1387 Coq.Lists.List <> nil constr
+R1400 Coq.Init.Logic "x = y" not
+R1404 Coq.Lists.List <> nil constr
+R1347 Coq.Lists.List <> list ind
+R1347 Coq.Lists.List <> list ind
+R1470 Coq.Lists.List <> app_eq_nil thm
+R1470 Coq.Lists.List <> app_eq_nil thm
+R1536 Coq.Init.Logic <> refl_equal constr
+R1536 Coq.Init.Logic <> refl_equal constr
+prf 1560 <> nil_eq_list_app
+R1634 Coq.Init.Logic "A <-> B" not
+R1621 Coq.Init.Logic "x = y" not
+R1616 Coq.Lists.List <> nil constr
+R1628 Coq.Lists.List "x ++ y" not
+R1652 Coq.Init.Logic "A /\ B" not
+R1641 Coq.Init.Logic "x = y" not
+R1645 Coq.Lists.List <> nil constr
+R1658 Coq.Init.Logic "x = y" not
+R1662 Coq.Lists.List <> nil constr
+R1605 Coq.Lists.List <> list ind
+R1605 Coq.Lists.List <> list ind
+R1743 Coq.Lists.List <> app_eq_nil thm
+R1743 Coq.Lists.List <> app_eq_nil thm
+R1809 Coq.Init.Logic <> refl_equal constr
+R1809 Coq.Init.Logic <> refl_equal constr
+prf 1833 <> simpl_head_cons
+R1907 Coq.Init.Logic "x = y" not
+R1893 Coq.Lists.List <> hd def
+R1901 Coq.Lists.List "x :: y" not
+R1874 Coq.Lists.List <> list ind
+R1942 Coq.Init.Logic <> refl_equal constr
+R1942 Coq.Init.Logic <> refl_equal constr
+prf 1966 <> simpl_tail_nil
+R2016 Coq.Init.Logic "x = y" not
+R2002 Coq.Lists.List <> tail def
+R2009 Coq.Lists.List <> nil constr
+R2020 Coq.Lists.List <> nil constr
+R2058 Coq.Init.Logic <> refl_equal constr
+R2058 Coq.Init.Logic <> refl_equal constr
+prf 2082 <> simpl_tail_cons
+R2154 Coq.Init.Logic "x = y" not
+R2140 Coq.Lists.List <> tail def
+R2148 Coq.Lists.List "x :: y" not
+R2123 Coq.Lists.List <> list ind
+R2189 Coq.Init.Logic <> refl_equal constr
+R2189 Coq.Init.Logic <> refl_equal constr
+prf 2213 <> simpl_length_nil
+R2267 Coq.Init.Logic "x = y" not
+R2251 Coq.Lists.List <> length def
+R2260 Coq.Lists.List <> nil constr
+R2269 Coq.Init.Datatypes "" not
+R2302 Coq.Init.Logic <> refl_equal constr
+R2302 Coq.Init.Logic <> refl_equal constr
+prf 2326 <> simpl_length_not_nil
+R2395 Coq.Init.Logic "A <-> B" not
+R2383 Coq.Init.Logic "x <> y" not
+R2388 Coq.Lists.List <> nil constr
+R2410 Coq.Init.Peano "x > y" not
+R2399 Coq.Lists.List <> length def
+R2412 Coq.Init.Datatypes "" not
+R2372 Coq.Lists.List <> list ind
+prf 2445 <> simpl_length_cons
+R2521 Coq.Init.Logic "x = y" not
+R2505 Coq.Lists.List <> length def
+R2515 Coq.Lists.List "x :: y" not
+R2525 Coq.Init.Peano "n + m" not
+R2523 Coq.Init.Datatypes "" not
+R2527 Coq.Lists.List <> length def
+R2488 Coq.Lists.List <> list ind
+R2567 Coq.Init.Logic <> refl_equal constr
+R2567 Coq.Init.Logic <> refl_equal constr
+prf 2591 <> simpl_rev_nil
+R2639 Coq.Init.Logic "x = y" not
+R2626 Coq.Lists.List <> rev def
+R2632 Coq.Lists.List <> nil constr
+R2643 Coq.Lists.List <> nil constr
+R2681 Coq.Init.Logic <> refl_equal constr
+R2681 Coq.Init.Logic <> refl_equal constr
+prf 2705 <> simpl_rev_cons
+R2774 Coq.Init.Logic "x = y" not
+R2762 Coq.Lists.List <> rev def
+R2768 Coq.Lists.List "x :: y" not
+R2782 Coq.Lists.List "x ++ y" not
+R2776 Coq.Lists.List <> rev def
+R2787 Coq.Lists.List "x :: y" not
+R2792 Coq.Lists.List <> nil constr
+R2745 Coq.Lists.List <> list ind
+R2830 Coq.Init.Logic <> refl_equal constr
+R2830 Coq.Init.Logic <> refl_equal constr
+prf 2854 <> in_x_cons
+R2922 Coq.Init.Logic "A <-> B" not
+R2908 Coq.Lists.List <> In def
+R2916 Coq.Lists.List "x :: y" not
+R2932 Coq.Init.Logic "A \/ B" not
+R2928 Coq.Init.Logic "x = y" not
+R2935 Coq.Lists.List <> In def
+R2899 Coq.Lists.List <> list ind
+R3059 Coq.Lists.List <> Permutation_nil thm
+R3077 Coq.Lists.List <> Permutation_nil_cons thm
+R3101 Coq.Lists.List <> Permutation_refl thm
+R3120 Coq.Lists.List <> Permutation_sym thm
+R3138 Coq.Lists.List <> Permutation_trans thm
+R3158 Coq.Lists.List <> Permutation_in thm
+R3175 Coq.Lists.List <> Permutation_app thm
+R3193 Coq.Lists.List <> Permutation_app_swap thm
+R3216 Coq.Lists.List <> Permutation_cons_app thm
+R3239 Coq.Lists.List <> Permutation_length thm
+R3260 Coq.Lists.List <> Permutation_rev thm
+R3278 Coq.Lists.List <> Permutation_app_inv thm
+R3300 Coq.Lists.List <> Permutation_cons_inv thm
+R3323 Coq.Lists.List <> Permutation_cons_app_inv thm
+R3350 Coq.Lists.List <> Permutation_app_inv_l thm
+R3374 Coq.Lists.List <> Permutation_app_inv_r thm
+prf 3536 <> count_occ_le_len
+R3607 Coq.Init.Peano "n <= m" not
+R3584 Coq.Lists.List <> count_occ def
+R3594 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R3610 Coq.Lists.List <> length def
+R3580 Coq.ZArith.BinInt <> Z ind
+R3567 Coq.Lists.List <> list ind
+R3572 Coq.ZArith.BinInt <> Z ind
+R3682 Coq.Init.Peano <> le_n constr
+R3682 Coq.Init.Peano <> le_n constr
+R3699 Coq.Lists.List <> length def
+R3709 Coq.Lists.List "x :: y" not
+R3729 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R3699 Coq.Lists.List <> length def
+R3709 Coq.Lists.List "x :: y" not
+R3729 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R3791 Coq.Lists.List <> count_occ_cons_eq thm
+R3791 Coq.Lists.List <> count_occ_cons_eq thm
+R3856 Coq.Lists.List <> count_occ_cons_neq thm
+R3856 Coq.Lists.List <> count_occ_cons_neq thm
+prf 3921 <> count_occ_cons_eq_len
+R4039 Coq.Init.Logic "A /\ B" not
+R4035 Coq.Init.Logic "x = y" not
+R4065 Coq.Init.Logic "x = y" not
+R4042 Coq.Lists.List <> count_occ def
+R4052 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R4067 Coq.Lists.List <> length def
+R4012 Coq.Init.Logic "x = y" not
+R3982 Coq.Lists.List <> count_occ def
+R4004 Coq.Lists.List "x :: y" not
+R3992 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R4014 Coq.Lists.List <> length def
+R4024 Coq.Lists.List "x :: y" not
+R3978 Coq.ZArith.BinInt <> Z ind
+R3965 Coq.Lists.List <> list ind
+R3970 Coq.ZArith.BinInt <> Z ind
+R3957 Coq.ZArith.BinInt <> Z ind
+R4109 Coq.Lists.List <> length def
+R4119 Coq.Lists.List "x :: y" not
+R4144 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R4109 Coq.Lists.List <> length def
+R4119 Coq.Lists.List "x :: y" not
+R4144 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R4236 Coq.Lists.List <> count_occ_cons_eq thm
+R4236 Coq.Lists.List <> count_occ_cons_eq thm
+R4281 Coq.Init.Peano <> eq_add_S thm
+R4281 Coq.Init.Peano <> eq_add_S thm
+R4330 Coq.Lists.List <> count_occ_cons_neq thm
+R4330 Coq.Lists.List <> count_occ_cons_neq thm
+R4373 decidez <> count_occ_le_len thm
+R4373 decidez <> count_occ_le_len thm
+def 4446 <> alln
+R4498 Coq.Init.Logic "x = y" not
+R4475 Coq.Lists.List <> count_occ def
+R4485 Coq.ZArith.ZArith_dec <> Z_eq_dec def
+R4500 Coq.Lists.List <> length def
+R4469 Coq.ZArith.BinInt <> Z ind
+R4456 Coq.Lists.List <> list ind
+R4461 Coq.ZArith.BinInt <> Z ind
+prf 4519 <> alln_nil
+R4546 decidez <> alln def
+R4553 Coq.Lists.List <> nil constr
+R4557 Coq.ZArith.BinInt <> Z ind
+R4542 Coq.ZArith.BinInt <> Z ind
+R4607 Coq.Init.Logic <> refl_equal constr
+R4607 Coq.Init.Logic <> refl_equal constr
+prf 4633 <> alln_cons
+R4698 Coq.Init.Logic "A <-> B" not
+R4682 decidez <> alln def
+R4690 Coq.Lists.List "x :: y" not
+R4708 Coq.Init.Logic "A /\ B" not
+R4704 Coq.Init.Logic "x = y" not
+R4711 decidez <> alln def
+R4678 Coq.ZArith.BinInt <> Z ind
+R4665 Coq.Lists.List <> list ind
+R4670 Coq.ZArith.BinInt <> Z ind
+R4657 Coq.ZArith.BinInt <> Z ind
+R4788 decidez <> count_occ_cons_eq_len thm
+R4788 decidez <> count_occ_cons_eq_len thm
+R4928 Coq.Lists.List <> count_occ_cons_eq thm
+R4928 Coq.Lists.List <> count_occ_cons_eq thm
+R4960 Coq.Lists.List <> length def
+R4970 Coq.Lists.List "x :: y" not
+R4960 Coq.Lists.List <> length def
+R4970 Coq.Lists.List "x :: y" not
+prf 5026 <> alln_app
+R5099 Coq.Init.Logic "A <-> B" not
+R5081 decidez <> alln def
+R5090 Coq.Lists.List "x ++ y" not
+R5113 Coq.Init.Logic "A /\ B" not
+R5103 decidez <> alln def
+R5116 decidez <> alln def
+R5077 Coq.ZArith.BinInt <> Z ind
+R5064 Coq.Lists.List <> list ind
+R5069 Coq.ZArith.BinInt <> Z ind
+R5050 Coq.Lists.List <> list ind
+R5055 Coq.ZArith.BinInt <> Z ind
+R5237 decidez <> alln_nil thm
+R5237 decidez <> alln_nil thm
+R5290 decidez <> alln_cons thm
+R5290 decidez <> alln_cons thm
+R5386 decidez <> alln_cons thm
+R5386 decidez <> alln_cons thm
+R5561 decidez <> alln_cons thm
+R5580 decidez <> alln_cons thm
+R5561 decidez <> alln_cons thm
+R5580 decidez <> alln_cons thm
+prf 5693 <> alln_rev
+R5748 Coq.Init.Logic "A <-> B" not
+R5733 decidez <> alln def
+R5739 Coq.Lists.List <> rev def
+R5752 decidez <> alln def
+R5729 Coq.ZArith.BinInt <> Z ind
+R5716 Coq.Lists.List <> list ind
+R5721 Coq.ZArith.BinInt <> Z ind
+R5843 decidez <> alln_nil thm
+R5843 decidez <> alln_nil thm
+R5893 Coq.Lists.List "x ++ y" not
+R5887 Coq.Lists.List <> rev def
+R5898 Coq.Lists.List "x :: y" not
+R5901 Coq.Lists.List <> nil constr
+R5867 Coq.Lists.List <> rev def
+R5874 Coq.Lists.List "x :: y" not
+R5920 decidez <> alln_app thm
+R5963 decidez <> alln_cons thm
+R5893 Coq.Lists.List "x ++ y" not
+R5887 Coq.Lists.List <> rev def
+R5898 Coq.Lists.List "x :: y" not
+R5901 Coq.Lists.List <> nil constr
+R5867 Coq.Lists.List <> rev def
+R5874 Coq.Lists.List "x :: y" not
+R5920 decidez <> alln_app thm
+R5963 decidez <> alln_cons thm
+R5997 decidez <> alln_cons thm
+R5997 decidez <> alln_cons thm
+R6148 decidez <> alln_cons thm
+R6218 Coq.Lists.List "x ++ y" not
+R6212 Coq.Lists.List <> rev def
+R6223 Coq.Lists.List "x :: y" not
+R6226 Coq.Lists.List <> nil constr
+R6192 Coq.Lists.List <> rev def
+R6199 Coq.Lists.List "x :: y" not
+R6240 decidez <> alln_app thm
+R6148 decidez <> alln_cons thm
+R6218 Coq.Lists.List "x ++ y" not
+R6212 Coq.Lists.List <> rev def
+R6223 Coq.Lists.List "x :: y" not
+R6226 Coq.Lists.List <> nil constr
+R6192 Coq.Lists.List <> rev def
+R6199 Coq.Lists.List "x :: y" not
+R6240 decidez <> alln_app thm
+R6301 decidez <> alln_cons thm
+R6301 decidez <> alln_cons thm
+R6355 decidez <> alln_nil thm
+R6355 decidez <> alln_nil thm
+R6384 decidez <> alln_nil thm
+R6572 decidez <> cons_eq_nil thm
+R6586 decidez <> nil_eq_cons thm
+R6600 decidez <> cons_eq_cons thm
+R6615 Coq.Lists.List <> rev_unit thm
+R6626 Coq.Lists.List <> app_ass thm
+R6636 decidez <> simpl_x_cons_app thm
+R6655 decidez <> simpl_app_nil thm
+R6671 decidez <> simpl_nil_app thm
+R6687 decidez <> list_app_eq_nil thm
+R6705 decidez <> nil_eq_list_app thm
+R6723 decidez <> simpl_head_cons thm
+R6741 decidez <> simpl_tail_nil thm
+R6758 decidez <> simpl_tail_cons thm
+R6776 decidez <> simpl_length_nil thm
+R6795 decidez <> simpl_length_cons thm
+R6815 Coq.Lists.List <> app_length thm
+R6828 Coq.Lists.List <> rev_length thm
+R6841 decidez <> simpl_rev_nil thm
+R6857 decidez <> simpl_rev_cons thm
+R6874 Coq.Lists.List <> distr_rev thm
+R6886 Coq.Lists.List <> rev_involutive thm
+R6903 Coq.ZArith.Znat <> inj_0 thm
+R6911 Coq.ZArith.Znat <> inj_S thm
+R6919 Coq.ZArith.Znat <> inj_plus thm
+R6930 decidez <> in_x_cons thm
+R6942 decidez <> alln_cons thm
+R6954 decidez <> alln_app thm
+R6965 decidez <> alln_rev thm
+R7170 Coq.Init.Logic "x = y" not
+R7165 Coq.Lists.List "x :: y" not
+R7174 Coq.Lists.List <> nil constr
+R7178 Coq.ZArith.BinInt <> Z ind
+R7238 Coq.Init.Logic "x = y" not
+R7233 Coq.Lists.List <> nil constr
+R7237 Coq.ZArith.BinInt <> Z ind
+R7244 Coq.Lists.List "x :: y" not
+R7307 Coq.Init.Logic "x = y" not
+R7302 Coq.Lists.List "x :: y" not
+R7312 Coq.Lists.List "x :: y" not
+R7368 Coq.Lists.List <> rev def
+R7376 Coq.Lists.List "x ++ y" not
+R7382 Coq.Lists.List "x :: y" not
+R7387 Coq.Lists.List <> nil constr
+R7391 Coq.ZArith.BinInt <> Z ind
+R7453 Coq.Lists.List "x ++ y" not
+R7447 Coq.Lists.List "x ++ y" not
+R7518 Coq.Lists.List "x ++ y" not
+R7512 Coq.Lists.List "x :: y" not
+R7585 Coq.Lists.List "x ++ y" not
+R7590 Coq.Lists.List <> nil constr
+R7594 Coq.ZArith.BinInt <> Z ind
+R7656 Coq.Lists.List "x ++ y" not
+R7651 Coq.Lists.List <> nil constr
+R7655 Coq.ZArith.BinInt <> Z ind
+R7727 Coq.Init.Logic "x = y" not
+R7720 Coq.Lists.List "x ++ y" not
+R7731 Coq.Lists.List <> nil constr
+R7735 Coq.ZArith.BinInt <> Z ind
+R7799 Coq.Init.Logic "x = y" not
+R7794 Coq.Lists.List <> nil constr
+R7798 Coq.ZArith.BinInt <> Z ind
+R7807 Coq.Lists.List "x ++ y" not
+R7868 Coq.Lists.List <> hd def
+R7879 Coq.Lists.List "x :: y" not
+R7871 Coq.ZArith.BinInt "" not
+R7940 Coq.Lists.List <> tail def
+R7947 Coq.Lists.List <> nil constr
+R7951 Coq.ZArith.BinInt <> Z ind
+R8007 Coq.Lists.List <> tail def
+R8016 Coq.Lists.List "x :: y" not
+R8077 Coq.Lists.List <> length def
+R8086 Coq.Lists.List <> nil constr
+R8090 Coq.ZArith.BinInt <> Z ind
+R8148 Coq.Lists.List <> length def
+R8159 Coq.Lists.List "x :: y" not
+R8222 Coq.Lists.List <> length def
+R8234 Coq.Lists.List "x ++ y" not
+R8291 Coq.Lists.List <> length def
+R8299 Coq.Lists.List <> rev def
+R8356 Coq.Lists.List <> rev def
+R8362 Coq.Lists.List <> nil constr
+R8366 Coq.ZArith.BinInt <> Z ind
+R8421 Coq.Lists.List <> rev def
+R8429 Coq.Lists.List "x :: y" not
+R8489 Coq.Lists.List <> rev def
+R8498 Coq.Lists.List "x ++ y" not
+R8554 Coq.Lists.List <> rev def
+R8559 Coq.Lists.List <> rev def
+R8620 Coq.ZArith.BinInt <> Z_of_nat def
+R8629 Coq.Init.Datatypes "" not
+R8708 Coq.ZArith.BinInt <> Z_of_nat def
+R8718 Coq.Init.Datatypes <> S constr
+R8805 Coq.ZArith.BinInt <> Z_of_nat def
+R8819 Coq.Init.Peano "n + m" not
+R8873 Coq.Lists.List <> In def
+R8883 Coq.Lists.List "x :: y" not
+R8938 decidez <> alln def
+R8947 Coq.Lists.List "x :: y" not
+R9005 decidez <> alln def
+R9015 Coq.Lists.List "x ++ y" not
+R9073 decidez <> alln def
+R9079 Coq.Lists.List <> rev def
+R9150 Coq.Init.Logic "x = y" not
+R9145 Coq.Lists.List "x :: y" not
+R9154 Coq.Lists.List <> nil constr
+R9158 Coq.ZArith.BinInt <> Z ind
+R9254 Coq.Init.Logic "x = y" not
+R9249 Coq.Lists.List <> nil constr
+R9253 Coq.ZArith.BinInt <> Z ind
+R9260 Coq.Lists.List "x :: y" not
+R9354 Coq.Init.Logic "x = y" not
+R9349 Coq.Lists.List "x :: y" not
+R9359 Coq.Lists.List "x :: y" not
+R9417 Coq.Lists.List <> rev def
+R9425 Coq.Lists.List "x ++ y" not
+R9431 Coq.Lists.List "x :: y" not
+R9436 Coq.Lists.List <> nil constr
+R9440 Coq.ZArith.BinInt <> Z ind
+R9504 Coq.Lists.List "x ++ y" not
+R9498 Coq.Lists.List "x ++ y" not
+R9571 Coq.Lists.List "x ++ y" not
+R9565 Coq.Lists.List "x :: y" not
+R9640 Coq.Lists.List "x ++ y" not
+R9645 Coq.Lists.List <> nil constr
+R9649 Coq.ZArith.BinInt <> Z ind
+R9713 Coq.Lists.List "x ++ y" not
+R9708 Coq.Lists.List <> nil constr
+R9712 Coq.ZArith.BinInt <> Z ind
+R9786 Coq.Init.Logic "x = y" not
+R9779 Coq.Lists.List "x ++ y" not
+R9790 Coq.Lists.List <> nil constr
+R9794 Coq.ZArith.BinInt <> Z ind
+R9860 Coq.Init.Logic "x = y" not
+R9855 Coq.Lists.List <> nil constr
+R9859 Coq.ZArith.BinInt <> Z ind
+R9868 Coq.Lists.List "x ++ y" not
+R9931 Coq.Lists.List <> hd def
+R9942 Coq.Lists.List "x :: y" not
+R9934 Coq.ZArith.BinInt "" not
+R10005 Coq.Lists.List <> tail def
+R10012 Coq.Lists.List <> nil constr
+R10016 Coq.ZArith.BinInt <> Z ind
+R10074 Coq.Lists.List <> tail def
+R10083 Coq.Lists.List "x :: y" not
+R10146 Coq.Lists.List <> length def
+R10155 Coq.Lists.List <> nil constr
+R10159 Coq.ZArith.BinInt <> Z ind
+R10219 Coq.Lists.List <> length def
+R10230 Coq.Lists.List "x :: y" not
+R10295 Coq.Lists.List <> length def
+R10307 Coq.Lists.List "x ++ y" not
+R10366 Coq.Lists.List <> length def
+R10374 Coq.Lists.List <> rev def
+R10433 Coq.Lists.List <> rev def
+R10439 Coq.Lists.List <> nil constr
+R10443 Coq.ZArith.BinInt <> Z ind
+R10500 Coq.Lists.List <> rev def
+R10508 Coq.Lists.List "x :: y" not
+R10570 Coq.Lists.List <> rev def
+R10579 Coq.Lists.List "x ++ y" not
+R10637 Coq.Lists.List <> rev def
+R10642 Coq.Lists.List <> rev def
+R10705 Coq.ZArith.BinInt <> Z_of_nat def
+R10714 Coq.Init.Datatypes "" not
+R10792 Coq.ZArith.BinInt <> Z_of_nat def
+R10802 Coq.Init.Datatypes <> S constr
+R10888 Coq.ZArith.BinInt <> Z_of_nat def
+R10902 Coq.Init.Peano "n + m" not
+R10958 Coq.Lists.List <> In def
+R10968 Coq.Lists.List "x :: y" not
+R11025 decidez <> alln def
+R11034 Coq.Lists.List "x :: y" not
+R11094 decidez <> alln def
+R11104 Coq.Lists.List "x ++ y" not
+R11164 decidez <> alln def
+R11170 Coq.Lists.List <> rev def
+R11198 decidez <> alln_rev thm
+R11132 decidez <> alln_app thm
+R11061 decidez <> alln_cons thm
+R10992 decidez <> in_x_cons thm
+R10926 Coq.ZArith.Znat <> inj_plus thm
+R10824 Coq.ZArith.BinInt <> Z_of_nat def
+R10834 Coq.Init.Datatypes <> S constr
+R10732 Coq.ZArith.BinInt <> Z_of_nat def
+R10741 Coq.Init.Datatypes "" not
+R10667 Coq.Lists.List <> rev_involutive thm
+R10604 Coq.Lists.List <> distr_rev thm
+R10532 decidez <> simpl_rev_cons thm
+R10463 decidez <> simpl_rev_nil thm
+R10399 Coq.Lists.List <> rev_length thm
+R10332 Coq.Lists.List <> app_length thm
+R10254 decidez <> simpl_length_cons thm
+R10179 decidez <> simpl_length_nil thm
+R10107 decidez <> simpl_tail_cons thm
+R10036 decidez <> simpl_tail_nil thm
+R9966 decidez <> simpl_head_cons thm
+R9892 decidez <> nil_eq_list_app thm
+R9814 decidez <> list_app_eq_nil thm
+R9738 decidez <> simpl_nil_app thm
+R9669 decidez <> simpl_app_nil thm
+R9597 decidez <> simpl_x_cons_app thm
+R9530 Coq.Lists.List <> app_ass thm
+R9461 Coq.Lists.List <> rev_unit thm
+R9381 decidez <> cons_eq_cons thm
+R9287 decidez <> nil_eq_cons thm
+R9183 decidez <> cons_eq_nil thm
+R9102 decidez <> alln_rev thm
+R9038 decidez <> alln_app thm
+R8969 decidez <> alln_cons thm
+R8902 decidez <> in_x_cons thm
+R8838 Coq.ZArith.Znat <> inj_plus thm
+R8735 Coq.ZArith.BinInt <> Z_of_nat def
+R8745 Coq.Init.Datatypes <> S constr
+R8642 Coq.ZArith.BinInt <> Z_of_nat def
+R8651 Coq.Init.Datatypes "" not
+R8579 Coq.Lists.List <> rev_involutive thm
+R8518 Coq.Lists.List <> distr_rev thm
+R8448 decidez <> simpl_rev_cons thm
+R8381 decidez <> simpl_rev_nil thm
+R8319 Coq.Lists.List <> rev_length thm
+R8254 Coq.Lists.List <> app_length thm
+R8178 decidez <> simpl_length_cons thm
+R8105 decidez <> simpl_length_nil thm
+R8035 decidez <> simpl_tail_cons thm
+R7966 decidez <> simpl_tail_nil thm
+R7898 decidez <> simpl_head_cons thm
+R7826 decidez <> nil_eq_list_app thm
+R7750 decidez <> list_app_eq_nil thm
+R7676 decidez <> simpl_nil_app thm
+R7609 decidez <> simpl_app_nil thm
+R7539 decidez <> simpl_x_cons_app thm
+R7474 Coq.Lists.List <> app_ass thm
+R7407 Coq.Lists.List <> rev_unit thm
+R7329 decidez <> cons_eq_cons thm
+R7261 decidez <> nil_eq_cons thm
+R7193 decidez <> cons_eq_nil thm
+R11429 Coq.Init.Logic "~ x" not
+R11482 Coq.Init.Logic "'exists' x : t , p" not
+R11531 Coq.Init.Logic "A /\ B" not
+R11567 Coq.Init.Logic "A \/ B" not
+R11603 Coq.Init.Logic "A /\ B" not
+R11628 Coq.Init.Logic "A \/ B" not
+R11696 Coq.Init.Logic <> False ind
+R11766 Coq.Init.Logic <> ex ind
+R12068 Coq.Init.Logic <> False ind

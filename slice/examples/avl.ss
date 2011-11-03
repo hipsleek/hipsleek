@@ -13,7 +13,7 @@ avl<n, h> == self = null & n = 0 & h = 0
 	or self::node<_, h, p, q> * p::avl<n1, h1> * q::avl<n2, h2>
 		& n = 1+n1+n2
 		& h2<=h1+1 & h1<=h2+1 & h = max(h1, h2) + 1 
-	inv n >= 0 & h >= 0 & ($ n >= h);
+	inv n >= 0 & h >= 0 & ($ n <= h);
 
 /* function to return the height of an avl tree */
 int height(node x)

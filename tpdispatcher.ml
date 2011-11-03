@@ -24,6 +24,7 @@ type tp_type =
   | Z3
   | Redlog
   | RM (* Redlog and Mona *)
+  | ZM (* Z3 and Mona *)
 
 let tp = ref OmegaCalc
 let proof_no = ref 0
@@ -345,6 +346,8 @@ let set_tp tp_str =
     (tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "rm" then
     tp := RM
+  else if tp_str = "zm" then
+    tp := ZM
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else
@@ -367,6 +370,7 @@ let string_of_tp tp = match tp with
   | Z3 -> "z3"
   | Redlog -> "redlog"
   | RM -> "rm"
+  | ZM -> "zm"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -384,6 +388,7 @@ let name_of_tp tp = match tp with
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
   | RM -> "Redlog and Mona"
+  | ZM -> "Z3 and Mona"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -392,6 +397,7 @@ let log_file_of_tp tp = match tp with
   | Mona -> "allinput.mona"
   | Coq -> "allinput.v"
   | Redlog -> "allinput.rl"
+  | Z3 -> "allinput.z3"
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -536,6 +542,10 @@ let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
   ef
 
+let elim_exists (f : CP.formula) : CP.formula =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "elim_exists" pr pr elim_exists f
+
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
@@ -667,6 +677,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         Mona.is_sat f sat_no
       else
         Redlog.is_sat f sat_no
+  | ZM ->
+	  if (is_bag_constraint f) then
+        Mona.is_sat f sat_no
+      else
+		Smtsolver.is_sat f sat_no
 
 let tp_is_sat_no_cache(*_debug*) f sat_no =
   Gen.Debug.no_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
@@ -711,6 +726,10 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   else  
     tp_is_sat f sat_no
 ;;
+
+let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
     
 let simplify_omega (f:CP.formula): CP.formula = 
    if is_bag_constraint f then f
@@ -734,7 +753,14 @@ let simplify (f : CP.formula) : CP.formula =
               if (is_list_constraint f) then
                 (Coq.simplify f)
               else (Omega.simplify f)
-        | Mona | MonaH (* -> Mona.simplify f *)
+        | Mona | MonaH (* -> Mona.simplify f *) ->
+            if (is_bag_constraint f) then
+                (Mona.simplify f)
+            else
+              (* exist x, f0 ->  eexist x, x>0 /\ f0*)
+              let f1 = CP.add_gte0_for_mona f in
+              let f=(Omega.simplify f1) 
+              in CP.arith_simplify 12 f
         | OM ->
               if (is_bag_constraint f) then
                 (Mona.simplify f)
@@ -755,6 +781,11 @@ let simplify (f : CP.formula) : CP.formula =
                 Mona.simplify f
               else
                 Redlog.simplify f
+		| ZM -> 
+              if is_bag_constraint f then
+                Mona.simplify f
+              else
+                Smtsolver.simplify f
         | _ -> Omega.simplify f in
       Gen.Profiling.pop_time "simplify";
 	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
@@ -775,6 +806,7 @@ let simplify (f : CP.formula) : CP.formula =
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
+  let _ = Gen.Profiling.inc_counter ("stat_count_simpl") in
   simplify f 
 
 (* let simplify f = *)
@@ -844,6 +876,11 @@ let hull (f : CP.formula) : CP.formula = match !tp with
         Mona.hull f
       else
         Redlog.hull f
+  | ZM ->
+      if is_bag_constraint f then
+        Mona.hull f
+      else
+        Smtsolver.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -877,6 +914,9 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | RM ->
       if is_bag_constraint f then Mona.pairwisecheck f
       else Redlog.pairwisecheck f
+  | ZM ->
+      if is_bag_constraint f then Mona.pairwisecheck f
+      else Smtsolver.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -907,8 +947,7 @@ let rec split_disjunctions = function
 ;;
 
 let called_prover = ref ""
-
-let print_implication = ref false (* An Hoa *)
+let print_implication = ref false 
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
@@ -971,6 +1010,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         Mona.imply ante conseq imp_no
       else
         Redlog.imply ante conseq imp_no
+  | ZM -> 
+      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+        Mona.imply ante conseq imp_no
+      else
+        Smtsolver.imply ante conseq
   in let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n" ^ "res: " ^ (string_of_bool r) ^ "\n") in
   r
 ;;
@@ -1397,6 +1441,7 @@ let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
 let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
+(* CP.formula -> string -> 'a -> bool *)
 let is_sat f sat_no do_cache =
   if !external_prover then 
       match Netprover.call_prover (Sat f) with
@@ -1407,6 +1452,11 @@ let is_sat f sat_no do_cache =
     Gen.Profiling.do_1 "is_sat" (is_sat f sat_no) do_cache
   end
 ;;
+
+let is_sat f sat_no do_cache =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_1 "is_sat" pr string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+
 
 let sat_no = ref 1
 ;;
@@ -1447,7 +1497,7 @@ let is_sat_sub_no_with_slicing (f:CP.formula) sat_subno : bool =
   List.fold_left (fun a f -> if not a then a else is_sat_sub_no_c f sat_subno false) true n_f_l 
 
 
-let is_sat_sub_no_debug (f : CP.formula) sat_subno : bool =  
+let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
   Gen.Debug.no_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 

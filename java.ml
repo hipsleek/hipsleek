@@ -164,7 +164,8 @@ return true;
 
 and build_constructor (ddef : data_decl) : unit =
   let n = List.length ddef.data_fields in
-  let typs, fnames = List.split (fst (List.split ddef.data_fields)) in
+  let typs = List.map get_field_typ ddef.data_fields in
+  let fnames = List.map get_field_name ddef.data_fields in
   let pnames = fresh_names n in
   let formals = List.map2 (fun t -> fun name -> 
 							 (string_of_typ t) ^ " " ^ name) typs pnames in
@@ -185,7 +186,7 @@ and build_constructor (ddef : data_decl) : unit =
 	
 
 
-and convert_field ((t, v), l) =
+and convert_field ((t, v), l, _) =
   Buffer.add_string java_code (string_of_typ t);
   Buffer.add_string java_code (" " ^ v ^ ";\n")
 
@@ -235,8 +236,8 @@ and java_of_proc_decl p =
 	^ "\n" ^ body
 
 and java_of_exp = function
-	| ArrayAt ({exp_arrayat_array_name = a;
-	     exp_arrayat_index = e;}) -> a ^ "[" ^ (java_of_exp e) ^ "]" (* An Hoa *)
+	| ArrayAt ({exp_arrayat_array_base = a;
+	     exp_arrayat_index = idx;}) -> (java_of_exp a) ^ (String.concat "" (List.map (fun e -> "[" ^ (java_of_exp e) ^ "]") idx))
   | Label (_,b) -> java_of_exp b
   | Unfold _ -> ""
   | Java ({exp_java_code = code}) -> code

@@ -48,7 +48,7 @@ type typ =
   | BagT of typ
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
-  | Array of (typ * int option) (* base type and optional dimension *)
+  | Array of (typ * int) (* base type and dimension *)
 
 (*
   Data types for code gen
@@ -91,7 +91,9 @@ let rec string_of_typ = function
   | List t        -> "list("^(string_of_typ t)^")"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
-  | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
+  | Array (et, r) -> (* An Hoa *)
+	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
+		(string_of_typ et) ^ (repeat r)
 ;;
 
 let subs_tvar_in_typ t (i:int) nt =
@@ -107,13 +109,6 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
-let dim_subtype d1 d2 =
-  match d1,d2 with
-    | _, None -> true
-    | None, Some _ -> false
-    | Some i1, Some i2 -> i1==i2
-;;
-
 let rec sub_type (t1 : typ) (t2 : typ) = 
   match t1,t2 with
     | UNK, _ -> true
@@ -121,7 +116,7 @@ let rec sub_type (t1 : typ) (t2 : typ) =
           if c1=c2 then true
           else c1=""
     | Array (et1,d1), Array (et2,d2) ->
-          if dim_subtype d1 d2 then sub_type et1 et2
+          if (d1 = d2) then sub_type et1 et2
           else false
     | BagT et1, BagT et2 -> sub_type et1 et2
     | List et1, List et2 -> sub_type et1 et2
@@ -197,7 +192,7 @@ let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
 (* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
 let false_flow_int = (0,0)
-(*let stub_flow_int = (-3,-3)*)
+let stub_flow_int = (-3,-3)
 
 let res = "res"
 
@@ -276,7 +271,7 @@ let enable_norm_simp = ref false
 
 let n_xpure = ref 1
 
-let check_coercions = ref false
+let check_coercions = ref true
 
 let show_gist = ref false
 
@@ -284,7 +279,7 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
-let enable_sat_statistics = ref false
+(* let enable_sat_statistics = ref false *)
 
 let wrap_exists_implicit_explicit = ref false
 
@@ -300,7 +295,7 @@ let print_err_sleek = ref false
 
 let enable_prune_cache = ref true
 
-let enable_counters = ref true
+let enable_counters = ref false
 
 let enable_fast_imply = ref false
 
@@ -313,6 +308,10 @@ let print_input = ref false
 let pass_global_by_value = ref false
 
 let allow_pred_spec = ref false
+
+let disable_failure_explaining = ref false
+
+let simplify_error = ref false
 
 let prune_cnt_limit = ref 2
 
@@ -354,6 +353,7 @@ let enable_incremental_proving = ref false
 (* Options for slicing *)
 let do_slicing = ref false
 let opt_imply = ref 0
+let infer_slicing = ref false
 
 let add_count (t: int ref) = 
 	t := !t+1

@@ -1,0 +1,11 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+checkentail self::lseg<n-1, t> * t::node<_, null> |- self!=null.
+
+checkentail self::lseg<n-1, t> * t::node<_, null> |- n>0.
+

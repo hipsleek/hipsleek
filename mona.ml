@@ -823,7 +823,7 @@ let get_mona_predicates_file () : string =
     mona_pred_file
   else
     begin
-        let _ = print_string ("\n WARNING: File " ^ mona_pred_file ^ " was not found in current directory. Searching in alternative path: " ^ mona_pred_file_alternative_path) in
+        (* let _ = print_string ("\n WARNING: File " ^ mona_pred_file ^ " was not found in current directory. Searching in alternative path: " ^ mona_pred_file_alternative_path) in *)
         let alternative = mona_pred_file_alternative_path ^ mona_pred_file in
         if Sys.file_exists alternative then 
           alternative
@@ -846,7 +846,7 @@ let set_process (proc: Globals.prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
+    (* let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in *)
     false
   else true
 
@@ -1068,6 +1068,11 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no
   else
     imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no
+
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  imply ante conseq imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then

@@ -1,0 +1,42 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 
+   -> self::lseg<a, r> * r::lseg<b, p> .
+
+//lemma self::lseg<n, p> & n>=a & a>=0  -> self::lseg<a, r> * r::lseg<b, p> & n=a+b.
+//above cannot work!
+
+/*
+valid for -tp mona --eps
+fail for -tp oc
+fail for -tp oc --eps
+fail for -tp mona
+*/
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> & n1 = 8.
+
+/*
+
+Problem : using Omega for existential simplification 
+          of mona formula is unsound
+Solution (i) turn off Omega simplification 
+           when mona prover is being used.
+
+Solution (ii) add v>=0 for each exists found
+prior to sending to Omega when dealing with mona prover.
+ e.g exists1(b_92:n=b_92+8)
+ --transform to--> exists1(b_92:n=b_92+8 & b_92>=0)
+
+
+*/
+
+
+
+//checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> & n1 = 8.

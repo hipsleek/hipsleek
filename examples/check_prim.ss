@@ -57,10 +57,10 @@ int sum_loop(int n)
 	requires n>0 ensures res=n;
 {
 	int i = 0, s = 0;
-	while (i <= n) requires true ensures i>n & s'=s or i'=i+1 & s'=s+1;
+	while (i <= n) requires true ensures i>n & s'=s or i'=n & s'=n;
 	{
 		s++;
-		i++;
+		i=i+2;
 	}
 	return s;
 }

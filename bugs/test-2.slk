@@ -1,0 +1,18 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred ls<p,n> == self = p & n = 0 
+  or self::node<_ , q> * q::ls<p, n-1> 
+  inv n >= 0.
+
+pred ls2<p,n> == self = p & n = 0 
+  or  q::ls2<p, n-1> * self::node<_ , q> 
+  inv n >= 0.
+
+checkentail l::ls<p,n> & r=l |- r::ls<p,n> * l::ls<r,0>.
+
+
+

@@ -10,7 +10,10 @@ open Gen.Basic
 (* spec var *)
 type spec_var =
   | SpecVar of (typ * ident * primed)
-  
+
+let is_hole_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n.[0] = '#'
+
 	(** An Hoa : Array whose elements are all of type typ.
       In principle, this is 1D array. To have higher 
 			dimensional array, but we need to use nested arrays.
@@ -18,17 +21,20 @@ type spec_var =
 	 *)
   (* | Array of typ  *)
 
+
 type formula =
-  | BForm of (b_formula *(formula_label option))
+  | BForm of (b_formula  *(formula_label option))
   | And of (formula * formula * loc)
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option)* loc)
   | Forall of (spec_var * formula * (formula_label option)*loc)
   | Exists of (spec_var * formula * (formula_label option)*loc)
 
-(* Boolean constraints *)
-and b_formula = p_formula * ((bool * int * (exp list)) option)
+and bf_annot = (bool * int * (exp list))
 (* (is_linking, label, list of linking expressions in b_formula) *)
+
+(* Boolean constraints *)
+and b_formula = p_formula * (bf_annot option)
 	
 and p_formula =
   | BConst of (bool * loc)
@@ -79,7 +85,7 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
-  | ArrayAt of (spec_var * exp * loc)      (* An Hoa : array access *)
+  | ArrayAt of (spec_var * (exp list) * loc)      (* An Hoa : array access *)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here *)
   | ConstRel of bool
@@ -338,7 +344,7 @@ and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
 and afv (af : exp) : spec_var list =
   match af with
   | Null _ -> []
-  | Var (sv, _) -> [sv]
+  | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
   | IConst _ -> []
   | FConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
@@ -366,7 +372,10 @@ and afv (af : exp) : spec_var list =
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
-  | ArrayAt (a, i, _) -> remove_dups_svl (a :: afv i) (* An Hoa *)
+  | ArrayAt (a, i, _) -> 
+  		let ifv = List.map afv i in
+  		let ifv = List.flatten ifv in
+  		remove_dups_svl (a :: ifv) (* An Hoa *)
 
 and afv_list (alist : exp list) : spec_var list = match alist with
   |[] -> []
@@ -896,6 +905,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
     | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq sv1 sv3) & (eq sv2 sv4)
     | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+    | (RelForm (r1,args1,_), RelForm (r2,args2,_)) -> (r1 = r2) && (eqExp_list_f eq args1 args2)
     | _ -> false
           (*
             match (f1,f2) with
@@ -939,6 +949,7 @@ and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (ListTail (e1, _), ListTail (e2, _))
     | (ListLength (e1, _), ListLength (e2, _))
     | (ListReverse (e1, _), ListReverse (e2, _)) -> (eqExp_f eq e1 e2)
+    | (ArrayAt (a1, i1, _), ArrayAt (a2, i2, _)) -> (eq a1 a2) && (eqExp_list_f eq i1 i2)
     | _ -> false
 
 
@@ -1379,7 +1390,7 @@ and e_apply_subs sst e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_subs sst a, pos)
-  | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs sst i, pos) (* An Hoa : bug detected, replace a by subone sst a*)
+  | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
 
 and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
 
@@ -1479,7 +1490,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
-  | ArrayAt (a, i, pos) -> ArrayAt ((if eq_spec_var a fr then t else a), e_apply_one (fr, t) i, pos) (* An Hoa CHECK: BUG DETECTED must compare fr and a, in case we want to replace a[i] by a'[i] *)
+  | ArrayAt (a, i, pos) -> ArrayAt ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos) (* An Hoa CHECK: BUG DETECTED must compare fr and a, in case we want to replace a[i] by a'[i] *)
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
@@ -1600,7 +1611,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | ArrayAt (a, i, pos) -> (* An Hoa : CHECK BUG DETECTED - substitute a as well *)
 		let a1 = subs_one_term sst a (Var (a,pos)) in
 		(match a1 with
-		  | Var (a2,_) -> ArrayAt (a2, a_apply_par_term sst i, pos) 
+		  | Var (a2,_) -> ArrayAt (a2, a_apply_par_term_list sst i, pos) 
 		  | _ -> failwith "Cannot substitute an array variable by a non variable!\n")  
 
 and a_apply_par_term_list sst alist = match alist with
@@ -1676,7 +1687,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
 			| Var (a2, _) -> a2
 			| _ -> failwith "Cannot apply a non-variable term to an array variable.")
 		else a in
-		ArrayAt (a1, a_apply_one_term (fr, t) i, pos) (* An Hoa *) 
+		ArrayAt (a1, a_apply_one_term_list (fr, t) i, pos) (* An Hoa *) 
 
 
 and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*exp) = 
@@ -1754,7 +1765,7 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
           let b1,r1 = (helper crt_var a1) in
           (b1,ListReverse (r1, pos))
 	| ArrayAt (a, i, pos) -> (* An Hoa CHECK THIS! *)
-		  let b1,i1 = (helper crt_var i) in
+		  let b1,i1 = (a_apply_one_term_list crt_var i) in
           (b1,ArrayAt (a, i1, pos)) in
   (helper true e)
 
@@ -2231,6 +2242,60 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
+(*
+add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
+add_gte_0@144 EXIT out : exists(b_113:0<=b_113 & 
+  exists(b_128:0<=b_128 & (b_128+2)<=b_113 & (9+b_113)<=n))
+*)
+(* exists x: f0 ->  exists x: x>=0 /\ f0*)
+(* this pre-processing is needed for mona *)
+(* prior to sending a formula for Omega to simplify *)
+let add_gte0_for_mona (f0 : formula): (formula)=
+  let mkGte_f spec_var lbl pos=
+	let zero = IConst (0, pos) in
+    BForm (((mkLte zero (Var (spec_var, no_pos)) pos), None), lbl) in
+  let rec helper f0 =
+    match f0 with
+      | Exists (qvar, qf, lbl, pos) ->
+            begin
+              let qf = helper qf in
+              if (type_of_spec_var qvar)==Int then
+                let gtes = mkGte_f qvar lbl no_pos in
+                let and_formulas = mkAnd gtes qf pos in
+                mkExists [qvar] and_formulas lbl pos
+              else
+                mkExists [qvar] qf lbl pos
+            end
+      | And (f1, f2, pos) -> begin
+	      let ef1 = helper f1 in
+	      let ef2 = helper f2 in
+	      let res = mkAnd ef1 ef2 pos in
+	      res
+        end
+      | Or (f1, f2, lbl, pos) -> begin
+	      let ef1 = helper f1 in
+	      let ef2 = helper f2 in
+	      let res = mkOr ef1 ef2 lbl pos in
+	      res
+        end
+      | Not (f1, lbl, pos) -> begin
+	      let ef1 = helper f1 in
+	      let res = mkNot ef1 lbl pos in
+	      res
+        end
+      | Forall (qvar, qf, lbl, pos) -> begin
+	      let eqf = helper qf in
+	      let res = mkForall [qvar] eqf lbl pos in
+	      res
+        end
+      | BForm _ -> f0 in
+  helper f0
+
+let add_gte0_for_mona (f0 : formula): (formula)=
+  let pr = !print_formula in
+  Gen.Debug.no_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
+
+
 (* (\* pretty printing for types *\) *)
 (* let rec string_of_typ = function  *)
 (*   | t -> string_of_prim_type t  *)
@@ -2257,12 +2322,27 @@ struct
   type tlist = t list
   type ef = t -> t -> bool
   module X = Gen.BListEQ(Elt)
+  let sat x = true
   let overlap_eq eq = eq
   let intersect_eq eq (x:tlist)  (y:tlist) = Gen.BList.intersect_eq eq x y
   let overlap = eq
   let intersect (x:tlist)  (y:tlist) = X.intersect x y
   let star_union x y = x@y
 end;;
+
+(* module CnjBag = *)
+(*     functor (Elt:Gen.EQ_TYPE) -> *)
+(* struct *)
+(*   include Elt *)
+(*   type tlist = (t list) list *)
+(*   type ef = t -> t -> bool *)
+(*   module X = Gen.BListEQ(Elt) *)
+(*   let overlap_eq eq = eq *)
+(*   let intersect_eq eq (x:tlist)  (y:tlist) = Gen.BList.intersect_eq eq x y *)
+(*   let overlap = eq *)
+(*   let intersect (x:tlist)  (y:tlist) = X.intersect x y *)
+(*   let star_union x y = x@y *)
+(* end;; *)
 
 module PtrSV = Ptr(SV);;
 
@@ -2705,7 +2785,7 @@ and e_apply_one_exp (fr, t) e = match e with
             let a1 = if eq_spec_var a fr then (match t with 
                | Var (s,_) -> s
                | _ -> failwith "Can only substitute array variable by array variable\n")  else a in
-              ArrayAt (a1, e_apply_one_exp (fr, t) i, pos) (* An Hoa : BUG DETECTED *)
+              ArrayAt (a1, e_apply_one_list_exp (fr, t) i, pos) (* An Hoa : BUG DETECTED *)
 
 and e_apply_one_list_exp (fr, t) alist = match alist with
 	|[] -> []
@@ -3321,7 +3401,7 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
-	|  ArrayAt (a, i, l) -> ArrayAt (a, purge_mult i, l) (* An Hoa *)
+	|  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
 and b_form_simplify (b:b_formula) :b_formula = 
   let do_all e1 e2 l =
@@ -3560,9 +3640,10 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
           | ListReverse (e1,l) -> 
                 let (ne1,r1) = helper new_arg e1 in
                 (ListReverse (ne1,l),f_comb [r1])
-				  | ArrayAt (a, i, l) -> (* An Hoa *)
-	            let (ne1,r1) = helper new_arg i in
-		        	(ArrayAt (a,ne1,l),f_comb [r1])
+			| ArrayAt (a, i, l) -> (* An Hoa *)
+				let il = List.map (fun c-> helper new_arg c) i in
+				let (il, rl) = List.split il in 
+					(ArrayAt (a,il,l), f_comb rl)
   in helper arg e
 
 let trans_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option) 
@@ -3627,7 +3708,7 @@ let rec transform_exp f e  =
         | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
         | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
         | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
-				| ArrayAt (a, i, l) -> ArrayAt (a, (transform_exp f i), l) (* An Hoa *)
+		| ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
 
 let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
       (*(f_comb:'b list -> 'b)*) :(b_formula * 'b) =
@@ -3825,7 +3906,7 @@ let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
             | And (f1, f2, l) ->
                 let nf1, r1 = foldr_f new_arg f1 in
                 let nf2, r2 = foldr_f new_arg f2 in
-                (And (nf1, nf2, l), f_comb [r1; r2])
+                (mkAnd nf1 nf2 l, f_comb [r1; r2])
             | Or (f1, f2, lbl, l) ->
                 let nf1, r1 = foldr_f new_arg f1 in
                 let nf2, r2 = foldr_f new_arg f2 in
@@ -4022,7 +4103,7 @@ and norm_exp (e:exp) =
     | ListLength (e,l)-> ListLength(helper e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map helper e), l)    
     | ListReverse (e,l)-> ListReverse(helper e, l) 
-		| ArrayAt (a, i, l) -> ArrayAt (a, helper i, l) (* An Hoa *) in
+		| ArrayAt (a, i, l) -> ArrayAt (a, List.map helper i, l) (* An Hoa *) in
   helper e
 
 (* if v->c, replace v by the constant whenever encountered 
@@ -4266,7 +4347,7 @@ let get_elems_eq_with_null aset =
 (* creates a false aset*)
 let mkFalse_var_aset = add_equiv_eq_with_const EMapSV.mkEmpty  (mk_sp_const 0) (mk_sp_const 3)
 
-(**)	
+(*****)	
 let get_bform_eq_vars (bf:b_formula) : (spec_var * spec_var) option =
   let (pf,_) = bf in
   match pf with
@@ -5448,7 +5529,7 @@ let find_all_failures is_sat ante cons =
   let may_list = find_may_failures (imply is_sat) cand_pairs in
   (contra_list,must_list,may_list)
 
-let find_all_failures is_sat ante cons =
+let find_all_failures is_sat  ante cons =
   let pr = !print_formula in
   let pr2 = pr_list (pr_pair pr pr) in
   Gen.Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
@@ -5470,18 +5551,22 @@ let check_maymust_failure is_sat ante cons =
   let pr = !print_formula in
   Gen.Debug.no_2 "check_maymust_failure" pr pr string_of_bool (fun _ _ -> check_maymust_failure is_sat ante cons) ante cons 
 
-let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
-  let n_a = simpl ante in
+let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula =
+  let n_a =
+  if !Globals.simplify_error then
+    simpl ante
+  else ante 
+  in
   filter_ante n_a conseq
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula in
   Gen.Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq
 
-(*==================================================
-Forced slicing
-===================================================*)
-
+(*=================================================*)
+(* Forced Slicing                                  *)	
+(*=================================================*)
+	
 (* For assigning <IL> fields after doing simplify *)
 let rec break_formula (f: formula) : b_formula list =
   match f with
@@ -5667,3 +5752,44 @@ let rec partition_dnf_lhs f =
 let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
   List.filter (fun (svl,lkl,bfl) -> (*fst (check_dept fv (svl, lkl))*) true) parts
+
+(* An Hoa : remove primitive formula if should_elim returns true *)
+let remove_primitive should_elim e =
+	let rec elim_formula f = match f with
+		| BForm ((bf, _) , _) -> if (should_elim bf) then None else Some f
+		| Or (f1, f2, x, y) -> 
+			let nf1 = elim_formula f1 in
+			let nf2 = elim_formula f2 in
+			(match (nf1,nf2) with
+				| (None,None) -> None
+				| (None,Some _) -> nf2
+				| (Some _,None) -> nf1
+				| (Some nff1, Some nff2) -> Some (Or (nff1, nff2, x, y)))
+		| And (f1, f2, x) -> 			
+			let nf1 = elim_formula f1 in
+			let nf2 = elim_formula f2 in
+			(match (nf1,nf2) with
+				| (None,None) -> None
+				| (None,Some _) -> nf2
+				| (Some _,None) -> nf1
+				| (Some nff1, Some nff2) -> Some (And (nff1, nff2, x)))
+		| Forall (sv, f1, fl, loc) -> 
+			let nf = elim_formula f1 in
+			(match nf with
+				| None -> None
+				| Some nf1 -> Some (Forall (sv, nf1, fl, loc)))
+		| Exists (sv, f1, fl, loc) -> 
+			let nf = elim_formula f1 in
+			(match nf with
+				| None -> None
+				| Some nf1 -> Some (Exists (sv, nf1, fl, loc)))
+		| Not (f1, fl, loc) -> 
+			let nf = elim_formula f1 in
+			(match nf with
+				| None -> None
+				| Some nf1 -> Some (Not (nf1, fl, loc))) in
+	let r = elim_formula e in
+		match r with
+			| None -> mkTrue no_pos
+			| Some f -> f
+	

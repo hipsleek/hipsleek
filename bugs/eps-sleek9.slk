@@ -1,0 +1,89 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv self!=null & n>=1.
+	 
+lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma self::ll_tail<t, n> -> 
+  self::lseg<n-1, t> * t::node<_, null> & self!=null.
+
+// eps cannot handle self!=null
+checkentail self::lseg<n-1, t> * t::node<_, null> |- self!=null.
+
+checkentail self::lseg<n-1, t> * t::node<_, null> |- t!=null.
+
+checkentail self::lseg<n-1, t> * t::node<_, null> |- n>0.
+
+// Problem (3) :: self!=null cause --eps to fail ??
+// 
+lemma self::ll_tail<t, n> <- 
+  self::lseg<n-1, t> * t::node<_, null> & self!=null.
+
+
+//lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
+
+//checkentail x::lseg<n-1, t> * t::node<_, null> |- x::ll_tail<t, n>.
+// valid
+
+/*
+checkentail t::node<_, null> & x = t & m = 0  & m=n-1
+    or x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 
+    |- x::ll_tail<t, n>.
+
+checkentail t::node<_, null> & x = t & m = 0  & m=n-1 |- x::ll_tail<t, n>.
+
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 
+    |- x::ll_tail<t, n>.
+
+
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 
+  |- x::node<_, null> & t=x & n=1.
+
+
+
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 
+   |- x::node<_, r1> * r1::ll_tail<t, n-1> & r1!=null.
+
+
+checkentail
+      r::lseg<m - 1, t> * t::node<_, null> & m=n-1 
+   |- r::ll_tail<t, n-1> & r!=null.
+
+checkentail t::node<_, null> & x = t & m = 0  & m=n-1 & x!=null
+    or 
+
+checkentail
+  x::lseg<n-1, t> * t::node<_, null> & x!=null |-
+  x::ll_tail<t, n>.
+
+*/
+
+/*
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 & x!=null 
+  |- x::node<_, null> & t=x & n=1.
+
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 & x!=null
+   |- x::node<_, r1> * r1::ll_tail<t, n-1> & r1!=null.
+
+*/
+
+
+checkentail x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> 
+    & m=n-1 
+    |- x::ll_tail<t, n> .
+
+checkentail
+    x::node<next = r> * r::lseg<m - 1, t> * t::node<_, null> & m=n-1 & x!=null
+   |- x::node<_, r1> * r1::ll_tail<t, n-1> & r1!=null.

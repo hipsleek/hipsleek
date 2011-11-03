@@ -69,7 +69,7 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
-  | ArrayAt of ((ident * primed) * exp  * loc)      (* An Hoa : array access *)
+  | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -152,7 +152,8 @@ and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
 
 and afv (af : exp) : (ident * primed) list = match af with
   | Null _ -> []
-  | Var (sv, _) -> [sv]
+  | Var (sv, _) -> let id = fst sv in
+						if (id.[0] = '#') then [] else [sv]
   | IConst _ -> []
   | FConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
@@ -175,7 +176,9 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
-  | ArrayAt (a, i, _) -> Gen.BList.remove_dups_eq (=) (a :: (afv i)) (* An Hoa *)
+  | ArrayAt (a, i, _) -> 
+	let ifv = List.flatten (List.map afv i) in
+	Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -552,7 +555,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one (fr, t) a1, pos)
-  | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one (fr, t) ind), pos) (* An Hoa *)
+  | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one_list (fr, t) ind), pos) (* An Hoa *)
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
@@ -697,5 +700,14 @@ and find_lexp_exp (e: exp) ls =
 	| ListLength (e, _) -> find_lexp_exp e ls
 	| ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| ListReverse (e, _) -> find_lexp_exp e ls
-	| ArrayAt (_, e, _) -> find_lexp_exp e ls
+	| ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 ;;
+
+let rec break_pure_formula (f: formula) : b_formula list =
+  match f with
+	| BForm (bf, _) -> [bf]
+	| And (f1, f2, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
+	| Or (f1, f2, _, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
+	| Not (f, _, _) -> break_pure_formula f
+	| Forall (_, f, _, _) -> break_pure_formula f
+	| Exists (_, f, _, _) -> break_pure_formula f
