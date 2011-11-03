@@ -29,7 +29,7 @@ rb1<n, cl, bh, S> == self = null & n = 0 & bh = 1 & cl = 0 & S={}
 		& cl = 1 & n = 1 + nl + nr & bhl = bh & bhr = bh & S = union(S1, S2, {v})
 	or self::node<v, 0, l, r> * l::rb1<nl, _, bhl, S1> * r::rb1<nr, _, bhr, S2> 
 		& cl = 0 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl & S = union(S1, S2, {v})
-	inv bh >= 1 & 0 <= cl <= 1 & n >= 0;
+	inv bh >= 1 & 0 <= cl <= 1 & n >= 0 & ($ (n+1 >= bh));
 
 
 /* rotation case 3 */

@@ -5685,8 +5685,71 @@ and fv_with_slicing_label_new f = (* OUT: (non-linking vars, linking vars) of fo
 		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
 		(n_vs, n_lkl)
 
+and fv_with_slicing_label_new_1 f = (* OUT: (non-linking vars, linking vars) of formula *) 
+  match f with
+	| BForm (bf, _) -> bfv_with_slicing_label bf
+	| And (f1, f2, _) ->
+	    let (vs1, lkl1) = fv_with_slicing_label_new_1 f1 in
+		let (vs2, lkl2) = fv_with_slicing_label_new_1 f2 in
+		let lkl = Gen.BList.remove_dups_eq eq_spec_var (lkl1 @ lkl2) in
+		let n_vs1 = Gen.BList.difference_eq eq_spec_var vs1 lkl2 in
+		let n_vs2 = Gen.BList.difference_eq eq_spec_var vs2 lkl1 in
+		let vs = Gen.BList.remove_dups_eq eq_spec_var (n_vs1 @ n_vs2) in
+		(vs,lkl)
+	| Or (f1, f2, _, _) ->
+		let (vs1, lkl1) = fv_with_slicing_label_new_1 f1 in
+		let (vs2, lkl2) = fv_with_slicing_label_new_1 f2 in
+		let vs = Gen.BList.remove_dups_eq eq_spec_var (vs1 @ vs2) in
+		let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in
+		let n_lkl2 = Gen.BList.difference_eq eq_spec_var lkl2 vs1 in
+		let lkl = Gen.BList.remove_dups_eq eq_spec_var (n_lkl1 @ n_lkl2) in
+		(vs,lkl)
+	| Not (f, _, _) -> fv_with_slicing_label_new_1 f
+	| Forall (sv, f, _, _) ->
+		let (vs, lkl) = fv_with_slicing_label_new_1 f in
+		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+		(n_vs, n_lkl)
+	| Exists (sv, f, _, _) ->
+		let (vs, lkl) = fv_with_slicing_label_new_1 f in
+		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+		(n_vs, n_lkl)
+
+and fv_with_slicing_label_new_2 f = (* OUT: (non-linking vars, linking vars) of formula *) 
+  match f with
+	| BForm (bf, _) -> bfv_with_slicing_label bf
+	| And (f1, f2, _) ->
+	    let (vs1, lkl1) = fv_with_slicing_label_new_2 f1 in
+		let (vs2, lkl2) = fv_with_slicing_label_new_2 f2 in
+		let vs = Gen.BList.remove_dups_eq eq_spec_var (vs1 @ vs2) in
+		let n_lkl1 = Gen.BList.difference_eq eq_spec_var lkl1 vs2 in
+		let n_lkl2 = Gen.BList.difference_eq eq_spec_var lkl2 vs1 in
+		let lkl = Gen.BList.remove_dups_eq eq_spec_var (n_lkl1 @ n_lkl2) in
+		(vs,lkl)
+	| Or (f1, f2, _, _) ->
+		let (vs1, lkl1) = fv_with_slicing_label_new_2 f1 in
+		let (vs2, lkl2) = fv_with_slicing_label_new_2 f2 in
+		let lkl = Gen.BList.remove_dups_eq eq_spec_var (lkl1 @ lkl2) in
+		let n_vs1 = Gen.BList.difference_eq eq_spec_var vs1 lkl2 in
+		let n_vs2 = Gen.BList.difference_eq eq_spec_var vs2 lkl1 in
+		let vs = Gen.BList.remove_dups_eq eq_spec_var (n_vs1 @ n_vs2) in
+		(vs,lkl)
+	| Not (f, _, _) -> fv_with_slicing_label_new_2 f
+	| Forall (sv, f, _, _) ->
+		let (vs, lkl) = fv_with_slicing_label_new_2 f in
+		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+		(n_vs, n_lkl)
+	| Exists (sv, f, _, _) ->
+		let (vs, lkl) = fv_with_slicing_label_new_2 f in
+		let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
+		let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
+		(n_vs, n_lkl)		  
+		  
 and fv_with_slicing_label f =
-  fv_with_slicing_label_new f
+  if !Globals.opt_ineq then fv_with_slicing_label_new f
+  else fv_with_slicing_label_new_1 f
 
 and bfv_with_slicing_label bf =
   Gen.Debug.no_1 "bfv_with_slicing_label" !print_b_formula

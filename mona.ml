@@ -807,7 +807,7 @@ let send_cmd_with_answer str =
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
-  Gen.Debug.ho_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
+  Gen.Debug.no_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
 	
 (* modify mona for not sending answers *)
 let send_cmd_no_answer str =
