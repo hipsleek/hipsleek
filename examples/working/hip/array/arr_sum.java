@@ -15,8 +15,14 @@ axiom i < j & sumarray(a,i,j-1,s-a[j]) ==> sumarray(a, i, j, s).
 //	(i > j & s = 0 | i = j & s = a[i] | i < j & sumarray(a,i,j-1,s-a[j])).
 
 int sigmaright(int[] a, int i, int j) 
-	requires [t,k] dom(a,t,k) & t <= i & j <= k /* the allocation is from a[i..j] */
-	ensures sumarray(a,i,j,res);
+	case {
+		i <= j -> variance (1) [j-i] 
+				requires dom(a,i,j) /* the allocation is from a[i..j] */
+				ensures sumarray(a,i,j,res);
+		i > j -> variance (0)
+				requires true
+			ensures sumarray(a,i,j,res);
+	}
 {
 	if (i > j)
 		return 0;

@@ -377,11 +377,11 @@ type smt_output = {
 		(* expand with other information : proof, time, error, warning, ... *)
 	}
 	
-let string_of_smt_output output =
-	match output.sat_result with
+let string_of_smt_output output = String.concat "\n" output.original_output_text
+	(* match output.sat_result with
 	| Sat -> "sat"
 	| UnSat -> "unsat"
-	| Unknown -> "unknown|timeout"
+	| Unknown -> "unknown|timeout" *)
 
 (* Collect all Z3's output into a list of strings *)
 let rec collect_output chn accumulated_output : string list =
@@ -594,11 +594,19 @@ let process_stdout_print ante conseq input output res =
 	if (not !(outconfig.suppress_print_implication)) then
 	begin
 		if !(outconfig.print_implication) then 
-			print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
+			print_endline ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
 		if !(outconfig.print_input) then 
-			print_string ("Generated SMT input :\n" ^ input);
+			print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
 		if !(outconfig.print_original_solver_output) then
-			print_string ("==> SMT output : " ^ (string_of_smt_output output) ^ "\n");
+		begin
+			print_endline (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
+			print_endline (match output.sat_result with
+				| UnSat -> ">>> VERDICT: VALID!"
+				| Sat -> ">>> VERDICT: INVALID!"
+				| Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS INVALID.");
+		end;
+		if (!(outconfig.print_implication) || !(outconfig.print_input) || !(outconfig.print_original_solver_output)) then
+			print_string "\n";
 	end
 	
 	
