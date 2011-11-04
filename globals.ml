@@ -345,6 +345,9 @@ let enable_incremental_proving = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
 
+(* for Termination *)
+  let term_auto_number = ref false
+  
 (* Options for slicing *)
 let do_slicing = ref false
 let opt_imply = ref 0

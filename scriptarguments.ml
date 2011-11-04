@@ -40,7 +40,7 @@ let common_arguments = [
 	"Print all (and only) the verification condition generated.");
 	("-wpf", Arg.Set Globals.print_proof,
 	"Print all the verification conditions, the input to external prover and its output.");
-    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+        ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
 	"Print implication for debugging");
 	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
 	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
@@ -219,6 +219,8 @@ let common_arguments = [
   ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* Termination options *)
+  ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
   (* slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
   ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");

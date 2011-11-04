@@ -190,10 +190,15 @@ and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a si
 					exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
 					exp_arrayat_pos : loc; }
 
+(* (\* An Hoa : array memory allocation expression *\) *)
+(* and exp_aalloc = { exp_aalloc_etype_name : ident;		(\* Name of the base element *\) *)
+(* 					exp_aalloc_dimensions : exp list;	(\* List of size for each dimensions *\) *)
+(* 					exp_aalloc_pos : loc; } *)
+
 (* An Hoa : array memory allocation expression *)
-and exp_aalloc = { exp_aalloc_etype_name : ident;		(* Name of the base element *)
-					exp_aalloc_dimensions : exp list;	(* List of size for each dimensions *)
-					exp_aalloc_pos : loc; }
+and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
+	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
+			 exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
