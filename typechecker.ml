@@ -475,10 +475,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
-			let _ = if (!print_proof || !print_brief_proof) then print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ mn ^ "(" ^ (String.concat "," vs) ^ ")") in
+			let _ = if (!print_proof || !print_brief_proof) then
+					begin
+						Prooftracer.push_pre ();
+						Prooftracer.append_html ("Precondition of function call " ^ (Cprinter.string_of_exp e0) ^ " holds");
+						(* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
+					end in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
             else check_pre_post proc.proc_static_specs_with_pre ctx in	
-		    let _ = if (!print_proof || !print_brief_proof) then print_endline "OK.\n" in 
+		    let _ = if (!print_proof || !print_brief_proof) then 
+		    		begin
+		    			Prooftracer.pop_div ();
+			    		(* print_endline "OK.\n" *)
+		    		end in 
             res
           end
         | Seq ({exp_seq_type = te2;
@@ -593,12 +602,19 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
-	let _ = if (!print_proof || !print_brief_proof) then 
-				print_endline "VERIFYING POST-CONDITION" in
+	let _ = if (!print_proof || !print_brief_proof) then
+			begin
+				Prooftracer.push_post (); 
+				Prooftracer.append_html "Function post-condition holds";
+				(* print_endline "VERIFYING POST-CONDITION" *)
+			end in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
     let _ = if (!print_proof || !print_brief_proof) then 
-		    	print_endline "DONE!" in
+    		begin
+    			Prooftracer.pop_div ();
+		    	(* print_endline "DONE!" *)
+		    end in
   if (CF.isSuccessListPartialCtx rs) then 
     rs
   else begin
@@ -630,8 +646,6 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 
 (* checking procedure *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
-	(* An Hoa *)
-	(*let _ = print_endline ("check_proc : " ^ proc.Cast.proc_name) in*)
   let unmin_name = unmingle_name proc.proc_name in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
     && not (List.mem unmin_name !Inliner.inlined_procs)
@@ -639,7 +653,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   if check_flag then begin
     match proc.proc_body with
 	  | None -> true (* sanity checks have been done by the translation *)
-	  | Some body -> begin
+	  | Some body -> let _ = if (!print_proof || !print_brief_proof) then
+						begin
+							Prooftracer.push_proc ();
+							Prooftracer.append_html ("Procedure " ^ unmin_name);
+							Prooftracer.push_procdef ();
+							Prooftracer.append_html (Cprinter.string_of_proc_decl 3 proc);
+							Prooftracer.pop_div ();
+						end in
+	  begin
 	      if !Globals.print_proc then
 	        print_string ("Procedure " ^ proc.proc_name ^ ":\n"
 			^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
@@ -660,13 +682,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			  	                  (CF.normalize_only_clash_rename pre nox (CF.pos_of_formula pre))
 				                  in*)
 	      let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
-		  (*let _ = print_string ("check_proc: init_ctx1: " ^ (Cprinter.string_of_context init_ctx1) ^ "\n") in
-		    let _ = print_string ("check_proc: init_form: " ^ (Cprinter.string_of_formula init_form) ^ "\n") in*)
 	      let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-		  (*let _ = print_string ("check_proc: init_ctx: " ^ (Cprinter.string_of_context init_ctx) ^ "\n") in*)
 		  (* Add es_var_measures *)
 		  (*let init_ctx = CF.add_es_var_measures init_ctx2 proc.proc_static_specs in*)
 	      let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
+	      let _ = if (!print_proof || !print_brief_proof) then Prooftracer.pop_div () in
 	      let result =
 	        if pp then begin
 		      print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
@@ -679,16 +699,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		    end else false in *)
 	      result
 	    end
-  end else
+  	end 
+  else
     true
 
 (* check entire program *)
 let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
-	(* An Hoa *)
-	(*let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in*)
-    check_proc prog proc  
+    check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin
       (* dummy_exception(); *)
@@ -959,13 +978,7 @@ let variance_numbering ls g =
   else ls
 		
 let check_prog (prog : prog_decl) =
-	(* An Hoa *)
-	(*let _ = print_endline "check_prog : CHECKING PROGRAM START..." in*)
-  let _ = if (Printexc.backtrace_status ()) then print_string "backtrace active"
-(* An Hoa : Bug discovered : Someone forgot to comment the "else" *)
-(*  else print_string "bactracke inactive";
-    (print_string "raising\n";
-    raise Not_found);*) in 
+	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
     if !Globals.check_coercions then 
       begin
       print_string "Checking coercions... ";
@@ -975,10 +988,18 @@ let check_prog (prog : prog_decl) =
       end;
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-
+	let _ = if (!print_proof || !print_brief_proof) then
+			begin
+				Prooftracer.push_term ();
+				Prooftracer.append_html "Termination of all functions";
+			end in
 	let g = build_state_trans_graph !Solver.variance_graph in
 	let cl = variance_numbering !Solver.var_checked_list g in
-	List.iter (fun (es,e) -> heap_entail_variance prog es e) cl
+	let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
+		if (!print_proof || !print_brief_proof) then
+			begin
+				Prooftracer.pop_div ();
+			end
 	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in

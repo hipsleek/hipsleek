@@ -48,20 +48,20 @@ let set_priority = ref false
 let prio_list = ref []
 
 let string_of_prover prover = match prover with
-	| OmegaCalc -> "Omega Calculator"
+	| OmegaCalc -> "OMEGA CALCULATOR"
 	| CvcLite -> "CVC Lite"
 	| Cvc3 -> "CVC3"
 	| CO  -> ""
-	| Isabelle -> "Isabelle"
-	| Mona -> "Mona"
+	| Isabelle -> "ISABELLE"
+	| Mona -> "MONA"
 	| MonaH -> ""
 	| OM -> ""
 	| OI -> ""
 	| SetMONA -> ""
 	| CM  -> ""
-	| Coq -> "Coq"
+	| Coq -> "COQ"
 	| Z3 -> "Z3"
-	| Redlog -> "RedLog"
+	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> ""
 	| ZM -> ""
 
@@ -74,11 +74,15 @@ let prover_original_output = ref "_output_not_set_"
 
 let set_generated_prover_input inp =
 	generated_prover_input := inp;;
-	
+
+let reset_generated_prover_input () = generated_prover_input := "_input_not_set_";;
+
 let get_generated_prover_input () = !generated_prover_input;;
 	
 let set_prover_original_output oup = 
 	prover_original_output := oup;;
+
+let reset_prover_original_output () = prover_original_output := "_output_not_set_";;
 	
 let get_prover_original_output () = !prover_original_output;;
 
@@ -990,9 +994,13 @@ let rec split_disjunctions = function
 let called_prover = ref ""
 let print_implication = ref false 
   
-let tp_imply_no_cache ante conseq imp_no timeout process =
-  let _ = if (!print_proof || !print_brief_proof) then 
-  	print_endline ("\n>>> CHECKING VERIFICATION CONDITION USING " ^ (string_of_prover !tp) ^ " >>>\n\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
+let tp_imply_no_cache ante conseq imp_no timeout process =	
+	let _ = if (!print_proof || !print_brief_proof) then 
+		begin
+			reset_generated_prover_input ();
+			reset_prover_original_output ();
+			(* print_endline ("\n>>> CHECKING VERIFICATION CONDITION USING " ^ (string_of_prover !tp) ^ " >>>\n\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n"); *)
+	  	end in
   let r = match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
@@ -1054,16 +1062,33 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       else
         Smtsolver.imply ante conseq
   in
+  	let process_formula f =
+  		let s = Cprinter.string_of_pure_formula f in
+  		let s = Prooftracer.convert_to_html s in
+  		let s = Str.global_replace (Str.regexp_string "exists(") "&exist;" s in
+		let s = Str.global_replace (Str.regexp_string "forall(") "&forall;" s in
+			s in
 	let _ = if (!print_proof || !print_brief_proof) then
 			begin
+				Prooftracer.push_pure_imply r;
+				Prooftracer.append_html_no_convert (process_formula ante);
+				Prooftracer.append_html_no_convert "&#8866;"; (* |- character in HTML *)
+				Prooftracer.append_html_no_convert ((process_formula conseq) ^ "\n");
 				if (not !print_brief_proof) then
 				begin
-					print_endline (">>> " ^ (string_of_prover !tp) ^ " INPUT GENERATED >>>");
+					Prooftracer.push_prover_input ();
+					Prooftracer.append_html (get_generated_prover_input () ^ "\n");
+					Prooftracer.pop_div ();
+					Prooftracer.push_prover_output ();
+					Prooftracer.append_html (get_prover_original_output () ^ "\n");
+					Prooftracer.pop_div ();
+					(* print_endline (">>> " ^ (string_of_prover !tp) ^ " INPUT GENERATED >>>");
 					print_endline (get_generated_prover_input ());
 					print_endline (">>> " ^ (string_of_prover !tp) ^ " ORIGINAL OUTPUT >>>");
-					print_endline (get_prover_original_output ());
+					print_endline (get_prover_original_output ()); *)
 				end;
-				print_endline (">>> VERDICT : " ^ (if r then "VALID" else "INVALID") ^ " >>>");
+				Prooftracer.pop_div ();
+				(* print_endline (">>> VERDICT : " ^ (if r then "VALID" else "INVALID") ^ " >>>"); *)
 			end
 	in
 		r
