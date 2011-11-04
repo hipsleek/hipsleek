@@ -25,10 +25,10 @@ pred lseg<p, n, S> == self=p & n=0 & S={}
 // VALID
 // checkentail x::node<7,p> |- x::lseg<p,n,S> & forall (b : (b notin S | b=7)). 
 
-//checkentail x::node<7,p>*p::lseg<null,m,S1> & forall (b1 : (b1 notin S1 | b1=7)) |- x::lseg<r,n,S> & forall (b : (b notin S | b=7)). 
+checkentail true & forall (b : (b in union(S,{v}) | b=7)) |- false. 
 
 checkentail true & forall (b : (b in union(S,{v}) | b=7)) 
 |- false.
 
-print residue.
+//print residue.
 
