@@ -377,8 +377,8 @@ let string_of_smt_output output =
 let rec collect_output chn accumulated_output : string list =
 	let output = try
 					 let line = input_line chn in
-                     (*let _ = print_endline ("locle2" ^ line) in*)
-                     if ((String.length line) > 5) then (*something diff to sat and unsat, retry-may lead to timeout here*)
+                    (* let _ = print_endline ("locle2" ^ line) in*)
+                     if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
 					 collect_output chn (accumulated_output @ [line])
                     else accumulated_output @ [line]
 				with
@@ -408,7 +408,7 @@ type smtprover = Z3
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let timeout = ref 15.0
+let timeout = ref 10.0
 let prover_pid = ref 0
 let prover_process = ref {
 	name = "z3";
@@ -436,7 +436,10 @@ let path_to_z3 = "z3.3" (*"z3"*)
 let set_process (proc: Globals.prover_process_t) = 
   prover_process := proc
 
-let rec prelude () = ()
+let rec prelude () =
+let init_str = "(set-option :PULL_NESTED_QUANTIFIERS true)\n" in
+   output_string (!prover_process.outchannel) init_str;
+   flush (!prover_process.outchannel);
 (*
   begin
  (* let line = input_line (! prover_process.inchannel) in
@@ -445,7 +448,7 @@ let rec prelude () = ()
           output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") ); *)
   (*set logic*)
    let init_str = "(set-logic AUFNIA)\n" in
-
+(set-option :PULL_NESTED_QUANTIFIERS true)
    output_string (!prover_process.outchannel) init_str;
    flush (!prover_process.outchannel);
 
@@ -512,7 +515,7 @@ let check_formula f timeout =
         let new_f =
           "(push)\n" ^ f ^ "(pop)\n"
         in
-      (*  let _ = print_endline ("locle: check " ^ new_f) in*)
+        (*let _ = print_endline ("locle: check\n " ^ new_f) in*)
         output_string (!prover_process.outchannel) new_f;
         flush (!prover_process.outchannel);
 
@@ -797,8 +800,8 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-  (*let _ = print_endline ("ante: " ^(!print_pure ante)) in
-  let _ = print_endline ("conseq: " ^(!print_pure conseq)) in *)
+  (*let _ = print_endline ("ante: " ^(!print_pure ante)) in *)
+  (*let _ = print_endline ("conseq: " ^(!print_pure conseq)) in *)
   let res, should_run_smt = if (((*has_exists*)Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (true, false)
 	else (false, true) in
@@ -815,8 +818,7 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 			| Unknown -> try Omega.imply ante conseq "" !timeout with | _ -> false in
 		let _ = process_stdout_print ante conseq input output res in
 			res
-	else
-		res
+	else res
 (*
 and has_exists conseq = match conseq with
 	| CP.Exists _ -> true
@@ -867,9 +869,9 @@ let is_sat f sat_no =
 (**
  * To be implemented
  *)
-let simplify (f: CP.formula) : CP.formula = f
- (* let _ = print_endline "locle: simplify" in *)
- (* try (Omega.simplify f) with | _ -> f *)
+let simplify (f: CP.formula) : CP.formula = (*f*)
+  (*let _ = print_endline "locle: simplify" in*)
+  try (Omega.simplify f) with | _ -> f
 
 let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
