@@ -229,7 +229,11 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_path_label = es.es_path_label;
 	es_prior_steps= es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
-	es_var_label = es.es_var_label} 
+	es_var_label = es.es_var_label;
+	es_var_ctx_lhs = es.es_var_ctx_lhs(*;
+	es_var_ctx_rhs = es.es_var_ctx_rhs;
+	es_var_subst = es.es_var_subst*)
+  } 
 
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
@@ -2700,7 +2704,10 @@ and heap_entail_conjunct_lhs_struc_x
 			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
                           (*this unsat check is essential for completeness of result*)
 				          if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx],UnsatAnte)
-				          else 
+				          else
+							(* added by Chanh *)
+							let n_ctx = CF.transform_context (fun es -> let _ = print_string ("innner_entailer: ctx_rhs@Ecase: before updating: " ^ (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs) ^ "\n") in
+																								  CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx  in
                             let n_ctx = prune_ctx prog n_ctx in
                             inner_entailer 2 n_ctx c2 ) b.formula_case_branches 
 		            end
@@ -2790,6 +2797,7 @@ and heap_entail_conjunct_lhs_struc_x
               (*
 			    let _ = print_string (List.fold_left (fun rs (v1,v2,mn) -> rs ^ " (" ^ (Cprinter.string_of_spec_var v1) ^ "," ^ (Cprinter.string_of_spec_var v2) ^ "@" ^ mn ^ ")") "innner_entailer: var_subst@EVariance: " es.CF.es_var_subst) in
 			    let string_ctx_lhs = Cprinter.string_of_pure_formula es.es_var_ctx_lhs in
+			let string_ctx_rhs = Cprinter.string_of_pure_formula es.es_var_ctx_rhs in
 			    let str_var_subst  = List.map (fun (v1,v2,mn) -> ((Cprinter.string_of_spec_var v1), (Cprinter.string_of_spec_var v2))) es.CF.es_var_subst in
 			  *)
 			  let f = List.map (fun (v,_,_) -> v) es.CF.es_var_subst in
@@ -2860,6 +2868,14 @@ and heap_entail_variance
       (prog : prog_decl) 
       (es : entail_state) 
       (e : ext_variance_formula) =
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 e = pr_list (pr_pair Cprinter.string_of_formula_exp (pr_option Cprinter.string_of_formula_exp)) e.formula_var_measures in
+  Gen.Debug.no_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
+
+and heap_entail_variance_x
+      (prog : prog_decl) 
+      (es : entail_state) 
+      (e : ext_variance_formula) =
   let loc = e.formula_var_pos in
 
   let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e -> let str = Cprinter.string_of_formula_exp e in
@@ -2878,6 +2894,7 @@ and heap_entail_variance
   in
   
   if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then
+    let _ = print_string ("termination: loop at state (" ^ (string_of_int var_label_lhs) ^ ") " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) in
 	let lhs_measures = es.es_var_measures in
 	let rhs_measures = e.formula_var_measures in
 	let rec binding lhs_m rhs_m =
@@ -2910,9 +2927,9 @@ and heap_entail_variance
 	if (List.exists (fun (rs,prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
 	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
 	else
-	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc;
+	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
   else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then
-	Debug.print_info "termination" ("terminating state") loc
+	Debug.print_info "termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
   else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then
 	Debug.print_info "termination" ("non-terminating state") loc
   else if (var_label_lhs > var_label_rhs) then
@@ -5194,8 +5211,11 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
 		es_var_measures = estate.es_var_measures;
-		es_var_label = estate.es_var_label} in
-
+		es_var_label = estate.es_var_label;
+		es_var_ctx_lhs = estate.es_var_ctx_lhs;
+		es_var_ctx_rhs = estate.es_var_ctx_rhs;
+		es_var_subst = estate.es_var_subst
+		} in
     (* let _ = print_string ("do_base_case_unfold_only_x:"  *)
     (*                       ^ "\n ###  vd.view_name = " ^ (Cprinter.string_of_ident vd.view_name) *)
     (*                       ^ "\n ###  vd.view_base_case = " ^ (Cprinter.string_of_view_base_case  vd.view_base_case) *)
@@ -5785,7 +5805,10 @@ and do_fold_old prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 	  es_prior_steps = estate.es_prior_steps;
       es_path_label = estate.es_path_label;
 	  es_var_measures = estate.es_var_measures;
-	  es_var_label = estate.es_var_label} in
+	  es_var_label = estate.es_var_label;
+	  es_var_ctx_lhs = estate.es_var_ctx_lhs;
+	  es_var_ctx_rhs = estate.es_var_ctx_rhs;
+	  es_var_subst = estate.es_var_subst} in
   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
       
 and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
