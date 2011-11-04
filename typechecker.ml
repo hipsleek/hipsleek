@@ -889,7 +889,7 @@ module GSN = Graph.Oper.Neighbourhood(GS)
 module GSC = Graph.Components.Make(GS)
 module GSP = Graph.Path.Check(GS)
 
-  
+(* TODO : This printing of check_prog needs to be tidied *)
 let build_state_trans_graph ls =
   print_string ("\ncheck_prog: call graph:\n" ^
 	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.variance_graph) ^ "\n");
