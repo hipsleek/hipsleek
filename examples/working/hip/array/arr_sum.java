@@ -39,3 +39,10 @@ int sigmaleft(int[] a, int i, int j)
 	else 
 		return sigmaleft(a, i, j-1) + a[j];
 }
+
+void test()
+	requires true
+	ensures true;
+{
+	int x = 0;	
+}

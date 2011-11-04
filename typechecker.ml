@@ -487,10 +487,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
-            (*let _ = print_string ("\nAn Hoa :: Encounter function call [" ^ mn ^ "(" ^ (String.concat "," vs) ^ ")]" (*^ "with static spec :: " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs_with_pre) ^ "\n\n"*)) in*)
+			let _ = if (!print_proof || !print_brief_proof) then print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ mn ^ "(" ^ (String.concat "," vs) ^ ")") in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
             else check_pre_post proc.proc_static_specs_with_pre ctx in	
-		    
+		    let _ = if (!print_proof || !print_brief_proof) then print_endline "OK.\n" in 
             res
           end
         | Seq ({exp_seq_type = te2;
