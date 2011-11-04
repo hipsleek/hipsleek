@@ -36,7 +36,6 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
 	  | Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
-			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 		    let mn = Cast.unmingle_name (proc.Cast.proc_name) in
             let f_formula = fun f -> None in
 		let f_b_formula (pf,il) = match pf with
@@ -48,31 +47,22 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		      | _ -> None
 		    in
 		    let new_c1 = CP.transform_formula (true,true,f_formula,f_b_formula,f_exp) c1 in
-		let _ = print_string ("c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in
-		let _ = print_string ("new c1: " ^ (Cprinter.string_of_pure_formula new_c1) ^ "\n") in
-		    
 		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in  
 			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
-			let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
 			let r = check_specs_a prog proc nctx c2 e0 in
 			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 			r) b.Cformula.formula_case_branches
 	  | Cformula.EBase b ->
-		    (*let _ = print_string ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 	        let nctx = 
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx)
 	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
-			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
 	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 	        r
 	  | Cformula.EVariance b ->
-			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-		    (*let _ = print_string "check_specs: EVariance: before nctx\n" in*)
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
 			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
-			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
             let _ = set_post_pos (CF.pos_of_formula post_cond) in
@@ -93,11 +83,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		          let lfe = [CF.mk_failesc_context ctx1 []] in 
 			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 			      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
-				  (*let _ = print_string ("check_specs: EAssume: " ^ (Cprinter.string_of_list_partial_context res_ctx) ^ "\n") in*)
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
 			        let tmp_ctx = check_post prog proc res_ctx post_cond (Cformula.pos_of_formula post_cond) post_label in
-                    (* let _ = print_endline ("Answer after post :"^(string_of_int (List.length tmp_ctx))) in *)
 			        (CF.isSuccessListPartialCtx tmp_ctx) 
 		        in
 		        let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
@@ -605,8 +593,12 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
+	let _ = if (!print_proof || !print_brief_proof) then 
+				print_endline "VERIFYING POST-CONDITION" in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
+    let _ = if (!print_proof || !print_brief_proof) then 
+		    	print_endline "DONE!" in
   if (CF.isSuccessListPartialCtx rs) then 
     rs
   else begin
