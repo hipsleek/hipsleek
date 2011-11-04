@@ -2706,8 +2706,9 @@ and heap_entail_conjunct_lhs_struc_x
 				          if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx],UnsatAnte)
 				          else
 							(* added by Chanh *)
-							let n_ctx = CF.transform_context (fun es -> let _ = print_string ("innner_entailer: ctx_rhs@Ecase: before updating: " ^ (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs) ^ "\n") in
-																								  CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx  in
+							let n_ctx = CF.transform_context (fun es -> 
+                                (* let _ = print_string ("innner_entailer: ctx_rhs@Ecase: before updating: " ^ (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs) ^ "\n") in *)
+							    CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx  in
                             let n_ctx = prune_ctx prog n_ctx in
                             inner_entailer 2 n_ctx c2 ) b.formula_case_branches 
 		            end
