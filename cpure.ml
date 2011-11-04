@@ -196,6 +196,30 @@ let rec contains_exists (f:formula) : bool =  match f with
     | Forall (_ ,f1,_,_) -> (contains_exists f1)  
     | Exists _ -> true
 
+let rec exp_contains_spec_var (e : exp) : bool =
+  match e with
+  | Var (SpecVar (t, _, _), _) -> true
+  | Add (e1, e2, _) 
+  | Subtract (e1, e2, _) 
+  | Mult (e1, e2, _)
+  | Max (e1, e2, _) 
+  | Min (e1, e2, _) 
+  | Div (e1, e2, _) 
+  | ListCons (e1, e2, _) 
+  | BagDiff (e1, e2, _) -> (exp_contains_spec_var e1) || (exp_contains_spec_var e2)
+  | ListHead (e, _) 
+  | ListLength (e, _) 
+  | ListTail (e, _)
+  | ListReverse (e, _) -> (exp_contains_spec_var e)    
+  | List (el, _)
+  | ListAppend (el, _) 
+  | Bag (el, _)
+  | BagUnion (el, _) 
+  | BagIntersect (el, _) -> List.fold_left (fun a b -> a || (exp_contains_spec_var b)) false el
+  | ArrayAt _ -> true
+  | _ -> false
+    
+
 let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* translation has ensured well-typedness.
