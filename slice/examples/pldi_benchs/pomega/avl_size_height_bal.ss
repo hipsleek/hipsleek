@@ -1,4 +1,3 @@
-/* LOC: 150 */
 data node {
 	int ele;
 	int height;

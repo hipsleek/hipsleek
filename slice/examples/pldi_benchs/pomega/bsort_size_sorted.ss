@@ -1,4 +1,3 @@
-/* LOC: 55 */
 /* bubble sort */
 
 data node {

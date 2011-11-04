@@ -1,4 +1,3 @@
-/* LOC: 390 */
 /* avl trees */
 
 /* representation of a node in an avl tree */

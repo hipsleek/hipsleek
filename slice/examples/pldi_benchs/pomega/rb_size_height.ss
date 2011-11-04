@@ -8,18 +8,18 @@ data node {
 }
 
 /* view for red-black trees */
-rb<n, h, cl, bh> == self = null & n = 0 & h = 0 & bh = 1 & cl = 0 
-	or self::node<v, 1, l, r> * l::rb<nl, hl, 0, bhl> * r::rb<nr, hr, 0, bhr> & cl = 1 & n = 1 + nl + nr & bhl = bh & bhr = bh & h = 1 + max(hl, hr)
-	or self::node<v, 0, l, r> * l::rb<nl, hl, _, bhl> * r::rb<nr, hr, _, bhr> & cl = 0 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl & h = 1 + max(hl, hr)
-	inv n >= 0 & h >= 0 & bh >= 1 & 0 <= cl <= 1 & ($ (n+1 >= bh)) & ($ (n >= h));
+rb<n, cl, bh> == self = null & n=0 & bh = 1 & cl = 0 
+	or self::node<v, 1, l, r> * l::rb<nl, 0, bhl> * r::rb<nr, 0, bhr> & cl = 1 & n = 1 + nl + nr & bhl = bh & bhr = bh
+	or self::node<v, 0, l, r> * l::rb<nl, _, bhl> * r::rb<nr, _, bhr> & cl = 0 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
 
 
 /* rotation case 3 */
 
 node rotate_case_3(node a, node b, node c)
 
-	requires a::rb<na, ha, 1, bha> * b::rb<nb, hb, 0, bha> * c::rb<nc, hc, 0, bha> 
-	ensures res::rb<na + nb + nc + 2, h, 0, bha + 1> & h = 1 + max(max(hb, hc) + 1, ha);
+	requires a::rb<na, 1, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> 
+	ensures res::rb<na + nb + nc + 2, 0, bha + 1>;
 
 {
 	node tmp;
@@ -29,11 +29,12 @@ node rotate_case_3(node a, node b, node c)
 	return new node(0, 0, a, tmp);
 }
 
+
 /* rotation to transform case 2 in case 3, then apply case 3 */
 node case_2(node a, node b, node c, node d)
 
-	requires a::rb<na, ha, 0, bha> * b::rb<nb, hb, 0, bha> * c::rb<nc, hc, 0, bha> * d::rb<nd, hd, 0, bha> 
-	ensures res::rb<na + nb + nc + nd + 3, h, 0, bha + 1> & h = 1 + max(1 + max(hc, hd), 1 + max(ha, hb));
+	requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha> 
+	ensures res::rb<na + nb + nc + nd + 3, 0, bha + 1>;
 
 {
 	node tmp;
@@ -47,8 +48,8 @@ node case_2(node a, node b, node c, node d)
 /* rotation case 3 */
 node rotate_case_3r(node a, node b, node c)
 
-	requires a::rb<na, ha, 0, bha> * b::rb<nb, hb, 0, bha> * c::rb<nc, hc, 1, bha>
-	ensures res::rb<na + nb + nc + 2, h, 0, bha + 1> & h = 1 + max(1 + max(ha, hb), hc);
+	requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 1, bha>
+	ensures res::rb<na + nb + nc + 2, 0, bha + 1>;
 
 {
 	node tmp;
@@ -62,8 +63,8 @@ node rotate_case_3r(node a, node b, node c)
 /* rotation to transform case 2 in case 3, then apply case 3 */
 node case_2r(node a, node b, node c, node d)
 	
-	requires a::rb<na, ha, 0, bha> * b::rb<nb, hb, 0, bha> * c::rb<nc, hc, 0, bha> * d::rb<nd, hd, 0, bha>
-	ensures res::rb<na + nb + nc + nd + 3, h, 0, bha + 1> & h = 1 + max(1 + max(ha, hb), 1 + max(hc, hd));
+	requires a::rb<na, 0, bha> * b::rb<nb, 0, bha> * c::rb<nc, 0, bha> * d::rb<nd, 0, bha>
+	ensures res::rb<na + nb + nc + nd + 3, 0, bha + 1>;
 
 {
 	node tmp;
@@ -73,12 +74,13 @@ node case_2r(node a, node b, node c, node d)
 	return rotate_case_3r(a, b, tmp);
 }
 
+
 /* function to check if a node is red */
 bool is_red(node x)
 	
-	requires x::rb<n, h, cl, bh>
-	ensures x::rb<n, h, cl, bh> & cl = 1 & res
-		or x::rb<n, h, cl, bh> & cl = 0 & !res;
+	requires x::rb<n, cl, bh>
+	ensures x::rb<n, cl, bh> & cl = 1 & res
+		or x::rb<n, cl, bh> & cl = 0 & !res;
 
 {
 
@@ -95,9 +97,9 @@ bool is_red(node x)
 /* function to check if a node is black */
 bool is_black(node x)
 
-	requires x::rb<n, h, cl, bh>
-	ensures x::rb<n, h, cl, bh> & cl = 1 & !res
-		or x::rb<n, h, cl, bh> & cl = 0 & res;
+	requires x::rb<n, cl, bh>
+	ensures x::rb<n, cl, bh> & cl = 1 & !res
+		or x::rb<n, cl, bh> & cl = 0 & res;
 
 {
 	if (x == null)
@@ -114,10 +116,10 @@ bool is_black(node x)
 /* function for case 6 delete (simple rotation) */
 node del_6(node a, node b, node c, int color)
 
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, _, h> * c::rb<nc, hc, 1, h> & color = 0 or 
-			 a::rb<na, ha, 0, h> * b::rb<nb, hb, _, h> * c::rb<nc, hc, 1, h> & color = 1  
-	ensures res::rb<na + nb + nc + 2, hr, 0, h + 2> & color = 0 & hr = 1 + max(1 + max(ha, hb), hc) or 
-			res::rb<na + nb + nc + 2, hr, 1, h + 1> & color = 1 & hr = 1 + max(1 + max(ha, hb), hc);
+	requires a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 0 or 
+		 a::rb<na , 0, h> * b::rb<nb, _, h> * c::rb<nc, 1, h> & color = 1  
+	ensures res::rb<na + nb + nc + 2, 0, h + 2> & color = 0 or 
+		res::rb<na + nb + nc + 2, 1, h + 1> & color = 1;
  
 {
 	node tmp; 
@@ -131,10 +133,10 @@ node del_6(node a, node b, node c, int color)
 /* function for case 6 at delete (simple rotation) - when is right child */
 node del_6r(node a, node b, node c, int color)
 
-	requires a::rb<na, ha, 1, h> * b::rb<nb, hb, _, h> * c::rb<nc, hc, 0, h> & color = 0 or 
-			 a::rb<na, ha, 1, h> * b::rb<nb, hb, _, h> * c::rb<nc, hc, 0, h> & color = 1 
-	ensures res::rb<na + nb + nc + 2, hr, 0, h + 2> & color = 0 & hr = 1 + max(ha, 1 + max(hb, hc)) or 
-			res::rb<na + nb + nc + 2, hr, 1, h + 1> & color = 1 & hr = 1 + max(ha, 1 + max(hb, hc)) ;
+	requires a::rb<na , 1, ha> * b::rb<nb, _, ha> * c::rb<nc, 0, ha> & color = 0 or 
+		 a::rb<na , 1, ha> * b::rb<nb, _, ha> * c::rb<nc, 0, ha> & color = 1 
+	ensures res::rb<na + nb + nc + 2, 0, ha + 2> & color = 0 or 
+		res::rb<na + nb + nc + 2, 1, ha + 1> & color = 1;
 
 {
 	node tmp;
@@ -148,10 +150,10 @@ node del_6r(node a, node b, node c, int color)
 /* function for case 5 (double rotation) */
 node del_5(node a, node b, node c, node d, int color)
 
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h> * d::rb<nd, hd, 0, h> & color = 0 or 
-			 a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h> * d::rb<nd, hd, 0, h> & color = 1 
-	ensures res::rb<na + nb + nc + nd + 3, hr, 0, h + 2> & color = 0 & hr = 1 + max(1 + max(ha, hb), 1 + max(hc, hd)) or 
-			res::rb<na + nb + nc + nd + 3, hr, 1, h + 1> & color = 1 & hr = 1 + max(1 + max(ha, hb), 1 + max(hc, hd));
+	requires a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 0 or 
+		 a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 1 
+	ensures res::rb<na + nb + nc + nd + 3, 0, h + 2> & color = 0 or 
+		res::rb<na + nb + nc + nd + 3, 1, h + 1> & color = 1;
 
 {
 	node tmp;
@@ -163,10 +165,10 @@ node del_5(node a, node b, node c, node d, int color)
 
 /* function for case 5(double rotation) - right child */
 node del_5r(node a, node b, node c, node d, int color)
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h> * d::rb<nd, hd, 0, h> & color = 0 or 
-			 a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h> * d::rb<nd, hd, 0, h> & color = 1 
-	ensures res::rb<na + nb + nc + nd + 3, hr, 0, h + 2> & color = 0 & hr = 1 + max(1 + max(ha, hb), 1 + max(hc, hd)) or 
-			res::rb<na + nb + nc + nd + 3, hr, 1, h + 1> & color = 1 & hr = 1 + max(1 + max(ha, hb), 1 + max(hc, hd));
+	requires a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 0 or 
+		 a::rb<na , 0, h> * b::rb<nb, 0, h> * c::rb<nc, 0, h> * d::rb<nd, 0, h> & color = 1 
+	ensures res::rb<na + nb + nc + nd + 3, 0, h + 2> & color = 0 or 
+		res::rb<na + nb + nc + nd + 3, 1, h + 1> & color = 1;
 {
 	node tmp;
 
@@ -177,21 +179,21 @@ node del_5r(node a, node b, node c, node d, int color)
 /* function for case 4(just recolor) */
 node del_4(node a, node b, node c)
 
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h> 
-	ensures res::rb<na + nb + nc + 2, hr, 0, h + 1> & hr = 1 + max(ha, 1 + max(hb, hc));
+	requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha> 
+	ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 {
 	node tmp1,tmp2; 
 	tmp1 = new node(0, 1, b, c);
-	tmp2 = new node(0, 0, a, tmp1);
+  tmp2 = new node(0, 0, a, tmp1);
 	return tmp2;
 }
 
 /* function for case 4 (just recolor) - right child */
 node del_4r(node a, node b, node c)
 
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h> 
-	ensures res::rb<na + nb + nc + 2, hr, 0, h + 1> & hr = 1 + max(1 + max(ha, hb), hc);
+	requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha> 
+	ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 {
 	node tmp; 
@@ -204,8 +206,8 @@ node del_4r(node a, node b, node c)
 /* function for case 3 (just recolor) */
 node del_3(node a, node b, node c)
 
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h> 
-	ensures res::rb<na + nb + nc + 2, hr, 0, h + 1> & hr = 1 + max(ha, 1 + max(hb, hc));
+	requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha> 
+	ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 
 {
@@ -219,8 +221,8 @@ node del_3(node a, node b, node c)
 /* function for case 3 (just recolor) - right child */
 node del_3r(node a, node b, node c)
 
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h> * c::rb<nc, hc, 0, h>
-	ensures res::rb<na + nb + nc + 2, hr, 0, h + 1> & hr = 1 + max(1 + max(ha, hb), hc);
+	requires a::rb<na, 0, ha> * b::rb<nb, 0, ha> * c::rb<nc, 0, ha> 
+	ensures res::rb<na + nb + nc + 2, 0, ha + 1>;
 
 {
 	node tmp;
@@ -233,8 +235,8 @@ node del_3r(node a, node b, node c)
 /* function for case 2 (simple rotation + applying one of the cases 4, 5, 6) */
 node del_2(node a, node b, node c)
 
-	requires a::rb<na, ha, 0, h> * b::rb<nb, hb, 0, h+1> * c::rb<nc, hc, 0, h+1> & b != null & c != null
-	ensures res::rb<na+nb+nc+2, _, 0, h + 2>;
+	requires a::rb<na, 0, h> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h+1> & b != null & c != null
+	ensures res::rb<na+nb+nc+2, 0, h + 2>;
 
 {
 	node tmp; 
@@ -257,8 +259,8 @@ node del_2(node a, node b, node c)
 /* function for case 2 (simple rotation + applying one of the cases 4, 5, 6) - right child*/
 node del_2r(node a, node b, node c)
 
-	requires a::rb<na, ha, 0, h+1> * b::rb<nb, hb, 0, h+1> * c::rb<nc, hc, 0, h> & b != null //& a != null
-	ensures res::rb<na+nb+nc+2, _, 0, h+2>;
+	requires a::rb<na, 0, h+1> * b::rb<nb, 0, h+1> * c::rb<nc, 0, h> & b != null //& a != null
+	ensures res::rb<na+nb+nc+2, 0, h+2>;
 
 {
 	node tmp, f; 
@@ -272,14 +274,14 @@ node del_2r(node a, node b, node c)
 	}
 	else 
 		tmp = del_6r(b.left, b.right, c, 1);
-		
-	assert tmp'::rb<nb+nc+1, _, _, ha> & h=ha;
-	assert a'::rb<n_1, _, 0, hb> & hb=h & n_1=nb;
-	assert a'::rb<n_2, _, 0, hc> & hc=h+1 & n_2=na;
+	assert tmp'::rb<nb+nc+1, _, ha> & h=ha;
+	assert a'::rb<n_1, 0, hb> & hb=h & n_1=nb;
+	assert a'::rb<n_2, 0, hc> & hc=h+1 & n_2=na;
 	f = new node(0, 0, a, tmp);
-	//assert f'::rb<_,_,_,_>;	
+	//assert f'::rb<_,_,_>;	
 	return f;
 }
+
 
 /* not working, waiting for all the others to work to check the pbs*/ 
 /* primitive for the black height */
@@ -289,14 +291,13 @@ int bh(node x)
   requires x::rb<n,cl,bh>
   ensures x::rb<n,cl,bh> & res=bh;
 */
-
 /* function to delete the smalles element in a rb and then rebalance */
 int remove_min(ref node x)
 
-	requires x::rb<n, h, cl, bh> & x != null & 0 <= cl <= 1
-	ensures x'::rb<n-1, hr, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 & hr <= h
-			or x'::rb<n-1, hr, 0, bh2> & bh-1 <= bh2 <= bh & cl = 0 & hr <= h;
-/*
+	requires x::rb<n, cl, bh> & x != null & 0 <= cl <= 1
+	ensures x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1
+		or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh & cl = 0;
+        /*
 	requires x::rb<n, cl, bh> & x != null 
     case { cl=1 -> ensures x'::rb<n-1, cl2, bh>;
            cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh;
@@ -328,10 +329,10 @@ int remove_min(ref node x)
 				if (is_red(x.right))
 				{
 					if (x.right.left != null)
-                    {
+                                        {
 						x = del_2(x.left, x.right.left, x.right.right);
-                        return v1;
-                    }
+                                                return v1;
+                                        }
 					else
 						return v1;
 				}
@@ -375,10 +376,10 @@ int remove_min(ref node x)
 /* function to delete an element in a red black tree */
 void del(ref node  x, int a)
 
-	requires x::rb<n, h, cl, bh> & 0 <= cl <= 1
-	ensures x'::rb<n-1, hr, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 & hr <= h 
-			or x'::rb<n-1, hr, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 & hr <= h
-			or x'::rb<n, h, cl, bh>;
+	requires x::rb<n, cl, bh> & 0 <= cl <= 1
+	ensures  x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 
+		 or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 
+		 or x'::rb<n, cl, bh>;
 /*
   requires x::rb<n, cl, bh> 
     case { cl=1 -> ensures x'::rb<n-1, cl2, bh> 
@@ -524,8 +525,8 @@ node node_error() requires true ensures false;
 
 node insert(node x, int v)
 
-	requires x::rb<n, _, _, bh>
-	ensures res::rb<n+1, _, _, bh1> & res != null & bh<=bh1<=bh;
+	requires x::rb<n, _, bh>
+	ensures res::rb<n+1, _, bh1> & res != null & bh<=bh1<=bh;
 
 {
 	node tmp, tmp_null = null;

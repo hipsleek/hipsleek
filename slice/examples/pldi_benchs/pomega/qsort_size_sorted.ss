@@ -1,4 +1,3 @@
-/* LOC: 86 */
 /* quick sort */
 
 data node {

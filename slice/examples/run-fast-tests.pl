@@ -1426,7 +1426,7 @@ $output_file = "log";
 		    "case_2", "SUCCESS",
 		    "rotate_case_3", "SUCCESS"
 		],
-		["rb_size_bheight_bags.ss", 19, "", 
+		["rb_size_bheight_bags_1_link.ss", 19, "", 
 			"insert_1", "SUCCESS", 
 			"del_1", "SUCCESS", 
 			"remove_min_1", "SUCCESS", 
@@ -1447,7 +1447,7 @@ $output_file = "log";
 			"case_2_1", "SUCCESS", 
 			"rotate_case_3_1", "SUCCESS", 
 		],
-		["rb_size_bheight_2_links.ss", 19, "",
+		["rb_size_bheight_height_2_links.ss", 19, "",
 		    "insert", "SUCCESS",
 		    "del", "SUCCESS",
 		    "remove_min", "SUCCESS",
@@ -1468,7 +1468,7 @@ $output_file = "log";
 		    "case_2", "SUCCESS",
 		    "rotate_case_3", "SUCCESS"
 		],
-		["rb_size_bheight_3_links.ss", 19, "",
+		["rb_size_bheight_height_3_links.ss", 19, "",
 		    "insert", "SUCCESS",
 		    "del", "SUCCESS",
 		    "remove_min", "SUCCESS",
@@ -1621,6 +1621,9 @@ sub hip_process_file {
 		}elsif ("$param" =~ "pmona") {
             $exempl_path_full = "$exempl_path/pldi_benchs/mona";
             print "Starting automatic slicing experiment for PLDI paper with Mona:\n";
+		}elsif ("$param" =~ "plink") {
+            $exempl_path_full = "$exempl_path/pldi_benchs/link";
+            print "Starting annotated slicing experiment for PLDI paper:\n";
 		}
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})

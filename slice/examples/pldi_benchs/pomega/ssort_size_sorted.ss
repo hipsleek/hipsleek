@@ -1,4 +1,3 @@
-/* LOC: 65 */
 /* selection sort */
 
 data node {

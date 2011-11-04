@@ -1,4 +1,3 @@
-/* LOC: 50 */
 /* insertion sort */
 
 data node {
