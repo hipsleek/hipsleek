@@ -1,0 +1,73 @@
+h1 {
+	color : green;
+}
+
+.proc {
+	font-size : 3em;
+	font-weight : bold;
+	border-style : double;
+	
+}
+
+.procdef {
+	color:blue;
+	margin-left : 50px;
+	font-weight : normal;
+	border-style : groove;
+}
+
+.pre {
+	margin-left : 50px;
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+}
+
+.post {
+	margin-left : 50px;
+	background : burlywood;
+	font-weight : normal;
+	border-style : ridge;
+}
+
+.term {
+	font-size : 3em;
+	margin-left : 50px;
+	font-weight : normal;
+	border-style : inset;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	margin-left : 100px;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	margin-left : 100px;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	margin-left : 100px;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	margin-left : 100px;
+	font-weight : normal;
+	border-style : dashed;
+}
+
