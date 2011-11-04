@@ -74,8 +74,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
-	  | Cformula.EAssume (x,b,y) ->
-            let _ = set_post_pos (CF.pos_of_formula b) in
+	  | Cformula.EAssume (x,post_cond,post_label) ->
+            let _ = set_post_pos (CF.pos_of_formula post_cond) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
 	        if (Cformula.isAnyFalseCtx ctx1) then
@@ -89,14 +89,14 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		          flow_store := [];
 		          let ctx1 = CF.set_flow_in_context_override
 			        { CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = None} ctx1 in
-		          let ctx1 = CF.add_path_id ctx1 (Some y,-1) in
+		          let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
 		          let lfe = [CF.mk_failesc_context ctx1 []] in 
-			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 y) in
+			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 			      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
 				  (*let _ = print_string ("check_specs: EAssume: " ^ (Cprinter.string_of_list_partial_context res_ctx) ^ "\n") in*)
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
-			        let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
+			        let tmp_ctx = check_post prog proc res_ctx post_cond (Cformula.pos_of_formula post_cond) post_label in
                     (* let _ = print_endline ("Answer after post :"^(string_of_int (List.length tmp_ctx))) in *)
 			        (CF.isSuccessListPartialCtx tmp_ctx) 
 		        in
