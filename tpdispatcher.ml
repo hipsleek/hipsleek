@@ -30,7 +30,7 @@ type tp_type =
   | ZM (* Z3 and Mona *)
   | DP (*ineq prover for proof slicing experim*)
 
-let test_db = true
+let test_db = false
   
 let tp = ref OmegaCalc
 let proof_no = ref 0
