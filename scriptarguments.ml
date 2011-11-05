@@ -129,8 +129,8 @@ let common_arguments = [
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "zm"; "om";
-	"oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
-	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	"oi"; "set"; "cm"; "redlog"; "rm"; "prm";"dp" ], Tpdispatcher.set_tp),
+	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA. \n\tdp: Dedicated prover for eq/ineq");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
 	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
