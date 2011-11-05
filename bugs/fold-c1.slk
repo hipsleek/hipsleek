@@ -1,0 +1,109 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+
+pred lseg2<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] (exists r2,b:self::node<next = r2> * r2::lseg2<b, p> & b=n-1) ;
+          }
+         inv n >= 0.
+
+
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+
+//checkentail x::node<_,q>*q::node<_,null> |- x::lseg<a,p>.
+
+/*
+split_universal@23@22@3
+split_universal inp1 : 0+1=a & 0=0 & q=p
+split_universal inp2 :[a_99]/Impl=[]/Expl=[]/view vars:[a_99,p]
+split_universal@23 EXIT out : q=p/ true
+
+split_universal@14@13@9@8@6@5@3
+split_universal inp1 : b_111=0 & null=p_118 & b_111=0
+split_universal inp2 :[p_118,Anon_119,r2_120,p_106,Anon_107,r2_108,a_98,p,b_99]/Impl=[]/Expl=[]/view vars:[b_111,p_118]
+split_universal@14 EXIT out : b_111=0 & b_111=0 & exists1(p_118:null=p_118)/ null=p_118
+
+*/
+
+//ent 1
+checkentail x::node<_,q>*q::node<_,nil> & a>0 & a<=2 
+   |- x::lseg2<a,p>. //p? impl ex
+
+// unsound : should have failed like below
+print residue.
+
+/*
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<a,p> & x=p.
+// unsound : should fail if case used!
+print residue.
+
+//checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<r,p> & r=a.
+// fail (rightly so)
+print residue.
+
+
+//checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<r,p> & x=p & r=a.
+// unsound : should fail if case used!
+print residue.
+*/
+
+//ent 1
+
+/*
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 or x::node<_,null> & a=0|- 
+            case { a=0 -> [] x = p & a = 0 ;
+                   a!=0 -> [] (exists r2:x::node<next = r2> * r2::lseg2<a - 1, p>) ;
+            }.
+
+
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 & a=0
+ or x::node<_,q>*q::node<_,null> & a>0 & a=1
+ or x::node<_,q>*q::node<_,null> & a>0 & a=2
+  |- x::lseg2<r,p> & r=a.
+print residue.
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 & a=0
+ or x::node<_,q>*q::node<_,null> & a>0 & a=1
+ or x::node<_,q>*q::node<_,null> & a>0 & a=2
+  |- x::lseg2<a,p>.
+print residue.
+// too many answers
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 & a>2
+  |- x::lseg2<r,p> & r=a.
+// fail
+print residue.
+
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<a-1,p> .
+// failed
+print residue.
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg<a,p>.
+// fail
+
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<r,p> & r=a & a=1.
+// fail
+
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<a,p> & a=1.
+// fail
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<r,p> & r=1.
+print residue.
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<r,p> & r=0.
+print residue.
+
+checkentail x::node<_,q>*q::node<_,null> & a>0 |- x::lseg2<r,p> & r=2.
+print residue.
+*/

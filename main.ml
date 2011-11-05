@@ -114,15 +114,11 @@ let process_source_full source =
     let iprims = Iast.append_iprims_list_head iprims_list in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-
 	(*let _ = print_string ("\nmain: intermediate_prog (1): " ^ (Iprinter.string_of_program intermediate_prog) ^ "\n") in*)
-	
     (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
 	(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
-
 	(*let _ = print_string ("\nmain: intermediate_prog (2): " ^ (Iprinter.string_of_program intermediate_prog) ^ "\n") in*)
-	
 	(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
     (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
@@ -253,7 +249,11 @@ let finalize () =
 let _ = 
   try
     main1 ();
-    let _ = print_string (Gen.Profiling.string_of_counters ()) in
+    (* let _ =  *)
+    (*   if !Global.enable_counters then *)
+    (*     print_string (Gen.Profiling.string_of_counters ()) *)
+    (*   else () in *)
+    let _ = Gen.Profiling.print_counters_info () in
     let _ = Gen.Profiling.print_info () in
     ()
   with _ as e -> begin

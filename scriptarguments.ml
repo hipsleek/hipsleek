@@ -36,7 +36,7 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+	  ("--ahwytdi", Arg.Set Smtsolver.try_induction,
 	"Print implication for debugging");
 	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
 	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
@@ -68,7 +68,7 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--check-coercions", Arg.Set Globals.check_coercions,
+	("--disable-check-coercions", Arg.Clear Globals.check_coercions,
 	"Check coercion validity");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
@@ -129,8 +129,8 @@ let common_arguments = [
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "zm"; "om";
-	"oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
-	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	"oi"; "set"; "cm"; "redlog"; "rm"; "prm";"dp" ], Tpdispatcher.set_tp),
+	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA. \n\tdp: Dedicated prover for eq/ineq");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
 	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
@@ -147,10 +147,13 @@ let common_arguments = [
 	"<host:port>: use external prover via socket");
 	("--prover", Arg.String Tpdispatcher.set_tp, 
 	"<p,q,..> comma-separated list of provers to try in parallel");
-	("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, 
-	"enable sat statistics");
-	("--epi", Arg.Set Globals.profiling, 
+	(* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
+	(* "enable sat statistics"); *)
+	("--ep-stat", Arg.Set Globals.profiling, 
 	"enable profiling statistics");
+    ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
+	("--e-stat", (Arg.Set Globals.profiling; Arg.Set Globals.enable_counters), 
+	"enable all statistics");
 	("--sbc", Arg.Set Globals.enable_syn_base_case, 
 	"use only syntactic base case detection");
 	("--eci", Arg.Set Globals.enable_case_inference,
@@ -198,7 +201,6 @@ let common_arguments = [
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
     ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
-    ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
     ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
@@ -217,6 +219,8 @@ let common_arguments = [
   ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* Termination options *)
+  ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
   (* slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
   ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
@@ -224,6 +228,9 @@ let common_arguments = [
   ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+
+  (* invariant *)
+  ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ] 
 
 (* arguments/flags used only by hip *)	

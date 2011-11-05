@@ -28,7 +28,10 @@ type tp_type =
   | Redlog
   | RM (* Redlog and Mona *)
   | ZM (* Z3 and Mona *)
+  | DP (*ineq prover for proof slicing experim*)
 
+let test_db = false
+  
 let tp = ref OmegaCalc
 let proof_no = ref 0
 let provers_process = ref None
@@ -315,7 +318,8 @@ let rec check_prover_existence prover_cmd_str =
 let set_tp tp_str =
   prover_arg := tp_str;  
   let prover_str = ref [] in
-  if tp_str = "omega" then
+  if tp_str = "dp" then tp := DP
+  else if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "cvcl" then 
 	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
@@ -374,6 +378,7 @@ let string_of_tp tp = match tp with
   | Redlog -> "redlog"
   | RM -> "rm"
   | ZM -> "zm"
+  | DP -> "dp"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -392,6 +397,7 @@ let name_of_tp tp = match tp with
   | Redlog -> "Redlog"
   | RM -> "Redlog and Mona"
   | ZM -> "Z3 and Mona"
+  | DP -> "DP"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -722,6 +728,14 @@ let simplify_var_name (e: CP.formula) : CP.formula =
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let _ = disj_cnt f None "sat_no_cache" in
   match !tp with
+	| DP -> 
+		let r = Dp.is_sat f sat_no in
+		if test_db then 
+			let r2 = Omega.is_sat f sat_no in
+			if r=r2 then r 
+			else 
+				failwith ("dp-omega mismatch on sat: "^(Cprinter.string_of_pure_formula f)^" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
+		else r
 	| OmegaCalc ->
       begin
         Omega.is_sat f sat_no;
@@ -869,6 +883,7 @@ let simplify (f : CP.formula) : CP.formula =
       (Gen.Profiling.push_time "simplify";
        try
 		 let r = match !tp with
+		   | DP ->  Omega.simplify f 
            | Isabelle -> Isabelle.simplify f
            | Coq -> (* Coq.simplify f *)
              if (is_list_constraint f) then
@@ -966,6 +981,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   Gen.Debug.no_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
 
 let hull (f : CP.formula) : CP.formula = match !tp with
+  | DP -> Omega.hull f
   | Isabelle -> Isabelle.hull f
   | Coq -> (* Coq.hull f *)
       if (is_list_constraint f) then
@@ -1010,6 +1026,7 @@ let hull (f : CP.formula) : CP.formula =
   Gen.Debug.no_1 "hull" pr pr hull f
 
 let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
+  | DP -> Omega.pairwisecheck f
   | Isabelle -> Isabelle.pairwisecheck f
   | Coq -> (* Coq.pairwisecheck f *)
 	  if (is_list_constraint f) then
@@ -1081,6 +1098,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let _ = disj_cnt ante (Some conseq) "imply_no_cache" in
   
   let r = match !tp with
+	| DP -> 
+	   let r = Dp.imply ante conseq (imp_no^"XX") timeout in
+		if test_db then 
+			let r2 = Omega.imply ante conseq (imp_no^"XX") timeout in
+			if r=r2 then r 
+			else 
+				failwith ("dp-omega imply mismatch on: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^
+					" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
+		else r
 	| OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
 	| CvcLite -> Cvclite.imply ante conseq
     | Cvc3 -> begin

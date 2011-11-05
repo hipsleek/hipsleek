@@ -1,0 +1,110 @@
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     }
+     inv n >= 0.
+
+
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv self!=null & n>=1.
+
+/*
+pred ll_tail<tx, n> == 
+   case {
+      n=1 -> [] self::node<_, null> & tx=self ;
+      n!=1 -> [] self::node<_, r> * r::ll_tail<tx, b> & b=n-1 & r!=null;
+   } inv self!=null & n>=1.
+*/
+
+lemma "lseg" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma self::ll_tail<t, n> <- self::lseg<n-1, t> * t::node<_, null>.
+//FAIL w eps, VALID w/o eps
+
+//lemma self::lseg<n-1, t> * t::node<_, null> -> self::ll_tail<t, n>. 
+//FAIL (w & w/o eps)
+
+//lemma "lltail" self::ll_tail<t, n> -> self::lseg<n-1, t> * t::node<_, null>.
+
+lemma "lltail" self::ll_tail<t, n> <- self::lseg<n-1, t> * t::node<_, null>.
+
+//lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
+
+/*	
+// valid
+checkentail self::lseg<n-1, t> * t::node<_, null> |- self::ll_tail<t,n>.
+
+// valid
+checkentail t::node<_, null> & self=t & n-1=0 |- self::ll_tail<t,n>.
+*/
+
+// invalid?
+//checkentail self::node<_,q> * q::lseg<n-2, t> * t::node<_, null> |- self::ll_tail<t,n>.
+
+/*
+FAILURE because t_402 used in RHS, and t in LHS
+
+DO_FOLD used t_402 instead of t.
+!!!bug-lem9.slk:50: 12: [entail:0][post:0]do_fold: RHS view:  SS 30::self::ll_tail<t_402,n>@M[Orig]
+
+
+heap_entail_conjunct_lhs_struc
+context:
+ es_formula: 
+  self::node<Anon_32,q>@M * t::node<Anon_33,flted_50_400>@M * 
+  q::node<Anon_452,r_454>@M * 
+  SS 31::r_454::lseg<flted_11_453,p_451>@M[Orig] & flted_50_401!=0 & 
+  flted_11_453+1=flted_50_401 & p_451=t & flted_50_401+2=n & 
+  flted_50_400=null & {FLOW,(27,27)=__norm} LOC: _0_0
+ es_pure: true
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+conseq:
+ ECase case {n!=1 -> EBase exists (Expl)[](Impl)[r_455; 
+                           b_456](ex)[]EXISTS(tx_457,
+                           Anon_458: self::node<Anon_458,r_455>@M * 
+                           SS 30::r_455::ll_tail<tx_457,b_456>@M[Orig] &
+                           b_456+1=n & r_455!=null & tx_457=t_402 &
+                           {FLOW,(13,28)=__flow}) LOC: bug-lem9.slk_24_17
+             ;
+        n=1 -> EBase EXISTS(Anon_459,
+                     flted_23_460: self::node<Anon_459,flted_23_460>@M &
+                     flted_23_460=null & t_402=self &
+                     {FLOW,(13,28)=__flow}) LOC: bug-lem9.slk_23_16
+        }
+
+*/
+
+/*
+//valid
+checkentail self::node<_,q> * q::lseg<n-2, t> * t::node<_, null> & n=1 
+ |- self::node<_,null> & t=self.
+
+//valid
+checkentail self::node<_,q> * q::lseg<n-2, t> * t::node<_, null> & n!=1
+ |- self::node<_, r> * r::ll_tail<t, b> & b=n-1 & r!=null.
+
+
+checkentail self::node<_,q> * q::lseg<n-2, t> * t::node<_, null> |- self::ll_tail<iit,iin> & iit=t & iin=n.
+*/
+
+
+checkentail q::lseg<n, t> * t::node<_, null> |- q::ll_tail<t, b> .
+print residue.
+
+
+
+checkentail q::lseg<n, t> * t::node<_, null> |- q::ll_tail<tx, b> .
+
+print residue.

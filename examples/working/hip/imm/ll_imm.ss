@@ -19,11 +19,19 @@ lseg<p, n> == self=p & n=0
 	inv n>=0;
 
 int length (node x) 
-requires x::ll<n>@I
-ensures res = n;
+//requires x::ll<n>@I
+//ensures res = n;
+requires x::ll<n>
+ensures x::ll<n> & res = n;
 {
  if (x==null) return 0;
-    else return 1+length(x.next);
+    else 
+      {
+        //dprint;
+        int r = 1+length(x.next);
+        dprint;
+        return r;
+      }
 }
 
 void append(node x, node y)

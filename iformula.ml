@@ -572,6 +572,18 @@ let formula_to_struc_formula (f:formula):struc_formula =
 		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
 	(helper f);;
 
+(* split a conjunction into heap constraints, pure pointer constraints, *)
+(* and Presburger constraints *)
+let split_components (f : formula) =  match f with
+    | Base ({formula_base_heap = h; 
+	  formula_base_pure = p; 
+      formula_base_branches = b;
+	  formula_base_flow =fl }) -> (h, p, fl, b)
+    | Exists ({formula_exists_heap = h; 
+	  formula_exists_pure = p; 
+	  formula_exists_flow = fl;
+      formula_exists_branches = br }) -> (h, p, fl, br)
+    | _ -> failwith ("split_components: don't expect OR")
 
 let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 

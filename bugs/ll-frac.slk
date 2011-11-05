@@ -1,0 +1,40 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;
+    int frac;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<n>@f == self = null & n = 0  
+	or self::node<_, q>@f * q::ll<n-1>@f 
+  inv n >= 0 .
+
+
+pred foo<f> == self::node<_,_>@f & 0<f<=1.
+
+foo<0.5>@0.5 ==> self::node<_,_>@0.25
+
+
+pred foo<f>@g == self::node<_,_>@(f*g) & 0<f<=1 & 0<g<=1.
+
+
+pred foo<f,g> == self::node<_,_>@f*g & 0<f<=1  & 0<g<=1.
+
+
+lemma "frac" self::ll<n>@f & f=a+b & a>=0 & b>=0
+        -> self::ll<n>@a * self::ll<n>@b.
+
+ 
+x::ll<n>@f & f=1 |- x::ll<n>@g & g>0
+
+x::ll<n>@f & 0<f |- x::ll<n>@g & g=1
+
+x::ll<n>@f & f=1 |- x::ll<n>@g & g=0.5
+
+x::ll<n>@f & f=0.5 |- x::ll<n>@g & 0<g<=1

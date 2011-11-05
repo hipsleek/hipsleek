@@ -50,6 +50,14 @@ let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
             TRANSLATE CPURE FORMULA TO SMT FORMULA              
  **************************************************************)
 
+(* Construct [f(1) ... f(n)] *)
+let rec generate_list n f =
+	if (n = 0) then []
+	else (generate_list (n-1) f) @ [f n]
+
+(* Compute the n-th element of the sequence f0, f1, ..., fn defined by f0 = b and f_n = f(f_{n-1}) *)
+let rec compute f n b = if (n = 0) then b else f (compute f (n-1) b)
+	
 let rec smt_of_typ t = 
 	match t with
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
@@ -71,7 +79,7 @@ let rec smt_of_typ t =
 			Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "spec not supported for SMT"}
 		| Named _ -> "Int" (* objects and records are just pointers *)
-		| Array (et, _) -> "(Array Int " ^ smt_of_typ et ^ ")"
+		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
 
 let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
@@ -104,8 +112,8 @@ let rec smt_of_exp a =
 	| CP.ListLength _
 	| CP.ListAppend _
 	| CP.ListReverse _ -> failwith ("[z3.ml]: ERROR in constraints (lists should not appear here)")
-	| CP.ArrayAt (a, i, l) -> 
-		"(select " ^ (smt_of_spec_var a) ^ " " ^ (String.concat " " (List.map smt_of_exp i)) ^ ")"
+	| CP.ArrayAt (a, idx, l) -> 
+		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
 let rec smt_of_b_formula b =
 	let (pf,_) = b in
@@ -151,15 +159,26 @@ let rec smt_of_b_formula b =
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
-		if (r = "update_array") then
+		if is_update_array_relation r then
 			let orig_array = List.nth smt_args 0 in
-			let index = List.nth smt_args 1 in
+			let new_array = List.nth smt_args 1 in
 			let value = List.nth smt_args 2 in
-			let new_array = List.nth smt_args 3 in
-				"(= " ^ new_array ^ " (store " ^ orig_array ^ " " ^ index ^ " " ^ value ^ "))"
+			let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
+			let last_index = List.hd index in
+			let rem_index = List.rev (List.tl index) in
+			let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
+			let arr_select = List.rev arr_select in
+			let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
+			let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
+				"(= " ^ new_array ^ " " ^ result ^ ")"
 		else
 			"(" ^ r ^ " " ^ (String.concat " " smt_args) ^ ")"
-
+			
+and is_update_array_relation r = 
+	let udrel = "update_array" in
+	let udl = String.length udrel in
+		(String.length r) >= udl && (String.sub r 0 udl) = udrel
+		
 let rec smt_of_formula f =
 	match f with
 	| CP.BForm (b,_) -> (smt_of_b_formula b)
@@ -325,7 +344,7 @@ let add_axiom h dir c =
 
 (* Interface function to add a new relation *)
 let add_relation rname rargs rform =
-	if (rname = "update_array") then () else
+	if (is_update_array_relation rname) then () else
 	(* Cache the declaration for this relation *)
 	let cache_smt_input = 
 		let signature = List.map CP.type_of_spec_var rargs in

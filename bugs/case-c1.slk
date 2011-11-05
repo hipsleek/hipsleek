@@ -1,0 +1,24 @@
+data node { int val ; node next }.
+
+pred foo<b> ==
+   case { 
+      b=1 -> [] self::node<_,_> ;
+      b!=1 -> [] self::node<_,_>;
+   }.
+
+pred goo<b> ==
+   self::node<_,_> & b=1
+   or self::node<_,_> & b!=1
+   .
+
+// valid as case is more complex
+checkentail x::node<_,_> & b>=-10|- x::foo<b>.
+
+// invalid as search used instead of case analysis here
+checkentail x::node<_,_> & b>=-10|- x::goo<b>.
+
+// should be valid 
+checkentail x::node<_,_> & b>=-10 |- x::foo<c> & c=b+1.
+
+// valid 
+checkentail x::node<_,_> & b>=-10 & c=b+1 |- x::foo<c>.

@@ -1,0 +1,30 @@
+
+data node2 {
+	int val;
+    int priority;
+    node2 prev;
+	node2 next;
+}.
+
+
+pred dll2<p,r,l,n> == self=r & p=l & n=0 
+  or self::node2<_,_,p,q> * q::dll2<self,r,l,n-1> // = q1 
+  inv n >= 0.
+
+  /*
+  res=l
+  |- l::dll2<p,res,z1,0> .
+ERROR: File "test-1.slk", line 24, col 5 : res is not allowed in precondition
+exception in entail check
+  */
+
+/*
+ Implicit instantiation below need to be
+ processed in some particular order:
+*/
+
+checkentail l::dll2<p,r,z,n> & rs=l |- 
+            l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n>.
+
+checkentail l::dll2<p,r,z,n> & rs=l |- 
+            rs::dll2<z2,r,z,n> * l::dll2<p,rs,z2,0>.
