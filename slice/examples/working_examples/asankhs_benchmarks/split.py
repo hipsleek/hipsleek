@@ -28,11 +28,11 @@ def split_and_run (filename, fileext):
 	    args.append(sleek_exec)
 	    args.append(eps_flag)
 	    args.append(slicing_flag)
-        args.append(ufdp_flag)
-        args.append(ineq_flag)
+            args.append(ufdp_flag)
+            args.append(ineq_flag)
 	    args.append(fname)
 
-        start_time = time.time()
+            start_time = time.time()
 	    process = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             """
@@ -47,7 +47,7 @@ def split_and_run (filename, fileext):
 
             #communicate waits for process to terminate
 	    stdout, stderr = process.communicate()
-        elapsed_time = time.time() - start_time
+            elapsed_time = time.time() - start_time
 
         if stdout.find('Fail') != -1:
 			res = 'F'
