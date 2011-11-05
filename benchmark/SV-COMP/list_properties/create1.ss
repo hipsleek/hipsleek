@@ -13,7 +13,7 @@ lseg<p, n, S> == self=p & n=0 & S={}
 
 node create(int n)
   requires n >= 0
-  ensures res::lseg<r, n+1, S> * r::node<0,null> ;//& forall (b : (b notin S | b=1));
+  ensures res::lseg<r, n+1, S> * r::node<0,null> & forall (b : (b notin S | b=1));
 {  
     if (n==0) 
     { 
