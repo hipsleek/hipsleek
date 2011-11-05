@@ -1,3 +1,7 @@
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
 Array.prototype.indexOf = IndexOf;
 
 //Toggles between two classes for an element

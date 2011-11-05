@@ -387,6 +387,203 @@ let log_proof prf =
 	  
 (** An Hoa : Output to HTML **)
 
+let hipsleekjs = "
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(\" \");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(\" \");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, \"Collapsed\", \"Expanded\", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName(\"li\");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName(\"ul\").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}"
+
+let hipsleekcss = "
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}"
+
 let html_output = ref ""
 
 let html_output_file = ref ""
@@ -437,10 +634,12 @@ let initialize_html source_file_name =
 	html_output_file := source_file_name ^ "_proof.html";
 	html_output := 
 "<html>
-<head>
-	<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />
-	<script type=\"text/javascript\" src=\"hipsleek.js\"></script>
-</head>
+<head>" ^ 
+"	<style type=\"text/css\">" ^ hipsleekcss ^ "</style>" ^
+"	<script type=\"text/javascript\">" ^ hipsleekjs ^ "</script>" ^
+(* "<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />" ^ *)
+(* "<script type=\"text/javascript\" src=\"hipsleek.js\"></script>" ^ *)
+"</head>
 <body>\n" ^ 
 "<h1>" ^ source_file_name ^ "</h1>\n" ^
 "<ul class=\"TreeView\" id=\"ProofTree\">";
