@@ -729,7 +729,8 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)]];
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)
+  ]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
@@ -1003,13 +1004,13 @@ non_array_type:
    | `IDENTIFIER id      -> Named id ]];  
 
 array_type:
-  [[ t=array_type; r=rank_specifier -> Array (int_type, None)
-  |  t=non_array_type; r=rank_specifier -> Array (int_type, None)]];
+  [[ (* t=array_type; r=rank_specifier -> Array (t, None)
+  | *) t=non_array_type; r=rank_specifier -> Array (t, r)]];
 
 rank_specifier:
-  [[`OSQUARE; OPT comma_list; `CSQUARE -> ()]];
+  [[`OSQUARE; c = OPT comma_list; `CSQUARE -> un_option c 1]];
 
-comma_list: [[`COMMA; SELF ->()]];
+comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
   
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
 

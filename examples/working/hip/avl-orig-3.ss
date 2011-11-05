@@ -45,10 +45,6 @@ case {
 		& m = 1+m1+m2 & n=1+max(n1, n2) 
   & -1 <= n1-n2 <=1 & bal=n1-n2+1; }
 	inv m >= 0 & n >= 0 & 0<=bal<=2;
-
-
-
-
 */
 // fails if last case dropped though it seem redundant
 	requires x::avl<m, n, b>

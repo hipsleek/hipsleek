@@ -1,0 +1,31 @@
+data node { int val ; node next }.
+
+pred lseg2<n, p> == 
+   case { n<3 -> [] self = p  ;
+          n>=3 -> [] (exists r2:self::node<next = r2>) ;
+          }
+         inv true.
+
+pred lseg<n, p> == 
+   n<3 & self = p 
+   or  self::node<next = r2> & n>=3 
+   inv true.
+
+// below should succeed
+checkentail a=1 |- x::lseg2<b,p> & b+1=a. 
+
+//checkentail a=1 |- x::lseg2<b,p> & b=1+a. 
+
+// why isn't instantiation done for lseg?
+//checkentail a=1 |- x::lseg<b,p> & b=1+a. 
+
+//seems that instantion not done for exists
+//checkentail a=1 |- (exists b: x::lseg2<b,p> & b=a+1). 
+
+// b=1+a being instantiated
+// checkentail a=1 |- [b] x::lseg2<b,p> & b=1+a. 
+
+// b=1+a not instantiated immediately
+// checkentail a=1 |- [b] x::lseg<b,p> & b=1+a. 
+
+ print residue.

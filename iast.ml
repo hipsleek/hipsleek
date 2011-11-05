@@ -190,10 +190,15 @@ and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a si
 					exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
 					exp_arrayat_pos : loc; }
 
+(* (\* An Hoa : array memory allocation expression *\) *)
+(* and exp_aalloc = { exp_aalloc_etype_name : ident;		(\* Name of the base element *\) *)
+(* 					exp_aalloc_dimensions : exp list;	(\* List of size for each dimensions *\) *)
+(* 					exp_aalloc_pos : loc; } *)
+
 (* An Hoa : array memory allocation expression *)
-and exp_aalloc = { exp_aalloc_etype_name : ident;		(* Name of the base element *)
-					exp_aalloc_dimensions : exp list;	(* List of size for each dimensions *)
-					exp_aalloc_pos : loc; }
+and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
+	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
+			 exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
@@ -915,7 +920,8 @@ and look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs 
 		  look_up_proc_def_raw rest name
   | [] -> raise Not_found
 	    
-and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = match procs with
+and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = 
+	match procs with
   | p :: rest ->
         if p.proc_mingled_name = name then
 		  p

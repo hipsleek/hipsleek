@@ -6,6 +6,14 @@ pred ls<p> == self = p
 
 lemma "U0" self::ls<p> -> self::ls<b>*b::ls<p>.
 
+
+checkentail 
+    x = p 
+	or x::node<next = r> * r::ls<p> & x!=p
+|- x::ls<b>*b::ls<p>.
+
+
+
 //lemma "U3" self::ls<z>  <- self::ls<y>*y::ls<z> & z=null . 
 
 //lemma "U4" self::ls<y> * y::ls<z> * z::node<v,w> -> self::ls<z> * z::node<v,w> .
@@ -24,6 +32,12 @@ print residue.
 
 lemma "U1" self::ls<p> <- self::ls<b>*b::ls<p>.
 
+/*
+checkentail  
+    b::ls<p> & x = b 
+	or x::node<next = r> * r::ls<b> * b::ls<p> & x!=b
+ |- x::ls<p> .
+*/
 /*
 checkentail x::ls<y> * y::ls<z> |- x::ls<z2>.
 print residue.
