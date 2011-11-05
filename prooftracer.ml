@@ -387,25 +387,9 @@ let log_proof prf =
 	  
 (** An Hoa : Output to HTML **)
 
-let html_output = ref "<html><body>"
+let html_output = ref ""
 
-let push_proc () = html_output := !html_output ^ "<div class=\"proc\">\n"
-
-let push_procdef () = html_output := !html_output ^ "<div class=\"procdef\">\n"
-
-let push_pre () = html_output := !html_output ^ "<div class=\"pre\">\n"
-
-let push_post () = html_output := !html_output ^ "<div class=\"post\">\n"
-
-let push_term () = html_output := !html_output ^ "<div class=\"term\">\n"
-
-let push_pure_imply r = html_output := !html_output ^ "<div class=\"pureimply" ^ (if r then "valid" else "invalid") ^ "\">\n"
-
-let push_prover_input () = html_output := !html_output ^ "<div class=\"proverinput" ^ "\">\n"
-
-let push_prover_output () = html_output := !html_output ^ "<div class=\"proveroutput" ^ "\">\n"
-
-let pop_div () = html_output := !html_output ^ "</div>\n"
+let html_output_file = ref ""
 
 (* Convert a string to HTML: - replace 5 reserved characters <  >  '  ""  &  with entities
                              - replace newline \n with <br> </br>   *)
@@ -413,6 +397,34 @@ let convert_to_html s =
 	let html_map = [("&","&amp;"); ("<","&lt;"); (">","&gt;"); ("'","&apos;"); ("\"", "&quot;");   ("\n","<br/>\n"); ("\t","&nbsp;&nbsp;&nbsp;&nbsp;")] in
 	let res = List.fold_left (fun x (y, z) -> Str.global_replace (Str.regexp_string y) z x) s html_map in
 		res
+
+let push_proc proc_name = html_output := 
+	!html_output ^ "<li class=\"Collapsed proc\">\n" ^"Procedure " ^ proc_name ^ "<ul>"
+
+let push_procdef pdef = html_output :=
+	!html_output ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html pdef) ^ "</ul></li>"
+
+let push_pre s = html_output := 
+	!html_output ^ "<li class=\"Collapsed pre\">\n" ^ 
+	"Precondition of procedure call " ^ (convert_to_html s) ^ " holds" ^ "<ul>"
+
+let push_post () = html_output := 
+	!html_output ^ "<li class=\"Collapsed post\">\nProcedure post-condition holds\n<ul>"
+
+let push_term () = html_output := 
+	!html_output ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"
+
+let push_pure_imply r = html_output := !html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>"
+
+let push_prover_input () = 	html_output := 
+	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover\n<ul>"
+
+let push_prover_output () = html_output := 
+	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover\n<ul>"
+
+let pop_div () = html_output := !html_output ^ "</ul></li>\n"
+
+let pop_li () = html_output := !html_output ^ "</li>\n"
 		
 let append_html s =
 	let s = convert_to_html s in
@@ -420,19 +432,30 @@ let append_html s =
 		
 let append_html_no_convert s =	html_output := !html_output ^ s
 
-let post_process_html () = html_output := !html_output ^ "</body>\n</html>"
-
 let initialize_html source_file_name = 
+	begin
+	html_output_file := source_file_name ^ "_proof.html";
 	html_output := 
-		"<html>
-		<head>
-			<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />
-		</head>
-		<body>\n" ^ 
-		"<h1>" ^ source_file_name ^ "</h1>\n"
+"<html>
+<head>
+	<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />
+	<script type=\"text/javascript\" src=\"hipsleek.js\"></script>
+</head>
+<body>\n" ^ 
+"<h1>" ^ source_file_name ^ "</h1>\n" ^
+"<ul class=\"TreeView\" id=\"ProofTree\">";
+	end
+	
+let post_process_html () = 	html_output := !html_output ^ 
+"</ul>
+<script>
+	SetupTreeView(\"ProofTree\");
+</script>
+</body>
+</html>"
 		
 let write_html_output () =
 	let _ = post_process_html () in
-	let chn = open_out "verification_proof.html" in
+	let chn = open_out !html_output_file in
 		output_string chn !html_output;
 		close_out chn;;

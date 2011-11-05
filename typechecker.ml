@@ -477,8 +477,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
 			let _ = if (!print_proof || !print_brief_proof) then
 					begin
-						Prooftracer.push_pre ();
-						Prooftracer.append_html ("Precondition of function call " ^ (Cprinter.string_of_exp e0) ^ " holds");
+						Prooftracer.push_pre (Cprinter.string_of_exp e0);
 						(* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
 					end in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
@@ -604,8 +603,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint to_print pos;
 	let _ = if (!print_proof || !print_brief_proof) then
 			begin
-				Prooftracer.push_post (); 
-				Prooftracer.append_html "Function post-condition holds";
+				Prooftracer.push_post ();
 				(* print_endline "VERIFYING POST-CONDITION" *)
 			end in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
@@ -655,11 +653,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	  | None -> true (* sanity checks have been done by the translation *)
 	  | Some body -> let _ = if (!print_proof || !print_brief_proof) then
 						begin
-							Prooftracer.push_proc ();
-							Prooftracer.append_html ("Procedure " ^ unmin_name);
-							Prooftracer.push_procdef ();
-							Prooftracer.append_html (Cprinter.string_of_proc_decl 3 proc);
-							Prooftracer.pop_div ();
+							Prooftracer.push_proc unmin_name;
+							Prooftracer.push_procdef (Cprinter.string_of_proc_decl 3 proc);
 						end in
 	  begin
 	      if !Globals.print_proc then
@@ -991,7 +986,6 @@ let check_prog (prog : prog_decl) =
 	let _ = if (!print_proof || !print_brief_proof) then
 			begin
 				Prooftracer.push_term ();
-				Prooftracer.append_html "Termination of all functions";
 			end in
 	let g = build_state_trans_graph !Solver.variance_graph in
 	let cl = variance_numbering !Solver.var_checked_list g in
