@@ -1,0 +1,287 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/global4.ss</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure main<ul><li class="Collapsed procdef">Internal representation
+<ul>void main$int~int(  int t_12,  int n_11)<br/>
+static  EBase true &amp; (()) &amp; {FLOW,(34,34)=__norm}<br/>
+         EAssume 4::ref [t_12;n_11]<br/>
+           true &amp; (([2=t_12&apos;][3=n_11&apos;])) &amp; {FLOW,(34,34)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref t_12, n_11<br/>
+n_11 = 1;<br/>
+t_12 = 2;<br/>
+{<br/>
+71::increase_n$int~int(t_12,n_11)<br/>
+}<br/>
+<br/>
+{(13,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 71::increase_n$int~int(t_12,n_11) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; 1&lt;=2
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[] : ((1 &lt;= 2))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{ FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> n_11&apos;=2+1&#8866; 3=n_11&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_11PRMD] : (((n_11PRMD != 2 + 1) | (3 = n_11PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_11PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; 2=2
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[] : ((2 = 2))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{ FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure increase_n<ul><li class="Collapsed procdef">Internal representation
+<ul>void increase_n$int~int(  int k,  int n_13)<br/>
+static  EBase true &amp; (([1&lt;=k])) &amp; {FLOW,(34,34)=__norm}<br/>
+         EAssume 1::ref [n_13]<br/>
+           true &amp; (([n_13&apos;=k+n_13])) &amp; {FLOW,(34,34)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref n_13<br/>
+n_13 = {<br/>
+73::add___$int~int(n_13,k)<br/>
+}<br/>
+<br/>
+{(5,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 73::add___$int~int(n_13,k) holds<ul></ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> 1&lt;=k &amp; n_13&apos;=n_13+k&#8866; n_13&apos;=k+n_13
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_13PRMD, k, n_13] : (( (not (((1 &lt;= k) &amp; (n_13PRMD = n_13 + k))))  | (n_13PRMD = k + n_13)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_13PRMD,k,n_13]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

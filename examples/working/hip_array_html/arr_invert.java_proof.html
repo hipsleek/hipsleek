@@ -1,0 +1,952 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/array/arr_invert.java</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure InvertHelper<ul><li class="Collapsed procdef">Internal representation
+<ul>void InvertHelper$int[]~int[]~int~int(  int[] a,  int[] b,  int n,  int i)<br/>
+static  EBase true &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
+       IsLeftInverse(a,b,0,i - 1) &amp; 0&lt;=i &amp; {FLOW,(32,32)=__norm}<br/>
+         EAssume 2::ref [b]<br/>
+           true &amp; IsLeftInverse(a,b&apos;,0,n - 1) &amp; {FLOW,(32,32)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref b<br/>
+boolean v_bool_44_641;<br/>
+v_bool_44_641 = {<br/>
+72::lt___$int~int(i,n)<br/>
+};<br/>
+68::if (v_bool_44_641) LABEL! 68,0: b = {<br/>
+int v_int_46_638;<br/>
+v_int_46_638 = {<br/>
+array_get_elm_at___1d$int[]~int(a,i)<br/>
+};<br/>
+69::update___1d$int~int[]~int(i,b,v_int_46_638)<br/>
+};<br/>
+{<br/>
+int v_int_48_640;<br/>
+v_int_48_640 = {<br/>
+int v_int_48_639;<br/>
+v_int_48_639 = 1;<br/>
+71::add___$int~int(i,v_int_48_639)<br/>
+};<br/>
+70::InvertHelper$int[]~int[]~int~int(a,b,n,v_int_48_640) rec<br/>
+}<br/>
+else LABEL! 68,1: <br/>
+<br/>
+<br/>
+{(37,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 72::lt___$int~int(i,n) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; a=a
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (= a a)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> true&#8866; b=a
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun a () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (= b a)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>sat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> n - 1=ahaub &amp; dom(b,0,n - 1) &amp; dom(a,0,n - 1) &amp; Permute(a,0,n - 1,0,n -<br/>
+1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; 0&lt;=i &amp; i&lt;n&#8866; &exist;ahalb_677:&exist;ahaub_678:dom(a,ahalb_677,ahaub_678) &amp; <br/>
+ahalb_677&lt;=i &amp; i&lt;=ahaub_678))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (dom b 0 (- n 1)))<br/>
+(assert (dom a 0 (- n 1)))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (&lt; i n))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_677 Int)) (exists ((ahaub_678 Int)) (and (dom a ahalb_677 ahaub_678) (and (&lt;= ahalb_677 i) (&lt;= i ahaub_678)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 13 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 69::update___1d$int~int[]~int(i,b,v_int_46_638) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> v_int_46_638&apos;=a[i]&#8866; a=b
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_46_638_primed () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (= v_int_46_638_primed (select a i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= a b)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>sat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; b=b
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (= b b)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> n - 1=ahaub_681 &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; dom(a,0,ahaub) &amp; n - 1=ahaub &amp; i&lt;n &amp; <br/>
+Permute(a,0,n - 1,0,n - 1) &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; <br/>
+IsLeftInverse(a,b,0,i - 1) &amp; v_int_46_638&apos;=a[i]&#8866; &exist;ahalb_688:&exist;ahaub_689:dom(b,ahalb_688,ahaub_689) &amp; <br/>
+ahalb_688&lt;=v_int_46_638&apos; &amp; v_int_46_638&apos;&lt;=ahaub_689))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub_681 () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun n () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun v_int_46_638_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (= (- n 1) ahaub_681))<br/>
+(assert (&lt;= i ahaub))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (dom a 0 ahaub))<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (&lt; i n))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (dom a 0 (- n 1)))<br/>
+(assert (dom b 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (= v_int_46_638_primed (select a i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_688 Int)) (exists ((ahaub_689 Int)) (and (dom b ahalb_688 ahaub_689) (and (&lt;= ahalb_688 v_int_46_638_primed) (&lt;= v_int_46_638_primed ahaub_689)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 15 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 71::add___$int~int(i,v_int_48_639) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 70::InvertHelper$int[]~int[]~int~int(a,b,n,v_int_48_640) rec holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> v_int_48_640&apos;=1+i &amp; dom(b&apos;,0,ahaub_681) &amp; dom(b,0,ahaub_681) &amp; i&lt;=ahaub &amp; <br/>
+0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
+IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; dom(a,0,ahaub) &amp; n -<br/>
+1=ahaub_681 &amp; 0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; update_array_1d(b,b&apos;,i,a[i])&#8866; dom(a,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_48_640_primed () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun ahaub_681 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (= v_int_48_640_primed (+ 1 i)))<br/>
+(assert (dom b_primed 0 ahaub_681))<br/>
+(assert (dom b 0 ahaub_681))<br/>
+(assert (&lt;= i ahaub))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (dom a 0 (- n 1)))<br/>
+(assert (dom b 0 (- n 1)))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (&lt; i n))<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (dom a 0 ahaub))<br/>
+(assert (= (- n 1) ahaub_681))<br/>
+(assert (&lt;= 0 (select a i)))<br/>
+(assert (&lt;= (select a i) ahaub_681))<br/>
+(assert (= b_primed (store b (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (dom a 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 16 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> v_int_48_640&apos;=1+i &amp; (a[i])&lt;=ahaub_681 &amp; 0&lt;=(a[i]) &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; <br/>
+dom(a,0,ahaub) &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n -<br/>
+1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; n - 1=ahaub_681 &amp; <br/>
+dom(b,0,ahaub_681) &amp; dom(b&apos;,0,ahaub_681) &amp; update_array_1d(b,b&apos;,i,a[i])&#8866; dom(b&apos;,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_48_640_primed () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun ahaub_681 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (= v_int_48_640_primed (+ 1 i)))<br/>
+(assert (&lt;= (select a i) ahaub_681))<br/>
+(assert (&lt;= 0 (select a i)))<br/>
+(assert (&lt;= i ahaub))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (dom a 0 ahaub))<br/>
+(assert (dom a 0 (- n 1)))<br/>
+(assert (dom b 0 (- n 1)))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (&lt; i n))<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (= (- n 1) ahaub_681))<br/>
+(assert (dom b 0 ahaub_681))<br/>
+(assert (dom b_primed 0 ahaub_681))<br/>
+(assert (= b_primed (store b (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (dom b_primed 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 16 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> v_int_48_640&apos;=1+i &amp; dom(b&apos;,0,ahaub_681) &amp; dom(b,0,ahaub_681) &amp; i&lt;=ahaub &amp; <br/>
+0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
+IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; dom(a,0,ahaub) &amp; n -<br/>
+1=ahaub_681 &amp; 0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; update_array_1d(b,b&apos;,i,a[i])&#8866; Permute(a,0,n - 1,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_48_640_primed () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun ahaub_681 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+;Antecedent<br/>
+(assert (= v_int_48_640_primed (+ 1 i)))<br/>
+(assert (&lt;= i ahaub))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (&lt; i n))<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (= (- n 1) ahaub_681))<br/>
+(assert (&lt;= 0 (select a i)))<br/>
+(assert (&lt;= (select a i) ahaub_681))<br/>
+(assert (= b_primed (store b (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (Permute a 0 (- n 1) 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> n - 1=ahaub_681 &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; n - 1=ahaub &amp; i&lt;n &amp; dom(a,0,n - 1) &amp; <br/>
+dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; <br/>
+dom(a,0,ahaub) &amp; dom(b,0,ahaub_681) &amp; 0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; <br/>
+dom(b&apos;,0,ahaub_681) &amp; update_array_1d(b,b&apos;,i,a[i]) &amp; v_int_48_640&apos;=1+i&#8866; IsLeftInverse(a,b&apos;,0,v_int_48_640&apos; - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun n () Int)<br/>
+(declare-fun ahaub_681 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun v_int_48_640_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+;Antecedent<br/>
+(assert (= (- n 1) ahaub_681))<br/>
+(assert (&lt;= i ahaub))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (&lt; i n))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (&lt;= 0 (select a i)))<br/>
+(assert (&lt;= (select a i) ahaub_681))<br/>
+(assert (= b_primed (store b (select a i) i)))<br/>
+(assert (= v_int_48_640_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (IsLeftInverse a b_primed 0 (- v_int_48_640_primed 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
+update_array_1d(b,b&apos;,i,a[i]) &amp; dom(b&apos;,0,ahaub_681) &amp; (a[i])&lt;=ahaub_681 &amp; <br/>
+0&lt;=(a[i]) &amp; dom(b,0,ahaub_681) &amp; n - 1=ahaub_681 &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; <br/>
+dom(a,0,ahaub) &amp; n - 1=ahaub &amp; i&lt;n &amp; IsLeftInverse(a,b,0,i - 1) &amp; <br/>
+v_int_48_640&apos;=1+i&#8866; 0&lt;=v_int_48_640&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun ahaub_681 () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun n () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_48_640_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+;Antecedent<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (= b_primed (store b (select a i) i)))<br/>
+(assert (&lt;= (select a i) ahaub_681))<br/>
+(assert (&lt;= 0 (select a i)))<br/>
+(assert (= (- n 1) ahaub_681))<br/>
+(assert (&lt;= i ahaub))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (&lt; i n))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (= v_int_48_640_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (&lt;= 0 v_int_48_640_primed)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(b_706,0,ahaub_681) &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n -<br/>
+1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n -<br/>
+1=ahaub &amp; dom(a,0,ahaub) &amp; n - 1=ahaub_681 &amp; dom(b,0,ahaub_681) &amp; <br/>
+0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; update_array_1d(b,b_706,i,a[i]) &amp; <br/>
+IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsLeftInverse(a,b&apos;,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun ahaub_681 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun b_706 () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= i ahaub))<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (&lt; i n))<br/>
+(assert (= (- n 1) ahaub))<br/>
+(assert (= (- n 1) ahaub_681))<br/>
+(assert (&lt;= 0 (select a i)))<br/>
+(assert (&lt;= (select a i) ahaub_681))<br/>
+(assert (= b_706 (store b (select a i) i)))<br/>
+(assert (IsLeftInverse a b_primed 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (IsLeftInverse a b_primed 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
+IsLeftInverse(a,b,0,i - 1) &amp; n&lt;=i&#8866; IsLeftInverse(a,b,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= 0 i))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b 0 (- i 1)))<br/>
+(assert (&lt;= n i))<br/>
+;Negation of Consequence<br/>
+(assert (not (IsLeftInverse a b 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure Invert<ul><li class="Collapsed procdef">Internal representation
+<ul>void Invert$int[]~int[]~int(  int[] a,  int[] b,  int n)<br/>
+static  EBase true &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp;<br/>
+       {FLOW,(32,32)=__norm}<br/>
+         EAssume 1::ref [b]<br/>
+           true &amp; IsLeftInverse(a,b&apos;,0,n - 1) &amp; IsInjective(b&apos;,0,n - 1) &amp;<br/>
+           {FLOW,(32,32)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref b<br/>
+{<br/>
+int v_int_33_658;<br/>
+v_int_33_658 = 0;<br/>
+73::InvertHelper$int[]~int[]~int~int(a,b,n,v_int_33_658)<br/>
+}<br/>
+<br/>
+{(28,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 73::InvertHelper$int[]~int[]~int~int(a,b,n,v_int_33_658) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; dom(a,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (dom a 0 (- n 1)))<br/>
+(assert (dom b 0 (- n 1)))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (dom a 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 10 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; dom(b,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (dom a 0 (- n 1)))<br/>
+(assert (dom b 0 (- n 1)))<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (dom b 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 10 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; Permute(a,0,n - 1,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+;Antecedent<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (Permute a 0 (- n 1) 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; IsLeftInverse(a,b,0,0 - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun n () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b () (Array Int Int))<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+;Antecedent<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (IsLeftInverse a b 0 (- 0 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; 0&lt;=0
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (&lt;= 0 0)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
+IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsLeftInverse(a,b&apos;,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+;Antecedent<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b_primed 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (IsLeftInverse a b_primed 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
+IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsInjective(b&apos;,0,n - 1)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun Permute ((Array Int Int) Int Int Int Int) Bool)<br/>
+(declare-fun IsInjective ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun IsLeftInverse ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((l Int) (h Int) (a (Array Int Int)) (i Int) (j Int)) (= (Permute a i j l h) (and (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= l (select a k)) (&lt;= (select a k) h))))) (and (forall ((u Int)) (or (&lt; u l) (or (&gt; u h) (exists ((v Int)) (and (and (&lt;= i v) (&lt;= v j)) (= (select a v) u)))))) (IsInjective a i j))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+(assert (forall ((i Int) (j Int) (b (Array Int Int)) (a (Array Int Int))) (= (IsLeftInverse a b i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select b (select a k)) k)))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (IsInjective a i j) (forall ((y Int)) (forall ((x Int)) (or (&lt; x i) (or (&gt; x j) (or (&lt; y i) (or (&gt; y j) (or (= x y) (not (= (select a x) (select a y)))))))))))))<br/>
+;Antecedent<br/>
+(assert (Permute a 0 (- n 1) 0 (- n 1)))<br/>
+(assert (IsLeftInverse a b_primed 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (IsInjective b_primed 0 (- n 1))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

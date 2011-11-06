@@ -1,0 +1,1838 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/perfect.ss</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure insert<ul><li class="Collapsed procdef">Internal representation
+<ul>void insert$node2~int(  node2 t,  int a)<br/>
+static  EBase exists (Expl)[](Impl)[n](ex)[]NN t::perfect&lt;n&gt;@M[Orig][LHSCase]@ rem br[{183,182}] &amp;<br/>
+       (([0&lt;=n])) &amp; {FLOW,(44,44)=__norm}<br/>
+         EAssume 15::ref [t]<br/>
+           EXISTS(n1: NN t&apos;::perfect&lt;n1&gt;@M[Orig][LHSCase]@ rem br[{183,182}] &amp;<br/>
+           (([(n1=n | n1=1+n) &amp; 0&lt;=n1])) &amp; {FLOW,(44,44)=__norm})<br/>
+dynamic  []<br/>
+<br/>
+ref t<br/>
+boolean si_58;<br/>
+si_58 = {<br/>
+79::simple_insert$node2~int(t,a)<br/>
+};<br/>
+80::if (si_58) LABEL! 80,0: 85::return<br/>
+else LABEL! 80,1: int n_59;<br/>
+n_59 = {<br/>
+81::height$node2(t)<br/>
+};<br/>
+node2 new_60;<br/>
+new_60 = {<br/>
+82::create$int(n_59)<br/>
+};<br/>
+t = {<br/>
+int v_int_106_681;<br/>
+v_int_106_681 = 1;<br/>
+newnode2(a,v_int_106_681,t,new_60)<br/>
+};<br/>
+84::return<br/>
+<br/>
+<br/>
+{(96,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 79::simple_insert$node2~int(t,a) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n&#8866; null=t&apos; | 0=n
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[tPRMD, n] : (((0 &gt; n) | ((tPRMD &lt; 1) | (0 = n))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[tPRMD,n]: 1 &lt;= n &amp;&amp; 1 &lt;= tPRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> t&apos;=t&apos;&#8866; null=t&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[tPRMD] : (((tPRMD != tPRMD) | (tPRMD &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[tPRMD]: 1 &lt;= tPRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> t&apos;=t&apos;&#8866; t&apos;!=null
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[tPRMD] : (((tPRMD != tPRMD) | (tPRMD &gt; 0)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[tPRMD]: tPRMD &lt;= 0}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 81::height$node2(t) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_803&#8866; 0=n_803
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_803] : (((0 &gt; n_803) | (0 = n_803)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_803]: 1 &lt;= n_803}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_803&#8866; 0!=n_803
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_803] : (((0 &gt; n_803) | (0 != n_803)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 82::create$int(n_59) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_821&#8866; 0=n_821
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_821] : (((0 &gt; n_821) | (0 = n_821)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_821]: 1 &lt;= n_821}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_821&#8866; 0!=n_821
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_821] : (((0 &gt; n_821) | (0 != n_821)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_59&apos;&#8866; 0=n_59&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_59PRMD] : (((0 &gt; n_59PRMD) | (0 = n_59PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_59PRMD]: 1 &lt;= n_59PRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_59&apos;&#8866; 0!=n_59&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_59PRMD] : (((0 &gt; n_59PRMD) | (0 != n_59PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n&#8866; n=n | n=n+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n] : (((0 &gt; n) | ((n = n) | (n = n + 1))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_59&apos;&#8866; null=l_835 | 0=n_59&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_835, n_59PRMD] : (((0 &gt; n_59PRMD) | ((l_835 &lt; 1) | (0 = n_59PRMD))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_835,n_59PRMD]: 1 &lt;= n_59PRMD &amp;&amp; 1 &lt;= l_835}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_59&apos;&#8866; null=r_836 | 0=n_59&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_836, n_59PRMD] : (((0 &gt; n_59PRMD) | ((r_836 &lt; 1) | (0 = n_59PRMD))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_836,n_59PRMD]: 1 &lt;= n_59PRMD &amp;&amp; 1 &lt;= r_836}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_836=r_836&#8866; null=r_836
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_836] : (((r_836 != r_836) | (r_836 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_836]: 1 &lt;= r_836}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_835=l_835&#8866; null=l_835
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_835] : (((l_835 != l_835) | (l_835 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_835]: 1 &lt;= l_835}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n_59&apos;&#8866; n_59&apos;+1=n_59&apos;+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_59PRMD] : (((0 &gt; n_59PRMD) | (n_59PRMD + 1 = n_59PRMD + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_59PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> t&apos;!=null&#8866; null=t&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[tPRMD] : (((tPRMD &lt; 1) | (tPRMD &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[tPRMD]: 1 &lt;= tPRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n_59&apos;&#8866; n_59&apos;+1=n_59&apos; | n_59&apos;+1=n_59&apos;+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_59PRMD] : (((0 &gt; n_59PRMD) | ((n_59PRMD + 1 = n_59PRMD) | (n_59PRMD + 1 = n_59PRMD + 1))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_59PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure height<ul><li class="Collapsed procdef">Internal representation
+<ul>int height$node2(  node2 t)<br/>
+static  EBase exists (Expl)[](Impl)[n](ex)[]NN t::perfect&lt;n&gt;@M[Orig][LHSCase]@ rem br[{183,182}] &amp;<br/>
+       (([0&lt;=n])) &amp; {FLOW,(44,44)=__norm}<br/>
+         EAssume 12::<br/>
+           EXISTS(n_61: NN t::perfect&lt;n_61&gt;@M[Orig][LHSCase]@ rem br[{183,182}] &amp;<br/>
+           (([n=res &amp; n=n_61 &amp; 0&lt;=n_61])) &amp; {FLOW,(44,44)=__norm})<br/>
+dynamic  []<br/>
+boolean v_bool_88_708;<br/>
+v_bool_88_708 = {<br/>
+95::is_not_null___$node2(t)<br/>
+};<br/>
+86::if (v_bool_88_708) LABEL! 86,0: int v_int_89_706;<br/>
+v_int_89_706 = {<br/>
+int v_int_89_705;<br/>
+v_int_89_705 = {<br/>
+int v_int_89_703;<br/>
+v_int_89_703 = {<br/>
+node2 v_node2_89_696;<br/>
+v_node2_89_696 = 92::bind t to (val_89_692,flag_89_693,left_89_694,right_89_695) in <br/>
+{left_89_694<br/>
+};<br/>
+91::height$node2(v_node2_89_696) rec<br/>
+};<br/>
+int v_int_89_702;<br/>
+v_int_89_702 = {<br/>
+node2 v_node2_89_701;<br/>
+v_node2_89_701 = 94::bind t to (val_89_697,flag_89_698,left_89_699,right_89_700) in <br/>
+{right_89_700<br/>
+};<br/>
+93::height$node2(v_node2_89_701) rec<br/>
+};<br/>
+90::maxim$int~int(v_int_89_703,v_int_89_702)<br/>
+};<br/>
+int v_int_89_704;<br/>
+v_int_89_704 = 1;<br/>
+89::add___$int~int(v_int_89_705,v_int_89_704)<br/>
+};<br/>
+88::return v_int_89_706<br/>
+else LABEL! 86,1: int v_int_90_707;<br/>
+v_int_90_707 = 0;<br/>
+87::return v_int_90_707<br/>
+<br/>
+<br/>
+{(84,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 95::is_not_null___$node2(t) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> null=t&apos; &amp; null=t&#8866; null=t
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[tPRMD, t] : (( (not (((tPRMD &lt; 1) &amp; (t &lt; 1))))  | (t &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[tPRMD,t]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> null=t&apos; &amp; null=t&#8866; t!=null
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[tPRMD, t] : (( (not (((tPRMD &lt; 1) &amp; (t &lt; 1))))  | (t &gt; 0)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[tPRMD,t]: tPRMD &lt;= 0 &amp;&amp; t &lt;= 0}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_878=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_879 &amp; 1+flted_28_879=n&#8866; 0=flted_28_879
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_878, n, flted_28_879] : (( (not ((((((1 + flted_28_878 = n) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_879)) &amp; (1 + flted_28_879 = n))))  | (0 = flted_28_879)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_878,flted_28_878+1,flted_28_878]: 1 &lt;= flted_28_878}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_878=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_879 &amp; 1+flted_28_879=n&#8866; 0!=flted_28_879
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_878, n, flted_28_879] : (( (not ((((((1 + flted_28_878 = n) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_879)) &amp; (1 + flted_28_879 = n))))  | (0 != flted_28_879)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_879 &amp; 1+flted_28_879=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_878=n&#8866; 0=flted_28_878
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_879, n, flted_28_878] : (( (not ((((((0 &lt;= flted_28_879) &amp; (1 + flted_28_879 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_878 = n))))  | (0 = flted_28_878)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_879,flted_28_879+1,flted_28_879]: 1 &lt;= flted_28_879}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_879 &amp; 1+flted_28_879=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_878=n&#8866; 0!=flted_28_878
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_879, n, flted_28_878] : (( (not ((((((0 &lt;= flted_28_879) &amp; (1 + flted_28_879 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_878 = n))))  | (0 != flted_28_878)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 91::height$node2(v_node2_89_696) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_890 &amp; 1+flted_28_890=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_891 &amp; 1+<br/>
+flted_28_891=n&#8866; null=l_892 | 0=flted_28_891
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_890, n, l_892, flted_28_891] : (( (not (((((((0 &lt;= flted_28_890) &amp; (1 + flted_28_890 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_891)) &amp; (1 + flted_28_891 = n))))  | ((l_892 &lt; 1) | (0 = flted_28_891))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_890,flted_28_890+1,l_892,flted_28_890]: 1 &lt;= flted_28_890 &amp;&amp; 1 &lt;= l_892}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_892=l_892&#8866; null=l_892
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_892] : (((l_892 != l_892) | (l_892 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_892]: 1 &lt;= l_892}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_891 &amp; 1+flted_28_891=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_890=n&#8866; 0=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_891, n, flted_28_890] : (( (not ((((((0 &lt;= flted_28_891) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_890 = n))))  | (0 = flted_28_890)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_891,flted_28_891+1,flted_28_891]: 1 &lt;= flted_28_891}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_891 &amp; 1+flted_28_891=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_890=n&#8866; 0!=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_891, n, flted_28_890] : (( (not ((((((0 &lt;= flted_28_891) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_890 = n))))  | (0 != flted_28_890)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_28_890=n &amp; 1+flted_28_891=n &amp; 0&lt;=flted_28_891&#8866; 0=flted_28_891
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_890, n, flted_28_891] : (( (not ((((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_28_890 = n)) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= flted_28_891))))  | (0 = flted_28_891)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_890,flted_28_890+1,flted_28_890]: 1 &lt;= flted_28_890}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_28_890=n &amp; 1+flted_28_891=n &amp; 0&lt;=flted_28_891&#8866; 0!=flted_28_891
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_890, n, flted_28_891] : (( (not ((((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_28_890 = n)) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= flted_28_891))))  | (0 != flted_28_891)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_892=l_892&#8866; l_892!=null
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_892] : (((l_892 != l_892) | (l_892 &gt; 0)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_892]: l_892 &lt;= 0}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_703&apos; &amp; 0!=n &amp; 1+v_int_89_703&apos;=n &amp; 0&lt;=n &amp; 1+flted_28_890=n&#8866; 0=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_703PRMD, n, flted_28_890] : (( (not ((((((0 &lt;= v_int_89_703PRMD) &amp; (0 != n)) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n))))  | (0 = flted_28_890)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_703PRMD,v_int_89_703PRMD+1,v_int_89_703PRMD]: 1 &lt;= v_int_89_703PRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_703&apos; &amp; 0!=n &amp; 1+v_int_89_703&apos;=n &amp; 0&lt;=n &amp; 1+flted_28_890=n&#8866; 0!=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_703PRMD, n, flted_28_890] : (( (not ((((((0 &lt;= v_int_89_703PRMD) &amp; (0 != n)) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n))))  | (0 != flted_28_890)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_890=n &amp; 0!=n &amp; 0&lt;=n &amp; 1+v_int_89_703&apos;=n &amp; 0&lt;=v_int_89_703&apos;&#8866; 0=v_int_89_703&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_890, n, v_int_89_703PRMD] : (( (not ((((((1 + flted_28_890 = n) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 &lt;= v_int_89_703PRMD))))  | (0 = v_int_89_703PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_890,flted_28_890+1,flted_28_890]: 1 &lt;= flted_28_890}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_890=n &amp; 0!=n &amp; 0&lt;=n &amp; 1+v_int_89_703&apos;=n &amp; 0&lt;=v_int_89_703&apos;&#8866; 0!=v_int_89_703&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_890, n, v_int_89_703PRMD] : (( (not ((((((1 + flted_28_890 = n) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 &lt;= v_int_89_703PRMD))))  | (0 != v_int_89_703PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 93::height$node2(v_node2_89_701) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_703&apos; &amp; 0!=n &amp; 1+v_int_89_703&apos;=n &amp; 0&lt;=n &amp; 1+flted_28_890=n &amp; <br/>
+0&lt;=flted_28_890&#8866; null=r_893 | 0=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_703PRMD, n, r_893, flted_28_890] : (( (not (((((((0 &lt;= v_int_89_703PRMD) &amp; (0 != n)) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n)) &amp; (0 &lt;= flted_28_890))))  | ((r_893 &lt; 1) | (0 = flted_28_890))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_703PRMD,v_int_89_703PRMD+1,r_893,v_int_89_703PRMD]: 1 &lt;= v_int_89_703PRMD &amp;&amp; 1 &lt;= r_893}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_893=r_893&#8866; null=r_893
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_893] : (((r_893 != r_893) | (r_893 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_893]: 1 &lt;= r_893}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_911 &amp; 1+n_911=n &amp; 0!=n &amp; 0&lt;=n &amp; 0&lt;=v_int_89_703&apos; &amp; 1+v_int_89_703&apos;=n&#8866; 0=v_int_89_703&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_911, n, v_int_89_703PRMD] : (( (not (((((((0 &lt;= n_911) &amp; (1 + n_911 = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= v_int_89_703PRMD)) &amp; (1 + v_int_89_703PRMD = n))))  | (0 = v_int_89_703PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_911,n_911+1,n_911]: 1 &lt;= n_911}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_911 &amp; 1+n_911=n &amp; 0!=n &amp; 0&lt;=n &amp; 0&lt;=v_int_89_703&apos; &amp; 1+v_int_89_703&apos;=n&#8866; 0!=v_int_89_703&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_911, n, v_int_89_703PRMD] : (( (not (((((((0 &lt;= n_911) &amp; (1 + n_911 = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= v_int_89_703PRMD)) &amp; (1 + v_int_89_703PRMD = n))))  | (0 != v_int_89_703PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_703&apos; &amp; 1+v_int_89_703&apos;=n &amp; 0!=n &amp; 0&lt;=n &amp; 0&lt;=n_911 &amp; 1+n_911=n&#8866; 0=n_911
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_703PRMD, n, n_911] : (( (not (((((((0 &lt;= v_int_89_703PRMD) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= n_911)) &amp; (1 + n_911 = n))))  | (0 = n_911)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_703PRMD,v_int_89_703PRMD+1,v_int_89_703PRMD]: 1 &lt;= v_int_89_703PRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_703&apos; &amp; 1+v_int_89_703&apos;=n &amp; 0!=n &amp; 0&lt;=n &amp; 0&lt;=n_911 &amp; 1+n_911=n&#8866; 0!=n_911
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_703PRMD, n, n_911] : (( (not (((((((0 &lt;= v_int_89_703PRMD) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= n_911)) &amp; (1 + n_911 = n))))  | (0 != n_911)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_893=r_893&#8866; r_893!=null
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_893] : (((r_893 != r_893) | (r_893 &gt; 0)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_893]: r_893 &lt;= 0}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 90::maxim$int~int(v_int_89_703,v_int_89_702) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_702&apos; &amp; 0!=n &amp; 1+v_int_89_702&apos;=n &amp; 0&lt;=n &amp; 0&lt;=v_int_89_703&apos; &amp; 1+<br/>
+v_int_89_703&apos;=n&#8866; 0=v_int_89_703&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_702PRMD, n, v_int_89_703PRMD] : (( (not (((((((0 &lt;= v_int_89_702PRMD) &amp; (0 != n)) &amp; (1 + v_int_89_702PRMD = n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= v_int_89_703PRMD)) &amp; (1 + v_int_89_703PRMD = n))))  | (0 = v_int_89_703PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_702PRMD,v_int_89_702PRMD+1,v_int_89_702PRMD]: 1 &lt;= v_int_89_702PRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_702&apos; &amp; 0!=n &amp; 1+v_int_89_702&apos;=n &amp; 0&lt;=n &amp; 0&lt;=v_int_89_703&apos; &amp; 1+<br/>
+v_int_89_703&apos;=n&#8866; 0!=v_int_89_703&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_702PRMD, n, v_int_89_703PRMD] : (( (not (((((((0 &lt;= v_int_89_702PRMD) &amp; (0 != n)) &amp; (1 + v_int_89_702PRMD = n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= v_int_89_703PRMD)) &amp; (1 + v_int_89_703PRMD = n))))  | (0 != v_int_89_703PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_703&apos; &amp; 1+v_int_89_703&apos;=n &amp; 0!=n &amp; 0&lt;=n &amp; 1+v_int_89_702&apos;=n &amp; <br/>
+0&lt;=v_int_89_702&apos;&#8866; 0=v_int_89_702&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_703PRMD, n, v_int_89_702PRMD] : (( (not (((((((0 &lt;= v_int_89_703PRMD) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + v_int_89_702PRMD = n)) &amp; (0 &lt;= v_int_89_702PRMD))))  | (0 = v_int_89_702PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_703PRMD,v_int_89_703PRMD+1,v_int_89_703PRMD]: 1 &lt;= v_int_89_703PRMD}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_89_703&apos; &amp; 1+v_int_89_703&apos;=n &amp; 0!=n &amp; 0&lt;=n &amp; 1+v_int_89_702&apos;=n &amp; <br/>
+0&lt;=v_int_89_702&apos;&#8866; 0!=v_int_89_702&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_703PRMD, n, v_int_89_702PRMD] : (( (not (((((((0 &lt;= v_int_89_703PRMD) &amp; (1 + v_int_89_703PRMD = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + v_int_89_702PRMD = n)) &amp; (0 &lt;= v_int_89_702PRMD))))  | (0 != v_int_89_702PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 89::add___$int~int(v_int_89_705,v_int_89_704) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_906 &amp; 1+n_906=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+n_896=n &amp; 0&lt;=n_896&#8866; 0=n_896
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_906, n, n_896] : (( (not (((((((0 &lt;= n_906) &amp; (1 + n_906 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + n_896 = n)) &amp; (0 &lt;= n_896))))  | (0 = n_896)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_906,n_906+1,n_906]: 1 &lt;= n_906}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_906 &amp; 1+n_906=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+n_896=n &amp; 0&lt;=n_896&#8866; 0!=n_896
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_906, n, n_896] : (( (not (((((((0 &lt;= n_906) &amp; (1 + n_906 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + n_896 = n)) &amp; (0 &lt;= n_896))))  | (0 != n_896)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_896 &amp; 1+n_896=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=n_906 &amp; 1+n_906=n&#8866; 0=n_906
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_896, n, n_906] : (( (not (((((((0 &lt;= n_896) &amp; (1 + n_896 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= n_906)) &amp; (1 + n_906 = n))))  | (0 = n_906)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_896,n_896+1,n_896]: 1 &lt;= n_896}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_896 &amp; 1+n_896=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=n_906 &amp; 1+n_906=n&#8866; 0!=n_906
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_896, n, n_906] : (( (not (((((((0 &lt;= n_896) &amp; (1 + n_896 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= n_906)) &amp; (1 + n_906 = n))))  | (0 != n_906)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_890 &amp; 0!=n &amp; 0&lt;=n &amp; 1+flted_28_890=n &amp; 1+flted_28_891=n &amp; <br/>
+0&lt;=flted_28_891&#8866; 0=flted_28_891
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_890, n, flted_28_891] : (( (not (((((((0 &lt;= flted_28_890) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n)) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= flted_28_891))))  | (0 = flted_28_891)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_890,flted_28_890+1,flted_28_890]: 1 &lt;= flted_28_890}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_890 &amp; 0!=n &amp; 0&lt;=n &amp; 1+flted_28_890=n &amp; 1+flted_28_891=n &amp; <br/>
+0&lt;=flted_28_891&#8866; 0!=flted_28_891
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_890, n, flted_28_891] : (( (not (((((((0 &lt;= flted_28_890) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n)) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= flted_28_891))))  | (0 != flted_28_891)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_891 &amp; 0!=n &amp; 0&lt;=n &amp; 1+flted_28_891=n &amp; 0&lt;=flted_28_890 &amp; 1+<br/>
+flted_28_890=n&#8866; 0=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_891, n, flted_28_890] : (( (not (((((((0 &lt;= flted_28_891) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= flted_28_890)) &amp; (1 + flted_28_890 = n))))  | (0 = flted_28_890)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_891,flted_28_891+1,flted_28_891]: 1 &lt;= flted_28_891}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_891 &amp; 0!=n &amp; 0&lt;=n &amp; 1+flted_28_891=n &amp; 0&lt;=flted_28_890 &amp; 1+<br/>
+flted_28_890=n&#8866; 0!=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_891, n, flted_28_890] : (( (not (((((((0 &lt;= flted_28_891) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= flted_28_890)) &amp; (1 + flted_28_890 = n))))  | (0 != flted_28_890)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n &amp; 1+flted_28_890=n &amp; v_int_89_706&apos;=v_int_89_927+1 &amp; <br/>
+0&lt;=flted_28_890 &amp; (232::flted_28_891&lt;flted_28_890 | <br/>
+v_int_89_927=flted_28_891) &amp; (233::flted_28_890&lt;=flted_28_891 | <br/>
+v_int_89_927=flted_28_890) &amp; 1+flted_28_891=n &amp; 0&lt;=flted_28_891&#8866; null=l_929 | 0=flted_28_891
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_706PRMD, v_int_89_927, flted_28_890, n, l_929, flted_28_891] : (( (not ((((((((((0 != n) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n)) &amp; (v_int_89_706PRMD = v_int_89_927 + 1)) &amp; (0 &lt;= flted_28_890)) &amp; ((flted_28_891 &lt; flted_28_890) | (v_int_89_927 = flted_28_891))) &amp; ((flted_28_890 &lt;= flted_28_891) | (v_int_89_927 = flted_28_890))) &amp; (1 + flted_28_891 = n)) &amp; (0 &lt;= flted_28_891))))  | ((l_929 &lt; 1) | (0 = flted_28_891))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_706PRMD,v_int_89_706PRMD-1,v_int_89_706PRMD-1,v_int_89_706PRMD,l_929,v_int_89_706PRMD-1]: 2 &lt;= v_int_89_706PRMD &amp;&amp; 1 &lt;= l_929}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_891 &amp; 0!=n &amp; 0&lt;=n &amp; 1+flted_28_891=n &amp; <br/>
+v_int_89_706&apos;=v_int_89_927+1 &amp; (232::flted_28_891&lt;flted_28_890 | <br/>
+v_int_89_927=flted_28_891) &amp; (233::flted_28_890&lt;=flted_28_891 | <br/>
+v_int_89_927=flted_28_890) &amp; 0&lt;=flted_28_890 &amp; 1+flted_28_890=n&#8866; null=r_930 | 0=flted_28_890
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_706PRMD, flted_28_891, v_int_89_927, n, r_930, flted_28_890] : (( (not ((((((((((0 &lt;= flted_28_891) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_891 = n)) &amp; (v_int_89_706PRMD = v_int_89_927 + 1)) &amp; ((flted_28_891 &lt; flted_28_890) | (v_int_89_927 = flted_28_891))) &amp; ((flted_28_890 &lt;= flted_28_891) | (v_int_89_927 = flted_28_890))) &amp; (0 &lt;= flted_28_890)) &amp; (1 + flted_28_890 = n))))  | ((r_930 &lt; 1) | (0 = flted_28_890))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_706PRMD,v_int_89_706PRMD-1,v_int_89_706PRMD-1,v_int_89_706PRMD,r_930,v_int_89_706PRMD-1]: 2 &lt;= v_int_89_706PRMD &amp;&amp; 1 &lt;= r_930}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_930=r_930&#8866; null=r_930
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_930] : (((r_930 != r_930) | (r_930 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_930]: 1 &lt;= r_930}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_929=l_929&#8866; null=l_929
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_929] : (((l_929 != l_929) | (l_929 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_929]: 1 &lt;= l_929}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n &amp; 0&lt;=flted_28_890 &amp; 1+flted_28_891=n &amp; 1+flted_28_890=n &amp; <br/>
+0&lt;=flted_28_891&#8866; flted_28_890+1=flted_28_891+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_28_890, flted_28_891] : (( (not (((((((0 != n) &amp; (0 &lt;= n)) &amp; (0 &lt;= flted_28_890)) &amp; (1 + flted_28_891 = n)) &amp; (1 + flted_28_890 = n)) &amp; (0 &lt;= flted_28_891))))  | (flted_28_890 + 1 = flted_28_891 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,flted_28_890,flted_28_891]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> t!=null&#8866; null=t
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t] : (((t &lt; 1) | (t &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t]: 1 &lt;= t}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_890 &amp; 1+flted_28_890=n&#8866; flted_28_890+1=flted_28_890+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_28_890] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (0 &lt;= flted_28_890)) &amp; (1 + flted_28_890 = n))))  | (flted_28_890 + 1 = flted_28_890 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,flted_28_890]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_890 &amp; v_int_89_706&apos;=v_int_89_927+1 &amp; 0!=n &amp; 0&lt;=n &amp; 1+<br/>
+flted_28_890=n&#8866; n=v_int_89_706&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_927, flted_28_890, n, v_int_89_706PRMD] : (( (not ((((((0 &lt;= flted_28_890) &amp; (v_int_89_706PRMD = v_int_89_927 + 1)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n))))  | (n = v_int_89_706PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul> {[v_int_89_927,flted_28_890,flted_28_890+1,v_int_89_927+1]: v_int_89_927 &lt; flted_28_890 &amp;&amp; 0 &lt;= flted_28_890}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=flted_28_890 &amp; (233::flted_28_890&lt;=flted_28_890 | <br/>
+v_int_89_927=flted_28_890) &amp; (232::flted_28_890&lt;flted_28_890 | <br/>
+v_int_89_927=flted_28_890) &amp; v_int_89_706&apos;=v_int_89_927+1 &amp; 0!=n &amp; 0&lt;=n &amp; 1+<br/>
+flted_28_890=n&#8866; n=v_int_89_706&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_927, flted_28_890, n, v_int_89_706PRMD] : (( (not ((((((((0 &lt;= flted_28_890) &amp; ((flted_28_890 &lt;= flted_28_890) | (v_int_89_927 = flted_28_890))) &amp; ((flted_28_890 &lt; flted_28_890) | (v_int_89_927 = flted_28_890))) &amp; (v_int_89_706PRMD = v_int_89_927 + 1)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_890 = n))))  | (n = v_int_89_706PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_927,flted_28_890,n,v_int_89_706PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_890 &amp; v_int_89_706&apos;=v_int_89_927+1 &amp; 1+<br/>
+flted_28_890=n&#8866; 1+flted_28_890=v_int_89_706&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_927, n, flted_28_890, v_int_89_706PRMD] : (( (not ((((((0 &lt;= n) &amp; (0 != n)) &amp; (0 &lt;= flted_28_890)) &amp; (v_int_89_706PRMD = v_int_89_927 + 1)) &amp; (1 + flted_28_890 = n))))  | (1 + flted_28_890 = v_int_89_706PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul> {[v_int_89_927,n,n-1,v_int_89_927+1]: v_int_89_927 &lt;= n-2 &amp;&amp; 1 &lt;= n}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; (232::flted_28_890&lt;flted_28_890 | <br/>
+v_int_89_927=flted_28_890) &amp; (233::flted_28_890&lt;=flted_28_890 | <br/>
+v_int_89_927=flted_28_890) &amp; 0&lt;=flted_28_890 &amp; v_int_89_706&apos;=v_int_89_927+<br/>
+1 &amp; 1+flted_28_890=n&#8866; 1+flted_28_890=v_int_89_706&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_89_927, n, flted_28_890, v_int_89_706PRMD] : (( (not ((((((((0 &lt;= n) &amp; (0 != n)) &amp; ((flted_28_890 &lt; flted_28_890) | (v_int_89_927 = flted_28_890))) &amp; ((flted_28_890 &lt;= flted_28_890) | (v_int_89_927 = flted_28_890))) &amp; (0 &lt;= flted_28_890)) &amp; (v_int_89_706PRMD = v_int_89_927 + 1)) &amp; (1 + flted_28_890 = n))))  | (1 + flted_28_890 = v_int_89_706PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_89_927,n,flted_28_890,v_int_89_706PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> null=t&#8866; null=t | 0=0
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t] : (((t &gt; 0) | ((t &lt; 1) | (0 = 0))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> null=t&#8866; null=t
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t] : (((t &gt; 0) | (t &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure maxim<ul><li class="Collapsed procdef">Internal representation
+<ul>int maxim$int~int(  int a,  int b)<br/>
+static  EBase true &amp; (()) &amp; {FLOW,(44,44)=__norm}<br/>
+         EAssume 10::<br/>
+           true &amp; (([(a&lt;b | res=a) &amp; (b&lt;=a | res=b)])) &amp;<br/>
+           {FLOW,(44,44)=__norm}<br/>
+dynamic  []<br/>
+boolean v_bool_78_722;<br/>
+v_bool_78_722 = {<br/>
+99::gte___$int~int(a,b)<br/>
+};<br/>
+96::if (v_bool_78_722) LABEL! 96,0: int v_int_79_720;<br/>
+v_int_79_720 = a;<br/>
+98::return v_int_79_720<br/>
+else LABEL! 96,1: int v_int_81_721;<br/>
+v_int_81_721 = b;<br/>
+97::return v_int_81_721<br/>
+<br/>
+<br/>
+{(74,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 99::gte___$int~int(a,b) holds<ul></ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> b&lt;=res&#8866; res&lt;b | res=res
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[b, res] : (((b &gt; res) | ((res &lt; b) | (res = res))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[b,res]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> b&lt;=res&#8866; b&lt;=res | res=b
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[res, b] : (((b &gt; res) | ((b &lt;= res) | (res = b))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[res,b]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> (1+a)&lt;=res&#8866; a&lt;res | res=a
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[res, a] : (((1 + a &gt; res) | ((a &lt; res) | (res = a))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[res,a]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> (1+a)&lt;=res&#8866; res&lt;=a | res=res
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, res] : (((1 + a &gt; res) | ((res &lt;= a) | (res = res))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,res]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure create<ul><li class="Collapsed procdef">Internal representation
+<ul>node2 create$int(  int n)<br/>
+static  EBase true &amp; (()) &amp; {FLOW,(44,44)=__norm}<br/>
+         EAssume 6::<br/>
+           EXISTS(n_62: NN res::perfect&lt;n_62&gt;@M[Orig][LHSCase]@ rem br[{183,182}] &amp;<br/>
+           (([n=n_62 &amp; 0&lt;=n_62])) &amp; {FLOW,(44,44)=__norm})<br/>
+dynamic  []<br/>
+boolean v_bool_67_741;<br/>
+v_bool_67_741 = {<br/>
+int v_int_67_730;<br/>
+v_int_67_730 = 0;<br/>
+107::eq___$int~int(n,v_int_67_730)<br/>
+};<br/>
+100::if (v_bool_67_741) LABEL! 100,0: null v_null_68_731;<br/>
+v_null_68_731 = null;<br/>
+106::return v_null_68_731<br/>
+else LABEL! 100,1: node2 v_node2_70_740;<br/>
+v_node2_70_740 = {<br/>
+int v_int_70_739;<br/>
+v_int_70_739 = 0;<br/>
+int v_int_70_738;<br/>
+v_int_70_738 = 0;<br/>
+node2 v_node2_70_737;<br/>
+v_node2_70_737 = {<br/>
+int v_int_70_733;<br/>
+v_int_70_733 = {<br/>
+int v_int_70_732;<br/>
+v_int_70_732 = 1;<br/>
+103::minus___$int~int(n,v_int_70_732)<br/>
+};<br/>
+102::create$int(v_int_70_733) rec<br/>
+};<br/>
+node2 v_node2_70_736;<br/>
+v_node2_70_736 = {<br/>
+int v_int_70_735;<br/>
+v_int_70_735 = {<br/>
+int v_int_70_734;<br/>
+v_int_70_734 = 1;<br/>
+105::minus___$int~int(n,v_int_70_734)<br/>
+};<br/>
+104::create$int(v_int_70_735) rec<br/>
+};<br/>
+newnode2(v_int_70_739,v_int_70_738,v_node2_70_737,v_node2_70_736)<br/>
+};<br/>
+101::return v_node2_70_740<br/>
+<br/>
+<br/>
+{(63,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 107::eq___$int~int(n,v_int_67_730) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 103::minus___$int~int(n,v_int_70_732) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 102::create$int(v_int_70_733) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> n!=0 &amp; 0&lt;=n_988 &amp; 1+n_988=n&#8866; 0=n_988
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, n_988] : (( (not ((((n != 0) &amp; (0 &lt;= n_988)) &amp; (1 + n_988 = n))))  | (0 = n_988)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,n-1]: 2 &lt;= n}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> n!=0 &amp; 0&lt;=n_988 &amp; 1+n_988=n&#8866; 0!=n_988
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, n_988] : (( (not ((((n != 0) &amp; (0 &lt;= n_988)) &amp; (1 + n_988 = n))))  | (0 != n_988)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[1,0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 105::minus___$int~int(n,v_int_70_734) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> n!=0 &amp; 1+res=n &amp; 0&lt;=v_int_70_998 &amp; 1+v_int_70_998=n&#8866; 0=v_int_70_998
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[res, n, v_int_70_998] : (( (not (((((n != 0) &amp; (1 + res = n)) &amp; (0 &lt;= v_int_70_998)) &amp; (1 + v_int_70_998 = n))))  | (0 = v_int_70_998)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[res,res+1,res]: 1 &lt;= res}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> n!=0 &amp; 1+res=n &amp; 0&lt;=v_int_70_998 &amp; 1+v_int_70_998=n&#8866; 0!=v_int_70_998
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[res, n, v_int_70_998] : (( (not (((((n != 0) &amp; (1 + res = n)) &amp; (0 &lt;= v_int_70_998)) &amp; (1 + v_int_70_998 = n))))  | (0 != v_int_70_998)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 104::create$int(v_int_70_735) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1002 &amp; n&apos;!=0 &amp; 1+n_1002=n&apos; &amp; 0&lt;=v_int_70_998 &amp; 1+v_int_70_998=n&apos;&#8866; 0=v_int_70_998
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1002, nPRMD, v_int_70_998] : (( (not ((((((0 &lt;= n_1002) &amp; (nPRMD != 0)) &amp; (1 + n_1002 = nPRMD)) &amp; (0 &lt;= v_int_70_998)) &amp; (1 + v_int_70_998 = nPRMD))))  | (0 = v_int_70_998)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_1002,n_1002+1,n_1002]: 1 &lt;= n_1002}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1002 &amp; n&apos;!=0 &amp; 1+n_1002=n&apos; &amp; 0&lt;=v_int_70_998 &amp; 1+v_int_70_998=n&apos;&#8866; 0!=v_int_70_998
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1002, nPRMD, v_int_70_998] : (( (not ((((((0 &lt;= n_1002) &amp; (nPRMD != 0)) &amp; (1 + n_1002 = nPRMD)) &amp; (0 &lt;= v_int_70_998)) &amp; (1 + v_int_70_998 = nPRMD))))  | (0 != v_int_70_998)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_70_998 &amp; n&apos;!=0 &amp; 1+v_int_70_998=n&apos; &amp; 0&lt;=n_1002 &amp; 1+n_1002=n&apos;&#8866; 0=n_1002
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_70_998, nPRMD, n_1002] : (( (not ((((((0 &lt;= v_int_70_998) &amp; (nPRMD != 0)) &amp; (1 + v_int_70_998 = nPRMD)) &amp; (0 &lt;= n_1002)) &amp; (1 + n_1002 = nPRMD))))  | (0 = n_1002)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_70_998,v_int_70_998+1,v_int_70_998]: 1 &lt;= v_int_70_998}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_70_998 &amp; n&apos;!=0 &amp; 1+v_int_70_998=n&apos; &amp; 0&lt;=n_1002 &amp; 1+n_1002=n&apos;&#8866; 0!=n_1002
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_70_998, nPRMD, n_1002] : (( (not ((((((0 &lt;= v_int_70_998) &amp; (nPRMD != 0)) &amp; (1 + v_int_70_998 = nPRMD)) &amp; (0 &lt;= n_1002)) &amp; (1 + n_1002 = nPRMD))))  | (0 != n_1002)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> v_null_68_731&apos;=null&#8866; null=v_null_68_731&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_null_68_731PRMD] : (((v_null_68_731PRMD &gt; 0) | (v_null_68_731PRMD &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_null_68_731PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_70_1019 &amp; n!=0 &amp; 1+v_int_70_1019=n &amp; 0&lt;=v_int_70_998 &amp; 1+<br/>
+v_int_70_998=n&#8866; null=l_1025 | 0=v_int_70_998
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_70_1019, n, l_1025, v_int_70_998] : (( (not ((((((0 &lt;= v_int_70_1019) &amp; (n != 0)) &amp; (1 + v_int_70_1019 = n)) &amp; (0 &lt;= v_int_70_998)) &amp; (1 + v_int_70_998 = n))))  | ((l_1025 &lt; 1) | (0 = v_int_70_998))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_70_1019,v_int_70_1019+1,l_1025,v_int_70_1019]: 1 &lt;= v_int_70_1019 &amp;&amp; 1 &lt;= l_1025}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=v_int_70_998 &amp; n!=0 &amp; 1+v_int_70_998=n &amp; 0&lt;=v_int_70_1019 &amp; 1+<br/>
+v_int_70_1019=n&#8866; null=r_1026 | 0=v_int_70_1019
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_70_998, n, r_1026, v_int_70_1019] : (( (not ((((((0 &lt;= v_int_70_998) &amp; (n != 0)) &amp; (1 + v_int_70_998 = n)) &amp; (0 &lt;= v_int_70_1019)) &amp; (1 + v_int_70_1019 = n))))  | ((r_1026 &lt; 1) | (0 = v_int_70_1019))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_70_998,v_int_70_998+1,r_1026,v_int_70_998]: 1 &lt;= v_int_70_998 &amp;&amp; 1 &lt;= r_1026}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_1026=r_1026&#8866; null=r_1026
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_1026] : (((r_1026 != r_1026) | (r_1026 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_1026]: 1 &lt;= r_1026}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_1025=l_1025&#8866; null=l_1025
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_1025] : (((l_1025 != l_1025) | (l_1025 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_1025]: 1 &lt;= l_1025}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> n!=0 &amp; 0&lt;=v_int_70_1019 &amp; 1+v_int_70_1019=n &amp; 0&lt;=v_int_70_998 &amp; 1+<br/>
+v_int_70_998=n&#8866; v_int_70_1019+1=v_int_70_998+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, v_int_70_1019, v_int_70_998] : (( (not ((((((n != 0) &amp; (0 &lt;= v_int_70_1019)) &amp; (1 + v_int_70_1019 = n)) &amp; (0 &lt;= v_int_70_998)) &amp; (1 + v_int_70_998 = n))))  | (v_int_70_1019 + 1 = v_int_70_998 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,v_int_70_1019,v_int_70_998]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> res!=null&#8866; null=res
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[res] : (((res &lt; 1) | (res &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[res]: 1 &lt;= res}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> n!=0 &amp; 1+v_int_70_1019=n &amp; 0&lt;=v_int_70_1019&#8866; v_int_70_1019+1=v_int_70_1019+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, v_int_70_1019] : (( (not ((((n != 0) &amp; (1 + v_int_70_1019 = n)) &amp; (0 &lt;= v_int_70_1019))))  | (v_int_70_1019 + 1 = v_int_70_1019 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,v_int_70_1019]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> n!=0 &amp; 1+v_int_70_1019=n &amp; 0&lt;=v_int_70_1019&#8866; 1+v_int_70_1019=n
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[v_int_70_1019, n] : (( (not ((((n != 0) &amp; (1 + v_int_70_1019 = n)) &amp; (0 &lt;= v_int_70_1019))))  | (1 + v_int_70_1019 = n)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[v_int_70_1019,n]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure simple_insert<ul><li class="Collapsed procdef">Internal representation
+<ul>boolean simple_insert$node2~int(  node2 t,  int a)<br/>
+static  EBase exists (Expl)[](Impl)[n](ex)[]NN t::perfect&lt;n&gt;@M[Orig][LHSCase]@ rem br[{183,182}] &amp;<br/>
+       (([0&lt;=n])) &amp; {FLOW,(44,44)=__norm}<br/>
+         EAssume 1::<br/>
+           EXISTS(n_63: NN t::perfect&lt;n_63&gt;@M[Orig][LHSCase]@ rem br[{183,182}] &amp;<br/>
+           (([n=n_63 &amp; 0&lt;=n_63])) &amp; {FLOW,(44,44)=__norm})<br/>
+dynamic  []<br/>
+boolean v_bool_40_782;<br/>
+v_bool_40_782 = {<br/>
+125::is_null___$node2(t)<br/>
+};<br/>
+108::if (v_bool_40_782) LABEL! 108,0: boolean v_boolean_41_751;<br/>
+v_boolean_41_751 = false;<br/>
+124::return v_boolean_41_751<br/>
+else LABEL! 108,1: boolean v_bool_44_781;<br/>
+v_bool_44_781 = {<br/>
+int v_int_44_757;<br/>
+v_int_44_757 = 123::bind t to (val_44_752,flag_44_753,left_44_754,right_44_755) in <br/>
+{flag_44_753<br/>
+};<br/>
+int v_int_44_756;<br/>
+v_int_44_756 = 0;<br/>
+122::eq___$int~int(v_int_44_757,v_int_44_756)<br/>
+};<br/>
+109::if (v_bool_44_781) LABEL! 109,0: 118::bind t to (val_45_758,flag_45_759,left_45_760,right_45_761) in <br/>
+{val_45_758 = a<br/>
+};<br/>
+{<br/>
+int v_int_46_762;<br/>
+v_int_46_762 = 1;<br/>
+120::bind t to (val_46_763,flag_46_764,left_46_765,right_46_766) in <br/>
+{flag_46_764 = v_int_46_762<br/>
+}<br/>
+};<br/>
+boolean v_boolean_47_767;<br/>
+v_boolean_47_767 = true;<br/>
+121::return v_boolean_47_767<br/>
+else LABEL! 109,1: boolean v_bool_50_780;<br/>
+v_bool_50_780 = {<br/>
+node2 v_node2_50_772;<br/>
+v_node2_50_772 = 116::bind t to (val_50_768,flag_50_769,left_50_770,right_50_771) in <br/>
+{left_50_770<br/>
+};<br/>
+115::simple_insert$node2~int(v_node2_50_772,a) rec<br/>
+};<br/>
+110::if (v_bool_50_780) LABEL! 110,0: boolean v_boolean_51_773;<br/>
+v_boolean_51_773 = true;<br/>
+114::return v_boolean_51_773<br/>
+else LABEL! 110,1: boolean v_boolean_53_779;<br/>
+v_boolean_53_779 = {<br/>
+node2 v_node2_53_778;<br/>
+v_node2_53_778 = 113::bind t to (val_53_774,flag_53_775,left_53_776,right_53_777) in <br/>
+{right_53_777<br/>
+};<br/>
+112::simple_insert$node2~int(v_node2_53_778,a) rec<br/>
+};<br/>
+111::return v_boolean_53_779<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+{(36,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 125::is_null___$node2(t) holds<ul></ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_1069=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1070 &amp; 1+flted_28_1070=n&#8866; 0=flted_28_1070
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1069, n, flted_28_1070] : (( (not ((((((1 + flted_28_1069 = n) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1070)) &amp; (1 + flted_28_1070 = n))))  | (0 = flted_28_1070)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1069,flted_28_1069+1,flted_28_1069]: 1 &lt;= flted_28_1069}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_1069=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1070 &amp; 1+flted_28_1070=n&#8866; 0!=flted_28_1070
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1069, n, flted_28_1070] : (( (not ((((((1 + flted_28_1069 = n) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1070)) &amp; (1 + flted_28_1070 = n))))  | (0 != flted_28_1070)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1070 &amp; 1+flted_28_1070=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_1069=n&#8866; 0=flted_28_1069
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1070, n, flted_28_1069] : (( (not ((((((0 &lt;= flted_28_1070) &amp; (1 + flted_28_1070 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_1069 = n))))  | (0 = flted_28_1069)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1070,flted_28_1070+1,flted_28_1070]: 1 &lt;= flted_28_1070}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1070 &amp; 1+flted_28_1070=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_1069=n&#8866; 0!=flted_28_1069
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1070, n, flted_28_1069] : (( (not ((((((0 &lt;= flted_28_1070) &amp; (1 + flted_28_1070 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_1069 = n))))  | (0 != flted_28_1069)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 122::eq___$int~int(v_int_44_757,v_int_44_756) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n &amp; 1+flted_28_1081=n &amp; 1+flted_28_1082=n &amp; 0&lt;=flted_28_1082&#8866; 0=flted_28_1082
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n, flted_28_1082] : (( (not ((((((0 != n) &amp; (0 &lt;= n)) &amp; (1 + flted_28_1081 = n)) &amp; (1 + flted_28_1082 = n)) &amp; (0 &lt;= flted_28_1082))))  | (0 = flted_28_1082)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1081,flted_28_1081+1,flted_28_1081]: 1 &lt;= flted_28_1081}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n &amp; 1+flted_28_1081=n &amp; 1+flted_28_1082=n &amp; 0&lt;=flted_28_1082&#8866; 0!=flted_28_1082
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n, flted_28_1082] : (( (not ((((((0 != n) &amp; (0 &lt;= n)) &amp; (1 + flted_28_1081 = n)) &amp; (1 + flted_28_1082 = n)) &amp; (0 &lt;= flted_28_1082))))  | (0 != flted_28_1082)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 1+flted_28_1081=n&#8866; 0=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, flted_28_1081] : (( (not ((((((0 != n) &amp; (0 &lt;= n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n)) &amp; (1 + flted_28_1081 = n))))  | (0 = flted_28_1081)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1082,flted_28_1082+1,flted_28_1082]: 1 &lt;= flted_28_1082}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 1+flted_28_1081=n&#8866; 0!=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, flted_28_1081] : (( (not ((((((0 != n) &amp; (0 &lt;= n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n)) &amp; (1 + flted_28_1081 = n))))  | (0 != flted_28_1081)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_1081=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n&#8866; 0=flted_28_1082
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n, flted_28_1082] : (( (not ((((((1 + flted_28_1081 = n) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n))))  | (0 = flted_28_1082)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1081,flted_28_1081+1,flted_28_1081]: 1 &lt;= flted_28_1081}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 1+flted_28_1081=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n&#8866; 0!=flted_28_1082
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n, flted_28_1082] : (( (not ((((((1 + flted_28_1081 = n) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n))))  | (0 != flted_28_1082)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_1081=n&#8866; 0=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, flted_28_1081] : (( (not ((((((0 &lt;= flted_28_1082) &amp; (1 + flted_28_1082 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_1081 = n))))  | (0 = flted_28_1081)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1082,flted_28_1082+1,flted_28_1082]: 1 &lt;= flted_28_1082}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 0&lt;=n &amp; 0!=n &amp; 1+flted_28_1081=n&#8866; 0!=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, flted_28_1081] : (( (not ((((((0 &lt;= flted_28_1082) &amp; (1 + flted_28_1082 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + flted_28_1081 = n))))  | (0 != flted_28_1081)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 115::simple_insert$node2~int(v_node2_50_772,a) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1081 &amp; 1+flted_28_1081=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+<br/>
+flted_28_1082=n&#8866; null=l_1083 | 0=flted_28_1082
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n, l_1083, flted_28_1082] : (( (not (((((((0 &lt;= flted_28_1081) &amp; (1 + flted_28_1081 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n))))  | ((l_1083 &lt; 1) | (0 = flted_28_1082))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1081,flted_28_1081+1,l_1083,flted_28_1081]: 1 &lt;= flted_28_1081 &amp;&amp; 1 &lt;= l_1083}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_1083=l_1083&#8866; null=l_1083
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_1083] : (((l_1083 != l_1083) | (l_1083 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_1083]: 1 &lt;= l_1083}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 0&lt;=n &amp; 1+flted_28_1081=n&#8866; 0=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, flted_28_1081] : (( (not ((((((0 != n) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_1081 = n))))  | (0 = flted_28_1081)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1082,flted_28_1082+1,flted_28_1082]: 1 &lt;= flted_28_1082}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 0&lt;=n &amp; 1+flted_28_1081=n&#8866; 0!=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, flted_28_1081] : (( (not ((((((0 != n) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_1081 = n))))  | (0 != flted_28_1081)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_1083=l_1083&#8866; l_1083!=null
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_1083] : (((l_1083 != l_1083) | (l_1083 &gt; 0)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_1083]: l_1083 &lt;= 0}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 112::simple_insert$node2~int(v_node2_53_778,a) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1082 &amp; 0&lt;=n &amp; 1+flted_28_1082=n &amp; 0!=n &amp; 0&lt;=flted_28_1081 &amp; 1+<br/>
+flted_28_1081=n&#8866; null=r_1084 | 0=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, r_1084, flted_28_1081] : (( (not (((((((0 &lt;= flted_28_1082) &amp; (0 &lt;= n)) &amp; (1 + flted_28_1082 = n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1081)) &amp; (1 + flted_28_1081 = n))))  | ((r_1084 &lt; 1) | (0 = flted_28_1081))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1082,flted_28_1082+1,r_1084,flted_28_1082]: 1 &lt;= flted_28_1082 &amp;&amp; 1 &lt;= r_1084}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_1084=r_1084&#8866; null=r_1084
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_1084] : (((r_1084 != r_1084) | (r_1084 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_1084]: 1 &lt;= r_1084}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1124 &amp; 1+n_1124=n &amp; 0!=n &amp; 0&lt;=n &amp; 1+n_1104=n &amp; 0&lt;=n_1104&#8866; 0=n_1104
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1124, n, n_1104] : (( (not (((((((0 &lt;= n_1124) &amp; (1 + n_1124 = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + n_1104 = n)) &amp; (0 &lt;= n_1104))))  | (0 = n_1104)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_1124,n_1124+1,n_1124]: 1 &lt;= n_1124}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1124 &amp; 1+n_1124=n &amp; 0!=n &amp; 0&lt;=n &amp; 1+n_1104=n &amp; 0&lt;=n_1104&#8866; 0!=n_1104
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1124, n, n_1104] : (( (not (((((((0 &lt;= n_1124) &amp; (1 + n_1124 = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (1 + n_1104 = n)) &amp; (0 &lt;= n_1104))))  | (0 != n_1104)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1104 &amp; 1+n_1104=n &amp; 0!=n &amp; 0&lt;=n &amp; 0&lt;=n_1124 &amp; 1+n_1124=n&#8866; 0=n_1124
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1104, n, n_1124] : (( (not (((((((0 &lt;= n_1104) &amp; (1 + n_1104 = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= n_1124)) &amp; (1 + n_1124 = n))))  | (0 = n_1124)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_1104,n_1104+1,n_1104]: 1 &lt;= n_1104}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1104 &amp; 1+n_1104=n &amp; 0!=n &amp; 0&lt;=n &amp; 0&lt;=n_1124 &amp; 1+n_1124=n&#8866; 0!=n_1124
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1104, n, n_1124] : (( (not (((((((0 &lt;= n_1104) &amp; (1 + n_1104 = n)) &amp; (0 != n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= n_1124)) &amp; (1 + n_1124 = n))))  | (0 != n_1124)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[0,1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_1084=r_1084&#8866; r_1084!=null
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_1084] : (((r_1084 != r_1084) | (r_1084 &gt; 0)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_1084]: r_1084 &lt;= 0}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> t=null&#8866; null=t
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t] : (((t &gt; 0) | (t &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1081 &amp; 1+flted_28_1081=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+<br/>
+flted_28_1082=n&#8866; null=l_1134 | 0=flted_28_1082
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n, l_1134, flted_28_1082] : (( (not (((((((0 &lt;= flted_28_1081) &amp; (1 + flted_28_1081 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n))))  | ((l_1134 &lt; 1) | (0 = flted_28_1082))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1081,flted_28_1081+1,l_1134,flted_28_1081]: 1 &lt;= flted_28_1081 &amp;&amp; 1 &lt;= l_1134}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1081 &amp; 1+<br/>
+flted_28_1081=n&#8866; null=r_1135 | 0=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, r_1135, flted_28_1081] : (( (not (((((((0 &lt;= flted_28_1082) &amp; (1 + flted_28_1082 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1081)) &amp; (1 + flted_28_1081 = n))))  | ((r_1135 &lt; 1) | (0 = flted_28_1081))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1082,flted_28_1082+1,r_1135,flted_28_1082]: 1 &lt;= flted_28_1082 &amp;&amp; 1 &lt;= r_1135}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_1135=r_1135&#8866; null=r_1135
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_1135] : (((r_1135 != r_1135) | (r_1135 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_1135]: 1 &lt;= r_1135}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_1134=l_1134&#8866; null=l_1134
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_1134] : (((l_1134 != l_1134) | (l_1134 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_1134]: 1 &lt;= l_1134}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_28_1081=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n&#8866; flted_28_1081+1=flted_28_1082+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_28_1081, flted_28_1082] : (( (not ((((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_28_1081 = n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n))))  | (flted_28_1081 + 1 = flted_28_1082 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,flted_28_1081,flted_28_1082]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1081 &amp; 1+flted_28_1081=n&#8866; flted_28_1081+1=flted_28_1081+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_28_1081] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1081)) &amp; (1 + flted_28_1081 = n))))  | (flted_28_1081 + 1 = flted_28_1081 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,flted_28_1081]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=flted_28_1081 &amp; 0&lt;=n &amp; 1+flted_28_1081=n&#8866; 1+flted_28_1081=n
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n] : (( (not (((((0 != n) &amp; (0 &lt;= flted_28_1081)) &amp; (0 &lt;= n)) &amp; (1 + flted_28_1081 = n))))  | (1 + flted_28_1081 = n)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1081,n]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1081 &amp; 1+flted_28_1081=n &amp; 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+<br/>
+flted_28_1082=n&#8866; null=l_1163 | 0=flted_28_1082
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1081, n, l_1163, flted_28_1082] : (( (not (((((((0 &lt;= flted_28_1081) &amp; (1 + flted_28_1081 = n)) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n))))  | ((l_1163 &lt; 1) | (0 = flted_28_1082))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1081,flted_28_1081+1,l_1163,flted_28_1081]: 1 &lt;= flted_28_1081 &amp;&amp; 1 &lt;= l_1163}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=flted_28_1082 &amp; 0&lt;=n &amp; 1+flted_28_1082=n &amp; 0!=n &amp; 0&lt;=flted_28_1081 &amp; 1+<br/>
+flted_28_1081=n&#8866; null=r_1164 | 0=flted_28_1081
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_28_1082, n, r_1164, flted_28_1081] : (( (not (((((((0 &lt;= flted_28_1082) &amp; (0 &lt;= n)) &amp; (1 + flted_28_1082 = n)) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1081)) &amp; (1 + flted_28_1081 = n))))  | ((r_1164 &lt; 1) | (0 = flted_28_1081))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_28_1082,flted_28_1082+1,r_1164,flted_28_1082]: 1 &lt;= flted_28_1082 &amp;&amp; 1 &lt;= r_1164}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_1164=r_1164&#8866; null=r_1164
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_1164] : (((r_1164 != r_1164) | (r_1164 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_1164]: 1 &lt;= r_1164}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_1163=l_1163&#8866; null=l_1163
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_1163] : (((l_1163 != l_1163) | (l_1163 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_1163]: 1 &lt;= l_1163}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 0&lt;=flted_28_1082 &amp; 1+flted_28_1082=n &amp; 1+flted_28_1081=n&#8866; flted_28_1081+1=flted_28_1082+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_28_1081, flted_28_1082] : (( (not ((((((0 &lt;= n) &amp; (0 != n)) &amp; (0 &lt;= flted_28_1082)) &amp; (1 + flted_28_1082 = n)) &amp; (1 + flted_28_1081 = n))))  | (flted_28_1081 + 1 = flted_28_1082 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,flted_28_1081,flted_28_1082]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 0&lt;=n_1104 &amp; 1+n_1104=n&#8866; n_1104+1=n_1104+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, n_1104] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (0 &lt;= n_1104)) &amp; (1 + n_1104 = n))))  | (n_1104 + 1 = n_1104 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,n_1104]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n_1104 &amp; 0&lt;=n &amp; 1+n_1104=n&#8866; 1+n_1104=n
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1104, n] : (( (not (((((0 != n) &amp; (0 &lt;= n_1104)) &amp; (0 &lt;= n)) &amp; (1 + n_1104 = n))))  | (1 + n_1104 = n)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_1104,n]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1117 &amp; 0&lt;=n &amp; 0!=n &amp; 1+n_1117=n &amp; 0&lt;=n_1104 &amp; 1+n_1104=n&#8866; null=l_1192 | 0=n_1104
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1117, n, l_1192, n_1104] : (( (not (((((((0 &lt;= n_1117) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + n_1117 = n)) &amp; (0 &lt;= n_1104)) &amp; (1 + n_1104 = n))))  | ((l_1192 &lt; 1) | (0 = n_1104))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_1117,n_1117+1,l_1192,n_1117]: 1 &lt;= n_1117 &amp;&amp; 1 &lt;= l_1192}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n_1104 &amp; 0&lt;=n &amp; 0!=n &amp; 1+n_1104=n &amp; 1+n_1117=n &amp; 0&lt;=n_1117&#8866; null=r_1193 | 0=n_1117
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1104, n, r_1193, n_1117] : (( (not (((((((0 &lt;= n_1104) &amp; (0 &lt;= n)) &amp; (0 != n)) &amp; (1 + n_1104 = n)) &amp; (1 + n_1117 = n)) &amp; (0 &lt;= n_1117))))  | ((r_1193 &lt; 1) | (0 = n_1117))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_1104,n_1104+1,r_1193,n_1104]: 1 &lt;= n_1104 &amp;&amp; 1 &lt;= r_1193}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> r_1193=r_1193&#8866; null=r_1193
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[r_1193] : (((r_1193 != r_1193) | (r_1193 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[r_1193]: 1 &lt;= r_1193}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> l_1192=l_1192&#8866; null=l_1192
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[l_1192] : (((l_1192 != l_1192) | (l_1192 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[l_1192]: 1 &lt;= l_1192}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 0&lt;=n_1104 &amp; 1+n_1117=n &amp; 1+n_1104=n &amp; 0&lt;=n_1117&#8866; n_1117+1=n_1104+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, n_1117, n_1104] : (( (not (((((((0 &lt;= n) &amp; (0 != n)) &amp; (0 &lt;= n_1104)) &amp; (1 + n_1117 = n)) &amp; (1 + n_1104 = n)) &amp; (0 &lt;= n_1117))))  | (n_1117 + 1 = n_1104 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,n_1117,n_1104]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0!=n &amp; 0&lt;=n &amp; 0&lt;=n_1104 &amp; 1+n_1104=n&#8866; n_1104+1=n_1104+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, n_1104] : (( (not (((((0 != n) &amp; (0 &lt;= n)) &amp; (0 &lt;= n_1104)) &amp; (1 + n_1104 = n))))  | (n_1104 + 1 = n_1104 + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,n_1104]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n_1104 &amp; 0&lt;=n &amp; 1+n_1104=n &amp; 0!=n&#8866; 1+n_1104=n
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_1104, n] : (( (not (((((0 &lt;= n_1104) &amp; (0 &lt;= n)) &amp; (1 + n_1104 = n)) &amp; (0 != n))))  | (1 + n_1104 = n)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_1104,n]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

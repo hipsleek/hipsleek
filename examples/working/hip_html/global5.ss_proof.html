@@ -1,0 +1,273 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/global5.ss</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure decrease<ul><li class="Collapsed procdef">Internal representation
+<ul>void decrease$int(  int k_11)<br/>
+static  EBase true &amp; (()) &amp; {FLOW,(34,34)=__norm}<br/>
+         EAssume 3::ref [k_11]<br/>
+           true &amp; (([1+k_11&apos;=k_11])) &amp; {FLOW,(34,34)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref k_11<br/>
+{<br/>
+int v_int_16_606;<br/>
+v_int_16_606 = k_11;<br/>
+k_11 = {<br/>
+int v_int_16_607;<br/>
+v_int_16_607 = 1;<br/>
+68::minus___$int~int(k_11,v_int_16_607)<br/>
+};<br/>
+v_int_16_606<br/>
+}<br/>
+<br/>
+{(12,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 68::minus___$int~int(k_11,v_int_16_607) holds<ul></ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> 1+k_11&apos;=k_11&#8866; 1+k_11&apos;=k_11
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[k_11PRMD, k_11] : (((1 + k_11PRMD != k_11) | (1 + k_11PRMD = k_11)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[k_11PRMD,k_11]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure increase<ul><li class="Collapsed procdef">Internal representation
+<ul>void increase$int~int~int(  int k_local_1,  int n_13,  int k_12)<br/>
+static  EBase true &amp; (([1&lt;=k_local_1])) &amp; {FLOW,(34,34)=__norm}<br/>
+         EAssume 1::ref [k_local_1;n_13;k_12]<br/>
+           true &amp; (([n_13=k_local_1&apos;])) &amp; {FLOW,(34,34)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref k_local_1, n_13, k_12<br/>
+k_local_1 = n_13;<br/>
+{<br/>
+70::decrease$int(k_12)<br/>
+}<br/>
+<br/>
+{(4,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 70::decrease$int(k_12) holds<ul></ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> k_local_1&apos;=k_local_1&apos;&#8866; k_local_1&apos;=k_local_1&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[k_local_1PRMD] : (((k_local_1PRMD != k_local_1PRMD) | (k_local_1PRMD = k_local_1PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[k_local_1PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

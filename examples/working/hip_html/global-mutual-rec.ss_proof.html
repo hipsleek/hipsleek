@@ -1,0 +1,780 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/global-mutual-rec.ss</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure main<ul><li class="Collapsed procdef">Internal representation
+<ul>void main$int~int(  int n_12,  int k_11)<br/>
+static  EBase true &amp; (()) &amp; {FLOW,(40,40)=__norm}<br/>
+         EAssume 12::ref [n_12;k_11]<br/>
+           true &amp; (([5=n_12&apos;][5=k_11&apos;])) &amp; {FLOW,(40,40)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref n_12, k_11<br/>
+n_12 = 10;<br/>
+int t_50;<br/>
+t_50 = 5;<br/>
+k_11 = 10;<br/>
+{<br/>
+int v_int_43_614;<br/>
+v_int_43_614 = 10;<br/>
+79::decrease1$int~int~int(v_int_43_614,n_12,k_11)<br/>
+}<br/>
+<br/>
+{(36,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 79::decrease1$int~int~int(v_int_43_614,n_12,k_11) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; &exist;alpha_742:2*alpha_742=10 &amp; 0&lt;=10)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[] : ( (exists (alpha_742:((2(alpha_742) = 10) &amp; (0 &lt;= 10)))) )};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{ FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> true&#8866; &exist;alpha_745:2*alpha_745=1+10 &amp; 1&lt;=10)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[] : ( (exists (alpha_745:((2(alpha_745) = 1 + 10) &amp; (1 &lt;= 10)))) )};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{ TRUE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> true&#8866; &exist;alpha_746:2*alpha_746=1+10 &amp; 1&lt;=10)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[] : ( (exists (alpha_746:((2(alpha_746) = 1 + 10) &amp; (1 &lt;= 10)))) )};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{ TRUE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> true&#8866; &exist;alpha_747:2*alpha_747=1+10 &amp; 1&lt;=10)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[] : ( (exists (alpha_747:((2(alpha_747) = 1 + 10) &amp; (1 &lt;= 10)))) )};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{ TRUE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> true&#8866; &exist;alpha_748:2*alpha_748=1+10 &amp; 1&lt;=10)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[] : ( (exists (alpha_748:((2(alpha_748) = 1 + 10) &amp; (1 &lt;= 10)))) )};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{ TRUE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=a &amp; a+n_12&apos;=a+a &amp; a+k_11&apos;=a+a&#8866; 5=k_11&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_12PRMD, a, k_11PRMD] : (( (not ((((0 &lt;= a) &amp; (a + n_12PRMD = a + a)) &amp; (a + k_11PRMD = a + a))))  | (5 = k_11PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul> {[n_12PRMD,n_12PRMD,n_12PRMD]: 0 &lt;= n_12PRMD &lt;= 4}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=a &amp; a+n_12&apos;=a+a &amp; 10=a+a &amp; a+k_11&apos;=a+a&#8866; 5=k_11&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_12PRMD, a, k_11PRMD] : (( (not (((((0 &lt;= a) &amp; (a + n_12PRMD = a + a)) &amp; (10 = a + a)) &amp; (a + k_11PRMD = a + a))))  | (5 = k_11PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_12PRMD,a,k_11PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> a+k_11&apos;=a+a &amp; 0&lt;=a &amp; a+n_12&apos;=a+a&#8866; 5=n_12&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[k_11PRMD, a, n_12PRMD] : (( (not ((((a + k_11PRMD = a + a) &amp; (0 &lt;= a)) &amp; (a + n_12PRMD = a + a))))  | (5 = n_12PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul> {[k_11PRMD,k_11PRMD,k_11PRMD]: 0 &lt;= k_11PRMD &lt;= 4}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> a+k_11&apos;=a+a &amp; 0&lt;=a &amp; 10=a+a &amp; a+n_12&apos;=a+a&#8866; 5=n_12&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[k_11PRMD, a, n_12PRMD] : (( (not (((((a + k_11PRMD = a + a) &amp; (0 &lt;= a)) &amp; (10 = a + a)) &amp; (a + n_12PRMD = a + a))))  | (5 = n_12PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[k_11PRMD,a,n_12PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure decrease2<ul><li class="Collapsed procdef">Internal representation
+<ul>void decrease2$int~int~int(  int t,  int n_14,  int k_13)<br/>
+static  EBase exists (Expl)[a](Impl)[](ex)[]true &amp; (([0&lt;=a &amp; t=a+a])) &amp;<br/>
+       {FLOW,(40,40)=__norm}<br/>
+         EAssume 7::ref [n_14;k_13]<br/>
+           true &amp; (([t=a+a &amp; a+k_13&apos;=k_13 &amp; a+n_14&apos;=n_14])) &amp;<br/>
+           {FLOW,(40,40)=__norm}<br/>
+|| EBase exists (Expl)[a](Impl)[](ex)[]true &amp; (([0&lt;=a &amp; t=1+a+a])) &amp;<br/>
+         {FLOW,(40,40)=__norm}<br/>
+           EAssume 8::ref [n_14;k_13]<br/>
+             true &amp; (([t=1+a+a &amp; 1+a+k_13&apos;=k_13 &amp; a+n_14&apos;=n_14])) &amp;<br/>
+             {FLOW,(40,40)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref n_14, k_13<br/>
+boolean v_bool_30_667;<br/>
+v_bool_30_667 = {<br/>
+int v_int_30_661;<br/>
+v_int_30_661 = 0;<br/>
+85::gt___$int~int(t,v_int_30_661)<br/>
+};<br/>
+80::if (v_bool_30_667) LABEL! 80,0: {<br/>
+int v_int_31_666;<br/>
+v_int_31_666 = {<br/>
+int v_int_31_662;<br/>
+v_int_31_662 = k_13;<br/>
+k_13 = {<br/>
+int v_int_31_663;<br/>
+v_int_31_663 = 1;<br/>
+82::minus___$int~int(k_13,v_int_31_663)<br/>
+};<br/>
+v_int_31_662<br/>
+}<br/>
+};<br/>
+{<br/>
+int v_int_32_665;<br/>
+v_int_32_665 = {<br/>
+int v_int_32_664;<br/>
+v_int_32_664 = 1;<br/>
+84::minus___$int~int(t,v_int_32_664)<br/>
+};<br/>
+83::decrease1$int~int~int(v_int_32_665,n_14,k_13) rec<br/>
+}<br/>
+else LABEL! 80,1: <br/>
+<br/>
+<br/>
+{(18,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 85::gt___$int~int(t,v_int_30_661) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 82::minus___$int~int(k_13,v_int_31_663) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 84::minus___$int~int(t,v_int_32_664) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 83::decrease1$int~int~int(v_int_32_665,n_14,k_13) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_778:2*alpha_778=v_int_32_665&apos; &amp; 0&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_778:((2(alpha_778) = v_int_32_665PRMD) &amp; (0 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_779:2*alpha_779=v_int_32_665&apos; &amp; 0&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_779:((2(alpha_779) = v_int_32_665PRMD) &amp; (0 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_780:2*alpha_780=v_int_32_665&apos; &amp; 0&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_780:((2(alpha_780) = v_int_32_665PRMD) &amp; (0 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_781:2*alpha_781=v_int_32_665&apos; &amp; 0&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_781:((2(alpha_781) = v_int_32_665PRMD) &amp; (0 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_782:2*alpha_782=1+v_int_32_665&apos; &amp; 1&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_782:((2(alpha_782) = 1 + v_int_32_665PRMD) &amp; (1 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,tPRMD,v_int_32_665PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=a_771 &amp; 1+a_771+n_14&apos;=n_14 &amp; 1+a_771+k_13&apos;=k_13 &amp; 0&lt;=a &amp; t=a+a &amp; (1+<br/>
+0)&lt;=t &amp; 1+1+a_771+a_771=t&#8866; t=a+a
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_14PRMD, n_14, k_13PRMD, k_13, a_771, t, a] : (( (not ((((((((0 &lt;= a_771) &amp; (1 + a_771 + n_14PRMD = n_14)) &amp; (1 + a_771 + k_13PRMD = k_13)) &amp; (0 &lt;= a)) &amp; (t = a + a)) &amp; (1 + 0 &lt;= t)) &amp; (1 + 1 + a_771 + a_771 = t))))  | (t = a + a)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_14PRMD,n_14,k_13PRMD,k_13,a_771,t,a]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 1+1+a_771+a_771=t &amp; 0&lt;=a_771 &amp; 1+a_771+n_14&apos;=n_14 &amp; (1+0)&lt;=t &amp; 0&lt;=a &amp; t=a+<br/>
+a &amp; 1+a_771+k_13&apos;=k_13&#8866; a+k_13&apos;=k_13
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_14PRMD, n_14, t, a_771, a, k_13PRMD, k_13] : (( (not ((((((((1 + 1 + a_771 + a_771 = t) &amp; (0 &lt;= a_771)) &amp; (1 + a_771 + n_14PRMD = n_14)) &amp; (1 + 0 &lt;= t)) &amp; (0 &lt;= a)) &amp; (t = a + a)) &amp; (1 + a_771 + k_13PRMD = k_13))))  | (a + k_13PRMD = k_13)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_14PRMD,n_14,t,a_771,a,k_13PRMD,k_13]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 1+1+a_771+a_771=t &amp; 0&lt;=a_771 &amp; 1+a_771+k_13&apos;=k_13 &amp; (1+0)&lt;=t &amp; 0&lt;=a &amp; t=a+<br/>
+a &amp; 1+a_771+n_14&apos;=n_14&#8866; a+n_14&apos;=n_14
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[k_13PRMD, k_13, t, a_771, a, n_14PRMD, n_14] : (( (not ((((((((1 + 1 + a_771 + a_771 = t) &amp; (0 &lt;= a_771)) &amp; (1 + a_771 + k_13PRMD = k_13)) &amp; (1 + 0 &lt;= t)) &amp; (0 &lt;= a)) &amp; (t = a + a)) &amp; (1 + a_771 + n_14PRMD = n_14))))  | (a + n_14PRMD = n_14)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[k_13PRMD,k_13,t,a_771,a,n_14PRMD,n_14]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> t=a+a &amp; t&lt;=0 &amp; 0&lt;=a&#8866; t=a+a
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t, a] : (( (not ((((t = a + a) &amp; (t &lt;= 0)) &amp; (0 &lt;= a))))  | (t = a + a)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t,a]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> t&lt;=0 &amp; t=a+a &amp; 0&lt;=a&#8866; a+k_13&apos;=k_13&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t, a, k_13PRMD] : (( (not ((((t &lt;= 0) &amp; (t = a + a)) &amp; (0 &lt;= a))))  | (a + k_13PRMD = k_13PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t,a,k_13PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> t&lt;=0 &amp; t=a+a &amp; 0&lt;=a&#8866; a+n_14&apos;=n_14&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t, a, n_14PRMD] : (( (not ((((t &lt;= 0) &amp; (t = a + a)) &amp; (0 &lt;= a))))  | (a + n_14PRMD = n_14PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t,a,n_14PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 85::gt___$int~int(t,v_int_30_661) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 82::minus___$int~int(k_13,v_int_31_663) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 84::minus___$int~int(t,v_int_32_664) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 83::decrease1$int~int~int(v_int_32_665,n_14,k_13) rec holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_813:2*alpha_813=v_int_32_665&apos; &amp; 0&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_813:((2(alpha_813) = v_int_32_665PRMD) &amp; (0 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,tPRMD,v_int_32_665PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_816:2*alpha_816=1+v_int_32_665&apos; &amp; 1&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_816:((2(alpha_816) = 1 + v_int_32_665PRMD) &amp; (1 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_817:2*alpha_817=1+v_int_32_665&apos; &amp; 1&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_817:((2(alpha_817) = 1 + v_int_32_665PRMD) &amp; (1 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_818:2*alpha_818=1+v_int_32_665&apos; &amp; 1&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_818:((2(alpha_818) = 1 + v_int_32_665PRMD) &amp; (1 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_32_665&apos;=t&apos;&#8866; &exist;alpha_819:2*alpha_819=1+v_int_32_665&apos; &amp; 1&lt;=v_int_32_665&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_32_665PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_32_665PRMD = tPRMD))))  |  (exists (alpha_819:((2(alpha_819) = 1 + v_int_32_665PRMD) &amp; (1 &lt;= v_int_32_665PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=a_805 &amp; a_805+n_14&apos;=n_14 &amp; 1+a_805+k_13&apos;=k_13 &amp; 0&lt;=a &amp; t=1+a+a &amp; (1+<br/>
+0)&lt;=t &amp; 1+a_805+a_805=t&#8866; t=1+a+a
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_14PRMD, n_14, k_13PRMD, k_13, a_805, t, a] : (( (not ((((((((0 &lt;= a_805) &amp; (a_805 + n_14PRMD = n_14)) &amp; (1 + a_805 + k_13PRMD = k_13)) &amp; (0 &lt;= a)) &amp; (t = 1 + a + a)) &amp; (1 + 0 &lt;= t)) &amp; (1 + a_805 + a_805 = t))))  | (t = 1 + a + a)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_14PRMD,n_14,k_13PRMD,k_13,a_805,t,a]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 1+a_805+a_805=t &amp; 0&lt;=a_805 &amp; a_805+n_14&apos;=n_14 &amp; (1+0)&lt;=t &amp; 0&lt;=a &amp; t=1+a+a &amp; <br/>
+1+a_805+k_13&apos;=k_13&#8866; 1+a+k_13&apos;=k_13
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n_14PRMD, n_14, t, a_805, a, k_13PRMD, k_13] : (( (not ((((((((1 + a_805 + a_805 = t) &amp; (0 &lt;= a_805)) &amp; (a_805 + n_14PRMD = n_14)) &amp; (1 + 0 &lt;= t)) &amp; (0 &lt;= a)) &amp; (t = 1 + a + a)) &amp; (1 + a_805 + k_13PRMD = k_13))))  | (1 + a + k_13PRMD = k_13)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n_14PRMD,n_14,t,a_805,a,k_13PRMD,k_13]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 1+a_805+a_805=t &amp; 0&lt;=a_805 &amp; 1+a_805+k_13&apos;=k_13 &amp; (1+0)&lt;=t &amp; 0&lt;=a &amp; t=1+a+<br/>
+a &amp; a_805+n_14&apos;=n_14&#8866; a+n_14&apos;=n_14
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[k_13PRMD, k_13, t, a_805, a, n_14PRMD, n_14] : (( (not ((((((((1 + a_805 + a_805 = t) &amp; (0 &lt;= a_805)) &amp; (1 + a_805 + k_13PRMD = k_13)) &amp; (1 + 0 &lt;= t)) &amp; (0 &lt;= a)) &amp; (t = 1 + a + a)) &amp; (a_805 + n_14PRMD = n_14))))  | (a + n_14PRMD = n_14)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[k_13PRMD,k_13,t,a_805,a,n_14PRMD,n_14]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure decrease1<ul><li class="Collapsed procdef">Internal representation
+<ul>void decrease1$int~int~int(  int t,  int n_16,  int k_15)<br/>
+static  EBase exists (Expl)[a](Impl)[](ex)[]true &amp; (([0&lt;=a &amp; t=a+a])) &amp;<br/>
+       {FLOW,(40,40)=__norm}<br/>
+         EAssume 1::ref [n_16;k_15]<br/>
+           true &amp; (([t=a+a &amp; a+n_16&apos;=n_16 &amp; a+k_15&apos;=k_15])) &amp;<br/>
+           {FLOW,(40,40)=__norm}<br/>
+|| EBase exists (Expl)[a](Impl)[](ex)[]true &amp; (([0&lt;=a &amp; t=1+a+a])) &amp;<br/>
+         {FLOW,(40,40)=__norm}<br/>
+           EAssume 2::ref [n_16;k_15]<br/>
+             true &amp; (([t=1+a+a &amp; 1+a+n_16&apos;=n_16 &amp; a+k_15&apos;=k_15])) &amp;<br/>
+             {FLOW,(40,40)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref n_16, k_15<br/>
+boolean v_bool_9_723;<br/>
+v_bool_9_723 = {<br/>
+int v_int_9_714;<br/>
+v_int_9_714 = 0;<br/>
+92::gt___$int~int(t,v_int_9_714)<br/>
+};<br/>
+86::if (v_bool_9_723) LABEL! 86,0: {<br/>
+int v_int_11_719;<br/>
+v_int_11_719 = {<br/>
+int v_int_11_715;<br/>
+v_int_11_715 = n_16;<br/>
+n_16 = {<br/>
+int v_int_11_716;<br/>
+v_int_11_716 = 1;<br/>
+88::minus___$int~int(n_16,v_int_11_716)<br/>
+};<br/>
+v_int_11_715<br/>
+}<br/>
+};<br/>
+{<br/>
+int v_int_13_718;<br/>
+v_int_13_718 = {<br/>
+int v_int_13_717;<br/>
+v_int_13_717 = 1;<br/>
+90::minus___$int~int(t,v_int_13_717)<br/>
+};<br/>
+89::decrease2$int~int~int(v_int_13_718,n_16,k_15) rec<br/>
+};<br/>
+91:: assume  false &amp; (([false])) &amp; {FLOW,(40,40)=__norm}<br/>
+else LABEL! 86,1: <br/>
+<br/>
+<br/>
+{(3,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 92::gt___$int~int(t,v_int_9_714) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 88::minus___$int~int(n_16,v_int_11_716) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 90::minus___$int~int(t,v_int_13_717) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 89::decrease2$int~int~int(v_int_13_718,n_16,k_15) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_849:2*alpha_849=v_int_13_718&apos; &amp; 0&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_849:((2(alpha_849) = v_int_13_718PRMD) &amp; (0 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_850:2*alpha_850=v_int_13_718&apos; &amp; 0&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_850:((2(alpha_850) = v_int_13_718PRMD) &amp; (0 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_851:2*alpha_851=v_int_13_718&apos; &amp; 0&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_851:((2(alpha_851) = v_int_13_718PRMD) &amp; (0 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_852:2*alpha_852=v_int_13_718&apos; &amp; 0&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_852:((2(alpha_852) = v_int_13_718PRMD) &amp; (0 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a,2a-1]: 1 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_853:2*alpha_853=1+v_int_13_718&apos; &amp; 1&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_853:((2(alpha_853) = 1 + v_int_13_718PRMD) &amp; (1 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,tPRMD,v_int_13_718PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> t&lt;=0 &amp; t=a+a &amp; 0&lt;=a&#8866; a+n_16&apos;=n_16&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t, a, n_16PRMD] : (( (not ((((t &lt;= 0) &amp; (t = a + a)) &amp; (0 &lt;= a))))  | (a + n_16PRMD = n_16PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t,a,n_16PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> t&lt;=0 &amp; t=a+a &amp; 0&lt;=a&#8866; a+k_15&apos;=k_15&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[t, a, k_15PRMD] : (( (not ((((t &lt;= 0) &amp; (t = a + a)) &amp; (0 &lt;= a))))  | (a + k_15PRMD = k_15PRMD)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[t,a,k_15PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 92::gt___$int~int(t,v_int_9_714) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 88::minus___$int~int(n_16,v_int_11_716) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 90::minus___$int~int(t,v_int_13_717) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 89::decrease2$int~int~int(v_int_13_718,n_16,k_15) rec holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_884:2*alpha_884=v_int_13_718&apos; &amp; 0&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_884:((2(alpha_884) = v_int_13_718PRMD) &amp; (0 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,tPRMD,v_int_13_718PRMD]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_887:2*alpha_887=1+v_int_13_718&apos; &amp; 1&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_887:((2(alpha_887) = 1 + v_int_13_718PRMD) &amp; (1 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_888:2*alpha_888=1+v_int_13_718&apos; &amp; 1&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_888:((2(alpha_888) = 1 + v_int_13_718PRMD) &amp; (1 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_889:2*alpha_889=1+v_int_13_718&apos; &amp; 1&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_889:((2(alpha_889) = 1 + v_int_13_718PRMD) &amp; (1 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> (1+0)&lt;=t&apos; &amp; 0&lt;=a &amp; t&apos;=1+a+a &amp; 1+v_int_13_718&apos;=t&apos;&#8866; &exist;alpha_890:2*alpha_890=1+v_int_13_718&apos; &amp; 1&lt;=v_int_13_718&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[a, tPRMD, v_int_13_718PRMD] : (( (not (((((1 + 0 &lt;= tPRMD) &amp; (0 &lt;= a)) &amp; (tPRMD = 1 + a + a)) &amp; (1 + v_int_13_718PRMD = tPRMD))))  |  (exists (alpha_890:((2(alpha_890) = 1 + v_int_13_718PRMD) &amp; (1 &lt;= v_int_13_718PRMD)))) ))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[a,2a+1,2a]: 0 &lt;= a}<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul></ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

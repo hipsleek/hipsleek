@@ -1,0 +1,707 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/array/arr_search_decrease_less_than_two.java</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure searchzero<ul><li class="Collapsed procdef">Internal representation
+<ul>boolean searchzero$int[]~int~int~int(  int[] a,  int i,  int j,  int k)<br/>
+static  EBase exists (Expl)[al; ah](Impl)[](ex)[]true &amp; dom(a,al,ah) &amp; al&lt;=i &amp; <br/>
+       j&lt;=ah &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; {FLOW,(32,32)=__norm}<br/>
+         EAssume 1::ref [k]<br/>
+           true &amp; res &amp; i&lt;=k&apos; &amp; k&apos;&lt;=j &amp; a[k&apos;]=0 &amp; {FLOW,(32,32)=__norm}<br/>
+           or true &amp; !(res) &amp; alldiff(a,0,i,j) &amp; {FLOW,(32,32)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref k<br/>
+boolean v_bool_31_640;<br/>
+v_bool_31_640 = {<br/>
+84::lte___$int~int(i,j)<br/>
+};<br/>
+70::if (v_bool_31_640) LABEL! 70,0: boolean v_bool_32_638;<br/>
+v_bool_32_638 = {<br/>
+int v_int_32_627;<br/>
+v_int_32_627 = {<br/>
+array_get_elm_at___1d$int[]~int(a,i)<br/>
+};<br/>
+int v_int_32_626;<br/>
+v_int_32_626 = 0;<br/>
+83::eq___$int~int(v_int_32_627,v_int_32_626)<br/>
+};<br/>
+72::if (v_bool_32_638) LABEL! 72,0: k = i;<br/>
+boolean v_boolean_34_628;<br/>
+v_boolean_34_628 = true;<br/>
+82::return v_boolean_34_628<br/>
+else LABEL! 72,1: boolean v_bool_36_637;<br/>
+v_bool_36_637 = {<br/>
+int v_int_36_630;<br/>
+v_int_36_630 = {<br/>
+array_get_elm_at___1d$int[]~int(a,i)<br/>
+};<br/>
+int v_int_36_629;<br/>
+v_int_36_629 = 0;<br/>
+80::gt___$int~int(v_int_36_630,v_int_36_629)<br/>
+};<br/>
+73::if (v_bool_36_637) LABEL! 73,0: boolean v_boolean_37_633;<br/>
+v_boolean_37_633 = {<br/>
+int v_int_37_632;<br/>
+v_int_37_632 = {<br/>
+int v_int_37_631;<br/>
+v_int_37_631 = {<br/>
+array_get_elm_at___1d$int[]~int(a,i)<br/>
+};<br/>
+79::add___$int~int(i,v_int_37_631)<br/>
+};<br/>
+78::searchzero$int[]~int~int~int(a,v_int_37_632,j,k) rec<br/>
+};<br/>
+77::return v_boolean_37_633<br/>
+else LABEL! 73,1: boolean v_boolean_39_636;<br/>
+v_boolean_39_636 = {<br/>
+int v_int_39_635;<br/>
+v_int_39_635 = {<br/>
+int v_int_39_634;<br/>
+v_int_39_634 = 1;<br/>
+76::add___$int~int(i,v_int_39_634)<br/>
+};<br/>
+75::searchzero$int[]~int~int~int(a,v_int_39_635,j,k) rec<br/>
+};<br/>
+74::return v_boolean_39_636<br/>
+<br/>
+<br/>
+else LABEL! 70,1: boolean v_boolean_41_639;<br/>
+v_boolean_41_639 = false;<br/>
+71::return v_boolean_41_639<br/>
+<br/>
+<br/>
+{(25,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 84::lte___$int~int(i,j) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; a=a
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (= a a)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> j&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=i &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; <br/>
+i&lt;=j&#8866; &exist;ahalb_659:&exist;ahaub_660:dom(a,ahalb_659,ahaub_660) &amp; <br/>
+ahalb_659&lt;=i &amp; i&lt;=ahaub_660))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun unitdec ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= j ahaub))<br/>
+(assert (dom a ahalb ahaub))<br/>
+(assert (&lt;= ahalb i))<br/>
+(assert (unitdec a i j))<br/>
+(assert (induce (- j i)))<br/>
+(assert (&lt;= i j))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_659 Int)) (exists ((ahaub_660 Int)) (and (dom a ahalb_659 ahaub_660) (and (&lt;= ahalb_659 i) (&lt;= i ahaub_660)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 83::eq___$int~int(v_int_32_627,v_int_32_626) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> j&lt;=ahaub_672 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
+dom(a,ahalb_671,ahaub_672) &amp; ahalb_671&lt;=i &amp; i&lt;=ahaub_672 &amp; (a[i])!=0&#8866; &exist;ahalb_677:&exist;ahaub_678:dom(a,ahalb_677,ahaub_678) &amp; <br/>
+ahalb_677&lt;=i &amp; i&lt;=ahaub_678))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun j () Int)<br/>
+(declare-fun ahalb_671 () Int)<br/>
+(declare-fun ahaub_672 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun unitdec ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= j ahaub_672))<br/>
+(assert (unitdec a i j))<br/>
+(assert (induce (- j i)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (dom a ahalb_671 ahaub_672))<br/>
+(assert (&lt;= ahalb_671 i))<br/>
+(assert (&lt;= i ahaub_672))<br/>
+(assert (not (= (select a i) 0)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_677 Int)) (exists ((ahaub_678 Int)) (and (dom a ahalb_677 ahaub_678) (and (&lt;= ahalb_677 i) (&lt;= i ahaub_678)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 80::gt___$int~int(v_int_36_630,v_int_36_629) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> j&lt;=ahaub_688 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; (a[i])!=0 &amp; <br/>
+dom(a,ahalb_687,ahaub_688) &amp; ahalb_687&lt;=i &amp; i&lt;=ahaub_688 &amp; 0&lt;(a[i])&#8866; &exist;ahalb_693:&exist;ahaub_694:dom(a,ahalb_693,ahaub_694) &amp; <br/>
+ahalb_693&lt;=i &amp; i&lt;=ahaub_694))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun j () Int)<br/>
+(declare-fun ahalb_687 () Int)<br/>
+(declare-fun ahaub_688 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun unitdec ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= j ahaub_688))<br/>
+(assert (unitdec a i j))<br/>
+(assert (induce (- j i)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (not (= (select a i) 0)))<br/>
+(assert (dom a ahalb_687 ahaub_688))<br/>
+(assert (&lt;= ahalb_687 i))<br/>
+(assert (&lt;= i ahaub_688))<br/>
+(assert (&lt; 0 (select a i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_693 Int)) (exists ((ahaub_694 Int)) (and (dom a ahalb_693 ahaub_694) (and (&lt;= ahalb_693 i) (&lt;= i ahaub_694)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 79::add___$int~int(i,v_int_37_631) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 78::searchzero$int[]~int~int~int(a,v_int_37_632,j,k) rec holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> v_int_37_632&apos;=(a[i])+i&#8866; a=a
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_37_632_primed () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (= v_int_37_632_primed (+ (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= a a)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> v_int_37_632&apos;=(a[i])+i&#8866; i=v_int_37_632&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_37_632_primed () Int)<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (= v_int_37_632_primed (+ (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= i v_int_37_632_primed)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>sat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; j=j
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (= j j)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> v_int_37_632&apos;=(a[i])+i&#8866; j - i=j - v_int_37_632&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_37_632_primed () Int)<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (= v_int_37_632_primed (+ (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= (- j i) (- j v_int_37_632_primed))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>sat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> i&lt;=ah_702 &amp; al_701&lt;=i &amp; j&lt;=ah_702 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
+(a[i])!=0 &amp; 0&lt;(a[i]) &amp; dom(a,al_701,ah_702) &amp; v_int_37_632&apos;=(a[i])+i&#8866; &exist;al_711:&exist;ah_712:dom(a,al_711,ah_712) &amp; al_711&lt;=v_int_37_632&apos; &amp; <br/>
+j&lt;=ah_712 &amp; unitdec(a,v_int_37_632&apos;,j) &amp; induce(j - v_int_37_632&apos;)))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_701 () Int)<br/>
+(declare-fun ah_702 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_37_632_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun unitdec ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= i ah_702))<br/>
+(assert (&lt;= al_701 i))<br/>
+(assert (&lt;= j ah_702))<br/>
+(assert (unitdec a i j))<br/>
+(assert (induce (- j i)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (not (= (select a i) 0)))<br/>
+(assert (&lt; 0 (select a i)))<br/>
+(assert (dom a al_701 ah_702))<br/>
+(assert (= v_int_37_632_primed (+ (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_711 Int)) (exists ((ah_712 Int)) (and (dom a al_711 ah_712) (and (&lt;= al_711 v_int_37_632_primed) (and (&lt;= j ah_712) (and (unitdec a v_int_37_632_primed j) (induce (- j v_int_37_632_primed))))))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unknown<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> i&lt;=ah_702 &amp; al_701&lt;=i &amp; j&lt;=ah_702 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
+(a[i])!=0 &amp; 0&lt;(a[i]) &amp; dom(a,al_701,ah_702) &amp; v_int_37_632&apos;=(a[i])+i&#8866; &exist;al_713:&exist;ah_714:dom(a,al_713,ah_714) &amp; al_713&lt;=v_int_37_632&apos; &amp; <br/>
+j&lt;=ah_714 &amp; unitdec(a,v_int_37_632&apos;,j) &amp; induce(j - v_int_37_632&apos;)))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_701 () Int)<br/>
+(declare-fun ah_702 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_37_632_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun unitdec ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= i ah_702))<br/>
+(assert (&lt;= al_701 i))<br/>
+(assert (&lt;= j ah_702))<br/>
+(assert (unitdec a i j))<br/>
+(assert (induce (- j i)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (not (= (select a i) 0)))<br/>
+(assert (&lt; 0 (select a i)))<br/>
+(assert (dom a al_701 ah_702))<br/>
+(assert (= v_int_37_632_primed (+ (select a i) i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_713 Int)) (exists ((ah_714 Int)) (and (dom a al_713 ah_714) (and (&lt;= al_713 v_int_37_632_primed) (and (&lt;= j ah_714) (and (unitdec a v_int_37_632_primed j) (induce (- j v_int_37_632_primed))))))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unknown<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 76::add___$int~int(i,v_int_39_634) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 75::searchzero$int[]~int~int~int(a,v_int_39_635,j,k) rec holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> v_int_39_635&apos;=1+i&#8866; i=v_int_39_635&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_39_635_primed () Int)<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (= v_int_39_635_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= i v_int_39_635_primed)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>sat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> v_int_39_635&apos;=1+i&#8866; j - i=j - v_int_39_635&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_39_635_primed () Int)<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (= v_int_39_635_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= (- j i) (- j v_int_39_635_primed))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>sat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> i&lt;=ah_738 &amp; al_737&lt;=i &amp; j&lt;=ah_738 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
+(a[i])!=0 &amp; dom(a,al_737,ah_738) &amp; (a[i])&lt;=0 &amp; v_int_39_635&apos;=1+i&#8866; &exist;al_747:&exist;ah_748:dom(a,al_747,ah_748) &amp; al_747&lt;=v_int_39_635&apos; &amp; <br/>
+j&lt;=ah_748 &amp; unitdec(a,v_int_39_635&apos;,j) &amp; induce(j - v_int_39_635&apos;)))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_737 () Int)<br/>
+(declare-fun ah_738 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_39_635_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun unitdec ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= i ah_738))<br/>
+(assert (&lt;= al_737 i))<br/>
+(assert (&lt;= j ah_738))<br/>
+(assert (unitdec a i j))<br/>
+(assert (induce (- j i)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (not (= (select a i) 0)))<br/>
+(assert (dom a al_737 ah_738))<br/>
+(assert (&lt;= (select a i) 0))<br/>
+(assert (= v_int_39_635_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_747 Int)) (exists ((ah_748 Int)) (and (dom a al_747 ah_748) (and (&lt;= al_747 v_int_39_635_primed) (and (&lt;= j ah_748) (and (unitdec a v_int_39_635_primed j) (induce (- j v_int_39_635_primed))))))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unknown<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> i&lt;=ah_738 &amp; al_737&lt;=i &amp; j&lt;=ah_738 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
+(a[i])!=0 &amp; dom(a,al_737,ah_738) &amp; (a[i])&lt;=0 &amp; v_int_39_635&apos;=1+i&#8866; &exist;al_749:&exist;ah_750:dom(a,al_749,ah_750) &amp; al_749&lt;=v_int_39_635&apos; &amp; <br/>
+j&lt;=ah_750 &amp; unitdec(a,v_int_39_635&apos;,j) &amp; induce(j - v_int_39_635&apos;)))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_737 () Int)<br/>
+(declare-fun ah_738 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_39_635_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun unitdec ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (unitdec a i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (&gt;= (select a (+ k 1)) (- (select a k) 1))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= i ah_738))<br/>
+(assert (&lt;= al_737 i))<br/>
+(assert (&lt;= j ah_738))<br/>
+(assert (unitdec a i j))<br/>
+(assert (induce (- j i)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (not (= (select a i) 0)))<br/>
+(assert (dom a al_737 ah_738))<br/>
+(assert (&lt;= (select a i) 0))<br/>
+(assert (= v_int_39_635_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_749 Int)) (exists ((ah_750 Int)) (and (dom a al_749 ah_750) (and (&lt;= al_749 v_int_39_635_primed) (and (&lt;= j ah_750) (and (unitdec a v_int_39_635_primed j) (induce (- j v_int_39_635_primed))))))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unknown<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

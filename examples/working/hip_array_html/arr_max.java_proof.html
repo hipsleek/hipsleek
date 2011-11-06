@@ -1,0 +1,510 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/array/arr_max.java</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure max_value_of_array<ul><li class="Collapsed procdef">Internal representation
+<ul>int max_value_of_array$int[]~int~int(  int[] a,  int i,  int j)<br/>
+static  EBase true &amp; dom(a,i,j) &amp; i&lt;=j &amp; {FLOW,(31,31)=__norm}<br/>
+         EAssume 1::<br/>
+           true &amp; upperbnd(a,i,j,res) &amp; {FLOW,(31,31)=__norm}<br/>
+dynamic  []<br/>
+68:: assume  true &amp; dom(a&apos;,i,j) &amp; {FLOW,(31,31)=__norm};<br/>
+boolean v_bool_20_621;<br/>
+v_bool_20_621 = {<br/>
+77::eq___$int~int(i,j)<br/>
+};<br/>
+69::if (v_bool_20_621) LABEL! 69,0: int v_int_21_614;<br/>
+v_int_21_614 = {<br/>
+array_get_elm_at___1d$int[]~int(a,i)<br/>
+};<br/>
+76::return v_int_21_614<br/>
+else LABEL! 69,1: int m_41;<br/>
+m_41 = {<br/>
+int v_int_23_616;<br/>
+v_int_23_616 = {<br/>
+int v_int_23_615;<br/>
+v_int_23_615 = 1;<br/>
+71::add___$int~int(i,v_int_23_615)<br/>
+};<br/>
+70::max_value_of_array$int[]~int~int(a,v_int_23_616,j) rec<br/>
+};<br/>
+boolean v_bool_24_620;<br/>
+v_bool_24_620 = {<br/>
+int v_int_24_617;<br/>
+v_int_24_617 = {<br/>
+array_get_elm_at___1d$int[]~int(a,i)<br/>
+};<br/>
+75::gt___$int~int(m_41,v_int_24_617)<br/>
+};<br/>
+72::if (v_bool_24_620) LABEL! 72,0: int v_int_25_618;<br/>
+v_int_25_618 = m_41;<br/>
+74::return v_int_25_618<br/>
+else LABEL! 72,1: int v_int_27_619;<br/>
+v_int_27_619 = {<br/>
+array_get_elm_at___1d$int[]~int(a,i)<br/>
+};<br/>
+73::return v_int_27_619<br/>
+<br/>
+<br/>
+<br/>
+{(15,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 77::eq___$int~int(i,j) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> true&#8866; a=a
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (= a a)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> ahaub&lt;=ahaub &amp; dom(a,ahaub,ahaub)&#8866; &exist;ahalb_640:&exist;ahaub_641:dom(a,ahalb_640,ahaub_641) &amp; <br/>
+ahalb_640&lt;=ahaub &amp; ahaub&lt;=ahaub_641))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahaub () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahaub ahaub))<br/>
+(assert (dom a ahaub ahaub))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_640 Int)) (exists ((ahaub_641 Int)) (and (dom a ahalb_640 ahaub_641) (and (&lt;= ahalb_640 ahaub) (&lt;= ahaub ahaub_641)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 71::add___$int~int(i,v_int_23_615) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 70::max_value_of_array$int[]~int~int(a,v_int_23_616,j) rec holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> i&lt;=j &amp; dom(a,i,j) &amp; i!=j &amp; v_int_23_616&apos;=1+i&#8866; dom(a,v_int_23_616&apos;,j)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_23_616_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= i j))<br/>
+(assert (dom a i j))<br/>
+(assert (not (= i j)))<br/>
+(assert (= v_int_23_616_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (dom a v_int_23_616_primed j)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> i&lt;=j &amp; dom(a,i,j) &amp; i!=j &amp; v_int_23_616&apos;=1+i&#8866; v_int_23_616&apos;&lt;=j
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_23_616_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (&lt;= i j))<br/>
+(assert (not (= i j)))<br/>
+(assert (= v_int_23_616_primed (+ 1 i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (&lt;= v_int_23_616_primed j)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> ahalb&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb!=ahaub &amp; upperbnd(a,1+<br/>
+ahalb,ahaub,m_41&apos;)&#8866; &exist;ahalb_660:&exist;ahaub_661:dom(a,ahalb_660,ahaub_661) &amp; <br/>
+ahalb_660&lt;=ahalb &amp; ahalb&lt;=ahaub_661))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun m_41_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun upperbnd ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (s Int)) (= (upperbnd a i j s) (or (&gt; i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= i k) (and (&lt;= k j) (&lt;= (select a k) s))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahalb ahaub))<br/>
+(assert (dom a ahalb ahaub))<br/>
+(assert (not (= ahalb ahaub)))<br/>
+(assert (upperbnd a (+ 1 ahalb) ahaub m_41_primed))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_660 Int)) (exists ((ahaub_661 Int)) (and (dom a ahalb_660 ahaub_661) (and (&lt;= ahalb_660 ahalb) (&lt;= ahalb ahaub_661)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 75::gt___$int~int(m_41,v_int_24_617) holds<ul></ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> ahalb_670!=ahaub_671 &amp; upperbnd(a,1+ahalb_670,ahaub_671,m_41&apos;) &amp; <br/>
+dom(a,ahalb_670,ahaub_671) &amp; ahalb_670&lt;=ahalb_670 &amp; ahalb_670&lt;=ahaub_671 &amp; <br/>
+m_41&apos;&lt;=(a[ahalb_670])&#8866; &exist;ahalb_676:&exist;ahaub_677:dom(a,ahalb_676,ahaub_677) &amp; <br/>
+ahalb_676&lt;=ahalb_670 &amp; ahalb_670&lt;=ahaub_677))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub_671 () Int)<br/>
+(declare-fun m_41_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb_670 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun upperbnd ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (s Int)) (= (upperbnd a i j s) (or (&gt; i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= i k) (and (&lt;= k j) (&lt;= (select a k) s))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (not (= ahalb_670 ahaub_671)))<br/>
+(assert (upperbnd a (+ 1 ahalb_670) ahaub_671 m_41_primed))<br/>
+(assert (dom a ahalb_670 ahaub_671))<br/>
+(assert (&lt;= ahalb_670 ahalb_670))<br/>
+(assert (&lt;= ahalb_670 ahaub_671))<br/>
+(assert (&lt;= m_41_primed (select a ahalb_670)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_676 Int)) (exists ((ahaub_677 Int)) (and (dom a ahalb_676 ahaub_677) (and (&lt;= ahalb_676 ahalb_670) (&lt;= ahalb_670 ahaub_677)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a,ahaub,ahaub) &amp; ahaub&lt;=ahaub &amp; v_int_21_614&apos;=a[ahaub]&#8866; upperbnd(a,ahaub,ahaub,v_int_21_614&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun v_int_21_614_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun upperbnd ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (s Int)) (= (upperbnd a i j s) (or (&gt; i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= i k) (and (&lt;= k j) (&lt;= (select a k) s))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahaub ahaub))<br/>
+(assert (= v_int_21_614_primed (select a ahaub)))<br/>
+;Negation of Consequence<br/>
+(assert (not (upperbnd a ahaub ahaub v_int_21_614_primed)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> ahalb!=ahaub &amp; upperbnd(a,1+ahalb,ahaub,m_41&apos;) &amp; dom(a,ahalb,ahaub) &amp; <br/>
+ahalb&lt;=ahalb &amp; ahalb&lt;=ahaub &amp; (a[ahalb])&lt;m_41&apos;&#8866; upperbnd(a,ahalb,ahaub,m_41&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun m_41_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun upperbnd ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (s Int)) (= (upperbnd a i j s) (or (&gt; i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= i k) (and (&lt;= k j) (&lt;= (select a k) s))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (s Int)) (= (upperbnd a i j s) (or (&gt; i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= i k) (and (&lt;= k j) (&lt;= (select a k) s))))))))))<br/>
+;Antecedent<br/>
+(assert (not (= ahalb ahaub)))<br/>
+(assert (upperbnd a (+ 1 ahalb) ahaub m_41_primed))<br/>
+(assert (&lt;= ahalb ahalb))<br/>
+(assert (&lt;= ahalb ahaub))<br/>
+(assert (&lt; (select a ahalb) m_41_primed))<br/>
+;Negation of Consequence<br/>
+(assert (not (upperbnd a ahalb ahaub m_41_primed)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> ahalb_670!=ahaub_671 &amp; upperbnd(a,1+ahalb_670,ahaub_671,m_41&apos;) &amp; <br/>
+m_41&apos;&lt;=(a[ahalb_670]) &amp; dom(a,ahalb_670,ahaub_671) &amp; ahalb_670&lt;=ahalb_670 &amp; <br/>
+ahalb_670&lt;=ahaub_671 &amp; v_int_27_619&apos;=a[ahalb_670]&#8866; upperbnd(a,ahalb_670,ahaub_671,v_int_27_619&apos;)
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun m_41_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb_670 () Int)<br/>
+(declare-fun ahaub_671 () Int)<br/>
+(declare-fun v_int_27_619_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun upperbnd ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (s Int)) (= (upperbnd a i j s) (or (&gt; i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= i k) (and (&lt;= k j) (&lt;= (select a k) s))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (s Int)) (= (upperbnd a i j s) (or (&gt; i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= i k) (and (&lt;= k j) (&lt;= (select a k) s))))))))))<br/>
+;Antecedent<br/>
+(assert (not (= ahalb_670 ahaub_671)))<br/>
+(assert (upperbnd a (+ 1 ahalb_670) ahaub_671 m_41_primed))<br/>
+(assert (&lt;= m_41_primed (select a ahalb_670)))<br/>
+(assert (&lt;= ahalb_670 ahalb_670))<br/>
+(assert (&lt;= ahalb_670 ahaub_671))<br/>
+(assert (= v_int_27_619_primed (select a ahalb_670)))<br/>
+;Negation of Consequence<br/>
+(assert (not (upperbnd a ahalb_670 ahaub_671 v_int_27_619_primed)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

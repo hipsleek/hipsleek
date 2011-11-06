@@ -1,0 +1,435 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/bll.ss</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure delete<ul><li class="Collapsed procdef">Internal representation
+<ul>node delete$node(  node x)<br/>
+static  EBase exists (Expl)[](Impl)[n; sm; <br/>
+       bg](ex)[]NN x::bndl&lt;n,sm,bg&gt;@M[Orig][LHSCase]@ rem br[{125}] &amp; (<br/>
+       ([null!=x][0!=n &amp; 0&lt;=n][sm&lt;=bg])) &amp; {FLOW,(33,33)=__norm}<br/>
+         EAssume 2::<br/>
+           EXISTS(sm_49,bg_50,<br/>
+           flted_28_48: NN res::bndl&lt;flted_28_48,sm_49,bg_50&gt;@M[Orig][LHSCase]@ rem br[{125,124}] &amp;<br/>
+           (<br/>
+           ([0&lt;=flted_28_48 &amp; 1+flted_28_48=n]<br/>
+            [sm_49=sm &amp; bg=bg_50 &amp; sm_49&lt;=bg_50])) &amp;<br/>
+           {FLOW,(33,33)=__norm})<br/>
+dynamic  []<br/>
+node v_node_31_692;<br/>
+v_node_31_692 = 66::bind x to (val_31_690,next_31_691) in <br/>
+{next_31_691<br/>
+};<br/>
+65::return v_node_31_692<br/>
+<br/>
+{(25,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_11_751=n &amp; 0&lt;=flted_11_751&#8866; 0=flted_11_751
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_11_751] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_11_751 = n)) &amp; (0 &lt;= flted_11_751))))  | (0 = flted_11_751)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,n-1]: 2 &lt;= n}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_11_751=n &amp; 0&lt;=flted_11_751&#8866; 0!=flted_11_751
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_11_751] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_11_751 = n)) &amp; (0 &lt;= flted_11_751))))  | (0 != flted_11_751)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> p_763=p_763&#8866; null=p_763
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[p_763] : (((p_763 != p_763) | (p_763 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[p_763]: 1 &lt;= p_763}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_11_761=n &amp; 0&lt;=flted_11_761&#8866; 0=flted_11_761
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_11_761] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_11_761 = n)) &amp; (0 &lt;= flted_11_761))))  | (0 = flted_11_761)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,n-1]: 2 &lt;= n}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_11_761=n &amp; 0&lt;=flted_11_761&#8866; 0!=flted_11_761
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, flted_11_761] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_11_761 = n)) &amp; (0 &lt;= flted_11_761))))  | (0 != flted_11_761)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[1,0]}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> p_763=p_763&#8866; p_763!=null
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[p_763] : (((p_763 != p_763) | (p_763 &gt; 0)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[p_763]: p_763 &lt;= 0}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n &amp; 0!=n &amp; 1+flted_11_761=n &amp; 0&lt;=flted_11_761&#8866; null=p_763 | 0=flted_11_761
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n, p_763, flted_11_761] : (( (not (((((0 &lt;= n) &amp; (0 != n)) &amp; (1 + flted_11_761 = n)) &amp; (0 &lt;= flted_11_761))))  | ((p_763 &lt; 1) | (0 = flted_11_761))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n,p_763,n-1]: 2 &lt;= n &amp;&amp; 1 &lt;= p_763}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> sm_759&lt;=d_762 &amp; d_762&lt;=bg_760 &amp; sm_759&lt;=bg_760&#8866; bg_760=bg_760
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[d_762, sm_759, bg_760] : (( (not ((((sm_759 &lt;= d_762) &amp; (d_762 &lt;= bg_760)) &amp; (sm_759 &lt;= bg_760))))  | (bg_760 = bg_760)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[d_762,sm_759,bg_760]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> d_762&lt;=bg_760 &amp; sm_759&lt;=d_762 &amp; sm_759&lt;=bg_760&#8866; sm_759=sm_759
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[d_762, bg_760, sm_759] : (( (not ((((d_762 &lt;= bg_760) &amp; (sm_759 &lt;= d_762)) &amp; (sm_759 &lt;= bg_760))))  | (sm_759 = sm_759)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[d_762,bg_760,sm_759]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0!=n &amp; 1+flted_11_761=n &amp; 0&lt;=n &amp; 0&lt;=flted_11_761&#8866; 1+flted_11_761=n
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[flted_11_761, n] : (( (not (((((0 != n) &amp; (1 + flted_11_761 = n)) &amp; (0 &lt;= n)) &amp; (0 &lt;= flted_11_761))))  | (1 + flted_11_761 = n)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[flted_11_761,n]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure insert<ul><li class="Collapsed procdef">Internal representation
+<ul>node insert$node~int(  node x,  int v)<br/>
+static  EBase exists (Expl)[](Impl)[n; sm; <br/>
+       bg](ex)[]NN x::bndl&lt;n,sm,bg&gt;@M[Orig][LHSCase]@ rem br[{125,124}] &amp; (<br/>
+       ([v&lt;=bg &amp; sm&lt;=v][0&lt;=n])) &amp; {FLOW,(33,33)=__norm}<br/>
+         EAssume 1::<br/>
+           EXISTS(sm_53,bg_54,<br/>
+           flted_18_52: NN res::bndl&lt;flted_18_52,sm_53,bg_54&gt;@M[Orig][LHSCase]@ rem br[{125,124}] &amp;<br/>
+           (<br/>
+           ([0&lt;=flted_18_52 &amp; -1+flted_18_52=n]<br/>
+            [sm_53=sm &amp; bg=bg_54 &amp; sm_53&lt;=bg_54])) &amp;<br/>
+           {FLOW,(33,33)=__norm})<br/>
+dynamic  []<br/>
+node v_node_21_720;<br/>
+v_node_21_720 = {<br/>
+newnode(v,x)<br/>
+};<br/>
+67::return v_node_21_720<br/>
+<br/>
+{(15,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> 0&lt;=n&#8866; null=p_787 | 0=n
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[p_787, n] : (((0 &gt; n) | ((p_787 &lt; 1) | (0 = n))))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[p_787,n]: 1 &lt;= n &amp;&amp; 1 &lt;= p_787}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> p_787=p_787&#8866; null=p_787
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[p_787] : (((p_787 != p_787) | (p_787 &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[p_787]: 1 &lt;= p_787}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> sm&lt;=d_786 &amp; d_786&lt;=bg&#8866; d_786&lt;=bg
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[sm, d_786, bg] : (( (not (((sm &lt;= d_786) &amp; (d_786 &lt;= bg))))  | (d_786 &lt;= bg)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[sm,d_786,bg]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> sm&lt;=d_786 &amp; d_786&lt;=bg&#8866; sm&lt;=d_786
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[bg, sm, d_786] : (( (not (((sm &lt;= d_786) &amp; (d_786 &lt;= bg))))  | (sm &lt;= d_786)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[bg,sm,d_786]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul> res!=null&#8866; null=res
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[res] : (((res &lt; 1) | (res &lt; 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[res]: 1 &lt;= res}<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> d_786&lt;=bg &amp; sm&lt;=d_786&#8866; sm&lt;=d_786
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[bg, sm, d_786] : (( (not (((d_786 &lt;= bg) &amp; (sm &lt;= d_786))))  | (sm &lt;= d_786)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[bg,sm,d_786]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> d_786&lt;=bg &amp; sm&lt;=d_786&#8866; d_786&lt;=bg
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[sm, d_786, bg] : (( (not (((d_786 &lt;= bg) &amp; (sm &lt;= d_786))))  | (d_786 &lt;= bg)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[sm,d_786,bg]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> 0&lt;=n&#8866; 1+n=n+1
+<li class="Collapsed proverinput">Input to prover
+<ul>complement {[n] : (((0 &gt; n) | (1 + n = n + 1)))};<br/>
+<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>{[n]  : FALSE }<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

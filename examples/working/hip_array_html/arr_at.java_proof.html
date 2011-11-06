@@ -1,0 +1,333 @@
+<html>
+<head>	<style type="text/css">
+/*
+ Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ Modified by An Hoa
+ */
+
+h1 {
+	color : green;
+}
+
+.proc {
+	border-style : double;
+	font-family : Arial;
+}
+
+.procdef {
+	color:blue;
+	font-size : 0.75em;
+	font-weight : normal;
+	border-style : groove;
+	font-family : monospace;
+}
+
+.pre {
+	background : aliceblue;
+	font-weight : normal;
+	border-style : solid;
+	font-family : Arial;
+}
+
+.post {
+	background : burlywood;
+	font-weight : normal;
+	font-family : Arial;
+	border-style : ridge;
+}
+
+.term {
+	font-weight : normal;
+	font-family : Arial;
+	border-style : double;
+}
+
+.proverinput {
+	color : black;
+	font-size : 0.75em;
+	background : goldenrod;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double.;
+}
+
+.proveroutput {
+	color : darkmagenta;
+	font-size : 0.75em;
+	background : greenyellow;
+	font-weight : normal;
+	font-family : monospace;
+	border-style : double;
+}
+
+.pureimplyvalid {
+	color : green;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.pureimplyinvalid {
+	color : red;
+	font-weight : normal;
+	border-style : dashed;
+}
+
+.TreeView 
+{
+    font: Verdana;
+    line-height: 20px;
+	cursor: pointer; 
+	font-style: normal;
+}
+
+.TreeView li
+{
+    /* The padding is for the tree view nodes */
+    padding: 0 0 0 18px;
+    float: left;
+    width: 100%;
+    list-style: none;
+}
+
+.TreeView, .TreeView ul
+{
+    margin: 0;
+    padding: 0;
+}
+
+li.Expanded 
+{
+    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+}
+
+li.Expanded ul
+{
+	display: block;
+}
+
+li.Collapsed 
+{
+	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+}
+
+li.Collapsed ul
+{
+    display: none;
+}</style>	<script type="text/javascript">
+/*
+ Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
+ */
+
+Array.prototype.indexOf = IndexOf;
+
+//Toggles between two classes for an element
+function ToggleClass(element, firstClass, secondClass, event)
+{
+    event.cancelBubble = true;
+    
+    var classes = element.className.split(" ");
+    var firstClassIndex = classes.indexOf(firstClass);
+    var secondClassIndex = classes.indexOf(secondClass);
+    
+    if (firstClassIndex == -1 && secondClassIndex == -1)
+    {
+        classes[classes.length] = firstClass;
+    }
+    else if (firstClassIndex != -1)
+    {
+        classes[firstClassIndex] = secondClass;
+    }
+    else
+    {
+        classes[secondClassIndex] = firstClass;
+    }
+    
+    element.className = classes.join(" ");
+    
+}
+
+//Finds the index of an item in an array
+function IndexOf(item)
+{
+    for (var i=0; i < this.length; i++)
+    {        
+        if (this[i] == item)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+//The toggle event handler for each expandable/collapsable node
+//- Note that this also exists to prevent any IE memory leaks 
+//(due to circular references caused by this)
+function ToggleNodeStateHandler(event)
+{
+    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
+}
+
+//Prevents the onclick event from bubbling up to parent elements
+function PreventBubbleHandler(event)
+{
+    if (!event) event = window.event;
+    event.cancelBubble = true;
+}
+
+//Adds the relevant onclick handlers for the nodes in the tree view
+function SetupTreeView(elementId)
+{
+    var tree = document.getElementById(elementId);
+    var treeElements = tree.getElementsByTagName("li");
+    
+    for (var i=0; i < treeElements.length; i++)
+    {
+        if (treeElements[i].getElementsByTagName("ul").length > 0)
+        {
+            treeElements[i].onclick = ToggleNodeStateHandler; 
+        }
+        else
+        {
+            treeElements[i].onclick = PreventBubbleHandler; 
+        }
+    }
+}</script></head>
+<body>
+<h1>./hip/array/arr_at.java</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+Procedure main<ul><li class="Collapsed procdef">Internal representation
+<ul>int main$()<br/>
+static  EBase true &amp; true &amp; {FLOW,(30,30)=__norm}<br/>
+         EAssume 1::<br/>
+           true &amp; res=1 &amp; {FLOW,(30,30)=__norm}<br/>
+dynamic  []<br/>
+int[] a_40;<br/>
+a_40 = Empty Array;<br/>
+66:: assume  true &amp; dom(a_40&apos;,0,5) &amp; {FLOW,(30,30)=__norm};<br/>
+a_40 = {<br/>
+int v_int_15_606;<br/>
+v_int_15_606 = 1;<br/>
+int v_int_15_605;<br/>
+v_int_15_605 = 0;<br/>
+67::update___1d$int~int[]~int(v_int_15_606,a_40,v_int_15_605)<br/>
+};<br/>
+int x_41;<br/>
+x_41 = {<br/>
+int v_int_16_607;<br/>
+v_int_16_607 = 0;<br/>
+array_get_elm_at___1d$int[]~int(a_40,v_int_16_607)<br/>
+};<br/>
+int v_int_17_608;<br/>
+v_int_17_608 = x_41;<br/>
+68::return v_int_17_608<br/>
+<br/>
+{(9,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 67::update___1d$int~int[]~int(v_int_15_606,a_40,v_int_15_605) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a_40&apos;,0,5)&#8866; &exist;ahalb_626:&exist;ahaub_627:dom(a_40&apos;,ahalb_626,ahaub_627) &amp; <br/>
+ahalb_626&lt;=0 &amp; 0&lt;=ahaub_627))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a_40_primed () (Array Int Int))<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (dom a_40_primed 0 5))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_626 Int)) (exists ((ahaub_627 Int)) (and (dom a_40_primed ahalb_626 ahaub_627) (and (&lt;= ahalb_626 0) (&lt;= 0 ahaub_627)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 6 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call array_get_elm_at___1d$int[]~int(a_40,v_int_16_607) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
+<ul> true&#8866; a_637=a_40&apos;
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a_637 () (Array Int Int))<br/>
+(declare-fun a_40_primed () (Array Int Int))<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert true)<br/>
+;Negation of Consequence<br/>
+(assert (not (= a_637 a_40_primed)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>sat<br/>
+</ul></li>
+</ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a_637,0,5) &amp; dom(a_40&apos;,0,5) &amp; update_array_1d(a_637,a_40&apos;,1,0)&#8866; &exist;ahalb_638:&exist;ahaub_639:dom(a_40&apos;,ahalb_638,ahaub_639) &amp; <br/>
+ahalb_638&lt;=0 &amp; 0&lt;=ahaub_639))
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a_637 () (Array Int Int))<br/>
+(declare-fun a_40_primed () (Array Int Int))<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (dom a_637 0 5))<br/>
+(assert (dom a_40_primed 0 5))<br/>
+(assert (= a_40_primed (store a_637 0 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_638 Int)) (exists ((ahaub_639 Int)) (and (dom a_40_primed ahalb_638 ahaub_639) (and (&lt;= ahalb_638 0) (&lt;= 0 ahaub_639)))))))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>(error &quot;line 7 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
+unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul> dom(a_637,0,5) &amp; dom(a_40&apos;,0,5) &amp; update_array_1d(a_637,a_40&apos;,1,0) &amp; <br/>
+x_41&apos;=a_40&apos;[0]&#8866; x_41&apos;=1
+<li class="Collapsed proverinput">Input to prover
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a_637 () (Array Int Int))<br/>
+(declare-fun a_40_primed () (Array Int Int))<br/>
+(declare-fun x_41_primed () Int)<br/>
+;Relations declarations<br/>
+;Axioms assertions<br/>
+;Antecedent<br/>
+(assert (= a_40_primed (store a_637 0 1)))<br/>
+(assert (= x_41_primed (select a_40_primed 0)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= x_41_primed 1)))<br/>
+(check-sat)<br/>
+</ul></li>
+<li class="Collapsed proveroutput">Output of prover
+<ul>unsat<br/>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>
