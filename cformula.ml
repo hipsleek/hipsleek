@@ -876,7 +876,7 @@ and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix
   if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
   else if (isAnyConstTrue f1) then (f2,true)
   else 
-    let r = MCP.merge_mems p f2 true in
+    let r = Gen.Profiling.no_1 "6_combine_mm" (MCP.merge_mems p f2) true in
     if (MCP.isConstMFalse r) then (r,false)
     else if (MCP.isConstMTrue r) then (r,false)
     else (r,true)      
@@ -1813,11 +1813,11 @@ and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f
 			  let eo2 = normalize_combine_star_x f1 o22 pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
-			let rf1 = rename_bound_vars f1 in
-			let rf2 = rename_bound_vars f2 in
+			let rf1 = Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f1 in
+			let rf2 = Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar_combine base1 base2 Flow_combine pos in
+			let new_base = Gen.Profiling.no_1 "6_mkstar" (mkStar_combine base1 base2 Flow_combine) pos in
 			let new_h, new_p, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
@@ -1827,7 +1827,7 @@ and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f
 and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = 
   let pr = !print_formula in
   Gen.Debug.no_2 "normalize_combine_star" pr pr pr 
-      (fun _ _ -> normalize_combine_star_x f1 f2 pos) f1 f2
+      (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st"(normalize_combine_star_x f1 f2) pos) f1 f2
 
 
 and normalize_combine_conj (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -4780,7 +4780,7 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
     if !Globals.max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx =
-  Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
+  Gen.Profiling.no_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
       
 let normalize_max_renaming f pos b ctx = 
   if !Globals.max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx

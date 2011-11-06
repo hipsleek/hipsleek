@@ -731,7 +731,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 	| DP -> 
 		let r = Dp.is_sat f sat_no in
 		if test_db then 
-			let r2 = Omega.is_sat f sat_no in
+			let r2 = Smtsolver.is_sat f sat_no in
 			if r=r2 then r 
 			else 
 				failwith ("dp-omega mismatch on sat: "^(Cprinter.string_of_pure_formula f)^" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
@@ -1101,7 +1101,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 	| DP -> 
 	   let r = Dp.imply ante conseq (imp_no^"XX") timeout in
 		if test_db then 
-			let r2 = Omega.imply ante conseq (imp_no^"XX") timeout in
+			let r2 = Smtsolver.imply ante conseq (*(imp_no^"XX") timeout*) in
 			if r=r2 then r 
 			else 
 				failwith ("dp-omega imply mismatch on: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^
@@ -2166,7 +2166,7 @@ let start_prover () =
 	  Mona.start();
 	  Omega.start();
 	end
-  | DP -> Omega.start();
+  | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
   | _ -> Omega.start()
@@ -2201,7 +2201,7 @@ let stop_prover () =
 		Mona.stop();
 		Omega.stop();
 	  end
-	| DP -> Omega.stop()
+	| DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
     | _ -> Omega.stop();;

@@ -176,18 +176,27 @@ let rec trans_f b f = match f with
   
 let trans_f b f = Gen.Profiling.do_2 "dptransf" trans_f b f
 let sat_check f = 
-  let contra_test eq_s neq_s =
-        List.exists (fun (v1,v2) -> Gen.BList.mem_eq s_eq v2 (get_aset eq_s v1)) neq_s in
+  let rec and_lin f = match f with | SAnd (f1,f2) -> (and_lin f1)@(and_lin f2) | _ -> [f] in
+  let contra_test1 eq_s (v1,v2) = Gen.BList.mem_eq s_eq v2 (get_aset eq_s v1) in
+  let contra_test eq_s neq_s = List.exists (contra_test1 eq_s) neq_s in
   let rec helper eqs neqs w_l f = match f with 
     | Seq a ->  
-      let eqs = set_add_eq eqs a in
-      ( match w_l with 
-          | [] -> not (contra_test eqs neqs)
-          | h::t -> helper eqs neqs t h)
-    | Sneq a -> (match w_l with 
+        let eqs = set_add_eq eqs a in
+        ( match w_l with 
+            | [] -> not (contra_test eqs neqs)
+            | h::t -> 
+              if (List.exists (fun (v1,v2)->(v1,v2)=a || (v2,v1)=a) neqs) then false
+              else helper eqs neqs t h)
+    | Sneq a -> 
+      (match w_l with 
           | [] -> not (contra_test eqs (a::neqs))
-          | h::t -> helper eqs (a::neqs) t h)
-    | SAnd (f1,f2) -> helper eqs neqs (f2::w_l) f1 
+          | h::t -> 
+            if contra_test1 eqs a then false
+            else helper eqs (a::neqs) t h)
+    | SAnd _ -> 
+      let l1,l2 = List.partition (fun c-> match c with | SOr _ -> true | _ -> false ) (and_lin f) in
+      let l = l2@l1 in
+      helper eqs neqs ((List.tl l) @ w_l) (List.hd l) 
     | SOr (f1,f2) -> (helper eqs neqs w_l f1) || (helper eqs neqs w_l f2) in
   helper [] [] [] f 
       
@@ -196,6 +205,7 @@ let is_sat f sat_no =
   | STrue -> true
   | SFalse -> false
   | SComp fc -> sat_check fc in
+ (* print_string (" is sat: "^(Cprinter.string_of_pure_formula f)^"\n \n"); flush(stdout);*)
   Gen.Profiling.do_1 "dpsat" h f
       
 let imply_test afc cfc =   
@@ -231,17 +241,15 @@ let imply ante conseq impl_no _ =
 		 | SComp afc -> imply_test afc cfc in
 	Gen.Profiling.do_2 "dpimply" h ante conseq 
       
-let simplify f = 
-	print_string "ffifi\n";
-	Omega.simplify f
+(*
+let imply ante conseq i f = Gen.Profiling.do_2 "dpimply" Smtsolver.imply ante conseq(* i f*)
+let is_sat f sn = Gen.Profiling.do_2 "dpsat" Smtsolver.is_sat f sn
+	*)  
+let simplify f = Omega.simplify f
 
-let hull f = 
-	print_string "faifi\n";
-	Omega.hull f	
+let hull f = Omega.hull f	
 	
-let pairwisecheck f = 
-	print_string "fpifi\n";
-	Omega.pairwisecheck f
+let pairwisecheck f = Omega.pairwisecheck f
 	
 (*let imply ante conseq impl_no _ = match trans_f false ante with
   | SFalse -> true

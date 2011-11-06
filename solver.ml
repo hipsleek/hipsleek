@@ -1491,9 +1491,9 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
-  let unfolded_h = unfold_heap prog h aset v fl uf pos in
+  let unfolded_h = Gen.Profiling.no_1 "4_unfold_heap" (unfold_heap prog h aset v fl uf) pos in
   let pure_f = mkBase HTrue p TypeTrue (mkTrueFlow ()) b pos in
-  let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
+  let tmp_form_norm =  Gen.Profiling.no_1 "8_norm_w_rest" (normalize_combine unfolded_h pure_f) pos in
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
   let resform = if (List.length qvars) >0 then push_exists qvars tmp_form else tmp_form in
   (*let res_form = elim_unsat prog resform in*)
@@ -1580,7 +1580,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 	  h_formula_star_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_star uf1 uf2 pos
+          Gen.Profiling.no_1 "5_norm_comb_star" (normalize_combine_star uf1 uf2) pos
     | Conj ({h_formula_conj_h1 = f1;
 	  h_formula_conj_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
@@ -2183,7 +2183,7 @@ and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno=
   let phb = CP.merge_branches phb br in    
   if phb = [] then
     let npf = MCP.merge_mems mix ph true in
-	(not (TP.is_sat_mix_sub_no npf sat_subno true true))
+	(not (Gen.Profiling.no_1 "2_tp_unsat" (TP.is_sat_mix_sub_no npf sat_subno true) true))
   else
     let npf = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true mix in
     let r = List.fold_left (fun is_ok (_,pf1b)->  
@@ -2833,7 +2833,9 @@ and heap_entail_conjunct_lhs_struc_x
 				(*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
                 
 	            let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
-	            let n_ctx_list, prf = heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding)   n_ctx formula_base pos in
+	            let n_ctx_list, prf = 
+					Gen.Profiling.no_1 "h_ent_1_EBase" 
+					(heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding)   n_ctx formula_base) pos in
 				(*let _ = print_string ("An Hoa :: inner_entailer_a :: ORIGINAL CONTEXT\n" ^ (Cprinter.string_of_context ctx) ^ "\n\n") in
 				  let _ = print_string ("An Hoa :: inner_entailer_a :: RESULT CONTEXT AFTER <heap_entail_one_context>\n" ^ (Cprinter.string_of_list_context n_ctx_list) ^ "\n\n") in*)
 	            (*let _ = print_string ("pp: "^(Cprinter.string_of_spec_var_list b.formula_ext_explicit_inst)^"\n"^
@@ -3101,6 +3103,9 @@ and heap_entail_one_context prog is_folding ctx conseq pos =
 	  (fun (l,p) -> Cprinter.string_of_list_context l)
 	  (fun ctx conseq -> heap_entail_one_context_x prog is_folding  ctx conseq pos) ctx conseq
 
+(*and heap_entail_one_context_y prog is_folding  ctx conseq pos = 
+	Gen.Profiling.do_1 "ent_1_ctx" (heap_entail_one_context_y prog is_folding  ctx conseq) pos*)
+	  
 and heap_entail_one_context_x (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
@@ -3160,6 +3165,8 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
       = Gen.Debug.no_2 "heap_entail_conjunct_lhs" Cprinter.string_of_context Cprinter.string_of_formula Cprinter.(fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
   (fun ctx conseq -> heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos) ctx conseq 
 
+and heap_entail_conjunct_lhs_y prog is_folding ctx conseq pos =
+  Gen.Profiling.no_1 "ent_conj_lhs" (heap_entail_conjunct_lhs_y prog is_folding ctx conseq) pos
 (* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
@@ -3316,7 +3323,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     formula_base_branches = []; 
     formula_base_label = None;
     formula_base_pos = no_pos } in
-	let res = process_action prog es conseq b b action [] is_folding pos in
+	let res = Gen.Profiling.no_1 "p_e_st"  (process_action prog es conseq b b action [] is_folding) pos in
 	(*let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
 	  let _ = print_endline (PR.string_of_entail_state es) in
 	  let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in
@@ -4354,7 +4361,7 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
       ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
       ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*)
     (* <<<<<<< solver.ml *)
-    heap_entail_conjunct_helper prog is_folding  ctx0 conseq rhs_matched_set pos
+    Gen.Profiling.no_1 "ent_conj_h" (heap_entail_conjunct_helper prog is_folding  ctx0 conseq rhs_matched_set) pos
 
 (* check the entailment of two conjuncts  *)
 (* return value: if fst res = true, then  *)
@@ -4831,10 +4838,13 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
   "LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^
   "RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in*)
 
+and heap_entail_empty_rhs_heap_y p i_f es lhs rhs rhsb pos =
+  Gen.Profiling.no_1 "empty_rhs" (heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb) pos
+  
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
-      (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
+      (fun _ _ -> heap_entail_empty_rhs_heap_y p i_f es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
@@ -6130,7 +6140,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             (CF.mkFailCtx_in(Basic_Reason(mkFailContext "ensuring finite unfold" estate conseq (get_node_label lhs_node) pos,
             CF.mk_failure_must "infinite unfolding" "separation reduction" [])),NoAlias)
           else
-            let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
+            let delta1 = Gen.Profiling.no_1 "1_unfold" (unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num) pos in (* update unfold_num *)
             let ctx1 = build_context (Ctx estate) delta1 pos in
 			let ctx1 = set_unsat_flag ctx1 true in
 			let res_rs, prf1 = heap_entail_one_context prog is_folding ctx1 conseq pos in
@@ -6140,7 +6150,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
     | Context.M_base_case_unfold {
           Context.match_res_lhs_node = lhs_node;
           Context.match_res_rhs_node = rhs_node;}->
-          let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
+          let ans = Gen.Profiling.no_1 "3_unfold" 
+            (do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos) rhs_b in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
                   , CF.mk_failure_none "base case unfold failed" )),NoAlias)
