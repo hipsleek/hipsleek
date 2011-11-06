@@ -883,7 +883,7 @@ let simplify (f : CP.formula) : CP.formula =
       (Gen.Profiling.push_time "simplify";
        try
 		 let r = match !tp with
-		   | DP ->  Omega.simplify f 
+		   | DP ->  Dp.simplify f 
            | Isabelle -> Isabelle.simplify f
            | Coq -> (* Coq.simplify f *)
              if (is_list_constraint f) then
@@ -981,7 +981,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   Gen.Debug.no_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
 
 let hull (f : CP.formula) : CP.formula = match !tp with
-  | DP -> Omega.hull f
+  | DP -> Dp.hull  f
   | Isabelle -> Isabelle.hull f
   | Coq -> (* Coq.hull f *)
       if (is_list_constraint f) then
@@ -1026,7 +1026,7 @@ let hull (f : CP.formula) : CP.formula =
   Gen.Debug.no_1 "hull" pr pr hull f
 
 let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
-  | DP -> Omega.pairwisecheck f
+  | DP -> Dp.pairwisecheck f
   | Isabelle -> Isabelle.pairwisecheck f
   | Coq -> (* Coq.pairwisecheck f *)
 	  if (is_list_constraint f) then
@@ -2166,6 +2166,7 @@ let start_prover () =
 	  Mona.start();
 	  Omega.start();
 	end
+  | DP -> Omega.start();
   | Z3 ->
       Smtsolver.start();
   | _ -> Omega.start()
@@ -2200,6 +2201,7 @@ let stop_prover () =
 		Mona.stop();
 		Omega.stop();
 	  end
+	| DP -> Omega.stop()
     | Z3 ->
       Smtsolver.stop();
     | _ -> Omega.stop();;
