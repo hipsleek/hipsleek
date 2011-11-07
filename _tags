@@ -3,4 +3,6 @@
 <omega_modified/omega_lib/obj/*.*>: not_hygienic
 <omega_modified/code_gen/obj/*.*>: not_hygienic
 <omega_modified/omega_calc/obj/*.*>: not_hygienic
+<omega_modified/petit/obj/*.*>: not_hygienic
+<omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
