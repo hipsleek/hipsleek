@@ -478,6 +478,22 @@ h1 {
 	color : green;
 }
 
+.progsource {
+	border-style : double;
+}
+
+.progsource td {
+	padding-right : 20px;
+}
+
+tr.OddSourceLine {
+	background: white !important;
+}
+
+tr.EvenSourceLine {
+	background: #F0F0F0 !important;
+}
+
 .proc {
 	border-style : double;
 	font-family : Arial;
@@ -494,7 +510,7 @@ h1 {
 .pre {
 	background : aliceblue;
 	font-weight : normal;
-	border-style : solid;
+	/* border-style : solid; */
 	font-family : Arial;
 }
 
@@ -502,7 +518,7 @@ h1 {
 	background : burlywood;
 	font-weight : normal;
 	font-family : Arial;
-	border-style : ridge;
+	/* border-style : ridge; */
 }
 
 .term {
@@ -517,7 +533,7 @@ h1 {
 	background : goldenrod;
 	font-weight : normal;
 	font-family : monospace;
-	border-style : double.;
+	border-style : double;
 }
 
 .proveroutput {
@@ -600,6 +616,10 @@ let push_proc proc = let unmin_name = Cast.unmingle_name proc.Cast.proc_name in
 
 let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"]
 
+let start_with s p = if (String.length s >= String.length p) then
+		String.sub s 0 (String.length p) = p
+	else false
+
 let push_pre fce = match fce with
 	| Cast.SCall {
 		Cast.exp_scall_type = t;
@@ -611,7 +631,12 @@ let push_pre fce = match fce with
 		let unmin_name = Cast.unmingle_name mn in
 		if List.mem unmin_name primitive_procs then false
 		else begin
-			let message = "Precondition of procedure call " ^ (convert_to_html (Cprinter.string_of_exp fce)) ^ " at " ^ (string_of_loc pos) ^ " holds" in
+			let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
+			let message = if (start_with unmin_name "array_get_elm_at___") then
+					"Memory safety of array access at line " ^ line_loc
+				else if (start_with unmin_name "update___") then
+					"Memory safety of array update at line " ^ line_loc
+				else "Precondition of procedure call " ^ (convert_to_html (Cprinter.string_of_exp fce)) ^ " at " ^ line_loc ^ " holds" in
 			html_output :=  !html_output ^ "<li class=\"Collapsed pre\">\n" ^ message ^ "<ul>";
 			true
 		end
@@ -621,8 +646,8 @@ let push_assert_assume ae = match ae with
 		Cast.exp_assert_asserted_formula = fa;
 		Cast.exp_assert_assumed_formula = fas;
 		Cast.exp_assert_path_id = pid;
-		Cast.exp_assert_pos = pos } -> html_output := 
-	!html_output ^ "<li class=\"Collapsed assert\">\nAssertion at " ^ (string_of_loc pos) ^ " holds\n<ul>"
+		Cast.exp_assert_pos = pos } -> let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
+		html_output := !html_output ^ "<li class=\"Collapsed assert\">\nAssertion at " ^ line_loc ^ " holds\n<ul>"
 
 let push_post () = html_output := 
 	!html_output ^ "<li class=\"Collapsed post\">\nProcedure post-condition holds\n<ul>"
@@ -643,10 +668,10 @@ let push_pure_imply ante conseq r = html_output :=
 (* prover input | output are all leaves of the proof trees, so we push and pop at the same time *)
 
 let push_pop_prover_input prover_inp prover_name = html_output := 
-	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover " ^ prover_name ^ "\n<ul>" ^ prover_inp ^ "</ul></li>"
+	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_inp) ^ "</ul></li>"
 	
 let push_pop_prover_output prover_out prover_name = html_output := 
-	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ prover_out ^ "</li></ul>"
+	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_out) ^ "</li></ul>"
 
 let pop_div () = html_output := !html_output ^ "</ul></li>\n"
 
@@ -656,20 +681,35 @@ let append_html s =
 		
 let append_html_no_convert s =	html_output := !html_output ^ s
 
-let initialize_html source_file_name = 
+let html_of_hip_source src =
+	let srclines = Str.split (Str.regexp "\n") src in
+	let res, _ = List.fold_left (fun (accumulated,current_line_no) next_line -> 
+			let new_accumulated = accumulated ^ 
+					"<tr id=\"L" ^ (string_of_int current_line_no) ^ "\" class=\"" ^ (if (current_line_no mod 2 = 0) then "EvenSourceLine" else "OddSourceLine") ^ "\">" ^
+						"<td>" ^ (string_of_int current_line_no) ^ "</td>" ^
+						"<td><pre>" ^ next_line ^ "</pre></td>" ^
+					"</tr>\n" in
+			let new_line_no = current_line_no + 1 in
+				(new_accumulated,new_line_no)) ("",1) srclines in
+		"<table>" ^ res ^ "</table>"
+	
+
+let initialize_html source_file_name = let source = (Gen.SysUti.string_of_file source_file_name) in
+	let source_html = html_of_hip_source source in
 	begin
 	html_output_file := source_file_name ^ "_proof.html";
 	html_output := 
 "<html>
 <head>" ^ 
-"	<style type=\"text/css\">" ^ hipsleekcss ^ "</style>" ^
-"	<script type=\"text/javascript\">" ^ hipsleekjs ^ "</script>" ^
-(* "<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />" ^ *)
-(* "<script type=\"text/javascript\" src=\"hipsleek.js\"></script>" ^ *)
+(*"	<style type=\"text/css\">" ^ hipsleekcss ^ "</style>" ^*)
+(*"	<script type=\"text/javascript\">" ^ hipsleekjs ^ "</script>" ^*)
+"	<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />" ^
+"	<script type=\"text/javascript\" src=\"hipsleek.js\"></script>" ^
 "</head>
 <body>\n" ^ 
 "<h1>" ^ source_file_name ^ "</h1>\n" ^
-"<ul class=\"TreeView\" id=\"ProofTree\">";
+"<ul class=\"TreeView\" id=\"ProofTree\">" ^
+"<li class=\"Collapsed progsource\">Source<ul>" ^ source_html ^ "</ul></li>";
 	end
 	
 let post_process_html () = 	html_output := !html_output ^ 

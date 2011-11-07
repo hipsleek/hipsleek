@@ -1,201 +1,172 @@
 <html>
-<head>	<style type="text/css">
-/*
- Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
- Modified by An Hoa
- */
-
-h1 {
-	color : green;
-}
-
-.proc {
-	border-style : double;
-	font-family : Arial;
-}
-
-.procdef {
-	color:blue;
-	font-size : 0.75em;
-	font-weight : normal;
-	border-style : groove;
-	font-family : monospace;
-}
-
-.pre {
-	background : aliceblue;
-	font-weight : normal;
-	border-style : solid;
-	font-family : Arial;
-}
-
-.post {
-	background : burlywood;
-	font-weight : normal;
-	font-family : Arial;
-	border-style : ridge;
-}
-
-.term {
-	font-weight : normal;
-	font-family : Arial;
-	border-style : double;
-}
-
-.proverinput {
-	color : black;
-	font-size : 0.75em;
-	background : goldenrod;
-	font-weight : normal;
-	font-family : monospace;
-	border-style : double.;
-}
-
-.proveroutput {
-	color : darkmagenta;
-	font-size : 0.75em;
-	background : greenyellow;
-	font-weight : normal;
-	font-family : monospace;
-	border-style : double;
-}
-
-.pureimplyvalid {
-	color : green;
-	font-weight : normal;
-	border-style : dashed;
-}
-
-.pureimplyinvalid {
-	color : red;
-	font-weight : normal;
-	border-style : dashed;
-}
-
-.TreeView 
-{
-    font: Verdana;
-    line-height: 20px;
-	cursor: pointer; 
-	font-style: normal;
-}
-
-.TreeView li
-{
-    /* The padding is for the tree view nodes */
-    padding: 0 0 0 18px;
-    float: left;
-    width: 100%;
-    list-style: none;
-}
-
-.TreeView, .TreeView ul
-{
-    margin: 0;
-    padding: 0;
-}
-
-li.Expanded 
-{
-    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
-}
-
-li.Expanded ul
-{
-	display: block;
-}
-
-li.Collapsed 
-{
-	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
-}
-
-li.Collapsed ul
-{
-    display: none;
-}</style>	<script type="text/javascript">
-/*
- Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
- */
-
-Array.prototype.indexOf = IndexOf;
-
-//Toggles between two classes for an element
-function ToggleClass(element, firstClass, secondClass, event)
-{
-    event.cancelBubble = true;
-    
-    var classes = element.className.split(" ");
-    var firstClassIndex = classes.indexOf(firstClass);
-    var secondClassIndex = classes.indexOf(secondClass);
-    
-    if (firstClassIndex == -1 && secondClassIndex == -1)
-    {
-        classes[classes.length] = firstClass;
-    }
-    else if (firstClassIndex != -1)
-    {
-        classes[firstClassIndex] = secondClass;
-    }
-    else
-    {
-        classes[secondClassIndex] = firstClass;
-    }
-    
-    element.className = classes.join(" ");
-    
-}
-
-//Finds the index of an item in an array
-function IndexOf(item)
-{
-    for (var i=0; i < this.length; i++)
-    {        
-        if (this[i] == item)
-        {
-            return i;
-        }
-    }
-    
-    return -1;
-}
-
-//The toggle event handler for each expandable/collapsable node
-//- Note that this also exists to prevent any IE memory leaks 
-//(due to circular references caused by this)
-function ToggleNodeStateHandler(event)
-{
-    ToggleClass(this, "Collapsed", "Expanded", (event == null) ? window.event : event);
-}
-
-//Prevents the onclick event from bubbling up to parent elements
-function PreventBubbleHandler(event)
-{
-    if (!event) event = window.event;
-    event.cancelBubble = true;
-}
-
-//Adds the relevant onclick handlers for the nodes in the tree view
-function SetupTreeView(elementId)
-{
-    var tree = document.getElementById(elementId);
-    var treeElements = tree.getElementsByTagName("li");
-    
-    for (var i=0; i < treeElements.length; i++)
-    {
-        if (treeElements[i].getElementsByTagName("ul").length > 0)
-        {
-            treeElements[i].onclick = ToggleNodeStateHandler; 
-        }
-        else
-        {
-            treeElements[i].onclick = PreventBubbleHandler; 
-        }
-    }
-}</script></head>
+<head>	<link rel="stylesheet" type="text/css" href="hipsleek.css" />	<script type="text/javascript" src="hipsleek.js"></script></head>
 <body>
 <h1>./hip/array/arr_sparse.java</h1>
-<ul class="TreeView" id="ProofTree"><li class="Collapsed proc">
+<ul class="TreeView" id="ProofTree"><li class="Collapsed progsource">Source<ul><table><tr id="L1" class="OddSourceLine"><td>1</td><td><pre>/** If the sparse array contains three elements x y z, at index</pre></td></tr>
+<tr id="L2" class="EvenSourceLine"><td>2</td><td><pre> *  a b c respectively, then the three arrays look like this:</pre></td></tr>
+<tr id="L3" class="OddSourceLine"><td>3</td><td><pre> *  </pre></td></tr>
+<tr id="L4" class="EvenSourceLine"><td>4</td><td><pre> *               b     a      c</pre></td></tr>
+<tr id="L5" class="OddSourceLine"><td>5</td><td><pre> * values +-----+-+---+-+----+-+----+</pre></td></tr>
+<tr id="L6" class="EvenSourceLine"><td>6</td><td><pre> *        |     |y|   |x|    |z|    |</pre></td></tr>
+<tr id="L7" class="OddSourceLine"><td>7</td><td><pre> *        +-----+-+---+-+----+-+----+</pre></td></tr>
+<tr id="L8" class="EvenSourceLine"><td>8</td><td><pre> *</pre></td></tr>
+<tr id="L9" class="OddSourceLine"><td>9</td><td><pre> * index  +-----+-+---+-+----+-+----+</pre></td></tr>
+<tr id="L10" class="EvenSourceLine"><td>10</td><td><pre> *        |     |1|   |0|    |2|    |</pre></td></tr>
+<tr id="L11" class="OddSourceLine"><td>11</td><td><pre> *        +-----+-+---+-+----+-+----+</pre></td></tr>
+<tr id="L12" class="EvenSourceLine"><td>12</td><td><pre> *</pre></td></tr>
+<tr id="L13" class="OddSourceLine"><td>13</td><td><pre> *         0 1 2  n=3</pre></td></tr>
+<tr id="L14" class="EvenSourceLine"><td>14</td><td><pre> * back   +-+-+-+-------------------+</pre></td></tr>
+<tr id="L15" class="OddSourceLine"><td>15</td><td><pre> *        |a|b|c|                   |</pre></td></tr>
+<tr id="L16" class="EvenSourceLine"><td>16</td><td><pre> *        +-+-+-+-------------------+</pre></td></tr>
+<tr id="L17" class="OddSourceLine"><td>17</td><td><pre> *        </pre></td></tr>
+<tr id="L18" class="EvenSourceLine"><td>18</td><td><pre> * Reference:</pre></td></tr>
+<tr id="L19" class="OddSourceLine"><td>19</td><td><pre> * Sparse Arrays in Why3</pre></td></tr>
+<tr id="L20" class="EvenSourceLine"><td>20</td><td><pre> * http://proval.lri.fr/gallery/vacid_0_sparse_array.en.html</pre></td></tr>
+<tr id="L21" class="OddSourceLine"><td>21</td><td><pre> * </pre></td></tr>
+<tr id="L22" class="EvenSourceLine"><td>22</td><td><pre> * Remark: The original code has a macro MAXLEN for</pre></td></tr>
+<tr id="L23" class="OddSourceLine"><td>23</td><td><pre> * the maximum size of the sparse array. In this implementation, </pre></td></tr>
+<tr id="L24" class="EvenSourceLine"><td>24</td><td><pre> * we substitute that value by 1000.</pre></td></tr>
+<tr id="L25" class="OddSourceLine"><td>25</td><td><pre> * </pre></td></tr>
+<tr id="L26" class="EvenSourceLine"><td>26</td><td><pre> * Task 0 {50 pts} is handled.</pre></td></tr>
+<tr id="L27" class="OddSourceLine"><td>27</td><td><pre> * Task 1 {30 pts} is in progress.</pre></td></tr>
+<tr id="L28" class="EvenSourceLine"><td>28</td><td><pre> * </pre></td></tr>
+<tr id="L29" class="OddSourceLine"><td>29</td><td><pre> * @author Vu An Hoa</pre></td></tr>
+<tr id="L30" class="EvenSourceLine"><td>30</td><td><pre> */</pre></td></tr>
+<tr id="L31" class="OddSourceLine"><td>31</td><td><pre></pre></td></tr>
+<tr id="L32" class="EvenSourceLine"><td>32</td><td><pre></pre></td></tr>
+<tr id="L33" class="OddSourceLine"><td>33</td><td><pre>data SparseArray {	</pre></td></tr>
+<tr id="L34" class="EvenSourceLine"><td>34</td><td><pre>	int[] values;</pre></td></tr>
+<tr id="L35" class="OddSourceLine"><td>35</td><td><pre>	int[] index;</pre></td></tr>
+<tr id="L36" class="EvenSourceLine"><td>36</td><td><pre>	int[] back;</pre></td></tr>
+<tr id="L37" class="OddSourceLine"><td>37</td><td><pre>	int n;</pre></td></tr>
+<tr id="L38" class="EvenSourceLine"><td>38</td><td><pre>}</pre></td></tr>
+<tr id="L39" class="OddSourceLine"><td>39</td><td><pre></pre></td></tr>
+<tr id="L40" class="EvenSourceLine"><td>40</td><td><pre>//relation dom(int[] a, int i, int j) == true.</pre></td></tr>
+<tr id="L41" class="OddSourceLine"><td>41</td><td><pre></pre></td></tr>
+<tr id="L42" class="EvenSourceLine"><td>42</td><td><pre>relation bounded(int[] a, int i, int j, int low, int high) ==</pre></td></tr>
+<tr id="L43" class="OddSourceLine"><td>43</td><td><pre>	forall(k : k < i | k > j | low <= a[k] <= high).</pre></td></tr>
+<tr id="L44" class="EvenSourceLine"><td>44</td><td><pre></pre></td></tr>
+<tr id="L45" class="OddSourceLine"><td>45</td><td><pre>relation different_pairwise(int[] a, int i, int j) ==</pre></td></tr>
+<tr id="L46" class="EvenSourceLine"><td>46</td><td><pre>	forall(k, t : k < i | k > j | t < i | t > j | t = k | a[t] != a [k]).</pre></td></tr>
+<tr id="L47" class="OddSourceLine"><td>47</td><td><pre>	</pre></td></tr>
+<tr id="L48" class="EvenSourceLine"><td>48</td><td><pre>relation is_sparse_array(int[] val, int[] idx, int[] bk, int n) ==</pre></td></tr>
+<tr id="L49" class="OddSourceLine"><td>49</td><td><pre>	forall(k, t : k < 0 | k >= n | t < 0 | t >= n | t = k | bk[t] != bk[k]) & </pre></td></tr>
+<tr id="L50" class="EvenSourceLine"><td>50</td><td><pre>	forall(i : i < 0 | i >= n | 0 <= bk[i] < 1000 & idx[bk[i]] = i).</pre></td></tr>
+<tr id="L51" class="OddSourceLine"><td>51</td><td><pre>	</pre></td></tr>
+<tr id="L52" class="EvenSourceLine"><td>52</td><td><pre>relation is_modified(int[] val, int[] idx, int[] bk, int n, int i) ==</pre></td></tr>
+<tr id="L53" class="OddSourceLine"><td>53</td><td><pre>	0 <= i < 1000 & 0 <= idx[i] < n & bk[idx[i]] = i.</pre></td></tr>
+<tr id="L54" class="EvenSourceLine"><td>54</td><td><pre></pre></td></tr>
+<tr id="L55" class="OddSourceLine"><td>55</td><td><pre>relation value_at(int[] val, int[] idx, int[] bk, int n, int i, int v) ==</pre></td></tr>
+<tr id="L56" class="EvenSourceLine"><td>56</td><td><pre>	0 <= i <= 1000-1 & </pre></td></tr>
+<tr id="L57" class="OddSourceLine"><td>57</td><td><pre>	(is_modified(val, idx, bk, n, i) & v = val[i] | </pre></td></tr>
+<tr id="L58" class="EvenSourceLine"><td>58</td><td><pre>		!(is_modified(val, idx, bk, n, i)) & v = 0).</pre></td></tr>
+<tr id="L59" class="OddSourceLine"><td>59</td><td><pre>	// the following property is provable in sleek:</pre></td></tr>
+<tr id="L60" class="EvenSourceLine"><td>60</td><td><pre>	// forall(u : u = v | !(value_at(val,idx,bk,n,i,u))).</pre></td></tr>
+<tr id="L61" class="OddSourceLine"><td>61</td><td><pre></pre></td></tr>
+<tr id="L62" class="EvenSourceLine"><td>62</td><td><pre>axiom is_sparse_array(val, idx, bk, 1000) & 0 <= i < 1000 ==> is_modified(val, idx, bk, 1000, i).</pre></td></tr>
+<tr id="L63" class="OddSourceLine"><td>63</td><td><pre>			</pre></td></tr>
+<tr id="L64" class="EvenSourceLine"><td>64</td><td><pre>relation idexc(int[] val1, int[] idx1, int[] bk1, int n1, </pre></td></tr>
+<tr id="L65" class="OddSourceLine"><td>65</td><td><pre>			int[] val2, int[] idx2, int[] bk2, int n2, int i) ==</pre></td></tr>
+<tr id="L66" class="EvenSourceLine"><td>66</td><td><pre>	forall(k : k = i | </pre></td></tr>
+<tr id="L67" class="OddSourceLine"><td>67</td><td><pre>		forall(h : !(value_at(val1,idx1,bk1,n1,k,h)) | value_at(val2,idx2,bk2,n2,k,h)) &</pre></td></tr>
+<tr id="L68" class="EvenSourceLine"><td>68</td><td><pre>		forall(t : !(value_at(val2,idx2,bk2,n2,k,t)) | value_at(val1,idx1,bk1,n1,k,t))).</pre></td></tr>
+<tr id="L69" class="OddSourceLine"><td>69</td><td><pre>	</pre></td></tr>
+<tr id="L70" class="EvenSourceLine"><td>70</td><td><pre>void harness()</pre></td></tr>
+<tr id="L71" class="OddSourceLine"><td>71</td><td><pre>	requires true ensures true;</pre></td></tr>
+<tr id="L72" class="EvenSourceLine"><td>72</td><td><pre>{</pre></td></tr>
+<tr id="L73" class="OddSourceLine"><td>73</td><td><pre>	SparseArray a = create(10);</pre></td></tr>
+<tr id="L74" class="EvenSourceLine"><td>74</td><td><pre>	SparseArray b = create(20);</pre></td></tr>
+<tr id="L75" class="OddSourceLine"><td>75</td><td><pre>	int a5 = get(a, 5);</pre></td></tr>
+<tr id="L76" class="EvenSourceLine"><td>76</td><td><pre>	int b7 = get(b, 7);</pre></td></tr>
+<tr id="L77" class="OddSourceLine"><td>77</td><td><pre>	assert a5' = 0 & b7' = 0;</pre></td></tr>
+<tr id="L78" class="EvenSourceLine"><td>78</td><td><pre>	setsa(a, 5, 1);</pre></td></tr>
+<tr id="L79" class="OddSourceLine"><td>79</td><td><pre>	setsa(b, 7, 2);</pre></td></tr>
+<tr id="L80" class="EvenSourceLine"><td>80</td><td><pre>	a5 = get(a, 5);</pre></td></tr>
+<tr id="L81" class="OddSourceLine"><td>81</td><td><pre>	b7 = get(b, 7);</pre></td></tr>
+<tr id="L82" class="EvenSourceLine"><td>82</td><td><pre>	assert a5' = 1 & b7' = 2;</pre></td></tr>
+<tr id="L83" class="OddSourceLine"><td>83</td><td><pre>	int a0 = get(a, 0);</pre></td></tr>
+<tr id="L84" class="EvenSourceLine"><td>84</td><td><pre>	int b0 = get(b, 0);</pre></td></tr>
+<tr id="L85" class="OddSourceLine"><td>85</td><td><pre>	assert a0' = 0 & b0' = 0;</pre></td></tr>
+<tr id="L86" class="EvenSourceLine"><td>86</td><td><pre>}</pre></td></tr>
+<tr id="L87" class="OddSourceLine"><td>87</td><td><pre></pre></td></tr>
+<tr id="L88" class="EvenSourceLine"><td>88</td><td><pre></pre></td></tr>
+<tr id="L89" class="OddSourceLine"><td>89</td><td><pre>SparseArray create(int sz)</pre></td></tr>
+<tr id="L90" class="EvenSourceLine"><td>90</td><td><pre>	requires sz >= 0</pre></td></tr>
+<tr id="L91" class="OddSourceLine"><td>91</td><td><pre>	ensures res::SparseArray<val,idx,bk,0> & dom(val,0,1000-1) </pre></td></tr>
+<tr id="L92" class="EvenSourceLine"><td>92</td><td><pre>		& dom(idx,0,1000-1) & dom(bk,0,1000-1)</pre></td></tr>
+<tr id="L93" class="OddSourceLine"><td>93</td><td><pre>		& is_sparse_array(val,idx,bk,0);</pre></td></tr>
+<tr id="L94" class="EvenSourceLine"><td>94</td><td><pre>{</pre></td></tr>
+<tr id="L95" class="OddSourceLine"><td>95</td><td><pre>	int[] values = new int[1000];</pre></td></tr>
+<tr id="L96" class="EvenSourceLine"><td>96</td><td><pre>	int[] index = new int[1000];</pre></td></tr>
+<tr id="L97" class="OddSourceLine"><td>97</td><td><pre>	int[] back = new int[1000];</pre></td></tr>
+<tr id="L98" class="EvenSourceLine"><td>98</td><td><pre>	return new SparseArray(values, index, back, 0);</pre></td></tr>
+<tr id="L99" class="OddSourceLine"><td>99</td><td><pre>}</pre></td></tr>
+<tr id="L100" class="EvenSourceLine"><td>100</td><td><pre></pre></td></tr>
+<tr id="L101" class="OddSourceLine"><td>101</td><td><pre></pre></td></tr>
+<tr id="L102" class="EvenSourceLine"><td>102</td><td><pre>int get(SparseArray a, int i)</pre></td></tr>
+<tr id="L103" class="OddSourceLine"><td>103</td><td><pre>	requires a::SparseArray<val,idx,bk,n>@I & dom(val,0,1000-1) </pre></td></tr>
+<tr id="L104" class="EvenSourceLine"><td>104</td><td><pre>			& dom(idx,0,1000-1) & dom(bk,0,1000-1)</pre></td></tr>
+<tr id="L105" class="OddSourceLine"><td>105</td><td><pre>			& 0 <= n <= 1000 & 0 <= i <= 1000-1</pre></td></tr>
+<tr id="L106" class="EvenSourceLine"><td>106</td><td><pre>			& is_sparse_array(val,idx,bk,n)</pre></td></tr>
+<tr id="L107" class="OddSourceLine"><td>107</td><td><pre>			& bounded(bk,0,n-1,0,1000-1)</pre></td></tr>
+<tr id="L108" class="EvenSourceLine"><td>108</td><td><pre>	ensures value_at(val,idx,bk,n,i,res);</pre></td></tr>
+<tr id="L109" class="OddSourceLine"><td>109</td><td><pre>{</pre></td></tr>
+<tr id="L110" class="EvenSourceLine"><td>110</td><td><pre>	int[] idx = a.index;</pre></td></tr>
+<tr id="L111" class="OddSourceLine"><td>111</td><td><pre>	int[] back = a.back;</pre></td></tr>
+<tr id="L112" class="EvenSourceLine"><td>112</td><td><pre>	if (idx[i] >= 0 && idx[i] < a.n) {</pre></td></tr>
+<tr id="L113" class="OddSourceLine"><td>113</td><td><pre>		if (back[idx[i]] == i) {</pre></td></tr>
+<tr id="L114" class="EvenSourceLine"><td>114</td><td><pre>			int[] val = a.values;</pre></td></tr>
+<tr id="L115" class="OddSourceLine"><td>115</td><td><pre>			return val[i];</pre></td></tr>
+<tr id="L116" class="EvenSourceLine"><td>116</td><td><pre>		}</pre></td></tr>
+<tr id="L117" class="OddSourceLine"><td>117</td><td><pre>	}</pre></td></tr>
+<tr id="L118" class="EvenSourceLine"><td>118</td><td><pre>	return 0;</pre></td></tr>
+<tr id="L119" class="OddSourceLine"><td>119</td><td><pre>}</pre></td></tr>
+<tr id="L120" class="EvenSourceLine"><td>120</td><td><pre></pre></td></tr>
+<tr id="L121" class="OddSourceLine"><td>121</td><td><pre></pre></td></tr>
+<tr id="L122" class="EvenSourceLine"><td>122</td><td><pre>void setsa(SparseArray a, int i, int v)</pre></td></tr>
+<tr id="L123" class="OddSourceLine"><td>123</td><td><pre>	requires a::SparseArray<val,idx,bk,n> & dom(val,0,1000-1) </pre></td></tr>
+<tr id="L124" class="EvenSourceLine"><td>124</td><td><pre>				& dom(idx,0,1000-1) & dom(bk,0,1000-1)</pre></td></tr>
+<tr id="L125" class="OddSourceLine"><td>125</td><td><pre>				& 0 <= n <= 1000 & bounded(bk,0,n-1,0,1000-1)</pre></td></tr>
+<tr id="L126" class="EvenSourceLine"><td>126</td><td><pre>				& is_sparse_array(val,idx,bk,n)</pre></td></tr>
+<tr id="L127" class="OddSourceLine"><td>127</td><td><pre>				& 0 <= i < 1000</pre></td></tr>
+<tr id="L128" class="EvenSourceLine"><td>128</td><td><pre>	ensures a::SparseArray<valr,idxr,bkr,nr> & dom(valr,0,1000-1) </pre></td></tr>
+<tr id="L129" class="OddSourceLine"><td>129</td><td><pre>				& dom(idxr,0,1000-1) & dom(bkr,0,1000-1)</pre></td></tr>
+<tr id="L130" class="EvenSourceLine"><td>130</td><td><pre>				& 0 <= nr <= 1000</pre></td></tr>
+<tr id="L131" class="OddSourceLine"><td>131</td><td><pre>				& (is_modified(val,idx,bk,n,i) & nr = n | </pre></td></tr>
+<tr id="L132" class="EvenSourceLine"><td>132</td><td><pre>					!(is_modified(val,idx,bk,n,i)) & nr = n + 1)</pre></td></tr>
+<tr id="L133" class="OddSourceLine"><td>133</td><td><pre>				& bounded(bkr,0,nr-1,0,1000-1)</pre></td></tr>
+<tr id="L134" class="EvenSourceLine"><td>134</td><td><pre>				& value_at(valr,idxr,bkr,nr,i,v)</pre></td></tr>
+<tr id="L135" class="OddSourceLine"><td>135</td><td><pre>				& is_sparse_array(valr,idxr,bkr,nr)</pre></td></tr>
+<tr id="L136" class="EvenSourceLine"><td>136</td><td><pre>				& idexc(val,idx,bk,n,valr,idxr,bkr,nr,i);</pre></td></tr>
+<tr id="L137" class="OddSourceLine"><td>137</td><td><pre>{</pre></td></tr>
+<tr id="L138" class="EvenSourceLine"><td>138</td><td><pre>	int[] val = a.values;</pre></td></tr>
+<tr id="L139" class="OddSourceLine"><td>139</td><td><pre>	int[] idx = a.index;</pre></td></tr>
+<tr id="L140" class="EvenSourceLine"><td>140</td><td><pre>	int[] bk = a.back;</pre></td></tr>
+<tr id="L141" class="OddSourceLine"><td>141</td><td><pre>	val[i] = v;</pre></td></tr>
+<tr id="L142" class="EvenSourceLine"><td>142</td><td><pre>	if (idx[i] >= a.n || idx[i] < 0) {</pre></td></tr>
+<tr id="L143" class="OddSourceLine"><td>143</td><td><pre>		assert (!(is_modified(val',idx',bk',n,i)));</pre></td></tr>
+<tr id="L144" class="EvenSourceLine"><td>144</td><td><pre>		assume (!(is_modified(val',idx',bk',n,i)));</pre></td></tr>
+<tr id="L145" class="OddSourceLine"><td>145</td><td><pre>		// if n = 1000 then both is_modified(val,idx,bk,n,i) and its negation holds.</pre></td></tr>
+<tr id="L146" class="EvenSourceLine"><td>146</td><td><pre>		assert n < 1000;</pre></td></tr>
+<tr id="L147" class="OddSourceLine"><td>147</td><td><pre>		assume n < 1000;</pre></td></tr>
+<tr id="L148" class="EvenSourceLine"><td>148</td><td><pre>		idx[i] = a.n;</pre></td></tr>
+<tr id="L149" class="OddSourceLine"><td>149</td><td><pre>		bk[a.n] = i;</pre></td></tr>
+<tr id="L150" class="EvenSourceLine"><td>150</td><td><pre>		a.n = a.n + 1;</pre></td></tr>
+<tr id="L151" class="OddSourceLine"><td>151</td><td><pre>	} else if (bk[idx[i]] != i) {</pre></td></tr>
+<tr id="L152" class="EvenSourceLine"><td>152</td><td><pre>		assert (!(is_modified(val',idx',bk',n,i)));</pre></td></tr>
+<tr id="L153" class="OddSourceLine"><td>153</td><td><pre>		assume (!(is_modified(val',idx',bk',n,i)));</pre></td></tr>
+<tr id="L154" class="EvenSourceLine"><td>154</td><td><pre>		// if n = 1000 then both is_modified(val,idx,bk,n,i) and its negation holds.</pre></td></tr>
+<tr id="L155" class="OddSourceLine"><td>155</td><td><pre>		assert n < 1000;</pre></td></tr>
+<tr id="L156" class="EvenSourceLine"><td>156</td><td><pre>		assume n < 1000;</pre></td></tr>
+<tr id="L157" class="OddSourceLine"><td>157</td><td><pre>		idx[i] = a.n;</pre></td></tr>
+<tr id="L158" class="EvenSourceLine"><td>158</td><td><pre>		bk[a.n] = i;</pre></td></tr>
+<tr id="L159" class="OddSourceLine"><td>159</td><td><pre>		a.n = a.n + 1;</pre></td></tr>
+<tr id="L160" class="EvenSourceLine"><td>160</td><td><pre>	}</pre></td></tr>
+<tr id="L161" class="OddSourceLine"><td>161</td><td><pre>	a.values = val;</pre></td></tr>
+<tr id="L162" class="EvenSourceLine"><td>162</td><td><pre>	a.index = idx;</pre></td></tr>
+<tr id="L163" class="OddSourceLine"><td>163</td><td><pre>	a.back = bk;</pre></td></tr>
+<tr id="L164" class="EvenSourceLine"><td>164</td><td><pre>}</pre></td></tr>
+</table></ul></li><li class="Collapsed proc">
 Procedure setsa<ul><li class="Collapsed procdef">Internal representation
 <ul>void setsa$SparseArray~int~int(  SparseArray a,  int i,  int v)<br/>
 static  EBase exists (Expl)[](Impl)[val; idx; bk; <br/>
@@ -348,68 +319,12 @@ else LABEL! 105,1: <br/>
 <br/>
 {(122,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
-Precondition of procedure call 103::update___1d$int~int[]~int(v,val_49,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; val=val
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun val () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= val val)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; idx=val
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun idx () (Array Int Int))<br/>
-(declare-fun val () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= idx val)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; bk=val
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun bk () (Array Int Int))<br/>
-(declare-fun val () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= bk val)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array update at line <a href="#L141">line 141</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(bk,0,1000 - 1) &amp; <br/>
 dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; <br/>
-0&lt;=i &amp; i&lt;1000&#8866; &exist;ahalb_1026:&exist;ahaub_1027:dom(val,ahalb_1026,ahaub_1027) &amp; <br/>
+0&lt;=i &amp; i&lt;1000&#8866; &exist;(ahalb_1026:&exist;(ahaub_1027:dom(val,ahalb_1026,ahaub_1027) &amp; <br/>
 ahalb_1026&lt;=i &amp; i&lt;=ahaub_1027))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun idx () (Array Int Int))<br/>
@@ -441,96 +356,17 @@ ahalb_1026&lt;=i &amp; i&lt;=ahaub_1027))
 (assert (&lt; i 1000))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1026 Int)) (exists ((ahaub_1027 Int)) (and (dom val ahalb_1026 ahaub_1027) (and (&lt;= ahalb_1026 i) (&lt;= i ahaub_1027)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(idx_50,i) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; val=idx
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun val () (Array Int Int))<br/>
-(declare-fun idx () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= val idx)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; idx=idx
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun idx () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= idx idx)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; bk=idx
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun bk () (Array Int Int))<br/>
-(declare-fun idx () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= bk idx)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; val_49&apos;=idx
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun val_49_primed () (Array Int Int))<br/>
-(declare-fun idx () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= val_49_primed idx)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L142">line 142</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val_49&apos;,0,ahaub) &amp; dom(val,0,ahaub) &amp; 1000 - 1=ahaub &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; <br/>
 dom(idx,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; 0&lt;=i &amp; <br/>
-i&lt;=ahaub &amp; update_array_1d(val,val_49&apos;,v,i)&#8866; &exist;ahalb_1035:&exist;ahaub_1036:dom(idx,ahalb_1035,ahaub_1036) &amp; <br/>
+i&lt;=ahaub &amp; update_array_1d(val,val_49&apos;,v,i)&#8866; &exist;(ahalb_1035:&exist;(ahaub_1036:dom(idx,ahalb_1035,ahaub_1036) &amp; <br/>
 ahalb_1035&lt;=i &amp; i&lt;=ahaub_1036))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk () (Array Int Int))<br/>
@@ -570,25 +406,19 @@ ahalb_1035&lt;=i &amp; i&lt;=ahaub_1036))
 (assert (= val_49_primed (store val i v)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1035 Int)) (exists ((ahaub_1036 Int)) (and (dom idx ahalb_1035 ahaub_1036) (and (&lt;= ahalb_1035 i) (&lt;= i ahaub_1036)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 133::gte___$int~int(v_int_142_759,v_int_142_758) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(idx_50,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L142">line 142</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1048 &amp; dom(val_49&apos;,0,ahaub) &amp; dom(val,0,ahaub) &amp; 1000 -<br/>
 1=ahaub &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(bk,0,1000 -<br/>
 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(idx,0,ahaub_1048) &amp; 0&lt;=i &amp; <br/>
-i&lt;=ahaub_1048 &amp; n&lt;=(idx[i])&#8866; &exist;ahalb_1053:&exist;ahaub_1054:dom(idx,ahalb_1053,ahaub_1054) &amp; <br/>
+i&lt;=ahaub_1048 &amp; n&lt;=(idx[i])&#8866; &exist;(ahalb_1053:&exist;(ahaub_1054:dom(idx,ahalb_1053,ahaub_1054) &amp; <br/>
 ahalb_1053&lt;=i &amp; i&lt;=ahaub_1054))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk () (Array Int Int))<br/>
@@ -633,21 +463,17 @@ ahalb_1053&lt;=i &amp; i&lt;=ahaub_1054))
 (assert (&lt;= n (select idx i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1053 Int)) (exists ((ahaub_1054 Int)) (and (dom idx ahalb_1053 ahaub_1054) (and (&lt;= ahalb_1053 i) (&lt;= i ahaub_1054)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1048 &amp; dom(val_49&apos;,0,ahaub) &amp; dom(val,0,ahaub) &amp; 1000 -<br/>
 1=ahaub &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(bk,0,1000 -<br/>
 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(idx,0,ahaub_1048) &amp; 0&lt;=i &amp; <br/>
-i&lt;=ahaub_1048 &amp; (idx[i])&lt;n&#8866; &exist;ahalb_1055:&exist;ahaub_1056:dom(idx,ahalb_1055,ahaub_1056) &amp; <br/>
+i&lt;=ahaub_1048 &amp; (idx[i])&lt;n&#8866; &exist;(ahalb_1055:&exist;(ahaub_1056:dom(idx,ahalb_1055,ahaub_1056) &amp; <br/>
 ahalb_1055&lt;=i &amp; i&lt;=ahaub_1056))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk () (Array Int Int))<br/>
@@ -692,24 +518,18 @@ ahalb_1055&lt;=i &amp; i&lt;=ahaub_1056))
 (assert (&lt; (select idx i) n))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1055 Int)) (exists ((ahaub_1056 Int)) (and (dom idx ahalb_1055 ahaub_1056) (and (&lt;= ahalb_1055 i) (&lt;= i ahaub_1056)))))))<br/>
-(check-sat)<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-</ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call 132::lt___$int~int(v_int_142_761,v_int_142_760) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call 131::lor___$boolean~boolean(v_boolean_142_763,v_boolean_142_762) holds<ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+<li class="Collapsed assert">
+Assertion at <a href="#L143">line 143</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1048 &amp; dom(val,0,ahaub) &amp; 1000 - 1=ahaub &amp; dom(val,0,1000 -<br/>
 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; <br/>
 bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; <br/>
 i&lt;=ahaub &amp; dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/>
 n&lt;=(idx[i]) &amp; dom(idx,0,ahaub_1048) &amp; 0&lt;=i &amp; i&lt;=ahaub_1048 &amp; 0&lt;=(idx[i])&#8866; !(is_modified(val_49&apos;,idx,bk,n,i))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -749,19 +569,15 @@ n&lt;=(idx[i]) &amp; dom(idx,0,ahaub_1048) &amp; 0&lt;=i &amp; i&lt;=ahaub_1048 
 (assert (&lt;= 0 (select idx i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (not (is_modified val_49_primed idx bk n i))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1048 &amp; dom(val,0,ahaub) &amp; 1000 - 1=ahaub &amp; dom(val,0,1000 -<br/>
 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; <br/>
 bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; <br/>
 i&lt;=ahaub &amp; dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/>
 (idx[i])&lt;n &amp; dom(idx,0,ahaub_1048) &amp; 0&lt;=i &amp; i&lt;=ahaub_1048 &amp; (idx[i])&lt;0&#8866; !(is_modified(val_49&apos;,idx,bk,n,i))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -801,20 +617,22 @@ i&lt;=ahaub &amp; dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apo
 (assert (&lt; (select idx i) 0))<br/>
 ;Negation of Consequence<br/>
 (assert (not (not (is_modified val_49_primed idx bk n i))))<br/>
-(check-sat)<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+<li class="Collapsed assert">
+Assertion at <a href="#L144">line 144</a> holds
+<ul></ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L146">line 146</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1048 &amp; 0&lt;=(idx[i]) &amp; i&lt;=ahaub_1048 &amp; 0&lt;=i &amp; <br/>
 dom(idx,0,ahaub_1048) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/>
 dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; i&lt;1000 &amp; dom(bk,0,1000 -<br/>
 1) &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; <br/>
 bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; <br/>
 n&lt;=(idx[i]) &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; n&lt;1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1048 () Int)<br/>
@@ -852,12 +670,8 @@ n&lt;=(idx[i]) &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; n&lt;1000
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt; n 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1048 &amp; (idx[i])&lt;0 &amp; i&lt;=ahaub_1048 &amp; 0&lt;=i &amp; <br/>
 dom(idx,0,ahaub_1048) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/>
@@ -865,7 +679,7 @@ dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; i&lt;10
 1) &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; <br/>
 bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; <br/>
 (idx[i])&lt;n &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; n&lt;1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1048 () Int)<br/>
@@ -903,22 +717,22 @@ bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; <br/>
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt; n 1000)))<br/>
-(check-sat)<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L147">line 147</a> holds
+<ul></ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 123::update___1d$int~int[]~int(v_int_148_797,idx_50,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array update at line <a href="#L148">line 148</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1115 &amp; n&lt;1000 &amp; dom(val_49&apos;,0,ahaub) &amp; dom(val,0,ahaub) &amp; <br/>
 1000 - 1=ahaub &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; <br/>
 dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; n&lt;=(idx[i]) &amp; dom(idx,0,ahaub_1115) &amp; <br/>
-0&lt;=i &amp; i&lt;=ahaub_1115 &amp; 0&lt;=(idx[i]) &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; &exist;ahalb_1122:&exist;ahaub_1123:dom(idx,ahalb_1122,ahaub_1123) &amp; <br/>
+0&lt;=i &amp; i&lt;=ahaub_1115 &amp; 0&lt;=(idx[i]) &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; &exist;(ahalb_1122:&exist;(ahaub_1123:dom(idx,ahalb_1122,ahaub_1123) &amp; <br/>
 ahalb_1122&lt;=i &amp; i&lt;=ahaub_1123))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -966,21 +780,17 @@ ahalb_1122&lt;=i &amp; i&lt;=ahaub_1123))
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1122 Int)) (exists ((ahaub_1123 Int)) (and (dom idx ahalb_1122 ahaub_1123) (and (&lt;= ahalb_1122 i) (&lt;= i ahaub_1123)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1115 &amp; n&lt;1000 &amp; dom(val_49&apos;,0,ahaub) &amp; dom(val,0,ahaub) &amp; <br/>
 1000 - 1=ahaub &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; <br/>
 dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1115) &amp; <br/>
-0&lt;=i &amp; i&lt;=ahaub_1115 &amp; (idx[i])&lt;0 &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; &exist;ahalb_1124:&exist;ahaub_1125:dom(idx,ahalb_1124,ahaub_1125) &amp; <br/>
+0&lt;=i &amp; i&lt;=ahaub_1115 &amp; (idx[i])&lt;0 &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; &exist;(ahalb_1124:&exist;(ahaub_1125:dom(idx,ahalb_1124,ahaub_1125) &amp; <br/>
 ahalb_1124&lt;=i &amp; i&lt;=ahaub_1125))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -1028,109 +838,11 @@ ahalb_1124&lt;=i &amp; i&lt;=ahaub_1125))
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1124 Int)) (exists ((ahaub_1125 Int)) (and (dom idx ahalb_1124 ahaub_1125) (and (&lt;= ahalb_1124 i) (&lt;= i ahaub_1125)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 125::update___1d$int~int[]~int(i,bk_51,v_int_149_802) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; val=bk
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun val () (Array Int Int))<br/>
-(declare-fun bk () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= val bk)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; idx=bk
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun idx () (Array Int Int))<br/>
-(declare-fun bk () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= idx bk)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; bk=bk
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun bk () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= bk bk)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; val_49&apos;=bk
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun val_49_primed () (Array Int Int))<br/>
-(declare-fun bk () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= val_49_primed bk)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> true&#8866; idx_50&apos;=bk
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun idx_50_primed () (Array Int Int))<br/>
-(declare-fun bk () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert true)<br/>
-;Negation of Consequence<br/>
-(assert (not (= idx_50_primed bk)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array update at line <a href="#L149">line 149</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1115 &amp; dom(idx_50&apos;,0,ahaub_1115) &amp; <br/>
 i&lt;=ahaub_1115 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1115) &amp; 0&lt;=(idx[i]) &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
@@ -1138,9 +850,9 @@ dom(val,0,ahaub) &amp; i&lt;1000 &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 
 dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; n&lt;=(idx[i]) &amp; <br/>
 !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; n&lt;1000 &amp; <br/>
-update_array_1d(idx,idx_50&apos;,n,i)&#8866; &exist;ahalb_1141:&exist;ahaub_1142:dom(bk,ahalb_1141,ahaub_1142) &amp; <br/>
+update_array_1d(idx,idx_50&apos;,n,i)&#8866; &exist;(ahalb_1141:&exist;(ahaub_1142:dom(bk,ahalb_1141,ahaub_1142) &amp; <br/>
 ahalb_1141&lt;=n &amp; n&lt;=ahaub_1142))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1115 () Int)<br/>
@@ -1191,12 +903,8 @@ ahalb_1141&lt;=n &amp; n&lt;=ahaub_1142))
 (assert (= idx_50_primed (store idx i n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1141 Int)) (exists ((ahaub_1142 Int)) (and (dom bk ahalb_1141 ahaub_1142) (and (&lt;= ahalb_1141 n) (&lt;= n ahaub_1142)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1115 &amp; dom(idx_50&apos;,0,ahaub_1115) &amp; <br/>
 i&lt;=ahaub_1115 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1115) &amp; (idx[i])&lt;0 &amp; <br/>
@@ -1205,9 +913,9 @@ dom(val,0,ahaub) &amp; i&lt;1000 &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 
 dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; <br/>
 !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; n&lt;1000 &amp; <br/>
-update_array_1d(idx,idx_50&apos;,n,i)&#8866; &exist;ahalb_1143:&exist;ahaub_1144:dom(bk,ahalb_1143,ahaub_1144) &amp; <br/>
+update_array_1d(idx,idx_50&apos;,n,i)&#8866; &exist;(ahalb_1143:&exist;(ahaub_1144:dom(bk,ahalb_1143,ahaub_1144) &amp; <br/>
 ahalb_1143&lt;=n &amp; n&lt;=ahaub_1144))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1115 () Int)<br/>
@@ -1258,25 +966,19 @@ ahalb_1143&lt;=n &amp; n&lt;=ahaub_1144))
 (assert (= idx_50_primed (store idx i n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1143 Int)) (exists ((ahaub_1144 Int)) (and (dom bk ahalb_1143 ahaub_1144) (and (&lt;= ahalb_1143 n) (&lt;= n ahaub_1144)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 128::add___$int~int(v_int_150_808,v_int_150_807) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(idx_50,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L151">line 151</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1164 &amp; dom(val_49&apos;,0,ahaub) &amp; dom(val,0,ahaub) &amp; 1000 -<br/>
 1=ahaub &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(bk,0,1000 -<br/>
 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1164) &amp; <br/>
-0&lt;=i &amp; i&lt;=ahaub_1164 &amp; 0&lt;=(idx[i])&#8866; &exist;ahalb_1173:&exist;ahaub_1174:dom(idx,ahalb_1173,ahaub_1174) &amp; <br/>
+0&lt;=i &amp; i&lt;=ahaub_1164 &amp; 0&lt;=(idx[i])&#8866; &exist;(ahalb_1173:&exist;(ahaub_1174:dom(idx,ahalb_1173,ahaub_1174) &amp; <br/>
 ahalb_1173&lt;=i &amp; i&lt;=ahaub_1174))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk () (Array Int Int))<br/>
@@ -1322,44 +1024,19 @@ ahalb_1173&lt;=i &amp; i&lt;=ahaub_1174))
 (assert (&lt;= 0 (select idx i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1173 Int)) (exists ((ahaub_1174 Int)) (and (dom idx ahalb_1173 ahaub_1174) (and (&lt;= ahalb_1173 i) (&lt;= i ahaub_1174)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(bk_51,v_int_151_814) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> v_int_151_814&apos;=idx[i]&#8866; idx=bk
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun v_int_151_814_primed () Int)<br/>
-(declare-fun i () Int)<br/>
-(declare-fun idx () (Array Int Int))<br/>
-(declare-fun bk () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (= v_int_151_814_primed (select idx i)))<br/>
-;Negation of Consequence<br/>
-(assert (not (= idx bk)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L151">line 151</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1164 &amp; i&lt;=ahaub_1164 &amp; 0&lt;=i &amp; <br/>
 dom(idx,0,ahaub_1164) &amp; 0&lt;=(idx[i]) &amp; (idx[i])&lt;n &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(idx,0,1000 - 1) &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
-is_sparse_array(val,idx,bk,n) &amp; v_int_151_814&apos;=idx[i]&#8866; &exist;ahalb_1182:&exist;ahaub_1183:dom(bk,ahalb_1182,ahaub_1183) &amp; <br/>
+is_sparse_array(val,idx,bk,n) &amp; v_int_151_814&apos;=idx[i]&#8866; &exist;(ahalb_1182:&exist;(ahaub_1183:dom(bk,ahalb_1182,ahaub_1183) &amp; <br/>
 ahalb_1182&lt;=v_int_151_814&apos; &amp; v_int_151_814&apos;&lt;=ahaub_1183))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1164 () Int)<br/>
@@ -1407,16 +1084,12 @@ ahalb_1182&lt;=v_int_151_814&apos; &amp; v_int_151_814&apos;&lt;=ahaub_1183))
 (assert (= v_int_151_814_primed (select idx i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1182 Int)) (exists ((ahaub_1183 Int)) (and (dom bk ahalb_1182 ahaub_1183) (and (&lt;= ahalb_1182 v_int_151_814_primed) (&lt;= v_int_151_814_primed ahaub_1183)))))))<br/>
-(check-sat)<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-</ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call 118::neq___$int~int(v_int_151_815,i) holds<ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+<li class="Collapsed assert">
+Assertion at <a href="#L152">line 152</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1177 &amp; 1000 - 1=ahaub_1164 &amp; dom(val,0,ahaub) &amp; 1000 -<br/>
 1=ahaub &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; <br/>
 0&lt;=n &amp; n&lt;=1000 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
@@ -1424,7 +1097,7 @@ is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; dom(val_49
 update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1164) &amp; <br/>
 0&lt;=i &amp; i&lt;=ahaub_1164 &amp; dom(bk,0,ahaub_1177) &amp; 0&lt;=(idx[i]) &amp; <br/>
 (idx[i])&lt;=ahaub_1177 &amp; (bk[idx[i]])!=i&#8866; !(is_modified(val_49&apos;,idx,bk,n,i))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -1468,13 +1141,15 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_
 (assert (not (= (select bk (select idx i)) i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (not (is_modified val_49_primed idx bk n i))))<br/>
-(check-sat)<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+<li class="Collapsed assert">
+Assertion at <a href="#L153">line 153</a> holds
+<ul></ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L155">line 155</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1164 &amp; 1000 - 1=ahaub_1177 &amp; <br/>
 (bk[idx[i]])!=i &amp; (idx[i])&lt;=ahaub_1177 &amp; 0&lt;=(idx[i]) &amp; <br/>
 dom(bk,0,ahaub_1177) &amp; i&lt;=ahaub_1164 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1164) &amp; <br/>
@@ -1483,7 +1158,7 @@ dom(val,0,ahaub) &amp; i&lt;1000 &amp; dom(bk,0,1000 - 1) &amp; dom(idx,0,1000 -
 dom(val,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; <br/>
 !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; n&lt;1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1177 () Int)<br/>
@@ -1525,23 +1200,23 @@ is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; <br/>
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt; n 1000)))<br/>
-(check-sat)<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L156">line 156</a> holds
+<ul></ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 110::update___1d$int~int[]~int(v_int_157_849,idx_50,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array update at line <a href="#L157">line 157</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1195 &amp; n&lt;1000 &amp; dom(bk,0,ahaub_1177) &amp; 1000 - 1=ahaub_1177 &amp; <br/>
 dom(val_49&apos;,0,ahaub) &amp; dom(val,0,ahaub) &amp; 1000 - 1=ahaub &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; <br/>
 dom(idx,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1195) &amp; <br/>
 0&lt;=i &amp; i&lt;=ahaub_1195 &amp; 0&lt;=(idx[i]) &amp; (idx[i])&lt;=ahaub_1177 &amp; <br/>
-(bk[idx[i]])!=i &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; &exist;ahalb_1202:&exist;ahaub_1203:dom(idx,ahalb_1202,ahaub_1203) &amp; <br/>
+(bk[idx[i]])!=i &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; &exist;(ahalb_1202:&exist;(ahaub_1203:dom(idx,ahalb_1202,ahaub_1203) &amp; <br/>
 ahalb_1202&lt;=i &amp; i&lt;=ahaub_1203))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -1594,15 +1269,11 @@ ahalb_1202&lt;=i &amp; i&lt;=ahaub_1203))
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1202 Int)) (exists ((ahaub_1203 Int)) (and (dom idx ahalb_1202 ahaub_1203) (and (&lt;= ahalb_1202 i) (&lt;= i ahaub_1203)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 112::update___1d$int~int[]~int(i,bk_51,v_int_158_854) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array update at line <a href="#L158">line 158</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1195 &amp; 1000 - 1=ahaub_1209 &amp; <br/>
 dom(idx_50&apos;,0,ahaub_1195) &amp; i&lt;=ahaub_1195 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1195) &amp; <br/>
 (idx[i])&lt;=ahaub_1209 &amp; 0&lt;=(idx[i]) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/>
@@ -1611,9 +1282,9 @@ dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 0&l
 n&lt;=1000 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; <br/>
 (idx[i])&lt;n &amp; dom(bk,0,ahaub_1209) &amp; (bk[idx[i]])!=i &amp; <br/>
 !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; n&lt;1000 &amp; <br/>
-update_array_1d(idx,idx_50&apos;,n,i)&#8866; &exist;ahalb_1216:&exist;ahaub_1217:dom(bk,ahalb_1216,ahaub_1217) &amp; <br/>
+update_array_1d(idx,idx_50&apos;,n,i)&#8866; &exist;(ahalb_1216:&exist;(ahaub_1217:dom(bk,ahalb_1216,ahaub_1217) &amp; <br/>
 ahalb_1216&lt;=n &amp; n&lt;=ahaub_1217))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1195 () Int)<br/>
@@ -1669,15 +1340,9 @@ ahalb_1216&lt;=n &amp; n&lt;=ahaub_1217))
 (assert (= idx_50_primed (store idx i n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1216 Int)) (exists ((ahaub_1217 Int)) (and (dom bk ahalb_1216 ahaub_1217) (and (&lt;= ahalb_1216 n) (&lt;= n ahaub_1217)))))))<br/>
-(check-sat)<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
-</ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call 115::add___$int~int(v_int_159_860,v_int_159_859) holds<ul></ul></li>
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
@@ -1690,7 +1355,7 @@ n&lt;1000 &amp; 0&lt;=(idx[i]) &amp; n&lt;=(idx[i]) &amp; i&lt;=ahaub &amp; dom(
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(val_49&apos;,0,ahaub) &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; dom(val_49&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_150_1235 () Int)<br/>
@@ -1750,12 +1415,8 @@ update_array_1d(val,val_49&apos;,v,i) &amp; !(is_modified(val_49&apos;,idx,bk,n,
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom val_49_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1134 &amp; v_int_150_1235=1+n &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
@@ -1766,7 +1427,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(idx,0,1000 - 1) &amp; dom(idx_50&apos;,0,ahaub_1115) &amp; <br/>
 update_array_1d(idx,idx_50&apos;,n,i)&#8866; dom(idx_50&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_150_1235 () Int)<br/>
@@ -1826,12 +1487,8 @@ update_array_1d(idx,idx_50&apos;,n,i)&#8866; dom(idx_50&apos;,0,1000 - 1)
 (assert (= idx_50_primed (store idx i n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom idx_50_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1115 &amp; v_int_150_1235=1+n &amp; n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; <br/>
@@ -1843,7 +1500,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(bk_51&apos;,0,ahaub_1134) &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n)&#8866; dom(bk_51&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_150_1235 () Int)<br/>
@@ -1903,12 +1560,8 @@ update_array_1d(bk,bk_51&apos;,i,n)&#8866; dom(bk_51&apos;,0,1000 - 1)
 (assert (= bk_51_primed (store bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom bk_51_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; i&lt;1000 &amp; <br/>
 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1115 &amp; 1000 - 1=ahaub_1134 &amp; <br/>
@@ -1919,7 +1572,7 @@ n&lt;1000 &amp; !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; 0&lt;=(idx[i]) &am
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
 dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; v_int_150_1235=1+n&#8866; 0&lt;=v_int_150_1235
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk_51_primed () (Array Int Int))<br/>
@@ -1967,12 +1620,8 @@ dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 (assert (= v_int_150_1235 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 v_int_150_1235)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; i&lt;1000 &amp; <br/>
 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1115 &amp; 1000 - 1=ahaub_1134 &amp; <br/>
@@ -1983,7 +1632,7 @@ n&lt;1000 &amp; !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; 0&lt;=(idx[i]) &am
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
 dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; v_int_150_1235=1+n&#8866; v_int_150_1235&lt;=1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk_51_primed () (Array Int Int))<br/>
@@ -2031,12 +1680,8 @@ dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 (assert (= v_int_150_1235 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= v_int_150_1235 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk_51&apos;,0,ahaub_1134) &amp; 1000 - 1=ahaub_1134 &amp; <br/>
 dom(idx_50&apos;,0,ahaub_1115) &amp; 1000 - 1=ahaub_1115 &amp; dom(val_49&apos;,0,ahaub) &amp; <br/>
@@ -2048,7 +1693,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; n&lt;=(idx[i]) &amp; 0&lt;=(idx[i]) 
 i&lt;=ahaub_1115 &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahaub_1134) &amp; <br/>
 0&lt;=n &amp; n&lt;=ahaub_1134 &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1235=1+n&#8866; 452::is_modified(val,idx,bk,n,i) &amp; v_int_150_1235=n | <br/>
 !(is_modified(val,idx,bk,n,i)) &amp; v_int_150_1235=n+1
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -2099,12 +1744,8 @@ i&lt;=ahaub_1115 &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahau
 (assert (= v_int_150_1235 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (or (and (is_modified val idx bk n i) (= v_int_150_1235 n)) (and (not (is_modified val idx bk n i)) (= v_int_150_1235 (+ n 1))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1115 &amp; n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1134) &amp; 1000 -<br/>
@@ -2115,7 +1756,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(bk_51&apos;,0,ahaub_1134) &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1235=1+n&#8866; bounded(bk_51&apos;,0,v_int_150_1235 - 1,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1134 () Int)<br/>
@@ -2164,12 +1805,8 @@ update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1235=1+n&#8866; bounded(bk_5
 (assert (= v_int_150_1235 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (bounded bk_51_primed 0 (- v_int_150_1235 1) 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1134) &amp; 1000 - 1=ahaub_1134 &amp; <br/>
 dom(idx,0,ahaub_1115) &amp; 1000 - 1=ahaub_1115 &amp; n&lt;1000 &amp; dom(val,0,ahaub) &amp; <br/>
@@ -2181,7 +1818,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; n&lt;=(idx[i]) &amp; 0&lt;=(idx[i]) 
 dom(idx_50&apos;,0,ahaub_1115) &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; <br/>
 dom(bk_51&apos;,0,ahaub_1134) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1235=1+<br/>
 n&#8866; value_at(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1235,i,v)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1134 () Int)<br/>
@@ -2233,12 +1870,8 @@ n&#8866; value_at(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1235,i,v)
 (assert (= v_int_150_1235 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val_49_primed idx_50_primed bk_51_primed v_int_150_1235 i v)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1134) &amp; 1000 - 1=ahaub_1134 &amp; <br/>
 i&lt;=ahaub_1115 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1115) &amp; 1000 - 1=ahaub_1115 &amp; <br/>
@@ -2250,7 +1883,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; !(is_modified(val_49&apos;,idx,bk,n,
 dom(idx_50&apos;,0,ahaub_1115) &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; <br/>
 dom(bk_51&apos;,0,ahaub_1134) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1235=1+<br/>
 n&#8866; is_sparse_array(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1235)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1134 () Int)<br/>
@@ -2301,12 +1934,8 @@ n&#8866; is_sparse_array(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1235)
 (assert (= v_int_150_1235 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (is_sparse_array val_49_primed idx_50_primed bk_51_primed v_int_150_1235)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1134 &amp; 1000 - 1=ahaub_1115 &amp; 1000 - 1=ahaub &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; n&lt;=1000 &amp; <br/>
@@ -2318,7 +1947,7 @@ i&lt;=ahaub_1115 &amp; dom(idx_50&apos;,0,ahaub_1115) &amp; <br/>
 update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahaub_1134) &amp; 0&lt;=n &amp; <br/>
 n&lt;=ahaub_1134 &amp; dom(bk_51&apos;,0,ahaub_1134) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
 v_int_150_1235=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1235,i)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -2370,12 +1999,8 @@ v_int_150_1235=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apo
 (assert (= v_int_150_1235 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (idexc val idx bk n val_49_primed idx_50_primed bk_51_primed v_int_150_1235 i)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1115 &amp; 1000 - 1=ahaub_1134 &amp; v_int_150_1237=1+n &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n) &amp; dom(bk_51&apos;,0,ahaub_1134) &amp; n&lt;=ahaub_1134 &amp; <br/>
@@ -2386,7 +2011,7 @@ n&lt;1000 &amp; (idx[i])&lt;0 &amp; (idx[i])&lt;n &amp; i&lt;=ahaub &amp; dom(va
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(val_49&apos;,0,ahaub) &amp; <br/>
 update_array_1d(val,val_49&apos;,v,i) &amp; !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; dom(val_49&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_150_1237 () Int)<br/>
@@ -2446,12 +2071,8 @@ update_array_1d(val,val_49&apos;,v,i) &amp; !(is_modified(val_49&apos;,idx,bk,n,
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom val_49_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1134 &amp; v_int_150_1237=1+n &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
@@ -2462,7 +2083,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(idx,0,1000 - 1) &amp; dom(idx_50&apos;,0,ahaub_1115) &amp; <br/>
 update_array_1d(idx,idx_50&apos;,n,i)&#8866; dom(idx_50&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_150_1237 () Int)<br/>
@@ -2522,12 +2143,8 @@ update_array_1d(idx,idx_50&apos;,n,i)&#8866; dom(idx_50&apos;,0,1000 - 1)
 (assert (= idx_50_primed (store idx i n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom idx_50_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1115 &amp; v_int_150_1237=1+n &amp; n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; <br/>
@@ -2539,7 +2156,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(bk_51&apos;,0,ahaub_1134) &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n)&#8866; dom(bk_51&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_150_1237 () Int)<br/>
@@ -2599,12 +2216,8 @@ update_array_1d(bk,bk_51&apos;,i,n)&#8866; dom(bk_51&apos;,0,1000 - 1)
 (assert (= bk_51_primed (store bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom bk_51_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; i&lt;1000 &amp; <br/>
 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1115 &amp; 1000 - 1=ahaub_1134 &amp; <br/>
@@ -2615,7 +2228,7 @@ n&lt;1000 &amp; !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; (idx[i])&lt;0 &amp
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
 dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; v_int_150_1237=1+n&#8866; 0&lt;=v_int_150_1237
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk_51_primed () (Array Int Int))<br/>
@@ -2663,12 +2276,8 @@ dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 (assert (= v_int_150_1237 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 v_int_150_1237)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; i&lt;1000 &amp; <br/>
 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1115 &amp; 1000 - 1=ahaub_1134 &amp; <br/>
@@ -2679,7 +2288,7 @@ n&lt;1000 &amp; !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; (idx[i])&lt;0 &amp
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
 dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; v_int_150_1237=1+n&#8866; v_int_150_1237&lt;=1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk_51_primed () (Array Int Int))<br/>
@@ -2727,12 +2336,8 @@ dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 (assert (= v_int_150_1237 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= v_int_150_1237 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk_51&apos;,0,ahaub_1134) &amp; 1000 - 1=ahaub_1134 &amp; <br/>
 dom(idx_50&apos;,0,ahaub_1115) &amp; 1000 - 1=ahaub_1115 &amp; dom(val_49&apos;,0,ahaub) &amp; <br/>
@@ -2744,7 +2349,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; (idx[i])&lt;0 &a
 i&lt;=ahaub_1115 &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahaub_1134) &amp; <br/>
 0&lt;=n &amp; n&lt;=ahaub_1134 &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1237=1+n&#8866; 452::is_modified(val,idx,bk,n,i) &amp; v_int_150_1237=n | <br/>
 !(is_modified(val,idx,bk,n,i)) &amp; v_int_150_1237=n+1
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -2795,12 +2400,8 @@ i&lt;=ahaub_1115 &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahau
 (assert (= v_int_150_1237 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (or (and (is_modified val idx bk n i) (= v_int_150_1237 n)) (and (not (is_modified val idx bk n i)) (= v_int_150_1237 (+ n 1))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1115 &amp; n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1134) &amp; 1000 -<br/>
@@ -2811,7 +2412,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(bk_51&apos;,0,ahaub_1134) &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1237=1+n&#8866; bounded(bk_51&apos;,0,v_int_150_1237 - 1,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1134 () Int)<br/>
@@ -2860,12 +2461,8 @@ update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1237=1+n&#8866; bounded(bk_5
 (assert (= v_int_150_1237 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (bounded bk_51_primed 0 (- v_int_150_1237 1) 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1134) &amp; 1000 - 1=ahaub_1134 &amp; <br/>
 dom(idx,0,ahaub_1115) &amp; 1000 - 1=ahaub_1115 &amp; n&lt;1000 &amp; dom(val,0,ahaub) &amp; <br/>
@@ -2877,7 +2474,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; (idx[i])&lt;0 &a
 dom(idx_50&apos;,0,ahaub_1115) &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; <br/>
 dom(bk_51&apos;,0,ahaub_1134) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1237=1+<br/>
 n&#8866; value_at(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1237,i,v)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1134 () Int)<br/>
@@ -2929,12 +2526,8 @@ n&#8866; value_at(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1237,i,v)
 (assert (= v_int_150_1237 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val_49_primed idx_50_primed bk_51_primed v_int_150_1237 i v)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> n&lt;=ahaub_1134 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1134) &amp; 1000 - 1=ahaub_1134 &amp; <br/>
 i&lt;=ahaub_1115 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1115) &amp; 1000 - 1=ahaub_1115 &amp; <br/>
@@ -2946,7 +2539,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; !(is_modified(val_49&apos;,idx,bk,n,
 dom(idx_50&apos;,0,ahaub_1115) &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; <br/>
 dom(bk_51&apos;,0,ahaub_1134) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_150_1237=1+<br/>
 n&#8866; is_sparse_array(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1237)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1134 () Int)<br/>
@@ -2997,12 +2590,8 @@ n&#8866; is_sparse_array(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1237)
 (assert (= v_int_150_1237 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (is_sparse_array val_49_primed idx_50_primed bk_51_primed v_int_150_1237)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1134 &amp; 1000 - 1=ahaub_1115 &amp; 1000 - 1=ahaub &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; n&lt;=1000 &amp; <br/>
@@ -3014,7 +2603,7 @@ i&lt;=ahaub_1115 &amp; dom(idx_50&apos;,0,ahaub_1115) &amp; <br/>
 update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahaub_1134) &amp; 0&lt;=n &amp; <br/>
 n&lt;=ahaub_1134 &amp; dom(bk_51&apos;,0,ahaub_1134) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
 v_int_150_1237=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_150_1237,i)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -3066,12 +2655,8 @@ v_int_150_1237=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apo
 (assert (= v_int_150_1237 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (idexc val idx bk n val_49_primed idx_50_primed bk_51_primed v_int_150_1237 i)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1195 &amp; v_int_159_1239=1+n &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
 dom(bk_51&apos;,0,ahaub_1209) &amp; n&lt;=ahaub_1209 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1209) &amp; <br/>
@@ -3083,7 +2668,7 @@ is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1
 dom(bk,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; <br/>
 dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/>
 !(is_modified(val_49&apos;,idx,bk,n,i))&#8866; dom(val_49&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_159_1239 () Int)<br/>
@@ -3145,12 +2730,8 @@ dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/
 (assert (not (is_modified val_49_primed idx bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom val_49_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; <br/>
 v_int_159_1239=1+n &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
@@ -3162,7 +2743,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(idx,0,1000 - 1) &amp; dom(idx_50&apos;,0,ahaub_1195) &amp; <br/>
 update_array_1d(idx,idx_50&apos;,n,i)&#8866; dom(idx_50&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_159_1239 () Int)<br/>
@@ -3224,12 +2805,8 @@ update_array_1d(idx,idx_50&apos;,n,i)&#8866; dom(idx_50&apos;,0,1000 - 1)
 (assert (= idx_50_primed (store idx i n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom idx_50_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1195 &amp; v_int_159_1239=1+n &amp; n&lt;=ahaub_1209 &amp; 0&lt;=n &amp; <br/>
@@ -3242,7 +2819,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(bk_51&apos;,0,ahaub_1209) &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n)&#8866; dom(bk_51&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v_int_159_1239 () Int)<br/>
@@ -3304,12 +2881,8 @@ update_array_1d(bk,bk_51&apos;,i,n)&#8866; dom(bk_51&apos;,0,1000 - 1)
 (assert (= bk_51_primed (store bk n i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom bk_51_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; i&lt;1000 &amp; <br/>
 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1195 &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
@@ -3321,7 +2894,7 @@ n&lt;1000 &amp; !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; (bk[idx[i]])!=i &a
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
 dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; v_int_159_1239=1+n&#8866; 0&lt;=v_int_159_1239
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk_51_primed () (Array Int Int))<br/>
@@ -3371,12 +2944,8 @@ dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 (assert (= v_int_159_1239 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 v_int_159_1239)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; i&lt;1000 &amp; <br/>
 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1195 &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
@@ -3388,7 +2957,7 @@ n&lt;1000 &amp; !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; (bk[idx[i]])!=i &a
 update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; <br/>
 dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; v_int_159_1239=1+n&#8866; v_int_159_1239&lt;=1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun bk_51_primed () (Array Int Int))<br/>
@@ -3438,12 +3007,8 @@ dom(val,0,ahaub) &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 (assert (= v_int_159_1239 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= v_int_159_1239 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk_51&apos;,0,ahaub_1209) &amp; 1000 - 1=ahaub_1209 &amp; <br/>
 dom(idx_50&apos;,0,ahaub_1195) &amp; 1000 - 1=ahaub_1195 &amp; dom(val_49&apos;,0,ahaub) &amp; <br/>
@@ -3456,7 +3021,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; 0&lt;=(idx[i]) &
 i&lt;=ahaub_1195 &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahaub_1209) &amp; <br/>
 0&lt;=n &amp; n&lt;=ahaub_1209 &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_159_1239=1+n&#8866; 452::is_modified(val,idx,bk,n,i) &amp; v_int_159_1239=n | <br/>
 !(is_modified(val,idx,bk,n,i)) &amp; v_int_159_1239=n+1
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -3509,12 +3074,8 @@ i&lt;=ahaub_1195 &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahau
 (assert (= v_int_159_1239 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (or (and (is_modified val idx bk n i) (= v_int_159_1239 n)) (and (not (is_modified val idx bk n i)) (= v_int_159_1239 (+ n 1))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; 1000 - 1=ahaub &amp; 1000 -<br/>
 1=ahaub_1195 &amp; n&lt;=ahaub_1209 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1209) &amp; 1000 -<br/>
@@ -3526,7 +3087,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; dom(val_49&apos;,0,ahaub) &amp; i&lt
 dom(val,0,ahaub) &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; n&lt;=1000 &amp; dom(bk,0,1000 - 1) &amp; dom(bk_51&apos;,0,ahaub_1209) &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_159_1239=1+n&#8866; bounded(bk_51&apos;,0,v_int_159_1239 - 1,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun idx_50_primed () (Array Int Int))<br/>
@@ -3577,12 +3138,8 @@ update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_159_1239=1+n&#8866; bounded(bk_5
 (assert (= v_int_159_1239 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (bounded bk_51_primed 0 (- v_int_159_1239 1) 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> n&lt;=ahaub_1209 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1209) &amp; 1000 - 1=ahaub_1209 &amp; <br/>
 dom(idx,0,ahaub_1195) &amp; 1000 - 1=ahaub_1195 &amp; n&lt;1000 &amp; dom(val,0,ahaub) &amp; <br/>
@@ -3595,7 +3152,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; 0&lt;=(idx[i]) &
 dom(idx_50&apos;,0,ahaub_1195) &amp; update_array_1d(idx,idx_50&apos;,n,i) &amp; <br/>
 dom(bk_51&apos;,0,ahaub_1209) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_159_1239=1+<br/>
 n&#8866; value_at(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_159_1239,i,v)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -3649,12 +3206,8 @@ n&#8866; value_at(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_159_1239,i,v)
 (assert (= v_int_159_1239 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val_49_primed idx_50_primed bk_51_primed v_int_159_1239 i v)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> n&lt;=ahaub_1209 &amp; 0&lt;=n &amp; dom(bk,0,ahaub_1209) &amp; 1000 - 1=ahaub_1209 &amp; <br/>
 i&lt;=ahaub_1195 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1195) &amp; 1000 - 1=ahaub_1195 &amp; <br/>
@@ -3666,7 +3219,7 @@ dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; <br/
 !(is_modified(val_49&apos;,idx,bk,n,i)) &amp; dom(idx_50&apos;,0,ahaub_1195) &amp; <br/>
 update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk_51&apos;,0,ahaub_1209) &amp; <br/>
 update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_159_1239=1+n&#8866; is_sparse_array(val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_159_1239)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1195 () Int)<br/>
@@ -3719,12 +3272,8 @@ update_array_1d(bk,bk_51&apos;,i,n) &amp; v_int_159_1239=1+n&#8866; is_sparse_ar
 (assert (= v_int_159_1239 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (is_sparse_array val_49_primed idx_50_primed bk_51_primed v_int_159_1239)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1209 &amp; 1000 - 1=ahaub_1195 &amp; 1000 - 1=ahaub &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; n&lt;=1000 &amp; <br/>
@@ -3737,7 +3286,7 @@ i&lt;=ahaub_1195 &amp; dom(idx_50&apos;,0,ahaub_1195) &amp; <br/>
 update_array_1d(idx,idx_50&apos;,n,i) &amp; dom(bk,0,ahaub_1209) &amp; 0&lt;=n &amp; <br/>
 n&lt;=ahaub_1209 &amp; dom(bk_51&apos;,0,ahaub_1209) &amp; update_array_1d(bk,bk_51&apos;,i,n) &amp; <br/>
 v_int_159_1239=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apos;,v_int_159_1239,i)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -3791,12 +3340,8 @@ v_int_159_1239=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apo
 (assert (= v_int_159_1239 (+ 1 n)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (idexc val idx bk n val_49_primed idx_50_primed bk_51_primed v_int_159_1239 i)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; bounded(bk,0,n -<br/>
 1,0,1000 - 1) &amp; 1000 - 1=ahaub_1164 &amp; 1000 - 1=ahaub_1177 &amp; i=bk[idx[i]] &amp; <br/>
@@ -3804,7 +3349,7 @@ v_int_159_1239=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apo
 0&lt;=i &amp; dom(idx,0,ahaub_1164) &amp; (idx[i])&lt;n &amp; i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; <br/>
 1000 - 1=ahaub &amp; i&lt;1000 &amp; is_sparse_array(val,idx,bk,n) &amp; dom(val,0,1000 -<br/>
 1) &amp; dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apos;,v,i)&#8866; dom(val_49&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1177 () Int)<br/>
@@ -3855,12 +3400,8 @@ v_int_159_1239=1+n&#8866; idexc(val,idx,bk,n,val_49&apos;,idx_50&apos;,bk_51&apo
 (assert (= val_49_primed (store val i v)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom val_49_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; dom(bk,0,ahaub_1177) &amp; 1000 - 1=ahaub_1177 &amp; <br/>
 i&lt;=ahaub_1164 &amp; 0&lt;=i &amp; 1000 - 1=ahaub_1164 &amp; <br/>
@@ -3869,7 +3410,7 @@ dom(val,0,ahaub) &amp; i&lt;1000 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt
 0&lt;=n &amp; dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1164) &amp; <br/>
 0&lt;=(idx[i]) &amp; (idx[i])&lt;=ahaub_1177 &amp; i=bk[idx[i]]&#8866; dom(idx,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun v () Int)<br/>
@@ -3920,12 +3461,8 @@ is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1164) &a
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom idx 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1164 &amp; (idx[i])&lt;=ahaub_1177 &amp; 0&lt;=(idx[i]) &amp; <br/>
 1000 - 1=ahaub_1177 &amp; i&lt;=ahaub_1164 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1164) &amp; <br/>
@@ -3933,7 +3470,7 @@ is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1164) &a
 i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; i&lt;1000 &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(idx,0,1000 -<br/>
 1) &amp; dom(val,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; bounded(bk,0,n - 1,0,1000 -<br/>
 1) &amp; is_sparse_array(val,idx,bk,n) &amp; dom(bk,0,ahaub_1177) &amp; i=bk[idx[i]]&#8866; dom(bk,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1164 () Int)<br/>
@@ -3984,12 +3521,8 @@ i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; i&lt;1000 &amp; n&lt;=1000 &amp; 0&lt;=
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom bk 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1164 &amp; 1000 - 1=ahaub_1177 &amp; i=bk[idx[i]] &amp; <br/>
 (idx[i])&lt;=ahaub_1177 &amp; 0&lt;=(idx[i]) &amp; dom(bk,0,ahaub_1177) &amp; i&lt;=ahaub_1164 &amp; <br/>
@@ -3997,7 +3530,7 @@ i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; i&lt;1000 &amp; n&lt;=1000 &amp; 0&lt;=
 dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; i&lt;1000 &amp; dom(bk,0,1000 -<br/>
 1) &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; <br/>
 bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n&#8866; 0&lt;=n
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1177 () Int)<br/>
@@ -4038,12 +3571,8 @@ bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; (idx[i]
 (assert (&lt; (select idx i) n))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 n)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1164 &amp; 1000 - 1=ahaub_1177 &amp; i=bk[idx[i]] &amp; <br/>
 (idx[i])&lt;=ahaub_1177 &amp; 0&lt;=(idx[i]) &amp; dom(bk,0,ahaub_1177) &amp; i&lt;=ahaub_1164 &amp; <br/>
@@ -4051,7 +3580,7 @@ bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; (idx[i]
 dom(val_49&apos;,0,ahaub) &amp; i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; i&lt;1000 &amp; dom(bk,0,1000 -<br/>
 1) &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; <br/>
 bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n&#8866; n&lt;=1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1177 () Int)<br/>
@@ -4092,12 +3621,8 @@ bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; (idx[i]
 (assert (&lt; (select idx i) n))<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= n 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1177 &amp; 1000 - 1=ahaub_1164 &amp; dom(val_49&apos;,0,ahaub) &amp; 1000 -<br/>
 1=ahaub &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; <br/>
@@ -4107,7 +3632,7 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_
 0&lt;=i &amp; i&lt;=ahaub_1164 &amp; dom(bk,0,ahaub_1177) &amp; 0&lt;=(idx[i]) &amp; <br/>
 (idx[i])&lt;=ahaub_1177 &amp; i=bk[idx[i]]&#8866; 452::is_modified(val,idx,bk,n,i) &amp; n=n | !(is_modified(val,idx,bk,n,i)) &amp; <br/>
 n=n+1
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -4151,12 +3676,8 @@ n=n+1
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (or (and (is_modified val idx bk n i) (= n n)) (and (not (is_modified val idx bk n i)) (= n (+ n 1))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub &amp; 1000 - 1=ahaub_1164 &amp; (idx[i])&lt;=ahaub_1177 &amp; 0&lt;=(idx[i]) &amp; <br/>
 1000 - 1=ahaub_1177 &amp; i&lt;=ahaub_1164 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1164) &amp; <br/>
@@ -4165,7 +3686,7 @@ dom(val,0,ahaub) &amp; i&lt;1000 &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 
 dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; dom(bk,0,ahaub_1177) &amp; <br/>
 i=bk[idx[i]]&#8866; bounded(bk,0,n - 1,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1177 () Int)<br/>
@@ -4207,12 +3728,8 @@ i=bk[idx[i]]&#8866; bounded(bk,0,n - 1,0,1000 - 1)
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (bounded bk 0 (- n 1) 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1177 &amp; 1000 - 1=ahaub_1164 &amp; dom(val,0,ahaub) &amp; 1000 -<br/>
 1=ahaub &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; <br/>
@@ -4221,7 +3738,7 @@ is_sparse_array(val,idx,bk,n) &amp; i&lt;1000 &amp; i&lt;=ahaub &amp; dom(val_49
 update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1164) &amp; <br/>
 0&lt;=i &amp; i&lt;=ahaub_1164 &amp; dom(bk,0,ahaub_1177) &amp; 0&lt;=(idx[i]) &amp; <br/>
 (idx[i])&lt;=ahaub_1177 &amp; i=bk[idx[i]]&#8866; value_at(val_49&apos;,idx,bk,n,i,v)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -4266,12 +3783,8 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val_49_primed idx bk n i v)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1177 &amp; i&lt;=ahaub_1164 &amp; 0&lt;=i &amp; 1000 - 1=ahaub_1164 &amp; <br/>
 i&lt;=ahaub &amp; dom(val,0,ahaub) &amp; 1000 - 1=ahaub &amp; i&lt;1000 &amp; dom(val,0,1000 -<br/>
@@ -4280,7 +3793,7 @@ bounded(bk,0,n - 1,0,1000 - 1) &amp; is_sparse_array(val,idx,bk,n) &amp; <br/>
 dom(val_49&apos;,0,ahaub) &amp; update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; <br/>
 dom(idx,0,ahaub_1164) &amp; dom(bk,0,ahaub_1177) &amp; 0&lt;=(idx[i]) &amp; <br/>
 (idx[i])&lt;=ahaub_1177 &amp; i=bk[idx[i]]&#8866; is_sparse_array(val_49&apos;,idx,bk,n)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1164 () Int)<br/>
@@ -4324,12 +3837,8 @@ dom(idx,0,ahaub_1164) &amp; dom(bk,0,ahaub_1177) &amp; 0&lt;=(idx[i]) &amp; <br/
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (is_sparse_array val_49_primed idx bk n)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1177 &amp; 1000 - 1=ahaub_1164 &amp; 1000 - 1=ahaub &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; <br/>
@@ -4338,7 +3847,7 @@ i&lt;1000 &amp; dom(val,0,ahaub) &amp; i&lt;=ahaub &amp; dom(val_49&apos;,0,ahau
 update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1164) &amp; <br/>
 0&lt;=i &amp; i&lt;=ahaub_1164 &amp; dom(bk,0,ahaub_1177) &amp; 0&lt;=(idx[i]) &amp; <br/>
 (idx[i])&lt;=ahaub_1177 &amp; i=bk[idx[i]]&#8866; idexc(val,idx,bk,n,val_49&apos;,idx,bk,n,i)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub () Int)<br/>
@@ -4383,12 +3892,8 @@ update_array_1d(val,val_49&apos;,v,i) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (idexc val idx bk n val_49_primed idx bk n i)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 </ul></li>
 <li class="Collapsed proc">
@@ -4467,12 +3972,12 @@ v_int_118_934 = 0;<br/>
 <br/>
 {(102,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(idx_52,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L112">line 112</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(bk,0,1000 - 1) &amp; <br/>
 dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; 0&lt;=i &amp; (i+1)&lt;=1000 &amp; <br/>
-is_sparse_array(val,idx,bk,n)&#8866; &exist;ahalb_1328:&exist;ahaub_1329:dom(idx,ahalb_1328,ahaub_1329) &amp; <br/>
+is_sparse_array(val,idx,bk,n)&#8866; &exist;(ahalb_1328:&exist;(ahaub_1329:dom(idx,ahalb_1328,ahaub_1329) &amp; <br/>
 ahalb_1328&lt;=i &amp; i&lt;=ahaub_1329))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val () (Array Int Int))<br/>
@@ -4504,23 +4009,17 @@ ahalb_1328&lt;=i &amp; i&lt;=ahaub_1329))
 (assert (is_sparse_array val idx bk n))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1328 Int)) (exists ((ahaub_1329 Int)) (and (dom idx ahalb_1328 ahaub_1329) (and (&lt;= ahalb_1328 i) (&lt;= i ahaub_1329)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 151::gte___$int~int(v_int_112_916,v_int_112_915) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(idx_52,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L112">line 112</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1339 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; <br/>
 dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; (i+<br/>
 1)&lt;=1000 &amp; is_sparse_array(val,idx,bk,n) &amp; dom(idx,0,ahaub_1339) &amp; 0&lt;=i &amp; <br/>
-i&lt;=ahaub_1339 &amp; 0&lt;=(idx[i])&#8866; &exist;ahalb_1344:&exist;ahaub_1345:dom(idx,ahalb_1344,ahaub_1345) &amp; <br/>
+i&lt;=ahaub_1339 &amp; 0&lt;=(idx[i])&#8866; &exist;(ahalb_1344:&exist;(ahaub_1345:dom(idx,ahalb_1344,ahaub_1345) &amp; <br/>
 ahalb_1344&lt;=i &amp; i&lt;=ahaub_1345))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val () (Array Int Int))<br/>
@@ -4557,19 +4056,15 @@ ahalb_1344&lt;=i &amp; i&lt;=ahaub_1345))
 (assert (&lt;= 0 (select idx i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1344 Int)) (exists ((ahaub_1345 Int)) (and (dom idx ahalb_1344 ahaub_1345) (and (&lt;= ahalb_1344 i) (&lt;= i ahaub_1345)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1339 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; <br/>
 dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; (i+<br/>
 1)&lt;=1000 &amp; is_sparse_array(val,idx,bk,n) &amp; dom(idx,0,ahaub_1339) &amp; 0&lt;=i &amp; <br/>
-i&lt;=ahaub_1339 &amp; (idx[i])&lt;0&#8866; &exist;ahalb_1346:&exist;ahaub_1347:dom(idx,ahalb_1346,ahaub_1347) &amp; <br/>
+i&lt;=ahaub_1339 &amp; (idx[i])&lt;0&#8866; &exist;(ahalb_1346:&exist;(ahaub_1347:dom(idx,ahalb_1346,ahaub_1347) &amp; <br/>
 ahalb_1346&lt;=i &amp; i&lt;=ahaub_1347))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val () (Array Int Int))<br/>
@@ -4606,25 +4101,17 @@ ahalb_1346&lt;=i &amp; i&lt;=ahaub_1347))
 (assert (&lt; (select idx i) 0))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1346 Int)) (exists ((ahaub_1347 Int)) (and (dom idx ahalb_1346 ahaub_1347) (and (&lt;= ahalb_1346 i) (&lt;= i ahaub_1347)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 149::lt___$int~int(v_int_112_922,v_int_112_921) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call 148::land___$boolean~boolean(v_boolean_112_924,v_boolean_112_923) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(idx_52,i) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L113">line 113</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1376 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; <br/>
 dom(bk,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; (i+<br/>
 1)&lt;=1000 &amp; is_sparse_array(val,idx,bk,n) &amp; 0&lt;=(idx[i]) &amp; <br/>
-dom(idx,0,ahaub_1376) &amp; 0&lt;=i &amp; i&lt;=ahaub_1376 &amp; (idx[i])&lt;n&#8866; &exist;ahalb_1385:&exist;ahaub_1386:dom(idx,ahalb_1385,ahaub_1386) &amp; <br/>
+dom(idx,0,ahaub_1376) &amp; 0&lt;=i &amp; i&lt;=ahaub_1376 &amp; (idx[i])&lt;n&#8866; &exist;(ahalb_1385:&exist;(ahaub_1386:dom(idx,ahalb_1385,ahaub_1386) &amp; <br/>
 ahalb_1385&lt;=i &amp; i&lt;=ahaub_1386))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val () (Array Int Int))<br/>
@@ -4662,43 +4149,18 @@ ahalb_1385&lt;=i &amp; i&lt;=ahaub_1386))
 (assert (&lt; (select idx i) n))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1385 Int)) (exists ((ahaub_1386 Int)) (and (dom idx ahalb_1385 ahaub_1386) (and (&lt;= ahalb_1385 i) (&lt;= i ahaub_1386)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(back_53,v_int_113_925) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> v_int_113_925&apos;=idx[i]&#8866; idx=bk
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun v_int_113_925_primed () Int)<br/>
-(declare-fun i () Int)<br/>
-(declare-fun idx () (Array Int Int))<br/>
-(declare-fun bk () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (= v_int_113_925_primed (select idx i)))<br/>
-;Negation of Consequence<br/>
-(assert (not (= idx bk)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L113">line 113</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1376 &amp; i&lt;=ahaub_1376 &amp; 0&lt;=i &amp; dom(idx,0,ahaub_1376) &amp; <br/>
 (idx[i])&lt;n &amp; 0&lt;=(idx[i]) &amp; (i+1)&lt;=1000 &amp; n&lt;=1000 &amp; 0&lt;=n &amp; dom(idx,0,1000 -<br/>
 1) &amp; dom(val,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
-v_int_113_925&apos;=idx[i]&#8866; &exist;ahalb_1394:&exist;ahaub_1395:dom(bk,ahalb_1394,ahaub_1395) &amp; <br/>
+v_int_113_925&apos;=idx[i]&#8866; &exist;(ahalb_1394:&exist;(ahaub_1395:dom(bk,ahalb_1394,ahaub_1395) &amp; <br/>
 ahalb_1394&lt;=v_int_113_925&apos; &amp; v_int_113_925&apos;&lt;=ahaub_1395))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1376 () Int)<br/>
@@ -4738,66 +4200,18 @@ ahalb_1394&lt;=v_int_113_925&apos; &amp; v_int_113_925&apos;&lt;=ahaub_1395))
 (assert (= v_int_113_925_primed (select idx i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1394 Int)) (exists ((ahaub_1395 Int)) (and (dom bk ahalb_1394 ahaub_1395) (and (&lt;= ahalb_1394 v_int_113_925_primed) (&lt;= v_int_113_925_primed ahaub_1395)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 147::eq___$int~int(v_int_113_926,i) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call array_get_elm_at___1d$int[]~int(val_54,i) holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> i=bk[idx[i]]&#8866; idx=val
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun bk () (Array Int Int))<br/>
-(declare-fun i () Int)<br/>
-(declare-fun idx () (Array Int Int))<br/>
-(declare-fun val () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (= i (select bk (select idx i))))<br/>
-;Negation of Consequence<br/>
-(assert (not (= idx val)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> i=bk[idx[i]]&#8866; bk=val
-<li class="Collapsed proverinput">Input to prover
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun idx () (Array Int Int))<br/>
-(declare-fun i () Int)<br/>
-(declare-fun bk () (Array Int Int))<br/>
-(declare-fun val () (Array Int Int))<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (= i (select bk (select idx i))))<br/>
-;Negation of Consequence<br/>
-(assert (not (= bk val)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>sat<br/>
-</ul></li>
-</ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Memory safety of array access at line <a href="#L115">line 115</a><ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk,0,ahaub_1389) &amp; 1000 - 1=ahaub_1389 &amp; dom(idx,0,ahaub_1376) &amp; 1000 -<br/>
 1=ahaub_1376 &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; n&lt;=1000 &amp; 0&lt;=n &amp; <br/>
 dom(bk,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; dom(val,0,1000 - 1) &amp; (i+<br/>
 1)&lt;=1000 &amp; is_sparse_array(val,idx,bk,n) &amp; (idx[i])&lt;n &amp; 0&lt;=i &amp; <br/>
-i&lt;=ahaub_1376 &amp; 0&lt;=(idx[i]) &amp; (idx[i])&lt;=ahaub_1389 &amp; i=bk[idx[i]]&#8866; &exist;ahalb_1412:&exist;ahaub_1413:dom(val,ahalb_1412,ahaub_1413) &amp; <br/>
+i&lt;=ahaub_1376 &amp; 0&lt;=(idx[i]) &amp; (idx[i])&lt;=ahaub_1389 &amp; i=bk[idx[i]]&#8866; &exist;(ahalb_1412:&exist;(ahaub_1413:dom(val,ahalb_1412,ahaub_1413) &amp; <br/>
 ahalb_1412&lt;=i &amp; i&lt;=ahaub_1413))
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun n () Int)<br/>
@@ -4840,12 +4254,8 @@ ahalb_1412&lt;=i &amp; i&lt;=ahaub_1413))
 (assert (= i (select bk (select idx i))))<br/>
 ;Negation of Consequence<br/>
 (assert (not (exists ((ahalb_1412 Int)) (exists ((ahaub_1413 Int)) (and (dom val ahalb_1412 ahaub_1413) (and (&lt;= ahalb_1412 i) (&lt;= i ahaub_1413)))))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed post">
 Procedure post-condition holds
@@ -4856,7 +4266,7 @@ n&lt;=1000 &amp; (i+1)&lt;=1000 &amp; is_sparse_array(val,idx,bk,n) &amp; bounde
 1,0,1000 - 1) &amp; (idx[i])&lt;n &amp; dom(idx,0,ahaub_1376) &amp; i&lt;=ahaub_1376 &amp; <br/>
 dom(bk,0,ahaub_1389) &amp; 0&lt;=(idx[i]) &amp; (idx[i])&lt;=ahaub_1389 &amp; i=bk[idx[i]] &amp; <br/>
 dom(val,0,ahaub_1407) &amp; 0&lt;=i &amp; i&lt;=ahaub_1407 &amp; v_int_115_931&apos;=val[i]&#8866; value_at(val,idx,bk,n,i,v_int_115_931&apos;)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1376 () Int)<br/>
@@ -4900,19 +4310,15 @@ dom(val,0,ahaub_1407) &amp; 0&lt;=i &amp; i&lt;=ahaub_1407 &amp; v_int_115_931&a
 (assert (= v_int_115_931_primed (select val i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val idx bk n i v_int_115_931_primed)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1389 &amp; 1000 - 1=ahaub_1376 &amp; dom(val,0,1000 - 1) &amp; <br/>
 dom(idx,0,1000 - 1) &amp; dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; (i+1)&lt;=1000 &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 (idx[i])&lt;n &amp; dom(idx,0,ahaub_1376) &amp; 0&lt;=i &amp; i&lt;=ahaub_1376 &amp; <br/>
 dom(bk,0,ahaub_1389) &amp; 0&lt;=(idx[i]) &amp; (idx[i])&lt;=ahaub_1389 &amp; (bk[idx[i]])!=i&#8866; value_at(val,idx,bk,n,i,0)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1376 () Int)<br/>
@@ -4951,18 +4357,14 @@ dom(bk,0,ahaub_1389) &amp; 0&lt;=(idx[i]) &amp; (idx[i])&lt;=ahaub_1389 &amp; (b
 (assert (not (= (select bk (select idx i)) i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val idx bk n i 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1339 &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; (i+1)&lt;=1000 &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 0&lt;=(idx[i]) &amp; dom(idx,0,ahaub_1339) &amp; 0&lt;=i &amp; i&lt;=ahaub_1339 &amp; n&lt;=(idx[i])&#8866; value_at(val,idx,bk,n,i,0)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1339 () Int)<br/>
@@ -4997,18 +4399,14 @@ is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 (assert (&lt;= n (select idx i)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val idx bk n i 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> 1000 - 1=ahaub_1339 &amp; dom(val,0,1000 - 1) &amp; dom(idx,0,1000 - 1) &amp; <br/>
 dom(bk,0,1000 - 1) &amp; 0&lt;=n &amp; n&lt;=1000 &amp; (i+1)&lt;=1000 &amp; <br/>
 is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 (idx[i])&lt;0 &amp; dom(idx,0,ahaub_1339) &amp; 0&lt;=i &amp; i&lt;=ahaub_1339 &amp; (idx[i])&lt;n&#8866; value_at(val,idx,bk,n,i,0)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun ahaub_1339 () Int)<br/>
@@ -5043,12 +4441,8 @@ is_sparse_array(val,idx,bk,n) &amp; bounded(bk,0,n - 1,0,1000 - 1) &amp; <br/>
 (assert (&lt; (select idx i) n))<br/>
 ;Negation of Consequence<br/>
 (assert (not (value_at val idx bk n i 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 </ul></li>
 <li class="Collapsed proc">
@@ -5088,17 +4482,11 @@ newSparseArray(values_57,index_58,back_59,v_int_98_954)<br/>
 153::return v_SparseArray_98_955<br/>
 <br/>
 {(89,0),(0,-1)}<br/>
-</ul></li><li class="Collapsed pre">
-Precondition of procedure call aalloc___$int(v_int_95_951) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call aalloc___$int(v_int_96_952) holds<ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call aalloc___$int(v_int_97_953) holds<ul></ul></li>
-<li class="Collapsed post">
+</ul></li><li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 0=0
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5107,15 +4495,11 @@ Procedure post-condition holds
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (= 0 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(values_57&apos;,0,1000 - 1)&#8866; dom(values_57&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun values_57_primed () (Array Int Int))<br/>
@@ -5128,15 +4512,11 @@ Procedure post-condition holds
 (assert (dom values_57_primed 0 (- 1000 1)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom values_57_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(index_58&apos;,0,1000 - 1)&#8866; dom(index_58&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun index_58_primed () (Array Int Int))<br/>
@@ -5149,15 +4529,11 @@ Procedure post-condition holds
 (assert (dom index_58_primed 0 (- 1000 1)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom index_58_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(back_59&apos;,0,1000 - 1)&#8866; dom(back_59&apos;,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun back_59_primed () (Array Int Int))<br/>
@@ -5170,16 +4546,12 @@ Procedure post-condition holds
 (assert (dom back_59_primed 0 (- 1000 1)))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom back_59_primed 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(values_57&apos;,0,1000 - 1) &amp; dom(index_58&apos;,0,1000 - 1) &amp; <br/>
 dom(back_59&apos;,0,1000 - 1)&#8866; is_sparse_array(values_57&apos;,index_58&apos;,back_59&apos;,0)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun values_57_primed () (Array Int Int))<br/>
@@ -5196,12 +4568,8 @@ dom(back_59&apos;,0,1000 - 1)&#8866; is_sparse_array(values_57&apos;,index_58&ap
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (is_sparse_array values_57_primed index_58_primed back_59_primed 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 </ul></li>
 <li class="Collapsed proc">
@@ -5277,9 +4645,9 @@ v_int_84_984 = 0;<br/>
 <br/>
 {(70,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
-Precondition of procedure call 154::create$int(v_int_73_957) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Precondition of procedure call 154::create$int(v_int_73_957) at <a href="#L73">line 73</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 0&lt;=10
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5288,17 +4656,13 @@ Precondition of procedure call 154::create$int(v_int_73_957) holds<ul><li class=
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 10)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 155::create$int(v_int_74_958) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Precondition of procedure call 155::create$int(v_int_74_958) at <a href="#L74">line 74</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 0&lt;=20
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5307,22 +4671,20 @@ Precondition of procedure call 155::create$int(v_int_74_958) holds<ul><li class=
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 20)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 156::get$SparseArray~int(a_60,v_int_75_959) holds<ul></ul></li>
+Precondition of procedure call 156::get$SparseArray~int(a_60,v_int_75_959) at <a href="#L75">line 75</a> holds<ul></ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 157::get$SparseArray~int(b_61,v_int_76_960) holds<ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Precondition of procedure call 157::get$SparseArray~int(b_61,v_int_76_960) at <a href="#L76">line 76</a> holds<ul></ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L77">line 77</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; dom(bk_1486,0,1000 - 1) &amp; <br/>
 dom(idx_1487,0,1000 - 1) &amp; dom(val_1488,0,1000 - 1) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; a5_62&apos;=0
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1488 () (Array Int Int))<br/>
@@ -5343,17 +4705,13 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; a5_62&apos;=0
 (assert (value_at val_1488 idx_1487 bk_1486 0 5 a5_62_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (= a5_62_primed 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; dom(bk_1512,0,1000 - 1) &amp; <br/>
 dom(idx_1513,0,1000 - 1) &amp; dom(val_1514,0,1000 - 1) &amp; <br/>
 value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; b7_63&apos;=0
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1514 () (Array Int Int))<br/>
@@ -5374,18 +4732,15 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; b7_63&apos;=0
 (assert (value_at val_1514 idx_1513 bk_1512 0 7 b7_63_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (= b7_63_primed 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 159::setsa$SparseArray~int~int(a_60,v_int_78_970,v_int_78_969) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Precondition of procedure call 159::setsa$SparseArray~int~int(a_60,v_int_78_970,v_int_78_969) at <a href="#L78">line 78</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk_1486,0,1000 - 1) &amp; dom(idx_1487,0,1000 - 1) &amp; dom(val_1488,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(val_1488,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun idx_1487 () (Array Int Int))<br/>
@@ -5412,17 +4767,13 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(val_1488,0,1000 -
 (assert (value_at val_1488 idx_1487 bk_1486 0 5 a5_62_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom val_1488 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk_1486,0,1000 - 1) &amp; dom(val_1488,0,1000 - 1) &amp; dom(idx_1487,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(idx_1487,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1488 () (Array Int Int))<br/>
@@ -5449,17 +4800,13 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(idx_1487,0,1000 -
 (assert (value_at val_1488 idx_1487 bk_1486 0 5 a5_62_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom idx_1487 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(idx_1487,0,1000 - 1) &amp; dom(val_1488,0,1000 - 1) &amp; dom(bk_1486,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(bk_1486,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1488 () (Array Int Int))<br/>
@@ -5486,15 +4833,11 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(bk_1486,0,1000 - 
 (assert (value_at val_1488 idx_1487 bk_1486 0 5 a5_62_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom bk_1486 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 0&lt;=0
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5503,15 +4846,11 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(bk_1486,0,1000 - 
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 0&lt;=1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5520,17 +4859,13 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; dom(bk_1486,0,1000 - 
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(idx_1487,0,1000 - 1) &amp; dom(val_1488,0,1000 - 1) &amp; dom(bk_1486,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; bounded(bk_1486,0,0 - 1,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1488 () (Array Int Int))<br/>
@@ -5553,17 +4888,13 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; bounded(bk_1486,0,0 -
 (assert (value_at val_1488 idx_1487 bk_1486 0 5 a5_62_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (bounded bk_1486 0 (- 0 1) 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val_1488,0,1000 - 1) &amp; dom(idx_1487,0,1000 - 1) &amp; dom(bk_1486,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; is_sparse_array(val_1488,idx_1487,bk_1486,0)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun a5_62_primed () Int)<br/>
@@ -5587,15 +4918,11 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; is_sparse_array(val_1
 (assert (value_at val_1488 idx_1487 bk_1486 0 5 a5_62_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (is_sparse_array val_1488 idx_1487 bk_1486 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 0&lt;=5
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5604,15 +4931,11 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; is_sparse_array(val_1
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 5)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 5&lt;1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5621,19 +4944,15 @@ value_at(val_1488,idx_1487,bk_1486,0,5,a5_62&apos;)&#8866; is_sparse_array(val_1
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt; 5 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 160::setsa$SparseArray~int~int(b_61,v_int_79_972,v_int_79_971) holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+Precondition of procedure call 160::setsa$SparseArray~int~int(b_61,v_int_79_972,v_int_79_971) at <a href="#L79">line 79</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk_1512,0,1000 - 1) &amp; dom(idx_1513,0,1000 - 1) &amp; dom(val_1514,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; <br/>
 value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; dom(val_1514,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun idx_1513 () (Array Int Int))<br/>
@@ -5660,17 +4979,13 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; dom(val_1514,0,1000 -
 (assert (value_at val_1514 idx_1513 bk_1512 0 7 b7_63_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom val_1514 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(bk_1512,0,1000 - 1) &amp; dom(val_1514,0,1000 - 1) &amp; dom(idx_1513,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; <br/>
 value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; dom(idx_1513,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1514 () (Array Int Int))<br/>
@@ -5697,17 +5012,13 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; dom(idx_1513,0,1000 -
 (assert (value_at val_1514 idx_1513 bk_1512 0 7 b7_63_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom idx_1513 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(idx_1513,0,1000 - 1) &amp; dom(val_1514,0,1000 - 1) &amp; dom(bk_1512,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; <br/>
 value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; dom(bk_1512,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1514 () (Array Int Int))<br/>
@@ -5734,17 +5045,13 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; dom(bk_1512,0,1000 - 
 (assert (value_at val_1514 idx_1513 bk_1512 0 7 b7_63_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (dom bk_1512 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(idx_1513,0,1000 - 1) &amp; dom(val_1514,0,1000 - 1) &amp; dom(bk_1512,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; <br/>
 value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; bounded(bk_1512,0,0 - 1,0,1000 - 1)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun val_1514 () (Array Int Int))<br/>
@@ -5767,17 +5074,13 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; bounded(bk_1512,0,0 -
 (assert (value_at val_1514 idx_1513 bk_1512 0 7 b7_63_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (bounded bk_1512 0 (- 0 1) 0 (- 1000 1))))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val_1514,0,1000 - 1) &amp; dom(idx_1513,0,1000 - 1) &amp; dom(bk_1512,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; <br/>
 value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; is_sparse_array(val_1514,idx_1513,bk_1512,0)
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun b7_63_primed () Int)<br/>
@@ -5801,15 +5104,11 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; is_sparse_array(val_1
 (assert (value_at val_1514 idx_1513 bk_1512 0 7 b7_63_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (is_sparse_array val_1514 idx_1513 bk_1512 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 0&lt;=7
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5818,15 +5117,11 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; is_sparse_array(val_1
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt;= 0 7)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> true&#8866; 7&lt;1000
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 ;Relations declarations<br/>
@@ -5835,18 +5130,16 @@ value_at(val_1514,idx_1513,bk_1512,0,7,b7_63&apos;)&#8866; is_sparse_array(val_1
 (assert true)<br/>
 ;Negation of Consequence<br/>
 (assert (not (&lt; 7 1000)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 162::get$SparseArray~int(a_60,v_int_80_973) holds<ul></ul></li>
+Precondition of procedure call 162::get$SparseArray~int(a_60,v_int_80_973) at <a href="#L80">line 80</a> holds<ul></ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 164::get$SparseArray~int(b_61,v_int_81_974) holds<ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Precondition of procedure call 164::get$SparseArray~int(b_61,v_int_81_974) at <a href="#L81">line 81</a> holds<ul></ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L82">line 82</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val_1488,0,1000 - 1) &amp; dom(idx_1487,0,1000 - 1) &amp; dom(bk_1486,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_1611) &amp; <br/>
@@ -5859,7 +5152,7 @@ bounded(bkr_1570,0,nr_1569 - 1,0,1000 - 1) &amp; <br/>
 nr_1569&lt;=1000 &amp; 0&lt;=nr_1569 &amp; dom(bkr_1570,0,1000 - 1) &amp; <br/>
 dom(idxr_1571,0,1000 - 1) &amp; dom(valr_1572,0,1000 - 1) &amp; <br/>
 value_at(valr_1572,idxr_1571,bkr_1570,nr_1569,5,a5_62&apos;)&#8866; a5_62&apos;=1
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun a5_1611 () Int)<br/>
@@ -5897,12 +5190,8 @@ value_at(valr_1572,idxr_1571,bkr_1570,nr_1569,5,a5_62&apos;)&#8866; a5_62&apos;=
 (assert (value_at valr_1572 idxr_1571 bkr_1570 nr_1569 5 a5_62_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (= a5_62_primed 1)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val_1514,0,1000 - 1) &amp; dom(idx_1513,0,1000 - 1) &amp; dom(bk_1512,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; <br/>
@@ -5916,7 +5205,7 @@ bounded(bkr_1595,0,nr_1594 - 1,0,1000 - 1) &amp; <br/>
 nr_1594&lt;=1000 &amp; 0&lt;=nr_1594 &amp; dom(bkr_1595,0,1000 - 1) &amp; <br/>
 dom(idxr_1596,0,1000 - 1) &amp; dom(valr_1597,0,1000 - 1) &amp; <br/>
 value_at(valr_1597,idxr_1596,bkr_1595,nr_1594,7,b7_63&apos;)&#8866; b7_63&apos;=2
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun b7_1615 () Int)<br/>
@@ -5954,17 +5243,16 @@ value_at(valr_1597,idxr_1596,bkr_1595,nr_1594,7,b7_63&apos;)&#8866; b7_63&apos;=
 (assert (value_at valr_1597 idxr_1596 bkr_1595 nr_1594 7 b7_63_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (= b7_63_primed 2)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 166::get$SparseArray~int(a_60,v_int_83_983) holds<ul></ul></li>
+Precondition of procedure call 166::get$SparseArray~int(a_60,v_int_83_983) at <a href="#L83">line 83</a> holds<ul></ul></li>
 <li class="Collapsed pre">
-Precondition of procedure call 167::get$SparseArray~int(b_61,v_int_84_984) holds<ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
+Precondition of procedure call 167::get$SparseArray~int(b_61,v_int_84_984) at <a href="#L84">line 84</a> holds<ul></ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L85">line 85</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val_1488,0,1000 - 1) &amp; dom(idx_1487,0,1000 - 1) &amp; dom(bk_1486,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1488,idx_1487,bk_1486,0) &amp; <br/>
 value_at(val_1488,idx_1487,bk_1486,0,5,a5_1611) &amp; <br/>
@@ -5978,7 +5266,7 @@ bounded(bkr_1570,0,nr_1569 - 1,0,1000 - 1) &amp; <br/>
 nr_1569&lt;=1000 &amp; 0&lt;=nr_1569 &amp; dom(bkr_1570,0,1000 - 1) &amp; <br/>
 dom(idxr_1571,0,1000 - 1) &amp; dom(valr_1572,0,1000 - 1) &amp; <br/>
 value_at(valr_1572,idxr_1571,bkr_1570,nr_1569,0,a0_64&apos;)&#8866; a0_64&apos;=0
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun a5_1611 () Int)<br/>
@@ -6018,12 +5306,8 @@ value_at(valr_1572,idxr_1571,bkr_1570,nr_1569,0,a0_64&apos;)&#8866; a0_64&apos;=
 (assert (value_at valr_1572 idxr_1571 bkr_1570 nr_1569 0 a0_64_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (= a0_64_primed 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
 <ul> dom(val_1514,0,1000 - 1) &amp; dom(idx_1513,0,1000 - 1) &amp; dom(bk_1512,0,1000 -<br/>
 1) &amp; is_sparse_array(val_1514,idx_1513,bk_1512,0) &amp; <br/>
@@ -6038,7 +5322,7 @@ bounded(bkr_1595,0,nr_1594 - 1,0,1000 - 1) &amp; <br/>
 nr_1594&lt;=1000 &amp; 0&lt;=nr_1594 &amp; dom(bkr_1595,0,1000 - 1) &amp; <br/>
 dom(idxr_1596,0,1000 - 1) &amp; dom(valr_1597,0,1000 - 1) &amp; <br/>
 value_at(valr_1597,idxr_1596,bkr_1595,nr_1594,0,b0_65&apos;)&#8866; b0_65&apos;=0
-<li class="Collapsed proverinput">Input to prover
+<li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
 (declare-fun b7_1627 () Int)<br/>
@@ -6078,11 +5362,8 @@ value_at(valr_1597,idxr_1596,bkr_1595,nr_1594,0,b0_65&apos;)&#8866; b0_65&apos;=
 (assert (value_at valr_1597 idxr_1596 bkr_1595 nr_1594 0 b0_65_primed))<br/>
 ;Negation of Consequence<br/>
 (assert (not (= b0_65_primed 0)))<br/>
-(check-sat)<br/>
-</ul></li>
-<li class="Collapsed proveroutput">Output of prover
-<ul>unsat<br/>
-</ul></li>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed post">
 Procedure post-condition holds

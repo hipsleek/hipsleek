@@ -519,6 +519,9 @@ let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_in
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
 ;;
 
+(* An Hoa *)
+let line_number_of_pos p = string_of_int (p.start_pos.Lexing.pos_lnum)
+
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
 
 let string_of_loc_by_char_num (l : loc) = 

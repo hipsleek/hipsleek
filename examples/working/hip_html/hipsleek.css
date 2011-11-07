@@ -15,14 +15,6 @@ h1 {
 	padding-right : 20px;
 }
 
-tr.OddSourceLine {
-	background: white !important;
-}
-
-tr.EvenSourceLine {
-	background: #F0F0F0 !important;
-}
-
 .proc {
 	border-style : double;
 	font-family : Arial;
@@ -127,4 +119,12 @@ li.Collapsed
 li.Collapsed ul
 {
     display: none;
+}
+
+tr.OddSourceLine {
+	background: white !important;
+}
+
+tr.EvenSourceLine {
+	background: #F0F0F0 !important;
 }
