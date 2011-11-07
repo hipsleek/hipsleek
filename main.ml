@@ -180,7 +180,7 @@ let process_source_full source =
     let _ = Tpdispatcher.stop_prover () in
     
     (* An Hoa : export the proof to html *)
-    let _ = if (!Globals.print_proof || !Globals.print_brief_proof) then
+    let _ = if !Globals.print_proof then
     		begin 
     			print_string "\nExport proof to HTML file ... ";
     			Prooftracer.write_html_output ();

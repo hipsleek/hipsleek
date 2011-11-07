@@ -595,15 +595,34 @@ let convert_to_html s =
 	let res = List.fold_left (fun x (y, z) -> Str.global_replace (Str.regexp_string y) z x) s html_map in
 		res
 
-let push_proc proc_name = html_output := 
-	!html_output ^ "<li class=\"Collapsed proc\">\n" ^"Procedure " ^ proc_name ^ "<ul>"
+let push_proc proc = let unmin_name = Cast.unmingle_name proc.Cast.proc_name in 
+	html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "<ul>" ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>"
 
-let push_procdef pdef = html_output :=
-	!html_output ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html pdef) ^ "</ul></li>"
+let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"]
 
-let push_pre s = html_output := 
-	!html_output ^ "<li class=\"Collapsed pre\">\n" ^ 
-	"Precondition of procedure call " ^ (convert_to_html s) ^ " holds" ^ "<ul>"
+let push_pre fce = match fce with
+	| Cast.SCall {
+		Cast.exp_scall_type = t;
+		Cast.exp_scall_method_name = mn;
+		Cast.exp_scall_arguments = args;
+		Cast.exp_scall_is_rec = ir;
+		Cast.exp_scall_path_id = pid;
+		Cast.exp_scall_pos = pos } ->
+		let unmin_name = Cast.unmingle_name mn in
+		if List.mem unmin_name primitive_procs then false
+		else begin
+			let message = "Precondition of procedure call " ^ (convert_to_html (Cprinter.string_of_exp fce)) ^ " at " ^ (string_of_loc pos) ^ " holds" in
+			html_output :=  !html_output ^ "<li class=\"Collapsed pre\">\n" ^ message ^ "<ul>";
+			true
+		end
+		
+let push_assert_assume ae = match ae with
+	| Cast.Assert {
+		Cast.exp_assert_asserted_formula = fa;
+		Cast.exp_assert_assumed_formula = fas;
+		Cast.exp_assert_path_id = pid;
+		Cast.exp_assert_pos = pos } -> html_output := 
+	!html_output ^ "<li class=\"Collapsed assert\">\nAssertion at " ^ (string_of_loc pos) ^ " holds\n<ul>"
 
 let push_post () = html_output := 
 	!html_output ^ "<li class=\"Collapsed post\">\nProcedure post-condition holds\n<ul>"
@@ -611,18 +630,26 @@ let push_post () = html_output :=
 let push_term () = html_output := 
 	!html_output ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"
 
-let push_pure_imply r = html_output := !html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>"
+let html_of_pure_formula f =
+	let s = Cprinter.string_of_pure_formula f in
+	let s = convert_to_html s in
+	let s = Str.global_replace (Str.regexp_string "exists") "&exist;" s in
+	let s = Str.global_replace (Str.regexp_string "forall") "&forall;" s in
+		s
+			
+let push_pure_imply ante conseq r = html_output := 
+	!html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>" ^ (html_of_pure_formula ante) ^ "&#8866;" (* |- character in HTML *) ^ (html_of_pure_formula conseq) ^ "\n"
 
-let push_prover_input () = 	html_output := 
-	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover\n<ul>"
+(* prover input | output are all leaves of the proof trees, so we push and pop at the same time *)
 
-let push_prover_output () = html_output := 
-	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover\n<ul>"
+let push_pop_prover_input prover_inp prover_name = html_output := 
+	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover " ^ prover_name ^ "\n<ul>" ^ prover_inp ^ "</ul></li>"
+	
+let push_pop_prover_output prover_out prover_name = html_output := 
+	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ prover_out ^ "</li></ul>"
 
 let pop_div () = html_output := !html_output ^ "</ul></li>\n"
 
-let pop_li () = html_output := !html_output ^ "</li>\n"
-		
 let append_html s =
 	let s = convert_to_html s in
 		html_output := !html_output ^ s

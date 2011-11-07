@@ -86,10 +86,13 @@ let reset_prover_original_output () = prover_original_output := "_output_not_set
 	
 let get_prover_original_output () = !prover_original_output;;
 
+let suppress_imply_out = ref false;;
+
 Smtsolver.set_generated_prover_input := set_generated_prover_input;;
 Smtsolver.set_prover_original_output := set_prover_original_output;;
 Omega.set_generated_prover_input := set_generated_prover_input;;
 Omega.set_prover_original_output := set_prover_original_output;;
+
 (* An Hoa : end *)
 
 module Netprover = struct
@@ -992,10 +995,15 @@ let rec split_disjunctions = function
 ;;
 
 let called_prover = ref ""
-let print_implication = ref false 
+
+let should_output () = !print_proof && not !suppress_imply_out
+
+let suppress_imply_output () = suppress_imply_out := true
+
+let unsuppress_imply_output () = suppress_imply_out := false
   
 let tp_imply_no_cache ante conseq imp_no timeout process =	
-	let _ = if (!print_proof || !print_brief_proof) then 
+	let _ = if should_output () then
 		begin
 			reset_generated_prover_input ();
 			reset_prover_original_output ();
@@ -1062,31 +1070,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       else
         Smtsolver.imply ante conseq
   in
-  	let process_formula f =
-  		let s = Cprinter.string_of_pure_formula f in
-  		let s = Prooftracer.convert_to_html s in
-  		let s = Str.global_replace (Str.regexp_string "exists(") "&exist;" s in
-		let s = Str.global_replace (Str.regexp_string "forall(") "&forall;" s in
-			s in
-	let _ = if (!print_proof || !print_brief_proof) then
+	let _ = if should_output () then
 			begin
-				Prooftracer.push_pure_imply r;
-				Prooftracer.append_html_no_convert (process_formula ante);
-				Prooftracer.append_html_no_convert "&#8866;"; (* |- character in HTML *)
-				Prooftracer.append_html_no_convert ((process_formula conseq) ^ "\n");
-				if (not !print_brief_proof) then
-				begin
-					Prooftracer.push_prover_input ();
-					Prooftracer.append_html (get_generated_prover_input () ^ "\n");
-					Prooftracer.pop_div ();
-					Prooftracer.push_prover_output ();
-					Prooftracer.append_html (get_prover_original_output () ^ "\n");
-					Prooftracer.pop_div ();
-					(* print_endline (">>> " ^ (string_of_prover !tp) ^ " INPUT GENERATED >>>");
-					print_endline (get_generated_prover_input ());
-					print_endline (">>> " ^ (string_of_prover !tp) ^ " ORIGINAL OUTPUT >>>");
-					print_endline (get_prover_original_output ()); *)
-				end;
+				Prooftracer.push_pure_imply ante conseq r;
+				Prooftracer.push_pop_prover_input (get_generated_prover_input ()) (string_of_prover !tp);
+				Prooftracer.push_pop_prover_output (get_prover_original_output ()) (string_of_prover !tp);
+				(* print_endline (">>> " ^ (string_of_prover !tp) ^ " INPUT GENERATED >>>");
+				print_endline (get_generated_prover_input ());
+				print_endline (">>> " ^ (string_of_prover !tp) ^ " ORIGINAL OUTPUT >>>");
+				print_endline (get_prover_original_output ()); *)
 				Prooftracer.pop_div ();
 				(* print_endline (">>> VERDICT : " ^ (if r then "VALID" else "INVALID") ^ " >>>"); *)
 			end

@@ -608,4 +608,3 @@ end
 
 (* An Hoa : option to print proof *)
 let print_proof = ref false
-let print_brief_proof = ref false
