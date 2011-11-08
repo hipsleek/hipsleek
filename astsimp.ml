@@ -2475,7 +2475,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
               else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
               else 
-                ( let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+                (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                 let positions = List.map I.get_exp_pos args in
                 let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
                 let call_e = C.SCall {
@@ -3435,35 +3435,35 @@ and trans_type_back (te : typ) : typ =
     | p -> p 
 
 and trans_args (args : (C.exp * typ * loc) list) :
-      ((C.typed_ident list) * C.exp * (ident list)) =
+    ((C.typed_ident list) * C.exp * (ident list)) =
   match args with
     | arg :: rest ->
-	      let (rest_local_vars, rest_e, rest_names) = trans_args rest
-	      in
-          (match arg with
-            | (C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _
-		      },
-		      _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
-            | (arg_e, at, pos) ->
-		          let fn = fresh_var_name (string_of_typ at) pos.start_pos.Lexing.pos_lnum in
-		          let fn_decl =
-		            C.VarDecl
-                        {
-                            C.exp_var_decl_type = at;
-                            C.exp_var_decl_name = fn;
-                            C.exp_var_decl_pos = pos;
-                        } in
-		          let fn_init =
-		            C.Assign
-                        {
-                            C.exp_assign_lhs = fn;
-                            C.exp_assign_rhs = arg_e;
-                            C.exp_assign_pos = pos;
-                        } in
-		          let seq1 = C.mkSeq C.void_type fn_init rest_e pos in
-		          let seq2 = C.mkSeq C.void_type fn_decl seq1 pos in
-		          let local_var = (at, fn)
-		          in ((local_var :: rest_local_vars), seq2, (fn :: rest_names)))
+	  let (rest_local_vars, rest_e, rest_names) = trans_args rest
+	  in
+      (match arg with
+        | (C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _
+				 },
+		   _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
+        | (arg_e, at, pos) ->
+		  let fn = fresh_var_name (string_of_typ at) pos.start_pos.Lexing.pos_lnum in
+		  let fn_decl =
+		    C.VarDecl
+              {
+                C.exp_var_decl_type = at;
+                C.exp_var_decl_name = fn;
+                C.exp_var_decl_pos = pos;
+              } in
+		  let fn_init =
+		    C.Assign
+              {
+                C.exp_assign_lhs = fn;
+                C.exp_assign_rhs = arg_e;
+                C.exp_assign_pos = pos;
+              } in
+		  let seq1 = C.mkSeq C.void_type fn_init rest_e pos in
+		  let seq2 = C.mkSeq C.void_type fn_decl seq1 pos in
+		  let local_var = (at, fn)
+		  in ((local_var :: rest_local_vars), seq2, (fn :: rest_names)))
     | [] -> ([], (C.Unit no_pos), [])
 
 and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =

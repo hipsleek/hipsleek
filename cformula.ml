@@ -38,10 +38,10 @@ and ext_formula =
   | EBase of ext_base_formula
   | EAssume of ((Cpure.spec_var list) *formula* formula_label)
   | EVariance of ext_variance_formula
-        (*  struct_formula *)
- (*
-   | EScope of  (Cpure.spec_var list) 
- *)
+  (*  struct_formula *)
+(*
+  | EScope of  (Cpure.spec_var list) 
+*)
 
 
 and ext_case_formula =
@@ -77,6 +77,7 @@ and formula =
   | Base of formula_base
   | Or of formula_or
   | Exists of formula_exists
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -2437,6 +2438,9 @@ and fail_type =
   | ContinuationErr of fail_context    
   | Or_Continuation of (fail_type * fail_type)
 
+and term_context = {
+	tc_temp : int;							   
+}
       
 and list_context = 
   | FailCtx of fail_type 

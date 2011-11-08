@@ -35,23 +35,29 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     let pos_spec = CF.pos_of_struc_formula [spec] in
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
-	  | Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
-		    let mn = Cast.unmingle_name (proc.Cast.proc_name) in
-            let f_formula = fun f -> None in
-		let f_b_formula (pf,il) = match pf with
-		  | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
-		      | _ -> None
-		    in
-		    let f_exp = function
-		      | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
-		      | _ -> None
-		    in
-		    let new_c1 = CP.transform_formula (true,true,f_formula,f_b_formula,f_exp) c1 in
-		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in  
-			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
-			let r = check_specs_a prog proc nctx c2 e0 in
-			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
-			r) b.Cformula.formula_case_branches
+	  | Cformula.ECase b ->
+		List.for_all (fun (c1, c2) -> 
+		  let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+		  let f_formula = fun f -> None in
+		  let f_b_formula (pf, il) = match pf with
+			| CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
+			| _ -> None
+		  in
+		  let f_exp = function
+			| CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+			| _ -> None
+		  in
+		  let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
+		  (* Termination: Add source condition *)
+		  let nctx = CF.transform_context (fun es ->
+			CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in
+
+		  let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
+		  
+		  let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
+		  let r = check_specs_a prog proc nctx c2 e0 in
+		  (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
+		  r) b.Cformula.formula_case_branches
 	  | Cformula.EBase b ->
 	        let nctx = 
 	          if !Globals.max_renaming 
@@ -391,12 +397,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
 		| EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
-        | SCall ({exp_scall_type = ret_t;
-          exp_scall_method_name = mn;
-          exp_scall_arguments = vs;
-		  exp_scall_is_rec = ir;
-          exp_scall_path_id = pid;
-          exp_scall_pos = pos}) -> begin (* mn is mingled name of the method *)
+        | SCall ({
+			exp_scall_type = ret_t;
+			exp_scall_method_name = mn; (* mn is mingled name of the method *)
+			exp_scall_arguments = vs;
+			exp_scall_is_rec = ir;
+			exp_scall_path_id = pid;
+			exp_scall_pos = pos}) ->
+		  begin 
 	        let _ = set_proving_loc pos in
 	        let proc = look_up_proc_def pos prog.prog_proc_decls mn in
 	        let farg_types, farg_names = List.split proc.proc_args in
@@ -406,8 +414,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* Internal function to check pre/post condition of the function call. *)        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
-			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
-			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: org_spec" ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n") in*)
+			  
 			  let stripped_spec = if ir then org_spec else
 				let rec strip_variance ls = match ls with
 				  | [] -> []
@@ -418,10 +425,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 					  | _ -> spec::(strip_variance rest)
 				in strip_variance org_spec
 			  in
-			  (*let _ = print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "stripped_spec: " ^ (Cprinter.string_of_struc_formula stripped_spec) ^ "\n") in*)
+
 			  (* org_spec -> stripped_spec *)
 	          (* free vars = linking vars that appear both in pre and are not formal arguments *)
-	          let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var (Gen.BList.difference_eq CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*)) (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
+	          let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
+				(Gen.BList.difference_eq CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*))
+				(Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
 	          (* free vars get to be substituted by fresh vars *)
 	          let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
 	          let renamed_spec = 
@@ -439,24 +448,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			    let _ = String.blit mn 0 new_mn 0 l in
 			    let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
 			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
-			  let sctx = List.map
-				(fun fctx -> let (lb,estk,lbctx) = fctx in
-				let nlbctx = List.map
-				  (fun bctx -> let (pt,ctx) = bctx in
+			  let sctx = List.map (fun fctx ->
+				let (lb,estk,lbctx) = fctx in
+				let nlbctx = List.map (fun bctx ->
+				  let (pt,ctx) = bctx in
 				  let nctx = CF.transform_context
 					(fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst}) ctx in (pt,nctx)) lbctx in
 				(lb,estk,nlbctx)) sctx in
-
-			  
-			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec1: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
 	          let renamed_spec = CF.subst_struc st1 renamed_spec in
-			  
-			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec2: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
-			    let _ = print_string ("\ncheck_pre_post@SCall@check_exp: fr_vars: " ^ (Cprinter.string_of_spec_var_list fr_vars) ^ "\n") in
-			    let _ = print_string ("\ncheck_pre_post@SCall@check_exp: to_vars: " ^ (Cprinter.string_of_spec_var_list to_vars) ^ "\n") in*)				
 	          let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
-
-			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec3: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
 	          let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
 	          let pre2 = CF.subst_struc_pre st2 renamed_spec in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
@@ -469,7 +469,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                 (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;
-	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+	          let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
             (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
 		      let _ = PTracer.log_proof prf in
               (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)
@@ -690,9 +690,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 				                  in*)
 	      let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
 	      let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-		  (* Add es_var_measures *)
-		  (*let init_ctx = CF.add_es_var_measures init_ctx2 proc.proc_static_specs in*)
-	      let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
+		  let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
 	      let _ = if !print_proof then Prooftracer.pop_div () in
 	      let result =
 	        if pp then begin
@@ -915,28 +913,14 @@ let build_state_trans_graph ls =
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
     let ng1 = IG.add_vertex g f1 in
-	(*let _ = print_string (if (ng1 = g) then (Cprinter.string_of_pure_formula f1) ^ ": not added\n" else (Cprinter.string_of_pure_formula f1) ^ ": added\n") in*)
 	let ng2 = IG.add_vertex ng1 f2 in
-	(*let _ = print_string (if (ng2 = ng1) then (Cprinter.string_of_pure_formula f2) ^ ": not added\n" else (Cprinter.string_of_pure_formula f2) ^ ": added\n") in*)
 	let ng3 = IG.add_edge ng2 f1 f2 in
-	(*let _ = print_string (let edge = "Edge " ^ (Cprinter.string_of_pure_formula f1) ^ "->" ^ (Cprinter.string_of_pure_formula f2) in
-						  if (ng3 = ng2) then edge ^ ": not added\n" else edge ^ ": added\n") in*)
 	ng3) gr ls in
   g
 
 let scc_numbering g =
-  (*let _ = print_string "List of vertices:\n" in
-  let _ = IG.iter_vertex (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "\n")) g in*)
-  
   let scc_list = IGC.scc_list g in
-  
-  (*let _ = print_string ("The number of scc: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
-  let _ = List.iter (fun ls -> List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in*)
-
   let scc_list = snd (List.fold_left (fun (n,rs) l -> (n+1, rs @ [(n,l)])) (0,[]) scc_list) in
-
-  (*let _ = print_string ("New scc list: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
-  let _ = List.iter (fun (n,ls) -> print_string ((string_of_int n) ^ ": "); List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in*)
 
   let mem e ls = List.fold_left (fun rs e1 -> if (equalpf e e1) then true else rs) false ls in
   let meml ls1 ls2 = List.fold_left (fun rs e -> if (mem e ls2) then true else rs) false ls1 in
@@ -951,13 +935,6 @@ let scc_numbering g =
   ) scc_graph scc_list in
 
   let (nscc, fscc) = GSC.scc scc_graph in
-
-  (*let lscc = GSC.scc_list scc_graph in*)
-
-  (*let _ = print_string ("The number of transformed scc: " ^ (string_of_int nscc) ^ "\n") in
-  let _ = List.iter (fun ls -> List.iter (fun v -> print_string ((string_of_int v) ^ "; "); print_string "\n") ls) lscc in
-  let _ = print_string ("The mapping from label to scc number: \n") in
-  let _ = List.iter (fun (n,_) -> print_string ((string_of_int n) ^ "->" ^ (string_of_int (fscc n)) ^ "\n")) scc_list in*)
 
   fun v -> List.fold_left (fun rs (n,l) -> if (mem v l) then (fscc n) else rs) 0 scc_list
   
@@ -995,17 +972,11 @@ let check_prog (prog : prog_decl) =
       end;
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	let _ = if !print_proof then
-			begin
-				Prooftracer.push_term ();
-			end in
+	let _ = if !print_proof then begin Prooftracer.push_term (); end in
 	let g = build_state_trans_graph !Solver.variance_graph in
 	let cl = variance_numbering !Solver.var_checked_list g in
 	let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
-		if !print_proof then
-			begin
-				Prooftracer.pop_div ();
-			end
+	if !print_proof then begin Prooftracer.pop_div (); end
 	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
