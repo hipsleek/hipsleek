@@ -420,7 +420,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 and process_one_match prog (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res  in
-  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
+  Gen.Debug.ho_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -450,7 +450,8 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     let a2 = (1,M_match c) in
                      if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,Cond_action [a1;a2])]
                     else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
-                    else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
+                    else if not(is_rec_view_def prog vr.h_formula_view_name) then 
+                      (print_string "\n WN: non-recursive fold"; [(2,M_fold c)])
                     else let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] in
                     [(1,Cond_action lst)]
                   in
@@ -464,10 +465,11 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     else left_act@right_act
                   end
                   else  [] in
-                  let l4 = []
-                    (*if get_view_original rhs_node then 
-                      [M_base_case_fold c] 
-                      else [] *)in
+                  let l4 = (* [] *)
+                    (* TODO WN : what is original?? *)
+                    if get_view_original rhs_node then 
+                      [(1,M_base_case_fold c)] 
+                      else []in
                   let src = (-1,norm_search_action (l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> (1,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
@@ -482,6 +484,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
                     | View_mater -> 
+                        print_string "\n WN : unfold for meteralised!";
                         M_unfold (c,uf_i) (* uf_i to prevent infinite unfolding *)
                     | Coerc_mater s -> 
                         (* let _ = print_string "\n selected lemma XX" in *)
@@ -548,7 +551,7 @@ and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = matc
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
   let pr2 = pr_list string_of_action_res in
-  Gen.Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
+  Gen.Debug.ho_1 "sort_wt" pr pr2 sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
@@ -619,7 +622,7 @@ and compute_actions prog es
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_5 "compute_actions" pr0 
+  Gen.Debug.ho_5 "compute_actions" pr0 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3) 
       (add_str "RHS cand" pr1)

@@ -5,13 +5,24 @@ pred lseg<p> == self = p
          inv true.
 
 
-checkentail  self::node<next = r2> * r2::lseg<p> |- self::lseg<p>.
+checkentail  self::node<next = r2> * r2::lseg<p> |- self::lseg<rr> & rr=p.
+
+//checkentail  x::lseg<p> |- x::lseg<rr> .
 print residue.
 
-checkentail  self::node<next = r2> * r2::lseg<p> |- self=p.
 
-checkentail  self::node<next = r2> * r2::lseg<p> |- self::node<_,r>*r::lseg<p>.
+/*
+checkentail  self::node<next = r2> * r2::lseg<p> |- 
+                (exists r: self=r & r=p) 
+             or self::node<_,r3>*r3::lseg<r> & r=p.
+
 print residue.
+*/
+
+//checkentail  self::node<next = r2> * r2::lseg<p> |- self=p.
+
+//checkentail  self::node<next = r2> * r2::lseg<p> |- self::node<_,r>*r::lseg<p>.
+//print residue.
 
 /*
 WHY does folding (1) above result in two solutions,
