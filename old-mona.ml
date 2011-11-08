@@ -426,7 +426,7 @@ and is_inside_bag_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
   | _ -> begin false; end
 
 and is_firstorder_mem f e vs =
-  Gen.Debug.ho_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
+  Gen.Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
 
 and is_firstorder_mem_a f e vs =
   match e with
@@ -536,7 +536,7 @@ and mona_of_formula_exp_list l f = match l with
 
 (* pretty printing for boolean vars *)
 and mona_of_b_formula b f vs = 
-  Gen.Debug.ho_1 "mona_of_b_formula" Cprinter.string_of_b_formula (fun x -> x)
+  Gen.Debug.no_1 "mona_of_b_formula" Cprinter.string_of_b_formula (fun x -> x)
       (fun _ -> mona_of_b_formula_x b f vs) b
 
 (* pretty printing for boolean vars *)
