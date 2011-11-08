@@ -5628,7 +5628,7 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
   let pr (x,_) = Cprinter.string_of_list_context x in
   let pr_c = Cprinter.string_of_context in
   let pr_es = Cprinter.string_of_entail_state in
-   Gen.Debug.ho_4(* loop_3_no *)  "do_fold_w_ctx" pr_c pr_es Cprinter.string_of_h_formula pr2 pr
+   Gen.Debug.no_4(* loop_3_no *)  "do_fold_w_ctx" pr_c pr_es Cprinter.string_of_h_formula pr2 pr
       (fun _ _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos) 
       fold_ctx estate rhs_node vd
       (*
@@ -5740,14 +5740,12 @@ and combine_results_x ((res_es1,prf1): list_context * Prooftracer.proof)
    
 and combine_results ((res_es1,prf1): list_context * Prooftracer.proof) 
       ((res_es2,prf2): list_context * Prooftracer.proof) : list_context * Prooftracer.proof =
-  (* andreeac -to delete *)
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
-  (* andreeac -to delete *)
   let pr x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) (* ^ "\n Proof: " ^ (Prooftracer.string_of_proof (snd x)) *) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
+  Gen.Debug.no_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
 
 and do_fold_old prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   (* TODO : should we use estate as the base to perform modifications,
@@ -5897,7 +5895,6 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_lhs_rest = lhs_rest;
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
-          let _ = print_string "\n !!! (andreeac) 1 \n" in
           let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
 		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" "separation reduction" [])), NoAlias)
           else
@@ -5920,11 +5917,9 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
     | Context.M_fold {
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} -> 
-          let _ = print_string "\n !!! (andreeac) 2 \n" in
           do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
-          let _ = print_string "\n !!! (andreeac) 3 \n" in
           let lhs_var = get_node_var lhs_node in
           let curr_unfold_num = (get_view_unfold_num lhs_node)+unfold_num in
           if (curr_unfold_num>1) then 
@@ -5941,7 +5936,6 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
     | Context.M_base_case_unfold {
           Context.match_res_lhs_node = lhs_node;
           Context.match_res_rhs_node = rhs_node;}->
-          let _ = print_string "\n !!! (andreeac) 4 \n" in
           let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
@@ -5951,16 +5945,11 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
     | Context.M_base_case_fold {
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
-          let _ = print_string "\n !!! (andreeac) 5 \n" in
           if (estate.es_cont != []) then (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the continuation" estate (Base rhs_b) (get_node_label rhs_node) pos)), NoAlias)
 		  else do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
     | Context.M_lhs_case {
           Context.match_res_lhs_node = lhs_node;
           Context.match_res_rhs_node = rhs_node;}->
-          let _ = print_string "\n !!! (andreeac) 6 \n" in
-        let _ = print_string ("process_action: Context.M_lhs_case" 
-                              ^ "\n\n") in
-
         let ans = do_lhs_case prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos in
         (match ans with
           | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "lhs_case failed" estate conseq (get_node_label rhs_node) pos
@@ -5973,7 +5962,6 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;
       } -> 
-           let _ = print_string "\n !!! (andreeac) 7 \n" in
           let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
           (r1,Search r2)
     | Context.M_lemma  ({
@@ -5982,27 +5970,20 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;
       },ln) ->
-           let _ = print_string "\n !!! (andreeac) 8 \n" in
           (* let _ = match ln with *)
           (*   | None -> ()  *)
           (*   | Some c -> ()(\* print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") *\) in *)
           let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
-          (* andreeac -to delete *)
           let length_ctx ctx = match ctx with
             | CF.FailCtx _ -> 0
             | CF.SuccCtx ctx0 -> List.length ctx0 in
-          let _ = print_string ("\n\n!!!! (andreeac) process_action_x \n  ctx length:" ^ (string_of_int (length_ctx r1)) ^ " \n")  in
-          (* andreeac -to delete *)
           (r1,Search r2)
     | Context.Undefined_action mr -> 
-           let _ = print_string "\n !!! (andreeac) 9 \n" in
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" "" [])), NoAlias)
     | Context.M_Nothing_to_do s -> 
-           let _ = print_string "\n !!! (andreeac) 10 \n" in
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
       CF.mk_failure_none ("Nothing_to_do?"^s))), NoAlias)
     | Context.M_unmatched_rhs_data_node rhs ->
-          let _ = print_string "\n !!! (andreeac) 11 \n" in
           (* TODO : obtain xpure0 of RHS
              (i) check if it is unsat, or
              (ii) check if negated term implied by LHS
@@ -6096,12 +6077,10 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                                                   CF.mk_failure_may s)), NoAlias)
           end
     | Context.Seq_action l ->
-          let _ = print_string "\n !!! (andreeac) 12 \n" in
           report_warning no_pos "Sequential action - not handled";
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
               , CF.mk_failure_none "sequential action - not handled" )), NoAlias)
     | Context.Cond_action l ->
-          let _ = print_string "\n !!! (andreeac) 13 \n" in
           let rec helper l = match l with
            | [] ->           
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
@@ -6113,18 +6092,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                   else (r,prf)
           in helper l
     | Context.Search_action l ->
-          let _ = print_string "\n !!! (andreeac) 14 \n" in
-          let _ = print_string ("\n !!! (andreeac) action_wt: "^ (Gen.Basic.pr_list Context.string_of_action_wt_res l)) in
           let r = List.map (fun (_,a1) -> process_action 14 prog estate conseq lhs_b rhs_b a1
               rhs_h_matched_set is_folding pos) l in
-          let _ = print_string ("\n !!! (andreeac) process_action!! r length: "^(string_of_int (List.length r))) in
-          (* andreeac -to delete *)
           let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in
           let length_ctx ctx = match ctx with
             | CF.FailCtx _ -> 0
             | CF.SuccCtx ctx0 -> List.length ctx0 in
-          let _ = print_string ("\n\n!!!! (andreeac) process_action_x search_action\n  ctx length:" ^ (string_of_int (length_ctx ctx_lst)) ^ " \n")  in
-          (* andreeac -to delete *)
           (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
           
           (ctx_lst, pf) in
@@ -6134,14 +6107,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
 and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
 
   let pr1 = Context.string_of_action_res_simpl in
-  (* andreeac -to delete *)
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
-  (* andreeac -to delete *)
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) (* ^ "\n Proof: " ^ (Prooftracer.string_of_proof (snd x)) *) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Gen.Debug.ho_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Gen.Debug.no_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun __ _ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) caller a estate conseq
 
