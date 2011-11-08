@@ -393,13 +393,21 @@ let string_of_smt_output output =
 	| Unknown -> "unknown|timeout"
 
 (* Collect all Z3's output into a list of strings *)
-let rec collect_output chn accumulated_output : string list =
+let rec icollect_output chn accumulated_output : string list =
 	let output = try
 					 let line = input_line chn in
                     (* let _ = print_endline ("locle2" ^ line) in*)
                      if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
-					 collect_output chn (accumulated_output @ [line])
+					 icollect_output chn (accumulated_output @ [line])
                     else accumulated_output @ [line]
+				with
+					| End_of_file -> accumulated_output in
+		output
+
+let rec collect_output chn accumulated_output : string list =
+	let output = try
+					let line = input_line chn in
+						collect_output chn (accumulated_output @ [line])
 				with
 					| End_of_file -> accumulated_output in
 		output
@@ -409,12 +417,17 @@ let sat_type_from_string r =
 	else if (r = "unsat") then UnSat
 	else Unknown
 
-let get_answer chn =
-	let output = collect_output chn [] in
+let iget_answer chn =
+	let output = icollect_output chn [] in
     let solver_sat_result = List.nth output (List.length output - 1) in
 	{ original_output_text = output;
 	  sat_result = sat_type_from_string solver_sat_result; }
 
+let get_answer chn =
+	let output = collect_output chn [] in
+	let solver_sat_result = List.nth output (List.length output - 1) in
+		{ original_output_text = output;
+		sat_result = sat_type_from_string solver_sat_result; }
 
 let remove_file filename =
 	try
@@ -448,17 +461,58 @@ let log_all_flag = ref false
 let z3_restart_interval = ref (-1)
 let log_all = open_out ("allinput.z3")
 
-let path_to_z3 = "z3.3" (*"z3"*)
-
+let path_to_z3 = "z3" (*"z3"*)
+let smtsolver_name = ref ("z3": string)
 (*let command_for prover ("z3", path_to_z3, [|"z3"; "-smt2"; infile; ("> "^ outfile)|] )*)
 
 let set_process (proc: Globals.prover_process_t) = 
   prover_process := proc
 
-let rec prelude () =
+(*for z3-2.19*)
+let command_for prover =
+(*	match prover with
+	| Z3 -> *)
+  (match !smtsolver_name with
+    | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | "z3-3.2" -> ("z3-3.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    )
+(*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
+	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
+*)
+
+(* Runs the specified prover and returns output *)
+let run prover input =
+  (*let _ = print_endline "z3-2.19" in*)
+	let out_stream = open_out infile in
+	output_string out_stream input;
+	close_out out_stream;
+	let (cmd, cmd_arg) = command_for prover in
+	let set_process proc = prover_process := proc in
+	let fnc () = 
+		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
+			get_answer !prover_process.inchannel in
+	let res = try
+			Procutils.PrvComms.maybe_raise_timeout fnc () !timeout 
+		with
+			| _ -> begin (* exception : return the safe result to ensure soundness *)
+				Printexc.print_backtrace stdout;
+				Unix.kill !prover_process.pid 9;
+				ignore (Unix.waitpid [] !prover_process.pid);
+				{ original_output_text = []; sat_result = Unknown; }
+				end 
+	in
+	let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
+	remove_file infile;
+	remove_file outfile;
+		res
+
+(*for z3-3.2*)
+let rec prelude () = ()
+(*
 let init_str = "(set-option :PULL_NESTED_QUANTIFIERS true)\n" in
    output_string (!prover_process.outchannel) init_str;
    flush (!prover_process.outchannel);
+*)
 (*
   begin
  (* let line = input_line (! prover_process.inchannel) in
@@ -491,7 +545,10 @@ and start() =
       print_string "Starting z3... \n"; flush stdout;
       last_test_number := !test_number;
       (*("z312", path_to_z3, [|path_to_z3; "-smt2";"-si"|])*)
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("z312", path_to_z3, [|path_to_z3;"-smt2"; "-si"|]) set_process prelude in
+      let _ = if !smtsolver_name = "z3-3.2" then
+            Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"|]) set_process prelude else
+            Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
+      in
       is_z3_running := true;
    (*   let  _ = print_endline "locle: start" in ()*)
   end
@@ -538,7 +595,7 @@ let check_formula f timeout =
         output_string (!prover_process.outchannel) new_f;
         flush (!prover_process.outchannel);
 
-        get_answer (!prover_process.inchannel)
+        iget_answer (!prover_process.inchannel)
       in
       let fail_with_timeout () = 
         restart ("[z3.ml]Timeout when checking sat!" ^ (string_of_float timeout));
@@ -830,7 +887,11 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
     if ((Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
       ("(set-option :mbqi true)\n" ^ input)
     else input in*)
-		let output =  check_formula input !timeout in
+		let output = if !smtsolver_name = "z3-3.2" then
+          check_formula input !timeout
+            else
+              	run prover input
+        in
 		let res = match output.sat_result with
 			| Sat -> false
 			| UnSat -> true
@@ -865,7 +926,10 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
     if (Cpure.contains_exists f) then
       ("(set-option :mbqi true)\n" ^ input)
     else input in *)
-	let output = check_formula input !timeout in
+	let output =
+      if !smtsolver_name = "z3-3.2" then check_formula input !timeout
+      else run prover input
+    in
 	let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
