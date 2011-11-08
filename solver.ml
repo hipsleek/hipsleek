@@ -5993,8 +5993,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_lhs_node = lhs_node;
           Context.match_res_rhs_node = rhs_node;}->
         
-        let _ = print_string ("process_action: Context.M_lhs_case" 
-                              ^ "\n\n") in
+        (* let _ = print_string ("process_action: Context.M_lhs_case"  *)
+        (*                       ^ "\n\n") in *)
 
         let ans = do_lhs_case prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos in
         (match ans with
