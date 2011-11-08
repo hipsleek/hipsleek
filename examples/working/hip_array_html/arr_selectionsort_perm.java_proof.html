@@ -131,7 +131,7 @@ else LABEL! 82,1: <br/>
 {(60,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 83::array_index_of_max$int[]~int~int(a,i,j) at <a href="#L66">line 66</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k,t_737) &amp; k&lt;=i &amp; j&lt;=t_737 &amp; i&lt;j&#8866; &exist;(k_744:&exist;(t_745:dom(a,k_744,t_745) &amp; k_744&lt;=i &amp; j&lt;=t_745))
+<ul>(dom(a,k,t_737) &and; k &le; i &and; j &le; t_737 &and; i &lt; j)  &#8866;   &exist; k_744  &exist; t_745 (dom(a,k_744,t_745) &and; k_744 &le; i &and; j &le; t_745)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -157,9 +157,7 @@ Precondition of procedure call 83::array_index_of_max$int[]~int~int(a,i,j) at <a
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L67">line 67</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=j &amp; j&lt;=ahaub &amp; ahalb&lt;=i &amp; i&lt;j &amp; dom(a,ahalb,ahaub) &amp; i&lt;=k_43&apos; &amp; <br/>
-k_43&apos;&lt;=j &amp; upperbnd(a,i,j,a[k_43&apos;])&#8866; &exist;(ahalb_751:&exist;(ahaub_752:dom(a,ahalb_751,ahaub_752) &amp; <br/>
-ahalb_751&lt;=k_43&apos; &amp; k_43&apos;&lt;=ahaub_752))
+<ul>(i &le; j &and; j &le; ahaub &and; ahalb &le; i &and; i &lt; j &and; dom(a,ahalb,ahaub) &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']))  &#8866;   &exist; ahalb_751  &exist; ahaub_752 (dom(a,ahalb_751,ahaub_752) &and; ahalb_751 &le; k_43' &and; k_43' &le; ahaub_752)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -192,10 +190,7 @@ ahalb_751&lt;=k_43&apos; &amp; k_43&apos;&lt;=ahaub_752))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L68">line 68</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_43&apos;&lt;=ahaub_755 &amp; ahalb_754&lt;=k_43&apos; &amp; i&lt;=k_43&apos; &amp; ahalb_754&lt;=i &amp; i&lt;j &amp; <br/>
-j&lt;=ahaub_755 &amp; k_43&apos;&lt;=j &amp; upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; <br/>
-dom(a,ahalb_754,ahaub_755) &amp; temp_44&apos;=a[k_43&apos;]&#8866; &exist;(ahalb_760:&exist;(ahaub_761:dom(a,ahalb_760,ahaub_761) &amp; <br/>
-ahalb_760&lt;=j &amp; j&lt;=ahaub_761))
+<ul>(k_43' &le; ahaub_755 &and; ahalb_754 &le; k_43' &and; i &le; k_43' &and; ahalb_754 &le; i &and; i &lt; j &and; j &le; ahaub_755 &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; dom(a,ahalb_754,ahaub_755) &and; temp_44' = a[k_43'])  &#8866;   &exist; ahalb_760  &exist; ahaub_761 (dom(a,ahalb_760,ahaub_761) &and; ahalb_760 &le; j &and; j &le; ahaub_761)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -232,10 +227,7 @@ ahalb_760&lt;=j &amp; j&lt;=ahaub_761))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L68">line 68</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_764 &amp; ahalb_763&lt;=j &amp; i&lt;=j &amp; ahalb_763&lt;=i &amp; i&lt;j &amp; i&lt;=k_43&apos; &amp; <br/>
-k_43&apos;&lt;=j &amp; upperbnd(a,i,j,a[k_43&apos;]) &amp; ahalb_763&lt;=k_43&apos; &amp; k_43&apos;&lt;=ahaub_764 &amp; <br/>
-temp_44&apos;=a[k_43&apos;] &amp; dom(a,ahalb_763,ahaub_764) &amp; v_int_68_666&apos;=a[j]&#8866; &exist;(ahalb_771:&exist;(ahaub_772:dom(a,ahalb_771,ahaub_772) &amp; <br/>
-ahalb_771&lt;=k_43&apos; &amp; k_43&apos;&lt;=ahaub_772))
+<ul>(j &le; ahaub_764 &and; ahalb_763 &le; j &and; i &le; j &and; ahalb_763 &le; i &and; i &lt; j &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; ahalb_763 &le; k_43' &and; k_43' &le; ahaub_764 &and; temp_44' = a[k_43'] &and; dom(a,ahalb_763,ahaub_764) &and; v_int_68_666' = a[j])  &#8866;   &exist; ahalb_771  &exist; ahaub_772 (dom(a,ahalb_771,ahaub_772) &and; ahalb_771 &le; k_43' &and; k_43' &le; ahaub_772)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -275,11 +267,7 @@ ahalb_771&lt;=k_43&apos; &amp; k_43&apos;&lt;=ahaub_772))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L69">line 69</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_43&apos;&lt;=ahaub_775 &amp; ahalb_774&lt;=k_43&apos; &amp; i&lt;=k_43&apos; &amp; ahalb_774&lt;=i &amp; i&lt;j &amp; <br/>
-k_43&apos;&lt;=j &amp; upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; temp_44&apos;=a[k_43&apos;] &amp; <br/>
-ahalb_774&lt;=j &amp; j&lt;=ahaub_775 &amp; dom(a,ahalb_774,ahaub_775) &amp; <br/>
-dom(a&apos;,ahalb_774,ahaub_775) &amp; update_array_1d(a,a&apos;,a[j],k_43&apos;)&#8866; &exist;(ahalb_782:&exist;(ahaub_783:dom(a&apos;,ahalb_782,ahaub_783) &amp; <br/>
-ahalb_782&lt;=j &amp; j&lt;=ahaub_783))
+<ul>(k_43' &le; ahaub_775 &and; ahalb_774 &le; k_43' &and; i &le; k_43' &and; ahalb_774 &le; i &and; i &lt; j &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; ahalb_774 &le; j &and; j &le; ahaub_775 &and; dom(a,ahalb_774,ahaub_775) &and; dom(a',ahalb_774,ahaub_775) &and; update_array_1d(a,a',a[j],k_43'))  &#8866;   &exist; ahalb_782  &exist; ahaub_783 (dom(a',ahalb_782,ahaub_783) &and; ahalb_782 &le; j &and; j &le; ahaub_783)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -321,11 +309,7 @@ ahalb_782&lt;=j &amp; j&lt;=ahaub_783))
 <li class="Collapsed assert">
 Assertion at <a href="#L70">line 70</a> holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_785,ahalb_774,ahaub_775) &amp; k_43&apos;&lt;=ahaub_775 &amp; ahalb_774&lt;=k_43&apos; &amp; <br/>
-i&lt;j &amp; ahalb_774&lt;=i &amp; i&lt;=k_43&apos; &amp; k_43&apos;&lt;=j &amp; upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; <br/>
-temp_44&apos;=a[k_43&apos;] &amp; dom(a,ahalb_774,ahaub_775) &amp; <br/>
-update_array_1d(a,a_785,a[j],k_43&apos;) &amp; ahalb_774&lt;=j &amp; j&lt;=ahaub_775 &amp; <br/>
-dom(a&apos;,ahalb_774,ahaub_775) &amp; update_array_1d(a_785,a&apos;,temp_44&apos;,j)&#8866; permutation(a,a&apos;,i,j)
+<ul>(dom(a_785,ahalb_774,ahaub_775) &and; k_43' &le; ahaub_775 &and; ahalb_774 &le; k_43' &and; i &lt; j &and; ahalb_774 &le; i &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; dom(a,ahalb_774,ahaub_775) &and; update_array_1d(a,a_785,a[j],k_43') &and; ahalb_774 &le; j &and; j &le; ahaub_775 &and; dom(a',ahalb_774,ahaub_775) &and; update_array_1d(a_785,a',temp_44',j))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -375,12 +359,7 @@ Assertion at <a href="#L71">line 71</a> holds
 <li class="Collapsed assert">
 Assertion at <a href="#L72">line 72</a> holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_786,ahalb_774,ahaub_775) &amp; k_43&apos;&lt;=ahaub_775 &amp; ahalb_774&lt;=k_43&apos; &amp; <br/>
-i&lt;j &amp; ahalb_774&lt;=i &amp; i&lt;=k_43&apos; &amp; k_43&apos;&lt;=j &amp; upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; <br/>
-temp_44&apos;=a[k_43&apos;] &amp; dom(a,ahalb_774,ahaub_775) &amp; <br/>
-update_array_1d(a,a_786,a[j],k_43&apos;) &amp; ahalb_774&lt;=j &amp; j&lt;=ahaub_775 &amp; <br/>
-dom(a&apos;,ahalb_774,ahaub_775) &amp; update_array_1d(a_786,a&apos;,temp_44&apos;,j) &amp; <br/>
-permutation(a,a&apos;,i,j)&#8866; upperbnd(a&apos;,i,j - 1,temp_44&apos;)
+<ul>(dom(a_786,ahalb_774,ahaub_775) &and; k_43' &le; ahaub_775 &and; ahalb_774 &le; k_43' &and; i &lt; j &and; ahalb_774 &le; i &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; dom(a,ahalb_774,ahaub_775) &and; update_array_1d(a,a_786,a[j],k_43') &and; ahalb_774 &le; j &and; j &le; ahaub_775 &and; dom(a',ahalb_774,ahaub_775) &and; update_array_1d(a_786,a',temp_44',j) &and; permutation(a,a',i,j))  &#8866;  upperbnd(a',i,j - 1,temp_44')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -431,13 +410,7 @@ Assertion at <a href="#L73">line 73</a> holds
 <ul></ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 90::selection_sort$int[]~int~int(a,i,v_int_74_690) rec at <a href="#L74">line 74</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=t_796 &amp; h_795&lt;=j &amp; dom(a_793,h_795,t_796) &amp; k_43&apos;&lt;=t_796 &amp; <br/>
-h_795&lt;=k_43&apos; &amp; k_43&apos;&lt;=j &amp; i&lt;j &amp; h_795&lt;=i &amp; i&lt;=k_43&apos; &amp; <br/>
-upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; temp_44&apos;=a[k_43&apos;] &amp; dom(a,h_795,t_796) &amp; <br/>
-update_array_1d(a,a_793,a[j],k_43&apos;) &amp; dom(a&apos;,h_795,t_796) &amp; <br/>
-update_array_1d(a_793,a&apos;,temp_44&apos;,j) &amp; permutation(a,a&apos;,i,j) &amp; <br/>
-upperbnd(a&apos;,i,j - 1,temp_44&apos;) &amp; v_int_74_690&apos;+1=j&#8866; &exist;(h_803:&exist;(t_804:dom(a&apos;,h_803,t_804) &amp; h_803&lt;=i &amp; <br/>
-v_int_74_690&apos;&lt;=t_804))
+<ul>(j &le; t_796 &and; h_795 &le; j &and; dom(a_793,h_795,t_796) &and; k_43' &le; t_796 &and; h_795 &le; k_43' &and; k_43' &le; j &and; i &lt; j &and; h_795 &le; i &and; i &le; k_43' &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; dom(a,h_795,t_796) &and; update_array_1d(a,a_793,a[j],k_43') &and; dom(a',h_795,t_796) &and; update_array_1d(a_793,a',temp_44',j) &and; permutation(a,a',i,j) &and; upperbnd(a',i,j - 1,temp_44') &and; v_int_74_690' + 1 = j)  &#8866;   &exist; h_803  &exist; t_804 (dom(a',h_803,t_804) &and; h_803 &le; i &and; v_int_74_690' &le; t_804)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -494,15 +467,7 @@ v_int_74_690&apos;&lt;=t_804))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_74_807+1=j &amp; upperbnd(a_806,i,j - 1,temp_44&apos;) &amp; <br/>
-update_array_1d(a_793,a_806,temp_44&apos;,j) &amp; i&lt;=j &amp; k_43&apos;&lt;=j &amp; i&lt;=k_43&apos; &amp; i&lt;j &amp; <br/>
-upperbnd(a,i,j,a[k_43&apos;]) &amp; temp_44&apos;=a[k_43&apos;] &amp; dom(a,h_795,t_796) &amp; <br/>
-h_795&lt;=k_43&apos; &amp; k_43&apos;&lt;=t_796 &amp; update_array_1d(a,a_793,a[j],k_43&apos;) &amp; <br/>
-dom(a_793,h_795,t_796) &amp; h_795&lt;=j &amp; j&lt;=t_796 &amp; permutation(a,a_806,i,j) &amp; <br/>
-dom(a_806,h_795,t_796) &amp; h_795&lt;=i &amp; v_int_74_807&lt;=t_796 &amp; <br/>
-dom(a&apos;,h_795,t_796) &amp; sorted(a&apos;,i,v_int_74_807) &amp; <br/>
-idexc(a&apos;,a_806,i,v_int_74_807) &amp; upperbndprev(a_806,a&apos;,i,v_int_74_807) &amp; <br/>
-permutation(a_806,a&apos;,i,v_int_74_807)&#8866; dom(a&apos;,h_795,t_796)
+<ul>(v_int_74_807 + 1 = j &and; upperbnd(a_806,i,j - 1,temp_44') &and; update_array_1d(a_793,a_806,temp_44',j) &and; i &le; j &and; k_43' &le; j &and; i &le; k_43' &and; i &lt; j &and; upperbnd(a,i,j,a[k_43']) &and; temp_44' = a[k_43'] &and; dom(a,h_795,t_796) &and; h_795 &le; k_43' &and; k_43' &le; t_796 &and; update_array_1d(a,a_793,a[j],k_43') &and; dom(a_793,h_795,t_796) &and; h_795 &le; j &and; j &le; t_796 &and; permutation(a,a_806,i,j) &and; dom(a_806,h_795,t_796) &and; h_795 &le; i &and; v_int_74_807 &le; t_796 &and; dom(a',h_795,t_796) &and; sorted(a',i,v_int_74_807) &and; idexc(a',a_806,i,v_int_74_807) &and; upperbndprev(a_806,a',i,v_int_74_807) &and; permutation(a_806,a',i,v_int_74_807))  &#8866;  dom(a',h_795,t_796)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -569,15 +534,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; dom(a&apos;,h_795,t_796)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_74_807&lt;=t_796 &amp; dom(a_806,h_795,t_796) &amp; dom(a_793,h_795,t_796) &amp; <br/>
-k_43&apos;&lt;=t_796 &amp; h_795&lt;=k_43&apos; &amp; i&lt;j &amp; i&lt;=k_43&apos; &amp; k_43&apos;&lt;=j &amp; <br/>
-upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; temp_44&apos;=a[k_43&apos;] &amp; dom(a,h_795,t_796) &amp; <br/>
-update_array_1d(a,a_793,a[j],k_43&apos;) &amp; h_795&lt;=j &amp; j&lt;=t_796 &amp; <br/>
-update_array_1d(a_793,a_806,temp_44&apos;,j) &amp; permutation(a,a_806,i,j) &amp; <br/>
-upperbnd(a_806,i,j - 1,temp_44&apos;) &amp; v_int_74_807+1=j &amp; h_795&lt;=i &amp; <br/>
-dom(a&apos;,h_795,t_796) &amp; sorted(a&apos;,i,v_int_74_807) &amp; <br/>
-idexc(a&apos;,a_806,i,v_int_74_807) &amp; upperbndprev(a_806,a&apos;,i,v_int_74_807) &amp; <br/>
-permutation(a_806,a&apos;,i,v_int_74_807)&#8866; sorted(a&apos;,i,j)
+<ul>(v_int_74_807 &le; t_796 &and; dom(a_806,h_795,t_796) &and; dom(a_793,h_795,t_796) &and; k_43' &le; t_796 &and; h_795 &le; k_43' &and; i &lt; j &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; dom(a,h_795,t_796) &and; update_array_1d(a,a_793,a[j],k_43') &and; h_795 &le; j &and; j &le; t_796 &and; update_array_1d(a_793,a_806,temp_44',j) &and; permutation(a,a_806,i,j) &and; upperbnd(a_806,i,j - 1,temp_44') &and; v_int_74_807 + 1 = j &and; h_795 &le; i &and; dom(a',h_795,t_796) &and; sorted(a',i,v_int_74_807) &and; idexc(a',a_806,i,v_int_74_807) &and; upperbndprev(a_806,a',i,v_int_74_807) &and; permutation(a_806,a',i,v_int_74_807))  &#8866;  sorted(a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -638,15 +595,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; sorted(a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_74_807&lt;=t_796 &amp; dom(a_806,h_795,t_796) &amp; dom(a_793,h_795,t_796) &amp; <br/>
-k_43&apos;&lt;=t_796 &amp; h_795&lt;=k_43&apos; &amp; i&lt;j &amp; i&lt;=k_43&apos; &amp; k_43&apos;&lt;=j &amp; <br/>
-upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; temp_44&apos;=a[k_43&apos;] &amp; dom(a,h_795,t_796) &amp; <br/>
-update_array_1d(a,a_793,a[j],k_43&apos;) &amp; h_795&lt;=j &amp; j&lt;=t_796 &amp; <br/>
-update_array_1d(a_793,a_806,temp_44&apos;,j) &amp; permutation(a,a_806,i,j) &amp; <br/>
-upperbnd(a_806,i,j - 1,temp_44&apos;) &amp; v_int_74_807+1=j &amp; h_795&lt;=i &amp; <br/>
-dom(a&apos;,h_795,t_796) &amp; sorted(a&apos;,i,v_int_74_807) &amp; <br/>
-idexc(a&apos;,a_806,i,v_int_74_807) &amp; upperbndprev(a_806,a&apos;,i,v_int_74_807) &amp; <br/>
-permutation(a_806,a&apos;,i,v_int_74_807)&#8866; idexc(a&apos;,a,i,j)
+<ul>(v_int_74_807 &le; t_796 &and; dom(a_806,h_795,t_796) &and; dom(a_793,h_795,t_796) &and; k_43' &le; t_796 &and; h_795 &le; k_43' &and; i &lt; j &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; dom(a,h_795,t_796) &and; update_array_1d(a,a_793,a[j],k_43') &and; h_795 &le; j &and; j &le; t_796 &and; update_array_1d(a_793,a_806,temp_44',j) &and; permutation(a,a_806,i,j) &and; upperbnd(a_806,i,j - 1,temp_44') &and; v_int_74_807 + 1 = j &and; h_795 &le; i &and; dom(a',h_795,t_796) &and; sorted(a',i,v_int_74_807) &and; idexc(a',a_806,i,v_int_74_807) &and; upperbndprev(a_806,a',i,v_int_74_807) &and; permutation(a_806,a',i,v_int_74_807))  &#8866;  idexc(a',a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -707,15 +656,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; idexc(a&apos;,a,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_74_807&lt;=t_796 &amp; dom(a_806,h_795,t_796) &amp; dom(a_793,h_795,t_796) &amp; <br/>
-k_43&apos;&lt;=t_796 &amp; h_795&lt;=k_43&apos; &amp; i&lt;j &amp; i&lt;=k_43&apos; &amp; k_43&apos;&lt;=j &amp; <br/>
-upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; temp_44&apos;=a[k_43&apos;] &amp; dom(a,h_795,t_796) &amp; <br/>
-update_array_1d(a,a_793,a[j],k_43&apos;) &amp; h_795&lt;=j &amp; j&lt;=t_796 &amp; <br/>
-update_array_1d(a_793,a_806,temp_44&apos;,j) &amp; permutation(a,a_806,i,j) &amp; <br/>
-upperbnd(a_806,i,j - 1,temp_44&apos;) &amp; v_int_74_807+1=j &amp; h_795&lt;=i &amp; <br/>
-dom(a&apos;,h_795,t_796) &amp; sorted(a&apos;,i,v_int_74_807) &amp; <br/>
-idexc(a&apos;,a_806,i,v_int_74_807) &amp; upperbndprev(a_806,a&apos;,i,v_int_74_807) &amp; <br/>
-permutation(a_806,a&apos;,i,v_int_74_807)&#8866; upperbndprev(a,a&apos;,i,j)
+<ul>(v_int_74_807 &le; t_796 &and; dom(a_806,h_795,t_796) &and; dom(a_793,h_795,t_796) &and; k_43' &le; t_796 &and; h_795 &le; k_43' &and; i &lt; j &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; dom(a,h_795,t_796) &and; update_array_1d(a,a_793,a[j],k_43') &and; h_795 &le; j &and; j &le; t_796 &and; update_array_1d(a_793,a_806,temp_44',j) &and; permutation(a,a_806,i,j) &and; upperbnd(a_806,i,j - 1,temp_44') &and; v_int_74_807 + 1 = j &and; h_795 &le; i &and; dom(a',h_795,t_796) &and; sorted(a',i,v_int_74_807) &and; idexc(a',a_806,i,v_int_74_807) &and; upperbndprev(a_806,a',i,v_int_74_807) &and; permutation(a_806,a',i,v_int_74_807))  &#8866;  upperbndprev(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -777,15 +718,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; upperbndprev(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_74_807&lt;=t_796 &amp; dom(a_806,h_795,t_796) &amp; dom(a_793,h_795,t_796) &amp; <br/>
-k_43&apos;&lt;=t_796 &amp; h_795&lt;=k_43&apos; &amp; i&lt;j &amp; i&lt;=k_43&apos; &amp; k_43&apos;&lt;=j &amp; <br/>
-upperbnd(a,i,j,a[k_43&apos;]) &amp; i&lt;=j &amp; temp_44&apos;=a[k_43&apos;] &amp; dom(a,h_795,t_796) &amp; <br/>
-update_array_1d(a,a_793,a[j],k_43&apos;) &amp; h_795&lt;=j &amp; j&lt;=t_796 &amp; <br/>
-update_array_1d(a_793,a_806,temp_44&apos;,j) &amp; permutation(a,a_806,i,j) &amp; <br/>
-upperbnd(a_806,i,j - 1,temp_44&apos;) &amp; v_int_74_807+1=j &amp; h_795&lt;=i &amp; <br/>
-dom(a&apos;,h_795,t_796) &amp; sorted(a&apos;,i,v_int_74_807) &amp; <br/>
-idexc(a&apos;,a_806,i,v_int_74_807) &amp; upperbndprev(a_806,a&apos;,i,v_int_74_807) &amp; <br/>
-permutation(a_806,a&apos;,i,v_int_74_807)&#8866; permutation(a,a&apos;,i,j)
+<ul>(v_int_74_807 &le; t_796 &and; dom(a_806,h_795,t_796) &and; dom(a_793,h_795,t_796) &and; k_43' &le; t_796 &and; h_795 &le; k_43' &and; i &lt; j &and; i &le; k_43' &and; k_43' &le; j &and; upperbnd(a,i,j,a[k_43']) &and; i &le; j &and; temp_44' = a[k_43'] &and; dom(a,h_795,t_796) &and; update_array_1d(a,a_793,a[j],k_43') &and; h_795 &le; j &and; j &le; t_796 &and; update_array_1d(a_793,a_806,temp_44',j) &and; permutation(a,a_806,i,j) &and; upperbnd(a_806,i,j - 1,temp_44') &and; v_int_74_807 + 1 = j &and; h_795 &le; i &and; dom(a',h_795,t_796) &and; sorted(a',i,v_int_74_807) &and; idexc(a',a_806,i,v_int_74_807) &and; upperbndprev(a_806,a',i,v_int_74_807) &and; permutation(a_806,a',i,v_int_74_807))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -852,7 +785,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; permutation(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=i &amp; dom(a,h,t) &amp; h&lt;=i &amp; j&lt;=t&#8866; dom(a,h,t)
+<ul>(j &le; i &and; dom(a,h,t) &and; h &le; i &and; j &le; t)  &#8866;  dom(a,h,t)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -876,7 +809,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; permutation(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,h,t) &amp; h&lt;=i &amp; j&lt;=t &amp; j&lt;=i&#8866; sorted(a,i,j)
+<ul>(dom(a,h,t) &and; h &le; i &and; j &le; t &and; j &le; i)  &#8866;  sorted(a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -898,7 +831,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; permutation(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,h,t) &amp; h&lt;=i &amp; j&lt;=t &amp; j&lt;=i&#8866; idexc(a,a,i,j)
+<ul>(dom(a,h,t) &and; h &le; i &and; j &le; t &and; j &le; i)  &#8866;  idexc(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -920,7 +853,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; permutation(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,h,t) &amp; h&lt;=i &amp; j&lt;=t &amp; j&lt;=i&#8866; upperbndprev(a,a,i,j)
+<ul>(dom(a,h,t) &and; h &le; i &and; j &le; t &and; j &le; i)  &#8866;  upperbndprev(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -944,7 +877,7 @@ permutation(a_806,a&apos;,i,v_int_74_807)&#8866; permutation(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,h,t) &amp; h&lt;=i &amp; j&lt;=t &amp; j&lt;=i&#8866; permutation(a,a,i,j)
+<ul>(dom(a,h,t) &and; h &le; i &and; j &le; t &and; j &le; i)  &#8866;  permutation(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1041,7 +974,7 @@ Memory safety of array access at line <a href="#L54">line 54</a><ul></ul></li>
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=t &amp; dom(a,k,t) &amp; k&lt;=i &amp; k_45&apos;+1=i &amp; j&lt;i&#8866; 1+k_45&apos;=i
+<ul>(j &le; t &and; dom(a,k,t) &and; k &le; i &and; k_45' + 1 = i &and; j &lt; i)  &#8866;  1 + k_45' = i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1064,9 +997,7 @@ Procedure post-condition holds
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 96::array_index_of_max$int[]~int~int(a,v_int_51_716,j) rec at <a href="#L51">line 51</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_45&apos;+1=i &amp; k_866&lt;=i &amp; dom(a,k_866,t_867) &amp; j&lt;=t_867 &amp; i&lt;=j &amp; <br/>
-v_int_51_716&apos;=1+i&#8866; &exist;(k_874:&exist;(t_875:dom(a,k_874,t_875) &amp; k_874&lt;=v_int_51_716&apos; &amp; <br/>
-j&lt;=t_875))
+<ul>(k_45' + 1 = i &and; k_866 &le; i &and; dom(a,k_866,t_867) &and; j &le; t_867 &and; i &le; j &and; v_int_51_716' = 1 + i)  &#8866;   &exist; k_874  &exist; t_875 (dom(a,k_874,t_875) &and; k_874 &le; v_int_51_716' &and; j &le; t_875)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1096,9 +1027,7 @@ j&lt;=t_875))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L54">line 54</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub &amp; ahalb&lt;=i &amp; k_893+1=i &amp; i&lt;=j &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=(1+<br/>
-i) &amp; k_45&apos;+1=1+i &amp; j&lt;(1+i) &amp; i&lt;=k_45&apos;&#8866; &exist;(ahalb_894:&exist;(ahaub_895:dom(a,ahalb_894,ahaub_895) &amp; <br/>
-ahalb_894&lt;=i &amp; i&lt;=ahaub_895))
+<ul>(j &le; ahaub &and; ahalb &le; i &and; k_893 + 1 = i &and; i &le; j &and; dom(a,ahalb,ahaub) &and; ahalb &le; 1 + i &and; k_45' + 1 = 1 + i &and; j &lt; 1 + i &and; i &le; k_45')  &#8866;   &exist; ahalb_894  &exist; ahaub_895 (dom(a,ahalb_894,ahaub_895) &and; ahalb_894 &le; i &and; i &le; ahaub_895)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1129,10 +1058,7 @@ ahalb_894&lt;=i &amp; i&lt;=ahaub_895))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_45&apos;&lt;=j &amp; j&lt;=ahaub &amp; ahalb&lt;=i &amp; k_896+1=i &amp; i&lt;=j &amp; dom(a,ahalb,ahaub) &amp; <br/>
-ahalb&lt;=(1+i) &amp; (1+i)&lt;=k_45&apos; &amp; upperbnd(a,1+i,j,a[k_45&apos;]) &amp; (1+i)&lt;=j &amp; <br/>
-i&lt;=k_45&apos;&#8866; &exist;(ahalb_897:&exist;(ahaub_898:dom(a,ahalb_897,ahaub_898) &amp; <br/>
-ahalb_897&lt;=i &amp; i&lt;=ahaub_898))
+<ul>(k_45' &le; j &and; j &le; ahaub &and; ahalb &le; i &and; k_896 + 1 = i &and; i &le; j &and; dom(a,ahalb,ahaub) &and; ahalb &le; 1 + i &and; 1 + i &le; k_45' &and; upperbnd(a,1 + i,j,a[k_45']) &and; 1 + i &le; j &and; i &le; k_45')  &#8866;   &exist; ahalb_897  &exist; ahaub_898 (dom(a,ahalb_897,ahaub_898) &and; ahalb_897 &le; i &and; i &le; ahaub_898)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1169,10 +1095,7 @@ ahalb_897&lt;=i &amp; i&lt;=ahaub_898))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L54">line 54</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_902 &amp; ahalb_901&lt;=i &amp; j&lt;(1+i) &amp; j&lt;=ahaub_902 &amp; ahalb_901&lt;=(1+i) &amp; <br/>
-i&lt;=j &amp; k_893+1=i &amp; k_45&apos;+1=1+i &amp; i&lt;=k_45&apos; &amp; dom(a,ahalb_901,ahaub_902) &amp; <br/>
-v_int_54_718&apos;=a[i]&#8866; &exist;(ahalb_907:&exist;(ahaub_908:dom(a,ahalb_907,ahaub_908) &amp; <br/>
-ahalb_907&lt;=k_45&apos; &amp; k_45&apos;&lt;=ahaub_908))
+<ul>(i &le; ahaub_902 &and; ahalb_901 &le; i &and; j &lt; 1 + i &and; j &le; ahaub_902 &and; ahalb_901 &le; 1 + i &and; i &le; j &and; k_893 + 1 = i &and; k_45' + 1 = 1 + i &and; i &le; k_45' &and; dom(a,ahalb_901,ahaub_902) &and; v_int_54_718' = a[i])  &#8866;   &exist; ahalb_907  &exist; ahaub_908 (dom(a,ahalb_907,ahaub_908) &and; ahalb_907 &le; k_45' &and; k_45' &le; ahaub_908)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1206,10 +1129,7 @@ ahalb_907&lt;=k_45&apos; &amp; k_45&apos;&lt;=ahaub_908))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_902 &amp; ahalb_901&lt;=i &amp; (1+i)&lt;=j &amp; j&lt;=ahaub_902 &amp; ahalb_901&lt;=(1+i) &amp; <br/>
-i&lt;=j &amp; k_896+1=i &amp; (1+i)&lt;=k_45&apos; &amp; k_45&apos;&lt;=j &amp; upperbnd(a,1+i,j,a[k_45&apos;]) &amp; <br/>
-i&lt;=k_45&apos; &amp; dom(a,ahalb_901,ahaub_902) &amp; v_int_54_718&apos;=a[i]&#8866; &exist;(ahalb_909:&exist;(ahaub_910:dom(a,ahalb_909,ahaub_910) &amp; <br/>
-ahalb_909&lt;=k_45&apos; &amp; k_45&apos;&lt;=ahaub_910))
+<ul>(i &le; ahaub_902 &and; ahalb_901 &le; i &and; 1 + i &le; j &and; j &le; ahaub_902 &and; ahalb_901 &le; 1 + i &and; i &le; j &and; k_896 + 1 = i &and; 1 + i &le; k_45' &and; k_45' &le; j &and; upperbnd(a,1 + i,j,a[k_45']) &and; i &le; k_45' &and; dom(a,ahalb_901,ahaub_902) &and; v_int_54_718' = a[i])  &#8866;   &exist; ahalb_909  &exist; ahaub_910 (dom(a,ahalb_909,ahaub_910) &and; ahalb_909 &le; k_45' &and; k_45' &le; ahaub_910)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1250,9 +1170,7 @@ ahalb_909&lt;=k_45&apos; &amp; k_45&apos;&lt;=ahaub_910))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_927&lt;=ahaub_902 &amp; ahalb_901&lt;=k_927 &amp; dom(a,ahalb_901,ahaub_902) &amp; <br/>
-j&lt;=ahaub_902 &amp; k_893+1=i &amp; i&lt;=j &amp; ahalb_901&lt;=(1+i) &amp; k_927+1=1+i &amp; j&lt;(1+i) &amp; <br/>
-i&lt;=k_927 &amp; ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; (a[k_927])&lt;=(a[i])&#8866; i&lt;=i
+<ul>(k_927 &le; ahaub_902 &and; ahalb_901 &le; k_927 &and; dom(a,ahalb_901,ahaub_902) &and; j &le; ahaub_902 &and; k_893 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; k_927 + 1 = 1 + i &and; j &lt; 1 + i &and; i &le; k_927 &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; a[k_927] &le; a[i])  &#8866;  i &le; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1283,9 +1201,7 @@ i&lt;=k_927 &amp; ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; (a[k_927])&lt;=(a[
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_927&lt;=ahaub_902 &amp; ahalb_901&lt;=k_927 &amp; dom(a,ahalb_901,ahaub_902) &amp; k_893+<br/>
-1=i &amp; i&lt;=j &amp; ahalb_901&lt;=(1+i) &amp; j&lt;=ahaub_902 &amp; k_927+1=1+i &amp; j&lt;(1+i) &amp; <br/>
-i&lt;=k_927 &amp; ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; (a[k_927])&lt;=(a[i])&#8866; i&lt;=j
+<ul>(k_927 &le; ahaub_902 &and; ahalb_901 &le; k_927 &and; dom(a,ahalb_901,ahaub_902) &and; k_893 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; j &le; ahaub_902 &and; k_927 + 1 = 1 + i &and; j &lt; 1 + i &and; i &le; k_927 &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; a[k_927] &le; a[i])  &#8866;  i &le; j
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1316,9 +1232,7 @@ i&lt;=k_927 &amp; ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; (a[k_927])&lt;=(a[
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_927&lt;=ahaub_902 &amp; ahalb_901&lt;=k_927 &amp; k_893+1=i &amp; i&lt;=j &amp; ahalb_901&lt;=(1+i) &amp; <br/>
-j&lt;=ahaub_902 &amp; k_927+1=1+i &amp; j&lt;(1+i) &amp; i&lt;=k_927 &amp; ahalb_901&lt;=i &amp; <br/>
-i&lt;=ahaub_902 &amp; dom(a,ahalb_901,ahaub_902) &amp; (a[k_927])&lt;=(a[i])&#8866; upperbnd(a,i,j,a[i])
+<ul>(k_927 &le; ahaub_902 &and; ahalb_901 &le; k_927 &and; k_893 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; j &le; ahaub_902 &and; k_927 + 1 = 1 + i &and; j &lt; 1 + i &and; i &le; k_927 &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; dom(a,ahalb_901,ahaub_902) &and; a[k_927] &le; a[i])  &#8866;  upperbnd(a,i,j,a[i])
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1351,10 +1265,7 @@ i&lt;=ahaub_902 &amp; dom(a,ahalb_901,ahaub_902) &amp; (a[k_927])&lt;=(a[i])&#88
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_928&lt;=ahaub_902 &amp; ahalb_901&lt;=k_928 &amp; dom(a,ahalb_901,ahaub_902) &amp; <br/>
-k_928&lt;=j &amp; j&lt;=ahaub_902 &amp; k_896+1=i &amp; i&lt;=j &amp; ahalb_901&lt;=(1+i) &amp; (1+<br/>
-i)&lt;=k_928 &amp; upperbnd(a,1+i,j,a[k_928]) &amp; (1+i)&lt;=j &amp; i&lt;=k_928 &amp; <br/>
-ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; (a[k_928])&lt;=(a[i])&#8866; i&lt;=i
+<ul>(k_928 &le; ahaub_902 &and; ahalb_901 &le; k_928 &and; dom(a,ahalb_901,ahaub_902) &and; k_928 &le; j &and; j &le; ahaub_902 &and; k_896 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; 1 + i &le; k_928 &and; upperbnd(a,1 + i,j,a[k_928]) &and; 1 + i &le; j &and; i &le; k_928 &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; a[k_928] &le; a[i])  &#8866;  i &le; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1389,10 +1300,7 @@ ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; (a[k_928])&lt;=(a[i])&#8866; i&lt;=i
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_928&lt;=ahaub_902 &amp; ahalb_901&lt;=k_928 &amp; dom(a,ahalb_901,ahaub_902) &amp; k_896+<br/>
-1=i &amp; i&lt;=j &amp; ahalb_901&lt;=(1+i) &amp; j&lt;=ahaub_902 &amp; (1+i)&lt;=k_928 &amp; k_928&lt;=j &amp; <br/>
-upperbnd(a,1+i,j,a[k_928]) &amp; (1+i)&lt;=j &amp; i&lt;=k_928 &amp; ahalb_901&lt;=i &amp; <br/>
-i&lt;=ahaub_902 &amp; (a[k_928])&lt;=(a[i])&#8866; i&lt;=j
+<ul>(k_928 &le; ahaub_902 &and; ahalb_901 &le; k_928 &and; dom(a,ahalb_901,ahaub_902) &and; k_896 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; j &le; ahaub_902 &and; 1 + i &le; k_928 &and; k_928 &le; j &and; upperbnd(a,1 + i,j,a[k_928]) &and; 1 + i &le; j &and; i &le; k_928 &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; a[k_928] &le; a[i])  &#8866;  i &le; j
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1427,10 +1335,7 @@ i&lt;=ahaub_902 &amp; (a[k_928])&lt;=(a[i])&#8866; i&lt;=j
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_928&lt;=ahaub_902 &amp; ahalb_901&lt;=k_928 &amp; k_896+1=i &amp; i&lt;=j &amp; ahalb_901&lt;=(1+i) &amp; <br/>
-j&lt;=ahaub_902 &amp; (1+i)&lt;=k_928 &amp; k_928&lt;=j &amp; upperbnd(a,1+i,j,a[k_928]) &amp; (1+<br/>
-i)&lt;=j &amp; i&lt;=k_928 &amp; ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; <br/>
-dom(a,ahalb_901,ahaub_902) &amp; (a[k_928])&lt;=(a[i])&#8866; upperbnd(a,i,j,a[i])
+<ul>(k_928 &le; ahaub_902 &and; ahalb_901 &le; k_928 &and; k_896 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; j &le; ahaub_902 &and; 1 + i &le; k_928 &and; k_928 &le; j &and; upperbnd(a,1 + i,j,a[k_928]) &and; 1 + i &le; j &and; i &le; k_928 &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; dom(a,ahalb_901,ahaub_902) &and; a[k_928] &le; a[i])  &#8866;  upperbnd(a,i,j,a[i])
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1466,10 +1371,7 @@ dom(a,ahalb_901,ahaub_902) &amp; (a[k_928])&lt;=(a[i])&#8866; upperbnd(a,i,j,a[i
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahalb_901,ahaub_902) &amp; j&lt;=ahaub_902 &amp; k_896+1=i &amp; i&lt;=j &amp; <br/>
-ahalb_901&lt;=(1+i) &amp; (1+i)&lt;=k_45&apos; &amp; k_45&apos;&lt;=j &amp; upperbnd(a,1+i,j,a[k_45&apos;]) &amp; (1+<br/>
-i)&lt;=j &amp; i&lt;=k_45&apos; &amp; ahalb_901&lt;=i &amp; i&lt;=ahaub_902 &amp; ahalb_901&lt;=k_45&apos; &amp; <br/>
-k_45&apos;&lt;=ahaub_902 &amp; (a[i])&lt;(a[k_45&apos;])&#8866; i&lt;=k_45&apos;
+<ul>(dom(a,ahalb_901,ahaub_902) &and; j &le; ahaub_902 &and; k_896 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; 1 + i &le; k_45' &and; k_45' &le; j &and; upperbnd(a,1 + i,j,a[k_45']) &and; 1 + i &le; j &and; i &le; k_45' &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; ahalb_901 &le; k_45' &and; k_45' &le; ahaub_902 &and; a[i] &lt; a[k_45'])  &#8866;  i &le; k_45'
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1504,10 +1406,7 @@ k_45&apos;&lt;=ahaub_902 &amp; (a[i])&lt;(a[k_45&apos;])&#8866; i&lt;=k_45&apos;
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahalb_901,ahaub_902) &amp; i&lt;=ahaub_902 &amp; ahalb_901&lt;=i &amp; ahalb_901&lt;=(1+<br/>
-i) &amp; k_896+1=i &amp; i&lt;=j &amp; j&lt;=ahaub_902 &amp; (1+i)&lt;=k_45&apos; &amp; k_45&apos;&lt;=j &amp; <br/>
-upperbnd(a,1+i,j,a[k_45&apos;]) &amp; (1+i)&lt;=j &amp; i&lt;=k_45&apos; &amp; ahalb_901&lt;=k_45&apos; &amp; <br/>
-k_45&apos;&lt;=ahaub_902 &amp; (a[i])&lt;(a[k_45&apos;])&#8866; k_45&apos;&lt;=j
+<ul>(dom(a,ahalb_901,ahaub_902) &and; i &le; ahaub_902 &and; ahalb_901 &le; i &and; ahalb_901 &le; 1 + i &and; k_896 + 1 = i &and; i &le; j &and; j &le; ahaub_902 &and; 1 + i &le; k_45' &and; k_45' &le; j &and; upperbnd(a,1 + i,j,a[k_45']) &and; 1 + i &le; j &and; i &le; k_45' &and; ahalb_901 &le; k_45' &and; k_45' &le; ahaub_902 &and; a[i] &lt; a[k_45'])  &#8866;  k_45' &le; j
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1542,10 +1441,7 @@ k_45&apos;&lt;=ahaub_902 &amp; (a[i])&lt;(a[k_45&apos;])&#8866; k_45&apos;&lt;=j
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> k_896+1=i &amp; i&lt;=j &amp; ahalb_901&lt;=(1+i) &amp; j&lt;=ahaub_902 &amp; (1+i)&lt;=k_45&apos; &amp; <br/>
-k_45&apos;&lt;=j &amp; upperbnd(a,1+i,j,a[k_45&apos;]) &amp; (1+i)&lt;=j &amp; i&lt;=k_45&apos; &amp; ahalb_901&lt;=i &amp; <br/>
-i&lt;=ahaub_902 &amp; dom(a,ahalb_901,ahaub_902) &amp; ahalb_901&lt;=k_45&apos; &amp; <br/>
-k_45&apos;&lt;=ahaub_902 &amp; (a[i])&lt;(a[k_45&apos;])&#8866; upperbnd(a,i,j,a[k_45&apos;])
+<ul>(k_896 + 1 = i &and; i &le; j &and; ahalb_901 &le; 1 + i &and; j &le; ahaub_902 &and; 1 + i &le; k_45' &and; k_45' &le; j &and; upperbnd(a,1 + i,j,a[k_45']) &and; 1 + i &le; j &and; i &le; k_45' &and; ahalb_901 &le; i &and; i &le; ahaub_902 &and; dom(a,ahalb_901,ahaub_902) &and; ahalb_901 &le; k_45' &and; k_45' &le; ahaub_902 &and; a[i] &lt; a[k_45'])  &#8866;  upperbnd(a,i,j,a[k_45'])
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

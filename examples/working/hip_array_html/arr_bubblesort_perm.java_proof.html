@@ -180,8 +180,7 @@ v_boolean_85_685 = true;<br/>
 {(51,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L71">line 71</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=i &amp; i&lt;j&#8866; &exist;(ahalb_717:&exist;(ahaub_718:dom(a,ahalb_717,ahaub_718) &amp; <br/>
-ahalb_717&lt;=i &amp; i&lt;=ahaub_718))
+<ul>(j &le; ahaub &and; dom(a,ahalb,ahaub) &and; ahalb &le; i &and; i &lt; j)  &#8866;   &exist; ahalb_717  &exist; ahaub_718 (dom(a,ahalb_717,ahaub_718) &and; ahalb_717 &le; i &and; i &le; ahaub_718)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -207,9 +206,7 @@ ahalb_717&lt;=i &amp; i&lt;=ahaub_718))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L71">line 71</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_727 &amp; ahalb_726&lt;=i &amp; i&lt;j &amp; j&lt;=ahaub_727 &amp; <br/>
-dom(a,ahalb_726,ahaub_727) &amp; v_int_71_664&apos;=a[i] &amp; v_int_71_662&apos;=1+i&#8866; &exist;(ahalb_732:&exist;(ahaub_733:dom(a,ahalb_732,ahaub_733) &amp; <br/>
-ahalb_732&lt;=v_int_71_662&apos; &amp; v_int_71_662&apos;&lt;=ahaub_733))
+<ul>(i &le; ahaub_727 &and; ahalb_726 &le; i &and; i &lt; j &and; j &le; ahaub_727 &and; dom(a,ahalb_726,ahaub_727) &and; v_int_71_664' = a[i] &and; v_int_71_662' = 1 + i)  &#8866;   &exist; ahalb_732  &exist; ahaub_733 (dom(a,ahalb_732,ahaub_733) &and; ahalb_732 &le; v_int_71_662' &and; v_int_71_662' &le; ahaub_733)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -240,10 +237,7 @@ ahalb_732&lt;=v_int_71_662&apos; &amp; v_int_71_662&apos;&lt;=ahaub_733))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L73">line 73</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_742 &amp; i&lt;j &amp; ahalb_741&lt;=i &amp; i&lt;=ahaub_742 &amp; <br/>
-dom(a,ahalb_741,ahaub_742) &amp; ahalb_741&lt;=(1+i) &amp; (1+i)&lt;=ahaub_742 &amp; (a[1+<br/>
-i])&lt;(a[i])&#8866; &exist;(ahalb_747:&exist;(ahaub_748:dom(a,ahalb_747,ahaub_748) &amp; <br/>
-ahalb_747&lt;=i &amp; i&lt;=ahaub_748))
+<ul>(j &le; ahaub_742 &and; i &lt; j &and; ahalb_741 &le; i &and; i &le; ahaub_742 &and; dom(a,ahalb_741,ahaub_742) &and; ahalb_741 &le; 1 + i &and; 1 + i &le; ahaub_742 &and; a[1 + i] &lt; a[i])  &#8866;   &exist; ahalb_747  &exist; ahaub_748 (dom(a,ahalb_747,ahaub_748) &and; ahalb_747 &le; i &and; i &le; ahaub_748)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -273,10 +267,7 @@ ahalb_747&lt;=i &amp; i&lt;=ahaub_748))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L74">line 74</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_757 &amp; ahalb_756&lt;=i &amp; (1+i)&lt;=ahaub_757 &amp; ahalb_756&lt;=(1+i) &amp; i&lt;j &amp; <br/>
-j&lt;=ahaub_757 &amp; (a[1+i])&lt;(a[i]) &amp; dom(a,ahalb_756,ahaub_757) &amp; t_44&apos;=a[i] &amp; <br/>
-v_int_74_666&apos;=1+i&#8866; &exist;(ahalb_762:&exist;(ahaub_763:dom(a,ahalb_762,ahaub_763) &amp; <br/>
-ahalb_762&lt;=v_int_74_666&apos; &amp; v_int_74_666&apos;&lt;=ahaub_763))
+<ul>(i &le; ahaub_757 &and; ahalb_756 &le; i &and; 1 + i &le; ahaub_757 &and; ahalb_756 &le; 1 + i &and; i &lt; j &and; j &le; ahaub_757 &and; a[1 + i] &lt; a[i] &and; dom(a,ahalb_756,ahaub_757) &and; t_44' = a[i] &and; v_int_74_666' = 1 + i)  &#8866;   &exist; ahalb_762  &exist; ahaub_763 (dom(a,ahalb_762,ahaub_763) &and; ahalb_762 &le; v_int_74_666' &and; v_int_74_666' &le; ahaub_763)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -310,10 +301,7 @@ ahalb_762&lt;=v_int_74_666&apos; &amp; v_int_74_666&apos;&lt;=ahaub_763))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L74">line 74</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_766 &amp; i&lt;j &amp; (a[1+i])&lt;(a[i]) &amp; ahalb_765&lt;=i &amp; i&lt;=ahaub_766 &amp; <br/>
-t_44&apos;=a[i] &amp; dom(a,ahalb_765,ahaub_766) &amp; ahalb_765&lt;=(1+i) &amp; (1+<br/>
-i)&lt;=ahaub_766 &amp; v_int_74_667&apos;=a[1+i]&#8866; &exist;(ahalb_773:&exist;(ahaub_774:dom(a,ahalb_773,ahaub_774) &amp; <br/>
-ahalb_773&lt;=i &amp; i&lt;=ahaub_774))
+<ul>(j &le; ahaub_766 &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; ahalb_765 &le; i &and; i &le; ahaub_766 &and; t_44' = a[i] &and; dom(a,ahalb_765,ahaub_766) &and; ahalb_765 &le; 1 + i &and; 1 + i &le; ahaub_766 &and; v_int_74_667' = a[1 + i])  &#8866;   &exist; ahalb_773  &exist; ahaub_774 (dom(a,ahalb_773,ahaub_774) &and; ahalb_773 &le; i &and; i &le; ahaub_774)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -347,11 +335,7 @@ ahalb_773&lt;=i &amp; i&lt;=ahaub_774))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L75">line 75</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_783 &amp; ahalb_782&lt;=i &amp; (1+i)&lt;=ahaub_783 &amp; ahalb_782&lt;=(1+i) &amp; i&lt;j &amp; <br/>
-j&lt;=ahaub_783 &amp; (a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,ahalb_782,ahaub_783) &amp; <br/>
-dom(a&apos;,ahalb_782,ahaub_783) &amp; update_array_1d(a,a&apos;,a[1+i],i) &amp; <br/>
-v_int_75_669&apos;=1+i&#8866; &exist;(ahalb_790:&exist;(ahaub_791:dom(a&apos;,ahalb_790,ahaub_791) &amp; <br/>
-ahalb_790&lt;=v_int_75_669&apos; &amp; v_int_75_669&apos;&lt;=ahaub_791))
+<ul>(i &le; ahaub_783 &and; ahalb_782 &le; i &and; 1 + i &le; ahaub_783 &and; ahalb_782 &le; 1 + i &and; i &lt; j &and; j &le; ahaub_783 &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,ahalb_782,ahaub_783) &and; dom(a',ahalb_782,ahaub_783) &and; update_array_1d(a,a',a[1 + i],i) &and; v_int_75_669' = 1 + i)  &#8866;   &exist; ahalb_790  &exist; ahaub_791 (dom(a',ahalb_790,ahaub_791) &and; ahalb_790 &le; v_int_75_669' &and; v_int_75_669' &le; ahaub_791)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -389,10 +373,7 @@ ahalb_790&lt;=v_int_75_669&apos; &amp; v_int_75_669&apos;&lt;=ahaub_791))
 <li class="Collapsed assert">
 Assertion at <a href="#L80">line 80</a> holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_793,ahalb_782,ahaub_783) &amp; j&lt;=ahaub_783 &amp; i&lt;j &amp; (a[1+i])&lt;(a[i]) &amp; <br/>
-t_44&apos;=a[i] &amp; dom(a,ahalb_782,ahaub_783) &amp; ahalb_782&lt;=i &amp; i&lt;=ahaub_783 &amp; <br/>
-update_array_1d(a,a_793,a[1+i],i) &amp; ahalb_782&lt;=(1+i) &amp; (1+i)&lt;=ahaub_783 &amp; <br/>
-dom(a&apos;,ahalb_782,ahaub_783) &amp; update_array_1d(a_793,a&apos;,t_44&apos;,1+i)&#8866; permutation(a,a&apos;,i,j)
+<ul>(dom(a_793,ahalb_782,ahaub_783) &and; j &le; ahaub_783 &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,ahalb_782,ahaub_783) &and; ahalb_782 &le; i &and; i &le; ahaub_783 &and; update_array_1d(a,a_793,a[1 + i],i) &and; ahalb_782 &le; 1 + i &and; 1 + i &le; ahaub_783 &and; dom(a',ahalb_782,ahaub_783) &and; update_array_1d(a_793,a',t_44',1 + i))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -431,9 +412,7 @@ dom(a&apos;,ahalb_782,ahaub_783) &amp; update_array_1d(a_793,a&apos;,t_44&apos;,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_727 &amp; i&lt;j &amp; ahalb_726&lt;=i &amp; i&lt;=ahaub_727 &amp; <br/>
-dom(a,ahalb_726,ahaub_727) &amp; ahalb_726&lt;=(1+i) &amp; (1+i)&lt;=ahaub_727 &amp; <br/>
-(a[i])&lt;=(a[1+i])&#8866; permutation(a,a,i,j)
+<ul>(j &le; ahaub_727 &and; i &lt; j &and; ahalb_726 &le; i &and; i &le; ahaub_727 &and; dom(a,ahalb_726,ahaub_727) &and; ahalb_726 &le; 1 + i &and; 1 + i &le; ahaub_727 &and; a[i] &le; a[1 + i])  &#8866;  permutation(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -471,12 +450,7 @@ Assertion at <a href="#L81">line 81</a> holds
 <ul></ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 93::bubble$int[]~int~int(a,v_int_82_681,j) rec at <a href="#L82">line 82</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+i)&lt;=t_805 &amp; k_804&lt;=(1+i) &amp; dom(a_801,k_804,t_805) &amp; i&lt;=t_805 &amp; <br/>
-k_804&lt;=i &amp; j&lt;=t_805 &amp; i&lt;j &amp; (a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; <br/>
-dom(a,k_804,t_805) &amp; update_array_1d(a,a_801,a[1+i],i) &amp; <br/>
-dom(a&apos;,k_804,t_805) &amp; update_array_1d(a_801,a&apos;,t_44&apos;,1+i) &amp; <br/>
-permutation(a,a&apos;,i,j) &amp; v_int_82_681&apos;=1+i&#8866; &exist;(k_812:&exist;(t_813:dom(a&apos;,k_812,t_813) &amp; k_812&lt;=v_int_82_681&apos; &amp; <br/>
-j&lt;=t_813))
+<ul>(1 + i &le; t_805 &and; k_804 &le; 1 + i &and; dom(a_801,k_804,t_805) &and; i &le; t_805 &and; k_804 &le; i &and; j &le; t_805 &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; update_array_1d(a,a_801,a[1 + i],i) &and; dom(a',k_804,t_805) &and; update_array_1d(a_801,a',t_44',1 + i) &and; permutation(a,a',i,j) &and; v_int_82_681' = 1 + i)  &#8866;   &exist; k_812  &exist; t_813 (dom(a',k_812,t_813) &and; k_812 &le; v_int_82_681' &and; j &le; t_813)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -524,10 +498,7 @@ j&lt;=t_813))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+i)&lt;=t_805 &amp; k_804&lt;=(1+i) &amp; i&lt;=t_805 &amp; k_804&lt;=i &amp; j&lt;=t_805 &amp; i&lt;j &amp; <br/>
-dom(a,k_804,t_805) &amp; (a[i])&lt;=(a[1+i]) &amp; permutation(a,a,i,j) &amp; <br/>
-v_int_82_681&apos;=1+i&#8866; &exist;(k_815:&exist;(t_816:dom(a,k_815,t_816) &amp; k_815&lt;=v_int_82_681&apos; &amp; <br/>
-j&lt;=t_816))
+<ul>(1 + i &le; t_805 &and; k_804 &le; 1 + i &and; i &le; t_805 &and; k_804 &le; i &and; j &le; t_805 &and; i &lt; j &and; dom(a,k_804,t_805) &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; v_int_82_681' = 1 + i)  &#8866;   &exist; k_815  &exist; t_816 (dom(a,k_815,t_816) &and; k_815 &le; v_int_82_681' &and; j &le; t_816)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -570,12 +541,7 @@ j&lt;=t_816))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_849 &amp; update_array_1d(a_801,a_848,t_44&apos;,1+i) &amp; i&lt;j &amp; (a[1+<br/>
-i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; <br/>
-update_array_1d(a,a_801,a[1+i],i) &amp; dom(a_801,k_804,t_805) &amp; (1+i)&lt;=t_805 &amp; <br/>
-permutation(a,a_848,i,j) &amp; dom(a_848,k_804,t_805) &amp; k_804&lt;=(1+i) &amp; <br/>
-j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_849) | sorted(a_848,1+<br/>
-i,j) &amp; a&apos;=a_848) &amp; permutation(a_848,a&apos;,1+i,j) &amp; idexc(a_848,a&apos;,1+i,j)&#8866; dom(a&apos;,k_804,t_805)
+<ul>(v_boolean_82_849 &and; update_array_1d(a_801,a_848,t_44',1 + i) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; dom(a_801,k_804,t_805) &and; 1 + i &le; t_805 &and; permutation(a,a_848,i,j) &and; dom(a_848,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_849 &or; (sorted(a_848,1 + i,j) &and; a' = a_848)) &and; permutation(a_848,a',1 + i,j) &and; idexc(a_848,a',1 + i,j))  &#8866;  dom(a',k_804,t_805)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -632,13 +598,7 @@ i,j) &amp; a&apos;=a_848) &amp; permutation(a_848,a&apos;,1+i,j) &amp; idexc(a_8
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_849 &amp; dom(a_848,k_804,t_805) &amp; dom(a_801,k_804,t_805) &amp; i&lt;j &amp; <br/>
-(a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; <br/>
-update_array_1d(a,a_801,a[1+i],i) &amp; (1+i)&lt;=t_805 &amp; <br/>
-update_array_1d(a_801,a_848,t_44&apos;,1+i) &amp; permutation(a,a_848,i,j) &amp; <br/>
-k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_849) | <br/>
-sorted(a_848,1+i,j) &amp; a&apos;=a_848) &amp; permutation(a_848,a&apos;,1+i,j) &amp; <br/>
-idexc(a_848,a&apos;,1+i,j) &amp; !(v_boolean_82_684&apos;)&#8866; 243::!(v_boolean_82_684&apos;) | sorted(a,i,j) &amp; a&apos;=a
+<ul>(v_boolean_82_849 &and; dom(a_848,k_804,t_805) &and; dom(a_801,k_804,t_805) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; 1 + i &le; t_805 &and; update_array_1d(a_801,a_848,t_44',1 + i) &and; permutation(a,a_848,i,j) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_849 &or; (sorted(a_848,1 + i,j) &and; a' = a_848)) &and; permutation(a_848,a',1 + i,j) &and; idexc(a_848,a',1 + i,j) &and;  &not; v_boolean_82_684')  &#8866;  ( &not; v_boolean_82_684' &or; (sorted(a,i,j) &and; a' = a))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -691,13 +651,7 @@ idexc(a_848,a&apos;,1+i,j) &amp; !(v_boolean_82_684&apos;)&#8866; 243::!(v_boole
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_849 &amp; dom(a_848,k_804,t_805) &amp; dom(a_801,k_804,t_805) &amp; i&lt;j &amp; <br/>
-(a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; <br/>
-update_array_1d(a,a_801,a[1+i],i) &amp; (1+i)&lt;=t_805 &amp; <br/>
-update_array_1d(a_801,a_848,t_44&apos;,1+i) &amp; permutation(a,a_848,i,j) &amp; <br/>
-k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_849) | <br/>
-sorted(a_848,1+i,j) &amp; a&apos;=a_848) &amp; permutation(a_848,a&apos;,1+i,j) &amp; <br/>
-idexc(a_848,a&apos;,1+i,j)&#8866; permutation(a,a&apos;,i,j)
+<ul>(v_boolean_82_849 &and; dom(a_848,k_804,t_805) &and; dom(a_801,k_804,t_805) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; 1 + i &le; t_805 &and; update_array_1d(a_801,a_848,t_44',1 + i) &and; permutation(a,a_848,i,j) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_849 &or; (sorted(a_848,1 + i,j) &and; a' = a_848)) &and; permutation(a_848,a',1 + i,j) &and; idexc(a_848,a',1 + i,j))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -755,13 +709,7 @@ idexc(a_848,a&apos;,1+i,j)&#8866; permutation(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_849 &amp; dom(a_848,k_804,t_805) &amp; dom(a_801,k_804,t_805) &amp; i&lt;j &amp; <br/>
-(a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; <br/>
-update_array_1d(a,a_801,a[1+i],i) &amp; (1+i)&lt;=t_805 &amp; <br/>
-update_array_1d(a_801,a_848,t_44&apos;,1+i) &amp; permutation(a,a_848,i,j) &amp; <br/>
-k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_849) | <br/>
-sorted(a_848,1+i,j) &amp; a&apos;=a_848) &amp; permutation(a_848,a&apos;,1+i,j) &amp; <br/>
-idexc(a_848,a&apos;,1+i,j)&#8866; idexc(a,a&apos;,i,j)
+<ul>(v_boolean_82_849 &and; dom(a_848,k_804,t_805) &and; dom(a_801,k_804,t_805) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; 1 + i &le; t_805 &and; update_array_1d(a_801,a_848,t_44',1 + i) &and; permutation(a,a_848,i,j) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_849 &or; (sorted(a_848,1 + i,j) &and; a' = a_848)) &and; permutation(a_848,a',1 + i,j) &and; idexc(a_848,a',1 + i,j))  &#8866;  idexc(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -812,12 +760,7 @@ idexc(a_848,a&apos;,1+i,j)&#8866; idexc(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_852) &amp; update_array_1d(a_801,a_851,t_44&apos;,1+i) &amp; i&lt;j &amp; (a[1+<br/>
-i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; <br/>
-update_array_1d(a,a_801,a[1+i],i) &amp; dom(a_801,k_804,t_805) &amp; (1+i)&lt;=t_805 &amp; <br/>
-permutation(a,a_851,i,j) &amp; dom(a_851,k_804,t_805) &amp; k_804&lt;=(1+i) &amp; <br/>
-j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_852) | sorted(a_851,1+<br/>
-i,j) &amp; a&apos;=a_851) &amp; permutation(a_851,a&apos;,1+i,j) &amp; idexc(a_851,a&apos;,1+i,j)&#8866; dom(a&apos;,k_804,t_805)
+<ul>( &not; v_boolean_82_852 &and; update_array_1d(a_801,a_851,t_44',1 + i) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; dom(a_801,k_804,t_805) &and; 1 + i &le; t_805 &and; permutation(a,a_851,i,j) &and; dom(a_851,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_852 &or; (sorted(a_851,1 + i,j) &and; a' = a_851)) &and; permutation(a_851,a',1 + i,j) &and; idexc(a_851,a',1 + i,j))  &#8866;  dom(a',k_804,t_805)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -874,13 +817,7 @@ i,j) &amp; a&apos;=a_851) &amp; permutation(a_851,a&apos;,1+i,j) &amp; idexc(a_8
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_852) &amp; dom(a_851,k_804,t_805) &amp; dom(a_801,k_804,t_805) &amp; <br/>
-i&lt;j &amp; (a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; <br/>
-i&lt;=t_805 &amp; update_array_1d(a,a_801,a[1+i],i) &amp; (1+i)&lt;=t_805 &amp; <br/>
-update_array_1d(a_801,a_851,t_44&apos;,1+i) &amp; permutation(a,a_851,i,j) &amp; <br/>
-k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_852) | <br/>
-sorted(a_851,1+i,j) &amp; a&apos;=a_851) &amp; permutation(a_851,a&apos;,1+i,j) &amp; <br/>
-idexc(a_851,a&apos;,1+i,j) &amp; !(v_boolean_82_684&apos;)&#8866; 243::!(v_boolean_82_684&apos;) | sorted(a,i,j) &amp; a&apos;=a
+<ul>( &not; v_boolean_82_852 &and; dom(a_851,k_804,t_805) &and; dom(a_801,k_804,t_805) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; 1 + i &le; t_805 &and; update_array_1d(a_801,a_851,t_44',1 + i) &and; permutation(a,a_851,i,j) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_852 &or; (sorted(a_851,1 + i,j) &and; a' = a_851)) &and; permutation(a_851,a',1 + i,j) &and; idexc(a_851,a',1 + i,j) &and;  &not; v_boolean_82_684')  &#8866;  ( &not; v_boolean_82_684' &or; (sorted(a,i,j) &and; a' = a))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -933,13 +870,7 @@ idexc(a_851,a&apos;,1+i,j) &amp; !(v_boolean_82_684&apos;)&#8866; 243::!(v_boole
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_852) &amp; dom(a_851,k_804,t_805) &amp; dom(a_801,k_804,t_805) &amp; <br/>
-i&lt;j &amp; (a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; <br/>
-i&lt;=t_805 &amp; update_array_1d(a,a_801,a[1+i],i) &amp; (1+i)&lt;=t_805 &amp; <br/>
-update_array_1d(a_801,a_851,t_44&apos;,1+i) &amp; permutation(a,a_851,i,j) &amp; <br/>
-k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_852) | <br/>
-sorted(a_851,1+i,j) &amp; a&apos;=a_851) &amp; permutation(a_851,a&apos;,1+i,j) &amp; <br/>
-idexc(a_851,a&apos;,1+i,j)&#8866; permutation(a,a&apos;,i,j)
+<ul>( &not; v_boolean_82_852 &and; dom(a_851,k_804,t_805) &and; dom(a_801,k_804,t_805) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; 1 + i &le; t_805 &and; update_array_1d(a_801,a_851,t_44',1 + i) &and; permutation(a,a_851,i,j) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_852 &or; (sorted(a_851,1 + i,j) &and; a' = a_851)) &and; permutation(a_851,a',1 + i,j) &and; idexc(a_851,a',1 + i,j))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -997,13 +928,7 @@ idexc(a_851,a&apos;,1+i,j)&#8866; permutation(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_852) &amp; dom(a_851,k_804,t_805) &amp; dom(a_801,k_804,t_805) &amp; <br/>
-i&lt;j &amp; (a[1+i])&lt;(a[i]) &amp; t_44&apos;=a[i] &amp; dom(a,k_804,t_805) &amp; k_804&lt;=i &amp; <br/>
-i&lt;=t_805 &amp; update_array_1d(a,a_801,a[1+i],i) &amp; (1+i)&lt;=t_805 &amp; <br/>
-update_array_1d(a_801,a_851,t_44&apos;,1+i) &amp; permutation(a,a_851,i,j) &amp; <br/>
-k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_852) | <br/>
-sorted(a_851,1+i,j) &amp; a&apos;=a_851) &amp; permutation(a_851,a&apos;,1+i,j) &amp; <br/>
-idexc(a_851,a&apos;,1+i,j)&#8866; idexc(a,a&apos;,i,j)
+<ul>( &not; v_boolean_82_852 &and; dom(a_851,k_804,t_805) &and; dom(a_801,k_804,t_805) &and; i &lt; j &and; a[1 + i] &lt; a[i] &and; t_44' = a[i] &and; dom(a,k_804,t_805) &and; k_804 &le; i &and; i &le; t_805 &and; update_array_1d(a,a_801,a[1 + i],i) &and; 1 + i &le; t_805 &and; update_array_1d(a_801,a_851,t_44',1 + i) &and; permutation(a,a_851,i,j) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_852 &or; (sorted(a_851,1 + i,j) &and; a' = a_851)) &and; permutation(a_851,a',1 + i,j) &and; idexc(a_851,a',1 + i,j))  &#8866;  idexc(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1054,10 +979,7 @@ idexc(a_851,a&apos;,1+i,j)&#8866; idexc(a,a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_854 &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; (a[i])&lt;=(a[1+<br/>
-i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; <br/>
-dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_854) | sorted(a,1+i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; dom(a&apos;,k_804,t_805)
+<ul>(v_boolean_82_854 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_854 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j))  &#8866;  dom(a',k_804,t_805)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1106,10 +1028,7 @@ permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; dom(a&apos;,k_8
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_854 &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; (a[i])&lt;=(a[1+<br/>
-i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; <br/>
-dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_854) | sorted(a,1+i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j) &amp; v_boolean_82_684&apos;&#8866; 243::!(v_boolean_82_684&apos;) | sorted(a,i,j) &amp; a&apos;=a
+<ul>(v_boolean_82_854 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_854 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j) &and; v_boolean_82_684')  &#8866;  ( &not; v_boolean_82_684' &or; (sorted(a,i,j) &and; a' = a))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1156,10 +1075,7 @@ permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j) &amp; v_boolean_82_684
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_854 &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; (a[i])&lt;=(a[1+<br/>
-i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; <br/>
-dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_854) | sorted(a,1+i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; permutation(a,a&apos;,i,j)
+<ul>(v_boolean_82_854 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_854 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1211,10 +1127,7 @@ permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; permutation(a,a
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_82_854 &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; (a[i])&lt;=(a[1+<br/>
-i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+i) &amp; j&lt;=t_805 &amp; <br/>
-dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_854) | sorted(a,1+i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; idexc(a,a&apos;,i,j)
+<ul>(v_boolean_82_854 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_854 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j))  &#8866;  idexc(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1259,10 +1172,7 @@ permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; idexc(a,a&apos;
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_856) &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; <br/>
-(a[i])&lt;=(a[1+i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+<br/>
-i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_856) | sorted(a,1+<br/>
-i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; dom(a&apos;,k_804,t_805)
+<ul>( &not; v_boolean_82_856 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_856 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j))  &#8866;  dom(a',k_804,t_805)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1311,11 +1221,7 @@ i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_856) &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; <br/>
-(a[i])&lt;=(a[1+i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+<br/>
-i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_856) | sorted(a,1+<br/>
-i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j) &amp; <br/>
-!(v_boolean_82_684&apos;)&#8866; 243::!(v_boolean_82_684&apos;) | sorted(a,i,j) &amp; a&apos;=a
+<ul>( &not; v_boolean_82_856 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_856 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j) &and;  &not; v_boolean_82_684')  &#8866;  ( &not; v_boolean_82_684' &or; (sorted(a,i,j) &and; a' = a))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1362,10 +1268,7 @@ i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_856) &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; <br/>
-(a[i])&lt;=(a[1+i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+<br/>
-i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_856) | sorted(a,1+<br/>
-i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; permutation(a,a&apos;,i,j)
+<ul>( &not; v_boolean_82_856 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_856 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1417,10 +1320,7 @@ i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_82_856) &amp; i&lt;j &amp; k_804&lt;=i &amp; i&lt;=t_805 &amp; (1+i)&lt;=t_805 &amp; <br/>
-(a[i])&lt;=(a[1+i]) &amp; permutation(a,a,i,j) &amp; dom(a,k_804,t_805) &amp; k_804&lt;=(1+<br/>
-i) &amp; j&lt;=t_805 &amp; dom(a&apos;,k_804,t_805) &amp; (212::!(v_boolean_82_856) | sorted(a,1+<br/>
-i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1+i,j)&#8866; idexc(a,a&apos;,i,j)
+<ul>( &not; v_boolean_82_856 &and; i &lt; j &and; k_804 &le; i &and; i &le; t_805 &and; 1 + i &le; t_805 &and; a[i] &le; a[1 + i] &and; permutation(a,a,i,j) &and; dom(a,k_804,t_805) &and; k_804 &le; 1 + i &and; j &le; t_805 &and; dom(a',k_804,t_805) &and; ( &not; v_boolean_82_856 &or; (sorted(a,1 + i,j) &and; a' = a)) &and; permutation(a,a',1 + i,j) &and; idexc(a,a',1 + i,j))  &#8866;  idexc(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1465,7 +1365,7 @@ i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=i &amp; dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t&#8866; dom(a,k,t)
+<ul>(j &le; i &and; dom(a,k,t) &and; k &le; i &and; j &le; t)  &#8866;  dom(a,k,t)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1489,7 +1389,7 @@ i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t &amp; j&lt;=i &amp; v_boolean_85_685&apos;&#8866; 243::!(v_boolean_85_685&apos;) | sorted(a,i,j) &amp; a=a
+<ul>(dom(a,k,t) &and; k &le; i &and; j &le; t &and; j &le; i &and; v_boolean_85_685')  &#8866;  ( &not; v_boolean_85_685' &or; (sorted(a,i,j) &and; a = a))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1513,7 +1413,7 @@ i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t &amp; j&lt;=i&#8866; permutation(a,a,i,j)
+<ul>(dom(a,k,t) &and; k &le; i &and; j &le; t &and; j &le; i)  &#8866;  permutation(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1542,7 +1442,7 @@ i,j) &amp; a&apos;=a) &amp; permutation(a,a&apos;,1+i,j) &amp; idexc(a,a&apos;,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t &amp; j&lt;=i&#8866; idexc(a,a,i,j)
+<ul>(dom(a,k,t) &and; k &le; i &and; j &le; t &and; j &le; i)  &#8866;  idexc(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1593,7 +1493,7 @@ else LABEL! 96,1: <br/>
 {(39,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 100::bubble$int[]~int~int(a,i,j) at <a href="#L43">line 43</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k_858,t_859) &amp; k_858&lt;=i &amp; j&lt;=t_859&#8866; &exist;(k_866:&exist;(t_867:dom(a,k_866,t_867) &amp; k_866&lt;=i &amp; j&lt;=t_867))
+<ul>(dom(a,k_858,t_859) &and; k_858 &le; i &and; j &le; t_859)  &#8866;   &exist; k_866  &exist; t_867 (dom(a,k_866,t_867) &and; k_866 &le; i &and; j &le; t_867)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1618,9 +1518,7 @@ Precondition of procedure call 100::bubble$int[]~int~int(a,i,j) at <a href="#L43
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 97::bubblesort$int[]~int~int(a,i,j) rec at <a href="#L44">line 44</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_boolean_43_884) &amp; dom(a,k_876,t_877) &amp; k_876&lt;=i &amp; j&lt;=t_877 &amp; <br/>
-dom(a&apos;,k_876,t_877) &amp; (252::!(v_boolean_43_884) | sorted(a,i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,i,j) &amp; idexc(a,a&apos;,i,j)&#8866; &exist;(k_885:&exist;(t_886:dom(a&apos;,k_885,t_886) &amp; k_885&lt;=i &amp; j&lt;=t_886))
+<ul>( &not; v_boolean_43_884 &and; dom(a,k_876,t_877) &and; k_876 &le; i &and; j &le; t_877 &and; dom(a',k_876,t_877) &and; ( &not; v_boolean_43_884 &or; (sorted(a,i,j) &and; a' = a)) &and; permutation(a,a',i,j) &and; idexc(a,a',i,j))  &#8866;   &exist; k_885  &exist; t_886 (dom(a',k_885,t_886) &and; k_885 &le; i &and; j &le; t_886)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1666,10 +1564,7 @@ permutation(a,a&apos;,i,j) &amp; idexc(a,a&apos;,i,j)&#8866; &exist;(k_885:&exis
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_888,k_876,t_877) &amp; !(v_boolean_43_884) &amp; dom(a,k_876,t_877) &amp; <br/>
-(252::!(v_boolean_43_884) | sorted(a,i,j) &amp; a_888=a) &amp; <br/>
-permutation(a,a_888,i,j) &amp; idexc(a,a_888,i,j) &amp; k_876&lt;=i &amp; j&lt;=t_877 &amp; <br/>
-sorted(a&apos;,i,j) &amp; permutation(a_888,a&apos;,i,j) &amp; idexc(a_888,a&apos;,i,j)&#8866; sorted(a&apos;,i,j)
+<ul>(dom(a_888,k_876,t_877) &and;  &not; v_boolean_43_884 &and; dom(a,k_876,t_877) &and; ( &not; v_boolean_43_884 &or; (sorted(a,i,j) &and; a_888 = a)) &and; permutation(a,a_888,i,j) &and; idexc(a,a_888,i,j) &and; k_876 &le; i &and; j &le; t_877 &and; sorted(a',i,j) &and; permutation(a_888,a',i,j) &and; idexc(a_888,a',i,j))  &#8866;  sorted(a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1712,10 +1607,7 @@ sorted(a&apos;,i,j) &amp; permutation(a_888,a&apos;,i,j) &amp; idexc(a_888,a&apo
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_888,k_876,t_877) &amp; !(v_boolean_43_884) &amp; dom(a,k_876,t_877) &amp; <br/>
-(252::!(v_boolean_43_884) | sorted(a,i,j) &amp; a_888=a) &amp; <br/>
-permutation(a,a_888,i,j) &amp; idexc(a,a_888,i,j) &amp; k_876&lt;=i &amp; j&lt;=t_877 &amp; <br/>
-sorted(a&apos;,i,j) &amp; permutation(a_888,a&apos;,i,j) &amp; idexc(a_888,a&apos;,i,j)&#8866; permutation(a,a&apos;,i,j)
+<ul>(dom(a_888,k_876,t_877) &and;  &not; v_boolean_43_884 &and; dom(a,k_876,t_877) &and; ( &not; v_boolean_43_884 &or; (sorted(a,i,j) &and; a_888 = a)) &and; permutation(a,a_888,i,j) &and; idexc(a,a_888,i,j) &and; k_876 &le; i &and; j &le; t_877 &and; sorted(a',i,j) &and; permutation(a_888,a',i,j) &and; idexc(a_888,a',i,j))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1765,10 +1657,7 @@ sorted(a&apos;,i,j) &amp; permutation(a_888,a&apos;,i,j) &amp; idexc(a_888,a&apo
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_888,k_876,t_877) &amp; !(v_boolean_43_884) &amp; dom(a,k_876,t_877) &amp; <br/>
-(252::!(v_boolean_43_884) | sorted(a,i,j) &amp; a_888=a) &amp; <br/>
-permutation(a,a_888,i,j) &amp; idexc(a,a_888,i,j) &amp; k_876&lt;=i &amp; j&lt;=t_877 &amp; <br/>
-sorted(a&apos;,i,j) &amp; permutation(a_888,a&apos;,i,j) &amp; idexc(a_888,a&apos;,i,j)&#8866; idexc(a,a&apos;,i,j)
+<ul>(dom(a_888,k_876,t_877) &and;  &not; v_boolean_43_884 &and; dom(a,k_876,t_877) &and; ( &not; v_boolean_43_884 &or; (sorted(a,i,j) &and; a_888 = a)) &and; permutation(a,a_888,i,j) &and; idexc(a,a_888,i,j) &and; k_876 &le; i &and; j &le; t_877 &and; sorted(a',i,j) &and; permutation(a_888,a',i,j) &and; idexc(a_888,a',i,j))  &#8866;  idexc(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1811,9 +1700,7 @@ sorted(a&apos;,i,j) &amp; permutation(a_888,a&apos;,i,j) &amp; idexc(a_888,a&apo
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_43_889 &amp; dom(a,k_858,t_859) &amp; k_858&lt;=i &amp; j&lt;=t_859 &amp; <br/>
-dom(a&apos;,k_858,t_859) &amp; (252::!(v_boolean_43_889) | sorted(a,i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,i,j) &amp; idexc(a,a&apos;,i,j)&#8866; sorted(a&apos;,i,j)
+<ul>(v_boolean_43_889 &and; dom(a,k_858,t_859) &and; k_858 &le; i &and; j &le; t_859 &and; dom(a',k_858,t_859) &and; ( &not; v_boolean_43_889 &or; (sorted(a,i,j) &and; a' = a)) &and; permutation(a,a',i,j) &and; idexc(a,a',i,j))  &#8866;  sorted(a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1852,9 +1739,7 @@ permutation(a,a&apos;,i,j) &amp; idexc(a,a&apos;,i,j)&#8866; sorted(a&apos;,i,j)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_43_889 &amp; dom(a,k_858,t_859) &amp; k_858&lt;=i &amp; j&lt;=t_859 &amp; <br/>
-dom(a&apos;,k_858,t_859) &amp; (252::!(v_boolean_43_889) | sorted(a,i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,i,j) &amp; idexc(a,a&apos;,i,j)&#8866; permutation(a,a&apos;,i,j)
+<ul>(v_boolean_43_889 &and; dom(a,k_858,t_859) &and; k_858 &le; i &and; j &le; t_859 &and; dom(a',k_858,t_859) &and; ( &not; v_boolean_43_889 &or; (sorted(a,i,j) &and; a' = a)) &and; permutation(a,a',i,j) &and; idexc(a,a',i,j))  &#8866;  permutation(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1900,9 +1785,7 @@ permutation(a,a&apos;,i,j) &amp; idexc(a,a&apos;,i,j)&#8866; permutation(a,a&apo
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_boolean_43_889 &amp; dom(a,k_858,t_859) &amp; k_858&lt;=i &amp; j&lt;=t_859 &amp; <br/>
-dom(a&apos;,k_858,t_859) &amp; (252::!(v_boolean_43_889) | sorted(a,i,j) &amp; a&apos;=a) &amp; <br/>
-permutation(a,a&apos;,i,j) &amp; idexc(a,a&apos;,i,j)&#8866; idexc(a,a&apos;,i,j)
+<ul>(v_boolean_43_889 &and; dom(a,k_858,t_859) &and; k_858 &le; i &and; j &le; t_859 &and; dom(a',k_858,t_859) &and; ( &not; v_boolean_43_889 &or; (sorted(a,i,j) &and; a' = a)) &and; permutation(a,a',i,j) &and; idexc(a,a',i,j))  &#8866;  idexc(a,a',i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

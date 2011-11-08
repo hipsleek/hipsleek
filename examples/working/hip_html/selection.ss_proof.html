@@ -71,18 +71,6 @@
 <tr id="L67" class="OddSourceLine"><td>67</td><td><pre>		return new node(minimum, tmp);</pre></td></tr>
 <tr id="L68" class="EvenSourceLine"><td>68</td><td><pre>	}</pre></td></tr>
 <tr id="L69" class="OddSourceLine"><td>69</td><td><pre>}</pre></td></tr>
-<tr id="L70" class="EvenSourceLine"><td>70</td><td><pre></pre></td></tr>
-<tr id="L71" class="OddSourceLine"><td>71</td><td><pre></pre></td></tr>
-<tr id="L72" class="EvenSourceLine"><td>72</td><td><pre></pre></td></tr>
-<tr id="L73" class="OddSourceLine"><td>73</td><td><pre></pre></td></tr>
-<tr id="L74" class="EvenSourceLine"><td>74</td><td><pre></pre></td></tr>
-<tr id="L75" class="OddSourceLine"><td>75</td><td><pre></pre></td></tr>
-<tr id="L76" class="EvenSourceLine"><td>76</td><td><pre></pre></td></tr>
-<tr id="L77" class="OddSourceLine"><td>77</td><td><pre></pre></td></tr>
-<tr id="L78" class="EvenSourceLine"><td>78</td><td><pre></pre></td></tr>
-<tr id="L79" class="OddSourceLine"><td>79</td><td><pre></pre></td></tr>
-<tr id="L80" class="EvenSourceLine"><td>80</td><td><pre></pre></td></tr>
-<tr id="L81" class="OddSourceLine"><td>81</td><td><pre></pre></td></tr>
 </table></ul></li><li class="Collapsed proc">
 Procedure selection_sort<ul><li class="Collapsed procdef">Internal representation
 <ul>node selection_sort$node(  node x)<br/>
@@ -135,54 +123,51 @@ newnode(minimum_65,tmp_66)<br/>
 Precondition of procedure call 76::find_min$node(x) at <a href="#L58">line 58</a> holds<ul></ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 77::delete_min$node~int(x,minimum_65) at <a href="#L59">line 59</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> s_917&lt;=mi_919 &amp; (1+mi_919)&lt;=l_918&#8866; mi_919=mi_919
+<ul>(s_917 &le; mi_919 &and; 1 + mi_919 &le; l_918)  &#8866;  mi_919 = mi_919
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[s_917, l_918, mi_919] : (( (not (((s_917 &lt;= mi_919) &amp; (1 + mi_919 &lt;= l_918))))  | (mi_919 = mi_919)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[s_917,l_918,mi_919]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+flted_38_928=n_907 &amp; 1&lt;=flted_38_928&#8866; 1=flted_38_928
+<ul>(1 &le; n_907 &and; 1 + flted_38_928 = n_907 &and; 1 &le; flted_38_928)  &#8866;  1 = flted_38_928
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, flted_38_928] : (( (not ((((1 &lt;= n_907) &amp; (1 + flted_38_928 = n_907)) &amp; (1 &lt;= flted_38_928))))  | (1 = flted_38_928)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n_907,n_907-1]: 3 &lt;= n_907}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+flted_38_928=n_907 &amp; 1&lt;=flted_38_928&#8866; 1!=flted_38_928
+<ul>(1 &le; n_907 &and; 1 + flted_38_928 = n_907 &and; 1 &le; flted_38_928)  &#8866;  1 &ne; flted_38_928
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, flted_38_928] : (( (not ((((1 &lt;= n_907) &amp; (1 + flted_38_928 = n_907)) &amp; (1 &lt;= flted_38_928))))  | (1 != flted_38_928)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[2,1]}</li></ul></ul></li>
 </ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call 83::is_null___$node(x) at <a href="#L61">line 61</a> holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+flted_38_934=n_907 &amp; 1&lt;=flted_38_934&#8866; 1=flted_38_934
+<li class="Collapsed pureimplyinvalid">Verification condition
+<ul>(1 &le; n_907 &and; 1 + flted_38_934 = n_907 &and; 1 &le; flted_38_934)  &#8866;  1 = flted_38_934
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, flted_38_934] : (( (not ((((1 &lt;= n_907) &amp; (1 + flted_38_934 = n_907)) &amp; (1 &lt;= flted_38_934))))  | (1 = flted_38_934)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n_907,n_907-1]: 3 &lt;= n_907}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+flted_38_934=n_907 &amp; 1&lt;=flted_38_934&#8866; 1!=flted_38_934
+<ul>(1 &le; n_907 &and; 1 + flted_38_934 = n_907 &and; 1 &le; flted_38_934)  &#8866;  1 &ne; flted_38_934
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, flted_38_934] : (( (not ((((1 &lt;= n_907) &amp; (1 + flted_38_934 = n_907)) &amp; (1 &lt;= flted_38_934))))  | (1 != flted_38_934)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[2,1]}</li></ul></ul></li>
-</ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 80::selection_sort$node(x) rec at <a href="#L65">line 65</a> holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+n_946=n_907 &amp; 1&lt;=n_946&#8866; 1=n_946
+<ul>(1 &le; n_907 &and; 1 + n_946 = n_907 &and; 1 &le; n_946)  &#8866;  1 = n_946
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, n_946] : (( (not ((((1 &lt;= n_907) &amp; (1 + n_946 = n_907)) &amp; (1 &lt;= n_946))))  | (1 = n_946)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n_907,n_907-1]: 3 &lt;= n_907}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> (1+mi_919)&lt;=lg_941 &amp; sm_940&lt;=mi_919 &amp; (1+l_948)&lt;=lg_941 &amp; sm_940&lt;=mi_947 &amp; <br/>
-mi_919&lt;=mi_947 &amp; mi_947&lt;=l_948 &amp; (1+mi_947)&lt;=lg_941&#8866; l_948!=mi_947
+<ul>(1 + mi_919 &le; lg_941 &and; sm_940 &le; mi_919 &and; 1 + l_948 &le; lg_941 &and; sm_940 &le; mi_947 &and; mi_919 &le; mi_947 &and; mi_947 &le; l_948 &and; 1 + mi_947 &le; lg_941)  &#8866;  l_948 &ne; mi_947
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[sm_940, mi_919, lg_941, l_948, mi_947] : (( (not ((((((((1 + mi_919 &lt;= lg_941) &amp; (sm_940 &lt;= mi_919)) &amp; (1 + l_948 &lt;= lg_941)) &amp; (sm_940 &lt;= mi_947)) &amp; (mi_919 &lt;= mi_947)) &amp; (mi_947 &lt;= l_948)) &amp; (1 + mi_947 &lt;= lg_941))))  | (l_948 != mi_947)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[sm_940,mi_919,lg_941,l_948,l_948]: sm_940 &lt;= mi_919 &lt;= l_948 &lt; lg_941}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+n_946=n_907 &amp; 1&lt;=n_946&#8866; 1!=n_946
+<ul>(1 &le; n_907 &and; 1 + n_946 = n_907 &and; 1 &le; n_946)  &#8866;  1 &ne; n_946
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, n_946] : (( (not ((((1 &lt;= n_907) &amp; (1 + n_946 = n_907)) &amp; (1 &lt;= n_946))))  | (1 != n_946)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
@@ -191,96 +176,91 @@ mi_919&lt;=mi_947 &amp; mi_947&lt;=l_948 &amp; (1+mi_947)&lt;=lg_941&#8866; l_94
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+n_939=n_907 &amp; 1&lt;=n_939&#8866; 1=n_939
+<ul>(1 &le; n_907 &and; 1 + n_939 = n_907 &and; 1 &le; n_939)  &#8866;  1 = n_939
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, n_939] : (( (not ((((1 &lt;= n_907) &amp; (1 + n_939 = n_907)) &amp; (1 &lt;= n_939))))  | (1 = n_939)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n_907,n_907-1]: 3 &lt;= n_907}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> (1+mi_919)&lt;=lg_941 &amp; sm_940&lt;=mi_919 &amp; (1+l_954)&lt;=lg_941 &amp; sm_940&lt;=mi_942 &amp; <br/>
-mi_919&lt;=mi_942 &amp; mi_942&lt;=l_954 &amp; (1+mi_942)&lt;=lg_941&#8866; l_954!=mi_942
+<ul>(1 + mi_919 &le; lg_941 &and; sm_940 &le; mi_919 &and; 1 + l_954 &le; lg_941 &and; sm_940 &le; mi_942 &and; mi_919 &le; mi_942 &and; mi_942 &le; l_954 &and; 1 + mi_942 &le; lg_941)  &#8866;  l_954 &ne; mi_942
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[sm_940, mi_919, lg_941, l_954, mi_942] : (( (not ((((((((1 + mi_919 &lt;= lg_941) &amp; (sm_940 &lt;= mi_919)) &amp; (1 + l_954 &lt;= lg_941)) &amp; (sm_940 &lt;= mi_942)) &amp; (mi_919 &lt;= mi_942)) &amp; (mi_942 &lt;= l_954)) &amp; (1 + mi_942 &lt;= lg_941))))  | (l_954 != mi_942)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[sm_940,mi_919,lg_941,l_954,l_954]: sm_940 &lt;= mi_919 &lt;= l_954 &lt; lg_941}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n_907 &amp; 1+n_939=n_907 &amp; 1&lt;=n_939&#8866; 1!=n_939
+<ul>(1 &le; n_907 &and; 1 + n_939 = n_907 &and; 1 &le; n_939)  &#8866;  1 &ne; n_939
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_907, n_939] : (( (not ((((1 &lt;= n_907) &amp; (1 + n_939 = n_907)) &amp; (1 &lt;= n_939))))  | (1 != n_939)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[2,1]}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> tmp_67&apos;=null&#8866; null=tmp_67&apos;
+<ul>tmp_67' = <b>null</b>  &#8866;  <b>null</b> = tmp_67'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[tmp_67PRMD] : (((tmp_67PRMD &gt; 0) | (tmp_67PRMD &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[tmp_67PRMD]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+mi_919)&lt;=l_918 &amp; s_917&lt;=mi_919&#8866; mi_919=mi_919
+<ul>(1 + mi_919 &le; l_918 &and; s_917 &le; mi_919)  &#8866;  mi_919 = mi_919
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l_918, s_917, mi_919] : (( (not (((1 + mi_919 &lt;= l_918) &amp; (s_917 &lt;= mi_919))))  | (mi_919 = mi_919)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[l_918,s_917,mi_919]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+mi_919)&lt;=l_918 &amp; s_917&lt;=mi_919&#8866; (1+mi_919)&lt;=l_918
+<ul>(1 + mi_919 &le; l_918 &and; s_917 &le; mi_919)  &#8866;  1 + mi_919 &le; l_918
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[s_917, mi_919, l_918] : (( (not (((1 + mi_919 &lt;= l_918) &amp; (s_917 &lt;= mi_919))))  | (1 + mi_919 &lt;= l_918)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[s_917,mi_919,l_918]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> null=x&apos;&#8866; null=x&apos;
+<ul><b>null</b> = x'  &#8866;  <b>null</b> = x'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[xPRMD] : (((xPRMD &gt; 0) | (xPRMD &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[xPRMD]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; 1=1
+<ul><b>true</b>  &#8866;  1 = 1
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[] : ((1 = 1))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{ FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+l_984)&lt;=lg_941 &amp; sm_940&lt;=mi_919 &amp; (1+mi_919)&lt;=lg_941 &amp; (1+<br/>
-qs_989)&lt;=lg_941 &amp; sm_940&lt;=qs_989 &amp; qs_989&lt;=l_984 &amp; mi_919&lt;=qs_989&#8866; mi_919&lt;=qs_989
+<ul>(1 + l_984 &le; lg_941 &and; sm_940 &le; mi_919 &and; 1 + mi_919 &le; lg_941 &and; 1 + qs_989 &le; lg_941 &and; sm_940 &le; qs_989 &and; qs_989 &le; l_984 &and; mi_919 &le; qs_989)  &#8866;  mi_919 &le; qs_989
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[lg_941, sm_940, l_984, mi_919, qs_989] : (( (not ((((((((1 + l_984 &lt;= lg_941) &amp; (sm_940 &lt;= mi_919)) &amp; (1 + mi_919 &lt;= lg_941)) &amp; (1 + qs_989 &lt;= lg_941)) &amp; (sm_940 &lt;= qs_989)) &amp; (qs_989 &lt;= l_984)) &amp; (mi_919 &lt;= qs_989))))  | (mi_919 &lt;= qs_989)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[lg_941,sm_940,l_984,mi_919,qs_989]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> tmp_66&apos;!=null&#8866; null=tmp_66&apos;
+<ul>tmp_66' &ne; <b>null</b>  &#8866;  <b>null</b> = tmp_66'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[tmp_66PRMD] : (((tmp_66PRMD &lt; 1) | (tmp_66PRMD &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[tmp_66PRMD]: 1 &lt;= tmp_66PRMD}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+l_984)&lt;=lg_941 &amp; mi_919&lt;=qs_989 &amp; sm_940&lt;=mi_919 &amp; qs_989&lt;=l_984 &amp; (1+<br/>
-mi_919)&lt;=lg_941 &amp; sm_940&lt;=qs_989 &amp; (1+qs_989)&lt;=lg_941&#8866; mi_919&lt;=qs_989
+<ul>(1 + l_984 &le; lg_941 &and; mi_919 &le; qs_989 &and; sm_940 &le; mi_919 &and; qs_989 &le; l_984 &and; 1 + mi_919 &le; lg_941 &and; sm_940 &le; qs_989 &and; 1 + qs_989 &le; lg_941)  &#8866;  mi_919 &le; qs_989
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l_984, sm_940, lg_941, mi_919, qs_989] : (( (not ((((((((1 + l_984 &lt;= lg_941) &amp; (mi_919 &lt;= qs_989)) &amp; (sm_940 &lt;= mi_919)) &amp; (qs_989 &lt;= l_984)) &amp; (1 + mi_919 &lt;= lg_941)) &amp; (sm_940 &lt;= qs_989)) &amp; (1 + qs_989 &lt;= lg_941))))  | (mi_919 &lt;= qs_989)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[l_984,sm_940,lg_941,mi_919,qs_989]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+qs_989)&lt;=lg_941 &amp; (1+l_984)&lt;=lg_941 &amp; sm_940&lt;=qs_989 &amp; qs_989&lt;=l_984 &amp; <br/>
-mi_919&lt;=qs_989 &amp; sm_940&lt;=mi_919 &amp; (1+mi_919)&lt;=lg_941&#8866; mi_919=mi_919
+<ul>(1 + qs_989 &le; lg_941 &and; 1 + l_984 &le; lg_941 &and; sm_940 &le; qs_989 &and; qs_989 &le; l_984 &and; mi_919 &le; qs_989 &and; sm_940 &le; mi_919 &and; 1 + mi_919 &le; lg_941)  &#8866;  mi_919 = mi_919
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l_984, qs_989, sm_940, lg_941, mi_919] : (( (not ((((((((1 + qs_989 &lt;= lg_941) &amp; (1 + l_984 &lt;= lg_941)) &amp; (sm_940 &lt;= qs_989)) &amp; (qs_989 &lt;= l_984)) &amp; (mi_919 &lt;= qs_989)) &amp; (sm_940 &lt;= mi_919)) &amp; (1 + mi_919 &lt;= lg_941))))  | (mi_919 = mi_919)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[l_984,qs_989,sm_940,lg_941,mi_919]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sm_940&lt;=qs_989 &amp; sm_940&lt;=mi_919 &amp; mi_919&lt;=qs_989 &amp; qs_989&lt;=l_984 &amp; (1+<br/>
-mi_919)&lt;=lg_941 &amp; (1+l_984)&lt;=lg_941 &amp; (1+qs_989)&lt;=lg_941&#8866; (1+l_984)&lt;=lg_941
+<ul>(sm_940 &le; qs_989 &and; sm_940 &le; mi_919 &and; mi_919 &le; qs_989 &and; qs_989 &le; l_984 &and; 1 + mi_919 &le; lg_941 &and; 1 + l_984 &le; lg_941 &and; 1 + qs_989 &le; lg_941)  &#8866;  1 + l_984 &le; lg_941
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[sm_940, mi_919, qs_989, l_984, lg_941] : (( (not ((((((((sm_940 &lt;= qs_989) &amp; (sm_940 &lt;= mi_919)) &amp; (mi_919 &lt;= qs_989)) &amp; (qs_989 &lt;= l_984)) &amp; (1 + mi_919 &lt;= lg_941)) &amp; (1 + l_984 &lt;= lg_941)) &amp; (1 + qs_989 &lt;= lg_941))))  | (1 + l_984 &lt;= lg_941)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[sm_940,mi_919,qs_989,l_984,lg_941]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> x&apos;=null&#8866; null=x&apos;
+<ul>x' = <b>null</b>  &#8866;  <b>null</b> = x'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[xPRMD] : (((xPRMD &gt; 0) | (xPRMD &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[xPRMD]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1+n_939=n_907 &amp; 1&lt;=n_907 &amp; 1&lt;=n_939&#8866; 1+n_939=n_907
+<ul>(1 + n_939 = n_907 &and; 1 &le; n_907 &and; 1 &le; n_939)  &#8866;  1 + n_939 = n_907
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_939, n_907] : (( (not ((((1 + n_939 = n_907) &amp; (1 &lt;= n_907)) &amp; (1 &lt;= n_939))))  | (1 + n_939 = n_907)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
@@ -326,53 +306,38 @@ else LABEL! 84,1: 85::bind x to (Anon_11,xnext) in <br/>
 <br/>
 {(35,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1037=n &amp; 1&lt;=flted_9_1037&#8866; 1=flted_9_1037
-<li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
-<ul>complement {[n, flted_9_1037] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1037 = n)) &amp; (1 &lt;= flted_9_1037))))  | (1 = flted_9_1037)))};<br/>
-</ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
-<ul>{[n,n-1]: 3 &lt;= n}</li></ul></ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1037=n &amp; 1&lt;=flted_9_1037&#8866; 1!=flted_9_1037
-<li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
-<ul>complement {[n, flted_9_1037] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1037 = n)) &amp; (1 &lt;= flted_9_1037))))  | (1 != flted_9_1037)))};<br/>
-</ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
-<ul>{[2,1]}</li></ul></ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1054=n &amp; 1&lt;=flted_9_1054&#8866; 1=flted_9_1054
+<ul>(1 &le; n &and; 1 + flted_9_1054 = n &and; 1 &le; flted_9_1054)  &#8866;  1 = flted_9_1054
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n, flted_9_1054] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1054 = n)) &amp; (1 &lt;= flted_9_1054))))  | (1 = flted_9_1054)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n,n-1]: 3 &lt;= n}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1054=n &amp; 1&lt;=flted_9_1054&#8866; 1!=flted_9_1054
+<ul>(1 &le; n &and; 1 + flted_9_1054 = n &and; 1 &le; flted_9_1054)  &#8866;  1 &ne; flted_9_1054
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n, flted_9_1054] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1054 = n)) &amp; (1 &lt;= flted_9_1054))))  | (1 != flted_9_1054)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[2,1]}</li></ul></ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 86::delete_min$node~int(xnext,a) rec at <a href="#L45">line 45</a> holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> (1+d_1055)&lt;=l_1076 &amp; s_1075&lt;=d_1055 &amp; (1+a&apos;)&lt;=l_1076 &amp; (1+<br/>
-tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=tmi_1057 &amp; s_1075&lt;=a&apos; &amp; d_1055!=a&apos;&#8866; tmi_1057=a&apos;
+<ul>(1 + d_1055 &le; l_1076 &and; s_1075 &le; d_1055 &and; 1 + a' &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; a' &and; d_1055 &ne; a')  &#8866;  tmi_1057 = a'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l_1076, s_1075, d_1055, tmi_1057, aPRMD] : (( (not ((((((((1 + d_1055 &lt;= l_1076) &amp; (s_1075 &lt;= d_1055)) &amp; (1 + aPRMD &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= aPRMD)) &amp; (d_1055 != aPRMD))))  | (tmi_1057 = aPRMD)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul> {[l_1076,s_1075,d_1055,tmi_1057,aPRMD]: s_1075 &lt;= d_1055 &lt; aPRMD &lt; tmi_1057 &lt; l_1076}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+d_1055)&lt;=l_1076 &amp; s_1075&lt;=d_1055 &amp; a&apos;=min(d_1055,tmi_1057) &amp; (1+<br/>
-a&apos;)&lt;=l_1076 &amp; (1+tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=tmi_1057 &amp; s_1075&lt;=a&apos; &amp; <br/>
-d_1055!=a&apos;&#8866; tmi_1057=a&apos;
+<ul>(1 + d_1055 &le; l_1076 &and; s_1075 &le; d_1055 &and; a' = <b>min</b>(d_1055,tmi_1057) &and; 1 + a' &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; a' &and; d_1055 &ne; a')  &#8866;  tmi_1057 = a'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l_1076, s_1075, d_1055, tmi_1057, aPRMD] : (( (not (((((((((1 + d_1055 &lt;= l_1076) &amp; (s_1075 &lt;= d_1055)) &amp; (((d_1055 &gt;= tmi_1057 &amp; aPRMD = tmi_1057) | (tmi_1057 &gt; d_1055 &amp; aPRMD = d_1055)))) &amp; (1 + aPRMD &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= aPRMD)) &amp; (d_1055 != aPRMD))))  | (tmi_1057 = aPRMD)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[l_1076,s_1075,d_1055,tmi_1057,aPRMD]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1&lt;=n_1074 &amp; 1+n_1074=n &amp; 1&lt;=flted_38_1086 &amp; 1+flted_38_1086=n_1074&#8866; 1=flted_38_1086
+<ul>(1 &le; n &and; 1 &le; n_1074 &and; 1 + n_1074 = n &and; 1 &le; flted_38_1086 &and; 1 + flted_38_1086 = n_1074)  &#8866;  1 = flted_38_1086
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n, n_1074, flted_38_1086] : (( (not ((((((1 &lt;= n) &amp; (1 &lt;= n_1074)) &amp; (1 + n_1074 = n)) &amp; (1 &lt;= flted_38_1086)) &amp; (1 + flted_38_1086 = n_1074))))  | (1 = flted_38_1086)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n,n-1,n-2]: 4 &lt;= n}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1&lt;=n_1074 &amp; 1+n_1074=n &amp; 1&lt;=flted_38_1086 &amp; 1+flted_38_1086=n_1074&#8866; 1!=flted_38_1086
+<ul>(1 &le; n &and; 1 &le; n_1074 &and; 1 + n_1074 = n &and; 1 &le; flted_38_1086 &and; 1 + flted_38_1086 = n_1074)  &#8866;  1 &ne; flted_38_1086
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n, n_1074, flted_38_1086] : (( (not ((((((1 &lt;= n) &amp; (1 &lt;= n_1074)) &amp; (1 + n_1074 = n)) &amp; (1 &lt;= flted_38_1086)) &amp; (1 + flted_38_1086 = n_1074))))  | (1 != flted_38_1086)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
@@ -381,182 +346,151 @@ d_1055!=a&apos;&#8866; tmi_1057=a&apos;
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+mi_1043)&lt;=l &amp; s&lt;=mi_1043&#8866; s&lt;=mi_1043
+<ul>(1 + mi_1043 &le; l &and; s &le; mi_1043)  &#8866;  s &le; mi_1043
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l, s, mi_1043] : (( (not (((1 + mi_1043 &lt;= l) &amp; (s &lt;= mi_1043))))  | (s &lt;= mi_1043)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[l,s,mi_1043]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+mi_1043)&lt;=l &amp; s&lt;=mi_1043&#8866; (1+mi_1043)&lt;=l
+<ul>(1 + mi_1043 &le; l &and; s &le; mi_1043)  &#8866;  1 + mi_1043 &le; l
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[s, mi_1043, l] : (( (not (((1 + mi_1043 &lt;= l) &amp; (s &lt;= mi_1043))))  | (1 + mi_1043 &lt;= l)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[s,mi_1043,l]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> p_1056!=null&#8866; null=p_1056
+<ul>p_1056 &ne; <b>null</b>  &#8866;  <b>null</b> = p_1056
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[p_1056] : (((p_1056 &lt; 1) | (p_1056 &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[p_1056]: 1 &lt;= p_1056}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sm_1052&lt;=tmi_1057 &amp; sm_1052&lt;=d_1055 &amp; (1+tmi_1057)&lt;=bg_1053 &amp; (1+<br/>
-d_1055)&lt;=bg_1053&#8866; bg_1053=bg_1053
+<ul>(sm_1052 &le; tmi_1057 &and; sm_1052 &le; d_1055 &and; 1 + tmi_1057 &le; bg_1053 &and; 1 + d_1055 &le; bg_1053)  &#8866;  bg_1053 = bg_1053
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[sm_1052, tmi_1057, d_1055, bg_1053] : (( (not (((((sm_1052 &lt;= tmi_1057) &amp; (sm_1052 &lt;= d_1055)) &amp; (1 + tmi_1057 &lt;= bg_1053)) &amp; (1 + d_1055 &lt;= bg_1053))))  | (bg_1053 = bg_1053)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[sm_1052,tmi_1057,d_1055,bg_1053]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+d_1055)&lt;=bg_1053 &amp; (1+tmi_1057)&lt;=bg_1053 &amp; sm_1052&lt;=d_1055 &amp; <br/>
-sm_1052&lt;=tmi_1057&#8866; sm_1052=sm_1052
+<ul>(1 + d_1055 &le; bg_1053 &and; 1 + tmi_1057 &le; bg_1053 &and; sm_1052 &le; d_1055 &and; sm_1052 &le; tmi_1057)  &#8866;  sm_1052 = sm_1052
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[bg_1053, d_1055, tmi_1057, sm_1052] : (( (not (((((1 + d_1055 &lt;= bg_1053) &amp; (1 + tmi_1057 &lt;= bg_1053)) &amp; (sm_1052 &lt;= d_1055)) &amp; (sm_1052 &lt;= tmi_1057))))  | (sm_1052 = sm_1052)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[bg_1053,d_1055,tmi_1057,sm_1052]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> sm_1052&lt;=d_1055 &amp; sm_1052&lt;=tmi_1057 &amp; (1+tmi_1057)&lt;=bg_1053 &amp; (1+<br/>
-d_1055)&lt;=bg_1053&#8866; d_1055&lt;=tmi_1057
+<ul>(sm_1052 &le; d_1055 &and; sm_1052 &le; tmi_1057 &and; 1 + tmi_1057 &le; bg_1053 &and; 1 + d_1055 &le; bg_1053)  &#8866;  d_1055 &le; tmi_1057
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[sm_1052, bg_1053, d_1055, tmi_1057] : (( (not (((((sm_1052 &lt;= d_1055) &amp; (sm_1052 &lt;= tmi_1057)) &amp; (1 + tmi_1057 &lt;= bg_1053)) &amp; (1 + d_1055 &lt;= bg_1053))))  | (d_1055 &lt;= tmi_1057)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[sm_1052,bg_1053,d_1055,tmi_1057]: sm_1052 &lt;= tmi_1057 &lt; d_1055 &lt; bg_1053}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> d_1055=min(d_1055,tmi_1057) &amp; sm_1052&lt;=d_1055 &amp; sm_1052&lt;=tmi_1057 &amp; (1+<br/>
-tmi_1057)&lt;=bg_1053 &amp; (1+d_1055)&lt;=bg_1053&#8866; d_1055&lt;=tmi_1057
+<ul>(d_1055 = <b>min</b>(d_1055,tmi_1057) &and; sm_1052 &le; d_1055 &and; sm_1052 &le; tmi_1057 &and; 1 + tmi_1057 &le; bg_1053 &and; 1 + d_1055 &le; bg_1053)  &#8866;  d_1055 &le; tmi_1057
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[sm_1052, bg_1053, d_1055, tmi_1057] : (( (not ((((((((d_1055 &gt;= tmi_1057 &amp; d_1055 = tmi_1057) | (tmi_1057 &gt; d_1055 &amp; d_1055 = d_1055))) &amp; (sm_1052 &lt;= d_1055)) &amp; (sm_1052 &lt;= tmi_1057)) &amp; (1 + tmi_1057 &lt;= bg_1053)) &amp; (1 + d_1055 &lt;= bg_1053))))  | (d_1055 &lt;= tmi_1057)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[sm_1052,bg_1053,d_1055,tmi_1057]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1054=n &amp; 1&lt;=flted_9_1054&#8866; 1+flted_9_1054=n
+<ul>(1 &le; n &and; 1 + flted_9_1054 = n &and; 1 &le; flted_9_1054)  &#8866;  1 + flted_9_1054 = n
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[flted_9_1054, n] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1054 = n)) &amp; (1 &lt;= flted_9_1054))))  | (1 + flted_9_1054 = n)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[flted_9_1054,n]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> x&apos;!=null&#8866; null=x&apos;
+<ul>x' &ne; <b>null</b>  &#8866;  <b>null</b> = x'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[xPRMD] : (((xPRMD &lt; 1) | (xPRMD &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[xPRMD]: 1 &lt;= xPRMD}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> null=xnext_1111&#8866; null=xnext_1111
+<ul><b>null</b> = xnext_1111  &#8866;  <b>null</b> = xnext_1111
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[xnext_1111] : (((xnext_1111 &gt; 0) | (xnext_1111 &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[xnext_1111]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1+1=n &amp; 1&lt;=n&#8866; 1+1=n
+<ul>(1 + 1 = n &and; 1 &le; n)  &#8866;  1 + 1 = n
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n] : (( (not (((1 + 1 = n) &amp; (1 &lt;= n))))  | (1 + 1 = n)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> (1+tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=tmi_1057 &amp; d_1055!=mi &amp; s_1075&lt;=mi &amp; (1+<br/>
-mi)&lt;=l_1076 &amp; (1+d_1055)&lt;=l_1076 &amp; s_1075&lt;=d_1055&#8866; mi&lt;=d_1055
+<ul>(1 + tmi_1057 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; d_1055 &ne; mi &and; s_1075 &le; mi &and; 1 + mi &le; l_1076 &and; 1 + d_1055 &le; l_1076 &and; s_1075 &le; d_1055)  &#8866;  mi &le; d_1055
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[tmi_1057, l_1076, s_1075, mi, d_1055] : (( (not ((((((((1 + tmi_1057 &lt;= l_1076) &amp; (s_1075 &lt;= tmi_1057)) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= mi)) &amp; (1 + mi &lt;= l_1076)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (s_1075 &lt;= d_1055))))  | (mi &lt;= d_1055)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[tmi_1057,l_1076,s_1075,mi,d_1055]: s_1075 &lt;= d_1055 &lt; mi &lt; l_1076 &amp;&amp; s_1075 &lt;= tmi_1057 &lt; l_1076}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=tmi_1057 &amp; mi=min(d_1055,tmi_1057) &amp; <br/>
-d_1055!=mi &amp; s_1075&lt;=mi &amp; (1+mi)&lt;=l_1076 &amp; (1+d_1055)&lt;=l_1076 &amp; <br/>
-s_1075&lt;=d_1055&#8866; mi&lt;=d_1055
+<ul>(1 + tmi_1057 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; mi = <b>min</b>(d_1055,tmi_1057) &and; d_1055 &ne; mi &and; s_1075 &le; mi &and; 1 + mi &le; l_1076 &and; 1 + d_1055 &le; l_1076 &and; s_1075 &le; d_1055)  &#8866;  mi &le; d_1055
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[tmi_1057, l_1076, s_1075, mi, d_1055] : (( (not (((((((((1 + tmi_1057 &lt;= l_1076) &amp; (s_1075 &lt;= tmi_1057)) &amp; (((d_1055 &gt;= tmi_1057 &amp; mi = tmi_1057) | (tmi_1057 &gt; d_1055 &amp; mi = d_1055)))) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= mi)) &amp; (1 + mi &lt;= l_1076)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (s_1075 &lt;= d_1055))))  | (mi &lt;= d_1055)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[tmi_1057,l_1076,s_1075,mi,d_1055]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> d_1055!=mi &amp; (1+d_1055)&lt;=l_1076 &amp; (1+tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=mi1_1150 &amp; <br/>
-tmi_1057&lt;=mi1_1150 &amp; (1+mi1_1150)&lt;=l_1076 &amp; (1+mi)&lt;=l_1076 &amp; <br/>
-s_1075&lt;=tmi_1057 &amp; s_1075&lt;=mi &amp; s_1075&lt;=d_1055&#8866; s_1075&lt;=mi1_1150 &amp; (mi1_1150+1)&lt;=l_1076 &amp; mi1_1150&lt;=d_1055 | <br/>
-s_1075&lt;=d_1055 &amp; (d_1055+1)&lt;=l_1076 &amp; (d_1055+1)&lt;=mi1_1150
+<ul>(d_1055 &ne; mi &and; 1 + d_1055 &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; s_1075 &le; mi1_1150 &and; tmi_1057 &le; mi1_1150 &and; 1 + mi1_1150 &le; l_1076 &and; 1 + mi &le; l_1076 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; mi &and; s_1075 &le; d_1055)  &#8866;  ((s_1075 &le; mi1_1150 &and; mi1_1150 + 1 &le; l_1076 &and; mi1_1150 &le; d_1055) &or; (s_1075 &le; d_1055 &and; d_1055 + 1 &le; l_1076 &and; d_1055 + 1 &le; mi1_1150))
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[tmi_1057, mi, s_1075, l_1076, d_1055, mi1_1150] : (( (not (((((((((((d_1055 != mi) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (s_1075 &lt;= mi1_1150)) &amp; (tmi_1057 &lt;= mi1_1150)) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= mi)) &amp; (s_1075 &lt;= d_1055))))  | ((((s_1075 &lt;= mi1_1150) &amp; (mi1_1150 + 1 &lt;= l_1076)) &amp; (mi1_1150 &lt;= d_1055)) | (((s_1075 &lt;= d_1055) &amp; (d_1055 + 1 &lt;= l_1076)) &amp; (d_1055 + 1 &lt;= mi1_1150)))))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[tmi_1057,mi,s_1075,l_1076,d_1055,mi1_1150]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+mi)&lt;=l_1076 &amp; (1+mi1_1150)&lt;=l_1076 &amp; tmi_1057&lt;=mi1_1150 &amp; (1+<br/>
-tmi_1057)&lt;=l_1076 &amp; d_1055!=mi &amp; (1+d_1055)&lt;=l_1076 &amp; s_1075&lt;=mi1_1150 &amp; <br/>
-s_1075&lt;=tmi_1057 &amp; s_1075&lt;=mi &amp; s_1075&lt;=d_1055&#8866; s_1075&lt;=d_1055
+<ul>(1 + mi &le; l_1076 &and; 1 + mi1_1150 &le; l_1076 &and; tmi_1057 &le; mi1_1150 &and; 1 + tmi_1057 &le; l_1076 &and; d_1055 &ne; mi &and; 1 + d_1055 &le; l_1076 &and; s_1075 &le; mi1_1150 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; mi &and; s_1075 &le; d_1055)  &#8866;  s_1075 &le; d_1055
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l_1076, mi1_1150, tmi_1057, mi, s_1075, d_1055] : (( (not (((((((((((1 + mi &lt;= l_1076) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (tmi_1057 &lt;= mi1_1150)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (d_1055 != mi)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (s_1075 &lt;= mi1_1150)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= mi)) &amp; (s_1075 &lt;= d_1055))))  | (s_1075 &lt;= d_1055)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[l_1076,mi1_1150,tmi_1057,mi,s_1075,d_1055]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> s_1075&lt;=mi &amp; s_1075&lt;=tmi_1057 &amp; tmi_1057&lt;=mi1_1150 &amp; s_1075&lt;=mi1_1150 &amp; <br/>
-d_1055!=mi &amp; (1+d_1055)&lt;=l_1076 &amp; (1+tmi_1057)&lt;=l_1076 &amp; (1+<br/>
-mi1_1150)&lt;=l_1076 &amp; (1+mi)&lt;=l_1076 &amp; s_1075&lt;=d_1055&#8866; (1+d_1055)&lt;=l_1076
+<ul>(s_1075 &le; mi &and; s_1075 &le; tmi_1057 &and; tmi_1057 &le; mi1_1150 &and; s_1075 &le; mi1_1150 &and; d_1055 &ne; mi &and; 1 + d_1055 &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; 1 + mi1_1150 &le; l_1076 &and; 1 + mi &le; l_1076 &and; s_1075 &le; d_1055)  &#8866;  1 + d_1055 &le; l_1076
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[tmi_1057, mi1_1150, mi, s_1075, d_1055, l_1076] : (( (not (((((((((((s_1075 &lt;= mi) &amp; (s_1075 &lt;= tmi_1057)) &amp; (tmi_1057 &lt;= mi1_1150)) &amp; (s_1075 &lt;= mi1_1150)) &amp; (d_1055 != mi)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (s_1075 &lt;= d_1055))))  | (1 + d_1055 &lt;= l_1076)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[tmi_1057,mi1_1150,mi,s_1075,d_1055,l_1076]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> xnext_1151!=null&#8866; null=xnext_1151
+<ul>xnext_1151 &ne; <b>null</b>  &#8866;  <b>null</b> = xnext_1151
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[xnext_1151] : (((xnext_1151 &lt; 1) | (xnext_1151 &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[xnext_1151]: 1 &lt;= xnext_1151}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> s_1075&lt;=d_1055 &amp; d_1055!=mi &amp; s_1075&lt;=mi &amp; (1+d_1055)&lt;=l_1076 &amp; <br/>
-s_1075&lt;=tmi_1057 &amp; (1+tmi_1057)&lt;=l_1076 &amp; (1+mi)&lt;=l_1076 &amp; <br/>
-s_1075&lt;=mi1_1150 &amp; (1+mi1_1150)&lt;=l_1076 &amp; tmi_1057&lt;=mi1_1150&#8866; s_1075&lt;=mi1_1150 &amp; (mi1_1150+1)&lt;=l_1076 &amp; mi1_1150&lt;=d_1055 | <br/>
-s_1075&lt;=d_1055 &amp; (d_1055+1)&lt;=l_1076 &amp; (d_1055+1)&lt;=mi1_1150
+<ul>(s_1075 &le; d_1055 &and; d_1055 &ne; mi &and; s_1075 &le; mi &and; 1 + d_1055 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; 1 + tmi_1057 &le; l_1076 &and; 1 + mi &le; l_1076 &and; s_1075 &le; mi1_1150 &and; 1 + mi1_1150 &le; l_1076 &and; tmi_1057 &le; mi1_1150)  &#8866;  ((s_1075 &le; mi1_1150 &and; mi1_1150 + 1 &le; l_1076 &and; mi1_1150 &le; d_1055) &or; (s_1075 &le; d_1055 &and; d_1055 + 1 &le; l_1076 &and; d_1055 + 1 &le; mi1_1150))
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[mi, tmi_1057, s_1075, l_1076, d_1055, mi1_1150] : (( (not (((((((((((s_1075 &lt;= d_1055) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= mi)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (s_1075 &lt;= mi1_1150)) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (tmi_1057 &lt;= mi1_1150))))  | ((((s_1075 &lt;= mi1_1150) &amp; (mi1_1150 + 1 &lt;= l_1076)) &amp; (mi1_1150 &lt;= d_1055)) | (((s_1075 &lt;= d_1055) &amp; (d_1055 + 1 &lt;= l_1076)) &amp; (d_1055 + 1 &lt;= mi1_1150)))))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[mi,tmi_1057,s_1075,l_1076,d_1055,mi1_1150]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> tmi_1057&lt;=mi1_1150 &amp; s_1075&lt;=mi1_1150 &amp; s_1075&lt;=tmi_1057 &amp; s_1075&lt;=mi &amp; <br/>
-s_1075&lt;=d_1055 &amp; d_1055!=mi &amp; (1+d_1055)&lt;=l_1076 &amp; (1+tmi_1057)&lt;=l_1076 &amp; (1+<br/>
-mi)&lt;=l_1076 &amp; (1+mi1_1150)&lt;=l_1076&#8866; (1+d_1055)&lt;=l_1076
+<ul>(tmi_1057 &le; mi1_1150 &and; s_1075 &le; mi1_1150 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; mi &and; s_1075 &le; d_1055 &and; d_1055 &ne; mi &and; 1 + d_1055 &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; 1 + mi &le; l_1076 &and; 1 + mi1_1150 &le; l_1076)  &#8866;  1 + d_1055 &le; l_1076
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[s_1075, tmi_1057, mi, mi1_1150, d_1055, l_1076] : (( (not (((((((((((tmi_1057 &lt;= mi1_1150) &amp; (s_1075 &lt;= mi1_1150)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= mi)) &amp; (s_1075 &lt;= d_1055)) &amp; (d_1055 != mi)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (1 + mi1_1150 &lt;= l_1076))))  | (1 + d_1055 &lt;= l_1076)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[s_1075,tmi_1057,mi,mi1_1150,d_1055,l_1076]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> tmi_1057&lt;=mi1_1150 &amp; (1+mi1_1150)&lt;=l_1076 &amp; (1+mi)&lt;=l_1076 &amp; (1+<br/>
-tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=d_1055 &amp; d_1055!=mi &amp; s_1075&lt;=mi &amp; (1+<br/>
-d_1055)&lt;=l_1076 &amp; s_1075&lt;=tmi_1057 &amp; s_1075&lt;=mi1_1150&#8866; s_1075&lt;=d_1055
+<ul>(tmi_1057 &le; mi1_1150 &and; 1 + mi1_1150 &le; l_1076 &and; 1 + mi &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; s_1075 &le; d_1055 &and; d_1055 &ne; mi &and; s_1075 &le; mi &and; 1 + d_1055 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; mi1_1150)  &#8866;  s_1075 &le; d_1055
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[mi, l_1076, tmi_1057, mi1_1150, s_1075, d_1055] : (( (not (((((((((((tmi_1057 &lt;= mi1_1150) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (s_1075 &lt;= d_1055)) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= mi)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= mi1_1150))))  | (s_1075 &lt;= d_1055)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[mi,l_1076,tmi_1057,mi1_1150,s_1075,d_1055]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=n_1074 &amp; 1+n_1074=n &amp; 1&lt;=flted_38_1149 &amp; 1&lt;=n &amp; 1+flted_38_1149=n_1074&#8866; 1+flted_38_1149+1=n
+<ul>(1 &le; n_1074 &and; 1 + n_1074 = n &and; 1 &le; flted_38_1149 &and; 1 &le; n &and; 1 + flted_38_1149 = n_1074)  &#8866;  1 + flted_38_1149 + 1 = n
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_1074, flted_38_1149, n] : (( (not ((((((1 &lt;= n_1074) &amp; (1 + n_1074 = n)) &amp; (1 &lt;= flted_38_1149)) &amp; (1 &lt;= n)) &amp; (1 + flted_38_1149 = n_1074))))  | (1 + flted_38_1149 + 1 = n)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n_1074,flted_38_1149,n]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> tmi_1057&lt;=mi1_1150 &amp; s_1075&lt;=mi1_1150 &amp; s_1075&lt;=tmi_1057 &amp; s_1075&lt;=mi &amp; <br/>
-d_1055!=mi &amp; s_1075&lt;=d_1055 &amp; (1+d_1055)&lt;=l_1076 &amp; (1+tmi_1057)&lt;=l_1076 &amp; (1+<br/>
-mi)&lt;=l_1076 &amp; (1+mi1_1150)&lt;=l_1076&#8866; l_1076=l_1076
+<ul>(tmi_1057 &le; mi1_1150 &and; s_1075 &le; mi1_1150 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; mi &and; d_1055 &ne; mi &and; s_1075 &le; d_1055 &and; 1 + d_1055 &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; 1 + mi &le; l_1076 &and; 1 + mi1_1150 &le; l_1076)  &#8866;  l_1076 = l_1076
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[s_1075, d_1055, tmi_1057, mi, mi1_1150, l_1076] : (( (not (((((((((((tmi_1057 &lt;= mi1_1150) &amp; (s_1075 &lt;= mi1_1150)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= mi)) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= d_1055)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (1 + mi1_1150 &lt;= l_1076))))  | (l_1076 = l_1076)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[s_1075,d_1055,tmi_1057,mi,mi1_1150,l_1076]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> tmi_1057&lt;=mi1_1150 &amp; (1+mi1_1150)&lt;=l_1076 &amp; (1+mi)&lt;=l_1076 &amp; (1+<br/>
-tmi_1057)&lt;=l_1076 &amp; (1+d_1055)&lt;=l_1076 &amp; d_1055!=mi &amp; s_1075&lt;=d_1055 &amp; <br/>
-s_1075&lt;=mi &amp; s_1075&lt;=tmi_1057 &amp; s_1075&lt;=mi1_1150&#8866; s_1075=s_1075
+<ul>(tmi_1057 &le; mi1_1150 &and; 1 + mi1_1150 &le; l_1076 &and; 1 + mi &le; l_1076 &and; 1 + tmi_1057 &le; l_1076 &and; 1 + d_1055 &le; l_1076 &and; d_1055 &ne; mi &and; s_1075 &le; d_1055 &and; s_1075 &le; mi &and; s_1075 &le; tmi_1057 &and; s_1075 &le; mi1_1150)  &#8866;  s_1075 = s_1075
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l_1076, d_1055, mi, tmi_1057, mi1_1150, s_1075] : (( (not (((((((((((tmi_1057 &lt;= mi1_1150) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (1 + tmi_1057 &lt;= l_1076)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= d_1055)) &amp; (s_1075 &lt;= mi)) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= mi1_1150))))  | (s_1075 = s_1075)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[l_1076,d_1055,mi,tmi_1057,mi1_1150,s_1075]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> (1+tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=tmi_1057 &amp; s_1075&lt;=d_1055 &amp; d_1055!=mi &amp; <br/>
-s_1075&lt;=mi &amp; (1+d_1055)&lt;=l_1076 &amp; (1+mi)&lt;=l_1076 &amp; s_1075&lt;=mi1_1150 &amp; (1+<br/>
-mi1_1150)&lt;=l_1076 &amp; tmi_1057&lt;=mi1_1150&#8866; mi&lt;=mi1_1150 &amp; mi1_1150&lt;=d_1055 | mi&lt;=d_1055 &amp; d_1055&lt;mi1_1150
+<ul>(1 + tmi_1057 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; s_1075 &le; d_1055 &and; d_1055 &ne; mi &and; s_1075 &le; mi &and; 1 + d_1055 &le; l_1076 &and; 1 + mi &le; l_1076 &and; s_1075 &le; mi1_1150 &and; 1 + mi1_1150 &le; l_1076 &and; tmi_1057 &le; mi1_1150)  &#8866;  ((mi &le; mi1_1150 &and; mi1_1150 &le; d_1055) &or; (mi &le; d_1055 &and; d_1055 &lt; mi1_1150))
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[s_1075, l_1076, tmi_1057, mi, d_1055, mi1_1150] : (( (not (((((((((((1 + tmi_1057 &lt;= l_1076) &amp; (s_1075 &lt;= tmi_1057)) &amp; (s_1075 &lt;= d_1055)) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= mi)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (s_1075 &lt;= mi1_1150)) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (tmi_1057 &lt;= mi1_1150))))  | (((mi &lt;= mi1_1150) &amp; (mi1_1150 &lt;= d_1055)) | ((mi &lt;= d_1055) &amp; (d_1055 &lt; mi1_1150)))))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul> {[s_1075,l_1076,tmi_1057,mi,d_1055,mi1_1150]: s_1075 &lt;= tmi_1057 &lt;= mi1_1150 &lt;= d_1055 &lt; mi &lt; l_1076}</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+tmi_1057)&lt;=l_1076 &amp; s_1075&lt;=tmi_1057 &amp; (s_1075&lt;=mi1_1150 &amp; <br/>
-mi1_1150&lt;=d_1055 &amp; d_1055&lt;l_1076 | s_1075&lt;=d_1055 &amp; d_1055&lt;=(l_1076 - 1) &amp; <br/>
-d_1055&lt;=(mi1_1150 - 1)) &amp; mi=min(d_1055,tmi_1057) &amp; s_1075&lt;=d_1055 &amp; <br/>
-d_1055!=mi &amp; s_1075&lt;=mi &amp; (1+d_1055)&lt;=l_1076 &amp; (1+mi)&lt;=l_1076 &amp; <br/>
-s_1075&lt;=mi1_1150 &amp; (1+mi1_1150)&lt;=l_1076 &amp; tmi_1057&lt;=mi1_1150&#8866; mi&lt;=mi1_1150 &amp; mi1_1150&lt;=d_1055 | mi&lt;=d_1055 &amp; d_1055&lt;mi1_1150
+<ul>(1 + tmi_1057 &le; l_1076 &and; s_1075 &le; tmi_1057 &and; ((s_1075 &le; mi1_1150 &and; mi1_1150 &le; d_1055 &and; d_1055 &lt; l_1076) &or; (s_1075 &le; d_1055 &and; d_1055 &le; l_1076 - 1 &and; d_1055 &le; mi1_1150 - 1)) &and; mi = <b>min</b>(d_1055,tmi_1057) &and; s_1075 &le; d_1055 &and; d_1055 &ne; mi &and; s_1075 &le; mi &and; 1 + d_1055 &le; l_1076 &and; 1 + mi &le; l_1076 &and; s_1075 &le; mi1_1150 &and; 1 + mi1_1150 &le; l_1076 &and; tmi_1057 &le; mi1_1150)  &#8866;  ((mi &le; mi1_1150 &and; mi1_1150 &le; d_1055) &or; (mi &le; d_1055 &and; d_1055 &lt; mi1_1150))
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[s_1075, l_1076, tmi_1057, mi, d_1055, mi1_1150] : (( (not (((((((((((((1 + tmi_1057 &lt;= l_1076) &amp; (s_1075 &lt;= tmi_1057)) &amp; ((((s_1075 &lt;= mi1_1150) &amp; (mi1_1150 &lt;= d_1055)) &amp; (d_1055 &lt; l_1076)) | ((s_1075 &lt;= d_1055) &amp; ((d_1055 &lt;= l_1076 - (1)) &amp; (d_1055 &lt;= mi1_1150 - (1)))))) &amp; (((d_1055 &gt;= tmi_1057 &amp; mi = tmi_1057) | (tmi_1057 &gt; d_1055 &amp; mi = d_1055)))) &amp; (s_1075 &lt;= d_1055)) &amp; (d_1055 != mi)) &amp; (s_1075 &lt;= mi)) &amp; (1 + d_1055 &lt;= l_1076)) &amp; (1 + mi &lt;= l_1076)) &amp; (s_1075 &lt;= mi1_1150)) &amp; (1 + mi1_1150 &lt;= l_1076)) &amp; (tmi_1057 &lt;= mi1_1150))))  | (((mi &lt;= mi1_1150) &amp; (mi1_1150 &lt;= d_1055)) | ((mi &lt;= d_1055) &amp; (d_1055 &lt; mi1_1150)))))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
@@ -622,31 +556,17 @@ v_int_31_874 = tmp_76;<br/>
 <br/>
 {(17,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1208=n &amp; 1&lt;=flted_9_1208&#8866; 1=flted_9_1208
-<li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
-<ul>complement {[n, flted_9_1208] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1208 = n)) &amp; (1 &lt;= flted_9_1208))))  | (1 = flted_9_1208)))};<br/>
-</ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
-<ul>{[n,n-1]: 3 &lt;= n}</li></ul></ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1208=n &amp; 1&lt;=flted_9_1208&#8866; 1!=flted_9_1208
-<li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
-<ul>complement {[n, flted_9_1208] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1208 = n)) &amp; (1 &lt;= flted_9_1208))))  | (1 != flted_9_1208)))};<br/>
-</ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
-<ul>{[2,1]}</li></ul></ul></li>
-<li class="Collapsed pre">
-Precondition of procedure call 104::is_null___$node(v_node_23_859) at <a href="#L23">line 23</a> holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1225=n &amp; 1&lt;=flted_9_1225&#8866; 1=flted_9_1225
+<ul>(1 &le; n &and; 1 + flted_9_1225 = n &and; 1 &le; flted_9_1225)  &#8866;  1 = flted_9_1225
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n, flted_9_1225] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1225 = n)) &amp; (1 &lt;= flted_9_1225))))  | (1 = flted_9_1225)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n,n-1]: 3 &lt;= n}</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> 1&lt;=n &amp; 1+flted_9_1225=n &amp; 1&lt;=flted_9_1225&#8866; 1!=flted_9_1225
+<ul>(1 &le; n &and; 1 + flted_9_1225 = n &and; 1 &le; flted_9_1225)  &#8866;  1 &ne; flted_9_1225
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n, flted_9_1225] : (( (not ((((1 &lt;= n) &amp; (1 + flted_9_1225 = n)) &amp; (1 &lt;= flted_9_1225))))  | (1 != flted_9_1225)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[2,1]}</li></ul></ul></li>
-</ul></li>
 <li class="Collapsed assert">
 Assertion at <a href="#L26">line 26</a> holds
 <ul></ul></li>
@@ -655,13 +575,13 @@ Precondition of procedure call 94::find_min$node(v_node_27_867) rec at <a href="
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> null=flted_8_1215&#8866; null=flted_8_1215
+<ul><b>null</b> = flted_8_1215  &#8866;  <b>null</b> = flted_8_1215
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[flted_8_1215] : (((flted_8_1215 &gt; 0) | (flted_8_1215 &lt; 1)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[flted_8_1215]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+res)&lt;=l &amp; s&lt;=res&#8866; res=res
+<ul>(1 + res &le; l &and; s &le; res)  &#8866;  res = res
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[l, s, res] : (( (not (((1 + res &lt;= l) &amp; (s &lt;= res))))  | (res = res)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR

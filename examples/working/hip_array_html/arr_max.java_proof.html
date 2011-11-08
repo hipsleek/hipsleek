@@ -83,8 +83,7 @@ Assertion at <a href="#L19">line 19</a> holds
 <ul></ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L21">line 21</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahaub&lt;=ahaub &amp; dom(a,ahaub,ahaub)&#8866; &exist;(ahalb_640:&exist;(ahaub_641:dom(a,ahalb_640,ahaub_641) &amp; <br/>
-ahalb_640&lt;=ahaub &amp; ahaub&lt;=ahaub_641))
+<ul>(ahaub &le; ahaub &and; dom(a,ahaub,ahaub))  &#8866;   &exist; ahalb_640  &exist; ahaub_641 (dom(a,ahalb_640,ahaub_641) &and; ahalb_640 &le; ahaub &and; ahaub &le; ahaub_641)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -105,7 +104,7 @@ ahalb_640&lt;=ahaub &amp; ahaub&lt;=ahaub_641))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 70::max_value_of_array$int[]~int~int(a,v_int_23_616,j) rec at <a href="#L23">line 23</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=j &amp; dom(a,i,j) &amp; i!=j &amp; v_int_23_616&apos;=1+i&#8866; dom(a,v_int_23_616&apos;,j)
+<ul>(i &le; j &and; dom(a,i,j) &and; i &ne; j &and; v_int_23_616' = 1 + i)  &#8866;  dom(a,v_int_23_616',j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -128,7 +127,7 @@ Precondition of procedure call 70::max_value_of_array$int[]~int~int(a,v_int_23_6
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=j &amp; dom(a,i,j) &amp; i!=j &amp; v_int_23_616&apos;=1+i&#8866; v_int_23_616&apos;&lt;=j
+<ul>(i &le; j &and; dom(a,i,j) &and; i &ne; j &and; v_int_23_616' = 1 + i)  &#8866;  v_int_23_616' &le; j
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -148,9 +147,7 @@ Precondition of procedure call 70::max_value_of_array$int[]~int~int(a,v_int_23_6
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L24">line 24</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb!=ahaub &amp; upperbnd(a,1+<br/>
-ahalb,ahaub,m_41&apos;)&#8866; &exist;(ahalb_660:&exist;(ahaub_661:dom(a,ahalb_660,ahaub_661) &amp; <br/>
-ahalb_660&lt;=ahalb &amp; ahalb&lt;=ahaub_661))
+<ul>(ahalb &le; ahaub &and; dom(a,ahalb,ahaub) &and; ahalb &ne; ahaub &and; upperbnd(a,1 + ahalb,ahaub,m_41'))  &#8866;   &exist; ahalb_660  &exist; ahaub_661 (dom(a,ahalb_660,ahaub_661) &and; ahalb_660 &le; ahalb &and; ahalb &le; ahaub_661)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -177,10 +174,7 @@ ahalb_660&lt;=ahalb &amp; ahalb&lt;=ahaub_661))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L27">line 27</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb_670!=ahaub_671 &amp; upperbnd(a,1+ahalb_670,ahaub_671,m_41&apos;) &amp; <br/>
-dom(a,ahalb_670,ahaub_671) &amp; ahalb_670&lt;=ahalb_670 &amp; ahalb_670&lt;=ahaub_671 &amp; <br/>
-m_41&apos;&lt;=(a[ahalb_670])&#8866; &exist;(ahalb_676:&exist;(ahaub_677:dom(a,ahalb_676,ahaub_677) &amp; <br/>
-ahalb_676&lt;=ahalb_670 &amp; ahalb_670&lt;=ahaub_677))
+<ul>(ahalb_670 &ne; ahaub_671 &and; upperbnd(a,1 + ahalb_670,ahaub_671,m_41') &and; dom(a,ahalb_670,ahaub_671) &and; ahalb_670 &le; ahalb_670 &and; ahalb_670 &le; ahaub_671 &and; m_41' &le; a[ahalb_670])  &#8866;   &exist; ahalb_676  &exist; ahaub_677 (dom(a,ahalb_676,ahaub_677) &and; ahalb_676 &le; ahalb_670 &and; ahalb_670 &le; ahaub_677)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -210,7 +204,7 @@ ahalb_676&lt;=ahalb_670 &amp; ahalb_670&lt;=ahaub_677))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahaub,ahaub) &amp; ahaub&lt;=ahaub &amp; v_int_21_614&apos;=a[ahaub]&#8866; upperbnd(a,ahaub,ahaub,v_int_21_614&apos;)
+<ul>(dom(a,ahaub,ahaub) &and; ahaub &le; ahaub &and; v_int_21_614' = a[ahaub])  &#8866;  upperbnd(a,ahaub,ahaub,v_int_21_614')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -229,8 +223,7 @@ Procedure post-condition holds
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb!=ahaub &amp; upperbnd(a,1+ahalb,ahaub,m_41&apos;) &amp; dom(a,ahalb,ahaub) &amp; <br/>
-ahalb&lt;=ahalb &amp; ahalb&lt;=ahaub &amp; (a[ahalb])&lt;m_41&apos;&#8866; upperbnd(a,ahalb,ahaub,m_41&apos;)
+<ul>(ahalb &ne; ahaub &and; upperbnd(a,1 + ahalb,ahaub,m_41') &and; dom(a,ahalb,ahaub) &and; ahalb &le; ahalb &and; ahalb &le; ahaub &and; a[ahalb] &lt; m_41')  &#8866;  upperbnd(a,ahalb,ahaub,m_41')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -254,9 +247,7 @@ ahalb&lt;=ahalb &amp; ahalb&lt;=ahaub &amp; (a[ahalb])&lt;m_41&apos;&#8866; uppe
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb_670!=ahaub_671 &amp; upperbnd(a,1+ahalb_670,ahaub_671,m_41&apos;) &amp; <br/>
-m_41&apos;&lt;=(a[ahalb_670]) &amp; dom(a,ahalb_670,ahaub_671) &amp; ahalb_670&lt;=ahalb_670 &amp; <br/>
-ahalb_670&lt;=ahaub_671 &amp; v_int_27_619&apos;=a[ahalb_670]&#8866; upperbnd(a,ahalb_670,ahaub_671,v_int_27_619&apos;)
+<ul>(ahalb_670 &ne; ahaub_671 &and; upperbnd(a,1 + ahalb_670,ahaub_671,m_41') &and; m_41' &le; a[ahalb_670] &and; dom(a,ahalb_670,ahaub_671) &and; ahalb_670 &le; ahalb_670 &and; ahalb_670 &le; ahaub_671 &and; v_int_27_619' = a[ahalb_670])  &#8866;  upperbnd(a,ahalb_670,ahaub_671,v_int_27_619')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

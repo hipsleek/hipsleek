@@ -53,8 +53,7 @@ Assertion at <a href="#L14">line 14</a> holds
 <ul></ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L15">line 15</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_40&apos;,0,5)&#8866; &exist;(ahalb_626:&exist;(ahaub_627:dom(a_40&apos;,ahalb_626,ahaub_627) &amp; <br/>
-ahalb_626&lt;=0 &amp; 0&lt;=ahaub_627))
+<ul>dom(a_40',0,5)  &#8866;   &exist; ahalb_626  &exist; ahaub_627 (dom(a_40',ahalb_626,ahaub_627) &and; ahalb_626 &le; 0 &and; 0 &le; ahaub_627)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -75,8 +74,7 @@ unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L16">line 16</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_637,0,5) &amp; dom(a_40&apos;,0,5) &amp; update_array_1d(a_637,a_40&apos;,1,0)&#8866; &exist;(ahalb_638:&exist;(ahaub_639:dom(a_40&apos;,ahalb_638,ahaub_639) &amp; <br/>
-ahalb_638&lt;=0 &amp; 0&lt;=ahaub_639))
+<ul>(dom(a_637,0,5) &and; dom(a_40',0,5) &and; update_array_1d(a_637,a_40',1,0))  &#8866;   &exist; ahalb_638  &exist; ahaub_639 (dom(a_40',ahalb_638,ahaub_639) &and; ahalb_638 &le; 0 &and; 0 &le; ahaub_639)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -101,8 +99,7 @@ unsat</li></ul></ul></li>
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_637,0,5) &amp; dom(a_40&apos;,0,5) &amp; update_array_1d(a_637,a_40&apos;,1,0) &amp; <br/>
-x_41&apos;=a_40&apos;[0]&#8866; x_41&apos;=1
+<ul>(dom(a_637,0,5) &and; dom(a_40',0,5) &and; update_array_1d(a_637,a_40',1,0) &and; x_41' = a_40'[0])  &#8866;  x_41' = 1
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

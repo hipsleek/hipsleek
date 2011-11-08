@@ -40,7 +40,7 @@ t_12 = 2;<br/>
 {(13,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 71::increase_n$int~int(t_12,n_11) at <a href="#L20">line 20</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; 1&lt;=2
+<ul><b>true</b>  &#8866;  1 &le; 2
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[] : ((1 &lt;= 2))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
@@ -49,13 +49,13 @@ Precondition of procedure call 71::increase_n$int~int(t_12,n_11) at <a href="#L2
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> n_11&apos;=2+1&#8866; 3=n_11&apos;
+<ul>n_11' = 2 + 1  &#8866;  3 = n_11'
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_11PRMD] : (((n_11PRMD != 2 + 1) | (3 = n_11PRMD)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
 <ul>{[n_11PRMD]  : FALSE }</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; 2=2
+<ul><b>true</b>  &#8866;  2 = 2
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[] : ((2 = 2))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR
@@ -79,7 +79,7 @@ n_13 = {<br/>
 </ul></li><li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=k &amp; n_13&apos;=n_13+k&#8866; n_13&apos;=k+n_13
+<ul>(1 &le; k &and; n_13' = n_13 + k)  &#8866;  n_13' = k + n_13
 <li class="Collapsed proverinput">Input to prover OMEGA CALCULATOR
 <ul>complement {[n_13PRMD, k, n_13] : (( (not (((1 &lt;= k) &amp; (n_13PRMD = n_13 + k))))  | (n_13PRMD = k + n_13)))};<br/>
 </ul></li><li class="Collapsed proveroutput">Output of prover OMEGA CALCULATOR

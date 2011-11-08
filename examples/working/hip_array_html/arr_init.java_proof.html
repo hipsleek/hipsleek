@@ -73,8 +73,7 @@ else LABEL! 67,1: <br/>
 {(14,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array update at line <a href="#L21">line 21</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=i &amp; i&lt;=j&#8866; &exist;(ahalb_641:&exist;(ahaub_642:dom(a,ahalb_641,ahaub_642) &amp; <br/>
-ahalb_641&lt;=i &amp; i&lt;=ahaub_642))
+<ul>(j &le; ahaub &and; dom(a,ahalb,ahaub) &and; ahalb &le; i &and; i &le; j)  &#8866;   &exist; ahalb_641  &exist; ahaub_642 (dom(a,ahalb_641,ahaub_642) &and; ahalb_641 &le; i &and; i &le; ahaub_642)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -100,9 +99,7 @@ ahalb_641&lt;=i &amp; i&lt;=ahaub_642))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 69::zinit$int[]~int~int(a,v_int_23_618,j) rec at <a href="#L23">line 23</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=t_651 &amp; k_650&lt;=i &amp; j&lt;=t_651 &amp; i&lt;=j &amp; dom(a,k_650,t_651) &amp; <br/>
-dom(a&apos;,k_650,t_651) &amp; update_array_1d(a,a&apos;,0,i) &amp; v_int_23_618&apos;=1+i&#8866; &exist;(k_658:&exist;(t_659:dom(a&apos;,k_658,t_659) &amp; k_658&lt;=v_int_23_618&apos; &amp; <br/>
-j&lt;=t_659))
+<ul>(i &le; t_651 &and; k_650 &le; i &and; j &le; t_651 &and; i &le; j &and; dom(a,k_650,t_651) &and; dom(a',k_650,t_651) &and; update_array_1d(a,a',0,i) &and; v_int_23_618' = 1 + i)  &#8866;   &exist; k_658  &exist; t_659 (dom(a',k_658,t_659) &and; k_658 &le; v_int_23_618' &and; j &le; t_659)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -135,9 +132,7 @@ j&lt;=t_659))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=j &amp; dom(a,k_650,t_651) &amp; k_650&lt;=i &amp; i&lt;=t_651 &amp; <br/>
-update_array_1d(a,a_661,0,i) &amp; dom(a_661,k_650,t_651) &amp; k_650&lt;=(1+i) &amp; <br/>
-j&lt;=t_651 &amp; dom(a&apos;,k_650,t_651) &amp; identicalzeroes(a&apos;,a_661,1+i,j)&#8866; dom(a&apos;,k_650,t_651)
+<ul>(i &le; j &and; dom(a,k_650,t_651) &and; k_650 &le; i &and; i &le; t_651 &and; update_array_1d(a,a_661,0,i) &and; dom(a_661,k_650,t_651) &and; k_650 &le; 1 + i &and; j &le; t_651 &and; dom(a',k_650,t_651) &and; identicalzeroes(a',a_661,1 + i,j))  &#8866;  dom(a',k_650,t_651)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -171,9 +166,7 @@ j&lt;=t_651 &amp; dom(a&apos;,k_650,t_651) &amp; identicalzeroes(a&apos;,a_661,1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a_661,k_650,t_651) &amp; i&lt;=j &amp; dom(a,k_650,t_651) &amp; k_650&lt;=i &amp; i&lt;=t_651 &amp; <br/>
-update_array_1d(a,a_661,0,i) &amp; k_650&lt;=(1+i) &amp; j&lt;=t_651 &amp; <br/>
-dom(a&apos;,k_650,t_651) &amp; identicalzeroes(a&apos;,a_661,1+i,j)&#8866; identicalzeroes(a&apos;,a,i,j)
+<ul>(dom(a_661,k_650,t_651) &and; i &le; j &and; dom(a,k_650,t_651) &and; k_650 &le; i &and; i &le; t_651 &and; update_array_1d(a,a_661,0,i) &and; k_650 &le; 1 + i &and; j &le; t_651 &and; dom(a',k_650,t_651) &and; identicalzeroes(a',a_661,1 + i,j))  &#8866;  identicalzeroes(a',a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -202,7 +195,7 @@ dom(a&apos;,k_650,t_651) &amp; identicalzeroes(a&apos;,a_661,1+i,j)&#8866; ident
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;i &amp; dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t&#8866; dom(a,k,t)
+<ul>(j &lt; i &and; dom(a,k,t) &and; k &le; i &and; j &le; t)  &#8866;  dom(a,k,t)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -226,7 +219,7 @@ dom(a&apos;,k_650,t_651) &amp; identicalzeroes(a&apos;,a_661,1+i,j)&#8866; ident
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t &amp; j&lt;i&#8866; identicalzeroes(a,a,i,j)
+<ul>(dom(a,k,t) &and; k &le; i &and; j &le; t &and; j &lt; i)  &#8866;  identicalzeroes(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

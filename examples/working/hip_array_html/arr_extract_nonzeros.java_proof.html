@@ -127,9 +127,7 @@ else LABEL! 80,1: 81::assert 81::: EBase true &amp; n=0 &amp; {FLOW,(35,35)=__no
 {(50,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L56">line 56</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,0,bh) &amp; n&lt;=(bh+1) &amp; 0&lt;=n &amp; ahalb&lt;=i &amp; dom(a,ahalb,ahaub) &amp; j&lt;=ahaub &amp; <br/>
-numnonzeros(a,i,j,n) &amp; i&lt;=j&#8866; &exist;(ahalb_703:&exist;(ahaub_704:dom(a,ahalb_703,ahaub_704) &amp; <br/>
-ahalb_703&lt;=j &amp; j&lt;=ahaub_704))
+<ul>(dom(b,0,bh) &and; n &le; bh + 1 &and; 0 &le; n &and; ahalb &le; i &and; dom(a,ahalb,ahaub) &and; j &le; ahaub &and; numnonzeros(a,i,j,n) &and; i &le; j)  &#8866;   &exist; ahalb_703  &exist; ahaub_704 (dom(a,ahalb_703,ahaub_704) &and; ahalb_703 &le; j &and; j &le; ahaub_704)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -164,9 +162,7 @@ ahalb_703&lt;=j &amp; j&lt;=ahaub_704))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L57">line 57</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,0,bh) &amp; n&lt;=(bh+1) &amp; 0&lt;=n &amp; ahalb_713&lt;=i &amp; numnonzeros(a,i,j,n) &amp; <br/>
-i&lt;=j &amp; dom(a,ahalb_713,ahaub_714) &amp; ahalb_713&lt;=j &amp; j&lt;=ahaub_714 &amp; (a[j])!=0&#8866; &exist;(ahalb_719:&exist;(ahaub_720:dom(a,ahalb_719,ahaub_720) &amp; <br/>
-ahalb_719&lt;=j &amp; j&lt;=ahaub_720))
+<ul>(dom(b,0,bh) &and; n &le; bh + 1 &and; 0 &le; n &and; ahalb_713 &le; i &and; numnonzeros(a,i,j,n) &and; i &le; j &and; dom(a,ahalb_713,ahaub_714) &and; ahalb_713 &le; j &and; j &le; ahaub_714 &and; a[j] &ne; 0)  &#8866;   &exist; ahalb_719  &exist; ahaub_720 (dom(a,ahalb_719,ahaub_720) &and; ahalb_719 &le; j &and; j &le; ahaub_720)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -203,10 +199,7 @@ ahalb_719&lt;=j &amp; j&lt;=ahaub_720))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L57">line 57</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb_713&lt;=i &amp; v_int_57_638&apos;=a[j] &amp; j&lt;=ahaub_714 &amp; ahalb_713&lt;=j &amp; <br/>
-dom(a,ahalb_713,ahaub_714) &amp; (a[j])!=0 &amp; i&lt;=j &amp; n&lt;=(ahaub_729+1) &amp; <br/>
-numnonzeros(a,i,j,n) &amp; 0&lt;=n &amp; dom(b,0,ahaub_729) &amp; v_int_57_637&apos;+1=n&#8866; &exist;(ahalb_736:&exist;(ahaub_737:dom(b,ahalb_736,ahaub_737) &amp; <br/>
-ahalb_736&lt;=v_int_57_637&apos; &amp; v_int_57_637&apos;&lt;=ahaub_737))
+<ul>(ahalb_713 &le; i &and; v_int_57_638' = a[j] &and; j &le; ahaub_714 &and; ahalb_713 &le; j &and; dom(a,ahalb_713,ahaub_714) &and; a[j] &ne; 0 &and; i &le; j &and; n &le; ahaub_729 + 1 &and; numnonzeros(a,i,j,n) &and; 0 &le; n &and; dom(b,0,ahaub_729) &and; v_int_57_637' + 1 = n)  &#8866;   &exist; ahalb_736  &exist; ahaub_737 (dom(b,ahalb_736,ahaub_737) &and; ahalb_736 &le; v_int_57_637' &and; v_int_57_637' &le; ahaub_737)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -247,13 +240,7 @@ ahalb_736&lt;=v_int_57_637&apos; &amp; v_int_57_637&apos;&lt;=ahaub_737))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 88::copy_nonzeros$int[]~int~int~int[]~int(a,i,v_int_60_642,b,n) rec at <a href="#L60">line 60</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_57_746&lt;=bh_758 &amp; 0&lt;=v_int_57_746 &amp; j&lt;=ah_757 &amp; al_756&lt;=j &amp; <br/>
-al_756&lt;=i &amp; 0&lt;=n &amp; numnonzeros(a,i,j,n) &amp; n&lt;=(bh_758+1) &amp; i&lt;=j &amp; (a[j])!=0 &amp; <br/>
-dom(a,al_756,ah_757) &amp; v_int_57_746+1=n &amp; dom(b,0,bh_758) &amp; <br/>
-dom(b&apos;,0,bh_758) &amp; update_array_1d(b,b&apos;,a[j],v_int_57_746) &amp; n&apos;+1=n &amp; <br/>
-v_int_60_642&apos;+1=j&#8866; &exist;(al_769:&exist;(ah_770:&exist;(bh_771:dom(a,al_769,ah_770) &amp; <br/>
-al_769&lt;=i &amp; v_int_60_642&apos;&lt;=ah_770 &amp; 0&lt;=n&apos; &amp; <br/>
-numnonzeros(a,i,v_int_60_642&apos;,n&apos;) &amp; dom(b&apos;,0,bh_771) &amp; n&apos;&lt;=(1+bh_771))))
+<ul>(v_int_57_746 &le; bh_758 &and; 0 &le; v_int_57_746 &and; j &le; ah_757 &and; al_756 &le; j &and; al_756 &le; i &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh_758 + 1 &and; i &le; j &and; a[j] &ne; 0 &and; dom(a,al_756,ah_757) &and; v_int_57_746 + 1 = n &and; dom(b,0,bh_758) &and; dom(b',0,bh_758) &and; update_array_1d(b,b',a[j],v_int_57_746) &and; n' + 1 = n &and; v_int_60_642' + 1 = j)  &#8866;   &exist; al_769  &exist; ah_770  &exist; bh_771 (dom(a,al_769,ah_770) &and; al_769 &le; i &and; v_int_60_642' &le; ah_770 &and; 0 &le; n' &and; numnonzeros(a,i,v_int_60_642',n') &and; dom(b',0,bh_771) &and; n' &le; 1 + bh_771)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -300,11 +287,7 @@ numnonzeros(a,i,v_int_60_642&apos;,n&apos;) &amp; dom(b&apos;,0,bh_771) &amp; n&
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ah_757 &amp; al_756&lt;=j &amp; al_756&lt;=i &amp; 0&lt;=n &amp; numnonzeros(a,i,j,n) &amp; <br/>
-dom(b,0,bh_758) &amp; n&lt;=(bh_758+1) &amp; i&lt;=j &amp; dom(a,al_756,ah_757) &amp; a[j]=0 &amp; <br/>
-a[j]=a[j] &amp; v_int_60_642&apos;+1=j&#8866; &exist;(al_773:&exist;(ah_774:&exist;(bh_775:dom(a,al_773,ah_774) &amp; <br/>
-al_773&lt;=i &amp; v_int_60_642&apos;&lt;=ah_774 &amp; 0&lt;=n &amp; <br/>
-numnonzeros(a,i,v_int_60_642&apos;,n) &amp; dom(b,0,bh_775) &amp; n&lt;=(1+bh_775))))
+<ul>(j &le; ah_757 &and; al_756 &le; j &and; al_756 &le; i &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; dom(b,0,bh_758) &and; n &le; bh_758 + 1 &and; i &le; j &and; dom(a,al_756,ah_757) &and; a[j] = 0 &and; a[j] = a[j] &and; v_int_60_642' + 1 = j)  &#8866;   &exist; al_773  &exist; ah_774  &exist; bh_775 (dom(a,al_773,ah_774) &and; al_773 &le; i &and; v_int_60_642' &le; ah_774 &and; 0 &le; n &and; numnonzeros(a,i,v_int_60_642',n) &and; dom(b,0,bh_775) &and; n &le; 1 + bh_775)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -346,8 +329,7 @@ numnonzeros(a,i,v_int_60_642&apos;,n) &amp; dom(b,0,bh_775) &amp; n&lt;=(1+bh_77
 <li class="Collapsed assert">
 Assertion at <a href="#L62">line 62</a> holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;i &amp; dom(b,0,bh) &amp; j&lt;=ah &amp; al&lt;=i &amp; dom(a,al,ah) &amp; 0&lt;=n &amp; <br/>
-numnonzeros(a,i,j,n) &amp; n&lt;=(bh+1)&#8866; n=0
+<ul>(j &lt; i &and; dom(b,0,bh) &and; j &le; ah &and; al &le; i &and; dom(a,al,ah) &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh + 1)  &#8866;  n = 0
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -377,13 +359,7 @@ numnonzeros(a,i,j,n) &amp; n&lt;=(bh+1)&#8866; n=0
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> n_779&lt;=(bh_758+1) &amp; dom(b_777,0,bh_758) &amp; <br/>
-numnonzeros(a,i,v_int_60_778,n_779) &amp; 0&lt;=n_779 &amp; v_int_60_778&lt;=ah_757 &amp; <br/>
-al_756&lt;=i &amp; dom(a,al_756,ah_757) &amp; v_int_60_778+1=j &amp; v_int_57_746&lt;=bh_758 &amp; <br/>
-0&lt;=v_int_57_746 &amp; j&lt;=ah_757 &amp; al_756&lt;=j &amp; (a[j])!=0 &amp; i&lt;=j &amp; 0&lt;=n &amp; <br/>
-numnonzeros(a,i,j,n) &amp; n&lt;=(bh_758+1) &amp; v_int_57_746+1=n &amp; dom(b,0,bh_758) &amp; <br/>
-update_array_1d(b,b_777,a[j],v_int_57_746) &amp; n_779+1=n &amp; <br/>
-amodr(b_777,b&apos;,0,n_779 - 1) &amp; alldiff(b&apos;,0,0,n_779 - 1)&#8866; amodr(b,b&apos;,0,n - 1)
+<ul>(n_779 &le; bh_758 + 1 &and; dom(b_777,0,bh_758) &and; numnonzeros(a,i,v_int_60_778,n_779) &and; 0 &le; n_779 &and; v_int_60_778 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_778 + 1 = j &and; v_int_57_746 &le; bh_758 &and; 0 &le; v_int_57_746 &and; j &le; ah_757 &and; al_756 &le; j &and; a[j] &ne; 0 &and; i &le; j &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh_758 + 1 &and; v_int_57_746 + 1 = n &and; dom(b,0,bh_758) &and; update_array_1d(b,b_777,a[j],v_int_57_746) &and; n_779 + 1 = n &and; amodr(b_777,b',0,n_779 - 1) &and; alldiff(b',0,0,n_779 - 1))  &#8866;  amodr(b,b',0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -435,13 +411,7 @@ amodr(b_777,b&apos;,0,n_779 - 1) &amp; alldiff(b&apos;,0,0,n_779 - 1)&#8866; amo
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> n_779&lt;=(bh_758+1) &amp; dom(b_777,0,bh_758) &amp; <br/>
-numnonzeros(a,i,v_int_60_778,n_779) &amp; 0&lt;=n_779 &amp; v_int_60_778&lt;=ah_757 &amp; <br/>
-al_756&lt;=i &amp; dom(a,al_756,ah_757) &amp; v_int_60_778+1=j &amp; v_int_57_746&lt;=bh_758 &amp; <br/>
-0&lt;=v_int_57_746 &amp; j&lt;=ah_757 &amp; al_756&lt;=j &amp; (a[j])!=0 &amp; i&lt;=j &amp; 0&lt;=n &amp; <br/>
-numnonzeros(a,i,j,n) &amp; n&lt;=(bh_758+1) &amp; v_int_57_746+1=n &amp; dom(b,0,bh_758) &amp; <br/>
-update_array_1d(b,b_777,a[j],v_int_57_746) &amp; n_779+1=n &amp; <br/>
-amodr(b_777,b&apos;,0,n_779 - 1) &amp; alldiff(b&apos;,0,0,n_779 - 1)&#8866; alldiff(b&apos;,0,0,n - 1)
+<ul>(n_779 &le; bh_758 + 1 &and; dom(b_777,0,bh_758) &and; numnonzeros(a,i,v_int_60_778,n_779) &and; 0 &le; n_779 &and; v_int_60_778 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_778 + 1 = j &and; v_int_57_746 &le; bh_758 &and; 0 &le; v_int_57_746 &and; j &le; ah_757 &and; al_756 &le; j &and; a[j] &ne; 0 &and; i &le; j &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh_758 + 1 &and; v_int_57_746 + 1 = n &and; dom(b,0,bh_758) &and; update_array_1d(b,b_777,a[j],v_int_57_746) &and; n_779 + 1 = n &and; amodr(b_777,b',0,n_779 - 1) &and; alldiff(b',0,0,n_779 - 1))  &#8866;  alldiff(b',0,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -493,10 +463,7 @@ amodr(b_777,b&apos;,0,n_779 - 1) &amp; alldiff(b&apos;,0,0,n_779 - 1)&#8866; all
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_60_780&lt;=ah_757 &amp; al_756&lt;=i &amp; dom(a,al_756,ah_757) &amp; v_int_60_780+<br/>
-1=j &amp; a[j]=a[j] &amp; a[j]=0 &amp; j&lt;=ah_757 &amp; al_756&lt;=j &amp; i&lt;=j &amp; <br/>
-numnonzeros(a,i,j,n) &amp; 0&lt;=n &amp; numnonzeros(a,i,v_int_60_780,n) &amp; <br/>
-dom(b,0,bh_758) &amp; n&lt;=(bh_758+1) &amp; amodr(b,b&apos;,0,n - 1) &amp; alldiff(b&apos;,0,0,n - 1)&#8866; amodr(b,b&apos;,0,n - 1)
+<ul>(v_int_60_780 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_780 + 1 = j &and; a[j] = a[j] &and; a[j] = 0 &and; j &le; ah_757 &and; al_756 &le; j &and; i &le; j &and; numnonzeros(a,i,j,n) &and; 0 &le; n &and; numnonzeros(a,i,v_int_60_780,n) &and; dom(b,0,bh_758) &and; n &le; bh_758 + 1 &and; amodr(b,b',0,n - 1) &and; alldiff(b',0,0,n - 1))  &#8866;  amodr(b,b',0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -539,10 +506,7 @@ dom(b,0,bh_758) &amp; n&lt;=(bh_758+1) &amp; amodr(b,b&apos;,0,n - 1) &amp; alld
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_60_780&lt;=ah_757 &amp; al_756&lt;=i &amp; dom(a,al_756,ah_757) &amp; v_int_60_780+<br/>
-1=j &amp; a[j]=a[j] &amp; a[j]=0 &amp; j&lt;=ah_757 &amp; al_756&lt;=j &amp; i&lt;=j &amp; <br/>
-numnonzeros(a,i,j,n) &amp; 0&lt;=n &amp; numnonzeros(a,i,v_int_60_780,n) &amp; <br/>
-dom(b,0,bh_758) &amp; n&lt;=(bh_758+1) &amp; amodr(b,b&apos;,0,n - 1) &amp; alldiff(b&apos;,0,0,n - 1)&#8866; alldiff(b&apos;,0,0,n - 1)
+<ul>(v_int_60_780 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_780 + 1 = j &and; a[j] = a[j] &and; a[j] = 0 &and; j &le; ah_757 &and; al_756 &le; j &and; i &le; j &and; numnonzeros(a,i,j,n) &and; 0 &le; n &and; numnonzeros(a,i,v_int_60_780,n) &and; dom(b,0,bh_758) &and; n &le; bh_758 + 1 &and; amodr(b,b',0,n - 1) &and; alldiff(b',0,0,n - 1))  &#8866;  alldiff(b',0,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -585,8 +549,7 @@ dom(b,0,bh_758) &amp; n&lt;=(bh_758+1) &amp; amodr(b,b&apos;,0,n - 1) &amp; alld
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;i &amp; j&lt;=ah &amp; al&lt;=i &amp; dom(a,al,ah) &amp; 0&lt;=n &amp; numnonzeros(a,i,j,n) &amp; <br/>
-dom(b,0,bh) &amp; n&lt;=(bh+1)&#8866; amodr(b,b,0,n - 1)
+<ul>(j &lt; i &and; j &le; ah &and; al &le; i &and; dom(a,al,ah) &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; dom(b,0,bh) &and; n &le; bh + 1)  &#8866;  amodr(b,b,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -616,8 +579,7 @@ dom(b,0,bh) &amp; n&lt;=(bh+1)&#8866; amodr(b,b,0,n - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;i &amp; j&lt;=ah &amp; al&lt;=i &amp; dom(a,al,ah) &amp; 0&lt;=n &amp; numnonzeros(a,i,j,n) &amp; <br/>
-dom(b,0,bh) &amp; n&lt;=(bh+1)&#8866; alldiff(b,0,0,n - 1)
+<ul>(j &lt; i &and; j &le; ah &and; al &le; i &and; dom(a,al,ah) &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; dom(b,0,bh) &and; n &le; bh + 1)  &#8866;  alldiff(b,0,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -708,8 +670,7 @@ v_int_45_670 = 1;<br/>
 {(36,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L42">line 42</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb&lt;=i &amp; dom(a,ahalb,ahaub) &amp; j&lt;=ahaub &amp; i&lt;=j&#8866; &exist;(ahalb_792:&exist;(ahaub_793:dom(a,ahalb_792,ahaub_793) &amp; <br/>
-ahalb_792&lt;=j &amp; j&lt;=ahaub_793))
+<ul>(ahalb &le; i &and; dom(a,ahalb,ahaub) &and; j &le; ahaub &and; i &le; j)  &#8866;   &exist; ahalb_792  &exist; ahaub_793 (dom(a,ahalb_792,ahaub_793) &and; ahalb_792 &le; j &and; j &le; ahaub_793)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -735,9 +696,7 @@ ahalb_792&lt;=j &amp; j&lt;=ahaub_793))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 100::count_nonzeros$int[]~int~int(a,i,v_int_43_666) rec at <a href="#L43">line 43</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ah_810 &amp; al_809&lt;=j &amp; al_809&lt;=i &amp; i&lt;=j &amp; dom(a,al_809,ah_810) &amp; <br/>
-(a[j])!=0 &amp; v_int_43_666&apos;+1=j&#8866; &exist;(al_817:&exist;(ah_818:dom(a,al_817,ah_818) &amp; al_817&lt;=i &amp; <br/>
-v_int_43_666&apos;&lt;=ah_818))
+<ul>(j &le; ah_810 &and; al_809 &le; j &and; al_809 &le; i &and; i &le; j &and; dom(a,al_809,ah_810) &and; a[j] &ne; 0 &and; v_int_43_666' + 1 = j)  &#8866;   &exist; al_817  &exist; ah_818 (dom(a,al_817,ah_818) &and; al_817 &le; i &and; v_int_43_666' &le; ah_818)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -767,9 +726,7 @@ v_int_43_666&apos;&lt;=ah_818))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 96::count_nonzeros$int[]~int~int(a,i,v_int_45_671) rec at <a href="#L45">line 45</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ah_835 &amp; al_834&lt;=j &amp; al_834&lt;=i &amp; i&lt;=j &amp; dom(a,al_834,ah_835) &amp; a[j]=0 &amp; <br/>
-a[j]=a[j] &amp; v_int_45_671&apos;+1=j&#8866; &exist;(al_842:&exist;(ah_843:dom(a,al_842,ah_843) &amp; al_842&lt;=i &amp; <br/>
-v_int_45_671&apos;&lt;=ah_843))
+<ul>(j &le; ah_835 &and; al_834 &le; j &and; al_834 &le; i &and; i &le; j &and; dom(a,al_834,ah_835) &and; a[j] = 0 &and; a[j] = a[j] &and; v_int_45_671' + 1 = j)  &#8866;   &exist; al_842  &exist; ah_843 (dom(a,al_842,ah_843) &and; al_842 &le; i &and; v_int_45_671' &le; ah_843)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -801,7 +758,7 @@ v_int_45_671&apos;&lt;=ah_843))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,al,ah) &amp; al&lt;=i &amp; j&lt;=ah &amp; j&lt;i&#8866; numnonzeros(a,i,j,0)
+<ul>(dom(a,al,ah) &and; al &le; i &and; j &le; ah &and; j &lt; i)  &#8866;  numnonzeros(a,i,j,0)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -823,9 +780,7 @@ Procedure post-condition holds
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_43_825&lt;=ah_810 &amp; i&lt;=j &amp; al_809&lt;=j &amp; j&lt;=ah_810 &amp; (a[j])!=0 &amp; <br/>
-v_int_43_825+1=j &amp; dom(a,al_809,ah_810) &amp; al_809&lt;=i &amp; <br/>
-numnonzeros(a,i,v_int_43_825,v_int_43_846) &amp; v_int_43_669&apos;=v_int_43_846+1&#8866; numnonzeros(a,i,j,v_int_43_669&apos;)
+<ul>(v_int_43_825 &le; ah_810 &and; i &le; j &and; al_809 &le; j &and; j &le; ah_810 &and; a[j] &ne; 0 &and; v_int_43_825 + 1 = j &and; dom(a,al_809,ah_810) &and; al_809 &le; i &and; numnonzeros(a,i,v_int_43_825,v_int_43_846) &and; v_int_43_669' = v_int_43_846 + 1)  &#8866;  numnonzeros(a,i,j,v_int_43_669')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -857,9 +812,7 @@ numnonzeros(a,i,v_int_43_825,v_int_43_846) &amp; v_int_43_669&apos;=v_int_43_846
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_45_847&lt;=ah_835 &amp; i&lt;=j &amp; al_834&lt;=j &amp; j&lt;=ah_835 &amp; a[j]=0 &amp; a[j]=a[j] &amp; <br/>
-v_int_45_847+1=j &amp; dom(a,al_834,ah_835) &amp; al_834&lt;=i &amp; <br/>
-numnonzeros(a,i,v_int_45_847,v_int_45_672&apos;)&#8866; numnonzeros(a,i,j,v_int_45_672&apos;)
+<ul>(v_int_45_847 &le; ah_835 &and; i &le; j &and; al_834 &le; j &and; j &le; ah_835 &and; a[j] = 0 &and; a[j] = a[j] &and; v_int_45_847 + 1 = j &and; dom(a,al_834,ah_835) &and; al_834 &le; i &and; numnonzeros(a,i,v_int_45_847,v_int_45_672'))  &#8866;  numnonzeros(a,i,j,v_int_45_672')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -915,7 +868,7 @@ aalloc___$int(n_45)<br/>
 {(26,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 103::count_nonzeros$int[]~int~int(a,i,j) at <a href="#L30">line 30</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,al_848,ah_849) &amp; al_848&lt;=i &amp; j&lt;=ah_849&#8866; &exist;(al_856:&exist;(ah_857:dom(a,al_856,ah_857) &amp; al_856&lt;=i &amp; j&lt;=ah_857))
+<ul>(dom(a,al_848,ah_849) &and; al_848 &le; i &and; j &le; ah_849)  &#8866;   &exist; al_856  &exist; ah_857 (dom(a,al_856,ah_857) &and; al_856 &le; i &and; j &le; ah_857)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -940,10 +893,7 @@ Precondition of procedure call 103::count_nonzeros$int[]~int~int(a,i,j) at <a hr
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 105::copy_nonzeros$int[]~int~int~int[]~int(a,i,j,b,n_45) at <a href="#L32">line 32</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,al_862,ah_863) &amp; al_862&lt;=i &amp; j&lt;=ah_863 &amp; numnonzeros(a,i,j,n_45&apos;) &amp; <br/>
-dom(b&apos;,0,n_45&apos; - 1) &amp; n_45&apos; - 1=bh&#8866; &exist;(al_874:&exist;(ah_875:&exist;(bh_876:dom(a,al_874,ah_875) &amp; <br/>
-al_874&lt;=i &amp; j&lt;=ah_875 &amp; 0&lt;=n_45&apos; &amp; numnonzeros(a,i,j,n_45&apos;) &amp; <br/>
-dom(b&apos;,0,bh_876) &amp; n_45&apos;&lt;=(1+bh_876))))
+<ul>(dom(a,al_862,ah_863) &and; al_862 &le; i &and; j &le; ah_863 &and; numnonzeros(a,i,j,n_45') &and; dom(b',0,n_45' - 1) &and; n_45' - 1 = bh)  &#8866;   &exist; al_874  &exist; ah_875  &exist; bh_876 (dom(a,al_874,ah_875) &and; al_874 &le; i &and; j &le; ah_875 &and; 0 &le; n_45' &and; numnonzeros(a,i,j,n_45') &and; dom(b',0,bh_876) &and; n_45' &le; 1 + bh_876)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

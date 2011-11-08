@@ -119,7 +119,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Assert ({ exp_assert_asserted_formula = c1_o;
           exp_assert_assumed_formula = c2;
           exp_assert_path_id = (pidi,s);
-          exp_assert_pos = pos}) -> let _ = if !print_proof then 
+          exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
           				begin
           					Prooftracer.push_assert_assume e0;
 							Tpdispatcher.unsuppress_imply_output ();
@@ -144,6 +144,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				            Debug.pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
 				          else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
                           rs in 
+					let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
+                  			begin
+                  				Prooftracer.pop_div ();
+								Tpdispatcher.suppress_imply_output ();
+                  			end in
                   let res = match c2 with
                     | None -> ts
                     | Some c ->
@@ -151,11 +156,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
                           let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
                           List.map CF.remove_dupl_false_fe r in
-                  let _ = if !print_proof then 
-                  			begin
-                  				Prooftracer.pop_div ();
-								Tpdispatcher.suppress_imply_output ();
-                  			end in
                   (ps@res)
 	          end
         | Assign ({ exp_assign_lhs = v;

@@ -217,9 +217,7 @@ v_int_132_665 = 1;<br/>
 {(121,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L129">line 129</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j!=0 &amp; 0&lt;=j &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; j&lt;i &amp; IsConsistent(b,1,i -<br/>
-1) &amp; IsConsistent(b,j+1,i)&#8866; &exist;(ahalb_770:&exist;(ahaub_771:dom(b,ahalb_770,ahaub_771) &amp; <br/>
-ahalb_770&lt;=i &amp; i&lt;=ahaub_771))
+<ul>(j &ne; 0 &and; 0 &le; j &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i))  &#8866;   &exist; ahalb_770  &exist; ahaub_771 (dom(b,ahalb_770,ahaub_771) &and; ahalb_770 &le; i &and; i &le; ahaub_771)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -253,9 +251,7 @@ ahalb_770&lt;=i &amp; i&lt;=ahaub_771))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L129">line 129</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_774 &amp; 1&lt;=i &amp; 0&lt;=j &amp; j&lt;i &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-IsConsistent(b,j+1,i) &amp; j!=0 &amp; dom(b,1,ahaub_774) &amp; v_int_129_655&apos;=b[i]&#8866; &exist;(ahalb_779:&exist;(ahaub_780:dom(b,ahalb_779,ahaub_780) &amp; <br/>
-ahalb_779&lt;=j &amp; j&lt;=ahaub_780))
+<ul>(i &le; ahaub_774 &and; 1 &le; i &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; j &ne; 0 &and; dom(b,1,ahaub_774) &and; v_int_129_655' = b[i])  &#8866;   &exist; ahalb_779  &exist; ahaub_780 (dom(b,ahalb_779,ahaub_780) &and; ahalb_779 &le; j &and; j &le; ahaub_780)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -291,10 +287,7 @@ ahalb_779&lt;=j &amp; j&lt;=ahaub_780))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 97::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_132_666) rec at <a href="#L132">line 132</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_132_666&apos;+1=j &amp; h_48&apos;!=v_int_130_887 &amp; v_int_130_887+i=j &amp; <br/>
-h_48&apos;!=v_int_130_833 &amp; v_int_130_833+j=i &amp; h_48&apos;!=0 &amp; 1&lt;=j &amp; 1&lt;=i &amp; j!=0 &amp; <br/>
-j&lt;i &amp; 0&lt;=j &amp; IsConsistent(b,1,i - 1) &amp; IsConsistent(b,j+1,i) &amp; <br/>
-i&lt;=ahaub_774 &amp; dom(b,1,ahaub_774) &amp; j&lt;=ahaub_774 &amp; h_48&apos;+(b[j])=b[i]&#8866; dom(b,1,ahaub_774)
+<ul>(v_int_132_666' + 1 = j &and; h_48' &ne; v_int_130_887 &and; v_int_130_887 + i = j &and; h_48' &ne; v_int_130_833 &and; v_int_130_833 + j = i &and; h_48' &ne; 0 &and; 1 &le; j &and; 1 &le; i &and; j &ne; 0 &and; j &lt; i &and; 0 &le; j &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; j &le; ahaub_774 &and; h_48' + b[j] = b[i])  &#8866;  dom(b,1,ahaub_774)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -339,10 +332,7 @@ i&lt;=ahaub_774 &amp; dom(b,1,ahaub_774) &amp; j&lt;=ahaub_774 &amp; h_48&apos;+
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_132_666&apos;+1=j &amp; h_48&apos;!=v_int_130_887 &amp; h_48&apos;!=v_int_130_833 &amp; <br/>
-h_48&apos;!=0 &amp; j&lt;=ahaub_774 &amp; 1&lt;=j &amp; dom(b,1,ahaub_774) &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; <br/>
-h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; v_int_130_887+i=j&#8866; 1&lt;=i
+<ul>(v_int_132_666' + 1 = j &and; h_48' &ne; v_int_130_887 &and; h_48' &ne; v_int_130_833 &and; h_48' &ne; 0 &and; j &le; ahaub_774 &and; 1 &le; j &and; dom(b,1,ahaub_774) &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; h_48' + b[j] = b[i] &and; v_int_130_833 + j = i &and; v_int_130_887 + i = j)  &#8866;  1 &le; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -383,10 +373,7 @@ h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; v_int_130_887+i=j&#8866; 1&
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_132_666&apos;+1=j &amp; h_48&apos;!=v_int_130_887 &amp; h_48&apos;!=v_int_130_833 &amp; <br/>
-h_48&apos;!=0 &amp; 1&lt;=j &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; dom(b,1,ahaub_774) &amp; <br/>
-j&lt;=ahaub_774 &amp; h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; v_int_130_887+i=j&#8866; i&lt;=ahaub_774
+<ul>(v_int_132_666' + 1 = j &and; h_48' &ne; v_int_130_887 &and; h_48' &ne; v_int_130_833 &and; h_48' &ne; 0 &and; 1 &le; j &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; j &le; ahaub_774 &and; h_48' + b[j] = b[i] &and; v_int_130_833 + j = i &and; v_int_130_887 + i = j)  &#8866;  i &le; ahaub_774
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -427,10 +414,7 @@ j&lt;=ahaub_774 &amp; h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; v_int
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> h_48&apos;!=v_int_130_887 &amp; v_int_130_887+i=j &amp; h_48&apos;!=v_int_130_833 &amp; <br/>
-v_int_130_833+j=i &amp; h_48&apos;!=0 &amp; h_48&apos;+(b[j])=b[i] &amp; j&lt;=ahaub_774 &amp; 1&lt;=j &amp; <br/>
-dom(b,1,ahaub_774) &amp; i&lt;=ahaub_774 &amp; 1&lt;=i &amp; j!=0 &amp; IsConsistent(b,j+1,i) &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; j&lt;i &amp; 0&lt;=j &amp; v_int_132_666&apos;+1=j&#8866; 0&lt;=v_int_132_666&apos;
+<ul>(h_48' &ne; v_int_130_887 &and; v_int_130_887 + i = j &and; h_48' &ne; v_int_130_833 &and; v_int_130_833 + j = i &and; h_48' &ne; 0 &and; h_48' + b[j] = b[i] &and; j &le; ahaub_774 &and; 1 &le; j &and; dom(b,1,ahaub_774) &and; i &le; ahaub_774 &and; 1 &le; i &and; j &ne; 0 &and; IsConsistent(b,j + 1,i) &and; IsConsistent(b,1,i - 1) &and; j &lt; i &and; 0 &le; j &and; v_int_132_666' + 1 = j)  &#8866;  0 &le; v_int_132_666'
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -471,10 +455,7 @@ IsConsistent(b,1,i - 1) &amp; j&lt;i &amp; 0&lt;=j &amp; v_int_132_666&apos;+1=j
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> h_48&apos;!=v_int_130_887 &amp; h_48&apos;!=v_int_130_833 &amp; h_48&apos;!=0 &amp; j&lt;=ahaub_774 &amp; <br/>
-1&lt;=j &amp; dom(b,1,ahaub_774) &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; h_48&apos;+(b[j])=b[i] &amp; <br/>
-v_int_130_833+j=i &amp; v_int_130_887+i=j &amp; v_int_132_666&apos;+1=j&#8866; v_int_132_666&apos;&lt;i
+<ul>(h_48' &ne; v_int_130_887 &and; h_48' &ne; v_int_130_833 &and; h_48' &ne; 0 &and; j &le; ahaub_774 &and; 1 &le; j &and; dom(b,1,ahaub_774) &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; h_48' + b[j] = b[i] &and; v_int_130_833 + j = i &and; v_int_130_887 + i = j &and; v_int_132_666' + 1 = j)  &#8866;  v_int_132_666' &lt; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -515,10 +496,7 @@ v_int_130_833+j=i &amp; v_int_130_887+i=j &amp; v_int_132_666&apos;+1=j&#8866; v
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_132_666&apos;+1=j &amp; h_48&apos;!=v_int_130_887 &amp; h_48&apos;!=v_int_130_833 &amp; <br/>
-h_48&apos;!=0 &amp; j&lt;=ahaub_774 &amp; 1&lt;=j &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; IsConsistent(b,1,i -<br/>
-1) &amp; IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; dom(b,1,ahaub_774) &amp; <br/>
-h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; v_int_130_887+i=j&#8866; IsConsistent(b,1,i - 1)
+<ul>(v_int_132_666' + 1 = j &and; h_48' &ne; v_int_130_887 &and; h_48' &ne; v_int_130_833 &and; h_48' &ne; 0 &and; j &le; ahaub_774 &and; 1 &le; j &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; h_48' + b[j] = b[i] &and; v_int_130_833 + j = i &and; v_int_130_887 + i = j)  &#8866;  IsConsistent(b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -562,10 +540,7 @@ h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; v_int_130_887+i=j&#8866; Is
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> h_48&apos;!=v_int_130_887 &amp; h_48&apos;!=v_int_130_833 &amp; h_48&apos;!=0 &amp; j&lt;=ahaub_774 &amp; <br/>
-1&lt;=j &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; IsConsistent(b,1,i - 1) &amp; IsConsistent(b,j+1,i) &amp; <br/>
-1&lt;=i &amp; i&lt;=ahaub_774 &amp; dom(b,1,ahaub_774) &amp; h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+<br/>
-j=i &amp; v_int_130_887+i=j &amp; v_int_132_666&apos;+1=j&#8866; IsConsistent(b,v_int_132_666&apos;+1,i)
+<ul>(h_48' &ne; v_int_130_887 &and; h_48' &ne; v_int_130_833 &and; h_48' &ne; 0 &and; j &le; ahaub_774 &and; 1 &le; j &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; h_48' + b[j] = b[i] &and; v_int_130_833 + j = i &and; v_int_130_887 + i = j &and; v_int_132_666' + 1 = j)  &#8866;  IsConsistent(b,v_int_132_666' + 1,i)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -612,11 +587,7 @@ j=i &amp; v_int_130_887+i=j &amp; v_int_132_666&apos;+1=j&#8866; IsConsistent(b,
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> 0!=v_int_130_854 &amp; 0!=v_int_130_813 &amp; 1&lt;=j &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; <br/>
-dom(b,1,ahaub_774) &amp; j&lt;=ahaub_774 &amp; 0+(b[j])=b[i] &amp; v_int_130_813+j=i &amp; <br/>
-v_int_130_854+i=j &amp; !(v_boolean_131_663&apos;)&#8866; v_boolean_131_663&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_131_663&apos;) &amp; <br/>
-NoSolutionPrefix(b,ahaub_774,i,ahaub_774)
+<ul>(0 &ne; v_int_130_854 &and; 0 &ne; v_int_130_813 &and; 1 &le; j &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; j &le; ahaub_774 &and; 0 + b[j] = b[i] &and; v_int_130_813 + j = i &and; v_int_130_854 + i = j &and;  &not; v_boolean_131_663')  &#8866;  ((v_boolean_131_663' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_131_663' &and; NoSolutionPrefix(b,ahaub_774,i,ahaub_774)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -658,11 +629,7 @@ NoSolutionPrefix(b,ahaub_774,i,ahaub_774)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> h_48&apos;!=v_int_130_855 &amp; h_48&apos;!=0 &amp; 1&lt;=j &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; <br/>
-dom(b,1,ahaub_774) &amp; j&lt;=ahaub_774 &amp; h_48&apos;+(b[j])=b[i] &amp; h_48&apos;+j=i &amp; <br/>
-v_int_130_855+i=j &amp; !(v_boolean_131_663&apos;)&#8866; v_boolean_131_663&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_131_663&apos;) &amp; <br/>
-NoSolutionPrefix(b,ahaub_774,i,ahaub_774)
+<ul>(h_48' &ne; v_int_130_855 &and; h_48' &ne; 0 &and; 1 &le; j &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; j &le; ahaub_774 &and; h_48' + b[j] = b[i] &and; h_48' + j = i &and; v_int_130_855 + i = j &and;  &not; v_boolean_131_663')  &#8866;  ((v_boolean_131_663' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_131_663' &and; NoSolutionPrefix(b,ahaub_774,i,ahaub_774)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -704,11 +671,7 @@ NoSolutionPrefix(b,ahaub_774,i,ahaub_774)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> h_48&apos;!=v_int_130_833 &amp; h_48&apos;!=0 &amp; 1&lt;=j &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; <br/>
-dom(b,1,ahaub_774) &amp; j&lt;=ahaub_774 &amp; h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; <br/>
-h_48&apos;+i=j &amp; !(v_boolean_131_663&apos;)&#8866; v_boolean_131_663&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_131_663&apos;) &amp; <br/>
-NoSolutionPrefix(b,ahaub_774,i,ahaub_774)
+<ul>(h_48' &ne; v_int_130_833 &and; h_48' &ne; 0 &and; 1 &le; j &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; j &le; ahaub_774 &and; h_48' + b[j] = b[i] &and; v_int_130_833 + j = i &and; h_48' + i = j &and;  &not; v_boolean_131_663')  &#8866;  ((v_boolean_131_663' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_131_663' &and; NoSolutionPrefix(b,ahaub_774,i,ahaub_774)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -750,9 +713,7 @@ NoSolutionPrefix(b,ahaub_774,i,ahaub_774)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; 0&lt;i &amp; IsConsistent(b,1,i - 1) &amp; IsConsistent(b,0+<br/>
-1,i) &amp; v_boolean_127_653&apos;&#8866; v_boolean_127_653&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_127_653&apos;) &amp; <br/>
-NoSolutionPrefix(b,n,i,n)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; 0 &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,0 + 1,i) &and; v_boolean_127_653')  &#8866;  ((v_boolean_127_653' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_127_653' &and; NoSolutionPrefix(b,n,i,n)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -782,13 +743,7 @@ NoSolutionPrefix(b,n,i,n)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_132_907+1=j &amp; h_48&apos;!=v_int_130_887 &amp; h_48&apos;!=v_int_130_833 &amp; <br/>
-h_48&apos;!=0 &amp; 1&lt;=j &amp; j!=0 &amp; 0&lt;=j &amp; j&lt;i &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-IsConsistent(b,j+1,i) &amp; 1&lt;=i &amp; i&lt;=ahaub_774 &amp; dom(b,1,ahaub_774) &amp; <br/>
-j&lt;=ahaub_774 &amp; h_48&apos;+(b[j])=b[i] &amp; v_int_130_833+j=i &amp; v_int_130_887+i=j &amp; <br/>
-(262::v_boolean_132_667&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_132_667&apos;) &amp; <br/>
-NoSolutionPrefix(b,ahaub_774,i,ahaub_774))&#8866; v_boolean_132_667&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_132_667&apos;) &amp; <br/>
-NoSolutionPrefix(b,ahaub_774,i,ahaub_774)
+<ul>(v_int_132_907 + 1 = j &and; h_48' &ne; v_int_130_887 &and; h_48' &ne; v_int_130_833 &and; h_48' &ne; 0 &and; 1 &le; j &and; j &ne; 0 &and; 0 &le; j &and; j &lt; i &and; IsConsistent(b,1,i - 1) &and; IsConsistent(b,j + 1,i) &and; 1 &le; i &and; i &le; ahaub_774 &and; dom(b,1,ahaub_774) &and; j &le; ahaub_774 &and; h_48' + b[j] = b[i] &and; v_int_130_833 + j = i &and; v_int_130_887 + i = j &and; ((v_boolean_132_667' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_132_667' &and; NoSolutionPrefix(b,ahaub_774,i,ahaub_774))))  &#8866;  ((v_boolean_132_667' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_132_667' &and; NoSolutionPrefix(b,ahaub_774,i,ahaub_774)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -859,7 +814,7 @@ v_int_117_679 = 1;<br/>
 {(106,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_117_680) at <a href="#L117">line 117</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_117_680&apos;+1=i &amp; 1&lt;=i &amp; dom(b,1,n) &amp; i&lt;=n &amp; IsConsistent(b,1,i - 1)&#8866; dom(b,1,n)
+<ul>(v_int_117_680' + 1 = i &and; 1 &le; i &and; dom(b,1,n) &and; i &le; n &and; IsConsistent(b,1,i - 1))  &#8866;  dom(b,1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -888,7 +843,7 @@ Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; IsConsistent(b,1,i - 1) &amp; v_int_117_680&apos;+1=i&#8866; 1&lt;=i
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; IsConsistent(b,1,i - 1) &and; v_int_117_680' + 1 = i)  &#8866;  1 &le; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -913,7 +868,7 @@ Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; IsConsistent(b,1,i - 1) &amp; v_int_117_680&apos;+1=i&#8866; i&lt;=n
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; IsConsistent(b,1,i - 1) &and; v_int_117_680' + 1 = i)  &#8866;  i &le; n
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -938,7 +893,7 @@ Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; IsConsistent(b,1,i - 1) &amp; i&lt;=n &amp; 1&lt;=i &amp; v_int_117_680&apos;+1=i&#8866; 0&lt;=v_int_117_680&apos;
+<ul>(dom(b,1,n) &and; IsConsistent(b,1,i - 1) &and; i &le; n &and; 1 &le; i &and; v_int_117_680' + 1 = i)  &#8866;  0 &le; v_int_117_680'
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -963,7 +918,7 @@ Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; IsConsistent(b,1,i - 1) &amp; v_int_117_680&apos;+1=i&#8866; v_int_117_680&apos;&lt;i
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; IsConsistent(b,1,i - 1) &and; v_int_117_680' + 1 = i)  &#8866;  v_int_117_680' &lt; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -988,7 +943,7 @@ Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; IsConsistent(b,1,i - 1) &amp; v_int_117_680&apos;+1=i&#8866; IsConsistent(b,1,i - 1)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; IsConsistent(b,1,i - 1) &and; v_int_117_680' + 1 = i)  &#8866;  IsConsistent(b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1016,7 +971,7 @@ Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; IsConsistent(b,1,i - 1) &amp; v_int_117_680&apos;+1=i&#8866; IsConsistent(b,v_int_117_680&apos;+1,i)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; IsConsistent(b,1,i - 1) &and; v_int_117_680' + 1 = i)  &#8866;  IsConsistent(b,v_int_117_680' + 1,i)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1047,10 +1002,7 @@ Precondition of procedure call 102::IsSafeHelper$int[]~int~int~int(b,n,i,v_int_1
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; IsConsistent(b,1,i - 1) &amp; v_int_117_924+1=i &amp; <br/>
-(280::v_boolean_117_681&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_117_681&apos;) &amp; <br/>
-NoSolutionPrefix(b,n,i,n))&#8866; v_boolean_117_681&apos; &amp; IsConsistent(b,1,i) | !(v_boolean_117_681&apos;) &amp; <br/>
-NoSolutionPrefix(b,n,i,n)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; IsConsistent(b,1,i - 1) &and; v_int_117_924 + 1 = i &and; ((v_boolean_117_681' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_117_681' &and; NoSolutionPrefix(b,n,i,n))))  &#8866;  ((v_boolean_117_681' &and; IsConsistent(b,1,i)) &or; ( &not; v_boolean_117_681' &and; NoSolutionPrefix(b,n,i,n)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1141,10 +1093,7 @@ v_boolean_100_718 = false;<br/>
 {(82,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array update at line <a href="#L91">line 91</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub)&#8866; &exist;(ahalb_937:&exist;(ahaub_938:dom(b,ahalb_937,ahaub_938) &amp; <br/>
-ahalb_937&lt;=i &amp; i&lt;=ahaub_938))
+<ul>(j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub))  &#8866;   &exist; ahalb_937  &exist; ahaub_938 (dom(b,ahalb_937,ahaub_938) &and; ahalb_937 &le; i &and; i &le; ahaub_938)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1181,10 +1130,7 @@ ahalb_937&lt;=i &amp; i&lt;=ahaub_938))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 114::IsSafe$int[]~int~int(b,n,i) at <a href="#L92">line 92</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=i &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-update_array_1d(b,b&apos;,j,i)&#8866; dom(b&apos;,1,ahaub)
+<ul>(1 &le; i &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i))  &#8866;  dom(b',1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1222,9 +1168,7 @@ update_array_1d(b,b&apos;,j,i)&#8866; dom(b&apos;,1,ahaub)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b&apos;,1,ahaub) &amp; dom(b,1,ahaub) &amp; j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; update_array_1d(b,b&apos;,j,i)&#8866; 1&lt;=i
+<ul>(dom(b',1,ahaub) &and; dom(b,1,ahaub) &and; j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; update_array_1d(b,b',j,i))  &#8866;  1 &le; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1257,9 +1201,7 @@ Bounded(b,1,i - 1,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; update_array_1d
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i -<br/>
-1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; <br/>
-i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; update_array_1d(b,b&apos;,j,i)&#8866; i&lt;=ahaub
+<ul>(1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i))  &#8866;  i &le; ahaub
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1292,10 +1234,7 @@ i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; update_array_1d(b,b&apos;,j,i)&#886
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-update_array_1d(b,b&apos;,j,i)&#8866; IsConsistent(b&apos;,1,i - 1)
+<ul>(j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i))  &#8866;  IsConsistent(b',1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1333,12 +1272,7 @@ update_array_1d(b,b&apos;,j,i)&#8866; IsConsistent(b&apos;,1,i - 1)
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 112::nQueensHelper$int[]~int~int(b,n,v_int_94_710) rec at <a href="#L94">line 94</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_94_710&apos;=1+i &amp; v_bool_92_716&apos; &amp; 1&lt;=i &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; <br/>
-dom(b&apos;,1,ahaub) &amp; update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b&apos;,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i,ahaub))&#8866; dom(b&apos;,1,ahaub)
+<ul>(v_int_94_710' = 1 + i &and; v_bool_92_716' &and; 1 &le; i &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i) &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))))  &#8866;  dom(b',1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1381,12 +1315,7 @@ NoSolutionPrefix(b&apos;,ahaub,i,ahaub))&#8866; dom(b&apos;,1,ahaub)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; v_bool_92_716&apos; &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b&apos;,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i,ahaub)) &amp; update_array_1d(b,b&apos;,j,i) &amp; <br/>
-dom(b&apos;,1,ahaub) &amp; i&lt;=ahaub &amp; 1&lt;=i &amp; dom(b,1,ahaub) &amp; j&lt;=ahaub &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; v_int_94_710&apos;=1+i&#8866; 1&lt;=v_int_94_710&apos;
+<ul>(1 &le; j &and; j &le; 1 + ahaub &and; v_bool_92_716' &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))) &and; update_array_1d(b,b',j,i) &and; dom(b',1,ahaub) &and; i &le; ahaub &and; 1 &le; i &and; dom(b,1,ahaub) &and; j &le; ahaub &and; Bounded(b,1,i - 1,1,ahaub) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; IsConsistent(b,1,i - 1) &and; v_int_94_710' = 1 + i)  &#8866;  1 &le; v_int_94_710'
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1424,11 +1353,7 @@ IsConsistent(b,1,i - 1) &amp; v_int_94_710&apos;=1+i&#8866; 1&lt;=v_int_94_710&a
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_bool_92_716&apos; &amp; update_array_1d(b,b&apos;,j,i) &amp; 1&lt;=i &amp; IsConsistent(b,1,i -<br/>
-1) &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; <br/>
-dom(b&apos;,1,ahaub) &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b&apos;,1,i) | <br/>
-!(v_bool_92_716&apos;) &amp; NoSolutionPrefix(b&apos;,ahaub,i,ahaub)) &amp; v_int_94_710&apos;=1+i&#8866; v_int_94_710&apos;&lt;=(ahaub+1)
+<ul>(v_bool_92_716' &and; update_array_1d(b,b',j,i) &and; 1 &le; i &and; IsConsistent(b,1,i - 1) &and; 1 &le; j &and; j &le; 1 + ahaub &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b',1,ahaub) &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))) &and; v_int_94_710' = 1 + i)  &#8866;  v_int_94_710' &le; ahaub + 1
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1466,11 +1391,7 @@ dom(b&apos;,1,ahaub) &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b&apos;,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_bool_92_716&apos; &amp; i&lt;=ahaub &amp; 1&lt;=i &amp; j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; dom(b,1,ahaub) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b&apos;,1,i) | <br/>
-!(v_bool_92_716&apos;) &amp; NoSolutionPrefix(b&apos;,ahaub,i,ahaub)) &amp; v_int_94_710&apos;=1+i&#8866; IsConsistent(b&apos;,1,v_int_94_710&apos; - 1)
+<ul>(v_bool_92_716' &and; i &le; ahaub &and; 1 &le; i &and; j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; dom(b,1,ahaub) &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i) &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))) &and; v_int_94_710' = 1 + i)  &#8866;  IsConsistent(b',1,v_int_94_710' - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1511,11 +1432,7 @@ update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsisten
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_bool_92_716&apos; &amp; 1&lt;=i &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b&apos;,1,i) | <br/>
-!(v_bool_92_716&apos;) &amp; NoSolutionPrefix(b&apos;,ahaub,i,ahaub)) &amp; v_int_94_710&apos;=1+i&#8866; Bounded(b&apos;,1,v_int_94_710&apos; - 1,1,ahaub)
+<ul>(v_bool_92_716' &and; 1 &le; i &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i) &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))) &and; v_int_94_710' = 1 + i)  &#8866;  Bounded(b',1,v_int_94_710' - 1,1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1556,16 +1473,7 @@ update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsisten
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 109::nQueensHelperHelper$int[]~int~int~int(b,n,i,v_int_97_713) rec at <a href="#L97">line 97</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_97_713&apos;=1+j &amp; !(v_bool_94_715&apos;) &amp; v_bool_92_716&apos; &amp; 1&lt;=i &amp; 1&lt;=j &amp; <br/>
-j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j -<br/>
-1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; <br/>
-dom(b_970,1,ahaub) &amp; update_array_1d(b,b_970,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_970,1,(1+<br/>
-i) - 1)&#8866; dom(b&apos;,1,ahaub)
+<ul>(v_int_97_713' = 1 + j &and;  &not; v_bool_94_715' &and; v_bool_92_716' &and; 1 &le; i &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b_970,1,ahaub) &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_970,1,1 + i - 1))  &#8866;  dom(b',1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1616,16 +1524,7 @@ i) - 1)&#8866; dom(b&apos;,1,ahaub)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_97_713&apos;=1+j &amp; !(v_bool_94_715&apos;) &amp; dom(b&apos;,1,ahaub) &amp; v_bool_92_716&apos; &amp; <br/>
-dom(b_970,1,ahaub) &amp; dom(b,1,ahaub) &amp; j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; <br/>
-update_array_1d(b,b_970,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; (314::v_bool_94_715&apos; &amp; <br/>
-IsConsistent(b&apos;,1,ahaub) &amp; Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_970,1,(1+<br/>
-i) - 1)&#8866; 1&lt;=i
+<ul>(v_int_97_713' = 1 + j &and;  &not; v_bool_94_715' &and; dom(b',1,ahaub) &and; v_bool_92_716' &and; dom(b_970,1,ahaub) &and; dom(b,1,ahaub) &and; j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_970,1,1 + i - 1))  &#8866;  1 &le; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1670,16 +1569,7 @@ i) - 1)&#8866; 1&lt;=i
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_97_713&apos;=1+j &amp; !(v_bool_94_715&apos;) &amp; v_bool_92_716&apos; &amp; 1&lt;=j &amp; j&lt;=(1+<br/>
-ahaub) &amp; IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; <br/>
-dom(b_970,1,ahaub) &amp; update_array_1d(b,b_970,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_970,1,(1+<br/>
-i) - 1)&#8866; i&lt;=ahaub
+<ul>(v_int_97_713' = 1 + j &and;  &not; v_bool_94_715' &and; v_bool_92_716' &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b_970,1,ahaub) &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_970,1,1 + i - 1))  &#8866;  i &le; ahaub
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1724,16 +1614,7 @@ i) - 1)&#8866; i&lt;=ahaub
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> IsConsistent(b,1,i - 1) &amp; !(v_bool_94_715&apos;) &amp; IdenticalRange(b&apos;,b_970,1,(1+<br/>
-i) - 1) &amp; (314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-v_bool_92_716&apos; &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b_970,1,i) | <br/>
-!(v_bool_92_716&apos;) &amp; NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; <br/>
-update_array_1d(b,b_970,j,i) &amp; dom(b_970,1,ahaub) &amp; i&lt;=ahaub &amp; 1&lt;=i &amp; <br/>
-dom(b,1,ahaub) &amp; j&lt;=ahaub &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; <br/>
-v_int_97_713&apos;=1+j&#8866; 1&lt;=v_int_97_713&apos;
+<ul>(IsConsistent(b,1,i - 1) &and;  &not; v_bool_94_715' &and; IdenticalRange(b',b_970,1,1 + i - 1) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; dom(b',1,ahaub) &and; v_bool_92_716' &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; update_array_1d(b,b_970,j,i) &and; dom(b_970,1,ahaub) &and; i &le; ahaub &and; 1 &le; i &and; dom(b,1,ahaub) &and; j &le; ahaub &and; Bounded(b,1,i - 1,1,ahaub) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; j &le; 1 + ahaub &and; 1 &le; j &and; v_int_97_713' = 1 + j)  &#8866;  1 &le; v_int_97_713'
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1778,15 +1659,7 @@ v_int_97_713&apos;=1+j&#8866; 1&lt;=v_int_97_713&apos;
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_94_715&apos;) &amp; IdenticalRange(b&apos;,b_970,1,(1+i) - 1) &amp; v_bool_92_716&apos; &amp; <br/>
-update_array_1d(b,b_970,j,i) &amp; 1&lt;=i &amp; IsConsistent(b,1,i - 1) &amp; 1&lt;=j &amp; j&lt;=(1+<br/>
-ahaub) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i -<br/>
-1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; dom(b_970,1,ahaub) &amp; <br/>
-(304::v_bool_92_716&apos; &amp; IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; v_int_97_713&apos;=1+j&#8866; v_int_97_713&apos;&lt;=(ahaub+1)
+<ul>( &not; v_bool_94_715' &and; IdenticalRange(b',b_970,1,1 + i - 1) &and; v_bool_92_716' &and; update_array_1d(b,b_970,j,i) &and; 1 &le; i &and; IsConsistent(b,1,i - 1) &and; 1 &le; j &and; j &le; 1 + ahaub &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b_970,1,ahaub) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; v_int_97_713' = 1 + j)  &#8866;  v_int_97_713' &le; ahaub + 1
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1831,16 +1704,7 @@ NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; v_int_97_713&apos;=1+j&#8
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_97_713&apos;=1+j &amp; !(v_bool_94_715&apos;) &amp; v_bool_92_716&apos; &amp; <br/>
-dom(b_970,1,ahaub) &amp; j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; IsConsistent(b,1,i -<br/>
-1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; update_array_1d(b,b_970,j,i) &amp; <br/>
-(304::v_bool_92_716&apos; &amp; IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_970,1,(1+<br/>
-i) - 1)&#8866; IsConsistent(b&apos;,1,i - 1)
+<ul>(v_int_97_713' = 1 + j &and;  &not; v_bool_94_715' &and; v_bool_92_716' &and; dom(b_970,1,ahaub) &and; j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_970,1,1 + i - 1))  &#8866;  IsConsistent(b',1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1888,16 +1752,7 @@ i) - 1)&#8866; IsConsistent(b&apos;,1,i - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_94_715&apos;) &amp; v_bool_92_716&apos; &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; <br/>
-dom(b_970,1,ahaub) &amp; update_array_1d(b,b_970,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_970,1,(1+<br/>
-i) - 1) &amp; v_int_97_713&apos;=1+j&#8866; NoSolutionPrefix(b&apos;,ahaub,i - 1,v_int_97_713&apos; - 1)
+<ul>( &not; v_bool_94_715' &and; v_bool_92_716' &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b_970,1,ahaub) &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_970,1,1 + i - 1) &and; v_int_97_713' = 1 + j)  &#8866;  NoSolutionPrefix(b',ahaub,i - 1,v_int_97_713' - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1945,16 +1800,7 @@ i) - 1) &amp; v_int_97_713&apos;=1+j&#8866; NoSolutionPrefix(b&apos;,ahaub,i - 1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_97_713&apos;=1+j &amp; !(v_bool_94_715&apos;) &amp; v_bool_92_716&apos; &amp; 1&lt;=j &amp; j&lt;=(1+<br/>
-ahaub) &amp; IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; <br/>
-dom(b_970,1,ahaub) &amp; update_array_1d(b,b_970,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_970,1,(1+<br/>
-i) - 1)&#8866; Bounded(b&apos;,1,i - 1,1,ahaub)
+<ul>(v_int_97_713' = 1 + j &and;  &not; v_bool_94_715' &and; v_bool_92_716' &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b_970,1,ahaub) &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_970,1,1 + i - 1))  &#8866;  Bounded(b',1,i - 1,1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2003,16 +1849,7 @@ i) - 1)&#8866; Bounded(b&apos;,1,i - 1,1,ahaub)
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_bool_94_715&apos; &amp; v_bool_92_716&apos; &amp; 1&lt;=i &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; <br/>
-dom(b_985,1,ahaub) &amp; update_array_1d(b,b_985,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_985,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_985,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_985,1,(1+<br/>
-i) - 1)&#8866; dom(b&apos;,1,ahaub)
+<ul>(v_bool_94_715' &and; v_bool_92_716' &and; 1 &le; i &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b_985,1,ahaub) &and; update_array_1d(b,b_985,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_985,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_985,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_985,1,1 + i - 1))  &#8866;  dom(b',1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2061,18 +1898,7 @@ i) - 1)&#8866; dom(b&apos;,1,ahaub)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_bool_94_715&apos; &amp; v_bool_92_716&apos; &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i -<br/>
-1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; dom(b_985,1,ahaub) &amp; <br/>
-update_array_1d(b,b_985,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_985,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_985,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_985,1,(1+<br/>
-i) - 1) &amp; v_boolean_95_711&apos;&#8866; 338::v_boolean_95_711&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_boolean_95_711&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)
+<ul>(v_bool_94_715' &and; v_bool_92_716' &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b_985,1,ahaub) &and; update_array_1d(b,b_985,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_985,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_985,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_985,1,1 + i - 1) &and; v_boolean_95_711')  &#8866;  ((v_boolean_95_711' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_boolean_95_711' &and; NoSolutionPrefix(b',ahaub,i - 1,ahaub)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2121,16 +1947,7 @@ NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_bool_94_715&apos; &amp; v_bool_92_716&apos; &amp; dom(b_985,1,ahaub) &amp; j&lt;=ahaub &amp; j&lt;=(1+<br/>
-ahaub) &amp; 1&lt;=j &amp; IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j -<br/>
-1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; <br/>
-update_array_1d(b,b_985,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_985,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_985,ahaub,i,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,(1+i) - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_985,1,(1+<br/>
-i) - 1)&#8866; IdenticalRange(b&apos;,b,1,i - 1)
+<ul>(v_bool_94_715' &and; v_bool_92_716' &and; dom(b_985,1,ahaub) &and; j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; update_array_1d(b,b_985,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_985,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_985,ahaub,i,ahaub))) &and; dom(b',1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b',ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b',b_985,1,1 + i - 1))  &#8866;  IdenticalRange(b',b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2174,19 +1991,7 @@ i) - 1)&#8866; IdenticalRange(b&apos;,b,1,i - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_94_715&apos;) &amp; IdenticalRange(b_986,b_970,1,(1+i) - 1) &amp; <br/>
-v_bool_92_716&apos; &amp; 1&lt;=i &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; dom(b_970,1,ahaub) &amp; <br/>
-update_array_1d(b,b_970,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b_986,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b_986,1,ahaub) &amp; <br/>
-Bounded(b_986,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b_986,ahaub,(1+i) - 1,ahaub)) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(326::v_boolean_97_714&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_boolean_97_714&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_986,1,i - 1)&#8866; dom(b&apos;,1,ahaub)
+<ul>( &not; v_bool_94_715' &and; IdenticalRange(b_986,b_970,1,1 + i - 1) &and; v_bool_92_716' &and; 1 &le; i &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b_970,1,ahaub) &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b_986,1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b_986,1,ahaub) &and; Bounded(b_986,1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b_986,ahaub,1 + i - 1,ahaub))) &and; dom(b',1,ahaub) &and; ((v_boolean_97_714' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_boolean_97_714' &and; NoSolutionPrefix(b',ahaub,i - 1,ahaub))) &and; IdenticalRange(b',b_986,1,i - 1))  &#8866;  dom(b',1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2240,21 +2045,7 @@ NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_986,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_94_715&apos;) &amp; v_bool_92_716&apos; &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; <br/>
-IsConsistent(b,1,i - 1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; <br/>
-Bounded(b,1,i - 1,1,ahaub) &amp; j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; <br/>
-dom(b_970,1,ahaub) &amp; update_array_1d(b,b_970,j,i) &amp; (304::v_bool_92_716&apos; &amp; <br/>
-IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; dom(b_986,1,ahaub) &amp; <br/>
-(314::v_bool_94_715&apos; &amp; IsConsistent(b_986,1,ahaub) &amp; <br/>
-Bounded(b_986,1,ahaub,1,ahaub) | !(v_bool_94_715&apos;) &amp; <br/>
-NoSolutionPrefix(b_986,ahaub,(1+i) - 1,ahaub)) &amp; <br/>
-IdenticalRange(b_986,b_970,1,(1+i) - 1) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(326::v_boolean_97_714&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_boolean_97_714&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_986,1,i - 1)&#8866; 338::v_boolean_97_714&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_boolean_97_714&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)
+<ul>( &not; v_bool_94_715' &and; v_bool_92_716' &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b_970,1,ahaub) &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; dom(b_986,1,ahaub) &and; ((v_bool_94_715' &and; IsConsistent(b_986,1,ahaub) &and; Bounded(b_986,1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b_986,ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b_986,b_970,1,1 + i - 1) &and; dom(b',1,ahaub) &and; ((v_boolean_97_714' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_boolean_97_714' &and; NoSolutionPrefix(b',ahaub,i - 1,ahaub))) &and; IdenticalRange(b',b_986,1,i - 1))  &#8866;  ((v_boolean_97_714' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_boolean_97_714' &and; NoSolutionPrefix(b',ahaub,i - 1,ahaub)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2305,18 +2096,7 @@ NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_94_715&apos;) &amp; dom(b_986,1,ahaub) &amp; v_bool_92_716&apos; &amp; <br/>
-dom(b_970,1,ahaub) &amp; j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; IsConsistent(b,1,i -<br/>
-1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; update_array_1d(b,b_970,j,i) &amp; <br/>
-(304::v_bool_92_716&apos; &amp; IsConsistent(b_970,1,i) | !(v_bool_92_716&apos;) &amp; <br/>
-NoSolutionPrefix(b_970,ahaub,i,ahaub)) &amp; (314::v_bool_94_715&apos; &amp; <br/>
-IsConsistent(b_986,1,ahaub) &amp; Bounded(b_986,1,ahaub,1,ahaub) | <br/>
-!(v_bool_94_715&apos;) &amp; NoSolutionPrefix(b_986,ahaub,(1+i) - 1,ahaub)) &amp; <br/>
-IdenticalRange(b_986,b_970,1,(1+i) - 1) &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-(326::v_boolean_97_714&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_boolean_97_714&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_986,1,i - 1)&#8866; IdenticalRange(b&apos;,b,1,i - 1)
+<ul>( &not; v_bool_94_715' &and; dom(b_986,1,ahaub) &and; v_bool_92_716' &and; dom(b_970,1,ahaub) &and; j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; update_array_1d(b,b_970,j,i) &and; ((v_bool_92_716' &and; IsConsistent(b_970,1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b_970,ahaub,i,ahaub))) &and; ((v_bool_94_715' &and; IsConsistent(b_986,1,ahaub) &and; Bounded(b_986,1,ahaub,1,ahaub)) &or; ( &not; v_bool_94_715' &and; NoSolutionPrefix(b_986,ahaub,1 + i - 1,ahaub))) &and; IdenticalRange(b_986,b_970,1,1 + i - 1) &and; dom(b',1,ahaub) &and; ((v_boolean_97_714' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_boolean_97_714' &and; NoSolutionPrefix(b',ahaub,i - 1,ahaub))) &and; IdenticalRange(b',b_986,1,i - 1))  &#8866;  IdenticalRange(b',b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2364,11 +2144,7 @@ NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)) &amp; IdenticalRange(b&apos;,b_986,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_92_716&apos;) &amp; 1&lt;=i &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b&apos;,1,i) | <br/>
-!(v_bool_92_716&apos;) &amp; NoSolutionPrefix(b&apos;,ahaub,i,ahaub))&#8866; dom(b&apos;,1,ahaub)
+<ul>( &not; v_bool_92_716' &and; 1 &le; i &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i) &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))))  &#8866;  dom(b',1,ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2409,14 +2185,7 @@ update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsisten
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_92_716&apos;) &amp; 1&lt;=j &amp; j&lt;=(1+ahaub) &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-j&lt;=ahaub &amp; dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b&apos;,1,i) | <br/>
-!(v_bool_92_716&apos;) &amp; NoSolutionPrefix(b&apos;,ahaub,i,ahaub)) &amp; <br/>
-!(v_boolean_100_718&apos;)&#8866; 338::v_boolean_100_718&apos; &amp; IsConsistent(b&apos;,1,ahaub) &amp; <br/>
-Bounded(b&apos;,1,ahaub,1,ahaub) | !(v_boolean_100_718&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)
+<ul>( &not; v_bool_92_716' &and; 1 &le; j &and; j &le; 1 + ahaub &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; j &le; ahaub &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i) &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))) &and;  &not; v_boolean_100_718')  &#8866;  ((v_boolean_100_718' &and; IsConsistent(b',1,ahaub) &and; Bounded(b',1,ahaub,1,ahaub)) &or; ( &not; v_boolean_100_718' &and; NoSolutionPrefix(b',ahaub,i - 1,ahaub)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2458,11 +2227,7 @@ NoSolutionPrefix(b&apos;,ahaub,i - 1,ahaub)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> !(v_bool_92_716&apos;) &amp; j&lt;=ahaub &amp; j&lt;=(1+ahaub) &amp; 1&lt;=j &amp; IsConsistent(b,1,i -<br/>
-1) &amp; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,ahaub) &amp; <br/>
-dom(b,1,ahaub) &amp; 1&lt;=i &amp; i&lt;=ahaub &amp; dom(b&apos;,1,ahaub) &amp; <br/>
-update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsistent(b&apos;,1,i) | <br/>
-!(v_bool_92_716&apos;) &amp; NoSolutionPrefix(b&apos;,ahaub,i,ahaub))&#8866; IdenticalRange(b&apos;,b,1,i - 1)
+<ul>( &not; v_bool_92_716' &and; j &le; ahaub &and; j &le; 1 + ahaub &and; 1 &le; j &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,ahaub,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,ahaub) &and; dom(b,1,ahaub) &and; 1 &le; i &and; i &le; ahaub &and; dom(b',1,ahaub) &and; update_array_1d(b,b',j,i) &and; ((v_bool_92_716' &and; IsConsistent(b',1,i)) &or; ( &not; v_bool_92_716' &and; NoSolutionPrefix(b',ahaub,i,ahaub))))  &#8866;  IdenticalRange(b',b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2500,8 +2265,7 @@ update_array_1d(b,b&apos;,j,i) &amp; (304::v_bool_92_716&apos; &amp; IsConsisten
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=j &amp; 1&lt;=i &amp; dom(b,1,n) &amp; i&lt;=n &amp; j&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,n,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,n) &amp; n&lt;j&#8866; dom(b,1,n)
+<ul>(1 &le; j &and; 1 &le; i &and; dom(b,1,n) &and; i &le; n &and; j &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,n,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,n) &and; n &lt; j)  &#8866;  dom(b,1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2536,10 +2300,7 @@ NoSolutionPrefix(b,n,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,n) &amp; n&lt;j&#886
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=j &amp; dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; j&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; <br/>
-NoSolutionPrefix(b,n,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,n) &amp; n&lt;j &amp; <br/>
-!(v_boolean_100_718&apos;)&#8866; 338::v_boolean_100_718&apos; &amp; IsConsistent(b,1,n) &amp; Bounded(b,1,n,1,n) | <br/>
-!(v_boolean_100_718&apos;) &amp; NoSolutionPrefix(b,n,i - 1,n)
+<ul>(1 &le; j &and; dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; j &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,n,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,n) &and; n &lt; j &and;  &not; v_boolean_100_718')  &#8866;  ((v_boolean_100_718' &and; IsConsistent(b,1,n) &and; Bounded(b,1,n,1,n)) &or; ( &not; v_boolean_100_718' &and; NoSolutionPrefix(b,n,i - 1,n)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2576,8 +2337,7 @@ NoSolutionPrefix(b,n,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,n) &amp; n&lt;j &amp
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> n&lt;j &amp; j&lt;=(1+n) &amp; 1&lt;=j &amp; dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=n &amp; IsConsistent(b,1,i -<br/>
-1) &amp; NoSolutionPrefix(b,n,i - 1,j - 1) &amp; Bounded(b,1,i - 1,1,n)&#8866; IdenticalRange(b,b,1,i - 1)
+<ul>(n &lt; j &and; j &le; 1 + n &and; 1 &le; j &and; dom(b,1,n) &and; 1 &le; i &and; i &le; n &and; IsConsistent(b,1,i - 1) &and; NoSolutionPrefix(b,n,i - 1,j - 1) &and; Bounded(b,1,i - 1,1,n))  &#8866;  IdenticalRange(b,b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2648,8 +2408,7 @@ v_int_75_740 = 1;<br/>
 {(60,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,v_int_75_740) rec at <a href="#L75">line 75</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=i &amp; dom(b,1,n) &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n)&#8866; dom(b,1,n)
+<ul>(1 &le; i &and; dom(b,1,n) &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n)  &#8866;  dom(b,1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2680,8 +2439,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n)&#8866; 1&lt;=i
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n)  &#8866;  1 &le; i
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2708,8 +2466,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n)&#8866; i&lt;=n
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n)  &#8866;  i &le; n
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2736,7 +2493,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; 1&lt;=1
+<ul><b>true</b>  &#8866;  1 &le; 1
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2749,8 +2506,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> IsConsistent(b,1,i - 1) &amp; 1&lt;=i &amp; dom(b,1,n) &amp; i&lt;=(1+n) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n)&#8866; 1&lt;=(n+1)
+<ul>(IsConsistent(b,1,i - 1) &and; 1 &le; i &and; dom(b,1,n) &and; i &le; 1 + n &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n)  &#8866;  1 &le; n + 1
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2777,8 +2533,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n)&#8866; IsConsistent(b,1,i - 1)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n)  &#8866;  IsConsistent(b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2808,8 +2563,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n)&#8866; NoSolutionPrefix(b,n,i - 1,1 - 1)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n)  &#8866;  NoSolutionPrefix(b,n,i - 1,1 - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2839,8 +2593,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n)&#8866; Bounded(b,1,i - 1,1,n)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n)  &#8866;  Bounded(b,1,i - 1,1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2871,8 +2624,7 @@ Precondition of procedure call 119::nQueensHelperHelper$int[]~int~int~int(b,n,i,
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=i &amp; dom(b,1,n) &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i=1+n&#8866; dom(b,1,n)
+<ul>(1 &le; i &and; dom(b,1,n) &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i = 1 + n)  &#8866;  dom(b,1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2903,9 +2655,7 @@ Procedure post-condition holds
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i=1+n &amp; v_boolean_67_739&apos;&#8866; 367::v_boolean_67_739&apos; &amp; IsConsistent(b,1,n) &amp; Bounded(b,1,n,1,n) | <br/>
-!(v_boolean_67_739&apos;) &amp; NoSolutionPrefix(b,n,i - 1,n)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i = 1 + n &and; v_boolean_67_739')  &#8866;  ((v_boolean_67_739' &and; IsConsistent(b,1,n) &and; Bounded(b,1,n,1,n)) &or; ( &not; v_boolean_67_739' &and; NoSolutionPrefix(b,n,i - 1,n)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2938,8 +2688,7 @@ Procedure post-condition holds
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i=1+n&#8866; IdenticalRange(b,b,1,i - 1)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i = 1 + n)  &#8866;  IdenticalRange(b,b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2968,10 +2717,7 @@ Procedure post-condition holds
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=i &amp; dom(b,1,n) &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n) &amp; dom(b&apos;,1,n) &amp; (355::v_boolean_75_741&apos; &amp; <br/>
-IsConsistent(b&apos;,1,n) &amp; Bounded(b&apos;,1,n,1,n) | !(v_boolean_75_741&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,n,i - 1,n)) &amp; IdenticalRange(b&apos;,b,1,i - 1)&#8866; dom(b&apos;,1,n)
+<ul>(1 &le; i &and; dom(b,1,n) &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n &and; dom(b',1,n) &and; ((v_boolean_75_741' &and; IsConsistent(b',1,n) &and; Bounded(b',1,n,1,n)) &or; ( &not; v_boolean_75_741' &and; NoSolutionPrefix(b',n,i - 1,n))) &and; IdenticalRange(b',b,1,i - 1))  &#8866;  dom(b',1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3009,11 +2755,7 @@ NoSolutionPrefix(b&apos;,n,i - 1,n)) &amp; IdenticalRange(b&apos;,b,1,i - 1)&#88
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n) &amp; dom(b&apos;,1,n) &amp; (355::v_boolean_75_741&apos; &amp; <br/>
-IsConsistent(b&apos;,1,n) &amp; Bounded(b&apos;,1,n,1,n) | !(v_boolean_75_741&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,n,i - 1,n)) &amp; IdenticalRange(b&apos;,b,1,i - 1)&#8866; 367::v_boolean_75_741&apos; &amp; IsConsistent(b&apos;,1,n) &amp; Bounded(b&apos;,1,n,1,n) | <br/>
-!(v_boolean_75_741&apos;) &amp; NoSolutionPrefix(b&apos;,n,i - 1,n)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n &and; dom(b',1,n) &and; ((v_boolean_75_741' &and; IsConsistent(b',1,n) &and; Bounded(b',1,n,1,n)) &or; ( &not; v_boolean_75_741' &and; NoSolutionPrefix(b',n,i - 1,n))) &and; IdenticalRange(b',b,1,i - 1))  &#8866;  ((v_boolean_75_741' &and; IsConsistent(b',1,n) &and; Bounded(b',1,n,1,n)) &or; ( &not; v_boolean_75_741' &and; NoSolutionPrefix(b',n,i - 1,n)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3050,10 +2792,7 @@ NoSolutionPrefix(b&apos;,n,i - 1,n)) &amp; IdenticalRange(b&apos;,b,1,i - 1)&#88
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=i &amp; i&lt;=(1+n) &amp; IsConsistent(b,1,i - 1) &amp; Bounded(b,1,i -<br/>
-1,1,n) &amp; i!=(1+n) &amp; dom(b&apos;,1,n) &amp; (355::v_boolean_75_741&apos; &amp; <br/>
-IsConsistent(b&apos;,1,n) &amp; Bounded(b&apos;,1,n,1,n) | !(v_boolean_75_741&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,n,i - 1,n)) &amp; IdenticalRange(b&apos;,b,1,i - 1)&#8866; IdenticalRange(b&apos;,b,1,i - 1)
+<ul>(dom(b,1,n) &and; 1 &le; i &and; i &le; 1 + n &and; IsConsistent(b,1,i - 1) &and; Bounded(b,1,i - 1,1,n) &and; i &ne; 1 + n &and; dom(b',1,n) &and; ((v_boolean_75_741' &and; IsConsistent(b',1,n) &and; Bounded(b',1,n,1,n)) &or; ( &not; v_boolean_75_741' &and; NoSolutionPrefix(b',n,i - 1,n))) &and; IdenticalRange(b',b,1,i - 1))  &#8866;  IdenticalRange(b',b,1,i - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3109,7 +2848,7 @@ v_int_55_748 = 1;<br/>
 {(51,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 124::nQueensHelper$int[]~int~int(b,n,v_int_55_748) at <a href="#L55">line 55</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=n&#8866; dom(b,1,n)
+<ul>(dom(b,1,n) &and; 1 &le; n)  &#8866;  dom(b,1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3128,7 +2867,7 @@ Precondition of procedure call 124::nQueensHelper$int[]~int~int(b,n,v_int_55_748
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=n&#8866; 1&lt;=(n+1)
+<ul>(dom(b,1,n) &and; 1 &le; n)  &#8866;  1 &le; n + 1
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3142,7 +2881,7 @@ Precondition of procedure call 124::nQueensHelper$int[]~int~int(b,n,v_int_55_748
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 1&lt;=n &amp; dom(b,1,n)&#8866; IsConsistent(b,1,1 - 1)
+<ul>(1 &le; n &and; dom(b,1,n))  &#8866;  IsConsistent(b,1,1 - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3162,7 +2901,7 @@ Precondition of procedure call 124::nQueensHelper$int[]~int~int(b,n,v_int_55_748
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=n&#8866; Bounded(b,1,1 - 1,1,n)
+<ul>(dom(b,1,n) &and; 1 &le; n)  &#8866;  Bounded(b,1,1 - 1,1,n)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3182,10 +2921,7 @@ Precondition of procedure call 124::nQueensHelper$int[]~int~int(b,n,v_int_55_748
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,1,n) &amp; 1&lt;=n &amp; dom(b&apos;,1,n) &amp; (372::v_boolean_55_749&apos; &amp; <br/>
-IsConsistent(b&apos;,1,n) &amp; Bounded(b&apos;,1,n,1,n) | !(v_boolean_55_749&apos;) &amp; <br/>
-NoSolutionPrefix(b&apos;,n,1 - 1,n)) &amp; IdenticalRange(b&apos;,b,1,1 - 1)&#8866; v_boolean_55_749&apos; &amp; IsConsistent(b&apos;,1,n) &amp; Bounded(b&apos;,1,n,1,n) | <br/>
-!(v_boolean_55_749&apos;) &amp; NoSolutionPrefix(b&apos;,n,0,n)
+<ul>(dom(b,1,n) &and; 1 &le; n &and; dom(b',1,n) &and; ((v_boolean_55_749' &and; IsConsistent(b',1,n) &and; Bounded(b',1,n,1,n)) &or; ( &not; v_boolean_55_749' &and; NoSolutionPrefix(b',n,1 - 1,n))) &and; IdenticalRange(b',b,1,1 - 1))  &#8866;  ((v_boolean_55_749' &and; IsConsistent(b',1,n) &and; Bounded(b',1,n,1,n)) &or; ( &not; v_boolean_55_749' &and; NoSolutionPrefix(b',n,0,n)))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

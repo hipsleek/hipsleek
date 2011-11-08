@@ -88,9 +88,7 @@ else LABEL! 68,1: <br/>
 {(37,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L46">line 46</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> n - 1=ahaub &amp; dom(b,0,n - 1) &amp; dom(a,0,n - 1) &amp; Permute(a,0,n - 1,0,n -<br/>
-1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; 0&lt;=i &amp; i&lt;n&#8866; &exist;(ahalb_677:&exist;(ahaub_678:dom(a,ahalb_677,ahaub_678) &amp; <br/>
-ahalb_677&lt;=i &amp; i&lt;=ahaub_678))
+<ul>(n - 1 = ahaub &and; dom(b,0,n - 1) &and; dom(a,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; 0 &le; i &and; i &lt; n)  &#8866;   &exist; ahalb_677  &exist; ahaub_678 (dom(a,ahalb_677,ahaub_678) &and; ahalb_677 &le; i &and; i &le; ahaub_678)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -127,10 +125,7 @@ unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L46">line 46</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> n - 1=ahaub_681 &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; dom(a,0,ahaub) &amp; n - 1=ahaub &amp; i&lt;n &amp; <br/>
-Permute(a,0,n - 1,0,n - 1) &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; <br/>
-IsLeftInverse(a,b,0,i - 1) &amp; v_int_46_638&apos;=a[i]&#8866; &exist;(ahalb_688:&exist;(ahaub_689:dom(b,ahalb_688,ahaub_689) &amp; <br/>
-ahalb_688&lt;=v_int_46_638&apos; &amp; v_int_46_638&apos;&lt;=ahaub_689))
+<ul>(n - 1 = ahaub_681 &and; i &le; ahaub &and; 0 &le; i &and; dom(a,0,ahaub) &and; n - 1 = ahaub &and; i &lt; n &and; Permute(a,0,n - 1,0,n - 1) &and; dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; v_int_46_638' = a[i])  &#8866;   &exist; ahalb_688  &exist; ahaub_689 (dom(b,ahalb_688,ahaub_689) &and; ahalb_688 &le; v_int_46_638' &and; v_int_46_638' &le; ahaub_689)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -173,10 +168,7 @@ unsat</li></ul></ul></li>
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 70::InvertHelper$int[]~int[]~int~int(a,b,n,v_int_48_640) rec at <a href="#L48">line 48</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_48_640&apos;=1+i &amp; dom(b&apos;,0,ahaub_681) &amp; dom(b,0,ahaub_681) &amp; i&lt;=ahaub &amp; <br/>
-0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
-IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; dom(a,0,ahaub) &amp; n -<br/>
-1=ahaub_681 &amp; 0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; update_array_1d(b,b&apos;,i,a[i])&#8866; dom(a,0,n - 1)
+<ul>(v_int_48_640' = 1 + i &and; dom(b',0,ahaub_681) &and; dom(b,0,ahaub_681) &and; i &le; ahaub &and; 0 &le; i &and; dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; i &lt; n &and; n - 1 = ahaub &and; dom(a,0,ahaub) &and; n - 1 = ahaub_681 &and; 0 &le; a[i] &and; a[i] &le; ahaub_681 &and; update_array_1d(b,b',i,a[i]))  &#8866;  dom(a,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -223,10 +215,7 @@ IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; dom(a,0,ahaub) &
 <ul>(error &quot;line 16 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
 unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_48_640&apos;=1+i &amp; (a[i])&lt;=ahaub_681 &amp; 0&lt;=(a[i]) &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; <br/>
-dom(a,0,ahaub) &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n -<br/>
-1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; n - 1=ahaub_681 &amp; <br/>
-dom(b,0,ahaub_681) &amp; dom(b&apos;,0,ahaub_681) &amp; update_array_1d(b,b&apos;,i,a[i])&#8866; dom(b&apos;,0,n - 1)
+<ul>(v_int_48_640' = 1 + i &and; a[i] &le; ahaub_681 &and; 0 &le; a[i] &and; i &le; ahaub &and; 0 &le; i &and; dom(a,0,ahaub) &and; dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; i &lt; n &and; n - 1 = ahaub &and; n - 1 = ahaub_681 &and; dom(b,0,ahaub_681) &and; dom(b',0,ahaub_681) &and; update_array_1d(b,b',i,a[i]))  &#8866;  dom(b',0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -273,10 +262,7 @@ dom(b,0,ahaub_681) &amp; dom(b&apos;,0,ahaub_681) &amp; update_array_1d(b,b&apos
 <ul>(error &quot;line 16 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
 unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_48_640&apos;=1+i &amp; dom(b&apos;,0,ahaub_681) &amp; dom(b,0,ahaub_681) &amp; i&lt;=ahaub &amp; <br/>
-0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
-IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; dom(a,0,ahaub) &amp; n -<br/>
-1=ahaub_681 &amp; 0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; update_array_1d(b,b&apos;,i,a[i])&#8866; Permute(a,0,n - 1,0,n - 1)
+<ul>(v_int_48_640' = 1 + i &and; dom(b',0,ahaub_681) &and; dom(b,0,ahaub_681) &and; i &le; ahaub &and; 0 &le; i &and; dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; i &lt; n &and; n - 1 = ahaub &and; dom(a,0,ahaub) &and; n - 1 = ahaub_681 &and; 0 &le; a[i] &and; a[i] &le; ahaub_681 &and; update_array_1d(b,b',i,a[i]))  &#8866;  Permute(a,0,n - 1,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -315,10 +301,7 @@ IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n - 1=ahaub &amp; dom(a,0,ahaub) &
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> n - 1=ahaub_681 &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; n - 1=ahaub &amp; i&lt;n &amp; dom(a,0,n - 1) &amp; <br/>
-dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; <br/>
-dom(a,0,ahaub) &amp; dom(b,0,ahaub_681) &amp; 0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; <br/>
-dom(b&apos;,0,ahaub_681) &amp; update_array_1d(b,b&apos;,i,a[i]) &amp; v_int_48_640&apos;=1+i&#8866; IsLeftInverse(a,b&apos;,0,v_int_48_640&apos; - 1)
+<ul>(n - 1 = ahaub_681 &and; i &le; ahaub &and; 0 &le; i &and; n - 1 = ahaub &and; i &lt; n &and; dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; dom(a,0,ahaub) &and; dom(b,0,ahaub_681) &and; 0 &le; a[i] &and; a[i] &le; ahaub_681 &and; dom(b',0,ahaub_681) &and; update_array_1d(b,b',i,a[i]) &and; v_int_48_640' = 1 + i)  &#8866;  IsLeftInverse(a,b',0,v_int_48_640' - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -356,11 +339,7 @@ dom(b&apos;,0,ahaub_681) &amp; update_array_1d(b,b&apos;,i,a[i]) &amp; v_int_48_
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
-update_array_1d(b,b&apos;,i,a[i]) &amp; dom(b&apos;,0,ahaub_681) &amp; (a[i])&lt;=ahaub_681 &amp; <br/>
-0&lt;=(a[i]) &amp; dom(b,0,ahaub_681) &amp; n - 1=ahaub_681 &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; <br/>
-dom(a,0,ahaub) &amp; n - 1=ahaub &amp; i&lt;n &amp; IsLeftInverse(a,b,0,i - 1) &amp; <br/>
-v_int_48_640&apos;=1+i&#8866; 0&lt;=v_int_48_640&apos;
+<ul>(dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; update_array_1d(b,b',i,a[i]) &and; dom(b',0,ahaub_681) &and; a[i] &le; ahaub_681 &and; 0 &le; a[i] &and; dom(b,0,ahaub_681) &and; n - 1 = ahaub_681 &and; i &le; ahaub &and; 0 &le; i &and; dom(a,0,ahaub) &and; n - 1 = ahaub &and; i &lt; n &and; IsLeftInverse(a,b,0,i - 1) &and; v_int_48_640' = 1 + i)  &#8866;  0 &le; v_int_48_640'
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -400,11 +379,7 @@ v_int_48_640&apos;=1+i&#8866; 0&lt;=v_int_48_640&apos;
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b_706,0,ahaub_681) &amp; i&lt;=ahaub &amp; 0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n -<br/>
-1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; IsLeftInverse(a,b,0,i - 1) &amp; i&lt;n &amp; n -<br/>
-1=ahaub &amp; dom(a,0,ahaub) &amp; n - 1=ahaub_681 &amp; dom(b,0,ahaub_681) &amp; <br/>
-0&lt;=(a[i]) &amp; (a[i])&lt;=ahaub_681 &amp; update_array_1d(b,b_706,i,a[i]) &amp; <br/>
-IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsLeftInverse(a,b&apos;,0,n - 1)
+<ul>(dom(b_706,0,ahaub_681) &and; i &le; ahaub &and; 0 &le; i &and; dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; i &lt; n &and; n - 1 = ahaub &and; dom(a,0,ahaub) &and; n - 1 = ahaub_681 &and; dom(b,0,ahaub_681) &and; 0 &le; a[i] &and; a[i] &le; ahaub_681 &and; update_array_1d(b,b_706,i,a[i]) &and; IsLeftInverse(a,b',0,n - 1))  &#8866;  IsLeftInverse(a,b',0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -442,8 +417,7 @@ IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsLeftInverse(a,b&apos;,0,n - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> 0&lt;=i &amp; dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
-IsLeftInverse(a,b,0,i - 1) &amp; n&lt;=i&#8866; IsLeftInverse(a,b,0,n - 1)
+<ul>(0 &le; i &and; dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b,0,i - 1) &and; n &le; i)  &#8866;  IsLeftInverse(a,b,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -491,7 +465,7 @@ v_int_33_658 = 0;<br/>
 {(28,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 73::InvertHelper$int[]~int[]~int~int(a,b,n,v_int_33_658) at <a href="#L33">line 33</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; dom(a,0,n - 1)
+<ul>(dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1))  &#8866;  dom(a,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -518,7 +492,7 @@ Precondition of procedure call 73::InvertHelper$int[]~int[]~int~int(a,b,n,v_int_
 <ul>(error &quot;line 10 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
 unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; dom(b,0,n - 1)
+<ul>(dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1))  &#8866;  dom(b,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -545,7 +519,7 @@ unsat</li></ul></ul></li>
 <ul>(error &quot;line 10 column 47: invalid declaration, function &apos;dom&apos; (whith the given signature) already declared&quot;)<br/>
 unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; Permute(a,0,n - 1,0,n - 1)
+<ul>(dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1))  &#8866;  Permute(a,0,n - 1,0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -566,7 +540,7 @@ unsat</li></ul></ul></li>
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1)&#8866; IsLeftInverse(a,b,0,0 - 1)
+<ul>(dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1))  &#8866;  IsLeftInverse(a,b,0,0 - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -588,7 +562,7 @@ unsat</li></ul></ul></li>
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> true&#8866; 0&lt;=0
+<ul><b>true</b>  &#8866;  0 &le; 0
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -604,8 +578,7 @@ unsat</li></ul></ul></li>
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
-IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsLeftInverse(a,b&apos;,0,n - 1)
+<ul>(dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b',0,n - 1))  &#8866;  IsLeftInverse(a,b',0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -629,8 +602,7 @@ IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsLeftInverse(a,b&apos;,0,n - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,0,n - 1) &amp; dom(b,0,n - 1) &amp; Permute(a,0,n - 1,0,n - 1) &amp; <br/>
-IsLeftInverse(a,b&apos;,0,n - 1)&#8866; IsInjective(b&apos;,0,n - 1)
+<ul>(dom(a,0,n - 1) &and; dom(b,0,n - 1) &and; Permute(a,0,n - 1,0,n - 1) &and; IsLeftInverse(a,b',0,n - 1))  &#8866;  IsInjective(b',0,n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

@@ -347,9 +347,7 @@ else LABEL! 108,1: <br/>
 {(88,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 111::merge_sort$int[]~int~int(a,i,m_50) rec at <a href="#L96">line 96</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; j&lt;=ha_834 &amp; dom(a,la_833,ha_834) &amp; la_833&lt;=i &amp; <br/>
-i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=m_50&apos; &amp; 0&lt;=(j+i)&#8866; &exist;(la_842:&exist;(ha_843:dom(a,la_842,ha_843) &amp; la_842&lt;=i &amp; <br/>
-m_50&apos;&lt;=ha_843))
+<ul>(r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; j &le; ha_834 &and; dom(a,la_833,ha_834) &and; la_833 &le; i &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; m_50' &and; 0 &le; j + i)  &#8866;   &exist; la_842  &exist; ha_843 (dom(a,la_842,ha_843) &and; la_842 &le; i &and; m_50' &le; ha_843)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -380,9 +378,7 @@ m_50&apos;&lt;=ha_843))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; j&lt;=ha_834 &amp; dom(a,la_833,ha_834) &amp; la_833&lt;=i &amp; <br/>
-i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (m_50&apos;+1)&lt;=0 &amp; (j+i)&lt;0&#8866; &exist;(la_846:&exist;(ha_847:dom(a,la_846,ha_847) &amp; la_846&lt;=i &amp; <br/>
-m_50&apos;&lt;=ha_847))
+<ul>(r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; j &le; ha_834 &and; dom(a,la_833,ha_834) &and; la_833 &le; i &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; m_50' + 1 &le; 0 &and; j + i &lt; 0)  &#8866;   &exist; la_846  &exist; ha_847 (dom(a,la_846,ha_847) &and; la_846 &le; i &and; m_50' &le; ha_847)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -415,11 +411,7 @@ m_50&apos;&lt;=ha_847))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 112::merge_sort$int[]~int~int(a,v_int_97_641,j) rec at <a href="#L97">line 97</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> m_50&apos;&lt;=ha_858 &amp; la_857&lt;=i &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; <br/>
-j&lt;=ha_858 &amp; i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=(j+i) &amp; dom(a,la_857,ha_858) &amp; <br/>
-dom(a&apos;,la_857,ha_858) &amp; sorted(a&apos;,i,m_50&apos;) &amp; amodr(a,a&apos;,i,m_50&apos;) &amp; <br/>
-v_int_97_641&apos;=1+m_50&apos;&#8866; &exist;(la_865:&exist;(ha_866:dom(a&apos;,la_865,ha_866) &amp; la_865&lt;=v_int_97_641&apos; &amp; <br/>
-j&lt;=ha_866))
+<ul>(m_50' &le; ha_858 &and; la_857 &le; i &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; j &le; ha_858 &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; j + i &and; dom(a,la_857,ha_858) &and; dom(a',la_857,ha_858) &and; sorted(a',i,m_50') &and; amodr(a,a',i,m_50') &and; v_int_97_641' = 1 + m_50')  &#8866;   &exist; la_865  &exist; ha_866 (dom(a',la_865,ha_866) &and; la_865 &le; v_int_97_641' &and; j &le; ha_866)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -461,11 +453,7 @@ j&lt;=ha_866))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> m_50&apos;&lt;=ha_858 &amp; la_857&lt;=i &amp; (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; (m_50&apos;+1)&lt;=0 &amp; <br/>
-j&lt;=ha_858 &amp; i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (j+i)&lt;0 &amp; dom(a,la_857,ha_858) &amp; <br/>
-dom(a&apos;,la_857,ha_858) &amp; sorted(a&apos;,i,m_50&apos;) &amp; amodr(a,a&apos;,i,m_50&apos;) &amp; <br/>
-v_int_97_641&apos;=1+m_50&apos;&#8866; &exist;(la_868:&exist;(ha_869:dom(a&apos;,la_868,ha_869) &amp; la_868&lt;=v_int_97_641&apos; &amp; <br/>
-j&lt;=ha_869))
+<ul>(m_50' &le; ha_858 &and; la_857 &le; i &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; j &le; ha_858 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; j + i &lt; 0 &and; dom(a,la_857,ha_858) &and; dom(a',la_857,ha_858) &and; sorted(a',i,m_50') &and; amodr(a,a',i,m_50') &and; v_int_97_641' = 1 + m_50')  &#8866;   &exist; la_868  &exist; ha_869 (dom(a',la_868,ha_869) &and; la_868 &le; v_int_97_641' &and; j &le; ha_869)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -509,12 +497,7 @@ j&lt;=ha_869))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L104">line 104</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(c_51&apos;,0,(1+v_int_98_891) - 1) &amp; v_int_98_891+i=j &amp; j&lt;=ahaub &amp; <br/>
-dom(a_875,ahalb,ahaub) &amp; ahalb&lt;=i &amp; 0&lt;=(j+i) &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; <br/>
-i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=m_50&apos; &amp; dom(a,ahalb,ahaub) &amp; m_50&apos;&lt;=ahaub &amp; <br/>
-sorted(a_875,i,m_50&apos;) &amp; amodr(a,a_875,i,m_50&apos;) &amp; ahalb&lt;=(1+m_50&apos;) &amp; <br/>
-dom(a&apos;,ahalb,ahaub) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_875,a&apos;,1+m_50&apos;,j)&#8866; &exist;(ahalb_901:&exist;(ahaub_902:dom(a&apos;,ahalb_901,ahaub_902) &amp; <br/>
-ahalb_901&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_902))
+<ul>(dom(c_51',0,1 + v_int_98_891 - 1) &and; v_int_98_891 + i = j &and; j &le; ahaub &and; dom(a_875,ahalb,ahaub) &and; ahalb &le; i &and; 0 &le; j + i &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; m_50' &and; dom(a,ahalb,ahaub) &and; m_50' &le; ahaub &and; sorted(a_875,i,m_50') &and; amodr(a,a_875,i,m_50') &and; ahalb &le; 1 + m_50' &and; dom(a',ahalb,ahaub) &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j))  &#8866;   &exist; ahalb_901  &exist; ahaub_902 (dom(a',ahalb_901,ahaub_902) &and; ahalb_901 &le; m_50' &and; m_50' &le; ahaub_902)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -563,13 +546,7 @@ ahalb_901&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_902))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(c_51&apos;,0,(1+v_int_98_892) - 1) &amp; v_int_98_892+i=j &amp; j&lt;=ahaub &amp; <br/>
-dom(a_876,ahalb,ahaub) &amp; ahalb&lt;=i &amp; (j+i)&lt;0 &amp; (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; <br/>
-i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (m_50&apos;+1)&lt;=0 &amp; dom(a,ahalb,ahaub) &amp; <br/>
-m_50&apos;&lt;=ahaub &amp; sorted(a_876,i,m_50&apos;) &amp; amodr(a,a_876,i,m_50&apos;) &amp; ahalb&lt;=(1+<br/>
-m_50&apos;) &amp; dom(a&apos;,ahalb,ahaub) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_876,a&apos;,1+<br/>
-m_50&apos;,j)&#8866; &exist;(ahalb_903:&exist;(ahaub_904:dom(a&apos;,ahalb_903,ahaub_904) &amp; <br/>
-ahalb_903&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_904))
+<ul>(dom(c_51',0,1 + v_int_98_892 - 1) &and; v_int_98_892 + i = j &and; j &le; ahaub &and; dom(a_876,ahalb,ahaub) &and; ahalb &le; i &and; j + i &lt; 0 &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; m_50' + 1 &le; 0 &and; dom(a,ahalb,ahaub) &and; m_50' &le; ahaub &and; sorted(a_876,i,m_50') &and; amodr(a,a_876,i,m_50') &and; ahalb &le; 1 + m_50' &and; dom(a',ahalb,ahaub) &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j))  &#8866;   &exist; ahalb_903  &exist; ahaub_904 (dom(a',ahalb_903,ahaub_904) &and; ahalb_903 &le; m_50' &and; m_50' &le; ahaub_904)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -620,14 +597,7 @@ ahalb_903&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_904))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L104">line 104</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> m_50&apos;&lt;=ahaub_908 &amp; ahalb_907&lt;=m_50&apos; &amp; dom(c_51&apos;,0,(1+v_int_98_891) - 1) &amp; <br/>
-ahalb_907&lt;=(1+m_50&apos;) &amp; dom(a_875,ahalb_907,ahaub_908) &amp; <br/>
-sorted(a_875,i,m_50&apos;) &amp; ahalb_907&lt;=i &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; <br/>
-i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=(j+i) &amp; dom(a,ahalb_907,ahaub_908) &amp; <br/>
-amodr(a,a_875,i,m_50&apos;) &amp; j&lt;=ahaub_908 &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; <br/>
-amodr(a_875,a&apos;,1+m_50&apos;,j) &amp; v_int_98_891+i=j &amp; dom(a&apos;,ahalb_907,ahaub_908) &amp; <br/>
-v_int_104_646&apos;=a&apos;[m_50&apos;]&#8866; &exist;(ahalb_913:&exist;(ahaub_914:dom(a&apos;,ahalb_913,ahaub_914) &amp; <br/>
-ahalb_913&lt;=j &amp; j&lt;=ahaub_914))
+<ul>(m_50' &le; ahaub_908 &and; ahalb_907 &le; m_50' &and; dom(c_51',0,1 + v_int_98_891 - 1) &and; ahalb_907 &le; 1 + m_50' &and; dom(a_875,ahalb_907,ahaub_908) &and; sorted(a_875,i,m_50') &and; ahalb_907 &le; i &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; j + i &and; dom(a,ahalb_907,ahaub_908) &and; amodr(a,a_875,i,m_50') &and; j &le; ahaub_908 &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j) &and; v_int_98_891 + i = j &and; dom(a',ahalb_907,ahaub_908) &and; v_int_104_646' = a'[m_50'])  &#8866;   &exist; ahalb_913  &exist; ahaub_914 (dom(a',ahalb_913,ahaub_914) &and; ahalb_913 &le; j &and; j &le; ahaub_914)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -679,14 +649,7 @@ ahalb_913&lt;=j &amp; j&lt;=ahaub_914))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> m_50&apos;&lt;=ahaub_908 &amp; ahalb_907&lt;=m_50&apos; &amp; dom(c_51&apos;,0,(1+v_int_98_892) - 1) &amp; <br/>
-ahalb_907&lt;=(1+m_50&apos;) &amp; dom(a_876,ahalb_907,ahaub_908) &amp; <br/>
-sorted(a_876,i,m_50&apos;) &amp; ahalb_907&lt;=i &amp; (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; (m_50&apos;+<br/>
-1)&lt;=0 &amp; i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (j+i)&lt;0 &amp; dom(a,ahalb_907,ahaub_908) &amp; <br/>
-amodr(a,a_876,i,m_50&apos;) &amp; j&lt;=ahaub_908 &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; <br/>
-amodr(a_876,a&apos;,1+m_50&apos;,j) &amp; v_int_98_892+i=j &amp; dom(a&apos;,ahalb_907,ahaub_908) &amp; <br/>
-v_int_104_646&apos;=a&apos;[m_50&apos;]&#8866; &exist;(ahalb_915:&exist;(ahaub_916:dom(a&apos;,ahalb_915,ahaub_916) &amp; <br/>
-ahalb_915&lt;=j &amp; j&lt;=ahaub_916))
+<ul>(m_50' &le; ahaub_908 &and; ahalb_907 &le; m_50' &and; dom(c_51',0,1 + v_int_98_892 - 1) &and; ahalb_907 &le; 1 + m_50' &and; dom(a_876,ahalb_907,ahaub_908) &and; sorted(a_876,i,m_50') &and; ahalb_907 &le; i &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; j + i &lt; 0 &and; dom(a,ahalb_907,ahaub_908) &and; amodr(a,a_876,i,m_50') &and; j &le; ahaub_908 &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j) &and; v_int_98_892 + i = j &and; dom(a',ahalb_907,ahaub_908) &and; v_int_104_646' = a'[m_50'])  &#8866;   &exist; ahalb_915  &exist; ahaub_916 (dom(a',ahalb_915,ahaub_916) &and; ahalb_915 &le; j &and; j &le; ahaub_916)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -740,14 +703,7 @@ ahalb_915&lt;=j &amp; j&lt;=ahaub_916))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L104">line 104</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_928 &amp; ahalb_927&lt;=j &amp; dom(c_51&apos;,0,(1+v_int_98_891) - 1) &amp; <br/>
-v_int_98_891+i=j &amp; dom(a_875,ahalb_927,ahaub_928) &amp; ahalb_927&lt;=i &amp; 0&lt;=(j+<br/>
-i) &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=m_50&apos; &amp; <br/>
-dom(a,ahalb_927,ahaub_928) &amp; sorted(a_875,i,m_50&apos;) &amp; <br/>
-amodr(a,a_875,i,m_50&apos;) &amp; ahalb_927&lt;=(1+m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; <br/>
-amodr(a_875,a&apos;,1+m_50&apos;,j) &amp; ahalb_927&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_928 &amp; <br/>
-dom(a&apos;,ahalb_927,ahaub_928) &amp; (a&apos;[j])&lt;(a&apos;[m_50&apos;])&#8866; &exist;(ahalb_933:&exist;(ahaub_934:dom(a&apos;,ahalb_933,ahaub_934) &amp; <br/>
-ahalb_933&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_934))
+<ul>(j &le; ahaub_928 &and; ahalb_927 &le; j &and; dom(c_51',0,1 + v_int_98_891 - 1) &and; v_int_98_891 + i = j &and; dom(a_875,ahalb_927,ahaub_928) &and; ahalb_927 &le; i &and; 0 &le; j + i &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; m_50' &and; dom(a,ahalb_927,ahaub_928) &and; sorted(a_875,i,m_50') &and; amodr(a,a_875,i,m_50') &and; ahalb_927 &le; 1 + m_50' &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j) &and; ahalb_927 &le; m_50' &and; m_50' &le; ahaub_928 &and; dom(a',ahalb_927,ahaub_928) &and; a'[j] &lt; a'[m_50'])  &#8866;   &exist; ahalb_933  &exist; ahaub_934 (dom(a',ahalb_933,ahaub_934) &and; ahalb_933 &le; m_50' &and; m_50' &le; ahaub_934)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -799,14 +755,7 @@ ahalb_933&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_934))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_928 &amp; ahalb_927&lt;=j &amp; dom(c_51&apos;,0,(1+v_int_98_892) - 1) &amp; <br/>
-v_int_98_892+i=j &amp; dom(a_876,ahalb_927,ahaub_928) &amp; ahalb_927&lt;=i &amp; (j+i)&lt;0 &amp; <br/>
-(r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (m_50&apos;+1)&lt;=0 &amp; <br/>
-dom(a,ahalb_927,ahaub_928) &amp; sorted(a_876,i,m_50&apos;) &amp; <br/>
-amodr(a,a_876,i,m_50&apos;) &amp; ahalb_927&lt;=(1+m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; <br/>
-amodr(a_876,a&apos;,1+m_50&apos;,j) &amp; ahalb_927&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_928 &amp; <br/>
-dom(a&apos;,ahalb_927,ahaub_928) &amp; (a&apos;[j])&lt;(a&apos;[m_50&apos;])&#8866; &exist;(ahalb_935:&exist;(ahaub_936:dom(a&apos;,ahalb_935,ahaub_936) &amp; <br/>
-ahalb_935&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_936))
+<ul>(j &le; ahaub_928 &and; ahalb_927 &le; j &and; dom(c_51',0,1 + v_int_98_892 - 1) &and; v_int_98_892 + i = j &and; dom(a_876,ahalb_927,ahaub_928) &and; ahalb_927 &le; i &and; j + i &lt; 0 &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; m_50' + 1 &le; 0 &and; dom(a,ahalb_927,ahaub_928) &and; sorted(a_876,i,m_50') &and; amodr(a,a_876,i,m_50') &and; ahalb_927 &le; 1 + m_50' &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j) &and; ahalb_927 &le; m_50' &and; m_50' &le; ahaub_928 &and; dom(a',ahalb_927,ahaub_928) &and; a'[j] &lt; a'[m_50'])  &#8866;   &exist; ahalb_935  &exist; ahaub_936 (dom(a',ahalb_935,ahaub_936) &and; ahalb_935 &le; m_50' &and; m_50' &le; ahaub_936)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -860,14 +809,7 @@ ahalb_935&lt;=m_50&apos; &amp; m_50&apos;&lt;=ahaub_936))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L104">line 104</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> m_50&apos;&lt;=ahaub_940 &amp; ahalb_939&lt;=m_50&apos; &amp; dom(c_51&apos;,0,(1+v_int_98_891) - 1) &amp; <br/>
-ahalb_939&lt;=(1+m_50&apos;) &amp; dom(a_875,ahalb_939,ahaub_940) &amp; <br/>
-sorted(a_875,i,m_50&apos;) &amp; ahalb_939&lt;=i &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; <br/>
-i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=(j+i) &amp; dom(a,ahalb_939,ahaub_940) &amp; <br/>
-amodr(a,a_875,i,m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_875,a&apos;,1+m_50&apos;,j) &amp; <br/>
-v_int_98_891+i=j &amp; dom(a&apos;,ahalb_939,ahaub_940) &amp; ahalb_939&lt;=j &amp; <br/>
-j&lt;=ahaub_940 &amp; (a&apos;[m_50&apos;])&lt;=(a&apos;[j])&#8866; &exist;(ahalb_945:&exist;(ahaub_946:dom(a&apos;,ahalb_945,ahaub_946) &amp; <br/>
-ahalb_945&lt;=j &amp; j&lt;=ahaub_946))
+<ul>(m_50' &le; ahaub_940 &and; ahalb_939 &le; m_50' &and; dom(c_51',0,1 + v_int_98_891 - 1) &and; ahalb_939 &le; 1 + m_50' &and; dom(a_875,ahalb_939,ahaub_940) &and; sorted(a_875,i,m_50') &and; ahalb_939 &le; i &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; j + i &and; dom(a,ahalb_939,ahaub_940) &and; amodr(a,a_875,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j) &and; v_int_98_891 + i = j &and; dom(a',ahalb_939,ahaub_940) &and; ahalb_939 &le; j &and; j &le; ahaub_940 &and; a'[m_50'] &le; a'[j])  &#8866;   &exist; ahalb_945  &exist; ahaub_946 (dom(a',ahalb_945,ahaub_946) &and; ahalb_945 &le; j &and; j &le; ahaub_946)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -919,14 +861,7 @@ ahalb_945&lt;=j &amp; j&lt;=ahaub_946))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> m_50&apos;&lt;=ahaub_940 &amp; ahalb_939&lt;=m_50&apos; &amp; dom(c_51&apos;,0,(1+v_int_98_892) - 1) &amp; <br/>
-ahalb_939&lt;=(1+m_50&apos;) &amp; dom(a_876,ahalb_939,ahaub_940) &amp; <br/>
-sorted(a_876,i,m_50&apos;) &amp; ahalb_939&lt;=i &amp; (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; (m_50&apos;+<br/>
-1)&lt;=0 &amp; i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (j+i)&lt;0 &amp; dom(a,ahalb_939,ahaub_940) &amp; <br/>
-amodr(a,a_876,i,m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_876,a&apos;,1+m_50&apos;,j) &amp; <br/>
-v_int_98_892+i=j &amp; dom(a&apos;,ahalb_939,ahaub_940) &amp; ahalb_939&lt;=j &amp; <br/>
-j&lt;=ahaub_940 &amp; (a&apos;[m_50&apos;])&lt;=(a&apos;[j])&#8866; &exist;(ahalb_947:&exist;(ahaub_948:dom(a&apos;,ahalb_947,ahaub_948) &amp; <br/>
-ahalb_947&lt;=j &amp; j&lt;=ahaub_948))
+<ul>(m_50' &le; ahaub_940 &and; ahalb_939 &le; m_50' &and; dom(c_51',0,1 + v_int_98_892 - 1) &and; ahalb_939 &le; 1 + m_50' &and; dom(a_876,ahalb_939,ahaub_940) &and; sorted(a_876,i,m_50') &and; ahalb_939 &le; i &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; j + i &lt; 0 &and; dom(a,ahalb_939,ahaub_940) &and; amodr(a,a_876,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j) &and; v_int_98_892 + i = j &and; dom(a',ahalb_939,ahaub_940) &and; ahalb_939 &le; j &and; j &le; ahaub_940 &and; a'[m_50'] &le; a'[j])  &#8866;   &exist; ahalb_947  &exist; ahaub_948 (dom(a',ahalb_947,ahaub_948) &and; ahalb_947 &le; j &and; j &le; ahaub_948)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -983,24 +918,7 @@ Assertion at <a href="#L110">line 110</a> holds
 <ul></ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 121::merge_sorted_arrays$int[]~int~int~int[]~int~int~int[](a,i,v_int_112_659,a,v_int_112_658,v_int_112_657,c_51) at <a href="#L112">line 112</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+v_int_98_891) - 1=hc &amp; m_50&apos;&lt;=hb &amp; lb&lt;=m_50&apos; &amp; j&lt;=hb &amp; lb&lt;=j &amp; lb&lt;=(1+<br/>
-m_50&apos;) &amp; dom(a_875,lb,hb) &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; i&lt;j &amp; j+<br/>
-i=r_841+(2*m_50&apos;) &amp; 0&lt;=(j+i) &amp; dom(a,lb,hb) &amp; lb&lt;=i &amp; <br/>
-sorted(a_875,i,m_50&apos;) &amp; amodr(a,a_875,i,m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; <br/>
-amodr(a_875,a&apos;,1+m_50&apos;,j) &amp; v_int_98_891+i=j &amp; dom(c_51&apos;,0,(1+v_int_98_891) -<br/>
-1) &amp; (a&apos;[j])&lt;(a&apos;[m_50&apos;]) &amp; dom(a&apos;,lb,hb) &amp; u=a&apos;[m_50&apos;] &amp; <br/>
-upperbnd(a&apos;,i,m_50&apos;,u) &amp; upperbnd(a&apos;,m_50&apos;+1,j,u) &amp; v_int_112_987+i=m_50&apos; &amp; <br/>
-v_int_112_659&apos;=1+v_int_112_987 &amp; v_int_112_657&apos;+m_50&apos;=j &amp; 1+<br/>
-m_50&apos;=v_int_112_658&apos; &amp; m_50&apos;=(i+v_int_112_659&apos;) - 1 &amp; m_50&apos;+<br/>
-1=v_int_112_658&apos; &amp; j=(v_int_112_658&apos;+v_int_112_657&apos;) - 1&#8866; &exist;(la_1019:&exist;(ha_1020:&exist;(lb_1021:&exist;(hb_1022:&exist;(lc_1023:&exist;(hc_1024:&exist;(u_1025:dom(a&apos;,la_1019,ha_1020) &amp; <br/>
-la_1019&lt;=i &amp; (v_int_112_659&apos;+i)&lt;=(1+ha_1020) &amp; 0&lt;=v_int_112_659&apos; &amp; <br/>
-dom(a&apos;,lb_1021,hb_1022) &amp; lb_1021&lt;=v_int_112_658&apos; &amp; (v_int_112_657&apos;+<br/>
-v_int_112_658&apos;)&lt;=(1+hb_1022) &amp; 0&lt;=v_int_112_657&apos; &amp; <br/>
-dom(c_51&apos;,lc_1023,hc_1024) &amp; lc_1023&lt;=0 &amp; (v_int_112_659&apos;+<br/>
-v_int_112_657&apos;)&lt;=(1+hc_1024) &amp; upperbnd(a&apos;,i,(i+v_int_112_659&apos;) -<br/>
-1,u_1025) &amp; upperbnd(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) -<br/>
-1,u_1025) &amp; sorted(a&apos;,i,(i+v_int_112_659&apos;) - 1) &amp; <br/>
-sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1))))))))
+<ul>(1 + v_int_98_891 - 1 = hc &and; m_50' &le; hb &and; lb &le; m_50' &and; j &le; hb &and; lb &le; j &and; lb &le; 1 + m_50' &and; dom(a_875,lb,hb) &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; j + i &and; dom(a,lb,hb) &and; lb &le; i &and; sorted(a_875,i,m_50') &and; amodr(a,a_875,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j) &and; v_int_98_891 + i = j &and; dom(c_51',0,1 + v_int_98_891 - 1) &and; a'[j] &lt; a'[m_50'] &and; dom(a',lb,hb) &and; u = a'[m_50'] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_987 + i = m_50' &and; v_int_112_659' = 1 + v_int_112_987 &and; v_int_112_657' + m_50' = j &and; 1 + m_50' = v_int_112_658' &and; m_50' = i + v_int_112_659' - 1 &and; m_50' + 1 = v_int_112_658' &and; j = v_int_112_658' + v_int_112_657' - 1)  &#8866;   &exist; la_1019  &exist; ha_1020  &exist; lb_1021  &exist; hb_1022  &exist; lc_1023  &exist; hc_1024  &exist; u_1025 (dom(a',la_1019,ha_1020) &and; la_1019 &le; i &and; v_int_112_659' + i &le; 1 + ha_1020 &and; 0 &le; v_int_112_659' &and; dom(a',lb_1021,hb_1022) &and; lb_1021 &le; v_int_112_658' &and; v_int_112_657' + v_int_112_658' &le; 1 + hb_1022 &and; 0 &le; v_int_112_657' &and; dom(c_51',lc_1023,hc_1024) &and; lc_1023 &le; 0 &and; v_int_112_659' + v_int_112_657' &le; 1 + hc_1024 &and; upperbnd(a',i,i + v_int_112_659' - 1,u_1025) &and; upperbnd(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1,u_1025) &and; sorted(a',i,i + v_int_112_659' - 1) &and; sorted(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1073,23 +991,7 @@ sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+v_int_98_892) - 1=hc &amp; m_50&apos;&lt;=hb &amp; lb&lt;=m_50&apos; &amp; j&lt;=hb &amp; lb&lt;=j &amp; lb&lt;=(1+<br/>
-m_50&apos;) &amp; dom(a_876,lb,hb) &amp; (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; (m_50&apos;+1)&lt;=0 &amp; i&lt;j &amp; j+<br/>
-i=r_845+(2*m_50&apos;) &amp; (j+i)&lt;0 &amp; dom(a,lb,hb) &amp; lb&lt;=i &amp; sorted(a_876,i,m_50&apos;) &amp; <br/>
-amodr(a,a_876,i,m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_876,a&apos;,1+m_50&apos;,j) &amp; <br/>
-v_int_98_892+i=j &amp; dom(c_51&apos;,0,(1+v_int_98_892) - 1) &amp; (a&apos;[j])&lt;(a&apos;[m_50&apos;]) &amp; <br/>
-dom(a&apos;,lb,hb) &amp; u=a&apos;[m_50&apos;] &amp; upperbnd(a&apos;,i,m_50&apos;,u) &amp; upperbnd(a&apos;,m_50&apos;+<br/>
-1,j,u) &amp; v_int_112_988+i=m_50&apos; &amp; v_int_112_659&apos;=1+v_int_112_988 &amp; <br/>
-v_int_112_657&apos;+m_50&apos;=j &amp; 1+m_50&apos;=v_int_112_658&apos; &amp; m_50&apos;=(i+v_int_112_659&apos;) -<br/>
-1 &amp; m_50&apos;+1=v_int_112_658&apos; &amp; j=(v_int_112_658&apos;+v_int_112_657&apos;) - 1&#8866; &exist;(la_1027:&exist;(ha_1028:&exist;(lb_1029:&exist;(hb_1030:&exist;(lc_1031:&exist;(hc_1032:&exist;(u_1033:dom(a&apos;,la_1027,ha_1028) &amp; <br/>
-la_1027&lt;=i &amp; (v_int_112_659&apos;+i)&lt;=(1+ha_1028) &amp; 0&lt;=v_int_112_659&apos; &amp; <br/>
-dom(a&apos;,lb_1029,hb_1030) &amp; lb_1029&lt;=v_int_112_658&apos; &amp; (v_int_112_657&apos;+<br/>
-v_int_112_658&apos;)&lt;=(1+hb_1030) &amp; 0&lt;=v_int_112_657&apos; &amp; <br/>
-dom(c_51&apos;,lc_1031,hc_1032) &amp; lc_1031&lt;=0 &amp; (v_int_112_659&apos;+<br/>
-v_int_112_657&apos;)&lt;=(1+hc_1032) &amp; upperbnd(a&apos;,i,(i+v_int_112_659&apos;) -<br/>
-1,u_1033) &amp; upperbnd(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) -<br/>
-1,u_1033) &amp; sorted(a&apos;,i,(i+v_int_112_659&apos;) - 1) &amp; <br/>
-sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1))))))))
+<ul>(1 + v_int_98_892 - 1 = hc &and; m_50' &le; hb &and; lb &le; m_50' &and; j &le; hb &and; lb &le; j &and; lb &le; 1 + m_50' &and; dom(a_876,lb,hb) &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; j + i &lt; 0 &and; dom(a,lb,hb) &and; lb &le; i &and; sorted(a_876,i,m_50') &and; amodr(a,a_876,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j) &and; v_int_98_892 + i = j &and; dom(c_51',0,1 + v_int_98_892 - 1) &and; a'[j] &lt; a'[m_50'] &and; dom(a',lb,hb) &and; u = a'[m_50'] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_988 + i = m_50' &and; v_int_112_659' = 1 + v_int_112_988 &and; v_int_112_657' + m_50' = j &and; 1 + m_50' = v_int_112_658' &and; m_50' = i + v_int_112_659' - 1 &and; m_50' + 1 = v_int_112_658' &and; j = v_int_112_658' + v_int_112_657' - 1)  &#8866;   &exist; la_1027  &exist; ha_1028  &exist; lb_1029  &exist; hb_1030  &exist; lc_1031  &exist; hc_1032  &exist; u_1033 (dom(a',la_1027,ha_1028) &and; la_1027 &le; i &and; v_int_112_659' + i &le; 1 + ha_1028 &and; 0 &le; v_int_112_659' &and; dom(a',lb_1029,hb_1030) &and; lb_1029 &le; v_int_112_658' &and; v_int_112_657' + v_int_112_658' &le; 1 + hb_1030 &and; 0 &le; v_int_112_657' &and; dom(c_51',lc_1031,hc_1032) &and; lc_1031 &le; 0 &and; v_int_112_659' + v_int_112_657' &le; 1 + hc_1032 &and; upperbnd(a',i,i + v_int_112_659' - 1,u_1033) &and; upperbnd(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1,u_1033) &and; sorted(a',i,i + v_int_112_659' - 1) &and; sorted(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1162,24 +1064,7 @@ sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+v_int_98_891) - 1=hc &amp; j&lt;=hb &amp; lb&lt;=j &amp; m_50&apos;&lt;=hb &amp; lb&lt;=m_50&apos; &amp; lb&lt;=(1+<br/>
-m_50&apos;) &amp; dom(a_875,lb,hb) &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; i&lt;j &amp; j+<br/>
-i=r_841+(2*m_50&apos;) &amp; 0&lt;=(j+i) &amp; dom(a,lb,hb) &amp; lb&lt;=i &amp; <br/>
-sorted(a_875,i,m_50&apos;) &amp; amodr(a,a_875,i,m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; <br/>
-amodr(a_875,a&apos;,1+m_50&apos;,j) &amp; v_int_98_891+i=j &amp; dom(c_51&apos;,0,(1+v_int_98_891) -<br/>
-1) &amp; (a&apos;[m_50&apos;])&lt;=(a&apos;[j]) &amp; dom(a&apos;,lb,hb) &amp; u=a&apos;[j] &amp; <br/>
-upperbnd(a&apos;,i,m_50&apos;,u) &amp; upperbnd(a&apos;,m_50&apos;+1,j,u) &amp; v_int_112_989+i=m_50&apos; &amp; <br/>
-v_int_112_659&apos;=1+v_int_112_989 &amp; v_int_112_657&apos;+m_50&apos;=j &amp; 1+<br/>
-m_50&apos;=v_int_112_658&apos; &amp; m_50&apos;=(i+v_int_112_659&apos;) - 1 &amp; m_50&apos;+<br/>
-1=v_int_112_658&apos; &amp; j=(v_int_112_658&apos;+v_int_112_657&apos;) - 1&#8866; &exist;(la_1035:&exist;(ha_1036:&exist;(lb_1037:&exist;(hb_1038:&exist;(lc_1039:&exist;(hc_1040:&exist;(u_1041:dom(a&apos;,la_1035,ha_1036) &amp; <br/>
-la_1035&lt;=i &amp; (v_int_112_659&apos;+i)&lt;=(1+ha_1036) &amp; 0&lt;=v_int_112_659&apos; &amp; <br/>
-dom(a&apos;,lb_1037,hb_1038) &amp; lb_1037&lt;=v_int_112_658&apos; &amp; (v_int_112_657&apos;+<br/>
-v_int_112_658&apos;)&lt;=(1+hb_1038) &amp; 0&lt;=v_int_112_657&apos; &amp; <br/>
-dom(c_51&apos;,lc_1039,hc_1040) &amp; lc_1039&lt;=0 &amp; (v_int_112_659&apos;+<br/>
-v_int_112_657&apos;)&lt;=(1+hc_1040) &amp; upperbnd(a&apos;,i,(i+v_int_112_659&apos;) -<br/>
-1,u_1041) &amp; upperbnd(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) -<br/>
-1,u_1041) &amp; sorted(a&apos;,i,(i+v_int_112_659&apos;) - 1) &amp; <br/>
-sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1))))))))
+<ul>(1 + v_int_98_891 - 1 = hc &and; j &le; hb &and; lb &le; j &and; m_50' &le; hb &and; lb &le; m_50' &and; lb &le; 1 + m_50' &and; dom(a_875,lb,hb) &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; j + i &and; dom(a,lb,hb) &and; lb &le; i &and; sorted(a_875,i,m_50') &and; amodr(a,a_875,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j) &and; v_int_98_891 + i = j &and; dom(c_51',0,1 + v_int_98_891 - 1) &and; a'[m_50'] &le; a'[j] &and; dom(a',lb,hb) &and; u = a'[j] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_989 + i = m_50' &and; v_int_112_659' = 1 + v_int_112_989 &and; v_int_112_657' + m_50' = j &and; 1 + m_50' = v_int_112_658' &and; m_50' = i + v_int_112_659' - 1 &and; m_50' + 1 = v_int_112_658' &and; j = v_int_112_658' + v_int_112_657' - 1)  &#8866;   &exist; la_1035  &exist; ha_1036  &exist; lb_1037  &exist; hb_1038  &exist; lc_1039  &exist; hc_1040  &exist; u_1041 (dom(a',la_1035,ha_1036) &and; la_1035 &le; i &and; v_int_112_659' + i &le; 1 + ha_1036 &and; 0 &le; v_int_112_659' &and; dom(a',lb_1037,hb_1038) &and; lb_1037 &le; v_int_112_658' &and; v_int_112_657' + v_int_112_658' &le; 1 + hb_1038 &and; 0 &le; v_int_112_657' &and; dom(c_51',lc_1039,hc_1040) &and; lc_1039 &le; 0 &and; v_int_112_659' + v_int_112_657' &le; 1 + hc_1040 &and; upperbnd(a',i,i + v_int_112_659' - 1,u_1041) &and; upperbnd(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1,u_1041) &and; sorted(a',i,i + v_int_112_659' - 1) &and; sorted(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1252,24 +1137,7 @@ sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (1+v_int_98_892) - 1=hc &amp; j&lt;=hb &amp; lb&lt;=j &amp; m_50&apos;&lt;=hb &amp; lb&lt;=m_50&apos; &amp; lb&lt;=(1+<br/>
-m_50&apos;) &amp; dom(a_876,lb,hb) &amp; (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; (m_50&apos;+1)&lt;=0 &amp; i&lt;j &amp; j+<br/>
-i=r_845+(2*m_50&apos;) &amp; (j+i)&lt;0 &amp; dom(a,lb,hb) &amp; lb&lt;=i &amp; sorted(a_876,i,m_50&apos;) &amp; <br/>
-amodr(a,a_876,i,m_50&apos;) &amp; sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_876,a&apos;,1+m_50&apos;,j) &amp; <br/>
-v_int_98_892+i=j &amp; dom(c_51&apos;,0,(1+v_int_98_892) - 1) &amp; <br/>
-(a&apos;[m_50&apos;])&lt;=(a&apos;[j]) &amp; dom(a&apos;,lb,hb) &amp; u=a&apos;[j] &amp; upperbnd(a&apos;,i,m_50&apos;,u) &amp; <br/>
-upperbnd(a&apos;,m_50&apos;+1,j,u) &amp; v_int_112_990+i=m_50&apos; &amp; v_int_112_659&apos;=1+<br/>
-v_int_112_990 &amp; v_int_112_657&apos;+m_50&apos;=j &amp; 1+m_50&apos;=v_int_112_658&apos; &amp; m_50&apos;=(i+<br/>
-v_int_112_659&apos;) - 1 &amp; m_50&apos;+1=v_int_112_658&apos; &amp; j=(v_int_112_658&apos;+<br/>
-v_int_112_657&apos;) - 1&#8866; &exist;(la_1043:&exist;(ha_1044:&exist;(lb_1045:&exist;(hb_1046:&exist;(lc_1047:&exist;(hc_1048:&exist;(u_1049:dom(a&apos;,la_1043,ha_1044) &amp; <br/>
-la_1043&lt;=i &amp; (v_int_112_659&apos;+i)&lt;=(1+ha_1044) &amp; 0&lt;=v_int_112_659&apos; &amp; <br/>
-dom(a&apos;,lb_1045,hb_1046) &amp; lb_1045&lt;=v_int_112_658&apos; &amp; (v_int_112_657&apos;+<br/>
-v_int_112_658&apos;)&lt;=(1+hb_1046) &amp; 0&lt;=v_int_112_657&apos; &amp; <br/>
-dom(c_51&apos;,lc_1047,hc_1048) &amp; lc_1047&lt;=0 &amp; (v_int_112_659&apos;+<br/>
-v_int_112_657&apos;)&lt;=(1+hc_1048) &amp; upperbnd(a&apos;,i,(i+v_int_112_659&apos;) -<br/>
-1,u_1049) &amp; upperbnd(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) -<br/>
-1,u_1049) &amp; sorted(a&apos;,i,(i+v_int_112_659&apos;) - 1) &amp; <br/>
-sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1))))))))
+<ul>(1 + v_int_98_892 - 1 = hc &and; j &le; hb &and; lb &le; j &and; m_50' &le; hb &and; lb &le; m_50' &and; lb &le; 1 + m_50' &and; dom(a_876,lb,hb) &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; j + i &lt; 0 &and; dom(a,lb,hb) &and; lb &le; i &and; sorted(a_876,i,m_50') &and; amodr(a,a_876,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j) &and; v_int_98_892 + i = j &and; dom(c_51',0,1 + v_int_98_892 - 1) &and; a'[m_50'] &le; a'[j] &and; dom(a',lb,hb) &and; u = a'[j] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_990 + i = m_50' &and; v_int_112_659' = 1 + v_int_112_990 &and; v_int_112_657' + m_50' = j &and; 1 + m_50' = v_int_112_658' &and; m_50' = i + v_int_112_659' - 1 &and; m_50' + 1 = v_int_112_658' &and; j = v_int_112_658' + v_int_112_657' - 1)  &#8866;   &exist; la_1043  &exist; ha_1044  &exist; lb_1045  &exist; hb_1046  &exist; lc_1047  &exist; hc_1048  &exist; u_1049 (dom(a',la_1043,ha_1044) &and; la_1043 &le; i &and; v_int_112_659' + i &le; 1 + ha_1044 &and; 0 &le; v_int_112_659' &and; dom(a',lb_1045,hb_1046) &and; lb_1045 &le; v_int_112_658' &and; v_int_112_657' + v_int_112_658' &le; 1 + hb_1046 &and; 0 &le; v_int_112_657' &and; dom(c_51',lc_1047,hc_1048) &and; lc_1047 &le; 0 &and; v_int_112_659' + v_int_112_657' &le; 1 + hc_1048 &and; upperbnd(a',i,i + v_int_112_659' - 1,u_1049) &and; upperbnd(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1,u_1049) &and; sorted(a',i,i + v_int_112_659' - 1) &and; sorted(a',v_int_112_658',v_int_112_658' + v_int_112_657' - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1344,27 +1212,7 @@ sorted(a&apos;,v_int_112_658&apos;,(v_int_112_658&apos;+v_int_112_657&apos;) - 1
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 126::copy_array$int[]~int~int~int[]~int(c_51,v_int_113_661,v_int_113_660,a,i) at <a href="#L113">line 113</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> (v_int_112_1067+1+v_int_112_987)&lt;=(ha_1080+1) &amp; dom(c_1068,0,ha_1080) &amp; <br/>
-0&lt;=v_int_112_1067 &amp; (1+m_50&apos;+v_int_112_1067)&lt;=(hb_1082+1) &amp; lb_1081&lt;=(1+<br/>
-m_50&apos;) &amp; 0&lt;=(1+v_int_112_987) &amp; j=(1+m_50&apos;+v_int_112_1067) - 1 &amp; m_50&apos;+1=1+<br/>
-m_50&apos; &amp; (1+v_int_98_891) - 1=ha_1080 &amp; 1+m_50&apos;=1+m_50&apos; &amp; v_int_112_1067+<br/>
-m_50&apos;=j &amp; m_50&apos;&lt;=hb_1082 &amp; lb_1081&lt;=m_50&apos; &amp; j&lt;=hb_1082 &amp; lb_1081&lt;=j &amp; <br/>
-dom(c_1068,0,(1+v_int_98_891) - 1) &amp; dom(a_875,lb_1081,hb_1082) &amp; (r_841+<br/>
-1)&lt;=2 &amp; 0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=(j+i) &amp; <br/>
-dom(a,lb_1081,hb_1082) &amp; sorted(a_875,i,m_50&apos;) &amp; amodr(a,a_875,i,m_50&apos;) &amp; <br/>
-sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_875,a&apos;,1+m_50&apos;,j) &amp; v_int_98_891+i=j &amp; <br/>
-(a&apos;[j])&lt;(a&apos;[m_50&apos;]) &amp; u=a&apos;[m_50&apos;] &amp; upperbnd(a&apos;,i,m_50&apos;,u) &amp; <br/>
-upperbnd(a&apos;,m_50&apos;+1,j,u) &amp; v_int_112_987+i=m_50&apos; &amp; m_50&apos;=(i+1+<br/>
-v_int_112_987) - 1 &amp; lb_1081&lt;=i &amp; (i+1+v_int_112_987)&lt;=(hb_1082+1) &amp; <br/>
-dom(a&apos;,lb_1081,hb_1082) &amp; upperbnd(a&apos;,i,(i+1+v_int_112_987) - 1,u) &amp; <br/>
-upperbnd(a&apos;,1+m_50&apos;,(1+m_50&apos;+v_int_112_1067) - 1,u) &amp; sorted(a&apos;,i,(i+1+<br/>
-v_int_112_987) - 1) &amp; sorted(a&apos;,1+m_50&apos;,(1+m_50&apos;+v_int_112_1067) - 1) &amp; <br/>
-dom(c_51&apos;,0,ha_1080) &amp; sorted(c_51&apos;,0,(v_int_112_1067+1+v_int_112_987) -<br/>
-1) &amp; upperbnd(c_51&apos;,0,(v_int_112_1067+1+v_int_112_987) - 1,u) &amp; <br/>
-amodr(c_1068,c_51&apos;,0,(v_int_112_1067+1+v_int_112_987) - 1) &amp; v_int_113_660&apos;+<br/>
-i=j&#8866; &exist;(la_1093:&exist;(ha_1094:&exist;(lb_1095:&exist;(hb_1096:dom(c_51&apos;,la_1093,ha_1094) &amp; <br/>
-la_1093&lt;=0 &amp; v_int_113_660&apos;&lt;=ha_1094 &amp; dom(a&apos;,lb_1095,hb_1096) &amp; <br/>
-lb_1095&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1096)))))
+<ul>(v_int_112_1067 + 1 + v_int_112_987 &le; ha_1080 + 1 &and; dom(c_1068,0,ha_1080) &and; 0 &le; v_int_112_1067 &and; 1 + m_50' + v_int_112_1067 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 0 &le; 1 + v_int_112_987 &and; j = 1 + m_50' + v_int_112_1067 - 1 &and; m_50' + 1 = 1 + m_50' &and; 1 + v_int_98_891 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1067 + m_50' = j &and; m_50' &le; hb_1082 &and; lb_1081 &le; m_50' &and; j &le; hb_1082 &and; lb_1081 &le; j &and; dom(c_1068,0,1 + v_int_98_891 - 1) &and; dom(a_875,lb_1081,hb_1082) &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; j + i &and; dom(a,lb_1081,hb_1082) &and; sorted(a_875,i,m_50') &and; amodr(a,a_875,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j) &and; v_int_98_891 + i = j &and; a'[j] &lt; a'[m_50'] &and; u = a'[m_50'] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_987 + i = m_50' &and; m_50' = i + 1 + v_int_112_987 - 1 &and; lb_1081 &le; i &and; i + 1 + v_int_112_987 &le; hb_1082 + 1 &and; dom(a',lb_1081,hb_1082) &and; upperbnd(a',i,i + 1 + v_int_112_987 - 1,u) &and; upperbnd(a',1 + m_50',1 + m_50' + v_int_112_1067 - 1,u) &and; sorted(a',i,i + 1 + v_int_112_987 - 1) &and; sorted(a',1 + m_50',1 + m_50' + v_int_112_1067 - 1) &and; dom(c_51',0,ha_1080) &and; sorted(c_51',0,v_int_112_1067 + 1 + v_int_112_987 - 1) &and; upperbnd(c_51',0,v_int_112_1067 + 1 + v_int_112_987 - 1,u) &and; amodr(c_1068,c_51',0,v_int_112_1067 + 1 + v_int_112_987 - 1) &and; v_int_113_660' + i = j)  &#8866;   &exist; la_1093  &exist; ha_1094  &exist; lb_1095  &exist; hb_1096 (dom(c_51',la_1093,ha_1094) &and; la_1093 &le; 0 &and; v_int_113_660' &le; ha_1094 &and; dom(a',lb_1095,hb_1096) &and; lb_1095 &le; i &and; v_int_113_660' + i &le; 0 + hb_1096)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1449,27 +1297,7 @@ lb_1095&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1096)))))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (v_int_112_1069+1+v_int_112_988)&lt;=(ha_1080+1) &amp; dom(c_1070,0,ha_1080) &amp; <br/>
-0&lt;=v_int_112_1069 &amp; (1+m_50&apos;+v_int_112_1069)&lt;=(hb_1082+1) &amp; lb_1081&lt;=(1+<br/>
-m_50&apos;) &amp; 0&lt;=(1+v_int_112_988) &amp; j=(1+m_50&apos;+v_int_112_1069) - 1 &amp; m_50&apos;+1=1+<br/>
-m_50&apos; &amp; (1+v_int_98_892) - 1=ha_1080 &amp; 1+m_50&apos;=1+m_50&apos; &amp; v_int_112_1069+<br/>
-m_50&apos;=j &amp; m_50&apos;&lt;=hb_1082 &amp; lb_1081&lt;=m_50&apos; &amp; j&lt;=hb_1082 &amp; lb_1081&lt;=j &amp; <br/>
-dom(c_1070,0,(1+v_int_98_892) - 1) &amp; dom(a_876,lb_1081,hb_1082) &amp; (r_845+<br/>
-1)&lt;=2 &amp; 0&lt;=r_845 &amp; (m_50&apos;+1)&lt;=0 &amp; i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (j+i)&lt;0 &amp; <br/>
-dom(a,lb_1081,hb_1082) &amp; sorted(a_876,i,m_50&apos;) &amp; amodr(a,a_876,i,m_50&apos;) &amp; <br/>
-sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_876,a&apos;,1+m_50&apos;,j) &amp; v_int_98_892+i=j &amp; <br/>
-(a&apos;[j])&lt;(a&apos;[m_50&apos;]) &amp; u=a&apos;[m_50&apos;] &amp; upperbnd(a&apos;,i,m_50&apos;,u) &amp; <br/>
-upperbnd(a&apos;,m_50&apos;+1,j,u) &amp; v_int_112_988+i=m_50&apos; &amp; m_50&apos;=(i+1+<br/>
-v_int_112_988) - 1 &amp; lb_1081&lt;=i &amp; (i+1+v_int_112_988)&lt;=(hb_1082+1) &amp; <br/>
-dom(a&apos;,lb_1081,hb_1082) &amp; upperbnd(a&apos;,i,(i+1+v_int_112_988) - 1,u) &amp; <br/>
-upperbnd(a&apos;,1+m_50&apos;,(1+m_50&apos;+v_int_112_1069) - 1,u) &amp; sorted(a&apos;,i,(i+1+<br/>
-v_int_112_988) - 1) &amp; sorted(a&apos;,1+m_50&apos;,(1+m_50&apos;+v_int_112_1069) - 1) &amp; <br/>
-dom(c_51&apos;,0,ha_1080) &amp; sorted(c_51&apos;,0,(v_int_112_1069+1+v_int_112_988) -<br/>
-1) &amp; upperbnd(c_51&apos;,0,(v_int_112_1069+1+v_int_112_988) - 1,u) &amp; <br/>
-amodr(c_1070,c_51&apos;,0,(v_int_112_1069+1+v_int_112_988) - 1) &amp; v_int_113_660&apos;+<br/>
-i=j&#8866; &exist;(la_1098:&exist;(ha_1099:&exist;(lb_1100:&exist;(hb_1101:dom(c_51&apos;,la_1098,ha_1099) &amp; <br/>
-la_1098&lt;=0 &amp; v_int_113_660&apos;&lt;=ha_1099 &amp; dom(a&apos;,lb_1100,hb_1101) &amp; <br/>
-lb_1100&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1101)))))
+<ul>(v_int_112_1069 + 1 + v_int_112_988 &le; ha_1080 + 1 &and; dom(c_1070,0,ha_1080) &and; 0 &le; v_int_112_1069 &and; 1 + m_50' + v_int_112_1069 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 0 &le; 1 + v_int_112_988 &and; j = 1 + m_50' + v_int_112_1069 - 1 &and; m_50' + 1 = 1 + m_50' &and; 1 + v_int_98_892 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1069 + m_50' = j &and; m_50' &le; hb_1082 &and; lb_1081 &le; m_50' &and; j &le; hb_1082 &and; lb_1081 &le; j &and; dom(c_1070,0,1 + v_int_98_892 - 1) &and; dom(a_876,lb_1081,hb_1082) &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; j + i &lt; 0 &and; dom(a,lb_1081,hb_1082) &and; sorted(a_876,i,m_50') &and; amodr(a,a_876,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j) &and; v_int_98_892 + i = j &and; a'[j] &lt; a'[m_50'] &and; u = a'[m_50'] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_988 + i = m_50' &and; m_50' = i + 1 + v_int_112_988 - 1 &and; lb_1081 &le; i &and; i + 1 + v_int_112_988 &le; hb_1082 + 1 &and; dom(a',lb_1081,hb_1082) &and; upperbnd(a',i,i + 1 + v_int_112_988 - 1,u) &and; upperbnd(a',1 + m_50',1 + m_50' + v_int_112_1069 - 1,u) &and; sorted(a',i,i + 1 + v_int_112_988 - 1) &and; sorted(a',1 + m_50',1 + m_50' + v_int_112_1069 - 1) &and; dom(c_51',0,ha_1080) &and; sorted(c_51',0,v_int_112_1069 + 1 + v_int_112_988 - 1) &and; upperbnd(c_51',0,v_int_112_1069 + 1 + v_int_112_988 - 1,u) &and; amodr(c_1070,c_51',0,v_int_112_1069 + 1 + v_int_112_988 - 1) &and; v_int_113_660' + i = j)  &#8866;   &exist; la_1098  &exist; ha_1099  &exist; lb_1100  &exist; hb_1101 (dom(c_51',la_1098,ha_1099) &and; la_1098 &le; 0 &and; v_int_113_660' &le; ha_1099 &and; dom(a',lb_1100,hb_1101) &and; lb_1100 &le; i &and; v_int_113_660' + i &le; 0 + hb_1101)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1554,27 +1382,7 @@ lb_1100&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1101)))))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (v_int_112_1071+1+v_int_112_989)&lt;=(ha_1080+1) &amp; dom(c_1072,0,ha_1080) &amp; <br/>
-0&lt;=v_int_112_1071 &amp; (1+m_50&apos;+v_int_112_1071)&lt;=(hb_1082+1) &amp; lb_1081&lt;=(1+<br/>
-m_50&apos;) &amp; 0&lt;=(1+v_int_112_989) &amp; j=(1+m_50&apos;+v_int_112_1071) - 1 &amp; m_50&apos;+1=1+<br/>
-m_50&apos; &amp; (1+v_int_98_891) - 1=ha_1080 &amp; 1+m_50&apos;=1+m_50&apos; &amp; v_int_112_1071+<br/>
-m_50&apos;=j &amp; j&lt;=hb_1082 &amp; lb_1081&lt;=j &amp; m_50&apos;&lt;=hb_1082 &amp; lb_1081&lt;=m_50&apos; &amp; <br/>
-dom(c_1072,0,(1+v_int_98_891) - 1) &amp; dom(a_875,lb_1081,hb_1082) &amp; (r_841+<br/>
-1)&lt;=2 &amp; 0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; i&lt;j &amp; j+i=r_841+(2*m_50&apos;) &amp; 0&lt;=(j+i) &amp; <br/>
-dom(a,lb_1081,hb_1082) &amp; sorted(a_875,i,m_50&apos;) &amp; amodr(a,a_875,i,m_50&apos;) &amp; <br/>
-sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_875,a&apos;,1+m_50&apos;,j) &amp; v_int_98_891+i=j &amp; <br/>
-(a&apos;[m_50&apos;])&lt;=(a&apos;[j]) &amp; u=a&apos;[j] &amp; upperbnd(a&apos;,i,m_50&apos;,u) &amp; upperbnd(a&apos;,m_50&apos;+<br/>
-1,j,u) &amp; v_int_112_989+i=m_50&apos; &amp; m_50&apos;=(i+1+v_int_112_989) - 1 &amp; <br/>
-lb_1081&lt;=i &amp; (i+1+v_int_112_989)&lt;=(hb_1082+1) &amp; dom(a&apos;,lb_1081,hb_1082) &amp; <br/>
-upperbnd(a&apos;,i,(i+1+v_int_112_989) - 1,u) &amp; upperbnd(a&apos;,1+m_50&apos;,(1+m_50&apos;+<br/>
-v_int_112_1071) - 1,u) &amp; sorted(a&apos;,i,(i+1+v_int_112_989) - 1) &amp; sorted(a&apos;,1+<br/>
-m_50&apos;,(1+m_50&apos;+v_int_112_1071) - 1) &amp; dom(c_51&apos;,0,ha_1080) &amp; <br/>
-sorted(c_51&apos;,0,(v_int_112_1071+1+v_int_112_989) - 1) &amp; <br/>
-upperbnd(c_51&apos;,0,(v_int_112_1071+1+v_int_112_989) - 1,u) &amp; <br/>
-amodr(c_1072,c_51&apos;,0,(v_int_112_1071+1+v_int_112_989) - 1) &amp; v_int_113_660&apos;+<br/>
-i=j&#8866; &exist;(la_1103:&exist;(ha_1104:&exist;(lb_1105:&exist;(hb_1106:dom(c_51&apos;,la_1103,ha_1104) &amp; <br/>
-la_1103&lt;=0 &amp; v_int_113_660&apos;&lt;=ha_1104 &amp; dom(a&apos;,lb_1105,hb_1106) &amp; <br/>
-lb_1105&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1106)))))
+<ul>(v_int_112_1071 + 1 + v_int_112_989 &le; ha_1080 + 1 &and; dom(c_1072,0,ha_1080) &and; 0 &le; v_int_112_1071 &and; 1 + m_50' + v_int_112_1071 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 0 &le; 1 + v_int_112_989 &and; j = 1 + m_50' + v_int_112_1071 - 1 &and; m_50' + 1 = 1 + m_50' &and; 1 + v_int_98_891 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1071 + m_50' = j &and; j &le; hb_1082 &and; lb_1081 &le; j &and; m_50' &le; hb_1082 &and; lb_1081 &le; m_50' &and; dom(c_1072,0,1 + v_int_98_891 - 1) &and; dom(a_875,lb_1081,hb_1082) &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; i &lt; j &and; j + i = r_841 + 2 &sdot; m_50' &and; 0 &le; j + i &and; dom(a,lb_1081,hb_1082) &and; sorted(a_875,i,m_50') &and; amodr(a,a_875,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_875,a',1 + m_50',j) &and; v_int_98_891 + i = j &and; a'[m_50'] &le; a'[j] &and; u = a'[j] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_989 + i = m_50' &and; m_50' = i + 1 + v_int_112_989 - 1 &and; lb_1081 &le; i &and; i + 1 + v_int_112_989 &le; hb_1082 + 1 &and; dom(a',lb_1081,hb_1082) &and; upperbnd(a',i,i + 1 + v_int_112_989 - 1,u) &and; upperbnd(a',1 + m_50',1 + m_50' + v_int_112_1071 - 1,u) &and; sorted(a',i,i + 1 + v_int_112_989 - 1) &and; sorted(a',1 + m_50',1 + m_50' + v_int_112_1071 - 1) &and; dom(c_51',0,ha_1080) &and; sorted(c_51',0,v_int_112_1071 + 1 + v_int_112_989 - 1) &and; upperbnd(c_51',0,v_int_112_1071 + 1 + v_int_112_989 - 1,u) &and; amodr(c_1072,c_51',0,v_int_112_1071 + 1 + v_int_112_989 - 1) &and; v_int_113_660' + i = j)  &#8866;   &exist; la_1103  &exist; ha_1104  &exist; lb_1105  &exist; hb_1106 (dom(c_51',la_1103,ha_1104) &and; la_1103 &le; 0 &and; v_int_113_660' &le; ha_1104 &and; dom(a',lb_1105,hb_1106) &and; lb_1105 &le; i &and; v_int_113_660' + i &le; 0 + hb_1106)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1659,27 +1467,7 @@ lb_1105&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1106)))))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> (v_int_112_1073+1+v_int_112_990)&lt;=(ha_1080+1) &amp; dom(c_1074,0,ha_1080) &amp; <br/>
-0&lt;=v_int_112_1073 &amp; (1+m_50&apos;+v_int_112_1073)&lt;=(hb_1082+1) &amp; lb_1081&lt;=(1+<br/>
-m_50&apos;) &amp; 0&lt;=(1+v_int_112_990) &amp; j=(1+m_50&apos;+v_int_112_1073) - 1 &amp; m_50&apos;+1=1+<br/>
-m_50&apos; &amp; (1+v_int_98_892) - 1=ha_1080 &amp; 1+m_50&apos;=1+m_50&apos; &amp; v_int_112_1073+<br/>
-m_50&apos;=j &amp; j&lt;=hb_1082 &amp; lb_1081&lt;=j &amp; m_50&apos;&lt;=hb_1082 &amp; lb_1081&lt;=m_50&apos; &amp; <br/>
-dom(c_1074,0,(1+v_int_98_892) - 1) &amp; dom(a_876,lb_1081,hb_1082) &amp; (r_845+<br/>
-1)&lt;=2 &amp; 0&lt;=r_845 &amp; (m_50&apos;+1)&lt;=0 &amp; i&lt;j &amp; j+i=r_845+(2*m_50&apos;) &amp; (j+i)&lt;0 &amp; <br/>
-dom(a,lb_1081,hb_1082) &amp; sorted(a_876,i,m_50&apos;) &amp; amodr(a,a_876,i,m_50&apos;) &amp; <br/>
-sorted(a&apos;,1+m_50&apos;,j) &amp; amodr(a_876,a&apos;,1+m_50&apos;,j) &amp; v_int_98_892+i=j &amp; <br/>
-(a&apos;[m_50&apos;])&lt;=(a&apos;[j]) &amp; u=a&apos;[j] &amp; upperbnd(a&apos;,i,m_50&apos;,u) &amp; upperbnd(a&apos;,m_50&apos;+<br/>
-1,j,u) &amp; v_int_112_990+i=m_50&apos; &amp; m_50&apos;=(i+1+v_int_112_990) - 1 &amp; <br/>
-lb_1081&lt;=i &amp; (i+1+v_int_112_990)&lt;=(hb_1082+1) &amp; dom(a&apos;,lb_1081,hb_1082) &amp; <br/>
-upperbnd(a&apos;,i,(i+1+v_int_112_990) - 1,u) &amp; upperbnd(a&apos;,1+m_50&apos;,(1+m_50&apos;+<br/>
-v_int_112_1073) - 1,u) &amp; sorted(a&apos;,i,(i+1+v_int_112_990) - 1) &amp; sorted(a&apos;,1+<br/>
-m_50&apos;,(1+m_50&apos;+v_int_112_1073) - 1) &amp; dom(c_51&apos;,0,ha_1080) &amp; <br/>
-sorted(c_51&apos;,0,(v_int_112_1073+1+v_int_112_990) - 1) &amp; <br/>
-upperbnd(c_51&apos;,0,(v_int_112_1073+1+v_int_112_990) - 1,u) &amp; <br/>
-amodr(c_1074,c_51&apos;,0,(v_int_112_1073+1+v_int_112_990) - 1) &amp; v_int_113_660&apos;+<br/>
-i=j&#8866; &exist;(la_1108:&exist;(ha_1109:&exist;(lb_1110:&exist;(hb_1111:dom(c_51&apos;,la_1108,ha_1109) &amp; <br/>
-la_1108&lt;=0 &amp; v_int_113_660&apos;&lt;=ha_1109 &amp; dom(a&apos;,lb_1110,hb_1111) &amp; <br/>
-lb_1110&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1111)))))
+<ul>(v_int_112_1073 + 1 + v_int_112_990 &le; ha_1080 + 1 &and; dom(c_1074,0,ha_1080) &and; 0 &le; v_int_112_1073 &and; 1 + m_50' + v_int_112_1073 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 0 &le; 1 + v_int_112_990 &and; j = 1 + m_50' + v_int_112_1073 - 1 &and; m_50' + 1 = 1 + m_50' &and; 1 + v_int_98_892 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1073 + m_50' = j &and; j &le; hb_1082 &and; lb_1081 &le; j &and; m_50' &le; hb_1082 &and; lb_1081 &le; m_50' &and; dom(c_1074,0,1 + v_int_98_892 - 1) &and; dom(a_876,lb_1081,hb_1082) &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; i &lt; j &and; j + i = r_845 + 2 &sdot; m_50' &and; j + i &lt; 0 &and; dom(a,lb_1081,hb_1082) &and; sorted(a_876,i,m_50') &and; amodr(a,a_876,i,m_50') &and; sorted(a',1 + m_50',j) &and; amodr(a_876,a',1 + m_50',j) &and; v_int_98_892 + i = j &and; a'[m_50'] &le; a'[j] &and; u = a'[j] &and; upperbnd(a',i,m_50',u) &and; upperbnd(a',m_50' + 1,j,u) &and; v_int_112_990 + i = m_50' &and; m_50' = i + 1 + v_int_112_990 - 1 &and; lb_1081 &le; i &and; i + 1 + v_int_112_990 &le; hb_1082 + 1 &and; dom(a',lb_1081,hb_1082) &and; upperbnd(a',i,i + 1 + v_int_112_990 - 1,u) &and; upperbnd(a',1 + m_50',1 + m_50' + v_int_112_1073 - 1,u) &and; sorted(a',i,i + 1 + v_int_112_990 - 1) &and; sorted(a',1 + m_50',1 + m_50' + v_int_112_1073 - 1) &and; dom(c_51',0,ha_1080) &and; sorted(c_51',0,v_int_112_1073 + 1 + v_int_112_990 - 1) &and; upperbnd(c_51',0,v_int_112_1073 + 1 + v_int_112_990 - 1,u) &and; amodr(c_1074,c_51',0,v_int_112_1073 + 1 + v_int_112_990 - 1) &and; v_int_113_660' + i = j)  &#8866;   &exist; la_1108  &exist; ha_1109  &exist; lb_1110  &exist; hb_1111 (dom(c_51',la_1108,ha_1109) &and; la_1108 &le; 0 &and; v_int_113_660' &le; ha_1109 &and; dom(a',lb_1110,hb_1111) &and; lb_1110 &le; i &and; v_int_113_660' + i &le; 0 + hb_1111)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1767,28 +1555,7 @@ lb_1110&lt;=i &amp; (v_int_113_660&apos;+i)&lt;=(0+hb_1111)))))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> v_int_113_1113&lt;=ha_1080 &amp; dom(c_51&apos;,0,ha_1080) &amp; v_int_113_1113+i=j &amp; <br/>
-amodr(c_1068,c_51&apos;,0,(v_int_112_1067+1+v_int_112_987) - 1) &amp; <br/>
-upperbnd(c_51&apos;,0,(v_int_112_1067+1+v_int_112_987) - 1,u) &amp; <br/>
-sorted(c_51&apos;,0,(v_int_112_1067+1+v_int_112_987) - 1) &amp; sorted(a_1114,1+<br/>
-m_50&apos;,(1+m_50&apos;+v_int_112_1067) - 1) &amp; sorted(a_1114,i,(i+1+v_int_112_987) -<br/>
-1) &amp; upperbnd(a_1114,1+m_50&apos;,(1+m_50&apos;+v_int_112_1067) - 1,u) &amp; <br/>
-upperbnd(a_1114,i,(i+1+v_int_112_987) - 1,u) &amp; (v_int_112_1067+1+<br/>
-v_int_112_987)&lt;=(ha_1080+1) &amp; dom(c_1068,0,ha_1080) &amp; 0&lt;=v_int_112_1067 &amp; <br/>
-0&lt;=(1+v_int_112_987) &amp; j=(1+m_50&apos;+v_int_112_1067) - 1 &amp; m_50&apos;+1=1+m_50&apos; &amp; <br/>
-m_50&apos;=(i+1+v_int_112_987) - 1 &amp; (1+v_int_98_891) - 1=ha_1080 &amp; 1+m_50&apos;=1+<br/>
-m_50&apos; &amp; v_int_112_1067+m_50&apos;=j &amp; v_int_112_987+i=m_50&apos; &amp; <br/>
-upperbnd(a_1114,m_50&apos;+1,j,u) &amp; upperbnd(a_1114,i,m_50&apos;,u) &amp; <br/>
-u=a_1114[m_50&apos;] &amp; (a_1114[j])&lt;(a_1114[m_50&apos;]) &amp; dom(c_1068,0,(1+<br/>
-v_int_98_891) - 1) &amp; v_int_98_891+i=j &amp; amodr(a_875,a_1114,1+m_50&apos;,j) &amp; <br/>
-sorted(a_1114,1+m_50&apos;,j) &amp; sorted(a_875,i,m_50&apos;) &amp; 0&lt;=(j+i) &amp; (r_841+1)&lt;=2 &amp; <br/>
-0&lt;=r_841 &amp; 0&lt;=m_50&apos; &amp; j+i=r_841+(2*m_50&apos;) &amp; i&lt;j &amp; dom(a,lb_1081,hb_1082) &amp; <br/>
-amodr(a,a_875,i,m_50&apos;) &amp; dom(a_875,lb_1081,hb_1082) &amp; lb_1081&lt;=j &amp; <br/>
-j&lt;=hb_1082 &amp; lb_1081&lt;=m_50&apos; &amp; m_50&apos;&lt;=hb_1082 &amp; (i+1+v_int_112_987)&lt;=(hb_1082+<br/>
-1) &amp; lb_1081&lt;=(1+m_50&apos;) &amp; (1+m_50&apos;+v_int_112_1067)&lt;=(hb_1082+1) &amp; <br/>
-dom(a_1114,lb_1081,hb_1082) &amp; lb_1081&lt;=i &amp; (i+v_int_113_1113)&lt;=(hb_1082+0) &amp; <br/>
-idbtwn(c_51&apos;,0,v_int_113_1113,a&apos;,i,(i+v_int_113_1113) - 0) &amp; <br/>
-amodr(a&apos;,a_1114,i,(i+v_int_113_1113) - 0)&#8866; dom(a&apos;,lb_1081,hb_1082)
+<ul>(v_int_113_1113 &le; ha_1080 &and; dom(c_51',0,ha_1080) &and; v_int_113_1113 + i = j &and; amodr(c_1068,c_51',0,v_int_112_1067 + 1 + v_int_112_987 - 1) &and; upperbnd(c_51',0,v_int_112_1067 + 1 + v_int_112_987 - 1,u) &and; sorted(c_51',0,v_int_112_1067 + 1 + v_int_112_987 - 1) &and; sorted(a_1114,1 + m_50',1 + m_50' + v_int_112_1067 - 1) &and; sorted(a_1114,i,i + 1 + v_int_112_987 - 1) &and; upperbnd(a_1114,1 + m_50',1 + m_50' + v_int_112_1067 - 1,u) &and; upperbnd(a_1114,i,i + 1 + v_int_112_987 - 1,u) &and; v_int_112_1067 + 1 + v_int_112_987 &le; ha_1080 + 1 &and; dom(c_1068,0,ha_1080) &and; 0 &le; v_int_112_1067 &and; 0 &le; 1 + v_int_112_987 &and; j = 1 + m_50' + v_int_112_1067 - 1 &and; m_50' + 1 = 1 + m_50' &and; m_50' = i + 1 + v_int_112_987 - 1 &and; 1 + v_int_98_891 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1067 + m_50' = j &and; v_int_112_987 + i = m_50' &and; upperbnd(a_1114,m_50' + 1,j,u) &and; upperbnd(a_1114,i,m_50',u) &and; u = a_1114[m_50'] &and; a_1114[j] &lt; a_1114[m_50'] &and; dom(c_1068,0,1 + v_int_98_891 - 1) &and; v_int_98_891 + i = j &and; amodr(a_875,a_1114,1 + m_50',j) &and; sorted(a_1114,1 + m_50',j) &and; sorted(a_875,i,m_50') &and; 0 &le; j + i &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; j + i = r_841 + 2 &sdot; m_50' &and; i &lt; j &and; dom(a,lb_1081,hb_1082) &and; amodr(a,a_875,i,m_50') &and; dom(a_875,lb_1081,hb_1082) &and; lb_1081 &le; j &and; j &le; hb_1082 &and; lb_1081 &le; m_50' &and; m_50' &le; hb_1082 &and; i + 1 + v_int_112_987 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 1 + m_50' + v_int_112_1067 &le; hb_1082 + 1 &and; dom(a_1114,lb_1081,hb_1082) &and; lb_1081 &le; i &and; i + v_int_113_1113 &le; hb_1082 + 0 &and; idbtwn(c_51',0,v_int_113_1113,a',i,i + v_int_113_1113 - 0) &and; amodr(a',a_1114,i,i + v_int_113_1113 - 0))  &#8866;  dom(a',lb_1081,hb_1082)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1880,29 +1647,7 @@ amodr(a&apos;,a_1114,i,(i+v_int_113_1113) - 0)&#8866; dom(a&apos;,lb_1081,hb_108
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unknown</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> v_int_113_1115&lt;=ha_1080 &amp; dom(c_51&apos;,0,ha_1080) &amp; v_int_113_1115+i=j &amp; <br/>
-amodr(c_1070,c_51&apos;,0,(v_int_112_1069+1+v_int_112_988) - 1) &amp; <br/>
-upperbnd(c_51&apos;,0,(v_int_112_1069+1+v_int_112_988) - 1,u) &amp; <br/>
-sorted(c_51&apos;,0,(v_int_112_1069+1+v_int_112_988) - 1) &amp; sorted(a_1116,1+<br/>
-m_50&apos;,(1+m_50&apos;+v_int_112_1069) - 1) &amp; sorted(a_1116,i,(i+1+v_int_112_988) -<br/>
-1) &amp; upperbnd(a_1116,1+m_50&apos;,(1+m_50&apos;+v_int_112_1069) - 1,u) &amp; <br/>
-upperbnd(a_1116,i,(i+1+v_int_112_988) - 1,u) &amp; (v_int_112_1069+1+<br/>
-v_int_112_988)&lt;=(ha_1080+1) &amp; dom(c_1070,0,ha_1080) &amp; 0&lt;=v_int_112_1069 &amp; <br/>
-0&lt;=(1+v_int_112_988) &amp; j=(1+m_50&apos;+v_int_112_1069) - 1 &amp; m_50&apos;+1=1+m_50&apos; &amp; <br/>
-m_50&apos;=(i+1+v_int_112_988) - 1 &amp; (1+v_int_98_892) - 1=ha_1080 &amp; 1+m_50&apos;=1+<br/>
-m_50&apos; &amp; v_int_112_1069+m_50&apos;=j &amp; v_int_112_988+i=m_50&apos; &amp; <br/>
-upperbnd(a_1116,m_50&apos;+1,j,u) &amp; upperbnd(a_1116,i,m_50&apos;,u) &amp; <br/>
-u=a_1116[m_50&apos;] &amp; (a_1116[j])&lt;(a_1116[m_50&apos;]) &amp; dom(c_1070,0,(1+<br/>
-v_int_98_892) - 1) &amp; v_int_98_892+i=j &amp; amodr(a_876,a_1116,1+m_50&apos;,j) &amp; <br/>
-sorted(a_1116,1+m_50&apos;,j) &amp; sorted(a_876,i,m_50&apos;) &amp; (j+i)&lt;0 &amp; (r_845+1)&lt;=2 &amp; <br/>
-0&lt;=r_845 &amp; (m_50&apos;+1)&lt;=0 &amp; j+i=r_845+(2*m_50&apos;) &amp; i&lt;j &amp; <br/>
-dom(a,lb_1081,hb_1082) &amp; amodr(a,a_876,i,m_50&apos;) &amp; <br/>
-dom(a_876,lb_1081,hb_1082) &amp; lb_1081&lt;=j &amp; j&lt;=hb_1082 &amp; lb_1081&lt;=m_50&apos; &amp; <br/>
-m_50&apos;&lt;=hb_1082 &amp; (i+1+v_int_112_988)&lt;=(hb_1082+1) &amp; lb_1081&lt;=(1+m_50&apos;) &amp; (1+<br/>
-m_50&apos;+v_int_112_1069)&lt;=(hb_1082+1) &amp; dom(a_1116,lb_1081,hb_1082) &amp; <br/>
-lb_1081&lt;=i &amp; (i+v_int_113_1115)&lt;=(hb_1082+0) &amp; <br/>
-idbtwn(c_51&apos;,0,v_int_113_1115,a&apos;,i,(i+v_int_113_1115) - 0) &amp; <br/>
-amodr(a&apos;,a_1116,i,(i+v_int_113_1115) - 0)&#8866; dom(a&apos;,lb_1081,hb_1082)
+<ul>(v_int_113_1115 &le; ha_1080 &and; dom(c_51',0,ha_1080) &and; v_int_113_1115 + i = j &and; amodr(c_1070,c_51',0,v_int_112_1069 + 1 + v_int_112_988 - 1) &and; upperbnd(c_51',0,v_int_112_1069 + 1 + v_int_112_988 - 1,u) &and; sorted(c_51',0,v_int_112_1069 + 1 + v_int_112_988 - 1) &and; sorted(a_1116,1 + m_50',1 + m_50' + v_int_112_1069 - 1) &and; sorted(a_1116,i,i + 1 + v_int_112_988 - 1) &and; upperbnd(a_1116,1 + m_50',1 + m_50' + v_int_112_1069 - 1,u) &and; upperbnd(a_1116,i,i + 1 + v_int_112_988 - 1,u) &and; v_int_112_1069 + 1 + v_int_112_988 &le; ha_1080 + 1 &and; dom(c_1070,0,ha_1080) &and; 0 &le; v_int_112_1069 &and; 0 &le; 1 + v_int_112_988 &and; j = 1 + m_50' + v_int_112_1069 - 1 &and; m_50' + 1 = 1 + m_50' &and; m_50' = i + 1 + v_int_112_988 - 1 &and; 1 + v_int_98_892 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1069 + m_50' = j &and; v_int_112_988 + i = m_50' &and; upperbnd(a_1116,m_50' + 1,j,u) &and; upperbnd(a_1116,i,m_50',u) &and; u = a_1116[m_50'] &and; a_1116[j] &lt; a_1116[m_50'] &and; dom(c_1070,0,1 + v_int_98_892 - 1) &and; v_int_98_892 + i = j &and; amodr(a_876,a_1116,1 + m_50',j) &and; sorted(a_1116,1 + m_50',j) &and; sorted(a_876,i,m_50') &and; j + i &lt; 0 &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; j + i = r_845 + 2 &sdot; m_50' &and; i &lt; j &and; dom(a,lb_1081,hb_1082) &and; amodr(a,a_876,i,m_50') &and; dom(a_876,lb_1081,hb_1082) &and; lb_1081 &le; j &and; j &le; hb_1082 &and; lb_1081 &le; m_50' &and; m_50' &le; hb_1082 &and; i + 1 + v_int_112_988 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 1 + m_50' + v_int_112_1069 &le; hb_1082 + 1 &and; dom(a_1116,lb_1081,hb_1082) &and; lb_1081 &le; i &and; i + v_int_113_1115 &le; hb_1082 + 0 &and; idbtwn(c_51',0,v_int_113_1115,a',i,i + v_int_113_1115 - 0) &and; amodr(a',a_1116,i,i + v_int_113_1115 - 0))  &#8866;  dom(a',lb_1081,hb_1082)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -1994,28 +1739,7 @@ amodr(a&apos;,a_1116,i,(i+v_int_113_1115) - 0)&#8866; dom(a&apos;,lb_1081,hb_108
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unknown</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> v_int_113_1117&lt;=ha_1080 &amp; dom(c_51&apos;,0,ha_1080) &amp; v_int_113_1117+i=j &amp; <br/>
-amodr(c_1072,c_51&apos;,0,(v_int_112_1071+1+v_int_112_989) - 1) &amp; <br/>
-upperbnd(c_51&apos;,0,(v_int_112_1071+1+v_int_112_989) - 1,u) &amp; <br/>
-sorted(c_51&apos;,0,(v_int_112_1071+1+v_int_112_989) - 1) &amp; sorted(a_1118,1+<br/>
-m_50&apos;,(1+m_50&apos;+v_int_112_1071) - 1) &amp; sorted(a_1118,i,(i+1+v_int_112_989) -<br/>
-1) &amp; upperbnd(a_1118,1+m_50&apos;,(1+m_50&apos;+v_int_112_1071) - 1,u) &amp; <br/>
-upperbnd(a_1118,i,(i+1+v_int_112_989) - 1,u) &amp; (v_int_112_1071+1+<br/>
-v_int_112_989)&lt;=(ha_1080+1) &amp; dom(c_1072,0,ha_1080) &amp; 0&lt;=v_int_112_1071 &amp; <br/>
-0&lt;=(1+v_int_112_989) &amp; j=(1+m_50&apos;+v_int_112_1071) - 1 &amp; m_50&apos;+1=1+m_50&apos; &amp; <br/>
-m_50&apos;=(i+1+v_int_112_989) - 1 &amp; (1+v_int_98_891) - 1=ha_1080 &amp; 1+m_50&apos;=1+<br/>
-m_50&apos; &amp; v_int_112_1071+m_50&apos;=j &amp; v_int_112_989+i=m_50&apos; &amp; <br/>
-upperbnd(a_1118,m_50&apos;+1,j,u) &amp; upperbnd(a_1118,i,m_50&apos;,u) &amp; u=a_1118[j] &amp; <br/>
-(a_1118[m_50&apos;])&lt;=(a_1118[j]) &amp; dom(c_1072,0,(1+v_int_98_891) - 1) &amp; <br/>
-v_int_98_891+i=j &amp; amodr(a_875,a_1118,1+m_50&apos;,j) &amp; sorted(a_1118,1+<br/>
-m_50&apos;,j) &amp; sorted(a_875,i,m_50&apos;) &amp; 0&lt;=(j+i) &amp; (r_841+1)&lt;=2 &amp; 0&lt;=r_841 &amp; <br/>
-0&lt;=m_50&apos; &amp; j+i=r_841+(2*m_50&apos;) &amp; i&lt;j &amp; dom(a,lb_1081,hb_1082) &amp; <br/>
-amodr(a,a_875,i,m_50&apos;) &amp; dom(a_875,lb_1081,hb_1082) &amp; lb_1081&lt;=m_50&apos; &amp; <br/>
-m_50&apos;&lt;=hb_1082 &amp; lb_1081&lt;=j &amp; j&lt;=hb_1082 &amp; (i+1+v_int_112_989)&lt;=(hb_1082+<br/>
-1) &amp; lb_1081&lt;=(1+m_50&apos;) &amp; (1+m_50&apos;+v_int_112_1071)&lt;=(hb_1082+1) &amp; <br/>
-dom(a_1118,lb_1081,hb_1082) &amp; lb_1081&lt;=i &amp; (i+v_int_113_1117)&lt;=(hb_1082+0) &amp; <br/>
-idbtwn(c_51&apos;,0,v_int_113_1117,a&apos;,i,(i+v_int_113_1117) - 0) &amp; <br/>
-amodr(a&apos;,a_1118,i,(i+v_int_113_1117) - 0)&#8866; dom(a&apos;,lb_1081,hb_1082)
+<ul>(v_int_113_1117 &le; ha_1080 &and; dom(c_51',0,ha_1080) &and; v_int_113_1117 + i = j &and; amodr(c_1072,c_51',0,v_int_112_1071 + 1 + v_int_112_989 - 1) &and; upperbnd(c_51',0,v_int_112_1071 + 1 + v_int_112_989 - 1,u) &and; sorted(c_51',0,v_int_112_1071 + 1 + v_int_112_989 - 1) &and; sorted(a_1118,1 + m_50',1 + m_50' + v_int_112_1071 - 1) &and; sorted(a_1118,i,i + 1 + v_int_112_989 - 1) &and; upperbnd(a_1118,1 + m_50',1 + m_50' + v_int_112_1071 - 1,u) &and; upperbnd(a_1118,i,i + 1 + v_int_112_989 - 1,u) &and; v_int_112_1071 + 1 + v_int_112_989 &le; ha_1080 + 1 &and; dom(c_1072,0,ha_1080) &and; 0 &le; v_int_112_1071 &and; 0 &le; 1 + v_int_112_989 &and; j = 1 + m_50' + v_int_112_1071 - 1 &and; m_50' + 1 = 1 + m_50' &and; m_50' = i + 1 + v_int_112_989 - 1 &and; 1 + v_int_98_891 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1071 + m_50' = j &and; v_int_112_989 + i = m_50' &and; upperbnd(a_1118,m_50' + 1,j,u) &and; upperbnd(a_1118,i,m_50',u) &and; u = a_1118[j] &and; a_1118[m_50'] &le; a_1118[j] &and; dom(c_1072,0,1 + v_int_98_891 - 1) &and; v_int_98_891 + i = j &and; amodr(a_875,a_1118,1 + m_50',j) &and; sorted(a_1118,1 + m_50',j) &and; sorted(a_875,i,m_50') &and; 0 &le; j + i &and; r_841 + 1 &le; 2 &and; 0 &le; r_841 &and; 0 &le; m_50' &and; j + i = r_841 + 2 &sdot; m_50' &and; i &lt; j &and; dom(a,lb_1081,hb_1082) &and; amodr(a,a_875,i,m_50') &and; dom(a_875,lb_1081,hb_1082) &and; lb_1081 &le; m_50' &and; m_50' &le; hb_1082 &and; lb_1081 &le; j &and; j &le; hb_1082 &and; i + 1 + v_int_112_989 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 1 + m_50' + v_int_112_1071 &le; hb_1082 + 1 &and; dom(a_1118,lb_1081,hb_1082) &and; lb_1081 &le; i &and; i + v_int_113_1117 &le; hb_1082 + 0 &and; idbtwn(c_51',0,v_int_113_1117,a',i,i + v_int_113_1117 - 0) &and; amodr(a',a_1118,i,i + v_int_113_1117 - 0))  &#8866;  dom(a',lb_1081,hb_1082)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2107,28 +1831,7 @@ amodr(a&apos;,a_1118,i,(i+v_int_113_1117) - 0)&#8866; dom(a&apos;,lb_1081,hb_108
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unknown</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> v_int_113_1119&lt;=ha_1080 &amp; dom(c_51&apos;,0,ha_1080) &amp; v_int_113_1119+i=j &amp; <br/>
-amodr(c_1074,c_51&apos;,0,(v_int_112_1073+1+v_int_112_990) - 1) &amp; <br/>
-upperbnd(c_51&apos;,0,(v_int_112_1073+1+v_int_112_990) - 1,u) &amp; <br/>
-sorted(c_51&apos;,0,(v_int_112_1073+1+v_int_112_990) - 1) &amp; sorted(a_1120,1+<br/>
-m_50&apos;,(1+m_50&apos;+v_int_112_1073) - 1) &amp; sorted(a_1120,i,(i+1+v_int_112_990) -<br/>
-1) &amp; upperbnd(a_1120,1+m_50&apos;,(1+m_50&apos;+v_int_112_1073) - 1,u) &amp; <br/>
-upperbnd(a_1120,i,(i+1+v_int_112_990) - 1,u) &amp; (v_int_112_1073+1+<br/>
-v_int_112_990)&lt;=(ha_1080+1) &amp; dom(c_1074,0,ha_1080) &amp; 0&lt;=v_int_112_1073 &amp; <br/>
-0&lt;=(1+v_int_112_990) &amp; j=(1+m_50&apos;+v_int_112_1073) - 1 &amp; m_50&apos;+1=1+m_50&apos; &amp; <br/>
-m_50&apos;=(i+1+v_int_112_990) - 1 &amp; (1+v_int_98_892) - 1=ha_1080 &amp; 1+m_50&apos;=1+<br/>
-m_50&apos; &amp; v_int_112_1073+m_50&apos;=j &amp; v_int_112_990+i=m_50&apos; &amp; <br/>
-upperbnd(a_1120,m_50&apos;+1,j,u) &amp; upperbnd(a_1120,i,m_50&apos;,u) &amp; u=a_1120[j] &amp; <br/>
-(a_1120[m_50&apos;])&lt;=(a_1120[j]) &amp; dom(c_1074,0,(1+v_int_98_892) - 1) &amp; <br/>
-v_int_98_892+i=j &amp; amodr(a_876,a_1120,1+m_50&apos;,j) &amp; sorted(a_1120,1+<br/>
-m_50&apos;,j) &amp; sorted(a_876,i,m_50&apos;) &amp; (j+i)&lt;0 &amp; (r_845+1)&lt;=2 &amp; 0&lt;=r_845 &amp; <br/>
-(m_50&apos;+1)&lt;=0 &amp; j+i=r_845+(2*m_50&apos;) &amp; i&lt;j &amp; dom(a,lb_1081,hb_1082) &amp; <br/>
-amodr(a,a_876,i,m_50&apos;) &amp; dom(a_876,lb_1081,hb_1082) &amp; lb_1081&lt;=m_50&apos; &amp; <br/>
-m_50&apos;&lt;=hb_1082 &amp; lb_1081&lt;=j &amp; j&lt;=hb_1082 &amp; (i+1+v_int_112_990)&lt;=(hb_1082+<br/>
-1) &amp; lb_1081&lt;=(1+m_50&apos;) &amp; (1+m_50&apos;+v_int_112_1073)&lt;=(hb_1082+1) &amp; <br/>
-dom(a_1120,lb_1081,hb_1082) &amp; lb_1081&lt;=i &amp; (i+v_int_113_1119)&lt;=(hb_1082+0) &amp; <br/>
-idbtwn(c_51&apos;,0,v_int_113_1119,a&apos;,i,(i+v_int_113_1119) - 0) &amp; <br/>
-amodr(a&apos;,a_1120,i,(i+v_int_113_1119) - 0)&#8866; dom(a&apos;,lb_1081,hb_1082)
+<ul>(v_int_113_1119 &le; ha_1080 &and; dom(c_51',0,ha_1080) &and; v_int_113_1119 + i = j &and; amodr(c_1074,c_51',0,v_int_112_1073 + 1 + v_int_112_990 - 1) &and; upperbnd(c_51',0,v_int_112_1073 + 1 + v_int_112_990 - 1,u) &and; sorted(c_51',0,v_int_112_1073 + 1 + v_int_112_990 - 1) &and; sorted(a_1120,1 + m_50',1 + m_50' + v_int_112_1073 - 1) &and; sorted(a_1120,i,i + 1 + v_int_112_990 - 1) &and; upperbnd(a_1120,1 + m_50',1 + m_50' + v_int_112_1073 - 1,u) &and; upperbnd(a_1120,i,i + 1 + v_int_112_990 - 1,u) &and; v_int_112_1073 + 1 + v_int_112_990 &le; ha_1080 + 1 &and; dom(c_1074,0,ha_1080) &and; 0 &le; v_int_112_1073 &and; 0 &le; 1 + v_int_112_990 &and; j = 1 + m_50' + v_int_112_1073 - 1 &and; m_50' + 1 = 1 + m_50' &and; m_50' = i + 1 + v_int_112_990 - 1 &and; 1 + v_int_98_892 - 1 = ha_1080 &and; 1 + m_50' = 1 + m_50' &and; v_int_112_1073 + m_50' = j &and; v_int_112_990 + i = m_50' &and; upperbnd(a_1120,m_50' + 1,j,u) &and; upperbnd(a_1120,i,m_50',u) &and; u = a_1120[j] &and; a_1120[m_50'] &le; a_1120[j] &and; dom(c_1074,0,1 + v_int_98_892 - 1) &and; v_int_98_892 + i = j &and; amodr(a_876,a_1120,1 + m_50',j) &and; sorted(a_1120,1 + m_50',j) &and; sorted(a_876,i,m_50') &and; j + i &lt; 0 &and; r_845 + 1 &le; 2 &and; 0 &le; r_845 &and; m_50' + 1 &le; 0 &and; j + i = r_845 + 2 &sdot; m_50' &and; i &lt; j &and; dom(a,lb_1081,hb_1082) &and; amodr(a,a_876,i,m_50') &and; dom(a_876,lb_1081,hb_1082) &and; lb_1081 &le; m_50' &and; m_50' &le; hb_1082 &and; lb_1081 &le; j &and; j &le; hb_1082 &and; i + 1 + v_int_112_990 &le; hb_1082 + 1 &and; lb_1081 &le; 1 + m_50' &and; 1 + m_50' + v_int_112_1073 &le; hb_1082 + 1 &and; dom(a_1120,lb_1081,hb_1082) &and; lb_1081 &le; i &and; i + v_int_113_1119 &le; hb_1082 + 0 &and; idbtwn(c_51',0,v_int_113_1119,a',i,i + v_int_113_1119 - 0) &and; amodr(a',a_1120,i,i + v_int_113_1119 - 0))  &#8866;  dom(a',lb_1081,hb_1082)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2220,7 +1923,7 @@ amodr(a&apos;,a_1120,i,(i+v_int_113_1119) - 0)&#8866; dom(a&apos;,lb_1081,hb_108
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unknown</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=i &amp; dom(a,la,ha) &amp; la&lt;=i &amp; j&lt;=ha&#8866; dom(a,la,ha)
+<ul>(j &le; i &and; dom(a,la,ha) &and; la &le; i &and; j &le; ha)  &#8866;  dom(a,la,ha)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2244,7 +1947,7 @@ amodr(a&apos;,a_1120,i,(i+v_int_113_1119) - 0)&#8866; dom(a&apos;,lb_1081,hb_108
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,la,ha) &amp; la&lt;=i &amp; j&lt;=ha &amp; j&lt;=i&#8866; sorted(a,i,j)
+<ul>(dom(a,la,ha) &and; la &le; i &and; j &le; ha &and; j &le; i)  &#8866;  sorted(a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2266,7 +1969,7 @@ amodr(a&apos;,a_1120,i,(i+v_int_113_1119) - 0)&#8866; dom(a&apos;,lb_1081,hb_108
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,la,ha) &amp; la&lt;=i &amp; j&lt;=ha &amp; j&lt;=i&#8866; amodr(a,a,i,j)
+<ul>(dom(a,la,ha) &and; la &le; i &and; j &le; ha &and; j &le; i)  &#8866;  amodr(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2332,9 +2035,7 @@ else LABEL! 129,1: <br/>
 {(73,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L79">line 79</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> lb&lt;=i &amp; dom(b,lb,hb) &amp; e&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=s &amp; (i+<br/>
-e)&lt;=(hb+s) &amp; s&lt;=e&#8866; &exist;(ahalb_1131:&exist;(ahaub_1132:dom(a,ahalb_1131,ahaub_1132) &amp; <br/>
-ahalb_1131&lt;=s &amp; s&lt;=ahaub_1132))
+<ul>(lb &le; i &and; dom(b,lb,hb) &and; e &le; ahaub &and; dom(a,ahalb,ahaub) &and; ahalb &le; s &and; i + e &le; hb + s &and; s &le; e)  &#8866;   &exist; ahalb_1131  &exist; ahaub_1132 (dom(a,ahalb_1131,ahaub_1132) &and; ahalb_1131 &le; s &and; s &le; ahaub_1132)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2367,10 +2068,7 @@ ahalb_1131&lt;=s &amp; s&lt;=ahaub_1132))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L79">line 79</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_79_693&apos;=a[s] &amp; s&lt;=ahaub &amp; ahalb&lt;=s &amp; dom(a,ahalb,ahaub) &amp; s&lt;=e &amp; <br/>
-e&lt;=ahaub &amp; dom(b,ahalb_1134,ahaub_1135) &amp; ahalb_1134&lt;=i &amp; (i+e)&lt;=(ahaub_1135+<br/>
-s)&#8866; &exist;(ahalb_1142:&exist;(ahaub_1143:dom(b,ahalb_1142,ahaub_1143) &amp; <br/>
-ahalb_1142&lt;=i &amp; i&lt;=ahaub_1143))
+<ul>(v_int_79_693' = a[s] &and; s &le; ahaub &and; ahalb &le; s &and; dom(a,ahalb,ahaub) &and; s &le; e &and; e &le; ahaub &and; dom(b,ahalb_1134,ahaub_1135) &and; ahalb_1134 &le; i &and; i + e &le; ahaub_1135 + s)  &#8866;   &exist; ahalb_1142  &exist; ahaub_1143 (dom(b,ahalb_1142,ahaub_1143) &and; ahalb_1142 &le; i &and; i &le; ahaub_1143)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2406,12 +2104,7 @@ ahalb_1142&lt;=i &amp; i&lt;=ahaub_1143))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 131::copy_array$int[]~int~int~int[]~int(a,v_int_80_697,e,b,v_int_80_696) rec at <a href="#L80">line 80</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=hb_1160 &amp; lb_1159&lt;=i &amp; s&lt;=ha_1158 &amp; la_1157&lt;=s &amp; e&lt;=ha_1158 &amp; (i+<br/>
-e)&lt;=(hb_1160+s) &amp; s&lt;=e &amp; dom(a,la_1157,ha_1158) &amp; dom(b,lb_1159,hb_1160) &amp; <br/>
-dom(b&apos;,lb_1159,hb_1160) &amp; update_array_1d(b,b&apos;,a[s],i) &amp; v_int_80_697&apos;=1+s &amp; <br/>
-v_int_80_696&apos;=1+i&#8866; &exist;(la_1171:&exist;(ha_1172:&exist;(lb_1173:&exist;(hb_1174:dom(a,la_1171,ha_1172) &amp; <br/>
-la_1171&lt;=v_int_80_697&apos; &amp; e&lt;=ha_1172 &amp; dom(b&apos;,lb_1173,hb_1174) &amp; <br/>
-lb_1173&lt;=v_int_80_696&apos; &amp; (e+v_int_80_696&apos;)&lt;=(v_int_80_697&apos;+hb_1174)))))
+<ul>(i &le; hb_1160 &and; lb_1159 &le; i &and; s &le; ha_1158 &and; la_1157 &le; s &and; e &le; ha_1158 &and; i + e &le; hb_1160 + s &and; s &le; e &and; dom(a,la_1157,ha_1158) &and; dom(b,lb_1159,hb_1160) &and; dom(b',lb_1159,hb_1160) &and; update_array_1d(b,b',a[s],i) &and; v_int_80_697' = 1 + s &and; v_int_80_696' = 1 + i)  &#8866;   &exist; la_1171  &exist; ha_1172  &exist; lb_1173  &exist; hb_1174 (dom(a,la_1171,ha_1172) &and; la_1171 &le; v_int_80_697' &and; e &le; ha_1172 &and; dom(b',lb_1173,hb_1174) &and; lb_1173 &le; v_int_80_696' &and; e + v_int_80_696' &le; v_int_80_697' + hb_1174)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2454,11 +2147,7 @@ lb_1173&lt;=v_int_80_696&apos; &amp; (e+v_int_80_696&apos;)&lt;=(v_int_80_697&ap
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b_1176,lb_1159,hb_1160) &amp; (i+e)&lt;=(hb_1160+s) &amp; s&lt;=e &amp; la_1157&lt;=s &amp; <br/>
-s&lt;=ha_1158 &amp; dom(b,lb_1159,hb_1160) &amp; lb_1159&lt;=i &amp; i&lt;=hb_1160 &amp; <br/>
-update_array_1d(b,b_1176,a[s],i) &amp; dom(a,la_1157,ha_1158) &amp; la_1157&lt;=(1+s) &amp; <br/>
-e&lt;=ha_1158 &amp; lb_1159&lt;=(1+i) &amp; (1+i+e)&lt;=(hb_1160+1+s) &amp; idbtwn(a,1+s,e,b&apos;,1+<br/>
-i,(1+i+e) - (1+s)) &amp; amodr(b&apos;,b_1176,1+i,(1+i+e) - (1+s))&#8866; idbtwn(a,s,e,b&apos;,i,(i+e) - s)
+<ul>(dom(b_1176,lb_1159,hb_1160) &and; i + e &le; hb_1160 + s &and; s &le; e &and; la_1157 &le; s &and; s &le; ha_1158 &and; dom(b,lb_1159,hb_1160) &and; lb_1159 &le; i &and; i &le; hb_1160 &and; update_array_1d(b,b_1176,a[s],i) &and; dom(a,la_1157,ha_1158) &and; la_1157 &le; 1 + s &and; e &le; ha_1158 &and; lb_1159 &le; 1 + i &and; 1 + i + e &le; hb_1160 + 1 + s &and; idbtwn(a,1 + s,e,b',1 + i,1 + i + e - 1 + s) &and; amodr(b',b_1176,1 + i,1 + i + e - 1 + s))  &#8866;  idbtwn(a,s,e,b',i,i + e - s)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2499,11 +2188,7 @@ i,(1+i+e) - (1+s)) &amp; amodr(b&apos;,b_1176,1+i,(1+i+e) - (1+s))&#8866; idbtwn
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b_1176,lb_1159,hb_1160) &amp; dom(a,la_1157,ha_1158) &amp; (i+e)&lt;=(hb_1160+s) &amp; <br/>
-s&lt;=e &amp; la_1157&lt;=s &amp; s&lt;=ha_1158 &amp; dom(b,lb_1159,hb_1160) &amp; lb_1159&lt;=i &amp; <br/>
-i&lt;=hb_1160 &amp; update_array_1d(b,b_1176,a[s],i) &amp; la_1157&lt;=(1+s) &amp; <br/>
-e&lt;=ha_1158 &amp; lb_1159&lt;=(1+i) &amp; (1+i+e)&lt;=(hb_1160+1+s) &amp; idbtwn(a,1+s,e,b&apos;,1+<br/>
-i,(1+i+e) - (1+s)) &amp; amodr(b&apos;,b_1176,1+i,(1+i+e) - (1+s))&#8866; amodr(b&apos;,b,i,(i+e) - s)
+<ul>(dom(b_1176,lb_1159,hb_1160) &and; dom(a,la_1157,ha_1158) &and; i + e &le; hb_1160 + s &and; s &le; e &and; la_1157 &le; s &and; s &le; ha_1158 &and; dom(b,lb_1159,hb_1160) &and; lb_1159 &le; i &and; i &le; hb_1160 &and; update_array_1d(b,b_1176,a[s],i) &and; la_1157 &le; 1 + s &and; e &le; ha_1158 &and; lb_1159 &le; 1 + i &and; 1 + i + e &le; hb_1160 + 1 + s &and; idbtwn(a,1 + s,e,b',1 + i,1 + i + e - 1 + s) &and; amodr(b',b_1176,1 + i,1 + i + e - 1 + s))  &#8866;  amodr(b',b,i,i + e - s)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2544,7 +2229,7 @@ i,(1+i+e) - (1+s)) &amp; amodr(b&apos;,b_1176,1+i,(1+i+e) - (1+s))&#8866; amodr(
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,la,ha) &amp; la&lt;=s &amp; e&lt;=ha &amp; dom(b,lb,hb) &amp; lb&lt;=i &amp; (i+e)&lt;=(hb+s) &amp; e&lt;s&#8866; idbtwn(a,s,e,b,i,(i+e) - s)
+<ul>(dom(a,la,ha) &and; la &le; s &and; e &le; ha &and; dom(b,lb,hb) &and; lb &le; i &and; i + e &le; hb + s &and; e &lt; s)  &#8866;  idbtwn(a,s,e,b,i,i + e - s)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2572,7 +2257,7 @@ i,(1+i+e) - (1+s)) &amp; amodr(b&apos;,b_1176,1+i,(1+i+e) - (1+s))&#8866; amodr(
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,la,ha) &amp; la&lt;=s &amp; e&lt;=ha &amp; dom(b,lb,hb) &amp; lb&lt;=i &amp; (i+e)&lt;=(hb+s) &amp; e&lt;s&#8866; amodr(b,b,i,(i+e) - s)
+<ul>(dom(a,la,ha) &and; la &le; s &and; e &le; ha &and; dom(b,lb,hb) &and; lb &le; i &and; i + e &le; hb + s &and; e &lt; s)  &#8866;  amodr(b,b,i,i + e - s)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2736,12 +2421,7 @@ else LABEL! 142,1: <br/>
 {(27,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L44">line 44</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc&lt;=0 &amp; dom(b,lb,hb) &amp; lb&lt;=ib &amp; (ib+m)&lt;=(hb+1) &amp; 0&lt;=m &amp; dom(c,lc,hc) &amp; <br/>
-0&lt;m &amp; 0&lt;n &amp; jb_55&apos;+1=m+ib &amp; p_53&apos;+1=n+m &amp; sorted(b,ib,(ib+m) - 1) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u) &amp; (m+n)&lt;=(hc+1) &amp; 0&lt;=n &amp; (ia+n)&lt;=(ahaub+1) &amp; <br/>
-ahalb&lt;=ia &amp; dom(a,ahalb,ahaub) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; ja_54&apos;+1=n+ia&#8866; &exist;(ahalb_1228:&exist;(ahaub_1229:dom(a,ahalb_1228,ahaub_1229) &amp; <br/>
-ahalb_1228&lt;=ja_54&apos; &amp; ja_54&apos;&lt;=ahaub_1229))
+<ul>(lc &le; 0 &and; dom(b,lb,hb) &and; lb &le; ib &and; ib + m &le; hb + 1 &and; 0 &le; m &and; dom(c,lc,hc) &and; 0 &lt; m &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; p_53' + 1 = n + m &and; sorted(b,ib,ib + m - 1) &and; upperbnd(b,ib,ib + m - 1,u) &and; m + n &le; hc + 1 &and; 0 &le; n &and; ia + n &le; ahaub + 1 &and; ahalb &le; ia &and; dom(a,ahalb,ahaub) &and; upperbnd(a,ia,ia + n - 1,u) &and; sorted(a,ia,ia + n - 1) &and; ja_54' + 1 = n + ia)  &#8866;   &exist; ahalb_1228  &exist; ahaub_1229 (dom(a,ahalb_1228,ahaub_1229) &and; ahalb_1228 &le; ja_54' &and; ja_54' &le; ahaub_1229)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2799,14 +2479,7 @@ ahalb_1228&lt;=ja_54&apos; &amp; ja_54&apos;&lt;=ahaub_1229))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L44">line 44</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc&lt;=0 &amp; ahalb&lt;=ia &amp; (ia+n)&lt;=(ahaub+1) &amp; 0&lt;=n &amp; dom(c,lc,hc) &amp; <br/>
-v_int_44_779&apos;=a[ja_54&apos;] &amp; ja_54&apos;&lt;=ahaub &amp; ahalb&lt;=ja_54&apos; &amp; <br/>
-dom(a,ahalb,ahaub) &amp; 0&lt;m &amp; 0&lt;n &amp; ja_54&apos;+1=n+ia &amp; p_53&apos;+1=n+m &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; (m+n)&lt;=(hc+1) &amp; <br/>
-0&lt;=m &amp; (ib+m)&lt;=(ahaub_1232+1) &amp; ahalb_1231&lt;=ib &amp; <br/>
-dom(b,ahalb_1231,ahaub_1232) &amp; upperbnd(b,ib,(ib+m) - 1,u) &amp; sorted(b,ib,(ib+<br/>
-m) - 1) &amp; jb_55&apos;+1=m+ib&#8866; &exist;(ahalb_1237:&exist;(ahaub_1238:dom(b,ahalb_1237,ahaub_1238) &amp; <br/>
-ahalb_1237&lt;=jb_55&apos; &amp; jb_55&apos;&lt;=ahaub_1238))
+<ul>(lc &le; 0 &and; ahalb &le; ia &and; ia + n &le; ahaub + 1 &and; 0 &le; n &and; dom(c,lc,hc) &and; v_int_44_779' = a[ja_54'] &and; ja_54' &le; ahaub &and; ahalb &le; ja_54' &and; dom(a,ahalb,ahaub) &and; 0 &lt; m &and; 0 &lt; n &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; sorted(a,ia,ia + n - 1) &and; upperbnd(a,ia,ia + n - 1,u) &and; m + n &le; hc + 1 &and; 0 &le; m &and; ib + m &le; ahaub_1232 + 1 &and; ahalb_1231 &le; ib &and; dom(b,ahalb_1231,ahaub_1232) &and; upperbnd(b,ib,ib + m - 1,u) &and; sorted(b,ib,ib + m - 1) &and; jb_55' + 1 = m + ib)  &#8866;   &exist; ahalb_1237  &exist; ahaub_1238 (dom(b,ahalb_1237,ahaub_1238) &and; ahalb_1237 &le; jb_55' &and; jb_55' &le; ahaub_1238)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2868,14 +2541,7 @@ ahalb_1237&lt;=jb_55&apos; &amp; jb_55&apos;&lt;=ahaub_1238))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L45">line 45</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc&lt;=0 &amp; ahalb_1231&lt;=ib &amp; (ib+m)&lt;=(ahaub_1232+1) &amp; 0&lt;=m &amp; dom(c,lc,hc) &amp; <br/>
-jb_55&apos;&lt;=ahaub_1232 &amp; ahalb_1231&lt;=jb_55&apos; &amp; dom(b,ahalb_1231,ahaub_1232) &amp; <br/>
-0&lt;m &amp; 0&lt;n &amp; jb_55&apos;+1=m+ib &amp; p_53&apos;+1=n+m &amp; sorted(b,ib,(ib+m) - 1) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u) &amp; (m+n)&lt;=(hc+1) &amp; 0&lt;=n &amp; (ia+n)&lt;=(ahaub_1247+<br/>
-1) &amp; ahalb_1246&lt;=ia &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; sorted(a,ia,(ia+n) -<br/>
-1) &amp; ja_54&apos;+1=n+ia &amp; dom(a,ahalb_1246,ahaub_1247) &amp; ahalb_1246&lt;=ja_54&apos; &amp; <br/>
-ja_54&apos;&lt;=ahaub_1247 &amp; (b[jb_55&apos;])&lt;(a[ja_54&apos;])&#8866; &exist;(ahalb_1252:&exist;(ahaub_1253:dom(a,ahalb_1252,ahaub_1253) &amp; <br/>
-ahalb_1252&lt;=ja_54&apos; &amp; ja_54&apos;&lt;=ahaub_1253))
+<ul>(lc &le; 0 &and; ahalb_1231 &le; ib &and; ib + m &le; ahaub_1232 + 1 &and; 0 &le; m &and; dom(c,lc,hc) &and; jb_55' &le; ahaub_1232 &and; ahalb_1231 &le; jb_55' &and; dom(b,ahalb_1231,ahaub_1232) &and; 0 &lt; m &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; p_53' + 1 = n + m &and; sorted(b,ib,ib + m - 1) &and; upperbnd(b,ib,ib + m - 1,u) &and; m + n &le; hc + 1 &and; 0 &le; n &and; ia + n &le; ahaub_1247 + 1 &and; ahalb_1246 &le; ia &and; upperbnd(a,ia,ia + n - 1,u) &and; sorted(a,ia,ia + n - 1) &and; ja_54' + 1 = n + ia &and; dom(a,ahalb_1246,ahaub_1247) &and; ahalb_1246 &le; ja_54' &and; ja_54' &le; ahaub_1247 &and; b[jb_55'] &lt; a[ja_54'])  &#8866;   &exist; ahalb_1252  &exist; ahaub_1253 (dom(a,ahalb_1252,ahaub_1253) &and; ahalb_1252 &le; ja_54' &and; ja_54' &le; ahaub_1253)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -2938,15 +2604,7 @@ ahalb_1252&lt;=ja_54&apos; &amp; ja_54&apos;&lt;=ahaub_1253))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L45">line 45</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb_1246&lt;=ia &amp; ahalb_1231&lt;=ib &amp; v_int_45_780&apos;=a[ja_54&apos;] &amp; <br/>
-ja_54&apos;&lt;=ahaub_1247 &amp; ahalb_1246&lt;=ja_54&apos; &amp; dom(a,ahalb_1246,ahaub_1247) &amp; <br/>
-(b[jb_55&apos;])&lt;(a[ja_54&apos;]) &amp; jb_55&apos;&lt;=ahaub_1232 &amp; ahalb_1231&lt;=jb_55&apos; &amp; <br/>
-dom(b,ahalb_1231,ahaub_1232) &amp; 0&lt;m &amp; 0&lt;n &amp; jb_55&apos;+1=m+ib &amp; ja_54&apos;+1=n+ia &amp; <br/>
-sorted(b,ib,(ib+m) - 1) &amp; sorted(a,ia,(ia+n) - 1) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; (m+n)&lt;=(ahaub_1256+1) &amp; ahalb_1255&lt;=0 &amp; <br/>
-0&lt;=m &amp; (ib+m)&lt;=(ahaub_1232+1) &amp; 0&lt;=n &amp; (ia+n)&lt;=(ahaub_1247+1) &amp; <br/>
-dom(c,ahalb_1255,ahaub_1256) &amp; p_53&apos;+1=n+m&#8866; &exist;(ahalb_1263:&exist;(ahaub_1264:dom(c,ahalb_1263,ahaub_1264) &amp; <br/>
-ahalb_1263&lt;=p_53&apos; &amp; p_53&apos;&lt;=ahaub_1264))
+<ul>(ahalb_1246 &le; ia &and; ahalb_1231 &le; ib &and; v_int_45_780' = a[ja_54'] &and; ja_54' &le; ahaub_1247 &and; ahalb_1246 &le; ja_54' &and; dom(a,ahalb_1246,ahaub_1247) &and; b[jb_55'] &lt; a[ja_54'] &and; jb_55' &le; ahaub_1232 &and; ahalb_1231 &le; jb_55' &and; dom(b,ahalb_1231,ahaub_1232) &and; 0 &lt; m &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; sorted(b,ib,ib + m - 1) &and; sorted(a,ia,ia + n - 1) &and; upperbnd(b,ib,ib + m - 1,u) &and; upperbnd(a,ia,ia + n - 1,u) &and; m + n &le; ahaub_1256 + 1 &and; ahalb_1255 &le; 0 &and; 0 &le; m &and; ib + m &le; ahaub_1232 + 1 &and; 0 &le; n &and; ia + n &le; ahaub_1247 + 1 &and; dom(c,ahalb_1255,ahaub_1256) &and; p_53' + 1 = n + m)  &#8866;   &exist; ahalb_1263  &exist; ahaub_1264 (dom(c,ahalb_1263,ahaub_1264) &and; ahalb_1263 &le; p_53' &and; p_53' &le; ahaub_1264)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3011,14 +2669,7 @@ ahalb_1263&lt;=p_53&apos; &amp; p_53&apos;&lt;=ahaub_1264))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L49">line 49</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc&lt;=0 &amp; ahalb&lt;=ia &amp; (ia+n)&lt;=(ahaub+1) &amp; 0&lt;=n &amp; dom(c,lc,hc) &amp; <br/>
-ja_54&apos;&lt;=ahaub &amp; ahalb&lt;=ja_54&apos; &amp; dom(a,ahalb,ahaub) &amp; 0&lt;m &amp; 0&lt;n &amp; ja_54&apos;+1=n+<br/>
-ia &amp; p_53&apos;+1=n+m &amp; sorted(a,ia,(ia+n) - 1) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; <br/>
-(m+n)&lt;=(hc+1) &amp; 0&lt;=m &amp; (ib+m)&lt;=(ahaub_1273+1) &amp; ahalb_1272&lt;=ib &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u) &amp; sorted(b,ib,(ib+m) - 1) &amp; jb_55&apos;+1=m+ib &amp; <br/>
-dom(b,ahalb_1272,ahaub_1273) &amp; ahalb_1272&lt;=jb_55&apos; &amp; jb_55&apos;&lt;=ahaub_1273 &amp; <br/>
-(a[ja_54&apos;])&lt;=(b[jb_55&apos;])&#8866; &exist;(ahalb_1278:&exist;(ahaub_1279:dom(b,ahalb_1278,ahaub_1279) &amp; <br/>
-ahalb_1278&lt;=jb_55&apos; &amp; jb_55&apos;&lt;=ahaub_1279))
+<ul>(lc &le; 0 &and; ahalb &le; ia &and; ia + n &le; ahaub + 1 &and; 0 &le; n &and; dom(c,lc,hc) &and; ja_54' &le; ahaub &and; ahalb &le; ja_54' &and; dom(a,ahalb,ahaub) &and; 0 &lt; m &and; 0 &lt; n &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; sorted(a,ia,ia + n - 1) &and; upperbnd(a,ia,ia + n - 1,u) &and; m + n &le; hc + 1 &and; 0 &le; m &and; ib + m &le; ahaub_1273 + 1 &and; ahalb_1272 &le; ib &and; upperbnd(b,ib,ib + m - 1,u) &and; sorted(b,ib,ib + m - 1) &and; jb_55' + 1 = m + ib &and; dom(b,ahalb_1272,ahaub_1273) &and; ahalb_1272 &le; jb_55' &and; jb_55' &le; ahaub_1273 &and; a[ja_54'] &le; b[jb_55'])  &#8866;   &exist; ahalb_1278  &exist; ahaub_1279 (dom(b,ahalb_1278,ahaub_1279) &and; ahalb_1278 &le; jb_55' &and; jb_55' &le; ahaub_1279)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3081,15 +2732,7 @@ ahalb_1278&lt;=jb_55&apos; &amp; jb_55&apos;&lt;=ahaub_1279))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L49">line 49</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb&lt;=ia &amp; ahalb_1272&lt;=ib &amp; v_int_49_782&apos;=b[jb_55&apos;] &amp; jb_55&apos;&lt;=ahaub_1273 &amp; <br/>
-ahalb_1272&lt;=jb_55&apos; &amp; dom(b,ahalb_1272,ahaub_1273) &amp; <br/>
-(a[ja_54&apos;])&lt;=(b[jb_55&apos;]) &amp; ja_54&apos;&lt;=ahaub &amp; ahalb&lt;=ja_54&apos; &amp; <br/>
-dom(a,ahalb,ahaub) &amp; 0&lt;m &amp; 0&lt;n &amp; jb_55&apos;+1=m+ib &amp; ja_54&apos;+1=n+ia &amp; <br/>
-sorted(b,ib,(ib+m) - 1) &amp; sorted(a,ia,(ia+n) - 1) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; (m+n)&lt;=(ahaub_1282+1) &amp; ahalb_1281&lt;=0 &amp; <br/>
-0&lt;=m &amp; (ib+m)&lt;=(ahaub_1273+1) &amp; 0&lt;=n &amp; (ia+n)&lt;=(ahaub+1) &amp; <br/>
-dom(c,ahalb_1281,ahaub_1282) &amp; p_53&apos;+1=n+m&#8866; &exist;(ahalb_1289:&exist;(ahaub_1290:dom(c,ahalb_1289,ahaub_1290) &amp; <br/>
-ahalb_1289&lt;=p_53&apos; &amp; p_53&apos;&lt;=ahaub_1290))
+<ul>(ahalb &le; ia &and; ahalb_1272 &le; ib &and; v_int_49_782' = b[jb_55'] &and; jb_55' &le; ahaub_1273 &and; ahalb_1272 &le; jb_55' &and; dom(b,ahalb_1272,ahaub_1273) &and; a[ja_54'] &le; b[jb_55'] &and; ja_54' &le; ahaub &and; ahalb &le; ja_54' &and; dom(a,ahalb,ahaub) &and; 0 &lt; m &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; sorted(b,ib,ib + m - 1) &and; sorted(a,ia,ia + n - 1) &and; upperbnd(b,ib,ib + m - 1,u) &and; upperbnd(a,ia,ia + n - 1,u) &and; m + n &le; ahaub_1282 + 1 &and; ahalb_1281 &le; 0 &and; 0 &le; m &and; ib + m &le; ahaub_1273 + 1 &and; 0 &le; n &and; ia + n &le; ahaub + 1 &and; dom(c,ahalb_1281,ahaub_1282) &and; p_53' + 1 = n + m)  &#8866;   &exist; ahalb_1289  &exist; ahaub_1290 (dom(c,ahalb_1289,ahaub_1290) &and; ahalb_1289 &le; p_53' &and; p_53' &le; ahaub_1290)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3154,12 +2797,7 @@ ahalb_1289&lt;=p_53&apos; &amp; p_53&apos;&lt;=ahaub_1290))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L53">line 53</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc&lt;=0 &amp; dom(b,lb,hb) &amp; lb&lt;=ib &amp; (ib+m)&lt;=(hb+1) &amp; 0&lt;=m &amp; dom(c,lc,hc) &amp; <br/>
-m&lt;=0 &amp; 0&lt;n &amp; jb_55&apos;+1=m+ib &amp; p_53&apos;+1=n+m &amp; sorted(b,ib,(ib+m) - 1) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u) &amp; (m+n)&lt;=(hc+1) &amp; 0&lt;=n &amp; (ia+n)&lt;=(ahaub+1) &amp; <br/>
-ahalb&lt;=ia &amp; dom(a,ahalb,ahaub) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; ja_54&apos;+1=n+ia&#8866; &exist;(ahalb_1302:&exist;(ahaub_1303:dom(a,ahalb_1302,ahaub_1303) &amp; <br/>
-ahalb_1302&lt;=ja_54&apos; &amp; ja_54&apos;&lt;=ahaub_1303))
+<ul>(lc &le; 0 &and; dom(b,lb,hb) &and; lb &le; ib &and; ib + m &le; hb + 1 &and; 0 &le; m &and; dom(c,lc,hc) &and; m &le; 0 &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; p_53' + 1 = n + m &and; sorted(b,ib,ib + m - 1) &and; upperbnd(b,ib,ib + m - 1,u) &and; m + n &le; hc + 1 &and; 0 &le; n &and; ia + n &le; ahaub + 1 &and; ahalb &le; ia &and; dom(a,ahalb,ahaub) &and; upperbnd(a,ia,ia + n - 1,u) &and; sorted(a,ia,ia + n - 1) &and; ja_54' + 1 = n + ia)  &#8866;   &exist; ahalb_1302  &exist; ahaub_1303 (dom(a,ahalb_1302,ahaub_1303) &and; ahalb_1302 &le; ja_54' &and; ja_54' &le; ahaub_1303)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3217,13 +2855,7 @@ ahalb_1302&lt;=ja_54&apos; &amp; ja_54&apos;&lt;=ahaub_1303))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L53">line 53</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb&lt;=ia &amp; dom(b,lb,hb) &amp; lb&lt;=ib &amp; v_int_53_785&apos;=a[ja_54&apos;] &amp; <br/>
-ja_54&apos;&lt;=ahaub &amp; ahalb&lt;=ja_54&apos; &amp; dom(a,ahalb,ahaub) &amp; m&lt;=0 &amp; 0&lt;n &amp; jb_55&apos;+1=m+<br/>
-ib &amp; ja_54&apos;+1=n+ia &amp; sorted(b,ib,(ib+m) - 1) &amp; sorted(a,ia,(ia+n) - 1) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; (m+<br/>
-n)&lt;=(ahaub_1306+1) &amp; ahalb_1305&lt;=0 &amp; 0&lt;=m &amp; (ib+m)&lt;=(hb+1) &amp; 0&lt;=n &amp; (ia+<br/>
-n)&lt;=(ahaub+1) &amp; dom(c,ahalb_1305,ahaub_1306) &amp; p_53&apos;+1=n+m&#8866; &exist;(ahalb_1313:&exist;(ahaub_1314:dom(c,ahalb_1313,ahaub_1314) &amp; <br/>
-ahalb_1313&lt;=p_53&apos; &amp; p_53&apos;&lt;=ahaub_1314))
+<ul>(ahalb &le; ia &and; dom(b,lb,hb) &and; lb &le; ib &and; v_int_53_785' = a[ja_54'] &and; ja_54' &le; ahaub &and; ahalb &le; ja_54' &and; dom(a,ahalb,ahaub) &and; m &le; 0 &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; sorted(b,ib,ib + m - 1) &and; sorted(a,ia,ia + n - 1) &and; upperbnd(b,ib,ib + m - 1,u) &and; upperbnd(a,ia,ia + n - 1,u) &and; m + n &le; ahaub_1306 + 1 &and; ahalb_1305 &le; 0 &and; 0 &le; m &and; ib + m &le; hb + 1 &and; 0 &le; n &and; ia + n &le; ahaub + 1 &and; dom(c,ahalb_1305,ahaub_1306) &and; p_53' + 1 = n + m)  &#8866;   &exist; ahalb_1313  &exist; ahaub_1314 (dom(c,ahalb_1313,ahaub_1314) &and; ahalb_1313 &le; p_53' &and; p_53' &le; ahaub_1314)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3285,12 +2917,7 @@ ahalb_1313&lt;=p_53&apos; &amp; p_53&apos;&lt;=ahaub_1314))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L58">line 58</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc&lt;=0 &amp; dom(a,la,ha) &amp; la&lt;=ia &amp; (ia+n)&lt;=(ha+1) &amp; 0&lt;=n &amp; dom(c,lc,hc) &amp; <br/>
-0&lt;m &amp; n&lt;=0 &amp; ja_54&apos;+1=n+ia &amp; p_53&apos;+1=n+m &amp; sorted(a,ia,(ia+n) - 1) &amp; <br/>
-upperbnd(a,ia,(ia+n) - 1,u) &amp; (m+n)&lt;=(hc+1) &amp; 0&lt;=m &amp; (ib+m)&lt;=(ahaub+1) &amp; <br/>
-ahalb&lt;=ib &amp; dom(b,ahalb,ahaub) &amp; upperbnd(b,ib,(ib+m) - 1,u) &amp; <br/>
-sorted(b,ib,(ib+m) - 1) &amp; jb_55&apos;+1=m+ib&#8866; &exist;(ahalb_1333:&exist;(ahaub_1334:dom(b,ahalb_1333,ahaub_1334) &amp; <br/>
-ahalb_1333&lt;=jb_55&apos; &amp; jb_55&apos;&lt;=ahaub_1334))
+<ul>(lc &le; 0 &and; dom(a,la,ha) &and; la &le; ia &and; ia + n &le; ha + 1 &and; 0 &le; n &and; dom(c,lc,hc) &and; 0 &lt; m &and; n &le; 0 &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; sorted(a,ia,ia + n - 1) &and; upperbnd(a,ia,ia + n - 1,u) &and; m + n &le; hc + 1 &and; 0 &le; m &and; ib + m &le; ahaub + 1 &and; ahalb &le; ib &and; dom(b,ahalb,ahaub) &and; upperbnd(b,ib,ib + m - 1,u) &and; sorted(b,ib,ib + m - 1) &and; jb_55' + 1 = m + ib)  &#8866;   &exist; ahalb_1333  &exist; ahaub_1334 (dom(b,ahalb_1333,ahaub_1334) &and; ahalb_1333 &le; jb_55' &and; jb_55' &le; ahaub_1334)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3348,13 +2975,7 @@ ahalb_1333&lt;=jb_55&apos; &amp; jb_55&apos;&lt;=ahaub_1334))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L58">line 58</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,la,ha) &amp; la&lt;=ia &amp; ahalb&lt;=ib &amp; v_int_58_789&apos;=b[jb_55&apos;] &amp; <br/>
-jb_55&apos;&lt;=ahaub &amp; ahalb&lt;=jb_55&apos; &amp; dom(b,ahalb,ahaub) &amp; 0&lt;m &amp; n&lt;=0 &amp; jb_55&apos;+1=m+<br/>
-ib &amp; ja_54&apos;+1=n+ia &amp; sorted(b,ib,(ib+m) - 1) &amp; sorted(a,ia,(ia+n) - 1) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u) &amp; upperbnd(a,ia,(ia+n) - 1,u) &amp; (m+<br/>
-n)&lt;=(ahaub_1337+1) &amp; ahalb_1336&lt;=0 &amp; 0&lt;=m &amp; (ib+m)&lt;=(ahaub+1) &amp; 0&lt;=n &amp; (ia+<br/>
-n)&lt;=(ha+1) &amp; dom(c,ahalb_1336,ahaub_1337) &amp; p_53&apos;+1=n+m&#8866; &exist;(ahalb_1344:&exist;(ahaub_1345:dom(c,ahalb_1344,ahaub_1345) &amp; <br/>
-ahalb_1344&lt;=p_53&apos; &amp; p_53&apos;&lt;=ahaub_1345))
+<ul>(dom(a,la,ha) &and; la &le; ia &and; ahalb &le; ib &and; v_int_58_789' = b[jb_55'] &and; jb_55' &le; ahaub &and; ahalb &le; jb_55' &and; dom(b,ahalb,ahaub) &and; 0 &lt; m &and; n &le; 0 &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; sorted(b,ib,ib + m - 1) &and; sorted(a,ia,ia + n - 1) &and; upperbnd(b,ib,ib + m - 1,u) &and; upperbnd(a,ia,ia + n - 1,u) &and; m + n &le; ahaub_1337 + 1 &and; ahalb_1336 &le; 0 &and; 0 &le; m &and; ib + m &le; ahaub + 1 &and; 0 &le; n &and; ia + n &le; ha + 1 &and; dom(c,ahalb_1336,ahaub_1337) &and; p_53' + 1 = n + m)  &#8866;   &exist; ahalb_1344  &exist; ahaub_1345 (dom(c,ahalb_1344,ahaub_1345) &and; ahalb_1344 &le; p_53' &and; p_53' &le; ahaub_1345)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3419,21 +3040,7 @@ Assertion at <a href="#L63">line 63</a> holds
 <ul></ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 162::merge_sorted_arrays$int[]~int~int~int[]~int~int~int[](a,ia,n,b,ib,m,c) rec at <a href="#L64">line 64</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; <br/>
-jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; lc_1357&lt;=0 &amp; la_1353&lt;=ia &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; lb_1355&lt;=ib &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+<br/>
-n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+<br/>
-m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(b,lb_1355,hb_1356) &amp; <br/>
-(b[jb_55&apos;])&lt;(a[ja_54&apos;]) &amp; dom(a,la_1353,ha_1354) &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-dom(c&apos;,lc_1357,hc_1358) &amp; update_array_1d(c,c&apos;,a[ja_54&apos;],p_53&apos;) &amp; n&apos;+1=n &amp; <br/>
-upperbnd(a,ia,(ia+n&apos;) - 1,c&apos;[p_53&apos;]) &amp; (ib+m) - 1=(ib+m) - 1 &amp; (ia+n&apos;) -<br/>
-1=(ia+n&apos;) - 1 &amp; c&apos;[p_53&apos;]=u_1359&#8866; &exist;(la_1374:&exist;(ha_1375:&exist;(lb_1376:&exist;(hb_1377:&exist;(lc_1378:&exist;(hc_1379:&exist;(u_1380:dom(a,la_1374,ha_1375) &amp; <br/>
-la_1374&lt;=ia &amp; (n&apos;+ia)&lt;=(1+ha_1375) &amp; 0&lt;=n&apos; &amp; dom(b,lb_1376,hb_1377) &amp; <br/>
-lb_1376&lt;=ib &amp; (m+ib)&lt;=(1+hb_1377) &amp; 0&lt;=m &amp; dom(c&apos;,lc_1378,hc_1379) &amp; <br/>
-lc_1378&lt;=0 &amp; (n&apos;+m)&lt;=(1+hc_1379) &amp; upperbnd(a,ia,(ia+n&apos;) - 1,u_1380) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u_1380) &amp; sorted(a,ia,(ia+n&apos;) - 1) &amp; <br/>
-sorted(b,ib,(ib+m) - 1))))))))
+<ul>(p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; lc_1357 &le; 0 &and; la_1353 &le; ia &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; lb_1355 &le; ib &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(b,lb_1355,hb_1356) &and; b[jb_55'] &lt; a[ja_54'] &and; dom(a,la_1353,ha_1354) &and; dom(c,lc_1357,hc_1358) &and; dom(c',lc_1357,hc_1358) &and; update_array_1d(c,c',a[ja_54'],p_53') &and; n' + 1 = n &and; upperbnd(a,ia,ia + n' - 1,c'[p_53']) &and; ib + m - 1 = ib + m - 1 &and; ia + n' - 1 = ia + n' - 1 &and; c'[p_53'] = u_1359)  &#8866;   &exist; la_1374  &exist; ha_1375  &exist; lb_1376  &exist; hb_1377  &exist; lc_1378  &exist; hc_1379  &exist; u_1380 (dom(a,la_1374,ha_1375) &and; la_1374 &le; ia &and; n' + ia &le; 1 + ha_1375 &and; 0 &le; n' &and; dom(b,lb_1376,hb_1377) &and; lb_1376 &le; ib &and; m + ib &le; 1 + hb_1377 &and; 0 &le; m &and; dom(c',lc_1378,hc_1379) &and; lc_1378 &le; 0 &and; n' + m &le; 1 + hc_1379 &and; upperbnd(a,ia,ia + n' - 1,u_1380) &and; upperbnd(b,ib,ib + m - 1,u_1380) &and; sorted(a,ia,ia + n' - 1) &and; sorted(b,ib,ib + m - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3507,21 +3114,7 @@ sorted(b,ib,(ib+m) - 1))))))))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; <br/>
-ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; lc_1357&lt;=0 &amp; la_1353&lt;=ia &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; lb_1355&lt;=ib &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+<br/>
-n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+<br/>
-m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-(a[ja_54&apos;])&lt;=(b[jb_55&apos;]) &amp; dom(b,lb_1355,hb_1356) &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-dom(c&apos;,lc_1357,hc_1358) &amp; update_array_1d(c,c&apos;,b[jb_55&apos;],p_53&apos;) &amp; m&apos;+1=m &amp; <br/>
-upperbnd(a,ia,(ia+n) - 1,c&apos;[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; <br/>
-c&apos;[p_53&apos;]=u_1359&#8866; &exist;(la_1382:&exist;(ha_1383:&exist;(lb_1384:&exist;(hb_1385:&exist;(lc_1386:&exist;(hc_1387:&exist;(u_1388:dom(a,la_1382,ha_1383) &amp; <br/>
-la_1382&lt;=ia &amp; (n+ia)&lt;=(1+ha_1383) &amp; 0&lt;=n &amp; dom(b,lb_1384,hb_1385) &amp; <br/>
-lb_1384&lt;=ib &amp; (m&apos;+ib)&lt;=(1+hb_1385) &amp; 0&lt;=m&apos; &amp; dom(c&apos;,lc_1386,hc_1387) &amp; <br/>
-lc_1386&lt;=0 &amp; (n+m&apos;)&lt;=(1+hc_1387) &amp; upperbnd(a,ia,(ia+n) - 1,u_1388) &amp; <br/>
-upperbnd(b,ib,(ib+m&apos;) - 1,u_1388) &amp; sorted(a,ia,(ia+n) - 1) &amp; <br/>
-sorted(b,ib,(ib+m&apos;) - 1))))))))
+<ul>(p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; lc_1357 &le; 0 &and; la_1353 &le; ia &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; lb_1355 &le; ib &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(a,la_1353,ha_1354) &and; a[ja_54'] &le; b[jb_55'] &and; dom(b,lb_1355,hb_1356) &and; dom(c,lc_1357,hc_1358) &and; dom(c',lc_1357,hc_1358) &and; update_array_1d(c,c',b[jb_55'],p_53') &and; m' + 1 = m &and; upperbnd(a,ia,ia + n - 1,c'[p_53']) &and; ia + n - 1 = ia + n - 1 &and; c'[p_53'] = u_1359)  &#8866;   &exist; la_1382  &exist; ha_1383  &exist; lb_1384  &exist; hb_1385  &exist; lc_1386  &exist; hc_1387  &exist; u_1388 (dom(a,la_1382,ha_1383) &and; la_1382 &le; ia &and; n + ia &le; 1 + ha_1383 &and; 0 &le; n &and; dom(b,lb_1384,hb_1385) &and; lb_1384 &le; ib &and; m' + ib &le; 1 + hb_1385 &and; 0 &le; m' &and; dom(c',lc_1386,hc_1387) &and; lc_1386 &le; 0 &and; n + m' &le; 1 + hc_1387 &and; upperbnd(a,ia,ia + n - 1,u_1388) &and; upperbnd(b,ib,ib + m' - 1,u_1388) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m' - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3594,21 +3187,7 @@ sorted(b,ib,(ib+m&apos;) - 1))))))))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; <br/>
-lc_1357&lt;=0 &amp; la_1353&lt;=ia &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; <br/>
-dom(b,lb_1355,hb_1356) &amp; lb_1355&lt;=ib &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+<br/>
-n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+<br/>
-m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; 0&lt;n &amp; m&lt;=0 &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-dom(c,lc_1357,hc_1358) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c&apos;,a[ja_54&apos;],p_53&apos;) &amp; n&apos;+1=n &amp; upperbnd(a,ia,(ia+n&apos;) -<br/>
-1,c&apos;[p_53&apos;]) &amp; (ib+m) - 1=(ib+m) - 1 &amp; (ia+n&apos;) - 1=(ia+n&apos;) - 1 &amp; <br/>
-c&apos;[p_53&apos;]=u_1359&#8866; &exist;(la_1390:&exist;(ha_1391:&exist;(lb_1392:&exist;(hb_1393:&exist;(lc_1394:&exist;(hc_1395:&exist;(u_1396:dom(a,la_1390,ha_1391) &amp; <br/>
-la_1390&lt;=ia &amp; (n&apos;+ia)&lt;=(1+ha_1391) &amp; 0&lt;=n&apos; &amp; dom(b,lb_1392,hb_1393) &amp; <br/>
-lb_1392&lt;=ib &amp; (m+ib)&lt;=(1+hb_1393) &amp; 0&lt;=m &amp; dom(c&apos;,lc_1394,hc_1395) &amp; <br/>
-lc_1394&lt;=0 &amp; (n&apos;+m)&lt;=(1+hc_1395) &amp; upperbnd(a,ia,(ia+n&apos;) - 1,u_1396) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u_1396) &amp; sorted(a,ia,(ia+n&apos;) - 1) &amp; <br/>
-sorted(b,ib,(ib+m) - 1))))))))
+<ul>(p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; lc_1357 &le; 0 &and; la_1353 &le; ia &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; dom(b,lb_1355,hb_1356) &and; lb_1355 &le; ib &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; m &le; 0 &and; dom(a,la_1353,ha_1354) &and; dom(c,lc_1357,hc_1358) &and; dom(c',lc_1357,hc_1358) &and; update_array_1d(c,c',a[ja_54'],p_53') &and; n' + 1 = n &and; upperbnd(a,ia,ia + n' - 1,c'[p_53']) &and; ib + m - 1 = ib + m - 1 &and; ia + n' - 1 = ia + n' - 1 &and; c'[p_53'] = u_1359)  &#8866;   &exist; la_1390  &exist; ha_1391  &exist; lb_1392  &exist; hb_1393  &exist; lc_1394  &exist; hc_1395  &exist; u_1396 (dom(a,la_1390,ha_1391) &and; la_1390 &le; ia &and; n' + ia &le; 1 + ha_1391 &and; 0 &le; n' &and; dom(b,lb_1392,hb_1393) &and; lb_1392 &le; ib &and; m + ib &le; 1 + hb_1393 &and; 0 &le; m &and; dom(c',lc_1394,hc_1395) &and; lc_1394 &le; 0 &and; n' + m &le; 1 + hc_1395 &and; upperbnd(a,ia,ia + n' - 1,u_1396) &and; upperbnd(b,ib,ib + m - 1,u_1396) &and; sorted(a,ia,ia + n' - 1) &and; sorted(b,ib,ib + m - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3679,20 +3258,7 @@ sorted(b,ib,(ib+m) - 1))))))))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; <br/>
-lc_1357&lt;=0 &amp; dom(a,la_1353,ha_1354) &amp; la_1353&lt;=ia &amp; (ia+n)&lt;=(ha_1354+1) &amp; <br/>
-0&lt;=n &amp; lb_1355&lt;=ib &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n)&lt;=(hc_1358+1) &amp; <br/>
-upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+<br/>
-ia &amp; jb_55&apos;+1=m+ib &amp; n&lt;=0 &amp; 0&lt;m &amp; dom(b,lb_1355,hb_1356) &amp; <br/>
-dom(c,lc_1357,hc_1358) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c&apos;,b[jb_55&apos;],p_53&apos;) &amp; m&apos;+1=m &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,c&apos;[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; c&apos;[p_53&apos;]=u_1359&#8866; &exist;(la_1398:&exist;(ha_1399:&exist;(lb_1400:&exist;(hb_1401:&exist;(lc_1402:&exist;(hc_1403:&exist;(u_1404:dom(a,la_1398,ha_1399) &amp; <br/>
-la_1398&lt;=ia &amp; (n+ia)&lt;=(1+ha_1399) &amp; 0&lt;=n &amp; dom(b,lb_1400,hb_1401) &amp; <br/>
-lb_1400&lt;=ib &amp; (m&apos;+ib)&lt;=(1+hb_1401) &amp; 0&lt;=m&apos; &amp; dom(c&apos;,lc_1402,hc_1403) &amp; <br/>
-lc_1402&lt;=0 &amp; (n+m&apos;)&lt;=(1+hc_1403) &amp; upperbnd(a,ia,(ia+n) - 1,u_1404) &amp; <br/>
-upperbnd(b,ib,(ib+m&apos;) - 1,u_1404) &amp; sorted(a,ia,(ia+n) - 1) &amp; <br/>
-sorted(b,ib,(ib+m&apos;) - 1))))))))
+<ul>(p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; lc_1357 &le; 0 &and; dom(a,la_1353,ha_1354) &and; la_1353 &le; ia &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; lb_1355 &le; ib &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; 0 &lt; m &and; dom(b,lb_1355,hb_1356) &and; dom(c,lc_1357,hc_1358) &and; dom(c',lc_1357,hc_1358) &and; update_array_1d(c,c',b[jb_55'],p_53') &and; m' + 1 = m &and; upperbnd(a,ia,ia + n - 1,c'[p_53']) &and; ia + n - 1 = ia + n - 1 &and; c'[p_53'] = u_1359)  &#8866;   &exist; la_1398  &exist; ha_1399  &exist; lb_1400  &exist; hb_1401  &exist; lc_1402  &exist; hc_1403  &exist; u_1404 (dom(a,la_1398,ha_1399) &and; la_1398 &le; ia &and; n + ia &le; 1 + ha_1399 &and; 0 &le; n &and; dom(b,lb_1400,hb_1401) &and; lb_1400 &le; ib &and; m' + ib &le; 1 + hb_1401 &and; 0 &le; m' &and; dom(c',lc_1402,hc_1403) &and; lc_1402 &le; 0 &and; n + m' &le; 1 + hc_1403 &and; upperbnd(a,ia,ia + n - 1,u_1404) &and; upperbnd(b,ib,ib + m' - 1,u_1404) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m' - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3762,18 +3328,7 @@ sorted(b,ib,(ib+m&apos;) - 1))))))))
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc_1357&lt;=0 &amp; dom(a,la_1353,ha_1354) &amp; la_1353&lt;=ia &amp; (ia+n)&lt;=(ha_1354+1) &amp; <br/>
-0&lt;=n &amp; dom(b,lb_1355,hb_1356) &amp; lb_1355&lt;=ib &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; <br/>
-dom(c,lc_1357,hc_1358) &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; <br/>
-sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; <br/>
-n&lt;=0 &amp; m&lt;=0 &amp; upperbnd(a,ia,(ia+n) - 1,c[p_53&apos;]) &amp; (ib+m) - 1=(ib+m) - 1 &amp; <br/>
-(ia+n) - 1=(ia+n) - 1 &amp; c[p_53&apos;]=u_1359&#8866; &exist;(la_1406:&exist;(ha_1407:&exist;(lb_1408:&exist;(hb_1409:&exist;(lc_1410:&exist;(hc_1411:&exist;(u_1412:dom(a,la_1406,ha_1407) &amp; <br/>
-la_1406&lt;=ia &amp; (n+ia)&lt;=(1+ha_1407) &amp; 0&lt;=n &amp; dom(b,lb_1408,hb_1409) &amp; <br/>
-lb_1408&lt;=ib &amp; (m+ib)&lt;=(1+hb_1409) &amp; 0&lt;=m &amp; dom(c,lc_1410,hc_1411) &amp; <br/>
-lc_1410&lt;=0 &amp; (n+m)&lt;=(1+hc_1411) &amp; upperbnd(a,ia,(ia+n) - 1,u_1412) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u_1412) &amp; sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+<br/>
-m) - 1))))))))
+<ul>(lc_1357 &le; 0 &and; dom(a,la_1353,ha_1354) &and; la_1353 &le; ia &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; dom(b,lb_1355,hb_1356) &and; lb_1355 &le; ib &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; dom(c,lc_1357,hc_1358) &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; m &le; 0 &and; upperbnd(a,ia,ia + n - 1,c[p_53']) &and; ib + m - 1 = ib + m - 1 &and; ia + n - 1 = ia + n - 1 &and; c[p_53'] = u_1359)  &#8866;   &exist; la_1406  &exist; ha_1407  &exist; lb_1408  &exist; hb_1409  &exist; lc_1410  &exist; hc_1411  &exist; u_1412 (dom(a,la_1406,ha_1407) &and; la_1406 &le; ia &and; n + ia &le; 1 + ha_1407 &and; 0 &le; n &and; dom(b,lb_1408,hb_1409) &and; lb_1408 &le; ib &and; m + ib &le; 1 + hb_1409 &and; 0 &le; m &and; dom(c,lc_1410,hc_1411) &and; lc_1410 &le; 0 &and; n + m &le; 1 + hc_1411 &and; upperbnd(a,ia,ia + n - 1,u_1412) &and; upperbnd(b,ib,ib + m - 1,u_1412) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3838,21 +3393,7 @@ m) - 1))))))))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m) - 1) &amp; sorted(a,ia,(ia+n_1415) - 1) &amp; upperbnd(b,ib,(ib+<br/>
-m) - 1,u_1359) &amp; upperbnd(a,ia,(ia+n_1415) - 1,u_1359) &amp; 0&lt;=m &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; 0&lt;=n_1415 &amp; (ia+<br/>
-n_1415)&lt;=(ha_1354+1) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-c_1414[p_53&apos;]=u_1359 &amp; (ia+n_1415) - 1=(ia+n_1415) - 1 &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; upperbnd(a,ia,(ia+n_1415) - 1,c_1414[p_53&apos;]) &amp; n_1415+1=n &amp; <br/>
-ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; (b[jb_55&apos;])&lt;(a[ja_54&apos;]) &amp; <br/>
-jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; 0&lt;m &amp; 0&lt;n &amp; jb_55&apos;+1=m+ib &amp; ja_54&apos;+1=n+<br/>
-ia &amp; p_53&apos;+1=n+m &amp; sorted(a,ia,(ia+n) - 1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; 0&lt;=n &amp; (ia+n)&lt;=(ha_1354+1) &amp; (m+n)&lt;=(hc_1358+1) &amp; <br/>
-dom(c,lc_1357,hc_1358) &amp; lc_1357&lt;=p_53&apos; &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-update_array_1d(c,c_1414,a[ja_54&apos;],p_53&apos;) &amp; dom(c_1414,lc_1357,hc_1358) &amp; <br/>
-lc_1357&lt;=0 &amp; (m+n_1415)&lt;=(hc_1358+1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1415) - 1) &amp; upperbnd(c&apos;,0,(m+n_1415) - 1,u_1359) &amp; <br/>
-amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
+<ul>(sorted(b,ib,ib + m - 1) &and; sorted(a,ia,ia + n_1415 - 1) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; upperbnd(a,ia,ia + n_1415 - 1,u_1359) &and; 0 &le; m &and; ib + m &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n_1415 &and; ia + n_1415 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1414[p_53'] = u_1359 &and; ia + n_1415 - 1 = ia + n_1415 - 1 &and; ib + m - 1 = ib + m - 1 &and; upperbnd(a,ia,ia + n_1415 - 1,c_1414[p_53']) &and; n_1415 + 1 = n &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; b[jb_55'] &lt; a[ja_54'] &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; 0 &lt; m &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; sorted(a,ia,ia + n - 1) &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; 0 &le; n &and; ia + n &le; ha_1354 + 1 &and; m + n &le; hc_1358 + 1 &and; dom(c,lc_1357,hc_1358) &and; lc_1357 &le; p_53' &and; p_53' &le; hc_1358 &and; update_array_1d(c,c_1414,a[ja_54'],p_53') &and; dom(c_1414,lc_1357,hc_1358) &and; lc_1357 &le; 0 &and; m + n_1415 &le; hc_1358 + 1 &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1415 - 1) &and; upperbnd(c',0,m + n_1415 - 1,u_1359) &and; amodr(c_1414,c',0,m + n_1415 - 1))  &#8866;  dom(c',lc_1357,hc_1358)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -3936,21 +3477,7 @@ amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(a,ia,(ia+n_1415) - 1) &amp; upperbnd(a,ia,(ia+n_1415) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1414,lc_1357,hc_1358) &amp; lb_1355&lt;=ib &amp; <br/>
-dom(b,lb_1355,hb_1356) &amp; 0&lt;=n_1415 &amp; (ia+n_1415)&lt;=(ha_1354+1) &amp; <br/>
-la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; c_1414[p_53&apos;]=u_1359 &amp; (ia+n_1415) -<br/>
-1=(ia+n_1415) - 1 &amp; upperbnd(a,ia,(ia+n_1415) - 1,c_1414[p_53&apos;]) &amp; <br/>
-p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; <br/>
-(b[jb_55&apos;])&lt;(a[ja_54&apos;]) &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1414,a[ja_54&apos;],p_53&apos;) &amp; n_1415+1=n &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n_1415)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+<br/>
-m) - 1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1415) - 1) &amp; upperbnd(c&apos;,0,(m+n_1415) - 1,u_1359) &amp; <br/>
-amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; sorted(c&apos;,0,(m+n) - 1)
+<ul>(sorted(a,ia,ia + n_1415 - 1) &and; upperbnd(a,ia,ia + n_1415 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1414,lc_1357,hc_1358) &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n_1415 &and; ia + n_1415 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1414[p_53'] = u_1359 &and; ia + n_1415 - 1 = ia + n_1415 - 1 &and; upperbnd(a,ia,ia + n_1415 - 1,c_1414[p_53']) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; b[jb_55'] &lt; a[ja_54'] &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1414,a[ja_54'],p_53') &and; n_1415 + 1 = n &and; ib + m - 1 = ib + m - 1 &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n_1415 &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1415 - 1) &and; upperbnd(c',0,m + n_1415 - 1,u_1359) &and; amodr(c_1414,c',0,m + n_1415 - 1))  &#8866;  sorted(c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4027,21 +3554,7 @@ amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; sorted(c&apos;,0,(m+n) - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(a,ia,(ia+n_1415) - 1) &amp; lc_1357&lt;=0 &amp; dom(c_1414,lc_1357,hc_1358) &amp; <br/>
-lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; 0&lt;=n_1415 &amp; (ia+n_1415)&lt;=(ha_1354+<br/>
-1) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; (ia+n_1415) - 1=(ia+n_1415) -<br/>
-1 &amp; upperbnd(a,ia,(ia+n_1415) - 1,c_1414[p_53&apos;]) &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; <br/>
-(b[jb_55&apos;])&lt;(a[ja_54&apos;]) &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1414,a[ja_54&apos;],p_53&apos;) &amp; n_1415+1=n &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; c_1414[p_53&apos;]=u_1359 &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n_1415)&lt;=(hc_1358+<br/>
-1) &amp; upperbnd(a,ia,(ia+n_1415) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1415) - 1) &amp; upperbnd(c&apos;,0,(m+n_1415) - 1,u_1359) &amp; <br/>
-amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; upperbnd(c&apos;,0,(m+n) - 1,u_1359)
+<ul>(sorted(a,ia,ia + n_1415 - 1) &and; lc_1357 &le; 0 &and; dom(c_1414,lc_1357,hc_1358) &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n_1415 &and; ia + n_1415 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; ia + n_1415 - 1 = ia + n_1415 - 1 &and; upperbnd(a,ia,ia + n_1415 - 1,c_1414[p_53']) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; b[jb_55'] &lt; a[ja_54'] &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1414,a[ja_54'],p_53') &and; n_1415 + 1 = n &and; ib + m - 1 = ib + m - 1 &and; c_1414[p_53'] = u_1359 &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n_1415 &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n_1415 - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1415 - 1) &and; upperbnd(c',0,m + n_1415 - 1,u_1359) &and; amodr(c_1414,c',0,m + n_1415 - 1))  &#8866;  upperbnd(c',0,m + n - 1,u_1359)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4118,21 +3631,7 @@ amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; upperbnd(c&apos;,0,(m+n) - 1,u_135
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(a,ia,(ia+n_1415) - 1) &amp; upperbnd(a,ia,(ia+n_1415) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1414,lc_1357,hc_1358) &amp; lb_1355&lt;=ib &amp; <br/>
-dom(b,lb_1355,hb_1356) &amp; 0&lt;=n_1415 &amp; (ia+n_1415)&lt;=(ha_1354+1) &amp; <br/>
-la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; c_1414[p_53&apos;]=u_1359 &amp; (ia+n_1415) -<br/>
-1=(ia+n_1415) - 1 &amp; upperbnd(a,ia,(ia+n_1415) - 1,c_1414[p_53&apos;]) &amp; <br/>
-p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; <br/>
-(b[jb_55&apos;])&lt;(a[ja_54&apos;]) &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1414,a[ja_54&apos;],p_53&apos;) &amp; n_1415+1=n &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n_1415)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+<br/>
-m) - 1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1415) - 1) &amp; upperbnd(c&apos;,0,(m+n_1415) - 1,u_1359) &amp; <br/>
-amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; amodr(c,c&apos;,0,(m+n) - 1)
+<ul>(sorted(a,ia,ia + n_1415 - 1) &and; upperbnd(a,ia,ia + n_1415 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1414,lc_1357,hc_1358) &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n_1415 &and; ia + n_1415 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1414[p_53'] = u_1359 &and; ia + n_1415 - 1 = ia + n_1415 - 1 &and; upperbnd(a,ia,ia + n_1415 - 1,c_1414[p_53']) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; b[jb_55'] &lt; a[ja_54'] &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1414,a[ja_54'],p_53') &and; n_1415 + 1 = n &and; ib + m - 1 = ib + m - 1 &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n_1415 &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1415 - 1) &and; upperbnd(c',0,m + n_1415 - 1,u_1359) &and; amodr(c_1414,c',0,m + n_1415 - 1))  &#8866;  amodr(c,c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4209,20 +3708,7 @@ amodr(c_1414,c&apos;,0,(m+n_1415) - 1)&#8866; amodr(c,c&apos;,0,(m+n) - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1417) - 1) &amp; sorted(a,ia,(ia+n) - 1) &amp; upperbnd(b,ib,(ib+<br/>
-m_1417) - 1,u_1359) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; 0&lt;=m_1417 &amp; (ib+<br/>
-m_1417)&lt;=(hb_1356+1) &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; 0&lt;=n &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-c_1416[p_53&apos;]=u_1359 &amp; (ia+n) - 1=(ia+n) - 1 &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,c_1416[p_53&apos;]) &amp; m_1417+1=m &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; <br/>
-(a[ja_54&apos;])&lt;=(b[jb_55&apos;]) &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; 0&lt;m &amp; 0&lt;n &amp; <br/>
-jb_55&apos;+1=m+ib &amp; ja_54&apos;+1=n+ia &amp; p_53&apos;+1=n+m &amp; sorted(b,ib,(ib+m) - 1) &amp; <br/>
-upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; 0&lt;=m &amp; (ib+m)&lt;=(hb_1356+1) &amp; (m+<br/>
-n)&lt;=(hc_1358+1) &amp; dom(c,lc_1357,hc_1358) &amp; lc_1357&lt;=p_53&apos; &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-update_array_1d(c,c_1416,b[jb_55&apos;],p_53&apos;) &amp; dom(c_1416,lc_1357,hc_1358) &amp; <br/>
-lc_1357&lt;=0 &amp; (m_1417+n)&lt;=(hc_1358+1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m_1417+n) - 1) &amp; upperbnd(c&apos;,0,(m_1417+n) - 1,u_1359) &amp; <br/>
-amodr(c_1416,c&apos;,0,(m_1417+n) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
+<ul>(sorted(b,ib,ib + m_1417 - 1) &and; sorted(a,ia,ia + n - 1) &and; upperbnd(b,ib,ib + m_1417 - 1,u_1359) &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; 0 &le; m_1417 &and; ib + m_1417 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n &and; ia + n &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1416[p_53'] = u_1359 &and; ia + n - 1 = ia + n - 1 &and; upperbnd(a,ia,ia + n - 1,c_1416[p_53']) &and; m_1417 + 1 = m &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; a[ja_54'] &le; b[jb_55'] &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; 0 &lt; m &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; sorted(b,ib,ib + m - 1) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; 0 &le; m &and; ib + m &le; hb_1356 + 1 &and; m + n &le; hc_1358 + 1 &and; dom(c,lc_1357,hc_1358) &and; lc_1357 &le; p_53' &and; p_53' &le; hc_1358 &and; update_array_1d(c,c_1416,b[jb_55'],p_53') &and; dom(c_1416,lc_1357,hc_1358) &and; lc_1357 &le; 0 &and; m_1417 + n &le; hc_1358 + 1 &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1417 + n - 1) &and; upperbnd(c',0,m_1417 + n - 1,u_1359) &and; amodr(c_1416,c',0,m_1417 + n - 1))  &#8866;  dom(c',lc_1357,hc_1358)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4305,20 +3791,7 @@ amodr(c_1416,c&apos;,0,(m_1417+n) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1417) - 1) &amp; upperbnd(b,ib,(ib+m_1417) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1416,lc_1357,hc_1358) &amp; 0&lt;=m_1417 &amp; (ib+m_1417)&lt;=(hb_1356+<br/>
-1) &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; <br/>
-dom(a,la_1353,ha_1354) &amp; c_1416[p_53&apos;]=u_1359 &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; <br/>
-(a[ja_54&apos;])&lt;=(b[jb_55&apos;]) &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1416,b[jb_55&apos;],p_53&apos;) &amp; m_1417+1=m &amp; upperbnd(a,ia,(ia+<br/>
-n) - 1,c_1416[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; <br/>
-(m_1417+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; sorted(a,ia,(ia+<br/>
-n) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m_1417+n) - 1) &amp; <br/>
-upperbnd(c&apos;,0,(m_1417+n) - 1,u_1359) &amp; amodr(c_1416,c&apos;,0,(m_1417+n) - 1)&#8866; sorted(c&apos;,0,(m+n) - 1)
+<ul>(sorted(b,ib,ib + m_1417 - 1) &and; upperbnd(b,ib,ib + m_1417 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1416,lc_1357,hc_1358) &and; 0 &le; m_1417 &and; ib + m_1417 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1416[p_53'] = u_1359 &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; a[ja_54'] &le; b[jb_55'] &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1416,b[jb_55'],p_53') &and; m_1417 + 1 = m &and; upperbnd(a,ia,ia + n - 1,c_1416[p_53']) &and; ia + n - 1 = ia + n - 1 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m_1417 + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1417 + n - 1) &and; upperbnd(c',0,m_1417 + n - 1,u_1359) &and; amodr(c_1416,c',0,m_1417 + n - 1))  &#8866;  sorted(c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4394,20 +3867,7 @@ upperbnd(c&apos;,0,(m_1417+n) - 1,u_1359) &amp; amodr(c_1416,c&apos;,0,(m_1417+n
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1417) - 1) &amp; lc_1357&lt;=0 &amp; dom(c_1416,lc_1357,hc_1358) &amp; <br/>
-0&lt;=m_1417 &amp; (ib+m_1417)&lt;=(hb_1356+1) &amp; lb_1355&lt;=ib &amp; <br/>
-dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; <br/>
-(a[ja_54&apos;])&lt;=(b[jb_55&apos;]) &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1416,b[jb_55&apos;],p_53&apos;) &amp; m_1417+1=m &amp; upperbnd(a,ia,(ia+<br/>
-n) - 1,c_1416[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; c_1416[p_53&apos;]=u_1359 &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (m_1417+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; upperbnd(b,ib,(ib+m_1417) - 1,u_1359) &amp; sorted(a,ia,(ia+n) -<br/>
-1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m_1417+n) - 1) &amp; <br/>
-upperbnd(c&apos;,0,(m_1417+n) - 1,u_1359) &amp; amodr(c_1416,c&apos;,0,(m_1417+n) - 1)&#8866; upperbnd(c&apos;,0,(m+n) - 1,u_1359)
+<ul>(sorted(b,ib,ib + m_1417 - 1) &and; lc_1357 &le; 0 &and; dom(c_1416,lc_1357,hc_1358) &and; 0 &le; m_1417 &and; ib + m_1417 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; a[ja_54'] &le; b[jb_55'] &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1416,b[jb_55'],p_53') &and; m_1417 + 1 = m &and; upperbnd(a,ia,ia + n - 1,c_1416[p_53']) &and; ia + n - 1 = ia + n - 1 &and; c_1416[p_53'] = u_1359 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m_1417 + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m_1417 - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1417 + n - 1) &and; upperbnd(c',0,m_1417 + n - 1,u_1359) &and; amodr(c_1416,c',0,m_1417 + n - 1))  &#8866;  upperbnd(c',0,m + n - 1,u_1359)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4483,20 +3943,7 @@ upperbnd(c&apos;,0,(m_1417+n) - 1,u_1359) &amp; amodr(c_1416,c&apos;,0,(m_1417+n
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1417) - 1) &amp; upperbnd(b,ib,(ib+m_1417) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1416,lc_1357,hc_1358) &amp; 0&lt;=m_1417 &amp; (ib+m_1417)&lt;=(hb_1356+<br/>
-1) &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; <br/>
-dom(a,la_1353,ha_1354) &amp; c_1416[p_53&apos;]=u_1359 &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; <br/>
-(a[ja_54&apos;])&lt;=(b[jb_55&apos;]) &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1416,b[jb_55&apos;],p_53&apos;) &amp; m_1417+1=m &amp; upperbnd(a,ia,(ia+<br/>
-n) - 1,c_1416[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; <br/>
-(m_1417+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; sorted(a,ia,(ia+<br/>
-n) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m_1417+n) - 1) &amp; <br/>
-upperbnd(c&apos;,0,(m_1417+n) - 1,u_1359) &amp; amodr(c_1416,c&apos;,0,(m_1417+n) - 1)&#8866; amodr(c,c&apos;,0,(m+n) - 1)
+<ul>(sorted(b,ib,ib + m_1417 - 1) &and; upperbnd(b,ib,ib + m_1417 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1416,lc_1357,hc_1358) &and; 0 &le; m_1417 &and; ib + m_1417 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1416[p_53'] = u_1359 &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; a[ja_54'] &le; b[jb_55'] &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1416,b[jb_55'],p_53') &and; m_1417 + 1 = m &and; upperbnd(a,ia,ia + n - 1,c_1416[p_53']) &and; ia + n - 1 = ia + n - 1 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m_1417 + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1417 + n - 1) &and; upperbnd(c',0,m_1417 + n - 1,u_1359) &and; amodr(c_1416,c',0,m_1417 + n - 1))  &#8866;  amodr(c,c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4572,20 +4019,7 @@ upperbnd(c&apos;,0,(m_1417+n) - 1,u_1359) &amp; amodr(c_1416,c&apos;,0,(m_1417+n
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,lb_1355,hb_1356) &amp; sorted(b,ib,(ib+m) - 1) &amp; sorted(a,ia,(ia+n_1419) -<br/>
-1) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; upperbnd(a,ia,(ia+n_1419) -<br/>
-1,u_1359) &amp; 0&lt;=m &amp; (ib+m)&lt;=(hb_1356+1) &amp; lb_1355&lt;=ib &amp; 0&lt;=n_1419 &amp; (ia+<br/>
-n_1419)&lt;=(ha_1354+1) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-c_1418[p_53&apos;]=u_1359 &amp; (ia+n_1419) - 1=(ia+n_1419) - 1 &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; upperbnd(a,ia,(ia+n_1419) - 1,c_1418[p_53&apos;]) &amp; n_1419+1=n &amp; <br/>
-ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; m&lt;=0 &amp; 0&lt;n &amp; jb_55&apos;+1=m+ib &amp; ja_54&apos;+1=n+<br/>
-ia &amp; p_53&apos;+1=n+m &amp; sorted(a,ia,(ia+n) - 1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; 0&lt;=n &amp; (ia+n)&lt;=(ha_1354+1) &amp; (m+n)&lt;=(hc_1358+1) &amp; <br/>
-dom(c,lc_1357,hc_1358) &amp; lc_1357&lt;=p_53&apos; &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-update_array_1d(c,c_1418,a[ja_54&apos;],p_53&apos;) &amp; dom(c_1418,lc_1357,hc_1358) &amp; <br/>
-lc_1357&lt;=0 &amp; (m+n_1419)&lt;=(hc_1358+1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1419) - 1) &amp; upperbnd(c&apos;,0,(m+n_1419) - 1,u_1359) &amp; <br/>
-amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
+<ul>(dom(b,lb_1355,hb_1356) &and; sorted(b,ib,ib + m - 1) &and; sorted(a,ia,ia + n_1419 - 1) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; upperbnd(a,ia,ia + n_1419 - 1,u_1359) &and; 0 &le; m &and; ib + m &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; 0 &le; n_1419 &and; ia + n_1419 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1418[p_53'] = u_1359 &and; ia + n_1419 - 1 = ia + n_1419 - 1 &and; ib + m - 1 = ib + m - 1 &and; upperbnd(a,ia,ia + n_1419 - 1,c_1418[p_53']) &and; n_1419 + 1 = n &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; m &le; 0 &and; 0 &lt; n &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; sorted(a,ia,ia + n - 1) &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; 0 &le; n &and; ia + n &le; ha_1354 + 1 &and; m + n &le; hc_1358 + 1 &and; dom(c,lc_1357,hc_1358) &and; lc_1357 &le; p_53' &and; p_53' &le; hc_1358 &and; update_array_1d(c,c_1418,a[ja_54'],p_53') &and; dom(c_1418,lc_1357,hc_1358) &and; lc_1357 &le; 0 &and; m + n_1419 &le; hc_1358 + 1 &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1419 - 1) &and; upperbnd(c',0,m + n_1419 - 1,u_1359) &and; amodr(c_1418,c',0,m + n_1419 - 1))  &#8866;  dom(c',lc_1357,hc_1358)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4666,20 +4100,7 @@ amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(a,ia,(ia+n_1419) - 1) &amp; upperbnd(a,ia,(ia+n_1419) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1418,lc_1357,hc_1358) &amp; lb_1355&lt;=ib &amp; <br/>
-dom(b,lb_1355,hb_1356) &amp; 0&lt;=n_1419 &amp; (ia+n_1419)&lt;=(ha_1354+1) &amp; <br/>
-la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; c_1418[p_53&apos;]=u_1359 &amp; (ia+n_1419) -<br/>
-1=(ia+n_1419) - 1 &amp; upperbnd(a,ia,(ia+n_1419) - 1,c_1418[p_53&apos;]) &amp; <br/>
-p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; m&lt;=0 &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1418,a[ja_54&apos;],p_53&apos;) &amp; n_1419+1=n &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n_1419)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+<br/>
-m) - 1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1419) - 1) &amp; upperbnd(c&apos;,0,(m+n_1419) - 1,u_1359) &amp; <br/>
-amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; sorted(c&apos;,0,(m+n) - 1)
+<ul>(sorted(a,ia,ia + n_1419 - 1) &and; upperbnd(a,ia,ia + n_1419 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1418,lc_1357,hc_1358) &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n_1419 &and; ia + n_1419 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1418[p_53'] = u_1359 &and; ia + n_1419 - 1 = ia + n_1419 - 1 &and; upperbnd(a,ia,ia + n_1419 - 1,c_1418[p_53']) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; m &le; 0 &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1418,a[ja_54'],p_53') &and; n_1419 + 1 = n &and; ib + m - 1 = ib + m - 1 &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n_1419 &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1419 - 1) &and; upperbnd(c',0,m + n_1419 - 1,u_1359) &and; amodr(c_1418,c',0,m + n_1419 - 1))  &#8866;  sorted(c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4753,20 +4174,7 @@ amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; sorted(c&apos;,0,(m+n) - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(a,ia,(ia+n_1419) - 1) &amp; lc_1357&lt;=0 &amp; dom(c_1418,lc_1357,hc_1358) &amp; <br/>
-lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; 0&lt;=n_1419 &amp; (ia+n_1419)&lt;=(ha_1354+<br/>
-1) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; (ia+n_1419) - 1=(ia+n_1419) -<br/>
-1 &amp; upperbnd(a,ia,(ia+n_1419) - 1,c_1418[p_53&apos;]) &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; (ia+n)&lt;=(ha_1354+1) &amp; <br/>
-0&lt;=n &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; <br/>
-0&lt;n &amp; m&lt;=0 &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1418,a[ja_54&apos;],p_53&apos;) &amp; n_1419+1=n &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; c_1418[p_53&apos;]=u_1359 &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n_1419)&lt;=(hc_1358+<br/>
-1) &amp; upperbnd(a,ia,(ia+n_1419) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1419) - 1) &amp; upperbnd(c&apos;,0,(m+n_1419) - 1,u_1359) &amp; <br/>
-amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; upperbnd(c&apos;,0,(m+n) - 1,u_1359)
+<ul>(sorted(a,ia,ia + n_1419 - 1) &and; lc_1357 &le; 0 &and; dom(c_1418,lc_1357,hc_1358) &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n_1419 &and; ia + n_1419 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; ia + n_1419 - 1 = ia + n_1419 - 1 &and; upperbnd(a,ia,ia + n_1419 - 1,c_1418[p_53']) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; m &le; 0 &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1418,a[ja_54'],p_53') &and; n_1419 + 1 = n &and; ib + m - 1 = ib + m - 1 &and; c_1418[p_53'] = u_1359 &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n_1419 &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n_1419 - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1419 - 1) &and; upperbnd(c',0,m + n_1419 - 1,u_1359) &and; amodr(c_1418,c',0,m + n_1419 - 1))  &#8866;  upperbnd(c',0,m + n - 1,u_1359)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4840,20 +4248,7 @@ amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; upperbnd(c&apos;,0,(m+n) - 1,u_135
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(a,ia,(ia+n_1419) - 1) &amp; upperbnd(a,ia,(ia+n_1419) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1418,lc_1357,hc_1358) &amp; lb_1355&lt;=ib &amp; <br/>
-dom(b,lb_1355,hb_1356) &amp; 0&lt;=n_1419 &amp; (ia+n_1419)&lt;=(ha_1354+1) &amp; <br/>
-la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; c_1418[p_53&apos;]=u_1359 &amp; (ia+n_1419) -<br/>
-1=(ia+n_1419) - 1 &amp; upperbnd(a,ia,(ia+n_1419) - 1,c_1418[p_53&apos;]) &amp; <br/>
-p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; ja_54&apos;&lt;=ha_1354 &amp; la_1353&lt;=ja_54&apos; &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; sorted(a,ia,(ia+n) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; 0&lt;n &amp; m&lt;=0 &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1418,a[ja_54&apos;],p_53&apos;) &amp; n_1419+1=n &amp; (ib+m) - 1=(ib+m) -<br/>
-1 &amp; (ib+m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n_1419)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+<br/>
-m) - 1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m+n_1419) - 1) &amp; upperbnd(c&apos;,0,(m+n_1419) - 1,u_1359) &amp; <br/>
-amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; amodr(c,c&apos;,0,(m+n) - 1)
+<ul>(sorted(a,ia,ia + n_1419 - 1) &and; upperbnd(a,ia,ia + n_1419 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1418,lc_1357,hc_1358) &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n_1419 &and; ia + n_1419 &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1418[p_53'] = u_1359 &and; ia + n_1419 - 1 = ia + n_1419 - 1 &and; upperbnd(a,ia,ia + n_1419 - 1,c_1418[p_53']) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; ja_54' &le; ha_1354 &and; la_1353 &le; ja_54' &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; 0 &lt; n &and; m &le; 0 &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1418,a[ja_54'],p_53') &and; n_1419 + 1 = n &and; ib + m - 1 = ib + m - 1 &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n_1419 &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n_1419 - 1) &and; upperbnd(c',0,m + n_1419 - 1,u_1359) &and; amodr(c_1418,c',0,m + n_1419 - 1))  &#8866;  amodr(c,c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -4927,19 +4322,7 @@ amodr(c_1418,c&apos;,0,(m+n_1419) - 1)&#8866; amodr(c,c&apos;,0,(m+n) - 1)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1421) - 1) &amp; sorted(a,ia,(ia+n) - 1) &amp; upperbnd(b,ib,(ib+<br/>
-m_1421) - 1,u_1359) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; 0&lt;=m_1421 &amp; (ib+<br/>
-m_1421)&lt;=(hb_1356+1) &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; 0&lt;=n &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-c_1420[p_53&apos;]=u_1359 &amp; (ia+n) - 1=(ia+n) - 1 &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,c_1420[p_53&apos;]) &amp; m_1421+1=m &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; 0&lt;m &amp; <br/>
-n&lt;=0 &amp; jb_55&apos;+1=m+ib &amp; ja_54&apos;+1=n+ia &amp; p_53&apos;+1=n+m &amp; sorted(b,ib,(ib+m) -<br/>
-1) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; 0&lt;=m &amp; (ib+m)&lt;=(hb_1356+1) &amp; (m+<br/>
-n)&lt;=(hc_1358+1) &amp; dom(c,lc_1357,hc_1358) &amp; lc_1357&lt;=p_53&apos; &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-update_array_1d(c,c_1420,b[jb_55&apos;],p_53&apos;) &amp; dom(c_1420,lc_1357,hc_1358) &amp; <br/>
-lc_1357&lt;=0 &amp; (m_1421+n)&lt;=(hc_1358+1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; <br/>
-sorted(c&apos;,0,(m_1421+n) - 1) &amp; upperbnd(c&apos;,0,(m_1421+n) - 1,u_1359) &amp; <br/>
-amodr(c_1420,c&apos;,0,(m_1421+n) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
+<ul>(sorted(b,ib,ib + m_1421 - 1) &and; sorted(a,ia,ia + n - 1) &and; upperbnd(b,ib,ib + m_1421 - 1,u_1359) &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; 0 &le; m_1421 &and; ib + m_1421 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; 0 &le; n &and; ia + n &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1420[p_53'] = u_1359 &and; ia + n - 1 = ia + n - 1 &and; upperbnd(a,ia,ia + n - 1,c_1420[p_53']) &and; m_1421 + 1 = m &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; 0 &lt; m &and; n &le; 0 &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; sorted(b,ib,ib + m - 1) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; 0 &le; m &and; ib + m &le; hb_1356 + 1 &and; m + n &le; hc_1358 + 1 &and; dom(c,lc_1357,hc_1358) &and; lc_1357 &le; p_53' &and; p_53' &le; hc_1358 &and; update_array_1d(c,c_1420,b[jb_55'],p_53') &and; dom(c_1420,lc_1357,hc_1358) &and; lc_1357 &le; 0 &and; m_1421 + n &le; hc_1358 + 1 &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1421 + n - 1) &and; upperbnd(c',0,m_1421 + n - 1,u_1359) &and; amodr(c_1420,c',0,m_1421 + n - 1))  &#8866;  dom(c',lc_1357,hc_1358)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -5019,19 +4402,7 @@ amodr(c_1420,c&apos;,0,(m_1421+n) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1421) - 1) &amp; upperbnd(b,ib,(ib+m_1421) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1420,lc_1357,hc_1358) &amp; 0&lt;=m_1421 &amp; (ib+m_1421)&lt;=(hb_1356+<br/>
-1) &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; <br/>
-dom(a,la_1353,ha_1354) &amp; c_1420[p_53&apos;]=u_1359 &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; (ib+m)&lt;=(hb_1356+1) &amp; <br/>
-0&lt;=m &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; <br/>
-sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; <br/>
-n&lt;=0 &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1420,b[jb_55&apos;],p_53&apos;) &amp; m_1421+1=m &amp; upperbnd(a,ia,(ia+<br/>
-n) - 1,c_1420[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; <br/>
-(m_1421+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; sorted(a,ia,(ia+<br/>
-n) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m_1421+n) - 1) &amp; <br/>
-upperbnd(c&apos;,0,(m_1421+n) - 1,u_1359) &amp; amodr(c_1420,c&apos;,0,(m_1421+n) - 1)&#8866; sorted(c&apos;,0,(m+n) - 1)
+<ul>(sorted(b,ib,ib + m_1421 - 1) &and; upperbnd(b,ib,ib + m_1421 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1420,lc_1357,hc_1358) &and; 0 &le; m_1421 &and; ib + m_1421 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1420[p_53'] = u_1359 &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1420,b[jb_55'],p_53') &and; m_1421 + 1 = m &and; upperbnd(a,ia,ia + n - 1,c_1420[p_53']) &and; ia + n - 1 = ia + n - 1 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m_1421 + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1421 + n - 1) &and; upperbnd(c',0,m_1421 + n - 1,u_1359) &and; amodr(c_1420,c',0,m_1421 + n - 1))  &#8866;  sorted(c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -5104,19 +4475,7 @@ upperbnd(c&apos;,0,(m_1421+n) - 1,u_1359) &amp; amodr(c_1420,c&apos;,0,(m_1421+n
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1421) - 1) &amp; lc_1357&lt;=0 &amp; dom(c_1420,lc_1357,hc_1358) &amp; <br/>
-0&lt;=m_1421 &amp; (ib+m_1421)&lt;=(hb_1356+1) &amp; lb_1355&lt;=ib &amp; <br/>
-dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; <br/>
-p_53&apos;&lt;=hc_1358 &amp; lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+m) -<br/>
-1,u_1359) &amp; sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+<br/>
-1=m+ib &amp; n&lt;=0 &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1420,b[jb_55&apos;],p_53&apos;) &amp; m_1421+1=m &amp; upperbnd(a,ia,(ia+<br/>
-n) - 1,c_1420[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; c_1420[p_53&apos;]=u_1359 &amp; (ia+<br/>
-n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (m_1421+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) -<br/>
-1,u_1359) &amp; upperbnd(b,ib,(ib+m_1421) - 1,u_1359) &amp; sorted(a,ia,(ia+n) -<br/>
-1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m_1421+n) - 1) &amp; <br/>
-upperbnd(c&apos;,0,(m_1421+n) - 1,u_1359) &amp; amodr(c_1420,c&apos;,0,(m_1421+n) - 1)&#8866; upperbnd(c&apos;,0,(m+n) - 1,u_1359)
+<ul>(sorted(b,ib,ib + m_1421 - 1) &and; lc_1357 &le; 0 &and; dom(c_1420,lc_1357,hc_1358) &and; 0 &le; m_1421 &and; ib + m_1421 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1420,b[jb_55'],p_53') &and; m_1421 + 1 = m &and; upperbnd(a,ia,ia + n - 1,c_1420[p_53']) &and; ia + n - 1 = ia + n - 1 &and; c_1420[p_53'] = u_1359 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m_1421 + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m_1421 - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1421 + n - 1) &and; upperbnd(c',0,m_1421 + n - 1,u_1359) &and; amodr(c_1420,c',0,m_1421 + n - 1))  &#8866;  upperbnd(c',0,m + n - 1,u_1359)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -5189,19 +4548,7 @@ upperbnd(c&apos;,0,(m_1421+n) - 1,u_1359) &amp; amodr(c_1420,c&apos;,0,(m_1421+n
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> sorted(b,ib,(ib+m_1421) - 1) &amp; upperbnd(b,ib,(ib+m_1421) - 1,u_1359) &amp; <br/>
-lc_1357&lt;=0 &amp; dom(c_1420,lc_1357,hc_1358) &amp; 0&lt;=m_1421 &amp; (ib+m_1421)&lt;=(hb_1356+<br/>
-1) &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; <br/>
-dom(a,la_1353,ha_1354) &amp; c_1420[p_53&apos;]=u_1359 &amp; p_53&apos;&lt;=hc_1358 &amp; <br/>
-lc_1357&lt;=p_53&apos; &amp; jb_55&apos;&lt;=hb_1356 &amp; lb_1355&lt;=jb_55&apos; &amp; (ib+m)&lt;=(hb_1356+1) &amp; <br/>
-0&lt;=m &amp; (m+n)&lt;=(hc_1358+1) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; <br/>
-sorted(b,ib,(ib+m) - 1) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; <br/>
-n&lt;=0 &amp; 0&lt;m &amp; dom(c,lc_1357,hc_1358) &amp; <br/>
-update_array_1d(c,c_1420,b[jb_55&apos;],p_53&apos;) &amp; m_1421+1=m &amp; upperbnd(a,ia,(ia+<br/>
-n) - 1,c_1420[p_53&apos;]) &amp; (ia+n) - 1=(ia+n) - 1 &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; <br/>
-(m_1421+n)&lt;=(hc_1358+1) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; sorted(a,ia,(ia+<br/>
-n) - 1) &amp; dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m_1421+n) - 1) &amp; <br/>
-upperbnd(c&apos;,0,(m_1421+n) - 1,u_1359) &amp; amodr(c_1420,c&apos;,0,(m_1421+n) - 1)&#8866; amodr(c,c&apos;,0,(m+n) - 1)
+<ul>(sorted(b,ib,ib + m_1421 - 1) &and; upperbnd(b,ib,ib + m_1421 - 1,u_1359) &and; lc_1357 &le; 0 &and; dom(c_1420,lc_1357,hc_1358) &and; 0 &le; m_1421 &and; ib + m_1421 &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; c_1420[p_53'] = u_1359 &and; p_53' &le; hc_1358 &and; lc_1357 &le; p_53' &and; jb_55' &le; hb_1356 &and; lb_1355 &le; jb_55' &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; m + n &le; hc_1358 + 1 &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(b,ib,ib + m - 1) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; 0 &lt; m &and; dom(c,lc_1357,hc_1358) &and; update_array_1d(c,c_1420,b[jb_55'],p_53') &and; m_1421 + 1 = m &and; upperbnd(a,ia,ia + n - 1,c_1420[p_53']) &and; ia + n - 1 = ia + n - 1 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; m_1421 + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m_1421 + n - 1) &and; upperbnd(c',0,m_1421 + n - 1,u_1359) &and; amodr(c_1420,c',0,m_1421 + n - 1))  &#8866;  amodr(c,c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -5274,15 +4621,7 @@ upperbnd(c&apos;,0,(m_1421+n) - 1,u_1359) &amp; amodr(c_1420,c&apos;,0,(m_1421+n
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(b,lb_1355,hb_1356) &amp; sorted(b,ib,(ib+m) - 1) &amp; sorted(a,ia,(ia+n) -<br/>
-1) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; <br/>
-0&lt;=m &amp; (ib+m)&lt;=(hb_1356+1) &amp; lb_1355&lt;=ib &amp; 0&lt;=n &amp; (ia+n)&lt;=(ha_1354+1) &amp; <br/>
-la_1353&lt;=ia &amp; dom(a,la_1353,ha_1354) &amp; (ia+n) - 1=(ia+n) - 1 &amp; (ib+m) -<br/>
-1=(ib+m) - 1 &amp; m&lt;=0 &amp; n&lt;=0 &amp; jb_55&apos;+1=m+ib &amp; ja_54&apos;+1=n+ia &amp; p_53&apos;+1=n+m &amp; <br/>
-upperbnd(a,ia,(ia+n) - 1,c[p_53&apos;]) &amp; c[p_53&apos;]=u_1359 &amp; <br/>
-dom(c,lc_1357,hc_1358) &amp; lc_1357&lt;=0 &amp; (m+n)&lt;=(hc_1358+1) &amp; <br/>
-dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m+n) - 1) &amp; upperbnd(c&apos;,0,(m+n) -<br/>
-1,u_1359) &amp; amodr(c,c&apos;,0,(m+n) - 1)&#8866; dom(c&apos;,lc_1357,hc_1358)
+<ul>(dom(b,lb_1355,hb_1356) &and; sorted(b,ib,ib + m - 1) &and; sorted(a,ia,ia + n - 1) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; 0 &le; m &and; ib + m &le; hb_1356 + 1 &and; lb_1355 &le; ib &and; 0 &le; n &and; ia + n &le; ha_1354 + 1 &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; ia + n - 1 = ia + n - 1 &and; ib + m - 1 = ib + m - 1 &and; m &le; 0 &and; n &le; 0 &and; jb_55' + 1 = m + ib &and; ja_54' + 1 = n + ia &and; p_53' + 1 = n + m &and; upperbnd(a,ia,ia + n - 1,c[p_53']) &and; c[p_53'] = u_1359 &and; dom(c,lc_1357,hc_1358) &and; lc_1357 &le; 0 &and; m + n &le; hc_1358 + 1 &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n - 1) &and; upperbnd(c',0,m + n - 1,u_1359) &and; amodr(c,c',0,m + n - 1))  &#8866;  dom(c',lc_1357,hc_1358)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -5349,15 +4688,7 @@ dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m+n) - 1) &amp; upperbnd(c&
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc_1357&lt;=0 &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; <br/>
-dom(a,la_1353,ha_1354) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; <br/>
-n&lt;=0 &amp; m&lt;=0 &amp; upperbnd(a,ia,(ia+n) - 1,c[p_53&apos;]) &amp; (ib+m) - 1=(ib+m) - 1 &amp; <br/>
-(ia+n) - 1=(ia+n) - 1 &amp; c[p_53&apos;]=u_1359 &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; dom(c,lc_1357,hc_1358) &amp; (m+n)&lt;=(hc_1358+1) &amp; <br/>
-upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+m) - 1) &amp; <br/>
-dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m+n) - 1) &amp; upperbnd(c&apos;,0,(m+n) -<br/>
-1,u_1359) &amp; amodr(c,c&apos;,0,(m+n) - 1)&#8866; sorted(c&apos;,0,(m+n) - 1)
+<ul>(lc_1357 &le; 0 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; m &le; 0 &and; upperbnd(a,ia,ia + n - 1,c[p_53']) &and; ib + m - 1 = ib + m - 1 &and; ia + n - 1 = ia + n - 1 &and; c[p_53'] = u_1359 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; dom(c,lc_1357,hc_1358) &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n - 1) &and; upperbnd(c',0,m + n - 1,u_1359) &and; amodr(c,c',0,m + n - 1))  &#8866;  sorted(c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -5418,15 +4749,7 @@ dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m+n) - 1) &amp; upperbnd(c&
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc_1357&lt;=0 &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; <br/>
-dom(a,la_1353,ha_1354) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; <br/>
-n&lt;=0 &amp; m&lt;=0 &amp; upperbnd(a,ia,(ia+n) - 1,c[p_53&apos;]) &amp; (ib+m) - 1=(ib+m) - 1 &amp; <br/>
-(ia+n) - 1=(ia+n) - 1 &amp; c[p_53&apos;]=u_1359 &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; dom(c,lc_1357,hc_1358) &amp; (m+n)&lt;=(hc_1358+1) &amp; <br/>
-upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+m) - 1) &amp; <br/>
-dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m+n) - 1) &amp; upperbnd(c&apos;,0,(m+n) -<br/>
-1,u_1359) &amp; amodr(c,c&apos;,0,(m+n) - 1)&#8866; upperbnd(c&apos;,0,(m+n) - 1,u_1359)
+<ul>(lc_1357 &le; 0 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; m &le; 0 &and; upperbnd(a,ia,ia + n - 1,c[p_53']) &and; ib + m - 1 = ib + m - 1 &and; ia + n - 1 = ia + n - 1 &and; c[p_53'] = u_1359 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; dom(c,lc_1357,hc_1358) &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n - 1) &and; upperbnd(c',0,m + n - 1,u_1359) &and; amodr(c,c',0,m + n - 1))  &#8866;  upperbnd(c',0,m + n - 1,u_1359)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -5487,15 +4810,7 @@ dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m+n) - 1) &amp; upperbnd(c&
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> lc_1357&lt;=0 &amp; lb_1355&lt;=ib &amp; dom(b,lb_1355,hb_1356) &amp; la_1353&lt;=ia &amp; <br/>
-dom(a,la_1353,ha_1354) &amp; p_53&apos;+1=n+m &amp; ja_54&apos;+1=n+ia &amp; jb_55&apos;+1=m+ib &amp; <br/>
-n&lt;=0 &amp; m&lt;=0 &amp; upperbnd(a,ia,(ia+n) - 1,c[p_53&apos;]) &amp; (ib+m) - 1=(ib+m) - 1 &amp; <br/>
-(ia+n) - 1=(ia+n) - 1 &amp; c[p_53&apos;]=u_1359 &amp; (ia+n)&lt;=(ha_1354+1) &amp; 0&lt;=n &amp; (ib+<br/>
-m)&lt;=(hb_1356+1) &amp; 0&lt;=m &amp; dom(c,lc_1357,hc_1358) &amp; (m+n)&lt;=(hc_1358+1) &amp; <br/>
-upperbnd(a,ia,(ia+n) - 1,u_1359) &amp; upperbnd(b,ib,(ib+m) - 1,u_1359) &amp; <br/>
-sorted(a,ia,(ia+n) - 1) &amp; sorted(b,ib,(ib+m) - 1) &amp; <br/>
-dom(c&apos;,lc_1357,hc_1358) &amp; sorted(c&apos;,0,(m+n) - 1) &amp; upperbnd(c&apos;,0,(m+n) -<br/>
-1,u_1359) &amp; amodr(c,c&apos;,0,(m+n) - 1)&#8866; amodr(c,c&apos;,0,(m+n) - 1)
+<ul>(lc_1357 &le; 0 &and; lb_1355 &le; ib &and; dom(b,lb_1355,hb_1356) &and; la_1353 &le; ia &and; dom(a,la_1353,ha_1354) &and; p_53' + 1 = n + m &and; ja_54' + 1 = n + ia &and; jb_55' + 1 = m + ib &and; n &le; 0 &and; m &le; 0 &and; upperbnd(a,ia,ia + n - 1,c[p_53']) &and; ib + m - 1 = ib + m - 1 &and; ia + n - 1 = ia + n - 1 &and; c[p_53'] = u_1359 &and; ia + n &le; ha_1354 + 1 &and; 0 &le; n &and; ib + m &le; hb_1356 + 1 &and; 0 &le; m &and; dom(c,lc_1357,hc_1358) &and; m + n &le; hc_1358 + 1 &and; upperbnd(a,ia,ia + n - 1,u_1359) &and; upperbnd(b,ib,ib + m - 1,u_1359) &and; sorted(a,ia,ia + n - 1) &and; sorted(b,ib,ib + m - 1) &and; dom(c',lc_1357,hc_1358) &and; sorted(c',0,m + n - 1) &and; upperbnd(c',0,m + n - 1,u_1359) &and; amodr(c,c',0,m + n - 1))  &#8866;  amodr(c,c',0,m + n - 1)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

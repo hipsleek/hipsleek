@@ -76,8 +76,7 @@ else LABEL! 69,1: <br/>
 {(13,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L19">line 19</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=i &amp; i&lt;=j&#8866; &exist;(ahalb_642:&exist;(ahaub_643:dom(a,ahalb_642,ahaub_643) &amp; <br/>
-ahalb_642&lt;=i &amp; i&lt;=ahaub_643))
+<ul>(j &le; ahaub &and; dom(a,ahalb,ahaub) &and; ahalb &le; i &and; i &le; j)  &#8866;   &exist; ahalb_642  &exist; ahaub_643 (dom(a,ahalb_642,ahaub_643) &and; ahalb_642 &le; i &and; i &le; ahaub_643)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -103,9 +102,7 @@ ahalb_642&lt;=i &amp; i&lt;=ahaub_643))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L20">line 20</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_646 &amp; ahalb_645&lt;=i &amp; j&lt;=ahaub_646 &amp; i&lt;=j &amp; <br/>
-dom(a,ahalb_645,ahaub_646) &amp; temp_41&apos;=a[i]&#8866; &exist;(ahalb_651:&exist;(ahaub_652:dom(a,ahalb_651,ahaub_652) &amp; <br/>
-ahalb_651&lt;=j &amp; j&lt;=ahaub_652))
+<ul>(i &le; ahaub_646 &and; ahalb_645 &le; i &and; j &le; ahaub_646 &and; i &le; j &and; dom(a,ahalb_645,ahaub_646) &and; temp_41' = a[i])  &#8866;   &exist; ahalb_651  &exist; ahaub_652 (dom(a,ahalb_651,ahaub_652) &and; ahalb_651 &le; j &and; j &le; ahaub_652)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -134,9 +131,7 @@ ahalb_651&lt;=j &amp; j&lt;=ahaub_652))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L20">line 20</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_655 &amp; ahalb_654&lt;=j &amp; i&lt;=j &amp; ahalb_654&lt;=i &amp; i&lt;=ahaub_655 &amp; <br/>
-temp_41&apos;=a[i] &amp; dom(a,ahalb_654,ahaub_655) &amp; v_int_20_618&apos;=a[j]&#8866; &exist;(ahalb_662:&exist;(ahaub_663:dom(a,ahalb_662,ahaub_663) &amp; <br/>
-ahalb_662&lt;=i &amp; i&lt;=ahaub_663))
+<ul>(j &le; ahaub_655 &and; ahalb_654 &le; j &and; i &le; j &and; ahalb_654 &le; i &and; i &le; ahaub_655 &and; temp_41' = a[i] &and; dom(a,ahalb_654,ahaub_655) &and; v_int_20_618' = a[j])  &#8866;   &exist; ahalb_662  &exist; ahaub_663 (dom(a,ahalb_662,ahaub_663) &and; ahalb_662 &le; i &and; i &le; ahaub_663)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -168,10 +163,7 @@ ahalb_662&lt;=i &amp; i&lt;=ahaub_663))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array update at line <a href="#L21">line 21</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i&lt;=ahaub_666 &amp; ahalb_665&lt;=i &amp; i&lt;=j &amp; temp_41&apos;=a[i] &amp; ahalb_665&lt;=j &amp; <br/>
-j&lt;=ahaub_666 &amp; dom(a,ahalb_665,ahaub_666) &amp; dom(a&apos;,ahalb_665,ahaub_666) &amp; <br/>
-update_array_1d(a,a&apos;,a[j],i)&#8866; &exist;(ahalb_673:&exist;(ahaub_674:dom(a&apos;,ahalb_673,ahaub_674) &amp; <br/>
-ahalb_673&lt;=j &amp; j&lt;=ahaub_674))
+<ul>(i &le; ahaub_666 &and; ahalb_665 &le; i &and; i &le; j &and; temp_41' = a[i] &and; ahalb_665 &le; j &and; j &le; ahaub_666 &and; dom(a,ahalb_665,ahaub_666) &and; dom(a',ahalb_665,ahaub_666) &and; update_array_1d(a,a',a[j],i))  &#8866;   &exist; ahalb_673  &exist; ahaub_674 (dom(a',ahalb_673,ahaub_674) &and; ahalb_673 &le; j &and; j &le; ahaub_674)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -204,11 +196,7 @@ ahalb_673&lt;=j &amp; j&lt;=ahaub_674))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 72::arrayrev$int[]~int~int(a,v_int_22_622,v_int_22_621) rec at <a href="#L22">line 22</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=t_691 &amp; k_690&lt;=j &amp; dom(a_682,k_690,t_691) &amp; i&lt;=t_691 &amp; k_690&lt;=i &amp; i&lt;=j &amp; <br/>
-temp_41&apos;=a[i] &amp; dom(a,k_690,t_691) &amp; update_array_1d(a,a_682,a[j],i) &amp; <br/>
-dom(a&apos;,k_690,t_691) &amp; update_array_1d(a_682,a&apos;,temp_41&apos;,j) &amp; v_int_22_622&apos;=1+<br/>
-i &amp; v_int_22_621&apos;+1=j&#8866; &exist;(k_698:&exist;(t_699:dom(a&apos;,k_698,t_699) &amp; k_698&lt;=v_int_22_622&apos; &amp; <br/>
-v_int_22_621&apos;&lt;=t_699))
+<ul>(j &le; t_691 &and; k_690 &le; j &and; dom(a_682,k_690,t_691) &and; i &le; t_691 &and; k_690 &le; i &and; i &le; j &and; temp_41' = a[i] &and; dom(a,k_690,t_691) &and; update_array_1d(a,a_682,a[j],i) &and; dom(a',k_690,t_691) &and; update_array_1d(a_682,a',temp_41',j) &and; v_int_22_622' = 1 + i &and; v_int_22_621' + 1 = j)  &#8866;   &exist; k_698  &exist; t_699 (dom(a',k_698,t_699) &and; k_698 &le; v_int_22_622' &and; v_int_22_621' &le; t_699)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -249,11 +237,7 @@ v_int_22_621&apos;&lt;=t_699))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_22_701&lt;=t_691 &amp; dom(a_702,k_690,t_691) &amp; dom(a_682,k_690,t_691) &amp; <br/>
-i&lt;=j &amp; temp_41&apos;=a[i] &amp; dom(a,k_690,t_691) &amp; k_690&lt;=i &amp; i&lt;=t_691 &amp; <br/>
-update_array_1d(a,a_682,a[j],i) &amp; k_690&lt;=j &amp; j&lt;=t_691 &amp; <br/>
-update_array_1d(a_682,a_702,temp_41&apos;,j) &amp; v_int_22_701+1=j &amp; k_690&lt;=(1+i) &amp; <br/>
-reversearr(a&apos;,a_702,1+i,v_int_22_701) &amp; idexc(a&apos;,a_702,1+i,v_int_22_701)&#8866; reversearr(a&apos;,a,i,j)
+<ul>(v_int_22_701 &le; t_691 &and; dom(a_702,k_690,t_691) &and; dom(a_682,k_690,t_691) &and; i &le; j &and; temp_41' = a[i] &and; dom(a,k_690,t_691) &and; k_690 &le; i &and; i &le; t_691 &and; update_array_1d(a,a_682,a[j],i) &and; k_690 &le; j &and; j &le; t_691 &and; update_array_1d(a_682,a_702,temp_41',j) &and; v_int_22_701 + 1 = j &and; k_690 &le; 1 + i &and; reversearr(a',a_702,1 + i,v_int_22_701) &and; idexc(a',a_702,1 + i,v_int_22_701))  &#8866;  reversearr(a',a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -293,11 +277,7 @@ reversearr(a&apos;,a_702,1+i,v_int_22_701) &amp; idexc(a&apos;,a_702,1+i,v_int_2
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_22_701&lt;=t_691 &amp; dom(a_702,k_690,t_691) &amp; dom(a_682,k_690,t_691) &amp; <br/>
-i&lt;=j &amp; temp_41&apos;=a[i] &amp; dom(a,k_690,t_691) &amp; k_690&lt;=i &amp; i&lt;=t_691 &amp; <br/>
-update_array_1d(a,a_682,a[j],i) &amp; k_690&lt;=j &amp; j&lt;=t_691 &amp; <br/>
-update_array_1d(a_682,a_702,temp_41&apos;,j) &amp; v_int_22_701+1=j &amp; k_690&lt;=(1+i) &amp; <br/>
-reversearr(a&apos;,a_702,1+i,v_int_22_701) &amp; idexc(a&apos;,a_702,1+i,v_int_22_701)&#8866; idexc(a&apos;,a,i,j)
+<ul>(v_int_22_701 &le; t_691 &and; dom(a_702,k_690,t_691) &and; dom(a_682,k_690,t_691) &and; i &le; j &and; temp_41' = a[i] &and; dom(a,k_690,t_691) &and; k_690 &le; i &and; i &le; t_691 &and; update_array_1d(a,a_682,a[j],i) &and; k_690 &le; j &and; j &le; t_691 &and; update_array_1d(a_682,a_702,temp_41',j) &and; v_int_22_701 + 1 = j &and; k_690 &le; 1 + i &and; reversearr(a',a_702,1 + i,v_int_22_701) &and; idexc(a',a_702,1 + i,v_int_22_701))  &#8866;  idexc(a',a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -337,7 +317,7 @@ reversearr(a&apos;,a_702,1+i,v_int_22_701) &amp; idexc(a&apos;,a_702,1+i,v_int_2
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t &amp; j&lt;i&#8866; reversearr(a,a,i,j)
+<ul>(dom(a,k,t) &and; k &le; i &and; j &le; t &and; j &lt; i)  &#8866;  reversearr(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -359,7 +339,7 @@ reversearr(a&apos;,a_702,1+i,v_int_22_701) &amp; idexc(a&apos;,a_702,1+i,v_int_2
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,k,t) &amp; k&lt;=i &amp; j&lt;=t &amp; j&lt;i&#8866; idexc(a,a,i,j)
+<ul>(dom(a,k,t) &and; k &le; i &and; j &le; t &and; j &lt; i)  &#8866;  idexc(a,a,i,j)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

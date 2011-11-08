@@ -117,9 +117,7 @@ v_boolean_41_639 = false;<br/>
 {(25,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L32">line 32</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=i &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; <br/>
-i&lt;=j&#8866; &exist;(ahalb_659:&exist;(ahaub_660:dom(a,ahalb_659,ahaub_660) &amp; <br/>
-ahalb_659&lt;=i &amp; i&lt;=ahaub_660))
+<ul>(j &le; ahaub &and; dom(a,ahalb,ahaub) &and; ahalb &le; i &and; unitdec(a,i,j) &and; induce(j - i) &and; i &le; j)  &#8866;   &exist; ahalb_659  &exist; ahaub_660 (dom(a,ahalb_659,ahaub_660) &and; ahalb_659 &le; i &and; i &le; ahaub_660)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -150,9 +148,7 @@ ahalb_659&lt;=i &amp; i&lt;=ahaub_660))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L36">line 36</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_672 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
-dom(a,ahalb_671,ahaub_672) &amp; ahalb_671&lt;=i &amp; i&lt;=ahaub_672 &amp; (a[i])!=0&#8866; &exist;(ahalb_677:&exist;(ahaub_678:dom(a,ahalb_677,ahaub_678) &amp; <br/>
-ahalb_677&lt;=i &amp; i&lt;=ahaub_678))
+<ul>(j &le; ahaub_672 &and; unitdec(a,i,j) &and; induce(j - i) &and; i &le; j &and; dom(a,ahalb_671,ahaub_672) &and; ahalb_671 &le; i &and; i &le; ahaub_672 &and; a[i] &ne; 0)  &#8866;   &exist; ahalb_677  &exist; ahaub_678 (dom(a,ahalb_677,ahaub_678) &and; ahalb_677 &le; i &and; i &le; ahaub_678)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -185,9 +181,7 @@ ahalb_677&lt;=i &amp; i&lt;=ahaub_678))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L37">line 37</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=ahaub_688 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; (a[i])!=0 &amp; <br/>
-dom(a,ahalb_687,ahaub_688) &amp; ahalb_687&lt;=i &amp; i&lt;=ahaub_688 &amp; 0&lt;(a[i])&#8866; &exist;(ahalb_693:&exist;(ahaub_694:dom(a,ahalb_693,ahaub_694) &amp; <br/>
-ahalb_693&lt;=i &amp; i&lt;=ahaub_694))
+<ul>(j &le; ahaub_688 &and; unitdec(a,i,j) &and; induce(j - i) &and; i &le; j &and; a[i] &ne; 0 &and; dom(a,ahalb_687,ahaub_688) &and; ahalb_687 &le; i &and; i &le; ahaub_688 &and; 0 &lt; a[i])  &#8866;   &exist; ahalb_693  &exist; ahaub_694 (dom(a,ahalb_693,ahaub_694) &and; ahalb_693 &le; i &and; i &le; ahaub_694)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -221,9 +215,7 @@ ahalb_693&lt;=i &amp; i&lt;=ahaub_694))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 78::searchzero$int[]~int~int~int(a,v_int_37_632,j,k) rec at <a href="#L37">line 37</a> holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> i&lt;=ah_702 &amp; al_701&lt;=i &amp; j&lt;=ah_702 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
-(a[i])!=0 &amp; 0&lt;(a[i]) &amp; dom(a,al_701,ah_702) &amp; v_int_37_632&apos;=(a[i])+i&#8866; &exist;(al_711:&exist;(ah_712:dom(a,al_711,ah_712) &amp; al_711&lt;=v_int_37_632&apos; &amp; <br/>
-j&lt;=ah_712 &amp; unitdec(a,v_int_37_632&apos;,j) &amp; induce(j - v_int_37_632&apos;)))
+<ul>(i &le; ah_702 &and; al_701 &le; i &and; j &le; ah_702 &and; unitdec(a,i,j) &and; induce(j - i) &and; i &le; j &and; a[i] &ne; 0 &and; 0 &lt; a[i] &and; dom(a,al_701,ah_702) &and; v_int_37_632' = a[i] + i)  &#8866;   &exist; al_711  &exist; ah_712 (dom(a,al_711,ah_712) &and; al_711 &le; v_int_37_632' &and; j &le; ah_712 &and; unitdec(a,v_int_37_632',j) &and; induce(j - v_int_37_632'))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -258,9 +250,7 @@ j&lt;=ah_712 &amp; unitdec(a,v_int_37_632&apos;,j) &amp; induce(j - v_int_37_632
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unknown</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> i&lt;=ah_702 &amp; al_701&lt;=i &amp; j&lt;=ah_702 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
-(a[i])!=0 &amp; 0&lt;(a[i]) &amp; dom(a,al_701,ah_702) &amp; v_int_37_632&apos;=(a[i])+i&#8866; &exist;(al_713:&exist;(ah_714:dom(a,al_713,ah_714) &amp; al_713&lt;=v_int_37_632&apos; &amp; <br/>
-j&lt;=ah_714 &amp; unitdec(a,v_int_37_632&apos;,j) &amp; induce(j - v_int_37_632&apos;)))
+<ul>(i &le; ah_702 &and; al_701 &le; i &and; j &le; ah_702 &and; unitdec(a,i,j) &and; induce(j - i) &and; i &le; j &and; a[i] &ne; 0 &and; 0 &lt; a[i] &and; dom(a,al_701,ah_702) &and; v_int_37_632' = a[i] + i)  &#8866;   &exist; al_713  &exist; ah_714 (dom(a,al_713,ah_714) &and; al_713 &le; v_int_37_632' &and; j &le; ah_714 &and; unitdec(a,v_int_37_632',j) &and; induce(j - v_int_37_632'))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -297,9 +287,7 @@ j&lt;=ah_714 &amp; unitdec(a,v_int_37_632&apos;,j) &amp; induce(j - v_int_37_632
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 75::searchzero$int[]~int~int~int(a,v_int_39_635,j,k) rec at <a href="#L39">line 39</a> holds<ul><li class="Collapsed pureimplyinvalid">Verification condition
-<ul> i&lt;=ah_738 &amp; al_737&lt;=i &amp; j&lt;=ah_738 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
-(a[i])!=0 &amp; dom(a,al_737,ah_738) &amp; (a[i])&lt;=0 &amp; v_int_39_635&apos;=1+i&#8866; &exist;(al_747:&exist;(ah_748:dom(a,al_747,ah_748) &amp; al_747&lt;=v_int_39_635&apos; &amp; <br/>
-j&lt;=ah_748 &amp; unitdec(a,v_int_39_635&apos;,j) &amp; induce(j - v_int_39_635&apos;)))
+<ul>(i &le; ah_738 &and; al_737 &le; i &and; j &le; ah_738 &and; unitdec(a,i,j) &and; induce(j - i) &and; i &le; j &and; a[i] &ne; 0 &and; dom(a,al_737,ah_738) &and; a[i] &le; 0 &and; v_int_39_635' = 1 + i)  &#8866;   &exist; al_747  &exist; ah_748 (dom(a,al_747,ah_748) &and; al_747 &le; v_int_39_635' &and; j &le; ah_748 &and; unitdec(a,v_int_39_635',j) &and; induce(j - v_int_39_635'))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -334,9 +322,7 @@ j&lt;=ah_748 &amp; unitdec(a,v_int_39_635&apos;,j) &amp; induce(j - v_int_39_635
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unknown</li></ul></ul></li>
 <li class="Collapsed pureimplyinvalid">Verification condition
-<ul> i&lt;=ah_738 &amp; al_737&lt;=i &amp; j&lt;=ah_738 &amp; unitdec(a,i,j) &amp; induce(j - i) &amp; i&lt;=j &amp; <br/>
-(a[i])!=0 &amp; dom(a,al_737,ah_738) &amp; (a[i])&lt;=0 &amp; v_int_39_635&apos;=1+i&#8866; &exist;(al_749:&exist;(ah_750:dom(a,al_749,ah_750) &amp; al_749&lt;=v_int_39_635&apos; &amp; <br/>
-j&lt;=ah_750 &amp; unitdec(a,v_int_39_635&apos;,j) &amp; induce(j - v_int_39_635&apos;)))
+<ul>(i &le; ah_738 &and; al_737 &le; i &and; j &le; ah_738 &and; unitdec(a,i,j) &and; induce(j - i) &and; i &le; j &and; a[i] &ne; 0 &and; dom(a,al_737,ah_738) &and; a[i] &le; 0 &and; v_int_39_635' = 1 + i)  &#8866;   &exist; al_749  &exist; ah_750 (dom(a,al_749,ah_750) &and; al_749 &le; v_int_39_635' &and; j &le; ah_750 &and; unitdec(a,v_int_39_635',j) &and; induce(j - v_int_39_635'))
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>

@@ -104,8 +104,7 @@ array_get_elm_at___1d$int[]~int(a,j)<br/>
 {(33,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Precondition of procedure call 76::sigmaleft$int[]~int~int(a,i,v_int_40_620) rec at <a href="#L40">line 40</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;=k_665 &amp; dom(a,t_664,k_665) &amp; t_664&lt;=i &amp; i&lt;=j &amp; v_int_40_620&apos;+1=j&#8866; &exist;(t_672:&exist;(k_673:dom(a,t_672,k_673) &amp; t_672&lt;=i &amp; <br/>
-v_int_40_620&apos;&lt;=k_673))
+<ul>(j &le; k_665 &and; dom(a,t_664,k_665) &and; t_664 &le; i &and; i &le; j &and; v_int_40_620' + 1 = j)  &#8866;   &exist; t_672  &exist; k_673 (dom(a,t_672,k_673) &and; t_672 &le; i &and; v_int_40_620' &le; k_673)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -133,9 +132,7 @@ v_int_40_620&apos;&lt;=k_673))
 </ul></li>
 <li class="Collapsed pre">
 Memory safety of array access at line <a href="#L40">line 40</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_40_680&lt;=ahaub &amp; ahalb&lt;=i &amp; j&lt;=ahaub &amp; i&lt;=j &amp; v_int_40_680+1=j &amp; <br/>
-dom(a,ahalb,ahaub) &amp; sumarray(a,i,v_int_40_680,v_int_40_622&apos;)&#8866; &exist;(ahalb_681:&exist;(ahaub_682:dom(a,ahalb_681,ahaub_682) &amp; <br/>
-ahalb_681&lt;=j &amp; j&lt;=ahaub_682))
+<ul>(v_int_40_680 &le; ahaub &and; ahalb &le; i &and; j &le; ahaub &and; i &le; j &and; v_int_40_680 + 1 = j &and; dom(a,ahalb,ahaub) &and; sumarray(a,i,v_int_40_680,v_int_40_622'))  &#8866;   &exist; ahalb_681  &exist; ahaub_682 (dom(a,ahalb_681,ahaub_682) &and; ahalb_681 &le; j &and; j &le; ahaub_682)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -170,7 +167,7 @@ ahalb_681&lt;=j &amp; j&lt;=ahaub_682))
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,t,k) &amp; t&lt;=i &amp; j&lt;=k &amp; j&lt;i&#8866; sumarray(a,i,j,0)
+<ul>(dom(a,t,k) &and; t &le; i &and; j &le; k &and; j &lt; i)  &#8866;  sumarray(a,i,j,0)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -193,9 +190,7 @@ Procedure post-condition holds
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> v_int_40_680&lt;=ahaub &amp; i&lt;=j &amp; v_int_40_680+1=j &amp; ahalb&lt;=i &amp; <br/>
-sumarray(a,i,v_int_40_680,v_int_40_690) &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=j &amp; <br/>
-j&lt;=ahaub &amp; v_int_40_623&apos;=(a[j])+v_int_40_690&#8866; sumarray(a,i,j,v_int_40_623&apos;)
+<ul>(v_int_40_680 &le; ahaub &and; i &le; j &and; v_int_40_680 + 1 = j &and; ahalb &le; i &and; sumarray(a,i,v_int_40_680,v_int_40_690) &and; dom(a,ahalb,ahaub) &and; ahalb &le; j &and; j &le; ahaub &and; v_int_40_623' = a[j] + v_int_40_690)  &#8866;  sumarray(a,i,j,v_int_40_623')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -275,8 +270,7 @@ v_int_30_636 = 1;<br/>
 {(17,0),(0,-1)}<br/>
 </ul></li><li class="Collapsed pre">
 Memory safety of array access at line <a href="#L30">line 30</a><ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahalb,ahaub) &amp; ahalb&lt;=ahaub&#8866; &exist;(ahalb_701:&exist;(ahaub_702:dom(a,ahalb_701,ahaub_702) &amp; <br/>
-ahalb_701&lt;=ahalb &amp; ahalb&lt;=ahaub_702))
+<ul>(dom(a,ahalb,ahaub) &and; ahalb &le; ahaub)  &#8866;   &exist; ahalb_701  &exist; ahaub_702 (dom(a,ahalb_701,ahaub_702) &and; ahalb_701 &le; ahalb &and; ahalb &le; ahaub_702)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -298,8 +292,7 @@ ahalb_701&lt;=ahalb &amp; ahalb&lt;=ahaub_702))
 </ul></li>
 <li class="Collapsed pre">
 Precondition of procedure call 83::sigmaright$int[]~int~int(a,v_int_30_637,j) rec at <a href="#L30">line 30</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> ahalb&lt;=ahalb &amp; dom(a,ahalb,ahaub) &amp; ahalb&lt;=ahaub &amp; v_int_30_639&apos;=a[ahalb] &amp; <br/>
-v_int_30_637&apos;=1+ahalb &amp; v_int_30_637&apos;&lt;=ahaub&#8866; dom(a,v_int_30_637&apos;,ahaub)
+<ul>(ahalb &le; ahalb &and; dom(a,ahalb,ahaub) &and; ahalb &le; ahaub &and; v_int_30_639' = a[ahalb] &and; v_int_30_637' = 1 + ahalb &and; v_int_30_637' &le; ahaub)  &#8866;  dom(a,v_int_30_637',ahaub)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -328,9 +321,7 @@ v_int_30_637&apos;=1+ahalb &amp; v_int_30_637&apos;&lt;=ahaub&#8866; dom(a,v_int
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahalb,ahaub) &amp; ahalb&lt;=ahalb &amp; ahalb&lt;=ahaub &amp; sumarray(a,1+<br/>
-ahalb,ahaub,v_int_30_726) &amp; (1+ahalb)&lt;=ahaub &amp; v_int_30_640&apos;=v_int_30_726+<br/>
-(a[ahalb])&#8866; sumarray(a,ahalb,ahaub,v_int_30_640&apos;)
+<ul>(dom(a,ahalb,ahaub) &and; ahalb &le; ahalb &and; ahalb &le; ahaub &and; sumarray(a,1 + ahalb,ahaub,v_int_30_726) &and; 1 + ahalb &le; ahaub &and; v_int_30_640' = v_int_30_726 + a[ahalb])  &#8866;  sumarray(a,ahalb,ahaub,v_int_30_640')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -357,9 +348,7 @@ ahalb,ahaub,v_int_30_726) &amp; (1+ahalb)&lt;=ahaub &amp; v_int_30_640&apos;=v_i
 (check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
 <ul>unsat</li></ul></ul></li>
 <li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahalb,ahaub) &amp; ahalb&lt;=ahalb &amp; ahalb&lt;=ahaub &amp; sumarray(a,1+<br/>
-ahalb,ahaub,v_int_30_727) &amp; ahaub&lt;(1+ahalb) &amp; v_int_30_640&apos;=v_int_30_727+<br/>
-(a[ahalb])&#8866; sumarray(a,ahalb,ahaub,v_int_30_640&apos;)
+<ul>(dom(a,ahalb,ahaub) &and; ahalb &le; ahalb &and; ahalb &le; ahaub &and; sumarray(a,1 + ahalb,ahaub,v_int_30_727) &and; ahaub &lt; 1 + ahalb &and; v_int_30_640' = v_int_30_727 + a[ahalb])  &#8866;  sumarray(a,ahalb,ahaub,v_int_30_640')
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -393,7 +382,7 @@ Precondition of procedure call 83::sigmaright$int[]~int~int(a,v_int_30_637,j) re
 <li class="Collapsed post">
 Procedure post-condition holds
 <ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> j&lt;i&#8866; sumarray(a,i,j,0)
+<ul>j &lt; i  &#8866;  sumarray(a,i,j,0)
 <li class="Collapsed proverinput">Input to prover Z3
 <ul>(set-logic AUFNIA)<br/>
 ;Variables declarations<br/>
@@ -414,113 +403,7 @@ Procedure post-condition holds
 </ul></li>
 </ul></li>
 <li class="Collapsed term">Termination of all procedures
-<ul><li class="Collapsed pureimplyvalid">Verification condition
-<ul> i_sigmaright&lt;=j_sigmaright&#8866; i_sigmaright&lt;=j_sigmaright
-<li class="Collapsed proverinput">Input to prover Z3
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun i_sigmaright () Int)<br/>
-(declare-fun j_sigmaright () Int)<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (&lt;= i_sigmaright j_sigmaright))<br/>
-;Negation of Consequence<br/>
-(assert (not (&lt;= i_sigmaright j_sigmaright)))<br/>
-(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
-<ul>unsat</li></ul></ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> j_sigmaright&lt;i_sigmaright&#8866; i_sigmaright&lt;=j_sigmaright
-<li class="Collapsed proverinput">Input to prover Z3
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun i_sigmaright () Int)<br/>
-(declare-fun j_sigmaright () Int)<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (&lt; j_sigmaright i_sigmaright))<br/>
-;Negation of Consequence<br/>
-(assert (not (&lt;= i_sigmaright j_sigmaright)))<br/>
-(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
-<ul>sat</li></ul></ul></li>
-<li class="Collapsed pureimplyinvalid">Verification condition
-<ul> i_sigmaright&lt;=j_sigmaright&#8866; j_sigmaright&lt;i_sigmaright
-<li class="Collapsed proverinput">Input to prover Z3
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun j_sigmaright () Int)<br/>
-(declare-fun i_sigmaright () Int)<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (&lt;= i_sigmaright j_sigmaright))<br/>
-;Negation of Consequence<br/>
-(assert (not (&lt; j_sigmaright i_sigmaright)))<br/>
-(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
-<ul>sat</li></ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
-<ul> j_sigmaright&lt;i_sigmaright&#8866; j_sigmaright&lt;i_sigmaright
-<li class="Collapsed proverinput">Input to prover Z3
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun j_sigmaright () Int)<br/>
-(declare-fun i_sigmaright () Int)<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (&lt; j_sigmaright i_sigmaright))<br/>
-;Negation of Consequence<br/>
-(assert (not (&lt; j_sigmaright i_sigmaright)))<br/>
-(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
-<ul>unsat</li></ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahalb,ahaub) &amp; ahalb&lt;=ahalb &amp; ahalb&lt;=ahaub &amp; v_int_30_639&apos;=a[ahalb] &amp; <br/>
-v_int_30_637&apos;=1+ahalb &amp; v_int_30_637&apos;&lt;=ahaub&#8866; (ahaub+ahalb)&lt;(v_int_30_637&apos;+ahaub)
-<li class="Collapsed proverinput">Input to prover Z3
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun v_int_30_639_primed () Int)<br/>
-(declare-fun a () (Array Int Int))<br/>
-(declare-fun ahalb () Int)<br/>
-(declare-fun v_int_30_637_primed () Int)<br/>
-(declare-fun ahaub () Int)<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (&lt;= ahalb ahalb))<br/>
-(assert (&lt;= ahalb ahaub))<br/>
-(assert (= v_int_30_639_primed (select a ahalb)))<br/>
-(assert (= v_int_30_637_primed (+ 1 ahalb)))<br/>
-(assert (&lt;= v_int_30_637_primed ahaub))<br/>
-;Negation of Consequence<br/>
-(assert (not (&lt; (+ ahaub ahalb) (+ v_int_30_637_primed ahaub))))<br/>
-(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
-<ul>unsat</li></ul></ul></li>
-<li class="Collapsed pureimplyvalid">Verification condition
-<ul> dom(a,ahalb,ahaub) &amp; ahalb&lt;=ahalb &amp; ahalb&lt;=ahaub &amp; v_int_30_639&apos;=a[ahalb] &amp; <br/>
-v_int_30_637&apos;=1+ahalb &amp; v_int_30_637&apos;&lt;=ahaub&#8866; ahalb&lt;=ahaub
-<li class="Collapsed proverinput">Input to prover Z3
-<ul>(set-logic AUFNIA)<br/>
-;Variables declarations<br/>
-(declare-fun v_int_30_639_primed () Int)<br/>
-(declare-fun a () (Array Int Int))<br/>
-(declare-fun v_int_30_637_primed () Int)<br/>
-(declare-fun ahalb () Int)<br/>
-(declare-fun ahaub () Int)<br/>
-;Relations declarations<br/>
-;Axioms assertions<br/>
-;Antecedent<br/>
-(assert (&lt;= ahalb ahalb))<br/>
-(assert (&lt;= ahalb ahaub))<br/>
-(assert (= v_int_30_639_primed (select a ahalb)))<br/>
-(assert (= v_int_30_637_primed (+ 1 ahalb)))<br/>
-(assert (&lt;= v_int_30_637_primed ahaub))<br/>
-;Negation of Consequence<br/>
-(assert (not (&lt;= ahalb ahaub)))<br/>
-(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
-<ul>unsat</li></ul></ul></li>
-</ul></li>
+<ul></ul></li>
 </ul>
 <script>
 	SetupTreeView("ProofTree");
