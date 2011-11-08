@@ -5,7 +5,7 @@ pred lseg<p> == self = p
          or self::node<next = r> * r::lseg<p> 
          inv true.
 
-lemma self::lseg<p> <- self::lseg<p>*p::node<a,null>.
+//lemma self::lseg<p> <- self::lseg<p>*p::node<a,null>.
 
 // checkentail self::lseg<p>*p::node<a,null> |- self::lseg<p>.
 
@@ -15,10 +15,15 @@ checkentail p::node<a,null> & self = p
 // non-empty residues.
 print residue.
 
+
 lemma self::lseg<p> <- self::lseg<r>*r::lseg<p>.
+
+/*print residue.
 
 checkentail r::lseg<p> & self = r 
     or self::node<next = r2> * r2::lseg<r> * r::lseg<p> |- self::lseg<p>.
 
 // empty residues.
 print residue.
+
+*/

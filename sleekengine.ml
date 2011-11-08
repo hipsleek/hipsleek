@@ -384,10 +384,15 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
      Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
+  (* andreeac - for debugging - to delet: *)
+  let length_ctx ctx = match ctx with
+    | CF.FailCtx _ -> 0
+    | CF.SuccCtx ctx0 -> List.length ctx0 in
+  (* let _ = print_endline ( "\n Sleekengine.ml, run_entail_check 1:" ^ (string_of_int (length_ctx rs1)) ^" \n\n\t ############reidues#######" ^ (Cprinter.string_of_list_context rs1) ^ "\n ############END#######") in  *)
+  (* to delete *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-  (*let _ = print_endline ( (Cprinter.string_of_list_context rs)) in*)
   residues := Some rs;
-  (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
+  (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)
   flush stdout;
   let res =
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
@@ -475,7 +480,7 @@ let check_coercion coer lhs rhs =
   Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
 
 (* below expects struc_formula for rhs *)
-let check_coercion_struc coer lhs (rhs:CF.struc_formula) =
+let check_coercion_struc coer lhs rhs =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
