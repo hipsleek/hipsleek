@@ -2676,7 +2676,7 @@ and heap_entail_conjunct_lhs_struc_x
   (*     end in *)
 
   let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
-	Gen.Debug.ho_2 "helper_inner"
+	Gen.Debug.no_2 "helper_inner"
 	  Cprinter.string_of_context
 	  Cprinter.string_of_ext_formula
 	  (fun (lc, _) -> Cprinter.string_of_list_context lc)
@@ -2857,7 +2857,7 @@ and heap_entail_variance
       (e : ext_variance_formula) =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 e = pr_list (pr_pair Cprinter.string_of_formula_exp (pr_option Cprinter.string_of_formula_exp)) e.formula_var_measures in
-  Gen.Debug.ho_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
+  Gen.Debug.no_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
 
 and heap_entail_variance_x
       (prog : prog_decl) 

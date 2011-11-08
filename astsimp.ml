@@ -66,7 +66,9 @@ let view_rec : (ident list) ref = ref []
 
 (* if no processed, conservatively assume a view is recursive *)
 let is_view_recursive (n:ident) = 
-  if (!view_scc)==[] then (report_warning no_pos "view_scc is empty : not processed yet?";true)
+  if (!view_scc)==[] then (
+      (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
+      true)
   else List.mem n !view_rec 
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
