@@ -608,7 +608,7 @@ let rec while_labelling (e:I.exp):I.exp =
 let rec label_breaks lb e :I.exp = match e with
   | I.Label (l,e)-> I.Label(l, label_breaks lb e)
   | I.Assert _ -> e
-	| I.ArrayAt b -> I.ArrayAt { b with I.exp_arrayat_index = (label_breaks lb b.I.exp_arrayat_index); } (* An Hoa *)
+	| I.ArrayAt b -> I.ArrayAt { b with I.exp_arrayat_index = List.map (label_breaks lb) b.I.exp_arrayat_index; } (* An Hoa *)
   | I.Assign b -> I.Assign {b with I.exp_assign_lhs = (label_breaks lb b.I.exp_assign_lhs);
 								   I.exp_assign_rhs = (label_breaks lb  b.I.exp_assign_rhs); }  
   | I.Binary b -> I.Binary {b with I.exp_binary_oper1 = (label_breaks lb  b.I.exp_binary_oper1);
@@ -676,7 +676,6 @@ and need_break_continue lb ne non_generated_label :bool =
 		| I.Label (_,e) -> need_break_continue lb e false
 		| _ -> false 
 	else match ne with
-		  | I.ArrayAt b -> (need_break_continue lb b.I.exp_arrayat_index true) (* An Hoa *)
 		  | I.Assert _ -> false
 		  | I.Assign b -> (need_break_continue lb b.I.exp_assign_lhs true)||(need_break_continue lb  b.I.exp_assign_rhs true)
 		  | I.Binary b -> (need_break_continue lb  b.I.exp_binary_oper1 true)||(need_break_continue lb  b.I.exp_binary_oper2 true)
@@ -716,6 +715,7 @@ and need_break_continue lb ne non_generated_label :bool =
 		  | I.Member b -> (need_break_continue lb  b.I.exp_member_base true)
 			(* An Hoa *)
 			| I.ArrayAlloc b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) false b.I.exp_aalloc_dimensions 
+			| I.ArrayAt b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_arrayat_index
 		  | I.New b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_new_arguments
 		  | I.Null _ -> false
 		  | I.Raise b -> (match b.I.exp_raise_val with | None -> false | Some b ->(need_break_continue lb b true))
@@ -740,7 +740,6 @@ and need_break_continue lb ne non_generated_label :bool =
 			(need_break_continue lb b.I.exp_while_body true)||(need_break_continue lb  b.I.exp_while_condition true)
 						end in
  match e with
-	| I.ArrayAt b -> I.ArrayAt {b with I.exp_arrayat_index = (while_labelling b.I.exp_arrayat_index); } (* An Hoa *)  
   | I.Assert _ -> e
   | I.Assign b -> I.Assign {b with I.exp_assign_lhs = (while_labelling b.I.exp_assign_lhs);
 								   I.exp_assign_rhs = (while_labelling b.I.exp_assign_rhs); }  
@@ -817,6 +816,7 @@ and need_break_continue lb ne non_generated_label :bool =
   | I.Member b -> I.Member {b with I.exp_member_base = (while_labelling b.I.exp_member_base)}
 	(* An Hoa *)
 	| I.ArrayAlloc b -> I.ArrayAlloc {b with I.exp_aalloc_dimensions = List.map while_labelling b.I.exp_aalloc_dimensions}
+	| I.ArrayAt b -> I.ArrayAt {b with I.exp_arrayat_index = (List.map while_labelling b.I.exp_arrayat_index); } (* An Hoa *) 
   | I.New b -> I.New {b with I.exp_new_arguments = List.map while_labelling b.I.exp_new_arguments}
   | I.Null _ -> e
   | I.Raise b -> I.Raise {b with I.exp_raise_val = match b.I.exp_raise_val with | None -> None | Some b -> Some (while_labelling b)}
@@ -1089,8 +1089,8 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   Gen.Debug.no_3 "compute_view_x_formula"
-	Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
-	compute_view_x_formula_x prog vdef n
+  Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
+  compute_view_x_formula_x prog vdef n
 	
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
@@ -1125,7 +1125,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
            (vdef.C.view_x_formula <- (xform, xform_b);
             vdef.C.view_addr_vars <- addr_vars;
             vdef.C.view_baga <- (match ms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-            compute_view_x_formula prog vdef (n - 1))
+            compute_view_x_formula_x prog vdef (n - 1))
          else
            Err.report_error
              {
@@ -1180,6 +1180,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let _ = gather_type_info_pure prog inv stab in
   let _ = List.iter (fun (_,f) -> gather_type_info_pure prog f stab) inv_b in
   let pf = trans_pure_formula inv stab in
+  (* Thai : pf - user given invariant in core form *) 
   let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
   let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
   let pf = Cpure.arith_simplify 1 pf in
@@ -1232,6 +1233,12 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       (* let _ = print_string ("trans_view: " *)
       (*                       ^ "\n ### cf = " ^ (Cprinter.string_of_struc_formula cf) *)
       (*                       ^"\n\n") in *)
+      (* Thai : we can compute better pure inv named new_pf here that 
+         should be stronger than pf *)
+			let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str pf in
+(*			print_endline (Cprinter.string_of_pure_formula pf ^ "a");    *)
+(*      print_endline (Cprinter.string_of_pure_formula new_pf ^ "a");*)
+      let memo_pf = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -1241,11 +1248,11 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_materialized_vars = mvars;
           C.view_data_name = data_name;
           C.view_formula = cf;
-          C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
+          C.view_x_formula = (memo_pf, pf_b);
           C.view_addr_vars = [];
           C.view_baga = [];
           C.view_complex_inv = None;
-          C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
+          C.view_user_inv = (memo_pf, pf_b);
           C.view_un_struc_formula = n_un_str;
                C.view_base_case = None;
                C.view_is_rec = ir;
@@ -2053,14 +2060,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               C.exp_unfold_pos = pos;
           }), C.void_type)
 	          (* An Hoa MARKED *)
-	| I.ArrayAt { I.exp_arrayat_array_name = a; 
+	| I.ArrayAt { I.exp_arrayat_array_base = a; 
 	  I.exp_arrayat_index = index;
 	  I.exp_arrayat_pos = pos } ->
-		  (* Array variable *)
-		  let array_var = I.Var { I.exp_var_name = a; I.exp_var_pos = pos } in
+	  	let r = List.length index in
 		  let new_e = I.CallNRecv {
-			  I.exp_call_nrecv_method = array_access_call; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-			  I.exp_call_nrecv_arguments = [array_var; index];
+			  I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+			  I.exp_call_nrecv_arguments = a :: index;
 			  I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
 			  I.exp_call_nrecv_pos = pos;} in 
 	      helper new_e
@@ -2073,7 +2079,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	            begin match ct with
 	            | CP.Array et -> ((C.ArrayAt {
 	            C.exp_arrayat_type = et;
-	            C.exp_arrayat_array_name = a;
+	            C.exp_arrayat_array_base = a;
 	            C.exp_arrayat_index = ci;
 	            C.exp_arrayat_pos = pos; }),et)
 	            | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
@@ -2210,21 +2216,22 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
 								(* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
 								(* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
-					| I.ArrayAt { I.exp_arrayat_array_name = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
+					| I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
 						  (* Array variable *)
-						  let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in
+						  (* let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in *)
+						  let r = List.length index in
 						  let new_rhs = I.CallNRecv {
-			                  I.exp_call_nrecv_method = array_update_call; (* Update call *)
+			                  I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
 							  (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-			                  I.exp_call_nrecv_arguments = [new_lhs; index; rhs];
+			                  I.exp_call_nrecv_arguments = rhs :: a :: index;
 			                  I.exp_call_nrecv_path_id = pid;
-			                  I.exp_call_nrecv_pos = I.get_exp_pos rhs;} in 
+			                  I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
 						  let new_e = I.Assign {
 							  I.exp_assign_op = I.OpAssign;
-		   					  I.exp_assign_lhs = new_lhs;
+		   					  I.exp_assign_lhs = a; (* new_lhs; *)
 							  I.exp_assign_rhs = new_rhs;
 							  I.exp_assign_path_id = pid;
-							  I.exp_assign_pos = pos_a;} in
+							  I.exp_assign_pos = pos_a; } in
 			              helper new_e
 							  (* let (ce1, te1) = helper lhs in
 	                             let (ce2, te2) = helper rhs in
@@ -2486,7 +2493,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     C.exp_block_body = seq_1;
                     C.exp_block_local_vars = local_vars;
                     C.exp_block_pos = pos; }),ret_ct)))
-          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");})
+          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");})
     | I.Catch { I.exp_catch_var = cv;
 	  I.exp_catch_flow_type = cvt;
 	  I.exp_catch_flow_var = cfv;
@@ -3181,9 +3188,10 @@ and default_value (t :typ) pos : C.exp =
     | List _ ->
           failwith "default_value: list can only be used for constraints"
     | Named c -> C.Null pos
-	| Array (t, _) -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos} 
-		  (* An Hoa : TODO add empty array *)
-		  (* failwith "default_value: array cannot be used here!"*)
+	| Array (t, d) ->
+		C.EmptyArray { C.exp_emparray_type = t; 
+						C.exp_emparray_dim = d; 
+						C.exp_emparray_pos = pos}
 
 and sub_type_x (t1 : typ) (t2 : typ) =
   let it1 = trans_type_back t1 in
@@ -3216,12 +3224,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
 							let _ = undef_data_types := (c, pos) :: !undef_data_types in
 								Named c (* Store this temporarily *)
 					))
-    | Array (et, _) -> Array (trans_type prog et pos, None) (* An Hoa *)
-	      (* Err.report_error
-             {
-             Err.error_loc = pos;
-             Err.error_text = "trans_type: array is not supported yet";
-             } *)
+    | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
 and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
@@ -3430,7 +3433,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 and trans_type_back (te : typ) : typ =
   match te with 
     | Named n -> Named n 
-    | Array (t, _) -> Array (trans_type_back t, None) (* An Hoa *) 
+    | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
     | p -> p 
 
 and trans_args (args : (C.exp * typ * loc) list) :
@@ -3470,9 +3473,6 @@ and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =
     | Named c ->
 	      (try let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c in "int"
 	      with | Not_found -> c)
-    | Array (t,_) ->  (* An Hoa *) 
-		  (get_type_name_for_mingling prog t ^ "[]")
-	          (* failwith "get_type_name_for_mingling: array is not supported yet" *)
     |t -> string_of_typ t
 
 and mingle_name_enum prog (m : ident) (targs : typ list) =
@@ -3484,8 +3484,7 @@ and set_mingled_name (prog : I.prog_decl) =
   let rec helper1 (pdecls : I.proc_decl list) =
     match pdecls with
       | pdef :: rest ->
-            let ptypes = List.map (fun p -> p.I.param_type) pdef.I.proc_args
-            in
+            let ptypes = List.map (fun p -> p.I.param_type) pdef.I.proc_args in
             (pdef.I.proc_mingled_name <-
                 mingle_name_enum prog pdef.I.proc_name ptypes;
             helper1 rest)
@@ -3659,7 +3658,7 @@ and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : iden
 and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
-	(* let _ = print_endline "trans_I2C_struc_formula_x" in *)
+    (* let _ = print_endline "trans_I2C_struc_formula_x" in *)
     (* let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in *)
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
       | Iformula.EAssume (b,y)->	(*add res, self*)
@@ -4091,9 +4090,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.ListPerm (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.ListPerm (pe1, pe2, pos)
-    | IP.RelForm (r, args, pos) ->
-          let cpargs = trans_pure_exp_list args stab in
-          CP.RelForm (r, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
+    | IP.RelForm (r, args, pos) ->    
+    	(* Match types of arguments with relation signature *)
+		let cpargs = trans_pure_exp_list args stab in
+			CP.RelForm (r, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
   in
   match sl with
 	| None -> (npf, None)
@@ -4125,11 +4125,10 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
     | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp e stab, pos)
     | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e stab, pos)
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
-    | IP.ArrayAt ((a, p), ind, pos) -> 
-          (* An Hoa : translate IP.ArrayAt to CP.ArrayAt *)
-          let cpind = trans_pure_exp ind stab in
-          (* Currently, only allow single dimensional array of int => TODO Use the correct type *)
-          CP.ArrayAt (CP.SpecVar ((Array (C.int_type, None)), a, p), cpind, pos)
+    | IP.ArrayAt ((a, p), ind, pos) ->
+		let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
+		let dim = List.length ind in (* currently only support int type array *)
+			CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -4137,12 +4136,7 @@ and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
     | e :: rest -> (trans_pure_exp e stab) :: (trans_pure_exp_list rest stab)
 
 
-and dim_unify d1 d2 =
-  match d1,d2 with
-    | _, None -> Some None
-    | None, _ -> Some None
-    | Some l1, Some l2 -> if (l1==l2) then Some (Some l1)
-      else None
+and dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) stab pos : typ  =
   let pr = string_of_typ in
@@ -4477,16 +4471,17 @@ and gather_type_info_exp_x a0 stab et =
           let el_t = fresh_tvar stab in
           let t = List.fold_left (fun e a -> gather_type_info_exp_x a stab e) el_t es in
           BagT t
-    | IP.ArrayAt ((a,p),i,pos) -> (* t[] -> int -> t *)
-          (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array*)
-		  (* and hence, accessing the element at position i, we get the value of expected_type*)
-		  (* Furthermore, the expression of the index must be of type integer.*)
-          let new_et = Array (et,None) in
+    | IP.ArrayAt ((a,p),idx,pos) -> (* t[] -> int -> t *)
+          (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array *)
+		  (* and hence, accessing the element at position i, we get the value of expected_type *)
+		  (* Furthermore, the expression of the index must be of type integer. *)
+		  let dim = List.length idx in
+          let new_et = Array (et, dim) in
           let lt = gather_type_info_var a stab new_et pos in
-          let _ = gather_type_info_exp_x i stab Int in
+          let _ = List.map (fun i -> gather_type_info_exp_x i stab Int) idx in
           (match lt with
             | Array (r,_) -> r
-            | _ ->  failwith ("gather_type_info_exp: expecting Array type but obtained "^(string_of_typ lt)))
+            | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
 		      (* let a_exp_type = match et with *)
 		      (*   | UNK -> UNK *)
 		      (*   | t -> Array (t, None) *)
@@ -4890,16 +4885,16 @@ and collect_type_info_arith a0 stab expected_type =
           failwith "collect_type_info_arith: encountered bag constraint 1"
     | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
           failwith "collect_type_info_arith: encountered list constraint"
-    | IP.ArrayAt ((a,p),i,pos) -> 
+    | IP.ArrayAt ((a,p),idx,pos) -> 
           (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array*)
 		  (* and hence, accessing the element at position i, we get the value of expected_type*)
 		  (* Furthermore, the expression of the index must be of type integer.*)
 		  let a_exp_type = match expected_type with
 			| UNK -> UNK
-			| t -> Array (t, None)
+			| t -> Array (t, List.length idx)
 		  in
 		  collect_type_info_var a stab a_exp_type pos;
-		  collect_type_info_arith i stab (C.int_type)
+		  let _ = List.map (fun i -> collect_type_info_arith i stab (C.int_type)) idx in ()
 
 and collect_type_info_bag_content a0 stab =
   Gen.Debug.no_eff_2 "collect_type_info_bag_content" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
@@ -5893,12 +5888,10 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                                                                      let _ = print_string (" before ren assert: "^(Iprinter.string_of_exp f)^"\n") in 
                                                                      let _ = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in 
                                                                      r*)
-		  (* An Hoa MARKED *)
 	| Iast.ArrayAt b->
-          Iast.ArrayAt	{  Iast.exp_arrayat_array_name = subid ren b.Iast.exp_arrayat_array_name; (* substitute the new name for array name if it is in ren *)
-          Iast.exp_arrayat_index = helper ren b.Iast.exp_arrayat_index;
+          Iast.ArrayAt	{  Iast.exp_arrayat_array_base = helper ren b.Iast.exp_arrayat_array_base; (* substitute the new name for array name if it is in ren *)
+          Iast.exp_arrayat_index = List.map (helper ren) b.Iast.exp_arrayat_index;
           Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos}
-		      (* An Hoa END *)
     | Iast.Assign b->
           Iast.Assign	{  Iast.exp_assign_op = b.Iast.exp_assign_op;
           Iast.exp_assign_lhs = helper ren b.Iast.exp_assign_lhs;
@@ -5999,12 +5992,6 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
   | Iast.Assert _ -> (f,[])
-		(* An Hoa MARKED *)
-  | Iast.ArrayAt b -> 
-        (Iast.ArrayAt { Iast.exp_arrayat_array_name = b.Iast.exp_arrayat_array_name;
-        Iast.exp_arrayat_index = fst(case_rename_var_decls b.Iast.exp_arrayat_index);
-        Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos},[])
-			(* An Hoa END *)
   | Iast.Assign b -> 
         (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
         Iast.exp_assign_lhs = fst(case_rename_var_decls b.Iast.exp_assign_lhs);
@@ -6069,10 +6056,14 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
   | Iast.Label (pid,b)-> (Iast.Label (pid, fst (case_rename_var_decls b)),[])
   | Iast.Member b ->
         (Iast.Member {b with Iast.exp_member_base = fst (case_rename_var_decls b.Iast.exp_member_base)},[]) 
-  (* An Hoa *)
 	| Iast.ArrayAlloc b->
         let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_aalloc_dimensions in
         (Iast.ArrayAlloc  {b with Iast.exp_aalloc_dimensions =nl},[])
+	| Iast.ArrayAt b -> 
+		let new_index = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_arrayat_index in
+        (Iast.ArrayAt { Iast.exp_arrayat_array_base = b.Iast.exp_arrayat_array_base;
+        Iast.exp_arrayat_index = new_index;
+        Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos},[])
 	| Iast.New b->
         let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_new_arguments in
         (Iast.New  {b with Iast.exp_new_arguments =nl},[])
@@ -6157,13 +6148,6 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               Iast.exp_assert_pos = b.Iast.exp_assert_pos;
               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
               (rez_assert, h, p)
-			      (* An Hoa MARKED *)
-		| Iast.ArrayAt b-> 
-              let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_arrayat_index in
-              (Iast.ArrayAt { Iast.exp_arrayat_array_name = b.Iast.exp_arrayat_array_name;
-              Iast.exp_arrayat_index = l1;
-              Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos},h,p)
-                  (* An Hoa END *)
 		| Iast.Assign b-> 
               let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
               let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
@@ -6256,7 +6240,12 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
         | Iast.ArrayAlloc b-> (* An Hoa *)
               let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_aalloc_dimensions in
               (Iast.ArrayAlloc  {b with Iast.exp_aalloc_dimensions =nl},h,p)
-				| Iast.New b->
+		| Iast.ArrayAt b-> 
+			let new_index = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_arrayat_index in
+              (Iast.ArrayAt { Iast.exp_arrayat_array_base = b.Iast.exp_arrayat_array_base;
+              Iast.exp_arrayat_index = new_index;
+              Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos},h,p)
+		| Iast.New b->
               let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_new_arguments in
               (Iast.New  {b with Iast.exp_new_arguments =nl},h,p)
         | Iast.Return b -> 

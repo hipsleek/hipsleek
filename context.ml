@@ -477,11 +477,11 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     else left_act@right_act
                   end
                   else  [] in
-                  let l4 = (* [] *)
+                  let l4 = 
                     (* TODO WN : what is original?? *)
                     if get_view_original rhs_node then 
-                      [(1,M_base_case_fold c)] 
-                      else []in
+                      [(2,M_base_case_fold c)] 
+                      else [] in
                   let src = (-1,norm_search_action (l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> (1,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)

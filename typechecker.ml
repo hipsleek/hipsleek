@@ -23,7 +23,7 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+	check_specs_a prog proc ctx spec_list e0
   (*Gen.Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
@@ -48,12 +48,12 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		      | _ -> None
 		    in
 		    let new_c1 = CP.transform_formula (true,true,f_formula,f_b_formula,f_exp) c1 in
-		    (*let _ = print_string ("c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in
-		      let _ = print_string ("new c1: " ^ (Cprinter.string_of_pure_formula new_c1) ^ "\n") in*)
+		let _ = print_string ("c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in
+		let _ = print_string ("new c1: " ^ (Cprinter.string_of_pure_formula new_c1) ^ "\n") in
 		    
 		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in  
 			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
-			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+			let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
 			let r = check_specs_a prog proc nctx c2 e0 in
 			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 			r) b.Cformula.formula_case_branches
@@ -889,10 +889,10 @@ module GSN = Graph.Oper.Neighbourhood(GS)
 module GSC = Graph.Components.Make(GS)
 module GSP = Graph.Path.Check(GS)
 
-  
+(* TODO : This printing of check_prog needs to be tidied *)
 let build_state_trans_graph ls =
-  (*print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");*)
+  print_string ("\ncheck_prog: call graph:\n" ^
+	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.variance_graph) ^ "\n");
 
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
@@ -945,6 +945,7 @@ let scc_numbering g =
   
 
 let variance_numbering ls g =
+  if !Globals.term_auto_number then
   let f = scc_numbering g in
   let nf = fun v -> if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
   let helper ele =
@@ -963,6 +964,7 @@ let variance_numbering ls g =
 			          else Some (nf es.CF.es_var_ctx_rhs)}
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
+  else ls
 		
 let check_prog (prog : prog_decl) =
 	(* An Hoa *)

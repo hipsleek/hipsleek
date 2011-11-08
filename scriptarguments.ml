@@ -36,17 +36,17 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+	  ("--ahwytdi", Arg.Set Smtsolver.try_induction,
 	"Print implication for debugging");
 	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
 	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
 	("--ahwytdi", Arg.Set Smtsolver.try_induction,
 	"Try induction in case of failure implication."); (* An Hoa *)
-    ("--smtimply", Arg.Set Smtsolver.print_implication,
+    ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-    ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
+    ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
     "Print the original output given by the SMT solver."); (* An Hoa *)
-    ("--smtinp", Arg.Set Smtsolver.print_input,
+    ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
     "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
@@ -143,10 +143,13 @@ let common_arguments = [
 	"<host:port>: use external prover via socket");
 	("--prover", Arg.String Tpdispatcher.set_tp, 
 	"<p,q,..> comma-separated list of provers to try in parallel");
-	("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, 
-	"enable sat statistics");
-	("--epi", Arg.Set Globals.profiling, 
+	(* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
+	(* "enable sat statistics"); *)
+	("--ep-stat", Arg.Set Globals.profiling, 
 	"enable profiling statistics");
+    ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
+	("--e-stat", (Arg.Set Globals.profiling; Arg.Set Globals.enable_counters), 
+	"enable all statistics");
 	("--sbc", Arg.Set Globals.enable_syn_base_case, 
 	"use only syntactic base case detection");
 	("--eci", Arg.Set Globals.enable_case_inference,
@@ -194,7 +197,6 @@ let common_arguments = [
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
     ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
-    ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
     ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
@@ -213,10 +215,15 @@ let common_arguments = [
   ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* Termination options *)
+  ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
   (* slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
   ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+
+  (* invariant *)
+  ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ] 
 
 (* arguments/flags used only by hip *)	

@@ -40,10 +40,10 @@ int length (node xs)
 */
  
  requires xs::ll<n>
- variance (1) [-n @ 1]
+ //variance [n@1]
  case {
-  xs=null -> 
-     ensures n=0 & res=0; // fails without n=0!
+  xs=null -> variance (0) ensures n=0 & res=0; // fails without n=0!
+  xs!=null -> variance [n@1] ensures xs::ll<n> & res=n;
   xs!=null -> 
      ensures xs::ll<n> & res=n;
  }
@@ -52,7 +52,7 @@ int length (node xs)
   else {
          node tmp = xs.next;
          int r = 1+length(tmp);
-         dprint;
+         //dprint;
          return r;
   }
 }

@@ -1421,7 +1421,11 @@ and get_formula_pos (f : formula) = match f with
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
-  Gen.Debug.no_3 "subst_avoid_capture" !print_svl !print_svl !print_formula !print_formula
+  Gen.Debug.no_3 "subst_avoid_capture" 
+      (add_str "from vars:" !print_svl) 
+      (add_str "to vars:" !print_svl)
+      !print_formula 
+      !print_formula
       (fun _ _ _ -> subst_avoid_capture_x fr t f) fr t f
 
 and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
@@ -4792,8 +4796,16 @@ let normalize_max_renaming_s f pos b ctx =
   must be cleared.
 *)
 let clear_entailment_history_es (es :entail_state) :context = 
-  Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula =
-      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;es_var_measures = es.es_var_measures; es_var_label = es.es_var_label;es_var_ctx_lhs = es.es_var_ctx_lhs;es_var_ctx_rhs = es.es_var_ctx_rhs} 
+  Ctx {(empty_es (mkTrueFlow ()) no_pos) with
+	es_formula = es.es_formula;
+	es_path_label = es.es_path_label;
+	es_prior_steps = es.es_prior_steps;
+	es_var_measures = es.es_var_measures;
+	es_var_label = es.es_var_label;
+	es_var_ctx_lhs = es.es_var_ctx_lhs(*;
+	es_var_ctx_rhs = es.es_var_ctx_rhs;
+	es_var_subst = es.es_var_subst*)
+  } 
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
   
