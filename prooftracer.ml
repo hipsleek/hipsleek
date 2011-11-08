@@ -607,7 +607,7 @@ let html_output_file = ref ""
 (* Convert a string to HTML: - replace 5 reserved characters <  >  '  ""  &  with entities
                              - replace newline \n with <br> </br>   *)
 let convert_to_html s =
-	let html_map = [("&","&amp;"); ("<","&lt;"); (">","&gt;"); ("'","&apos;"); ("\"", "&quot;");   ("\n","<br/>\n"); ("\t","&nbsp;&nbsp;&nbsp;&nbsp;")] in
+	let html_map = [("&","&amp;"); ("<","&lt;"); (">","&gt;"); ("'","&apos;"); ("\"", "&quot;");   ("\n","<br/>\n");] in
 	let res = List.fold_left (fun x (y, z) -> Str.global_replace (Str.regexp_string y) z x) s html_map in
 		res
 
@@ -654,16 +654,9 @@ let push_post () = html_output :=
 
 let push_term () = html_output := 
 	!html_output ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"
-
-let html_of_pure_formula f =
-	let s = Cprinter.string_of_pure_formula f in
-	let s = convert_to_html s in
-	let s = Str.global_replace (Str.regexp_string "exists") "&exist;" s in
-	let s = Str.global_replace (Str.regexp_string "forall") "&forall;" s in
-		s
 			
 let push_pure_imply ante conseq r = html_output := 
-	!html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>" ^ (html_of_pure_formula ante) ^ "&#8866;" (* |- character in HTML *) ^ (html_of_pure_formula conseq) ^ "\n"
+	!html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>" ^ (Cprinter.html_of_pure_formula ante) ^ "  &#8866;  " (* |- character in HTML *) ^ (Cprinter.html_of_pure_formula conseq) ^ "\n"
 
 (* prover input | output are all leaves of the proof trees, so we push and pop at the same time *)
 
