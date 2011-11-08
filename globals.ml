@@ -269,7 +269,7 @@ let enable_norm_simp = ref false
 
 let n_xpure = ref 1
 
-let check_coercions = ref true
+let check_coercions = ref false
 
 let show_gist = ref false
 
