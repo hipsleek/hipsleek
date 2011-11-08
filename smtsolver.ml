@@ -435,7 +435,7 @@ let command_for prover =
 	match prover with
 	| Z3 -> (match !smtsolver_name with
           | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
-          | "z3-3.2" -> ("z3", [|!smtsolver_name; "-smt2"; "-si"; infile; ("> "^ outfile) |] )
+          | "z3-3.2" -> ("z3-3.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     )
 	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
