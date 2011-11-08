@@ -86,7 +86,7 @@ let reset_prover_original_output () = prover_original_output := "_output_not_set
 	
 let get_prover_original_output () = !prover_original_output;;
 
-let suppress_imply_out = ref false;;
+let suppress_imply_out = ref true;;
 
 Smtsolver.set_generated_prover_input := set_generated_prover_input;;
 Smtsolver.set_prover_original_output := set_prover_original_output;;
@@ -1001,6 +1001,18 @@ let should_output () = !print_proof && not !suppress_imply_out
 let suppress_imply_output () = suppress_imply_out := true
 
 let unsuppress_imply_output () = suppress_imply_out := false
+
+let suppress_imply_output_stack = ref ([] : bool list)
+
+let push_suppress_imply_output_state () = 
+	suppress_imply_output_stack := !suppress_imply_out :: !suppress_imply_output_stack
+
+let restore_suppress_imply_output_state () = match !suppress_imply_output_stack with
+	| [] -> suppress_imply_output ()
+	| h :: t -> begin
+					suppress_imply_out := h;
+					suppress_imply_output_stack := t;
+				end
   
 let tp_imply_no_cache ante conseq imp_no timeout process =	
 	let _ = if should_output () then

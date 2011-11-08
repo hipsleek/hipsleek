@@ -614,7 +614,7 @@ let convert_to_html s =
 let push_proc proc = let unmin_name = Cast.unmingle_name proc.Cast.proc_name in 
 	html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "<ul>" ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>"
 
-let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"]
+let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
 
 let start_with s p = if (String.length s >= String.length p) then
 		String.sub s 0 (String.length p) = p
@@ -676,6 +676,7 @@ let append_html_no_convert s =	html_output := !html_output ^ s
 
 let html_of_hip_source src =
 	let srclines = Str.split (Str.regexp "\n") src in
+	let _,srclines = List.fold_right (fun x (y, z) -> if (not y && x = "") then (false,[]) else (true,x :: z)) srclines (false,[]) in (* remove trailing \n *)
 	let res, _ = List.fold_left (fun (accumulated,current_line_no) next_line -> 
 			let new_accumulated = accumulated ^ 
 					"<tr id=\"L" ^ (string_of_int current_line_no) ^ "\" class=\"" ^ (if (current_line_no mod 2 = 0) then "EvenSourceLine" else "OddSourceLine") ^ "\">" ^

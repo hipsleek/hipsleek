@@ -119,7 +119,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Assert ({ exp_assert_asserted_formula = c1_o;
           exp_assert_assumed_formula = c2;
           exp_assert_path_id = (pidi,s);
-          exp_assert_pos = pos}) -> let _ = if !print_proof then Prooftracer.push_assert_assume e0 in
+          exp_assert_pos = pos}) -> let _ = if !print_proof then 
+          				begin
+          					Prooftracer.push_assert_assume e0;
+							Tpdispatcher.unsuppress_imply_output ();
+          				end in
               begin
 	            let s1 = snd post_start_label in
                 (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
@@ -147,7 +151,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
                           let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
                           List.map CF.remove_dupl_false_fe r in
-                  let _ = if !print_proof then Prooftracer.pop_div () in
+                  let _ = if !print_proof then 
+                  			begin
+                  				Prooftracer.pop_div ();
+								Tpdispatcher.suppress_imply_output ();
+                  			end in
                   (ps@res)
 	          end
         | Assign ({ exp_assign_lhs = v;
@@ -478,7 +486,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
 			let scall_pre_cond_pushed = if !print_proof then
 					begin
-						Prooftracer.push_pre e0
+						Tpdispatcher.unsuppress_imply_output ();
+						Prooftracer.push_pre e0;
 						(* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
 					end else false in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
@@ -486,6 +495,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		    let _ = if !print_proof && scall_pre_cond_pushed then 
 		    		begin
 		    			Prooftracer.pop_div ();
+						Tpdispatcher.suppress_imply_output ();
 			    		(* print_endline "OK.\n" *)
 		    		end in 
             res
@@ -605,6 +615,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	let _ = if !print_proof then
 			begin
 				Prooftracer.push_post ();
+				Tpdispatcher.unsuppress_imply_output ();
 				(* print_endline "VERIFYING POST-CONDITION" *)
 			end in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
@@ -612,6 +623,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
     let _ = if !print_proof then 
     		begin
     			Prooftracer.pop_div ();
+				Tpdispatcher.suppress_imply_output ();
 		    	(* print_endline "DONE!" *)
 		    end in
   if (CF.isSuccessListPartialCtx rs) then 

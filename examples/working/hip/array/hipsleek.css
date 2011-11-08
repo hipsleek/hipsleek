@@ -98,9 +98,9 @@ tr.EvenSourceLine {
 .TreeView li
 {
     /* The padding is for the tree view nodes */
-    padding: 0 0 0 18px;
-    float: left;
-    width: 100%;
+	padding: 0 0 0 20px;
+    float : left;
+    width : 95%;
     list-style: none;
 }
 

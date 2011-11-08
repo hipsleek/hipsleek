@@ -9,10 +9,19 @@ h1 {
 
 .progsource {
 	border-style : double;
+	font-family : Arial;
 }
 
 .progsource td {
 	padding-right : 20px;
+}
+
+tr.OddSourceLine {
+	background: white !important;
+}
+
+tr.EvenSourceLine {
+	background: #F0F0F0 !important;
 }
 
 .proc {
@@ -89,9 +98,9 @@ h1 {
 .TreeView li
 {
     /* The padding is for the tree view nodes */
-    padding: 0 0 0 18px;
-    float: left;
-    width: 100%;
+	padding: 0 0 0 20px;
+    float : left;
+    width : 95%;
     list-style: none;
 }
 
@@ -119,12 +128,4 @@ li.Collapsed
 li.Collapsed ul
 {
     display: none;
-}
-
-tr.OddSourceLine {
-	background: white !important;
-}
-
-tr.EvenSourceLine {
-	background: #F0F0F0 !important;
 }
