@@ -1858,8 +1858,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let h = List.map (fun c-> (c,Unprimed)) lhs_fnames0 in
   let p = List.map (fun c-> (c,Primed)) lhs_fnames0 in
   let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula coer.I.coercion_body) false true [] in
+  (* let _ = print_string ("\ntsimp.ml, trans_one_coercion, cs_body_normwf " ^ (Iprinter.string_of_struc_formula wf)) in *)
   let quant = true in
   let cs_body_norm = trans_I2C_struc_formula prog quant (* fv_names *) lhs_fnames0 wf stab false in
+  (* let _ = print_string ("\ntsimp.ml, trans_one_coercion, cs_body_norm : " ^ (Cprinter.string_of_struc_formula cs_body_norm)) in *)
   (* let c_body_norm = CF.struc_to_formula cs_body_norm in *)
 
 
