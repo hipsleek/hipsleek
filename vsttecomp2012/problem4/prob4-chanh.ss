@@ -12,7 +12,7 @@ treelseg<t,p,d,h> ==
 t::node<d,p> * self::tree<null, null> & h=1
   or self::tree<left,right> * left::treelseg<t,r,d+1,h1> * right::treelseg<r,p,d+1,h2>
   & h = 1+max(h1,h2)
-  inv h>=0;
+  inv h>=0 & self!=null;
 
 lseg<p, n> == self=p & n=0 
   or self::node<v, r> * r::lseg<p, n-1> & v>0
@@ -80,7 +80,7 @@ case {
 		return null;
 	}
 	else {
-		dprint;
+		//dprint;
 		int h = hd(s);
 		if (h < d) {
 			assume false;

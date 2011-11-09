@@ -52,7 +52,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		  let nctx = CF.transform_context (fun es ->
 			CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in
 
-		  let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
+		  (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		  
 		  let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		  let r = check_specs_a prog proc nctx c2 e0 in
