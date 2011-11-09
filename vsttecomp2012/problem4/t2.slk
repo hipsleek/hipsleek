@@ -1,0 +1,25 @@
+//class exception extends __Exc {}.
+
+data node {
+  int val;
+  node next;
+}.
+
+data tree {
+  tree left;
+  tree right;
+}.
+
+pred treelseg<t,p,d,n> ==
+     t::node<d,p> & self=null & n=1
+  or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
+     * right::treelseg<r,p,d+1,n2> & n=n1+n2
+  inv n>=0.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<v, r> * r::lseg<p,n-1> 
+  inv n>=0.
+
+checkentail x::node<d,q> & r=null |- r::treelseg<x,q,d,1> .
+
+print residue.

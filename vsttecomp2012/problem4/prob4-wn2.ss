@@ -61,29 +61,29 @@ void pop(ref node x)
 //coercion "lsegbrk" self::lseg<p,n> & n=a+b & a>0 & b>0 & n>=2 -> self::lseg<q,a> * q::lseg<p,b>;
 
 tree build_rec (int d, ref node s)
- requires s::lseg<null,nn>
+ requires s::lseg<null,n>
  case {
-  nn=0 -> ensures true & flow exception;
-  nn!=0 -> ensures  res::treelseg<s, pp, d, m> 
-                         * pp::lseg<null,nn-m> & s'=pp & 1>2 & flow __norm //'
+  n=0 -> ensures true & flow exception;
+  n!=0 -> ensures  res::treelseg<s, pp, d, m> 
+                         * pp::lseg<null,n-m> & s'=pp & flow __norm //'
                    or true & flow exception ; 
   }
 {
     tree ll,rr;
     exception ve;
     ve = new exception();
-    dprint;
-    assert false & flow __norm ;//
 	if (s == null) raise ve;
 	int h = hd(s);
 	if (h < d) raise ve;
     if (h == d) {
 			pop(s);
+            
 			return null;
 	}
+    assume false;
 	ll = build_rec(d+1, s);
     //dprint;
-    //assert false & flow __norm or  true & flow exception;//
+    //assert false & flow __norm  or true & flow exception;//
     assume false;
 	rr = build_rec(d+1, s);
 	return new tree(ll, rr);

@@ -244,17 +244,21 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
   else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
+  let psv =  Cprinter.string_of_spec_var in
+  let pr0 = pr_list (pr_pair psv psv) in
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 l = pr_list string_of_match_res l in
   let pr3 = Cprinter.string_of_mix_formula in
+  let pr4 = pr_list Cprinter.string_of_spec_var in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.no_4 "choose_context" 
+  Gen.Debug.ho_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
       (add_str "RHS pure" pr3)
+      (add_str "right aliase" pr0)
       pr2 
-      (fun _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p
+      (fun _ _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p es
 
 
 
@@ -318,13 +322,20 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
       
 (*
   spatial context
+ type: Cast.prog_decl ->
+  Cformula.h_formula ->
+  Cformula.CP.spec_var list ->
+  bool -> Cformula.h_formula -> Cformula.h_formula -> match_res list
+  f - left heap/node
+  a - alias of right node
+  rn - right node
+  rr - right rest
 *)
-      
 and spatial_ctx_extract p f a i rn rr = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
   (* let pr = pr_no in *)
-  Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
+  Gen.Debug.ho_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
       (fun _ _ _ _ -> spatial_ctx_extract_x p f a i rn rr) f i a rn
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
@@ -603,7 +614,7 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
      (* Cond_action (r) *)
           (* time for runfast hip --eps --imm - 43s *)
 
-and compute_actions prog es 
+and compute_actions prog es (* list of right aliases *)
       lhs_h (*lhs heap *) 
       lhs_p (*lhs pure*) 
       rhs_p (*rhs pure*)
@@ -619,7 +630,7 @@ and compute_actions prog es
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_5 "compute_actions" pr0 
+  Gen.Debug.ho_5 "compute_actions" pr0 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3) 
       (add_str "RHS cand" pr1)
