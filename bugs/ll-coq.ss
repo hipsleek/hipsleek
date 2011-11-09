@@ -8,11 +8,11 @@ data node {
 
 /* view for a singly linked list */
 ll<"n":n,"l":L1> == self = null & [
-                                   "n": n=0;
-                                   "l":L1 = [||]]
+         "n": n=0;  "l":L1 = [||]]
   or self::node<v, r> * r::ll<n1,L2> & 
    ["n": n=1+n1;
-   "l": L1 = v:::L2 ];
+   "l": L1 = v:::L2 ]
+  inv true & ["n":n>=0] ;
 
 /* append two singly linked lists */
 void append(node x, node y)
@@ -25,7 +25,6 @@ void append(node x, node y)
 	if (x.next == null) {
 		x.next = y;
 	} else {
-		//assume false;
 		append(x.next, y);
 	}
 }
