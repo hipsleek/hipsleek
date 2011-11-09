@@ -146,3 +146,6 @@ bool is_empty(int[] C, int n)
 	}
 	return true;
 }
+
+
+
