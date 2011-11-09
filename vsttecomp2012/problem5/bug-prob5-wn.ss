@@ -1,4 +1,5 @@
 // below is hard to support in current system
+// as it requires graph structure and immutability
 // most likely need array to handle this example
 
 data node {
@@ -23,6 +24,15 @@ Exception occurred: Failure("Presburger.b_apply_one_term: attempting to substitu
 
 /*
 arc<s,d,r> ==
+  self::graph<i,l,n> * l::contains<d,r> & s=i
+  or self::graph<i,l,n> * n::arc<s,d,r> & s!=i
+  or self=null & !r
+  inv true;
+
+
+path<s,d> ==
+  s=d 
+  or self::arc<s,s',true> * self :: path<s',d,> 
   self::graph<i,l,n> * l::contains<d,r> & s=i
   or self::graph<i,l,n> * n::arc<s,d,r> & s!=i
   or self=null & !r
