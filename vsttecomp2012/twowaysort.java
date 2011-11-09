@@ -35,8 +35,6 @@ axiom permutation(A,B,i,j-1) & A[j] = B[j] ==> permutation(A,B,i,j).
 
 axiom permutation(A,B,i+1,j-1) & A[i] = B[j] & A[j] = B[i] ==> permutation(A,B,i,j).
 
-axiom permutation(A,B,i+1,j-1) & A[i] = B[i] & A[j] = B[j] ==> permutation(A,B,i,j).
-
 axiom permutation(A,B,i,j) & permutation(B,C,i,j) ==> permutation(A,C,i,j).
 
 void two_way_sort(ref bool[] a, int n)
@@ -58,13 +56,18 @@ void two_way_sort_helper(ref bool[] a, int i, int j)
 		else if (a[j])
 			two_way_sort_helper(a, i, j - 1);
 		else {
-			bool temp = a[i];
+			bool t = a[i];
 			a[i] = a[j];
-			a[j] = temp;
-			assert permutation(a, a', i, j);
-			assume permutation(a, a', i, j);
+			a[j] = t;
+			
+			bool[] a1 = a;
+			assert permutation(a, a1', i, j);
+			assume permutation(a, a1', i, j);
+			
 			two_way_sort_helper(a, i + 1, j - 1);
-			assert permutation(a, a', i + 1, j - 1);
+			
+			assert permutation(a1', a', i , j);
+			assume permutation(a1', a', i , j);
 		}
 	}
 }
