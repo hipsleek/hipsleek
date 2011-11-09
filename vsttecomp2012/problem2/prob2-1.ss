@@ -10,12 +10,6 @@ allowed<> ==
   or self::anode<2,null,null> // denotes S
   inv self!=null;
 
-allowK<n> ==
-     self::anode<0,f,a> * f::allowK<n1> * a::allowK<n2> & n=1+n1+n2
-  or self::anode<1,null,null> & n=0  // denotes K
-  inv self!=null & n>=0;
-
-
 value<> ==
   self::anode<1,null,null>  // denotes K
   or self::anode<2,null,null>  // denotes S
@@ -24,10 +18,6 @@ value<> ==
   or self::anode<0,f,a> * f::anode<0,f1,a1> * 
       f1::anode<2,null,null> * a1::value<> * a::value<> // S v1 v2
   inv self!=null;
-
-ks<n> == self::anode<1,null,null> & n = 0 // K
-      or self::anode<0,f,a> * f::ks<n-1> * a::anode<1,null,null> 
-inv n >= 0;
 
 coercion self::value<> -> self::allowed<>;
 
@@ -59,20 +49,8 @@ bool isCombS(anode t)
 
 anode reduction (anode t)
 
-
 requires t::allowed<>
 ensures  res::value<>;
-
-requires t::allowK<n>
-variance (1) [n]
-ensures  res::value<> ;
-/*
-requires (exists k: t::ks<n> & n=2*k & k>=0)
-ensures res::anode<1,null,null>;
-
-requires (exists k: t::ks<n> & n=2*k+1 & k>=0)
-ensures res::anode<0,f,a> * f::anode<1,null,null> * a::anode<1,null,null>;
-*/
 
 {
  anode val1, val2, val11, val2c;

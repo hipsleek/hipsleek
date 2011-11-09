@@ -57,8 +57,8 @@ bool isCombS(anode t)
 }
 
 
+// BELOW is PERFORMANCE BUG
 anode reduction (anode t)
-
 
 requires t::allowed<>
 ensures  res::value<>;
@@ -66,13 +66,12 @@ ensures  res::value<>;
 requires t::allowK<n>
 variance (1) [n]
 ensures  res::value<> ;
-/*
+
 requires (exists k: t::ks<n> & n=2*k & k>=0)
 ensures res::anode<1,null,null>;
 
 requires (exists k: t::ks<n> & n=2*k+1 & k>=0)
 ensures res::anode<0,f,a> * f::anode<1,null,null> * a::anode<1,null,null>;
-*/
 
 {
  anode val1, val2, val11, val2c;
