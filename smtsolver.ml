@@ -394,16 +394,22 @@ let rec collect_output chn accumulated_output : string list =
 					| End_of_file -> accumulated_output in
 		output
 
-let sat_type_from_string r =
+let sat_type_from_string r input=
 	if (r = "sat") then Sat
 	else if (r = "unsat") then UnSat
-	else Unknown
-	
-let get_answer chn =
+	else 
+		try
+             let _ = Str.search_forward (Str.regexp "unexpected") r 0 in
+              (print_string "Z3 translation failure!";
+              Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r^"\n input: "^input)})
+            with
+              | Not_found -> Unknown
+                    	
+let get_answer chn input =
 	let output = collect_output chn [] in
 	let solver_sat_result = List.nth output (List.length output - 1) in
 		{ original_output_text = output;
-		sat_result = sat_type_from_string solver_sat_result; }
+		sat_result = sat_type_from_string solver_sat_result input; }
 
 let remove_file filename =
 	try
@@ -449,7 +455,7 @@ let run prover input =
 	let set_process proc = prover_process := proc in
 	let fnc () = 
 		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
-			get_answer !prover_process.inchannel in
+			get_answer !prover_process.inchannel input in
 	let res = try
 			Procutils.PrvComms.maybe_raise_timeout fnc () !timeout 
 		with

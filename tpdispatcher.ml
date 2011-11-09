@@ -676,7 +676,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         end
       else
         begin
-          (Omega.is_sat f sat_no);
+          (Smtsolver(*Omega*).is_sat f sat_no);
         end
   | Mona | MonaH -> Mona.is_sat f sat_no
   | CO -> 
@@ -800,7 +800,7 @@ let simplify (f : CP.formula) : CP.formula =
         | Coq -> (* Coq.simplify f *)
               if (is_list_constraint f) then
                 (Coq.simplify f)
-              else (Omega.simplify f)
+              else ((*Omega*)Smtsolver.simplify f)
         | Mona | MonaH (* -> Mona.simplify f *) ->
             if (is_bag_constraint f) then
                 (Mona.simplify f)
@@ -902,7 +902,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | Coq -> (* Coq.hull f *)
       if (is_list_constraint f) then
 		(Coq.hull f)
-	  else (Omega.hull f)
+	  else ((*Omega*)Smtsolver.hull f)
   | Mona   -> Mona.hull f  
   | MonaH  (* -> Mona.hull f  *)
   | OM ->
@@ -943,7 +943,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | Coq -> (* Coq.pairwisecheck f *)
 	  if (is_list_constraint f) then
 		(Coq.pairwisecheck f)
-	  else (Omega.pairwisecheck f)
+	  else ((*Omega*)Smtsolver.pairwisecheck f)
   | Mona (* -> Mona.pairwisecheck f *)
   | OM ->
 	  if (is_bag_constraint f) then
@@ -1036,7 +1036,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
-		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
+		    (called_prover :="smtsolver " ; Smtsolver.imply ante conseq (*imp_no timeout*))
   | Mona | MonaH -> Mona.imply ante conseq imp_no 
   | CO -> 
       begin
@@ -1625,7 +1625,7 @@ let start_prover () =
   match !tp with
   | Coq -> begin
       Coq.start ();
-	  Omega.start ();
+	 (* Omega.start ();*)
 	 end
   | Redlog | RM -> 
     begin
@@ -1654,7 +1654,7 @@ let stop_prover () =
     | Coq -> (* Coq.stop_prover () *)
           begin
             Coq.stop ();
-	        Omega.stop();
+	        (*Omega.stop();*)
 	      end
     | Redlog | RM -> 
           begin
