@@ -128,6 +128,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
           				begin
           					Prooftracer.push_assert_assume e0;
+							Tpdispatcher.push_suppress_imply_output_state ();
 							Tpdispatcher.unsuppress_imply_output ();
           				end in
               begin
@@ -153,7 +154,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 					let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                   			begin
                   				Prooftracer.pop_div ();
-								Tpdispatcher.suppress_imply_output ();
+								Tpdispatcher.restore_suppress_imply_output_state ();
                   			end in
                   let res = match c2 with
                     | None -> ts
@@ -486,6 +487,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
 			let scall_pre_cond_pushed = if !print_proof then
 					begin
+						Tpdispatcher.push_suppress_imply_output_state ();
 						Tpdispatcher.unsuppress_imply_output ();
 						Prooftracer.push_pre e0;
 						(* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
@@ -495,7 +497,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		    let _ = if !print_proof && scall_pre_cond_pushed then 
 		    		begin
 		    			Prooftracer.pop_div ();
-						Tpdispatcher.suppress_imply_output ();
+						Tpdispatcher.restore_suppress_imply_output_state ();
 			    		(* print_endline "OK.\n" *)
 		    		end in 
             res
@@ -596,6 +598,13 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
   (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)
+  let _ = if !print_proof then
+			begin
+				Prooftracer.push_post ();
+				Tpdispatcher.push_suppress_imply_output_state ();
+				Tpdispatcher.unsuppress_imply_output ();
+				(* print_endline "VERIFYING POST-CONDITION" *)
+			end in
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
   let r = proc.proc_by_name_params in
@@ -612,18 +621,12 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
-	let _ = if !print_proof then
-			begin
-				Prooftracer.push_post ();
-				Tpdispatcher.unsuppress_imply_output ();
-				(* print_endline "VERIFYING POST-CONDITION" *)
-			end in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
-    let _ = if !print_proof then 
+  let _ = if !print_proof then 
     		begin
+	    		Tpdispatcher.restore_suppress_imply_output_state ();
     			Prooftracer.pop_div ();
-				Tpdispatcher.suppress_imply_output ();
 		    	(* print_endline "DONE!" *)
 		    end in
   if (CF.isSuccessListPartialCtx rs) then 
@@ -661,52 +664,37 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
     && not (List.mem unmin_name !Inliner.inlined_procs)
   in
-  if check_flag then begin
-    match proc.proc_body with
+	if check_flag then 
+  	begin
+	match proc.proc_body with
 	  | None -> true (* sanity checks have been done by the translation *)
-	  | Some body -> let _ = if !print_proof then
-						begin
-							Prooftracer.push_proc proc;
-						end in
-	  begin
-	      if !Globals.print_proc then
-	        print_string ("Procedure " ^ proc.proc_name ^ ":\n"
-			^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
-	      print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-	      Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
-	      Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
-	      let ftypes, fnames = List.split proc.proc_args in
-	      (* fsvars are the spec vars corresponding to the parameters *)
-	      let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
-	      (*Debug.devel_pprint ("fsvars : " ^ Cprinter.string_of_spec_var_list fsvars) proc.proc_loc;*)
-	      let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
-	      let init_form = nox in(*
-				                  if !Globals.max_renaming then
-	      (* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
-			   	                  (CF.normalize pre nox (CF.pos_of_formula pre))
-			   	                  else
-	      (* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
-			  	                  (CF.normalize_only_clash_rename pre nox (CF.pos_of_formula pre))
-				                  in*)
-	      let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
-	      let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-		  let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
-	      let _ = if !print_proof then Prooftracer.pop_div () in
-	      let result =
-	        if pp then begin
-		      print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
-		      true
-	        end else begin print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n"); false end in
-	      (*
-		    if List.for_all check_pre_post pp then begin
-		    print_string ("SUCCESS\n");
-		    true
-		    end else false in *)
-	      result
-	    end
-  	end 
-  else
-    true
+	  | Some body ->
+		begin
+			if !print_proof then Prooftracer.push_proc proc;
+			if !Globals.print_proc then 
+				print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
+			print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
+			Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
+			Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
+			let ftypes, fnames = List.split proc.proc_args in
+			(* fsvars are the spec vars corresponding to the parameters *)
+			let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+			let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
+			let init_form = nox in
+			let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
+			let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
+			let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
+		    if !print_proof then Prooftracer.pop_div ();
+			let result = if pp then begin
+							print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
+		      				true
+	        			end else begin
+	        				print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n"); 
+	        				false 
+	        			end in
+	      		result
+		end
+	end else true
 
 (* check entire program *)
 let check_proc_wrapper prog proc =

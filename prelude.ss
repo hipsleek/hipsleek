@@ -189,7 +189,13 @@ relation induce(int value) == true.
 
 relation dom(int[] a, int low, int high).
 
+relation domb(bool[] a, int low, int high).
+
 axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
+
+axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
+
+relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
 
 relation update_array_1d(int[] a, int[] r, int val, int i).
 
@@ -223,6 +229,13 @@ int array_get_elm_at___1d(int[] a, int i)
 				& ahalb <= i 
 				& i <= ahaub
 	ensures res = a[i];
+	
+bool array_get_elm_at___1d(bool[] a, int i) 
+	requires [ahalb,ahaub]
+				domb(a,ahalb,ahaub) 
+				& ahalb <= i 
+				& i <= ahaub
+	ensures res = a[i];
 
 // 2D array access
 int array_get_elm_at___2d(int[,] a, int i, int j) 
@@ -247,6 +260,11 @@ int[] update___1d(int v, int[] a, int i)
 				& i <= ahaub
 	ensures dom(res,ahalb,ahaub) 
 				& update_array_1d(a,res,v,i);
+				
+				
+bool[] update___1d(bool v, bool[] a, int i)
+	requires [ahalb,ahaub] domb(a,ahalb,ahaub) & ahalb <= i & i <= ahaub
+	ensures domb(res,ahalb,ahaub) & update_array_1d_b(a,res,v,i);
 
 int[,] update___2d(int v, int[,] a, int i, int j)
 	requires true
