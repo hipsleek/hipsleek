@@ -252,7 +252,7 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref false
+let allow_imm = ref true
 
 let print_proc = ref false
 

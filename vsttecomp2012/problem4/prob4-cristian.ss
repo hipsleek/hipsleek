@@ -13,7 +13,7 @@ treell<t,p,d> == t::node<d,p> * self::tree<null, null>
   inv true;
 
 ll< n> == self=null & n=0 
-  or self::node<v, r> * r::ll<n-1> & v>0
+  or self::node<v, r> * r::ll<n-1> 
   inv n>=0;
 
 bool is_empty(node x)
@@ -46,7 +46,7 @@ case {
 		case {
 			v<d ->  ensures res=null;
 			v=d ->  ensures res::treell<s,s',d>@I & s'=q & 1>2;
-			v>d ->  ensures res::treell<s, s', d> * s'::ll<n1> & n1<n;
+			v>d ->  ensures res::treell<s, s', d>@I * s'::ll<n1>@I & n1<n;
 		}	
 	}
 {
@@ -62,7 +62,9 @@ case {
 		}
 		else if (h == d) {
 			//assume false;
-			pop(s);			
+			pop(s);		
+            dprint;
+            assert false;
 			return new tree(null, null); 
 		}
 		else {
