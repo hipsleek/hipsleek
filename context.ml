@@ -251,7 +251,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.ho_5 "choose_context" 
+  Gen.Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -335,7 +335,7 @@ and spatial_ctx_extract p f a i rn rr =
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
   (* let pr = pr_no in *)
-  Gen.Debug.ho_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
+  Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
       (fun _ _ _ _ -> spatial_ctx_extract_x p f a i rn rr) f i a rn
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
@@ -630,7 +630,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_5 "compute_actions" pr0 
+  Gen.Debug.no_5 "compute_actions" pr0 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3) 
       (add_str "RHS cand" pr1)
