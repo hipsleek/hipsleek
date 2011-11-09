@@ -75,7 +75,7 @@ case {
 	}
 	ll = build_rec(d+1, s);
     assert s'::lseg<_,m> & m>0;//'
-    assume false;
+    //assume false;
 	rr = build_rec(d+1, s);
 	return new tree(ll, rr);
 }
