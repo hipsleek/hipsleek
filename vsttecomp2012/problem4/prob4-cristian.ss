@@ -42,34 +42,34 @@ void pop(ref node x)
 tree build_rec (int d, ref node s)
 case {	
 	s=null -> ensures res = null;
-	s!=null -> requires s::node<v, q> * q::ll<n>
+	s!=null -> requires s::node<v, q>@I * q::ll<n>@I
 		case {
 			v<d ->  ensures res=null;
-			v=d ->  ensures res::treell<s,s',d> * q::ll<n> & s'=q;
-			v>d ->  ensures res::treell<s', s', d> * s'::ll<n1> & n1<n;
+			v=d ->  ensures res::treell<s,s',d>@I & s'=q & 1>2;
+			v>d ->  ensures res::treell<s, s', d> * s'::ll<n1> & n1<n;
 		}	
 	}
 {
 	if (is_empty(s)) {
-		assume false;
+		//assume false;
 		return null;
 	}
 	else {
 		int h = hd(s);
 		if (h < d) {
-			assume false;
+		//	assume false;
 			return null;
 		}
 		else if (h == d) {
-			assume false;
-			pop(s);
+			//assume false;
+			pop(s);			
 			return new tree(null, null); 
 		}
 		else {
-		//	  assume false;
+			  assume false;
 			tree lll = build_rec(d+1, s);
 			tree rrr = build_rec(d+1, s);
-			dprint;
+			//dprint;
 			assume false;
 			return new tree(lll, rrr);
 		}
