@@ -20,10 +20,14 @@ lseg<p,n> == self=p & n=0
   inv n>=0;
 
 
-
 bool is_empty(node x)
   requires true
   ensures true & (x=null & res | x!=null & !res);
+  requires x::lseg<pp,n>
+  case {
+    x=null -> ensures res;
+    x!=null -> ensures !res;
+  }
   /*
   case {
     x=null -> ensures res;
@@ -35,11 +39,15 @@ bool is_empty(node x)
 }
 
 int hd(node x)
-  requires x::node<i,_>@I 
-  //ensures x::node<i, _> * p::lseg<q, n> & res=i;
-  ensures res=i;
+ case {
+  x=null -> ensures true & flow exception;
+  x!=null ->  
+    requires x::node<i,_>@I 
+    ensures res=i;
+ }
 {
-	return x.val;
+  if (x==null) raise new exception();
+  else return x.val;
 }
 
 void pop(ref node x)
@@ -49,19 +57,16 @@ void pop(ref node x)
 	x = x.next;
 }
 
-coercion "lsegbrk" self::lseg<p,n> & n=a+b & a>0 & b>0 & n>=2 -> self::lseg<q,a> * q::lseg<p,b>;
+//coercion "lsegbrk" self::lseg<p,n> & n=a+b & a>0 & b>0 & n>=2 -> self::lseg<q,a> * q::lseg<p,b>;
 
 tree build_rec (int d, ref node s)
-case {	
-	s=null ->  ensures true & flow exception;
-	s!=null -> 
-	  requires s::lseg<p,n> & n>0
-      case {
-       n=1 -> ensures  res::treelseg<s, s', d, 1> & s'=p & flow __norm  or true & flow exception;
-       n!=1 -> ensures  res::treelseg<s, s', d, n> & s'=p & flow __norm 
+ requires s::lseg<null,nn> 
+ case {
+  nn=0 -> ensures true & flow exception;
+  nn!=0 -> ensures  res::treelseg<s, pp, d, m> 
+                         * pp::lseg<null,nn-m> & s'=pp & flow __norm //'
                    or true & flow exception ; 
-    }
-}
+  }
 {
     tree ll,rr;
     exception ve;
@@ -74,7 +79,8 @@ case {
 			return null;
 	}
 	ll = build_rec(d+1, s);
-    assert s'::lseg<_,m> & m>0;//'
+    dprint;
+    assert false & flow __norm or  true & flow exception;//'
     //assume false;
 	rr = build_rec(d+1, s);
 	return new tree(ll, rr);
