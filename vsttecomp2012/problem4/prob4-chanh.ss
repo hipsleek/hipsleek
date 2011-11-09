@@ -9,13 +9,13 @@ data tree {
 }
 
 treelseg<t,p,d,h> ==
-t::node<d,p> * self::tree<null, null> & h=1
+     t::node<d,p> * self::tree<null, null> & h=1
   or self::tree<left,right> * left::treelseg<t,r,d+1,h1> * right::treelseg<r,p,d+1,h2>
-  & h = 1+max(h1,h2)
-  inv h>=0 & self!=null;
+     & h = 1+max(h1,h2)
+  inv h>=1 & self!=null;
 
 lseg<p, n> == self=p & n=0 
-  or self::node<v, r> * r::lseg<p, n-1> & v>0
+  or self::node<v, r> * r::lseg<p, n-1> //& v>0
   inv n>=0;
 
 bool is_empty_lseg(node x)

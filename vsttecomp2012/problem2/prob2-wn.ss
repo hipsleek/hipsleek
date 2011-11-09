@@ -61,7 +61,8 @@ anode reduction (anode t)
 /*requires t::allowed<>
 ensures  res::value<>;
 requires t::allowK<n>
-ensures  res::value<> ;*/
+variance (1) [n]
+ensures  res::value<> ;
 
 requires t::ks<n>
 ensures (exists k: res::anode<1,null,null>  & n = 2*k)
@@ -69,8 +70,8 @@ ensures (exists k: res::anode<1,null,null>  & n = 2*k)
 
 {
  anode val1, val2, val11, val2c;
- anode tmp1, tmp2, tmp3;      
- if (isApply(t)) {                         
+ anode tmp1, tmp2, tmp3;
+ if (isApply(t)) {
    // apply
    val1 = reduction(t.fn);
    val2 = reduction(t.arg);
