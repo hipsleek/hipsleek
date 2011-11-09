@@ -670,7 +670,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	  | None -> true (* sanity checks have been done by the translation *)
 	  | Some body ->
 		begin
-			if !print_proof then Prooftracer.push_proc proc;
 			if !Globals.print_proc then 
 				print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 			print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
@@ -683,8 +682,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			let init_form = nox in
 			let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
 			let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-			let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
-		    if !print_proof then Prooftracer.pop_div ();
+			let _ = if !print_proof then Prooftracer.push_proc proc in
+			let pp, exc = try (* catch exception to close the section appropriately *)
+				(check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body, None) with | _ as e -> (false, Some e) in
+		    let _ = if !print_proof then Prooftracer.pop_div () in
+		    let _ = match exc with | Some e -> raise e | None -> () in
 			let result = if pp then begin
 							print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
 		      				true

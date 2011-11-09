@@ -48,7 +48,7 @@ int div4(int a, int b)
   requires b != 0 
   ensures true;
 
-int mod(int a, int b) case {
+int mod___(int a, int b) case {
   a >= 0 -> case {
     b >= 1 -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
     b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
