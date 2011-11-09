@@ -2863,7 +2863,10 @@ and heap_entail_variance_x
       (prog : prog_decl) 
       (es : entail_state) 
       (e : ext_variance_formula) =
-  let loc = e.formula_var_pos in
+  (*let loc = e.formula_var_pos in*)
+  let loc = es.es_var_loc in
+
+  let _ = if !print_proof then Prooftracer.push_term_checking loc in
 
   let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e ->
 	let str = Cprinter.string_of_formula_exp e in
@@ -2892,8 +2895,9 @@ and heap_entail_variance_x
 		| [] -> []
 		| h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
 	let binding_measures = binding lhs_measures rhs_measures in
-	let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m1>=lb1 & m2>n2 & m2>=lb2*) 
-	  let term_formula = 
+	
+	let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m1>=lb1 & m2>n2 & m2>=lb2 *) 
+	  let (_, term_formula) = 
 		List.fold_right (fun (l,r) (flag,res) ->
 		    let lower_bound = match (snd r) with
 		      | None -> report_error no_pos ("termination: variance checking: error with lower bound in termination checking \n")
@@ -2906,25 +2910,38 @@ and heap_entail_variance_x
 		    (false, CP.mkAnd f res loc)) lst_measures (true, CP.mkTrue loc)
 	  in
       (*let _ = print_string ("\ntermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
-	  (heap_entail_conjunct_lhs_struc prog false false (CF.Ctx es) [mkEBase (snd term_formula) loc] no_pos None)  
+	  let _ = begin Tpdispatcher.push_suppress_imply_output_state (); Tpdispatcher.suppress_imply_output () end in
+	  let res = (heap_entail_conjunct_lhs_struc prog false false (CF.Ctx es) [mkEBase term_formula loc] no_pos None) in
+	  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
+	  let _ = if !print_proof then Prooftracer.push_pop_entail_variance (es.CF.es_formula, term_formula) in
+	  res
 	in
+
 	let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
 	  List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
 	in
+	(*
 	let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
-	if (List.exists (fun (rs,prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
+	if (List.exists (fun (rs, prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
+	*)
+	let res = List.exists (fun lm ->
+	  let (rs, _) = (fun_check_term lm) in
+	  not (CF.isFailCtx rs)) lexico_measures in
+	let _ = if !print_proof then Prooftracer.push_pop_entail_variance_res res in
+	let _ = if !print_proof then begin Prooftracer.pop_div (); end in
+	if res then
 	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
 	else
 	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
-  else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then
-	Debug.print_info "termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
-  else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then
-	Debug.print_info "termination" ("non-terminating state") loc
-  else if (var_label_lhs > var_label_rhs) then
-	(* Already checked UNSAT(D) at heap_entail_one_context_struc *)
-	Debug.print_info "termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc  		
-  else
-	Debug.print_info "termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ " to " ^ (string_of_int var_label_rhs) ^ " : invalid") loc
+	else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then
+	  Debug.print_info "termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
+	else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then
+	  Debug.print_info "termination" ("non-terminating state") loc
+	else if (var_label_lhs > var_label_rhs) then
+	  (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
+	  Debug.print_info "termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc  		
+	else
+	  Debug.print_info "termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ " to " ^ (string_of_int var_label_rhs) ^ " : invalid") loc
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   match cl with

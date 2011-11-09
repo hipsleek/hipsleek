@@ -102,7 +102,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   List.for_all do_spec_verification spec_list
 
 and check_exp prog proc ctx e0 label =
-Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+  Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
@@ -414,8 +414,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             
             (* Internal function to check pre/post condition of the function call. *)        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
-			  
+
+			  (* Termination: Stripping the "variance" feature from org_spec
+				 if the call is not a recursive call *)
 			  let stripped_spec = if ir then org_spec else
 				let rec strip_variance ls = match ls with
 				  | [] -> []
@@ -448,14 +449,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			    let _ = print_string ("mn: " ^ mn ^ "\n") in
 			    let _ = String.blit mn 0 new_mn 0 l in
 			    let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
-			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
-			  let sctx = List.map (fun fctx ->
-				let (lb,estk,lbctx) = fctx in
-				let nlbctx = List.map (fun bctx ->
-				  let (pt,ctx) = bctx in
-				  let nctx = CF.transform_context
-					(fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst}) ctx in (pt,nctx)) lbctx in
-				(lb,estk,nlbctx)) sctx in
+			  (* Termination: Cache the subst for output pretty printing *)
+			  let sctx = if not ir then sctx else
+				let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
+				List.map (fun fctx ->
+				  let (lb,estk,lbctx) = fctx in
+				  let nlbctx = List.map (fun bctx ->
+				    let (pt,ctx) = bctx in
+				    let nctx = CF.transform_context
+					  (fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst; CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
+				  (lb,estk,nlbctx)) sctx
+			  in
 	          let renamed_spec = CF.subst_struc st1 renamed_spec in
 	          let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
 	          let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in

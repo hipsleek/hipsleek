@@ -666,6 +666,18 @@ let push_pop_prover_input prover_inp prover_name = html_output :=
 let push_pop_prover_output prover_out prover_name = html_output := 
 	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_out) ^ "</ul></li>"
 
+let push_term_checking pos =
+    let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
+    html_output := !html_output ^ "<li class=\"Collapsed term\">Termination checking at " ^ line_loc ^ "\n<ul>"	
+	
+let push_pop_entail_variance (es, f) = html_output := 
+	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Variance entailment " ^ "\n<ul>" ^
+	(convert_to_html ((Cprinter.string_of_formula es) ^ "\n|-" ^ (Cprinter.string_of_pure_formula f))) ^ "</ul></li>"
+
+let push_pop_entail_variance_res res = html_output := 
+	!html_output ^ "<li class=\"Collapsed termres" ^ "\">Variance checking result " ^ "\n<ul>" ^
+	(convert_to_html (if res then "Valid" else "Invalid")) ^ "</ul></li>"
+	
 let pop_div () = html_output := !html_output ^ "</ul></li>\n"
 
 let append_html s =

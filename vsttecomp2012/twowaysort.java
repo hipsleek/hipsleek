@@ -51,7 +51,7 @@ void two_way_sort(ref bool[] a, int n)
 }
 
 void two_way_sort_helper(ref bool[] a, int i, int j)
-	variance (1) [j,i]
+	variance (1) [j-i]
 	requires domb(a,i,j)
 	ensures sorted(a',i,j) & idout(a,a',i,j) & permutation(a,a',i,j);
 {
