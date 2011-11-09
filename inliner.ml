@@ -32,7 +32,7 @@ let rec inline (prog : prog_decl) (pdef : proc_decl) (e0 : exp) : exp = match e0
 		else
 		  (* assign actual arguments to fresh vars *)
 		  let mkfvar param arg = 
-			let fname = fresh_var_name (string_of_typ param.param_type) pos.start_pos.Lexing.pos_lnum in
+			let fname = fresh_ty_var_name (param.param_type) pos.start_pos.Lexing.pos_lnum in
 			(*-- 09.05.2008 *)
 		  (*let _ = (print_string ("\n[inliner.ml, line 37]: fresh name = " ^ fname ^ "\n")) in*)
 		  (* 09.05.2008 --*)		

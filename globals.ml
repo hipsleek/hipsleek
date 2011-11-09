@@ -94,6 +94,25 @@ let rec string_of_typ = function
 		(string_of_typ et) ^ (repeat r)
 ;;
 
+(* aphanumeric name *)
+let rec string_of_typ_alpha = function 
+   (* may be based on types used !! *)
+  | UNK          -> "Unknown"
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | NUM          -> "NUM"
+  | BagT t        -> "bag_"^(string_of_typ t)
+  | TVar t        -> "TVar_"^(string_of_int t)
+  | List t        -> "list_"^(string_of_typ t)
+  (* | Prim t -> string_of_prim_type t  *)
+  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Array (et, r) -> (* An Hoa *)
+	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
+		(string_of_typ et) ^ (repeat r)
+;;
+
 let subs_tvar_in_typ t (i:int) nt =
   let rec helper t = match t with
     | TVar j -> if i==j then nt else t
@@ -474,6 +493,9 @@ let reset_int2 () =
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
+
+let fresh_ty_var_name (t:typ)(ln:int):string = 
+	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_var_name (tn:string)(ln:int):string = 
 	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))

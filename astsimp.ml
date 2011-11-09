@@ -2258,7 +2258,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                             (match rhs_c with
                               | C.Var { C.exp_var_name = v } -> (v, false)
                               | _ -> 
-                                    let fn = (fresh_var_name (string_of_typ rhs_t) pos.start_pos.Lexing.pos_lnum) in (fn, true)) in
+                                    let fn = (fresh_ty_var_name (rhs_t) pos.start_pos.Lexing.pos_lnum) in (fn, true)) in
                           let fn_var = C.Var {
                               C.exp_var_type = rhs_t;
                               C.exp_var_name = fn;
@@ -2399,7 +2399,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             (match crecv with
               | C.Var { C.exp_var_name = v } -> (v, (C.Unit pos), false)
               | _ ->
-                    let fname = (fresh_var_name (string_of_typ crecv_t) (pos.start_pos.Lexing.pos_lnum)) in
+                    let fname = (fresh_ty_var_name (crecv_t) (pos.start_pos.Lexing.pos_lnum)) in
                     let fdecl = C.VarDecl {
                         C.exp_var_decl_type = crecv_t;
                         C.exp_var_decl_name = fname;
@@ -2694,7 +2694,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 let e_pos = Iast.get_exp_pos e in
                 let ce, ct = helper e in
                 if sub_type ct cret_type then
-                  let fn = (fresh_var_name (string_of_typ ct) e_pos.start_pos.Lexing.pos_lnum) in
+                  let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
                   let vd = C.VarDecl { 
                       C.exp_var_decl_type = ct;
                       C.exp_var_decl_name = fn;
@@ -3008,7 +3008,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     let e_pos = Iast.get_exp_pos oe in
                     let ce, ct = helper oe in						
                     if Gen.ExcNumbering.exc_sub_type (string_of_typ ct) raisable_class then 							 
-                      let fn = (fresh_var_name (string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
+                      let fn = (fresh_ty_var_name (ct) pos.start_pos.Lexing.pos_lnum) in
                       let vd = C.VarDecl { C.exp_var_decl_type = ct;
                       C.exp_var_decl_name = fn;
                       C.exp_var_decl_pos = e_pos;} in
@@ -3271,7 +3271,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
-              | _ -> let fn2 = (fresh_var_name (string_of_typ base_t) pos.start_pos.Lexing.pos_lnum) in (fn2, true)) in
+              | _ -> let fn2 = (fresh_ty_var_name (base_t) pos.start_pos.Lexing.pos_lnum) in (fn2, true)) in
           let fn_decl = if new_var then
             C.VarDecl {
                 C.exp_var_decl_type = base_t;
@@ -3447,7 +3447,7 @@ and trans_args (args : (C.exp * typ * loc) list) :
 				 },
 		   _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
         | (arg_e, at, pos) ->
-		  let fn = fresh_var_name (string_of_typ at) pos.start_pos.Lexing.pos_lnum in
+		  let fn = fresh_ty_var_name (at) pos.start_pos.Lexing.pos_lnum in
 		  let fn_decl =
 		    C.VarDecl
               {
@@ -3516,7 +3516,7 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
 	        | None -> ce
 	        | Some t -> if CP.are_same_types t C.void_type then ce
               else
-		        (let fn = fresh_var_name (string_of_typ t) pos.start_pos.Lexing.pos_lnum in
+		        (let fn = fresh_ty_var_name (t) pos.start_pos.Lexing.pos_lnum in
 		        let fn_decl = C.VarDecl {
                     C.exp_var_decl_type = t;
                     C.exp_var_decl_name = fn;
