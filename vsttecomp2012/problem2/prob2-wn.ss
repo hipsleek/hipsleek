@@ -25,6 +25,10 @@ value<> ==
       f1::anode<2,null,null> * a1::value<> * a::value<> // S v1 v2
   inv self!=null;
 
+ks<n> == self::anode<1,null,null> & n = 0
+      or self::anode<0,f,a> * f::ks<n-1> * a::anode<1,null,null> 
+inv n >= 0;
+
 coercion self::value<> -> self::allowed<>;
 
 anode clone (anode t)
@@ -54,10 +58,15 @@ bool isCombS(anode t)
 
 
 anode reduction (anode t)
-requires t::allowed<>
+/*requires t::allowed<>
 ensures  res::value<>;
 requires t::allowK<n>
-ensures  res::value<> ;
+ensures  res::value<> ;*/
+
+requires t::ks<n>
+ensures (exists k: res::anode<1,null,null>  & n = 2*k)
+  or (exists k: res::anode<0,f,a> * f::anode<1,null,null> * a::anode<1,null,null>  & n = 2*k + 1);
+
 {
  anode val1, val2, val11, val2c;
  anode tmp1, tmp2, tmp3;      
@@ -86,6 +95,7 @@ ensures  res::value<> ;
    }
  } else return t; 
 }
+
 
 
 
