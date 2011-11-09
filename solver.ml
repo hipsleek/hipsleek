@@ -4290,8 +4290,8 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                                       else
                                         "1.2: conseq has an incompatible flow type"
                                     in
-                                    let _ = print_endline ("locle 1:"^
-                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in
+                                    (*let _ = print_endline ("locle 1:"^
+                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in*)
                                     let fe = mk_failure_may err_msg in
                                     let may_flow_failure =
 			                        FailCtx (Basic_Reason ({fc_message = err_msg;
@@ -4318,8 +4318,8 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                                     (err_msg,
                                     mk_failure_must err_msg err_name [])
                                 in
-                                let _ = print_endline ("locle 2:"^
-                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in
+                                (*let _ = print_endline ("locle 2:"^
+                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in*)
 			                    (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
 							                                     fc_current_lhs = estate;
 							                                     fc_orig_conseq = struc_formula_of_formula conseq pos;

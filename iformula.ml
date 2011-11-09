@@ -272,14 +272,17 @@ and mkEBase ei ii e b c l= EBase {
 						 	formula_ext_pos = l;}
   
 and mkOr f1 f2 pos =
-  if isConstTrue f1 || isConstTrue f2 then
-	mkTrue top_flow pos
-  else if isConstFalse f1 then f2
-  else if isConstFalse f2 then f1
-  else Or { formula_or_f1 = f1;
+  let raw =  Or { formula_or_f1 = f1;
 			formula_or_f2 = f2;
-			formula_or_pos = pos }
-
+			formula_or_pos = pos } in
+   if (formula_same_flow f1 f2) then
+    if (isConstTrue f1) then f1
+    else if (isConstTrue f2) then f2
+    else if (isConstFalse f1) then f2
+    else if (isConstFalse f2) then f1
+    else raw
+   else raw
+      
 and mkBase (h : h_formula) (p : P.formula) flow br pos = match h with
   | HFalse -> mkFalse flow pos
   | _ -> 
@@ -375,6 +378,24 @@ if (List.length f0)==0 then no_pos
 	| EAssume (b,_) -> pos_of_formula b
 	| EVariance b -> b.formula_var_pos
 
+and flow_of_formula f1 = match f1 with
+  | Base b-> Some b.formula_base_flow
+  | Exists b -> Some b.formula_exists_flow
+  | Or o -> 
+    let fl1 = flow_of_formula o.formula_or_f1 in
+    let fl2 = flow_of_formula o.formula_or_f2 in
+    match fl1,fl2 with
+      | Some f1, Some f2 -> if (f1=f2) then Some f1 else None
+      | _ -> None
+
+and formula_same_flow f1 f2 = 
+  let f1 = flow_of_formula f1 in
+  let f2 = flow_of_formula f2 in
+  match f1, f2 with
+    | Some f1, Some f2 -> f1=f2
+    | _ -> false
+  
+  
 let replace_branches b = function
   | Or f -> failwith "replace_branches doesn't expect an Or"
   | Base f -> Base {f with formula_base_branches = b;}
@@ -570,8 +591,8 @@ let formula_to_struc_formula (f:formula):struc_formula =
 					formula_ext_continuation = [];
 		 			formula_ext_pos = b.formula_exists_pos})]
 		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
-	(helper f);;
-
+	Gen.Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f;;
+  
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
 let split_components (f : formula) =  match f with
@@ -1494,8 +1515,7 @@ List.map helper f
 
 
 and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
-
-
+      
 (* normalization of the heap formula *)
 (* emp & emp * K == K *)
 
