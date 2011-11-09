@@ -2911,9 +2911,11 @@ and heap_entail_variance_x
 	  in
       (*let _ = print_string ("\ntermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
 	  let _ = begin Tpdispatcher.push_suppress_imply_output_state (); Tpdispatcher.suppress_imply_output () end in
-	  let res = (heap_entail_conjunct_lhs_struc prog false false (CF.Ctx es) [mkEBase term_formula loc] no_pos None) in
+	  let (rs, _) = (heap_entail_conjunct_lhs_struc prog false false (CF.Ctx es) [mkEBase term_formula loc] no_pos None) in
 	  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
-	  let _ = if !print_proof then Prooftracer.push_pop_entail_variance (es.CF.es_formula, term_formula) in
+
+	  let res = not (CF.isFailCtx rs) in
+	  let _ = if !print_proof then Prooftracer.push_pop_entail_variance (es.CF.es_formula, term_formula, res) in
 	  res
 	in
 
@@ -2924,9 +2926,7 @@ and heap_entail_variance_x
 	let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
 	if (List.exists (fun (rs, prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
 	*)
-	let res = List.exists (fun lm ->
-	  let (rs, _) = (fun_check_term lm) in
-	  not (CF.isFailCtx rs)) lexico_measures in
+	let res = List.exists (fun lm -> fun_check_term lm) lexico_measures in
 	let _ = if !print_proof then Prooftracer.push_pop_entail_variance_res res in
 	let _ = if !print_proof then begin Prooftracer.pop_div (); end in
 	if res then
