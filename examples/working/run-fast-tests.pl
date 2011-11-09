@@ -618,7 +618,7 @@ $output_file = "log";
                       ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk","Valid.Fail."],
                       ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "sleek_wo_lemma_check"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
+    "sleek_wo_lem"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
               ["sleek1.slk","Fail."],
               ["sleek10.slk","Valid.Fail."],
               ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],

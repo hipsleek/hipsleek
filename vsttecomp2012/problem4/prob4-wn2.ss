@@ -76,17 +76,24 @@ tree build_rec (int d, ref node s)
 	int h = hd(s);
 	if (h < d) raise ve;
     if (h == d) {
-			pop(s);
-            
+			pop(s);   
+      tree r = null;
+     // dprint;
+      //assert r'::treelseg<s, _, d, _>;
+       // assume false;
 			return null;
 	}
-    assume false;
+    
 	ll = build_rec(d+1, s);
     //dprint;
+    
     //assert false & flow __norm  or true & flow exception;//
-    assume false;
+
 	rr = build_rec(d+1, s);
-	return new tree(ll, rr);
+    dprint;
+    tree r = new tree (ll,rr);
+   assume false;
+	return r;
 }
 
 
