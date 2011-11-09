@@ -1168,8 +1168,6 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   fmt_close ()
 
-
-
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
 let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_printer_of_pr fmt pr_estate es
 

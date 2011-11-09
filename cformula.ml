@@ -2382,6 +2382,7 @@ type entail_state = {
   es_var_ctx_lhs : CP.formula;
   es_var_ctx_rhs : CP.formula;
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
+  es_var_loc : loc;
   (* for immutability *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
@@ -2951,6 +2952,7 @@ let rec empty_es flowt pos =
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
   es_var_subst = [];
+  es_var_loc = no_pos;
   (*es_cache_no_list = [];*)
   es_cont = [];
   es_crt_holes = [];
