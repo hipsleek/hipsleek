@@ -637,7 +637,7 @@ let is_list_b_formula (pf,_) = match pf with
     | CP.ListAllN _ 
     | CP.ListPerm _
         -> Some true
-    | _ -> None
+    | _ -> Some false
  
 let is_array_constraint (e: CP.formula) : bool =
  
@@ -678,7 +678,7 @@ let elim_exists (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Gen.Debug.no_1 "elim_exists" pr pr elim_exists f
 
-let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
+let assumption_filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
     (CP.filter_ante ante conseq, conseq)
@@ -1158,11 +1158,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | AUTO ->
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         begin
-          (called_prover :="mona "; Mona.imply ante conseq imp_no);
+          (called_prover :="Mona "; Mona.imply ante conseq imp_no);
         end
       else if (is_list_constraint ante) || (is_list_constraint conseq) then
         begin
-          (Coq.imply ante conseq);
+          (called_prover :="Coq "; Coq.imply ante conseq);
         end
       else if (is_array_constraint ante) || (is_array_constraint conseq) then
         begin
@@ -1232,6 +1232,16 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 	in
 		r
 ;;
+
+
+let tp_imply_no_cache ante conseq imp_no timeout process =	
+  let pr1 = Cprinter.string_of_pure_formula in
+  let prout x = string_of_bool x in
+  Gen.Debug.no_2 "tp_imply_no_cache" 
+      (add_str "ante" pr1) 
+      (add_str "conseq" pr1) 
+      (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
+
 (*
 let tp_imply_no_cache ante conseq imp_no timeout process =
   if !do_slicing then (* Slicing *)
@@ -1476,7 +1486,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             let ante = CP.remove_dup_constraints ante in
             match process with
               | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
-              | _ -> filter ante cons) split_conseq in
+              | _ -> assumption_filter ante cons) split_conseq in
 		let pairs_length = List.length pairs in
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
