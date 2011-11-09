@@ -10,31 +10,37 @@ Solution:
 3. Behavior
 */
 
-relation lessthan(bool a, bool b) == !a & b.
-
+// a <= b if and only if a = b or a = false & b = true
 relation lessthaneq(bool a, bool b) == !a | b.
 
+// A and B are identical except in the domain [i..j]
 relation idout(bool[] A, bool[] B, int i, int j) ==
 	forall(k : i <= k <= j | A[k] = B[k]).
 
+// A[i..j] is sorted
 relation sorted(bool[] A, int i, int j) ==
 	forall(k : k < i | k >= j | lessthaneq(A[k],A[k+1])).
 
 /* relation freq(bool[] A, int i, int j, bool b, int f) ==
 	(i > j & f = 0) | (i <= j & (A[i] = b & freq(A,i+1,j,b,f-1) | A[i] != b & freq(A,i+1,j,b,f))). */
-	
+
+// A[i..j] and B[i..j] are permutations of each other.
 relation permutation(bool[] A, bool[] B, int i, int j).
 
+// empty arrays
 axiom i > j ==> permutation(A,B,i,j).
 
+// reflexivity
 axiom forall(k : k < i | k > j | A[k] = B[k]) ==> permutation(A,B,i,j).
 
+// extensionality
 axiom permutation(A,B,i+1,j) & A[i] = B[i] ==> permutation(A,B,i,j).
-
 axiom permutation(A,B,i,j-1) & A[j] = B[j] ==> permutation(A,B,i,j).
 
+// transposition
 axiom permutation(A,B,i+1,j-1) & A[i] = B[j] & A[j] = B[i] ==> permutation(A,B,i,j).
 
+// transitivity
 axiom permutation(A,B,i,j) & permutation(B,C,i,j) ==> permutation(A,C,i,j).
 
 void two_way_sort(ref bool[] a, int n)
