@@ -1580,7 +1580,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let npf = match pf with
   | BConst _ -> pf
   | BVar (bv, pos) ->
-        if List.fold_left (fun curr -> fun (fr,_) -> curr or eq_spec_var bv fr) false sst   then
+        if List.exists (fun (fr,_) -> eq_spec_var bv fr) sst   then
           failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
         else
           pf
@@ -1656,7 +1656,9 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   | BConst _ -> pf
   | BVar (bv, pos) ->
         if eq_spec_var bv fr then
-          failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+		match t with 
+			| Var (t,_) -> BVar (t,pos)
+			| _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
         else
           pf
   | Lt (a1, a2, pos) -> Lt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
