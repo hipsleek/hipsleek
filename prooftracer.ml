@@ -612,7 +612,7 @@ let convert_to_html s =
 		res
 
 let push_proc proc = let unmin_name = Cast.unmingle_name proc.Cast.proc_name in 
-	html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "<ul>" ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>"
+	html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "\n<ul>" (* ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>" *)
 
 let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
 
@@ -664,7 +664,7 @@ let push_pop_prover_input prover_inp prover_name = html_output :=
 	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_inp) ^ "</ul></li>"
 	
 let push_pop_prover_output prover_out prover_name = html_output := 
-	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_out) ^ "</li></ul>"
+	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_out) ^ "</ul></li>"
 
 let pop_div () = html_output := !html_output ^ "</ul></li>\n"
 
