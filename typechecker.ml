@@ -492,8 +492,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 						Prooftracer.push_pre e0;
 						(* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
 					end else false in
-	        let res = if(CF.isFailListFailescCtx ctx) then ctx
-            else check_pre_post proc.proc_static_specs_with_pre ctx in	
+	        let res = if (CF.isFailListFailescCtx ctx) then ctx else check_pre_post proc.proc_static_specs_with_pre ctx in
 		    let _ = if !print_proof && scall_pre_cond_pushed then 
 		    		begin
 		    			Prooftracer.pop_div ();

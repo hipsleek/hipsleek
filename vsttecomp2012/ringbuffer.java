@@ -1,8 +1,8 @@
 data ring {
 	int[] content; // buffer contents
-	int size; // buffer capacity
-	int first;  // queue head
-	int length; // queue length (maybe 0)
+    int size; // buffer capacity
+    int first;  // queue head
+    int length; // queue length (maybe 0)
 }
 
 // list property not yet captured
