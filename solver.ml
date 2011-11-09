@@ -2729,7 +2729,7 @@ and heap_entail_conjunct_lhs_struc_x
 				let n_ctx = CF.transform_context (
 				  fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
 
-				let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in
+				(*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
 				
 				[inner_entailer 3 n_ctx e] end in
 	        let rez1, rez2 = List.split r in
@@ -2813,8 +2813,8 @@ and heap_entail_conjunct_lhs_struc_x
 		    in filter es.es_var_ctx_rhs
 		  in
 
-		  let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
-		  let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in
+		  (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
+		  let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
 
 		  let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
 			  

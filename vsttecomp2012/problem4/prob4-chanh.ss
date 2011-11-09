@@ -8,13 +8,14 @@ data tree {
   tree right;
 }
 
-treelseg<t,p,d,h> == t::node<d,p> & self=null & h=0
+treelseg<t,p,d,h> ==
+t::node<d,p> * self::tree<null, null> & h=1
   or self::tree<left,right> * left::treelseg<t,r,d+1,h1> * right::treelseg<r,p,d+1,h2>
   & h = 1+max(h1,h2)
   inv h>=0;
 
 lseg<p, n> == self=p & n=0 
-  or self::node<_, r> * r::lseg<p, n-1>
+  or self::node<v, r> * r::lseg<p, n-1> & v>0
   inv n>=0;
 
 bool is_empty_lseg(node x)
@@ -37,8 +38,8 @@ bool is_empty(node x)
 }
 
 int hd(node x)
-  requires x::node<i,_>@I
-  //ensures x::node<i, _> & res=i;
+  requires x::node<i,_>@I 
+  //ensures x::node<i, _> * p::lseg<q, n> & res=i;
   ensures res=i;
 {
 	return x.val;
@@ -55,36 +56,54 @@ coercion "lsegbreakmerge" self::lseg<p, b+c> <-> self::lseg<q, b> * q::lseg<p, c
 
 tree build_rec (int d, ref node s)
 
-	requires s::lseg<p, _> //* p1::lseg<p,_>@I 
+case {	
+	s=null -> ensures res = null;
+	s!= null -> 
+	  
+	requires s::lseg<p, _> //& s!= null //* p1::lseg<p,_>@I
+	//ensures res::treelseg<s, s', d, _> * s'::lseg<p,_>;
+
+	
 	case { p=null ->
-		ensures res::treelseg<s, p, d, _> * s'::lseg<p,_>;
+		ensures res::treelseg<s, s', d, _> * s'::lseg<p,_>;
 	p!=null ->
 	requires p::node<_,_>@I
-		ensures res::treelseg<s, p, d, _> * s'::lseg<p,_	>;
+		ensures res::treelseg<s, s', d, _> * s'::lseg<p,_>;
+	}
+	
 	}
 
 {
 	
 	if (s == null) {
+		//assume false;
 		return null;
 	}
 	else {
 		dprint;
 		int h = hd(s);
-		if (h < d) { assume false;
+		if (h < d) {
+			assume false;
 			return null;
 		}
 		else if (h == d) {
+				   
 			pop(s);
-			return null;
+			dprint;
+			//assume false;
+			return new tree(null, null);
 		}
 		else {
-			tree l = build_rec(d+1, s);
+			  assume false;
+			tree lll = build_rec(d+1, s);
 		//	assert s'=p1;
-		assert true;
-			tree r = build_rec(d+1, s);
-		assert true;
-			return new tree(l, r);
+		//assert true;
+		//dprint;
+			tree rrr = build_rec(d+1, s);
+	   //assume false;
+		//assert true;
+		//dprint;
+			return new tree(lll, rrr);
 		}
 	}
 }
