@@ -878,7 +878,7 @@ let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
   in
   if (lhs_length=1) then Simple
   else (**)
-    if (rhs_length<lhs_length) then Normalize
+    if (rhs_length<=lhs_length) then Normalize
     else Complex
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 

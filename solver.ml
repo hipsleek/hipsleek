@@ -8907,8 +8907,9 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
           let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(Complex)"::old_trace)} in
           let new_ctx1 = Ctx new_estate in
           let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
-          let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in 
-          
+          (*prove extra heap + guard*)
+          let conseq_extra = mkBase extra_heap_new (MCP.OnePF lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in 
+          (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in *)           
 	      Debug.devel_pprint ("apply_left_coercion_complex: check extra heap") pos;
 	      Debug.devel_pprint ("apply_left_coercion_complex: new_ctx after folding: "
 		                      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
@@ -9775,7 +9776,9 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
             let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(normalizing)"::old_trace); es_is_normalizing = true} in
             let new_ctx1 = Ctx new_estate in
             let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
-            let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
+            (*prove extra heap + guard*)
+            let conseq_extra = mkBase extra_heap_new (MCP.OnePF lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
+            (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in  *)
 
 	        Debug.devel_pprint ("normalize_w_coers:process_one: check extra heap") no_pos;
 	        Debug.devel_pprint ("normalize_w_coers:process_one: new_ctx after folding: "
@@ -10003,7 +10006,7 @@ let normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 let normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
 
 

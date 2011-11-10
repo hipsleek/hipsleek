@@ -587,10 +587,22 @@ $output_file = "log";
                   # slow in sleek8.slk due to search
 				  ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 					["sleek9.slk","Valid.Fail.Valid.Valid."],
-                    ["norm1.slk","Valid.Valid.Valid.Fail."],
-                    ["norm2.slk","Valid.Valid.Valid.Valid.Valid.Fail."],
+
+                    ["norm1.slk","Fail.Valid.Fail."],
+                    #["norm2.slk","Valid.Valid.Valid.Valid.Valid.Fail."],
 					["norm3.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-					["norm4.slk","Valid.Valid.Valid."]
+					["norm4.slk","Valid.Valid.Valid."],
+					#["match.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid."],
+					#["base_case.slk","Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+					#["unfolding_pred.slk","Valid.Valid.Valid.Valid.Fail.Fail."],
+					#["folding_pred.slk","Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail."],
+					["uni_vars.slk","Valid.Valid.Fail."],
+					["frac1.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid."],
+					["frac2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail."],
+					["frac3.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Fail.Fail."],
+					["split_simple.slk","Valid.Fail.Valid.Fail.Fail.Valid.Valid."],
+					#["combine_data.slk","Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+					["combine_simple.slk","Valid.Valid.Fail.Valid.Fail.Valid.Valid."]
                   #,
                                         #["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
 			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
