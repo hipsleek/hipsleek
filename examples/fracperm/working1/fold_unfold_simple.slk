@@ -7,9 +7,10 @@ pred cellp<v> == self::cell(f)<v>
      inv true.
 
 
-lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0 .
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & 1.0>=f1>0.0 & 1.0>=f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0 .
 
-lemma "split1" self::cellp(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cellp(f1)<v> * self::cellp(f2)<v> & 0.0<f<=1.0 .
+lemma "split1" self::cellp(f)<v> & f=f1+f2 & 1.0>=f1>0.0 & 1.0>=f2>0.0  -> self::cellp(f1)<v> * self::cellp(f2)<v> & 0.0<f<=1.0 .
+
 
 //(1)
 checkentail x::cellp<v1> |- x::cell(f2)<v2>.
@@ -43,10 +44,7 @@ print residue. //valid, 1 residue
 checkentail x::cellp(1.0)<v1> |-  x::cell(0.4)<v1> * x::cellp(0.5)<v1>.
 print residue. //valid, 1 residue
 
-/*
-WARNING: Found formula with existential quantified var(s), result may be unsound
-! (Imply #47) for redlog!!! do_coercion should try directly lemma: splitCell
 
-Could this warning be suppressed if we are indeed proving for 
-fractional.
-*/
+
+//checkentail x::cell<v1> |- x::cellp(f2)<v2>.
+//print residue. //valid

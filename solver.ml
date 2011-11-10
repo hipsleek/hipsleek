@@ -2145,16 +2145,16 @@ in
 
         (*LDK: IMPORTANT
           if frac var is an existential variable, transfer it into folded view*)
-        (* let new_es_vars = (match frac with *)
-        (*   | None -> vs *)
-        (*   | Some f -> f::vs *)
-        (*       (\* if (List.mem f estate.es_evars) *\) *)
-        (*       (\* then *\) *)
-        (*       (\*   (f::vs) *\) *)
-        (*       (\* else *\) *)
-        (*       (\*   vs *\) *)
-        (* ) *)
-        (* in *)
+        let new_es_vars = (match frac with
+          | None -> vs
+          | Some f -> f::vs
+              (* if (List.mem f estate.es_evars) *)
+              (* then *)
+              (*   (f::vs) *)
+              (* else *)
+              (*   vs *)
+        )
+        in
 
 
         (*LDK: propagate es_vars from the estate to FOLD context
@@ -2164,9 +2164,11 @@ in
           estate into FOLDING context to avoid. Is it SOUND? Indeed, 
           we need to propagate es_vars whose constraints are propagated 
           into view formula when FOLDING.*)
-        (* let new_es = {estate with es_evars = estate.es_evars@new_es_vars} in *)
+        
+        let new_es = {estate with es_evars = estate.es_evars@new_es_vars} in
+        
 
-        let new_es = {estate with es_evars = estate.es_evars@vs} in
+        (* let new_es = {estate with es_evars = estate.es_evars@vs} in *)
 
         (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in (\*LDK: ??? should we add frac perm into it*\) *)
 
