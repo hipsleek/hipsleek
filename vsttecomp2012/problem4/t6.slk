@@ -8,21 +8,24 @@ data tree {
   tree right;
 }.
 
-pred treelseg<t,p,d,n> ==
+
+treelseg<t,p,d,n> ==
      t::node<d,p> & self=null & n=1
   or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
-  inv n>=1 .
-
-pred lseg<p,n> == self=p & n=0
-  or self::node<_,q> * q::lseg<p,n-1>
-  inv n>=0.
-
+  inv n>=1 ;
   
-pred tlseg<p,d,n> ==
-     self::node<d,p> & n=1
+tlseg<p,d,n> ==
+     self::node<d,p> & n=1 
   or self::tlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2 
-  inv self!=null & n>=1 .
+  inv self!=null & n>=1;
+
+coercion self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d.
+
+
+checkentail s1::node<1,s2>*s2::node<3,s3>*s3::node<3,s4>*s4::node<2,null>
+    |- res::treelseg<s1,null,0,4>.
+  
   
 //lemma self::tlseg<p,d,n> -> self::node<dd,q> * q::lseg<p,n-1> & dd>=d.
 
