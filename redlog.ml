@@ -6,6 +6,8 @@
 open Globals
 module CP = Cpure
 
+let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
+  
 (* options *)
 let is_presburger = ref false
 let no_pseudo_ops = ref false
@@ -1063,7 +1065,12 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   in
   res
 
-let imply ante conseq imp_no =
+let rec imply (ante : Cpure.formula) (conseq : Cpure.formula) imp_no : bool =
+  let pr = !print_pure in
+  Gen.Debug.no_2 "[redlog.ml] imply" pr pr string_of_bool (fun _ _ -> imply_x ante conseq imp_no) ante conseq
+
+and imply_x ante conseq imp_no =
+  (*let _ = if not !is_reduce_running then start () in*)
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
   let sf = simplify_var_name f in
   let fstring = string_of_formula sf in

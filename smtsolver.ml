@@ -755,18 +755,23 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let pr = !print_pure in
-  Gen.Debug.ho_2 "smt_imply" pr pr string_of_bool (fun _ _ -> smt_imply_x ante conseq prover) ante conseq
+  Gen.Debug.no_2 "smt_imply" pr pr string_of_bool (fun _ _ -> smt_imply_x ante conseq prover) ante conseq
 	
 and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
 	let res, should_run_smt =
+	  (*
+	  let conseq_info = collect_formula_info conseq in
+	  let ante_info = collect_formula_info ante in
+	  if (not conseq_info.is_linear) || (not ante_info.is_linear) then
+		if (not (List.mem "dom" conseq_info.relations)) then
+		  let n_ante = CP.remove_primitive (fun x -> is_array_constraint (CP.BForm ((x, None), None))) ante in
+		  let _ = print_string ("smt_imply: n_ante: " ^ (!print_pure n_ante) ^ "\n") in
+		  (Redlog.imply n_ante conseq "", false)
+		else (false, true)
+	  else
+	  *)
 	  if (has_exists conseq) then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
-	  else if not ((Redlog.is_linear_formula ante) && (Redlog.is_linear_formula conseq)) then
-		let _ = print_string ("Smtsolver: Retry with Redlog") in
-		if (is_array_constraint conseq) then (false, true)
-		else
-		  let n_ante = remove_array_constraint_formula ante in
-		  (Redlog.imply n_ante conseq "", false)
 	  else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
@@ -778,21 +783,14 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
 			| UnSat -> true
 			| Unknown -> try Omega.imply ante conseq "" !timeout with | _ -> false in
 		let _ = process_stdout_print ante conseq input output res in
-			res
+		res
 	else
 		res
 		
 and has_exists conseq = match conseq with
 	| CP.Exists _ -> true
 	| _ -> false
-
-and remove_array_constraint_formula f =
-  match f with
-	| CP.BForm _ -> if is_array_constraint f then CP.mkTrue no_pos else f
-	| CP.And (f1, f2, pos) ->
-	  CP.mkAnd (remove_array_constraint_formula f1) (remove_array_constraint_formula f2) pos
-	| _ -> f
-
+(*
 and is_array_b_formula (pf,_) = match pf with
     | CP.BConst _ 
     | CP.BVar _
@@ -854,11 +852,11 @@ and is_array_exp e = match e with
     | CP.ArrayAt (_,_,_) -> Some true
     | CP.FConst _ | CP.IConst _ | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
-
+  
 and is_array_constraint (e: CP.formula) : bool =
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
-	  
+*)	  
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
