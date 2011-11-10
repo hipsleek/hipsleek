@@ -5,8 +5,8 @@ data anode {
 }
 
 
-allowK<n> ==
-     self::anode<0,f,a> * f::allowK<n1> * a::allowK<n2> & n=1+n1+n2
+termK<n> ==
+     self::anode<0,f,a> * f::termK<n1> * a::termK<n2> & n=1+n1+n2
   or self::anode<1,null,null> & n=0  // denotes K
   inv self!=null & n>=0;
 
@@ -16,7 +16,7 @@ valueK<> ==
   or self::anode<0,f,a> * f::anode<1,null,null> * a::valueK<> // K v
   inv self!=null;
 
-coercion self::valueK<> -> self::allowK<>;
+coercion self::valueK<> -> self::termK<>;
 
 anode clone (anode t)
 requires t::valueK<>@I
@@ -46,7 +46,7 @@ bool isCombS(anode t)
 
 anode reduction (anode t)
 
-requires t::allowK<n>
+requires t::termK<n>
 variance (1) [n]
 ensures  res::valueK<> ;
 

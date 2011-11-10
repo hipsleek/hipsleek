@@ -17,9 +17,27 @@ ks<n> == self::anode<1,null,null> & n = 0 // K
       or self::anode<0,f,a> * f::ks<n-1> * a::anode<1,null,null> 
 inv n >= 0;
 
-anode clone (anode t)
+anode clone (anode t)   // cloning a value
 requires t::value<>@I
 ensures  res::value<>;
+{
+ anode tmp1, tmp2, tmp3;
+ if (isApply(t)) {
+      tmp1 = clone(t.arg);
+      if (isCombK(t.fn)) {
+	return new anode(0, new anode(1, null, null), tmp1);		
+      }
+      else if (isCombS(t.fn)) {
+	return new anode(0, new anode(2, null, null), tmp1);		     
+      }
+      else {
+        tmp2 = clone(t.fn.arg);
+        tmp3 = new anode(0, new anode(2, null, null), tmp2); 
+	return new anode(0, tmp3, tmp1);
+     }
+ }
+ else return new anode(t.val, null, null);
+}
 
 bool isApply(anode t)
   requires t::anode<v,_,_>@I

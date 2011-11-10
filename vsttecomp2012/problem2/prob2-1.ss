@@ -4,8 +4,8 @@ data anode {
   anode arg;
 }
 
-allowed<> ==
-     self::anode<0,f,a> * f::allowed<> * a::allowed<>
+term<> ==
+     self::anode<0,f,a> * f::term<> * a::term<>
   or self::anode<1,null,null> // denotes K
   or self::anode<2,null,null> // denotes S
   inv self!=null;
@@ -19,11 +19,29 @@ value<> ==
       f1::anode<2,null,null> * a1::value<> * a::value<> // S v1 v2
   inv self!=null;
 
-coercion self::value<> -> self::allowed<>;
+coercion self::value<> -> self::term<>;
 
-anode clone (anode t)
+anode clone (anode t)   // cloning a value
 requires t::value<>@I
 ensures  res::value<>;
+{
+ anode tmp1, tmp2, tmp3;
+ if (isApply(t)) {
+      tmp1 = clone(t.arg);
+      if (isCombK(t.fn)) {
+	return new anode(0, new anode(1, null, null), tmp1);		
+      }
+      else if (isCombS(t.fn)) {
+	return new anode(0, new anode(2, null, null), tmp1);		     
+      }
+      else {
+        tmp2 = clone(t.fn.arg);
+        tmp3 = new anode(0, new anode(2, null, null), tmp2); 
+	return new anode(0, tmp3, tmp1);
+     }
+ }
+ else return new anode(t.val, null, null);
+}
 
 bool isApply(anode t)
   requires t::anode<v,_,_>@I
@@ -49,7 +67,7 @@ bool isCombS(anode t)
 
 anode reduction (anode t)
 
-requires t::allowed<>
+requires t::term<>
 ensures  res::value<>;
 
 {
