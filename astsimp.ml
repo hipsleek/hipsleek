@@ -4656,6 +4656,8 @@ and collect_type_info_b_formula_x prog b0 stab =
 		      (* An Hoa : TODO IMPLEMENT IMMEDIATELY *)			
 	| IP.RelForm (r, args, pos) ->
 		  (try 
+		  	(* let _ = print_endline ("collect_type_info_b_formula_x : fail with " ^ r) in
+		  	let _ = print_endline (String.concat " ; " (List.map Iprinter.string_of_formula_exp args)) in *)
 			let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
 			let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
 			let args_exp_types = List.map (fun t -> (t)) args_ctypes in
@@ -4830,7 +4832,7 @@ and gather_type_info_b_formula_x prog b0 stab =
 		  with
 		    | Not_found ->   
                   failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-            | _ -> print_endline ("Error gather type for relation " ^ r)
+            | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
           )
 
 		      (* An Hoa *)
