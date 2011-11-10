@@ -52,6 +52,7 @@ let rec process_primitives (file_list: string list) : Iast.prog_decl list =
   | hd::tl ->
         let header_filename = String.sub hd 1 ((String.length hd) - 2) in
         let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
+        (* let _ = print_string ("\n WN : prelude here"^new_filename^"\n") in *)
         let primitives = parse_file_full new_filename in
                 primitives :: (process_primitives tl)
 

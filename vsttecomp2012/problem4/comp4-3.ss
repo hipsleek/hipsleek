@@ -23,25 +23,25 @@ treelseg<t,p,d,n> ==
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
   inv n>=1 ;
 
-tlseg<p,d,n> ==
-     self::node<d,p> & n=1 
-  or self::tlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2 
-  inv self!=null & n>=1;
+tlseg<p,f,d,n> ==
+     self::node<d,p> & n=1 & d=f 
+  or self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2
+  inv self!=null & n>=1 & f>=d ;
 
 // pred specifies a list of labels that would not
 // be able to generate a binary tree of the same size
 // this predicate is expected to be the complement of tlseg
 // which is supposed to give our completeness result
-negtlseg<p,d,n> ==
-  self::node<v,p> & n=1 & v!=d
-  or self::negtlseg<r,d+1,n1> & n1<=n
-  or self::tlseg<r,d+1,n2> * r::negtlseg<p,d+1,n3> & n=n2+n3
-  inv self!=null & n>=1; 
+negtlseg<p,f,d,n> ==
+  self::node<f,p> & n=1 & f>d
+  or self::negtlseg<r,f,d+1,n> 
+  or self::tlseg<r,f,d+1,n2> * r::negtlseg<p,_,d+1,n3> & n=n2+n3
+  inv self!=null & n>=1 & f>d; 
 
 // a provable lemma that tlseg gives at least one node
-coercion self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d;
+//coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
 
-coercion self::negtlseg<p,d,n> -> self::node<dd,q> & dd!=d;
+//coercion self::negtlseg<p,f,d,n> -> self::node<f,q> ;
 
 bool is_empty(node x)
   requires true
@@ -53,8 +53,10 @@ bool is_empty(node x)
 int hd(node x)
     requires x::node<d,_>@I
     ensures res=d;
-    requires x::tlseg<p,d,n>@I & n>1
-    ensures res>=d;
+    requires x::tlseg<p,f,d,n>@I 
+    ensures res=f;
+    requires x::negtlseg<p,f,d,n>@I 
+    ensures res=f;
 {
   return x.val;
 }
@@ -70,19 +72,19 @@ tree build_rec (int d, ref node s)
  case {
    s=null -> ensures true &  flow exception;
   s!=null -> 
-     requires s::tlseg<p,d,n>
-     ensures res::treelseg<s,s',d,n> & s' = p & flow __norm;
-     requires s::negtlseg<p,d,n> 
-     ensures true & flow exception;
-     //requires self::tlseg<r,d+1,n2> * r::negtlseg<p,d+1,n3>
-     //ensures true & flow exception;
+      requires s::tlseg<p,_,d,n>
+      ensures res::treelseg<s,s',d,n> & s' = p & flow __norm;
+      requires s::negtlseg<p,_,d,_> 
+      ensures true & flow exception;
   }
 {
   tree ll,rr;
 	if (is_empty(s)) raise new exception();
+  unfold s;
   int h = hd(s);
   if (h < d) raise new exception();        
   if (h == d) {
+      dprint; assume false;
       pop(s);        
 	  return null;
 	}
@@ -96,9 +98,9 @@ tree build(node s)
  case {
    s=null -> ensures true &  flow exception;
   s!=null ->   
-      requires s::tlseg<null,0,n>
+      requires s::tlseg<null,_,0,n>
       ensures res::treelseg<s, null, 0, n>  & flow __norm; 
-      requires s::negtlseg<p,0,_> 
+      requires s::negtlseg<p,_,0,_> 
       ensures true & flow exception ; 
 }
 {
