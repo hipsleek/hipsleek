@@ -1475,6 +1475,7 @@ let pr_view_decl v =
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
+  pr_vwrap  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
   pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with 
     | None -> ()
@@ -2054,6 +2055,7 @@ Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Cast.print_view_decl := string_of_view_decl;
+Cast.print_coercion := string_of_coerc_long;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Coq.print_p_f_f := string_of_pure_formula ;;

@@ -354,6 +354,7 @@ let no_cache_formula = ref false
 
 let enable_incremental_proving = ref false
 
+let disable_multiple_specs =ref false
 
   (*for cav experiments*)
   let f_1_slice = ref false

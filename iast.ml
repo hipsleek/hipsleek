@@ -1111,13 +1111,19 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
 	let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let dl = List.map (fun v -> v.data_name) data_decls in
   let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
-  let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
-  then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
+  (*let _ = List.iter 
+    (fun (v,_,tl) -> 
+        if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
+        then report_error no_pos ("self points infinitely within definition "^v.view_name) 
+        else () )  rl in*)
 	(* Restore the original list of view_decls and continue with the previous implementation *)
-  	let view_decls = view_decls_org in
+  let view_decls = view_decls_org in
 	let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
-  let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
-  then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
+ (* let _ = List.iter 
+     (fun (v,_,tl) -> 
+        if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
+        then report_error no_pos ("self points infinitely within definition "^v.view_name) 
+        else () )  rl in*)
   rl
 
 and fixpt_data_name (view_ans)  =
