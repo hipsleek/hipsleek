@@ -346,7 +346,7 @@ and spatial_ctx_extract p f a i rn rr =
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in
   (* let pr = pr_no in *)
-  Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula (*pr_aset*) pr 
+  Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i rn rr ) f i a rn 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =

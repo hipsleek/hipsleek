@@ -16,9 +16,9 @@ treelseg<t,p,d,n> ==
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
   inv n>=1 ;
 
-ll<n> == self=null & n=0
-  or self::node<v, r> * r::ll<n-1> 
-  inv n>=0;
+ll<n,mx> == self=null & n=0 & mx=0
+  or self::node<v, r> * r::ll<n-1,mx1> & mx=max(v,mx1) & v>0 
+  inv n>=0 & mx>=0;
 
 
 bool is_empty(node x)
@@ -48,11 +48,12 @@ void pop(ref node x)
 }
 
 tree build_rec (int d, ref node s)
- requires s::ll<n>@I
+ requires s::ll<n,mx>@I
+ variance (1) [mx - d]
  case {
   n=0 -> ensures true & flow exception;
   n!=0 -> ensures  res::treelseg<s, pp, d, m>@I 
-                      * pp::ll<n-m>@I & s'=pp & flow __norm //'
+                      * pp::ll<n-m,mx1>@I & s'=pp & mx1<=mx & flow __norm //'
                  or true & flow exception ; 
   }
 {
@@ -71,7 +72,7 @@ tree build_rec (int d, ref node s)
 
 
 tree build(node s)
-  requires s::ll<n>@I
+  requires s::ll<n,_>@I
   ensures res::treelseg<s, null, 0, n>@I & flow __norm
       or true & flow exception ; 
 {

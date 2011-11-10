@@ -4820,14 +4820,19 @@ and gather_type_info_b_formula_x prog b0 stab =
           ()
 	| IP.RelForm (r, args, pos) ->
  		  (try
+ 		  	(* let _ = print_endline ("Gather type info : relation " ^ r) in *)
 		    let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
 		    let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
 		    let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+		    (* let _ = List.map Iprinter.string_of_formula_exp args in
+		    let _ = List.map string_of_typ args_exp_types in *)
 		    let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
 		  with
 		    | Not_found ->   
                   failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
+            | _ -> print_endline ("Error gather type for relation " ^ r)
           )
+
 		      (* An Hoa *)
 
 and guess_type_of_exp_arith a0 stab =

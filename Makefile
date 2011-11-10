@@ -18,7 +18,7 @@ OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: native 
+all: native decidez.vo
 #gui
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
@@ -73,3 +73,13 @@ clean:
 	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
 	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
+
+decidez.vo:
+	coqtop -compile decidez
+
+install:
+	cp mona_predicates.mona /usr/local/lib/mona_predicates.mona
+	coqtop -compile decidez
+	cp decidez.vo /usr/local/lib/decidez.vo
+	./hip --build-image true
+	cp MyImage /usr/local/lib/MyImage

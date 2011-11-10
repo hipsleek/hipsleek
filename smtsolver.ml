@@ -6,6 +6,10 @@ module StringSet = Set.Make(String)
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
+(* Pure formula printing function, to be intialized by cprinter module *)
+
+let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
+
 (***************************************************************
                   GLOBAL VARIABLES & TYPES                      
  **************************************************************)
@@ -306,7 +310,14 @@ and compact_formula_info info =
 
 (* Interface function to add a new axiom *)
 let add_axiom h dir c =
-	let info = collect_combine_formula_info_raw h c in 
+	(* let _ = print_endline ("add axiom : " ^ (!print_pure h) ^ (match dir with |IFF -> " <==> " | _ -> " ==> ") ^ (!print_pure c)) in *)
+	let info = collect_combine_formula_info_raw h c in
+	(* let _ = print_endline ("directly related relations : " ^ (String.concat "," info.relations)) in *)
+	let indirectly_related_relations = List.filter (fun x -> List.mem x.rel_name info.relations) !global_rel_defs in (* assumption: every relations in global_rel_defs has their related axioms computed *)
+	let indirectly_related_relations = List.map (fun x -> x.related_rels) indirectly_related_relations in
+	let related_relations = (List.flatten indirectly_related_relations) @ info.relations in
+	let related_relations = Gen.BList.remove_dups_eq (=) related_relations in
+	(* let _ = print_endline ("all related relations : " ^ (String.concat ", " related_relations)) in *)
 	let aindex = List.length !global_axiom_defs in
 	begin
 		(* Modifying every relations appearing in h and c by
@@ -314,7 +325,7 @@ let add_axiom h dir c =
 		   2)   Add all other relations (appearing in h and c) to the list of related relations *)
 		global_rel_defs := List.map (fun x -> if (List.mem x.rel_name info.relations) then
 			let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ info.relations) in
-			let rs = List.filter (fun y -> not (y = x.rel_name)) rs in
+			(* let rs = List.filter (fun y -> not (y = x.rel_name)) rs in *)
 			{ x with 
 				related_rels = rs;
 				related_axioms = x.related_axioms @ [aindex]; }
@@ -330,7 +341,7 @@ let add_axiom h dir c =
 		let new_axiom = { axiom_direction = dir;
 						axiom_hypothesis = h;
 						axiom_conclusion = c;
-						related_relations = info.relations (* TODO must we compute closure ? *);
+						related_relations = related_relations (* info.relations TODO must we compute closure ? *);
 						axiom_cache_smt_assert = cache_smt_input; } in
 		global_axiom_defs := !global_axiom_defs @ [new_axiom];
 	end
@@ -511,9 +522,11 @@ let to_smt_v2 ante conseq logic fvars info =
 	let smt_var_decls = String.concat "" smt_var_decls in
 	(* Relations that appears in the ante and conseq *)
 	let used_rels = info.relations in
-	let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in
+	let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in
+	(* let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in *)
 	(* Necessary axioms *)
-	let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
+	let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in (* Add all axioms; there are bugs! *)
+	(* let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in *)
 	(* Antecedent and consequence : split /\ into small asserts for easier management *)
 	let ante_clauses = CP.split_conjunctions ante in
 	let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
@@ -592,10 +605,6 @@ let outconfig = {
 		print_implication = ref false; 
 		suppress_print_implication = ref false;
 	}
-
-(* Pure formula printing function, to be intialized by cprinter module *)
-
-let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
 
 (* Function to suppress and unsuppress all output of this modules *)
 
@@ -743,10 +752,22 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * If it is unsatisfiable, the original implication is true.
  * We also consider unknown is the same as sat
  *)
+
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-	let res, should_run_smt = if (has_exists conseq) then
+  let pr = !print_pure in
+  Gen.Debug.ho_2 "smt_imply" pr pr string_of_bool (fun _ _ -> smt_imply_x ante conseq prover) ante conseq
+	
+and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+	let res, should_run_smt =
+	  if (has_exists conseq) then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
-	else (false, true) in
+	  else if not ((Redlog.is_linear_formula ante) && (Redlog.is_linear_formula conseq)) then
+		let _ = print_string ("Smtsolver: Retry with Redlog") in
+		if (is_array_constraint conseq) then (false, true)
+		else
+		  let n_ante = remove_array_constraint_formula ante in
+		  (Redlog.imply n_ante conseq "", false)
+	  else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
 		let _ = !set_generated_prover_input input in
@@ -765,6 +786,79 @@ and has_exists conseq = match conseq with
 	| CP.Exists _ -> true
 	| _ -> false
 
+and remove_array_constraint_formula f =
+  match f with
+	| CP.BForm _ -> if is_array_constraint f then CP.mkTrue no_pos else f
+	| CP.And (f1, f2, pos) ->
+	  CP.mkAnd (remove_array_constraint_formula f1) (remove_array_constraint_formula f2) pos
+	| _ -> f
+
+and is_array_b_formula (pf,_) = match pf with
+    | CP.BConst _ 
+    | CP.BVar _
+	| CP.BagMin _ 
+    | CP.BagMax _
+		-> Some false    
+    | CP.Lt (e1,e2,_) 
+    | CP.Lte (e1,e2,_) 
+    | CP.Gt (e1,e2,_)
+    | CP.Gte (e1,e2,_)
+	| CP.Eq (e1,e2,_)
+	| CP.Neq (e1,e2,_)
+	| CP.BagSub (e1,e2,_)
+		-> (match (is_array_exp e1) with
+						| Some true -> Some true
+						| _ -> is_array_exp e2)
+    | CP.EqMax (e1,e2,e3,_)
+    | CP.EqMin (e1,e2,e3,_)
+		-> (match (is_array_exp e1) with
+						| Some true -> Some true
+						| _ -> (match (is_array_exp e2) with
+											| Some true -> Some true
+											| _ -> is_array_exp e3))
+    | CP.BagIn (_,e,_) 
+    | CP.BagNotIn (_,e,_)
+		-> is_array_exp e
+    | CP.ListIn _ 
+    | CP.ListNotIn _
+    | CP.ListAllN _ 
+    | CP.ListPerm _
+        -> Some false
+    | CP.RelForm _ -> Some true
+	  
+and is_array_exp e = match e with
+    | CP.List _
+    | CP.ListCons _
+    | CP.ListHead _
+    | CP.ListTail _
+    | CP.ListLength _
+    | CP.ListAppend _
+    | CP.ListReverse _ 
+        -> Some false
+	| CP.Add (e1,e2,_)
+	| CP.Subtract (e1,e2,_)
+	| CP.Mult (e1,e2,_)
+	| CP.Div (e1,e2,_)
+	| CP.Max (e1,e2,_)
+	| CP.Min (e1,e2,_)
+	| CP.BagDiff (e1,e2,_)
+		-> (match (is_array_exp e1) with
+						| Some true -> Some true
+						| _ -> is_array_exp e2)
+	| CP.Bag (el,_)
+	| CP.BagUnion (el,_)
+	| CP.BagIntersect (el,_)
+		-> (List.fold_left (fun res exp -> match res with
+											| Some true -> Some true
+											| _ -> is_array_exp exp) (Some false) el)
+    | CP.ArrayAt (_,_,_) -> Some true
+    | CP.FConst _ | CP.IConst _ | CP.Var _ | CP.Null _ -> Some false
+    (* | _ -> Some false *)
+
+and is_array_constraint (e: CP.formula) : bool =
+  let or_list = List.fold_left (||) false in
+  CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
+	  
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)

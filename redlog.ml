@@ -271,7 +271,7 @@ let rl_of_b_formula b =
       let a3 = rl_of_exp e3 in
       "((" ^ a1 ^ " = " ^ a2 ^ " and " ^ a2 ^ " <= " ^ a3 ^ ") or ("
       ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " >= " ^ a3 ^ "))"
-  | _ -> failwith "redlog: bags is not supported"
+  | _ -> failwith "Redlog: constraint is not supported"
 
 let rec rl_of_formula f0 = 
   match f0 with

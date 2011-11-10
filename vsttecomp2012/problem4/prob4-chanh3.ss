@@ -14,16 +14,27 @@ treelseg<t,p,d,n> ==
      t::node<d,p> & self=null & n=1
   or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
-  inv n>=1 ;
-
-ll<n> == self=null & n=0
-  or self::node<v, r> * r::ll<n-1> 
   inv n>=0;
+
+lseg<p,n,mx> == self=p & n=0 & mx=0
+  or self::node<v,r> * r::lseg<p,n-1,mx1> & mx=max(mx1,v) & v>0 
+  inv n>=0 & mx>=0;
 
 
 bool is_empty(node x)
   requires true
   ensures true & (x=null & res | x!=null & !res);
+  requires x::lseg<pp,n,_>
+  case {
+    x=null -> ensures res;
+    x!=null -> ensures !res;
+  }
+  /*
+  case {
+    x=null -> ensures res;
+    x!=null -> ensures !res;
+  }
+  */
 {
 	return x==null; 
 }
@@ -47,22 +58,27 @@ void pop(ref node x)
 	x = x.next;
 }
 
+//coercion "lsegbrk" self::lseg<p,n> & n=a+b & a>0 & b>0 & n>=2 -> self::lseg<q,a> * q::lseg<p,b>;
+
 tree build_rec (int d, ref node s)
- requires s::ll<n>@I
+ requires s::lseg<null,n,mx>
+ variance (1) [mx-d]
  case {
   n=0 -> ensures true & flow exception;
-  n!=0 -> ensures  res::treelseg<s, pp, d, m>@I 
-                      * pp::ll<n-m>@I & s'=pp & flow __norm //'
-                 or true & flow exception ; 
+  n!=0 -> ensures  res::treelseg<s, pp, d, m> 
+                         * pp::lseg<null,n-m,mx1> & s'=pp & mx1 <= mx & flow __norm //'
+                   or true & flow exception ; 
   }
 {
     tree ll,rr;
-	if (is_empty(s)) raise new exception();
+    exception ve;
+    ve = new exception();
+	if (s == null) raise ve;
 	int h = hd(s);
-	if (h < d) raise new exception();
+	if (h < d) raise ve;
     if (h == d) {
-			pop(s);   
-			return null;
+		pop(s);   
+		return null;
 	}    
 	ll = build_rec(d+1, s);
  	rr = build_rec(d+1, s);
@@ -71,7 +87,7 @@ tree build_rec (int d, ref node s)
 
 
 tree build(node s)
-  requires s::ll<n>@I
+  requires s::lseg<null,n,_>
   ensures res::treelseg<s, null, 0, n>@I & flow __norm
       or true & flow exception ; 
 {
@@ -82,15 +98,5 @@ tree build(node s)
 	} else {
 		return t;
 	}
-}
-
-
-tree harness1(node s1)
-	requires s1::node<1,s2>@I*s2::node<3,s3>@I
-      *s3::node<3,s4>@I*s4::node<2,null>@I 
-  ensures res::treelseg<s1,null,0,4>@I 
-  or true & flow exception;
-{
-	return build(s1);
 }
 
