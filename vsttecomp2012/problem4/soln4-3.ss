@@ -1,3 +1,9 @@
+/*
+  This spec prove the termination of build_rec function.
+  
+*/
+
+
 data node {
   int val;
   node next;
@@ -16,6 +22,7 @@ treelseg<t,p,d,n> ==
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
   inv n>=1 ;
 
+// pred for a linked list of int of length n and the maximum element mx
 ll<n,mx> == self=null & n=0 & mx=0
   or self::node<v, r> * r::ll<n-1,mx1> & mx=max(v,mx1) & v>0 
   inv n>=0 & mx>=0;
@@ -46,7 +53,24 @@ void pop(ref node x)
 {
 	x = x.next;
 }
+/*
+The below specification with 'variance' is used
+to prove the termination of the build_rec function.
+Informally, we observe that in each recursive
+call of the build_rec function, the input d is
+increased toward the height of the tree, so that
+it can be used to prove the termination of build_rec.
 
+As a result, the variant used here is the distance
+between the depth of the currently built tree and
+the height of the final tree, which can be interpreted
+as the value of the maximum elements in the input linked
+list.
+
+The well-founded relation of the transition
+between to recursive calls are proved successfully
+by our system.
+*/
 tree build_rec (int d, ref node s)
  requires s::ll<n,mx>@I
  variance (1) [mx - d]
