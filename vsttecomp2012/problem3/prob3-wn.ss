@@ -6,8 +6,9 @@ data ring {
 }
 
 // list property not yet captured
-buf<s,f,l> == self::ring<arr,s,f,l> & dom(arr,0,s-1) & 0<=l<=s & s>0 & 0<=f<s
-	inv s>=1 & 0<=l<=s;
+buf<s,f,l> == 
+  self::ring<arr,s,f,l> & dom(arr,0,s-1) & 0<=l<=s & s>0 & 0<=f<s
+  inv s>=1 & 0<=l<=s;
 
 ring create(int n)
 	requires n>0
@@ -32,6 +33,8 @@ int queuehead(ring b)
 	return b.content[b.first];
 }
 
+
+
 // assumes that b is not full
 void queuepush(ring b, int x) 
 	requires b::buf<s,f,l> & l < s
@@ -42,7 +45,15 @@ void queuepush(ring b, int x)
 	b.length = b.length + 1;
 }
 
+int cyclic_inc(int x, int b)
+ requires 0<=x<b
+ case {
+  x+1=b -> ensures res=0;
+  x+1!=b -> ensures res=x+1;
+ }
+
 // assumes that b is non-empty
+// redlog needed to prove with mod operator
 int queuepop(ring b)
 	requires b::buf<s,f,l> & l>0
     case {
@@ -55,9 +66,10 @@ int queuepop(ring b)
   if (b.length==0) return 0;
   else {
 	int r = b.content[b.first];
-	b.first = (b.first + 1) % b.size;
+    b.first = cyclic_inc(b.first,b.size);
+	//b.first = (b.first + 1) % b.size;
 	b.length = b.length - 1;
-    assume false;
+    //assume false;
 	return r;
   }
 }
