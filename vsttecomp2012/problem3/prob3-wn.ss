@@ -1,3 +1,6 @@
+// working version
+
+
 data ring {
 	int[] content; // buffer contents
 	int size; // buffer capacity

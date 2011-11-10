@@ -1,12 +1,26 @@
-data ring {
-	int[] content; // buffer contents
-    int size; // buffer capacity
-    int first;  // queue head
-    int length; // queue length (maybe 0)
+data node {
+	int value;
+	node next;
 }
 
+data queue {
+	node first;
+	node last;
+}
+
+data ring {
+	int[] content; 	// buffer contents
+    int size; 		// buffer capacity
+    int first;  	// queue head
+    int length; 	// queue length (maybe 0)
+    node queue; 	// ghost queue for semantics proving
+}
+
+aqueue<f,l> == self = null & l = 0
+	or self::node<v,n,l> * n::aqueue<_,l-1> & f = v
+
 // list property not yet captured
-buf<s,f,l> == self::ring<arr,s,f,l> & dom(arr,0,s-1) & 0<=l<=s & s>0 & 0<=f<s
+buf<s,f,l> == self::ring<arr,s,f,l,q> * q::aqueue<f,l> & dom(arr,0,s-1) & 0<=l<=s & s>0 & 0<=f<s
 	inv s>=1 & 0<=l<=s;
 
 ring create(int n)
