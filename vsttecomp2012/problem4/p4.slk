@@ -1,0 +1,55 @@
+data node {
+  int val;
+  node next;
+}.
+
+data tree {
+  tree left;
+  tree right;
+}.
+
+
+pred treelseg<t,p,d,n> ==
+     t::node<d,p> & self=null & n=1
+  or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
+     * right::treelseg<r,p,d+1,n2> & n=n1+n2
+  inv n>=1 .
+
+
+checkentail  s1::node<1,s2> & rs=null |- rs::treelseg<s1,s2,1,1>.
+
+checkentail  s4::node<2,null> & rs=null |- rs::treelseg<s4,null,2,1>.
+
+checkentail  s2::node<3,s3> & rs=null |- rs::treelseg<s2,s3,3,1>.
+
+checkentail  s3::node<3,s4> & rs=null |- rs::treelseg<s3,s4,3,1>.
+
+
+checkentail  rs3::tree<null,null> *
+             rs1::treelseg<s2,s3,3,1> *
+             rs2::treelseg<s3,s4,3,1>
+          |- rs3::treelseg<s2,s4,2,2>.
+
+checkentail  rs3::tree<null,null> *
+             rs1::treelseg<s2,s3,3,1> *
+             rs3::treelseg<s2,s4,2,2>
+          |- rs3::treelseg<s2,s4,2,2>.
+
+
+
+checkentail  s1::node<1,s2>*s2::node<3,s3>
+      *s3::node<3,s4>*s4::node<2,null>
+      * rs::tree<null,r> * r::tree<rl,null>*
+      rl::tree<null,null> |- rs::treelseg<s1,null,0,4>.
+
+
+/*
+
+checkentail  s1::node<1,s2>@I*s2::node<3,s3>@I
+      *s3::node<3,s4>@I*s4::node<2,null>@I /\ rs::treelseg<s1,null,0,4>@I
+    |-
+      rs::tree<null,r>@I * r::tree<rl,null>@I*
+      rl::tree<null,null>@I.
+*/
+
+print residue.

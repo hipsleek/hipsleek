@@ -6,20 +6,26 @@ data ring {
 	int length; // queue length (maybe 0)
 }
 
-
 // list property not yet captured
-buf<s,f,l> == 
-  self::ring<arr,s,f,l> & dom(arr,0,s-1) & 0<=l<=s & s>0 & 0<=f<s 
-  inv s>=1 & 0<=l<=s;
+buf<s,f,l,L> == 
+  self::ring<arr,s,f,l> &  
+   [ "num": 0<=l<=s & s>0 & 0<=f<s;
+     "lst": len(L)=l;
+     "arr": dom(arr,0,s-1);
+   ] 
+  inv true & ["num": s>=1 & 0<=l<=s];
 
 ring create(int n)
 	requires n>0
-	ensures res::buf<n,0,0>;
+  ensures res::buf<n,f,l,L> & ["num":f=0 & l=0;
+                             "lst": L=[||]] ;
 {
 	int[] a = new int[n];
 	return new ring(a,n,0,0);
 }
 
+
+/*
 void clear(ring b)
 	requires b::buf<s,f,l>
 	ensures b::buf<s,f,0>;
@@ -74,3 +80,4 @@ void test(int x, int y, int z)
 	h = queuepop(b); 
     //assert h = z;
 }
+*/
