@@ -1,8 +1,6 @@
 /**
  VSTTE 2012 Competition
  Problem 5 : Breadth First Search
- 
- Let us fix the terminology 
  */
 
 relation allzero(int[] A, int i, int j) == forall(k : k < i | k > j | A[k] = 0).
@@ -11,16 +9,16 @@ relation has_path(int[,] A, int n, int s, int t) ==
 	(s = t 
 	| exists(i : 0 <= i < n & has_path(A,n,s,i) & A[i,t] != 0)).
 
-relation has_bounded_length_path_via(int[,] A, int n, int s, int t, int k, int v) ==
+relation has_bounded_length_v_path(int[,] A, int n, int s, int t, int k, int v) ==
 	(k = 0 & s = t
-	| k > 0 & (has_bounded_length_path_via(A,n,s,t,k-1,n) 
-			| exists(i : 0 <= i < v & has_exact_length_path_via(A,n,s,i,k-1,n) & A[i,t] != 0))).
+	| k > 0 & (has_bounded_length_v_path(A,n,s,t,k-1,n) 
+			| exists(i : 0 <= i < v & has_exact_length_v_path(A,n,s,i,k-1,n) & A[i,t] != 0))).
 
 relation has_bounded_length_path(int[,] A, int n, int s, int t, int k) ==
 	(k = 0 & s = t 
-	| k > 0 & has_bounded_length_path_via(A,n,s,t,k,n)). 
+	| k > 0 & has_bounded_length_v_path(A,n,s,t,k,n)). 
 
-relation has_exact_length_path_via(int[,] A, int n, int s, int t, int k, int v) ==
+relation has_exact_length_v_path(int[,] A, int n, int s, int t, int k, int v) ==
 	(k = 0 & s = t
 	| k > 0 & exists(i : 0 <= i < v & has_exact_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
 
@@ -28,70 +26,61 @@ relation has_exact_length_path(int[,] A, int n, int s, int t, int k) ==
 	(k = 0 & s = t
 	| k > 0 & exists(i : 0 <= i < n & has_exact_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
 
-relation shortest_distance_via(int[,] A, int n, int s, int t, int d, int v) ==
-	has_exact_length_path_via(A, n, s, t, d, v) & 
-	!(has_bounded_length_path_via(A, n, s, t, d-1, v)).
+relation v_shortest_distance(int[,] A, int n, int s, int t, int d, int v) ==
+	has_exact_length_v_path(A, n, s, t, d, v) & 
+	!(has_bounded_length_v_path(A, n, s, t, d-1, v)).
 	
 
 relation shortest_distance(int[,] A, int n, int s, int t, int d) ==
 	(d = 0 & s = t
-	| d > 0 & shortest_distance_via(A, n, s, t, d, n)).
+	| d > 0 & v_shortest_distance(A, n, s, t, d, n)).
 
 relation all_has_bounded_length_path(int[,] A, int n, int s, int d, int[] V) ==
 	forall(i : i < 0 | i >= n | 
 			V[i] = 0 & !(has_bounded_length_path(A,n,s,i,d)) |
 			V[i] != 0 & has_bounded_length_path(A,n,s,i,d)).
 			
-relation all_has_bounded_length_path_via(int[,] A, int n, int s, int d, int[] V, int v) ==
+relation all_has_bounded_length_v_path(int[,] A, int n, int s, int d, int[] V, int v) ==
 	forall(i : i < 0 | i >= n | 
-			V[i] = 0 & !(has_bounded_length_path_via(A,n,s,i,d,v)) |
-			V[i] != 0 & has_bounded_length_path_via(A,n,s,i,d,v)).
+			V[i] = 0 & !(has_bounded_length_v_path(A,n,s,i,d,v)) |
+			V[i] != 0 & has_bounded_length_v_path(A,n,s,i,d,v)).
 			
-relation some_has_bounded_length_path_via(int[,] A, int n, int s, int d, int[] V, int v, int w1, int w2) ==
+relation some_has_bounded_length_v_path(int[,] A, int n, int s, int d, int[] V, int v, int w1, int w2) ==
 	forall(i : i < w1 |i >= w2 | 
-			V[i] = 0 & !(has_bounded_length_path_via(A,n,s,i,d,v)) |
-			V[i] != 0 & has_bounded_length_path_via(A,n,s,i,d,v)).
+			V[i] = 0 & !(has_bounded_length_v_path(A,n,s,i,d,v)) |
+			V[i] != 0 & has_bounded_length_v_path(A,n,s,i,d,v)).
 
 relation all_has_shortest_distance(int[,] A, int n, int s, int d, int[] C) ==
 	forall(i : i < 0 | i >= n | 
 			C[i] = 0 & !(shortest_distance(A,n,s,i,d)) |
 			C[i] != 0 & shortest_distance(A,n,s,i,d)).
 
-relation all_has_shortest_distance_via(int[,] A, int n, int s, int k, int[] N, int v) ==
+relation all_has_v_shortest_distance(int[,] A, int n, int s, int k, int[] N, int v) ==
 	forall(i : i < 0 | i >= n | 
-			N[i] = 0 & !(shortest_distance_via(A,n,s,i,k,v)) |
-			N[i] != 0 & shortest_distance_via(A,n,s,i,k,v)).
+			N[i] = 0 & !(v_shortest_distance(A,n,s,i,k,v)) |
+			N[i] != 0 & v_shortest_distance(A,n,s,i,k,v)).
 
-relation some_has_shortest_distance_via(int[,] A, int n, int s, int d, int[] N, int v, int w1, int w2) ==
+relation some_has_v_shortest_distance(int[,] A, int n, int s, int d, int[] N, int v, int w1, int w2) ==
 	forall(i : i < w1 | i >= w2 | 
-				N[i] = 0 & !(shortest_distance_via(A,n,s,i,d,v)) |
-				N[i] != 0 & shortest_distance_via(A,n,s,i,d,v)).
+				N[i] = 0 & !(v_shortest_distance(A,n,s,i,d,v)) |
+				N[i] != 0 & v_shortest_distance(A,n,s,i,d,v)).
 
 // THEOREMS REQUIRED FOR PRE-CONDITION I.E. LOOP INVARIANTS
 
 // AXIOM 1
-axiom has_bounded_length_path_via(A,n,s,w,d+1,v) & 
-		some_has_shortest_distance_via(A,n,s,d+1,N,v+1,0,w) & 
-		some_has_shortest_distance_via(A,n,s,d+1,N,v,w,n) & 
-		0 <= w < n ==> some_has_shortest_distance_via(A,n,s,d+1,N,v+1,0,w+1).
+axiom has_bounded_length_v_path(A,n,s,w,d+1,v) & 
+		some_has_v_shortest_distance(A,n,s,d+1,N,v+1,0,w) & 
+		some_has_v_shortest_distance(A,n,s,d+1,N,v,w,n) & 
+		0 <= w < n ==> some_has_v_shortest_distance(A,n,s,d+1,N,v+1,0,w+1).
 
 // AXIOM 2
-axiom !(shortest_distance(A,n,s,v,d)) & all_has_bounded_length_path_via(A,n,s,d+1,V,v) ==> all_has_bounded_length_path_via(A,n,s,d+1,V,v+1).
+axiom !(shortest_distance(A,n,s,v,d)) & all_has_bounded_length_v_path(A,n,s,d+1,V,v) ==> all_has_bounded_length_v_path(A,n,s,d+1,V,v+1).
 
 // AXIOM 3
-axiom !(shortest_distance(A,n,s,v,d)) & all_has_shortest_distance_via(A,n,s,d+1,N,v) ==> all_has_shortest_distance_via(A,n,s,d+1,N,v+1).
+axiom !(shortest_distance(A,n,s,v,d)) & all_has_v_shortest_distance(A,n,s,d+1,N,v) ==> all_has_v_shortest_distance(A,n,s,d+1,N,v+1).
 
 // AXIOM 4
-axiom shortest_distance(A,n,s,v,d) & A[v,w] != 0 & !(has_bounded_length_path_via(A,n,s,w,d,v)) ==> shortest_distance_via(A,n,s,w,d+1,v+1).
-
-// AXIOM 5 - verified
-axiom all_has_bounded_length_path_via(A,n,s,d,V,n) ==> all_has_bounded_length_path(A,n,s,d,V).
-
-// AXIOM 6 - verified
-axiom shortest_distance_via(A,n,s,t,d,v) ==> has_bounded_length_path_via(A,n,s,t,d,v+1).
-
-// AXIOM 7 - verified
-axiom all_has_shortest_distance_via(A,n,s,d,N,n) ==> all_has_shortest_distance(A,n,s,d,N).
+axiom shortest_distance(A,n,s,v,d) & A[v,w] != 0 & !(has_bounded_length_v_path(A,n,s,w,d,v)) ==> v_shortest_distance(A,n,s,w,d+1,v+1).
 
 int bfs(int[,] A, int n, int source, int target)
 	requires 0 <= source < n & 0 <= target < n
@@ -149,8 +138,8 @@ int bfs_loop2(int[,] A, int n, int source, int target, int d,
 	requires 0 <= source < n & 0 <= target < n & d >= 0 & 0 <= v <= n &
 			dom(V,0,n-1) & dom(C,0,n-1) & dom(N,0,n-1) &
 			all_has_shortest_distance(A,n,source,d,C) &
-			all_has_bounded_length_path_via(A,n,source,d+1,V,v) &
-			all_has_shortest_distance_via(A,n,source,d+1,N,v)
+			all_has_bounded_length_v_path(A,n,source,d+1,V,v) &
+			all_has_v_shortest_distance(A,n,source,d+1,N,v)
 	ensures res < 0 & all_has_bounded_length_path(A,n,source,d+1,V') & 
 			all_has_shortest_distance(A,n,source,d+1,N') & 
 			dom(V',0,n-1) & dom(N',0,n-1) | 
@@ -171,14 +160,14 @@ void bfs_loop3(int[,] A, int n, int source, int target, int d,
 							ref int[] V, int[] C, ref int[] N, int v, int w)
 	requires 0 <= source < n & 0 <= target < n & d >= 0 & 0 <= v < n & 0 <= w <= n & 
 			dom(V,0,n-1) & dom(C,0,n-1) & dom(N,0,n-1) & 
-			some_has_bounded_length_path_via(A,n,source,d+1,V,v+1,0,w) &
-			some_has_bounded_length_path_via(A,n,source,d+1,V,v,w,n) &
+			some_has_bounded_length_v_path(A,n,source,d+1,V,v+1,0,w) &
+			some_has_bounded_length_v_path(A,n,source,d+1,V,v,w,n) &
 			all_has_shortest_distance(A,n,source,d,C) &
-			some_has_shortest_distance_via(A,n,source,d+1,N,v+1,0,w) &
-			some_has_shortest_distance_via(A,n,source,d+1,N,v,w,n) &
+			some_has_v_shortest_distance(A,n,source,d+1,N,v+1,0,w) &
+			some_has_v_shortest_distance(A,n,source,d+1,N,v,w,n) &
 			shortest_distance(A,n,source,v,d)
-	ensures all_has_bounded_length_path_via(A,n,source,d+1,V',v+1) &
-			all_has_shortest_distance_via(A,n,source,d+1,N',v+1) &
+	ensures all_has_bounded_length_v_path(A,n,source,d+1,V',v+1) &
+			all_has_v_shortest_distance(A,n,source,d+1,N',v+1) &
 			dom(V',0,n-1) & dom(N',0,n-1);
 {
 	if (w < n) {
