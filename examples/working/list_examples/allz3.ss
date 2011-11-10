@@ -13,7 +13,8 @@ ll<L1> == self=null & L1=[||]
 lz<L1> == self=null & L1=[||]
 	or self::node<0, r> * r::lz<L2> & L1=0:::L2;
 
-coercion self::ll<L> & alln(0, L) <-> self::lz<L>;
+lemma self::ll<L> & alln(0, L) <-> self::lz<L>;
+lemma self::ll<L> & alln(0, L) <-> self::lz<L>;
 
 /* append two singly linked lists */
 void append(node x, node y)

@@ -385,12 +385,6 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
      Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
-  (* andreeac - for debugging - to delet: *)
-  let length_ctx ctx = match ctx with
-    | CF.FailCtx _ -> 0
-    | CF.SuccCtx ctx0 -> List.length ctx0 in
-  (* let _ = print_endline ( "\n Sleekengine.ml, run_entail_check 1:" ^ (string_of_int (length_ctx rs1)) ^" \n\n\t ############reidues#######" ^ (Cprinter.string_of_list_context rs1) ^ "\n ############END#######") in  *)
-  (* to delete *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)

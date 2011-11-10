@@ -13,7 +13,8 @@ sll1<S> == self = null & S = {}
 	or self::node<v2, r> * r::sll1<S1> & S = union(S1, {v2}) & 
 	forall(x: (x notin S1 | v2 <= x));
 
-coercion self::sll1<S> -> self::ll1<S>;
+lemma self::sll1<S> -> self::ll1<S>;
+lemma self::sll1<S> -> self::ll1<S>;
 
 bool bubble(node xs)
 	requires xs::ll1<S> & S != {}
@@ -36,7 +37,8 @@ bool bubble(node xs)
 			flag = true; 
 
 			/*if (!tmp) {
-				if (xs.next.next != null) { // this is the coercion step
+				if (xs.next.next != null) { // this is the lemma step
+				if (xs.next.next != null) { // this is the lemma step
 					id1(xs.next.next);
 				}
 			}*/

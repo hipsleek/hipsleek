@@ -739,8 +739,8 @@ let check_coercion (prog : prog_decl) =
     let rs, prf = heap_entail_init prog false (CF.SuccCtx [ctx]) c_rhs pos in
     let _ = PTracer.log_proof prf in
     (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
-    if (CF.isFailCtx rs) then print_string ("\nCoercion " ^ coer_name ^ " is not valid\n")
-    else print_string ("\nCoercion  " ^ coer_name ^ " is valid\n")
+    if (CF.isFailCtx rs) then print_string ("\nLemma " ^ coer_name ^ " is not valid\n")
+    else print_string ("\nLemma  " ^ coer_name ^ " is valid\n")
   in
     (*TODO: find and unfold all instances of the head predicate in both sides *)
     (*let unfold_head_pred hname f0 : int = *)
@@ -976,7 +976,7 @@ let check_prog (prog : prog_decl) =
     raise Not_found);*) in 
     if !Globals.check_coercions then 
       begin
-      print_string "Checking coercions... ";
+      print_string "Checking lemmas... ";
       (* ignore (check_coercion prog); *)
       check_coercion prog;
       print_string "DONE.\n"

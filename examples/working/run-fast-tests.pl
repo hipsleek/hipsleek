@@ -774,7 +774,7 @@ sub sleek_process_file  {
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
       }
-      if ($script_arguments=~"--disable-check-coercions"){
+      if ($script_arguments=~"--disable-check-lemmas"){
           $param =~ s/sleek/sleek_wo_lemma_check/;
       }
       $t_list = $sleek_files{$param};
