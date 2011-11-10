@@ -28,19 +28,8 @@ tlseg<p,f,d,n> ==
   or self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2
   inv self!=null & n>=1 & f>=d ;
 
-// pred specifies a list of labels that would never
-// be able to generate a binary tree of upto that size
-// this predicate is expected to be the complement of tlseg
-// which is supposed to give our completeness result
-negtlseg<p,f,d,n> ==
-  self::node<f,p> & n=1 & f>d
-  or self::negtlseg<r,f,d+1,m> & m<n 
-  or self::tlseg<r,f,d+1,n2> * r::negtlseg<p,_,d+1,n3> & n>=n2+n3
-  inv self!=null & n>=1 & f>d; 
-
 // a provable lemma that tlseg gives at least one node
-//coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
-
+// coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
 //coercion self::negtlseg<p,f,d,n> -> self::node<f,q> ;
 
 bool is_empty(node x)
@@ -54,8 +43,6 @@ int hd(node x)
     requires x::node<d,_>@I
     ensures res=d;
     requires x::tlseg<p,f,d,n>@I 
-    ensures res=f;
-    requires x::negtlseg<p,f,d,n>@I 
     ensures res=f;
 {
   return x.val;
@@ -74,21 +61,20 @@ tree build_rec (int d, ref node s)
   s!=null -> 
       requires s::tlseg<p,_,d,n>
       ensures res::treelseg<s,s',d,n> & s' = p & flow __norm;
-      requires s::negtlseg<p,_,d,_> 
-      ensures true & flow exception;
   }
 {
   tree ll,rr;
 	if (is_empty(s)) raise new exception();
   unfold s;
   int h = hd(s);
-  if (h < d) raise new exception();        
+  //if (h < d) raise new exception();        
   if (h == d) {
-      dprint; assume false;
       pop(s);        
 	  return null;
 	}
-  assume false;
+  // why are there so many unnecessary states
+  // here. Is it due to the conditional?
+  dprint;
   ll = build_rec(d+1, s);
   rr = build_rec(d+1, s);
   return new tree (ll,rr);
@@ -100,8 +86,6 @@ tree build(node s)
   s!=null ->   
       requires s::tlseg<null,_,0,n>
       ensures res::treelseg<s, null, 0, n>  & flow __norm; 
-      requires s::negtlseg<p,_,0,_> 
-      ensures true & flow exception ; 
 }
 {
 	tree t = build_rec(0, s);
