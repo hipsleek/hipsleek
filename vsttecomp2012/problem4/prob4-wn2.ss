@@ -61,11 +61,10 @@ void pop(ref node x)
 //coercion "lsegbrk" self::lseg<p,n> & n=a+b & a>0 & b>0 & n>=2 -> self::lseg<q,a> * q::lseg<p,b>;
 
 tree build_rec (int d, ref node s)
- requires s::lseg<null,n>
+ requires s::lseg<null,n>@I
  case {
   n=0 -> ensures true & flow exception;
-  n!=0 -> ensures  res::treelseg<s, pp, d, m> 
-                         * pp::lseg<null,n-m> & s'=pp & flow __norm //'
+  n!=0 -> ensures  res::treelseg<s, pp, d, m>@I * pp::lseg<null,n-m>@I & s'=pp & flow __norm //'
                    or true & flow exception ; 
   }
 {
@@ -98,4 +97,10 @@ tree build(node s)
 		return t;
 	}
 }
+
+tree harness1(node s1)
+	requires s1::node<1,s2>@I*s2::node<3,s3>@I*s3::node<3,s4>@I*s4::node<2,null>@I ensures res::treelseg<s1,null,0,4>@I
+	{
+		return build(s1);
+	}
 
