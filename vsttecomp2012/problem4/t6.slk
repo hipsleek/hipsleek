@@ -9,29 +9,33 @@ data tree {
 }.
 
 
-treelseg<t,p,d,n> ==
+pred treelseg<t,p,d,n> ==
      t::node<d,p> & self=null & n=1
   or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
-  inv n>=1 ;
+  inv n>=1 .
   
-tlseg<p,d,n> ==
+pred tlseg<p,d,n> ==
      self::node<d,p> & n=1 
   or self::tlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2 
-  inv self!=null & n>=1;
+  inv self!=null & n>=1.
 
-coercion self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d.
+lemma self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d.
 
 
-checkentail s1::node<1,s2>*s2::node<3,s3>*s3::node<3,s4>*s4::node<2,null>
-    |- res::treelseg<s1,null,0,4>.
+checkentail s1::node<1,s2> & rs=null|- rs::tlseg<s2,1,1>.
+checkentail s2::node<3,s3> & rs=null|- rs::tlseg<s3,3,1>.
+checkentail s3::node<3,s4> & rs=null|- rs::tlseg<s4,3,1>.
+checkentail s3::node<3,s4> & rs=null|- rs::tlseg<s3,3,1>.
+
+checkentail s1::node<1,s2>*s2::node<3,s3>*s3::node<3,s4>*s4::node<2,null> & rs=null|- rs::treelseg<s1,null,0,4>.
   
   
 //lemma self::tlseg<p,d,n> -> self::node<dd,q> * q::lseg<p,n-1> & dd>=d.
 
 //checkentail r::tlseg<p1,d1,n> |- r::node<d,p>.
  
- checkentail r::tlseg<p1,d1,n> |- r::node<d,p>.
+// checkentail r::tlseg<p1,d1,n> |- r::node<d,p>.
 //checkentail r::node<d,p> |- r::tlseg<p1,d1,n>.
 print residue.
   

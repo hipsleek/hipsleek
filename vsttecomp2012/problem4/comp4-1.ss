@@ -74,11 +74,11 @@ tree build(node s)
 	else return t;
 }
 
-
+/*
 tree harness1(node s1)
 	requires s1::node<1,s2>*s2::node<3,s3>
       *s3::node<3,s4>*s4::node<2,null>
   ensures res::treelseg<s1,null,0,4>;
 {
 	return build(s1);
-}
+}*/
