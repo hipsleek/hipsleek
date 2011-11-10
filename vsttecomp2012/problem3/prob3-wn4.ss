@@ -71,10 +71,6 @@ void queuepush(ring b, int x)
 
 // assumes that b is non-empty
 int queuepop(ring b)
-/*
-	requires b::buf<s,f,l> & l>0
-    ensures b::buf<s,_,l-1>; 
-*/
   requires b::buf<s,f,l,a> & l>0
     case {
        f=s-1 -> 
@@ -108,16 +104,6 @@ void test(int x, int y, int z)
     assert h' = y';
 	h = queuepop(b); 
     assert h' = z';
-}
-
-void test2(int x, int y, int z) 
-  requires true
-  ensures true;
-{
-	ring b = create(2);
-	queuepush(b, x);
-	int h = queuepop(b); 
-    assert h' = x';
 }
 
 
