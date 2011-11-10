@@ -23,7 +23,7 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+	check_specs_a prog proc ctx spec_list e0
   (*Gen.Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
@@ -48,12 +48,12 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		      | _ -> None
 		    in
 		    let new_c1 = CP.transform_formula (true,true,f_formula,f_b_formula,f_exp) c1 in
-		    (*let _ = print_string ("c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in
-		      let _ = print_string ("new c1: " ^ (Cprinter.string_of_pure_formula new_c1) ^ "\n") in*)
+		let _ = print_string ("c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in
+		let _ = print_string ("new c1: " ^ (Cprinter.string_of_pure_formula new_c1) ^ "\n") in
 		    
 		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in  
 			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
-			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+			let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
 			let r = check_specs_a prog proc nctx c2 e0 in
 			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 			r) b.Cformula.formula_case_branches
@@ -108,7 +108,12 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   List.for_all do_spec_verification spec_list
 
 and check_exp prog proc ctx e0 label =
-Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+  Gen.Debug.no_3 "check_exp"
+	(fun proc -> proc.proc_name)
+	(Cprinter.string_of_list_failesc_context)
+	(Cprinter.string_of_exp)
+	(Cprinter.string_of_list_failesc_context)
+	(fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
@@ -442,6 +447,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			    let _ = String.blit mn 0 new_mn 0 l in
 			    let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
 			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
+
+			  (*let _ = print_string ("\ncheck_pre_post: sctx: " ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
 			  let sctx = List.map
 				(fun fctx -> let (lb,estk,lbctx) = fctx in
 				let nlbctx = List.map
@@ -449,6 +456,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				  let nctx = CF.transform_context
 					(fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst}) ctx in (pt,nctx)) lbctx in
 				(lb,estk,nlbctx)) sctx in
+			  (*let _ = print_string ("\ncheck_pre_post: sctx': " ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
 
 			  
 			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec1: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
@@ -472,7 +480,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                 (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;
-	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+			  (*let _ = print_string (to_print ^ "\n") in*)
+			  let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
             (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
 		      let _ = PTracer.log_proof prf in
               if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
@@ -576,18 +585,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
        else *)	    
     let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)
-        
+(*        
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let ctx = list_partial_context_and_unsat_now prog ctx in *)
   let _ = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2  
+  Gen.Debug.loop_2_no "check_post" Cprinter.string_of_pos pr2 pr2  
       (fun _ _ -> 
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)
           r ) pos ctx
-
+*)
+and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+  let pr = pr_list Cprinter.string_of_partial_context in
+  Gen.Debug.no_2 "check_post" pr Cprinter.string_of_formula (fun _ -> "?")
+	(fun ctx post -> check_post_x prog proc ctx post pos pid) ctx post
+	  
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
   (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)
@@ -735,34 +749,52 @@ let check_data (prog : prog_decl) (cdef : data_decl) =
   List.map (check_proc_wrapper prog) cdef.data_methods
 
 let check_coercion (prog : prog_decl) =
-  let check_entailment c_lhs c_rhs =
+  let check_entailment c_lhs c_rhs coer_name =
     let pos = CF.pos_of_formula c_lhs in
     let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) pos) c_lhs pos in
     let rs, prf = heap_entail_init prog false (CF.SuccCtx [ctx]) c_rhs pos in
     let _ = PTracer.log_proof prf in
-      (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
-      if not(CF.isFailCtx rs) then begin
-	Error.report_error { Error.error_loc = pos;
-			     Error.error_text = "coercion is not valid" }
-      end in
+    (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
+    if (CF.isFailCtx rs) then print_string ("\nCoercion " ^ coer_name ^ " is not valid\n")
+    else print_string ("\nCoercion  " ^ coer_name ^ " is valid\n")
+  in
     (*TODO: find and unfold all instances of the head predicate in both sides *)
     (*let unfold_head_pred hname f0 : int = *)
-  let check_left_coercion coer =
-    let pos = CF.pos_of_formula coer.coercion_head in
-    let lhs = unfold_nth 9 (prog,None) coer.coercion_head (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let rhs = unfold_nth 10 (prog,None) coer.coercion_body (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-      check_entailment lhs rhs in
-    (* check_entailment lhs coer.coercion_body in *)
-  let check_right_coercion coer =
-    let pos = CF.pos_of_formula coer.coercion_head in
-    let rhs = unfold_nth 11 (prog,None) coer.coercion_head (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = unfold_nth 12 (prog,None) coer.coercion_body (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-      check_entailment lhs rhs
-	(* check_entailment coer.coercion_body rhs *)
-  in
-    ignore (List.map (fun coer -> check_left_coercion coer) prog.prog_left_coercions);
-    List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 
+  let check_entailment c_lhs c_rhs coer_name =
+    let pr = Cprinter.string_of_formula in
+    Gen.Debug.no_2 "check_entailment" pr pr
+        (fun _ -> "?") (fun _ _ -> check_entailment c_lhs c_rhs coer_name ) c_lhs c_rhs in
+
+  let prepare_coer lhs rhs coer = 
+    let pos = CF.pos_of_formula coer.coercion_head in
+    let lhs = unfold_nth 9 (prog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+    let lhs = CF.add_original lhs true in
+    let lhs = CF.reset_origins lhs in
+    let rhs = CF.add_original rhs true in
+    let rhs = CF.reset_origins rhs in
+    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
+    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.coercion_name), Unprimed)) :: [] in
+    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
+    let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
+    (lhs, rhs) in
+
+  let check_left_coercion coer =
+    let (lhs,rhs) = prepare_coer coer.coercion_head coer.coercion_body coer in
+    check_entailment lhs rhs coer.coercion_name in
+  let check_left_coercion coer =
+    Gen.Debug.no_1 "check_left_coercion" Cprinter.string_of_coercion 
+        (fun _ -> "?") check_left_coercion coer in
+
+  let check_right_coercion coer =
+    let (lhs,rhs) = prepare_coer coer.coercion_body coer.coercion_head coer in
+    check_entailment lhs rhs coer.coercion_name in
+  let check_right_coercion coer =
+    Gen.Debug.no_1 "check_right_coercion" Cprinter.string_of_coercion 
+        (fun _ -> "?") check_right_coercion coer in
+
+  List.map (fun coer -> check_left_coercion coer) prog.prog_left_coercions;
+  List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 
 let rec size (expr : exp) =
   match expr with
@@ -873,10 +905,10 @@ module GSN = Graph.Oper.Neighbourhood(GS)
 module GSC = Graph.Components.Make(GS)
 module GSP = Graph.Path.Check(GS)
 
-  
+(* TODO : This printing of check_prog needs to be tidied *)
 let build_state_trans_graph ls =
-  (*print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");*)
+  print_string ("\ncheck_prog: call graph:\n" ^
+	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.variance_graph) ^ "\n");
 
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
@@ -929,6 +961,7 @@ let scc_numbering g =
   
 
 let variance_numbering ls g =
+  if !Globals.term_auto_number then
   let f = scc_numbering g in
   let nf = fun v -> if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
   let helper ele =
@@ -947,6 +980,7 @@ let variance_numbering ls g =
 			          else Some (nf es.CF.es_var_ctx_rhs)}
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
+  else ls
 		
 let check_prog (prog : prog_decl) =
 	(* An Hoa *)
@@ -956,11 +990,13 @@ let check_prog (prog : prog_decl) =
 (*  else print_string "bactracke inactive";
     (print_string "raising\n";
     raise Not_found);*) in 
- if !Globals.check_coercions then begin
-    print_string "Checking coercions... ";
-    ignore (check_coercion prog);
-    print_string "DONE."
-  end else begin
+    if !Globals.check_coercions then 
+      begin
+      print_string "Checking coercions... ";
+      (* ignore (check_coercion prog); *)
+      check_coercion prog;
+      print_string "DONE.\n"
+      end;
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
 
@@ -968,27 +1004,26 @@ let check_prog (prog : prog_decl) =
 	let cl = variance_numbering !Solver.var_checked_list g in
 	List.iter (fun (es,e) -> heap_entail_variance prog es e) cl
 	    
-    (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
-      let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
-      let num_list = numbers (List.length filtered_proc) in
-      let prog_proc_decls_num = if !sort_input then
-      List.map2 (fun a b -> (a,b)) (List.sort compare_proc_decl filtered_proc) num_list
-      else 
-      List.map2 (fun a b -> (a,b)) filtered_proc num_list in
-      if (!num_para = 0) then
-      ignore(Paralib1.map_para init_files (check_proc_wrapper_map prog) prog_proc_decls_num)
-      else if (!num_para > 1) then
-      if !Tpdispatcher.external_prover then
-      ignore(Paralib1v2.map_para_net init_files (check_proc_wrapper_map_net prog) prog_proc_decls_num !num_para)
-      else
-      ignore(Paralib1v2.map_para init_files (check_proc_wrapper_map prog) prog_proc_decls_num !num_para)
-      else if (!num_para = 1) then begin
-      ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-      if !webserver then Net.IO.write_job_web (!Tpdispatcher.Netprover.out_ch) (-1) "" "" 1 else ()
-      end
-      else
-      () *)
+(*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
+  let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
+  let num_list = numbers (List.length filtered_proc) in
+  let prog_proc_decls_num = if !sort_input then
+  List.map2 (fun a b -> (a,b)) (List.sort compare_proc_decl filtered_proc) num_list
+  else 
+  List.map2 (fun a b -> (a,b)) filtered_proc num_list in
+  if (!num_para = 0) then
+  ignore(Paralib1.map_para init_files (check_proc_wrapper_map prog) prog_proc_decls_num)
+  else if (!num_para > 1) then
+  if !Tpdispatcher.external_prover then
+  ignore(Paralib1v2.map_para_net init_files (check_proc_wrapper_map_net prog) prog_proc_decls_num !num_para)
+  else
+  ignore(Paralib1v2.map_para init_files (check_proc_wrapper_map prog) prog_proc_decls_num !num_para)
+  else if (!num_para = 1) then begin
+  ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
+  if !webserver then Net.IO.write_job_web (!Tpdispatcher.Netprover.out_ch) (-1) "" "" 1 else ()
   end
+  else
+  () *)
 
 let check_prog (prog : prog_decl) =
   Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 

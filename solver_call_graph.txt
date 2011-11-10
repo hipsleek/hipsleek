@@ -1,49 +1,60 @@
-  heap_entail_struc_list_failesc_context_init (*called in typechecker -> *)
-    |->heap_entail_failesc_prefix_init 
-        |->heap_entail_agressive_prunning  
-            |-> heap_entail_struc_list_failesc_context (*called in typechecker *)
-                 |-> heap_entail_struc_failesc_context  (*calls f*)
-                      |->heap_entail_one_context_struc_nth
-                          |-> heap_entail_one_context_struc_x
-                               |-> heap_entail_after_sat_struc
-                                    |-> heap_entail_conjunct_lhs_struc
-                                         |-> heap_entail_one_context
-                                              |-> heap_entail_after_sat
-                                                   |-> heap_entail_conjunct_lhs = heap_entail_conjunct_lhs_x
-                                                        |-> heap_entail_conjunct
-                                                             |-> heap_entail_empty_rhs_heap = heap_entail_empty_rhs_heap_x
-                                                             |-> heap_entail_non_empty_rhs_heap
+heap_entail_struc_list_failesc_context_init (* called in Typechecker.check_exp *) (* f = heap_entail_one_context_struc_nth *)
+	|-> heap_entail_failesc_prefix_init 
+		|-> heap_entail_agressive_prunning  
+			|-> heap_entail_struc_list_failesc_context (* called in Typechecker *)
+				|-> heap_entail_struc_failesc_context  (* calls f *)
+					|-> heap_entail_one_context_struc_nth
+						|-> heap_entail_one_context_struc_x
+							|-> heap_entail_after_sat_struc (* OCtx *)
+								|-> heap_entail_conjunct_lhs_struc (* work on struc_formula *)
+									|-> heap_entail_one_context
+										|-> heap_entail_after_sat (* OCtx *)
+											|-> heap_entail_conjunct_lhs = heap_entail_conjunct_lhs_x
+												|-> heap_entail_conjunct
+													|-> heap_entail_empty_rhs_heap = heap_entail_empty_rhs_heap_x
+														|-> heap_entail_build_mix_formula_check
+                                                    |-> heap_entail_non_empty_rhs_heap
                                                              
-  heap_entail_list_failesc_context_init (*called in typechecker*)
-   |->heap_entail_failesc_prefix_init 
-       |->(*see on top*) 
-  
-  heap_entail_struc_list_partial_context_init (*seems to never be called*)
-   |-> heap_entail_prefix_init (f= heap_entail_one_context_struc_nth)
-        |-> heap_entail_struc_list_partial_context
-             |->heap_entail_struc_partial_context (*calls f*)
-                 |-> heap_entail_one_context_struc_nth 
-                      |->(*see on top*)
+heap_entail_list_failesc_context_init (* called in Typechecker.check_exp *)
+	|-> heap_entail_failesc_prefix_init 
+		|-> (*see on top*) 
+
+		
+heap_entail_struc_list_partial_context_init (*seems to never be called*)
+	|-> heap_entail_prefix_init (f= heap_entail_one_context_struc_nth)
+		|-> heap_entail_struc_list_partial_context
+			|-> heap_entail_struc_partial_context (*calls f*)
+				|-> heap_entail_one_context_struc_nth 
+					|-> (*see on top*)
              
-             
-  heap_entail_list_partial_context_init (*called in typechecker*)
-   |->heap_entail_agressive_prunning  
-       |-> heap_entail_prefix_init (*heap_entail_one_context_new*)
-            |-> heap_entail_struc_list_partial_context
-                 |->heap_entail_struc_partial_context (*calls f*)
-                     |-> heap_entail_one_context_new = heap_entail_one_context
-                          |-> (*see on top*)
-             
-  heap_entail_struc_init  (*called in sleek*)
-   |->heap_entail_agressive_prunning  
-       |-> heap_entail_struc
-            |-> heap_entail_one_context_struc_nth
-                 |-> (*see on top*)
-                 
-  heap_entail_one_context_struc = heap_entail_one_context_struc_x (*see on top*)
-  heap_entail_one_context_struc_debug = heap_entail_one_context_struc_x (*see on top*)
-      
-	heap_entail_init (*called astsimp,solver,typechecker*)
-   |-> heap_entail 
-        |-> heap_entail_one_context
-             |-> (*see on top*)
+
+heap_entail_list_partial_context_init (* called in check_post@Typechecker *)
+	|-> heap_entail_agressive_prunning 
+		|-> heap_entail_prefix_init (*called via crt_heap_entailer*)
+			|-> heap_entail_struc_list_partial_context
+				|-> heap_entail_struc_partial_context (*calls f*)
+					|-> heap_entail_one_context_new = heap_entail_one_context
+						|-> (*see on top*)
+
+						
+heap_entail_struc_init  (* called in Sleek *)
+	|-> heap_entail_agressive_prunning  
+		|-> heap_entail_struc
+			|-> heap_entail_one_context_struc_nth
+				|-> (*see on top*)
+
+				
+heap_entail_init (*called astsimp,solver,typechecker*)
+	|-> heap_entail 
+		|-> heap_entail_one_context
+			|-> (*see on top*)
+
+			
+xpure
+	|-> xpure_symbolic
+	|-> xpure_mem_enum
+
+	
+xpure_heap
+	|-> xpure_heap_symbolic
+	|-> xpure_heap_mem_enum

@@ -25,7 +25,8 @@ and prog_decl = {
 	mutable prog_left_coercions : coercion_decl list;
 	mutable prog_right_coercions : coercion_decl list; }
 	
-and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
+and prog_or_branches = (prog_decl * 
+    ((MP.mix_formula * ((string*P.formula)list)*(ident * (P.spec_var list))) option) )
 	
 and data_decl = { 
     data_name : ident;
@@ -52,7 +53,7 @@ and view_decl = {
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
-    view_formula : F.struc_formula;
+    view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
     mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
@@ -115,7 +116,10 @@ and coercion_decl = {
     coercion_type : coercion_type;
     coercion_name : ident;
     coercion_head : F.formula;
+    coercion_head_norm : F.formula;
     coercion_body : F.formula;
+    coercion_body_norm : F.struc_formula;
+    coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)
     (* coercion_head_exist : F.formula;   *)
@@ -143,7 +147,7 @@ and sharp_val =
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
-   exp_arrayat_array_name : ident; (* Name of the array *)
+   exp_arrayat_array_base : ident; (* Name of the array *)
    exp_arrayat_index : exp; (* Integer valued expression for the index *)
    exp_arrayat_pos : loc; } *)
 
@@ -269,8 +273,9 @@ and exp_var = { exp_var_type : typ;
     exp_var_name : ident;
     exp_var_pos : loc }
 
-(* An Hoa : Empty array - only for initialization purpose *)		
+(* An Hoa : Empty array - only for initialization purpose *)
 and exp_emparray = { exp_emparray_type : typ;
+	exp_emparray_dim : int;
     exp_emparray_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
@@ -359,6 +364,7 @@ let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -652,7 +658,7 @@ let rec type_of_exp (e : exp) = match e with
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
   | Null _ -> Some (Named "")
-	| EmptyArray b -> Some (Array (b.exp_emparray_type, None)) (* An Hoa *)
+	| EmptyArray b -> Some (Array (b.exp_emparray_type, b.exp_emparray_dim)) (* An Hoa *)
   | Print _ -> None
  (* | Return ({exp_return_type = t; 
 			 exp_return_val = _; 
@@ -701,6 +707,12 @@ let unmingle_name (m : ident) =
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] -> raise Not_found
+
+let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
+  let pr = fun x -> x in
+  let pr_out = !print_view_decl in
+  Gen.Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+
 
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
@@ -869,7 +881,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Assert _ -> []
 	(* AN HOA *)
 	(*| ArrayAt ({exp_arrayat_type = _;
-			 exp_arrayat_array_name = _;
+			 exp_arrayat_array_base = _;
 			 exp_arrayat_index = e;
 			 exp_arrayat_pos = _; }) -> callees_of_exp e*)
 	(*| ArrayMod ({exp_arraymod_lhs = l;

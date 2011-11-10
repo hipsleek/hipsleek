@@ -78,7 +78,6 @@ let parse_file (parse) (source_file : string) =
       raise t)
 
 let parse_file (parse) (source_file : string) =
-	(* let _ = print_endline "parse_file 2" in *)
   let rec parse_first (cmds:command list) : (command list)  =
     try 
        parse source_file 
@@ -190,9 +189,9 @@ let main () =
                      | PredDef pdef -> process_pred_def pdef
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
-                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | EntailCheck (iante, iconseq) ->  process_entail_check iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
-                     | LemmaDef ldef -> process_lemma ldef
+                     | LemmaDef ldef ->   process_lemma ldef
                      | PrintCmd pcmd -> process_print_command pcmd
                      | LetDef (lvar, lbody) -> put_var lvar lbody
                      | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
@@ -220,9 +219,12 @@ let main () =
 (* let main () =  *)
 (*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
-let _ = 
-  wrap_exists_implicit_explicit := false ;
+let _ =
+   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
+  let _ = Printexc.record_backtrace !Globals.trace_failure in
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
   if !Scriptarguments.print_version_flag then begin
 	print_version ()
   end else

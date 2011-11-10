@@ -21,7 +21,7 @@ let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
-let oc_maxVars = ref 256
+let oc_maxVars = ref 1024
 let print_pure = ref (fun (c:formula)-> " printing not initialized")
 
 let process = ref {name = "omega"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
@@ -119,7 +119,9 @@ and omega_of_formula f  = match f with
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "oc"(* TODO: fix oc path *)
+let omegacalc = "oc"
+let modified_omegacalc = "/usr/local/bin/oc5"
+(* TODO: fix oc path *)
 (*let omegacalc = "/home/locle/workspace/hg/error_specs/sleekex/omega_modified/omega_calc/obj/oc"*)
 
 let start_with str prefix =
@@ -145,7 +147,12 @@ let start() =
   if not !is_omega_running then begin
       print_string "Starting Omega... \n"; flush stdout;
       last_test_number := !test_number;
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
+	  let path_to_omega =
+		if Sys.file_exists modified_omegacalc then
+		  let _ = print_string "Using modified Omega... \n"; flush stdout; in
+		  modified_omegacalc
+		else omegacalc in
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", path_to_omega, [||]) set_process prelude in
       is_omega_running := true;
   end
 
@@ -260,7 +267,7 @@ let check_formula f timeout =
   end
 
 let check_formula i f timeout =
-  Gen.Debug.no_2 "check_formula" (fun x->x) string_of_float string_of_bool
+  Gen.Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
       check_formula f timeout
 
 (* linear optimization with omega *)
@@ -298,7 +305,7 @@ let rec send_and_receive f timeout=
 let send_and_receive f timeout =
   let pr x = x in
   let pr2 = Cpure.string_of_relation in
-  Gen.Debug.no_2 "send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
+  Gen.Debug.no_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
 
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
@@ -318,6 +325,7 @@ let get_vars_formula (p : formula):(bool * string list) =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
+  Gen.Profiling.inc_counter "stat_omega_count_sat";
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
@@ -364,6 +372,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
+	let _ = Gen.Profiling.inc_counter "stat_omega_count_valid" in
       let safe,pvars = get_vars_formula pe in
       if not safe then true else
         begin
@@ -403,8 +412,9 @@ let is_valid (pe : formula) timeout: bool =
         end
   end
 
-let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+let imply (ante : formula) (conseq : formula) (imp_no : string) (timeout:float) : bool =
   (*print_endline "LOCLE: imply";*)
+  Gen.Profiling.inc_counter "stat_omega_count_imply";
   incr test_number;
   (*
     let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in

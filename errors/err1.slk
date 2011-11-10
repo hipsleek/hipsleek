@@ -62,3 +62,5 @@ checkentail n = 1 |- n < 1.
 print residue.
 
 
+//checkentail n = 1 |- (exists m: m < 1).
+

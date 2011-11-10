@@ -1,0 +1,82 @@
+data node { int val ; node next }.
+
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<b, p> & b=n-1 ; 
+//   n!=0 ->  [] self::node<next = r> * r::lseg<n-1, p> ; 
+     }
+     inv n >= 0.
+
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+ EXISTS(p_109,Anon_110,r_111,b_112: self_lem_29::node<Anon_110,r_111>@M * 
+ NN r_111::lseg<b_112,p_109>@M[Orig] & n!=0 & b_112+1=n & p_109=p & n=b+a & 
+ 0<=a & 0<=b & {FLOW,(13,28)=__flow}) LOC: sleek7.slk_17_6
+ or true & n=0 & self_lem_29=p & n=0 & n=b+a & 0<=a & 0<=b &
+    {FLOW,(13,28)=__flow} LOC: sleek7.slk_17_6 |-  
+       EBase EXISTS(a_85,b_86,p_87,
+       r: NN self_lem_29::lseg<a_85,r>@M[Orig][LHSCase] * 
+       NN r::lseg<b_86,p_87>@M[Orig][LHSCase] & a_85=a & b_86=b & p_87=p &
+       {FLOW,(13,28)=__flow}) LOC: sleek7.slk_17_48
+*/
+
+/*
+checkentail 
+self = p & n = 0 & n=a+b & a,b>=0
+or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0 
+  |- (exists r: self::lseg<a, r> * r::lseg<b, p>).
+
+
+
+checkentail 
+self = p & n = 0 & n=a+b & a,b>=0
+or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0 
+  |- self::lseg<a, r> * r::lseg<b, p>.
+*/
+
+/*
+ true & self=p & n=0 & n=b+a & 0<=a & 0<=b &
+ {FLOW,(27,27)=__norm} LOC: sleek7.slk_21_0
+ or EXISTS(flted_22_204: self::node<Anon_202,r2>@M * 
+    NN r2::lseg<flted_22_204,p>@M[Orig][LHSCase] & flted_22_204+1=n & n=b+
+    a & 0<=a & 0<=b & {FLOW,(27,27)=__norm}) LOC: sleek7.slk_22_3 
+|-  EBase exists (Expl)[](Impl)[r](ex)[]EXISTS(a_221,b_222,
+       p_223: NN self::lseg<a_221,r>@M[Orig][LHSCase] * 
+       NN r::lseg<b_222,p_223>@M[Orig][LHSCase] & a_221=a & b_222=b & 
+       p_223=p & {FLOW,(27,27)=__norm}) LOC: sleek7.slk_23_5
+
+*/
+
+/*
+checkentail self = p & n = 0 & n=a+b & a,b>=0  |- self::lseg<a, r> * r::lseg<b, p>.
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0  
+|- self::lseg<a, r> * r::lseg<b, p>.
+
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0 & a=0 
+|- r::lseg<b, p> & self=r.
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0 & a!=0 
+|- self::node<next = r2> * r2::lseg<a - 1, r> * r::lseg<b, p> .
+
+checkentail self::node<next = r1> * r1::lseg<n - 1, p> & n = a + b & a,b >=0 & a!=0 
+|- self::node<next = r2> * r2::lseg<am, r> * r::lseg<b, p> & am+1=a.
+
+//checkentail x::lseg<n, p> & n > 1000 |- (exists r1: x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 1 & n2 <=2 ).
+*/
+/*
+checkentail 
+self = p & n = 0 & n=a+b & a,b>=0
+or self::node<next = r2> * r2::lseg<n - 1, p> & n = a + b & a,b >=0 
+  |- self::lseg<a, r> * r::lseg<b, p>.
+*/

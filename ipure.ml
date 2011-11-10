@@ -69,7 +69,7 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
-  | ArrayAt of ((ident * primed) * exp  * loc)      (* An Hoa : array access *)
+  | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -176,7 +176,9 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
-  | ArrayAt (a, i, _) -> Gen.BList.remove_dups_eq (=) (a :: (afv i)) (* An Hoa *)
+  | ArrayAt (a, i, _) -> 
+	let ifv = List.flatten (List.map afv i) in
+	Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -553,7 +555,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one (fr, t) a1, pos)
-  | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one (fr, t) ind), pos) (* An Hoa *)
+  | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one_list (fr, t) ind), pos) (* An Hoa *)
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
@@ -664,8 +666,8 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| Neq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| EqMax (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
 	| EqMin (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
-	| BagIn (_, e, _) -> find_lexp_exp e ls
-	| BagNotIn (_, e, _) -> find_lexp_exp e ls
+	| BagIn (v, e, loc) -> find_lexp_exp (Var (v, loc)) ls @ find_lexp_exp e ls
+	| BagNotIn (v, e, loc) -> find_lexp_exp (Var (v, loc)) ls @ find_lexp_exp e ls
 	| BagSub (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| BagMin _ | BagMax _ -> []
 	| ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -698,7 +700,7 @@ and find_lexp_exp (e: exp) ls =
 	| ListLength (e, _) -> find_lexp_exp e ls
 	| ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| ListReverse (e, _) -> find_lexp_exp e ls
-	| ArrayAt (_, e, _) -> find_lexp_exp e ls
+	| ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 ;;
 
 let rec break_pure_formula (f: formula) : b_formula list =
@@ -709,3 +711,28 @@ let rec break_pure_formula (f: formula) : b_formula list =
 	| Not (f, _, _) -> break_pure_formula f
 	| Forall (_, f, _, _) -> break_pure_formula f
 	| Exists (_, f, _, _) -> break_pure_formula f
+
+let rec contain_vars_exp (expr : exp) : bool =
+  match expr with
+  | Null _ -> false
+  | Var _ -> true
+  | IConst _ -> false
+  | FConst _ -> false
+  | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Div (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagUnion (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagIntersect (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagDiff (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | List (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | ListCons (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | ListHead (exp, _) -> contain_vars_exp exp
+  | ListTail (exp, _) -> contain_vars_exp exp
+  | ListLength (exp, _) -> contain_vars_exp exp
+  | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | ListReverse (exp, _) -> contain_vars_exp exp
+  | ArrayAt _ -> true 

@@ -2,20 +2,40 @@ data node { int val ; node next }.
 
 
 pred lseg<n, p> == self = p & n = 0
+         or self::node<next = p> & n=1
+         inv n >= 0.
+
+/*
+pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
          inv n >= 0.
+*/
+
+//checkentail x::node<1,y> * y::node<1,z> * z::node<2,null> |- x::lseg<3,null> .
+
+//checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
 
 //lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
-lemma self::lseg<n, p> <-> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+//lemma "G1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+//lemma "G2" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+//lemma "F1" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+// OK to fail
+
+lemma "F2" self::lseg<n, p> <-> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+//Lemma F2: Valid. --> Bug?
+
+//lemma "F3" (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2) -> self::lseg<n, p>.
+
 
 //lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
 
-
-checkentail x::lseg<n1, r> * r::node<_,p> |- x::lseg<u, p1> & p1=p.
+//checkentail x::lseg<n1, r> * r::node<_,p> |- x::lseg<u, p1> & p1=p.
 // true & r_810=p & r_810=p1 & u=0+1+n1 & {FLOW,(143,144)=__norm,}
 
-print residue.
+//print residue.
 /*
 Seems to have many redundant/repeated solutions, when
  exists a,b,r: used instead of exists a,b,r WHY?
@@ -24,5 +44,32 @@ Valid.
  b_221+a_220 & {FLOW,(143,144)=__norm,})
  true & r_330=p & r_330=p1 & u=0+1+n1 & {FLOW,(143,144)=__norm,}
  EXISTS(b_365,a_364: true & n1=b_365+a_364 & r_412=p & r_412=p1 & u=0+1+
- b_365+a_364 & {FLOW,(143,144)=__norm,})
+ b_365+a_364 & {FLOW,(143,144)=__norm,}) 
+*/
+/*
+checkentail  x::lseg<a, r> * r::lseg<b, p> & n=a+b+2 
+   |- x::lseg<n, p>.
+*/
+
+/*
+checkentail  
+   r::lseg<b, p> & n=a+b+2 & x = r & a = 0
+ or x::node<_,q> * q::lseg<a - 1, r> * r::lseg<b, p> & n=a+b+2 
+   |- x::lseg<n, p>.
+*/
+// manual proof fails for "F2", so why did it succeed 
+// in check-coercion?
+/*
+checkentail  
+   r::lseg<b, p> & n=a+b+2 & x = r & a = 0
+   |- x::lseg<n, p>.
+
+checkentail  
+   (exists r,a,b: r::lseg<b, p> & n=a+b+2 & x = r & a = 0 & flow __flow)
+   |- x::lseg<n, p> & flow __flow.
+*/
+/*
+checkentail
+ x::node<_,q> * q::lseg<a - 1, r> * r::lseg<b, p> & n=a+b+2 
+   |- x::lseg<n, p>.
 */

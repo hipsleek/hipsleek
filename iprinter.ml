@@ -147,7 +147,7 @@ let rec string_of_formula_exp = function
           a ^ (match p with 
                 | Primed -> "'["
                 | Unprimed -> "[") 
-          ^ (string_of_formula_exp i) ^ "]"
+          ^ (string_of_formula_exp_list i) ^ "]"
   | P.Bag (el, l)		-> "Bag("^(string_of_formula_exp_list el) ^ ")"
   | P.BagUnion (el, l)		-> "BagUnion("^(string_of_formula_exp_list el) ^ ")"
   | P.BagIntersect (el, l)		-> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
@@ -435,9 +435,9 @@ let need_parenthesis2 = function
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
-	| ArrayAt ({exp_arrayat_array_name = a;
+	| ArrayAt ({exp_arrayat_array_base = a;
 	     exp_arrayat_index = e}) ->
-				a ^ "[" ^ (string_of_exp e) ^ "]" (* An Hoa *)
+				(string_of_exp a) ^ "[" ^ (string_of_exp_list e ",") ^ "]" (* An Hoa *)
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
   | Label ((pid,_),e) -> 

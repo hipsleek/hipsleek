@@ -1,0 +1,94 @@
+data node { int val ; node next }.
+
+pred lseg2<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] (exists r2,b:self::node<next = r2> * r2::lseg2<b, p> & b=n-1) ;
+          }
+         inv n >= 0.
+
+pred lseg<n, p> == 
+        self = p & n = 0 
+     or self::node<next = r2> * r2::lseg<b, p> & b=n-1 
+     inv n >= 0.
+
+/*
+checkentail x::node<_,q>*q::node<_,nil> & a>0 & a<=2 
+   |- x::lseg2<a,p> & a=3. //p? impl ex
+*/
+
+// two residues of c=0 (not critical)
+checkentail x::node<_,q>*q::node<_,null> & a>0 & a<=2 
+   |- x::lseg2<c,p>.
+
+// failure below when it previously succeeded (critical).
+// should succeed with one answer
+checkentail x::node<_,q>*q::node<_,null> & a>0 & a<=2 
+   |- x::lseg2<c,p> & c=0.
+
+// failure below when it previously succeeded (critical)
+checkentail x::node<_,q>*q::node<_,null>  
+   |- x::lseg<c,p> & c=0.
+
+// fail when it previously succeeded
+checkentail x::node<_,q>*q::node<_,null>  
+   |- [c] x::lseg<c,p> & c=0.
+
+// fail when it previously succeeded
+checkentail x::node<_,q>*q::node<_,null>  
+   |- (exists c: x::lseg<c,p> & c=0).
+
+// fail when it previously succeeded
+checkentail x::node<_,q>*q::node<_,null>  
+   |- x::lseg<c,p>.
+
+print residue.
+
+/*
+  checkentail x::node<_,q>*q::node<_,nil> & a=1
+   |- x::lseg2<a,p>. 
+*/
+
+/* implicit b and free a with case-pred seems to give problem */
+/*
+checkentail x::node<_,q>*q::node<_,nil> & a=1
+   |- x::lseg2<a,p>. 
+print residue.
+*/
+
+
+/*
+
+checkentail a=1
+   |- nil::lseg2<b,p>. 
+print residue.
+
+
+checkentail a=1
+   |- x::lseg2<b,p> & x=nil. 
+print residue.
+
+checkentail a=1
+   |- (exists x: x::lseg2<b,p> & x=nil). 
+print residue.
+*/
+
+/*
+checkentail x::node<_,q>*q::node<_,nil> & a=2
+   |- case {
+        a<=0 -> [] x::lseg2<a,p>;
+        a=1 -> [] x::lseg2<a,p>;
+        a=2 -> [] x::lseg2<a,p>;
+        a>2 -> [] x::lseg2<a,p>;
+      }.
+print residue.
+*/
+
+/*
+checkentail x::node<_,q>*q::node<_,nil> & a>0 & a<=2 
+   |- case {
+       a=0 -> [p] x=p ;
+       a!=0 -> [] x::node<_,q>*q::lseg2<b,p> & a=b+1;
+       }.
+*/
+
+

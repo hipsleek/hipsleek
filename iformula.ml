@@ -572,6 +572,18 @@ let formula_to_struc_formula (f:formula):struc_formula =
 		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
 	(helper f);;
 
+(* split a conjunction into heap constraints, pure pointer constraints, *)
+(* and Presburger constraints *)
+let split_components (f : formula) =  match f with
+    | Base ({formula_base_heap = h; 
+	  formula_base_pure = p; 
+      formula_base_branches = b;
+	  formula_base_flow =fl }) -> (h, p, fl, b)
+    | Exists ({formula_exists_heap = h; 
+	  formula_exists_pure = p; 
+	  formula_exists_flow = fl;
+      formula_exists_branches = br }) -> (h, p, fl, br)
+    | _ -> failwith ("split_components: don't expect OR")
 
 let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 
@@ -1089,8 +1101,13 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			(Ipure.ListReverse (ne1, l), np1)
 	(* An Hoa : get rid of min/max in a[i] *)
   | Ipure.ArrayAt (a, i, l) ->
-			let ne, np = float_out_exp_min_max i in
-			(Ipure.ArrayAt (a, ne, l), np)
+  			let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+			let r = List.fold_left (fun a c -> match (a, c) with
+				  	| None, None -> None
+					| Some p, None -> Some p
+					| None, Some p -> Some p
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+			(Ipure.ArrayAt (a, ne1, l), r)
 
 and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		
