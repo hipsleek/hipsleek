@@ -1,7 +1,7 @@
 // Problem 3 
 //   1. Verified array access are within bounds of allocated array
 //   2. Verified FIFO behavior of queue by modelling the elements
-//      in the array
+//      as a sequence in the circular array
 //   3. Verified test harness
 
 data ring_buffer {
@@ -16,7 +16,7 @@ data ring_buffer {
 // which denotes that we have an array allocated from index 0 to s-1
 buf<s,f,l,arr> == 
   self::ring_buffer<arr,s,f,l> & dom(arr,0,s-1) & 0<=l<=s & s>0 & 0<=f<s 
-  inv s>=1 & 0<=l<=s;
+  inv s>=1 & 0<=l<=s & 0<=f<=s;
 
 // precondition : n>=1 to create buffer with size>=1 
 // postcondition : buffer contains allocated
@@ -47,21 +47,6 @@ int queuehead(ring_buffer b)
 {
 	return b.content[b.first];
 }
-
-int cyclic_inc(int x, int b)
- requires 0<=x<b
- case {
-   x+1=b -> ensures res=0;
-   x+1!=b -> ensures res=x+1;
- }
-
-
-int cyclic_add(int f, int l, int s)
- requires 0<=l<s & 0<=f<s
- case {
-   f+l<s -> ensures res=f+l;
-   f+l>=s -> ensures res=f+l-s;
- }
 
 
 // precondition : b is not full
