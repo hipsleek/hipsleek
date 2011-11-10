@@ -25,10 +25,8 @@ bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
 inv n >= 0;
 
 lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> 
-lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> 
 	& (n=1 & sm=lg | n>1 & lg1<=lg);
 
-lemma "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2;
 lemma "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2;
 
 /*

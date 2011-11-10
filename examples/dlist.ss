@@ -21,9 +21,7 @@ dcl<s> == self = null & s = 0
 	inv s >= 0;
 
 //lemma "coer1" self::dsegN<p, n, t> <-> t::dsegP<self, p, n>;
-//lemma "coer1" self::dsegN<p, n, t> <-> t::dsegP<self, p, n>;
 
-lemma "coer2" self::dsegN<s, p, n, t> & s > 0 
 lemma "coer2" self::dsegN<s, p, n, t> & s > 0 
 	<-> self::dsegN<s - 1, p, t, r> * t::node<_, r, n>;
 

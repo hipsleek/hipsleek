@@ -70,7 +70,6 @@ void add_one(folder fldr, file fls, str name)
 }
 
 // lemma self::ftree<S> <- self::fseg<x, S1> * x::ftree<S2> & S = union(S1, S2);
-// lemma self::ftree<S> <- self::fseg<x, S1> * x::ftree<S2> & S = union(S1, S2);
 
 /*
 	Search for a name in a folder list by following the sib link.

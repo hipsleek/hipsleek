@@ -44,7 +44,6 @@ bool bubble(node xs, node p)
 
 			//if (!tmp) {
 				//if (xs.next.next != null) { // this is the lemma step
-				//if (xs.next.next != null) { // this is the lemma step
 					//--node tmp2 = xs.next.next;
 					//--xs.next.next = id(tmp2);
 					//id3(xs.next.next);

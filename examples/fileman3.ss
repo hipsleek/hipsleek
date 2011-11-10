@@ -61,7 +61,6 @@ fseg<p> == self = p
 		* chd::ftree<> * sb::fseg<p>;
 
 lemma self::ftree<> <- self::fseg<x> * x::ftree<>;
-lemma self::ftree<> <- self::fseg<x> * x::ftree<>;
 
 /*
 	Search for a name in a folder list by following the sib link.

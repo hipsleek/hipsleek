@@ -68,21 +68,16 @@ PairBM<m> == self::Book<m> * m::Member<self>;
 
 
 //----------------------------- lemmas ------------------------------------------
-//----------------------------- lemmas ------------------------------------------
 //MemberView<b> == self::Member<b>;
 //BookView<m> == self::Book<m>;
 //lemma "MB" self::MemberView<b> * b::BookView<self> <-> b::BookView<self> * self::MemberView<b>;
-//lemma "MB" self::MemberView<b> * b::BookView<self> <-> b::BookView<self> * self::MemberView<b>;
 
 //lemma "MemberBook" self::MemberI<b> & b != null <-> b::Book<self> & self != null; 
-//lemma "MemberBook" self::MemberI<b> & b != null <-> b::Book<self> & self != null; 
-void lemma_right(Member s)
 void lemma_right(Member s)
 	requires s::MemberI<b> & b!=null
 	ensures b::BookI<s> & s!=null;
 	
 
-void lemma_left(Book s)
 void lemma_left(Book s)
 	requires s::BookI<m> & m!=null
 	ensures m::MemberI<s> & s!=null;
@@ -102,8 +97,6 @@ void loan(Member t, Book b)
 	loanTo(b, t);
 	//assert b'::BookI<t> & t != null;
 	// lemma step
-	// lemma step
-	lemma_left(b);
 	lemma_left(b);
 	//dprint; 
 }
@@ -133,7 +126,6 @@ data Observer {
 ObserverIJ<cs, i> == self::Observer<cs, i> * cs::Subject<d, co> & i = d & co = self;
 ObserverJ<cs, i, d> == self::Observer<cs, i> * cs::Subject<d, co> & co = self;
 
-//lemma "IJ2J" self::ObserverIJ<cs, i> -> self::ObserverJ<cs, i, i>;
 //lemma "IJ2J" self::ObserverIJ<cs, i> -> self::ObserverJ<cs, i, i>;
 
 

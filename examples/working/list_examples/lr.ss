@@ -14,7 +14,6 @@ lr<L1> == self=null & L1=[||]
 	or self::node<v, r> * r::lr<L2> & L1=app(L2, [| v |]);
 
 lemma self::ll<L1> <-> self::lr<L2> & L2 = rev(L1);
-lemma self::ll<L1> <-> self::lr<L2> & L2 = rev(L1);
 
 /* function to reverse a singly linked list */
 void reverse(ref node xs, ref node ys)

@@ -15,9 +15,7 @@ clist<n> == self::node<_, p> * p::lseg<self, n-1>
 	inv n >= 1;
 
 lemma self::lseg<p, n> <-> self::lseg<q, n1> * q::lseg<p, n2> & n=n1+n2;
-lemma self::lseg<p, n> <-> self::lseg<q, n1> * q::lseg<p, n2> & n=n1+n2;
 
-lemma self::lseg<p, n> <-> self::lseg<q, n-1> * q::node<_, p>;
 lemma self::lseg<p, n> <-> self::lseg<q, n-1> * q::node<_, p>;
 
 void append(node x, node y) 

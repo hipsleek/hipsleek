@@ -10,7 +10,6 @@ ls<p,n> == self = p & n=0
   inv n>=0 ;
 
 lemma "lseg2" self::ls<p, n> <-> self::ls<q, n1> * q::node<_, p> & n=n1+1;
-lemma "lseg2" self::ls<p, n> <-> self::ls<q, n1> * q::node<_, p> & n=n1+1;
 
 node lrev(node i, node o)
   requires i::ls<null,n>

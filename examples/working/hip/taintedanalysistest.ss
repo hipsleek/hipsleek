@@ -23,7 +23,6 @@ ls<p,n> == self = p & n = 0
   inv n >= 0;
 
 // lemma "lseg2" self::ls<p, n> <- self::ls<q, n1> * q::ls<p, n2> & n=n1+n2;
-// lemma "lseg2" self::ls<p, n> <- self::ls<q, n1> * q::ls<p, n2> & n=n1+n2;
 
   
 node source(node n)

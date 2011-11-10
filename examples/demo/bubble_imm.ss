@@ -20,7 +20,6 @@ ll<n> == self=null & n=0
 	inv n>=0;
 
 lemma self::sll<n, sm, lg> -> self::ll<n>;
-lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 
 node id2(node xs)

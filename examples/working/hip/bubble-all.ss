@@ -24,8 +24,6 @@ ll<n, S> == self=null & n=0 & S={}
 	
 
 //lemma self::sll<n, sm, lg, S> -> self::bnd<n,_,_, _>;
-//lemma self::sll<n, sm, lg, S> -> self::bnd<n,_,_, _>;
-lemma self::sll<n, sm, lg, S> -> self::ll<n,S>;
 lemma self::sll<n, sm, lg, S> -> self::ll<n,S>;
 
 //------------------------------------------------------------

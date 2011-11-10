@@ -24,7 +24,6 @@ ilist1<ctr>  == self = null
 	or self::itvl<low, high, r> * r::ilist1<ctr> & low <= ctr <= high;
 
 lemma self::ilist<ctr, lo, hi> -> self::ilist1<ctr>;
-lemma self::ilist<ctr, lo, hi> -> self::ilist1<ctr>;
 
 /*
 	Interval tree.

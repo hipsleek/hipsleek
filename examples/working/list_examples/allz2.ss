@@ -14,7 +14,6 @@ lz<L1> == self=null & L1=[||]
 	or self::node<0, r> * r::lz<L2> & L1=0:::L2;
 
 lemma self::lz<L> <-> self::ll<L> & alln(0, L);
-lemma self::lz<L> <-> self::ll<L> & alln(0, L);
 
 /* append two singly linked lists */
 void append(node x, node y)

@@ -77,7 +77,6 @@ bool bubble1(node xs)
 
 			if (!tmp) {
 				if (xs.next.next != null) { // this is the lemma step
-				if (xs.next.next != null) { // this is the lemma step
 					id1(xs.next.next);
 				}
 			}

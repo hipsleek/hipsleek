@@ -68,10 +68,8 @@ fseg<p, nf, nr> == self = p & nf = 0 & nr = 0
 	inv nf >= 0 & nr >= 0;
 
 lemma self::ftree<nf, nr> 
-lemma self::ftree<nf, nr> 
 	<- self::fseg<x, nf1, nr1> * x::ftree<nf2, nr2> & nf = nf1 + nf2 & nr = nr1 + nr2;
 
-lemma self::fseg<x, nf, nr> 
 lemma self::fseg<x, nf, nr> 
 	<- self::fseg<r, nf1, nr1> * r::folder<files = fl, child = chd, sib = x>
 		* fl::flist<n> * chd::ftree<nf2, nr2>

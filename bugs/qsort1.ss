@@ -19,7 +19,6 @@ sll<n, sm, lg> ==
    inv n>=0;
 
 lemma self::sll<n, sm, lg> -> self::ll<n>;
-lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 node partition(ref node xs, int c)
   requires xs::bnd<n, sm, bg> & sm <= c <= bg
