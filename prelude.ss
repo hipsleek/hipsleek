@@ -171,3 +171,17 @@ int array_get_elm_at___(int[] a, int i)
 int[] update___(int[] a, int i, int v) 
    requires true 
    ensures update_array(a,i,v,res);
+
+/* ************ */
+/* Concurrency  */
+/* ************ */
+data tid{
+}
+
+tid fork()
+  requires true
+  ensures res::tid<>;
+
+void join1(tid id)
+  requires id::tid<>
+  ensures true;

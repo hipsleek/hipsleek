@@ -312,9 +312,9 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
   if not(c.coercion_case=Cast.Simple && c.coercion_head_view = l_vname) then None
   else 
-    let _ = print_string ( "choose_full_mater_coercion_x: before \n" ) in
+    (* let _ = print_string ( "choose_full_mater_coercion_x: before \n" ) in *)
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
-    let _ = print_string ( "choose_full_mater_coercion_x: after \n" ) in
+    (* let _ = print_string ( "choose_full_mater_coercion_x: after \n" ) in *)
     (* let args = List.tl (fv_simple_formula c.coercion_head) in (\* dropping the self parameter *\) *)
 
     (* (\*LDK*\) *)
@@ -651,7 +651,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
               | MaterializedArg (mv,ms) -> 
-                  let _ = print_string ("[Solver.ml] Warning: process_one_match not support Materialized Arg") in
+                  let _ = print_string ("[Solver.ml] Warning: process_one_match not support Materialized Arg \n") in
                   (1,M_Nothing_to_do (string_of_match_res c))
               | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
             in

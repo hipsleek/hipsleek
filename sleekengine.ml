@@ -544,6 +544,9 @@ let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula an
 
   let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
 
+  (* let _ = print_string ("run_entail_check:" *)
+  (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
+  (*                       ^"\n\n") in *)
 
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*LDK:exception in entail check is thrawn here*)
 

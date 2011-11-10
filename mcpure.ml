@@ -1426,7 +1426,12 @@ let merge_mems_m = merge_mems
 let merge_mems f1 f2 slice_dup = match (f1,f2) with
   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup)
   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos)
-  | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"}
+  | OnePF f1, MemoF f2 ->
+      let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 1 \n" in MemoF f2
+  | MemoF f1, OnePF f2 ->
+      let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 2 \n" in MemoF f1
+
+  (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
   
   
 let merge_mems_debug f1 f2 slice_dup = 

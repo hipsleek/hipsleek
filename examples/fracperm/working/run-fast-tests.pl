@@ -586,7 +586,11 @@ $output_file = "log";
 					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
                   # slow in sleek8.slk due to search
 				  ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-					["sleek9.slk","Valid.Fail.Valid.Valid."]
+					["sleek9.slk","Valid.Fail.Valid.Valid."],
+                    ["norm1.slk","Valid.Valid.Valid.Fail."],
+                    ["norm2.slk","Valid.Valid.Valid.Valid.Valid.Fail."],
+					["norm3.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
+					["norm4.slk","Valid.Valid.Valid."]
                   #,
                                         #["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
 			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],

@@ -1826,7 +1826,7 @@ and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formul
 and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formula) : struc_formula =
   let rec helper (f:ext_formula):(ext_formula) = match f with
 	| ECase b ->
-        let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for ECase not added") in
+        let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for ECase not added \n") in
         f
 	| EBase b ->
         let ext_base = b.formula_ext_base in
@@ -1859,7 +1859,7 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
         in res_f
 
 	| EAssume (x,b,y)->
-                let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for EAssume not added") in
+                let _ = print_string ("[add_frac_to_struc_formula] Warning: rhs_p for EAssume not added \n") in
                 f
 	| EVariance b ->
         let cont = add_mix_formula_to_struc_formula_x rhs_p b.formula_var_continuation in
@@ -2088,12 +2088,12 @@ and add_mix_formula_to_formula_x (rhs_p: MCP.mix_formula) (ext_base:formula)  : 
 and add_mix_formula_to_mix_formula (p: MCP.mix_formula) (rhs_p: MCP.mix_formula):MCP.mix_formula = 
   (  match p with
     | MCP.MemoF m -> 
-        let _ = print_string ("[ add_frac_formula_to_pure] Warning 1: rhs_p not added to MCP.MemoF ") in
+        let _ = print_string ("[ add_frac_formula_to_pure] Warning 1: rhs_p not added to MCP.MemoF \n") in
         p
     | MCP.OnePF p_f -> 
         (match rhs_p with
           | MCP.MemoF m1 -> 
-              let _ = print_string ("[ add_frac_formula_to_pure] Warning 2: rhs_p not added to MCP.MemoF") in
+              let _ = print_string ("[ add_frac_formula_to_pure] Warning 2: rhs_p not added to MCP.MemoF \n") in
               p
           | MCP.OnePF rhs_f -> 
               MCP.OnePF (add_formula_to_formula p_f rhs_f)
@@ -2106,7 +2106,7 @@ and add_formula_to_formula (p_f: CP.formula) (rhs_f:CP.formula) =
 and add_pure_formula_to_mix_formula (pure_f: CP.formula) (mix_f: MCP.mix_formula):MCP.mix_formula = 
   (match mix_f with
     | MCP.MemoF m1 -> 
-        let _ = print_string ("[add_pure_formula_to_mix_formula] Warning: mix_f not added to MCP.MemoF") in
+        let _ = print_string ("[add_pure_formula_to_mix_formula] Warning: mix_f not added to MCP.MemoF \n") in
         mix_f
     | MCP.OnePF mix_f_pure -> 
         MCP.OnePF (add_formula_to_formula pure_f mix_f_pure)
@@ -4320,7 +4320,7 @@ let remove_true_conj_pure (p:CP.formula) =
 let remove_true_conj_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula = 
   (match f with
     | MCP.MemoF _ -> 
-        let _ = print_string ("[cformula.ml][remove_true_conj_mix_formula] Warning: not yet support MCP.MemoF") in
+        let _ = print_string ("[cformula.ml][remove_true_conj_mix_formula] Warning: not yet support MCP.MemoF \n") in
         f
     | MCP.OnePF p_f -> (MCP.OnePF (remove_true_conj_pure p_f))
   )
@@ -4339,7 +4339,7 @@ let remove_dupl_conj_eq_pure (p:CP.formula) =
 let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula = 
   (match f with
     | MCP.MemoF _ -> 
-        let _ = print_string ("[cformula.ml][remove_dupl_conj_eq_mix_formula] Warning: not yet support MCP.MemoF") in
+        let _ = print_string ("[cformula.ml][remove_dupl_conj_eq_mix_formula] Warning: not yet support MCP.MemoF \n") in
         f
     | MCP.OnePF p_f -> (MCP.OnePF (remove_dupl_conj_eq_pure p_f))
   )
@@ -6349,7 +6349,7 @@ let add_to_steps (ss:steps) (s:string) = s::ss
 let get_prior_steps (c:context) = 
   match c with
     | Ctx es -> es.es_prior_steps 
-    | OCtx _ -> print_string "Warning : OCtx with get_prior_steps "; [] ;;
+    | OCtx _ -> print_string "Warning : OCtx with get_prior_steps \n"; [] ;;
 
 let add_to_context (c:context) (s:string) = 
   (* set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c *)

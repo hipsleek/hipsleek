@@ -8,7 +8,6 @@ open Cast
 open Cformula
 open Prooftracer
 open Gen.Basic
-
 module CP = Cpure
 module PR = Cprinter
 module MCP = Mcpure
@@ -739,12 +738,27 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
 and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
+                  h_formula_data_frac_perm = frac;
 	  h_formula_data_label = lbl;
 	  h_formula_data_pos = pos}) ->
           let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in
-          (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p])
+            (*LDK: add fractional invariant 0<f<=1, if applicable*)
+            (match frac with
+              | None ->
+	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [],[p])
+              | Some f ->
+                  let frac_inv = mkFracInv f in
+                  let res = CP.mkAnd non_zero frac_inv no_pos in
+	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [], [p])
+            )
+    (* | DataNode ({ h_formula_data_node = p; *)
+	(*   h_formula_data_label = lbl; *)
+	(*   h_formula_data_pos = pos}) -> *)
+    (*       let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in *)
+    (*       (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p]) *)
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
+	  h_formula_view_frac_perm = frac; (*Viewnode does not neccessary have invariant on fractional permission*)
 	  h_formula_view_arguments = vs;
 	  h_formula_view_remaining_branches = lbl_lst;
 	  h_formula_view_pos = pos}) ->
@@ -754,8 +768,21 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
           let to_svs = p :: vs in
           (match lbl_lst with
-            | None -> 
-                  let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in       
+            | None -> (*--imm only*)
+            (*LDK: add fractional invariant 0<f<=1, if applicable*)
+                let frac_inv =
+                  (match frac with
+                    | None ->
+	                    CP.mkTrue pos
+                    | Some f ->
+                        mkFracInv f
+                  ) in
+                  let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
+                    (*add fractional invariant*)
+                    let frac_inv_mix = MCP.OnePF frac_inv in
+                    let vinv = CF.add_mix_formula_to_mix_formula vinv frac_inv_mix in
+
+
                   let from_addrs = vdef.view_addr_vars in
                   let to_addrs = CP.fresh_spec_vars from_addrs in
                   let subst_m_fun f =
@@ -766,10 +793,33 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                     CP.subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
                   (* let _ = print_endline ("xpure_heap_symbolic_i NONE: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in *)
                   (subst_m_fun vinv, List.map (fun (l,x) -> (l, subst_fun x)) vinv_b, ba (*to_addrs*)) 
-            | Some ls ->  
+            | Some ls ->(*--imm and --eps *)
+                  (*??? what is it*)
                   let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
-			      (* let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in*)
+			      let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in
                   (MCP.mkMTrue no_pos, [], ba))
+
+          (* let ba = look_up_view_baga prog c p vs in *)
+          (* let vdef = look_up_view_def pos prog.prog_view_decls c in *)
+          (* let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in *)
+          (* let to_svs = p :: vs in *)
+          (* (match lbl_lst with *)
+          (*   | None ->  *)
+          (*         let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in        *)
+          (*         let from_addrs = vdef.view_addr_vars in *)
+          (*         let to_addrs = CP.fresh_spec_vars from_addrs in *)
+          (*         let subst_m_fun f = *)
+          (*           let tmp1 = MCP.subst_avoid_capture_memo(\*_debug2*\) from_svs to_svs f in *)
+          (*           MCP.memo_subst (List.combine from_addrs to_addrs) tmp1 (\* no capture can happen *\) in *)
+          (*         let subst_fun f = *)
+          (*           let tmp1 = CP.subst_avoid_capture from_svs to_svs f in *)
+          (*           CP.subst (List.combine from_addrs to_addrs) tmp1 (\* no capture can happen *\) in *)
+          (*         (\* let _ = print_endline ("xpure_heap_symbolic_i NONE: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in *\) *)
+          (*         (subst_m_fun vinv, List.map (fun (l,x) -> (l, subst_fun x)) vinv_b, ba (\*to_addrs*\))  *)
+          (*   | Some ls ->   *)
+          (*         let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in *)
+		  (*         (\* let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in*\) *)
+          (*         (MCP.mkMTrue no_pos, [], ba)) *)
     | Star ({ h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
 	  h_formula_star_pos = pos}) ->
@@ -1892,7 +1942,7 @@ and extract_mix_formula_w_frac (rhs_p: MCP.mix_formula) (fracvar: CP.spec_var): 
 and extract_mix_formula_w_frac_x (rhs_p: MCP.mix_formula) (fracvar: CP.spec_var): MCP.mix_formula * MCP.mix_formula = 
   (match rhs_p with
     | MCP.MemoF _ -> 
-        let _ = print_string ("[extract_formula_w_frac]Warning: extract_formula_w_frac not added for MemoF") in
+        let _ = print_string ("[extract_formula_w_frac]Warning: extract_formula_w_frac not added for MemoF \n") in
         (rhs_p, rhs_p)
     | MCP.OnePF pf ->
         let (w_frac_pf, wo_frac_pf) = extract_formula_w_frac pf fracvar in
@@ -1917,7 +1967,7 @@ and extract_formula_w_frac (pf: CP.formula) (fracvar: CP.spec_var): CP.formula *
           (w_frac_res, wo_frac_res)
       | _ -> 
 
-          let _ = print_string ("[extract_formula_w_frac] Warning: extract_formula_w_frac not added for OnePF of Or, Not, Forall, Exists") in
+          let _ = print_string ("[extract_formula_w_frac] Warning: extract_formula_w_frac not added for OnePF of Or, Not, Forall, Exists \n") in
           if CP.disjoint (CP.fv f) vvars then 
                   (*if not contains fracvar*)
             (CP.mkTrue no_pos, f)
@@ -2668,6 +2718,7 @@ and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno=
 
   (* (\*LDK*\) *)
   (*   let _ = print_string ("is_unsat_with_branches_x:   if phb = [] ==true : before TP.is_sat_sub_no" *)
+  (*                         ^ "\n ### npf = "^ Cprinter.string_of_mix_formula npf *)
   (*                         ^ "\n\n") in *)
 
 	(not (TP.is_sat_mix_sub_no npf sat_subno true true))
@@ -6417,7 +6468,7 @@ and create_bind_to_rhs (rhs_p:MCP.mix_formula) (l_f:CP.spec_var) (r_f:CP.spec_va
 and create_bind_to_rhs_x (rhs_p:MCP.mix_formula) (l_f:CP.spec_var) (r_f:CP.spec_var) : MCP.mix_formula =
   (match rhs_p with
     | MCP.MemoF m ->
-        let _ = print_string ("[create_bind_to_rhs] Warning: rhs_p not added to MCP.MemoF") in
+        let _ = print_string ("[create_bind_to_rhs] Warning: rhs_p not added to MCP.MemoF \n") in
         rhs_p
     | MCP.OnePF p_f ->
       let frac_p = Cpure.BForm ( (Cpure.Eq (
@@ -9588,6 +9639,8 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
     (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
   end
 
+
+
 let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula) =
   let rec helper (estate:CF.entail_state) (h:h_formula) (p:MCP.mix_formula) : (h_formula*MCP.mix_formula) =
     (*try to check whether the current estate with h=anode*rest and pure=p 
@@ -9596,16 +9649,57 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       let f = mkBase rest p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
       let coer_lhs = coer.coercion_head in
       let coer_rhs = coer.coercion_body in
+
+      (*compute free vars in extra heap and guard*)
+      let compute_extra_vars () =
+        let lhs_heap, lhs_guard, _, _, _ = split_components coer_lhs in
+        let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
+        let head_node = List.hd lhs_hs in
+        let extra_opt = join_star_conjunctions_opt (List.tl lhs_hs) in
+        let extra_heap =
+          (match (extra_opt) with
+            | None ->
+                let _ = print_string "[normalize_frac] Warning: List of conjunctions can not be empty \n" in
+                CF.HTrue
+            | Some res_f -> res_f)
+        in
+        let h_vars = CF.h_fv head_node in
+        let e_vars = CF.h_fv extra_heap in
+        let p_vars = MCP.mfv lhs_guard in
+        let vars = Gen.BList.difference_eq CP.eq_spec_var (e_vars@p_vars) h_vars in
+        Gen.BList.remove_dups_eq CP.eq_spec_var vars
+      in
+      (* rename the bound vars *)
+      let extra_vars = compute_extra_vars () in
+      let extra_vars_new =  CP.fresh_spec_vars extra_vars in
+      let tmp_rho = List.combine extra_vars extra_vars_new in
+      let coer_lhs = CF.subst tmp_rho coer_lhs in
+      let coer_rhs = CF.subst tmp_rho coer_rhs in
       (************************************************************************)
-      (* rename the free vars in the lhs and rhs to avoid name collision *)
-      (* between lemmas and entailment formulas*)
-      (* let lhs_fv = (fv_rhs coer_lhs coer_rhs) in *)
-      let lhs_fv = (CF.fv coer_lhs) in
+      (* also rename the free vars from the rhs that do not appear in the lhs *)
+      let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
       let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
       let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
       let coer_lhs = CF.subst tmp_rho coer_lhs in
       let coer_rhs = CF.subst tmp_rho coer_rhs in
       (************************************************************************)
+      (* (\************************************************************************\) *)
+      (* (\* rename the free vars in the lhs and rhs to avoid name collision *\) *)
+      (* (\* between lemmas and entailment formulas*\) *)
+      (* (\* let lhs_fv = (fv_rhs coer_lhs coer_rhs) in *\) *)
+      (* let lhs_fv = (CF.fv coer_lhs) in *)
+      (* let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in *)
+      (* let tmp_rho = List.combine lhs_fv fresh_lhs_fv in *)
+      (* let coer_lhs = CF.subst tmp_rho coer_lhs in *)
+      (* let coer_rhs = CF.subst tmp_rho coer_rhs in *)
+      (* (\************************************************************************\) *)
+      (* let _ = print_string ("normalize_w_coers: before and after renamed" *)
+      (*                       ^ "\n ### coer.coercion_head = " ^ (Cprinter.string_of_formula coer.coercion_head) *)
+      (*                       ^ "\n ### coer.coercion_body = " ^ (Cprinter.string_of_formula coer.coercion_body) *)
+      (*                       ^ "\n ### coer_lhs = " ^ (Cprinter.string_of_formula coer_lhs) *)
+      (*                       ^ "\n ### coer_rhs = " ^ (Cprinter.string_of_formula coer_rhs) *)
+      (*                       ^ "\n") in *)
+
       let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
       let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
       let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
@@ -9704,7 +9798,7 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
                   let ctx = List.hd res in
                   match ctx with
                     | OCtx (c1, c2) ->
-                        let _ = print_string ("[solver.ml] Warning: normalize_w_coers:process_one: expect only one context") in
+                        let _ = print_string ("[solver.ml] Warning: normalize_w_coers:process_one: expect only one context \n") in
                         (false,estate,h,p)
                     | Ctx es ->
                         let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
@@ -9731,7 +9825,7 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
               | ViewNode vn -> vn.h_formula_view_name
               | DataNode dn -> dn.h_formula_data_name
               | _ -> 
-              let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode or ViewNode ") in
+              let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode or ViewNode \n") in
               ""
             in
             let c_lst = look_up_coercion_def_raw coers name in (*list of coercions*)

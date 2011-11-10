@@ -36,7 +36,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
 	  | Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
-			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
+			let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in
 		    let mn = Cast.unmingle_name (proc.Cast.proc_name) in
             let f_formula = fun f -> None in
 		    let f_b_formula = function
@@ -58,17 +58,17 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 			r) b.Cformula.formula_case_branches
 	  | Cformula.EBase b ->
-		    (*let _ = print_string ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
+		    let _ = print_string ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in
 	        let nctx = 
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx)
 	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
-			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+			let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in
 	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
-	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
+	        let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
 	        r
 	  | Cformula.EVariance b ->
-			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
+			let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in
 		    (*let _ = print_string "check_specs: EVariance: before nctx\n" in*)
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
 			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
@@ -77,7 +77,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	  | Cformula.EAssume (x,b,y) ->
             let _ = set_post_pos (CF.pos_of_formula b) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
-	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
+	        let _ = print_string ("\n check_specs: EAssume: pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in
 	        if (Cformula.isAnyFalseCtx ctx1) then
 		      let _ = print_string ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 				  (Cprinter.string_of_context_short ctx)) in 
@@ -105,6 +105,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		      with _ as e -> 
 		          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in	
+  let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in
   List.for_all do_spec_verification spec_list
 
 and check_exp prog proc ctx e0 label = Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
@@ -204,8 +205,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
 
-	        (* let _  = print_string("BIND\n"); flush stdout in *)
-	        (* let _ = print_string("\n\nbind body = " ^ (Cprinter.string_of_exp body) ^ "\n\n") in   *)
+	        let _  = print_string("BIND\n"); flush stdout in
+	        let _ = print_string("\n\nbind body = " ^ (Cprinter.string_of_exp body) ^ "\n\n") in
 
 
             (* Debug.devel_pprint ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n") pos; *)
@@ -228,8 +229,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_pprint ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n") pos in
-	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
-            (*     ^ "\n") in *)
+	        let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
+                ^ "\n") in
 
 	        let c = string_of_typ v_t in
             (* let frac = (CP.FConst (1.0, pos)) in (\*LDK*\) *)
@@ -493,7 +494,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let _ = Cprinter.string_of_list_failesc_context in
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
-              Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
+              Gen.Debug.loop_2(* _no *) "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
             (*let _ = print_string ("\nAn Hoa :: Encounter function call [" ^ mn ^ "(" ^ (String.concat "," vs) ^ ")]" (*^ "with static spec :: " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs_with_pre) ^ "\n\n"*)) in*)
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
             else check_pre_post proc.proc_static_specs_with_pre ctx in	

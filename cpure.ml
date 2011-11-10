@@ -256,7 +256,7 @@ let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
   match f1,f2 with
     | BForm (b1,_),BForm (b2,_) ->
         (match b1,b2 with
-          | Eq (e11,e12,_), Eq (e21,e22,_) -> 
+          | Eq (e11,e12,_), Eq (e21,e22,_) ->
               (match e11,e12,e21,e22 with
                 | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
                     let b1 = eq_spec_var v11 v21 in
@@ -264,6 +264,22 @@ let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
                     let b3 = eq_spec_var v11 v22 in
                     let b4 = eq_spec_var v12 v21 in
                     (b1&&b2)||(b3&&b4)
+                | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
+                    let b1 = eq_spec_var v11 v21 in
+                    let b2 = (v12= v22) in
+                    b1&&b2
+                | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
+                    let b1 = (v11=v21) in
+                    let b2 = eq_spec_var v12 v22 in
+                    b1&b2
+                | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
+                    let b1 = eq_spec_var v11 v21 in
+                    let b2 = (v12= v22) in
+                    b1&&b2
+                | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
+                    let b1 = (v11=v21) in
+                    let b2 = eq_spec_var v12 v22 in
+                    b1&b2
                 | _ -> false)
           | _ -> false
         )
