@@ -52,8 +52,10 @@ int mod___(int a, int b) case {
   a >= 0 -> case {
 	b >= 1 -> case {
 	  a < b -> ensures res = a;
-	  a = b -> ensures res = 0;
-	  a > b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
+	  a >= b -> case {
+		a < 2*b -> ensures res = a - b;
+		a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
+	  }
 	}
 	b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
 	-1 < b < 1 -> ensures true & flow __DivByZeroErr;
