@@ -221,8 +221,9 @@ let comp_alias_part r_asets a_vars =
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
-  let imm,p = match rhs_node with
-    | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} |ViewNode{h_formula_view_node=p;h_formula_view_imm=imm}-> (imm,p)
+  let imm,p= match rhs_node with
+    | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} 
+    | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm,p)
     | _ -> report_error no_pos "choose_context unexpected rhs formula\n" in
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
   let eqns' = MCP.ptr_equations_without_null lhs_p in
@@ -262,7 +263,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
 
 
 
-and view_mater_match prog c vs1 aset imm f =
+and view_mater_match_x prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
   let mvs = subst_mater_list_nth 1 vdef.view_vars vs1 vdef.view_materialized_vars in
   try
@@ -273,6 +274,8 @@ and view_mater_match prog c vs1 aset imm f =
     else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
   with 
       _ ->  
+          if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
+          else
           if List.exists (fun v -> CP.mem v aset) vs1 then
             if imm then
               let hole_no = Globals.fresh_int() in 
@@ -280,6 +283,13 @@ and view_mater_match prog c vs1 aset imm f =
             else [(HTrue, f, [], WArg)]
           else []
 
+and view_mater_match prog c vs1 aset imm f =
+  let pr = fun v-> string_of_int (List.length v) in
+  let psv = Cprinter.string_of_spec_var in
+  let pr1 = pr_list psv in
+  let pr2 = pr_list  psv in  
+  Gen.Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset
+          
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None
   else 
@@ -334,9 +344,10 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
 and spatial_ctx_extract p f a i rn rr = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in
   (* let pr = pr_no in *)
   Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
-      (fun _ _ _ _ -> spatial_ctx_extract_x p f a i rn rr) f i a rn
+      (fun _ _ _ _-> spatial_ctx_extract_x p f a i rn rr ) f i a rn 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
   (* let _ = print_string("spatial_ctx_extract with f0 = " ^ (string_of_h_formula f0) ^ "\n") in  *)
@@ -543,14 +554,22 @@ and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
 and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> let r0 = (2,M_unmatched_rhs_data_node rhs_node) in
           if (is_view rhs_node) && (get_view_original rhs_node) then
-            let r = (1,M_base_case_fold { 
+            let r = (2, M_base_case_fold { 
             match_res_lhs_node = HTrue; 
             match_res_lhs_rest = lhs_h; 
             match_res_holes = [];
             match_res_type = Root;
             match_res_rhs_node = rhs_node;
-            match_res_rhs_rest = rhs_rest;}) in
-        (-1, (Search_action [r]))
+            match_res_rhs_rest = rhs_rest;}) in (*(-1, Search_action [r])*)
+            let r1 = (2, M_fold {
+              match_res_lhs_node = HTrue; 
+              match_res_lhs_rest = lhs_h; 
+              match_res_holes = [];
+              match_res_type = Root;
+              match_res_rhs_node = rhs_node;
+              match_res_rhs_rest = rhs_rest;
+            }) in
+        (-1, (Cond_action [r;r1]))
       else r0
 (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
   | x::[] -> process_one_match prog x 
