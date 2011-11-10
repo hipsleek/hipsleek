@@ -7,14 +7,6 @@
 
 relation allzero(int[] A, int i, int j) == forall(k : k < i | k > j | A[k] = 0).
 
-/* We make three parallel recursive definitions: there is a path from s --> t of
-        (i) no further restriction   (ii) length <= k        (iii) length exactly k
- <==>
-  - Base case: 
-        (i) s = t                    (ii) s = t & k >= 0     (iii) s = t & k = 0
-  - Induction: there is a path from s to a predecesor of t of
-        (i) no further restriction   (ii) length <= k - 1    (iii) length exactly k - 1
-*/
 relation has_path(int[,] A, int n, int s, int t) ==
 	(s = t 
 	| exists(i : 0 <= i < n & has_path(A,n,s,i) & A[i,t] != 0)).
@@ -27,7 +19,6 @@ relation has_bounded_length_path_via(int[,] A, int n, int s, int t, int k, int v
 relation has_bounded_length_path(int[,] A, int n, int s, int t, int k) ==
 	(k = 0 & s = t 
 	| k > 0 & has_bounded_length_path_via(A,n,s,t,k,n)). 
-			// exists(i : 0 <= i < n & has_bounded_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
 
 relation has_exact_length_path_via(int[,] A, int n, int s, int t, int k, int v) ==
 	(k = 0 & s = t
@@ -41,15 +32,11 @@ relation shortest_distance_via(int[,] A, int n, int s, int t, int d, int v) ==
 	has_exact_length_path_via(A, n, s, t, d, v) & 
 	!(has_bounded_length_path_via(A, n, s, t, d-1, v)).
 	
-// d is the shortest distance between s and t
+
 relation shortest_distance(int[,] A, int n, int s, int t, int d) ==
 	(d = 0 & s = t
 	| d > 0 & shortest_distance_via(A, n, s, t, d, n)).
-	//has_exact_length_path(A, n, s, t, d) & !(has_bounded_length_path(A, n, s, t, d-1)).
 
-// Generalization of individual relations to a set of vertices
-
-// All v in V is of distance <= d from s.
 relation all_has_bounded_length_path(int[,] A, int n, int s, int d, int[] V) ==
 	forall(i : i < 0 | i >= n | 
 			V[i] = 0 & !(has_bounded_length_path(A,n,s,i,d)) |
@@ -80,15 +67,9 @@ relation some_has_shortest_distance_via(int[,] A, int n, int s, int d, int[] N, 
 				N[i] = 0 & !(shortest_distance_via(A,n,s,i,d,v)) |
 				N[i] != 0 & shortest_distance_via(A,n,s,i,d,v)).
 
-// Theorem: (non-trivial) if there is a path from s-->d then there is a path of length <= n
-// Pf: For any path from s --> d, we can always construct a path with no duplicated vertices.
-//     Since the graph has n vertices, such a path must be of length <= n.     (QED)
-// axiom has_path(A,n,s,t) ==> has_bounded_length_path(A,n,s,t,n).
-
 // THEOREMS REQUIRED FOR PRE-CONDITION I.E. LOOP INVARIANTS
 
 // AXIOM 1
-//axiom shortest_distance_via(A,n,s,t,d,v) ==> shortest_distance_via(A,n,s,t,d,v+1).
 axiom has_bounded_length_path_via(A,n,s,w,d+1,v) & 
 		some_has_shortest_distance_via(A,n,s,d+1,N,v+1,0,w) & 
 		some_has_shortest_distance_via(A,n,s,d+1,N,v,w,n) & 
@@ -111,8 +92,6 @@ axiom shortest_distance_via(A,n,s,t,d,v) ==> has_bounded_length_path_via(A,n,s,t
 
 // AXIOM 7 - verified
 axiom all_has_shortest_distance_via(A,n,s,d,N,n) ==> all_has_shortest_distance(A,n,s,d,N).
-
-// PROGRAM
 
 int bfs(int[,] A, int n, int source, int target)
 	requires 0 <= source < n & 0 <= target < n
@@ -165,12 +144,6 @@ int bfs_loop1(int[,] A, int n, int source, int target, int d, int[] V, int[] C)
 	}
 }
 
-// Construct the set N of vertices whose shortest distance from source is d + 1 given
-//   .  the set V of vertex such that all vertex v in V is either reachable within d ars 
-//      or in exactly d+1 arcs with the final intermediate vertex is in {0,1,...,v-1}
-//   .  the set C of vertices with shortest distance d from source
-//   .  partially constructed N: x in N <==> x has shortest distance d+1 if the last
-//      intermediate vertex is in {0,1,...,v-1}
 int bfs_loop2(int[,] A, int n, int source, int target, int d, 
 						ref int[] V, int[] C, ref int[] N, int v)
 	requires 0 <= source < n & 0 <= target < n & d >= 0 & 0 <= v <= n &
@@ -194,13 +167,6 @@ int bfs_loop2(int[,] A, int n, int source, int target, int d,
 	return -1;
 }
 
-// Construct the set N of vertices whose shortest distance from source is d+1 if the last
-// intermediate vertex is in {0,1,...,v-1} given
-//   .  the set V of vertex such that all vertex v in V is reachable within d + 1
-//      arcs and vertex not in V has no path of length <= d; and
-//   .  the set C of vertices with shortest distance d from source
-//   .  partially constructed N: for any 0 <= x < w: x in N <==> x has shortest distance 
-//      d+1 with the last intermediate vertex is in {0,1,...,v-1}
 void bfs_loop3(int[,] A, int n, int source, int target, int d, 
 							ref int[] V, int[] C, ref int[] N, int v, int w)
 	requires 0 <= source < n & 0 <= target < n & d >= 0 & 0 <= v < n & 0 <= w <= n & 
