@@ -340,8 +340,10 @@ let set_tp tp_str =
      prover_str := "mona"::!prover_str;)
   else if tp_str = "coq" then
 	(tp := Coq; prover_str := "coqtop"::!prover_str;)
-  else if tp_str = "z3" then 
-	(tp := Z3; prover_str := "z3"::!prover_str;)
+  (*else if tp_str = "z3" then 
+	(tp := Z3; prover_str := "z3"::!prover_str;)*)
+   else if (String.sub tp_str 0 2) = "z3" then
+	(Smtsolver.smtsolver_name := tp_str; tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
     (tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "rm" then

@@ -92,6 +92,8 @@ let common_arguments = [
 	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
+    ("--log-z3", Arg.Set Smtsolver.log_all_flag,
+	"Log all formulae sent to z3 in file allinput.z3");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
 	"Log all formulae sent to Isabelle in file allinput.thy");
 	("--log-coq", Arg.Set Coq.log_all_flag,
@@ -124,9 +126,9 @@ let common_arguments = [
 	"Stop checking on erroneous procedure");
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
-	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "zm"; "om";
+	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3";"z3-3.2"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
-	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA. \n\tdp: Dedicated prover for eq/ineq");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
 	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
