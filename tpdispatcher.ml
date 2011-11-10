@@ -25,10 +25,11 @@ type tp_type =
   | Redlog
   | RM (* Redlog and Mona *)
   | ZM (* Z3 and Mona *)
+  | OZ (* Omega and Z3 *)
   | AUTO (* Omega, Z3, Mona, Coq *)
 
 (* let tp = ref OmegaCalc *)
-let tp = ref AUTO
+let tp = ref OZ
 let proof_no = ref 0
 let provers_process = ref None
 
@@ -66,6 +67,7 @@ let string_of_prover prover = match prover with
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> ""
 	| ZM -> ""
+	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 
 
@@ -405,6 +407,10 @@ let set_tp tp_str =
      prover_str := "mona"::!prover_str;
      prover_str := "coqtop"::!prover_str;
     )
+  else if tp_str = "oz" then
+	(tp := AUTO; prover_str := "oc"::!prover_str;
+     prover_str := "z3"::!prover_str;
+    )
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else
@@ -428,7 +434,8 @@ let string_of_tp tp = match tp with
   | Redlog -> "redlog"
   | RM -> "rm"
   | ZM -> "zm"
-  | AUTO -> "auto"
+  | OZ -> "oz"
+   | AUTO -> "auto"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -447,6 +454,7 @@ let name_of_tp tp = match tp with
   | Redlog -> "Redlog"
   | RM -> "Redlog and Mona"
   | ZM -> "Z3 and Mona"
+  | OZ -> "Omega, Z3"
   | AUTO -> "Omega, Z3, Mona, Coq"
 
 let log_file_of_tp tp = match tp with
@@ -458,6 +466,7 @@ let log_file_of_tp tp = match tp with
   | Redlog -> "allinput.rl"
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
+  | OZ -> "allinput.oz"
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -810,6 +819,15 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         begin
           (Omega.is_sat f sat_no);
         end
+  | OZ ->
+      if (is_array_constraint f) then
+        begin
+          (Smtsolver.is_sat f sat_no);
+        end
+      else
+        begin
+          (Omega.is_sat f sat_no);
+        end
   | OI ->
       if (is_bag_constraint f) then
         begin
@@ -945,6 +963,15 @@ let simplify (f : CP.formula) : CP.formula =
                     (Coq.simplify f);
                   end
                 else if (is_array_constraint f) then
+                  begin
+                    (Smtsolver.simplify f);
+                  end
+                else
+                  begin
+                    (Omega.simplify f);
+                  end
+          | OZ ->
+                if (is_array_constraint f) then
                   begin
                     (Smtsolver.simplify f);
                   end
@@ -1165,6 +1192,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           (called_prover :="Coq "; Coq.imply ante conseq);
         end
       else if (is_array_constraint ante) || (is_array_constraint conseq) then
+        begin
+          (called_prover :="smtsolver "; Smtsolver.imply ante conseq)
+        end
+      else
+        begin
+          (called_prover :="omega "; Omega.imply ante conseq imp_no timeout);
+        end
+  | OZ ->
+      if (is_array_constraint ante) || (is_array_constraint conseq) then
         begin
           (called_prover :="smtsolver "; Smtsolver.imply ante conseq)
         end
