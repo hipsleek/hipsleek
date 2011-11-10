@@ -120,7 +120,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	          (check_exp prog proc ctx e.exp_label_exp post_start_label)
         | Unfold ({exp_unfold_var = sv;
-          exp_unfold_pos = pos}) -> unfold_failesc_context (prog,None) ctx sv true pos 
+          exp_unfold_pos = pos}) -> 
+            unfold_failesc_context (prog,None) ctx sv true pos
 	          (* for code *)
         | Assert ({ exp_assert_asserted_formula = c1_o;
           exp_assert_assumed_formula = c2;

@@ -471,8 +471,10 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     let a1 = (1,M_base_case_unfold c) in
                     let a2 = (1,M_match c) in
                      if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,Cond_action [a1;a2])]
-                    else if not(is_rec_view_def prog vl.h_formula_view_name) then [(2,M_unfold (c,0))] 
-                    else if not(is_rec_view_def prog vr.h_formula_view_name) then [(2,M_fold c)] 
+                    else if not(is_rec_view_def prog vl.h_formula_view_name) && 
+                            vl.h_formula_view_original then [(2,M_unfold (c,0))] 
+                    else if not(is_rec_view_def prog vr.h_formula_view_name) &&
+                            vr.h_formula_view_original then [(2,M_fold c)] 
                     else let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl.h_formula_view_name)^" and RHS: "^(vr.h_formula_view_name)))] in
                     [(1,Cond_action lst)]
                   in
@@ -492,8 +494,18 @@ and process_one_match_x prog (c:match_res) :action_wt =
                       else [] in
                   let src = (-1,norm_search_action (l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
-            | DataNode dl, ViewNode vr -> (1,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
-            | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
+            | DataNode dl, ViewNode vr -> 
+                if vr.h_formula_view_original then (1,M_fold c)(*(-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
+                else (1,M_Nothing_to_do (" matched data with a deriv node "^(string_of_match_res c)))
+            | ViewNode vl, DataNode dr -> 
+                let uf_i = if vl.h_formula_view_original then 0 else 1 in
+                let ua = (1, M_unfold (c,uf_i)) in
+                let left_ls = 
+                  look_up_coercion_with_target 
+                    prog.prog_left_coercions 
+                      vl.h_formula_view_name dr.h_formula_data_name in
+                if left_ls == [] || vl.h_formula_view_original then ua
+                else (1,M_lemma (c,Some (List.hd left_ls)))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | MaterializedArg (mv,ms) ->

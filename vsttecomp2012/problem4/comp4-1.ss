@@ -15,18 +15,14 @@ treelseg<t,p,d,n> ==
   or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
   inv n>=1 ;
-
+  
 tlseg<p,d,n> ==
-     self::node<d,p> & n=1 & d>=0
-  or self::tlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2
-  inv self!=null & n>=1 & d>=0 ;
+     self::node<d,p> & n=1 
+  or self::tlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2 
+  inv self!=null & n>=1;
 
-negtlseg<p,d,n> ==
-     self::node<v,p> & n=1 & v<d
-  or self::negtlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2
-  or self::tlseg<r,d+1,n1> * r::negtlseg<p,d+1,n2> & n=n1+n2
-  or self::negtlseg<r,d+1,n1> * r::negtlseg<p,d+1,n2> & n=n1+n2
-  inv self!=null & n>=1 & d>=0 ;
+coercion self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d;
+ 
 
 bool is_empty(node x)
   requires true
@@ -36,15 +32,12 @@ bool is_empty(node x)
 }
 
 int hd(node x)
- case {
-  x=null -> ensures true & flow exception;
-  x!=null ->  
-    requires x::node<i,_>@I 
-    ensures res=i;
- }
+    requires x::node<d,_>@I
+    ensures res=d;
+    requires x::tlseg<_,d,n>@I
+    ensures res>=d;
 {
-  if (x==null) raise new exception();
-  else return x.val;
+  return x.val;
 }
 
 void pop(ref node x)
@@ -55,29 +48,28 @@ void pop(ref node x)
 }
 
 tree build_rec (int d, ref node s)
- requires s::tlseg<null,d,n>
- ensures  res::treelseg<s, pp, d, m>
-               * pp::tlseg<null,d,n-m> & s'=pp & flow __norm; //'
+ requires s::tlseg<p,d,n> 
+ ensures res::treelseg<s,s',d,1> & s' = p & flow __norm;
 {
-    tree ll,rr;
+  tree ll,rr;
 	if (is_empty(s)) raise new exception();
-	int h = hd(s);
-	if (h < d) raise new exception();
-    if (h == d) {
-			pop(s);   
+  int h = hd(s);
+  if (h < d) raise new exception();        
+  if (h == d) {
+      pop(s);        
+        
 			return null;
 	}    
-	ll = build_rec(d+1, s);
- 	rr = build_rec(d+1, s);
+  assert h'=d';// assume h'>d';
+  ll = build_rec(d+1, s);
+  rr = build_rec(d+1, s);
 	return new tree (ll,rr);
 }
 
-/*
 
 tree build(node s)
-  requires s::ll<n>@I
-  ensures res::treelseg<s, null, 0, n>@I & flow __norm
-      or true & flow exception ; 
+  requires s::tlseg<p,d,n>
+  ensures res::treelseg<s, null, 0, n>@I & flow __norm; 
 {
 	tree t = build_rec(0, s);
 	bool b = is_empty(s);
@@ -87,15 +79,3 @@ tree build(node s)
 		return t;
 	}
 }
-
-
-tree harness1(node s1)
-	requires s1::node<1,s2>@I*s2::node<3,s3>@I
-      *s3::node<3,s4>@I*s4::node<2,null>@I 
-  ensures res::treelseg<s1,null,0,4>@I 
-        or true & flow exception;
-{
-	return build(s1);
-}
-
-*/

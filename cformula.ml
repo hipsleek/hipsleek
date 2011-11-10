@@ -5399,3 +5399,38 @@ let compute_holes_list svs =
  * An Hoa : Check if svs contain a non-hole variable.
  **)
 let is_empty svs = List.for_all CP.is_hole_spec_var svs
+
+
+let mark_derv_self name f = 
+  let rec h_h f = match f with
+      | ViewNode h ->
+        if (CP.name_of_spec_var h.h_formula_view_node)="self" && 
+            h.h_formula_view_name = name then
+              ViewNode {h with h_formula_view_original = false }
+        else f   
+      | Star s -> Star {s with 
+          h_formula_star_h1 = h_h s.h_formula_star_h1;
+          h_formula_star_h2 = h_h s.h_formula_star_h2;} 
+      | Conj c -> Conj {c with 
+          h_formula_conj_h1 = h_h c.h_formula_conj_h1;
+          h_formula_conj_h2 = h_h c.h_formula_conj_h2;}
+      | Phase p -> Phase {p with 
+          h_formula_phase_rd = h_h p.h_formula_phase_rd;
+          h_formula_phase_rw =  h_h p.h_formula_phase_rw;}     
+      | DataNode _
+      | Hole _ | HTrue | HFalse -> f in
+  let rec h_f f = match f with 
+    | Or b -> Or {b with formula_or_f1 = h_f b.formula_or_f1; formula_or_f2 = h_f b.formula_or_f2; }
+    | Base b-> Base {b with formula_base_heap = h_h b.formula_base_heap; }
+    | Exists b-> Exists {b with formula_exists_heap = h_h b.formula_exists_heap; } in
+  let rec h_struc f = 
+    let h_ext f = match f with 
+       | ECase b -> ECase{b with 
+              formula_case_branches = List.map (fun (c1,c2)-> (c1,h_struc c2)) b.formula_case_branches}
+       | EBase b -> EBase{b with 
+            formula_ext_base = h_f b.formula_ext_base; 
+            formula_ext_continuation = h_struc b.formula_ext_continuation}
+       | EAssume _
+       | EVariance _ -> failwith "marh_derv_self: not expecting assume or variance\n" in
+    List.map h_ext f in
+  (h_struc f)

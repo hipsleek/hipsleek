@@ -1,0 +1,48 @@
+data node {
+  int val;
+  node next;
+}.
+
+data tree {
+  tree left;
+  tree right;
+}.
+
+pred treelseg<t,p,d,n> ==
+     t::node<d,p> & self=null & n=1
+  or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
+     * right::treelseg<r,p,d+1,n2> & n=n1+n2
+  inv n>=1 .
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<_,q> * q::lseg<p,n-1>
+  inv n>=0.
+
+  
+pred tlseg<p,d,n> ==
+     self::node<d,p> & n=1
+  or self::tlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2 
+  inv self!=null & n>=1 .
+  
+//lemma self::tlseg<p,d,n> -> self::node<dd,q> * q::lseg<p,n-1> & dd>=d.
+
+//checkentail r::tlseg<p1,d1,n> |- r::node<d,p>.
+ 
+ checkentail r::tlseg<p1,d1,n> |- r::node<d,p>.
+//checkentail r::node<d,p> |- r::tlseg<p1,d1,n>.
+print residue.
+  
+/*
+
+
+checkentail r::tlseg<p1,d1,n> |- r::node<d,p>.
+
+
+pred negtlseg<p,d,n> ==
+    self::node<v,p> & n=1 & v<d
+    or self::negtlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2
+    or self::tlseg<r,d+1,n1> * r::negtlseg<p,d+1,n2> & n=n1+n2
+    or self::negtlseg<r,d+1,n1> * r::negtlseg<p,d+1,n2> & n=n1+n2
+  inv  self!=null & n>=1.
+
+  */

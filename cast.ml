@@ -365,6 +365,8 @@ let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been init
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
+
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -862,9 +864,13 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
 
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
-  List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
+    List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
 
-
+let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
+  let pr1 = pr_list !print_coercion in
+  Gen.Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
+    (fun _ _ _ -> look_up_coercion_with_target coers c t) c t coers
+    
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
   let pdef = look_up_proc_def_no_mingling no_pos prog.prog_proc_decls name in
   let callees = 

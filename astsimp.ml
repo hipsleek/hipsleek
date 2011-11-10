@@ -1091,7 +1091,8 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   Gen.Debug.no_3 "compute_view_x_formula"
-  Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int (fun x -> "")
+  Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int 
+   (fun x -> "")
   compute_view_x_formula_x prog vdef n
 	
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
@@ -1178,6 +1179,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
    (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+  let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let (inv, inv_b) = vdef.I.view_invariant in
   let _ = gather_type_info_pure prog inv stab in
   let _ = List.iter (fun (_,f) -> gather_type_info_pure prog f stab) inv_b in
@@ -1964,6 +1966,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         (*   | I.Right -> ([], [ change_univ c_coer])) *)
 
 and find_view_name (f0 : CF.formula) (v : ident) pos =
+  Gen.Debug.no_2 "find_view_name"  (fun x->x) Cprinter.string_of_formula (fun x->x)
+    (fun _ _ -> find_view_name_x f0 v pos) v f0 
+ 
+and find_view_name_x (f0 : CF.formula) (v : ident) pos =
   match f0 with
     | CF.Base {
           CF.formula_base_heap = h;
@@ -2016,12 +2022,12 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_data_pos = _
 		              } ->
 		            if (CP.name_of_spec_var p) = v
-		            then
-		              Err.report_error
+		            then c
+                  (*Err.report_error
                           {
                               Err.error_loc = pos;
                               Err.error_text = v ^ " must point to a view";
-                          }
+                          }*)
 		            else ""
               | CF.ViewNode
 		              {
