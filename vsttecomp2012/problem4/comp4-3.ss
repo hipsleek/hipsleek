@@ -32,15 +32,22 @@ tlseg<p,f,d,n> ==
 // be able to generate a binary tree of upto that size
 // this predicate is expected to be the complement of tlseg
 // which is supposed to give our completeness result
+
 negtlseg<p,f,d,n> ==
   self::node<f,p> & n=1 & f>d
-  or self::negtlseg<r,f,d+1,m> & m<n 
-  or self::tlseg<r,f,d+1,n2> * r::negtlseg<p,_,d+1,n3> & n>=n2+n3
+  or self::negtlseg<r,f,d+1,n> 
+  or self::tlseg<r,f,d+1,n2> * r::negtlseg<p,_,d+1,n> 
   inv self!=null & n>=1 & f>d; 
+
+/* can we show disjointness of
+ (i) x::node<v,p> & v<d
+ (ii) x::tsleg<p,f,d,_> 
+ (iii) x::negtlseg<p,f,d,_> 
+ can we show its universality? 
+*/
 
 // a provable lemma that tlseg gives at least one node
 //coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
-
 //coercion self::negtlseg<p,f,d,n> -> self::node<f,q> ;
 
 bool is_empty(node x)
@@ -69,27 +76,30 @@ void pop(ref node x)
 }
 
 tree build_rec (int d, ref node s)
+// is spec below complete - how can we prove this 
  case {
    s=null -> ensures true &  flow exception;
   s!=null -> 
-      requires s::tlseg<p,_,d,n>
+      requires s::node<v,_> & v<d 
+      ensures  true & flow exception;
+      requires s::tlseg<p,f,d,n>
       ensures res::treelseg<s,s',d,n> & s' = p & flow __norm;
-      requires s::negtlseg<p,_,d,_> 
+      requires s::negtlseg<p,f,d,n> 
       ensures true & flow exception;
   }
 {
   tree ll,rr;
-	if (is_empty(s)) raise new exception();
-  unfold s;
+  if (is_empty(s)) raise new exception();
+  //unfold s;
   int h = hd(s);
   if (h < d) raise new exception();        
   if (h == d) {
-      dprint; assume false;
       pop(s);        
 	  return null;
 	}
-  assume false;
+  dprint;
   ll = build_rec(d+1, s);
+  //assume false;
   rr = build_rec(d+1, s);
   return new tree (ll,rr);
 }
