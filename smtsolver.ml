@@ -310,33 +310,35 @@ and compact_formula_info info =
 
 (* Interface function to add a new axiom *)
 let add_axiom h dir c =
-	(* let _ = print_endline ("add axiom : " ^ (!print_pure h) ^ (match dir with |IFF -> " <==> " | _ -> " ==> ") ^ (!print_pure c)) in *)
+	(* let _ = print_endline ("Add axiom : " ^ (!print_pure h) ^ (match dir with |IFF -> " <==> " | _ -> " ==> ") ^ (!print_pure c)) in *)
 	let info = collect_combine_formula_info_raw h c in
-	(* let _ = print_endline ("directly related relations : " ^ (String.concat "," info.relations)) in *)
-	let indirectly_related_relations = List.filter (fun x -> List.mem x.rel_name info.relations) !global_rel_defs in (* assumption: every relations in global_rel_defs has their related axioms computed *)
+	(* let _ = print_endline ("Directly related relations : " ^ (String.concat "," info.relations)) in *)
+	(* assumption: at the time of adding this axiom, all relations in global_rel_defs has their related axioms computed *)
+	let indirectly_related_relations = List.filter (fun x -> List.mem x.rel_name info.relations) !global_rel_defs in
 	let indirectly_related_relations = List.map (fun x -> x.related_rels) indirectly_related_relations in
-	let related_relations = (List.flatten indirectly_related_relations) @ info.relations in
+	let related_relations = info.relations @ (List.flatten indirectly_related_relations) in
 	let related_relations = Gen.BList.remove_dups_eq (=) related_relations in
-	(* let _ = print_endline ("all related relations : " ^ (String.concat ", " related_relations)) in *)
+	(* let _ = print_endline ("All related relations found : " ^ (String.concat ", " related_relations) ^ "\n") in *)
 	let aindex = List.length !global_axiom_defs in
 	begin
 		(* Modifying every relations appearing in h and c by
 		   1)   Add reference to 'h dir c' as a related axiom
 		   2)   Add all other relations (appearing in h and c) to the list of related relations *)
-		global_rel_defs := List.map (fun x -> if (List.mem x.rel_name info.relations) then
-			let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ info.relations) in
-			(* let rs = List.filter (fun y -> not (y = x.rel_name)) rs in *)
+		global_rel_defs := List.map (fun x ->
+			if (List.mem x.rel_name related_relations) then
+			let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ related_relations) in
 			{ x with 
 				related_rels = rs;
 				related_axioms = x.related_axioms @ [aindex]; }
 			else x) !global_rel_defs;
 		(* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
-		let cache_smt_input = 
-			let params = List.append (CP.fv h) (CP.fv c) in
-			let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
-			let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
-			let op = match dir with | IMPLIES -> "=>" | IFF -> "=" in
-				"(assert (forall (" ^ smt_params ^ ") (" ^ op ^ " " ^ (smt_of_formula h) ^ " " ^ (smt_of_formula c) ^ ")))\n" in
+		let params = List.append (CP.fv h) (CP.fv c) in
+		let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
+		let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
+		let op = match dir with 
+					| IMPLIES -> "=>" 
+					| IFF -> "=" in
+		let cache_smt_input = "(assert (forall (" ^ smt_params ^ ")\n\t(" ^ op ^ " " ^ (smt_of_formula h) ^ "\n\t" ^ (smt_of_formula c) ^ ")))\n" in
 		(* Add 'h dir c' to the global axioms *)
 		let new_axiom = { axiom_direction = dir;
 						axiom_hypothesis = h;
@@ -522,11 +524,11 @@ let to_smt_v2 ante conseq logic fvars info =
 	let smt_var_decls = String.concat "" smt_var_decls in
 	(* Relations that appears in the ante and conseq *)
 	let used_rels = info.relations in
-	let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in
-	(* let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in *)
+	(* let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in *)
+	let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in
 	(* Necessary axioms *)
-	let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in (* Add all axioms; there are bugs! *)
-	(* let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in *)
+	(* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
+	let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
 	(* Antecedent and consequence : split /\ into small asserts for easier management *)
 	let ante_clauses = CP.split_conjunctions ante in
 	let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in

@@ -62,7 +62,7 @@ let parse_file (parse) (source_file : string) =
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
 				                 | RelDef rdef -> process_rel_def rdef
-								 | AxiomDef adef -> process_axiom_def adef (* An Hoa *)
+								 | AxiomDef adef -> process_axiom_def adef (* An Hoa : Bug detected in MUTUALLY DEPENDENT relations! *)
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
