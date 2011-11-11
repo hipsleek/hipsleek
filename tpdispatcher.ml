@@ -729,6 +729,8 @@ let simplify_var_name (e: CP.formula) : CP.formula =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let _ = disj_cnt f None "sat_no_cache" in
+  let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
+  let res = 
   match !tp with
 	| DP -> 
 		let r = Dp.is_sat f sat_no in
@@ -814,6 +816,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         Mona.is_sat f sat_no
       else
 		Smtsolver.is_sat f sat_no
+  in let _ = Gen.Profiling.pop_time "tp_is_sat_no_cache" 
+  in res
 
 let tp_is_sat_no_cache f sat_no =
   Gen.Debug.no_1 "tp_is_sat_no_cache" Cprinter.string_of_pure_formula string_of_bool 
@@ -1098,6 +1102,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
 
   let _ = disj_cnt ante (Some conseq) "imply_no_cache" in
+  let _ = Gen.Profiling.push_time "tp_imply_no_cache" in
   
   let r = match !tp with
 	| DP -> 
@@ -1169,6 +1174,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       else
         Smtsolver.imply ante conseq
   in
+  let _ = Gen.Profiling.pop_time "tp_imply_no_cache" in
+  
   let _ = if !print_implication then
 	  print_string ("CHECK IMPLICATION:\n" ^
 					   (Cprinter.string_of_pure_formula ante) ^ " |- " ^

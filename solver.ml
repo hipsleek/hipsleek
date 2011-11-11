@@ -3162,7 +3162,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
       end
 
 and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) 
-      = Gen.Debug.no_2 "heap_entail_conjunct_lhs" Cprinter.string_of_context Cprinter.string_of_formula Cprinter.(fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
+      = Gen.Debug.no_2 "heap_entail_conjunct_lhs" Cprinter.string_of_context Cprinter.string_of_formula (fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
   (fun ctx conseq -> heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos) ctx conseq 
 
 and heap_entail_conjunct_lhs_y prog is_folding ctx conseq pos =
