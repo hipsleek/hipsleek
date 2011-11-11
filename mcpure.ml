@@ -9,6 +9,7 @@ open Cpure
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
+
 type var_aset = Gen.EqMap(SV).emap 
 
 let empty_var_aset = EMapSV.mkEmpty 
@@ -2058,9 +2059,9 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
-
+  
   (Gen.Profiling.push_time str_time;
-  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
+  let r = t_imply r conseq ("imply_process_ante_no_slicing"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;
   r)
 
@@ -2243,8 +2244,8 @@ and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply 
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
 
-  (Gen.Profiling.push_time str_time;
-   let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
+   (Gen.Profiling.push_time str_time;
+   let r = t_imply r conseq ("imply_process_ante_slicing"^(string_of_int !imp_no)) false None in
    Gen.Profiling.pop_time str_time;
    r)
 	
@@ -2286,9 +2287,7 @@ let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
 
-and imply_memo_x ante_memo0 conseq_memo t_imply             (*let _ = print_string ("\n failed ante: "^(Cprinter.string_of_pure_formula  
-              (fold_mem_lst (mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
-imp_no =
+and imply_memo_x ante_memo0 conseq_memo t_imply imp_no =
   if !do_slicing then imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no
   else imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no
 
