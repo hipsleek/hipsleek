@@ -57,17 +57,19 @@ void pop(ref node x)
 
 tree build_rec (int d, ref node s)
  case {
-   s=null -> ensures true &  flow exception;
+  s=null -> ensures "b1": true &  flow exception;
   s!=null -> 
       requires s::tlseg<p,_,d,n>
-      ensures res::treelseg<s,s',d,n> & s' = p & flow __norm;
+    ensures "b2": res::treelseg<s,s',d,n> & s' = p & flow __norm;
   }
 {
   tree ll,rr;
-	if (is_empty(s)) raise new exception();
+  if (is_empty(s)) raise new exception();
+  else {
   unfold s;
+  dprint;
   int h = hd(s);
-  //if (h < d) raise new exception();        
+  if (h < d) raise new exception();        
   if (h == d) {
       pop(s);        
 	  return null;
@@ -78,6 +80,7 @@ tree build_rec (int d, ref node s)
   ll = build_rec(d+1, s);
   rr = build_rec(d+1, s);
   return new tree (ll,rr);
+  }
 }
 
 tree build(node s)
