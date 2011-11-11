@@ -178,9 +178,9 @@ int[] update___(int[] a, int i, int v)
 data tid{
 }
 
-tid fork()
+void fork(tid id)
   requires true
-  ensures res::tid<>;
+  ensures id::tid<>;
 
 void join1(tid id)
   requires id::tid<>

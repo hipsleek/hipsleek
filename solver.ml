@@ -241,7 +241,9 @@ let prune_branches_subsume prog lhs_node rhs_node =
   let pr = Cprinter.string_of_h_formula in
   Gen.Debug.no_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
 
-  
+(*LDK: only use crt_heap_entailer
+a : Cformula.list_failesc_context
+*)  
 let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a -> 'a) (res_checker:'b-> bool) (argument:'a) :'b =
   begin
    Globals.prune_with_slice := !Globals.enable_aggressive_prune;

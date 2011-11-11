@@ -73,9 +73,9 @@ let process_source_full source =
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
-  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in
+  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
-  let prims_list = process_primitives new_h_files in
+  let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
 
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
@@ -104,9 +104,9 @@ let process_source_full source =
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
     (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
-	(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
+	let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
-	(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
+	let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in
     (* let _ = Iast.find_empty_static_specs intermediate_prog in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let _ = Gen.Profiling.pop_time "Translating global var" in

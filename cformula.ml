@@ -244,6 +244,10 @@ let mkFullPerm_pure  f : CP.formula =
       no_pos
   )),None)
 
+let mkFullPerm_pure_from_ident id : CP.formula = 
+  let var = (Cpure.SpecVar (Float, id, Unprimed)) in
+  mkFullPerm_pure var
+
 (*create fractional invariant 0<f<=1*)
 let mkFracInv (f:CP.spec_var) : CP.formula =
   let upper = 
