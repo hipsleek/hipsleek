@@ -500,10 +500,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | ViewNode vl, DataNode dr -> 
                 let uf_i = if vl.h_formula_view_original then 0 else 1 in
                 let ua = (1, M_unfold (c,uf_i)) in
-                let left_ls = 
-                  look_up_coercion_with_target 
-                    prog.prog_left_coercions 
-                      vl.h_formula_view_name dr.h_formula_data_name in
+                let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name dr.h_formula_data_name in
                 if left_ls == [] || vl.h_formula_view_original then ua
                 else (1,M_lemma (c,Some (List.hd left_ls)))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	

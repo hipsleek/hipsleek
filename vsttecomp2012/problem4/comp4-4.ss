@@ -29,7 +29,7 @@ tlseg<p,f,d,n> ==
   inv self!=null & n>=1 & f>=d ;
 
 // a provable lemma that tlseg gives at least one node
-// coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
+ coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
 //coercion self::negtlseg<p,f,d,n> -> self::node<f,q> ;
 
 bool is_empty(node x)
@@ -40,7 +40,7 @@ bool is_empty(node x)
 }
 
 int hd(node x)
-    requires x::node<d,_>@I
+	requires x::node<d,_>@I 
     ensures res=d;
     requires x::tlseg<p,f,d,n>@I 
     ensures res=f;
@@ -66,17 +66,14 @@ tree build_rec (int d, ref node s)
   tree ll,rr;
   if (is_empty(s)) raise new exception();
   else {
-  unfold s;
-  dprint;
+  //unfold s;
   int h = hd(s);
+  dprint; assume false;
   if (h < d) raise new exception();        
   if (h == d) {
       pop(s);        
 	  return null;
 	}
-  // why are there so many unnecessary states
-  // here. Is it due to the conditional?
-  dprint;
   ll = build_rec(d+1, s);
   rr = build_rec(d+1, s);
   return new tree (ll,rr);

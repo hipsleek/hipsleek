@@ -330,7 +330,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if str = "" then begin
               let str1 = (Cprinter.string_of_list_failesc_context ctx)  in
 	          (if (Gen.is_empty ctx) then
-                (print_string ("\ndprint: empty/false context")) 
+                (print_string ("\ndprint:"^pos.start_pos.Lexing.pos_fname
+                  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty/false context")) 
 	          else
                 let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
