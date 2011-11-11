@@ -66,7 +66,7 @@ tree build_rec (int d, ref node s)
   tree ll,rr;
   if (is_empty(s)) raise new exception();
   else {
-  //unfold s;
+  unfold s;
   int h = hd(s);
   dprint; assume false;
   if (h < d) raise new exception();        
