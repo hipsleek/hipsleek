@@ -9,27 +9,22 @@ relation has_path(int[,] A, int n, int s, int t) ==
 	(s = t 
 	| exists(i : 0 <= i < n & has_path(A,n,s,i) & A[i,t] != 0)).
 
+relation has_exact_length_v_path(int[,] A, int n, int s, int t, int k, int v) ==
+	(k = 0 & s = t
+	| k > 0 & exists(i : 0 <= i < v & has_exact_length_v_path(A,n,s,i,k-1,n) & A[i,t] != 0)).
+
+relation has_exact_length_path(int[,] A, int n, int s, int t, int k) == has_exact_length_v_path(A,n,s,t,k,n).
+
 relation has_bounded_length_v_path(int[,] A, int n, int s, int t, int k, int v) ==
 	(k = 0 & s = t
 	| k > 0 & (has_bounded_length_v_path(A,n,s,t,k-1,n) 
 			| exists(i : 0 <= i < v & has_exact_length_v_path(A,n,s,i,k-1,n) & A[i,t] != 0))).
 
-relation has_bounded_length_path(int[,] A, int n, int s, int t, int k) ==
-	(k = 0 & s = t 
-	| k > 0 & has_bounded_length_v_path(A,n,s,t,k,n)). 
-
-relation has_exact_length_v_path(int[,] A, int n, int s, int t, int k, int v) ==
-	(k = 0 & s = t
-	| k > 0 & exists(i : 0 <= i < v & has_exact_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
-
-relation has_exact_length_path(int[,] A, int n, int s, int t, int k) ==
-	(k = 0 & s = t
-	| k > 0 & exists(i : 0 <= i < n & has_exact_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
+relation has_bounded_length_path(int[,] A, int n, int s, int t, int k) == has_bounded_length_v_path(A,n,s,t,k,n).
 
 relation v_shortest_distance(int[,] A, int n, int s, int t, int d, int v) ==
 	has_exact_length_v_path(A, n, s, t, d, v) & 
 	!(has_bounded_length_v_path(A, n, s, t, d-1, v)).
-	
 
 relation shortest_distance(int[,] A, int n, int s, int t, int d) ==
 	(d = 0 & s = t
@@ -67,20 +62,17 @@ relation some_has_v_shortest_distance(int[,] A, int n, int s, int d, int[] N, in
 
 // THEOREMS REQUIRED FOR PRE-CONDITION I.E. LOOP INVARIANTS
 
-// AXIOM 1
-axiom has_bounded_length_v_path(A,n,s,w,d+1,v) & 
-		some_has_v_shortest_distance(A,n,s,d+1,N,v+1,0,w) & 
-		some_has_v_shortest_distance(A,n,s,d+1,N,v,w,n) & 
-		0 <= w < n ==> some_has_v_shortest_distance(A,n,s,d+1,N,v+1,0,w+1).
+// AXIOM 1 - bfs_loop3
+axiom has_bounded_length_v_path(A,n,s,x,d,v) & v_shortest_distance(A,n,s,x,d,v+1) ==> v_shortest_distance(A,n,s,x,d,v).
 
-// AXIOM 2
-axiom !(shortest_distance(A,n,s,v,d)) & all_has_bounded_length_v_path(A,n,s,d+1,V,v) ==> all_has_bounded_length_v_path(A,n,s,d+1,V,v+1).
+// AXIOM 2 - precondition to recursive call bfs_loop2 in bfs_loop2
+axiom !(shortest_distance(A,n,s,v,d)) & has_bounded_length_v_path(A,n,s,x,d+1,v+1) ==> has_bounded_length_v_path(A,n,s,x,d+1,v).
 
-// AXIOM 3
-axiom !(shortest_distance(A,n,s,v,d)) & all_has_v_shortest_distance(A,n,s,d+1,N,v) ==> all_has_v_shortest_distance(A,n,s,d+1,N,v+1).
+// AXIOM 3a - precondition to call recursive bfs_loop2 in bfs_loop2
+axiom !(shortest_distance(A,n,s,v,d)) & v_shortest_distance(A,n,s,x,d+1,v) ==> v_shortest_distance(A,n,s,x,d+1,v+1).
 
-// AXIOM 4
-axiom shortest_distance(A,n,s,v,d) & A[v,w] != 0 & !(has_bounded_length_v_path(A,n,s,w,d,v)) ==> v_shortest_distance(A,n,s,w,d+1,v+1).
+// AXIOM 3b - precondition to call recursive bfs_loop2 in bfs_loop2
+axiom !(shortest_distance(A,n,s,v,d)) & v_shortest_distance(A,n,s,x,d+1,v+1) ==> v_shortest_distance(A,n,s,x,d+1,v).
 
 int bfs(int[,] A, int n, int source, int target)
 	requires 0 <= source < n & 0 <= target < n
