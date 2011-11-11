@@ -387,6 +387,9 @@ let log_proof prf =
 	  
 (** An Hoa : Output to HTML **)
 
+(* The plus.gif and minus.gif icons should be put in the same directory as the executable *)
+let image_dir_url = "file://" ^ Gen.get_path Sys.executable_name
+
 let hipsleekjs = "
 /*
  Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
@@ -480,6 +483,7 @@ h1 {
 
 .progsource {
 	border-style : double;
+	font-family : Arial;
 }
 
 .progsource td {
@@ -503,7 +507,7 @@ tr.EvenSourceLine {
 	color:blue;
 	font-size : 0.75em;
 	font-weight : normal;
-	border-style : groove;
+	/* border-style : groove; */
 	font-family : monospace;
 }
 
@@ -568,9 +572,9 @@ tr.EvenSourceLine {
 .TreeView li
 {
     /* The padding is for the tree view nodes */
-    padding: 0 0 0 18px;
-    float: left;
-    width: 100%;
+	padding: 0 0 0 20px;
+    float : left;
+    width : 95%;
     list-style: none;
 }
 
@@ -582,7 +586,8 @@ tr.EvenSourceLine {
 
 li.Expanded 
 {
-    background: url(http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif) no-repeat left top;
+    background: url(" ^ image_dir_url ^ "minus.gif) no-repeat left top; 
+    /* http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif */
 }
 
 li.Expanded ul
@@ -592,7 +597,8 @@ li.Expanded ul
 
 li.Collapsed 
 {
-	background: url(http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif) no-repeat left top;
+	background: url(" ^ image_dir_url ^ "plus.gif) no-repeat left top; 
+	/* http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif */
 }
 
 li.Collapsed ul
@@ -707,10 +713,10 @@ let initialize_html source_file_name = let source = (Gen.SysUti.string_of_file s
 	html_output := 
 "<html>
 <head>" ^ 
-(*"	<style type=\"text/css\">" ^ hipsleekcss ^ "</style>" ^*)
-(*"	<script type=\"text/javascript\">" ^ hipsleekjs ^ "</script>" ^*)
-"	<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />" ^
-"	<script type=\"text/javascript\" src=\"hipsleek.js\"></script>" ^
+"	<style type=\"text/css\">" ^ hipsleekcss ^ "</style>" ^
+"	<script type=\"text/javascript\">" ^ hipsleekjs ^ "</script>" ^
+(*"	<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />" ^
+"	<script type=\"text/javascript\" src=\"hipsleek.js\"></script>" ^ *)
 "</head>
 <body>\n" ^ 
 "<h1>" ^ source_file_name ^ "</h1>\n" ^
