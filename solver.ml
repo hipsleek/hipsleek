@@ -4410,14 +4410,18 @@ and heap_entail_split_rhs_phases_x
 	    or ((is_true h2) && (is_true h3))
       then
 	    (* only one phase is not emp *)
+	    let _ = print_string("\nheap_entail_split_rhs_phases: only one phase is not emp \n") in
 	    heap_n_pure_entail prog is_folding  ctx_00 conseq (choose_not_true_heap h1 h2 h3) p func drop_read_phase pos
       else
 	    if ((is_true h1) && (is_true h2)) then (* does split_phase allow this *)
+	      let _ = print_string("heap_entail_split_rhs_phases: h3 is the only non empty phase \n") in
 	      let new_conseq = func h3 p in
 	      if not(contains_phase h3) then
 	        (* h3 is the only non empty phase and it does not contain any nested phases *)
+	        let _ = print_string("heap_entail_split_rhs_phases: h3 is the only non empty phase and it does not contain any nested phases \n") in
 	        heap_n_pure_entail prog is_folding  ctx_00 conseq (choose_not_true_heap h1 h2 h3) p func drop_read_phase pos
- 	      else
+ 	                             else
+	        let _ = print_string("heap_entail_split_rhs_phases: h3 is the only non empty phase and it contains nested phases \n") in
 	        heap_entail_split_rhs_phases_x prog is_folding  ctx_00 new_conseq (contains_mutable new_conseq) pos
 	    else
 	      let res_ctx, res_prf = 
@@ -4537,8 +4541,8 @@ and eliminate_exist_from_LHS qvars qh qp qt qfl qb pos estate =
   in new_ctx
 
 and heap_n_pure_entail(*_debug*) prog is_folding  ctx0 conseq h p func drop_read_phase pos : (list_context * proof) =
-  Gen.Debug.no_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
-      (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  (fun ctx0 h -> heap_n_pure_entail_x prog is_folding  ctx0 conseq h p func drop_read_phase pos) ctx0 h 
+  Gen.Debug.no_3 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula Cprinter.string_of_mix_formula
+      (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  (fun ctx0 h p -> heap_n_pure_entail_x prog is_folding  ctx0 conseq h p func drop_read_phase pos) ctx0 h p
 
 and heap_n_pure_entail_1 prog is_folding  ctx0 conseq h p func drop_read_phase pos = 
   (* print_string "tracing heap_n_pure_entail_1\n"; *) (heap_n_pure_entail prog is_folding  ctx0 conseq h p func drop_read_phase pos)
@@ -4568,9 +4572,10 @@ and heap_n_pure_entail_x
 	      (* let _  = print_string("*************************************************\n") in *)
 	      (* let _ = print_string("entailing the pure:\n") in *)
 	      (* let _  = print_string("*************************************************\n") in *)
+          (*prove pure constraints in p*)
           let entail_p = List.map 
 	        (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl  
-          in
+          in 
           let entail_p_ctx, entail_p_prf = List.split entail_p in
           let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
           let entail_p_ctx = fold_context_left entail_p_ctx in 
@@ -5951,7 +5956,8 @@ in
           (* let (mix_f,rest) = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br)) in *)
 
           (* (\*LDK*\) *)
-          (* let _ = print_string ("heap_entail_empty_rhs_heap_x:" *)
+          (* let _ = print_string ("\n heap_entail_empty_rhs_heap_x:" *)
+          (*                       ^ "\n ### lhs_heap  = " ^ (Cprinter.string_of_formula res_delta) *)
           (*                       ^ "\n ### res_delta  = " ^ (Cprinter.string_of_formula res_delta) *)
           (*                       ^ "\n ### rhs_p  = " ^ (Cprinter.string_of_mix_formula rhs_p) *)
           (*                       (\* ^ "\n ### mix_f  = " ^ (Cprinter.string_of_mix_formula mix_f) *\) *)
@@ -6947,9 +6953,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
     (* only add the consumed node if the node matched on the rhs is mutable *)
     let new_consumed = 
-      if not(get_imm r_node)
-      then mkStarH l_node estate.es_heap pos 
-      else  estate.es_heap
+      (* if (!Globals.allow_imm) then *)
+        if not(get_imm r_node)
+        then mkStarH l_node estate.es_heap pos (*if not immutable -> consumed*)
+        else  estate.es_heap
+      (* else  mkStarH l_node estate.es_heap pos *)
     in
     let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
       |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
@@ -10008,7 +10016,7 @@ let normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 let normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
 
 

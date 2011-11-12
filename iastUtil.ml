@@ -1232,15 +1232,15 @@ let pre_process_of_iprog iprims prog =
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
           } in
   let prog = float_var_decl_prog prog in
-  let _ = print_string "1\n" in
+  (* let _ = print_string "pre_process_of_iprog: 1\n" in *)
   let prog = rename_prog prog in
-  let _ = print_string "2\n" in
+  (* let _ = print_string "pre_process_of_iprog: 2\n" in *)
   let prog = add_globalv_to_mth_prog prog in
-  let _ = print_string "3\n" in
+  (* let _ = print_string "pre_process_of_iprog: 3\n" in *)
   prog
 
 let pre_process_of_iprog prog = 
-  Gen.Debug.ho_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
+  Gen.Debug.no_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
 
 
 
