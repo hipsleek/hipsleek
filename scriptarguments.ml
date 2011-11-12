@@ -189,6 +189,7 @@ let common_arguments = [
 	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
     ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
     ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+    ("-version", Arg.Set Globals.print_version_flag,"current version of software");
     ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining");
     ("--refine-error", Arg.Set Globals.simplify_error,
 	"Simplify the error");

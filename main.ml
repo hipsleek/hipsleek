@@ -15,6 +15,13 @@ let set_source_file arg =
 
 let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg
 
+let print_version () =
+  print_endline ("HIP: A Verifier for Heap Manipulating Programs");
+  print_endline ("Version 1.0");
+  print_endline ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.");
+  print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
+  print_endline ("Copyright @ PLS2 @ NUS")
+
 (******************************************)
 (* main function                          *)
 (******************************************)
@@ -226,7 +233,9 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
-  
+  if !Globals.print_version_flag then begin
+	print_version ()
+  end else
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
       Globals.procs_verified := ["f3"];

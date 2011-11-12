@@ -5356,31 +5356,31 @@ and gather_type_info_struc_f_x prog (f0:Iformula.struc_formula) stab =
 (* 			                  (c ^ " is neither a view nor data declaration")))) *)
 (*     | IF.HTrue | IF.HFalse -> () *)
 
-and check_ie_x ie t stab =
-  (match t with
-    | Bool ->
-		  if IP.is_var ie
-		  then
-            gather_type_info_var (IP.name_of_var ie) stab
-                (C.bool_type) (IP.pos_of_exp ie)
-		  else
-            Err.report_error
-                {
-			        Err.error_loc = IP.pos_of_exp ie;
-			        Err.error_text = "expecting type bool";
-                }
-    | Int -> gather_type_info_exp ie stab (C.int_type)
-    | Float -> gather_type_info_exp ie stab (C.float_type)
-    | Named _ -> gather_type_info_exp ie stab t  
-	| Array et -> gather_type_info_exp ie stab ( (Array et))
-    | _ ->  Err.report_error
-          {
-			  Err.error_loc = IP.pos_of_exp ie;
-			  Err.error_text = "check_ie : unexpected type "^(string_of_typ t);
-          } ) 
-and check_ie ie t stab =
-  Gen.Debug.no_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ
-      (fun _ _ _ -> check_ie_x ie t stab) ie t stab
+(* and check_ie_x ie t stab = *)
+(*   (match t with *)
+(*     | Bool -> *)
+(* 		  if IP.is_var ie *)
+(* 		  then *)
+(*             gather_type_info_var (IP.name_of_var ie) stab *)
+(*                 (C.bool_type) (IP.pos_of_exp ie) *)
+(* 		  else *)
+(*             Err.report_error *)
+(*                 { *)
+(* 			        Err.error_loc = IP.pos_of_exp ie; *)
+(* 			        Err.error_text = "expecting type bool"; *)
+(*                 } *)
+(*     | Int -> gather_type_info_exp ie stab (C.int_type) *)
+(*     | Float -> gather_type_info_exp ie stab (C.float_type) *)
+(*     | Named _ -> gather_type_info_exp ie stab t   *)
+(* 	| Array et -> gather_type_info_exp ie stab ( (Array et)) *)
+(*     | _ ->  Err.report_error *)
+(*           { *)
+(* 			  Err.error_loc = IP.pos_of_exp ie; *)
+(* 			  Err.error_text = "check_ie : unexpected type "^(string_of_typ t); *)
+(*           } )  *)
+(* and check_ie ie t stab = *)
+(*   Gen.Debug.no_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ *)
+(*       (fun _ _ _ -> check_ie_x ie t stab) ie t stab *)
 
 and try_unify_data_type_args prog c ddef v ies stab pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)

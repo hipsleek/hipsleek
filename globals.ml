@@ -315,6 +315,8 @@ let simplify_pure = ref false
 
 let enable_norm_simp = ref false
 
+let print_version_flag = ref false
+
 let n_xpure = ref 1
 
 let check_coercions = ref false
