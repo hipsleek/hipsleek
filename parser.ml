@@ -684,7 +684,7 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)
+(*  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1) *)
   ]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
