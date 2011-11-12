@@ -4104,7 +4104,7 @@ let rec simp_addsub e1 e2 loc =
 (* and norm_exp_aux (e:exp) = match e with  *)
 
 and norm_exp (e:exp) = 
-  let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in
+  (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
     | Null _ | IConst _ | FConst _ -> e
