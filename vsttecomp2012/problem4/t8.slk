@@ -17,7 +17,7 @@ lemma self::tlseg<p,f,d,n>@I -> self::node<f,q>@I.
 /* this is a data losing lemma that should only be used
    with immitable spec */
 
-//checkentail x::tlseg<p,f,d,n> |- x::node<v,_>@I.
+checkentail x::tlseg<p,f,d,n> |- x::node<v,_>@I.
 // two anwers; need only have one really
 
 //checkentail x::tlseg<p,f,d,n> |- x::tlseg<a,b,c,d>.
@@ -26,10 +26,9 @@ lemma self::tlseg<p,f,d,n>@I -> self::node<f,q>@I.
 
 checkentail x::node<_,q> |- x::tlseg<a,b,c,d>.
 
-
 //checkentail x::node<p,q> |- x::tlseg<a,b,c,d>.
 // WHY ERROR: File "t8.slk", line 30, col 28 : gather_type_info_var : unexpected exceptionFailure("TYPE ERROR : Found node but expecting int") 
 
-checkentail x::node<pp,q> |- x::tlseg<a,f,d,n>.
+checkentail x::node<p,q> |- x::tlseg<f,a,d,n>.
 
 print residue.
