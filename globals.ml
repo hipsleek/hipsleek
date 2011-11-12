@@ -163,21 +163,9 @@ let is_substr s id =
 let is_dont_care_var id =
   if is_substr "#" id 
   then true
-  else if is_substr "Anon_" id then true
+  (* else if is_substr "Anon_" id then true *)
   else false
 ;;
-
-(*   let n = String.length id in *)
-(*   if n>=1 then *)
-(*     let s = String.sub id 0 1 in *)
-(*     if (s="#") then true *)
-(*     else if n>=5 then *)
-(*       let s = String.sub id 0 5 in *)
-(*       if (s="Anon_") then true *)
-(*       else false *)
-(*     else false *)
-(*   else false *)
-
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 

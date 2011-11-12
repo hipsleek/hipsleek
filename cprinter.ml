@@ -2060,4 +2060,5 @@ Cast.print_view_decl := string_of_view_decl;
 Cast.print_coercion := string_of_coerc_long;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
+Smtsolver.print_ty_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;

@@ -1,4 +1,5 @@
 open Globals
+open Gen.Basic
 module CP = Cpure
 
 module StringSet = Set.Make(String)
@@ -9,6 +10,7 @@ let set_prover_original_output = ref (fun _ -> ())
 (* Pure formula printing function, to be intialized by cprinter module *)
 
 let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
+let print_ty_sv = ref (fun (c:CP.spec_var) -> " printing not initialized")
 
 (***************************************************************
                   GLOBAL VARIABLES & TYPES                      
@@ -68,8 +70,8 @@ let rec smt_of_typ t =
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
 		| Int -> "Int"
-		| UNK -> 	
-			Error.report_error {Error.error_loc = no_pos; 
+		| UNK -> 
+			Error.report_error {Error.error_loc = no_pos;
 			Error.error_text = "unexpected UNKNOWN type"}
 		| NUM -> "Int" (* Use default Int for NUM *)
 		| Void | (BagT _) | (TVar _) | List _ ->
@@ -82,7 +84,12 @@ let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
 
 let smt_typed_var_of_spec_var sv =
+  try
 	"(" ^ (smt_of_spec_var sv) ^ " " ^ (smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
+  with _ ->
+		Error.report_error {Error.error_loc = no_pos;
+		Error.error_text = ("problem with type of"^(!print_ty_sv sv))}
+
 
 let rec smt_of_exp a =
 	match a with
@@ -187,6 +194,8 @@ let rec smt_of_formula f =
 	| CP.Exists (sv, p, _,_) ->
 		"(exists (" ^ (smt_typed_var_of_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")"
 
+let smt_of_formula f =
+  Gen.Debug.no_1 "smt_of_formula" !print_pure pr_id smt_of_formula f 
 
 (***************************************************************
                        FORMULA INFORMATION                      
