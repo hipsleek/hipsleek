@@ -1,7 +1,6 @@
 (* global types and utility functions *)
 
 
-
 type ident = string
 type constant_flow = ident
 
@@ -148,7 +147,37 @@ let rec s_i_list l c = match l with
   | h::[] -> h 
   | h::t -> h ^ c ^ (s_i_list t c)
 ;;
+
 let string_of_ident_list l = "["^(s_i_list l ",")^"]"
+;;
+
+let is_substr s id =
+  let len_s = String.length s in
+  try
+    let s_id = String.sub id 0 len_s in
+    if (s = s_id) then true
+    else false
+  with _ -> false
+;;
+ 
+let is_dont_care_var id =
+  if is_substr "#" id 
+  then true
+  else if is_substr "Anon_" id then true
+  else false
+;;
+
+(*   let n = String.length id in *)
+(*   if n>=1 then *)
+(*     let s = String.sub id 0 1 in *)
+(*     if (s="#") then true *)
+(*     else if n>=5 then *)
+(*       let s = String.sub id 0 5 in *)
+(*       if (s="Anon_") then true *)
+(*       else false *)
+(*     else false *)
+(*   else false *)
+
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 

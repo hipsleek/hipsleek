@@ -33,9 +33,14 @@ struct
 
   let pr_id x = x
 
+  let pr_var_prime (id,p) = match p with
+    | Globals.Primed -> id^"'"
+    | Globals.Unprimed -> id
+
   let print_flush s = print_endline (s); flush stdout
 
   let pr_no x = "?"
+  let pr_none x = "?"
 
   let pr_unit x = "()"
 

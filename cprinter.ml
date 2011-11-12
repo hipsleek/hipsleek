@@ -1583,6 +1583,8 @@ let rec string_of_spec_var_list_noparen l = match l with
 
 let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
 
+let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
+
 (*
 let rec string_of_spec = function
 	| SCase {scase_branches= br;} ->
