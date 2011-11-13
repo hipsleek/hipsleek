@@ -1989,6 +1989,7 @@ and apply_one_struc_w_frac  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : st
 
 
 (*LDK : add a constraint formula between frac spec var of datanode to fresh spec var of a view decl  *)
+(*add rhs_p into ext_base*)
 and add_mix_formula_to_formula  (rhs_p: MCP.mix_formula) (ext_base:formula) : formula =
   Gen.Debug.no_2 "add_mix_formula_to_formula_x" !print_mix_formula !print_formula
       !print_formula
@@ -2008,7 +2009,7 @@ and add_mix_formula_to_formula_x (rhs_p: MCP.mix_formula) (ext_base:formula)  : 
 			   formula_base_label = lbl;
 			   formula_base_pos = pos}) ->
 
-        let qp1 = add_mix_formula_to_mix_formula qp rhs_p in
+        let qp1 = add_mix_formula_to_mix_formula rhs_p qp in
         let res =
           Base ({  formula_base_heap = qh;
 			       formula_base_pure = qp1;
@@ -2030,8 +2031,8 @@ and add_mix_formula_to_formula_x (rhs_p: MCP.mix_formula) (ext_base:formula)  : 
 			   formula_exists_branches = b;
 			   formula_exists_label = lbl;
 			   formula_exists_pos = pos}) ->
-
-        let qp1 = add_mix_formula_to_mix_formula qp rhs_p in
+        (*add rhs_p to qp*)
+        let qp1 = add_mix_formula_to_mix_formula rhs_p qp in
         let res =
           Exists ({formula_exists_qvars = qsv;
 			       formula_exists_heap =  qh;
@@ -2095,21 +2096,34 @@ and add_mix_formula_to_formula_x (rhs_p: MCP.mix_formula) (ext_base:formula)  : 
 (*               in (res, nv_frac) *)
 (*   in helper ext_base fracvar *)
 
+(*add rhs_p into p*)
+and add_mix_formula_to_mix_formula (rhs_p: MCP.mix_formula) (p: MCP.mix_formula) :MCP.mix_formula = 
+  (MCP.merge_mems rhs_p p true)
 
-and add_mix_formula_to_mix_formula (p: MCP.mix_formula) (rhs_p: MCP.mix_formula):MCP.mix_formula = 
-  (  match p with
-    | MCP.MemoF m -> 
-        let _ = print_string ("[ add_frac_formula_to_pure] Warning 1: rhs_p not added to MCP.MemoF \n") in
-        p
-    | MCP.OnePF p_f -> 
-        (match rhs_p with
-          | MCP.MemoF m1 -> 
-              let _ = print_string ("[ add_frac_formula_to_pure] Warning 2: rhs_p not added to MCP.MemoF \n") in
-              p
-          | MCP.OnePF rhs_f -> 
-              MCP.OnePF (add_formula_to_formula p_f rhs_f)
-        )
-  )
+  (* match rhs_p with *)
+  (*   | MCP.OnePF f -> *)
+  (*       MCP.memoise_add_pure_N p f (\*??? pure_N or pure_P*\) *)
+  (*   | MCP.MemoF m -> *)
+  (*       match p with *)
+  (*         | MCP.OnePF pf -> MCP.memoise_add_pure_N rhs_p pf *)
+  (*         | MCP.MemoF pm -> MCP.MemoF (MCP.merge_mems m pm true) *)
+    
+        
+
+(* and add_mix_formula_to_mix_formula (rhs_p: MCP.mix_formula) (p: MCP.mix_formula) :MCP.mix_formula =  *)
+(*   (  match p with *)
+(*     | MCP.MemoF m ->  *)
+(*         let _ = print_string ("[ add_frac_formula_to_pure] Warning 1: rhs_p not added to MCP.MemoF \n") in *)
+(*         p *)
+(*     | MCP.OnePF p_f ->  *)
+(*         (match rhs_p with *)
+(*           | MCP.MemoF m1 ->  *)
+(*               let _ = print_string ("[ add_frac_formula_to_pure] Warning 2: rhs_p not added to MCP.MemoF \n") in *)
+(*               p *)
+(*           | MCP.OnePF rhs_f ->  *)
+(*               MCP.OnePF (add_formula_to_formula p_f rhs_f) *)
+(*         ) *)
+(*   ) *)
 
 and add_formula_to_formula (p_f: CP.formula) (rhs_f:CP.formula) =
   (CP.And (p_f,rhs_f,no_pos))
@@ -2989,7 +3003,7 @@ and propagate_frac_formula_x (f : formula) (fracvar : CP.spec_var) : formula = m
         (*                       ^ "\n ### base_p = " ^ (!print_mix_f base_p) *)
         (*                       ^ "\n ### frac_p = " ^ (!print_mix_f frac_p) *)
         (*                       ^ "\n\n") in *)
-        let base_p = add_mix_formula_to_mix_formula base_p frac_p in
+        let base_p = add_mix_formula_to_mix_formula frac_p base_p  in
         Base({f1 with formula_base_heap = f1_heap; formula_base_pure = base_p})
   | Exists f1 ->
         let f1_heap,vars = propagate_frac_h_formula f1.formula_exists_heap fracvar in
@@ -3004,7 +3018,7 @@ and propagate_frac_formula_x (f : formula) (fracvar : CP.spec_var) : formula = m
         (*                       ^ "\n ### base_p = " ^ (!print_mix_f base_p) *)
         (*                       ^ "\n ### frac_p = " ^ (!print_mix_f frac_p) *)
         (*                       ^ "\n\n") in *)
-        let base_p = add_mix_formula_to_mix_formula base_p frac_p in
+        let base_p = add_mix_formula_to_mix_formula frac_p base_p in
         Exists({f1 with 
             formula_exists_qvars = List.append vars f1.formula_exists_qvars;
             formula_exists_heap = f1_heap; 

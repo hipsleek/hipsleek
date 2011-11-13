@@ -253,14 +253,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               We use exp_bind_imm. If true -> immutable -> read only -> 0.0<f<=1.0
               Othewiese, false -> mutable -> write -> f=1.0
             *)
-            (* let vheap = if (imm) *) (*this makes hip go wrong*)
-            (*     then *)
-            (*       let read_f = CF.mkFracInv fresh_frac in *)
-            (*       CF.mkBase vdatanode (MCP.OnePF read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos *)
-            (*     else *)
-            (*       let write_f = CF.mkFracWrite fresh_frac in *)
-            (*       CF.mkBase vdatanode (MCP.OnePF write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos *)
-            (* in *)
+            let vheap = if (imm) (* this makes hip go wrong *)
+                then
+                  let read_f = CF.mkFracInv fresh_frac in
+                  CF.mkBase vdatanode (MCP.OnePF read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                else
+                  let write_f = CF.mkFracWrite fresh_frac in
+                  CF.mkBase vdatanode (MCP.OnePF write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+            in
 		    let vheap = prune_preds prog false vheap in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
@@ -510,7 +510,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let _ = Cprinter.string_of_list_failesc_context in
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
-              Gen.Debug.loop_2(* _no *) "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
+              Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
             (*let _ = print_string ("\nAn Hoa :: Encounter function call [" ^ mn ^ "(" ^ (String.concat "," vs) ^ ")]" (*^ "with static spec :: " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs_with_pre) ^ "\n\n"*)) in*)
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
             else check_pre_post proc.proc_static_specs_with_pre ctx in	

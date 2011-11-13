@@ -396,18 +396,38 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 	  h_formula_data_imm = imm1}) ->
-        (* if (!Globals.allow_imm) then *)
-          if ((CP.mem p1 aset) && (subtype imm imm1)) then 
+        if (CP.mem p1 aset) then
+          if ((* (!Globals.allow_imm) &&  *)(subtype imm imm1)) then
             if (imm)then
-              let hole_no = Globals.fresh_int() in 
+              let hole_no = Globals.fresh_int() in
               [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
               [(HTrue, f, [], Root)]
-          else 
-            []
+          else
+            [(HTrue, f, [], Root)]
+        else
+          []
+
+        (* (\* if (!Globals.allow_imm) then *\) *)
+          (* if ((CP.mem p1 aset) && (subtype imm imm1)) then *)
+          (*   if (imm)then *)
+          (*     let hole_no = Globals.fresh_int() in *)
+          (*     [((Hole hole_no), f, [(f, hole_no)], Root)] *)
+          (*   else *)
+          (*     [(HTrue, f, [], Root)] *)
+          (* else *)
+          (*   [] *)
         (* else *)
         (*   [(HTrue, f, [], Root)] *)
 
+          (* if ((CP.mem p1 aset) && (subtype imm imm1)) then  *)
+          (*   if (imm)then *)
+          (*     let hole_no = Globals.fresh_int() in  *)
+          (*     [((Hole hole_no), f, [(f, hole_no)], Root)] *)
+          (*   else *)
+          (*     [(HTrue, f, [], Root)] *)
+          (* else  *)
+          (*   [] *)
     | ViewNode ({h_formula_view_node = p1;
 	  h_formula_view_imm = imm1;
 	  h_formula_view_frac_perm = frac1;

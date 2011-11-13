@@ -4157,6 +4157,8 @@ let simp_bform simp bf =
 (* normalise and simplify b_formula *)
 let norm_bform_a (bf:b_formula) : b_formula =
   (*let bf = b_form_simplify bf in *)
+  if (is_float_bformula bf) then bf
+  else
   match bf with 
       | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
       | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
@@ -4183,7 +4185,7 @@ let norm_bform_opt bf =
     | _ -> Some bf 
 
 let norm_bform_option (bf:b_formula) =
-  let bf=norm_bform_aux bf in
+  let bf= norm_bform_aux bf in
   norm_bform_opt bf
 
 
