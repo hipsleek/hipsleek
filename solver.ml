@@ -2835,7 +2835,7 @@ and heap_entail_conjunct_lhs_struc_x
     let _ = match ctx22 with 
       | OCtx _ ->
         Error.report_warning {
-          Error.error_loc = !post_pos;
+          Error.error_loc = post_pos#get;
           Error.error_text = ("[inner entailer" ^ (string_of_int i) ^ "] unexpected dealing with OCtx " ^ (string_of_int (count_octx ctx22)) ^ "\n" ^ (Cprinter.string_of_context_short ctx22))
         }
       | _ -> () in

@@ -66,13 +66,73 @@ type mode =
 (*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
 (*   | List          -> "list" *)
 
-let proving_loc : (loc option) ref = ref None
+let no_pos = 
+	let no_pos1 = { Lexing.pos_fname = "";
+				   Lexing.pos_lnum = 0;
+				   Lexing.pos_bol = 0; 
+				   Lexing.pos_cnum = 0 } in
+	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
-let set_proving_loc p =
-  proving_loc := Some p
 
-let clear_proving_loc () =
-  proving_loc := None
+let string_of_loc (p : loc) = 
+    Printf.sprintf "File \"%s\",Line:%d,Col:%d"
+    p.start_pos.Lexing.pos_fname 
+    p.start_pos.Lexing.pos_lnum
+	(p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
+;;
+
+let string_of_pos (p : Lexing.position) = 
+    Printf.sprintf "(Line:%d,Col:%d)"
+    p.Lexing.pos_lnum
+	(p.Lexing.pos_cnum-p.Lexing.pos_bol)
+;;
+
+(* let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")" *)
+(* ;; *)
+
+(* An Hoa *)
+let line_number_of_pos p = string_of_int (p.start_pos.Lexing.pos_lnum)
+
+let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
+
+let string_of_loc_by_char_num (l : loc) = 
+  Printf.sprintf "(%d-%d)"
+    l.start_pos.Lexing.pos_cnum
+    l.end_pos.Lexing.pos_cnum
+
+class prog_loc =
+   object 
+     val mutable lc = None
+     method is_avail : bool = match lc with
+       | None -> false
+       | Some _ -> true
+     method set (nl:loc) = lc <- Some nl
+     method get :loc = match lc with
+       | None -> no_pos
+       | Some p -> p
+     method reset = lc <- None
+     method string_of : string = match lc with
+       | None -> "None"
+       | Some l -> (string_of_loc l)
+     method string_of_pos : string = match lc with
+       | None -> "None"
+       | Some l -> (string_of_pos l.start_pos)
+   end;;
+
+let proving_loc  = new prog_loc
+
+let post_pos = new prog_loc
+(* let post_pos = ref no_pos *)
+(* let set_post_pos p = post_pos := p *)
+
+let entail_pos = ref no_pos
+let set_entail_pos p = entail_pos := p
+
+(* let set_proving_loc p = proving_loc#set p *)
+(*   (\* proving_loc := Some p *\) *)
+
+(* let clear_proving_loc () = proving_loc#reset *)
+(*   (\* proving_loc := None *\) *)
 
 (* pretty printing for types *)
 let rec string_of_typ = function 
@@ -190,18 +250,6 @@ let push_opt_val_rev opt v = match opt with
 
 (* global constants *)
 
-let no_pos = 
-	let no_pos1 = { Lexing.pos_fname = "";
-				   Lexing.pos_lnum = 0;
-				   Lexing.pos_bol = 0; 
-				   Lexing.pos_cnum = 0 } in
-	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
-
-let post_pos = ref no_pos
-let set_post_pos p = post_pos := p
-
-let entail_pos = ref no_pos
-let set_entail_pos p = entail_pos := p
 
 let flow = "flow"
 let top_flow = "__flow"
@@ -555,21 +603,6 @@ let fresh_formula_cache_no  () =
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
-let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
-	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
-
-let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
-;;
-
-(* An Hoa *)
-let line_number_of_pos p = string_of_int (p.start_pos.Lexing.pos_lnum)
-
-let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
-
-let string_of_loc_by_char_num (l : loc) = 
-  Printf.sprintf "(%d-%d)"
-    l.start_pos.Lexing.pos_cnum
-    l.end_pos.Lexing.pos_cnum
 
 let seq_local_number = ref 0
 

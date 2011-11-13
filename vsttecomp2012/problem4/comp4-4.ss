@@ -74,6 +74,7 @@ tree build_rec (int d, ref node s)
       pop(s);        
 	  return null;
 	}
+  assume false;
   ll = build_rec(d+1, s);
   rr = build_rec(d+1, s);
   return new tree (ll,rr);

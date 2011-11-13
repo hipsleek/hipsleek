@@ -34,10 +34,10 @@ tlseg<p,f,d,n> ==
 // which is supposed to give our completeness result
 
 negtlseg<p,f,d,n> ==
-  self::node<f,p> & n=1 & f>d
-  or self::negtlseg<r,f,d+1,n> 
-  or self::tlseg<r,f,d+1,n2> * r::negtlseg<p,_,d+1,n> 
-  inv self!=null & n>=1 & f>d; 
+  self::node<f,p> & n=1 & f<d 
+  or self::negtlseg<p,f,d+1,n> & f!=d 
+  or self::tlseg<r,f,d+1,n1> * r::negtlseg<p,_,d+1,n2> & n=n1+n2 
+  inv self!=null & n>=1 & f!=d; 
 
 /* can we show disjointness of
  (i) x::node<v,p> & v<d
@@ -47,8 +47,8 @@ negtlseg<p,f,d,n> ==
 */
 
 // a provable lemma that tlseg gives at least one node
-//coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
-//coercion self::negtlseg<p,f,d,n> -> self::node<f,q> ;
+//coercion self::tlseg<p,f,d,n>@I -> self::node<f,q>@I;
+//coercion self::negtlseg<p,f,d,n>@I -> self::node<f,q>@I ;
 
 bool is_empty(node x)
   requires true
@@ -64,10 +64,12 @@ int hd(node x)
     ensures res=f;
     requires x::negtlseg<p,f,d,n>@I 
     ensures res=f;
+/*
+// can be proven with the coercion
 {
   return x.val;
 }
-
+*/
 void pop(ref node x)
    requires x::node<_,y>@I
    ensures x'=y;  //'
@@ -78,26 +80,26 @@ void pop(ref node x)
 tree build_rec (int d, ref node s)
 // is spec below complete - how can we prove this 
  case {
-   s=null -> ensures true &  flow exception;
+  s=null -> ensures true &  flow exception;
   s!=null -> 
-      requires s::node<v,_> & v<d 
+     requires  s::node<v,_> & v<d 
       ensures  true & flow exception;
       requires s::tlseg<p,f,d,n>
-      ensures res::treelseg<s,s',d,n> & s' = p & flow __norm;
-      requires s::negtlseg<p,f,d,n> 
-      ensures true & flow exception;
+      ensures  res::treelseg<s,s',d,n> & s' = p & flow __norm;
+      requires s::negtlseg<_,_,d,_> 
+      ensures  true & flow exception;
   }
 {
   tree ll,rr;
   if (is_empty(s)) raise new exception();
-  //unfold s;
   int h = hd(s);
   if (h < d) raise new exception();        
+  unfold s;
   if (h == d) {
       pop(s);        
 	  return null;
 	}
-  dprint;
+  // dprint;
   ll = build_rec(d+1, s);
   //assume false;
   rr = build_rec(d+1, s);

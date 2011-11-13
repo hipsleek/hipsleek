@@ -71,7 +71,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
-            let _ = set_post_pos (CF.pos_of_formula post_cond) in
+            let _ = post_pos#set (CF.pos_of_formula post_cond) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
 	        if (Cformula.isAnyFalseCtx ctx1) then
@@ -133,6 +133,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 							Tpdispatcher.unsuppress_imply_output ();
           				end in
               begin
+	            let _ = proving_loc#set pos in
 	            let s1 = snd post_start_label in
                 (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
 	            if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
@@ -214,7 +215,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
 
             (* Debug.devel_pprint ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n") pos; *)
-	        let _ = set_proving_loc pos in
+	        let _ = proving_loc#set pos in
 	        let field_types, vs = List.split lvars in
 	        let v_prim = CP.SpecVar (v_t, v, Primed) in
 	        let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
@@ -408,7 +409,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			exp_scall_path_id = pid;
 			exp_scall_pos = pos}) ->
 		  begin 
-	        let _ = set_proving_loc pos in
+	        let _ = proving_loc#set pos in
 	        let proc = look_up_proc_def pos prog.prog_proc_decls mn in
 	        let farg_types, farg_names = List.split proc.proc_args in
 	        let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
@@ -473,8 +474,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  Debug.devel_pprint (str_debug_variance ^ "\n") pos;
 			  (*print_string (str_debug_variance ^ "\n");*)
 			  (* TODO: call the entailment checking function in solver.ml *)
-	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
-                (*!log_spec*) in
+	          let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
+	          let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
 	          Debug.devel_pprint (to_print^"\n") pos;
 	          let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
             (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
