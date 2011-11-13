@@ -3919,6 +3919,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                       CF.h_formula_view_coercible = true;
                       CF.h_formula_view_origins = [];
 		              CF.h_formula_view_original = true;
+		              (* CF.h_formula_view_orig_fold_num = !num_self_fold_search; *)
 		              CF.h_formula_view_lhs_case = true;
 		              CF.h_formula_view_unfold_num = 0;
                       CF.h_formula_view_label = pi;

@@ -442,7 +442,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 and process_one_match prog (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res  in
-  Gen.Debug.ho_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
+  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -476,6 +476,10 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let vr_is_rec = vr_vdef.view_is_rec in
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vr_self_pts = vr_vdef.view_pt_by_self in
+                  (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
+                  (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
+                  let en_num = !num_self_fold_search in
+                  let en_self_fold = !self_fold_search_flag in
                   let l2 = 
                     let a1 = (1,M_base_case_unfold c) in
                     let a2 = (1,M_match c) in
@@ -490,11 +494,11 @@ and process_one_match_x prog (c:match_res) :action_wt =
                       if a4==None then
                         begin
                         let l1 =
-                          if (vl.h_formula_view_original && vr.h_formula_view_original && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
+                          if (vl.h_formula_view_original && vr.h_formula_view_original && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                           then  [(2,M_fold c)] 
                           else [] in
                         let l2 =
-                          if (vl.h_formula_view_original && vr.h_formula_view_original && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
+                          if (vl.h_formula_view_original && vr.h_formula_view_original && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
                           then [(2,M_unfold (c,0))]
                           else [] in
                         let l = l1@l2 in
@@ -510,7 +514,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                               else 
                                 match a5 with
                                   | None -> a3
-                                  | Some a2 -> Some (1,Cond_action [a2;a1]) in
+                                  | Some a2 -> Some (1,Cond_action [a2; a1]) in
                     match a6 with
                       | Some a -> [a]
                       | None -> 

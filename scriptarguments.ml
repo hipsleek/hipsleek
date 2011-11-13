@@ -118,6 +118,10 @@ let common_arguments = [
     "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
+	("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
+    "Allow Depth of Unfold/Fold Self Search");
+	("--enable-self-fold-search", Arg.Set Globals.self_fold_search_flag,
+    "Enable Limited Search with Self Unfold/Fold");
 	("-parse", Arg.Set parse_only,"Parse only");
 	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
 	("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");

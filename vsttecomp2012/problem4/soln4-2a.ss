@@ -40,10 +40,11 @@ negtlseg<p,f,d,n> ==
   inv self!=null & n>=1 & f!=d; 
 
 /* can we show disjointness of
- (i) x::node<v,p> & v<d
+ (i) x=null
  (ii) x::tsleg<p,f,d,_> 
  (iii) x::negtlseg<p,f,d,_> 
- can we show its universality? 
+ can we show its universality?, namely
+ true |- (i) \/ (ii) \/ (iii)
 */
 
 // a provable lemma that tlseg gives at least one node
@@ -99,9 +100,7 @@ tree build_rec (int d, ref node s)
       pop(s);        
 	  return null;
 	}
-  // dprint;
   ll = build_rec(d+1, s);
-  //assume false;
   rr = build_rec(d+1, s);
   return new tree (ll,rr);
 }
