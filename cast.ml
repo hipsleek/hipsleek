@@ -64,6 +64,7 @@ and view_decl = {
     view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
     view_prune_branches: formula_label list; (* all the branches of a view *)
     view_is_rec : bool;
+    view_pt_by_self : ident list;
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;

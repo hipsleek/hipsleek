@@ -460,6 +460,7 @@ let rec h_arg_fv (f:h_formula):(ident*primed) list =
 
 
 
+
 let rec struc_hp_fv (f:struc_formula): (ident*primed) list = 
 						let rec helper (f:ext_formula):(ident*primed) list = Gen.BList.remove_dups_eq (=) ( match f with
 							| EBase b-> Gen.BList.difference_eq (=) 

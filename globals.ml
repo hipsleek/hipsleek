@@ -282,6 +282,9 @@ let self = "self"
 
 let this = "this"
 
+let is_self_ident id = self=id
+
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)

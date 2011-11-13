@@ -21,6 +21,9 @@ let is_hole_spec_var sv = match sv with
 	 *)
   (* | Array of typ  *)
 
+let is_self_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n = self
+
 
 type formula =
   | BForm of (b_formula  *(formula_label option))
