@@ -1028,7 +1028,7 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
   (*let vl = List.map (fun v -> v.view_name) view_decls in*)
   (* An Hoa : Implement the equality checking *)
   (** [Internal] replaces aliases of self by it. **)
-  let rec process_eq_self_view v = { v with view_formula = process_eq_self_sf v.view_formula }
+  (*let rec process_eq_self_view v = { v with view_formula = process_eq_self_sf v.view_formula }
 
   (** [Internal] replaces aliases of self in an struc_formula **)
   and process_eq_self_sf f = List.map process_eq_self_ef f
@@ -1106,15 +1106,15 @@ and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) 
 				h1.F.h_formula_heap2_node }
 	| F.HTrue -> h
 	| F.HFalse -> h
-  in
+  in*)
   (* let _ = print_endline "BEFORE REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
 	 let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let view_decls_org = view_decls in
-  let view_decls = List.map process_eq_self_view view_decls in
+  (*let view_decls = List.map process_eq_self_view view_decls in*)
   (* let _ = print_endline "AFTER REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
 	 let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let dl = List.map (fun v -> v.data_name) data_decls in
-  let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
+  (*let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in*)
   (*let _ = List.iter 
     (fun (v,_,tl) -> 
     if List.exists (fun n -> if (v.view_name=n) then true else false) tl 

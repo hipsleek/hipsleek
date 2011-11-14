@@ -1925,10 +1925,10 @@ let app_sv_print xs ys =
 (* An Hoa : formula to HTML output facility *)
 
 let rec html_of_pure_formula f = 
-	let is_quantified fml = match fml with
+	(*let is_quantified fml = match fml with
 		| P.Forall _ | P.Exists _ -> true
 		| _ -> false
-	in
+	in*)
 	match f with
     | P.BForm ((bf,_),_) -> html_of_pure_b_formula bf
     | P.And (f1, f2, l) -> 

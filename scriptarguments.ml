@@ -155,7 +155,7 @@ let common_arguments = [
 	("--ep-stat", Arg.Set Globals.profiling, 
 	"enable profiling statistics");
     ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
-	("--e-stat", (Arg.Set Globals.profiling; Arg.Set Globals.enable_counters), 
+	("--e-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]), 
 	"enable all statistics");
 	("--sbc", Arg.Set Globals.enable_syn_base_case, 
 	"use only syntactic base case detection");

@@ -789,8 +789,8 @@ let check_coercion (prog : prog_decl) =
     Gen.Debug.no_1 "check_right_coercion" Cprinter.string_of_coercion 
         (fun _ -> "?") check_right_coercion coer in
 
-  List.map (fun coer -> check_left_coercion coer) prog.prog_left_coercions;
-  List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
+  List.iter (fun coer -> check_left_coercion coer) prog.prog_left_coercions;
+  List.iter (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 
 let rec size (expr : exp) =
   match expr with

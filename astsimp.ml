@@ -169,7 +169,7 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
 let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list) 
       = (* AN HOA : modify return types *)
   let pr_no x = "?" in
-  let prd = pr_list Iprinter.string_of_proc_decl in
+	(*  let prd = pr_list Iprinter.string_of_proc_decl in*)
    let pr = pr_pair pr_no (pr_list Iprinter.string_of_rel_decl) in
   Gen.Debug.no_1 "gen_primitives" pr_no pr gen_primitives prog
   
@@ -2161,6 +2161,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 				I.exp_member_fields = [x];
 				I.exp_member_path_id = pid;
 				I.exp_member_pos = no_pos }) fseqs 
+			  | _ -> failwith "produce_member_exps: unexpected pattern"
 			in (* compute the list of field accesses that {lhs = rhs} should be expanded into *)
 			let expand_field_list = 
 			  if (is_member_exp lhs) then
@@ -2176,6 +2177,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						else I.look_up_all_fields prog (match remt with
 						  | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
 						  | _ -> failwith "ERror!")
+				  | _ -> failwith "expand_field_list: unexpected pattern"
 			  else if (is_member_exp rhs) then
 				match rhs with
 				  | I.Member {
@@ -2189,6 +2191,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						else I.look_up_all_fields prog (match remt with
 						  | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
 						  | _ -> failwith "ERror!")
+				  | _ -> failwith "expand_field_list: unexpected pattern"
 			  else []
 			in 
 			let expand_field_list = List.map I.get_field_name expand_field_list in
@@ -5394,7 +5397,7 @@ and try_unify_data_type_args prog c ddef v ies stab pos =
   in 
     (try 
       let f _ arg ((ty,_),_,_) = 
-        (let new_t = gather_type_info_exp arg stab ty in ())
+        (let _ = gather_type_info_exp arg stab ty in ())
       in (List.fold_left2 f () ies fields)
       with | Invalid_argument _ ->
 	  Err.report_error
@@ -5459,8 +5462,8 @@ and try_unify_view_type_args prog c vdef v ies stab pos =
     ()
   else begin
     (* below seems wrong to unify against previous var names *)
-    let pr_exp = pr_list Iprinter.string_of_formula_exp in
-    let pr_vars = pr_list (pr_id) in
+    (*let pr_exp = pr_list Iprinter.string_of_formula_exp in*)
+    (*let pr_vars = pr_list (pr_id) in*)
     (* let _ = print_string "\n WN : unify against the vars on LHS?" in *)
     (* let _ = print_string ("\n args:"^(pr_exp ies)) in *)
     (* let _ = print_string ("\n LHS vars:"^(pr_vars vdef.I.view_vars)) in *)
@@ -5590,10 +5593,10 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			  let _ = gather_type_info_exp (List.hd ies) stab ptr_type in ()
 			else ()
 		  else (* End dealing with generic ptr, continue what the original system did *)
-	        let view_unify_result = 
+	        let _ = 
               (try
                 let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
-                let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in
+                (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
 	            (* let _ = print_string ("\n searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" types:"^ss^"\n") in *)
                 try_unify_view_type_args prog c vdef v ies stab pos 
               with
@@ -6916,7 +6919,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
   let get_safe_prune_conds (pc:(CP.b_formula * formula_label list) list) (orig_pf:(formula_label * CP.formula) list)
         : (CP.b_formula * formula_label list) list = 
-    let all_ls = List.map fst orig_pf in
+    (*let all_ls = List.map fst orig_pf in*)
     (* let safe_test bf ls = *)
     (*   let bf = CP.BForm (bf,None) in *)
     (*   let remain_ls = Gen.BList.difference_eq eq_formula_label all_ls ls in *)

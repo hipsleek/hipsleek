@@ -2896,9 +2896,21 @@ let es_simplify e1 =
   let pr  = !print_entail_state in
   Gen.Debug.no_1 "es_simplify" pr pr es_simplify e1
   
+let mkOCtx ctx1 ctx2 pos =
+  (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
+  else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)
+  (* true_ctx (mkTrueFlow ()) pos *)  (* not much point in checking
+                                         for true *)
+  (* else *) 
+  if isAnyFalseCtx ctx1 then ctx2
+  else if isAnyFalseCtx ctx2 then ctx1
+  else OCtx (ctx1,ctx2) 
+
+let or_context c1 c2 = mkOCtx c1 c2 no_pos   
+
 let rec context_simplify (c:context):context  = match c with
   | Ctx e -> Ctx ((*es_simplify*) e)
-  | OCtx (c1,c2) -> OCtx ((context_simplify c1), (context_simplify c2))
+  | OCtx (c1,c2) -> mkOCtx (context_simplify c1) (context_simplify c2) no_pos
   
 let context_list_simplify (l:context list):context list = List.map context_simplify l
 
@@ -3019,20 +3031,6 @@ let rec contains_immutable_ctx (ctx : context) : bool =
   match ctx with
     | Ctx(es) -> contains_immutable es.es_formula
     | OCtx(c1, c2) -> (contains_immutable_ctx c1) or (contains_immutable_ctx c2)
-
-
-
-let mkOCtx ctx1 ctx2 pos =
-  (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
-  else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)
-  (* true_ctx (mkTrueFlow ()) pos *)  (* not much point in checking
-                                         for true *)
-  (* else *) 
-  if isAnyFalseCtx ctx1 then ctx2
-  else if isAnyFalseCtx ctx2 then ctx1
-  else OCtx (ctx1,ctx2) 
-
-let or_context c1 c2 = mkOCtx c1 c2 no_pos 
   
 let or_context_list (cl10 : context list) (cl20 : context list) : context list = 
   let rec helper cl1 = match cl1 with
@@ -3547,7 +3545,7 @@ and set_estate f (es: entail_state) : entail_state =
 
 and set_context f (ctx : context) : context = match ctx with 
   | Ctx (es) -> Ctx(set_estate f es)
-  | OCtx (ctx1, ctx2) -> OCtx((set_context f ctx1), (set_context f ctx2))
+  | OCtx (ctx1, ctx2) -> mkOCtx (set_context f ctx1)  (set_context f ctx2) no_pos
 
 and set_list_context f (ctx : list_context) : list_context = match ctx with
   | FailCtx f -> ctx
@@ -3680,7 +3678,7 @@ match ctx with
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_no_rename_context_formula c1 p in
 	  let nc2 = normalize_no_rename_context_formula c2 p in
-	  let res = OCtx (nc1, nc2) in
+	  let res = mkOCtx nc1 nc2 no_pos in
 		res
 		
 (* -- 17.05.2008 *)
@@ -4863,7 +4861,7 @@ with es_formula =
 let conv_lst (c:entail_state) (nf_lst:nflow list) = 
   match nf_lst with
     | [] -> None
-    | x::xs -> Some (List.fold_left (fun acc_ctx y -> OCtx (conv c y,acc_ctx)) (conv c x)  xs)
+    | x::xs -> Some (List.fold_left (fun acc_ctx y -> mkOCtx (conv c y) acc_ctx no_pos) (conv c x)  xs)
 
 let rec splitter (c:context) 
     (nf:nflow) (cvar:typed_ident option)  (elim_ex_fn: context -> context)

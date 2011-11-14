@@ -250,7 +250,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 l = pr_list string_of_match_res l in
   let pr3 = Cprinter.string_of_mix_formula in
-  let pr4 = pr_list Cprinter.string_of_spec_var in
+  (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
   Gen.Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
@@ -344,7 +344,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
 and spatial_ctx_extract p f a i rn rr = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in
+  (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
   Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i rn rr ) f i a rn 
@@ -478,7 +478,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
                   (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
-                  let en_num = !num_self_fold_search in
+                  (*let en_num = !num_self_fold_search in*)
                   let en_self_fold = !self_fold_search_flag in
                   let l2 = 
                     let a1 = (1,M_base_case_unfold c) in

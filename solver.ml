@@ -684,7 +684,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                     let tmp1 = CP.subst_avoid_capture from_svs to_svs f in
                     (*CP.subst (List.combine from_addrs to_addrs)*) tmp1 (* no capture can happen *) in
                   (* let _ = print_endline ("xpure_heap_symbolic_i NONE: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in *)
-                  let svinv = subst_m_fun vinv in
+                  (*let svinv = subst_m_fun vinv in*)
                   (*print_string ("vinv2: "^(Cprinter.string_of_mix_formula svinv)^"\n");*)
                   (subst_m_fun vinv, List.map (fun (l,x) -> (l, subst_fun x)) vinv_b, ba (*to_addrs*)) 
             | Some ls ->  
@@ -2660,9 +2660,9 @@ and heap_entail_conjunct_lhs_struc_x
       (conseq : struc_formula) pos pid : (list_context * proof) =
 
 
-  let estate = match ctx_00 with
+ (* let estate = match ctx_00 with
     | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
-    | Ctx es -> es in
+    | Ctx es -> es in*)
 
 
   (* and inner_entailer ctx conseq = *)

@@ -92,8 +92,8 @@ let consistent_memoised_group (m:memoised_group) : bool =
   if r==[] then 
     if r2==[] then true
     else
-      let s = ("WARNING: FreeVars unused :"^(!print_svl r2)) in
-      let _ = report_warning no_pos s in
+     (* let s = ("WARNING: FreeVars unused :"^(!print_svl r2)) in
+      let _ = report_warning no_pos s in*)
       true
   else 
     let s = ("ERROR : FreeVars not captured:"^(!print_svl r)) in

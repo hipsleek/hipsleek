@@ -646,6 +646,7 @@ let push_pre fce = match fce with
 			html_output :=  !html_output ^ "<li class=\"Collapsed pre\">\n" ^ message ^ "<ul>";
 			true
 		end
+	| _ -> failwith "push_pre: unexpected expr"
 		
 let push_assert_assume ae = match ae with
 	| Cast.Assert {
@@ -654,6 +655,7 @@ let push_assert_assume ae = match ae with
 		Cast.exp_assert_path_id = pid;
 		Cast.exp_assert_pos = pos } -> let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
 		html_output := !html_output ^ "<li class=\"Collapsed assert\">\nAssertion at " ^ line_loc ^ " holds\n<ul>"
+	| _ -> failwith "push_pre: unexpected expr"
 
 let push_post () = html_output := 
 	!html_output ^ "<li class=\"Collapsed post\">\nProcedure post-condition holds\n<ul>"
