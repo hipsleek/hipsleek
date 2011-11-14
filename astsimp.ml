@@ -2556,9 +2556,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_var_pos = pos;
                           } in
                           let (tmp_e, tmp_t) =
-			                flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos 
+			                flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false false pos (* o.f = s.th *)
 			              in
-			              
                           let fn_decl = if new_var then C.VarDecl {
                               C.exp_var_decl_type = rhs_t;
                               C.exp_var_decl_name = fn;
@@ -2658,6 +2657,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_bind_fields = List.combine vs_types vs;
                                   C.exp_bind_body = ce;
                                   C.exp_bind_imm = false; (* can it be true? *)
+                                  C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
 				                  C.exp_bind_pos = pos;
                                   C.exp_bind_path_id = pid; }), te)))
                       | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
@@ -2903,11 +2903,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_path_id = pid;
           I.exp_member_pos = pos } -> 
           (*let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in*)
+          (* ... = o.f => read_only = true *)
           let r = 
 	        if (!Globals.allow_imm) then
-	          flatten_to_bind prog proc e (List.rev fs) None pid true pos
+	          flatten_to_bind prog proc e (List.rev fs) None pid true true pos
 	        else
-	          flatten_to_bind prog proc e (List.rev fs) None pid false pos
+	          flatten_to_bind prog proc e (List.rev fs) None pid false true pos
 	      in
           (*let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in*)
           r
@@ -3523,10 +3524,10 @@ and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
       (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
-      (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) pos =
+      (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) (read_only: bool) pos =
   match rev_fs with
     | f :: rest ->
-          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm pos in
+          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only pos in
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
@@ -3586,6 +3587,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
 				C.exp_bind_imm = imm;
+                C.exp_bind_read_only = read_only;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in
@@ -3599,7 +3601,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
             else (seq2, bind_type))
     | [] -> trans_exp prog proc base
 and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
-      (rhs : C.exp option) pid imm pos : trans_exp_type =
+      (rhs : C.exp option) pid imm read_only pos : trans_exp_type =
   match fs with
     | f :: rest ->
 	      (try
@@ -3665,7 +3667,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 				                    Err.error_text = "lhs and rhs do not match";
 				                })
                 else
-                  convert_to_bind prog fresh_v (string_of_typ vt) rest rhs pid imm
+                  convert_to_bind prog fresh_v (string_of_typ vt) rest rhs pid imm read_only
                       pos
 		      in
               ((C.Bind
@@ -3677,6 +3679,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 			          C.exp_bind_body = bind_body;
 			          C.exp_bind_path_id = pid;
 					  C.exp_bind_imm = imm;
+                      C.exp_bind_read_only = read_only;
 			          C.exp_bind_pos = pos;
                   }),
               bind_type))

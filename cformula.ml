@@ -265,6 +265,13 @@ let mkFracInv (f:CP.spec_var) : CP.formula =
     (Cpure.And (lower,upper,no_pos)) in
   inv
 
+let mkFracWrite (f:CP.spec_var) : CP.formula =
+  Cpure.BForm ((Cpure.Eq (
+      (Cpure.Var (f,no_pos)),
+      (Cpure.FConst (1.0,no_pos)),
+      no_pos
+  )),None)
+
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list l = match l with 

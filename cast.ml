@@ -173,9 +173,9 @@ and exp_bind = {
     exp_bind_type : typ; (* the type of the entire bind construct, i.e. the type of the body *)
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
-    (* exp_bind_frac : Cpure.spec_var option; (\*frac perm*\) *)
     exp_bind_body : exp;
     exp_bind_imm : bool;
+    exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
 

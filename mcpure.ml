@@ -669,7 +669,7 @@ and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure =
     let r = merge_mems l m2 true in
     (*let r = List.concat (List.map split_mem_grp r) in*)
     Gen.Profiling.pop_time "add_pure"; r)
-        
+
 and memoise_add_pure_aux l p status : memo_pure = 
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in

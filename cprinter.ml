@@ -1632,6 +1632,10 @@ let string_of_sharp st = match st with
 	| Sharp_ct t -> string_of_flow_formula "" t
 	| Sharp_v  f -> "flow_var "^f
 
+let string_of_read_only ro = match ro with
+  | true -> "read"
+  | false -> "write" (*write is conservative*)
+
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
   | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
@@ -1662,10 +1666,11 @@ let rec string_of_exp = function
   | Bind ({exp_bind_type = _; 
 	exp_bind_bound_var = (_, id); 
 	exp_bind_fields = idl;
+    exp_bind_read_only = ro;
 	exp_bind_body = e;
 	exp_bind_path_id = pid;
 	exp_bind_pos = l}) -> 
-        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") in \n{" ^ (string_of_exp e) ^ "\n}")
+        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") [" ^ (string_of_read_only ro)^ "] in \n{" ^ (string_of_exp e) ^ "\n}")
   | Block ({exp_block_type = _;
 	exp_block_body = e;
 	exp_block_local_vars = _;
