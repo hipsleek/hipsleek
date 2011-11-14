@@ -109,7 +109,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   (* let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
   List.for_all do_spec_verification spec_list
 
-and check_exp prog proc ctx e0 label = Gen.Debug.no_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+and check_exp prog proc ctx e0 label = Gen.Debug.ho_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
@@ -250,10 +250,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               writable -> fresh_frac = full_perm => normally
               read-only -> fresh_frac != full_perm => in order to 
               detect permission violation
-              We use exp_bind_imm. If true -> immutable -> read only -> 0.0<f<=1.0
-              Othewiese, false -> mutable -> write -> f=1.0
+              We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
+              Othewiese, false -> write -> f=1.0
             *)
-            let vheap = if (imm)
+            let vheap = if (read_only)
                 then
                   let read_f = CF.mkFracInv fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
