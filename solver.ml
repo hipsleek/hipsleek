@@ -706,10 +706,10 @@ and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpu
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 [] prog in
   let ph, pb, pa = xpure_heap_symbolic_i prog h0 which_xpure in
-  (ph, pb, pa, memset)
-  (* if (is_sat_mem_formula memset) then  *)
-  (*   (ph, pb, pa, memset) *)
-  (* else (MCP.mkMFalse no_pos, pb, pa, memset)   *)
+  (* (ph, pb, pa, memset) *)
+  if (is_sat_mem_formula memset) then
+    (ph, pb, pa, memset)
+  else (MCP.mkMFalse no_pos, pb, pa, memset)
 
 
 and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list = 
