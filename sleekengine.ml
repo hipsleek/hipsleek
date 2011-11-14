@@ -548,9 +548,9 @@ let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula an
   (*                       ^"\n\n") in *)
 
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*LDK:exception in entail check is thrawn here*)
-  let _ = print_string ("\nrun_entail_check: after elim_unsat_es"
-                        ^ "\n ### ctx = "^(Cprinter.string_of_context ctx)
-                        ^"\n\n") in
+  (* let _ = print_string ("\nrun_entail_check: after elim_unsat_es" *)
+  (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
+  (*                       ^"\n\n") in *)
 
   let ante_flow_ff = (CF.flow_formula_of_formula ante) in
   let rs1, _ = 

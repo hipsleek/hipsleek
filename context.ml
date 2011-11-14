@@ -595,7 +595,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
           | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
         )
     | MaterializedArg (mv,ms) ->
-          let uf_i = if mv.mater_full_flag then 0 else 1 in 
+        let uf_i = if mv.mater_full_flag then 0 else 1 in 
         (match lhs_node,rhs_node with
           | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
           | ViewNode vl, ViewNode vr -> 
@@ -605,38 +605,39 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               (match mv.mater_full_flag with
                 | true -> (0,a1)
                 | false -> (1,a1)
-                            (*let a2 = in
-                              Search_action (a1::a2)*))
+                              (*let a2 = in
+                                Search_action (a1::a2)*))
           | ViewNode vl, DataNode dr ->
-            (* (match mv.mater_full_flag with *)
-            (*   | true -> (0,a1) *)
-            (*   | false -> (1,M_unfold (c,1)))  *)
-            (* to prevent infinite unfolding *)
-            (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
-            (* unfold to some depth *)
-                  let lhs_case_flag = vl.h_formula_view_lhs_case in
-            (* M_Nothing_to_do (string_of_match_res c) *)
-                 (*                       ^ "### lhs_case_flag = " ^ (string_of_bool lhs_case_flag) *)
+                  (* (match mv.mater_full_flag with *)
+                  (*   | true -> (0,a1) *)
+                  (*   | false -> (1,M_unfold (c,1)))  *)
+                  (* to prevent infinite unfolding *)
+                  (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
+                  (* unfold to some depth *)
+              let lhs_case_flag = vl.h_formula_view_lhs_case in
+                  (* M_Nothing_to_do (string_of_match_res c) *)
+                  (*                       ^ "### lhs_case_flag = " ^ (string_of_bool lhs_case_flag) *)
                   (*                       ^ "\n\n" )in *)
-                  let a2 = 
-                    (match ms with
-                      | View_mater -> (1,M_unfold (c,uf_i))
-                      | Coerc_mater s -> (1,M_lemma (c,Some s))) in
+              let a2 = 
+                (match ms with
+                  | View_mater -> (1,M_unfold (c,uf_i))
+                  | Coerc_mater s -> (1,M_lemma (c,Some s))) in
 
-                  let a1 = 
-                    if (lhs_case_flag=true) then
-                      let l1 = [(1,M_lhs_case c)] 
-                      in
-                      (-1, (Search_action (a2::l1)))
-                    else
-                      let l1 = [(1,M_base_case_unfold c)] in
-                      (-1, (Search_action (a2::l1)))
-                  in a1
+              let a1 = 
+                if (lhs_case_flag=true) then
+                  let l1 = [(1,M_lhs_case c)] 
+                  in
+                  (-1, (Search_action (a2::l1)))
+                else
+                  let l1 = [(1,M_base_case_unfold c)] in
+                  (-1, (Search_action (a2::l1)))
+              in a1
           | _ -> report_error no_pos "process_one_match unexpected formulas\n"
         )
-                  | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
+    | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
 
             let r1 = match c.match_res_type with 
+              (*Used when normalizing. MATCH only*)
               | Root ->
                   (match lhs_node,rhs_node with
                     | DataNode dl, DataNode dr -> 
@@ -651,7 +652,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
               | MaterializedArg (mv,ms) -> 
-                  let _ = print_string ("\n [Solver.ml] Warning: process_one_match not support Materialized Arg \n") in
+                  (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
+                  (* let _ = print_string ("\n [context.ml] Warning: process_one_match not support Materialized Arg when normalizing\n") in *)
                   (1,M_Nothing_to_do (string_of_match_res c))
               | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
             in

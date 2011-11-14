@@ -311,7 +311,18 @@ $output_file = "log";
                  "test_write2","SUCCESS",
                  "test_read2","FAIL-2",
                  "test_write3","SUCCESS",
-                 "test_read3","FAIL-2"]
+                 "test_read3","FAIL-2"],
+				["append-tail.ss",2,  "", 
+                 "append2","SUCCESS",
+                 "append","FAIL-2"],
+				["append.ss",3,  "", 
+                 "append","SUCCESS",
+                 "append2","FAIL-2",
+                 "app2","SUCCESS"],
+				["seq_tree_count.ss",3,  "", 
+                 "count","SUCCESS",
+                 "count2","FAIL-1",
+                 "count3","FAIL-1"]
             ],
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 

@@ -504,7 +504,7 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (bra
 
 
 and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  
-  Gen.Debug.ho_2 "xpure_heap_mem_enum" 
+  Gen.Debug.no_2 "xpure_heap_mem_enum" 
       Cprinter.string_of_h_formula 
       string_of_int 
       (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
@@ -2705,7 +2705,7 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 	      (nf1@nf2,nf1n@nf2n)
 
 and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
-  Gen.Debug.ho_2 "is_unsat_with_branches" 
+  Gen.Debug.no_2 "is_unsat_with_branches" 
       (fun h -> 
           "\n hf = "  ^ (Cprinter.string_of_h_formula h)
           ^"\n xpure_f hf = " ^ Cprinter.string_of_mix_formula(fst( xpure_f hf)))
@@ -2757,7 +2757,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Gen.Debug.ho_1 "unsat_base" 
+  Gen.Debug.no_1 "unsat_base" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
       
@@ -7539,8 +7539,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_lhs_node = lhs_node;
           Context.match_res_rhs_node = rhs_node;}->
         
-        let _ = print_string ("process_action: Context.M_lhs_case" 
-                              ^ "\n\n") in
+        (* let _ = print_string ("process_action: Context.M_lhs_case"  *)
+        (*                       ^ "\n\n") in *)
 
         let ans = do_lhs_case prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos in
         (match ans with
@@ -8228,12 +8228,12 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                       (*propagate_frac create a new fresh_var at any None and add freshvar = f1*)
                       let rhs2 = propagate_frac_formula rhs f1 in
 
-                      let _ = print_string ("rewrite_coercion: after add_frac"
-                                            ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs)
-                                            ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1)
-                                            (* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *)
-                                            ^ "\n ### rhs2 = " ^ (Cprinter.string_of_formula rhs2)
-                                            ^ "\n") in
+                      (* let _ = print_string ("rewrite_coercion: after add_frac" *)
+                      (*                       ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs) *)
+                      (*                       ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1) *)
+                      (*                       (\* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *\) *)
+                      (*                       ^ "\n ### rhs2 = " ^ (Cprinter.string_of_formula rhs2) *)
+                      (*                       ^ "\n") in *)
                       let br = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) f))) lhs_branches in
                       (guard,rhs2,br)
                   | None, Some f2 ->
@@ -8636,12 +8636,12 @@ begin
                       (*propagate_frac create a new fresh_var at any None and add freshvar = f1*)
                       let rhs2 = propagate_frac_formula rhs f1 in
 
-                      let _ = print_string ("rewrite_coercion: after add_frac"
-                                            ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs)
-                                            ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1)
-                                            (* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *)
-                                            ^ "\n ### rhs2 = " ^ (Cprinter.string_of_formula rhs2)
-                                            ^ "\n") in
+                      (* let _ = print_string ("rewrite_coercion: after add_frac" *)
+                      (*                       ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs) *)
+                      (*                       ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1) *)
+                      (*                       (\* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *\) *)
+                      (*                       ^ "\n ### rhs2 = " ^ (Cprinter.string_of_formula rhs2) *)
+                      (*                       ^ "\n") in *)
 
                       (guard,rhs2)
                   | None, Some f2 ->
@@ -10140,7 +10140,7 @@ let normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 let normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
 
 
