@@ -153,6 +153,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
+                        h_formula_view_derv : bool;
                         h_formula_view_imm : bool;
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
@@ -1042,6 +1043,10 @@ and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
   | _ -> failwith ("get_view_imm: not a view")
 
+and get_view_derv (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_derv = dr}) -> dr
+  | _ -> failwith ("get_view_imm: not a view")
+
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in
   let pr2 = !print_ident_list in
@@ -1111,6 +1116,7 @@ and h_add_unfold_num (h : h_formula) i =
     | _ -> h 
   in helper h
 
+(* WN : below is marking node as @D? *)
 and h_add_origs_to_node (v : string) (h : h_formula) origs = 
   let rec helper h = match h with
     | Star ({h_formula_star_h1 = h1;

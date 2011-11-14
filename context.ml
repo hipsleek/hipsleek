@@ -479,6 +479,8 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
                   let vr_view_orig = vr.h_formula_view_original in
+                  let vl_view_derv =  vl.h_formula_view_derv in
+                  let vr_view_derv = vr.h_formula_view_derv in
                   (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
                   (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
                   (*let en_num = !num_self_fold_search in*)
@@ -524,7 +526,13 @@ and process_one_match_x prog (c:match_res) :action_wt =
                             let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
                             [(1,Cond_action lst)]
                   in
-                  let l3 = if (vl_view_orig || vr_view_orig)
+                  (* using || results in some repeated answers but still terminates *)
+                  let flag = 
+                    if ann_derv 
+                    then (not(vl_view_derv) && not(vr_view_derv)) 
+                    else (vl_view_orig || vr_view_orig)
+                  in
+                  let l3 = if flag
                   then begin
                     let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in

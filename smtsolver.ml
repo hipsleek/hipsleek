@@ -767,7 +767,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let pr = !print_pure in
-  Gen.Debug.ho_2 "smt_imply" pr pr string_of_bool (fun _ _ -> smt_imply_x ante conseq prover) ante conseq
+  Gen.Debug.no_2 "smt_imply" pr pr string_of_bool (fun _ _ -> smt_imply_x ante conseq prover) ante conseq
 	
 and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
 	let res, should_run_smt =

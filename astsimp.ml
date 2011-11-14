@@ -343,65 +343,67 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         else (* make sure that the var is not already there *) f0
   
 let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
-	(* match named arguments with formal parameters to generate a list of    *)
-	(* position-based arguments. If a parameter does not appear in args,     *)
-	(* then it is instantiated to a fresh name.                              *)
+  (* match named arguments with formal parameters to generate a list of    *)
+  (* position-based arguments. If a parameter does not appear in args,     *)
+  (* then it is instantiated to a fresh name.                              *)
   let rec match_args (params : ident list) args : IP.exp list =
     match params with
-    | p :: rest ->
-        let tmp1 = match_args rest args in
-        let tmp2 = List.filter (fun a -> (fst a) = p) args in
-        let tmp3 =
-          (match tmp2 with
-           | [ (_, IP.Var ((e1, e2), e3)) ] -> IP.Var ((e1, e2), e3)
-           | _ ->
-               let fn = ("Anon"^(fresh_trailer()))
-               in
-								(* let _ = (print_string ("\n[astsimp.ml, line 241]: fresh *)
-								(* name = " ^ fn ^ "\n")) in                               *)
-                 IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos)) in
-        let tmp4 = tmp3 :: tmp1 in tmp4
-    | [] -> []
+      | p :: rest ->
+            let tmp1 = match_args rest args in
+            let tmp2 = List.filter (fun a -> (fst a) = p) args in
+            let tmp3 =
+              (match tmp2 with
+                | [ (_, IP.Var ((e1, e2), e3)) ] -> IP.Var ((e1, e2), e3)
+                | _ ->
+                      let fn = ("Anon"^(fresh_trailer()))
+                      in
+					  (* let _ = (print_string ("\n[astsimp.ml, line 241]: fresh *)
+					  (* name = " ^ fn ^ "\n")) in                               *)
+                      IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos)) in
+            let tmp4 = tmp3 :: tmp1 in tmp4
+      | [] -> []
   in
-    try
-      let vdef =
-        I.look_up_view_def_raw prog.I.prog_view_decls
+  try
+    let vdef =
+      I.look_up_view_def_raw prog.I.prog_view_decls
           h0.IF.h_formula_heap2_name in
-      let hargs =
-        match_args vdef.I.view_vars h0.IF.h_formula_heap2_arguments in
-      let h =
-        {
+    let hargs =
+      match_args vdef.I.view_vars h0.IF.h_formula_heap2_arguments in
+    let h =
+      {
           IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
           IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
-	  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+	      IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+	      IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
           IF.h_formula_heap_arguments = hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
 		  IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
-        }
-      in h
-    with
+      }
+    in h
+  with
     | Not_found ->
-        let ddef =
-          I.look_up_data_def h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
-            h0.IF.h_formula_heap2_name in
-        let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
-        let hargs = match_args params h0.IF.h_formula_heap2_arguments in
-        let h =
-          {
-            IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
-            IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
-	    IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
-            IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
-            IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-            IF.h_formula_heap_arguments = hargs;
-            IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
-            IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-			IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
-          }
-        in h
+          let ddef =
+            I.look_up_data_def h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
+                h0.IF.h_formula_heap2_name in
+          let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
+          let hargs = match_args params h0.IF.h_formula_heap2_arguments in
+          let h =
+            {
+                IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
+                IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
+	            IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+	            IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+                IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
+                IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
+                IF.h_formula_heap_arguments = hargs;
+                IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
+                IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+			    IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
+            }
+          in h
   
 (* convert HeapNode2 to HeapNode *)
 let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
@@ -3843,6 +3845,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
         | IF.HeapNode{
               IF.h_formula_heap_node = (v, p);
               IF.h_formula_heap_name = c;
+	          IF.h_formula_heap_derv = dr;
 	          IF.h_formula_heap_imm = imm;
               IF.h_formula_heap_arguments = exps;
               IF.h_formula_heap_full = full;
@@ -3916,6 +3919,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                   let new_h = CF.ViewNode {
                       CF.h_formula_view_node = new_v;
                       CF.h_formula_view_name = c;
+		              CF.h_formula_view_derv = dr;
 		              CF.h_formula_view_imm = imm;
                       CF.h_formula_view_arguments = hvars;
                       CF.h_formula_view_modes = vdef.I.view_modes;
