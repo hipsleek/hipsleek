@@ -528,7 +528,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   in
                   (* using || results in some repeated answers but still terminates *)
                   let flag = 
-                    if ann_derv 
+                    if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
                     else (vl_view_orig || vr_view_orig)
                   in
