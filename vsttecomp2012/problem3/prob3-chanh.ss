@@ -68,7 +68,10 @@ int queuepop(ring b)
   else {
 	int r = b.content[b.first];
     //b.first = cyclic_inc(b.first,b.size);
+	//assert b.fisrt < b.size; //loop
+	//int modb = (b.first + 1) % b.size;
 	b.first = (b.first + 1) % b.size;
+	//b.first = modb;
 	b.length = b.length - 1;
     //assume false;
 	return r;

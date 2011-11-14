@@ -815,7 +815,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         begin
           (Smtsolver.is_sat f sat_no);
         end
-      else
+	  else
         begin
           (Omega.is_sat f sat_no);
         end
@@ -966,7 +966,7 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (Smtsolver.simplify f);
                   end
-                else
+				else
                   begin
                     (Omega.simplify f);
                   end
@@ -1195,7 +1195,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         begin
           (called_prover :="smtsolver "; Smtsolver.imply ante conseq)
         end
-      else
+	  else
         begin
           (called_prover :="omega "; Omega.imply ante conseq imp_no timeout);
         end

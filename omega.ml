@@ -423,6 +423,7 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
     let tmp2 = mkExists fvars tmp1 no_pos in
     not (is_valid tmp2)
    *)
+  
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   	
   let result = is_valid tmp_form  timeout in

@@ -764,11 +764,22 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * If it is unsatisfiable, the original implication is true.
  * We also consider unknown is the same as sat
  *)
+
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-	(* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
-	let res, should_run_smt = if (has_exists conseq) then
+  let pr = !print_pure in
+  Gen.Debug.ho_2 "smt_imply" pr pr string_of_bool (fun _ _ -> smt_imply_x ante conseq prover) ante conseq
+	
+and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+	let res, should_run_smt =
+	  if (has_exists conseq) then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
-	else (false, true) in
+	  else if not ((Redlog.is_linear_formula ante) && (Redlog.is_linear_formula conseq)) then
+		let _ = print_string ("Smtsolver: Retry with Redlog") in
+		if (is_array_constraint conseq) then (false, true)
+		else
+		  let n_ante = remove_array_constraint_formula ante in
+		  (Redlog.imply n_ante conseq "", false)
+	  else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
 		let _ = !set_generated_prover_input input in
@@ -787,6 +798,79 @@ and has_exists conseq = match conseq with
 	| CP.Exists _ -> true
 	| _ -> false
 
+and remove_array_constraint_formula f =
+  match f with
+	| CP.BForm _ -> if is_array_constraint f then CP.mkTrue no_pos else f
+	| CP.And (f1, f2, pos) ->
+	  CP.mkAnd (remove_array_constraint_formula f1) (remove_array_constraint_formula f2) pos
+	| _ -> f
+
+and is_array_b_formula (pf,_) = match pf with
+    | CP.BConst _ 
+    | CP.BVar _
+	| CP.BagMin _ 
+    | CP.BagMax _
+		-> Some false    
+    | CP.Lt (e1,e2,_) 
+    | CP.Lte (e1,e2,_) 
+    | CP.Gt (e1,e2,_)
+    | CP.Gte (e1,e2,_)
+	| CP.Eq (e1,e2,_)
+	| CP.Neq (e1,e2,_)
+	| CP.BagSub (e1,e2,_)
+		-> (match (is_array_exp e1) with
+						| Some true -> Some true
+						| _ -> is_array_exp e2)
+    | CP.EqMax (e1,e2,e3,_)
+    | CP.EqMin (e1,e2,e3,_)
+		-> (match (is_array_exp e1) with
+						| Some true -> Some true
+						| _ -> (match (is_array_exp e2) with
+											| Some true -> Some true
+											| _ -> is_array_exp e3))
+    | CP.BagIn (_,e,_) 
+    | CP.BagNotIn (_,e,_)
+		-> is_array_exp e
+    | CP.ListIn _ 
+    | CP.ListNotIn _
+    | CP.ListAllN _ 
+    | CP.ListPerm _
+        -> Some false
+    | CP.RelForm _ -> Some true
+	  
+and is_array_exp e = match e with
+    | CP.List _
+    | CP.ListCons _
+    | CP.ListHead _
+    | CP.ListTail _
+    | CP.ListLength _
+    | CP.ListAppend _
+    | CP.ListReverse _ 
+        -> Some false
+	| CP.Add (e1,e2,_)
+	| CP.Subtract (e1,e2,_)
+	| CP.Mult (e1,e2,_)
+	| CP.Div (e1,e2,_)
+	| CP.Max (e1,e2,_)
+	| CP.Min (e1,e2,_)
+	| CP.BagDiff (e1,e2,_)
+		-> (match (is_array_exp e1) with
+						| Some true -> Some true
+						| _ -> is_array_exp e2)
+	| CP.Bag (el,_)
+	| CP.BagUnion (el,_)
+	| CP.BagIntersect (el,_)
+		-> (List.fold_left (fun res exp -> match res with
+											| Some true -> Some true
+											| _ -> is_array_exp exp) (Some false) el)
+    | CP.ArrayAt (_,_,_) -> Some true
+    | CP.FConst _ | CP.IConst _ | CP.Var _ | CP.Null _ -> Some false
+    (* | _ -> Some false *)
+
+and is_array_constraint (e: CP.formula) : bool =
+  let or_list = List.fold_left (||) false in
+  CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
+	  
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
