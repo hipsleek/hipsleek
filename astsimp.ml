@@ -4292,8 +4292,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     | IF.Base base ->
           let pos = base.Iformula.formula_base_pos in
           let nh,np,nt,nfl,nb = (linearize_base base pos) in
-          let np = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) np)  in
-          CF.mkBase nh np nt nfl nb pos
+          let np1 = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) np)  in
+          (* let _  = print_string ("linearize_base: IF.Base"  *)
+          (*                        ^ "\n ### np = " ^ (Cprinter.string_of_pure_formula np) *)
+          (*                        ^ "\n ### np1 = " ^ (Cprinter.string_of_mix_formula np1) *)
+          (*                        ^"\n") in *)
+          CF.mkBase nh np1 nt nfl nb pos
     | IF.Exists {
           IF.formula_exists_heap = h; 
           IF.formula_exists_pure = p;
@@ -4311,7 +4315,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 	      let nh,np,nt,nfl,nb = linearize_base base pos in
           let np = MCP.memoise_add_pure_N (MCP.mkMTrue pos) np in
 	      CF.mkExists (List.map (fun c-> 
-              let _  = print_string "linearize_base: IF.Exists \n" in
+              (* let _  = print_string "linearize_base: IF.Exists \n" in *)
               trans_var c stab pos) qvars) 
               nh np nt nfl nb pos 
 

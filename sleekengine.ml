@@ -442,7 +442,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
 
-  (* let _ = print_string ("run_entail_check: " *)
+  (* let _ = print_string ("\n run_entail_check: before meta_to_formula" *)
   (*                       ^ " ante0 = " ^ (string_of_meta_formula iante0) *)
   (*                       ^"\n\n") in *)
 
@@ -456,7 +456,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^ "\n stab = "^(AS.string_of_stab stab) *)
   (*                       ^"\n\n") in *)
 
-  (* let _ = print_string ("run_entail_check:" *)
+  (* let _ = print_string ("\nrun_entail_check: before Solver.prune_preds" *)
   (*                       ^ "\n ante = "^(Cprinter.string_of_formula ante) *)
   (*                       ^"\n\n") in *)
 
@@ -464,9 +464,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
   (*                       ^"\n\n") in *)
 
+  (*--eps => prune*)
   let ante = Solver.prune_preds !cprog true ante in
 
-  (* let _ = print_string ("\n run_entail_check:" *)
+  (* let _ = print_string ("\n run_entail_check: after Solver.prune_preds" *)
   (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
   (*                       ^"\n\n") in *)
 
@@ -522,6 +523,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
   (*                       ^"\n\n") in *)
 
+  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n") no_pos in
 
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in

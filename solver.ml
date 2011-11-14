@@ -591,7 +591,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 
                     (*add fractional invariant*)
                     let frac_inv_mix = MCP.OnePF frac_inv in
-                    let f = CF.add_mix_formula_to_mix_formula f frac_inv_mix in
+                    let f = CF.add_mix_formula_to_mix_formula frac_inv_mix f in
 
                     let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                     let subst_fun = CP.subst_avoid_capture from_svs to_svs in
@@ -782,7 +782,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                   let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
                     (*add fractional invariant*)
                     let frac_inv_mix = MCP.OnePF frac_inv in
-                    let vinv = CF.add_mix_formula_to_mix_formula vinv frac_inv_mix in
+                    let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
 
 
                   let from_addrs = vdef.view_addr_vars in
@@ -798,7 +798,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
             | Some ls ->(*--imm and --eps *)
                   (*??? what is it*)
                   let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
-			      let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in
+			      (* let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in *)
                   (MCP.mkMTrue no_pos, [], ba))
 
           (* let ba = look_up_view_baga prog c p vs in *)
@@ -6049,26 +6049,31 @@ in
 	   - if the equality is solved -> remove it from conseq 
     *)
 
-and solve_ineq_debug a m c = 
-  Gen.Debug.no_2 "solve_ineq "
+and solve_ineq(* _debug *) a m c = 
+  Gen.Debug.no_3 "solve_ineq "
+      (Cprinter.string_of_mix_formula) 
       (Cprinter.string_of_mem_formula)
       (Cprinter.string_of_mix_formula) 
-      (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq a m c) m c
+      (Cprinter.string_of_mix_formula) (fun a m c -> solve_ineq_x a m c) a m c
 
-and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
+and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
       (conseq : MCP.mix_formula) : MCP.mix_formula =
   (* let memset = {mem_formula_mset = [[Cpure.SpecVar (Cpure.Prim Int, "x", Unprimed);Cpure.SpecVar (Cpure.Prim Int, "y", Unprimed)]]} in *)
   match ante_m0,conseq with
     | (MCP.MemoF at,MCP.MemoF f) ->
-          begin
+        begin
             (* print_endline "solve_ineq: first"; *)
             MCP.MemoF (solve_ineq_memo_formula at memset f)
-          end
+        end
     | (MCP.OnePF at,MCP.OnePF f) -> 
-          begin
+        begin
             (* print_endline "solve_ineq: second"; *)
             MCP.OnePF (solve_ineq_pure_formula at memset f) 
-          end
+        end
+    (* | (MCP.MemoF am,MCP.OnePF cq) -> *)
+    (*     begin *)
+            
+    (*     end *)
     |  _ ->  Error.report_error 
            {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
@@ -8910,7 +8915,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
           let new_ctx1 = Ctx new_estate in
           let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
           (*prove extra heap + guard*)
-          let conseq_extra = mkBase extra_heap_new (MCP.OnePF lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in 
+          let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in 
           (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in *)           
 	      Debug.devel_pprint ("apply_left_coercion_complex: check extra heap") pos;
 	      Debug.devel_pprint ("apply_left_coercion_complex: new_ctx after folding: "
@@ -9779,11 +9784,11 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
             let new_ctx1 = Ctx new_estate in
             let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
             (*prove extra heap + guard*)
-            let conseq_extra = mkBase extra_heap_new (MCP.OnePF lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
+            let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
             (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in  *)
 
 	        Debug.devel_pprint ("normalize_w_coers:process_one: check extra heap") no_pos;
-	        Debug.devel_pprint ("normalize_w_coers:process_one: new_ctx after folding: "
+	        Debug.devel_pprint ("normalize_w_coers:process_one: new_ctx: "
 		                        ^ (Cprinter.string_of_spec_var p2) ^ "\n"
 		                        ^ (Cprinter.string_of_context new_ctx1)) no_pos;
 	        Debug.devel_pprint ("normalize_w_coers:process_one: conseq_extra:\n"
@@ -10008,7 +10013,7 @@ let normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 let normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
 
 

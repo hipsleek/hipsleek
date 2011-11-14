@@ -1240,7 +1240,7 @@ let pre_process_of_iprog iprims prog =
   prog
 
 let pre_process_of_iprog prog = 
-  Gen.Debug.ho_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
+  Gen.Debug.no_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
 
 
 

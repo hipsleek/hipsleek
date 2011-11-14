@@ -30,3 +30,4 @@ checkentail x::ll(f1)<n1> * x::ll(f2)<n2> & n1=n2 |- x=null.
 // fail, may bug
 //print residue.
 
+
