@@ -28,7 +28,6 @@ lemma "R2L" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg
 //checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, p> & n = 7.
 //print residue.// valid
 
-/*
 //(1)
 checkentail x::cellp(0.4)<v1> * x::cellp(0.6)<v1>  |- x::cellp(1.0)<v2>.
 print residue. //valid, COMBINE
@@ -73,10 +72,7 @@ checkentail x::cellp(0.4)<v1> * x::cellp(0.3)<v1>  |- x::cellp(f)<v>.
 // succeeds with 8 answers
 // lossless combine --> would succeed with 2 answers
 
-*/
 
 
-checkentail x::cellp(0.4)<v1> * x::cellp(0.6)<v3> |- x::cellp(1.0)<v2>.
-print residue. 
-// fails as may failure
-// lossless combine --> would succeed ???
+
+

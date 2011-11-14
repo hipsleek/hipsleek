@@ -1913,7 +1913,6 @@ let string_of_failure_list_partial_context (lc: Cformula.list_partial_context) =
   in string_of_list_partial_context lc
 ;;
 
-
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
 Mcpure.print_sv_f := string_of_spec_var ;; 

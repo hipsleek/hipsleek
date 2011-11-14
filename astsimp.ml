@@ -2908,7 +2908,6 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	          flatten_to_bind prog proc e (List.rev fs) None pid true pos
 	        else
 	          flatten_to_bind prog proc e (List.rev fs) None pid false pos
-	          (* flatten_to_bind prog proc e (List.rev fs) None pid true pos (\*always immutable*\) *)
 	      in
           (*let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in*)
           r

@@ -22,8 +22,8 @@ lemma "tail2lseg" self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
 
 
 //lemma "split1" self::cellp(f)<v> & 0<f<=1 & f=f1+f2 & f1>0 & f2>0  -> self::cellp(f1)<v> * self::cellp(f2)<v>.
-//lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
-lemma "split3" self::cellp(f)<v> & f=f1+f2 & 1.0>f1>0.0 & 1.0>f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+//lemma "split3" self::cellp(f)<v> & f=f1+f2 & 1.0>f1>0.0 & 1.0>f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
 
 //lemma "R2L" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
 
@@ -62,6 +62,3 @@ checkentail x::ll_tail<r3, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r
 //(7)
 checkentail x::ll_tail<p, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
 //print residue. // valid with r3=p
-
-
-

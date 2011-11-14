@@ -516,16 +516,12 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
   let conseq = Solver.prune_pred_struc !cprog true conseq in
 
-  (*LDK: cformula of ante and conseq*)
+  (* (\*LDK: cformula of ante and conseq*\) *)
   (* let _ = print_string ("\nrun_entail_check:" *)
   (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
   (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
   (*                       ^"\n\n") in *)
 
-  let _ = Debug.devel_pprint ("\nrun_entail_check:"
-                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
-                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
-                        ^"\n\n") no_pos in
 
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
@@ -555,7 +551,7 @@ let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula an
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*LDK:exception in entail check is thrawn here*)
 
   (* (\*LDK: cformula of ante and conseq*\) *)
-  (* let _ = print_string ("run_entail_check: after elim_unsat_es" *)
+  (* let _ = print_string ("run_entail_check:" *)
   (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
   (*                       ^"\n\n") in *)
 

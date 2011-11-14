@@ -396,47 +396,22 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 	  h_formula_data_imm = imm1}) ->
-        if (CP.mem p1 aset) then
-          if ((* (!Globals.allow_imm) &&  *)(subtype imm imm1)) then
-            if (imm)then
-              let hole_no = Globals.fresh_int() in
+          if ((CP.mem p1 aset) && (subtype imm imm1)) then 
+            if imm then
+              let hole_no = Globals.fresh_int() in 
               [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
               [(HTrue, f, [], Root)]
-          else
-            [(HTrue, f, [], Root)]
-        else
-          []
-
-        (* (\* if (!Globals.allow_imm) then *\) *)
-          (* if ((CP.mem p1 aset) && (subtype imm imm1)) then *)
-          (*   if (imm)then *)
-          (*     let hole_no = Globals.fresh_int() in *)
-          (*     [((Hole hole_no), f, [(f, hole_no)], Root)] *)
-          (*   else *)
-          (*     [(HTrue, f, [], Root)] *)
-          (* else *)
-          (*   [] *)
-        (* else *)
-        (*   [(HTrue, f, [], Root)] *)
-
-          (* if ((CP.mem p1 aset) && (subtype imm imm1)) then  *)
-          (*   if (imm)then *)
-          (*     let hole_no = Globals.fresh_int() in  *)
-          (*     [((Hole hole_no), f, [(f, hole_no)], Root)] *)
-          (*   else *)
-          (*     [(HTrue, f, [], Root)] *)
-          (* else  *)
-          (*   [] *)
+          else 
+            []
     | ViewNode ({h_formula_view_node = p1;
 	  h_formula_view_imm = imm1;
 	  h_formula_view_frac_perm = frac1;
 	  h_formula_view_arguments = vs1;
 	  h_formula_view_name = c}) ->
-        (* if(!Globals.allow_imm) then *)
           if (subtype imm imm1) then
             (if (CP.mem p1 aset)  then
-              if (imm)then
+              if imm then
                 let hole_no = Globals.fresh_int() in
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
                 [(Hole hole_no, f, [(f, hole_no)], Root)]
@@ -479,8 +454,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
               vmm@cmm
             )
           else []
-          (* else *)
-          (*   [(HTrue, f, [], Root)] *)
     | Star ({h_formula_star_h1 = f1;
 	  h_formula_star_h2 = f2;
 	  h_formula_star_pos = pos}) ->
@@ -763,7 +736,7 @@ and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizi
   (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^", "^(Cprinter.string_of_h_formula c2)^")") x in
-  let pr2 = string_of_action_res in
+  let pr2 = string_of_action_res_simpl in
   Gen.Debug.no_5 "compute_actions" pr0 pr pr1 pr3 pr3 pr2 (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos) es lhs_h rhs_lst lhs_p rhs_p
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =

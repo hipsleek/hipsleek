@@ -41,21 +41,14 @@ lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1
 
 lemma "split1" self::cellp(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cellp(f1)<v> * self::cellp(f2)<v> & 0.0<f<=1.0.
 
-
-//checkentail x::lseg<n,p> & n=3 |- x::lsegp<m,q> & m=2.
-//print residue. //valid after accounting for uni_vars
-// bug with "--imm" because it proves the heap and the pure separately
-// can not use the universal lemma ,after fold, to instantiate m=2
-
 //(1)
-checkentail x::lseg<n,p> & n=3 |- x::lseg<m,q> & m=2.
-//print residue. //valid
+checkentail x::lseg<n,p> & n=3 |- x::lsegp<m,q> & m=2.
+print residue. //valid after accounting for uni_vars
 
 //(2)
-checkentail x::lseg<n,p> & n=3 |- x::lseg<m,q> & m=3.
+checkentail x::lseg<n,p> & n=3 |- x::lsegp<m,q> & m=3.
 print residue. //valid after accounting for uni_vars
 
 //(3)
-checkentail x::lseg<n,p> & n=3 |- x::lseg<m,q> & m=4.
+checkentail x::lseg<n,p> & n=3 |- x::lsegp<m,q> & m=4.
 print residue. //fail
-

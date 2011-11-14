@@ -44,7 +44,7 @@ and prune_status =
                                   the bool indicates the source true: orig 
                                                                 false: invariant*)
   (*| Unknown_prune of bool*)   (*pruning constraint with unknown status, -bool indicates if it comes from an invariant*)
-
+  
 let print_mp_f = ref (fun (c:memo_pure)-> " printing not initialized")
 let print_mc_f = ref (fun (c:memoised_constraint)-> "printing not initialized")
 let print_sv_f = ref (fun (c:spec_var)-> "spec var printing not initialized")
@@ -55,7 +55,6 @@ let print_exp_f = ref(fun (c:exp) -> "exp_printing")
 (* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
 
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
-let print_bf_l l = String.concat "; " (List.map !print_bf_f l)
 
 let print_alias_set aset = EMapSV.string_of aset
 
@@ -542,12 +541,8 @@ and combine_memo_branch b (f, l) =
     | s -> try 
 	    memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
-and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
-  merge_mems_check l1 l2 slice_check_dups
-
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
-  Gen.Debug.no_2 "merge_mems" !print_mp_f !print_mp_f !print_mp_f
-     (fun _ _ ->  merge_mems_x l1 l2 slice_check_dups) l1 l2
+  merge_mems_check l1 l2 slice_check_dups
 
 
 and merge_mems_check (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
@@ -667,7 +662,7 @@ and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure =
     let disjs, rests = List.fold_left (fun (a1,a2) c-> match c with 
 	  | BForm x -> (x::a1,a2) 
 	  | _ -> (a1,c::a2))  ([],[]) (list_of_conjs p) in
-    let m2 = create_memo_group_debug disjs rests status in
+    let m2 = create_memo_group(*_debug*) disjs rests status in
     let r = merge_mems l m2 true in
     (*let r = List.concat (List.map split_mem_grp r) in*)
     Gen.Profiling.pop_time "add_pure"; r)
@@ -693,22 +688,9 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 (*add both imply and fail*)
 and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) (status:prune_status) :memo_pure = 
   let l1, to_slice2 = anon_partition l1 in
-
-  (* let _ = print_string ("create_memo_group: after anon_partition"  *)
-  (*                       ^ "\n ### l1 = "  *)
-  (*                       ^ (print_bf_l (let ls, _ = (List.split l1) in *)
-  (*                                     ls)) *)
-  (*                       ^ "\n") in *)
-
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
   let l2 = to_slice1 @ to_slice2 @ l2 in
-
-  (* let _ = print_string ("create_memo_group: "  *)
-  (*                       ^ "\n ### l1 = " ^ (print_bf_l l1)  *)
-  (*                       ^ "\n ### l2 = " ^ (print_p_f_l l2)  *)
-  (*                       ^ "\n") in *)
-
   let l2 = List.map (fun c-> (None, Some c)) l2 in
   let l1 = List.map (fun c-> (Some c,None)) l1 in  
   let ll  = List.fold_left ( fun a f->
@@ -893,8 +875,7 @@ and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure =
   if qv==[] then c
   else
     memo_pure_push_exists_all ((fun w f p-> mkExists w f None p),false) qv c no_pos
-
-(*foldleft ONLY. The first part do nothing at all*)
+        
 and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * formula list = 
   let rec get_head e = match e with 
     | Null _ -> "Null"
@@ -987,7 +968,7 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
   
   Gen.Profiling.push_time "memo_norm";
   let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
-	  match norm_bform_option(* _debug *) c1 with
+	  match norm_bform_option(*_debug*) c1 with
 		| Some c1 -> (c1::a1,a2)
 		| None -> (a1,(BForm(c1,c2))::a2)) ([],[]) l in
   Gen.Profiling.pop_time "memo_norm";l
@@ -1445,18 +1426,10 @@ let merge_mems_m = merge_mems
 let merge_mems f1 f2 slice_dup = match (f1,f2) with
   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup)
   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos)
-  | OnePF f1_f, MemoF f2_m -> 
-      MemoF (memoise_add_pure_N f2_m f1_f)
-  | MemoF f1_m, OnePF f2_f ->
-      MemoF (memoise_add_pure_N f1_m f2_f)
-
-(* let merge_mems f1 f2 slice_dup = match (f1,f2) with *)
-(*   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup) *)
-(*   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos) *)
-(*   | OnePF f1, MemoF f2 ->  *)
-(*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 1 \n" in MemoF f2 *)
-(*   | MemoF f1, OnePF f2 -> *)
-(*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 2 \n" in MemoF f1 *)
+  | OnePF f1, MemoF f2 ->
+      let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 1 \n" in MemoF f2
+  | MemoF f1, OnePF f2 ->
+      let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 2 \n" in MemoF f1
 
   (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
   

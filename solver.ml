@@ -591,7 +591,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 
                     (*add fractional invariant*)
                     let frac_inv_mix = MCP.OnePF frac_inv in
-                    let f = CF.add_mix_formula_to_mix_formula frac_inv_mix f in
+                    let f = CF.add_mix_formula_to_mix_formula f frac_inv_mix in
 
                     let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                     let subst_fun = CP.subst_avoid_capture from_svs to_svs in
@@ -706,12 +706,9 @@ and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpu
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 [] prog in
   let ph, pb, pa = xpure_heap_symbolic_i prog h0 which_xpure in
-  (ph, pb, pa, memset)
-
-  (* (\* (\\*LDK: temporary disable UNSAT BAGA check*\\) *\) *)
-  (* if (is_sat_mem_formula memset) then  *)
-  (*   (ph, pb, pa, memset) *)
-  (* else (MCP.mkMFalse no_pos, pb, pa, memset)   *)
+  if (is_sat_mem_formula memset) then 
+    (ph, pb, pa, memset)
+  else (MCP.mkMFalse no_pos, pb, pa, memset)  
 
 
 and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list = 
@@ -785,7 +782,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                   let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
                     (*add fractional invariant*)
                     let frac_inv_mix = MCP.OnePF frac_inv in
-                    let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
+                    let vinv = CF.add_mix_formula_to_mix_formula vinv frac_inv_mix in
 
 
                   let from_addrs = vdef.view_addr_vars in
@@ -801,7 +798,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
             | Some ls ->(*--imm and --eps *)
                   (*??? what is it*)
                   let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
-			      (* let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in *)
+			      let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in
                   (MCP.mkMTrue no_pos, [], ba))
 
           (* let ba = look_up_view_baga prog c p vs in *)
@@ -835,15 +832,6 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           (* 	if !no_diff then P.mkTrue no_pos *)
           (* 	else pairwise_diff addrs1 addrs2 pos in *)
           let tmp1 = MCP.merge_mems ph1 ph2 true in
-
-          (* let _ = print_string ("xpure_heap_symbolic_i:" *)
-          (*                       ^ "\n ### ph1 = " ^ (Cprinter.string_of_mix_formula ph1) *)
-          (*                       ^ "\n ### addrs1 = " ^ (Cprinter.string_of_spec_var_list addrs1) *)
-          (*                       ^ "\n ### ph2 = " ^ (Cprinter.string_of_mix_formula ph2) *)
-          (*                       ^ "\n ### addrs2 = " ^ (Cprinter.string_of_spec_var_list addrs2) *)
-          (*                       ^ "\n ### tmp1 = " ^ (Cprinter.string_of_mix_formula tmp1) *)
-          (*                       ^ "\n") in *)
-
           (* let res_form = MCP.memoise_add_pure_N tmp1 all_diff in *)
           (tmp1, CP.merge_branches b1 b2, addrs1 @ addrs2)
     | Phase ({ h_formula_phase_rd = h1;
@@ -4422,18 +4410,14 @@ and heap_entail_split_rhs_phases_x
 	    or ((is_true h2) && (is_true h3))
       then
 	    (* only one phase is not emp *)
-	    let _ = print_string("\nheap_entail_split_rhs_phases: only one phase is not emp \n") in
 	    heap_n_pure_entail prog is_folding  ctx_00 conseq (choose_not_true_heap h1 h2 h3) p func drop_read_phase pos
       else
 	    if ((is_true h1) && (is_true h2)) then (* does split_phase allow this *)
-	      let _ = print_string("heap_entail_split_rhs_phases: h3 is the only non empty phase \n") in
 	      let new_conseq = func h3 p in
 	      if not(contains_phase h3) then
 	        (* h3 is the only non empty phase and it does not contain any nested phases *)
-	        let _ = print_string("heap_entail_split_rhs_phases: h3 is the only non empty phase and it does not contain any nested phases \n") in
 	        heap_n_pure_entail prog is_folding  ctx_00 conseq (choose_not_true_heap h1 h2 h3) p func drop_read_phase pos
  	      else
-	        let _ = print_string("heap_entail_split_rhs_phases: h3 is the only non empty phase and it contains nested phases \n") in
 	        heap_entail_split_rhs_phases_x prog is_folding  ctx_00 new_conseq (contains_mutable new_conseq) pos
 	    else
 	      let res_ctx, res_prf = 
@@ -4461,28 +4445,20 @@ and heap_entail_split_rhs_phases_x
 		                  | OCtx _ -> report_error no_pos ("Disunctive context\n"))
 		              in 
 		              let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
-
-                      Debug.devel_pprint ("heap_entail_split_rhs_phases: entail the pure part"
-                                          ^ (Cprinter.string_of_context c)
-                                          ^ "\nconseq:\n"
-                                          ^ (Cprinter.string_of_formula new_conseq)
-                                          ^ "\nis_folding:\n"
-                                          ^ (string_of_bool is_folding)) pos;
 		              heap_entail_conjunct prog is_folding  c new_conseq []  pos) cl 
 	              in
 	              let res_ctx, res_prf = List.split res in
 	              let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
 	              let res_ctx = fold_context_left res_ctx in 
 	              (res_ctx, res_prf)
-	        | FailCtx _ -> 
-                Debug.devel_pprint ("heap_entail_split_rhs_phases: entail the pure part: FailCtx") pos;
-                (res_ctx, res_prf)	    
+	        | FailCtx _ -> (res_ctx, res_prf)	    
   in
 
-  Debug.devel_pprint ("heap_entail_split_rhs_phases: \nante:\n"
-                      ^ (Cprinter.string_of_context ctx_0)
-                      ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)                                  ^ "\nis_folding:\n"
-                      ^ (string_of_bool is_folding)) pos;
+  Debug.devel_pprint ("heap_entail_split_rhs_phases: 
+                            \nante:\n"
+  ^ (Cprinter.string_of_context ctx_0)
+  ^ "\nconseq:\n"
+  ^ (Cprinter.string_of_formula conseq)) pos;
 
   match ctx_0 with
     | Ctx estate -> begin
@@ -4561,8 +4537,8 @@ and eliminate_exist_from_LHS qvars qh qp qt qfl qb pos estate =
   in new_ctx
 
 and heap_n_pure_entail(*_debug*) prog is_folding  ctx0 conseq h p func drop_read_phase pos : (list_context * proof) =
-  Gen.Debug.no_3 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula Cprinter.string_of_mix_formula
-      (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  (fun ctx0 h p -> heap_n_pure_entail_x prog is_folding  ctx0 conseq h p func drop_read_phase pos) ctx0 h p
+  Gen.Debug.no_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
+      (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  (fun ctx0 h -> heap_n_pure_entail_x prog is_folding  ctx0 conseq h p func drop_read_phase pos) ctx0 h 
 
 and heap_n_pure_entail_1 prog is_folding  ctx0 conseq h p func drop_read_phase pos = 
   (* print_string "tracing heap_n_pure_entail_1\n"; *) (heap_n_pure_entail prog is_folding  ctx0 conseq h p func drop_read_phase pos)
@@ -4570,41 +4546,13 @@ and heap_n_pure_entail_1 prog is_folding  ctx0 conseq h p func drop_read_phase p
 and heap_n_pure_entail_2 prog is_folding  ctx0 conseq h p func drop_read_phase pos = 
   (* print_string "tracing heap_n_pure_entail_2\n"; *) (heap_n_pure_entail prog is_folding  ctx0 conseq h p func drop_read_phase pos)
 
-(*because h is the only phase => prove the heap part + the pure part at the same time*)
-(* and heap_n_pure_entail_x   *)
-(*       (prog : prog_decl)  *)
-(*       (is_folding : bool)  *)
+and heap_n_pure_entail_x  
+      (prog : prog_decl) 
+      (is_folding : bool) 
       
-(*       (ctx0 : context)  *)
-(*       (conseq : formula)  *)
-(*       (h : h_formula)  *)
-(*       p *)
-(*       func *)
-(*       (drop_read_phase : bool) *)
-(*       pos : (list_context * proof) = *)
-
-(*   (\* let _  = print_string("*************************************************\n") in *\) *)
-(*   (\* let _ = print_string("entailing the heap first:\n") in *\) *)
-(*   (\* let _  = print_string("*************************************************\n") in *\) *)
-(*     (\* let new_conseq = (func h (MCP.mkMTrue pos)) in *\) *)
-(*     let new_conseq = (func h p) in  *)
-(*     Debug.devel_pprint ("heap_n_pure_entail: prove the heap + pure *)
-(*                             \nante:\n" *)
-(*                       ^ (Cprinter.string_of_context ctx0) *)
-(*                       ^ "\nconseq:\n" *)
-(*                       ^ (Cprinter.string_of_formula conseq) *)
-(*                         ^ "\nis_folding:\n" *)
-(*                         ^ (string_of_bool is_folding)) pos; *)
-(*     heap_entail_split_lhs_phases prog is_folding  ctx0 conseq (contains_mutable_h_formula h) pos *)
-
-(*entail the heap and the pure parts separately*)
-and heap_n_pure_entail_x
-      (prog : prog_decl)
-      (is_folding : bool)
-      
-      (ctx0 : context)
-      (conseq : formula)
-      (h : h_formula)
+      (ctx0 : context) 
+      (conseq : formula) 
+      (h : h_formula) 
       p
       func
       (drop_read_phase : bool)
@@ -4613,46 +4561,19 @@ and heap_n_pure_entail_x
   (* let _  = print_string("*************************************************\n") in *)
   (* let _ = print_string("entailing the heap first:\n") in *)
   (* let _  = print_string("*************************************************\n") in *)
-    let new_conseq = (func h (MCP.mkMTrue pos)) in
-    (* let new_conseq = (func h p) in *)
-    Debug.devel_pprint ("heap_n_pure_entail: prove the heap first
-                            \nante:\n"
-                      ^ (Cprinter.string_of_context ctx0)
-                      ^ "\nconseq:\n"
-                      ^ (Cprinter.string_of_formula new_conseq)
-                        ^ "\nis_folding:\n"
-                        ^ (string_of_bool is_folding)) pos;
   let entail_h_ctx, entail_h_prf = heap_entail_split_lhs_phases prog is_folding  ctx0 (func h (MCP.mkMTrue pos)) (contains_mutable_h_formula h) pos in
   match entail_h_ctx with
-    | FailCtx _ ->
-        Debug.devel_pprint ("heap_n_pure_entail: NOT prove the pure (FailCtx) "
-                            ^ (Cprinter.string_of_mix_formula p)
-                            ^ "\n of the heap \n"
-                            ^ (Cprinter.string_of_formula new_conseq)
-                            ^ "\nis_folding:\n"
-                            ^ (string_of_bool is_folding)) pos;
-        (entail_h_ctx, entail_h_prf)
+    | FailCtx _ -> (entail_h_ctx, entail_h_prf)
     | SuccCtx(cl) ->
 	      (* let _  = print_string("*************************************************\n") in *)
 	      (* let _ = print_string("entailing the pure:\n") in *)
 	      (* let _  = print_string("*************************************************\n") in *)
-          (*prove pure constraints in p*)
-        Debug.devel_pprint ("heap_n_pure_entail: prove the pure "
-                            ^ (Cprinter.string_of_mix_formula p)
-                            ^ "\n of the heap \n"
-                            ^ (Cprinter.string_of_formula new_conseq)
-                            ^ "\nante:\n"
-                            ^ (Cprinter.string_of_context_list cl)
-                            ^ "\nconseq:\n"
-                            ^ (Cprinter.string_of_mix_formula p)
-                            ^ "\nis_folding:\n"
-                            ^ (string_of_bool is_folding)) pos;
-          let entail_p = List.map
-	        (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl
+          let entail_p = List.map 
+	        (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl  
           in
           let entail_p_ctx, entail_p_prf = List.split entail_p in
           let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
-          let entail_p_ctx = fold_context_left entail_p_ctx in
+          let entail_p_ctx = fold_context_left entail_p_ctx in 
           (entail_p_ctx, entail_p_prf)
 
 and one_ctx_entail prog is_folding  c conseq func p pos : (list_context * proof) =
@@ -5821,7 +5742,7 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
     let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
 
 
-  (* let _ = print_string ("\nheap_entail_empty_rhs_heap_x: " *)
+  (* let _ = print_string ("heap_entail_empty_rhs_heap_x: " *)
   (*                       ^ "\n curr_lhs_h = " ^ (Cprinter.string_of_h_formula curr_lhs_h) *)
   (*                       ^ "\n\n") in *)
 
@@ -6030,8 +5951,7 @@ in
           (* let (mix_f,rest) = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br)) in *)
 
           (* (\*LDK*\) *)
-          (* let _ = print_string ("\n heap_entail_empty_rhs_heap_x:" *)
-          (*                       ^ "\n ### lhs_heap  = " ^ (Cprinter.string_of_formula res_delta) *)
+          (* let _ = print_string ("heap_entail_empty_rhs_heap_x:" *)
           (*                       ^ "\n ### res_delta  = " ^ (Cprinter.string_of_formula res_delta) *)
           (*                       ^ "\n ### rhs_p  = " ^ (Cprinter.string_of_mix_formula rhs_p) *)
           (*                       (\* ^ "\n ### mix_f  = " ^ (Cprinter.string_of_mix_formula mix_f) *\) *)
@@ -6071,7 +5991,7 @@ in
 		            es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 			          | Some s1,Some s2 -> (s1,s2)::a
 			          | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
-	            Debug.devel_pprint ("heap_entail_empty_heap: formula is valid ") pos;
+	            Debug.devel_pprint ("heap_entail_empty_heap: formula is valid") pos;
 	            Debug.devel_pprint ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
 
    			  (* let _ = print_string ("An Hoa :: heap_entail_empty_heap :: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx) ^ "\n") in *)
@@ -7027,11 +6947,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
     (* only add the consumed node if the node matched on the rhs is mutable *)
     let new_consumed = 
-      (* if (!Globals.allow_imm) then *)
-        if not(get_imm r_node)
-        then mkStarH l_node estate.es_heap pos (*if not immutable -> consumed*)
-        else  estate.es_heap
-      (* else  mkStarH l_node estate.es_heap pos *)
+      if not(get_imm r_node)
+      then mkStarH l_node estate.es_heap pos 
+      else  estate.es_heap
     in
     let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
       |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
@@ -10090,7 +10008,7 @@ let normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     in helper f
 
 let normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
-  Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
+  Gen.Debug.ho_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
 
 
