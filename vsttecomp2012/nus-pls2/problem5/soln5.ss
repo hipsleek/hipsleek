@@ -5,7 +5,7 @@
 
 relation allzero(int[] A, int i, int j) == 
 	forall(k : k < i | k > j | A[k] = 0).
-
+	
 relation has_path(int[,] A, int n, int s, int t) == (s = t | exists(i : 0 <= i < n & has_path(A,n,s,i) & A[i,t] != 0)).
 
 // there exists a v-path from s to t of length d
@@ -21,7 +21,7 @@ relation v_shortest_distance(int[,] A, int n, int v, int s, int t, int d) == has
 relation shortest_distance(int[,] A, int n, int s, int t, int d) == v_shortest_distance(A,n,n,s,t,d).
 
 // Every vertices x such that x1 <= x < x2 belongs to S iff either there is a path of length <= d from s to x or there is a v-path of length d+1 from s to x
-relation reachable(int[,] A, int n, int v, int s, int[] S, int x1, int x2, int d) == forall(x : x < x1 | x >= x2 | S[x] = 0 & !(has_bounded_length_v_path(A,n,n,s,x,d)) & !(has_exact_length_v_path(A,n,v,s,x,d+1)) | S[x] != 0 & has_bounded_length_v_path(A,n,n,s,x,d) | has_exact_length_v_path(A,n,v,s,x,d+1)).
+relation reachable(int[,] A, int n, int v, int s, int[] S, int x1, int x2, int d) == forall(x : x < x1 | x >= x2 | S[x] = 0 & !(has_bounded_length_v_path(A,n,n,s,x,d)) & !(has_exact_length_v_path(A,n,v,s,x,d+1)) | S[x] != 0 & (has_bounded_length_v_path(A,n,n,s,x,d) | has_exact_length_v_path(A,n,v,s,x,d+1))).
 
 // Every vertex x such that x1 <= x < x2 is in S if and only if the v-shortest-distance from s to x is d
 relation allvsd(int[,] A, int n, int v, int s, int[] S, int x1, int x2, int d) == forall(x : x < x1 | x >= x2 | S[x] = 0 & !(v_shortest_distance(A,n,v,s,x,d)) | S[x] != 0 & v_shortest_distance(A,n,v,s,x,d)).
@@ -29,17 +29,19 @@ relation allvsd(int[,] A, int n, int v, int s, int[] S, int x1, int x2, int d) =
 // THEOREMS REQUIRED FOR PRE-CONDITION I.E. LOOP INVARIANTS
 
 // AXIOM 1 - bfs_loop3
-//axiom has_bounded_length_v_path(A,n,s,x,d,v) & v_shortest_distance(A,n,s,x,d,v+1) ==> v_shortest_distance(A,n,s,x,d,v).
+axiom has_bounded_length_v_path(A,n,v,s,x,d) & v_shortest_distance(A,n,v+1,s,x,d) ==> v_shortest_distance(A,n,v,s,x,d).
 
 // AXIOM 2 - precondition to recursive call bfs_loop2 in bfs_loop2
-//axiom !(shortest_distance(A,n,s,v,d)) & has_bounded_length_v_path(A,n,s,x,d+1,v+1) ==> has_bounded_length_v_path(A,n,s,x,d+1,v).
+axiom !(shortest_distance(A,n,s,v,d)) & has_exact_length_v_path(A,n,v+1,s,x,d+1) & !(has_bounded_length_v_path(A,n,n,s,x,d)) ==> has_exact_length_v_path(A,n,v,s,x,d+1).
 
 // AXIOM 3a - precondition to call recursive bfs_loop2 in bfs_loop2
-//axiom !(shortest_distance(A,n,s,v,d)) & v_shortest_distance(A,n,s,x,d+1,v) ==> v_shortest_distance(A,n,s,x,d+1,v+1).
+axiom !(shortest_distance(A,n,s,v,d)) & v_shortest_distance(A,n,v,s,x,d+1) ==> v_shortest_distance(A,n,v+1,s,x,d+1).
 
 // AXIOM 3b - precondition to call recursive bfs_loop2 in bfs_loop2
-//axiom !(shortest_distance(A,n,s,v,d)) & v_shortest_distance(A,n,s,x,d+1,v+1) ==> v_shortest_distance(A,n,s,x,d+1,v).
+axiom !(shortest_distance(A,n,s,v,d)) & v_shortest_distance(A,n,v+1,s,x,d+1) ==> v_shortest_distance(A,n,v,s,x,d+1).
 
+// to prove precondition to recursive call to bfs_loop1 in bfs_loop1.
+axiom reachable(A,n,n,s,V,0,n,d) ==> reachable(A,n,0,s,V,0,n,d+1).
 
 int bfs(int[,] A, int n, int s, int t)
 	requires 0 <= s < n & 0 <= t < n
@@ -56,13 +58,11 @@ int bfs(int[,] A, int n, int s, int t)
 	
 	int d = 0;
 	
-	assume reachable(A,n,0,s,V',0,n,0) & allvsd(A,n,n,s,C',0,n,0);
+	//assume reachable(A,n,0,s,V',0,n,0);
+	//assume allvsd(A,n,n,s,C',0,n,0);
 	
 	return bfs_loop1(A,n,s,t,d,V,C);
 }
-
-// to prove precondition to recursive call to bfs_loop1 in bfs_loop1.
-axiom reachable(A,n,n,s,V,0,n,d) ==> reachable(A,n,0,s,V,0,n,d+1).
 
 // Find shortest distance from s to t given:
 //   .  the set V consisting of vertices reachable within d arcs; and
@@ -114,8 +114,6 @@ int bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref in
 			if (v == t)
 				return d;
 			bfs_loop3(A, n, s, t, d, V, N, v, 0);
-		} else {
-			assume reachable(A,n,v+1,s,V,0,n,d) & allvsd(A,n,v+1,s,N,0,n,d+1);
 		}
 		return bfs_loop2(A, n, s, t, d, V, C, N, v + 1);
 	}
@@ -136,11 +134,15 @@ void bfs_loop3(int[,] A, int n, int s, int t, int d, ref int[] V, ref int[] N, i
 		dom(V',0,n-1) & dom(N',0,n-1);
 {
 	if (w < n) {
+		assume A[v,w] != 0 & V[w] = 0;
 		if (A[v,w] != 0 && V[w] == 0) {
+			assert has_exact_length_v_path(A,n,v+1,s,w,d+1);
+			assume has_exact_length_v_path(A,n,v+1,s,w,d+1);
+			assert !(has_bounded_length_v_path(A,n,n,s,w,d));
+			assume !(has_bounded_length_v_path(A,n,v+1,s,w,d));
 			V[w] = 1;
 			N[w] = 1;
 		}
-		assume allvsd(A,n,v+1,s,N',0,w+1,d+1);
 		bfs_loop3(A,n,s,t,d,V,N,v,w+1);
 	}
 }
