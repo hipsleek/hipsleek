@@ -7,12 +7,38 @@ data tree {
   tree left;
   tree right;
 }.
-  
+
 pred tlseg<p,f,d,n> ==
-     self::node<d,p> & n=1 & d=f 
-  or self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2
+     case {
+     d=f -> [] self::node<d,p> & n=1;
+     d!=f -> 
+        case {
+          f=d+1 -> [] self::node<d+1,r> * r::tlseg<p,_,d+1,n2> & n=1+n2;
+          f!=d+1 -> 
+          case {
+          f=d+2 -> [] self::node<d+2,r1> * r1::tlseg<r,_,d+2,n1> * r::tlseg<p,_,d+1,n2> & n=1+n1+n2;
+          f!=d+2 -> [] self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2;
+          };
+       };
+     }
+  inv self!=null & n>=1 & f>=d .
+ 
+
+/*
+
+ 
+pred tlseg<p,f,d,n> ==
+     case {
+     d=f -> [] self::node<d,p> & n=1;
+     d!=f -> 
+        case {
+          f=d+1 -> [] self::node<d+1,r> * r::tlseg<p,_,d+1,n2> & n=1+n2;
+          f!=d+1 -> [] self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2;
+          };
+     }
   inv self!=null & n>=1 & f>=d .
 
+*/
 pred negtlseg<p,f,d,n> ==
   self::node<f,p> & n=1 & f<d 
   or self::negtlseg<p,f,d+1,n> & f!=d 
@@ -58,6 +84,9 @@ checkentail  s2::tlseg<s4,3,2,2> |- s2::tlseg<s3,3,3,1>*s3::tlseg<s4,3,3,1>.
 
 checkentail  s2::tlseg<s4,3,2,2> |- s2::tlseg<a,b,c,d>.
 
-//checkentail s2::node<3,s3>*s3::node<3,s4>  |- s2::tlseg<s4,3,2,2>.
+checkentail s2::node<3,s3>*s3::node<3,s4>  |- s2::tlseg<s4,3,2,2>.
+
+
+checkentail s1::node<1,s2>*s2::node<3,s3>*s3::node<3,s4>*s4::node<2,null>  |- s1::tlseg<null,1,0,4>.
 
 print residue.

@@ -40,10 +40,10 @@ bool is_empty(node x)
 }
 
 int hd(node x)
-	requires x::node<d,_>@I 
-    ensures res=d;
     requires x::tlseg<p,f,d,n>@I 
     ensures res=f;
+//	requires x::node<d,_>@I 
+//    ensures res=d;
 {
   return x.val;
 }
@@ -66,15 +66,14 @@ tree build_rec (int d, ref node s)
   tree ll,rr;
   if (is_empty(s)) raise new exception();
   else {
-  unfold s;
   int h = hd(s);
-  dprint; assume false;
+  //dprint; assume false;
   if (h < d) raise new exception();        
   if (h == d) {
       pop(s);        
 	  return null;
 	}
-  assume false;
+  unfold s;
   ll = build_rec(d+1, s);
   rr = build_rec(d+1, s);
   return new tree (ll,rr);
