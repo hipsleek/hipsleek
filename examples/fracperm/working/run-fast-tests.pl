@@ -305,11 +305,13 @@ $output_file = "log";
          "get_next_next", "SUCCESS",
          "sumN", "SUCCESS"]],
 	"hip" =>[
-				["check_rw.ss",4,  "", 
+				["check_rw.ss",6,  "", 
                  "test_write","SUCCESS",
-                 "test_read2","FAIL-2",
                  "test_read","FAIL-2",
-                 "test_write2","SUCCESS"]
+                 "test_write2","SUCCESS",
+                 "test_read2","FAIL-2",
+                 "test_write3","SUCCESS",
+                 "test_read3","FAIL-2"]
             ],
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 

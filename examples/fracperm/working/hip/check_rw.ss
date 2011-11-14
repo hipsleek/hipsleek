@@ -41,6 +41,18 @@ void test_read(int2 x)
   x.val = i;
 }
 
+
+//valid
+void test_write2(node2 x)
+     requires x::node2(f)<v,l,r> & f=1.0
+     ensures x::node2(f)<v,l,r>;
+{
+  node2 i;
+  i=x.left;
+  x.left = i;
+  i=x.left;
+}
+
 //fail
 void test_read2(node2 x)
      requires x::node2(f)<v,l,r> & f=0.5
@@ -53,9 +65,21 @@ void test_read2(node2 x)
 }
 
 //valid
-void test_write2(node2 x)
-     requires x::node2(f)<v,l,r> & f=1.0
-     ensures x::node2(f)<v,l,r>;
+void test_write3(node2 x)
+     requires x::tree(f)<n> & f=1.0 & n>0
+     ensures x::tree(f)<n>;
+{
+  node2 i;
+  i=x.left;
+  x.left = i;
+  i=x.left;
+}
+
+
+//fail
+void test_read3(node2 x)
+     requires x::tree(f)<n> & f=0.5 & n>0
+     ensures x::tree(f)<n>;
 {
   node2 i;
   i=x.left;
