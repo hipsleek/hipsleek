@@ -2356,16 +2356,19 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
+  (* WN : What is this es_pure pure for? *)
   es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
-  es_evars : CP.spec_var list;
+  es_evars : CP.spec_var list; (* existential variables on RHS *)
   (*used by lemmas*)
-  es_ivars : CP.spec_var list; (* ivars are the variables to be instantiated (for the universal lemma application)  *)
+  es_ivars : CP.spec_var list; 
+    (* ivars are the variables to be instantiated (for the universal lemma application)  *)
   (* es_expl_vars : CP.spec_var list; (\* vars to be explicit instantiated *\) *)
   es_ante_evars : CP.spec_var list;
   (* es_must_match : bool; *)
   (*used by late instantiation*)
-  es_gen_expl_vars: CP.spec_var list; 
-  es_gen_impl_vars: CP.spec_var list; 
+  es_gen_expl_vars: CP.spec_var list; (* implicit instantiation var*)
+  es_gen_impl_vars: CP.spec_var list; (* explicit instantiation var*)
+  (* to indicate if unsat check has been done for current state *)
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
   es_arith_subst : (CP.spec_var * CP.exp) list;
@@ -2395,8 +2398,11 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
-  es_must_error : (string * fail_type) option
+  es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
+  es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
+  es_infer_heap : h_formula; (* output heap inferred *)
+  es_infer_pure : CP.formula (* output pure inferred *)
 }
 
 and context = 
@@ -2973,7 +2979,9 @@ let rec empty_es flowt pos =
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
   es_must_error = None;
-
+  es_infer_vars = [];
+  es_infer_heap = HTrue;
+  es_infer_pure = (CP.mkTrue no_pos)
 }
 
 let mk_not_a_failure =

@@ -7,7 +7,6 @@ type constant_flow = ident
 type nflow = (int*int)(*numeric representation of flow*)
 
 type bformula_label = int
-	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
 and control_path_id_strict = formula_label

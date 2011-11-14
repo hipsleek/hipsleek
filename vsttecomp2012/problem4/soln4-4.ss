@@ -30,13 +30,6 @@ tlseg<p,f,d,n> ==
   inv self!=null & n>=1 & f>=d ;
 */
 
-/*
-tlseg<p,f,d,n> ==
-     self::node<d,p> & n=1 & d=f 
-  or self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2
-  inv self!=null & n>=1 & f>=d ;
-*/
-
 // with tlseg unfolded twice
 tlseg<p,f,d,n> ==
      case {

@@ -43,6 +43,7 @@ negtlseg<p,f,d,n> ==
  (i) x=null
  (ii) x::tsleg<p,f,d,_> 
  (iii) x::negtlseg<p,f,d,_> 
+
  can we show its universality?, namely
  true |- (i) \/ (ii) \/ (iii)
 */
@@ -83,8 +84,6 @@ tree build_rec (int d, ref node s)
  case {
   s=null -> ensures true &  flow exception;
   s!=null -> 
-     requires  s::node<v,_> & v<d 
-      ensures  true & flow exception;
       requires s::tlseg<p,f,d,n>
       ensures  res::treelseg<s,s',d,n> & s' = p & flow __norm;
       requires s::negtlseg<_,_,d,_> 
