@@ -651,7 +651,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
               | MaterializedArg (mv,ms) -> 
-                  let _ = print_string ("[Solver.ml] Warning: process_one_match not support Materialized Arg \n") in
+                  let _ = print_string ("\n [Solver.ml] Warning: process_one_match not support Materialized Arg \n") in
                   (1,M_Nothing_to_do (string_of_match_res c))
               | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
             in
