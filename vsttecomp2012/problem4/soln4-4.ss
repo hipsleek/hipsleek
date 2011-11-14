@@ -30,6 +30,13 @@ tlseg<p,f,d,n> ==
   inv self!=null & n>=1 & f>=d ;
 */
 
+/*
+tlseg<p,f,d,n> ==
+     self::node<d,p> & n=1 & d=f 
+  or self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2
+  inv self!=null & n>=1 & f>=d ;
+*/
+
 // with tlseg unfolded twice
 tlseg<p,f,d,n> ==
      case {
@@ -45,6 +52,7 @@ tlseg<p,f,d,n> ==
        };
      }
 inv self!=null & n>=1 & f>=d;
+
  
 // pred specifies a list of labels that would never
 // be able to generate a binary tree of upto that size
@@ -52,6 +60,15 @@ inv self!=null & n>=1 & f>=d;
 // which is supposed to give our completeness result
 
 // with negtlseg unfolded twice
+
+/*
+negtlseg<p,f,d,n> ==
+  self::node<f,p> & n=1 & f<d
+  or self::negtlseg<p,f,d+1,n> & f!=d 
+  or self::tlseg<r,f,d+1,n1> * r::negtlseg<p,_,d+1,n2> & n=n1+n2
+inv self!=null & n>=1 & f!=d; 
+*/
+
 negtlseg<p,f,d,n> ==
  case {
   f<d -> [] self::node<f,p> & n=1 & f<d;
@@ -71,8 +88,18 @@ negtlseg<p,f,d,n> ==
   }
   inv self!=null & n>=1 & f!=d; 
 
+
+
 /*
+
 negtlseg<p,f,d,n> ==
+ case {
+  f<d -> [] self::node<f,p> & n=1 & f<d;
+  f>=d -> []
+        self::negtlseg<p,f,d+1,n> & f!=d 
+     or self::tlseg<r,f,d+1,n1> * r::negtlseg<p,_,d+1,n2> & n=n1+n2;
+  }
+  inv self!=null & n>=1 & f!=d; negtlseg<p,f,d,n> ==
  case {
   f<d -> [] self::node<f,p> & n=1 & f<d;
   f>=d -> []
@@ -133,8 +160,6 @@ tree build_rec (int d, ref node s)
  case {
   s=null -> ensures true &  flow exception;
   s!=null -> 
-     requires  s::node<v,_> & v<d 
-      ensures  true & flow exception;
       requires s::tlseg<p,f,d,n>
       ensures  res::treelseg<s,s',d,n> & s' = p & flow __norm;
       requires s::negtlseg<_,_,d,_> 
