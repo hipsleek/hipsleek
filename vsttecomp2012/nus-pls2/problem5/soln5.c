@@ -34,6 +34,18 @@ relation allsd(int[,] A, int n, int m, int s, int[] S, int x1, int x2, int d) ==
 	S[x] = 0 & hbmp(A,n,n,s,x,d-1) | 
 	S[x] != 0 & msd(A,n,m,s,x,d) & !(hbmp(A,n,n,s,x,d-1))).
 
+/* NON-TRIVIAL THEOREMS */
+
+// To prove precondition in case v is not in C in bfs_loop2
+axiom (!(msd(A,n,n,s,v,d)) | hbmp(A,n,n,s,v,d-1)) & reach(A,n,v,s,V,0,n,d) & allsd(A,n,n,s,C,0,n,d) & allsd(A,n,v,s,N,0,n,d+1) ==> allsd(A,n,v+1,s,N,0,n,d+1) & reach(A,n,v+1,s,V,0,n,d).
+
+// To prove post-condition of bfs_loop2
+axiom reach(A,n,n,s,S,0,n,d) ==> reach(A,n,0,s,S,0,n,d+1).
+
+// To prove pre-condition of recursive call in bfs_loop3 
+// when the right-above if-condition is true.
+axiom !(hbmp(A,n,n,s,t,d)) ==> !(hbmp(A,n,m,s,t,d)).
+
 /* ALGORITHM & SPECIFICATION */
 
 int bfs(int[,] A, int n, int s, int t)
@@ -70,11 +82,7 @@ int bfs_loop1(int[,] A, int n, int s, int t, int d, int[] V, int[] C)
 	}
 }
 
-// theorem requires to prove loop invariant: transform post-condition of loop2 to new pre-condition for recursive call to loop1
-axiom reach(A,n,n,s,S,0,n,d) ==> reach(A,n,0,s,S,0,n,d+1).
-// essentially due to 
-//axiom hbmp(A,n,n,s,t,d) | hemp(A,n,n,s,t,d+1) ==> hbmp(A,n,n,s,t,d+1).
-//axiom hbmp(A,n,n,s,t,d+1) ==> hbmp(A,n,n,s,t,d) | hemp(A,n,n,s,t,d+1).
+
 
 int bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref int[] N, int v)
 	requires 0 <= s < n & 0 <= t < n & d >= 0 & 0 <= v <= n &
@@ -94,13 +102,11 @@ int bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref in
 				return d;
 			bfs_loop3(A,n,s,t,d,V,N,v,0);
 		}
-		assume C[v] != 0 | allsd(A,n,v+1,s,N,0,n,d+1) & reach(A,n,v+1,s,V,0,n,d);
 		return bfs_loop2(A,n,s,t,d,V,C,N,v+1);
 	}
 	return -1;
 }
 
-axiom !(hbmp(A,n,n,s,t,d)) ==> !(hbmp(A,n,m,s,t,d)).
 
 void bfs_loop3(int[,] A, int n, int s, int t, int d, ref int[] V, ref int[] N, int v, int w)
 	requires 0 <= s < n & 0 <= t < n & 
