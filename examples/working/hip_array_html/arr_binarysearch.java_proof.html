@@ -1,0 +1,1013 @@
+<html>
+<head>	<link rel="stylesheet" type="text/css" href="hipsleek.css" />	<script type="text/javascript" src="hipsleek.js"></script></head>
+<body>
+<h1>./hip/array/arr_binarysearch.java</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed progsource">Source<ul><table><tr id="L1" class="OddSourceLine"><td>1</td><td><pre>/**</pre></td></tr>
+<tr id="L2" class="EvenSourceLine"><td>2</td><td><pre> * Binary search example.</pre></td></tr>
+<tr id="L3" class="OddSourceLine"><td>3</td><td><pre> * Remark: need to use the general definition of sorted-ness. The</pre></td></tr>
+<tr id="L4" class="EvenSourceLine"><td>4</td><td><pre> * definition in sorting algorithms does not work.</pre></td></tr>
+<tr id="L5" class="OddSourceLine"><td>5</td><td><pre> * </pre></td></tr>
+<tr id="L6" class="EvenSourceLine"><td>6</td><td><pre> * @author Vu An Hoa</pre></td></tr>
+<tr id="L7" class="OddSourceLine"><td>7</td><td><pre> */</pre></td></tr>
+<tr id="L8" class="EvenSourceLine"><td>8</td><td><pre></pre></td></tr>
+<tr id="L9" class="OddSourceLine"><td>9</td><td><pre>relation alldiff(int[] a, int x, int i, int j) ==</pre></td></tr>
+<tr id="L10" class="EvenSourceLine"><td>10</td><td><pre>	forall(k : k < i | k > j | a[k] != x).</pre></td></tr>
+<tr id="L11" class="OddSourceLine"><td>11</td><td><pre>	</pre></td></tr>
+<tr id="L12" class="EvenSourceLine"><td>12</td><td><pre>relation allgreater(int[] a, int x, int i, int j) ==</pre></td></tr>
+<tr id="L13" class="OddSourceLine"><td>13</td><td><pre>	forall(k : k < i | k > j | a[k] > x).</pre></td></tr>
+<tr id="L14" class="EvenSourceLine"><td>14</td><td><pre>	</pre></td></tr>
+<tr id="L15" class="OddSourceLine"><td>15</td><td><pre>relation allsmaller(int[] a, int x, int i, int j) ==</pre></td></tr>
+<tr id="L16" class="EvenSourceLine"><td>16</td><td><pre>	forall(k : k < i | k > j | a[k] < x).</pre></td></tr>
+<tr id="L17" class="OddSourceLine"><td>17</td><td><pre>	</pre></td></tr>
+<tr id="L18" class="EvenSourceLine"><td>18</td><td><pre>relation sorted(int[] a, int i, int j) == </pre></td></tr>
+<tr id="L19" class="OddSourceLine"><td>19</td><td><pre>	forall(k, t : (k < i | k > j | t < i | t > j | a[k] <= a[t])).</pre></td></tr>
+<tr id="L20" class="EvenSourceLine"><td>20</td><td><pre></pre></td></tr>
+<tr id="L21" class="OddSourceLine"><td>21</td><td><pre>// Search for x in a[low..high]</pre></td></tr>
+<tr id="L22" class="EvenSourceLine"><td>22</td><td><pre>bool binary_search(int[] a, int x, int i, int j, ref int k)</pre></td></tr>
+<tr id="L23" class="OddSourceLine"><td>23</td><td><pre>	requires [rl,rh] dom(a,rl,rh) & rl <= i & j <= rh & sorted(a,i,j)</pre></td></tr>
+<tr id="L24" class="EvenSourceLine"><td>24</td><td><pre>	ensures (res & i <= k' <= j & a[k'] = x | !res & alldiff(a, x, i, j));</pre></td></tr>
+<tr id="L25" class="OddSourceLine"><td>25</td><td><pre>{	</pre></td></tr>
+<tr id="L26" class="EvenSourceLine"><td>26</td><td><pre>	if (i <= j) {</pre></td></tr>
+<tr id="L27" class="OddSourceLine"><td>27</td><td><pre>		int m = (i + j) / 2;</pre></td></tr>
+<tr id="L28" class="EvenSourceLine"><td>28</td><td><pre>		assert i <= m' <= j;</pre></td></tr>
+<tr id="L29" class="OddSourceLine"><td>29</td><td><pre>		if (a[m] == x) {</pre></td></tr>
+<tr id="L30" class="EvenSourceLine"><td>30</td><td><pre>			k = m;</pre></td></tr>
+<tr id="L31" class="OddSourceLine"><td>31</td><td><pre>			return true;</pre></td></tr>
+<tr id="L32" class="EvenSourceLine"><td>32</td><td><pre>		} else if (x < a[m]) {</pre></td></tr>
+<tr id="L33" class="OddSourceLine"><td>33</td><td><pre>			assert allgreater(a, x, m', j);</pre></td></tr>
+<tr id="L34" class="EvenSourceLine"><td>34</td><td><pre>			return binary_search(a, x, i, m - 1, k);</pre></td></tr>
+<tr id="L35" class="OddSourceLine"><td>35</td><td><pre>		} else {</pre></td></tr>
+<tr id="L36" class="EvenSourceLine"><td>36</td><td><pre>			assert allsmaller(a, x, i, m');</pre></td></tr>
+<tr id="L37" class="OddSourceLine"><td>37</td><td><pre>			return binary_search(a, x, m + 1, j, k);</pre></td></tr>
+<tr id="L38" class="EvenSourceLine"><td>38</td><td><pre>		}</pre></td></tr>
+<tr id="L39" class="OddSourceLine"><td>39</td><td><pre>	} else</pre></td></tr>
+<tr id="L40" class="EvenSourceLine"><td>40</td><td><pre>		return false;</pre></td></tr>
+<tr id="L41" class="OddSourceLine"><td>41</td><td><pre>}</pre></td></tr>
+</table></ul></li><li class="Collapsed proc">
+Procedure binary_search<ul><li class="Collapsed procdef">Internal representation
+<ul>boolean binary_search$int[]~int~int~int~int(  int[] a,  int x,  int i,  int j,  int k)<br/>
+static  EBase exists (Expl)[rl; rh](Impl)[](ex)[]true &amp; dom(a,rl,rh) &amp; rl&lt;=i &amp; <br/>
+       j&lt;=rh &amp; sorted(a,i,j) &amp; {FLOW,(34,34)=__norm}<br/>
+         EAssume 1::ref [k]<br/>
+           true &amp; (res &amp; i&lt;=k&apos; &amp; k&apos;&lt;=j &amp; a[k&apos;]=x | !(res) &amp; <br/>
+           alldiff(a,x,i,j)) &amp; {FLOW,(34,34)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref k<br/>
+boolean v_bool_26_675;<br/>
+v_bool_26_675 = {<br/>
+94::lte___$int~int(i,j)<br/>
+};<br/>
+75::if (v_bool_26_675) LABEL! 75,0: int m_44;<br/>
+m_44 = {<br/>
+int v_int_27_640;<br/>
+v_int_27_640 = {<br/>
+78::add___$int~int(i,j)<br/>
+};<br/>
+int v_int_27_639;<br/>
+v_int_27_639 = 2;<br/>
+77::div___$int~int(v_int_27_640,v_int_27_639)<br/>
+};<br/>
+79::assert 79::: EBase true &amp; i&lt;=m_44&apos; &amp; m_44&apos;&lt;=j &amp; {FLOW,(34,34)=__norm} ;<br/>
+boolean v_bool_29_673;<br/>
+v_bool_29_673 = {<br/>
+int v_int_29_651;<br/>
+v_int_29_651 = {<br/>
+array_get_elm_at___1d$int[]~int(a,m_44)<br/>
+};<br/>
+93::eq___$int~int(v_int_29_651,x)<br/>
+};<br/>
+80::if (v_bool_29_673) LABEL! 80,0: k = m_44;<br/>
+boolean v_boolean_31_652;<br/>
+v_boolean_31_652 = true;<br/>
+92::return v_boolean_31_652<br/>
+else LABEL! 80,1: boolean v_bool_32_672;<br/>
+v_bool_32_672 = {<br/>
+int v_int_32_653;<br/>
+v_int_32_653 = {<br/>
+array_get_elm_at___1d$int[]~int(a,m_44)<br/>
+};<br/>
+90::lt___$int~int(x,v_int_32_653)<br/>
+};<br/>
+81::if (v_bool_32_672) LABEL! 81,0: 86::assert 86::: EBase true &amp; allgreater(a,x,m_44&apos;,j) &amp; {FLOW,(34,34)=__norm} ;<br/>
+boolean v_boolean_34_662;<br/>
+v_boolean_34_662 = {<br/>
+int v_int_34_661;<br/>
+v_int_34_661 = {<br/>
+int v_int_34_660;<br/>
+v_int_34_660 = 1;<br/>
+89::minus___$int~int(m_44,v_int_34_660)<br/>
+};<br/>
+88::binary_search$int[]~int~int~int~int(a,x,i,v_int_34_661,k) rec<br/>
+};<br/>
+87::return v_boolean_34_662<br/>
+else LABEL! 81,1: 82::assert 82::: EBase true &amp; allsmaller(a,x,i,m_44&apos;) &amp; {FLOW,(34,34)=__norm} ;<br/>
+boolean v_boolean_37_671;<br/>
+v_boolean_37_671 = {<br/>
+int v_int_37_670;<br/>
+v_int_37_670 = {<br/>
+int v_int_37_669;<br/>
+v_int_37_669 = 1;<br/>
+85::add___$int~int(m_44,v_int_37_669)<br/>
+};<br/>
+84::binary_search$int[]~int~int~int~int(a,x,v_int_37_670,j,k) rec<br/>
+};<br/>
+83::return v_boolean_37_671<br/>
+<br/>
+<br/>
+else LABEL! 75,1: boolean v_boolean_40_674;<br/>
+v_boolean_40_674 = false;<br/>
+76::return v_boolean_40_674<br/>
+<br/>
+<br/>
+{(22,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed assert">
+Assertion at <a href="#L28">line 28</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_706 + 1 &le; 2 &and; 0 &le; r_706 &and; j &le; rh &and; dom(a,rl,rh) &and; rl &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_706 + 2 &sdot; m_44' &and; 0 &le; m_44' &and; 0 &le; j + i)  &#8866;  i &le; m_44'
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rh () Int)<br/>
+(declare-fun rl () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun r_706 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_706 1) 2))<br/>
+(assert (&lt;= 0 r_706))<br/>
+(assert (&lt;= j rh))<br/>
+(assert (&lt;= rl i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_706 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (&lt;= i m_44_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_706 + 1 &le; 2 &and; 0 &le; r_706 &and; rl &le; i &and; dom(a,rl,rh) &and; j &le; rh &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_706 + 2 &sdot; m_44' &and; 0 &le; m_44' &and; 0 &le; j + i)  &#8866;  m_44' &le; j
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rl () Int)<br/>
+(declare-fun rh () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun r_706 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_706 1) 2))<br/>
+(assert (&lt;= 0 r_706))<br/>
+(assert (&lt;= rl i))<br/>
+(assert (&lt;= j rh))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_706 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+;Negation of Consequence<br/>
+(assert (not (&lt;= m_44_primed j)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_707 + 1 &le; 2 &and; 0 &le; r_707 &and; j &le; rh &and; dom(a,rl,rh) &and; rl &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_707 + 2 &sdot; m_44' &and; m_44' + 1 &le; 0 &and; j + i &lt; 0)  &#8866;  i &le; m_44'
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rh () Int)<br/>
+(declare-fun rl () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun r_707 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_707 1) 2))<br/>
+(assert (&lt;= 0 r_707))<br/>
+(assert (&lt;= j rh))<br/>
+(assert (&lt;= rl i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_707 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+;Negation of Consequence<br/>
+(assert (not (&lt;= i m_44_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_707 + 1 &le; 2 &and; 0 &le; r_707 &and; rl &le; i &and; dom(a,rl,rh) &and; j &le; rh &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_707 + 2 &sdot; m_44' &and; m_44' + 1 &le; 0 &and; j + i &lt; 0)  &#8866;  m_44' &le; j
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rl () Int)<br/>
+(declare-fun rh () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun r_707 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_707 1) 2))<br/>
+(assert (&lt;= 0 r_707))<br/>
+(assert (&lt;= rl i))<br/>
+(assert (&lt;= j rh))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_707 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+;Negation of Consequence<br/>
+(assert (not (&lt;= m_44_primed j)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array access at line <a href="#L29">line 29</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(0 &le; j + i &and; r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; i &le; j &and; j &le; ahaub &and; ahalb &le; i &and; dom(a,ahalb,ahaub) &and; sorted(a,i,j) &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; m_44')  &#8866;   &exist; ahalb_713  &exist; ahaub_714 (dom(a,ahalb_713,ahaub_714) &and; ahalb_713 &le; m_44' &and; m_44' &le; ahaub_714)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= j ahaub))<br/>
+(assert (&lt;= ahalb i))<br/>
+(assert (dom a ahalb ahaub))<br/>
+(assert (sorted a i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_713 Int)) (exists ((ahaub_714 Int)) (and (dom a ahalb_713 ahaub_714) (and (&lt;= ahalb_713 m_44_primed) (&lt;= m_44_primed ahaub_714)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j + i &lt; 0 &and; r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; i &le; j &and; j &le; ahaub &and; ahalb &le; i &and; dom(a,ahalb,ahaub) &and; sorted(a,i,j) &and; j + i = r_715 + 2 &sdot; m_44' &and; m_44' + 1 &le; 0)  &#8866;   &exist; ahalb_716  &exist; ahaub_717 (dom(a,ahalb_716,ahaub_717) &and; ahalb_716 &le; m_44' &and; m_44' &le; ahaub_717)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= j ahaub))<br/>
+(assert (&lt;= ahalb i))<br/>
+(assert (dom a ahalb ahaub))<br/>
+(assert (sorted a i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_716 Int)) (exists ((ahaub_717 Int)) (and (dom a ahalb_716 ahaub_717) (and (&lt;= ahalb_716 m_44_primed) (&lt;= m_44_primed ahaub_717)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array access at line <a href="#L32">line 32</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(0 &le; j + i &and; r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; i &le; j &and; j &le; ahaub_733 &and; ahalb_732 &le; i &and; sorted(a,i,j) &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; m_44' &and; dom(a,ahalb_732,ahaub_733) &and; ahalb_732 &le; m_44' &and; m_44' &le; ahaub_733 &and; a[m_44'] &ne; x)  &#8866;   &exist; ahalb_738  &exist; ahaub_739 (dom(a,ahalb_738,ahaub_739) &and; ahalb_738 &le; m_44' &and; m_44' &le; ahaub_739)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun j () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun ahalb_732 () Int)<br/>
+(declare-fun ahaub_733 () Int)<br/>
+(declare-fun x () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= j ahaub_733))<br/>
+(assert (&lt;= ahalb_732 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (dom a ahalb_732 ahaub_733))<br/>
+(assert (&lt;= ahalb_732 m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub_733))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_738 Int)) (exists ((ahaub_739 Int)) (and (dom a ahalb_738 ahaub_739) (and (&lt;= ahalb_738 m_44_primed) (&lt;= m_44_primed ahaub_739)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j + i &lt; 0 &and; r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; i &le; j &and; j &le; ahaub_733 &and; ahalb_732 &le; i &and; sorted(a,i,j) &and; j + i = r_715 + 2 &sdot; m_44' &and; m_44' + 1 &le; 0 &and; dom(a,ahalb_732,ahaub_733) &and; ahalb_732 &le; m_44' &and; m_44' &le; ahaub_733 &and; a[m_44'] &ne; x)  &#8866;   &exist; ahalb_740  &exist; ahaub_741 (dom(a,ahalb_740,ahaub_741) &and; ahalb_740 &le; m_44' &and; m_44' &le; ahaub_741)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun j () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun ahalb_732 () Int)<br/>
+(declare-fun ahaub_733 () Int)<br/>
+(declare-fun x () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= j ahaub_733))<br/>
+(assert (&lt;= ahalb_732 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (dom a ahalb_732 ahaub_733))<br/>
+(assert (&lt;= ahalb_732 m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub_733))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_740 Int)) (exists ((ahaub_741 Int)) (and (dom a ahalb_740 ahaub_741) (and (&lt;= ahalb_740 m_44_primed) (&lt;= m_44_primed ahaub_741)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L33">line 33</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; ahalb_732 &le; i &and; j &le; ahaub_733 &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; m_44' &and; 0 &le; j + i &and; a[m_44'] &ne; x &and; dom(a,ahalb_732,ahaub_733) &and; ahalb_732 &le; m_44' &and; m_44' &le; ahaub_733 &and; x &lt; a[m_44'])  &#8866;  allgreater(a,x,m_44',j)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun ahalb_732 () Int)<br/>
+(declare-fun ahaub_733 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun allgreater ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (allgreater a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (&gt; (select a k) x)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= ahalb_732 i))<br/>
+(assert (&lt;= j ahaub_733))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt;= ahalb_732 m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub_733))<br/>
+(assert (&lt; x (select a m_44_primed)))<br/>
+;Negation of Consequence<br/>
+(assert (not (allgreater a x m_44_primed j)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; ahalb_732 &le; i &and; j &le; ahaub_733 &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_715 + 2 &sdot; m_44' &and; m_44' + 1 &le; 0 &and; j + i &lt; 0 &and; a[m_44'] &ne; x &and; dom(a,ahalb_732,ahaub_733) &and; ahalb_732 &le; m_44' &and; m_44' &le; ahaub_733 &and; x &lt; a[m_44'])  &#8866;  allgreater(a,x,m_44',j)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun ahalb_732 () Int)<br/>
+(declare-fun ahaub_733 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun allgreater ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (allgreater a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (&gt; (select a k) x)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= ahalb_732 i))<br/>
+(assert (&lt;= j ahaub_733))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt;= ahalb_732 m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub_733))<br/>
+(assert (&lt; x (select a m_44_primed)))<br/>
+;Negation of Consequence<br/>
+(assert (not (allgreater a x m_44_primed j)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 88::binary_search$int[]~int~int~int~int(a,x,i,v_int_34_661,k) rec at <a href="#L34">line 34</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(m_44' &le; rh_761 &and; rl_760 &le; m_44' &and; r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; 0 &le; m_44' &and; j &le; rh_761 &and; rl_760 &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; j + i &and; a[m_44'] &ne; x &and; dom(a,rl_760,rh_761) &and; x &lt; a[m_44'] &and; v_int_34_661' + 1 = m_44')  &#8866;   &exist; rl_772  &exist; rh_773 (dom(a,rl_772,rh_773) &and; rl_772 &le; i &and; v_int_34_661' &le; rh_773 &and; sorted(a,i,v_int_34_661'))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun rl_760 () Int)<br/>
+(declare-fun rh_761 () Int)<br/>
+(declare-fun x () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_34_661_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= m_44_primed rh_761))<br/>
+(assert (&lt;= rl_760 m_44_primed))<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= j rh_761))<br/>
+(assert (&lt;= rl_760 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (dom a rl_760 rh_761))<br/>
+(assert (&lt; x (select a m_44_primed)))<br/>
+(assert (= (+ v_int_34_661_primed 1) m_44_primed))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((rl_772 Int)) (exists ((rh_773 Int)) (and (dom a rl_772 rh_773) (and (&lt;= rl_772 i) (and (&lt;= v_int_34_661_primed rh_773) (sorted a i v_int_34_661_primed))))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(m_44' &le; rh_761 &and; rl_760 &le; m_44' &and; r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; m_44' + 1 &le; 0 &and; j &le; rh_761 &and; rl_760 &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_715 + 2 &sdot; m_44' &and; j + i &lt; 0 &and; a[m_44'] &ne; x &and; dom(a,rl_760,rh_761) &and; x &lt; a[m_44'] &and; v_int_34_661' + 1 = m_44')  &#8866;   &exist; rl_775  &exist; rh_776 (dom(a,rl_775,rh_776) &and; rl_775 &le; i &and; v_int_34_661' &le; rh_776 &and; sorted(a,i,v_int_34_661'))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun rl_760 () Int)<br/>
+(declare-fun rh_761 () Int)<br/>
+(declare-fun x () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_34_661_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= m_44_primed rh_761))<br/>
+(assert (&lt;= rl_760 m_44_primed))<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt;= j rh_761))<br/>
+(assert (&lt;= rl_760 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (dom a rl_760 rh_761))<br/>
+(assert (&lt; x (select a m_44_primed)))<br/>
+(assert (= (+ v_int_34_661_primed 1) m_44_primed))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((rl_775 Int)) (exists ((rh_776 Int)) (and (dom a rl_775 rh_776) (and (&lt;= rl_775 i) (and (&lt;= v_int_34_661_primed rh_776) (sorted a i v_int_34_661_primed))))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L36">line 36</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; j &le; ahaub_733 &and; ahalb_732 &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; m_44' &and; 0 &le; j + i &and; a[m_44'] &ne; x &and; dom(a,ahalb_732,ahaub_733) &and; ahalb_732 &le; m_44' &and; m_44' &le; ahaub_733 &and; a[m_44'] &le; x)  &#8866;  allsmaller(a,x,i,m_44')
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun ahalb_732 () Int)<br/>
+(declare-fun ahaub_733 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun allsmaller ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (allsmaller a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (&lt; (select a k) x)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= j ahaub_733))<br/>
+(assert (&lt;= ahalb_732 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt;= ahalb_732 m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub_733))<br/>
+(assert (&lt;= (select a m_44_primed) x))<br/>
+;Negation of Consequence<br/>
+(assert (not (allsmaller a x i m_44_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; j &le; ahaub_733 &and; ahalb_732 &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_715 + 2 &sdot; m_44' &and; m_44' + 1 &le; 0 &and; j + i &lt; 0 &and; a[m_44'] &ne; x &and; dom(a,ahalb_732,ahaub_733) &and; ahalb_732 &le; m_44' &and; m_44' &le; ahaub_733 &and; a[m_44'] &le; x)  &#8866;  allsmaller(a,x,i,m_44')
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun ahalb_732 () Int)<br/>
+(declare-fun ahaub_733 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun allsmaller ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (allsmaller a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (&lt; (select a k) x)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= j ahaub_733))<br/>
+(assert (&lt;= ahalb_732 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt;= ahalb_732 m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub_733))<br/>
+(assert (&lt;= (select a m_44_primed) x))<br/>
+;Negation of Consequence<br/>
+(assert (not (allsmaller a x i m_44_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 84::binary_search$int[]~int~int~int~int(a,x,v_int_37_670,j,k) rec at <a href="#L37">line 37</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(m_44' &le; rh_791 &and; rl_790 &le; m_44' &and; r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; 0 &le; m_44' &and; rl_790 &le; i &and; j &le; rh_791 &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; j + i &and; a[m_44'] &ne; x &and; dom(a,rl_790,rh_791) &and; a[m_44'] &le; x &and; v_int_37_670' = 1 + m_44')  &#8866;   &exist; rl_802  &exist; rh_803 (dom(a,rl_802,rh_803) &and; rl_802 &le; v_int_37_670' &and; j &le; rh_803 &and; sorted(a,v_int_37_670',j))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun rl_790 () Int)<br/>
+(declare-fun rh_791 () Int)<br/>
+(declare-fun x () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_37_670_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= m_44_primed rh_791))<br/>
+(assert (&lt;= rl_790 m_44_primed))<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= rl_790 i))<br/>
+(assert (&lt;= j rh_791))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (dom a rl_790 rh_791))<br/>
+(assert (&lt;= (select a m_44_primed) x))<br/>
+(assert (= v_int_37_670_primed (+ 1 m_44_primed)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((rl_802 Int)) (exists ((rh_803 Int)) (and (dom a rl_802 rh_803) (and (&lt;= rl_802 v_int_37_670_primed) (and (&lt;= j rh_803) (sorted a v_int_37_670_primed j))))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(m_44' &le; rh_791 &and; rl_790 &le; m_44' &and; r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; m_44' + 1 &le; 0 &and; rl_790 &le; i &and; j &le; rh_791 &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_715 + 2 &sdot; m_44' &and; j + i &lt; 0 &and; a[m_44'] &ne; x &and; dom(a,rl_790,rh_791) &and; a[m_44'] &le; x &and; v_int_37_670' = 1 + m_44')  &#8866;   &exist; rl_805  &exist; rh_806 (dom(a,rl_805,rh_806) &and; rl_805 &le; v_int_37_670' &and; j &le; rh_806 &and; sorted(a,v_int_37_670',j))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun rl_790 () Int)<br/>
+(declare-fun rh_791 () Int)<br/>
+(declare-fun x () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_37_670_primed () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= m_44_primed rh_791))<br/>
+(assert (&lt;= rl_790 m_44_primed))<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt;= rl_790 i))<br/>
+(assert (&lt;= j rh_791))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (dom a rl_790 rh_791))<br/>
+(assert (&lt;= (select a m_44_primed) x))<br/>
+(assert (= v_int_37_670_primed (+ 1 m_44_primed)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((rl_805 Int)) (exists ((rh_806 Int)) (and (dom a rl_805 rh_806) (and (&lt;= rl_805 v_int_37_670_primed) (and (&lt;= j rh_806) (sorted a v_int_37_670_primed j))))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; ahalb &le; i &and; j &le; ahaub &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; m_44' &and; 0 &le; j + i &and; dom(a,ahalb,ahaub) &and; ahalb &le; m_44' &and; m_44' &le; ahaub &and; x = a[m_44'] &and; v_boolean_31_652')  &#8866;  ((v_boolean_31_652' &and; i &le; m_44' &and; m_44' &le; j &and; a[m_44'] = x) &or; ( &not; v_boolean_31_652' &and; alldiff(a,x,i,j)))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun v_boolean_31_652_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= ahalb i))<br/>
+(assert (&lt;= j ahaub))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (&lt;= ahalb m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub))<br/>
+(assert (= x (select a m_44_primed)))<br/>
+(assert (&gt; v_boolean_31_652_primed 0))<br/>
+;Negation of Consequence<br/>
+(assert (not (or (and (and (and (&gt; v_boolean_31_652_primed 0) (&lt;= i m_44_primed)) (&lt;= m_44_primed j)) (= (select a m_44_primed) x)) (and (not (&gt; v_boolean_31_652_primed 0)) (alldiff a x i j)))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; ahalb &le; i &and; j &le; ahaub &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_715 + 2 &sdot; m_44' &and; m_44' + 1 &le; 0 &and; j + i &lt; 0 &and; dom(a,ahalb,ahaub) &and; ahalb &le; m_44' &and; m_44' &le; ahaub &and; x = a[m_44'] &and; v_boolean_31_652')  &#8866;  ((v_boolean_31_652' &and; i &le; m_44' &and; m_44' &le; j &and; a[m_44'] = x) &or; ( &not; v_boolean_31_652' &and; alldiff(a,x,i,j)))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun v_boolean_31_652_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= ahalb i))<br/>
+(assert (&lt;= j ahaub))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (&lt;= ahalb m_44_primed))<br/>
+(assert (&lt;= m_44_primed ahaub))<br/>
+(assert (= x (select a m_44_primed)))<br/>
+(assert (&gt; v_boolean_31_652_primed 0))<br/>
+;Negation of Consequence<br/>
+(assert (not (or (and (and (and (&gt; v_boolean_31_652_primed 0) (&lt;= i m_44_primed)) (&lt;= m_44_primed j)) (= (select a m_44_primed) x)) (and (not (&gt; v_boolean_31_652_primed 0)) (alldiff a x i j)))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_int_34_811 &le; rh_761 &and; v_int_34_811 + 1 = m_44' &and; m_44' &le; rh_761 &and; rl_760 &le; m_44' &and; r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; 0 &le; m_44' &and; j &le; rh_761 &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; j + i &and; a[m_44'] &ne; x &and; x &lt; a[m_44'] &and; dom(a,rl_760,rh_761) &and; rl_760 &le; i &and; sorted(a,i,v_int_34_811) &and; ((v_boolean_34_662' &and; i &le; k' &and; k' &le; v_int_34_811 &and; a[k'] = x) &or; ( &not; v_boolean_34_662' &and; alldiff(a,x,i,v_int_34_811))))  &#8866;  ((v_boolean_34_662' &and; i &le; k' &and; k' &le; j &and; a[k'] = x) &or; ( &not; v_boolean_34_662' &and; alldiff(a,x,i,j)))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rh_761 () Int)<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun rl_760 () Int)<br/>
+(declare-fun v_int_34_811 () Int)<br/>
+(declare-fun k_primed () Int)<br/>
+(declare-fun v_boolean_34_662_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= v_int_34_811 rh_761))<br/>
+(assert (= (+ v_int_34_811 1) m_44_primed))<br/>
+(assert (&lt;= m_44_primed rh_761))<br/>
+(assert (&lt;= rl_760 m_44_primed))<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= j rh_761))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt; x (select a m_44_primed)))<br/>
+(assert (&lt;= rl_760 i))<br/>
+(assert (sorted a i v_int_34_811))<br/>
+(assert (or (and (&gt; v_boolean_34_662_primed 0) (and (and (&lt;= i k_primed) (&lt;= k_primed v_int_34_811)) (= (select a k_primed) x))) (and (not (&gt; v_boolean_34_662_primed 0)) (alldiff a x i v_int_34_811))))<br/>
+;Negation of Consequence<br/>
+(assert (not (or (and (and (and (&gt; v_boolean_34_662_primed 0) (&lt;= i k_primed)) (&lt;= k_primed j)) (= (select a k_primed) x)) (and (not (&gt; v_boolean_34_662_primed 0)) (alldiff a x i j)))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_int_34_812 &le; rh_761 &and; v_int_34_812 + 1 = m_44' &and; m_44' &le; rh_761 &and; rl_760 &le; m_44' &and; r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; m_44' + 1 &le; 0 &and; j &le; rh_761 &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_715 + 2 &sdot; m_44' &and; j + i &lt; 0 &and; a[m_44'] &ne; x &and; x &lt; a[m_44'] &and; dom(a,rl_760,rh_761) &and; rl_760 &le; i &and; sorted(a,i,v_int_34_812) &and; ((v_boolean_34_662' &and; i &le; k' &and; k' &le; v_int_34_812 &and; a[k'] = x) &or; ( &not; v_boolean_34_662' &and; alldiff(a,x,i,v_int_34_812))))  &#8866;  ((v_boolean_34_662' &and; i &le; k' &and; k' &le; j &and; a[k'] = x) &or; ( &not; v_boolean_34_662' &and; alldiff(a,x,i,j)))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rh_761 () Int)<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun rl_760 () Int)<br/>
+(declare-fun v_int_34_812 () Int)<br/>
+(declare-fun k_primed () Int)<br/>
+(declare-fun v_boolean_34_662_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= v_int_34_812 rh_761))<br/>
+(assert (= (+ v_int_34_812 1) m_44_primed))<br/>
+(assert (&lt;= m_44_primed rh_761))<br/>
+(assert (&lt;= rl_760 m_44_primed))<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt;= j rh_761))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt; x (select a m_44_primed)))<br/>
+(assert (&lt;= rl_760 i))<br/>
+(assert (sorted a i v_int_34_812))<br/>
+(assert (or (and (&gt; v_boolean_34_662_primed 0) (and (and (&lt;= i k_primed) (&lt;= k_primed v_int_34_812)) (= (select a k_primed) x))) (and (not (&gt; v_boolean_34_662_primed 0)) (alldiff a x i v_int_34_812))))<br/>
+;Negation of Consequence<br/>
+(assert (not (or (and (and (and (&gt; v_boolean_34_662_primed 0) (&lt;= i k_primed)) (&lt;= k_primed j)) (= (select a k_primed) x)) (and (not (&gt; v_boolean_34_662_primed 0)) (alldiff a x i j)))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(rl_790 &le; 1 + m_44' &and; m_44' &le; rh_791 &and; rl_790 &le; m_44' &and; r_712 + 1 &le; 2 &and; 0 &le; r_712 &and; 0 &le; m_44' &and; rl_790 &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_712 + 2 &sdot; m_44' &and; 0 &le; j + i &and; a[m_44'] &ne; x &and; a[m_44'] &le; x &and; dom(a,rl_790,rh_791) &and; j &le; rh_791 &and; sorted(a,1 + m_44',j) &and; ((v_boolean_37_671' &and; 1 + m_44' &le; k' &and; k' &le; j &and; a[k'] = x) &or; ( &not; v_boolean_37_671' &and; alldiff(a,x,1 + m_44',j))))  &#8866;  ((v_boolean_37_671' &and; i &le; k' &and; k' &le; j &and; a[k'] = x) &or; ( &not; v_boolean_37_671' &and; alldiff(a,x,i,j)))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rl_790 () Int)<br/>
+(declare-fun r_712 () Int)<br/>
+(declare-fun rh_791 () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun k_primed () Int)<br/>
+(declare-fun v_boolean_37_671_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= rl_790 (+ 1 m_44_primed)))<br/>
+(assert (&lt;= m_44_primed rh_791))<br/>
+(assert (&lt;= rl_790 m_44_primed))<br/>
+(assert (&lt;= (+ r_712 1) 2))<br/>
+(assert (&lt;= 0 r_712))<br/>
+(assert (&lt;= 0 m_44_primed))<br/>
+(assert (&lt;= rl_790 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_712 ( * 2 m_44_primed))))<br/>
+(assert (&lt;= 0 (+ j i)))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt;= (select a m_44_primed) x))<br/>
+(assert (&lt;= j rh_791))<br/>
+(assert (sorted a (+ 1 m_44_primed) j))<br/>
+(assert (or (and (&gt; v_boolean_37_671_primed 0) (and (and (&lt;= (+ 1 m_44_primed) k_primed) (&lt;= k_primed j)) (= (select a k_primed) x))) (and (not (&gt; v_boolean_37_671_primed 0)) (alldiff a x (+ 1 m_44_primed) j))))<br/>
+;Negation of Consequence<br/>
+(assert (not (or (and (and (and (&gt; v_boolean_37_671_primed 0) (&lt;= i k_primed)) (&lt;= k_primed j)) (= (select a k_primed) x)) (and (not (&gt; v_boolean_37_671_primed 0)) (alldiff a x i j)))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(rl_790 &le; 1 + m_44' &and; m_44' &le; rh_791 &and; rl_790 &le; m_44' &and; r_715 + 1 &le; 2 &and; 0 &le; r_715 &and; m_44' + 1 &le; 0 &and; rl_790 &le; i &and; sorted(a,i,j) &and; i &le; j &and; j + i = r_715 + 2 &sdot; m_44' &and; j + i &lt; 0 &and; a[m_44'] &ne; x &and; a[m_44'] &le; x &and; dom(a,rl_790,rh_791) &and; j &le; rh_791 &and; sorted(a,1 + m_44',j) &and; ((v_boolean_37_671' &and; 1 + m_44' &le; k' &and; k' &le; j &and; a[k'] = x) &or; ( &not; v_boolean_37_671' &and; alldiff(a,x,1 + m_44',j))))  &#8866;  ((v_boolean_37_671' &and; i &le; k' &and; k' &le; j &and; a[k'] = x) &or; ( &not; v_boolean_37_671' &and; alldiff(a,x,i,j)))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rl_790 () Int)<br/>
+(declare-fun r_715 () Int)<br/>
+(declare-fun rh_791 () Int)<br/>
+(declare-fun m_44_primed () Int)<br/>
+(declare-fun k_primed () Int)<br/>
+(declare-fun v_boolean_37_671_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= rl_790 (+ 1 m_44_primed)))<br/>
+(assert (&lt;= m_44_primed rh_791))<br/>
+(assert (&lt;= rl_790 m_44_primed))<br/>
+(assert (&lt;= (+ r_715 1) 2))<br/>
+(assert (&lt;= 0 r_715))<br/>
+(assert (&lt;= (+ m_44_primed 1) 0))<br/>
+(assert (&lt;= rl_790 i))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (= (+ j i) (+ r_715 ( * 2 m_44_primed))))<br/>
+(assert (&lt; (+ j i) 0))<br/>
+(assert (not (= (select a m_44_primed) x)))<br/>
+(assert (&lt;= (select a m_44_primed) x))<br/>
+(assert (&lt;= j rh_791))<br/>
+(assert (sorted a (+ 1 m_44_primed) j))<br/>
+(assert (or (and (&gt; v_boolean_37_671_primed 0) (and (and (&lt;= (+ 1 m_44_primed) k_primed) (&lt;= k_primed j)) (= (select a k_primed) x))) (and (not (&gt; v_boolean_37_671_primed 0)) (alldiff a x (+ 1 m_44_primed) j))))<br/>
+;Negation of Consequence<br/>
+(assert (not (or (and (and (and (&gt; v_boolean_37_671_primed 0) (&lt;= i k_primed)) (&lt;= k_primed j)) (= (select a k_primed) x)) (and (not (&gt; v_boolean_37_671_primed 0)) (alldiff a x i j)))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(dom(a,rl,rh) &and; rl &le; i &and; j &le; rh &and; sorted(a,i,j) &and; j &lt; i &and;  &not; v_boolean_40_674')  &#8866;  ((v_boolean_40_674' &and; i &le; k &and; k &le; j &and; a[k] = x) &or; ( &not; v_boolean_40_674' &and; alldiff(a,x,i,j)))
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun rl () Int)<br/>
+(declare-fun rh () Int)<br/>
+(declare-fun k () Int)<br/>
+(declare-fun v_boolean_40_674_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun x () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int))) (= (sorted a i j) (forall ((t Int)) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (or (&lt; t i) (or (&gt; t j) (&lt;= (select a k) (select a t)))))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= rl i))<br/>
+(assert (&lt;= j rh))<br/>
+(assert (sorted a i j))<br/>
+(assert (&lt; j i))<br/>
+(assert (not (&gt; v_boolean_40_674_primed 0)))<br/>
+;Negation of Consequence<br/>
+(assert (not (or (and (and (and (&gt; v_boolean_40_674_primed 0) (&lt;= i k)) (&lt;= k j)) (= (select a k) x)) (and (not (&gt; v_boolean_40_674_primed 0)) (alldiff a x i j)))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

@@ -1,0 +1,939 @@
+<html>
+<head>	<link rel="stylesheet" type="text/css" href="hipsleek.css" />	<script type="text/javascript" src="hipsleek.js"></script></head>
+<body>
+<h1>./hip/array/arr_extract_nonzeros.java</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed progsource">Source<ul><table><tr id="L1" class="OddSourceLine"><td>1</td><td><pre>/**</pre></td></tr>
+<tr id="L2" class="EvenSourceLine"><td>2</td><td><pre> * Count how many nonzeros elements in an array, allocate</pre></td></tr>
+<tr id="L3" class="OddSourceLine"><td>3</td><td><pre> * the exact memory and fill the array with those non-zeros</pre></td></tr>
+<tr id="L4" class="EvenSourceLine"><td>4</td><td><pre> * elements.</pre></td></tr>
+<tr id="L5" class="OddSourceLine"><td>5</td><td><pre> * </pre></td></tr>
+<tr id="L6" class="EvenSourceLine"><td>6</td><td><pre> * Reference:</pre></td></tr>
+<tr id="L7" class="OddSourceLine"><td>7</td><td><pre> * 1) Extract non-zero values from an array</pre></td></tr>
+<tr id="L8" class="EvenSourceLine"><td>8</td><td><pre> * http://proval.lri.fr/gallery/muller.en.html</pre></td></tr>
+<tr id="L9" class="OddSourceLine"><td>9</td><td><pre> * 2) Filter elements of an array</pre></td></tr>
+<tr id="L10" class="EvenSourceLine"><td>10</td><td><pre> * http://proval.lri.fr/gallery/MullerJava.en.html</pre></td></tr>
+<tr id="L11" class="OddSourceLine"><td>11</td><td><pre> * </pre></td></tr>
+<tr id="L12" class="EvenSourceLine"><td>12</td><td><pre> * @author Vu An Hoa</pre></td></tr>
+<tr id="L13" class="OddSourceLine"><td>13</td><td><pre> */</pre></td></tr>
+<tr id="L14" class="EvenSourceLine"><td>14</td><td><pre></pre></td></tr>
+<tr id="L15" class="OddSourceLine"><td>15</td><td><pre>// Need induction to show that n >= 0. Currently, our induction</pre></td></tr>
+<tr id="L16" class="EvenSourceLine"><td>16</td><td><pre>// capability does not work!</pre></td></tr>
+<tr id="L17" class="OddSourceLine"><td>17</td><td><pre>relation numnonzeros(int[] a, int i, int j, int n) ==</pre></td></tr>
+<tr id="L18" class="EvenSourceLine"><td>18</td><td><pre>	(i > j & n = 0 | i <= j & (a[j] = 0 & numnonzeros(a,i,j-1,n) | </pre></td></tr>
+<tr id="L19" class="OddSourceLine"><td>19</td><td><pre>		a[j] != 0 & numnonzeros(a,i,j-1,n-1))) & n >= 0.</pre></td></tr>
+<tr id="L20" class="EvenSourceLine"><td>20</td><td><pre></pre></td></tr>
+<tr id="L21" class="OddSourceLine"><td>21</td><td><pre>relation alldiff(int[] a, int x, int i, int j) ==</pre></td></tr>
+<tr id="L22" class="EvenSourceLine"><td>22</td><td><pre>	forall(k : k < i | k > j | a[k] != x).</pre></td></tr>
+<tr id="L23" class="OddSourceLine"><td>23</td><td><pre>	</pre></td></tr>
+<tr id="L24" class="EvenSourceLine"><td>24</td><td><pre>// Extract the non-zero elements of a into the array b. Allocate</pre></td></tr>
+<tr id="L25" class="OddSourceLine"><td>25</td><td><pre>// sufficient memory for b.</pre></td></tr>
+<tr id="L26" class="EvenSourceLine"><td>26</td><td><pre>void extract_nonzeros(int[] a, int i, int j, ref int[] b)</pre></td></tr>
+<tr id="L27" class="OddSourceLine"><td>27</td><td><pre>	requires [al,ah] dom(a,al,ah) & al <= i & j <= ah</pre></td></tr>
+<tr id="L28" class="EvenSourceLine"><td>28</td><td><pre>	ensures true;</pre></td></tr>
+<tr id="L29" class="OddSourceLine"><td>29</td><td><pre>{</pre></td></tr>
+<tr id="L30" class="EvenSourceLine"><td>30</td><td><pre>	int n = count_nonzeros(a, i, j);</pre></td></tr>
+<tr id="L31" class="OddSourceLine"><td>31</td><td><pre>	b = new int[n];</pre></td></tr>
+<tr id="L32" class="EvenSourceLine"><td>32</td><td><pre>	copy_nonzeros(a, i, j, b, n);</pre></td></tr>
+<tr id="L33" class="OddSourceLine"><td>33</td><td><pre>}</pre></td></tr>
+<tr id="L34" class="EvenSourceLine"><td>34</td><td><pre></pre></td></tr>
+<tr id="L35" class="OddSourceLine"><td>35</td><td><pre>// Count the number of non-zero elements in a[i..j]</pre></td></tr>
+<tr id="L36" class="EvenSourceLine"><td>36</td><td><pre>int count_nonzeros(int[] a, int i, int j)</pre></td></tr>
+<tr id="L37" class="OddSourceLine"><td>37</td><td><pre>	requires [al,ah] dom(a,al,ah) & al <= i & j <= ah</pre></td></tr>
+<tr id="L38" class="EvenSourceLine"><td>38</td><td><pre>	ensures numnonzeros(a,i,j,res);</pre></td></tr>
+<tr id="L39" class="OddSourceLine"><td>39</td><td><pre>{</pre></td></tr>
+<tr id="L40" class="EvenSourceLine"><td>40</td><td><pre>	if (i > j)</pre></td></tr>
+<tr id="L41" class="OddSourceLine"><td>41</td><td><pre>		return 0;</pre></td></tr>
+<tr id="L42" class="EvenSourceLine"><td>42</td><td><pre>	if (a[j] != 0)</pre></td></tr>
+<tr id="L43" class="OddSourceLine"><td>43</td><td><pre>		return 1 + count_nonzeros(a,i,j-1);</pre></td></tr>
+<tr id="L44" class="EvenSourceLine"><td>44</td><td><pre>	else</pre></td></tr>
+<tr id="L45" class="OddSourceLine"><td>45</td><td><pre>		return count_nonzeros(a,i,j-1);</pre></td></tr>
+<tr id="L46" class="EvenSourceLine"><td>46</td><td><pre>}</pre></td></tr>
+<tr id="L47" class="OddSourceLine"><td>47</td><td><pre></pre></td></tr>
+<tr id="L48" class="EvenSourceLine"><td>48</td><td><pre>// Copy the non-zero elements from a[i..j] to b[1..n] given that</pre></td></tr>
+<tr id="L49" class="OddSourceLine"><td>49</td><td><pre>// we already know the number of non-zero elements is n.</pre></td></tr>
+<tr id="L50" class="EvenSourceLine"><td>50</td><td><pre>void copy_nonzeros(int[] a, int i, int j, ref int[] b, int n)</pre></td></tr>
+<tr id="L51" class="OddSourceLine"><td>51</td><td><pre>	requires [al,ah,bh] dom(a,al,ah) & al <= i & j <= ah & 0 <= n &</pre></td></tr>
+<tr id="L52" class="EvenSourceLine"><td>52</td><td><pre>						numnonzeros(a,i,j,n) & dom(b,0,bh) & n - 1 <= bh</pre></td></tr>
+<tr id="L53" class="OddSourceLine"><td>53</td><td><pre>	ensures amodr(b,b',0,n-1) & alldiff(b',0,0,n-1);</pre></td></tr>
+<tr id="L54" class="EvenSourceLine"><td>54</td><td><pre>{</pre></td></tr>
+<tr id="L55" class="OddSourceLine"><td>55</td><td><pre>	if (i <= j) {</pre></td></tr>
+<tr id="L56" class="EvenSourceLine"><td>56</td><td><pre>		if (a[j] != 0) {</pre></td></tr>
+<tr id="L57" class="OddSourceLine"><td>57</td><td><pre>			b[n - 1] = a[j]; // challenge: show that this assignment is safe!</pre></td></tr>
+<tr id="L58" class="EvenSourceLine"><td>58</td><td><pre>			n = n - 1;</pre></td></tr>
+<tr id="L59" class="OddSourceLine"><td>59</td><td><pre>		}</pre></td></tr>
+<tr id="L60" class="EvenSourceLine"><td>60</td><td><pre>		copy_nonzeros(a, i, j - 1, b, n);</pre></td></tr>
+<tr id="L61" class="OddSourceLine"><td>61</td><td><pre>	} else {</pre></td></tr>
+<tr id="L62" class="EvenSourceLine"><td>62</td><td><pre>		assert n = 0;</pre></td></tr>
+<tr id="L63" class="OddSourceLine"><td>63</td><td><pre>	}</pre></td></tr>
+<tr id="L64" class="EvenSourceLine"><td>64</td><td><pre>}</pre></td></tr>
+</table></ul></li><li class="Collapsed proc">
+Procedure copy_nonzeros<ul><li class="Collapsed procdef">Internal representation
+<ul>void copy_nonzeros$int[]~int~int~int[]~int(  int[] a,  int i,  int j,  int[] b,  int n)<br/>
+static  EBase exists (Expl)[al; ah; bh](Impl)[](ex)[]true &amp; dom(a,al,ah) &amp; al&lt;=i &amp; <br/>
+       j&lt;=ah &amp; 0&lt;=n &amp; numnonzeros(a,i,j,n) &amp; dom(b,0,bh) &amp; n&lt;=(bh+1) &amp;<br/>
+       {FLOW,(35,35)=__norm}<br/>
+         EAssume 9::ref [b]<br/>
+           true &amp; amodr(b,b&apos;,0,n - 1) &amp; alldiff(b&apos;,0,0,n - 1) &amp;<br/>
+           {FLOW,(35,35)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref b<br/>
+boolean v_bool_55_650;<br/>
+v_bool_55_650 = {<br/>
+90::lte___$int~int(i,j)<br/>
+};<br/>
+80::if (v_bool_55_650) LABEL! 80,0: boolean v_bool_56_640;<br/>
+v_bool_56_640 = {<br/>
+int v_int_56_635;<br/>
+v_int_56_635 = {<br/>
+array_get_elm_at___1d$int[]~int(a,j)<br/>
+};<br/>
+int v_int_56_634;<br/>
+v_int_56_634 = 0;<br/>
+87::neq___$int~int(v_int_56_635,v_int_56_634)<br/>
+};<br/>
+82::if (v_bool_56_640) LABEL! 82,0: b = {<br/>
+int v_int_57_638;<br/>
+v_int_57_638 = {<br/>
+array_get_elm_at___1d$int[]~int(a,j)<br/>
+};<br/>
+int v_int_57_637;<br/>
+v_int_57_637 = {<br/>
+int v_int_57_636;<br/>
+v_int_57_636 = 1;<br/>
+84::minus___$int~int(n,v_int_57_636)<br/>
+};<br/>
+83::update___1d$int~int[]~int(v_int_57_638,b,v_int_57_637)<br/>
+};<br/>
+n = {<br/>
+int v_int_58_639;<br/>
+v_int_58_639 = 1;<br/>
+86::minus___$int~int(n,v_int_58_639)<br/>
+}<br/>
+else LABEL! 82,1: <br/>
+;<br/>
+{<br/>
+int v_int_60_642;<br/>
+v_int_60_642 = {<br/>
+int v_int_60_641;<br/>
+v_int_60_641 = 1;<br/>
+89::minus___$int~int(j,v_int_60_641)<br/>
+};<br/>
+88::copy_nonzeros$int[]~int~int~int[]~int(a,i,v_int_60_642,b,n) rec<br/>
+}<br/>
+else LABEL! 80,1: 81::assert 81::: EBase true &amp; n=0 &amp; {FLOW,(35,35)=__norm} <br/>
+<br/>
+<br/>
+{(50,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Memory safety of array access at line <a href="#L56">line 56</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(dom(b,0,bh) &and; n &le; bh + 1 &and; 0 &le; n &and; ahalb &le; i &and; dom(a,ahalb,ahaub) &and; j &le; ahaub &and; numnonzeros(a,i,j,n) &and; i &le; j)  &#8866;   &exist; ahalb_703  &exist; ahaub_704 (dom(a,ahalb_703,ahaub_704) &and; ahalb_703 &le; j &and; j &le; ahaub_704)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun bh () Int)<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun n () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (dom b 0 bh))<br/>
+(assert (&lt;= n (+ bh 1)))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (&lt;= ahalb i))<br/>
+(assert (dom a ahalb ahaub))<br/>
+(assert (&lt;= j ahaub))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= i j))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_703 Int)) (exists ((ahaub_704 Int)) (and (dom a ahalb_703 ahaub_704) (and (&lt;= ahalb_703 j) (&lt;= j ahaub_704)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array access at line <a href="#L57">line 57</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(dom(b,0,bh) &and; n &le; bh + 1 &and; 0 &le; n &and; ahalb_713 &le; i &and; numnonzeros(a,i,j,n) &and; i &le; j &and; dom(a,ahalb_713,ahaub_714) &and; ahalb_713 &le; j &and; j &le; ahaub_714 &and; a[j] &ne; 0)  &#8866;   &exist; ahalb_719  &exist; ahaub_720 (dom(a,ahalb_719,ahaub_720) &and; ahalb_719 &le; j &and; j &le; ahaub_720)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun bh () Int)<br/>
+(declare-fun n () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun ahalb_713 () Int)<br/>
+(declare-fun ahaub_714 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (dom b 0 bh))<br/>
+(assert (&lt;= n (+ bh 1)))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (&lt;= ahalb_713 i))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= i j))<br/>
+(assert (dom a ahalb_713 ahaub_714))<br/>
+(assert (&lt;= ahalb_713 j))<br/>
+(assert (&lt;= j ahaub_714))<br/>
+(assert (not (= (select a j) 0)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_719 Int)) (exists ((ahaub_720 Int)) (and (dom a ahalb_719 ahaub_720) (and (&lt;= ahalb_719 j) (&lt;= j ahaub_720)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array update at line <a href="#L57">line 57</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(ahalb_713 &le; i &and; v_int_57_638' = a[j] &and; j &le; ahaub_714 &and; ahalb_713 &le; j &and; dom(a,ahalb_713,ahaub_714) &and; a[j] &ne; 0 &and; i &le; j &and; n &le; ahaub_729 + 1 &and; numnonzeros(a,i,j,n) &and; 0 &le; n &and; dom(b,0,ahaub_729) &and; v_int_57_637' + 1 = n)  &#8866;   &exist; ahalb_736  &exist; ahaub_737 (dom(b,ahalb_736,ahaub_737) &and; ahalb_736 &le; v_int_57_637' &and; v_int_57_637' &le; ahaub_737)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_57_638_primed () Int)<br/>
+(declare-fun ahalb_713 () Int)<br/>
+(declare-fun ahaub_714 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun ahaub_729 () Int)<br/>
+(declare-fun n () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun v_int_57_637_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahalb_713 i))<br/>
+(assert (= v_int_57_638_primed (select a j)))<br/>
+(assert (&lt;= j ahaub_714))<br/>
+(assert (&lt;= ahalb_713 j))<br/>
+(assert (dom a ahalb_713 ahaub_714))<br/>
+(assert (not (= (select a j) 0)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= n (+ ahaub_729 1)))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (dom b 0 ahaub_729))<br/>
+(assert (= (+ v_int_57_637_primed 1) n))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_736 Int)) (exists ((ahaub_737 Int)) (and (dom b ahalb_736 ahaub_737) (and (&lt;= ahalb_736 v_int_57_637_primed) (&lt;= v_int_57_637_primed ahaub_737)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 88::copy_nonzeros$int[]~int~int~int[]~int(a,i,v_int_60_642,b,n) rec at <a href="#L60">line 60</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_int_57_746 &le; bh_758 &and; 0 &le; v_int_57_746 &and; j &le; ah_757 &and; al_756 &le; j &and; al_756 &le; i &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh_758 + 1 &and; i &le; j &and; a[j] &ne; 0 &and; dom(a,al_756,ah_757) &and; v_int_57_746 + 1 = n &and; dom(b,0,bh_758) &and; dom(b',0,bh_758) &and; update_array_1d(b,b',a[j],v_int_57_746) &and; n' + 1 = n &and; v_int_60_642' + 1 = j)  &#8866;   &exist; al_769  &exist; ah_770  &exist; bh_771 (dom(a,al_769,ah_770) &and; al_769 &le; i &and; v_int_60_642' &le; ah_770 &and; 0 &le; n' &and; numnonzeros(a,i,v_int_60_642',n') &and; dom(b',0,bh_771) &and; n' &le; 1 + bh_771)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_756 () Int)<br/>
+(declare-fun ah_757 () Int)<br/>
+(declare-fun bh_758 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun v_int_57_746 () Int)<br/>
+(declare-fun n () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_60_642_primed () Int)<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+;Antecedent<br/>
+(assert (&lt;= v_int_57_746 bh_758))<br/>
+(assert (&lt;= 0 v_int_57_746))<br/>
+(assert (&lt;= j ah_757))<br/>
+(assert (&lt;= al_756 j))<br/>
+(assert (&lt;= al_756 i))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= n (+ bh_758 1)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (not (= (select a j) 0)))<br/>
+(assert (dom a al_756 ah_757))<br/>
+(assert (= (+ v_int_57_746 1) n))<br/>
+(assert (dom b 0 bh_758))<br/>
+(assert (dom b_primed 0 bh_758))<br/>
+(assert (= b_primed (store b v_int_57_746 (select a j))))<br/>
+(assert (= (+ n_primed 1) n))<br/>
+(assert (= (+ v_int_60_642_primed 1) j))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_769 Int)) (exists ((ah_770 Int)) (exists ((bh_771 Int)) (and (dom a al_769 ah_770) (and (&lt;= al_769 i) (and (&lt;= v_int_60_642_primed ah_770) (and (&lt;= 0 n_primed) (and (numnonzeros a i v_int_60_642_primed n_primed) (and (dom b_primed 0 bh_771) (&lt;= n_primed (+ 1 bh_771)))))))))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j &le; ah_757 &and; al_756 &le; j &and; al_756 &le; i &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; dom(b,0,bh_758) &and; n &le; bh_758 + 1 &and; i &le; j &and; dom(a,al_756,ah_757) &and; a[j] = 0 &and; a[j] = a[j] &and; v_int_60_642' + 1 = j)  &#8866;   &exist; al_773  &exist; ah_774  &exist; bh_775 (dom(a,al_773,ah_774) &and; al_773 &le; i &and; v_int_60_642' &le; ah_774 &and; 0 &le; n &and; numnonzeros(a,i,v_int_60_642',n) &and; dom(b,0,bh_775) &and; n &le; 1 + bh_775)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun bh_758 () Int)<br/>
+(declare-fun al_756 () Int)<br/>
+(declare-fun ah_757 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_60_642_primed () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+;Antecedent<br/>
+(assert (&lt;= j ah_757))<br/>
+(assert (&lt;= al_756 j))<br/>
+(assert (&lt;= al_756 i))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (dom b 0 bh_758))<br/>
+(assert (&lt;= n (+ bh_758 1)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (dom a al_756 ah_757))<br/>
+(assert (= (select a j) 0))<br/>
+(assert (= (select a j) (select a j)))<br/>
+(assert (= (+ v_int_60_642_primed 1) j))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_773 Int)) (exists ((ah_774 Int)) (exists ((bh_775 Int)) (and (dom a al_773 ah_774) (and (&lt;= al_773 i) (and (&lt;= v_int_60_642_primed ah_774) (and (&lt;= 0 n) (and (numnonzeros a i v_int_60_642_primed n) (and (dom b 0 bh_775) (&lt;= n (+ 1 bh_775)))))))))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L62">line 62</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j &lt; i &and; dom(b,0,bh) &and; j &le; ah &and; al &le; i &and; dom(a,al,ah) &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh + 1)  &#8866;  n = 0
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ah () Int)<br/>
+(declare-fun al () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun bh () Int)<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+;Antecedent<br/>
+(assert (&lt; j i))<br/>
+(assert (&lt;= j ah))<br/>
+(assert (&lt;= al i))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= n (+ bh 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (= n 0)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(n_779 &le; bh_758 + 1 &and; dom(b_777,0,bh_758) &and; numnonzeros(a,i,v_int_60_778,n_779) &and; 0 &le; n_779 &and; v_int_60_778 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_778 + 1 = j &and; v_int_57_746 &le; bh_758 &and; 0 &le; v_int_57_746 &and; j &le; ah_757 &and; al_756 &le; j &and; a[j] &ne; 0 &and; i &le; j &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh_758 + 1 &and; v_int_57_746 + 1 = n &and; dom(b,0,bh_758) &and; update_array_1d(b,b_777,a[j],v_int_57_746) &and; n_779 + 1 = n &and; amodr(b_777,b',0,n_779 - 1) &and; alldiff(b',0,0,n_779 - 1))  &#8866;  amodr(b,b',0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_60_778 () Int)<br/>
+(declare-fun ah_757 () Int)<br/>
+(declare-fun al_756 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun bh_758 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_57_746 () Int)<br/>
+(declare-fun b_777 () (Array Int Int))<br/>
+(declare-fun n_779 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= n_779 (+ bh_758 1)))<br/>
+(assert (numnonzeros a i v_int_60_778 n_779))<br/>
+(assert (&lt;= 0 n_779))<br/>
+(assert (&lt;= v_int_60_778 ah_757))<br/>
+(assert (&lt;= al_756 i))<br/>
+(assert (= (+ v_int_60_778 1) j))<br/>
+(assert (&lt;= v_int_57_746 bh_758))<br/>
+(assert (&lt;= 0 v_int_57_746))<br/>
+(assert (&lt;= j ah_757))<br/>
+(assert (&lt;= al_756 j))<br/>
+(assert (not (= (select a j) 0)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= n (+ bh_758 1)))<br/>
+(assert (= (+ v_int_57_746 1) n))<br/>
+(assert (= b_777 (store b v_int_57_746 (select a j))))<br/>
+(assert (= (+ n_779 1) n))<br/>
+(assert (amodr b_777 b_primed 0 (- n_779 1)))<br/>
+(assert (alldiff b_primed 0 0 (- n_779 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (amodr b b_primed 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(n_779 &le; bh_758 + 1 &and; dom(b_777,0,bh_758) &and; numnonzeros(a,i,v_int_60_778,n_779) &and; 0 &le; n_779 &and; v_int_60_778 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_778 + 1 = j &and; v_int_57_746 &le; bh_758 &and; 0 &le; v_int_57_746 &and; j &le; ah_757 &and; al_756 &le; j &and; a[j] &ne; 0 &and; i &le; j &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; n &le; bh_758 + 1 &and; v_int_57_746 + 1 = n &and; dom(b,0,bh_758) &and; update_array_1d(b,b_777,a[j],v_int_57_746) &and; n_779 + 1 = n &and; amodr(b_777,b',0,n_779 - 1) &and; alldiff(b',0,0,n_779 - 1))  &#8866;  alldiff(b',0,0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_60_778 () Int)<br/>
+(declare-fun ah_757 () Int)<br/>
+(declare-fun al_756 () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun bh_758 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_57_746 () Int)<br/>
+(declare-fun b_777 () (Array Int Int))<br/>
+(declare-fun n_779 () Int)<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= n_779 (+ bh_758 1)))<br/>
+(assert (numnonzeros a i v_int_60_778 n_779))<br/>
+(assert (&lt;= 0 n_779))<br/>
+(assert (&lt;= v_int_60_778 ah_757))<br/>
+(assert (&lt;= al_756 i))<br/>
+(assert (= (+ v_int_60_778 1) j))<br/>
+(assert (&lt;= v_int_57_746 bh_758))<br/>
+(assert (&lt;= 0 v_int_57_746))<br/>
+(assert (&lt;= j ah_757))<br/>
+(assert (&lt;= al_756 j))<br/>
+(assert (not (= (select a j) 0)))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= n (+ bh_758 1)))<br/>
+(assert (= (+ v_int_57_746 1) n))<br/>
+(assert (= b_777 (store b v_int_57_746 (select a j))))<br/>
+(assert (= (+ n_779 1) n))<br/>
+(assert (amodr b_777 b_primed 0 (- n_779 1)))<br/>
+(assert (alldiff b_primed 0 0 (- n_779 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (alldiff b_primed 0 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_int_60_780 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_780 + 1 = j &and; a[j] = a[j] &and; a[j] = 0 &and; j &le; ah_757 &and; al_756 &le; j &and; i &le; j &and; numnonzeros(a,i,j,n) &and; 0 &le; n &and; numnonzeros(a,i,v_int_60_780,n) &and; dom(b,0,bh_758) &and; n &le; bh_758 + 1 &and; amodr(b,b',0,n - 1) &and; alldiff(b',0,0,n - 1))  &#8866;  amodr(b,b',0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ah_757 () Int)<br/>
+(declare-fun al_756 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_60_780 () Int)<br/>
+(declare-fun bh_758 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= v_int_60_780 ah_757))<br/>
+(assert (&lt;= al_756 i))<br/>
+(assert (= (+ v_int_60_780 1) j))<br/>
+(assert (= (select a j) (select a j)))<br/>
+(assert (= (select a j) 0))<br/>
+(assert (&lt;= j ah_757))<br/>
+(assert (&lt;= al_756 j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i v_int_60_780 n))<br/>
+(assert (&lt;= n (+ bh_758 1)))<br/>
+(assert (amodr b b_primed 0 (- n 1)))<br/>
+(assert (alldiff b_primed 0 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (amodr b b_primed 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_int_60_780 &le; ah_757 &and; al_756 &le; i &and; dom(a,al_756,ah_757) &and; v_int_60_780 + 1 = j &and; a[j] = a[j] &and; a[j] = 0 &and; j &le; ah_757 &and; al_756 &le; j &and; i &le; j &and; numnonzeros(a,i,j,n) &and; 0 &le; n &and; numnonzeros(a,i,v_int_60_780,n) &and; dom(b,0,bh_758) &and; n &le; bh_758 + 1 &and; amodr(b,b',0,n - 1) &and; alldiff(b',0,0,n - 1))  &#8866;  alldiff(b',0,0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ah_757 () Int)<br/>
+(declare-fun al_756 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_60_780 () Int)<br/>
+(declare-fun bh_758 () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt;= v_int_60_780 ah_757))<br/>
+(assert (&lt;= al_756 i))<br/>
+(assert (= (+ v_int_60_780 1) j))<br/>
+(assert (= (select a j) (select a j)))<br/>
+(assert (= (select a j) 0))<br/>
+(assert (&lt;= j ah_757))<br/>
+(assert (&lt;= al_756 j))<br/>
+(assert (&lt;= i j))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i v_int_60_780 n))<br/>
+(assert (&lt;= n (+ bh_758 1)))<br/>
+(assert (amodr b b_primed 0 (- n 1)))<br/>
+(assert (alldiff b_primed 0 0 (- n 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (alldiff b_primed 0 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j &lt; i &and; j &le; ah &and; al &le; i &and; dom(a,al,ah) &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; dom(b,0,bh) &and; n &le; bh + 1)  &#8866;  amodr(b,b,0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ah () Int)<br/>
+(declare-fun al () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun bh () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+;Antecedent<br/>
+(assert (&lt; j i))<br/>
+(assert (&lt;= j ah))<br/>
+(assert (&lt;= al i))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= n (+ bh 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (amodr b b 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j &lt; i &and; j &le; ah &and; al &le; i &and; dom(a,al,ah) &and; 0 &le; n &and; numnonzeros(a,i,j,n) &and; dom(b,0,bh) &and; n &le; bh + 1)  &#8866;  alldiff(b,0,0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ah () Int)<br/>
+(declare-fun al () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun bh () Int)<br/>
+(declare-fun b () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun alldiff ((Array Int Int) Int Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (x Int)) (= (alldiff a x i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (not (= (select a k) x))))))))<br/>
+;Antecedent<br/>
+(assert (&lt; j i))<br/>
+(assert (&lt;= j ah))<br/>
+(assert (&lt;= al i))<br/>
+(assert (&lt;= 0 n))<br/>
+(assert (numnonzeros a i j n))<br/>
+(assert (&lt;= n (+ bh 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (alldiff b 0 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure count_nonzeros<ul><li class="Collapsed procdef">Internal representation
+<ul>int count_nonzeros$int[]~int~int(  int[] a,  int i,  int j)<br/>
+static  EBase exists (Expl)[al; ah](Impl)[](ex)[]true &amp; dom(a,al,ah) &amp; al&lt;=i &amp; <br/>
+       j&lt;=ah &amp; {FLOW,(35,35)=__norm}<br/>
+         EAssume 3::<br/>
+           true &amp; numnonzeros(a,i,j,res) &amp; {FLOW,(35,35)=__norm}<br/>
+dynamic  []<br/>
+boolean v_bool_40_662;<br/>
+v_bool_40_662 = {<br/>
+93::gt___$int~int(i,j)<br/>
+};<br/>
+91::if (v_bool_40_662) LABEL! 91,0: int v_int_41_661;<br/>
+v_int_41_661 = 0;<br/>
+92::return v_int_41_661<br/>
+else LABEL! 91,1: <br/>
+;<br/>
+boolean v_bool_42_673;<br/>
+v_bool_42_673 = {<br/>
+int v_int_42_664;<br/>
+v_int_42_664 = {<br/>
+array_get_elm_at___1d$int[]~int(a,j)<br/>
+};<br/>
+int v_int_42_663;<br/>
+v_int_42_663 = 0;<br/>
+102::neq___$int~int(v_int_42_664,v_int_42_663)<br/>
+};<br/>
+94::if (v_bool_42_673) LABEL! 94,0: int v_int_43_669;<br/>
+v_int_43_669 = {<br/>
+int v_int_43_668;<br/>
+v_int_43_668 = 1;<br/>
+int v_int_43_667;<br/>
+v_int_43_667 = {<br/>
+int v_int_43_666;<br/>
+v_int_43_666 = {<br/>
+int v_int_43_665;<br/>
+v_int_43_665 = 1;<br/>
+101::minus___$int~int(j,v_int_43_665)<br/>
+};<br/>
+100::count_nonzeros$int[]~int~int(a,i,v_int_43_666) rec<br/>
+};<br/>
+99::add___$int~int(v_int_43_668,v_int_43_667)<br/>
+};<br/>
+98::return v_int_43_669<br/>
+else LABEL! 94,1: int v_int_45_672;<br/>
+v_int_45_672 = {<br/>
+int v_int_45_671;<br/>
+v_int_45_671 = {<br/>
+int v_int_45_670;<br/>
+v_int_45_670 = 1;<br/>
+97::minus___$int~int(j,v_int_45_670)<br/>
+};<br/>
+96::count_nonzeros$int[]~int~int(a,i,v_int_45_671) rec<br/>
+};<br/>
+95::return v_int_45_672<br/>
+<br/>
+<br/>
+{(36,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Memory safety of array access at line <a href="#L42">line 42</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(ahalb &le; i &and; dom(a,ahalb,ahaub) &and; j &le; ahaub &and; i &le; j)  &#8866;   &exist; ahalb_792  &exist; ahaub_793 (dom(a,ahalb_792,ahaub_793) &and; ahalb_792 &le; j &and; j &le; ahaub_793)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun i () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahalb i))<br/>
+(assert (dom a ahalb ahaub))<br/>
+(assert (&lt;= j ahaub))<br/>
+(assert (&lt;= i j))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_792 Int)) (exists ((ahaub_793 Int)) (and (dom a ahalb_792 ahaub_793) (and (&lt;= ahalb_792 j) (&lt;= j ahaub_793)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 100::count_nonzeros$int[]~int~int(a,i,v_int_43_666) rec at <a href="#L43">line 43</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j &le; ah_810 &and; al_809 &le; j &and; al_809 &le; i &and; i &le; j &and; dom(a,al_809,ah_810) &and; a[j] &ne; 0 &and; v_int_43_666' + 1 = j)  &#8866;   &exist; al_817  &exist; ah_818 (dom(a,al_817,ah_818) &and; al_817 &le; i &and; v_int_43_666' &le; ah_818)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_809 () Int)<br/>
+(declare-fun ah_810 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_43_666_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= j ah_810))<br/>
+(assert (&lt;= al_809 j))<br/>
+(assert (&lt;= al_809 i))<br/>
+(assert (&lt;= i j))<br/>
+(assert (dom a al_809 ah_810))<br/>
+(assert (not (= (select a j) 0)))<br/>
+(assert (= (+ v_int_43_666_primed 1) j))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_817 Int)) (exists ((ah_818 Int)) (and (dom a al_817 ah_818) (and (&lt;= al_817 i) (&lt;= v_int_43_666_primed ah_818)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 96::count_nonzeros$int[]~int~int(a,i,v_int_45_671) rec at <a href="#L45">line 45</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(j &le; ah_835 &and; al_834 &le; j &and; al_834 &le; i &and; i &le; j &and; dom(a,al_834,ah_835) &and; a[j] = 0 &and; a[j] = a[j] &and; v_int_45_671' + 1 = j)  &#8866;   &exist; al_842  &exist; ah_843 (dom(a,al_842,ah_843) &and; al_842 &le; i &and; v_int_45_671' &le; ah_843)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_834 () Int)<br/>
+(declare-fun ah_835 () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun v_int_45_671_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= j ah_835))<br/>
+(assert (&lt;= al_834 j))<br/>
+(assert (&lt;= al_834 i))<br/>
+(assert (&lt;= i j))<br/>
+(assert (dom a al_834 ah_835))<br/>
+(assert (= (select a j) 0))<br/>
+(assert (= (select a j) (select a j)))<br/>
+(assert (= (+ v_int_45_671_primed 1) j))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_842 Int)) (exists ((ah_843 Int)) (and (dom a al_842 ah_843) (and (&lt;= al_842 i) (&lt;= v_int_45_671_primed ah_843)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(dom(a,al,ah) &and; al &le; i &and; j &le; ah &and; j &lt; i)  &#8866;  numnonzeros(a,i,j,0)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al () Int)<br/>
+(declare-fun ah () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+;Antecedent<br/>
+(assert (&lt;= al i))<br/>
+(assert (&lt;= j ah))<br/>
+(assert (&lt; j i))<br/>
+;Negation of Consequence<br/>
+(assert (not (numnonzeros a i j 0)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_int_43_825 &le; ah_810 &and; i &le; j &and; al_809 &le; j &and; j &le; ah_810 &and; a[j] &ne; 0 &and; v_int_43_825 + 1 = j &and; dom(a,al_809,ah_810) &and; al_809 &le; i &and; numnonzeros(a,i,v_int_43_825,v_int_43_846) &and; v_int_43_669' = v_int_43_846 + 1)  &#8866;  numnonzeros(a,i,j,v_int_43_669')
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ah_810 () Int)<br/>
+(declare-fun al_809 () Int)<br/>
+(declare-fun v_int_43_825 () Int)<br/>
+(declare-fun v_int_43_846 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_43_669_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+;Antecedent<br/>
+(assert (&lt;= v_int_43_825 ah_810))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= al_809 j))<br/>
+(assert (&lt;= j ah_810))<br/>
+(assert (not (= (select a j) 0)))<br/>
+(assert (= (+ v_int_43_825 1) j))<br/>
+(assert (&lt;= al_809 i))<br/>
+(assert (numnonzeros a i v_int_43_825 v_int_43_846))<br/>
+(assert (= v_int_43_669_primed (+ v_int_43_846 1)))<br/>
+;Negation of Consequence<br/>
+(assert (not (numnonzeros a i j v_int_43_669_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_int_45_847 &le; ah_835 &and; i &le; j &and; al_834 &le; j &and; j &le; ah_835 &and; a[j] = 0 &and; a[j] = a[j] &and; v_int_45_847 + 1 = j &and; dom(a,al_834,ah_835) &and; al_834 &le; i &and; numnonzeros(a,i,v_int_45_847,v_int_45_672'))  &#8866;  numnonzeros(a,i,j,v_int_45_672')
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ah_835 () Int)<br/>
+(declare-fun al_834 () Int)<br/>
+(declare-fun v_int_45_847 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun v_int_45_672_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+;Antecedent<br/>
+(assert (&lt;= v_int_45_847 ah_835))<br/>
+(assert (&lt;= i j))<br/>
+(assert (&lt;= al_834 j))<br/>
+(assert (&lt;= j ah_835))<br/>
+(assert (= (select a j) 0))<br/>
+(assert (= (select a j) (select a j)))<br/>
+(assert (= (+ v_int_45_847 1) j))<br/>
+(assert (&lt;= al_834 i))<br/>
+(assert (numnonzeros a i v_int_45_847 v_int_45_672_primed))<br/>
+;Negation of Consequence<br/>
+(assert (not (numnonzeros a i j v_int_45_672_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure extract_nonzeros<ul><li class="Collapsed procdef">Internal representation
+<ul>void extract_nonzeros$int[]~int~int~int[](  int[] a,  int i,  int j,  int[] b)<br/>
+static  EBase exists (Expl)[al; ah](Impl)[](ex)[]true &amp; dom(a,al,ah) &amp; al&lt;=i &amp; <br/>
+       j&lt;=ah &amp; {FLOW,(35,35)=__norm}<br/>
+         EAssume 1::ref [b]<br/>
+           true &amp; true &amp; {FLOW,(35,35)=__norm}<br/>
+dynamic  []<br/>
+<br/>
+ref b<br/>
+int n_45;<br/>
+n_45 = {<br/>
+103::count_nonzeros$int[]~int~int(a,i,j)<br/>
+};<br/>
+b = {<br/>
+aalloc___$int(n_45)<br/>
+};<br/>
+{<br/>
+105::copy_nonzeros$int[]~int~int~int[]~int(a,i,j,b,n_45)<br/>
+}<br/>
+<br/>
+{(26,0),(0,-1)}<br/>
+</ul></li><li class="Collapsed pre">
+Precondition of procedure call 103::count_nonzeros$int[]~int~int(a,i,j) at <a href="#L30">line 30</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(dom(a,al_848,ah_849) &and; al_848 &le; i &and; j &le; ah_849)  &#8866;   &exist; al_856  &exist; ah_857 (dom(a,al_856,ah_857) &and; al_856 &le; i &and; j &le; ah_857)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_848 () Int)<br/>
+(declare-fun ah_849 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+;Antecedent<br/>
+(assert (dom a al_848 ah_849))<br/>
+(assert (&lt;= al_848 i))<br/>
+(assert (&lt;= j ah_849))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_856 Int)) (exists ((ah_857 Int)) (and (dom a al_856 ah_857) (and (&lt;= al_856 i) (&lt;= j ah_857)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 105::copy_nonzeros$int[]~int~int~int[]~int(a,i,j,b,n_45) at <a href="#L32">line 32</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(dom(a,al_862,ah_863) &and; al_862 &le; i &and; j &le; ah_863 &and; numnonzeros(a,i,j,n_45') &and; dom(b',0,n_45' - 1) &and; n_45' - 1 = bh)  &#8866;   &exist; al_874  &exist; ah_875  &exist; bh_876 (dom(a,al_874,ah_875) &and; al_874 &le; i &and; j &le; ah_875 &and; 0 &le; n_45' &and; numnonzeros(a,i,j,n_45') &and; dom(b',0,bh_876) &and; n_45' &le; 1 + bh_876)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun al_862 () Int)<br/>
+(declare-fun ah_863 () Int)<br/>
+(declare-fun bh () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+(declare-fun b_primed () (Array Int Int))<br/>
+(declare-fun n_45_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun numnonzeros ((Array Int Int) Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((a (Array Int Int)) (i Int) (j Int) (n Int)) (= (numnonzeros a i j n) (and (or (and (&gt; i j) (= n 0)) (and (&lt;= i j) (or (and (= (select a j) 0) (numnonzeros a i (- j 1) n)) (and (not (= (select a j) 0)) (numnonzeros a i (- j 1) (- n 1)))))) (&gt;= n 0)))))<br/>
+;Antecedent<br/>
+(assert (dom a al_862 ah_863))<br/>
+(assert (&lt;= al_862 i))<br/>
+(assert (&lt;= j ah_863))<br/>
+(assert (numnonzeros a i j n_45_primed))<br/>
+(assert (dom b_primed 0 (- n_45_primed 1)))<br/>
+(assert (= (- n_45_primed 1) bh))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((al_874 Int)) (exists ((ah_875 Int)) (exists ((bh_876 Int)) (and (dom a al_874 ah_875) (and (&lt;= al_874 i) (and (&lt;= j ah_875) (and (&lt;= 0 n_45_primed) (and (numnonzeros a i j n_45_primed) (and (dom b_primed 0 bh_876) (&lt;= n_45_primed (+ 1 bh_876)))))))))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</li></ul></ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul></ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul></ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

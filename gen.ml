@@ -33,9 +33,14 @@ struct
 
   let pr_id x = x
 
+  let pr_var_prime (id,p) = match p with
+    | Globals.Primed -> id^"'"
+    | Globals.Unprimed -> id
+
   let print_flush s = print_endline (s); flush stdout
 
   let pr_no x = "?"
+  let pr_none x = "?"
 
   let pr_unit x = "()"
 
@@ -53,7 +58,7 @@ struct
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
 
- let add_str s f xs = s^(f xs)
+ let add_str s f xs = s^":"^(f xs)
 
   let opt_to_list o = match o with
     | None -> []

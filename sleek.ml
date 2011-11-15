@@ -40,10 +40,11 @@ let set_source_file arg =
   source_files := arg :: !source_files
 
 let print_version () =
-  print_string ("SLEEK: A Separation Logic Entailment Checker");
-  print_string ("Prototype version.");
-  (*  print_string ("Copyright (C) 2005-2007 by Nguyen Huu Hai, Singapore-MIT Alliance."); *)
-  print_string ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.")
+  print_endline ("SLEEK: A Separation Logic Entailment Checker");
+  print_endline ("Version 1.0");
+  print_endline ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.");
+  print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
+  print_endline ("Copyright @ PLS2 @ NUS")
 
 let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
@@ -62,7 +63,7 @@ let parse_file (parse) (source_file : string) =
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
 				                 | RelDef rdef -> process_rel_def rdef
-								 | AxiomDef adef -> process_axiom_def adef (* An Hoa *)
+								 | AxiomDef adef -> process_axiom_def adef (* An Hoa : Bug detected in MUTUALLY DEPENDENT relations! *)
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
@@ -222,7 +223,7 @@ let main () =
 let _ = 
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
-  if !Scriptarguments.print_version_flag then begin
+  if !Globals.print_version_flag then begin
 	print_version ()
   end else
     (Tpdispatcher.start_prover ();
