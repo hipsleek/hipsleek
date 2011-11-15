@@ -7,12 +7,31 @@ pred ll<n> == self = null & n = 0
 
 
 // this failed with the "compete" system
-checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  
- |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
+//checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  
+// |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
 //print residue.
 // t@I; z
 //2. Valid
 
+
+//checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  
+//  |- (x::ll<n>@I); t::ll<a>@I * y::ll<m>.
+
+
+checkentail (x::ll<n>@I); y::ll<m>@I 
+    |- x::ll<n>@I * y::ll<m>@I.
+
+checkentail (x::ll<n>@I); y::ll<m>@I 
+    |- x::ll<n>@I .
+
+checkentail (x::ll<n>@I); y::ll<m>@I 
+    |- x::ll<n>@I; true .
+
+checkentail (x::ll<n>@I); y::ll<m>@I 
+    |- true .
+
+checkentail (x::ll<n>@I); y::ll<m>@I 
+    |- (x::ll<n>@I); y::ll<m>@I.
 
 //checkentail (x::ll<n>@I); y::ll<m> * z::ll<m> * t::ll<a>@I & n > 0  
 // |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
@@ -21,6 +40,7 @@ checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0
 // |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
 print residue.
 //
+
 
 
 
