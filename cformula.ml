@@ -3940,6 +3940,7 @@ let rec struc_to_formula_x (f0:struc_formula):formula =
 			push_exists b.formula_case_exists r 
 		| EBase b-> 
 				let e = normalize_combine b.formula_ext_base (struc_to_formula_x b.formula_ext_continuation) b.formula_ext_pos in
+                (* is it necessary to also push the implicit vars? *)
 				let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
 				nf
 		| EAssume (_,b,_)-> b 
