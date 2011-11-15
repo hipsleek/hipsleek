@@ -1141,6 +1141,8 @@ let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_
 
 let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_failesc_context lc))^"]"
 
+let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
+				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
   (* if String.length(hdr)>7 then *)
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
@@ -1169,10 +1171,11 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_wrap_test "es_var_measures: " Gen.is_empty (pr_seq "" pr_formula_exp) es.es_var_measures;
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
-	| None -> "None"
-	| Some i -> string_of_int i)) es.es_var_label;
+                                                    | None -> "None"
+                                                    | Some i -> string_of_int i)) es.es_var_label;
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
+  pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
   fmt_close ()
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
@@ -1529,8 +1532,6 @@ let rec string_of_ident_list l c = match l with
 
 let str_ident_list l = string_of_ident_list l "," ;;
 let str_ident_list l = "["^(string_of_ident_list l ",")^"]" ;;
-let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
-				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
 let string_of_constraint_relation m = match m with
   | Cpure.Unknown -> " ?  "

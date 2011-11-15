@@ -2576,10 +2576,12 @@ and heap_entail_one_context_struc p i1 hp cl cs pos pid =
 
 and heap_entail_one_context_struc_nth n p i1 hp cl cs pos pid =
   let str="heap_entail_one_context_struc" in
-  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl) cs pos pid
+  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_debug p i1 hp cl) cs pos pid
 
 and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
-  Gen.Debug.no_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
+  Gen.Debug.no_1 "heap_entail_one_context_struc" 
+    Cprinter.string_of_context (fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
+    (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
@@ -2806,38 +2808,38 @@ and heap_entail_conjunct_lhs_struc_x
             let rs4 = prune_ctx prog rs3 in
 	        ((SuccCtx [rs4]),TrueConseq)
 	    | EVariance e ->
-		  let es = match ctx11 with
-			| OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
-			| Ctx es -> es in 
-		  let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
-		  let t = List.map (fun (_, v, mn) ->
-			let CP.SpecVar (t, i, p) = v in
-			let nid = i ^ "_" ^ mn in
-			CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
+          let es = match ctx11 with
+            | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
+            | Ctx es -> es in 
+          let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
+          let t = List.map (fun (_, v, mn) ->
+                              let CP.SpecVar (t, i, p) = v in
+                              let nid = i ^ "_" ^ mn in
+                                CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
 
-		  let normalize_ctx_rhs =
-			let rec filter pformula =
-			  match pformula with
-				| CP.And (f1, f2, pos) ->
-				  let nf2 = CP.subst_avoid_capture f t f2 in
-				  let nf1 = filter f1 in
-				  if (CP.equalFormula f2 nf2) then nf1
-				  else CP.mkAnd nf1 nf2 pos
-				| _ ->
-				  let nf = CP.subst_avoid_capture f t pformula in
-				  if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
-				  else nf
-		    in filter es.es_var_ctx_rhs
-		  in
+          let normalize_ctx_rhs =
+            let rec filter pformula =
+              match pformula with
+                | CP.And (f1, f2, pos) ->
+                    let nf2 = CP.subst_avoid_capture f t f2 in
+                    let nf1 = filter f1 in
+                      if (CP.equalFormula f2 nf2) then nf1
+                      else CP.mkAnd nf1 nf2 pos
+                | _ ->
+                    let nf = CP.subst_avoid_capture f t pformula in
+                      if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
+                      else nf
+            in filter es.es_var_ctx_rhs
+          in
 
-		  (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
-		  let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
+          (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
+           let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
 
-		  let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
-			  
-		  variance_graph := !variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
-		  var_checked_list := !var_checked_list @ [(nes, e)];
-		  inner_entailer 7 ctx11 e.Cformula.formula_var_continuation
+          let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
+
+            variance_graph := !variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
+            var_checked_list := !var_checked_list @ [(nes, e)];
+            inner_entailer 7 ctx11 e.Cformula.formula_var_continuation
     end 
 
   and inner_entailer i (ctx22 : context) (conseq : struc_formula): list_context * proof = 
@@ -2883,8 +2885,13 @@ and heap_entail_variance_x
       (e : ext_variance_formula) =
   (*let loc = e.formula_var_pos in*)
   let loc = es.es_var_loc in
+  let ctx = (CF.Ctx es) in
+    if CF.isAnyFalseCtx ctx then
+      let _ = if !print_proof then Prooftracer.push_term_checking loc false in
+      let _ = if !print_proof then Prooftracer.pop_div () in ()
+    else
 
-  let _ = if !print_proof then Prooftracer.push_term_checking loc in
+let _ = if !print_proof then Prooftracer.push_term_checking loc true in
 
   let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e ->
 	let str = Cprinter.string_of_formula_exp e in
@@ -2929,7 +2936,7 @@ and heap_entail_variance_x
 	  in
       (*let _ = print_string ("\ntermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
 	  let _ = begin Tpdispatcher.push_suppress_imply_output_state (); Tpdispatcher.suppress_imply_output () end in
-	  let (rs, _) = (heap_entail_conjunct_lhs_struc prog false false (CF.Ctx es) [mkEBase term_formula loc] no_pos None) in
+	  let (rs, _) = (heap_entail_conjunct_lhs_struc prog false false ctx [mkEBase term_formula loc] no_pos None) in
 	  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
 
 	  let res = not (CF.isFailCtx rs) in
