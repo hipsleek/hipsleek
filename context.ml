@@ -262,11 +262,22 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
       pr2 
       (fun _ _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p es
 
+(* type: Cast.prog_decl ->
+  Globals.ident ->
+  Cast.P.spec_var list ->
+  Cformula.CP.spec_var list ->
+  bool ->
+  Cformula.h_formula *)
 
+and view_mater_match prog c vs1 aset imm f =
+  let pr1 = (fun x -> x) in
+  let pr2 = !print_svl in
+  Gen.Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr_no (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
-  let mvs = subst_mater_list_nth 1 vdef.view_vars vs1 vdef.view_materialized_vars in
+  let vdef_param = (self_param vdef)::(vdef.view_vars) in
+  let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
   try
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
     if imm then
@@ -284,17 +295,17 @@ and view_mater_match_x prog c vs1 aset imm f =
               else [(HTrue, f, [], WArg)]
             else []
 
-and view_mater_match prog c vs1 aset imm f =
-  let pr = fun v-> string_of_int (List.length v) in
-  let psv = Cprinter.string_of_spec_var in
-  let pr1 = pr_list psv in
-  let pr2 = pr_list  psv in  
-  Gen.Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset
+(* and view_mater_match prog c vs1 aset imm f = *)
+(*   let pr = fun v-> string_of_int (List.length v) in *)
+(*   let psv = Cprinter.string_of_spec_var in *)
+(*   let pr1 = pr_list psv in *)
+(*   let pr2 = pr_list  psv in   *)
+(*   Gen.Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset *)
       
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None
   else 
-    let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
+    let args = (* List.tl  *)(fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
     let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
     try
       let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
@@ -379,8 +390,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
               else
                 [(HTrue, f, [], Root)]
             else
-              let vmm = view_mater_match prog c vs1 aset imm f in
-              let cmm = coerc_mater_match prog c vs1 aset imm f in
+              let vmm = view_mater_match prog c (p1::vs1) aset imm f in
+              let cmm = coerc_mater_match prog c (p1::vs1) aset imm f in
               vmm@cmm
             )
           else []
@@ -543,6 +554,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   end
                   else  [] in
                   let l4 = 
+                    (* TODO WN : what is original?? *)
                     if get_view_original rhs_node then 
                       [(2,M_base_case_fold c)] 
                     else [] in
@@ -578,6 +590,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
                     | View_mater -> 
+                        (* print_string "\n WN : unfold for meteralised!"; *)
                           M_unfold (c,uf_i) (* uf_i to prevent infinite unfolding *)
                     | Coerc_mater s -> 
                           (* let _ = print_string "\n selected lemma XX" in *)

@@ -1,8 +1,7 @@
 /*
- * Variation on example 0: use a (non-deterministic) boolean
- * flag to set the value of the elements in the list before
- * 3 to a value depending on the flag, and check later on
- * that the list is what has been built just before.
+ * Alternating list example: 
+ * creates a list with 1s at odd positions and 2s at even ones. 
+ * Then, it goes through and checks if the alternation holds.
  */
 data node {
   int val;
@@ -19,8 +18,14 @@ node create(ref node x, int n, int flag)
   ensures res::lseg<x', n+1, S> * x'::node<0,null> & forall (b : (b notin S | b=1 | b=2));
   //ensures x'::node<0,null>;
 {
-  if (flag==1) x.val = 1;
-  else x.val = 2;
+  if (flag==1) {
+    x.val = 1;
+    flag = 0;
+  }
+  else {
+    x.val = 2;
+    flag = 1;
+  }
   node t = new node(0,null);
   if (t==null) {
     exit();
@@ -28,7 +33,7 @@ node create(ref node x, int n, int flag)
   }
   else
   {
-    x.next = t;    
+    x.next = t;
     if (n==0)
     {
       node y = x;
@@ -38,21 +43,22 @@ node create(ref node x, int n, int flag)
     else
     {
       bind x to (xval,xnext) in {
-        node tmp = create(xnext,n-1,flag);
+        node tmp = create(xnext,n-1,flag);;
         node y = x;
         x = xnext;
         return y;
-      }
+      }      
     }
   }
 }
 
 
-node main(int m, int flag)
+node main(int m)
   requires m > 0
   ensures res::lseg<r, m+1, S> * r::node<3,null> & forall (b : (b notin S | b=1 | b=2));
   //ensures res::node<3,null>;
 {
+  int flag = 1;
   node a = new node(0,null);
   if (a==null) {
     exit();
@@ -67,5 +73,4 @@ node main(int m, int flag)
     return a;
   }
 }
-
 
