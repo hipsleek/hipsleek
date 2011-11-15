@@ -21,7 +21,7 @@ checkentail x::node<1,x2>*x2::node<3,null> |- x::ll<n>.
 // abduction : p::ll<m> 
 // frame : n=2+m
 
-
+infer [p] x::node<1,x2>*x2::node<3,p> |- x::ll<n> .
 //checkentail x::ll<n> & n>2 |- x::node<_,y>*y::node<_,p> .
 // frame : p::ll<n-2> & n>2
 

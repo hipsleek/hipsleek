@@ -410,6 +410,7 @@ non_empty_command:
 	  | `AXIOM;t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
+      | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=time_cmd            -> t]];
@@ -890,7 +891,10 @@ opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
-  
+
+infer_cmd:
+  [[ `INFER; `OSQUARE; il=id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> (il, t, b)]];
+
 captureresidue_cmd:
   [[ `CAPTURERESIDUE; `DOLLAR; `IDENTIFIER id -> id ]];
 

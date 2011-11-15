@@ -5632,7 +5632,11 @@ and get_spec_var_stab (v : ident) stab pos =
 	      Err.report_error
               { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
 
-
+and get_spec_var_stab_infer (v : ident) stab pos ante =
+  let vtyp = fst (CF.get_var_type v ante) in
+  match vtyp with  
+  | UNK -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
+  | t -> let sv = CP.SpecVar (t, v, Unprimed) in (*print_endline (v ^ ":" ^ (Globals.string_of_typ t)); *)sv
 
 and string_of_spec_var_kind (k : spec_var_kind) =
   string_of_typ k

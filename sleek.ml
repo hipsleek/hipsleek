@@ -65,6 +65,7 @@ let parse_file (parse) (source_file : string) =
 				                 | RelDef rdef -> process_rel_def rdef
 								 | AxiomDef adef -> process_axiom_def adef (* An Hoa : Bug detected in MUTUALLY DEPENDENT relations! *)
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                 | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
 								 | PrintCmd pcmd -> process_print_command pcmd
@@ -97,6 +98,7 @@ let parse_file (parse) (source_file : string) =
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
+    | Infer _
 	  | PrintCmd _ 
       | Time _
 	  | EmptyCmd -> () in
@@ -110,12 +112,14 @@ let parse_file (parse) (source_file : string) =
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
+    | Infer _
 	  | PrintCmd _ 
       | Time _
 	  | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
 	  | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+    | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
 	  | PrintCmd pcmd -> process_print_command pcmd
 	  | LetDef (lvar, lbody) -> put_var lvar lbody
@@ -191,6 +195,7 @@ let main () =
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) ->  process_entail_check iante iconseq
+                     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef
                      | PrintCmd pcmd -> process_print_command pcmd
