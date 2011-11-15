@@ -89,7 +89,6 @@ ensures  res::value<>;
      else {
        // val3 is an apply
        // it has to be an (S w1)
-			 dprint;
        val2c = clone(val2);
        tmp1 = new anode(0,val11,val2);
        tmp2 = new anode(0,val1.arg,val2c);
