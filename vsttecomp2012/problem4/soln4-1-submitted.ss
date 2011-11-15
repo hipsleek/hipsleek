@@ -23,7 +23,7 @@ treelseg<t,p,d,n> ==
      t::node<d,p> & self=null & n=1
   or self::tree<left,right> * left::treelseg<t,r,d+1,n1> 
      * right::treelseg<r,p,d+1,n2> & n=n1+n2
-  inv t!=null & n>=1 ;
+  inv n>=1 ;
 
 // pred for a linked list of int of length n
 ll<n> == self=null & n=0
