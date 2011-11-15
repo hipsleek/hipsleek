@@ -397,32 +397,32 @@ class counter x_init =
      method string_of : string= (string_of_int ctr)
    end;;
 
-class ['a] stack2 xinit =
-   object 
-	val def = xinit
-	val mutable stk = []
-	method push (i:'a) = stk <- i::stk
-	method pop = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> stk <- xs
-   method top : 'a = match stk with 
-       | [] -> def
-       | x::xs -> x
-	method len = List.length stk
-end;;
+(* class ['a] stack2 xinit = *)
+(*    object  *)
+(* 	val def = xinit *)
+(* 	val mutable stk = [] *)
+(* 	method push (i:'a) = stk <- i::stk *)
+(* 	method pop = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> stk <- xs *)
+(*    method top : 'a = match stk with  *)
+(*        | [] -> def *)
+(*        | x::xs -> x *)
+(* 	method len = List.length stk *)
+(* end;; *)
 
-class ['a] stack3  =
-   object 
-	val mutable stk = []
-	method push (i:'a) = stk <- i::stk
-	method pop = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> stk <- xs
-   method top : 'a = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> x
-	method len = List.length stk
-end;;
+(* class ['a] stack3  = *)
+(*    object  *)
+(* 	val mutable stk = [] *)
+(* 	method push (i:'a) = stk <- i::stk *)
+(* 	method pop = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> stk <- xs *)
+(*    method top : 'a = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> x *)
+(* 	method len = List.length stk *)
+(* end;; *)
 
 (* module Stack4  = *)
 (*    struct  *)
@@ -468,9 +468,9 @@ module ErrorUti =
 struct
   (** Error-handling functions. *)
 
-  let (stkint:int stack2) = new stack2 (-1)
+  (* let (stkint:int stack2) = new stack2 (-1) *)
 
- let (stkint:int stack3) = new stack3 
+  (* let (stkint:int stack3) = new stack3  *)
 
   let error_list = new stack "error - stack underflow" (fun x -> x)
 
