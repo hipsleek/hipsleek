@@ -16,8 +16,8 @@ lemma "ll_tail" self::ll_tail<t, n> <-> self::lseg<t, n-1> * t::node<_, null>.
 
 //checkentail x::ll_tail<tx, n> |- tx::node<a,b>.
 
-//checkentail x::lseg<tx,n-1>*tx::node<_,y>*y::ll_tail<ty,m> 
-// |- x::ll_tail<ty,n+m>.
+checkentail x::lseg<tx,n-1>*tx::node<_,y>*y::ll_tail<ty,m> 
+ |- x::ll_tail<ty,n+m>.
 
 //checkentail x::lseg<tx,n-1>*tx::node<_,y>*y::lseg<ty,m-1>*ty::node<_,null>
 // |- x::ll_tail<ty,n+m>.
@@ -32,6 +32,6 @@ lemma "ll_tail" self::ll_tail<t, n> <-> self::lseg<t, n-1> * t::node<_, null>.
 
 //checkentail x::lseg<y,n> |- x::lseg<a,b>*a::lseg<c,d>.
 
-checkentail x::lseg<y,n>*y::lseg<z,m> |- x::lseg<a,b>*a::lseg<c,d>.
+//checkentail x::lseg<y,n>*y::lseg<z,m> |- x::lseg<a,b>*a::lseg<c,d>.
 
 print residue.
