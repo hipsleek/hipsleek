@@ -6,6 +6,9 @@ relation allzero(int[] A, int i, int j) ==
 relation has_path(int[,] A, int n, int s, int t) == 
 	exists(d : 0 <= d & hemp(A,n,n,s,t,d)).
 
+// well-ordering of integers
+axiom has_path(A,n,s,t) ==> exists(d : msd(A,n,n,s,t,d)).
+
 // there is a m-path from s to t of length exactly d
 relation hemp(int[,] A, int n, int m, int s, int t, int d) ==
 	0 <= m <= n & 0 <= s < n & 0 <= t < n & (d = 0 & s = t | 
@@ -35,22 +38,23 @@ relation allsd(int[,] A, int n, int m, int s, int[] S, int x1, int x2, int d) ==
 
 /* NON-TRIVIAL THEOREMS */
 
+// To prove precondition in case v is not in C in bfs_loop2
 axiom !(msd(A,n,n,s,v,d)) & allsd(A,n,v,s,S,0,n,d+1) ==> allsd(A,n,v+1,s,S,0,n,d+1).
 
+// expanded to the pair of theorems
+
+//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
+
+//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v+1,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
+
+// To prove post-condition of bfs_loop2; intuitively, 
+// it says that there is no 0-path of non-zero length.
 axiom reach(A,n,n,s,S,0,n,d) ==> reach(A,n,0,s,S,0,n,d+1).
 
+// To prove pre-condition of recursive call in bfs_loop3 
+// when the right-above if-condition is true. Intuitively,
+// this axiom is due to the fact any m-path is an n-paths.
 axiom !(hbmp(A,n,n,s,t,d)) ==> !(hbmp(A,n,m,s,t,d)).
-
-/* NON-TRIVIAL THEOREM TO PROVE COMPLETENESS */
-
-// proof requires induction!
-axiom k >= d & forall(t : t < 0 | t >= n | !(msd(A,n,n,s,t,d))) ==> forall(u : u < 0 | u >= n | !(msd(A,n,n,s,u,k))).
-
-// follows from the above and defn of has_path
-axiom forall(t : t < 0 | t >= n | !(msd(A,n,n,s,t,d))) & has_path(A,n,s,t) ==> hbmp(A,n,n,s,t,d).
-
-// follows from the well-ordering of integers
-axiom has_path(A,n,s,t) ==> exists(d : d >= 0 & msd(A,n,n,s,t,d)).
 
 /* ALGORITHM & SPECIFICATION */
 
@@ -65,48 +69,51 @@ int bfs(int[,] A, int n, int s, int t)
 	return bfs_loop1(A,n,s,t,d,V,C);
 }
 
-
 int bfs_loop1(int[,] A, int n, int s, int t, int d, int[] V, int[] C)
 	requires 0 <= s < n & 0 <= t < n & d >= 0 &
 			dom(V,0,n-1) & dom(C,0,n-1) &
 			reach(A,n,0,s,V,0,n,d) &
-			allsd(A,n,n,s,C,0,n,d) &
-			(C[t] != 0 | C[t] = 0 & V[t] = 0)
+			allsd(A,n,n,s,C,0,n,d) 
 	ensures res < 0 & !(has_path(A,n,s,t)) | 
 			res >= 0 & msd(A,n,n,s,t,res);
 {
-	if (C[t] != 0)
-		return d;
-	else if (is_empty(C,n))
+	if (is_empty(C,n)) {
+		assume !(has_path(A,n,s,t));
 		return -1;
+	}
 	else {
 		int[] N = new int[n];
 		init_false(N, n);
-		bfs_loop2(A,n,s,t,d,V,C,N,0);
-		return bfs_loop1(A,n,s,t,d+1,V,N);
+		int r = bfs_loop2(A,n,s,t,d,V,C,N,0);
+		if (r >= 0)
+			return r;
+		else
+			return bfs_loop1(A,n,s,t,d+1,V,N);
 	}
 }
 
-void bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref int[] N, int v)
+int bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref int[] N, int v)
 	requires 0 <= s < n & 0 <= t < n & d >= 0 & 0 <= v <= n &
 		dom(V,0,n-1) & dom(C,0,n-1) & dom(N,0,n-1) & 
 		reach(A,n,v,s,V,0,n,d) &
 		allsd(A,n,n,s,C,0,n,d) &
-		allsd(A,n,v,s,N,0,n,d+1) &
-		(N[t] != 0 | N[t] = 0 & V[t] = 0)
-	ensures reach(A,n,0,s,V',0,n,d+1) &
+		allsd(A,n,v,s,N,0,n,d+1)
+	ensures res < 0 & 
+		reach(A,n,0,s,V',0,n,d+1) &
 		allsd(A,n,n,s,N',0,n,d+1) &
-		dom(V',0,n-1) & dom(N',0,n-1) &
-		(N'[t] != 0 | N'[t] = 0 & V'[t] = 0);
+		dom(V',0,n-1) & dom(N',0,n-1) |
+		res >= 0 & msd(A,n,n,s,t,res);
 {
 	if (v < n) {
 		if (C[v] != 0) {
+			if (v == t)
+				return d;
 			bfs_loop3(A,n,s,t,d,V,N,v,0);
 		}
-		bfs_loop2(A,n,s,t,d,V,C,N,v+1);
+		return bfs_loop2(A,n,s,t,d,V,C,N,v+1);
 	}
+	return -1;
 }
-
 
 void bfs_loop3(int[,] A, int n, int s, int t, int d, ref int[] V, ref int[] N, int v, int w)
 	requires 0 <= s < n & 0 <= t < n & 
@@ -116,12 +123,10 @@ void bfs_loop3(int[,] A, int n, int s, int t, int d, ref int[] V, ref int[] N, i
 		reach(A,n,v+1,s,V,0,w,d) &
 		reach(A,n,v,s,V,w,n,d) &
 		allsd(A,n,v+1,s,N,0,w,d+1) &
-		allsd(A,n,v,s,N,w,n,d+1) &
-		(N[t] != 0 | N[t] = 0 & V[t] = 0)
+		allsd(A,n,v,s,N,w,n,d+1)
 	ensures reach(A,n,v+1,s,V',0,n,d) &
 		allsd(A,n,v+1,s,N',0,n,d+1) &
-		dom(V',0,n-1) & dom(N',0,n-1) &
-		(N'[t] != 0 | N'[t] = 0 & V'[t] = 0);
+		dom(V',0,n-1) & dom(N',0,n-1);
 {
 	if (w < n) {
 		if (A[v,w] != 0 && V[w] == 0) {
@@ -136,31 +141,31 @@ void bfs_loop3(int[,] A, int n, int s, int t, int d, ref int[] V, ref int[] N, i
 void init_false(ref int[] A, int n)
 	requires dom(A,0,n-1) & n >= 0
 	ensures dom(A',0,n-1) & allzero(A',0,n-1);
-/*{
+{
 	//for(int i = 0; i < n; i++) A[i] = 0;
 	init_false(A, n, 0);
-}*/
+}
 
 // Helper function expanding for loop 
 void init_false(ref int[] A, int n, int i)
 	requires dom(A,0,n-1) & allzero(A,0,i-1) & 0 <= i <= n
 	ensures dom(A',0,n-1) & allzero(A',0,n-1);
-/*{
+{
 	if (i < n) {
 		A[i] = 0;
 		init_false(A, n, i+1);
 	}
-}*/
+}
 
 // Check if the set C[0..n-1] is empty
 bool is_empty(int[] C, int n)
 	requires dom(C,0,n-1) & n >= 0
 	ensures res & allzero(C,0,n-1) or !res & !(allzero(C,0,n-1));
-/*{
+{
 	if (n > 0) {
 		if (C[n-1] != 0)
 			return false;
 		return is_empty(C, n-1);
 	}
 	return true;
-}*/
+}
