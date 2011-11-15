@@ -498,6 +498,9 @@ let check_right_coercion coer =
   let ent_lhs = coer.C.coercion_body in
   check_coercion coer ent_lhs ent_rhs 
 
+
+(* module LP = Lemproving *)
+
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
@@ -507,6 +510,8 @@ let process_lemma ldef =
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
   !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
+  (* below will make part of Lemproving module *)
+
   if !Globals.check_coercions then begin
     let helper coercs check_coerc = match coercs with
       | [] -> (true, None)
