@@ -95,6 +95,26 @@ fmt_string "(";
   fmt_string "\n RHS "; pr_h_formula c.match_res_rhs_node;
   fmt_string ")"
 
+(*LDK*)
+let pr_action a = match a with
+  | Undefined_action e -> "==> Undefined_action"
+  | M_match e -> "==> Match"
+  | M_fold e ->  "==> Fold"
+  | M_unfold (e,i) -> ("==> Unfold "^(string_of_int i))
+  | M_base_case_unfold e ->  "==> Base case unfold"
+  | M_base_case_fold e ->   "==> Base case fold"
+  | M_rd_lemma e ->  "==> Right distributive lemma"
+  | M_lemma (e,s) ->  ("==> "^(match s with | None -> "any lemma" | Some c-> "lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
+  | M_Nothing_to_do s ->  ("Nothing can be done: "^s)
+  | M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note: "^(string_of_h_formula h))
+  | Seq_action l -> "seq:"
+  | Search_action l -> "search:"
+  | Cond_action l -> "Cond:"
+  | M_lhs_case l -> "lhs_case:"
+
+let string_of_action a = pr_action a
+
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "==> Undefined_action"
   | M_match e -> pr_mr e; fmt_string "==> Match"
@@ -379,6 +399,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
             []
     | ViewNode ({h_formula_view_node = p1;
 	  h_formula_view_imm = imm1;
+	  h_formula_view_frac_perm = frac1;
 	  h_formula_view_arguments = vs1;
 	  h_formula_view_name = c}) ->
           if (subtype imm imm1) then
@@ -451,10 +472,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       match_res_rhs_node = rhs_node;
       match_res_rhs_rest = rhs_rest;}) l
       
-and process_one_match prog (c:match_res) :action_wt =
+and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res  in
-  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
+  Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -468,7 +489,7 @@ and norm_search_action ls = match ls with
   | [(_,a)] -> a
   | lst -> Search_action lst
 
-and process_one_match_x prog (c:match_res) :action_wt =
+and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
@@ -631,7 +652,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
 
-and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) =
+and process_matches prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) =
   let pr = Cprinter.string_of_h_formula   in
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
@@ -659,8 +680,8 @@ and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = matc
       (-1, (Cond_action [r;r1]))
     else r0
       (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
-  | x::[] -> process_one_match prog x 
-  | _ -> (-1,Search_action (List.map (process_one_match prog) l))
+  | x::[] -> process_one_match prog is_normalizing x 
+  | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
 
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
@@ -703,13 +724,13 @@ and pick_unfold_only ((w,a):action_wt) : action_wt list =
 
 (* and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) = *)
 
-and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action = 
+and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos :action = 
   let r = List.map (fun (c1,c2)-> (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
   (* match r with  *)
   (*   | [] -> M_Nothing_to_do "no nodes to match" *)
   (*   | x::[]-> process_matches lhs_h x *)
   (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
-  let r = List.map (process_matches prog lhs_h) r in
+  let r = List.map (process_matches prog is_normalizing lhs_h) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
@@ -725,7 +746,7 @@ and compute_actions prog es (* list of right aliases *)
       lhs_p (*lhs pure*) 
       rhs_p (*rhs pure*)
       posib_r_alias (*possible rhs variables*)
-      rhs_lst 
+      rhs_lst is_normalizing 
       pos =
   let psv = Cprinter.string_of_spec_var in
   let pr0 = pr_list (pr_pair psv psv) in
@@ -743,7 +764,7 @@ and compute_actions prog es (* list of right aliases *)
       (add_str "RHS cand" pr1)
       (* (add_str "right alias" pr4) *)
       pr2
-      (fun _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h (* lhs_p *) rhs_lst  (* posib_r_alias *)
+      (fun _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos) es lhs_h (* lhs_p *) rhs_lst  (* posib_r_alias *)
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

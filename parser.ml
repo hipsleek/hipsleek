@@ -507,6 +507,7 @@ view_header:
         { view_name = vn;
           view_data_name = "";
           view_vars = List.map fst cids;
+          view_frac_var = None;
           view_labels = br_labels;
           view_modes = modes;
           view_typed_vars = [];
@@ -660,37 +661,44 @@ heap_wr:
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
   ]];
  
-simple2:  [[ t= opt_type_var_list; `LT -> (* let _ = print_endline "PASSED simple2." in *)()]];
+simple2:  [[ t= opt_type_var_list -> (* let _ = print_endline "PASSED simple2." in *)()]];
    
+(*LDK: frac for fractional permission*)   
 simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
+  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac = opt_frac_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
      match hl with
-        | ([],t) -> F.mkHeapNode2 c id dr true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id dr true false false false t ofl (get_pos_camlp4 _loc 2)]];
+        | ([],t) -> F.mkHeapNode2 c id dr true false false false frac t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id dr true false false false frac t ofl (get_pos_camlp4 _loc 2)]];
 
 simple_heap_constr:
   [[ 
-    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
+    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_frac_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
     (match hl with
         | ([],t) -> F.mkHeapNode2 c id dr true false false false t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id dr true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
+  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_frac_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id dr false false false false t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c id dr false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false (*dr*) false false false false [] None  (get_pos_camlp4 _loc 1)
+      | ([],t) -> F.mkHeapNode2 c id dr false false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id dr false false false false frac t ofl (get_pos_camlp4 _loc 2))
+  | t = ho_fct_header -> 
+	let frac = Some (P.FConst (1.0, get_pos_camlp4 _loc 1)) in
+	F.mkHeapNode ("",Primed) "" false (*dr*) false false false false frac [] None  (get_pos_camlp4 _loc 1)
 	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-  | peek_heap; c=cid; `COLONCOLON; simple2; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
+  | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_frac_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
     (match hl with
-        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; simple2; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
+        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr true false false false frac t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr true false false false frac t ofl (get_pos_camlp4 _loc 2))
+  | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_frac_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr false false false false t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr false false false false t ofl (get_pos_camlp4 _loc 2))
-  (* | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" dr false false false false [] None  (get_pos_camlp4 _loc 1) *)
+      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr false false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr false false false false frac t ofl (get_pos_camlp4 _loc 2))
+  (* | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" dr false false false false frac [] None  (get_pos_camlp4 _loc 1) *)
   ]];
-  
+
+(*LDK: parse optional fractional permission, default = 1.0*)
+opt_frac_perm: [[t = OPT frac_perm -> t ]];
+
+frac_perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];  
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
 (*general_h_args:
@@ -1050,7 +1058,8 @@ rel_header:[[
 		let modes = get_modes anns in *)
 		  { rel_name = id;
 			rel_typed_vars = tl;
-			rel_formula = P.mkTrue no_pos; (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)}
+			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
+			}
 ]];
 
 rel_body:[[ (* formulas { 
