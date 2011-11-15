@@ -4,11 +4,11 @@ data anode {
   anode arg;
 }
 
-term<> ==
-     self::anode<0,f,a> * f::term<> * a::term<>
-  or self::anode<1,null,null> // denotes K
-  or self::anode<2,null,null> // denotes S
-  inv self!=null;
+term<n,hS> ==
+  self::anode<0,f,a> * f::term<n1,hS1> * a::term<n2,hS2> & n=1+n1+n2 & hS=hS1+hS2
+  or self::anode<1,null,null> & n=1 & hS=0 // denotes K
+  or self::anode<2,null,null> & n=1 & hS=1 // denotes S
+  inv self!=null & n>=1 & hS>=0;
 
 value<> ==
   self::anode<1,null,null>  // denotes K
@@ -29,15 +29,15 @@ ensures  res::value<>;
  if (isApply(t)) {
       tmp1 = clone(t.arg);
       if (isCombK(t.fn)) {
-	return new anode(0, new anode(1, null, null), tmp1);		
+				return new anode(0, new anode(1, null, null), tmp1);		
       }
       else if (isCombS(t.fn)) {
-	return new anode(0, new anode(2, null, null), tmp1);		     
+				return new anode(0, new anode(2, null, null), tmp1);		     
       }
       else {
         tmp2 = clone(t.fn.arg);
         tmp3 = new anode(0, new anode(2, null, null), tmp2); 
-	return new anode(0, tmp3, tmp1);
+				return new anode(0, tmp3, tmp1);
      }
  }
  else return new anode(t.val, null, null);
@@ -64,11 +64,13 @@ bool isCombS(anode t)
   return t.val == 2;
 }
 
-
 anode reduction (anode t)
 
-requires t::term<>
-ensures  res::value<>;
+requires t::term<n, hS>
+case {
+	hS=0 -> variance (1) [n] ensures res::value<>;
+  hS!=0 -> variance (-1) ensures false; 
+}
 
 {
  anode val1, val2, val11, val2c;
