@@ -149,7 +149,6 @@ h_formula_phase_pos : loc }
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_imm : bool;
-
                         h_formula_data_frac_perm : CP.spec_var option; (*CP.exp;*) (*LDK: fractional permission*)
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
@@ -164,9 +163,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_imm : bool;
-
                         h_formula_view_frac_perm : CP.spec_var option; (*CP.exp;*) (*LDK: fractional permission*)
-
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
                         h_formula_view_coercible : bool;
@@ -942,16 +939,12 @@ and fv_simple_formula (f:formula) =
         (match frac with
           | None -> h.h_formula_data_node::h.h_formula_data_arguments
           | Some f -> h.h_formula_data_node::(f::h.h_formula_data_arguments))
-
-
     (* | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments *)
     | ViewNode h -> let frac = h.h_formula_view_frac_perm in
         (match frac with
           | None -> h.h_formula_view_node::h.h_formula_view_arguments
           | Some f -> h.h_formula_view_node::(f::h.h_formula_view_arguments))
-
     | _ -> []
-
 
 (*LDK: don't count frac var as free vars in a coercion*)
 and fv_simple_formula_coerc (f:formula) = 
@@ -1107,7 +1100,6 @@ and get_node_name (h : h_formula) = match h with
   | ViewNode ({h_formula_view_name = c}) 
   | DataNode ({h_formula_data_name = c}) -> c
   | _ -> failwith ("get_node_name: invalid argument")
-
 (*LDK*)
 and get_node_frac_perm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_frac_perm = c}) 
@@ -1608,7 +1600,6 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
   (*       (\*let vs = List.tl (List.tl vs0) in*\) *)
   (*       let vs = vs0 in *)
   (*       if List.mem v vs then vs else v :: vs *)
-
 (*LDK*)
   | DataNode ({h_formula_data_node = v;
                h_formula_data_frac_perm = frac;
@@ -1691,7 +1682,6 @@ and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : fo
   let f2 = subst_one_by_one st2 f1 in
   f2
       
-
 and subst_avoid_capture_h (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
   Gen.Debug.no_3 "[cformula]subst_avoid_capture_h" !print_svl !print_svl !print_h_formula !print_h_formula
       (fun _ _ _ -> subst_avoid_capture_h_x fr t f) fr t f
@@ -1712,7 +1702,6 @@ and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
 		  | [(fr, t)] -> t
 		  | _ -> sv in
 		new_sv :: new_vars
-
 
 (*LDK: substitue variales (t) in formula (f) by variables (fr)*)
 and subst_struc_avoid_capture_w_frac (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula) (fracvar: CP.spec_var)  (rhs_p : MCP.mix_formula) : struc_formula =
@@ -1764,8 +1753,7 @@ and subst_struc_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f 
   f2
 and subst_struc sst (f : struc_formula) = match sst with
   | s :: rest -> subst_struc rest (apply_one_struc s f)
-  | [] -> f 
-
+  | [] -> f
 (*LDK*)
 and subst_struc_w_frac sst (f : struc_formula) (fracvar: CP.spec_var) : struc_formula  = match sst with
   | s :: rest -> subst_struc_w_frac rest (apply_one_struc_w_frac s f fracvar) fracvar
@@ -2328,7 +2316,6 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
         formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
         formula_exists_label = lbl;
 		formula_exists_pos = pos})
-
 and apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) (fracvar: CP.spec_var) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
         Or ({formula_or_f1 = apply_one_w_frac s f1 fracvar; formula_or_f2 =  apply_one_w_frac s f2 fracvar; formula_or_pos = pos})
@@ -4933,7 +4920,6 @@ let list_of_disjuncts f = split_conjuncts f
 let join_conjunct_opt l = match l with
   | [] -> None
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
-
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
     | [] -> None
@@ -6094,7 +6080,6 @@ let rename_labels_formula_ante  e=
 	let f_b e = Some e in
 	let f_e e = Some e in
 	let f_p_f e = Some e in		
-	
 	transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 			 
 let erase_propagated f = 
@@ -6219,7 +6204,14 @@ let normalize_max_renaming_s f pos b ctx =
 *)
 let clear_entailment_history_es (es :entail_state) :context = 
   Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula =
-      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;es_var_measures = es.es_var_measures; es_var_label = es.es_var_label;es_var_ctx_lhs = es.es_var_ctx_lhs;es_var_ctx_rhs = es.es_var_ctx_rhs} 
+      es.es_formula; 
+      es_path_label = es.es_path_label;
+      es_prior_steps= es.es_prior_steps;
+      es_var_measures = es.es_var_measures; 
+      es_var_label = es.es_var_label;
+	  es_var_ctx_lhs = es.es_var_ctx_lhs;
+	  es_var_ctx_rhs = es.es_var_ctx_rhs} 
+
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
   
@@ -6555,7 +6547,6 @@ and propagate_imm_struc_formula e =
   let f_p_t5 e = Some e in
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
-
 
 let propagate_frac_struc_formula_x e (fracvar:CP.spec_var)=
   let f_e_f e = None  in

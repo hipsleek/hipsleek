@@ -2112,6 +2112,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
 
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
 
+(*WN:TODO*)
   (* let _ = print_string ("trans_one_coercion_x: after trans_formula" *)
   (*                       ^ "\n ### c_rhs = " ^(Cprinter.string_of_formula c_rhs) *)
   (*                       ^"\n\n") in *)
@@ -2144,6 +2145,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     | CF.Simple -> CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name]
     | CF.Complex -> c_rhs
   in
+(*WN:TODO*)
   (* let c_rhs = CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] in *)
 
   (* let c_rhs = CF.add_origs_to_first_node self c_rhs [coer.I.coercion_name] in *)
@@ -4168,7 +4170,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                     vdef.I.view_data_name)
                   else vdef.I.view_data_name in
                 let new_v = CP.SpecVar (Named c0, v, p) in
-
                 (*LDK: linearize frac permission as a spec var*)
                 let fracvar = (match frac with
                   | None -> None
@@ -4203,7 +4204,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       let labels = List.map (fun _ -> "") exps in
                       let hvars = match_exp (List.combine exps labels) pos in
                       let new_v = CP.SpecVar (Named c, v, p) in
-
 
                       (*LDK: linearize frac permission as a spec var*)
                       let fracvar = match frac with 
@@ -5807,7 +5807,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
           (try
                let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
 
-
+(* WN :Not needed but find frac related *)
              (* (\*  (\\*LDK*\\) *\) *)
              (*   let _ = print_string ("gather_type_info_heap_x: zzz \n") in *)
 
@@ -5880,7 +5880,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                    Err.error_loc = pos;
 			                    Err.error_text = c ^ " is neither 2 a data nor view name";
 			                })) in
-
+(*WN : not needed in new code *)
 	    let check_ie ie t =
           (match t with
             | Bool ->
@@ -6113,7 +6113,6 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 	            Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
 	      in
 	      let (new_used_names, hvars, evars, (link_f, link_f_br)) =
-
                   (*if add frac perm if any*)
                   match b.Iformula.h_formula_heap_frac_perm with
                     | Some f ->
@@ -6124,7 +6123,6 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 	      (* let (new_used_names, hvars, evars, (link_f, link_f_br)) = *)
 	      (*   match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in *)
 	      let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-
           (*split frac perm if any*)
           let frac_var,hvars = match b.Iformula.h_formula_heap_frac_perm with
             | Some _ -> (Some (List.hd hvars), List.tl hvars)

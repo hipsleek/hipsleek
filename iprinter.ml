@@ -391,7 +391,8 @@ let rec string_of_ext_formula = function
 		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
 ;;
 
-let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
+let string_of_struc_formula d =  List.fold_left  (fun a c -> 
+a ^"\n "^(string_of_ext_formula c )) "" d 
 ;;
 (*
 let rec string_of_spec = function

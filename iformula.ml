@@ -146,9 +146,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		               h_formula_heap_imm : bool; 
 		               h_formula_heap_full : bool;
 		               h_formula_heap_with_inv : bool;
-
 		               h_formula_heap_frac_perm : P.exp option; (*LDK: optional fractional permission*)
-
 		               h_formula_heap_arguments : P.exp list;
 		               h_formula_heap_pseudo_data : bool;
 		               h_formula_heap_label : formula_label option;
@@ -159,9 +157,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			            h_formula_heap2_imm : bool;
 			            h_formula_heap2_full : bool;
 			            h_formula_heap2_with_inv : bool;
-
 		                h_formula_heap2_frac_perm : P.exp option; (*LDK: fractional permission*)
-
 			            h_formula_heap2_arguments : (ident * P.exp) list;
 			            h_formula_heap2_pseudo_data : bool;
 			            h_formula_heap2_label : formula_label option;
@@ -847,11 +843,11 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 			        | _ ->
 				        let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 				        let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
-				        let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos), None) in
+(*WN:TODO*)		        let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos), None) in
 				        (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 	          (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_frac_perm = Some na_frac}), (List.concat (ls_frac :: ls)))
 
-          | None ->
+ (*WN:TODO*)         | None ->
               let na,ls = List.split (List.map (fun c->
 			      match c with
 				    | Ipure.Var _ -> (c,[])
@@ -885,7 +881,7 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 				        let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 				        let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
 				        let npf = Ipure.BForm (Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None) in
-				        (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
+(*WN:TODO*)				(((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
 	          (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_frac_perm = Some na_frac}),(List.concat (ls_frac :: ls)))
 
           | None ->
@@ -1188,7 +1184,8 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		  List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, None,l))) r ev2 in *)							
 		(* End add_exists *)
   
-  let rec float_out_b_formula_min_max (b: Ipure.b_formula) lbl: Ipure.formula = match b with
+  let rec float_out_b_formula_min_max (b: Ipure.b_formula) lbl: Ipure.formula = 
+   match b with
 	| Ipure.BConst _ -> Ipure.BForm (b,lbl)
 	| Ipure.BVar _ -> Ipure.BForm (b,lbl)
 	| Ipure.Lt (e1, e2, l) ->
@@ -1446,7 +1443,7 @@ and float_out_heap_min_max (h :  h_formula) :
 		                  | _ ->
 		                      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in
 		                      let nv = Ipure.Var((new_name, Unprimed), l) in
-			                  (nv:: a, match c with
+(*WN:TODO*)			                  (nv:: a, match c with
 			                    | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l), None)) )
 			                    | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l), None))), s, l)))) (* ([], None) *)  ([], new_p_frac) args in
               (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);h_formula_heap_frac_perm = Some nl_frac;}), new_p)
@@ -1495,7 +1492,7 @@ and float_out_heap_min_max (h :  h_formula) :
 		                        | _ ->
 		                            let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in
 		                            let nv = Ipure.Var((new_name, Unprimed), l) in
-			                        ((d1,nv):: a, match c with
+(*WN:TODO*)			                        ((d1,nv):: a, match c with
 			                          | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) )
 			                          | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) ), s, l)))) (* ([], None) *) ([], new_p_frac) args in
                     (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_frac_perm = Some nl_frac;}), new_p)
@@ -1514,7 +1511,7 @@ and float_out_heap_min_max (h :  h_formula) :
 		                            let nv = Ipure.Var((new_name, Unprimed), l) in
 			                        ((d1,nv):: a, match c with
 			                          | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) )
-			                          | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) ), s, l)))) ([], None) args in
+(*WN:TODO*)			                          | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) ), s, l)))) ([], None) args in
                     (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);}), new_p)
               )
     |  HTrue -> (h, None)

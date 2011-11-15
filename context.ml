@@ -525,6 +525,8 @@ and norm_search_action ls = match ls with
   | [] -> M_Nothing_to_do ("search action is empty")
   | [(_,a)] -> a
   | lst -> Search_action lst
+
+(* WN : please see what you frac stuff to add to main code *)
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
@@ -635,6 +637,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
           | _ -> report_error no_pos "process_one_match unexpected formulas\n"
         )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
+
+(* WN : which part to add to main code? *)
 
             let r1 = match c.match_res_type with 
               (*Used when normalizing. MATCH only*)
