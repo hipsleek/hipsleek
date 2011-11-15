@@ -465,7 +465,7 @@ let push_term_checking pos reachable =
 	
 let push_pop_entail_variance (es, f, res) = html_output := 
 	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Well-foundedness checking" ^ "\n<ul>" ^
-	(convert_to_html ((Cprinter.string_of_formula es) ^ "\n|-" ^ (Cprinter.string_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed"))) ^ "</ul></li>"
+  (Cprinter.html_of_formula es) ^ "\n|-" ^ (Cprinter.html_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed") ^ "</ul></li>"
 
 let push_pop_unreachable_variance () = html_output := 
 	!html_output ^ "<li class=\"Collapsed termunreach" ^ "\">Unreachable" ^ "</ul></li>" 
