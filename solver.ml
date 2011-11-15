@@ -2923,7 +2923,7 @@ and heap_entail_variance_x
 		    let boundedness_checking_formula = CP.BForm ((CP.mkGte l lower_bound loc, None), None) in
 		    let lexico_ranking_formula = 
 		      if flag then CP.BForm ((CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None), None)
-			  else CP.BForm ((CP.mkEq l (fst r) loc, None), None) in
+			  else CP.BForm ((CP.mkEq_p l (fst r) loc, None), None) in
 		    let f = CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc in  
 		    (false, CP.mkAnd f res loc)) lst_measures (true, CP.mkTrue loc)
 	  in

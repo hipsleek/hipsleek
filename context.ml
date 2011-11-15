@@ -323,9 +323,10 @@ and view_mater_match_x prog c vs1 aset imm f =
 (*   Gen.Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset *)
       
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
-  if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None
+  (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
+  if not(c.coercion_case=Cast.Simple && c.coercion_head_view = l_vname) then None
   else 
-    let args = (* List.tl  *)(fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
+    let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter and fracvar *)
     let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
     try
       let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
@@ -657,9 +658,9 @@ and process_matches prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res in
-  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+  Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
-and process_matches_x prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
+and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> let r0 = (2,M_unmatched_rhs_data_node rhs_node) in
     if (is_view rhs_node) && (get_view_original rhs_node) then
       let r = (2, M_base_case_fold { 

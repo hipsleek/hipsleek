@@ -144,6 +144,7 @@ let is_int_str_aux (n:int) (s:string) : bool =
     else false
 
 
+
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =
   let n=String.length s in
@@ -231,7 +232,71 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
-     
+(*LDK: check constant TRUE conjuncts of equalities, i.e. v=v *)
+let is_true_conj_eq (f1:formula) : bool =
+  match f1 with
+    | BForm (b1,_) ->
+        (match b1 with
+          | Eq (e1,e2,_) , _ -> 
+              (match e1,e2 with
+                | Var (v1,_), Var (v2,_)-> 
+                    let b1 = eq_spec_var v1 v2 in
+                    b1
+                | _ -> false)
+          | _ -> false
+        )
+    | _ -> false
+
+(*LDK: remove duplicated conjuncts of equalities*)
+let remove_true_conj_eq (cnjlist:formula list):formula list =
+  List.filter (fun x -> not (is_true_conj_eq x)) cnjlist
+
+(*LDK: check duplicated conjuncts of equalities*)
+let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
+  match f1,f2 with
+    | BForm (b1,_),BForm (b2,_) ->
+        (match b1,b2 with
+          | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) ->
+              (match e11,e12,e21,e22 with
+                | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
+                    let b1 = eq_spec_var v11 v21 in
+                    let b2 = eq_spec_var v12 v22 in
+                    let b3 = eq_spec_var v11 v22 in
+                    let b4 = eq_spec_var v12 v21 in
+                    (b1&&b2)||(b3&&b4)
+                | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
+                    let b1 = eq_spec_var v11 v21 in
+                    let b2 = (v12= v22) in
+                    b1&&b2
+                | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
+                    let b1 = (v11=v21) in
+                    let b2 = eq_spec_var v12 v22 in
+                    b1&b2
+                | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
+                    let b1 = eq_spec_var v11 v21 in
+                    let b2 = (v12= v22) in
+                    b1&&b2
+                | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
+                    let b1 = (v11=v21) in
+                    let b2 = eq_spec_var v12 v22 in
+                    b1&b2
+                | _ -> false)
+          | _ -> false
+        )
+    | _ -> false
+
+(*LDK: remove duplicated conjuncts of equalities*)
+let remove_dupl_conj_eq (cnjlist:formula list):formula list =
+Gen.BList.remove_dups_eq is_dupl_conj_eq cnjlist
+
+  (* let rec helper ls = *)
+  (* match ls with *)
+  (*   | [] -> ls *)
+  (*   | x::xs -> *)
+  (*       let b = is_dupl_conj_eq *)
+  (* in *)
+  (* helper cnjlist *)
+
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ =
   match e with
@@ -449,9 +514,11 @@ and is_null (e : exp) : bool =
   | Null _ -> true
   | _ -> false
 
-and is_zero (e : exp) : bool =
-  match e with
+and is_zero_int (e : exp) : bool = match e with
   | IConst (0, _) -> true
+  | _ -> false
+
+and is_zero_float (e : exp) : bool = match e with
   | FConst (0.0, _) -> true
   | _ -> false
 
@@ -588,6 +655,46 @@ and is_float_type (t : typ) = match t with
   | Float -> true
   | _ -> false
 
+and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
+
+and is_float_exp exp = 
+  let rec helper exp = 
+    match exp with
+      | Var (v,_) -> is_float_var v (* check type *)
+      | FConst v -> true
+      | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _) -> (helper e1) || (helper e2)
+      | Div (e1, e2, _) -> true
+  (* Omega don't accept / operator, we have to manually transform the formula *)
+  (*
+    (match e2 with
+    | IConst _ -> is_linear_exp e1
+    | _ -> false)
+  *)
+      | _ -> false
+  in
+  helper exp
+
+and is_float_bformula b = 
+  let b, _ = b in
+  match b with
+  | Lt (e1, e2, _) | Lte (e1, e2, _) 
+  | Gt (e1, e2, _) | Gte (e1, e2, _)
+  | Eq (e1, e2, _) | Neq (e1, e2, _)
+      -> (is_float_exp e1) || (is_float_exp e2)
+  | EqMax (e1, e2, e3, _) | EqMin (e1, e2, e3, _)
+      -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
+  | _ -> false
+
+and is_float_formula f0 = 
+  let rec helper f0= 
+  match f0 with
+    | BForm (b,_) -> is_float_bformula b
+    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) ->
+        is_float_formula f;
+    | And (f1, f2, _) | Or (f1, f2, _,_) ->
+        (helper f1) || (helper f2)
+  in helper f0
+
 and is_object_type (t : typ) = match t with
   | Named _ -> true
   | _ -> false
@@ -714,15 +821,33 @@ and mkNeq a1 a2 pos =
   else
     Neq (a1, a2, pos)
 
-and mkEq a1 a2 pos =
-  if is_max_min a1 && is_max_min a2 then
-    failwith ("max/min can only appear in one side of an equation")
-  else if is_max_min a1 then
-    match a1 with
-      | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
-      | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
+and mkEq a1 a2 pos : b_formula=
+  let pf = 
+    if is_max_min a1 && is_max_min a2 then
+      failwith ("max/min can only appear in one side of an equation")
+    else if is_max_min a1 then
+      match a1 with
+        | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
+        | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
+        | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
+    else if is_max_min a2 then
+    match a2 with
+      | Min (a21, a22, _) -> EqMin (a1, a21, a22, pos)
+      | Max (a21, a22, _) -> EqMax (a1, a21, a22, pos)
       | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
-  else if is_max_min a2 then
+  else
+    Eq (a1, a2, pos)
+  in (pf,None)
+
+and mkEq_p a1 a2 pos : p_formula=
+    if is_max_min a1 && is_max_min a2 then
+      failwith ("max/min can only appear in one side of an equation")
+    else if is_max_min a1 then
+      match a1 with
+        | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
+        | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
+        | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
+    else if is_max_min a2 then
     match a2 with
       | Min (a21, a22, _) -> EqMin (a1, a21, a22, pos)
       | Max (a21, a22, _) -> EqMax (a1, a21, a22, pos)
@@ -785,6 +910,12 @@ and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
     mkTrue pos
   else
     BForm ((Eq (Var (sv1, pos), Var (sv2, pos), pos), None),None)
+
+and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
+  if eq_spec_var sv1 sv2 then
+    mkTrue pos
+  else
+    BForm (((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
 
 and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
@@ -1290,6 +1421,14 @@ and subst_var_list_par sst (svs : spec_var list) = match svs with
   f2*)
 
 and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
+  Gen.Debug.no_3 "[cpure]subst_avoid_capture"
+      !print_svl
+      !print_svl
+      !print_formula
+      !print_formula
+      subst_avoid_capture_x fr t f
+
+and subst_avoid_capture_x (fr : spec_var list) (t : spec_var list) (f : formula) =
   let st1 = List.combine fr t in
   (* let f2 = subst st1 f in *) 
   (* changing to a parallel substitution below *)
@@ -2210,7 +2349,7 @@ and elim_exists_with_ineq (f0: formula): formula =
 
 
 (* eliminate exists with the help of v=exp *)
-and elim_exists (f0 : formula) : formula = 
+and elim_exists_x (f0 : formula) : formula = 
   let rec helper f0 =
     match f0 with
       | Exists (qvar, qf, lbl, pos) -> begin
@@ -2271,6 +2410,8 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
+and elim_exists (f0 : formula) : formula = 
+  Gen.Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
 (*
 add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
 add_gte_0@144 EXIT out : exists(b_113:0<=b_113 & 
@@ -2629,12 +2770,14 @@ let rec break_implication (ante : formula) (conseq : formula) : ((formula * form
 (**************************************************************)
 (**************************************************************)
 
+(*find constraints in f that related to specvar in v_l*)  
 let find_rel_constraints (f:formula) desired :formula = 
  if desired=[] then (mkTrue no_pos)
  else 
    let lf = split_conjunctions f in
    let lf_pair = List.map (fun c-> ((fv c),c)) lf in
    let var_list = fst (List.split lf_pair) in
+   (*LDK: repeatedly collect vars that relate to desired vars*)
    let rec helper (fl:spec_var list) : spec_var list = 
     let nl = List.filter (fun c-> (Gen.BList.intersect_eq (=) c fl)!=[]) var_list in
     let nl = List.concat nl in
@@ -3052,7 +3195,7 @@ and drop_null (f:formula) self neg:formula =
 	| Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
 	      
 and add_null f self : formula =  
-  mkAnd f (BForm ((mkEq (Var (self,no_pos)) (Null no_pos) no_pos, None), None)) no_pos	  
+  mkAnd f (BForm ((mkEq (Var (self,no_pos)) (Null no_pos) no_pos, None))) no_pos	  
       (*to fully extend*)
       (* TODO: double check this func *)
 
@@ -3432,7 +3575,11 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
 	|  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
-and b_form_simplify (b:b_formula) :b_formula = 
+and b_form_simplify (pf : b_formula) :  b_formula =   
+  Gen.Debug.no_1 "b_form_simplify " !print_b_formula !print_b_formula 
+      b_form_simplify_x pf
+
+and b_form_simplify_x (b:b_formula) :b_formula = 
   let do_all e1 e2 l =
 	let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
@@ -4116,7 +4263,8 @@ and norm_exp (e:exp) =
     | Mult (e1,e2,l) -> 
           let e1=helper e1 in 
           let e2=helper e2 in
-          if (is_zero e1 || is_zero e2) then IConst(0,l)
+          if (is_zero_int e1 || is_zero_int e2) then IConst(0,l)
+          else if (is_zero_float e1 || is_zero_float e2) then FConst(0.0,l)
           else two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l
     | Div (e1,e2,l) -> if is_one e2 then e1 else Div (helper e1,helper e2,l)
     | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
@@ -4186,23 +4334,26 @@ let simp_bform simp bf =
 (* normalise and simplify b_formula *)
 let norm_bform_a (bf:b_formula) : b_formula =
   (*let bf = b_form_simplify bf in *)
-  let (pf,il) = bf in
-  let npf = match pf with 
-      | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
-      | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
-      | Gt  (e1,e2,l) -> norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
-      | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
-      | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
-      | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
-      | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
-      | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
-      | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
-      | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
-      | BConst _ | BVar _ | EqMax _ 
-      | EqMin _ |  BagSub _ | BagMin _ 
-      | BagMax _ | ListAllN _ | ListPerm _
-	  | RelForm _ -> pf (* An hoa *)
-  in (npf, il)
+  if (is_float_bformula bf) then bf
+  else
+    let (pf,il) = bf in	
+    let npf = 
+      match pf with 
+        | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
+        | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
+        | Gt  (e1,e2,l) -> norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
+        | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
+        | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
+        | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
+        | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
+        | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
+        | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
+        | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+        | BConst _ | BVar _ | EqMax _ 
+        | EqMin _ |  BagSub _ | BagMin _ 
+        | BagMax _ | ListAllN _ | ListPerm _
+	    | RelForm _ -> pf (* An hoa *)
+    in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
 
@@ -5343,6 +5494,9 @@ let is_linear_formula f0 =
       | _ -> None
   in
   fold_formula f0 (nonef, f_bf, f_e) and_list
+
+let is_linear_formula f0 =
+  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 let is_linear_exp e0 =
   let f e =

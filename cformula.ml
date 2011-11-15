@@ -13,6 +13,11 @@ module MCP = Mcpure
 
 type typed_ident = (typ * ident)
 
+and formula_type = 
+  | Simple
+  | Complex
+(*later, type of formula, based on #nodes ....*)
+
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
   	   | TypeExact of t_formula_sub_type (* for t = C *)
@@ -224,18 +229,18 @@ let full_perm_var_name = ("Anon_"^"full_perm")
 let full_perm_var = (Cpure.SpecVar (Float, full_perm_var_name, Unprimed))
 
 (*LDK: a constraint to indicate FULL permission = 1.0*)
-let full_perm_constraint = Mcpure.OnePF (Cpure.BForm ((Cpure.Eq (
+let full_perm_constraint = Mcpure.OnePF (Cpure.BForm (((Cpure.Eq (
     (Cpure.Var (full_perm_var,no_pos)),
     (Cpure.FConst (1.0,no_pos)),
     no_pos
-)),None))
+)), None),None))
 
 let mkFullPerm_pure  f : CP.formula = 
-  Cpure.BForm ((Cpure.Eq (
+  Cpure.BForm (((Cpure.Eq (
       (Cpure.Var (f,no_pos)),
       (Cpure.Var (full_perm_var,no_pos)),
       no_pos
-  )),None)
+  )),None), None)
 
 let mkFullPerm_pure_from_ident id : CP.formula = 
   let var = (Cpure.SpecVar (Float, id, Unprimed)) in
@@ -244,26 +249,26 @@ let mkFullPerm_pure_from_ident id : CP.formula =
 (*create fractional invariant 0<f<=1*)
 let mkFracInv (f:CP.spec_var) : CP.formula =
   let upper = 
-    Cpure.BForm ((Cpure.Lte (
+    Cpure.BForm (((Cpure.Lte (
         (Cpure.Var (f,no_pos)),
         (Cpure.FConst (1.0,no_pos)),
         no_pos
-    )),None) in
-  let lower =  Cpure.BForm ((Cpure.Gt (
+    )), None),None) in
+  let lower =  Cpure.BForm (((Cpure.Gt (
       (Cpure.Var (f,no_pos)),
       (Cpure.FConst (0.0,no_pos)),
       no_pos
-  )),None) in
+  )), None),None) in
   let inv = 
     (Cpure.And (lower,upper,no_pos)) in
   inv
 
 let mkFracWrite (f:CP.spec_var) : CP.formula =
-  Cpure.BForm ((Cpure.Eq (
+  Cpure.BForm (((Cpure.Eq (
       (Cpure.Var (f,no_pos)),
       (Cpure.FConst (1.0,no_pos)),
       no_pos
-  )),None)
+  )),None),None)
 
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -2627,6 +2632,7 @@ and h_apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formu
 	h_formula_data_origins = orgs;
 	h_formula_data_original = original;
 	h_formula_data_arguments = svs; 
+    h_formula_data_holes = holes;
 	h_formula_data_label = lbl;
     h_formula_data_remaining_branches = ann;
     h_formula_data_pruning_conditions = pcond;
@@ -2649,6 +2655,7 @@ and h_apply_one_w_frac ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formu
 	    h_formula_data_origins = orgs;
 	    h_formula_data_original = original;
 		h_formula_data_arguments = List.map (subst_var s) svs;
+        h_formula_data_holes = holes;
 		h_formula_data_label = lbl;
         h_formula_data_remaining_branches = ann;
         h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
@@ -5083,11 +5090,11 @@ let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_fo
                       CP.IConst (0,no_pos)
               in
               let rhs = add_exp xs in
-              let frac_f =   Cpure.BForm ((Cpure.Eq (
+              let frac_f =   Cpure.BForm (((Cpure.Eq (
                   (Cpure.Var (fresh_var,no_pos)),
                   rhs,
                   no_pos
-              )),None) in
+              )),None),None) in
               [frac_f], [fresh_var]
           in
 
@@ -5597,7 +5604,9 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
    f_h_f : heap formula
 *)
 
-let rec transform_formula f (e:formula):formula =
+
+let transform_formula_x f (e:formula):formula =
+  let rec helper f e = 
 	let (_, f_f, f_h_f, f_p_t) = f in
 	let r =  f_f e in 
 	match r with
@@ -5608,16 +5617,38 @@ let rec transform_formula f (e:formula):formula =
               formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
               formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure;
               formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;}
-		| Or o -> Or {o with 
-                    formula_or_f1 = transform_formula f o.formula_or_f1;
-                    formula_or_f2 = transform_formula f o.formula_or_f2;}
+		| Or o -> 
+
+        (* let _ = print_string ("\n [Debug] transform_formula, Or o = ") in  *)
+
+			Or {o with 
+                    formula_or_f1 = helper f o.formula_or_f1;
+                    formula_or_f2 = helper f o.formula_or_f2;}
 		| Exists e -> 
       Exists {e with
                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;
                 formula_exists_branches = 
                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
+  in helper f e
 
+
+
+let transform_formula f (e:formula):formula =
+  let pr = !print_formula in
+  Gen.Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
+
+let transform_formula_w_frac_x (f:formula -> formula option) (e:formula) (fracvar:CP.spec_var):formula =
+	let r =  f e in 
+	match r with
+	| Some e1 -> e1
+	| None  -> e
+
+let transform_formula_w_frac (f:formula -> formula option) (e:formula) (fracvar:CP.spec_var):formula =
+  let pr = !print_formula in
+  Gen.Debug.no_3 "transform_formula_w_frac" 
+      (fun _ -> "f") pr !print_spec_var pr 
+      transform_formula_w_frac_x f e fracvar
 
 let rec trans2_formula f (e:formula):formula =
 	let (f_h_f, f_p_t) = f in
@@ -6678,7 +6709,7 @@ and combine_star_h cs = match cs with
 and merge_data_nodes_common_ptr dns = 
 	List.fold_left merge_two_nodes HTrue dns
 
-
+(*LDK: how to deal with frac perms???*)
 (**
  * An Hoa : Supplementary function to merge two data nodes.
  **)
@@ -6688,6 +6719,9 @@ and merge_two_nodes dn1 dn2 =
 		h_formula_data_name = n1;
 		h_formula_data_imm = i1;
 		h_formula_data_arguments = args1;
+        h_formula_data_frac_perm = frac1;
+        h_formula_data_origins = origs1;
+        h_formula_data_original = orig1;
 		h_formula_data_holes = holes1;
 		h_formula_data_label = lb1;
 		h_formula_data_remaining_branches = br1;
@@ -6697,6 +6731,9 @@ and merge_two_nodes dn1 dn2 =
 						h_formula_data_name = n2;
 						h_formula_data_imm = i2;
 						h_formula_data_arguments = args2;
+                        h_formula_data_frac_perm = frac2;
+                        h_formula_data_origins = origs2;
+                        h_formula_data_original = orig2;
 						h_formula_data_holes = holes2;
 						h_formula_data_label = lb2;
 						h_formula_data_remaining_branches = br2;
@@ -6718,6 +6755,9 @@ and merge_two_nodes dn1 dn2 =
 										h_formula_data_name = n1;
 										h_formula_data_imm = i1;
 										h_formula_data_arguments = args;
+                                        h_formula_data_frac_perm = None; (*frac1? frac2???*)
+                                        h_formula_data_origins = origs1; (*??? how to merge??*)
+                                        h_formula_data_original = orig1;(*??? how to merge??*)
 										h_formula_data_holes = 
 												Gen.BList.intersect_eq (=) holes1 holes2;
 										h_formula_data_label = lb1;

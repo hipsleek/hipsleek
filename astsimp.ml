@@ -2023,7 +2023,42 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let univ_vars = compute_univ () in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
-  let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in
+
+  (*LDK: TODO: check for interraction with lemma proving*)
+  (*pass lhs_heap into add_origs *)
+  let lhs_heap ,_,_,_, _  = Cformula.split_components c_lhs in
+  let lhs_view_name = match lhs_heap with
+    | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
+    | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
+    | _ -> 
+        (*LDK: expecting complex LHS*)
+        let hs = CF.split_star_conjunctions lhs_heap in
+        if ( (List.length hs) > 0) then
+          let head = List.hd hs in
+          match head with
+            | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
+            | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
+            | _ -> 
+                let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node \n" in 
+                ""
+        else
+          let _ = print_string "[astsimp] Warning: lhs of a coercion is neither simple or complex\n" in 
+          ""
+  in
+  (*LDK: In the body of a coercions, there may be multiple nodes with
+  a same name with self => only add [coercion_name] to origins of the
+  first node*)
+  let  coercion_lhs_type = (CF.type_of_formula c_lhs) in
+  let c_rhs = match (coercion_lhs_type) with
+    | CF.Simple -> CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name]
+    | CF.Complex -> c_rhs
+  in
+(*WN:TODO*)
+  (* let c_rhs = CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] in *)
+
+  (* let c_rhs = CF.add_origs_to_first_node self c_rhs [coer.I.coercion_name] in *)
+
+  (* let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in *)
 
   (* ======================= *)
   (* c_body_norm is used only for proving l2r part of a lemma (left & equiv lemmas) *)
@@ -2088,7 +2123,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_head_view = lhs_name;
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
-        C.coercion_simple_lhs = (CF.is_simple_formula c_lhs) } in
+        (* C.coercion_simple_lhs = (CF.is_simple_formula c_lhs);  *)
+        C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs)} in
         let change_univ c = match c.C.coercion_univ_vars with
             (* | [] -> {c with C.coercion_type = Iast.Right} *) 
             (* move LHS guard to RHS regardless of universal lemma *)
@@ -4129,7 +4165,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 						  | [] -> []
 						  | x::t -> let th = collect_holes t (n+1) in 
 							(match x with 
-							  | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th )
+							  | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th ) in
                       (*LDK: linearize frac permission as a spec var*)
                       let fracvar = match frac with 
                         | None -> None

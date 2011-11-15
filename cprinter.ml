@@ -1861,7 +1861,6 @@ let string_of_coerc_opt op c =
     ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
     ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
-    ^"\n";;
     ^"\n head_norm: "^(string_of_formula c.coercion_head_norm)
     ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)^"\n";;
   

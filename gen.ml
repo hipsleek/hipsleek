@@ -57,6 +57,9 @@ struct
   let pr_lst f xs = String.concat "," (List.map f xs)
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
+ let map_opt f x = match x with 
+   | None -> None
+   | Some v -> Some (f v)
 
  let add_str s f xs = s^":"^(f xs)
 
