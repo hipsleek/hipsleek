@@ -322,7 +322,14 @@ $output_file = "log";
 				["seq_tree_count.ss",3,  "", 
                  "count","SUCCESS",
                  "count2","FAIL-1",
-                 "count3","FAIL-1"]
+                 "count3","FAIL-1"],
+				["trees.ss",6,  "", 
+                 "append","SUCCESS",
+                 "count","SUCCESS",
+                 "flatten","SUCCESS",
+                 "insert","SUCCESS",
+                 "remove_min","SUCCESS",
+                 "delete","SUCCESS"]
             ],
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
