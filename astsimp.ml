@@ -1991,62 +1991,62 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   else
     (E.push_scope ();
      (let all_args = 
-      if Gen.is_some proc.I.proc_data_decl then
-        (let cdef = Gen.unsome proc.I.proc_data_decl in
-        let this_arg ={
-            I.param_type = Named cdef.I.data_name;
-            I.param_name = this;
-            I.param_mod = I.NoMod;
-            I.param_loc = proc.I.proc_loc;} in 
-        this_arg :: proc.I.proc_args)
-      else proc.I.proc_args in
+        if Gen.is_some proc.I.proc_data_decl then
+          (let cdef = Gen.unsome proc.I.proc_data_decl in
+           let this_arg ={
+               I.param_type = Named cdef.I.data_name;
+               I.param_name = this;
+               I.param_mod = I.NoMod;
+               I.param_loc = proc.I.proc_loc;} in 
+           this_arg :: proc.I.proc_args)
+        else proc.I.proc_args in
       let p2v (p : I.param) = {
-        E.var_name = p.I.param_name;
-        E.var_alpha = p.I.param_name;
-        E.var_type = p.I.param_type; } in
+          E.var_name = p.I.param_name;
+          E.var_alpha = p.I.param_name;
+          E.var_type = p.I.param_type; } in
       let vinfos = List.map p2v all_args in
       let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
       let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
       let free_vars = List.map (fun p -> p.I.param_name) all_args in
       let stab = H.create 103 in
       let add_param p = H.add stab p.I.param_name {
-        sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
-        id = fresh_int () } in
+          sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
+          id = fresh_int () } in
       (ignore (List.map add_param all_args);
-	let _ = H.add stab res { sv_info_kind = cret_type;id = fresh_int () } in
-	let _ = check_valid_flows proc.I.proc_static_specs in
-	let _ = check_valid_flows proc.I.proc_dynamic_specs in
-	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
-	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
-	let exc_list = (List.map Gen.ExcNumbering.get_hash_of_exc proc.I.proc_exceptions) in
-	let r_int = Gen.ExcNumbering.get_hash_of_exc abnormal_flow in
-	(if (List.exists CF.is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
-	  Error.report_error {Err.error_loc = proc.I.proc_loc;Err.error_text =" can not throw an instance of a non throwable class"}
-	else ()) ;
-	let _ = Cast.check_proper_return cret_type exc_list (dynamic_specs_list@static_specs_list) in
+	   let _ = H.add stab res { sv_info_kind = cret_type;id = fresh_int () } in
+	   let _ = check_valid_flows proc.I.proc_static_specs in
+	   let _ = check_valid_flows proc.I.proc_dynamic_specs in
+	   let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
+	   let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+	   let exc_list = (List.map Gen.ExcNumbering.get_hash_of_exc proc.I.proc_exceptions) in
+	   let r_int = Gen.ExcNumbering.get_hash_of_exc abnormal_flow in
+	   (if (List.exists CF.is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
+	         Error.report_error {Err.error_loc = proc.I.proc_loc;Err.error_text =" can not throw an instance of a non throwable class"}
+	    else ()) ;
+	   let _ = Cast.check_proper_return cret_type exc_list (dynamic_specs_list@static_specs_list) in
 	(* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
-	let _ = H.remove stab res in
-	let body =match proc.I.proc_body with
-	  | None -> None
-	  | Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
+	   let _ = H.remove stab res in
+	   let body =match proc.I.proc_body with
+	     | None -> None
+	     | Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
 	(* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
-	let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
-	let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
-	let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
-	let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
-	let static_specs_list  = Cformula.plug_ref_vars static_specs_list by_names in
-	let dynamic_specs_list = Cformula.plug_ref_vars dynamic_specs_list by_names in
-	let final_static_specs_list =
-	  if Gen.is_empty static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc
-	  else static_specs_list in
-	let final_dynamic_specs_list = dynamic_specs_list in
+	   let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+	   let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
+	   let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
+	   let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
+	   let static_specs_list  = Cformula.plug_ref_vars static_specs_list by_names in
+	   let dynamic_specs_list = Cformula.plug_ref_vars dynamic_specs_list by_names in
+	   let final_static_specs_list =
+	     if Gen.is_empty static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc
+	     else static_specs_list in
+	   let final_dynamic_specs_list = dynamic_specs_list in
        let _ = 
          let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
-      let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((cret_type,res)::args) in
-      if (ffv!=[]) then 
-        Error.report_error { 
-            Err.error_loc = no_pos; 
-            Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
+       let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((cret_type,res)::args) in (*??? how about global variables*)
+       if (ffv!=[]) then 
+         Error.report_error { 
+             Err.error_loc = no_pos; 
+             Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
 	     let cproc ={
              C.proc_name = proc.I.proc_mingled_name;
              C.proc_args = args;
@@ -2112,7 +2112,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
 
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
 
-(*WN:TODO*)
+(*WN:TODO:DONE*)
   (* let _ = print_string ("trans_one_coercion_x: after trans_formula" *)
   (*                       ^ "\n ### c_rhs = " ^(Cprinter.string_of_formula c_rhs) *)
   (*                       ^"\n\n") in *)
@@ -2145,7 +2145,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     | CF.Simple -> CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name]
     | CF.Complex -> c_rhs
   in
-(*WN:TODO*)
+(*WN:TODO:DONE*)
   (* let c_rhs = CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] in *)
 
   (* let c_rhs = CF.add_origs_to_first_node self c_rhs [coer.I.coercion_name] in *)
@@ -6832,8 +6832,10 @@ and case_normalize_data prog (f:Iast.data_decl):Iast.data_decl =
   {f with Iast.data_invs = List.map (case_normalize_formula prog h) f.Iast.data_invs}
 
 and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl = 
+  (*convert global vars to ref param*)
   let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
   let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
+  (*args = agrs + global vars*)
   let gl_proc_args = gl_v@ f.Iast.proc_args in
   let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) gl_proc_args) in
   let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) gl_proc_args) in
