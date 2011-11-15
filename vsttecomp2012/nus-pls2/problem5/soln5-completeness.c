@@ -38,20 +38,10 @@ relation allsd(int[,] A, int n, int m, int s, int[] S, int x1, int x2, int d) ==
 
 /* NON-TRIVIAL THEOREMS */
 
-// To prove precondition in case v is not in C in bfs_loop2
 axiom !(msd(A,n,n,s,v,d)) & allsd(A,n,v,s,S,0,n,d+1) ==> allsd(A,n,v+1,s,S,0,n,d+1).
 
-// expanded to the pair of theorems
-
-//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
-
-//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v+1,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
-
-// To prove post-condition of bfs_loop2
 axiom reach(A,n,n,s,S,0,n,d) ==> reach(A,n,0,s,S,0,n,d+1).
 
-// To prove pre-condition of recursive call in bfs_loop3 
-// when the right-above if-condition is true.
 axiom !(hbmp(A,n,n,s,t,d)) ==> !(hbmp(A,n,m,s,t,d)).
 
 /* ALGORITHM & SPECIFICATION */
@@ -86,37 +76,28 @@ int bfs_loop1(int[,] A, int n, int s, int t, int d, int[] V, int[] C)
 		int[] N = new int[n];
 		init_false(N, n);
 		bfs_loop2(A,n,s,t,d,V,C,N,0);
-//		int r = bfs_loop2(A,n,s,t,d,V,C,N,0);
-//		if (r >= 0)
-//			return r;
-//		else
-			return bfs_loop1(A,n,s,t,d+1,V,N);
+		return bfs_loop1(A,n,s,t,d+1,V,N);
 	}
 }
 
-/*int*/ void bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref int[] N, int v)
+void bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref int[] N, int v)
 	requires 0 <= s < n & 0 <= t < n & d >= 0 & 0 <= v <= n &
 		dom(V,0,n-1) & dom(C,0,n-1) & dom(N,0,n-1) & 
 		reach(A,n,v,s,V,0,n,d) &
 		allsd(A,n,n,s,C,0,n,d) &
 		allsd(A,n,v,s,N,0,n,d+1) &
 		(N[t] != 0 | N[t] = 0 & V[t] = 0)
-	ensures //res < 0 & 
-		reach(A,n,0,s,V',0,n,d+1) &
+	ensures reach(A,n,0,s,V',0,n,d+1) &
 		allsd(A,n,n,s,N',0,n,d+1) &
 		dom(V',0,n-1) & dom(N',0,n-1) &
-		(N'[t] != 0 | N'[t] = 0 & V'[t] = 0);// |
-		//res >= 0 & msd(A,n,n,s,t,res);
+		(N'[t] != 0 | N'[t] = 0 & V'[t] = 0);
 {
 	if (v < n) {
 		if (C[v] != 0) {
-//			if (v == t)
-//				return d;
 			bfs_loop3(A,n,s,t,d,V,N,v,0);
 		}
-		/*return*/ bfs_loop2(A,n,s,t,d,V,C,N,v+1);
+		bfs_loop2(A,n,s,t,d,V,C,N,v+1);
 	}
-//	return -1;
 }
 
 
