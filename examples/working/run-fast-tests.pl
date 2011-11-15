@@ -41,7 +41,7 @@ else
 	}
 
 if($prover){
-	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 
+	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'zm' => 'zm');
 	if (!exists($provers{$prover})){
@@ -55,7 +55,7 @@ else{
         $prover = "$1";
     }
     else{
-	$prover = "omega";
+	$prover = "oc";
     }
 }
 

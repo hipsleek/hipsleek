@@ -1580,7 +1580,7 @@ let run_with_timeout (prog : string) (seconds : int) : int =
   Sys.command (timed_command ^ Printf.sprintf " %d " seconds ^ prog)
 
 let is_breakable c =  match c with
-  | '(' | ')' | ' ' | '+' | ':' -> true
+  | '(' | ')' | ' ' | '+' | ':'|',' -> true
   | _ -> false
 
 let new_line_str = "\n"
@@ -1593,7 +1593,7 @@ let new_line_str = "\n"
   else "\n"
 *)
 
-let break_lines (input : string) : string =
+let break_lines (input : string): string =
   let buf = Buffer.create 4096 in
   let i = ref 0 in
   let cnt = ref 0 in
@@ -1608,6 +1608,25 @@ let break_lines (input : string) : string =
       i := !i + 1
   done;
   Buffer.contents buf
+
+let break_lines_num (input : string) num: string =
+  let buf = Buffer.create 4096 in
+  let i = ref 0 in
+  let cnt = ref 0 in
+  let l = String.length input in
+  while !i < l do
+    Buffer.add_char buf input.[!i];
+      cnt := !cnt + 1;
+      if !cnt > num && (is_breakable input.[!i]) then begin
+		Buffer.add_string buf new_line_str;
+		cnt := 0
+	  end;
+      i := !i + 1
+  done;
+  Buffer.contents buf
+
+let break_lines_1024 (input : string) : string =
+  break_lines_num input (1024-32)
 
 end;;
 
