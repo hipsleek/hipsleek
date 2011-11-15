@@ -91,7 +91,7 @@ tree build(node s)
 
   
 tree harness1(node s1)
-  requires s1::node<1,s2>@I*s2::node<3,s3>@I*s3::node<3,s4>@I*s4::node<2,null>@I
+	requires s1::node<1,s2>@I*s2::node<3,s3>@I*s3::node<3,s4>@I*s4::node<2,null>@I
   ensures res::treelseg<s1,null,0,4>@I;
 {
 	return build(s1);

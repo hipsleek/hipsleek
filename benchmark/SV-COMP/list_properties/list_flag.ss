@@ -14,34 +14,44 @@ lseg<p, n, S> == self=p & n=0 & S={}
 
 void exit() requires true ensures true;
 
-void create(ref node x, int n, int flag)
+node create(ref node x, int n, int flag)
   requires x::node<0,null> & n >= 0
-//  ensures x'::lseg<r, n+1, S> * r::node<0,null> & forall (b : (b notin S | b=1 | b=2));
-  ensures x'::node<0,null>;
+  ensures res::lseg<x', n+1, S> * x'::node<0,null> & forall (b : (b notin S | b=1 | b=2));
+  //ensures x'::node<0,null>;
 {
   if (flag==1) x.val = 1;
   else x.val = 2;
   node t = new node(0,null);
-  if (t==null) exit();
+  if (t==null) {
+    exit();
+    return x;
+  }
   else
   {
-    x.next = t;
-    x = x.next;
+    x.next = t;    
     if (n==0)
     {
-      return;
+      node y = x;
+      x = x.next;
+      return y;
     }
     else
     {
-      create(x,n-1,flag);
+      bind x to (xval,xnext) in {
+        node tmp = create(xnext,n-1,flag);
+        node y = x;
+        x = xnext;
+        return y;
+      }
     }
   }
 }
 
+
 node main(int m, int flag)
   requires m > 0
-  //ensures res::lseg<r, m+1, S> * r::node<3,null> & forall (b : (b notin S | b=1 | b=2));
-  ensures res::node<3,null>;
+  ensures res::lseg<r, m+1, S> * r::node<3,null> & forall (b : (b notin S | b=1 | b=2));
+  //ensures res::node<3,null>;
 {
   node a = new node(0,null);
   if (a==null) {
@@ -51,10 +61,10 @@ node main(int m, int flag)
   else
   {
     node x = a;
-    create(x,m,flag);    
+    a = create(x,m,flag);    
     x.val = 3;
-    return x;
-    //return a;
+    //return x;
+    return a;
   }
 }
 

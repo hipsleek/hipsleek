@@ -34,8 +34,9 @@ tlseg<p,d,n> ==
 // which is supposed to give our completeness result
 negtlseg<p,d,n> ==
   self::node<v,p> & n=1 & v!=d
-  or self::negtlseg<r,d+1,n1> & n1<=n
-  or self::tlseg<r,d+1,n2> * r::negtlseg<p,d+1,n3> & n=n2+n3
+  or self::negtlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2
+  or self::tlseg<r,d+1,n1> * r::negtlseg<p,d+1,n2> & n=n1+n2
+  or self::negtlseg<r,d+1,n1> * r::negtlseg<p,d+1,n2> & n=n1+n2
   inv self!=null & n>=1; 
 
 // a provable lemma that tlseg gives at least one node
@@ -74,9 +75,7 @@ tree build_rec (int d, ref node s)
      ensures res::treelseg<s,s',d,n> & s' = p & flow __norm;
      requires s::negtlseg<p,d,n> 
      ensures true & flow exception;
-     //requires self::tlseg<r,d+1,n2> * r::negtlseg<p,d+1,n3>
-     //ensures true & flow exception;
-  }
+}
 {
   tree ll,rr;
 	if (is_empty(s)) raise new exception();
@@ -89,7 +88,7 @@ tree build_rec (int d, ref node s)
   assume false;
   ll = build_rec(d+1, s);
   rr = build_rec(d+1, s);
-  return new tree (ll,rr);
+	return new tree (ll,rr);
 }
 
 tree build(node s)
@@ -98,7 +97,7 @@ tree build(node s)
   s!=null ->   
       requires s::tlseg<null,0,n>
       ensures res::treelseg<s, null, 0, n>  & flow __norm; 
-      requires s::negtlseg<p,0,_> 
+      requires s::negtlseg<p,0,n> 
       ensures true & flow exception ; 
 }
 {

@@ -456,7 +456,10 @@ let string_of_spec_var x =
         | Unprimed -> "" )
 
 let string_of_imm imm = 
-  if imm then "@I" else "@M"
+  if imm then "@I" else "" (*"@M"*)
+
+let string_of_derv dr = 
+  if dr then "@D" else ""
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
@@ -465,6 +468,8 @@ let pr_typed_spec_var x = fmt_string (string_of_typed_spec_var x)
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
 let pr_imm x = fmt_string (string_of_imm x)
+
+let pr_derv x = fmt_string (string_of_derv x)
 
 let string_of_ident x = x
 
@@ -859,6 +864,7 @@ let rec pr_h_formula h =
           fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
+	  h_formula_view_derv = dr;
 	  h_formula_view_imm = imm;
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
@@ -875,6 +881,7 @@ let rec pr_h_formula h =
           fmt_string "::"; 
           pr_angle c pr_spec_var svs;
 	      pr_imm imm;
+	      pr_derv dr;
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
 	  if original then fmt_string "[Orig]"
 	  else fmt_string "[Derv]";

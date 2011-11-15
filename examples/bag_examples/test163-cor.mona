@@ -1,4 +1,0 @@
-include "/usr/local/lib/mona_predicates.mona";
-var1 v_815_r15;
-var2 S1_817_r15; 
- (all1 b:((b in S1_817_r15 union {v_815_r15}) | ((b = 1)))) ;

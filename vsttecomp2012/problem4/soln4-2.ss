@@ -3,6 +3,7 @@
 
 data node {
   int val;
+
   node next;
 }
 
@@ -86,7 +87,7 @@ tree build_rec (int d, ref node s)
   s!=null -> 
       requires s::tlseg<p,f,d,n>
       ensures  res::treelseg<s,s',d,n> & s' = p & flow __norm;
-      requires s::negtlseg<_,_,d,_> 
+      requires s::negtlseg<p,_,d,n> 
       ensures  true & flow exception;
   }
 {

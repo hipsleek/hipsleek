@@ -58,7 +58,7 @@ struct
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
 
- let add_str s f xs = s^(f xs)
+ let add_str s f xs = s^":"^(f xs)
 
   let opt_to_list o = match o with
     | None -> []
