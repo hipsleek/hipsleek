@@ -1,11 +1,13 @@
-/* PRELIMINARY RELATIONS */
-
+/* PRELIMINARY RELATIONS */ 
 relation allzero(int[] A, int i, int j) == 
 	forall(k : k < i | k > j | A[k] = 0).
 
 // there is a path from s to t
 relation has_path(int[,] A, int n, int s, int t) == 
 	exists(d : 0 <= d & hemp(A,n,n,s,t,d)).
+
+// well-ordering of integers
+axiom has_path(A,n,s,t) ==> exists(d : msd(A,n,n,s,t,d)).
 
 // there is a m-path from s to t of length exactly d
 relation hemp(int[,] A, int n, int m, int s, int t, int d) ==
@@ -15,7 +17,7 @@ relation hemp(int[,] A, int n, int m, int s, int t, int d) ==
 // there is a m-path from s to t of length at most d
 relation hbmp(int[,] A, int n, int m, int s, int t, int d) == 
 	0 <= s < n & 0 <= t < n & (d = 0 & s = t | 
-	d > 0 & 0 < m <= n & exists(k : 0 <= k <= d & hemp(A,n,m,s,t,d))).
+	d > 0 & 0 < m <= n & (hbmp(A,n,m,s,t,d-1) | hemp(A,n,m,s,t,d))). // exists(k : 0 <= k <= d & hemp(A,n,m,s,t,d))).
 
 // the length of shortest m-path from s to t is d
 relation msd(int[,] A, int n, int m, int s, int t, int d) == 
@@ -37,7 +39,13 @@ relation allsd(int[,] A, int n, int m, int s, int[] S, int x1, int x2, int d) ==
 /* NON-TRIVIAL THEOREMS */
 
 // To prove precondition in case v is not in C in bfs_loop2
-axiom (!(msd(A,n,n,s,v,d)) | hbmp(A,n,n,s,v,d-1)) & reach(A,n,v,s,V,0,n,d) & allsd(A,n,n,s,C,0,n,d) & allsd(A,n,v,s,N,0,n,d+1) ==> allsd(A,n,v+1,s,N,0,n,d+1) & reach(A,n,v+1,s,V,0,n,d).
+axiom !(msd(A,n,n,s,v,d)) & allsd(A,n,v,s,S,0,n,d+1) ==> allsd(A,n,v+1,s,S,0,n,d+1).
+
+// expanded to the pair of theorems
+
+//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
+
+//axiom !(msd(A,n,n,s,v,d)) & !(hbmp(A,n,n,s,t,d)) & msd(A,n,v+1,s,t,d+1) ==> msd(A,n,v+1,s,t,d+1).
 
 // To prove post-condition of bfs_loop2
 axiom reach(A,n,n,s,S,0,n,d) ==> reach(A,n,0,s,S,0,n,d+1).
@@ -63,7 +71,8 @@ int bfs_loop1(int[,] A, int n, int s, int t, int d, int[] V, int[] C)
 	requires 0 <= s < n & 0 <= t < n & d >= 0 &
 			dom(V,0,n-1) & dom(C,0,n-1) &
 			reach(A,n,0,s,V,0,n,d) &
-			allsd(A,n,n,s,C,0,n,d)
+			allsd(A,n,n,s,C,0,n,d) &
+			(C[t] != 0 | C[t] = 0 & V[t] = 0)
 	ensures res < 0 & !(has_path(A,n,s,t)) | 
 			res >= 0 & msd(A,n,n,s,t,res);
 {
@@ -71,40 +80,43 @@ int bfs_loop1(int[,] A, int n, int s, int t, int d, int[] V, int[] C)
 		assume !(has_path(A,n,s,t));
 		return -1;
 	}
+	else if (C[t] != 0)
+		return d;
 	else {
 		int[] N = new int[n];
 		init_false(N, n);
-		int r = bfs_loop2(A,n,s,t,d,V,C,N,0);
-		if (r >= 0)
-			return r;
-		else
+		bfs_loop2(A,n,s,t,d,V,C,N,0);
+//		int r = bfs_loop2(A,n,s,t,d,V,C,N,0);
+//		if (r >= 0)
+//			return r;
+//		else
 			return bfs_loop1(A,n,s,t,d+1,V,N);
 	}
 }
 
-
-
-int bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref int[] N, int v)
+/*int*/ void bfs_loop2(int[,] A, int n, int s, int t, int d, ref int[] V, int[] C, ref int[] N, int v)
 	requires 0 <= s < n & 0 <= t < n & d >= 0 & 0 <= v <= n &
 		dom(V,0,n-1) & dom(C,0,n-1) & dom(N,0,n-1) & 
 		reach(A,n,v,s,V,0,n,d) &
 		allsd(A,n,n,s,C,0,n,d) &
-		allsd(A,n,v,s,N,0,n,d+1)
-	ensures res < 0 & 
+		allsd(A,n,v,s,N,0,n,d+1) &
+		(N[t] != 0 | N[t] = 0 & V[t] = 0)
+	ensures //res < 0 & 
 		reach(A,n,0,s,V',0,n,d+1) &
 		allsd(A,n,n,s,N',0,n,d+1) &
-		dom(V',0,n-1) & dom(N',0,n-1) | 
-		res >= 0 & msd(A,n,n,s,t,res);
+		dom(V',0,n-1) & dom(N',0,n-1) &
+		(N'[t] != 0 | N'[t] = 0 & V'[t] = 0);// |
+		//res >= 0 & msd(A,n,n,s,t,res);
 {
 	if (v < n) {
 		if (C[v] != 0) {
-			if (v == t)
-				return d;
+//			if (v == t)
+//				return d;
 			bfs_loop3(A,n,s,t,d,V,N,v,0);
 		}
-		return bfs_loop2(A,n,s,t,d,V,C,N,v+1);
+		/*return*/ bfs_loop2(A,n,s,t,d,V,C,N,v+1);
 	}
-	return -1;
+//	return -1;
 }
 
 
@@ -116,10 +128,12 @@ void bfs_loop3(int[,] A, int n, int s, int t, int d, ref int[] V, ref int[] N, i
 		reach(A,n,v+1,s,V,0,w,d) &
 		reach(A,n,v,s,V,w,n,d) &
 		allsd(A,n,v+1,s,N,0,w,d+1) &
-		allsd(A,n,v,s,N,w,n,d+1)
+		allsd(A,n,v,s,N,w,n,d+1) &
+		(N[t] != 0 | N[t] = 0 & V[t] = 0)
 	ensures reach(A,n,v+1,s,V',0,n,d) &
 		allsd(A,n,v+1,s,N',0,n,d+1) &
-		dom(V',0,n-1) & dom(N',0,n-1);
+		dom(V',0,n-1) & dom(N',0,n-1) &
+		(N'[t] != 0 | N'[t] = 0 & V'[t] = 0);
 {
 	if (w < n) {
 		if (A[v,w] != 0 && V[w] == 0) {
