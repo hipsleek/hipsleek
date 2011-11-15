@@ -9,7 +9,8 @@ data node {
 }
 
 lseg<p, n, S> == self=p & n=0 & S={}
-  or self::node<v, r> * r::lseg<p, n-1, S1> & S=union(S1, {v});
+  or self::node<v, r> * r::lseg<p, n-1, S1> & S=union(S1, {v})
+  inv n>=0;
 
 void exit() requires true ensures true;
 

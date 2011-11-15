@@ -52,7 +52,7 @@ int count1(node x)
 }*/
 
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
-node split(ref node x, int a)
+node splitx(ref node x, int a)
 	requires x::bnd<n, sm, bg> & a > 0 & n > a 
         ensures x'::bnd<n1, sm, bg> * res::bnd<n2, sm, bg> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a; 
 
@@ -70,7 +70,7 @@ node split(ref node x, int a)
 		a = a - 1;
 		node tmp;
 		bind x to (_, xnext) in {
-			tmp = split(xnext, a);
+			tmp = splitx(xnext, a);
 		}
 		return tmp;
 	}
@@ -78,7 +78,7 @@ node split(ref node x, int a)
 /*
 node split1(ref node x, int a)
   requires x::ll1<n, S> & a > 0 & n > a 
-  ensures x'::ll1<n1, S1> * res::ll1<n2, S2> & n = n1 + n2 & n1 > 0 & n2 > 0 /*& n1 = a*/ & S = union(S1, S2); 
+  ensures x'::ll1<n1, S1> * res::ll1<n2, S2> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a & S = union(S1, S2); 
 
 {
 	node tmp;
@@ -114,7 +114,7 @@ node merge_sort(node xs)
 	{
 		c = count(xs);
 		middle = div2(c);
-		s1 = split(xs, middle);
+		s1 = splitx(xs, middle);
 		s2 = merge_sort(s1);
 		s3 = merge_sort(xs);
 		return merge(s2, s3);
