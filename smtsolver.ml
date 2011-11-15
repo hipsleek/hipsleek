@@ -1,8 +1,16 @@
 open Globals
+open Gen.Basic
 module CP = Cpure
 
 module StringSet = Set.Make(String)
 
+let set_generated_prover_input = ref (fun _ -> ())
+let set_prover_original_output = ref (fun _ -> ())
+
+(* Pure formula printing function, to be intialized by cprinter module *)
+
+let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
+let print_ty_sv = ref (fun (c:CP.spec_var) -> " printing not initialized")
 
 (***************************************************************
                   GLOBAL VARIABLES & TYPES                      
@@ -62,8 +70,8 @@ let rec smt_of_typ t =
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
 		| Int -> "Int"
-		| UNK -> 	
-			Error.report_error {Error.error_loc = no_pos; 
+		| UNK -> 
+			Error.report_error {Error.error_loc = no_pos;
 			Error.error_text = "unexpected UNKNOWN type"}
 		| NUM -> "Int" (* Use default Int for NUM *)
 		| Void | (BagT _) | (TVar _) | List _ ->
@@ -76,7 +84,12 @@ let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
 
 let smt_typed_var_of_spec_var sv =
+  try
 	"(" ^ (smt_of_spec_var sv) ^ " " ^ (smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
+  with _ ->
+		Error.report_error {Error.error_loc = no_pos;
+		Error.error_text = ("problem with type of"^(!print_ty_sv sv))}
+
 
 let rec smt_of_exp a =
 	match a with
@@ -181,6 +194,8 @@ let rec smt_of_formula f =
 	| CP.Exists (sv, p, _,_) ->
 		"(exists (" ^ (smt_typed_var_of_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")"
 
+let smt_of_formula f =
+  Gen.Debug.no_1 "smt_of_formula" !print_pure pr_id smt_of_formula f 
 
 (***************************************************************
                        FORMULA INFORMATION                      
@@ -304,31 +319,40 @@ and compact_formula_info info =
 
 (* Interface function to add a new axiom *)
 let add_axiom h dir c =
-	let info = collect_combine_formula_info_raw h c in 
+	(* let _ = print_endline ("Add axiom : " ^ (!print_pure h) ^ (match dir with |IFF -> " <==> " | _ -> " ==> ") ^ (!print_pure c)) in *)
+	let info = collect_combine_formula_info_raw h c in
+	(* let _ = print_endline ("Directly related relations : " ^ (String.concat "," info.relations)) in *)
+	(* assumption: at the time of adding this axiom, all relations in global_rel_defs has their related axioms computed *)
+	let indirectly_related_relations = List.filter (fun x -> List.mem x.rel_name info.relations) !global_rel_defs in
+	let indirectly_related_relations = List.map (fun x -> x.related_rels) indirectly_related_relations in
+	let related_relations = info.relations @ (List.flatten indirectly_related_relations) in
+	let related_relations = Gen.BList.remove_dups_eq (=) related_relations in
+	(* let _ = print_endline ("All related relations found : " ^ (String.concat ", " related_relations) ^ "\n") in *)
 	let aindex = List.length !global_axiom_defs in
 	begin
 		(* Modifying every relations appearing in h and c by
 		   1)   Add reference to 'h dir c' as a related axiom
 		   2)   Add all other relations (appearing in h and c) to the list of related relations *)
-		global_rel_defs := List.map (fun x -> if (List.mem x.rel_name info.relations) then
-			let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ info.relations) in
-			let rs = List.filter (fun y -> not (y = x.rel_name)) rs in
+		global_rel_defs := List.map (fun x ->
+			if (List.mem x.rel_name related_relations) then
+			let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ related_relations) in
 			{ x with 
 				related_rels = rs;
 				related_axioms = x.related_axioms @ [aindex]; }
 			else x) !global_rel_defs;
 		(* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
-		let cache_smt_input = 
-			let params = List.append (CP.fv h) (CP.fv c) in
-			let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
-			let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
-			let op = match dir with | IMPLIES -> "=>" | IFF -> "=" in
-				"(assert (forall (" ^ smt_params ^ ") (" ^ op ^ " " ^ (smt_of_formula h) ^ " " ^ (smt_of_formula c) ^ ")))\n" in
+		let params = List.append (CP.fv h) (CP.fv c) in
+		let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
+		let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
+		let op = match dir with 
+					| IMPLIES -> "=>" 
+					| IFF -> "=" in
+		let cache_smt_input = "(assert (forall (" ^ smt_params ^ ")\n\t(" ^ op ^ " " ^ (smt_of_formula h) ^ "\n\t" ^ (smt_of_formula c) ^ ")))\n" in
 		(* Add 'h dir c' to the global axioms *)
 		let new_axiom = { axiom_direction = dir;
 						axiom_hypothesis = h;
 						axiom_conclusion = c;
-						related_relations = info.relations (* TODO must we compute closure ? *);
+						related_relations = related_relations (* info.relations TODO must we compute closure ? *);
 						axiom_cache_smt_assert = cache_smt_input; } in
 		global_axiom_defs := !global_axiom_defs @ [new_axiom];
 	end
@@ -377,11 +401,11 @@ type smt_output = {
 		(* expand with other information : proof, time, error, warning, ... *)
 	}
 	
-let string_of_smt_output output =
-	match output.sat_result with
+let string_of_smt_output output = String.concat "\n" output.original_output_text
+	(* match output.sat_result with
 	| Sat -> "sat"
 	| UnSat -> "unsat"
-	| Unknown -> "unknown|timeout"
+	| Unknown -> "unknown|timeout" *)
 
 (* Collect all Z3's output into a list of strings *)
 let rec collect_output chn accumulated_output : string list =
@@ -392,16 +416,22 @@ let rec collect_output chn accumulated_output : string list =
 					| End_of_file -> accumulated_output in
 		output
 
-let sat_type_from_string r =
+let sat_type_from_string r input=
 	if (r = "sat") then Sat
 	else if (r = "unsat") then UnSat
-	else Unknown
-	
-let get_answer chn =
+	else 
+		try
+             let _ = Str.search_forward (Str.regexp "unexpected") r 0 in
+              (print_string "Z3 translation failure!";
+              Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r^"\n input: "^input)})
+            with
+              | Not_found -> Unknown
+                    	
+let get_answer chn input =
 	let output = collect_output chn [] in
 	let solver_sat_result = List.nth output (List.length output - 1) in
 		{ original_output_text = output;
-		sat_result = sat_type_from_string solver_sat_result; }
+		sat_result = sat_type_from_string solver_sat_result input; }
 
 let remove_file filename =
 	try
@@ -427,9 +457,15 @@ let prover_process = ref {
 	errchannel = stdin 
 }
 
+let smtsolver_name = ref ("z3": string)
+
 let command_for prover =
 	match prover with
-	| Z3 -> ("z3", [|"z3"; "-smt2"; infile; ("> "^ outfile) |] )
+	| Z3 -> (match !smtsolver_name with
+          | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+          | "z3-3.2" -> ("z3-3.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+		  | _ -> failwith "smtsolver, command_for: unexpected pattern"
+    )
 	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
 
@@ -442,7 +478,7 @@ let run prover input =
 	let set_process proc = prover_process := proc in
 	let fnc () = 
 		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
-			get_answer !prover_process.inchannel in
+			get_answer !prover_process.inchannel input in
 	let res = try
 			Procutils.PrvComms.maybe_raise_timeout fnc () !timeout 
 		with
@@ -498,8 +534,10 @@ let to_smt_v2 ante conseq logic fvars info =
 	let smt_var_decls = String.concat "" smt_var_decls in
 	(* Relations that appears in the ante and conseq *)
 	let used_rels = info.relations in
+	(* let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in *)
 	let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in
 	(* Necessary axioms *)
+	(* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
 	let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
 	(* Antecedent and consequence : split /\ into small asserts for easier management *)
 	let ante_clauses = CP.split_conjunctions ante in
@@ -517,7 +555,7 @@ let to_smt_v2 ante conseq logic fvars info =
 			";Antecedent\n" ^ 
 				ante_str ^
 			";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
-			"(check-sat)\n")
+			"(check-sat)")
 	
 (* output for smt-lib v1.2 format *)
 and to_smt_v1 ante conseq logic fvars =
@@ -580,10 +618,6 @@ let outconfig = {
 		suppress_print_implication = ref false;
 	}
 
-(* Pure formula printing function, to be intialized by cprinter module *)
-
-let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
-
 (* Function to suppress and unsuppress all output of this modules *)
 
 let suppress_all_output () = outconfig.suppress_print_implication := true
@@ -594,11 +628,19 @@ let process_stdout_print ante conseq input output res =
 	if (not !(outconfig.suppress_print_implication)) then
 	begin
 		if !(outconfig.print_implication) then 
-			print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
+			print_endline ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
 		if !(outconfig.print_input) then 
-			print_string ("Generated SMT input :\n" ^ input);
+			print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
 		if !(outconfig.print_original_solver_output) then
-			print_string ("==> SMT output : " ^ (string_of_smt_output output) ^ "\n");
+		begin
+			print_endline (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
+			print_endline (match output.sat_result with
+				| UnSat -> ">>> VERDICT: VALID!"
+				| Sat -> ">>> VERDICT: INVALID!"
+				| Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS INVALID.");
+		end;
+		if (!(outconfig.print_implication) || !(outconfig.print_input) || !(outconfig.print_original_solver_output)) then
+			print_string "\n";
 	end
 	
 	
@@ -723,12 +765,15 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * We also consider unknown is the same as sat
  *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+	(* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
 	let res, should_run_smt = if (has_exists conseq) then
 		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
 	else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
+		let _ = !set_generated_prover_input input in
 		let output = run prover input in
+		let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 		let res = match output.sat_result with
 			| Sat -> false
 			| UnSat -> true
@@ -752,7 +797,8 @@ let imply ante conseq =
  * Test for satisfiability
  * We also consider unknown is the same as sat
  *)
-let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool = 
+	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
 	let input = to_smt f None prover in
 	let output = run prover input in
 	let res = match output.sat_result with

@@ -21,6 +21,9 @@ let is_hole_spec_var sv = match sv with
 	 *)
   (* | Array of typ  *)
 
+let is_self_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n = self
+
 
 type formula =
   | BForm of (b_formula  *(formula_label option))
@@ -1580,7 +1583,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let npf = match pf with
   | BConst _ -> pf
   | BVar (bv, pos) ->
-        if List.fold_left (fun curr -> fun (fr,_) -> curr or eq_spec_var bv fr) false sst   then
+        if List.exists (fun (fr,_) -> eq_spec_var bv fr) sst   then
           failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
         else
           pf
@@ -1656,7 +1659,9 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   | BConst _ -> pf
   | BVar (bv, pos) ->
         if eq_spec_var bv fr then
-          failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+		match t with 
+			| Var (t,_) -> BVar (t,pos)
+			| _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
         else
           pf
   | Lt (a1, a2, pos) -> Lt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -4102,7 +4107,7 @@ let rec simp_addsub e1 e2 loc =
 (* and norm_exp_aux (e:exp) = match e with  *)
 
 and norm_exp (e:exp) = 
-  let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in
+  (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
     | Null _ | IConst _ | FConst _ -> e
