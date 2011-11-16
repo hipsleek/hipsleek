@@ -34,11 +34,11 @@ type sleek_token =
   (*operators*)
   | AND |  ANDAND | AT | IMM | DERV | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR 
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH  | HEAD | INLIST | LEFTARROW | LENGTH
-  | LT | LTE | MINUS | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
+  | LT | LTE | MINUS | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OPTIONS | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | OSQUARE  | REVERSE | SET | TAIL 
   | PERCENT 
   | PLUS | PRIME 
-  | SEMICOLON 
+  | SEMICOLON | STRATEGY
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE 
 
@@ -65,8 +65,9 @@ module Token = struct
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
     | LEMMA ->"lemma" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | PRED ->"pred" | DPRINT ->"dprint" |PRINT -> "print" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
-    | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static"
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | OPTIONS -> "options "| PRED ->"pred" 
+	| DPRINT ->"dprint" |PRINT -> "print" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
+    | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | STRATEGY -> "strategy"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
   (*operators*)

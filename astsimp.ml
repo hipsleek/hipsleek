@@ -1829,6 +1829,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
              C.proc_by_name_params = by_names;
              C.proc_body = body;
              C.proc_file = proc.I.proc_file;
+			 C.proc_verif_opt = proc.I.proc_verif_opt;
              C.proc_loc = proc.I.proc_loc;} in 
 	     (E.pop_scope (); cproc))))
 
@@ -2982,6 +2983,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_dynamic_specs = [];
                 I.proc_body = Some w_body;
                 I.proc_file = proc.I.proc_file;
+				I.proc_verif_opt = None;
                 I.proc_loc = pos; } in
             let temp_call =  I.CallNRecv {
                 I.exp_call_nrecv_method = w_name;

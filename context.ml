@@ -3,6 +3,7 @@ open Cformula
 open Cast
 open Cprinter
 open Gen.Basic
+open Strategy
 
 
 type match_res = {

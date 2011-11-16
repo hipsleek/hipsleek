@@ -16,7 +16,7 @@ let num_para = ref (1)
 let sort_input = ref false
 let webserver = ref false
 
-
+let verif_opt_stk = new Gen.stack verif_opt_default print_verif_opt
 
 
 let parallelize num =
@@ -681,6 +681,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
 			Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
 			Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
+			let prog = apply_verif_opt proc.proc_verif_opt
 			let ftypes, fnames = List.split proc.proc_args in
 			(* fsvars are the spec vars corresponding to the parameters *)
 			let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in

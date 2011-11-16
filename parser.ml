@@ -1245,29 +1245,47 @@ spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 
 opt_throws: [[ t = OPT throws -> un_option t []]];
 throws: [[ `THROWS; l=cid_list -> List.map fst l]];
+proc_opts: [[ `OPTIONS; puo = OPT proc_unfold_opt ; plo1 = OPT proc_on_lemma_opt ; plo2 = OPT proc_off_lemma_opt ; pso = OPT proc_strategy_opt -> 
+		{
+		verif_opt_pred_levels = un_option puo [];
+		verif_opt_active_lemmas = un_option plo1 [];
+		verif_opt_inactive_lemmas = un_option plo2 [];
+		verif_opt_strateg = un_option pso "default";
+	}
+]];
+
+unfold_item: [[`OPAREN; `IDENTIFIER p; `COMMA; n=integer_literal; `CPAREN -> (p,n)]];
+
+proc_unfold_opt: [[`UNFOLD; t = LIST1 unfold_item SEP `COMMA; `SEMICOLON -> t]];
+
+proc_on_lemma_opt: [[`LEMMA; `ON ; t= LIST1 id SEP `COMMA -> t]];
+
+proc_off_lemma_opt: [[`LEMMA; `OFF ; t= LIST1 id SEP `COMMA -> t]];
+
+proc_strategy_opt: [[`STRATEGY; `IDENTIFIER t -> t]];
 
 proc_decl: 
   [[ h=proc_header; b=proc_body -> { h with proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
    | h=proc_header -> h]];
   
 proc_header:
-  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; verif_opts = OPT proc_opts ; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc id "" None false ot fpl t osl [] (get_pos_camlp4 _loc 1) None
+     mkProc id "" None false ot fpl t osl [] (get_pos_camlp4 _loc 1) None verif_opts
      
-  | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; verif_opts = OPT proc_opts ; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc id "" None false ot fpl void_type osl [] (get_pos_camlp4 _loc 1) None]];
+    mkProc id "" None false ot fpl void_type osl [] (get_pos_camlp4 _loc 1) None verif_opts ]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
    | h=constructor_header -> h]];
 
 constructor_header:
-  [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; verif_opts = OPT proc_opts ; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc id "" None true ot fpl (Named id) osl [] (get_pos_camlp4 _loc 1) None
+      mkProc id "" None true ot fpl (Named id) osl [] (get_pos_camlp4 _loc 1) None verif_opts
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	

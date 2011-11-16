@@ -134,6 +134,28 @@ let set_entail_pos p = entail_pos := p
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
+type verif_opt =
+	{
+		verif_opt_pred_levels : (string*int) list;
+		verif_opt_active_lemmas : string list;
+		verif_opt_inactive_lemmas : string list;
+		verif_opt_strateg : ident;
+	}
+	
+let verif_opt_default = {
+		verif_opt_pred_levels = [];
+		verif_opt_active_lemmas = [];
+		verif_opt_inactive_lemmas = [];
+		verif_opt_strateg = "default"; }
+		
+let print_verif_opt d = 
+	let pr_list l = "["^(String.concat ", " (List.map (fun (p,t)-> "("^p^", "^(string_of_int t)^")") l))^" ]" in
+	"verif_pred_levels "^(pr_list d.verif_opt_pred_levels)^
+	"\n verif_opt_active_lemmas "^(String.concat ", " d.verif_opt_active_lemmas)^
+	"\n verif_opt_inactive_lemmas "^(String.concat ", " d.verif_opt_inactive_lemmas)^
+	"\n verif_opt_strateg "^d.verif_opt_strateg
+		
+
 (* pretty printing for types *)
 let rec string_of_typ = function 
    (* may be based on types used !! *)

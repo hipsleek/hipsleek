@@ -161,6 +161,8 @@ module Make (Token : SleekTokenS)
 	 ("notin", NOTIN);
    ("notinlist", NOTINLIST);
 	 ("null", NULL);
+	 ("options", OPTIONS);
+	 ("strategy", STRATEGY);
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);

@@ -126,7 +126,6 @@ and param = { param_type : typ;
   sensures_pos : loc
   }
 *)
-
 and proc_decl = { proc_name : ident;
 				  mutable proc_mingled_name : ident;
 				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
@@ -137,7 +136,8 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
 				  proc_body : exp option;
-          proc_file : string;
+				  proc_file : string;
+				  proc_verif_opt : verif_opt option;
 				  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;
@@ -623,7 +623,7 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 	
-let mkProc id n dd c ot ags r ss ds pos bd=
+let mkProc id n dd c ot ags r ss ds pos bd vopt=
     { proc_name = id;
 		  proc_mingled_name = n; 
 		  proc_data_decl = dd;
@@ -634,7 +634,8 @@ let mkProc id n dd c ot ags r ss ds pos bd=
 		  proc_static_specs = ss;
 		  proc_dynamic_specs = ds;
 		  proc_loc = pos;
-      proc_file = !input_file_name;
+		  proc_file = !input_file_name;
+		  proc_verif_opt = vopt;
 		  proc_body = bd }	
 
 let mkAssert asrtf assmf pid pos =

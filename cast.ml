@@ -107,6 +107,7 @@ and proc_decl = {
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     proc_file : string;
+	proc_verif_opt : verif_opt option;
     proc_loc : loc; }
 
 (*TODO: should we change lemma need struc formulas?
