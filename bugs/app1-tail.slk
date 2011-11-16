@@ -87,14 +87,31 @@ checkentail
 
 //print residue.
 
+
 /*
 checkentail 
  self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1
- |- (exists lg1,sm2: self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
+ |- [lg1] self::lseg<n1, q, sm, lg1> .
+*/
+
+
+/*
+
+checkentail 
+ self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1=1
+ |- (exists sm2: self::node<sm,q> * q::lseg<n2, p, sm2, lg> & sm<=sm2).
+
+
+checkentail 
+ self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1!=1
+ |- (exists lg1,sm2: 
+  self::node<sm, r1> * r1::lseg<n1-1, q, sm1, lg1> 
+  * q::lseg<n2, p, sm2, lg> & sm<=sm1 & lg1<=sm2).
 */
 
 checkentail 
  self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1
- |- (exists lg1: self::lseg<n1, q, sm, lg1> ).
-print residue.
+ |- (exists lg1,sm2: self::lseg<n1, q, sm, lg1> * q::lseg<m, pp, sm2, lg> & lg1<=sm2).
 
+
+print residue.

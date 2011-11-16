@@ -577,13 +577,18 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let vl_vdef = look_up_view_def_raw view_decls vl_name in
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
-                  let uf_i = if vl_view_orig then 0 else 1 in
-                  let ua = (1, M_unfold (c,uf_i)) in
+                  let vl_view_derv = vl.h_formula_view_derv in
+                  let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                  let uf_i = if new_orig then 0 else 1 in
                   let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name dr.h_formula_data_name in
+                  let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
+                  let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)
-                  if (vl_view_orig || vl_self_pts==[]) then ua
-                  else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls)))
+                  let a = a1@a2 in
+                  if a!=[] then (-1,Search_action a)
+                  (* if (vl_view_orig || vl_self_pts==[]) then ua *)
+                  (* else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls))) *)
                   else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res c)))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
@@ -741,7 +746,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_3 "compute_actions" 
+  Gen.Debug.no_3 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (* (add_str "LHS pure" pr3)  *)
