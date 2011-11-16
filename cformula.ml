@@ -2359,7 +2359,8 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
 
 
 
- (* context functions *)
+ (* co
+ntext functions *)
 	
   
   
@@ -2454,7 +2455,8 @@ and fail_type =
   | ContinuationErr of fail_context    
   | Or_Continuation of (fail_type * fail_type)
 
-      
+
+(* Fail | List of Successes *)
 and list_context = 
   | FailCtx of fail_type 
   | SuccCtx of context list
@@ -2463,13 +2465,17 @@ and branch_fail = path_trace * fail_type
 
 and branch_ctx =  path_trace * context
 
+(* disjunction of state with failures and partial success *)
+(* a state is successful if it has empty branch_fail *)
 and partial_context = (branch_fail list) * (branch_ctx list)  
     (* disjunct of failures and success *)
 
+(* successful partial states that have escaped through exceptions *)
 and esc_stack = ((control_path_id_strict * branch_ctx list) list)
 
 and failesc_context = (branch_fail list) * esc_stack * (branch_ctx list)
 
+(* conjunct of context in the form of /\(f1|f2 ..s1|s2|s3) *)
 and list_partial_context = partial_context list
  
 and list_failesc_context = failesc_context list 
