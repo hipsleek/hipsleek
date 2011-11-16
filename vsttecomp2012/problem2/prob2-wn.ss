@@ -29,7 +29,7 @@ ks<n> == self::anode<1,null,null> & n = 0 // K
       or self::anode<0,f,a> * f::ks<n-1> * a::anode<1,null,null> 
 inv n >= 0;
 
-coercion self::value<> -> self::allowed<>;
+lemma self::value<> -> self::allowed<>;
 
 anode clone (anode t)
 requires t::value<>@I

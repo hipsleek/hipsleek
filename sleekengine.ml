@@ -13,6 +13,7 @@ module CF = Cformula
 module CP = Cpure
 module IF = Iformula
 module IP = Ipure
+module LP = Lemproving
 module AS = Astsimp
 
 module XF = Xmlfront
@@ -358,8 +359,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(* An Hoa : PRINT OUT THE INPUT *)
 		(*  let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in *)
-		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
-		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
+		let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in
+		let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in
   let _ = residues := None in
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in    
@@ -385,12 +386,6 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
      Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
-  (* andreeac - for debugging - to delet: *)
-  let length_ctx ctx = match ctx with
-    | CF.FailCtx _ -> 0
-    | CF.SuccCtx ctx0 -> List.length ctx0 in
-  (* let _ = print_endline ( "\n Sleekengine.ml, run_entail_check 1:" ^ (string_of_int (length_ctx rs1)) ^" \n\n\t ############reidues#######" ^ (Cprinter.string_of_list_context rs1) ^ "\n ############END#######") in  *)
-  (* to delete *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)
@@ -441,68 +436,15 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
 
-let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
-  try 
-    run_entail_check iante0 iconseq0
-  with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason " exception in lemma proving ")) in
-      (false, rs)
-
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
-
-let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
-  let pr = string_of_meta_formula in
-  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some s -> CF.list_formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
-
-let check_coercion coer lhs (rhs:CF.formula) =
-    let pos = CF.pos_of_formula coer.C.coercion_head in
-    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = CF.add_original lhs true in
-    let lhs = CF.reset_origins lhs in
-    let rhs = CF.add_original rhs true in
-    let rhs = CF.reset_origins rhs in
-    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
-    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
-    let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs) coer.C.coercion_name
-
-let check_coercion coer lhs rhs =
-  let pr1 = Cprinter.string_of_coercion in
-  let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
-
-(* below expects struc_formula for rhs *)
-let check_coercion_struc coer lhs rhs =
-    let pos = CF.pos_of_formula coer.C.coercion_head in
-    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = CF.add_original lhs true in
-    let lhs = CF.reset_origins lhs in
-    let rhs = CF.add_struc_original rhs true in
-    let rhs = CF.reset_struc_origins rhs in
-    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
-    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
-    let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaEFormCF rhs) coer.C.coercion_name
-
-let check_left_coercion coer =
-  let ent_lhs =coer.C.coercion_head in
-  let ent_rhs = coer.C.coercion_body_norm in
-  check_coercion_struc coer ent_lhs ent_rhs
-
-let check_right_coercion coer =
-  let ent_rhs = coer.C.coercion_head_norm in
-  let ent_lhs = coer.C.coercion_body in
-  check_coercion coer ent_lhs ent_rhs 
 
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
@@ -513,44 +455,13 @@ let process_lemma ldef =
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
   !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
-  if !Globals.check_coercions then begin
-    let helper coercs check_coerc = match coercs with
-      | [] -> (true, None)
-      | coerc::[] -> let (valid, rs) = check_coerc coerc in (valid, Some rs)
-      | _ -> let _ = print_string "\n[sleekengine.ml] error at process_lemma: list of coercions should have max length of 1 \n" in 
-        (false, None)
-    in
-    let valid_l2r, rs_l2r = helper l2r check_left_coercion in
-    let valid_r2l, rs_r2l = helper r2l check_right_coercion in
-    let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
-    let residues = match (rs_l2r, rs_r2l) with
-      | (None, None) -> empty_resid
-      | (None, Some rs) 
-      | (Some rs, None) -> rs
-      | (Some rs1, Some rs2) -> CF.list_context_union rs1 rs2
-    in
-    let valid = valid_l2r && valid_r2l in
-    let num_id = "\nEntailing lemma \""^ (ldef.I.coercion_name) ^"\"" in
-    if valid then 
-      print_entail_result valid residues num_id
-    else begin
-      let num_id0, err_resid  = 
-        match ldef.I.coercion_type with
-          | I.Equiv -> begin
-                if (valid_l2r == false) then
-                  match rs_l2r with
-                    | Some rs -> (" (left-to-right) ", rs)
-                    | None -> (" (left-to-right) ",  empty_resid)
-                else
-                  match rs_r2l with
-                    | Some rs -> (" (right-to-left) ", rs)
-                    | None -> (" (right-to-left) ",  empty_resid)
-            end
-         | _ -> ("", residues) 
-      in
-      print_entail_result valid err_resid (num_id^num_id0)
-    end;
-  end
+  let get_coercion c_lst = match c_lst with 
+    | [c] -> Some c
+    | _ -> None in
+  let l2r = get_coercion l2r in
+  let r2l = get_coercion r2l in
+  residues := None;
+  residues := (LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type)
 
 let process_lemma ldef =
   Gen.Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef

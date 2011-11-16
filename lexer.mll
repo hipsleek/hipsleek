@@ -121,7 +121,7 @@ module Make (Token : SleekTokenS)
 	 ("checkentail", CHECKENTAIL);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
-	 ("coercion", COERCION);
+	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
    ("combine", COMBINE);
 	 ("const", CONST);

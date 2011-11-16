@@ -26,7 +26,7 @@ value<> ==
   or self::anode<0,f,a> * f::anode<0,f1,a1> * 
       f1::combS<> * a1::value<> * a::value<> // S v1 v2
   inv self!=null;
-//coercion self::value<> -> self::allowed<>;
+//lemma self::value<> -> self::allowed<>;
 
 anode reduction (anode t)
 requires t::allowed<>

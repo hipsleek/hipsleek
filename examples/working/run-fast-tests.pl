@@ -610,7 +610,7 @@ $output_file = "log";
                       ["sleek6.slk","Valid.Valid."],
                       ["sleek7.slk","Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
                       # slow in sleek8.slk due to search
-                      ["sleek8.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["sleek9.slk","Valid.Valid.Valid.Fail.Valid.Valid."],
                       ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
                       #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
@@ -774,7 +774,7 @@ sub sleek_process_file  {
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
       }
-      if ($script_arguments=~"--disable-check-coercions"){
+      if ($script_arguments=~"--disable-check-lemmas"){
           $param =~ s/sleek/sleek_wo_lemma_check/;
       }
       $t_list = $sleek_files{$param};

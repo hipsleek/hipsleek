@@ -67,7 +67,7 @@ fseg<p, nf> == self = p & nf = 0
 		& nf = n1 + nf1 + nf2
 	inv nf >= 0;
 
-coercion self::ftree<nf> <- self::fseg<x, nf1> * x::ftree<nf2> & nf = nf1 + nf2;
+lemma self::ftree<nf> <- self::fseg<x, nf1> * x::ftree<nf2> & nf = nf1 + nf2;
 
 /*
 	Search for a name in a folder list by following the sib link.

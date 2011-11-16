@@ -7,6 +7,8 @@ module CF = Cformula
 module CP = Cpure
 module TP = Tpdispatcher
 module PTracer = Prooftracer
+module I = Iast
+module LP = Lemproving
 
 let log_spec = ref ""
   (* checking expression *)
@@ -745,52 +747,32 @@ let check_data (prog : prog_decl) (cdef : data_decl) =
   List.map (check_proc_wrapper prog) cdef.data_methods
 
 let check_coercion (prog : prog_decl) =
-  let check_entailment c_lhs c_rhs coer_name =
-    let pos = CF.pos_of_formula c_lhs in
-    let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) pos) c_lhs pos in
-    let rs, prf = heap_entail_init prog false (CF.SuccCtx [ctx]) c_rhs pos in
-    let _ = PTracer.log_proof prf in
-    (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
-    if (CF.isFailCtx rs) then print_string ("\nCoercion " ^ coer_name ^ " is not valid\n")
-    else print_string ("\nCoercion  " ^ coer_name ^ " is valid\n")
-  in
-    (*TODO: find and unfold all instances of the head predicate in both sides *)
-    (*let unfold_head_pred hname f0 : int = *)
+  let find_coerc coercs name =
+    try
+      Some (List.find (fun coerc -> coerc.coercion_name == name) coercs)
+    with _ -> None in
 
-  let check_entailment c_lhs c_rhs coer_name =
-    let pr = Cprinter.string_of_formula in
-    Gen.Debug.no_2 "check_entailment" pr pr
-        (fun _ -> "?") (fun _ _ -> check_entailment c_lhs c_rhs coer_name ) c_lhs c_rhs in
-
-  let prepare_coer lhs rhs coer = 
-    let pos = CF.pos_of_formula coer.coercion_head in
-    let lhs = unfold_nth 9 (prog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = CF.add_original lhs true in
-    let lhs = CF.reset_origins lhs in
-    let rhs = CF.add_original rhs true in
-    let rhs = CF.reset_origins rhs in
-    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.coercion_name), Unprimed)) :: [] in
-    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
-    let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    (lhs, rhs) in
-
-  let check_left_coercion coer =
-    let (lhs,rhs) = prepare_coer coer.coercion_head coer.coercion_body coer in
-    check_entailment lhs rhs coer.coercion_name in
-  let check_left_coercion coer =
-    Gen.Debug.no_1 "check_left_coercion" Cprinter.string_of_coercion 
-        (fun _ -> "?") check_left_coercion coer in
-
-  let check_right_coercion coer =
-    let (lhs,rhs) = prepare_coer coer.coercion_body coer.coercion_head coer in
-    check_entailment lhs rhs coer.coercion_name in
-  let check_right_coercion coer =
-    Gen.Debug.no_1 "check_right_coercion" Cprinter.string_of_coercion 
-        (fun _ -> "?") check_right_coercion coer in
-
-  List.iter (fun coer -> check_left_coercion coer) prog.prog_left_coercions;
-  List.iter (fun coer -> check_right_coercion coer) prog.prog_right_coercions
+  (* combine the 2 lists of coercions into one list of lemmas:
+     - coercions that have the same name in the left and right list of coercions -> (Some c1,Some c2)
+     - left coercion c -> (Some c, None)
+     - right coercion c -> (None, Some c)
+  *)
+  let lemmas = List.map (fun l2r_coerc -> (Some l2r_coerc, find_coerc prog.prog_right_coercions l2r_coerc.coercion_name) ) prog.prog_left_coercions in
+  (* add to lemmas the coercions from prog.prog_right_coercions that do not have a corresponding pair in prog.prog_left_coercions *)
+  let lemmas = lemmas @ List.map (fun r2l_coerc -> (None, Some r2l_coerc))
+    (List.filter 
+        (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name != l2r_coerc.coercion_name) prog.prog_left_coercions)
+        prog.prog_right_coercions) in
+   List.iter (fun (l2r, r2l) -> 
+       let (coerc_type, coerc_name) = 
+       match (l2r, r2l) with
+         | (Some coerc_l2r, None) -> (I.Right, coerc_l2r.coercion_name)
+         | (None, Some coerc_r2l) -> (I.Left, coerc_r2l.coercion_name)
+         | (Some coerc1, Some coerc2) -> (I.Equiv, coerc1.coercion_name)
+         | (None, None) ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma can't be empty"}
+       in
+       let _ = LP.verify_lemma l2r r2l prog coerc_name coerc_type in ()
+   ) lemmas
 
 let rec size (expr : exp) =
   match expr with
@@ -961,7 +943,7 @@ let check_prog (prog : prog_decl) =
 	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
     if !Globals.check_coercions then 
       begin
-      print_string "Checking coercions... ";
+      print_string "Checking lemmas... ";
       (* ignore (check_coercion prog); *)
       check_coercion prog;
       print_string "DONE.\n"

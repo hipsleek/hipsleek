@@ -19,11 +19,11 @@ ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
 	inv n>=0;
 
-//coercion self::sll<n, sm, lg> <-> self::ll<n>;
+//lemma self::sll<n, sm, lg> <-> self::ll<n>;
 
-//coercion "C1" self::sll<n, sm, lg> <- self::ll<n>;
+//lemma "C1" self::sll<n, sm, lg> <- self::ll<n>;
 
-coercion "C2" self::sll<n, sm, lg> <-> self::ll<n>;
+lemma "C2" self::sll<n, sm, lg> <-> self::ll<n>;
 
 node id2(node xs)
 	requires xs::sll<n, sm, lg>

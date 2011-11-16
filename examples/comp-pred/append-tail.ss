@@ -46,16 +46,16 @@ lseg2<p, n> == self=p & n=0
 	or self::node<_, r> * r::lseg2<p, n-1>
 	inv n>=0;
 */
-coercion "lseg2" self::lseg2<p, n> <-> self::lseg2<q, n1> * q::lseg2<p, n2> & n=n1+n2;
-coercion "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>;
-//coercion "ll_tail2_1" self::ll_tail2<t, n> <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
+lemma "lseg2" self::lseg2<p, n> <-> self::lseg2<q, n1> * q::lseg2<p, n2> & n=n1+n2;
+lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>;
+//lemma "ll_tail2_1" self::ll_tail2<t, n> <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
 
 
-//coercion "composite" self::lseg2<y, n> * y::lseg2<ty, m-1> * ty::node<_, null> <-> self::ll_tail2<ty, m+n>;
-//coercion self::lseg2<p, n> -> self::lseg2<q, n-1> * q::node<_, p>;
-//coercion "lsegbreakmerge" self::lseg<p> <-> self::lseg<q> * q::lseg<p>;
-//coercion "lltail2lseg" self::ll_tail<t> <-> self::lseg<t> * t::node<_, null>;
-//coercion "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
+//lemma "composite" self::lseg2<y, n> * y::lseg2<ty, m-1> * ty::node<_, null> <-> self::ll_tail2<ty, m+n>;
+//lemma self::lseg2<p, n> -> self::lseg2<q, n-1> * q::node<_, p>;
+//lemma "lsegbreakmerge" self::lseg<p> <-> self::lseg<q> * q::lseg<p>;
+//lemma "lltail2lseg" self::ll_tail<t> <-> self::lseg<t> * t::node<_, null>;
+//lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
 
 void append(node x, node tx, node y, node ty)
 //	requires x::ll_tail<tx> * y::ll_tail<ty>
@@ -69,7 +69,7 @@ void append(node x, node tx, node y, node ty)
 }
 /*
 ****************************************************************************************************************************
- coercion "ll_tail2" self::ll_tail2<t, n>
+ lemma "ll_tail2" self::ll_tail2<t, n>
    <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
 
 This is a composite of lseg and ll_tail2 lemma. A hand-trace
