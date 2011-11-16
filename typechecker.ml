@@ -627,6 +627,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = if !print_proof then
 			begin
 				Prooftracer.push_post ();
+				Prooftracer.push_list_partial_context_formula_entailment ctx post;
 				Tpdispatcher.push_suppress_imply_output_state ();
 				Tpdispatcher.unsuppress_imply_output ();
 				(* print_endline "VERIFYING POST-CONDITION" *)
@@ -652,6 +653,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = if !print_proof then 
     		begin
 	    		Tpdispatcher.restore_suppress_imply_output_state ();
+    			Prooftracer.pop_div ();
     			Prooftracer.pop_div ();
 		    	(* print_endline "DONE!" *)
 		    end in

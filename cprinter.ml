@@ -1976,6 +1976,8 @@ let html_of_spec_var sv = match sv with
 		| Primed -> html_prime 
 		| Unprimed -> "")
 
+let html_of_spec_var_list svl = String.concat ", " (List.map html_of_spec_var svl)
+
 let rec html_of_formula_exp e =
 	 match e with
     | P.Null l -> "<b>null</b>"
@@ -2111,7 +2113,7 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_remaining_branches = ann;
 				h_formula_view_pruning_conditions = pcond;
 				h_formula_view_pos =pos}) ->
-			(html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (String.concat "," (List.map html_of_spec_var svs)) ^ html_right_angle_bracket
+			(html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket
 	| HTrue -> "<b>true</b>"
 	| HFalse -> "<b>false</b>"
 	| Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
@@ -2140,20 +2142,37 @@ let rec html_of_formula e = match e with
 			formula_exists_flow = fl;
 			formula_exists_label = lbl;
 			formula_exists_pos = pos}) ->
-		html_exist ^ (String.concat ", " (List.map html_of_spec_var svs)) ^ " : " ^ (html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
+		html_exist ^ (html_of_spec_var_list svs) ^ " : " ^ (html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
 
-(* TODO implement *)
-let rec html_of_ext_formula f = ""
+let rec html_of_ext_formula f = match f with
+	| ECase { formula_case_exists = ee;
+					formula_case_branches = case_list;
+					formula_case_pos = _ } ->
+		"ECase " ^ (String.concat " &oplus; " (List.map (fun (case_guard,case_fml) -> (html_of_pure_formula case_guard) ^ " ==> " ^ (html_of_struc_formula case_fml)) case_list))
+	| EBase { formula_ext_implicit_inst = ii;
+					formula_ext_explicit_inst = ei;
+					formula_ext_exists = ee;
+					formula_ext_base = fb;
+					formula_ext_continuation = cont;
+					formula_ext_pos = _ } ->
+		"EBase " ^ (if not (Gen.is_empty(ee@ii@ei)) then "exists " ^ "(Expl)" ^ (html_of_spec_var_list ei) ^ "(Impl)" ^ (html_of_spec_var_list ii) ^ "(ex)" ^ (html_of_spec_var_list ee)	else "") ^ (html_of_formula fb) ^ (if not(Gen.is_empty(cont)) then  html_of_struc_formula cont else "")
+	| EAssume (x,b,(y1,y2)) ->
+		"EAssume " ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
+	| EVariance { formula_var_label = label;
+							formula_var_measures = measures;
+							formula_var_escape_clauses = escape_clauses;
+							formula_var_continuation = cont; } -> ""
 
-(* TODO implement *)
-let rec html_of_struc_formula f = ""
+and html_of_struc_formula f = 
+	if f==[] then "[]" else 
+	String.concat "|| " (List.map html_of_ext_formula f)
 
 let html_of_estate es = "{ " ^ html_of_formula es.es_formula ^ " }"
 
 let html_of_context ctx = 
 	let args = bin_op_to_list "|" ctx_assoc_op ctx in
 	let args = List.map (fun x -> match x with Ctx es -> es) args in
-	String.concat "<b>OR</b>" (List.map html_of_estate args)
+	String.concat "<br /><b>OR</b>" (List.map html_of_estate args)
 
 (* TODO implement *)
 let html_of_fail_type f = ""
@@ -2165,6 +2184,13 @@ let html_of_failesc_context (fs,es,ss) =
 
 let html_of_list_failesc_context lctx = String.concat " ; " (List.map html_of_failesc_context lctx)
 
+let html_of_partial_context (fs,ss) =
+	html_of_failesc_context (fs,[],ss)
+	(*let htmlfs = if fs = [] then "&empty;" else "{" ^ (String.concat " , " (List.map html_of_fail_type fs)) ^ "}" in
+	let htmlss = if ss = [] then "&empty;" else "{" ^ (String.concat " , " (List.map (fun (pt, c) -> html_of_context c) ss)) ^ "}" in
+		"[Failed state : " ^ htmlfs ^ "<br />\n" ^ "Successful states : " ^ htmlss ^ "]"*)
+
+let html_of_list_partial_context lctx = String.concat " ; " (List.map html_of_partial_context lctx)
 ;;
 
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;

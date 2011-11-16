@@ -411,7 +411,11 @@ let start_with s p = if (String.length s >= String.length p) then
 	else false
 
 let push_list_failesc_context_struct_entailment lctx sf =
-	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_failesc_context lctx)
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_failesc_context lctx) ^ Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)) 
+
+let push_list_partial_context_formula_entailment lctx sf =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_partial_context lctx) ^ Cprinter.html_vdash ^ (Cprinter.html_of_formula sf) 
+
 
 (* let push_list_failesc_context ctx =
 	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>"

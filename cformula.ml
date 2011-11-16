@@ -3966,6 +3966,29 @@ and struc_to_formula f0 :formula =
   let pr2 = !print_formula in
   Gen.Debug.no_1 "struc_to_formula" pr1 pr2 struc_to_formula_x f0
 
+(* An Hoa : construct pre-condition from a structured spec formula *)
+let rec struc_to_precond_formula (f0 : struc_formula) : formula =
+	let rec ext_to_precond_formula (f : ext_formula) : formula =
+	match f with
+	| ECase b ->
+		let fold_function a (c1, c2) = 
+			if (isConstEFalse c2) then a 
+			else 
+				let c1 = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) c1 in 
+					(mkOr a (normalize_combine (mkBase HTrue c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos) (struc_to_precond_formula c2) b.formula_case_pos) b.formula_case_pos) in
+		let r = if (List.length b.formula_case_branches) >0 then
+			List.fold_left fold_function (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches 
+		else mkTrue (mkTrueFlow ()) b.formula_case_pos in
+			push_exists b.formula_case_exists r
+	| EBase b -> 
+		let e = normalize_combine b.formula_ext_base (struc_to_precond_formula b.formula_ext_continuation) b.formula_ext_pos in
+		let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
+			nf
+	| EAssume (_,b,_) -> (* Eliminate assume by making it true *) formula_of_heap HTrue no_pos 
+	| EVariance b -> struc_to_precond_formula b.formula_var_continuation in	
+    formula_of_disjuncts (List.map ext_to_precond_formula f0)
+(* An Hoa : end of pre-condition construction *)
+
 and formula_to_struc_formula (f:formula):struc_formula =
 	let rec helper (f:formula):struc_formula = match f with
 		| Base b-> [EBase ({
