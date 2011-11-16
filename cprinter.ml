@@ -851,7 +851,8 @@ let rec pr_h_formula h =
       h_formula_data_original = original;
       h_formula_data_pos = pos;
       h_formula_data_remaining_branches = ann;
-      h_formula_data_label = pid})-> 
+      h_formula_data_label = pid})->
+        let c = add_frac c frac in
 			(** [Internal] Replace the specvars at positions of holes with '-' **)
         let c = add_frac c frac in
 			let rec replace_holes svl hs n = 
@@ -900,6 +901,7 @@ let rec pr_h_formula h =
           pr_angle c pr_spec_var svs;
 	      pr_imm imm;
 	      pr_derv dr;
+          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	      if original then fmt_string "[Orig]"
 	      else fmt_string "[Derv]";
@@ -1265,7 +1267,7 @@ let pr_fail_estate (es:fail_context) =
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
   pr_vwrap "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
                                                    (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
-   pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; 
+  (* pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs; *)
   (* pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; *)
    (*pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)
   fmt_string "}"; 
@@ -1851,7 +1853,6 @@ let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Simple -> "Simple"
   | Cast.Complex -> "Complex"
   | Cast.Normalize -> "Normalize"
-
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
@@ -1861,7 +1862,9 @@ let string_of_coerc_opt op c =
   else s2
     ^"\n head match:"^c.coercion_head_view
     ^"\n body view:"^c.coercion_body_view
+    ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
+    ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
     ^"\n head_norm: "^(string_of_formula c.coercion_head_norm)
     ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)^"\n";;
     ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
@@ -2150,6 +2153,7 @@ Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
+Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_view_decl := string_of_view_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;

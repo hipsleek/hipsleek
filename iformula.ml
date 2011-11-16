@@ -147,6 +147,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_imm : bool; 
 		       h_formula_heap_full : bool;
 		       h_formula_heap_with_inv : bool;
+		               h_formula_heap_frac_perm : P.exp option; (*LDK: optional fractional permission*)
 		       h_formula_heap_arguments : P.exp list;
 		       h_formula_heap_pseudo_data : bool;
 		       h_formula_heap_label : formula_label option;
@@ -158,6 +159,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_imm : bool;
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
+		                h_formula_heap2_frac_perm : P.exp option; (*LDK: fractional permission*)
 			h_formula_heap2_arguments : (ident * P.exp) list;
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
@@ -345,7 +347,7 @@ and mkPhase f1 f2 pos =
 					h_formula_phase_rw = f2;
 					h_formula_phase_pos = pos }
 
-and mkHeapNode c id dr i f inv pd hl ofl l= HeapNode { 
+and mkHeapNode c id dr i f inv pd frac hl ofl l= HeapNode { 
                    h_formula_heap_node = c;
                    h_formula_heap_name = id;
                    h_formula_heap_derv = dr;
@@ -353,11 +355,12 @@ and mkHeapNode c id dr i f inv pd hl ofl l= HeapNode {
                    h_formula_heap_full = f;
                    h_formula_heap_with_inv = inv;
                    h_formula_heap_pseudo_data = pd;
+    h_formula_heap_frac_perm = frac; (*LDK: frac from parser*)
                    h_formula_heap_arguments = hl;
                    h_formula_heap_label = ofl;
                    h_formula_heap_pos = l }
           
-and mkHeapNode2 c id dr i f inv pd ohl ofl l = HeapNode2 { 
+and mkHeapNode2 c id dr i f inv pd frac ohl ofl l = HeapNode2 { 
                     h_formula_heap2_node = c;
                     h_formula_heap2_name = id;
                     h_formula_heap2_derv = dr;
@@ -365,6 +368,7 @@ and mkHeapNode2 c id dr i f inv pd ohl ofl l = HeapNode2 {
                     h_formula_heap2_full = f;
                     h_formula_heap2_with_inv = inv;
                     h_formula_heap2_pseudo_data = pd;
+    h_formula_heap2_frac_perm = frac; (*LDK: frac from parser*)
                     h_formula_heap2_arguments = ohl;
                     h_formula_heap2_label = ofl;
                     h_formula_heap2_pos = l}
@@ -430,8 +434,19 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | Star ({h_formula_star_h1 = h1; 
 	   h_formula_star_h2 = h2; 
 	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
-  | HeapNode {h_formula_heap_node = name ; (* An Hoa : problem detected and fix - name is a quantified id so that we need to extract the real information inside *)
-	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) ((extract_var_from_id name):: (List.concat (List.map Ipure.afv b)))
+(*WN:TODO:DONE*)
+ | HeapNode {h_formula_heap_node = name ;
+          (* An Hoa : problem detected and fix - name is a 
+             quantified id so that we need to extract the 
+             real information inside *)
+              h_formula_heap_frac_perm = frac; (*LDK*)
+              h_formula_heap_arguments = b} ->
+      (match frac with
+        | Some f ->
+            Gen.BList.remove_dups_eq (=) (List.append (Ipure.afv f) ((extract_var_from_id name) :: (List.concat (List.map Ipure.afv b))))
+        | None ->
+            Gen.BList.remove_dups_eq (=) ((extract_var_from_id name):: (List.concat (List.map Ipure.afv b)))
+      )
   | HeapNode2 { h_formula_heap2_node = name ;
 		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) ((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
   | HTrue -> [] 
@@ -684,16 +699,21 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_imm = imm; 
 	h_formula_heap_full = full; 
 	h_formula_heap_with_inv = winv;
+	           h_formula_heap_frac_perm = frac; (*LDK*)
 	h_formula_heap_arguments = args;
 	h_formula_heap_pseudo_data = ps_data;
 	h_formula_heap_label = l;
 	h_formula_heap_pos = pos}) -> 
-        HeapNode ({h_formula_heap_node = subst_var s x; 
+      let frac1 = match frac with
+        | Some f -> Some (Ipure.e_apply_one s f)
+        | None -> None
+      in HeapNode ({h_formula_heap_node = subst_var s x; 
 		h_formula_heap_name = c;
 	    h_formula_heap_derv = dr; 
 		h_formula_heap_imm = imm; 
 		h_formula_heap_full = full;
 		h_formula_heap_with_inv = winv;
+		         h_formula_heap_frac_perm = frac1 ; (*LDK: ??? what is it for*)
 		h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		h_formula_heap_pseudo_data = ps_data;
 		h_formula_heap_label = l;
@@ -706,9 +726,14 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap2_full = full;
 		h_formula_heap2_with_inv = winv;
 		h_formula_heap2_arguments = args;
+	  h_formula_heap2_frac_perm = frac; (*LDK*)
 		h_formula_heap2_pseudo_data = ps_data;
 		h_formula_heap2_label = l;
 		h_formula_heap2_pos= pos}) -> 
+      let frac1 = match frac with
+        | Some f -> Some (Ipure.e_apply_one s f)
+        | None -> None
+      in
         HeapNode2 ({
 		    h_formula_heap2_node = subst_var s x;
 		    h_formula_heap2_name =c;
@@ -716,6 +741,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		    h_formula_heap2_imm = imm;
 		    h_formula_heap2_full =full;
 		    h_formula_heap2_with_inv = winv;
+		  h_formula_heap2_frac_perm = frac1; (*LDK: ???*)
 		    h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 		    h_formula_heap2_pseudo_data =ps_data;
 		    h_formula_heap2_label = l;
@@ -815,8 +841,11 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 	List.map helper f
 
 
+and float_out_exps_from_heap (f:formula ):formula = float_out_exps_from_heap_x f
+(* let pr = Iprinter.string_of_formula in *)
+(* Gen.Debug.no_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f *)
 
-and float_out_exps_from_heap (f:formula ):formula = 
+and float_out_exps_from_heap_x (f:formula ):formula = 
 	
   let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
     | Star b-> 
@@ -834,42 +863,109 @@ and float_out_exps_from_heap (f:formula ):formula =
 	let r21,r22 = float_out_exps b.h_formula_phase_rw in
 	  (Phase ({h_formula_phase_rd  =r11; h_formula_phase_rw=r21;h_formula_phase_pos = b.h_formula_phase_pos}), 
 	   (r12@r22))
-    | HeapNode b-> 
-	let na,ls = List.split (List.map (fun c->
-					    match c with
-					      | Ipure.Var _ -> (c,[])
-					      | _ -> 
-						  let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
-						  let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
-						  let npf =
-							if !Globals.do_slicing then
-							  try
-								let lexp = P.find_lexp_exp c !linking_exp_list in
-								(*let _ = Hashtbl.remove !linking_exp_list c in*)
-								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
-							  with Not_found ->
-								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
-							else Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) in (* Slicing: TODO IL for linking exp *)																
-						    (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
-	  (HeapNode ({b with h_formula_heap_arguments = na}),(List.concat ls))
-    | HeapNode2 b ->	 
-	let na,ls = List.split (List.map (fun c->
-					    match (snd c) with
-					      | Ipure.Var _ -> (c,[])
-					      | _ -> 
-						  let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
-						  let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
-						  let npf =
-							if !Globals.do_slicing then
-							  try
+    | HeapNode b->
+        (*LDK*)
+        let frac = b.h_formula_heap_frac_perm in
+        (match frac with
+          | Some f ->
+              let na_frac, ls_frac = match f with
+                | Ipure.Var _ -> (f,[])
+		        | _ ->
+                    let nn_frac = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+			        let nv_frac = Ipure.Var (nn_frac,b.h_formula_heap_pos) in
+                    let npf_frac = Ipure.BForm ((Ipure.Eq (nv_frac,f,b.h_formula_heap_pos), None), None) in
+                    (nv_frac,[(nn_frac,npf_frac)])
+              in
+              let na,ls = List.split (List.map (fun c->
+			      match c with
+			        | Ipure.Var _ -> (c,[])
+			        | _ ->
+				        let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				        let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
+				        let npf = 
+					      if !Globals.do_slicing then
+                            try
+                                let lexp = P.find_lexp_exp c !linking_exp_list in
+                                (*let _ = Hashtbl.remove !linking_exp_list c in*)
+						        Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
+                            with Not_found ->
+						        Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+                          else
+                            Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) 
+                        (* Slicing: TODO IL for linking exp *)
+                        in
+				        (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
+	          (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_frac_perm = Some na_frac}),(List.concat (ls_frac ::ls)))
+
+          | None ->
+              let na,ls = List.split (List.map (fun c->
+			      match c with
+			        | Ipure.Var _ -> (c,[])
+			        | _ ->
+				        let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				        let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
+				        let npf = 
+					      if !Globals.do_slicing then
+                            try
+                                let lexp = P.find_lexp_exp c !linking_exp_list in
+                                (*let _ = Hashtbl.remove !linking_exp_list c in*)
+						        Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
+                            with Not_found ->
+						        Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+                          else
+                            Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) 
+                        (* Slicing: TODO IL for linking exp *)
+                        in
+				        (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
+	          (HeapNode ({b with h_formula_heap_arguments = na}),(List.concat ls))
+        )
+    | HeapNode2 b ->
+        (*LDK*)
+        let frac = b.h_formula_heap2_frac_perm in
+        (match frac with
+          | Some f ->
+              let na_frac, ls_frac = match f with
+                | Ipure.Var _ -> (f,[])
+		        | _ ->
+                    let nn_frac = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+			        let nv_frac = Ipure.Var (nn_frac,b.h_formula_heap2_pos) in
+                    let npf_frac = Ipure.BForm ((Ipure.Eq (nv_frac,f,b.h_formula_heap2_pos), None), None) in
+                    (nv_frac,[(nn_frac,npf_frac)])
+              in
+
+			  let na,ls = List.split (List.map (fun c->
+				  match (snd c) with
+					| Ipure.Var _ -> (c,[])
+					| _ -> 
+						let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+						let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
+
+						let npf =
+						  if !Globals.do_slicing then
+							try
 								let lexp = P.find_lexp_exp (snd c) !linking_exp_list in
 								(*let _ = Hashtbl.remove !linking_exp_list (snd c) in*)
 								Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None)
-							  with Not_found ->
+							with Not_found ->
 								Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None)
-							else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)															
-						    (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
-	  (HeapNode2 ({b with h_formula_heap2_arguments = na}),(List.concat ls))
+						  else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)															
+                        (*WN:TODO:DONE*)
+				        (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
+	          (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_frac_perm = Some na_frac}),(List.concat (ls_frac :: ls)))
+
+          | None ->
+              let na,ls = List.split (List.map (fun c->
+				  match (snd c) with
+					| Ipure.Var _ -> (c,[])
+					| _ ->
+						let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+						let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
+						let npf = Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in
+                            (* WN:TODO: DONE *)
+
+						(((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
+	          (HeapNode2 ({b with h_formula_heap2_arguments = na}),(List.concat ls))
+        )
     | HTrue -> (f,[])
     | HFalse -> (f,[]) in
     
@@ -1397,39 +1493,113 @@ match h with
 
 
     |  HeapNode h1->
-	 let args = h1. h_formula_heap_arguments in
-	 let l = h1. h_formula_heap_pos in
-	 let nl, new_p =
-	   List.fold_left
-             (fun (a, c) d -> 
-	        match d with
-		  | Ipure.Null _ 
-		  | Ipure.IConst _
-		  | Ipure.Var _ -> (d::a, c)
-		  | _ -> 
-		      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
-		      let nv = Ipure.Var((new_name, Unprimed), l) in
-			(nv::a, let lexp = P.find_lexp_exp d !linking_exp_list in match c with
-			   | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))) 
-			   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))), s, l)))) ([], None) args in
-           (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);}), new_p)
+	    let l = h1. h_formula_heap_pos in
+	    let args = h1. h_formula_heap_arguments in
+        (*LDK*)
+	    let frac = h1. h_formula_heap_frac_perm in
+        (*WN:TODO: DONE*)	
+        (match frac with
+          | Some f ->
+	          let nl_frac, new_p_frac =
+	            match f with
+		          | Ipure.Null _
+		          | Ipure.IConst _
+		          | Ipure.Var _ -> (f, None)
+		          | _ ->
+		              let new_name_frac = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in
+		              let nv_frac = Ipure.Var((new_name_frac, Unprimed), l) in
+			          (nv_frac, Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_frac, f, l), None), None))))
+              in
+	          let nl, new_p =
+	            List.fold_left
+                    (fun (a, c) d -> 
+	                    match d with
+		                  | Ipure.Null _ 
+		                  | Ipure.IConst _
+		                  | Ipure.Var _ -> (d::a, c)
+		                  | _ -> 
+		                      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+		                      let nv = Ipure.Var((new_name, Unprimed), l) in
+		                      (nv::a, let lexp = P.find_lexp_exp d !linking_exp_list 
+				                      in match c with
+		                                | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None)))
+		                                | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))), s, l)))) ([], new_p_frac) args in
+              (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);}), new_p)
+          | None -> 
+	          let nl, new_p =
+	            List.fold_left
+                    (fun (a, c) d -> 
+	                    match d with
+		                  | Ipure.Null _ 
+		                  | Ipure.IConst _
+		                  | Ipure.Var _ -> (d::a, c)
+		                  | _ -> 
+		                      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+		                      let nv = Ipure.Var((new_name, Unprimed), l) in
+		                      (nv::a, let lexp = P.find_lexp_exp d !linking_exp_list 
+				                      in match c with
+		                                | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None)))
+		                                | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))), s, l)))) ([], None) args in
+              (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);}), new_p)
+          (*WN:TODO: DONE*)
+        )
     |  HeapNode2 h1 ->
-	 let args = h1. h_formula_heap2_arguments in
-	 let l = h1. h_formula_heap2_pos in
-	 let nl, new_p =
-	   List.fold_left
-             (fun (a, c) (d1,d2) -> 
-	        match d2 with
-		  | Ipure.Null _ 
-		  | Ipure.IConst _
-		  | Ipure.Var _ -> ((d1,d2):: a, c)
-		  | _ -> 
-		      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
-		      let nv = Ipure.Var((new_name, Unprimed), l) in
-			((d1,nv):: a, let lexp = P.find_lexp_exp d2 !linking_exp_list in match c with
-			   | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)))
-			   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], None) args in
-           (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);}), new_p)
+	    let l = h1. h_formula_heap2_pos in
+	    let args = h1. h_formula_heap2_arguments in
+	    let frac = h1. h_formula_heap2_frac_perm in
+        (match frac with
+          | Some f ->
+	          let nl_frac, new_p_frac =
+	            match f with
+		          | Ipure.Null _
+		          | Ipure.IConst _
+		          | Ipure.Var _ -> (f, None)
+		          | _ ->
+		              let new_name_frac = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in
+		              let nv_frac = Ipure.Var((new_name_frac, Unprimed), l) in
+			          (nv_frac, Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_frac, f, l), None), None))))
+
+              in
+	          let nl, new_p =
+	            List.fold_left
+                    (fun (a, c) (d1,d2) ->
+	                    match d2 with
+		                  | Ipure.Null _ 
+		                  | Ipure.IConst _
+		                  | Ipure.Var _ -> ((d1,d2):: a, c)
+		                  | _ -> 
+		                      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+		                      let nv = Ipure.Var((new_name, Unprimed), l) in
+
+			                  ((d1,nv):: a, 
+                               let lexp = P.find_lexp_exp d2 !linking_exp_list in 
+                               match c with
+			                     | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)))
+			                     | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], new_p_frac) args 
+              in
+              (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_frac_perm = Some nl_frac;}), new_p)
+
+          | None ->
+	          let nl, new_p =
+	            List.fold_left
+                    (fun (a, c) (d1,d2) ->
+	                    match d2 with
+		                  | Ipure.Null _ 
+		                  | Ipure.IConst _
+		                  | Ipure.Var _ -> ((d1,d2):: a, c)
+		                  | _ -> 
+		                      let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+		                      let nv = Ipure.Var((new_name, Unprimed), l) in
+
+			                  ((d1,nv):: a, 
+                               let lexp = P.find_lexp_exp d2 !linking_exp_list in 
+                               match c with
+			                     | None -> Some (float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)))
+			                     | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], None) args 
+              in
+              (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl)}), new_p)
+              (*WN:TODO: DONE*)
+        )
     |  HTrue -> (h, None)
     |  HFalse -> (h, None)
 	 

@@ -380,7 +380,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
-
+let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -1090,7 +1090,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							   F.h_formula_data_original = subnode.F.h_formula_data_original;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
-						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
+	                           F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
                  F.h_formula_data_pruning_conditions = [];

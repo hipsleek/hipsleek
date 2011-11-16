@@ -339,7 +339,7 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
   if not(c.coercion_case=Cast.Simple && c.coercion_head_view = l_vname) then None
   else 
-    let args = (* List.tl  *)(fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
+    let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter and fracvar *)
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
     (* let _ = print_string ( "choose_full_mater_coercion_x: after \n" ) in *)
     (* let args = List.tl (fv_simple_formula c.coercion_head) in (\* dropping the self parameter *\) *)
@@ -561,6 +561,7 @@ and norm_search_action ls = match ls with
   | lst -> Search_action lst
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
 
+and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
@@ -800,7 +801,7 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
       (-1, (Cond_action [r;r1]))
     else r0
       (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
-  | x::[] -> process_one_match prog is_normalizing x
+  | x::[] -> process_one_match prog is_normalizing x 
   | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
 
 and sort_wt (ys: action_wt list) : action list =
@@ -867,7 +868,7 @@ and compute_actions prog es (* list of right aliases *)
       lhs_p (*lhs pure*) 
       rhs_p (*rhs pure*)
       posib_r_alias (*possible rhs variables*)
-      rhs_lst 
+      rhs_lst is_normalizing 
       pos =
   let psv = Cprinter.string_of_spec_var in
   let pr0 = pr_list (pr_pair psv psv) in
@@ -885,7 +886,7 @@ and compute_actions prog es (* list of right aliases *)
       (add_str "RHS cand" pr1)
       (* (add_str "right alias" pr4) *)
       pr2
-      (fun _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h (* lhs_p *) rhs_lst  (* posib_r_alias *)
+      (fun _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos) es lhs_h (* lhs_p *) rhs_lst  (* posib_r_alias *)
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

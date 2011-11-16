@@ -181,6 +181,7 @@ let rec is_float_formula f0 =
     | And (f1, f2, _) | Or (f1, f2, _,_) ->
         (is_float_formula f1) || (is_float_formula f2)
 
+
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =
   let n=String.length s in
@@ -273,7 +274,7 @@ let is_true_conj_eq (f1:formula) : bool =
   match f1 with
     | BForm (b1,_) ->
         (match b1 with
-          | Eq (e1,e2,_) -> 
+          | Eq (e1,e2,_) , _ -> 
               (match e1,e2 with
                 | Var (v1,_), Var (v2,_)-> 
                     let b1 = eq_spec_var v1 v2 in
@@ -292,7 +293,7 @@ let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
   match f1,f2 with
     | BForm (b1,_),BForm (b2,_) ->
         (match b1,b2 with
-          | Eq (e11,e12,_), Eq (e21,e22,_) ->
+          | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) ->
               (match e11,e12,e21,e22 with
                 | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
                     let b1 = eq_spec_var v11 v21 in
@@ -559,7 +560,6 @@ and is_null (e : exp) : bool =
   | _ -> false
 
 and is_zero_int (e : exp) : bool = match e with
-  match e with
   | IConst (0, _) -> true
   | _ -> false
 
@@ -708,6 +708,46 @@ and is_float_type (t : typ) = match t with
   | Float -> true
   | _ -> false
 
+and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
+
+and is_float_exp exp = 
+  let rec helper exp = 
+    match exp with
+      | Var (v,_) -> is_float_var v (* check type *)
+      | FConst v -> true
+      | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _) -> (helper e1) || (helper e2)
+      | Div (e1, e2, _) -> true
+  (* Omega don't accept / operator, we have to manually transform the formula *)
+  (*
+    (match e2 with
+    | IConst _ -> is_linear_exp e1
+    | _ -> false)
+  *)
+      | _ -> false
+  in
+  helper exp
+
+and is_float_bformula b = 
+  let b, _ = b in
+  match b with
+  | Lt (e1, e2, _) | Lte (e1, e2, _) 
+  | Gt (e1, e2, _) | Gte (e1, e2, _)
+  | Eq (e1, e2, _) | Neq (e1, e2, _)
+      -> (is_float_exp e1) || (is_float_exp e2)
+  | EqMax (e1, e2, e3, _) | EqMin (e1, e2, e3, _)
+      -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
+  | _ -> false
+
+and is_float_formula f0 = 
+  let rec helper f0= 
+  match f0 with
+    | BForm (b,_) -> is_float_bformula b
+    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) ->
+        is_float_formula f;
+    | And (f1, f2, _) | Or (f1, f2, _,_) ->
+        (helper f1) || (helper f2)
+  in helper f0
+
 and is_object_type (t : typ) = match t with
   | Named _ -> true
   | _ -> false
@@ -834,15 +874,33 @@ and mkNeq a1 a2 pos =
   else
     Neq (a1, a2, pos)
 
-and mkEq a1 a2 pos =
-  if is_max_min a1 && is_max_min a2 then
-    failwith ("max/min can only appear in one side of an equation")
-  else if is_max_min a1 then
-    match a1 with
-      | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
-      | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
+and mkEq a1 a2 pos : b_formula=
+  let pf = 
+    if is_max_min a1 && is_max_min a2 then
+      failwith ("max/min can only appear in one side of an equation")
+    else if is_max_min a1 then
+      match a1 with
+        | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
+        | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
+        | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
+    else if is_max_min a2 then
+    match a2 with
+      | Min (a21, a22, _) -> EqMin (a1, a21, a22, pos)
+      | Max (a21, a22, _) -> EqMax (a1, a21, a22, pos)
       | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
-  else if is_max_min a2 then
+  else
+    Eq (a1, a2, pos)
+  in (pf,None)
+
+and mkEq_p a1 a2 pos : p_formula=
+    if is_max_min a1 && is_max_min a2 then
+      failwith ("max/min can only appear in one side of an equation")
+    else if is_max_min a1 then
+      match a1 with
+        | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
+        | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
+        | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
+    else if is_max_min a2 then
     match a2 with
       | Min (a21, a22, _) -> EqMin (a1, a21, a22, pos)
       | Max (a21, a22, _) -> EqMax (a1, a21, a22, pos)
@@ -910,7 +968,7 @@ and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkTrue pos
   else
-    BForm ((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None)
+    BForm (((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
 
 and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
@@ -3195,7 +3253,7 @@ and drop_null (f:formula) self neg:formula =
 	| Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
 	      
 and add_null f self : formula =  
-  mkAnd f (BForm ((mkEq (Var (self,no_pos)) (Null no_pos) no_pos, None), None)) no_pos	  
+  mkAnd f (BForm ((mkEq (Var (self,no_pos)) (Null no_pos) no_pos, None))) no_pos	  
       (*to fully extend*)
       (* TODO: double check this func *)
 
@@ -4349,25 +4407,27 @@ let simp_bform simp bf =
 (* normalise and simplify b_formula *)
 let norm_bform_a (bf:b_formula) : b_formula =
   (*let bf = b_form_simplify bf in *)
-  let (pf,il) = bf in
-  let npf =  
-  if (is_float_bformula pf) then pf
+  if (is_float_bformula bf) then bf
+  else
+    let (pf,il) = bf in	
+    let npf = 
+      match pf with 
   else match pf with
-      | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
-      | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
-      | Gt  (e1,e2,l) -> norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
-      | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
-      | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
-      | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
-      | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
-      | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
-      | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
-      | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
-      | BConst _ | BVar _ | EqMax _ 
-      | EqMin _ |  BagSub _ | BagMin _ 
-      | BagMax _ | ListAllN _ | ListPerm _
-	  | RelForm _ -> pf (* An hoa *)
-  in (npf, il)
+        | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
+        | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
+        | Gt  (e1,e2,l) -> norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
+        | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
+        | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
+        | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
+        | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
+        | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
+        | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
+        | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+        | BConst _ | BVar _ | EqMax _ 
+        | EqMin _ |  BagSub _ | BagMin _ 
+        | BagMax _ | ListAllN _ | ListPerm _
+	    | RelForm _ -> pf (* An hoa *)
+    in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
 
@@ -5522,6 +5582,9 @@ let is_linear_formula f0 =
       | _ -> None
   in
   fold_formula f0 (nonef, f_bf, f_e) and_list
+
+let is_linear_formula f0 =
+  Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
 let is_linear_formula f0 =
   Gen.Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
