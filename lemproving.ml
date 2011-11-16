@@ -7,16 +7,31 @@ module CP = Cpure
 module H  = Hashtbl
 module I  = Iast
 
+type lem_formula = 
+  | CFormula of CF.formula
+  | CSFormula of CF.struc_formula
 
-let run_entail_check iante0 iconseq0 cprog meta_to_formula =
-  let (ante, conseq) = meta_to_formula iante0 iconseq0 cprog in
-  (* let stab = H.create 103 in *)
-  (* let ante =Sleekcommons.meta_to_formula iante0 false [] stab in     *)
-  (* let ante = Solver.prune_preds !cprog true ante in *)
-  (* let fvs = CF.fv ante in *)
-  (* let fv_idents = List.map CP.name_of_spec_var fvs in *)
-  (* let conseq = Sleekcommons.meta_to_struc_formula iconseq0 false fv_idents stab in *)
-  (* let conseq = Solver.prune_pred_struc !cprog true conseq in *)
+let lem_to_cformula (lf: lem_formula) = match lf with
+  | CFormula f -> f
+  | CSFormula csf -> Error.report_error {
+                   Error.error_loc = no_pos;
+                   Error.error_text = "cannot have structured formula in antecedent";
+                 }
+
+let lem_to_struc_cformula (lf: lem_formula) = match lf with
+  | CFormula f -> (Cformula.formula_to_struc_formula f)
+  | CSFormula csf -> csf
+
+let string_of_lem_formula lf = match lf with
+  | CFormula f -> Cprinter.string_of_formula f
+  | CSFormula csf -> Cprinter.string_of_struc_formula csf
+
+
+let run_entail_check (iante0: lem_formula) (iconseq0: lem_formula) cprog  =
+  let ante = lem_to_cformula iante0 in
+  let ante = Solver.prune_preds cprog true ante in
+  let conseq = lem_to_struc_cformula iconseq0 in
+  let conseq = Solver.prune_pred_struc cprog true conseq in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
@@ -65,18 +80,18 @@ let print_exc (check_id: string) =
   dummy_exception() ; 
   print_string ("exception in " ^ check_id ^ " check\n")
 
-let process_lemma_check iante0 iconseq0 (lemma_name: string) cprog meta_to_formula =
+let process_lemma_check iante0 iconseq0 (lemma_name: string) cprog  =
   try 
-    run_entail_check iante0 iconseq0 cprog meta_to_formula
+    run_entail_check iante0 iconseq0 cprog
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
       let rs = (CF.FailCtx (CF.Trivial_Reason " exception in lemma proving ")) in
       (false, rs)
 
-let process_lemma_check iante0 iconseq0 (lemma_name: string) cprog meta_to_formula =
-  let pr = Cprinter.string_of_formula in
-  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name cprog meta_to_formula) iante0 iconseq0
+let process_lemma_check iante0 iconseq0 (lemma_name: string) cprog =
+  let pr = string_of_lem_formula in
+  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name cprog) iante0 iconseq0
 
-let check_coercion coer lhs rhs cprog meta_to_formula =
+let check_coercion coer lhs rhs cprog =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
@@ -87,15 +102,15 @@ let check_coercion coer lhs rhs cprog meta_to_formula =
     let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
     let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
     let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check lhs rhs coer.C.coercion_name cprog meta_to_formula
+    process_lemma_check (CFormula lhs) (CFormula rhs) coer.C.coercion_name cprog 
 
-let check_coercion coer lhs rhs cprog meta_to_formula=
+let check_coercion coer lhs rhs cprog =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog meta_to_formula) coer lhs rhs
+  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog ) coer lhs rhs
 
 (* below expects struc_formula for rhs *)
-let check_coercion_struc coer lhs rhs cprog meta_to_formula =
+let check_coercion_struc coer lhs rhs cprog =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
@@ -106,29 +121,33 @@ let check_coercion_struc coer lhs rhs cprog meta_to_formula =
     let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
     let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
     let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check lhs rhs coer.C.coercion_name meta_to_formula
+    process_lemma_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_name  cprog
 
-let check_left_coercion coer cprog  meta_to_formula =
+let check_left_coercion coer cprog  =
   let ent_lhs =coer.C.coercion_head in
   let ent_rhs = coer.C.coercion_body_norm in
-  check_coercion_struc coer ent_lhs ent_rhs cprog meta_to_formula
+  check_coercion_struc coer ent_lhs ent_rhs cprog
 
-let check_right_coercion coer cprog  meta_to_formula =
+(* let check_left_coercion coer cprog  = *)
+(*   let pr = Cprinter.string_of_coerc_decl_list in *)
+(*   Gen.Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer *)
+
+let check_right_coercion coer cprog  =
   let ent_rhs = coer.C.coercion_head_norm in
   let ent_lhs = coer.C.coercion_body in
-  check_coercion coer ent_lhs ent_rhs cprog meta_to_formula
+  check_coercion coer ent_lhs ent_rhs cprog 
 
 
-let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type meta_to_formula =
+let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
   if !Globals.check_coercions then begin
     let helper coercs check_coerc = match coercs with
       | [] -> (true, None)
-      | coerc::[] -> let (valid, rs) = check_coerc coerc cprog meta_to_formula in (valid, Some rs)
+      | coerc::[] -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
       | _ -> let _ = print_string "\n[lemproving.ml] error at process_lemma: list of coercions should have max length of 1 \n" in 
         (false, None)
     in
-    (* let valid_l2r, rs_l2r = helper l2r check_left_coercion in    *)
-    let valid_l2r, rs_l2r = (false, None) in
+    let valid_l2r, rs_l2r = helper l2r check_left_coercion in
+    (* let valid_l2r, rs_l2r = (false, None) in *)
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
     let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
     let residues = match (rs_l2r, rs_r2l) with
@@ -159,3 +178,8 @@ let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog
       print_entail_result valid err_resid (num_id^num_id0)
     end;
   end
+
+
+let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
+  let pr = Cprinter.string_of_coerc_decl_list in
+  Gen.Debug.no_3 "process_lemma" pr pr (fun x -> x) (fun _ -> "Unit") (fun _ _ _ -> process_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
