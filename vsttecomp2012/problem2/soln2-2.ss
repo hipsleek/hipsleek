@@ -53,6 +53,9 @@ ensures  res::valueK<> ;
 {
  anode val1, val2, val11, val2c;
  anode tmp1, tmp2, tmp3;
+	dprint;
+	bool b = isApply(t);
+	dprint;
  if (isApply(t)) {
    // apply
    val1 = reduction(t.fn);
