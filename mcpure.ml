@@ -665,10 +665,6 @@ and combine_memo_branch b (f, l) =
 	    memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
-  Gen.Debug.no_3 "merge_mems" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
-	!print_mp_f merge_mems_x l1 l2 slice_check_dups
-		  
-and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
   merge_mems_check l1 l2 slice_check_dups
   
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =

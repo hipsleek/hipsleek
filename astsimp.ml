@@ -1409,6 +1409,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
+          C.view_uni_vars = [];
           C.view_labels = vdef.I.view_labels;
           C.view_modes = vdef.I.view_modes;
           C.view_partially_bound_vars = [];
@@ -2486,7 +2487,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_var_pos = pos;
                                 } in
                                 let (tmp_e, tmp_t) =
-			                      flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos 
+			                      flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false false pos (* o.f = s.th *)
 			                    in
 			                    
                                 let fn_decl = if new_var then C.VarDecl {
@@ -4105,6 +4106,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 					CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 					CF.h_formula_data_name = rootptr_type_name;
 					CF.h_formula_data_imm = imm;
+		            CF.h_formula_data_frac_perm = None; (*??? TO CHECK: temporarily*)
+                    CF.h_formula_data_origins = []; (*??? temporarily*)
+		            CF.h_formula_data_original = true; (*??? temporarily*)
 					CF.h_formula_data_arguments = hvars;
 					CF.h_formula_data_holes = holes;
 					CF.h_formula_data_label = pi;

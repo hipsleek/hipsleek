@@ -404,7 +404,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let field_types, vs = List.split args in
 	        let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed))
 	          vs field_types in
-            let frac = Some (CP.FConst (1.0, pos)) in (*LDK: a new node created with frac perm = 1.0*)
+            (* let frac = Some (CP.FConst (1.0, pos)) in (\*LDK: a new node created with frac perm = 1.0*\) *) (*fresh_variable = full_perm*)
 	        let heap_node = CF.DataNode ({
                 CF.h_formula_data_node = CP.SpecVar (Named c, res, Unprimed);
                 CF.h_formula_data_name = c;

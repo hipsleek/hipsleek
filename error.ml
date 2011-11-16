@@ -48,6 +48,7 @@ let report_error e =
 
 let report_warning e =
   if (not !suppress_warning_msg) then 
+    begin
     Printf.printf "\nWARNING: %s:%s\n"
         (string_of_loc e.error_loc)
             e.error_text;

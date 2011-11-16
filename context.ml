@@ -302,8 +302,7 @@ and view_mater_match_x prog c vs1 aset imm f =
   let vdef_param = (self_param vdef)::(vdef.view_vars) in
   let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
 
-   let vars =  vdef.view_vars in
-   
+   (* let vars =  vdef.view_vars in *)
    (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
 
 
@@ -339,7 +338,6 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
   if not(c.coercion_case=Cast.Simple && c.coercion_head_view = l_vname) then None
   else 
-    let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter and fracvar *)
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
     (* let _ = print_string ( "choose_full_mater_coercion_x: after \n" ) in *)
     (* let args = List.tl (fv_simple_formula c.coercion_head) in (\* dropping the self parameter *\) *)
@@ -454,7 +452,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                 [(HTrue, f, [], Root)]
              else
               let vmm = view_mater_match prog c (p1::vs1) aset imm f in
-              let cmm = coerc_mater_match prog c (p1::vs1) aset imm f in
             (* let _ = print_string "\n I am here, before vmm = view_mater_match... \n" in *)
 
             (* let vmm =  match frac1 with *)
@@ -559,7 +556,6 @@ and norm_search_action ls = match ls with
   | [] -> M_Nothing_to_do ("search action is empty")
   | [(_,a)] -> a
   | lst -> Search_action lst
-and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
 
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
@@ -743,7 +739,6 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       let l1 = [(1,M_base_case_unfold c)] in
                       (-1, (Search_action (a2::l1)))
                   in a1
-              in a1
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
         )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in

@@ -149,39 +149,6 @@ let is_int_str_aux (n:int) (s:string) : bool =
     if (p=const_prefix) then true
     else false
 
-let rec is_float_exp exp = 
-  match exp with
-  | Var (v,_) -> is_float_var v (* check type *)
-  | FConst v -> true
-  | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _) -> (is_float_exp e1) || (is_float_exp e2)
-  | Div (e1, e2, _) -> true
-      (* Omega don't accept / operator, we have to manually transform the formula *)
-      (*
-      (match e2 with
-        | IConst _ -> is_linear_exp e1
-        | _ -> false)
-      *)
-  | _ -> false
-
-let is_float_bformula b = 
-  match b with
-  | Lt (e1, e2, _) | Lte (e1, e2, _) 
-  | Gt (e1, e2, _) | Gte (e1, e2, _)
-  | Eq (e1, e2, _) | Neq (e1, e2, _)
-      -> (is_float_exp e1) || (is_float_exp e2)
-  | EqMax (e1, e2, e3, _) | EqMin (e1, e2, e3, _)
-      -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
-  | _ -> false
-
-let rec is_float_formula f0 = 
-  match f0 with
-    | BForm (b,_) -> is_float_bformula b
-    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) ->
-        is_float_formula f;
-    | And (f1, f2, _) | Or (f1, f2, _,_) ->
-        (is_float_formula f1) || (is_float_formula f2)
-
-
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =
   let n=String.length s in
@@ -874,25 +841,10 @@ and mkNeq a1 a2 pos =
   else
     Neq (a1, a2, pos)
 
-and mkEq a1 a2 pos : b_formula=
-  let pf = 
-    if is_max_min a1 && is_max_min a2 then
-      failwith ("max/min can only appear in one side of an equation")
-    else if is_max_min a1 then
-      match a1 with
-        | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
-        | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
-        | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
-    else if is_max_min a2 then
-    match a2 with
-      | Min (a21, a22, _) -> EqMin (a1, a21, a22, pos)
-      | Max (a21, a22, _) -> EqMax (a1, a21, a22, pos)
-      | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
-  else
-    Eq (a1, a2, pos)
-  in (pf,None)
+and mkEq_b a1 a2 pos : b_formula=
+  (mkEq a1 a2 pos, None)
 
-and mkEq_p a1 a2 pos : p_formula=
+and mkEq a1 a2 pos : p_formula=
     if is_max_min a1 && is_max_min a2 then
       failwith ("max/min can only appear in one side of an equation")
     else if is_max_min a1 then
@@ -3253,7 +3205,7 @@ and drop_null (f:formula) self neg:formula =
 	| Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
 	      
 and add_null f self : formula =  
-  mkAnd f (BForm ((mkEq (Var (self,no_pos)) (Null no_pos) no_pos, None))) no_pos	  
+  mkAnd f (BForm ((mkEq_b (Var (self,no_pos)) (Null no_pos) no_pos, None))) no_pos	  
       (*to fully extend*)
       (* TODO: double check this func *)
 
@@ -4412,7 +4364,6 @@ let norm_bform_a (bf:b_formula) : b_formula =
     let (pf,il) = bf in	
     let npf = 
       match pf with 
-  else match pf with
         | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
         | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
         | Gt  (e1,e2,l) -> norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l

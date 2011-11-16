@@ -422,8 +422,8 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 		  if ((is_var_num e1 || is_null e1) && is_normalized_term e2) || 
 			((is_var_num e2 || is_null e2) && is_normalized_term e1)
 		  then (BForm (bf0,lbl))
-		  else helper2 mkEq_p e1 e2 pos
-	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq_p e1 e2 pos) lbl pos
+		  else helper2 mkEq e1 e2 pos
+	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
 	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
 	  | Lte (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos

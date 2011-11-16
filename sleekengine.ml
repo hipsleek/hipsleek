@@ -308,9 +308,9 @@ let perform_second_parsing_stage () =
 	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
 		!cprog.C.prog_data_decls <- cddefs
 	
-let rec meta_to_struc_formula_x (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
+let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
   let rec helper (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
-  match mf0 with
+    match mf0 with
   | MetaFormCF mf -> 
 
       (* let _ = print_string ("meta_to_struc_formula: MetaFormCF" *)
@@ -383,6 +383,7 @@ let rec meta_to_struc_formula_x (mf0 : meta_formula) quant fv_idents stab : CF.s
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
       (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
       res
+  | MetaEFormCF b -> b (* assume it has already been normalized *)
   in helper mf0 quant fv_idents stab 
 
 
@@ -566,7 +567,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
   (*                       ^"\n\n") in *)
 
-  let ante_flow_ff = (CF.flow_formula_of_formula ante) in
+  (* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv !cprog false false 
@@ -575,10 +576,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
      Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
-  (* andreeac - for debugging - to delet: *)
-  let length_ctx ctx = match ctx with
-    | CF.FailCtx _ -> 0
-    | CF.SuccCtx ctx0 -> List.length ctx0 in
+  (* (\* andreeac - for debugging - to delet: *\) *)
+  (* let length_ctx ctx = match ctx with *)
+  (*   | CF.FailCtx _ -> 0 *)
+  (*   | CF.SuccCtx ctx0 -> List.length ctx0 in *)
   (* let _ = print_endline ( "\n Sleekengine.ml, run_entail_check 1:" ^ (string_of_int (length_ctx rs1)) ^" \n\n\t ############reidues#######" ^ (Cprinter.string_of_list_context rs1) ^ "\n ############END#######") in  *)
   (* to delete *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
