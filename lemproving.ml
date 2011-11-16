@@ -7,6 +7,7 @@ module CP = Cpure
 module H  = Hashtbl
 module I  = Iast
 
+(* the cformulae used during lemma proving *)
 type lem_formula = 
   | CFormula of CF.formula
   | CSFormula of CF.struc_formula
@@ -19,18 +20,20 @@ let lem_to_cformula (lf: lem_formula) = match lf with
                  }
 
 let lem_to_struc_cformula (lf: lem_formula) = match lf with
-  | CFormula f -> (Cformula.formula_to_struc_formula f)
+  | CFormula f -> (CF.formula_to_struc_formula f)
   | CSFormula csf -> csf
 
 let string_of_lem_formula lf = match lf with
   | CFormula f -> Cprinter.string_of_formula f
   | CSFormula csf -> Cprinter.string_of_struc_formula csf
 
-
-let run_entail_check (iante0: lem_formula) (iconseq0: lem_formula) cprog  =
-  let ante = lem_to_cformula iante0 in
+(* checks if iante(CF.formula) entails iconseq(CF.formula or CF.struc_formula) in cprog(C.prog_decl)
+   - similar to Sleekengine.run_entail_check
+*)
+let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog_decl)  =
+  let ante = lem_to_cformula iante in
   let ante = Solver.prune_preds cprog true ante in
-  let conseq = lem_to_struc_cformula iconseq0 in
+  let conseq = lem_to_struc_cformula iconseq in
   let conseq = Solver.prune_pred_struc cprog true conseq in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
@@ -38,60 +41,56 @@ let run_entail_check (iante0: lem_formula) (iconseq0: lem_formula) cprog  =
   let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
-    Solver.heap_entail_struc_init_bug_inv cprog false false 
-        (CF.SuccCtx[ctx]) conseq no_pos None
+    Solver.heap_entail_struc_init_bug_inv cprog false false (CF.SuccCtx[ctx]) conseq no_pos None
   else
-     Solver.heap_entail_struc_init cprog false false 
-        (CF.SuccCtx[ctx]) conseq no_pos None
+     Solver.heap_entail_struc_init cprog false false (CF.SuccCtx[ctx]) conseq no_pos None
   in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   flush stdout;
   let res =
-    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
-    else ((not (CF.isFailCtx rs)))
+    if !Globals.disable_failure_explaining then ((not (CF.isFailCtx rs)))
+    else ((not (CF.isFailCtx_gen rs)))
   in
   (res, rs)
 
+(* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
-  if not valid then
-    begin
-      let s =
-        if not !Globals.disable_failure_explaining then
-          match CF.get_must_failure residue with
-            | Some s -> "(must) cause:"^s 
-            | _ -> (match CF.get_may_failure residue with
-                | Some s -> "(may) cause:"^s
-                | None -> "INCONSISTENCY : expected failure but success instead"
-              )
-        else ""
-      in
-      print_string (num_id^": Fail. "^s^"\n")
-          (*if !Globals.print_err_sleek then *)
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
-    end
-  else
-    begin
-	  print_string (num_id^": Valid.\n")
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
-    end  
+  if valid then print_string (num_id ^ ": Valid.\n")
+  else let s = 
+    if !Globals.disable_failure_explaining then ""
+    else
+      match CF.get_must_failure residue with
+        | Some s -> "(must) cause:" ^ s 
+        | _ -> (match CF.get_may_failure residue with
+            | Some s -> "(may) cause:" ^ s
+            | None -> "INCONSISTENCY : expected failure but success instead"
+          )
+    in print_string (num_id ^ ": Fail. " ^ s ^ "\n")
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
   print_string ("exception in " ^ check_id ^ " check\n")
 
-let process_lemma_check iante0 iconseq0 (lemma_name: string) cprog  =
+(* calls the entailment method and catches possible exceptions *)
+let process_coercion_check iante iconseq (lemma_name: string)  (cprog: C.prog_decl)  =
   try 
-    run_entail_check iante0 iconseq0 cprog
+    run_entail_check iante iconseq cprog
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
       let rs = (CF.FailCtx (CF.Trivial_Reason " exception in lemma proving ")) in
       (false, rs)
 
-let process_lemma_check iante0 iconseq0 (lemma_name: string) cprog =
+let process_coercion_check iante0 iconseq0 (lemma_name: string)  (cprog: C.prog_decl) =
   let pr = string_of_lem_formula in
-  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name cprog) iante0 iconseq0
+  Gen.Debug.no_2 "process_coercion_check" pr pr (fun _ -> "?") (fun _ _ -> process_coercion_check iante0 iconseq0 lemma_name cprog) iante0 iconseq0
 
-let check_coercion coer lhs rhs cprog =
+(* prepares the lhs&rhs of the coercion to be checked 
+   - unfold lhs once
+   - sets lhs and rhs original-derived flag to original in order to be able to inductively apply the current lemma in its proving
+   - resets lhs & rhs view origins (originis = [])
+   - renames self to self_<lemma_name>
+*)
+let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
@@ -102,15 +101,15 @@ let check_coercion coer lhs rhs cprog =
     let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
     let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
     let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check (CFormula lhs) (CFormula rhs) coer.C.coercion_name cprog 
+    process_coercion_check (CFormula lhs) (CFormula rhs) coer.C.coercion_name cprog 
 
-let check_coercion coer lhs rhs cprog =
+let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
   Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog ) coer lhs rhs
 
-(* below expects struc_formula for rhs *)
-let check_coercion_struc coer lhs rhs cprog =
+(* same effect as check_coercion with the difference that the rhs is a struc_formula *)
+let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = CF.add_original lhs true in
@@ -121,25 +120,45 @@ let check_coercion_struc coer lhs rhs cprog =
     let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
     let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
     let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_name  cprog
+    process_coercion_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_name  cprog
 
-let check_left_coercion coer cprog  =
+let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
+  let pr1 = Cprinter.string_of_coercion in
+  let pr2 = Cprinter.string_of_formula in
+  let pr3 = Cprinter.string_of_struc_formula in
+  Gen.Debug.no_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
+
+(* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
+let check_left_coercion coer (cprog: C.prog_decl) =
+  (* let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
   let ent_lhs =coer.C.coercion_head in
   let ent_rhs = coer.C.coercion_body_norm in
   check_coercion_struc coer ent_lhs ent_rhs cprog
 
-(* let check_left_coercion coer cprog  = *)
-(*   let pr = Cprinter.string_of_coerc_decl_list in *)
-(*   Gen.Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer *)
+let check_left_coercion coer cprog  =
+  let pr = Cprinter.string_of_coerc_decl_list in
+  Gen.Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
 
-let check_right_coercion coer cprog  =
+(* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
+let check_right_coercion coer (cprog: C.prog_decl) =
+  (* let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
   let ent_rhs = coer.C.coercion_head_norm in
   let ent_lhs = coer.C.coercion_body in
   check_coercion coer ent_lhs ent_rhs cprog 
 
+let check_right_coercion coer (cprog: C.prog_decl) =
+  let pr = Cprinter.string_of_coerc_decl_list in
+  Gen.Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
-let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
-  if !Globals.check_coercions then begin
+(* check the validity of the lemma where:
+   l2r: "->" implication
+   r2l: "<-" implication 
+   cprog: cast program 
+   coerc_name: lemma name
+   coerc_type: lemma type (Right, Left or Equiv)
+*)
+let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  lemma_name lemma_type =
+  if !Globals.check_coercions then
     let helper coercs check_coerc = match coercs with
       | [] -> (true, None)
       | coerc::[] -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
@@ -147,7 +166,6 @@ let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog
         (false, None)
     in
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
-    (* let valid_l2r, rs_l2r = (false, None) in *)
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
     let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
     let residues = match (rs_l2r, rs_r2l) with
@@ -157,13 +175,14 @@ let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog
       | (Some rs1, Some rs2) -> CF.list_context_union rs1 rs2
     in
     let valid = valid_l2r && valid_r2l in
-    let num_id = "\nEntailing lemma \""^ coerc_name ^"\"" in
-    if valid then 
-      print_entail_result valid residues num_id
-    else begin
-      let num_id0, err_resid  = 
-        match coerc_type with
-          | I.Equiv -> begin
+    let num_id = "\nEntailing lemma \""^ lemma_name ^"\"" in
+    let _ =
+      if valid then 
+        print_entail_result valid residues num_id
+      else begin
+        let num_id0, err_resid  = 
+          match lemma_type with
+            | I.Equiv -> begin
                 if (valid_l2r == false) then
                   match rs_l2r with
                     | Some rs -> (" (left-to-right) ", rs)
@@ -172,13 +191,13 @@ let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog
                   match rs_r2l with
                     | Some rs -> (" (right-to-left) ", rs)
                     | None -> (" (right-to-left) ",  empty_resid)
-            end
-         | _ -> ("", residues) 
-      in
-      print_entail_result valid err_resid (num_id^num_id0)
-    end;
-  end
-
+              end
+            | _ -> ("", residues) 
+        in
+        print_entail_result valid err_resid (num_id ^ num_id0)
+      end; in
+    Some residues
+  else None
 
 let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr = Cprinter.string_of_coerc_decl_list in

@@ -788,7 +788,7 @@ let check_coercion (prog : prog_decl) =
   let check_right_coercion coer =
     Gen.Debug.no_1 "check_right_coercion" Cprinter.string_of_coercion 
         (fun _ -> "?") check_right_coercion coer in
-
+  let lemmas = List.map 
   List.iter (fun coer -> check_left_coercion coer) prog.prog_left_coercions;
   List.iter (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 
