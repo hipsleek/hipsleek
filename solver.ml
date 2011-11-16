@@ -757,7 +757,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     (* | DataNode ({ h_formula_data_node = p; *)
 	(*   h_formula_data_label = lbl; *)
 	(*   h_formula_data_pos = pos}) -> *)
-    (*       let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in *)
+    (*       let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in *)
     (*       (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p]) *)
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
@@ -5739,6 +5739,7 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   (* 	lhs_p *)
   (* in *)
   (* (\* An Hoa : END OF INSTANTIATION *\) *)
+
     let _ = reset_int2 () in
     let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
 
@@ -5790,6 +5791,7 @@ in
 
             let new_ante0, new_conseq0 = heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos in
             let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
+
 		(*let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^
 		  "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^
 		  "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in*)
@@ -6821,6 +6823,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
       Note: other_subs will never contain any impl_tvars because 
       of the pre-processed subs_to_inst_vars*)
+
+
     let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
       get_eqns_free other_subs new_exist_vars impl_tvars (* estate.es_evars *) (* estate.es_expl_vars@ *) estate.es_gen_expl_vars pos in
     (*********************************************************************)
@@ -7169,39 +7173,6 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   (*                       ^ "\n\n") in *)
 
   let (new_v2,use_case) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
-
-  (* let view_to_fold = (match frac with *)
-  (*   | None -> ViewNode ({   *)
-  (*     h_formula_view_node = List.hd new_v2 (\*var_to_fold*\); *)
-  (*     h_formula_view_name = c2; *)
-  (*     h_formula_view_imm = get_view_imm ln2; *)
-  (*     h_formula_view_original = original2; *)
-  (*     h_formula_view_unfold_num = unfold_num; *)
-  (*     h_formula_view_frac_perm = frac; (\*LDK*\) *)
-  (*     h_formula_view_arguments = List.tl new_v2; *)
-  (*     h_formula_view_modes = get_view_modes ln2; *)
-  (*     h_formula_view_coercible = true; *)
-  (*     h_formula_view_origins = get_view_origins ln2; *)
-  (*     h_formula_view_label = pid;           (\*TODO: the other alternative is to use none*\) *)
-  (*     h_formula_view_remaining_branches = r_rem_brs; *)
-  (*     h_formula_view_pruning_conditions = r_p_cond; *)
-  (*     h_formula_view_pos = pos2})  *)
-  (*   | Some _ ->  ViewNode ({   *)
-  (*     h_formula_view_node = List.hd new_v2 (\*var_to_fold*\); *)
-  (*     h_formula_view_name = c2; *)
-  (*     h_formula_view_imm = get_view_imm ln2; *)
-  (*     h_formula_view_original = original2; *)
-  (*     h_formula_view_unfold_num = unfold_num; *)
-  (*     h_formula_view_frac_perm = Some (List.hd (List.tl new_v2)); (\*LDK*\) *)
-  (*     h_formula_view_arguments = List.tl (List.tl new_v2); *)
-  (*     h_formula_view_modes = get_view_modes ln2; *)
-  (*     h_formula_view_coercible = true; *)
-  (*     h_formula_view_origins = get_view_origins ln2; *)
-  (*     h_formula_view_label = pid;           (\*TODO: the other alternative is to use none*\) *)
-  (*     h_formula_view_remaining_branches = r_rem_brs; *)
-  (*     h_formula_view_pruning_conditions = r_p_cond; *)
-  (*     h_formula_view_pos = pos2}) ) *)
-  (* in *)
 
   let view_to_fold = ViewNode ({
       h_formula_view_node = List.hd new_v2 (*var_to_fold*);
@@ -8212,7 +8183,6 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 	      else	(* we can apply coercion *)
 		    begin
 
-
 		        let lhs_guard_new,coer_rhs_new1,lhs_branches_new = match frac1,frac2 with
                   | Some f1, Some f2 ->
                       let guard = CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard in
@@ -8787,6 +8757,7 @@ begin
 		        (* ok because of TP.imply*)
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
+
 		          let new_f = normalize_replace f coer_rhs_new pos in
 
               (* let _ = print_string ("rewrite_coercion: after all" *)
@@ -9352,7 +9323,6 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t 
          pid - ?id
       *)
 and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
-
 
     if (coer.coercion_case = Cast.Simple) then
     (*simple lemmas with simple lhs with single node*)
