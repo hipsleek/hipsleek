@@ -408,46 +408,52 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 (* convert HeapNode2 to HeapNode *)
 let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
   match h0 with
-  | IF.Star (({ IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } as h))
-      ->
-      let tmp1 = convert_heap2_heap prog h1 in
-      let tmp2 = convert_heap2_heap prog h2
-      in
-        IF.Star
-          {
-            (h)
-            with
+    | IF.Star (({ IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.Star { (h) with
             IF.h_formula_star_h1 = tmp1;
-            IF.h_formula_star_h2 = tmp2;
-          }
-  | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
-  | _ -> h0
+            IF.h_formula_star_h2 = tmp2; }
+    | IF.Conj (({ IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.Conj { (h) with
+            IF.h_formula_conj_h1 = tmp1;
+            IF.h_formula_conj_h2 = tmp2; }
+    | IF.Phase (({ IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.Phase { (h) with
+            IF.h_formula_phase_rd = tmp1;
+            IF.h_formula_phase_rw = tmp2; }
+    | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
+    | IF.HTrue | IF.HFalse | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
   match f0 with
-  | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
-      let tmp1 = convert_heap2 prog f1 in
-      let tmp2 = convert_heap2 prog f2
-      in IF.Or { (f) with IF.formula_or_f1 = tmp1; IF.formula_or_f2 = tmp2; }
-  | IF.Base (({ IF.formula_base_heap = h0 } as f)) ->
-      let h = convert_heap2_heap prog h0
-      in IF.Base { (f) with IF.formula_base_heap = h; }
-  | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) ->
-      let h = convert_heap2_heap prog h0
-      in IF.Exists { (f) with IF.formula_exists_heap = h; }
+    | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
+          let tmp1 = convert_heap2 prog f1 in
+          let tmp2 = convert_heap2 prog f2
+          in IF.Or { (f) with IF.formula_or_f1 = tmp1; IF.formula_or_f2 = tmp2; }
+    | IF.Base (({ IF.formula_base_heap = h0 } as f)) ->
+          let h = convert_heap2_heap prog h0
+          in IF.Base { (f) with IF.formula_base_heap = h; }
+    | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) ->
+          let h = convert_heap2_heap prog h0
+          in IF.Exists { (f) with IF.formula_exists_heap = h; }
 
 and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 with
-	| Iformula.EAssume (b,tag)-> Iformula.EAssume ((convert_heap2 prog b),tag)
-	| Iformula.ECase b -> Iformula.ECase {b with Iformula.formula_case_branches = (List.map (fun (c1,c2)-> (c1,(convert_struc2 prog c2))) b.Iformula.formula_case_branches)};
-	| Iformula.EBase b -> Iformula.EBase{b with 
-		 Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
-		 Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation}
-	| Iformula.EVariance b -> Iformula.EVariance {b with
-									Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation
-		}
+  | Iformula.EAssume (b,tag)-> Iformula.EAssume ((convert_heap2 prog b),tag)
+  | Iformula.ECase b -> Iformula.ECase {b with Iformula.formula_case_branches = (List.map (fun (c1,c2)-> (c1,(convert_struc2 prog c2))) b.Iformula.formula_case_branches)};
+  | Iformula.EBase b -> Iformula.EBase{b with 
+		Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
+		Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation}
+  | Iformula.EVariance b -> Iformula.EVariance {b with
+		Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation
+	}
 
 and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula = 
-	List.map (convert_ext2 prog ) f0 
+  List.map (convert_ext2 prog ) f0 
 	  
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
@@ -460,8 +466,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
             (* if c = vname *)
             (* then [] *)
             (* else *)
-              (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
-              with | Not_found -> [])
+            (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
+            with | Not_found -> [])
       | _ -> [] in
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
     match f with
@@ -513,11 +519,11 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
     if not(mr==[]) 
-     then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
+    then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
     g
-    (* if DfsNG.has_cycle g *)
-    (* then failwith "View definitions are mutually recursive" *)
-    (* else g *)
+        (* if DfsNG.has_cycle g *)
+        (* then failwith "View definitions are mutually recursive" *)
+        (* else g *)
   in
 
   let g = build_graph view_decls0 in

@@ -1026,6 +1026,10 @@ and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list
   else (dl,el)
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+  Gen.Debug.no_1 "syn_data_name" pr_no pr_no
+      (fun _ -> syn_data_name_x data_decls view_decls) () 
+
+and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
   (*let vl = List.map (fun v -> v.view_name) view_decls in*)
   (* An Hoa : Implement the equality checking *)
   (** [Internal] replaces aliases of self by it. **)
@@ -1140,7 +1144,14 @@ and fixpt_data_name (view_ans)  =
 (* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
 
 and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
-  let fetch r = List.concat (List.map (fun id -> let (_,a,_)=List.find (fun (v,_,_)-> v.view_name=id) view_ans in a) r) in 
+  let fetch r = List.concat (List.map 
+      (fun id -> 
+          try 
+          let (_,a,_) = List.find (fun (v,_,_)-> v.view_name=id) view_ans in a
+          with Not_found -> 
+              []
+      )
+      r) in 
   let r = List.map (fun (v,a,r) -> (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
   let check (v,a1,_) (_,a2,_) c = 
     let d1=List.length a1 in
@@ -1176,7 +1187,7 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr x = "?" in 
-  Gen.Debug.no_1 "fixpt_data_name" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
+  Gen.Debug.no_1 "set_check_fixpt" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in

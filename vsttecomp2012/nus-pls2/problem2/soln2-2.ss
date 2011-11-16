@@ -47,7 +47,7 @@ bool isCombS(anode t)
 anode reduction (anode t)
 
 requires t::termK<n>
-variance (1) [n]
+//variance (1) [n]
 ensures  res::valueK<> ;
 
 {
@@ -55,6 +55,7 @@ ensures  res::valueK<> ;
  anode tmp1, tmp2, tmp3;
  if (isApply(t)) {
    // apply
+   dprint;
    val1 = reduction(t.fn);
    val2 = reduction(t.arg);
    t.fn = val1;
@@ -74,7 +75,8 @@ ensures  res::valueK<> ;
        tmp2 = new anode(0,val1.arg,val2c);
        t.fn = tmp1;
        t.arg = tmp2;
-       return reduction(t);
+       anode tmp = reduction(t);
+       return tmp;
      }
    }
  } else return t; 

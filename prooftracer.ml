@@ -387,224 +387,8 @@ let log_proof prf =
 	  
 (** An Hoa : Output to HTML **)
 
-(* The plus.gif and minus.gif icons should be put in the same directory as the executable *)
-let image_dir_url = "file://" ^ Gen.get_path Sys.executable_name
-
-let hipsleekjs = "
-/*
- Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
- */
-
-Array.prototype.indexOf = IndexOf;
-
-//Toggles between two classes for an element
-function ToggleClass(element, firstClass, secondClass, event)
-{
-    event.cancelBubble = true;
-    
-    var classes = element.className.split(\" \");
-    var firstClassIndex = classes.indexOf(firstClass);
-    var secondClassIndex = classes.indexOf(secondClass);
-    
-    if (firstClassIndex == -1 && secondClassIndex == -1)
-    {
-        classes[classes.length] = firstClass;
-    }
-    else if (firstClassIndex != -1)
-    {
-        classes[firstClassIndex] = secondClass;
-    }
-    else
-    {
-        classes[secondClassIndex] = firstClass;
-    }
-    
-    element.className = classes.join(\" \");
-    
-}
-
-//Finds the index of an item in an array
-function IndexOf(item)
-{
-    for (var i=0; i < this.length; i++)
-    {        
-        if (this[i] == item)
-        {
-            return i;
-        }
-    }
-    
-    return -1;
-}
-
-//The toggle event handler for each expandable/collapsable node
-//- Note that this also exists to prevent any IE memory leaks 
-//(due to circular references caused by this)
-function ToggleNodeStateHandler(event)
-{
-    ToggleClass(this, \"Collapsed\", \"Expanded\", (event == null) ? window.event : event);
-}
-
-//Prevents the onclick event from bubbling up to parent elements
-function PreventBubbleHandler(event)
-{
-    if (!event) event = window.event;
-    event.cancelBubble = true;
-}
-
-//Adds the relevant onclick handlers for the nodes in the tree view
-function SetupTreeView(elementId)
-{
-    var tree = document.getElementById(elementId);
-    var treeElements = tree.getElementsByTagName(\"li\");
-    
-    for (var i=0; i < treeElements.length; i++)
-    {
-        if (treeElements[i].getElementsByTagName(\"ul\").length > 0)
-        {
-            treeElements[i].onclick = ToggleNodeStateHandler; 
-        }
-        else
-        {
-            treeElements[i].onclick = PreventBubbleHandler; 
-        }
-    }
-}"
-
-let hipsleekcss = "
-/*
- Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
- Modified by An Hoa
- */
-
-h1 {
-	color : green;
-}
-
-.progsource {
-	border-style : double;
-	font-family : Arial;
-}
-
-.progsource td {
-	padding-right : 20px;
-}
-
-tr.OddSourceLine {
-	background: white !important;
-}
-
-tr.EvenSourceLine {
-	background: #F0F0F0 !important;
-}
-
-.proc {
-	border-style : double;
-	font-family : Arial;
-}
-
-.procdef {
-	color:blue;
-	font-size : 0.75em;
-	font-weight : normal;
-	/* border-style : groove; */
-	font-family : monospace;
-}
-
-.pre {
-	background : aliceblue;
-	font-weight : normal;
-	/* border-style : solid; */
-	font-family : Arial;
-}
-
-.post {
-	background : burlywood;
-	font-weight : normal;
-	font-family : Arial;
-	/* border-style : ridge; */
-}
-
-.term {
-	font-weight : normal;
-	font-family : Arial;
-	border-style : double;
-}
-
-.proverinput {
-	color : black;
-	font-size : 0.75em;
-	background : goldenrod;
-	font-weight : normal;
-	font-family : monospace;
-	border-style : double;
-}
-
-.proveroutput {
-	color : darkmagenta;
-	font-size : 0.75em;
-	background : greenyellow;
-	font-weight : normal;
-	font-family : monospace;
-	border-style : double;
-}
-
-.pureimplyvalid {
-	color : green;
-	font-weight : normal;
-	border-style : dashed;
-}
-
-.pureimplyinvalid {
-	color : red;
-	font-weight : normal;
-	border-style : dashed;
-}
-
-.TreeView 
-{
-    font: Verdana;
-    line-height: 20px;
-	cursor: pointer; 
-	font-style: normal;
-}
-
-.TreeView li
-{
-    /* The padding is for the tree view nodes */
-	padding: 0 0 0 20px;
-    float : left;
-    width : 95%;
-    list-style: none;
-}
-
-.TreeView, .TreeView ul
-{
-    margin: 0;
-    padding: 0;
-}
-
-li.Expanded 
-{
-    background: url(" ^ image_dir_url ^ "minus.gif) no-repeat left top; 
-    /* http://www.ridgway.co.za/Images/ridgway_co_za/minus.gif */
-}
-
-li.Expanded ul
-{
-	display: block;
-}
-
-li.Collapsed 
-{
-	background: url(" ^ image_dir_url ^ "plus.gif) no-repeat left top; 
-	/* http://www.ridgway.co.za/Images/ridgway_co_za/plus.gif */
-}
-
-li.Collapsed ul
-{
-    display: none;
-}"
+(* The resources (i.e. the 4 files hipsleek.css, hipsleek.js, plus.gif, minus.gif) should be put in the same directory as the executable *)
+let resources_dir_url = "file://" ^ Gen.get_path Sys.executable_name
 
 let html_output = ref ""
 
@@ -674,13 +458,17 @@ let push_pop_prover_input prover_inp prover_name = html_output :=
 let push_pop_prover_output prover_out prover_name = html_output := 
 	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_out) ^ "</ul></li>"
 
-let push_term_checking pos =
+let push_term_checking pos reachable =
     let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
-    html_output := !html_output ^ "<li class=\"Collapsed term\">Termination checking at " ^ line_loc ^ "\n<ul>"	
+    html_output := !html_output ^ "<li class=\"Collapsed term\">Termination checking at " ^ line_loc ^ 
+    (if not reachable then "\n<ul>Unreachable recursive call" else "") ^ "\n<ul>"	
 	
 let push_pop_entail_variance (es, f, res) = html_output := 
 	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Well-foundedness checking" ^ "\n<ul>" ^
-	(convert_to_html ((Cprinter.string_of_formula es) ^ "\n|-" ^ (Cprinter.string_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed"))) ^ "</ul></li>"
+  (Cprinter.html_of_formula es) ^ "\n|-" ^ (Cprinter.html_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed") ^ "</ul></li>"
+
+let push_pop_unreachable_variance () = html_output := 
+	!html_output ^ "<li class=\"Collapsed termunreach" ^ "\">Unreachable" ^ "</ul></li>" 
 
 let push_pop_entail_variance_res res = html_output := 
 	!html_output ^ "<li class=\"Collapsed termres" ^ "\">Variance checking result " ^ "\n<ul>" ^
@@ -714,16 +502,14 @@ let initialize_html source_file_name = let source = (Gen.SysUti.string_of_file s
 	html_output_file := source_file_name ^ "_proof.html";
 	html_output := 
 "<html>
-<head>" ^ 
-"	<style type=\"text/css\">" ^ hipsleekcss ^ "</style>" ^
-"	<script type=\"text/javascript\">" ^ hipsleekjs ^ "</script>" ^
-(*"	<link rel=\"stylesheet\" type=\"text/css\" href=\"hipsleek.css\" />" ^
-"	<script type=\"text/javascript\" src=\"hipsleek.js\"></script>" ^ *)
-"</head>
-<body>\n" ^ 
-"<h1>" ^ source_file_name ^ "</h1>\n" ^
-"<ul class=\"TreeView\" id=\"ProofTree\">" ^
-"<li class=\"Collapsed progsource\">Source<ul>" ^ source_html ^ "</ul></li>";
+<head> 
+	<link rel=\"stylesheet\" type=\"text/css\" href=\"" ^ resources_dir_url ^ "hipsleek.css\" />
+	<script type=\"text/javascript\" src=\"" ^ resources_dir_url ^ "hipsleek.js\"></script> 
+</head>
+<body> 
+<h1>" ^ source_file_name ^ "</h1>
+<ul class=\"TreeView\" id=\"ProofTree\">
+<li class=\"Collapsed progsource\">Source<ul>" ^ source_html ^ "</ul></li>";
 	end
 	
 let post_process_html () = 	html_output := !html_output ^ 

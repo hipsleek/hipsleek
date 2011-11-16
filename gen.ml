@@ -397,32 +397,32 @@ class counter x_init =
      method string_of : string= (string_of_int ctr)
    end;;
 
-class ['a] stack2 xinit =
-   object 
-	val def = xinit
-	val mutable stk = []
-	method push (i:'a) = stk <- i::stk
-	method pop = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> stk <- xs
-   method top : 'a = match stk with 
-       | [] -> def
-       | x::xs -> x
-	method len = List.length stk
-end;;
+(* class ['a] stack2 xinit = *)
+(*    object  *)
+(* 	val def = xinit *)
+(* 	val mutable stk = [] *)
+(* 	method push (i:'a) = stk <- i::stk *)
+(* 	method pop = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> stk <- xs *)
+(*    method top : 'a = match stk with  *)
+(*        | [] -> def *)
+(*        | x::xs -> x *)
+(* 	method len = List.length stk *)
+(* end;; *)
 
-class ['a] stack3  =
-   object 
-	val mutable stk = []
-	method push (i:'a) = stk <- i::stk
-	method pop = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> stk <- xs
-   method top : 'a = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> x
-	method len = List.length stk
-end;;
+(* class ['a] stack3  = *)
+(*    object  *)
+(* 	val mutable stk = [] *)
+(* 	method push (i:'a) = stk <- i::stk *)
+(* 	method pop = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> stk <- xs *)
+(*    method top : 'a = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> x *)
+(* 	method len = List.length stk *)
+(* end;; *)
 
 (* module Stack4  = *)
 (*    struct  *)
@@ -468,9 +468,9 @@ module ErrorUti =
 struct
   (** Error-handling functions. *)
 
-  let (stkint:int stack2) = new stack2 (-1)
+  (* let (stkint:int stack2) = new stack2 (-1) *)
 
- let (stkint:int stack3) = new stack3 
+  (* let (stkint:int stack3) = new stack3  *)
 
   let error_list = new stack "error - stack underflow" (fun x -> x)
 
@@ -1580,7 +1580,7 @@ let run_with_timeout (prog : string) (seconds : int) : int =
   Sys.command (timed_command ^ Printf.sprintf " %d " seconds ^ prog)
 
 let is_breakable c =  match c with
-  | '(' | ')' | ' ' | '+' | ':' -> true
+  | '(' | ')' | ' ' | '+' | ':'|',' -> true
   | _ -> false
 
 let new_line_str = "\n"
@@ -1593,7 +1593,7 @@ let new_line_str = "\n"
   else "\n"
 *)
 
-let break_lines (input : string) : string =
+let break_lines (input : string): string =
   let buf = Buffer.create 4096 in
   let i = ref 0 in
   let cnt = ref 0 in
@@ -1608,6 +1608,25 @@ let break_lines (input : string) : string =
       i := !i + 1
   done;
   Buffer.contents buf
+
+let break_lines_num (input : string) num: string =
+  let buf = Buffer.create 4096 in
+  let i = ref 0 in
+  let cnt = ref 0 in
+  let l = String.length input in
+  while !i < l do
+    Buffer.add_char buf input.[!i];
+      cnt := !cnt + 1;
+      if !cnt > num && (is_breakable input.[!i]) then begin
+		Buffer.add_string buf new_line_str;
+		cnt := 0
+	  end;
+      i := !i + 1
+  done;
+  Buffer.contents buf
+
+let break_lines_1024 (input : string) : string =
+  break_lines_num input (1024-32)
 
 end;;
 

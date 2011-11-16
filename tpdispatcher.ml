@@ -41,7 +41,7 @@ let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" 
 let sat_cache = ref (Hashtbl.create 200)
 let impl_cache = ref (Hashtbl.create 200)
 
-let prover_arg = ref "omega"
+let prover_arg = ref "oc"
 let external_prover = ref false
 let external_host_ports = ref []
 let webserver = ref false
@@ -365,8 +365,10 @@ let rec check_prover_existence prover_cmd_str =
 let set_tp tp_str =
   prover_arg := tp_str;  
   let prover_str = ref [] in
-  if tp_str = "omega" then
-	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
+  (*else if tp_str = "omega" then
+	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
+  if (String.sub tp_str 0 2) = "oc" then
+    (Omega.omegacalc := tp_str; tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "cvcl" then 
 	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 
@@ -815,7 +817,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         begin
           (Smtsolver.is_sat f sat_no);
         end
-	  else
+      else
         begin
           (Omega.is_sat f sat_no);
         end
@@ -966,7 +968,7 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (Smtsolver.simplify f);
                   end
-				else
+                else
                   begin
                     (Omega.simplify f);
                   end
@@ -1195,7 +1197,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         begin
           (called_prover :="smtsolver "; Smtsolver.imply ante conseq)
         end
-	  else
+      else
         begin
           (called_prover :="omega "; Omega.imply ante conseq imp_no timeout);
         end

@@ -69,7 +69,7 @@ and ext_variance_formula =
 		formula_var_label : int option;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
 		formula_var_escape_clauses : Cpure.formula list;
-	    formula_var_continuation : struc_formula;
+	  formula_var_continuation : struc_formula;
 		formula_var_pos : loc
 	}
 
@@ -189,6 +189,15 @@ and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
 (* utility functions *)
+
+let empty_ext_variance_formula =
+	{
+		formula_var_label = None;
+		formula_var_measures = [];
+		formula_var_escape_clauses = [];
+	  formula_var_continuation = [];
+		formula_var_pos = no_pos;
+	}
 
 (* generalized to data and view *)
 let get_ptr_from_data h =
@@ -2445,9 +2454,6 @@ and fail_type =
   | ContinuationErr of fail_context    
   | Or_Continuation of (fail_type * fail_type)
 
-and term_context = {
-	tc_temp : int;							   
-}
       
 and list_context = 
   | FailCtx of fail_type 
@@ -3028,6 +3034,10 @@ let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 let false_ctx flowt pos = 
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
+
+let false_es flowt pos = 
+  let x =  mkFalse flowt pos in
+    {(empty_es flowt pos) with es_formula = x;}
 
 and true_ctx flowt pos = Ctx (empty_es flowt pos)
 
