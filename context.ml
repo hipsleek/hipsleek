@@ -538,19 +538,20 @@ and process_one_match_x prog (c:match_res) :action_wt =
                             [(1,Cond_action lst)]
                   in
                   (* using || results in some repeated answers but still terminates *)
+                  let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                  let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                   let flag = 
                     if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
-                    else (vl_view_orig || vr_view_orig)
-                  in
+                    else (vl_view_orig || vr_view_orig)in
                   let l3 = if flag
                   then begin
                     let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
-                    let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
-                    let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
-                    if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
-                    else left_act@right_act
+                    let left_act = if vl_new_orig then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
+                    let right_act = if vr_new_orig then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
+                    (* if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (c,None))] *\) (\* only targetted lemma *\) *)
+                    (* else  *) left_act@right_act
                   end
                   else  [] in
                   let l4 = 

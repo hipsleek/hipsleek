@@ -1,0 +1,15 @@
+Starting Omega...oc
+guard to conseq:  nn_168=n2_196+n1_195 & 1<=n1_195 & 1<=n2_196
+guard to conseq:  n2_196=n2_263+n1_262 & 1<=n1_262 & 1<=n2_263
+guard to conseq:  nn_168=n2_313+n1_312 & 1<=n1_312 & 1<=n2_313
+
+Entailing lemma "lsegmb": Valid.
+guard to conseq:  nn_481=n2_513+n1_512 & 1<=n1_512 & 1<=n2_513
+guard to conseq:  n2_486=n2_584+n1_583 & 1<=n1_583 & 1<=n2_584
+guard to conseq:  nn_481=n2_771+n1_770 & 1<=n1_770 & 1<=n2_771
+guard to conseq:  n2_486=n2_947+n1_946 & 1<=n1_946 & 1<=n2_947
+guard to conseq:  n2_1146=n2_1173+n1_1172 & 1<=n1_1172 & 1<=n2_1173
+guard to conseq:  n2_1146=n2_1310+n1_1309 & 1<=n1_1309 & 1<=n2_1310
+
+Entailing lemma "lsegmb2": Valid.
+Stop Omega... 213 invocations 
