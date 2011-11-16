@@ -565,7 +565,12 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let vr_vdef = look_up_view_def_raw view_decls vr_name in
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   let vr_view_orig = vr.h_formula_view_original in
-                  if (vr_view_orig || vr_self_pts==[]) then (1,M_fold c)(*(-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
+                  let vr_view_derv = vr.h_formula_view_derv in
+                  let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
+                  let a2 = if new_orig then [(1,M_rd_lemma c)] else [] in
+                  let a = a1@a2 in
+                  if a!=[] then (-1,Search_action a)
                   else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res c)))
             | ViewNode vl, DataNode dr -> 
                   let vl_name = vl.h_formula_view_name in
@@ -736,7 +741,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_3 "compute_actions" 
+  Gen.Debug.ho_3 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (* (add_str "LHS pure" pr3)  *)

@@ -29,13 +29,19 @@ pred lseg<n, p, sm, lg> == case {
 lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1 -> 
 (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
 
+/*
 lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1  <- 
 (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
+*/
 
 /*
 checkentail self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1
  |- (exists lg1,sm2: self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
 */
+
+/*
+checkentail self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1 |- 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
 
 checkentail 
    self::node<sm, p> & sm=lg & n=1 & n = n1+n2 & n1,n2 >=1
@@ -57,7 +63,7 @@ checkentail
  |- (exists lg1,sm2: 
   self::node<sm, r1> * r1::lseg<n1-1, q, sm1, lg1> 
   * q::lseg<n2, p, sm2, lg> & sm<=sm1 & lg1<=sm2).
-
+*/
 
 //checkentail x::ll_tail<tx, n> |- tx::node<a,b>.
 
@@ -80,3 +86,15 @@ checkentail
 //checkentail x::lseg<y,n>*y::lseg<z,m> |- x::lseg<a,b>*a::lseg<c,d>.
 
 //print residue.
+
+/*
+checkentail 
+ self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1
+ |- (exists lg1,sm2: self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
+*/
+
+checkentail 
+ self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1
+ |- (exists lg1: self::lseg<n1, q, sm, lg1> ).
+print residue.
+
