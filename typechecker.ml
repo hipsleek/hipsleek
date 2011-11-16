@@ -475,9 +475,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* Termination checking *)
           let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
           let _ = Debug.devel_pprint (str_debug_variance) pos in
-          let _ = if not (CF.isNonFalseListFailescCtx sctx) & ir then
+          let _ = 
+            if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
             (* Termination: Add a false entail state for 
-             * unreachable recursive call *)
+             * unreachable recursive call if variance exists *)
             var_checked_list := !var_checked_list @ [(
               {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
               CF.empty_ext_variance_formula)];

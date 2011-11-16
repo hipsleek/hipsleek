@@ -199,6 +199,18 @@ let empty_ext_variance_formula =
 		formula_var_pos = no_pos;
 	}
 
+let rec has_variance_struc struc_f =
+  List.exists (fun ef -> has_variance_ext ef) struc_f
+  
+and has_variance_ext ext_f = 
+  match ext_f with
+    | ECase { formula_case_branches = cl } ->
+        List.exists (fun (_, sf) -> has_variance_struc sf) cl
+    | EBase { formula_ext_continuation = cont } ->
+        has_variance_struc cont
+    | EAssume _ -> false
+    | EVariance _ -> true
+
 (* generalized to data and view *)
 let get_ptr_from_data h =
   match h with
