@@ -259,7 +259,8 @@ rule tokenizer file_name = parse
   | "&&" { ANDAND }
   | "@" { AT }
   | "@I" {IMM}
-  | "@D" {DERV}
+  | "@L" {LEND}
+  | "@D" { DERV }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }

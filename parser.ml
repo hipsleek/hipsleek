@@ -486,9 +486,16 @@ inv:
   [[`INV; pc=pure_constr; ob=opt_branches -> (pc,ob)
    |`INV; h=ho_fct_header -> (P.mkTrue no_pos, [])]];
  
+ann_heap: [[ `IMM  -> "I"
+      | `LEND -> "L"
+      | `DERV -> "D"
+      ]];
+
+ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
+
 opt_branches:[[t=OPT branches -> un_option t []]];
 
-branches : [[`AND; `OSQUARE; b=LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> b ]];
+branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> b ]];
 
 one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (id,pc)]];
 
@@ -644,7 +651,7 @@ heap_constr:
    | hrw = heap_rw                                          -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)]]; 
 
 heap_rd: 
-  [[ shi=simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos_camlp4 _loc 2)
+  [[ shi= simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos_camlp4 _loc 2)
    | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos_camlp4 _loc 2)
    | shi=simple_heap_constr_imm                  -> shi ]];
 
@@ -663,7 +670,7 @@ heap_wr:
 simple2:  [[ t= opt_type_var_list; `LT -> (* let _ = print_endline "PASSED simple2." in *)()]];
    
 simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
+  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; dr= opt_derv; ofl= opt_formula_label ->
      match hl with
         | ([],t) -> F.mkHeapNode2 c id dr true false false false t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id dr true false false false t ofl (get_pos_camlp4 _loc 2)]];
