@@ -455,12 +455,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let sctx = if not ir then sctx else
             let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
               List.map (fun fctx ->
-                          let (lb,estk,lbctx) = fctx in
-                          let nlbctx = List.map (fun bctx ->
-                                                   let (pt,ctx) = bctx in
-                                                   let nctx = CF.transform_context
-                                                                (fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst; CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
-                            (lb,estk,nlbctx)) sctx
+                let (lb,estk,lbctx) = fctx in
+                let nlbctx = List.map (fun bctx ->
+                  let (pt,ctx) = bctx in
+                  let nctx = CF.transform_context (fun es -> 
+                    CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst; 
+                                    CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
+                (lb,estk,nlbctx)) sctx
           in
           (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
             (Cprinter.string_of_pos pos) ^ "\n" ^
@@ -474,16 +475,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* Termination checking *)
           let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
           let _ = Debug.devel_pprint (str_debug_variance) pos in
-          let _ = if not (CF.isNonFalseListFailescCtx sctx) & ir then 
-            (*print_string ("\nTermination: Unreachable State\n")*)
-            (* Termination: Add a false entail state for unreachable recursive
-             * call *)
+          let _ = if not (CF.isNonFalseListFailescCtx sctx) & ir then
+            (* Termination: Add a false entail state for 
+             * unreachable recursive call *)
             var_checked_list := !var_checked_list @ [(
               {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
               CF.empty_ext_variance_formula)];
           in 
-          (*print_string (str_debug_variance ^ "\n");*)
-          
+          (*print_string (str_debug_variance ^ "\n");*) 
           
           (* TODO: call the entailment checking function in solver.ml *)
           let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in

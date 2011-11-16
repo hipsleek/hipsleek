@@ -55,12 +55,13 @@ let helper prog h_node = match h_node with
   let _ = transform_context f_ctx cl in
   ()
 
+let variance_graph = ref []
+let var_checked_list = ref []
+
 (*
   - count how many int constants are contained in one expression
   - if there are more than 1 --> means that we can simplify further (by performing the operation)
 *)
-let variance_graph = ref []
-let var_checked_list = ref []
 
 let rec count_iconst (f : CP.exp) = match f with
   | CP.Subtract (e1, e2, _)
@@ -386,7 +387,6 @@ and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.m
 and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
   Gen.Debug.no_1 "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
       ^(Cprinter.string_of_mem_formula a3)) (fun f0 -> xpure_mem_enum_x prog f0) f0
-
 
 (* xpure approximation with memory enumeration *)
 and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
@@ -2918,7 +2918,7 @@ and heap_entail_variance_x
 			let rhs_measures = e.formula_var_measures in
 			let rec binding lhs_m rhs_m =
 				if ((List.length lhs_m) != (List.length rhs_m)) then
-					report_error no_pos ("termination: variance checking: LHS does not match RHS \n")
+					report_error no_pos ("Termination: variance checking: LHS does not match RHS \n")
 				else match lhs_m with
 					| [] -> []
 					| h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
@@ -2927,7 +2927,7 @@ and heap_entail_variance_x
 			let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m1>=lb1 & m2>n2 & m2>=lb2 *) 
 				let (_, term_formula) = List.fold_right (fun (l,r) (flag,res) ->
 					let lower_bound = match (snd r) with
-						| None -> report_error no_pos ("termination: variance checking: error with lower bound in termination checking \n")
+						| None -> report_error no_pos ("Termination: variance checking: error with lower bound in termination checking \n")
 						| Some exp -> exp in
 					let boundedness_checking_formula = CP.BForm ((CP.mkGte l lower_bound loc, None), None) in
 					let lexico_ranking_formula = 
