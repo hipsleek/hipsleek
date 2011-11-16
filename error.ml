@@ -47,10 +47,16 @@ let report_error e =
   failwith e.error_text
 
 let report_warning e =
-  if (not !suppress_warning_msg) then begin
+  if (not !suppress_warning_msg) then 
     Printf.printf "\nWARNING: %s:%s\n"
         (string_of_loc e.error_loc)
-        e.error_text;
-    flush stdout
-  end else ()
+            e.error_text;
+        (* print_string ("report_warning: before flush" *)
+        (*               ^ "\n\n"); *)
+        flush stdout;
+
+        (* print_string ("report_warning: after flush" *)
+        (*               ^ "\n\n"); *)
+    end 
+  else ()
   (* failwith "Error detected : error.ml B" *)

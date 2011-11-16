@@ -45,7 +45,7 @@ let parse_file_full file_name =
 		(*let _ = print_endline "Primitive relations : " in
 		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
 
-			prog 
+			prog
     with
 		End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
@@ -92,9 +92,9 @@ let process_source_full source =
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
-  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in
+  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
-  let prims_list = process_primitives new_h_files in
+  let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
 
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
@@ -129,7 +129,7 @@ let process_source_full source =
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
-    let _ = print_string ("Translating to core language...\n"); flush stdout in
+    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
 	(* Forward axioms and relations declarations to SMT solver module *)
 	let _ = List.map (fun crdef -> Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in

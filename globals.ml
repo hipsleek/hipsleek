@@ -73,6 +73,10 @@ let no_pos =
 				   Lexing.pos_cnum = 0 } in
 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
+let is_float_type (t:typ) = match t with
+  | Float -> true
+  | _ -> false
+
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
@@ -135,7 +139,7 @@ let set_entail_pos p = entail_pos := p
 (*   (\* proving_loc := None *\) *)
 
 (* pretty printing for types *)
-let rec string_of_typ = function 
+let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
   | UNK          -> "Unknown"
   | Bool          -> "boolean"

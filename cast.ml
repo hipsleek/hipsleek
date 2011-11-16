@@ -48,6 +48,7 @@ and view_decl = {
     view_name : ident; 
     view_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
+    view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : branch_label list;
     view_modes : mode list;
     mutable view_partially_bound_vars : bool list;
@@ -113,6 +114,11 @@ and proc_decl = {
   would this help with lemma folding later? *)
 
 (* TODO : coercion type ->, <-, <-> just added *)
+and coercion_case =
+  | Simple
+  | Complex
+  | Normalize
+
 and coercion_decl = { 
     coercion_type : coercion_type;
     coercion_name : ident;
@@ -129,7 +135,8 @@ and coercion_decl = {
     (* the name of the predicate where this coercion can be applied *)
     coercion_body_view : ident;  (* used for cycles checking *)
     coercion_mater_vars : mater_property list;
-    coercion_simple_lhs :bool; (* signify if LHS is simple or complex *)
+    (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
+    coercion_case : coercion_case; (*Simple or Complex*)
 }
 
 and coercion_type = Iast.coercion_type
@@ -137,6 +144,7 @@ and coercion_type = Iast.coercion_type
     (* | Equiv *)
     (* | Right *)
     
+
 and sharp_flow = 
   | Sharp_ct of F.flow_formula
   | Sharp_v of ident
@@ -178,6 +186,7 @@ and exp_bind = {
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
     exp_bind_imm : bool;
+    exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
 
@@ -365,6 +374,10 @@ let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
+let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+
+(*single node -> simple (true), otherwise -> complex (false*)
+(* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
@@ -377,7 +390,6 @@ let get_field_name f = snd f
 
 (** An Hoa [22/08/2011] End **)
 
-let is_simple_formula x = true
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
   (f_p : proc_decl -> proc_decl) : prog_decl =
@@ -409,6 +421,7 @@ let mater_props_to_sv_list l =  List.map (fun c-> c.mater_var) l
   
 let subst_mater_list fr t l = 
   let lsv = List.combine fr t in
+  (* let _ = print_string "subst_mater_list: inside \n" in (\*LDK*\) *)
   List.map (fun c-> 
       {c with mater_var = P.subs_one lsv c.mater_var
               (* ; mater_var = P.subs_one lsv c.mater_var *)
@@ -417,6 +430,10 @@ let subst_mater_list fr t l =
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
   Gen.Debug.no_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
+
+let subst_mater_list_nth i fr t l = 
+  let pr_svl = !print_svl in
+  Gen.Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
 
 let subst_coercion fr t (c:coercion_decl) = 
       {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
@@ -765,7 +782,7 @@ let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed)
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
-  (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
+  (* let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
@@ -865,6 +882,35 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (*   end *)
   (* | [] -> [] *)
 
+let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
+  let lhs_length = 
+    match lhs with
+      | Cformula.Base b  ->
+          let h = b.F.formula_base_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | Cformula.Exists e ->
+          let h = e.F.formula_exists_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | _ -> 1
+  in
+  let rhs_length = 
+    match rhs with
+      | F.Base b  ->
+          let h = b.F.formula_base_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | F.Exists e ->
+          let h = e.F.formula_exists_heap in
+          let hs = F.split_star_conjunctions h in
+          (List.length hs)
+      | _ -> 1
+  in
+  if (lhs_length=1) then Simple
+  else (**)
+    if (rhs_length<=lhs_length) then Normalize
+    else Complex
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
     List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
@@ -1040,6 +1086,9 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+							   F.h_formula_data_frac_perm = subnode.F.h_formula_data_frac_perm; (*LDK*)
+							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							   F.h_formula_data_original = subnode.F.h_formula_data_original;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
@@ -1056,6 +1105,9 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+										 F.h_formula_data_frac_perm = subnode.F.h_formula_data_frac_perm; (*LDK*)
+							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							             F.h_formula_data_original = subnode.F.h_formula_data_original;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
@@ -1073,6 +1125,9 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+										 F.h_formula_data_frac_perm = subnode.F.h_formula_data_frac_perm;
+							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+							             F.h_formula_data_original = subnode.F.h_formula_data_original;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 								F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
