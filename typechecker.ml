@@ -968,11 +968,13 @@ let check_prog (prog : prog_decl) =
       end;
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	let _ = if !print_proof then begin Prooftracer.push_term (); end in
 	let g = build_state_trans_graph !Solver.variance_graph in
 	let cl = variance_numbering !Solver.var_checked_list g in
-	let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
-	if !print_proof then begin Prooftracer.pop_div (); end
+    if (List.length cl) != 0 then
+      let _ = if !print_proof then begin Prooftracer.push_term (); end in
+      let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
+      if !print_proof then begin Prooftracer.pop_div (); end 
+    else () 
 	    
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
