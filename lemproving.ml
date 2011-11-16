@@ -32,9 +32,9 @@ let string_of_lem_formula lf = match lf with
 *)
 let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog_decl)  =
   let ante = lem_to_cformula iante in
-  let ante = Solver.prune_preds cprog true ante in
+  (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
   let conseq = lem_to_struc_cformula iconseq in
-  let conseq = Solver.prune_pred_struc cprog true conseq in
+  (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
@@ -157,13 +157,11 @@ let check_right_coercion coer (cprog: C.prog_decl) =
    coerc_name: lemma name
    coerc_type: lemma type (Right, Left or Equiv)
 *)
-let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  lemma_name lemma_type =
+let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  lemma_name lemma_type =
   if !Globals.check_coercions then
     let helper coercs check_coerc = match coercs with
-      | [] -> (true, None)
-      | coerc::[] -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
-      | _ -> let _ = print_string "\n[lemproving.ml] error at process_lemma: list of coercions should have max length of 1 \n" in 
-        (false, None)
+      | None -> (true, None)
+      | Some coerc -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
     in
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
@@ -199,6 +197,9 @@ let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog
     Some residues
   else None
 
-let process_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
-  let pr = Cprinter.string_of_coerc_decl_list in
-  Gen.Debug.no_3 "process_lemma" pr pr (fun x -> x) (fun _ -> "Unit") (fun _ _ _ -> process_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
+let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
+  let pr c = match c with 
+    | Some coerc -> Cprinter.string_of_coercion coerc
+    | None -> ""
+  in
+  Gen.Debug.no_3 "verify_lemma" pr pr (fun x -> x) (fun _ -> "Unit") (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
