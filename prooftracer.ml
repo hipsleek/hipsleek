@@ -410,6 +410,19 @@ let start_with s p = if (String.length s >= String.length p) then
 		String.sub s 0 (String.length p) = p
 	else false
 
+let push_list_failesc_context_struct_entailment lctx sf =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_failesc_context lctx) ^ Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)) 
+
+let push_list_partial_context_formula_entailment lctx sf =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_partial_context lctx) ^ Cprinter.html_vdash ^ (Cprinter.html_of_formula sf) 
+
+
+(* let push_list_failesc_context ctx =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>"
+
+let push_list_partial_context ctx =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context<ul>" ^ *)
+
 let push_pre fce = match fce with
 	| Cast.SCall {
 		Cast.exp_scall_type = t;
@@ -439,7 +452,7 @@ let push_assert_assume ae = match ae with
 		Cast.exp_assert_path_id = pid;
 		Cast.exp_assert_pos = pos } -> let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
 		html_output := !html_output ^ "<li class=\"Collapsed assert\">\nAssertion at " ^ line_loc ^ " holds\n<ul>"
-	| _ -> failwith "push_pre: unexpected expr"
+	| _ -> failwith "push_assert_assume: unexpected expr"
 
 let push_post () = html_output := 
 	!html_output ^ "<li class=\"Collapsed post\">\nProcedure post-condition holds\n<ul>"
@@ -448,11 +461,11 @@ let push_term () = html_output :=
 	!html_output ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"
 			
 let push_pure_imply ante conseq r = html_output := 
-	!html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>" ^ (Cprinter.html_of_pure_formula ante) ^ "  &#8866;  " (* |- character in HTML *) ^ (Cprinter.html_of_pure_formula conseq) ^ "\n"
+	!html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>" ^ (Cprinter.html_of_pure_formula ante) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula conseq) ^ "\n"
 
 (* prover input | output are all leaves of the proof trees, so we push and pop at the same time *)
 
-let push_pop_prover_input prover_inp prover_name = html_output := 
+let push_pop_prover_input prover_inp prover_name = html_output :=
 	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_inp) ^ "</ul></li>"
 	
 let push_pop_prover_output prover_out prover_name = html_output := 
@@ -465,7 +478,7 @@ let push_term_checking pos reachable =
 	
 let push_pop_entail_variance (es, f, res) = html_output := 
 	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Well-foundedness checking" ^ "\n<ul>" ^
-  (Cprinter.html_of_formula es) ^ "\n|-" ^ (Cprinter.html_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed") ^ "</ul></li>"
+  (Cprinter.html_of_formula es) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed") ^ "</ul></li>"
 
 let push_pop_unreachable_variance () = html_output := 
 	!html_output ^ "<li class=\"Collapsed termunreach" ^ "\">Unreachable" ^ "</ul></li>" 

@@ -53,6 +53,7 @@ ensures  res::valueK<> ;
 {
  anode val1, val2, val11, val2c;
  anode tmp1, tmp2, tmp3;
+	bool b = isApply(t);
  if (isApply(t)) {
    // apply
    val1 = reduction(t.fn);
@@ -69,13 +70,11 @@ ensures  res::valueK<> ;
      else {
        // val3 is an apply
        // it has to be an (S w1)
-       dprint;
        val2c = clone(val2);
        tmp1 = new anode(0,val11,val2);
        tmp2 = new anode(0,val1.arg,val2c);
        t.fn = tmp1;
        t.arg = tmp2;
-       dprint;
        anode temp = reduction(t);
        return temp;
      }

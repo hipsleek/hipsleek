@@ -39,6 +39,15 @@ negtlseg<p,f,d,n> ==
   or self::negtlseg<p,f,d+1,n> & f!=d 
   or self::tlseg<r,f,d+1,n1> * r::negtlseg<p,_,d+1,n2> & n=n1+n2 
   inv self!=null & n>=1 & f!=d; 
+/*
+disjoint:
+ P1 /\ P2 |- false
+ P1 /\ x=nil |- false
+ P2 /\ x=nil |- false
+
+universal
+ x::lseg<p,n> & n>0 <-> P1 \/ not(P1)
+*/
 
 /* can we show disjointness of
  (i) x=null

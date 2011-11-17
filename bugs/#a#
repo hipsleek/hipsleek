@@ -1,0 +1,17 @@
+Starting Omega...oc
+guard to conseq:  flted_119_169=n2_194+n1_193 & 1<=n1_193 & 1<=n2_194
+
+
+n1-1=
+
+Entail (1): Valid.
+
+
+ EXISTS(flted_119_169: NN q_218::lseg<n2_194,p,sm2_217,lg>[Derv] &
+ lg1_216<=sm2_217 & flted_119_169+1=n & sm<=sm1 & n!=1 & n=n2+n1 & 1<=n1 & 
+ 1<=n2 & n1!=1 & r_172=r & sm1_173=sm1 & lg1_216=lg1 & q_218=q & 
+ sm<=sm1_173 & lg1_216=lg1 & lg1_216=lg1 & {FLOW,(27,27)=__norm})
+ or EXISTS(flted_119_169: SS 9::r::lseg<flted_119_169,p,sm1,lg>[Orig][LHSCase] &
+    flted_119_169+1=n & sm<=sm1 & n!=1 & n=n2+n1 & 1<=n1 & 1<=n2 & n1=1 & 
+    sm=lg1 & r=q & sm=lg1 & lg1=sm & sm=sm & {FLOW,(27,27)=__norm})
+Stop Omega... 31 invocations 
