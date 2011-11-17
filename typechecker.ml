@@ -749,7 +749,7 @@ let check_data (prog : prog_decl) (cdef : data_decl) =
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
     try
-      Some (List.find (fun coerc -> coerc.coercion_name == name) coercs)
+      Some (List.find (fun coerc -> coerc.coercion_name = name) coercs)
     with _ -> None in
 
   (* combine the 2 lists of coercions into one list of lemmas:
