@@ -761,7 +761,7 @@ let check_coercion (prog : prog_decl) =
   (* add to lemmas the coercions from prog.prog_right_coercions that do not have a corresponding pair in prog.prog_left_coercions *)
   let lemmas = lemmas @ List.map (fun r2l_coerc -> (None, Some r2l_coerc))
     (List.filter 
-        (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name != l2r_coerc.coercion_name) prog.prog_left_coercions)
+        (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name <> l2r_coerc.coercion_name) prog.prog_left_coercions)
         prog.prog_right_coercions) in
    List.iter (fun (l2r, r2l) -> 
        let (coerc_type, coerc_name) = 

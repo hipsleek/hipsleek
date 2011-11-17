@@ -122,8 +122,8 @@ let check_left_coercion coer (cprog: C.prog_decl) =
   check_coercion_struc coer ent_lhs ent_rhs cprog
 
 let check_left_coercion coer cprog  =
-  let pr = Cprinter.string_of_coerc_decl_list in
-  Gen.Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
+  let pr = Cprinter.string_of_coercion in
+  Gen.Debug.ho_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
 
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
@@ -133,8 +133,8 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   check_coercion coer ent_lhs ent_rhs cprog 
 
 let check_right_coercion coer (cprog: C.prog_decl) =
-  let pr = Cprinter.string_of_coerc_decl_list in
-  Gen.Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
+  let pr = Cprinter.string_of_coercion in
+  Gen.Debug.ho_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
@@ -183,8 +183,8 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
               print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
             in
             residue
-      | I.Right -> let _ = print_entail_result valid_l2r rs1 num_id in rs1
-      | I.Left  -> let _ = print_entail_result valid_r2l rs2 num_id in rs2
+      | I.Left -> let _ = print_entail_result valid_l2r rs1 num_id in rs1
+      | I.Right  -> let _ = print_entail_result valid_r2l rs2 num_id in rs2
     in
     Some residues
   else None
