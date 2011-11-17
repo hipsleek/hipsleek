@@ -6630,7 +6630,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 		      (*************************************************************************************************************************************************************************)
 		      (* let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in *)
 		      (* let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
-		      (* let _ = print_string("guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
+		      let _ = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (* guard_to_check *)) ^ "\n") in
 		      let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
 		      (* add the guard to the consequent  - however, the guard check is delayed *)
               (* ?? *)

@@ -548,10 +548,13 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   then begin
                     let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
-                    let left_act = if vl_new_orig then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
-                    let right_act = if vr_new_orig then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
+                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
+                    let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
+                    (* let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in *)
+                    (* let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in *)
                     (* if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (c,None))] *\) (\* only targetted lemma *\) *)
-                    (* else  *) left_act@right_act
+                    (* else *)
+                    left_act@right_act
                   end
                   else  [] in
                   let l4 = 
@@ -568,8 +571,9 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let vr_view_orig = vr.h_formula_view_original in
                   let vr_view_derv = vr.h_formula_view_derv in
                   let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
                   let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
-                  let a2 = if new_orig then [(1,M_rd_lemma c)] else [] in
+                  let a2 = if (new_orig) then [(1,M_rd_lemma c)] else [] in
                   let a = a1@a2 in
                   if a!=[] then (-1,Search_action a)
                   else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res c)))
@@ -581,7 +585,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let vl_view_derv = vl.h_formula_view_derv in
                   let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let uf_i = if new_orig then 0 else 1 in
-                  let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name dr.h_formula_data_name in
+                  let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name in
                   let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
