@@ -5782,7 +5782,7 @@ let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
   List.filter (fun (svl,lkl,bfl) -> (*fst (check_dept fv (svl, lkl))*) true) parts
 
-(* An Hoa : remove primitive formula if should_elim returns true *)
+(* An Hoa : REMOVE PRIMITIVE CONSTRAINTS IF should_elim EVALUATE TO true *)
 let remove_primitive should_elim e =
 	let rec elim_formula f = match f with
 		| BForm ((bf, _) , _) -> if (should_elim bf) then None else Some f
@@ -5821,4 +5821,42 @@ let remove_primitive should_elim e =
 		match r with
 			| None -> mkTrue no_pos
 			| Some f -> f
+
+(** An Hoa : SIMPLIFY PURE FORMULAE **)
 	
+(* An Hoa : remove redundant identity constraints. *)
+let rec remove_redundant_constraints (f : formula) : formula = match f with
+	| BForm ((b,a),l) -> BForm ((remove_redundant_constraints_b b,a),l)
+	| And (f1,f2,l) -> 
+		let g1 = remove_redundant_constraints f1 in
+		let g2 = remove_redundant_constraints f2 in
+			mkAnd g1 g2 l
+	| Or (f1,f2,l,p) ->
+		let g1 = remove_redundant_constraints f1 in
+		let g2 = remove_redundant_constraints f2 in
+			mkOr g1 g2 l p
+	| _ -> f
+
+and remove_redundant_constraints_b f = match f with  
+	| Eq (e1,e2,l) -> 
+		let r = eqExp_f eq_spec_var e1 e2 in 
+			if r then BConst (true,no_pos) else f
+	| _ -> f
+
+(* Reference to function to solve equations in module Redlog. To be initialized in redlog.ml *)
+let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> (([],[]) : (((spec_var * spec_var) list) * ((spec_var * string) list))))
+
+(* An Hoa : Reduce the formula by removing redundant atomic formulas and variables given the list of "important" variables *)
+let rec reduce_pure (f : formula) (bv : spec_var list) =
+	(* Split f into collections of conjuction *)
+	let c = split_conjunctions f in
+	(* Pick out the term that are atomic *)
+	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c in 
+	let bf = List.map (fun x -> match x with | BForm ((y,_),_) -> y) bf in
+	(* Pick out equality from all atomic *)
+	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf in
+	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p) | _ -> failwith "Eq fail!") ebf in
+	let eqns = List.map (fun (e1,e2,p) -> (e1,e2)) ebf in
+	(* Solve the equation to find the substitution *)
+	let sst,strrep = !solve_equations eqns bv in
+		(sst,strrep)
