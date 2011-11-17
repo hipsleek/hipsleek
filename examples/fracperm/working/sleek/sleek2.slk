@@ -41,3 +41,4 @@ print residue.//valid
 
 //(8)
 checkentail x::ll(1.0)<n> & n > 3 |- x::node(1.0)<next = r1> * r1::node(1.0)<next = r2> & r2=null.//fail
+

@@ -5279,43 +5279,43 @@ let type_of_formula (f: formula) : formula_type =
     | _ -> Complex
 
 
-let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
-  match hs with
-    | [] -> None
-    | x::xs -> Some (List.fold_left (fun a c -> mkStarH a c no_pos ) x xs)
+(* let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  =  *)
+(*   match hs with *)
+(*     | [] -> None *)
+(*     | x::xs -> Some (List.fold_left (fun a c -> mkStarH a c no_pos ) x xs) *)
 
-let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =  
-  let rec pr1 xs = 
-    match xs with
-      | [] -> ""
-      | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr1 xs1
-  in
-  let pr2 = pr_option !print_h_formula in
-  Gen.Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
-  join_star_conjunctions_opt_x hs
+(* let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =   *)
+(*   let rec pr1 xs =  *)
+(*     match xs with *)
+(*       | [] -> "" *)
+(*       | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr1 xs1 *)
+(*   in *)
+(*   let pr2 = pr_option !print_h_formula in *)
+(*   Gen.Debug.no_1 "join_star_conjunctions_opt" pr1 pr2 *)
+(*   join_star_conjunctions_opt_x hs *)
 
 
-let split_star_conjunctions_x (f:h_formula): (h_formula list) =
-  let rec helper f = 
-  match f with
-  | Star({h_formula_star_h1 = h1;
-	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos;}) ->
-        let res1 = helper h1 in
-        let res2 = helper h2 in
-        (res1@res2)
-    | _ -> [f]
-  in
-  helper f
+(* let split_star_conjunctions_x (f:h_formula): (h_formula list) = *)
+(*   let rec helper f =  *)
+(*   match f with *)
+(*   | Star({h_formula_star_h1 = h1; *)
+(* 	h_formula_star_h2 = h2; *)
+(* 	h_formula_star_pos = pos;}) -> *)
+(*         let res1 = helper h1 in *)
+(*         let res2 = helper h2 in *)
+(*         (res1@res2) *)
+(*     | _ -> [f] *)
+(*   in *)
+(*   helper f *)
 
-let split_star_conjunctions (f:h_formula): (h_formula list) = 
-  let rec pr xs = 
-    match xs with
-      | [] -> ""
-      | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
-  in
-  Gen.Debug.no_1 "split_star_conjunctions" !print_h_formula pr
-  split_star_conjunctions_x f
+(* let split_star_conjunctions (f:h_formula): (h_formula list) =  *)
+(*   let rec pr xs =  *)
+(*     match xs with *)
+(*       | [] -> "" *)
+(*       | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1 *)
+(*   in *)
+(*   Gen.Debug.no_1 "split_star_conjunctions" !print_h_formula pr *)
+(*   split_star_conjunctions_x f *)
 
 let normalize_frac_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula * CP.spec_var list) =
   (*partition t into 2 list: MUST-ALIAS list w.r.t h and the rest *)

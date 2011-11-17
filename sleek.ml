@@ -118,7 +118,7 @@ let parse_file (parse) (source_file : string) =
   let proc_one_cmd c = 
     match c with
 	  | EntailCheck (iante, iconseq) -> 
-          let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in
+          (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
           process_entail_check iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
 	  | PrintCmd pcmd -> process_print_command pcmd
