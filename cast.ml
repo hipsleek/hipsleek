@@ -1341,3 +1341,31 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
 let any_xpure_1 prog (f:F.h_formula) : bool =
   let pr = !print_h_formula in
   Gen.Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
+
+
+let rename_view_decl pred fr t = 
+  let rec ren_h f = match f with
+    | F.Star h-> F.Star {h with  F.h_formula_star_h1 = ren_h h.F.h_formula_star_h1; F.h_formula_star_h2 = ren_h h.F.h_formula_star_h2;}
+    | F.Conj h-> F.Conj {h with F.h_formula_conj_h1 = ren_h h.F.h_formula_conj_h1; F.h_formula_conj_h2 = ren_h h.F.h_formula_conj_h2;}
+    | F.Phase h-> F.Phase {h with F.h_formula_phase_rd = ren_h h.F.h_formula_phase_rd; F.h_formula_phase_rw = ren_h h.F.h_formula_phase_rw; }
+    | F.ViewNode v -> F.ViewNode {v with F.h_formula_view_name = if v.F.h_formula_view_name = fr then t else v.F.h_formula_view_name}
+    | F.DataNode _ | F.Hole _ | F.HTrue | F.HFalse -> f in
+
+  let rec ren_f f = match f with 
+    | F.Base b -> F.Base {b with F.formula_base_heap = ren_h b.F.formula_base_heap}
+    | F.Exists e -> F.Exists {e with F.formula_exists_heap = ren_h e.F.formula_exists_heap}
+    | F.Or o -> F.Or {o with F.formula_or_f1 = ren_f o.F.formula_or_f1; F.formula_or_f2 = ren_f o.F.formula_or_f2;  } in
+  let rec ren_struc (f:F.struc_formula):F.struc_formula = 
+    let helper f = match f with 
+       | F.ECase c -> F.ECase {c with F.formula_case_branches = List.map (fun (c1,c2)-> (c1,ren_struc c2)) c.F.formula_case_branches}
+       | F.EBase b -> F.EBase {b with 
+             F.formula_ext_base = ren_f b.F.formula_ext_base; 
+             F.formula_ext_continuation = ren_struc b.F.formula_ext_continuation}
+       | F.EAssume (f1,f2,f3)-> F.EAssume (f1,ren_f f2, f3)
+       | F.EVariance v -> F.EVariance {v with F.formula_var_continuation= ren_struc v.F.formula_var_continuation} in
+    List.map helper f in
+  { pred with 
+      view_name = t ;
+      view_formula = ren_struc pred.view_formula;
+      view_un_struc_formula = List.map (fun (c1,c2)-> (ren_f c1, c2)) pred.view_un_struc_formula;
+      view_raw_base_case = match pred.view_raw_base_case with | None->None | Some v-> Some (ren_f v);}

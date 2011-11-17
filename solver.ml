@@ -3113,32 +3113,32 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   (** [Internal] Generate the action based on the list of node and its tail **)
   let rec generate_action_x nodes eset = match nodes with
 	| [] 
-	| [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
+	| [_] -> Strategy.M_Nothing_to_do "No duplicated nodes!" 
 	| x::t ->
 		  (*
 		    let y = List.hd t in
 		  (*if ((compare_sv (get_node_var x) (get_node_var y) eset = 0)*)
 		    if ((CP.eq_spec_var_aset eset (get_node_var x) (get_node_var y))
 			&& (is_view x || is_view y)) then
-			let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
-			Context.match_res_lhs_rest = x;
-			Context.match_res_holes = [] ;
-			Context.match_res_type = Context.Root;
-			Context.match_res_rhs_node = x;
-			Context.match_res_rhs_rest = x} in
+			let mr = { Strategy.match_res_lhs_node = if (is_view x) then x else y;
+			Strategy.match_res_lhs_rest = x;
+			Strategy.match_res_holes = [] ;
+			Strategy.match_res_type = Strategy.Root;
+			Strategy.match_res_rhs_node = x;
+			Strategy.match_res_rhs_rest = x} in
 		  (* let _ = print_endline "AN HOA : START THE UNFOLDING PROCESS" in *)
-			Context.M_unfold (mr,1)
+			Strategy.M_unfold (mr,1)
 		    else generate_action t eset
 		  *)
 		  try
 			let y = List.find (fun e -> (CP.eq_spec_var_aset eset (get_node_var x) (get_node_var e)) && (is_view x || is_view e)) t in
-			let mr = { Context.match_res_lhs_node = if (is_view x) then x else y;
-			Context.match_res_lhs_rest = x;
-			Context.match_res_holes = [] ;
-			Context.match_res_type = Context.Root;
-			Context.match_res_rhs_node = x;
-			Context.match_res_rhs_rest = x} in
-			Context.M_unfold (mr,1)
+			let mr = { Strategy.match_res_lhs_node = if (is_view x) then x else y;
+			Strategy.match_res_lhs_rest = x;
+			Strategy.match_res_holes = [] ;
+			Strategy.match_res_type = Strategy.Root;
+			Strategy.match_res_rhs_node = x;
+			Strategy.match_res_rhs_rest = x} in
+			Strategy.M_unfold (mr,1)
 		  with
 			| Not_found -> generate_action t eset
 		          
@@ -3146,7 +3146,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   and generate_action nodes eset = 
     let pr = pr_list Cprinter.string_of_h_formula in
 	let pr_1 = P.EMapSV.string_of in
-    let pr_2 = Context.string_of_action_res_simpl in
+    let pr_2 = Strategy.string_of_action_res_simpl in
     Gen.Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
   (** [Internal] Compare two spec var syntactically. **)
@@ -3208,7 +3208,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	   let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
 	   let _ = print_endline (PR.string_of_list_context lctx) in *)
 	(res, match action with
-	  | Context.M_Nothing_to_do _ -> false
+	  | Strategy.M_Nothing_to_do _ -> false
 	  | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
 		(* let _ = print_endline ("[heap_entail_conjunct_lhs_x] " ^ (string_of_int !num_unfold_on_dup) ^ " unfold performed!") in *)
 		true)
@@ -3425,7 +3425,7 @@ and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_fo
 	          match matches with
 		        | x :: rest -> 
 		              begin
-                        let anode = x.Context.match_res_lhs_node in
+                        let anode = x.Strategy.match_res_lhs_node in
 		                (* update the current phase *)
 			            (* crt_phase := phase; *)
 		                let target_node = get_node target coer_rhs_h in
@@ -5918,7 +5918,7 @@ and push_hole_action a1 r1=
       (fun _ -> push_hole_action_x a1 r1) a1
 
 
-and advance_unfold_struc prog (ctx:context) (conseq:struc_formula) : (Context.action_wt) list =
+and advance_unfold_struc prog (ctx:context) (conseq:struc_formula) : (Strategy.action_wt) list =
   let get_disj_ext_formula f = match f with
     | EBase e -> CF.split_conjuncts e.formula_ext_base 
     | _ -> [] in
@@ -5926,13 +5926,13 @@ and advance_unfold_struc prog (ctx:context) (conseq:struc_formula) : (Context.ac
   let ls = get_disj_struc conseq in
   advance_unfold prog ctx ls 
 
-and advance_unfold prog (ctx:context) (conseq:formula list) : (Context.action_wt) list =
+and advance_unfold prog (ctx:context) (conseq:formula list) : (Strategy.action_wt) list =
   let pr1 = Cprinter.string_of_context_short in
-  let pr2 = pr_list (Context.string_of_action_wt_res)  in
+  let pr2 = pr_list (Strategy.string_of_action_wt_res)  in
   let p0 fl = (string_of_int (List.length fl)) ^ (pr_list Cprinter.string_of_formula fl) in
   Gen.Debug.no_2 "advance_unfold" pr1 p0 pr2 (fun _ _ -> advance_unfold_x prog ctx conseq) ctx conseq 
 
-and advance_unfold_x prog (ctx:context) (conseq:formula list) : (Context.action_wt) list =
+and advance_unfold_x prog (ctx:context) (conseq:formula list) : (Strategy.action_wt) list =
   (* let rec get_disj (c:formula) = match c with *)
   (*   | Or e -> (get_disj e.formula_or_f1)@(get_disj e.formula_or_f2) *)
   (*   | _ -> [c] in *)
@@ -5949,13 +5949,13 @@ and advance_unfold_x prog (ctx:context) (conseq:formula list) : (Context.action_
             if a==[] then []
             else List.concat a
 
-and comp_act prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
+and comp_act prog (estate:entail_state) (rhs:formula) : (Strategy.action_wt) =
   let pr1 es = Cprinter.string_of_formula es.es_formula in
   let pr2 = Cprinter.string_of_formula in
-  let pr3 = Context.string_of_action_wt_res in
+  let pr3 = Strategy.string_of_action_wt_res in
   Gen.Debug.no_2 "comp_act" pr1 pr2 pr3 (fun _ _ -> comp_act_x prog estate rhs) estate rhs
 
-and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
+and comp_act_x prog (estate:entail_state) (rhs:formula) : (Strategy.action_wt) =
   let rhs_b = extr_rhs_b rhs in
   let lhs_b = extr_lhs_b estate in
   let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = extr_formula_base lhs_b in
@@ -5968,7 +5968,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
 
 and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   match a with
-    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) ->
+    | Strategy.M_unfold ({Strategy.match_res_lhs_node=lhs_node},unfold_num) ->
           let lhs_var = get_node_var lhs_node in
             let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
             let ctx1 = build_context (Ctx estate) delta1 pos in
@@ -5980,7 +5980,7 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
 
 
 and process_unfold prog estate conseq a is_folding pos has_post pid =
-  let pr1 = Context.string_of_action_res_simpl in
+  let pr1 = Strategy.string_of_action_res_simpl in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
   Gen.Debug.no_2 "process_unfold" pr1 Cprinter.string_of_entail_state pr2
@@ -5994,11 +5994,11 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
       
 and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
   let r1,r2 = match a with
-    | Context.M_match {
-          Context.match_res_lhs_node = lhs_node;
-          Context.match_res_lhs_rest = lhs_rest;
-          Context.match_res_rhs_node = rhs_node;
-          Context.match_res_rhs_rest = rhs_rest;} ->
+    | Strategy.M_match {
+          Strategy.match_res_lhs_node = lhs_node;
+          Strategy.match_res_lhs_rest = lhs_rest;
+          Strategy.match_res_rhs_node = rhs_node;
+          Strategy.match_res_rhs_rest = rhs_rest;} ->
           let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
 		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" "separation reduction" [])), NoAlias)
           else
@@ -6018,12 +6018,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
               (list_context_union res_es2 res_es0, Prooftracer.Unknown))
               else (res_es0,prf0)*)
             (res_es0,prf0)
-    | Context.M_fold {
-          Context.match_res_rhs_node = rhs_node;
-          Context.match_res_rhs_rest = rhs_rest;} -> 
+    | Strategy.M_fold {
+          Strategy.match_res_rhs_node = rhs_node;
+          Strategy.match_res_rhs_rest = rhs_rest;} -> 
           do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
-    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
+    | Strategy.M_unfold ({Strategy.match_res_lhs_node=lhs_node},unfold_num) -> 
           let lhs_var = get_node_var lhs_node in
           let curr_unfold_num = (get_view_unfold_num lhs_node)+unfold_num in
           if (curr_unfold_num>1) then 
@@ -6037,24 +6037,24 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
 			let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
 			(res_rs, prf)
 
-    | Context.M_base_case_unfold {
-          Context.match_res_lhs_node = lhs_node;
-          Context.match_res_rhs_node = rhs_node;}->
+    | Strategy.M_base_case_unfold {
+          Strategy.match_res_lhs_node = lhs_node;
+          Strategy.match_res_rhs_node = rhs_node;}->
           let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
                   , CF.mk_failure_none "base case unfold failed" )),NoAlias)
             (*use UNION, so return MUST, final res = latter case*)
             | Some x -> x)
-    | Context.M_base_case_fold {
-          Context.match_res_rhs_node = rhs_node;
-          Context.match_res_rhs_rest = rhs_rest;} ->
+    | Strategy.M_base_case_fold {
+          Strategy.match_res_rhs_node = rhs_node;
+          Strategy.match_res_rhs_rest = rhs_rest;} ->
           if (estate.es_cont != []) then (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the continuation" estate (Base rhs_b) (get_node_label rhs_node) pos)), NoAlias)
 		  else do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
-    | Context.M_lhs_case {
-          Context.match_res_lhs_node = lhs_node;
-          Context.match_res_rhs_node = rhs_node;}->
-        (* let _ = print_string ("process_action: Context.M_lhs_case"  *)
+    | Strategy.M_lhs_case {
+          Strategy.match_res_lhs_node = lhs_node;
+          Strategy.match_res_rhs_node = rhs_node;}->
+        (* let _ = print_string ("process_action: Strategy.M_lhs_case"  *)
         (*                       ^ "\n\n") in *)
         let ans = do_lhs_case prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos in
         (match ans with
@@ -6062,19 +6062,19 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                                                       , CF.mk_failure_none "lhs case analysis failed" )),NoAlias)
           | Some x -> x)
 
-    | Context.M_rd_lemma {
-          Context.match_res_lhs_node = lhs_node;
-          Context.match_res_lhs_rest = lhs_rest;
-          Context.match_res_rhs_node = rhs_node;
-          Context.match_res_rhs_rest = rhs_rest;
+    | Strategy.M_rd_lemma {
+          Strategy.match_res_lhs_node = lhs_node;
+          Strategy.match_res_lhs_rest = lhs_rest;
+          Strategy.match_res_rhs_node = rhs_node;
+          Strategy.match_res_rhs_rest = rhs_rest;
       } -> 
           let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
           (r1,Search r2)
-    | Context.M_lemma  ({
-          Context.match_res_lhs_node = lhs_node;
-          Context.match_res_lhs_rest = lhs_rest;
-          Context.match_res_rhs_node = rhs_node;
-          Context.match_res_rhs_rest = rhs_rest;
+    | Strategy.M_lemma  ({
+          Strategy.match_res_lhs_node = lhs_node;
+          Strategy.match_res_lhs_rest = lhs_rest;
+          Strategy.match_res_rhs_node = rhs_node;
+          Strategy.match_res_rhs_rest = rhs_rest;
       },ln) ->
           (* let _ = match ln with *)
           (*   | None -> ()  *)
@@ -6084,12 +6084,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             | CF.FailCtx _ -> 0
             | CF.SuccCtx ctx0 -> List.length ctx0 in*)
           (r1,Search r2)
-    | Context.Undefined_action mr -> 
+    | Strategy.Undefined_action mr -> 
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" "" [])), NoAlias)
-    | Context.M_Nothing_to_do s -> 
+    | Strategy.M_Nothing_to_do s -> 
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
       CF.mk_failure_none ("Nothing_to_do?"^s))), NoAlias)
-    | Context.M_unmatched_rhs_data_node rhs ->
+    | Strategy.M_unmatched_rhs_data_node rhs ->
           (* TODO : obtain xpure0 of RHS
              (i) check if it is unsat, or
              (ii) check if negated term implied by LHS
@@ -6182,11 +6182,11 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
                                                   CF.mk_failure_may s)), NoAlias)
           end
-    | Context.Seq_action l ->
+    | Strategy.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
               , CF.mk_failure_none "sequential action - not handled" )), NoAlias)
-    | Context.Cond_action l ->
+    | Strategy.Cond_action l ->
           let rec helper l = match l with
            | [] ->           
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
@@ -6197,7 +6197,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                   if isFailCtx r then helper xs
                   else (r,prf)
           in helper l
-    | Context.Search_action l ->
+    | Strategy.Search_action l ->
           let r = List.map (fun (_,a1) -> process_action 14 prog estate conseq lhs_b rhs_b a1
               rhs_h_matched_set is_folding pos) l in
           let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in
@@ -6207,12 +6207,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
           
           (ctx_lst, pf) in
-  if (Context.is_complex_action a) then (r1,r2) else 
+  if (Strategy.is_complex_action a) then (r1,r2) else 
     (push_hole_action a r1,r2)
 
 and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
 
-  let pr1 = Context.string_of_action_res_simpl in
+  let pr1 = Strategy.string_of_action_res_simpl in
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
@@ -6222,7 +6222,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
       (fun __ _ _ _ -> process_action_x prog estate conseq lhs_b rhs_b a
        rhs_h_matched_set is_folding pos) caller a estate conseq
 
-  (* let pr1 = Context.string_of_action_res in *)
+  (* let pr1 = Strategy.string_of_action_res in *)
   (* let pr2 x = Cprinter.string_of_list_context_short (fst x) in *)
   (* (\*let pr3 = Cprinter.string_of_spec_var_list in*\) *)
   (* Gen.Debug.loop_1_no "process_action" pr1 pr2 *)
@@ -6318,7 +6318,7 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
    h_formula_data_name = c1;
    h_formula_data_arguments = v1;
    h_formula_data_pos = pos1}) ->
-   if r_flag = Context.Root then begin (* matching occurs at root *)
+   if r_flag = Strategy.Root then begin (* matching occurs at root *)
    if c1 = c2 then 
 
 (* try and make sure the branches match, if not and if some conditions
@@ -6474,12 +6474,12 @@ and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP
 (* check_node_helper *)
 (*****************************************************************************************************************************************)
 (* check one match *)
-   let rec check_node_helper (all_nodes : (Context.match_res*Context.action) list) : (list_context * proof list) =
+   let rec check_node_helper (all_nodes : (Strategy.match_res*Strategy.action) list) : (list_context * proof list) =
    match all_nodes with
    | ((rest_heap, anode, holes, r_flag),act) :: rest ->
    let rs1, prf1 = check_aliased_node (anode, r_flag) rest_heap act in
 (* push the current holes in the estate *)
-   let rs1 = Context.push_crt_holes_list_ctx rs1 holes in 
+   let rs1 = Strategy.push_crt_holes_list_ctx rs1 holes in 
 (* update the ctx frame *)
    if rest=[] then (rs1,[prf1])
    else  

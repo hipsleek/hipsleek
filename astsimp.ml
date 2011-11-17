@@ -914,8 +914,7 @@ and need_break_continue lb ne non_generated_label :bool =
 					I.While {b with I.exp_while_body = continue_try;I.exp_while_wrappings= Some break_try}
 				else I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None} in
 				r
-						
-   
+
 and prepare_labels (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
 	| None -> fct
 	| Some e-> {fct with I.proc_body = Some (while_labelling e)}
@@ -923,6 +922,30 @@ and prepare_labels (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
 and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
+
+
+let prep_views prog =
+  let rec prep_one_pred seed crt lvl =
+    if (lvl<=0) then crt
+    else prep_one_pred seed {crt with I.view_formula = I.unfold_one seed crt.I.view_formula} (lvl-1) in
+
+  let req_view = List.concat (List.map (fun c-> match c.I.proc_verif_opt with 
+                                                    | None -> [] 
+                                                    | Some v -> v.verif_opt_pred_levels) prog.I.prog_proc_decls) in
+  let req_view = Gen.BList.remove_dups_eq (fun (c1,c2)(d1,d2)-> c1=d1 && c2=d2) req_view in
+  try
+      let pn,_ = List.find (fun (c,_)-> List.for_all (fun d-> (String.compare c d.I.view_name)<>0) prog.I.prog_view_decls) req_view in
+       failwith ("predicate: "^pn^" is not defined!")
+  with 
+    | Not_found ->
+      let new_l = List.concat (List.map (fun c-> 
+          let l = List.filter (fun (p,_)-> p=c.I.view_name) req_view in
+          let pd = {c with I.view_formula = IF.float_out_exps_from_heap_struc c.I.view_formula} in
+          List.map (fun (_,lvl)-> 
+              let pd = I.rename_view_decl pd c.I.view_name  (unfolded_pred_name c.I.view_name lvl) in
+              prep_one_pred pd pd lvl) l) prog.I.prog_view_decls) in
+      {prog with I.prog_view_decls = new_l @ prog.I.prog_view_decls}
+
 
 let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   let _ = (Gen.ExcNumbering.add_edge "Object" "") in
@@ -938,7 +961,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   (*         } *)
   (* in *)
   (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in *)
-  let prog3 = prog4 in
+  let prog3 = prep_views prog4 in
   let prog2 = { prog4 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
           ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})

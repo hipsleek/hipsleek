@@ -142,12 +142,14 @@ type verif_opt =
 		verif_opt_strateg : ident;
 	}
 	
-let verif_opt_default = {
+let unfolded_pred_name pred lvl =  "__"^pred^"_"^(string_of_int lvl) 
+
+(*let verif_opt_default = {
 		verif_opt_pred_levels = [];
 		verif_opt_active_lemmas = [];
 		verif_opt_inactive_lemmas = [];
 		verif_opt_strateg = "default"; }
-		
+*)		
 let print_verif_opt d = 
 	let pr_list l = "["^(String.concat ", " (List.map (fun (p,t)-> "("^p^", "^(string_of_int t)^")") l))^" ]" in
 	"verif_pred_levels "^(pr_list d.verif_opt_pred_levels)^

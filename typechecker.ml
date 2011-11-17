@@ -16,7 +16,7 @@ let num_para = ref (1)
 let sort_input = ref false
 let webserver = ref false
 
-let verif_opt_stk = new Gen.stack verif_opt_default print_verif_opt
+(*let verif_opt_stk = new Gen.stack verif_opt_default print_verif_opt*)
 
 
 let parallelize num =
@@ -683,50 +683,73 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 
 (* checking procedure *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
-  let unmin_name = unmingle_name proc.proc_name in
-  let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
-    && not (List.mem unmin_name !Inliner.inlined_procs)
-  in
-	if check_flag then 
-  	begin
-	match proc.proc_body with
-	  | None -> true (* sanity checks have been done by the translation *)
-	  | Some body ->
-		begin
-			if !Globals.print_proc then 
-				print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
-			print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-			Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
-			Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
-			let prog = apply_verif_opt proc.proc_verif_opt
-			let ftypes, fnames = List.split proc.proc_args in
-			(* fsvars are the spec vars corresponding to the parameters *)
-			let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
-			let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
-			let init_form = nox in
-			let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
-			let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-			let _ = if !print_proof then Prooftracer.push_proc proc in
-			let pp, exc = try (* catch exception to close the section appropriately *)
-				(check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body, None) with | _ as e -> (false, Some e) in
-		    let _ = if !print_proof then Prooftracer.pop_div () in
-		    let _ = match exc with | Some e -> raise e | None -> () in
-			let result = if pp then begin
-							print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
-		      				true
-	        			end else begin
-	        				print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n"); 
-	        				false 
-	        			end in
-	      		result
-		end
-	end else true
+	if !Globals.print_proc then 
+		print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
+	print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
+	Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
+	Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
+	let ftypes, fnames = List.split proc.proc_args in
+	(* fsvars are the spec vars corresponding to the parameters *)
+	let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+	let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
+	let init_form = nox in
+	let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
+	let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
+	let _ = if !print_proof then Prooftracer.push_proc proc in
+    let body = match proc.proc_body with | None -> failwith "check_proc: must not happen" | Some body -> body in
+	let pp, exc = try (* catch exception to close the section appropriately *)
+		(check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body, None) with | _ as e -> (false, Some e) in
+	let _ = if !print_proof then Prooftracer.pop_div () in
+	let _ = match exc with | Some e -> raise e | None -> () in
+	if pp then (print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");true)
+	else (print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n");false)
+	
+let apply_verif_opt prog proc = 
+  let vo = proc.proc_verif_opt in
+  let pname = proc.proc_name in
+  match vo with
+	| None -> check_proc prog proc
+	| Some v ->
+        let ll,rl= match v.verif_opt_active_lemmas with
+          | [] -> 
+              let fct c = not (List.exists ((=) c.coercion_name) v.verif_opt_inactive_lemmas) in
+              (List.filter fct prog.prog_left_coercions, List.filter fct prog.prog_right_coercions)
+          | _  -> 
+              if (List.length v.verif_opt_inactive_lemmas)>0 then 
+                failwith ("proc: "^pname^" found both active and inactive lemma annotations")
+              else 
+                let fct c = List.exists ((=) c.coercion_name) v.verif_opt_active_lemmas in
+                (List.filter fct prog.prog_left_coercions, List.filter fct prog.prog_right_coercions) in
+        let prep_one lst (pred,lvl) = 
+          let des_pn = unfolded_pred_name pred lvl  in
+          try 
+              
+              let np = List.find (fun c-> des_pn=c.view_name) lst in
+              let np = rename_view_decl np des_pn pred in
+              List.map (fun c-> if c.view_name=pred then np else c) lst
+          with
+            | Not_found-> failwith ("inaccurate preprocessiong, could not find: "^des_pn) in
+        let prog = {prog with 
+            prog_left_coercions=ll; 
+            prog_right_coercions=rl; 
+            prog_view_decls = List.fold_left prep_one prog.prog_view_decls v.verif_opt_pred_levels} in
+        Strategy.set_strateg v.verif_opt_strateg;
+        let r = check_proc prog proc in
+        Strategy.set_strateg Strategy.Default_strategy.sc.Strategy.name; r
 
+let check_proc_options prog proc = 
+	let unmin_name = unmingle_name proc.proc_name in
+	let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified) && not (List.mem unmin_name !Inliner.inlined_procs) in
+	if check_flag then 
+		match proc.proc_body with
+			| None -> true (* sanity checks have been done by the translation *)
+			| Some body -> apply_verif_opt prog proc
+	else true
+	
 (* check entire program *)
 let check_proc_wrapper prog proc =
-(* check_proc prog proc *)
   try
-    check_proc prog proc
+    check_proc_options prog proc
   with _ as e ->
     if !Globals.check_all then begin
       (* dummy_exception(); *)
@@ -859,7 +882,7 @@ let init_files () =
 let check_proc_wrapper_map prog (proc,num) =
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
-    check_proc prog proc
+    check_proc_options prog proc
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
@@ -870,7 +893,7 @@ let check_proc_wrapper_map prog (proc,num) =
 
 let check_proc_wrapper_map_net prog (proc,num) =
   try
-    check_proc prog proc
+    check_proc_options prog proc
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");

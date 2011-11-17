@@ -1820,6 +1820,7 @@ let string_of_proc_decl p =
       ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
       ^ (if Gen.is_empty p.proc_by_name_params then "" 
 	  else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
+      ^ (match p.proc_verif_opt with | None -> "" | Some v -> "\n verif_opt "^(print_verif_opt v))
       ^ (match p.proc_body with 
         | Some e -> (string_of_exp e) ^ "\n\n"
 	    | None -> "") ^ locstr^"\n"

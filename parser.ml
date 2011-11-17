@@ -1250,7 +1250,7 @@ proc_opts: [[ `OPTIONS; puo = OPT proc_unfold_opt ; plo1 = OPT proc_on_lemma_opt
 		verif_opt_pred_levels = un_option puo [];
 		verif_opt_active_lemmas = un_option plo1 [];
 		verif_opt_inactive_lemmas = un_option plo2 [];
-		verif_opt_strateg = un_option pso "default";
+		verif_opt_strateg = un_option pso Strategy.Default_strategy.sc.Strategy.name;
 	}
 ]];
 

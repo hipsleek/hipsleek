@@ -320,8 +320,6 @@ and mkStar f1 f2 pos = match f1 with
 					h_formula_star_h2 = f2;
 					h_formula_star_pos = pos }
 
-
-
 and mkConj f1 f2 pos = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
@@ -1701,3 +1699,45 @@ and break_ext_formula (f : ext_formula) : P.b_formula list list =
 
 and break_struc_formula (f : struc_formula) : P.b_formula list list =
   List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f
+
+
+let rec normalize_struc f1 f2 = 
+  let rec helper2 f1 = 
+    let helper f = match f with
+      | ECase c -> ECase {c with  formula_case_branches = List.map (fun (c1,c2)-> (c1,helper2 c2)) c. formula_case_branches}
+      | EBase b ->  EBase {b with 
+           formula_ext_continuation = if (List.length b. formula_ext_continuation)=0 then f2 
+              else helper2 b. formula_ext_continuation}
+      | EAssume (f1,f2)-> failwith "Iformula.normalize_struc unexpected assume"
+      | EVariance v ->  EVariance {v with  formula_var_continuation= helper2 v.formula_var_continuation} in
+    List.map helper f1 in
+  if (List.length f2)=0 then f1 else helper2 f1
+
+
+and mkStar_combine (f1 : formula) (f2 : formula) (pos : loc) = (*ignores phases,flows -> designed for views*)
+  let h1, p1, fl1, b1 = split_components f1 in
+  let h2, p2, fl2, b2 = split_components f2 in
+  let h =  mkStar h1 h2 pos  in
+  let p = P.mkAnd p1 p2 pos in
+  let b = P.merge_branches b1 b2 in
+  mkBase h p fl1 b pos
+
+
+
+let rec normalize_f f1 f2 =  (*ignores flow -> designed for views*)
+  match f1 with
+    | Or b-> mkOr (normalize_f b.formula_or_f1 f2) (normalize_f b.formula_or_f2 f2) no_pos
+    | _ -> begin
+      match f2 with
+        | Or b-> mkOr (normalize_f f1 b.formula_or_f1) (normalize_f f1 b.formula_or_f2) no_pos
+		| _ -> begin
+			let rf1 = rename_bound_vars f1 in
+			let rf2 = rename_bound_vars f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkStar_combine base1 base2 no_pos in
+			let new_h, new_p, new_fl, b = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_fl b no_pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			resform
+		  end
+  end

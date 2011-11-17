@@ -1938,4 +1938,88 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 		res
 
 
+let rename_view_decl pred fr t = 
+  let rec ren_h f = match f with
+    | F.Star h-> F.Star {h with  F.h_formula_star_h1 = ren_h h.F.h_formula_star_h1; F.h_formula_star_h2 = ren_h h.F.h_formula_star_h2;}
+    | F.Conj h-> F.Conj {h with F.h_formula_conj_h1 = ren_h h.F.h_formula_conj_h1; F.h_formula_conj_h2 = ren_h h.F.h_formula_conj_h2;}
+    | F.Phase h-> F.Phase {h with F.h_formula_phase_rd = ren_h h.F.h_formula_phase_rd; F.h_formula_phase_rw = ren_h h.F.h_formula_phase_rw; }
+    | F.HeapNode h -> F.HeapNode { h with F.h_formula_heap_name = if h.F.h_formula_heap_name = fr then t else h.F.h_formula_heap_name}
+    | F.HeapNode2 h -> F.HeapNode2 { h with F.h_formula_heap2_name = if h.F.h_formula_heap2_name = fr then t else h.F.h_formula_heap2_name}
+    | F.HTrue | F.HFalse -> f in
 
+  let rec ren_f f = match f with 
+    | F.Base b -> F.Base {b with F.formula_base_heap = ren_h b.F.formula_base_heap}
+    | F.Exists e -> F.Exists {e with F.formula_exists_heap = ren_h e.F.formula_exists_heap}
+    | F.Or o -> F.Or {o with F.formula_or_f1 = ren_f o.F.formula_or_f1; F.formula_or_f2 = ren_f o.F.formula_or_f2;  } in
+  let rec ren_struc (f:F.struc_formula):F.struc_formula = 
+    let helper f = match f with 
+       | F.ECase c -> F.ECase {c with F.formula_case_branches = List.map (fun (c1,c2)-> (c1,ren_struc c2)) c.F.formula_case_branches}
+       | F.EBase b -> F.EBase {b with 
+             F.formula_ext_base = ren_f b.F.formula_ext_base; 
+             F.formula_ext_continuation = ren_struc b.F.formula_ext_continuation}
+       | F.EAssume (f1,f2)-> F.EAssume (ren_f f1, f2)
+       | F.EVariance v -> F.EVariance {v with F.formula_var_continuation= ren_struc v.F.formula_var_continuation} in
+    List.map helper f in
+  { pred with 
+      view_name = t ;
+      view_formula = ren_struc pred.view_formula;}
+
+
+
+
+let rec push_f_in_struc ei ii ee f (s:F.struc_formula) = 
+ List.map (fun c-> match c with 
+            | F.EAssume _ -> failwith "unexpected assume in a pred def"
+            | F.EVariance _ -> F.mkEBase ei ii ee f [c] no_pos
+            | F.EBase b -> 
+                let nf = F.normalize_f f b.F.formula_ext_base in
+                F.mkEBase (ei@b.F. formula_ext_explicit_inst) (ii@b.F.formula_ext_implicit_inst) (ee@b.F.formula_ext_exists)
+                    nf b.F.formula_ext_continuation b.F.formula_ext_pos
+            | F.ECase c -> 
+                let l = List.map (fun (c1,c2)-> (c1,push_f_in_struc ei ii ee f c2)) c.F.formula_case_branches in
+                F.ECase{ c with F.formula_case_branches = l}) s
+
+let unfold_one (seed:view_decl) (crt:F.struc_formula): F.struc_formula =
+  let rec unfold_heap f:(F.h_formula*F.struc_formula) = match f with 
+     | F.Phase _ | F.Conj _ -> failwith "phases in pred defs?"
+     | F.HTrue | F.HFalse -> (f,[])
+     | F.HeapNode2 h -> 
+         if ((fst h.F.h_formula_heap2_node)= self) && (h.F.h_formula_heap2_name=seed.view_name) then
+           failwith ("please fill all args in pred "^seed.view_name^" in order to allow pre unfolds")
+         else (f,[])
+     | F.HeapNode h -> 
+         if ((fst h.F.h_formula_heap_node)= self) && (h.F.h_formula_heap_name=seed.view_name) then
+           let fr = List.map (fun c-> (c,Unprimed)) seed.view_vars in
+           let t = List.map (fun c-> match c with | P.Var (v,_) -> v | _ -> failwith "unfold_one: expression float missed one") h.F.h_formula_heap_arguments in
+           let sub = List.combine fr t in
+           let nf = F.subst_struc sub seed.view_formula in
+           (F.HTrue, nf)
+         else (f,[])
+     | F.Star h-> 
+         let f1,r1 = unfold_heap h.F.h_formula_star_h1 in 
+         let f2,r2 = unfold_heap h.F.h_formula_star_h2 in
+         (F.mkStar f1 f2 h.F.h_formula_star_pos, r1@r2) in
+  let unfold_f ei ii ee f :F.struc_formula= 
+    let rec helper f = match f with 
+    | F.Or b -> (helper b.F.formula_or_f1)@(helper b.F.formula_or_f2)
+    | F.Base b -> 
+          let rh, nf = unfold_heap b.F.formula_base_heap in 
+          if nf=[] then [F.mkEBase ei ii ee f [] b.F.formula_base_pos]
+          else push_f_in_struc ei ii ee (F.Base {b with F.formula_base_heap = rh}) nf 
+    | F.Exists b -> 
+          let rh, nf = unfold_heap b.F.formula_exists_heap in 
+          if nf=[] then [F.mkEBase ei ii ee f [] b.F.formula_exists_pos]
+          else 
+            let nb = F.mkBase rh b.F.formula_exists_pure b.F.formula_exists_flow b.F.formula_exists_branches b.F.formula_exists_pos in
+            push_f_in_struc ei ii ee nb nf in
+    helper f in
+  let rec unfold_struc (f:F.struc_formula):F.struc_formula = 
+    let helper f = match f with 
+       | F.ECase c -> [F.ECase {c with F.formula_case_branches = List.map (fun (c1,c2)-> (c1,unfold_struc c2)) c.F.formula_case_branches}]
+       | F.EAssume _ -> failwith "unexpected assume in a pred def" 
+       | F.EVariance v -> [F.EVariance {v with F.formula_var_continuation= unfold_struc v.F.formula_var_continuation}]
+       | F.EBase b -> 
+           let f = unfold_f b.F.formula_ext_explicit_inst b.F.formula_ext_implicit_inst b.F.formula_ext_exists b.F.formula_ext_base in
+           F.normalize_struc f b.F.formula_ext_continuation in
+    List.concat (List.map helper crt)in
+  unfold_struc crt
