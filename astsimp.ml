@@ -3916,7 +3916,7 @@ and add_pre_debug prog f =
 and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.ho_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+  Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) 
       stab (* type table *)
@@ -4002,7 +4002,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let prb = string_of_bool in
-  Gen.Debug.ho_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
+  Gen.Debug.no_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
           (f0 : IF.formula) stab (clean_res:bool)) stab quantify clean_res fvars f0
 
@@ -5834,7 +5834,7 @@ and try_unify_view_type_args prog c vdef v ies stab pos =
     let pr_exp = pr_list Iprinter.string_of_formula_exp in
     let pr_ty = pr_list (pr_pair string_of_typ pr_id) in
     let pr_out = pr_list (pr_pair string_of_spec_var_kind pr_id) in
-    let helper e t = Gen.Debug.no_2 "WN-helper1" pr_exp pr_ty pr_out helper e t in
+    let helper e t = Gen.Debug.ho_2 "WN-helper1" pr_exp pr_ty pr_out helper e t in
     let tmp = helper ies vdef.I.view_typed_vars in
     let _ = (List.map (fun (t, n) -> gather_type_info_var n stab (t) pos) tmp) in
     ()
@@ -5875,7 +5875,7 @@ and try_unify_view_type_args prog c vdef v ies stab pos =
 
 
 and gather_type_info_heap prog (h0 : IF.h_formula) stab =
-  Gen.Debug.no_eff_2 "gather_type_info_heap" [false;true]
+  Gen.Debug.ho_eff_2 "gather_type_info_heap" [false;true]
       Iprinter.string_of_h_formula string_of_stab (fun _ -> "()")
       (fun _ _ -> gather_type_info_heap_x prog h0 stab) h0 stab 
 
@@ -5912,6 +5912,11 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_name = c; (* data/pred name *)
                 IF.h_formula_heap_pos = pos
 	        } ->
+          let ft = Float in
+          let gather_type_info_perm p stab = match p with
+            | None -> ()
+            | Some e -> gather_type_info_exp e stab ft; () in
+          let _ = gather_type_info_perm frac stab in
 		  (* let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
 		  (* An Hoa : Deal with the generic pointer! *)
 		  if (c = Parser.generic_pointer_type_name) then 
@@ -6193,7 +6198,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     let pr0 (vs:((ident*primed) list))= 
       let idents, _ = List.split vs in
       (string_of_ident_list idents) in
-    Gen.Debug.ho_2 "linearize_heap" pr0 pr1 pr2 
+    Gen.Debug.no_2 "linearize_heap" pr0 pr1 pr2 
         (fun _ _ -> linearize_heap used_names f) used_names f  in
   let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("normalize_base: heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)

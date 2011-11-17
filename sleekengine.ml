@@ -395,7 +395,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   in helper mf0 quant fv_idents stab 
 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Gen.Debug.ho_4 "meta_to_struc_formula"
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Gen.Debug.no_4 "meta_to_struc_formula"
   string_of_meta_formula
   string_of_bool
   string_of_ident_list
@@ -604,7 +604,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Gen.Debug.ho_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+  Gen.Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
     (* let _ = print_string ("LDK: I am here before run_entail_check \n") in *)
@@ -652,7 +652,7 @@ let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
-  Gen.Debug.ho_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
+  Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   let pr = string_of_meta_formula in

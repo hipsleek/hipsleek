@@ -5495,7 +5495,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
-  Gen.Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Gen.Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
