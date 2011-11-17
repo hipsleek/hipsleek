@@ -12,7 +12,7 @@ pred sortl<n, mi> == self = null & n = 0
 // lemma self::sortl(f)<n, mi> -> self::ll(f)<n>.
 lemma self::sortl(1.0)<n, mi> -> self::ll(1.0)<n>.
 
-checkentail x::sortl(1.0)<a, b> |- x::ll(1.0)<a>.
+checkentail x::sortl(0.8)<a, b> |- x::ll(0.8)<a>.
 print residue.
 
 checkentail x::sortl(1.0)<10, _> |- x::ll(1.0)<n> & n > 11.

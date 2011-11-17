@@ -51,8 +51,9 @@ and action =
   | Undefined_action of match_res
   | M_Nothing_to_do of string
   | M_unmatched_rhs_data_node of h_formula
-  | Cond_action of action_wt list
-  | Seq_action of action_wt list
+  | Cond_action of action_wt list 
+  (* perform a list of actions until there is one succeed*)
+  | Seq_action of action_wt list (*not handle yet*)
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
   (* | Un *)
@@ -562,17 +563,18 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
     | Root ->
-          let view_decls = prog.prog_view_decls in
+        let view_decls = prog.prog_view_decls in
         (match lhs_node,rhs_node with
           | DataNode dl, DataNode dr -> 
               let l2 =
                 if ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 && 
                            ((dl.h_formula_data_original==false && (dl.h_formula_data_origins!=[])) 
-                            || ((dr.h_formula_data_original==false && dr.h_formula_data_origins!=[])))) then [(0,M_match c)]
+                            || ((dr.h_formula_data_original==false && dr.h_formula_data_origins!=[])))) then [(0,M_match c)] (*force a MATCH after each lemma*)
                 else 
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(1,M_match c)]
                   else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
               in
+              (*apply lemmas on data nodes*)
               let l3 = if (dl.h_formula_data_original || dr.h_formula_data_original)
                   then 
                     begin
@@ -588,40 +590,46 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               let src = (-1,Search_action (l2@l3)) in
               src
 
-            (* | DataNode dl, DataNode dr ->  *)
-            (*       if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c) *)
-            (*       else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c))) *)
+          (* | DataNode dl, DataNode dr ->  *)
+          (*       if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c) *)
+          (*       else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c))) *)
           | ViewNode vl, ViewNode vr -> 
-                  (* let l1 = [(1,M_base_case_unfold c)] in *)
-                  let vl_name = vl.h_formula_view_name in
-                  let vr_name = vr.h_formula_view_name in
-                  let vl_vdef = look_up_view_def_raw view_decls vl_name in
-                  let vr_vdef = look_up_view_def_raw view_decls vr_name in
-                  let vl_is_rec = vl_vdef.view_is_rec in
-                  let vr_is_rec = vr_vdef.view_is_rec in
-                  let vl_self_pts = vl_vdef.view_pt_by_self in
-                  let vr_self_pts = vr_vdef.view_pt_by_self in
-                  let vl_view_orig = vl.h_formula_view_original in
-                  let vr_view_orig = vr.h_formula_view_original in
-                  let vl_view_derv =  vl.h_formula_view_derv in
-                  let vr_view_derv = vr.h_formula_view_derv in
-                  (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
-                  (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
-                  (*let en_num = !num_self_fold_search in*)
-                  let en_self_fold = !self_fold_search_flag in
+              (* let l1 = [(1,M_base_case_unfold c)] in *)
+              let vl_name = vl.h_formula_view_name in
+              let vr_name = vr.h_formula_view_name in
+              let vl_vdef = look_up_view_def_raw view_decls vl_name in
+              let vr_vdef = look_up_view_def_raw view_decls vr_name in
+              let vl_is_rec = vl_vdef.view_is_rec in
+              let vr_is_rec = vr_vdef.view_is_rec in
+              let vl_self_pts = vl_vdef.view_pt_by_self in
+              let vr_self_pts = vr_vdef.view_pt_by_self in
+              let vl_view_orig = vl.h_formula_view_original in
+              let vr_view_orig = vr.h_formula_view_original in
+              let vl_view_origs = vl.h_formula_view_origins in
+              let vr_view_origs = vr.h_formula_view_origins in
+              let vl_view_derv =  vl.h_formula_view_derv in
+              let vr_view_derv = vr.h_formula_view_derv in
+              (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
+              (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
+              (*let en_num = !num_self_fold_search in*)
+              let en_self_fold = !self_fold_search_flag in
               let l2 = 
-                    let a1 = (1,M_base_case_unfold c) in
-                    let a2 = (1,M_match c) in
-                    let a3 = 
-                      if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
-                      else None in
-                    let a4 = 
-                      if not(vl_is_rec) then Some (2,M_unfold (c,0))
-                      else if not(vr_is_rec) then Some (2,M_fold c) 
-                      else None in
-                    let a5 = 
-                      if a4==None then
-                        begin
+                if ((String.compare vl_name vr_name)==0 && 
+                           ((vl_view_orig==false && (vl_view_origs!=[])) 
+                            || ((vr_view_orig==false && vr_view_origs!=[])))) then [(0,M_match c)] (*force a MATCH after each lemma*)
+                else
+                  let a1 = (1,M_base_case_unfold c) in
+                  let a2 = (1,M_match c) in
+                  let a3 = 
+                    if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
+                    else None in
+                  let a4 = 
+                    if not(vl_is_rec) then Some (2,M_unfold (c,0))
+                    else if not(vr_is_rec) then Some (2,M_fold c) 
+                    else None in
+                  let a5 = 
+                    if a4==None then
+                      begin
                           let l1 =
                             if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                             then  [(2,M_fold c)] 
@@ -633,66 +641,67 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                           let l = l1@l2 in
                           if l=[] then None
                           else Some (2,Cond_action l) 
-                        end
-                      else a4 in
-                    let a6 = 
-                      match a3 with 
-                        | None -> a5
-                        | Some a1 -> 
-                              if not(a4==None) then a3
-                              else 
-                                match a5 with
-                                  | None -> a3
-                                  | Some a2 -> Some (1,Cond_action [a2; a1]) in
-                    match a6 with
-                      | Some a -> [a]
-                      | None -> 
-                            let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
-                            [(1,Cond_action lst)]
+                      end
+                    else a4 in
+                  let a6 = 
+                    match a3 with 
+                      | None -> a5
+                      | Some a1 -> 
+                          if not(a4==None) then a3
+                          else 
+                            match a5 with
+                              | None -> a3
+                              | Some a2 -> Some (1,Cond_action [a2; a1]) in
+                  match a6 with
+                    | Some a -> [a]
+                    | None -> 
+                        let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
+                        [(1,Cond_action lst)]
               in
-                  (* using || results in some repeated answers but still terminates *)
-                  let flag = 
-                    if !ann_derv 
-                    then (not(vl_view_derv) && not(vr_view_derv)) 
-                    else (vl_view_orig || vr_view_orig)
-                  in
-                  let l3 = if flag
+              (* using || results in some repeated answers but still terminates *)
+              let flag = 
+                if !ann_derv 
+                then (not(vl_view_derv) && not(vr_view_derv)) 
+                else (vl_view_orig || vr_view_orig)
+              in
+              let l3 = if flag
                   then begin
-                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
-                    let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
+                      (*filtering our Normalize coercions to avoid non-termination*)
+                      let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case != Cast.Normalize) prog.prog_left_coercions) vl_name vr_name in
+                      let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
                       let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                       if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
                       else left_act@right_act
                   end
                   else  [] in
-                  let l4 = 
-                    (* TODO WN : what is original?? *)
-                    if get_view_original rhs_node then 
-                      [(2,M_base_case_fold c)] 
-                    else [] in
-                  let src = (-1,norm_search_action (l2@l3@l4)) in
+              let l4 = 
+                (* TODO WN : what is original?? *)
+                if get_view_original rhs_node then 
+                  [(2,M_base_case_fold c)] 
+                else [] in
+              let src = (-1,norm_search_action (l2@l3@l4)) in
               src (*Seq_action [l1;src]*)
-            | DataNode dl, ViewNode vr -> 
-                  let vr_name = vr.h_formula_view_name in
-                  let vr_vdef = look_up_view_def_raw view_decls vr_name in
-                  let vr_self_pts = vr_vdef.view_pt_by_self in
-                  let vr_view_orig = vr.h_formula_view_original in
-                  if (vr_view_orig || vr_self_pts==[]) then (1,M_fold c)(*(-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
-                  else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res c)))
-            | ViewNode vl, DataNode dr -> 
-                  let vl_name = vl.h_formula_view_name in
-                  let vl_vdef = look_up_view_def_raw view_decls vl_name in
-                  let vl_self_pts = vl_vdef.view_pt_by_self in
-                  let vl_view_orig = vl.h_formula_view_original in
-                  let uf_i = if vl_view_orig then 0 else 1 in
-                  let ua = (1, M_unfold (c,uf_i)) in
-                  let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name dr.h_formula_data_name in
+          | DataNode dl, ViewNode vr -> 
+              let vr_name = vr.h_formula_view_name in
+              let vr_vdef = look_up_view_def_raw view_decls vr_name in
+              let vr_self_pts = vr_vdef.view_pt_by_self in
+              let vr_view_orig = vr.h_formula_view_original in
+              if (vr_view_orig || vr_self_pts==[]) then (1,M_fold c)(*(-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
+              else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res c)))
+          | ViewNode vl, DataNode dr -> 
+              let vl_name = vl.h_formula_view_name in
+              let vl_vdef = look_up_view_def_raw view_decls vl_name in
+              let vl_self_pts = vl_vdef.view_pt_by_self in
+              let vl_view_orig = vl.h_formula_view_original in
+              let uf_i = if vl_view_orig then 0 else 1 in
+              let ua = (1, M_unfold (c,uf_i)) in
+              let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name dr.h_formula_data_name in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)
-                  if (vl_view_orig || vl_self_pts==[]) then ua
-                  else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls)))
-                  else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res c)))
+              if (vl_view_orig || vl_self_pts==[]) then ua
+              else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls)))
+              else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res c)))
           | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
         )
     | MaterializedArg (mv,ms) ->
@@ -764,6 +773,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   (1,M_Nothing_to_do (string_of_match_res c))
               | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
             in
+            (*if in normalizing process => choose r1, otherwise, r*)
             if (is_normalizing) then r1
             else r
 

@@ -29,7 +29,7 @@ type tp_type =
   | AUTO (* Omega, Z3, Mona, Coq *)
 
 (* let tp = ref OmegaCalc *)
-let tp = ref OZ
+(* let tp = ref OZ *)
 let tp = ref Redlog
 
 let proof_no = ref 0

@@ -5209,6 +5209,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
         let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
         let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
         let split_ante1 = new_ante1 in
+
+
+        (*LDK*)
+        let _ = print_string ("heap_entail_empty_rhs_heap_x: before imply_mix_formula"
+                              ^ "\n split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq)
+                              ^ "\n split_ante0 = " ^ (Cprinter.string_of_mix_formula split_ante0)
+                              ^ "\n split_ante1 = " ^ (Cprinter.string_of_mix_formula split_ante1)
+                              ^ "\n\n") in
+
         let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then (true,[],None)
 		else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in
         let res1,res2,re3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list)) =
@@ -5362,7 +5371,7 @@ and solve_ineq(* _debug *) a m c =
       (Cprinter.string_of_mix_formula) 
       (Cprinter.string_of_mem_formula)
       (Cprinter.string_of_mix_formula) 
-      (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq a m c) m c
+      (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq_x a m c) m c
 
 and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
       (conseq : MCP.mix_formula) : MCP.mix_formula =
@@ -5486,7 +5495,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
-  Gen.Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Gen.Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
@@ -5502,7 +5511,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
           begin
-            (*print_endline "imply_mix_formula: first";*)
+            print_endline "imply_mix_formula: first";
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
             if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
             else MCP.imply_memo a1 c TP.imply imp_no 
@@ -5510,7 +5519,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            (*print_endline "imply_mix_formula first: second";*)
+            print_endline "imply_mix_formula first: second";
 	        CP.imply_conj_orig 
                 (TP.split_disjunctions a0) 
                 (TP.split_disjunctions a1) 
