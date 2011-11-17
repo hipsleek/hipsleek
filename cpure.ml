@@ -4,6 +4,7 @@
   core pure constraints, including arithmetic and pure pointer
 *)
 
+
 open Globals
 open Gen.Basic
 
@@ -5852,7 +5853,9 @@ let rec reduce_pure (f : formula) (bv : spec_var list) =
 	let c = split_conjunctions f in
 	(* Pick out the term that are atomic *)
 	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c in 
-	let bf = List.map (fun x -> match x with | BForm ((y,_),_) -> y) bf in
+	let bf = List.fold_left  (fun a x -> 
+        match x with | BForm ((y,_),_) -> y::a
+          | _ -> a) [] bf in
 	(* Pick out equality from all atomic *)
 	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf in
 	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p) | _ -> failwith "Eq fail!") ebf in
