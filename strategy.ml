@@ -136,9 +136,8 @@ module Default_strategy : STRATEG =
                   else (0,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m))));
 
          root_v_v = (fun prog m vl vr ->
-                  (* let l1 = [(1,M_base_case_unfold c)] in *)
                   let view_decls = prog.prog_view_decls in
-                  let vl_name = vl.h_formula_view_name in
+  let vl_name = vl.h_formula_view_name in
                   let vr_name = vr.h_formula_view_name in
                   let vl_vdef = look_up_view_def_raw view_decls vl_name in
                   let vr_vdef = look_up_view_def_raw view_decls vr_name in
@@ -196,19 +195,23 @@ module Default_strategy : STRATEG =
                             [(1,Cond_action lst)]
                   in
                   (* using || results in some repeated answers but still terminates *)
+                  let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                  let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                   let flag = 
                     if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
-                    else (vl_view_orig || vr_view_orig)
-                  in
+                    else (vl_view_orig || vr_view_orig)in
                   let l3 = if flag
                   then begin
                     let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name in
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
-                    let left_act = List.map (fun l -> (1,M_lemma (m,Some l))) left_ls in
-                    let right_act = List.map (fun l -> (1,M_lemma (m,Some l))) right_ls in
-                    if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
-                    else left_act@right_act
+                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (m,Some l))) left_ls else [] in
+                    let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (m,Some l))) right_ls else [] in
+                    (* let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in *)
+                    (* let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in *)
+                    (* if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (c,None))] *\) (\* only targetted lemma *\) *)
+                    (* else *)
+                    left_act@right_act
                   end
                   else  [] in
                   let l4 = 
@@ -217,29 +220,39 @@ module Default_strategy : STRATEG =
                       [(2,M_base_case_fold m)] 
                     else [] in
                   let src = (-1,norm_search_action (l2@l3@l4)) in
-                  src (*Seq_action [l1;src]*));
+                  src (*Seq_action [l1;src]*)
+                 );
          root_d_v = (fun prog m dl vr ->
                   let vr_name = vr.h_formula_view_name in
-                  let view_decls = prog.prog_view_decls in
-                  let vr_vdef = look_up_view_def_raw view_decls vr_name in
+                  let vr_vdef = look_up_view_def_raw prog.prog_view_decls vr_name in
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   let vr_view_orig = vr.h_formula_view_original in
-                  if (vr_view_orig || vr_self_pts==[]) then (1,M_fold m)(*(-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
-                  else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res m))));
+                  let vr_view_derv = vr.h_formula_view_derv in
+                  let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
+                  let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold m)] else [] in
+                  let a2 = if (new_orig) then [(1,M_rd_lemma m)] else [] in
+                  let a = a1@a2 in
+                  if a!=[] then (-1,Search_action a)
+                  else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res m)) ));
         root_v_d = (fun prog m vl dr ->
                   let vl_name = vl.h_formula_view_name in
-                  let view_decls = prog.prog_view_decls in
-                  let vl_vdef = look_up_view_def_raw view_decls vl_name in
+                  let vl_vdef = look_up_view_def_raw prog.prog_view_decls vl_name in
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
-                  let uf_i = if vl_view_orig then 0 else 1 in
-                  let ua = (1, M_unfold (m,uf_i)) in
-                  let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name dr.h_formula_data_name in
+                  let vl_view_derv = vl.h_formula_view_derv in
+                  let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                  let uf_i = if new_orig then 0 else 1 in
+                  let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name in
+                  let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (m,uf_i))] else [] in
+                  let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (m,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)
-                  if (vl_view_orig || vl_self_pts==[]) then ua
-                  else if (left_ls != []) then (1,M_lemma (m,Some (List.hd left_ls)))
-                  else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m))));
+                  let a = a1@a2 in
+                  if a!=[] then (-1,Search_action a)
+                  (* if (vl_view_orig || vl_self_pts==[]) then ua *)
+                  (* else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls))) *)
+                  else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m))) );
          mater_d_d = (fun prog m mv ms dl dr ->
              (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula m.match_res_lhs_node)^" with rhs: "^(string_of_h_formula m.match_res_rhs_node))));
          mater_d_v = (fun prog m mv ms dl dr ->
@@ -295,7 +308,7 @@ end ;;
 
 
 
-module Interactve_strategy : STRATEG = 
+module Interactive_strategy : STRATEG = 
    struct
     let sc = 
       {
@@ -316,7 +329,7 @@ module Interactve_strategy : STRATEG =
 let c_strat = ref Default_strategy.sc ;;
 let strateg_repo = ref (Hashtbl.create 10);;
 Hashtbl.add !strateg_repo Default_strategy.sc.name Default_strategy.sc;;
-Hashtbl.add !strateg_repo Interactve_strategy.sc.name Default_strategy.sc;;
+Hashtbl.add !strateg_repo Interactive_strategy.sc.name Interactive_strategy.sc;;
 let set_strateg s = 
   try
       c_strat := Hashtbl.find !strateg_repo s 

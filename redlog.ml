@@ -1232,7 +1232,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let all_vars = List.map fst revmap in
 		let param_vars = Gen.BList.difference_eq (fun x y -> x = y) all_vars solved_vars in
 		(*let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
-		let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in
+		(*let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in*)
 		(*let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
 		let result = List.append result (List.map (fun x -> (x,x)) param_vars) in
 		(*let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in
