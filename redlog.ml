@@ -1302,6 +1302,14 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let _ = start () in
 	(*let _ = print_endline "solve_eqns :: reduce started!" in*)
 
+	(* filter out the array accesses *)
+	let rec contains_no_arr e = match e with
+		| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ -> true
+		| CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) -> (contains_no_arr e1) && (contains_no_arr e2)
+		| CP.ArrayAt _ -> false
+		| _ -> false (* filter out all multiplication as well *) in
+	let eqns = List.filter (fun (x,y) -> contains_no_arr x && contains_no_arr y) eqns in
+
 	(* Pick out the variables in the equations *)
 	let unks = List.map (fun (e1,e2) -> List.append (CP.afv e1) (CP.afv e2)) eqns in
 	let unks = List.flatten unks in
@@ -1330,14 +1338,14 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	(* Generate reduce equations *)
 	let rec rl_of_exp varsmap e = match e with
 		| CP.Null _ -> "null" (* null serves as a symbollic variable *)
-		| CP.Var (v, _) -> (try List.assoc v varsmap with | Not_found -> failwith "")
+		| CP.Var (v, _) -> (try List.assoc v varsmap with | Not_found -> failwith "solve : variable not found in variable mapping!")
 		| CP.IConst (i, _) -> string_of_int i
 		| CP.FConst (f, _) -> string_of_float f
 		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
 		| CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " - " ^ (rl_of_exp varsmap e2) ^ ")"
-		| CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " * " ^ (rl_of_exp varsmap e2) ^ ")"
-		| CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " / " ^ (rl_of_exp varsmap e2) ^ ")"
-		| _ -> failwith ("solve : unsupported!")
+		(*| CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " * " ^ (rl_of_exp varsmap e2) ^ ")"*)
+		(*| CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " / " ^ (rl_of_exp varsmap e2) ^ ")"*)
+		| _ -> failwith ("solve : unsupported expression!" ^ (!CP.print_exp e))
 	in
 	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
 	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
