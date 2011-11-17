@@ -239,20 +239,25 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   let f_c x = match x with
     | Some(s,i) -> fmt_close();
     | None -> () in
+  let opt_cut () = match box_opt with
+    | Some(s,i) -> 
+          if s="V" then fmt_cut()
+          else  ()
+    | None -> () in
   let f_s x sep = match x with
     | Some s -> if s="A" then (fmt_string sep_str; fmt_cut())
       else if s="AB" then (fmt_cut(); fmt_string sep_str; fmt_cut()) 
       else (fmt_cut(); fmt_string sep_str)  (* must be Before *)
     | None -> fmt_string sep_str in 
   pr_list_open_sep 
-      (fun () -> (f_o box_opt);  fmt_string op; fmt_string open_str)
-      (fun () -> fmt_string close_str; (f_c box_opt)) 
+      (fun () -> (f_o box_opt);  fmt_string op; fmt_string open_str; opt_cut())
+      (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt)) 
       (fun () -> f_s sep_opt sep_str) 
       f_empty  f xs
 
  (** invoke pr_args_gen  *)   
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
-  pr_args_gen (fun () -> fmt_string (op^open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
+  pr_args_gen (fun () -> fmt_string (op(* ^open_str^close_str *)) ) box_opt sep_opt op open_str close_str sep_str f xs
 
  (** invoke pr_args_gen and print nothing when xs  is empty  *)      
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
@@ -875,8 +880,8 @@ let rec pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
           fmt_open_hbox ();
-         (if pid==None then fmt_string "NN " else fmt_string "SS ");
-          pr_formula_label_opt pid; 
+         (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+          (* pr_formula_label_opt pid;  *)
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle c pr_spec_var svs;
@@ -1775,7 +1780,7 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Left -> "==>"
-  | Iast.Right -> "<==="
+  | Iast.Right -> "<=="
   | Iast.Equiv -> "<==>" ;;
 
 
