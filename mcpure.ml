@@ -65,17 +65,18 @@ let fold_aset (f:var_aset):formula =
   Gen.Debug.no_1 "fold_aset" print_alias_set !print_p_f_f fold_aset f 
 
 let fv_memoised_constraint ({memo_formula = bf}:memoised_constraint) : spec_var list 
-    = bfv bf
+  = bfv bf
+                                
 
 let fv_memoised_group (m:memoised_group) : spec_var list =
   match m with
-      {memo_group_cons = mc_ls;
-       memo_group_slice = f_ls;
-       memo_group_aset = eq_set}  ->  
-        let v1 = List.concat (List.map fv_memoised_constraint mc_ls) in
-        let v2 = List.concat (List.map fv f_ls) in
-        let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset eq_set) in
-        v1@v2@v3
+  {memo_group_cons = mc_ls;
+   memo_group_slice = f_ls;
+   memo_group_aset = eq_set}  ->  
+    let v1 = List.concat (List.map fv_memoised_constraint mc_ls) in
+    let v2 = List.concat (List.map fv f_ls) in
+    let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset eq_set) in
+    v1@v2@v3
 
 let repatch_memoised_group (m:memoised_group) : memoised_group =
   let new_vars = fv_memoised_group m in
@@ -93,11 +94,11 @@ let consistent_memoised_group (m:memoised_group) : bool =
   if r==[] then 
     if r2==[] then true
     else
-      let s = ("WARNING: FreeVars unused :"^(!print_svl r2)) in
+      let s = ("WARNING: FreeVars unused: "^(!print_svl r2)) in
       let _ = report_warning no_pos s in
       true
   else 
-    let s = ("ERROR : FreeVars not captured:"^(!print_svl r)) in
+    let s = ("ERROR: FreeVars not captured: "^(!print_svl r)) in
     let _ = report_warning no_pos s in
     false
 
@@ -110,7 +111,7 @@ let check_repatch_memo_pure l s =
     let _ = report_warning no_pos ("repatching memo_pure"^s) in
     repatch_memo_pure l
 	  
-let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = 
+let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) =
   let f_grp, f_memo_cons, f_aset, f_slice, f_fv = f in
   match f_grp e arg with 
     | Some e1 -> e1
@@ -176,8 +177,8 @@ let rec filter_mem_fct fct lst =
       
 and filter_mem_triv lst = 
   filter_mem_fct (fun c ->
-	let (pf,_) = c.memo_formula in
-	match pf with 
+    let (pf,_) = c.memo_formula in
+      match pf with 
 	| Lte (e1,e2,l) 
 	| Gte (e1,e2,l) 
 	| Eq  (e1,e2,l) 
@@ -220,14 +221,14 @@ and group_mem_by_fv_no_slicing (lst: memo_pure):memo_pure =
 		memo_group_aset = a_l}) r  
 
 and group_mem_by_fv_slicing (lst: memo_pure):memo_pure = 
-  if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem " ;failwith "multi slice problem" );lst)
+  if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem"; failwith "multi slice problem" );lst)
   else
-	let overlap (nlv1, lv1) (nlv2, lv2) = (*Gen.BList.overlap_eq eq_spec_var nlv1 nlv2*)
-	  if (nlv1 = [] && nlv2 = []) then
-		(Gen.BList.list_equiv_eq eq_spec_var lv1 lv2)
-	  else
-		(Gen.BList.overlap_eq eq_spec_var nlv1 nlv2) && (Gen.BList.list_equiv_eq eq_spec_var lv1 lv2)
-	in
+    let overlap (nlv1, lv1) (nlv2, lv2) = (*Gen.BList.overlap_eq eq_spec_var nlv1 nlv2*)
+      if (nlv1 = [] && nlv2 = []) then
+        (Gen.BList.list_equiv_eq eq_spec_var lv1 lv2)
+      else
+        (Gen.BList.overlap_eq eq_spec_var nlv1 nlv2) && (Gen.BList.list_equiv_eq eq_spec_var lv1 lv2)
+    in
 	
     let n_l = List.fold_left (fun a d -> 
 	  let n_l = List.map (fun c -> ((bfv_with_slicing_label c.memo_formula),[(Some c, None, None)])) d.memo_group_cons in
@@ -253,9 +254,9 @@ and group_mem_by_fv_slicing (lst: memo_pure):memo_pure =
 		| _ -> (a1,a2,a3)) ([], [], empty_var_aset) m_l in
 		(*let n_v_l = Gen.BList.remove_dups_eq eq_spec_var (List.fold_left (fun acc bf -> acc @ (fv_memoised_constraint bf)) v_l mc_l) in*) (* Option A *)
 	  let n_v_l = (* Option B *)
-		let v1 = List.concat (List.map fv_memoised_constraint mc_l) in
-		let v2 = List.concat (List.map fv f_l) in
-		let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset a_l) in
+      let v1 = List.concat (List.map fv_memoised_constraint mc_l) in
+      let v2 = List.concat (List.map fv f_l) in
+      let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset a_l) in
 		remove_dups_svl (v1 @ v2 @ v3) in 
 	  { memo_group_fv = n_v_l;
 		memo_group_linking_vars = (*Gen.BList.difference_eq eq_spec_var n_v_l v_l*) lv;

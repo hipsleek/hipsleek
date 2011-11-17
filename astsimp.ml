@@ -35,11 +35,11 @@ module Chk = Checks
 
 (*
 module VHD = struct
-			type t = ident
-			let compare c1 c2 = String.compare c1 c2
-			let hash c = Hashtbl.hash c
-			let equal c1 c2 = (String.compare c1 c2) = 0
-		end
+        type t = ident
+	let compare c1 c2 = String.compare c1 c2
+	let hash c = Hashtbl.hash c
+	let equal c1 c2 = (String.compare c1 c2) = 0
+end
 module VH = Graph.Persistent.Digraph.Concrete(VHD)
 module SVH = Graph.Components.Make(VH)			
 *)
