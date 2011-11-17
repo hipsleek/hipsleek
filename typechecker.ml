@@ -749,7 +749,7 @@ let check_data (prog : prog_decl) (cdef : data_decl) =
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
     try
-      Some (List.find (fun coerc -> coerc.coercion_name == name) coercs)
+      Some (List.find (fun coerc -> coerc.coercion_name = name) coercs)
     with _ -> None in
 
   (* combine the 2 lists of coercions into one list of lemmas:
@@ -761,13 +761,13 @@ let check_coercion (prog : prog_decl) =
   (* add to lemmas the coercions from prog.prog_right_coercions that do not have a corresponding pair in prog.prog_left_coercions *)
   let lemmas = lemmas @ List.map (fun r2l_coerc -> (None, Some r2l_coerc))
     (List.filter 
-        (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name != l2r_coerc.coercion_name) prog.prog_left_coercions)
+        (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name <> l2r_coerc.coercion_name) prog.prog_left_coercions)
         prog.prog_right_coercions) in
    List.iter (fun (l2r, r2l) -> 
        let (coerc_type, coerc_name) = 
        match (l2r, r2l) with
-         | (Some coerc_l2r, None) -> (I.Right, coerc_l2r.coercion_name)
-         | (None, Some coerc_r2l) -> (I.Left, coerc_r2l.coercion_name)
+         | (Some coerc_l2r, None) -> (I.Left, coerc_l2r.coercion_name)
+         | (None, Some coerc_r2l) -> (I.Right, coerc_r2l.coercion_name)
          | (Some coerc1, Some coerc2) -> (I.Equiv, coerc1.coercion_name)
          | (None, None) ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma can't be empty"}
        in
