@@ -16,8 +16,8 @@ let num_para = ref (1)
 let sort_input = ref false
 let webserver = ref false
 
-
-
+(* global option to switch on/off the simplification of context after symbolic execution *)
+let simplify_context = ref false 
 
 let parallelize num =
   num_para := num
@@ -475,9 +475,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* Termination checking *)
           let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
           let _ = Debug.devel_pprint (str_debug_variance) pos in
-          let _ = if not (CF.isNonFalseListFailescCtx sctx) & ir then
+          let _ = 
+            if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
             (* Termination: Add a false entail state for 
-             * unreachable recursive call *)
+             * unreachable recursive call if variance exists *)
             var_checked_list := !var_checked_list @ [(
               {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
               CF.empty_ext_variance_formula)];
@@ -604,7 +605,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
     else ctx in
-    let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
+	(* An Hoa : Simplify the context before checking *)
+	let ctx = if !simplify_context then 
+		CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
+		else ctx in
+	let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
     (* if (Gen.is_empty cl) then fl
        else *)	    
     let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in

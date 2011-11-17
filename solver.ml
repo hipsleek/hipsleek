@@ -2725,35 +2725,35 @@ and heap_entail_conjunct_lhs_struc_x
 		        (Cprinter.string_of_pure_formula p)^"\n\n"^(string_of_bool tt)^"\n") ;*)
 		        if tt then Some (p,e) else helper t in
 			
-			(* Find the branch whose condition is satisfied by the current context *)
-			(* Because these conditions are disjoint, the context can only statisfy at most one condition *)
+			    (* Find the branch whose condition is satisfied by the current context *)
+			    (* Because these conditions are disjoint, the context can only statisfy at most one condition *)
 	        let r = helper b.formula_case_branches in
 	        let r = match r with
 	          | None -> begin
-		        List.map (fun (c1, c2) -> 
-			      let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
+		            List.map (fun (c1, c2) -> 
+			            let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
                   (*this unsat check is essential for completeness of result*)
-				  if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
-				  else
-					(* Chanh : Termination: add target condition *)
-					let n_ctx = CF.transform_context (
-					  fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx in
+				          if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
+				          else
+					          (* Termination: add target condition *)
+					          let n_ctx = CF.transform_context (
+					          fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx in
 
-					(*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)					
+					          (*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)					
 					
-					let n_ctx = prune_ctx prog n_ctx in
-					inner_entailer 2 n_ctx c2) b.formula_case_branches 
-				end
+					          let n_ctx = prune_ctx prog n_ctx in
+					          inner_entailer 2 n_ctx c2) b.formula_case_branches 
+				      end
 	          | Some (p, e) -> begin
-				let n_ctx = CF.transform_context (
-				  fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
+				        let n_ctx = CF.transform_context (
+				          fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
 
-				(*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
+				        (*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
 				
-				[inner_entailer 3 n_ctx e] end in
-	        let rez1, rez2 = List.split r in
-            let rez1 = List.fold_left (fun a c -> or_list_context (*list_context_union*) a c) (List.hd rez1) (List.tl rez1) in
-	        (rez1, (mkCaseStep ctx [f] rez2))
+				        [inner_entailer 3 n_ctx e] end in
+	              let rez1, rez2 = List.split r in
+                let rez1 = List.fold_left (fun a c -> or_list_context (*list_context_union*) a c) (List.hd rez1) (List.tl rez1) in
+	              (rez1, (mkCaseStep ctx [f] rez2))
         | EBase ({
 		  formula_ext_explicit_inst = expl_inst;
 		  formula_ext_implicit_inst = impl_inst;
@@ -2968,7 +2968,7 @@ and heap_entail_variance_x
 		else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then (* Case 2: Base case *)
 			Debug.print_info "Termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
 		else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then (* Case 3: Non-terminating cases *)
-			Debug.print_info "Termination" ("non-terminating state") loc
+			Debug.print_info "Termination" ("non-terminating state ") loc
 		else if (var_label_lhs > var_label_rhs) then (* Case 4: Loop transition: state transition at boundary of loop *)
 			(* Already checked UNSAT(D) at heap_entail_one_context_struc *)
 			Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
