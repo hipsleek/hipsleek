@@ -2170,9 +2170,12 @@ and html_of_struc_formula f =
 let html_of_estate es = "{ " ^ html_of_formula es.es_formula ^ " }"
 
 let html_of_context ctx = 
-	let args = bin_op_to_list "|" ctx_assoc_op ctx in
-	let args = List.map (fun x -> match x with Ctx es -> es) args in
-	String.concat "<br /><br /><b>OR</b> " (List.map html_of_estate args)
+  let args = bin_op_to_list "|" ctx_assoc_op ctx in
+  let args = List.fold_left (fun a x -> 
+      match x with 
+        | Ctx es -> es::a
+        | _ -> a) [] args in
+  String.concat "<br /><br /><b>OR</b> " (List.map html_of_estate args)
 
 (* TODO implement *)
 let html_of_fail_type f = ""
