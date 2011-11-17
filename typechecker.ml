@@ -766,8 +766,8 @@ let check_coercion (prog : prog_decl) =
    List.iter (fun (l2r, r2l) -> 
        let (coerc_type, coerc_name) = 
        match (l2r, r2l) with
-         | (Some coerc_l2r, None) -> (I.Right, coerc_l2r.coercion_name)
-         | (None, Some coerc_r2l) -> (I.Left, coerc_r2l.coercion_name)
+         | (Some coerc_l2r, None) -> (I.Left, coerc_l2r.coercion_name)
+         | (None, Some coerc_r2l) -> (I.Right, coerc_r2l.coercion_name)
          | (Some coerc1, Some coerc2) -> (I.Equiv, coerc1.coercion_name)
          | (None, None) ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma can't be empty"}
        in

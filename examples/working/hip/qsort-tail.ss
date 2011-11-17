@@ -43,6 +43,8 @@ bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
 inv n >= 0;
 
 
+/* lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg); */
+
 lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg);
 
 /*
