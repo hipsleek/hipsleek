@@ -1,0 +1,31 @@
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<n, p, sm, lg> == case {
+  n=0 -> [] self=p & sm=lg;
+ (n!=0) -> [] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
+               & sm<=sm1 & nn=n-1 ;
+  }	inv n >= 0 & (n=0 & sm=lg | n>0 & sm<=lg).
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0 -> 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
+
+lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <- 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D 
+     & lg1<=sm2).
+
+// For below, I have to change
+// lg1<=sm2 to lg1=sm2
+
+checkentail 
+        self::lseg<n2, p, sm2, lg> & n1=0 & sm=lg1 
+             & lg1=sm2 // lg1<=sm2 
+             & n = n1+n2 & n1,n2 >=0
+   or self::node<sm, r1> * r1::lseg<n1-1, q, sm1, lg1> 
+        *  q::lseg<n2, p, sm2, lg>  
+        & sm<=sm1  & lg1<=sm2 & n = n1+n2 & n1,n2 >=0
+   |- self::lseg<n, p, sm, lg>.
+
