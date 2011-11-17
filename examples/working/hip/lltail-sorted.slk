@@ -23,13 +23,13 @@ pred lseg<n, p, sm, lg> == case {
 	inv n >= 0 & sm<=lg.
 */
 
-lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0 -> 
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0 <-> 
 (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
-
+/*
 lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <- 
 (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D 
      & lg1<=sm2).
-
+*/
 // For below, I have to change
 // lg1<=sm2 to lg1=sm2
 

@@ -53,20 +53,6 @@ let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog
   in
   (res, rs)
 
-(* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
-let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
-  if valid then print_string (num_id ^ ": Valid.\n")
-  else let s = 
-    if !Globals.disable_failure_explaining then ""
-    else
-      match CF.get_must_failure residue with
-        | Some s -> "(must) cause:" ^ s 
-        | _ -> (match CF.get_may_failure residue with
-            | Some s -> "(may) cause:" ^ s
-            | None -> "INCONSISTENCY : expected failure but success instead"
-          )
-    in print_string (num_id ^ ": Fail. " ^ s ^ "\n")
-
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
@@ -150,6 +136,20 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   let pr = Cprinter.string_of_coerc_decl_list in
   Gen.Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
+(* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
+let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+  if valid then print_string (num_id ^ ": Valid.\n")
+  else let s = 
+    if !Globals.disable_failure_explaining then ""
+    else
+      match CF.get_must_failure residue with
+        | Some s -> "(must) cause:" ^ s 
+        | _ -> (match CF.get_may_failure residue with
+            | Some s -> "(may) cause:" ^ s
+            | None -> "INCONSISTENCY : expected failure but success instead"
+          )
+  in print_string (num_id ^ ": Fail. " ^ s ^ "\n")
+
 (* check the validity of the lemma where:
    l2r: "->" implication
    r2l: "<-" implication 
@@ -165,35 +165,27 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     in
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
-    let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
-    let residues = match (rs_l2r, rs_r2l) with
-      | (None, None) -> empty_resid
-      | (None, Some rs) 
-      | (Some rs, None) -> rs
-      | (Some rs1, Some rs2) -> CF.list_context_union rs1 rs2
-    in
-    let valid = valid_l2r && valid_r2l in
     let num_id = "\nEntailing lemma \""^ lemma_name ^"\"" in
-    let _ =
-      if valid then 
-        print_entail_result valid residues num_id
-      else begin
-        let num_id0, err_resid  = 
-          match lemma_type with
-            | I.Equiv -> begin
-                if (valid_l2r == false) then
-                  match rs_l2r with
-                    | Some rs -> (" (left-to-right) ", rs)
-                    | None -> (" (left-to-right) ",  empty_resid)
-                else
-                  match rs_r2l with
-                    | Some rs -> (" (right-to-left) ", rs)
-                    | None -> (" (right-to-left) ",  empty_resid)
-              end
-            | _ -> ("", residues) 
-        in
-        print_entail_result valid err_resid (num_id ^ num_id0)
-      end; in
+    let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
+    let (rs1, rs2) = match (rs_l2r, rs_r2l) with
+      | (None, None) -> (empty_resid, empty_resid)
+      | (None, Some rsr) -> (empty_resid, rsr)
+      | (Some rsl, None) -> (rsl, empty_resid)
+      | (Some rsl_, Some rsr_) -> (rsl_, rsr_) in
+    let residues = match lemma_type with
+      | I.Equiv -> 
+            let residue = CF.list_context_union rs1 rs2 in
+            let valid = valid_l2r && valid_r2l in
+            let _ = if valid then print_entail_result valid residue num_id
+            else 
+              let _ = print_string (num_id ^ ": Fail. Details below:\n") in
+              let _ = print_entail_result valid_l2r rs1 "\t \"->\" implication: " in
+              print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
+            in
+            residue
+      | I.Right -> let _ = print_entail_result valid_l2r rs1 num_id in rs1
+      | I.Left  -> let _ = print_entail_result valid_r2l rs2 num_id in rs2
+    in
     Some residues
   else None
 
