@@ -123,7 +123,7 @@ let check_left_coercion coer (cprog: C.prog_decl) =
 
 let check_left_coercion coer cprog  =
   let pr = Cprinter.string_of_coercion in
-  Gen.Debug.ho_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
+  Gen.Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
 
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
@@ -134,7 +134,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
 
 let check_right_coercion coer (cprog: C.prog_decl) =
   let pr = Cprinter.string_of_coercion in
-  Gen.Debug.ho_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
+  Gen.Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =

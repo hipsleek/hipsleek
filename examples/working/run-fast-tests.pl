@@ -635,11 +635,11 @@ $output_file = "log";
               ["imm/imm3.slk", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
               ["imm/imm4.slk", "", "Valid.Fail."],
               ["imm/imm-hard.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "lemmas"=>[["lemmas/lemma_check01.slk", "--enable-check-lemmas", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check02.slk", "--enable-check-lemmas", "Fail.Valid."],
-              ["lemmas/lemma_check03.slk", "--enable-check-lemmas", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check04.slk", "--enable-check-lemmas", "Valid.Fail.Fail."],
-              ["lemmas/lemma_check06.slk", "--enable-check-lemmas", "Valid.Valid.Valid.Fail.Fail.Fail."]]
+    "lemmas"=>[["lemmas/lemma_check01.slk", " --enable-check-lemmas ", "Valid.Valid.Fail."],
+              ["lemmas/lemma_check02.slk", " --enable-check-lemmas ", "Fail.Valid."],
+              ["lemmas/lemma_check03.slk", " --enable-check-lemmas ", "Valid.Valid.Fail."],
+              ["lemmas/lemma_check04.slk", " --enable-check-lemmas ", "Valid.Fail.Fail."],
+              ["lemmas/lemma_check06.slk", " --enable-check-lemmas ", "Valid.Valid.Valid.Fail.Fail.Fail."]]
 
     );
 
@@ -811,13 +811,13 @@ sub sleek_process_file  {
 			}
 			if($r !~ /^$test->[2]$/)
 			{
-				print "Unexpected result with : $test->[0], $test->[2]\n";
+				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}  
+			}
             if($timings) {
                # log_one_line_of_timings ($test->[0],$output);
-            }  
+            }
 		}
 	}
 }
