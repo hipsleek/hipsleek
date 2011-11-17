@@ -294,9 +294,29 @@ module Default_strategy : STRATEG =
 end ;;
 
 
+
+module Interactve_strategy : STRATEG = 
+   struct
+    let sc = 
+      {
+          name = "interactive";
+          no_match = Default_strategy.sc.no_match;
+          root_d_d = Default_strategy.sc.root_d_d;
+          root_d_v = Default_strategy.sc.root_d_v;
+          root_v_d = Default_strategy.sc.root_v_d;
+          root_v_v = Default_strategy.sc.root_v_v;
+          mater_d_d = Default_strategy.sc.mater_d_d;
+          mater_d_v = Default_strategy.sc.mater_d_v;
+          mater_v_d = Default_strategy.sc.mater_v_d;
+          mater_v_v = Default_strategy.sc.mater_v_v;
+      }
+   end;;
+
+
 let c_strat = ref Default_strategy.sc ;;
 let strateg_repo = ref (Hashtbl.create 10);;
 Hashtbl.add !strateg_repo Default_strategy.sc.name Default_strategy.sc;;
+Hashtbl.add !strateg_repo Interactve_strategy.sc.name Default_strategy.sc;;
 let set_strateg s = 
   try
       c_strat := Hashtbl.find !strateg_repo s 
