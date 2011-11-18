@@ -37,20 +37,20 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     match spec with
 	  | Cformula.ECase b ->
 		List.for_all (fun (c1, c2) -> 
-		  let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+		  let mn = Cast.unmingle_name (proc.Cast.proc_name) in (*get proc_name*)
 		  let f_formula = fun f -> None in
 		  let f_b_formula (pf, il) = match pf with
 			| CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
 			| _ -> None
-		  in
+		  in (*???*)
 		  let f_exp = function
 			| CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
 			| _ -> None
-		  in
+		  in (*???*)
 		  let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
 		  (* Termination: Add source condition *)
 		  let nctx = CF.transform_context (fun es ->
-			CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in
+			CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in (*???*)
 
 		  (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		  
@@ -62,7 +62,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
           Debug.devel_pprint ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 	        let nctx = 
 	          if !Globals.max_renaming 
-	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx)
+	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
 			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
 	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
@@ -521,7 +521,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let _ = Cprinter.string_of_list_failesc_context in
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
-              Gen.Debug.loop_2(* _no *) "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
+              Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
 			let scall_pre_cond_pushed = if !print_proof then
 					begin
 						Tpdispatcher.push_suppress_imply_output_state ();
@@ -694,7 +694,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   end
 
 
-(* checking procedure *)
+(* checking procedure: (PROC p61) *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let unmin_name = unmingle_name proc.proc_name in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
@@ -714,7 +714,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			let ftypes, fnames = List.split proc.proc_args in
 			(* fsvars are the spec vars corresponding to the parameters *)
 			let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
-			let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
+			let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
 			let init_form = nox in
 			let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
           (*add default full permission = 1.0 to ante; 

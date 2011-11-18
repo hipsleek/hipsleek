@@ -6650,8 +6650,8 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
                 | None -> (None,h)
                 | Some asserted_f -> 
 
-        let _ = print_string ("Some asserted: before case_normalize_..."
-                              ^ "\n\n") in
+        (* let _ = print_string ("Some asserted: before case_normalize_..." *)
+        (*                       ^ "\n\n") in *)
 
                       let r, _ = case_normalize_struc_formula prog h p (fst asserted_f) true false [] in
                       let _ = check_eprim_in_struc_formula " is not a valid program variable " r in
@@ -6829,8 +6829,8 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
 
-        let _ = print_string ("case_normalize_proc: before case_normalize_... 1 "
-                              ^ "\n\n") in
+        (* let _ = print_string ("case_normalize_proc: before case_normalize_... 1 " *)
+        (*                       ^ "\n\n") in *)
 
   let nst,h11 = case_normalize_struc_formula prog h p f.Iast.proc_static_specs false false strad_s in
   let _ = check_eprim_in_struc_formula " is not allowed in precond " nst in 
@@ -6838,8 +6838,8 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
 
-        let _ = print_string ("case_normalize_proc: before case_normalize_... 2"
-                              ^ "\n\n") in
+        (* let _ = print_string ("case_normalize_proc: before case_normalize_... 2" *)
+        (*                       ^ "\n\n") in *)
 
   let ndn, h12 = case_normalize_struc_formula prog h p f.Iast.proc_dynamic_specs false false strad_d in
   let _ = check_eprim_in_struc_formula "is not allowed in precond " ndn in

@@ -261,6 +261,11 @@ void fork(tid id)
 void join1(tid id)
   requires id::tid<>
   ensures true;
+
+/* ************ */
+/* Concurrency  */
+/* ************ */
+
 int[] update___1d(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]

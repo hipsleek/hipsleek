@@ -4202,7 +4202,13 @@ let rec transform_formula f (e:formula) :formula =
 		  | Exists (v,e,fl,l) ->
 		    let ne = transform_formula f e in
 		    Exists(v,ne,fl,l)
-						
+
+let transform_formula f (e:formula) :formula =
+  Gen.Debug.no_1 "transform_formula" 
+      !print_formula
+      !print_formula
+      (fun _ -> transform_formula f e ) e
+
 let rename_labels  e=
   let f_b e = Some e in
   let f_e e = Some e in
