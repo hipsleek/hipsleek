@@ -553,7 +553,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
                         ^"\n\n") no_pos in
 
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
-  let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
+  let ante = Perm.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
 
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
