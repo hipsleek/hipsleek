@@ -19,7 +19,7 @@ value<> ==
       f1::anode<2,null,null> * a1::value<> * a::value<> // S v1 v2
   inv self!=null;
 
-coercion self::value<> -> self::term<>;
+lemma self::value<> -> self::term<>;
 
 anode clone (anode t)   // cloning a value
 requires t::value<>@I

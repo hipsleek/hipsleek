@@ -21,7 +21,7 @@ tlseg<p,d,n> ==
   or self::tlseg<r,d+1,n1> * r::tlseg<p,d+1,n2> & n=n1+n2 
   inv self!=null & n>=1;
 
-coercion self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d;
+lemma self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d;
  
 bool is_empty(node x)
   requires true

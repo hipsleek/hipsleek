@@ -71,10 +71,10 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--disable-check-coercions", Arg.Clear Globals.check_coercions,
-	"Disable Coercion Proving");
-	("--enable-check-coercions", Arg.Set Globals.check_coercions,
-	"Enable Coercion Proving");
+	("--disable-check-lemmas", Arg.Clear Globals.check_coercions,
+	"Disable Lemma Proving");
+	("--enable-check-lemmas", Arg.Set Globals.check_coercions,
+	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
 	("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,

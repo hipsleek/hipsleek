@@ -128,8 +128,8 @@ negtlseg<p,f,d,n> ==
 */
 
 // a provable lemma that tlseg gives at least one node
-//coercion self::tlseg<p,f,d,n>@I -> self::node<f,q>@I;
-//coercion self::negtlseg<p,f,d,n>@I -> self::node<f,q>@I ;
+//lemma self::tlseg<p,f,d,n>@I -> self::node<f,q>@I;
+//lemma self::negtlseg<p,f,d,n>@I -> self::node<f,q>@I ;
 
 bool is_empty(node x)
   requires true
@@ -146,7 +146,7 @@ int hd(node x)
     requires x::negtlseg<p,f,d,n>@I 
     ensures res=f;
 /*
-// can be proven with the coercion
+// can be proven with the lemma
 {
   return x.val;
 }

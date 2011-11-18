@@ -601,45 +601,45 @@ $output_file = "log";
 
 # list of file, string with result of each entailment&lemma....
 %sleek_files=(
-    "sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-                      ["sleek1.slk","Fail."],
-                      ["sleek10.slk","Valid.Fail."],
-                      ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-                      ["sleek3.slk","Valid.Valid.Fail.Valid."],
-                      ["sleek4.slk","Valid.Valid."],
-                      ["sleek6.slk","Valid.Valid."],
-                      ["sleek7.slk","Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+    "sleek"=>[["sleek.slk", "","Valid.Valid.Valid.Fail."],
+                      ["sleek1.slk", "", "Fail."],
+                      ["sleek10.slk", "", "Valid.Fail."],
+                      ["sleek2.slk", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+                      ["sleek3.slk", "", "Valid.Valid.Fail.Valid."],
+                      ["sleek4.slk", "", "Valid.Valid."],
+                      ["sleek6.slk", "", "Valid.Valid."],
+                      ["sleek7.slk", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
                       # slow in sleek8.slk due to search
-                      ["sleek8.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["sleek9.slk","Valid.Valid.Valid.Fail.Valid.Valid."],
-                      ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-                      #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-                      ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-                      ["imm/imm4.slk","Valid.Fail."],
-                      ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "sleek_wo_lem"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-              ["sleek1.slk","Fail."],
-              ["sleek10.slk","Valid.Fail."],
-              ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-              ["sleek3.slk","Valid.Fail.Valid."],
-              ["sleek4.slk","Valid.Valid."],
-              ["sleek6.slk","Valid.Valid."],
-              ["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+                      ["sleek8.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["sleek9.slk", "", "Valid.Valid.Valid.Fail.Valid.Valid."],
+                      ["imm/imm1.slk", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+                      #["imm/imm2.slk", "", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["imm/imm2.slk", "", "Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
+                      ["imm/imm4.slk", "", "Valid.Fail."],
+                      ["imm/imm-hard.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "sleek_wo_lem"=>[["sleek.slk", "", "Valid.Valid.Valid.Fail."],
+              ["sleek1.slk", "", "Fail."],
+              ["sleek10.slk", "", "Valid.Fail."],
+              ["sleek2.slk", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+              ["sleek3.slk", "", "Valid.Fail.Valid."],
+              ["sleek4.slk", "", "Valid.Valid."],
+              ["sleek6.slk", "", "Valid.Valid."],
+              ["sleek7.slk", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
               # slow in sleek8.slk due to search
-              ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["sleek9.slk","Valid.Fail.Valid.Valid."],
-              ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-              #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-              ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-              ["imm/imm4.slk","Valid.Fail."],
-              ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "lemmas"=>[["lemmas/lemma_check01.slk", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check02.slk", "Fail.Valid."],
-              ["lemmas/lemma_check03.slk", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check04.slk", "Valid.Fail.Fail."],
-              ["lemmas/lemma_check06.slk", "Valid.Valid.Valid.Fail.Fail.Fail."]]
+              ["sleek8.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+              ["sleek9.slk", "", "Valid.Fail.Valid.Valid."],
+              ["imm/imm1.slk", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+              #["imm/imm2.slk", "", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+              ["imm/imm2.slk", "", "Fail.Valid.Fail.Valid.Fail."],
+              ["imm/imm3.slk", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
+              ["imm/imm4.slk", "", "Valid.Fail."],
+              ["imm/imm-hard.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "lemmas"=>[["lemmas/lemma_check01.slk", " --enable-check-lemmas ", "Valid.Valid.Fail."],
+              ["lemmas/lemma_check02.slk", " --enable-check-lemmas ", "Fail.Valid."],
+              ["lemmas/lemma_check03.slk", " --enable-check-lemmas ", "Valid.Valid.Fail."],
+              ["lemmas/lemma_check04.slk", " --enable-check-lemmas ", "Valid.Fail.Fail."],
+              ["lemmas/lemma_check06.slk", " --enable-check-lemmas ", "Valid.Valid.Valid.Fail.Fail.Fail."]]
 
     );
 
@@ -774,14 +774,15 @@ sub sleek_process_file  {
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
       }
-      if ($script_arguments=~"--disable-check-coercions"){
+      if ($script_arguments=~"--disable-check-lemmas"){
           $param =~ s/sleek/sleek_wo_lemma_check/;
       }
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
 			{
 			print "Checking $test->[0]\n";
-			$output = `$sleek $script_arguments $exempl_path_full/$test->[0] 2>&1`;
+            $script_args = $script_arguments." $test->[1]";
+			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
 			$pos = 0;
@@ -808,15 +809,15 @@ sub sleek_process_file  {
 				if ($pos >=length($output)) 
 				{$pos = -1;}
 			}
-			if($r !~ /^$test->[1]$/)
+			if($r !~ /^$test->[2]$/)
 			{
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}  
+			}
             if($timings) {
                # log_one_line_of_timings ($test->[0],$output);
-            }  
+            }
 		}
 	}
 }
