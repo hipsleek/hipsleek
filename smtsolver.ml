@@ -447,7 +447,7 @@ type smtprover =
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let timeout = ref 15.0
+let timeout = ref 2.0
 let prover_pid = ref 0
 let prover_process = ref {
 	name = "smtsolver";
