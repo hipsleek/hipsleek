@@ -40,3 +40,26 @@ int fibwhilehelper(int n, int m, int f0, int f1)
   else
 		return fibwhilehelper(n-1,m+1,f1,f0+f1);
 }
+
+int fibwhile1(int n) 
+	requires n >= 0
+	ensures fiba(n,res);
+	//ensures fib(n,res);
+{
+	assume fiba(0,1) & fiba(1,1);
+	return fibwhilehelper1(n,1,1);
+}
+
+int fibwhilehelper1(int n, int f0, int f1) 
+	requires [m] fiba(m,f0) & fiba(m+1,f1) & n >= 0 & m >= 0
+	ensures fiba(m+n,res);
+	//requires fib(m,f0) & fib(m+1,f1) & n >= 0 & m >= 0
+	//ensures fib(m+n,res);
+{
+	if (n == 0)
+		return f0;
+	else if (n == 1)
+		return f1;
+  else
+		return fibwhilehelper1(n-1,f1,f0+f1);
+}
