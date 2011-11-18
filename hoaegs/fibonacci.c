@@ -10,7 +10,7 @@ axiom n > 1 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
 
 int computefib(int n)
 	requires n >= 0
-	ensures fiba(n,res);
+    ensures fiba(n,res);
 	//ensures fib(n,res);
 {
 	if (n < 2)
@@ -60,6 +60,6 @@ int fibwhilehelper1(int n, int f0, int f1)
 		return f0;
 	else if (n == 1)
 		return f1;
-  else
+    else
 		return fibwhilehelper1(n-1,f1,f0+f1);
 }
