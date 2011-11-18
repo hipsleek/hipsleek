@@ -955,6 +955,12 @@ let rec string_of_flow_formula f c =
   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
 	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
+let rec string_of_nflow n = (Gen.ExcNumbering.get_closest n)
+
+let rec string_of_sharp_flow sf = match sf with
+  | Sharp_ct ff -> "#"^(string_of_flow_formula "" ff)
+  | Sharp_id id -> "#"^id
+
 let rec pr_formula_base e =
   match e with
     | ({formula_base_heap = h;
@@ -1140,7 +1146,8 @@ let summary_partial_context (l1,l2) =  "PC("^string_of_int (List.length l1) ^", 
 
 let summary_failesc_context (l1,l2,l3) =  
 	"FEC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
-	(* ^" "^(summary_list_path_trace l3) *)^")"
+	^" "^(summary_list_path_trace l3)
+    ^")"
 
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
@@ -1334,11 +1341,11 @@ let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
-let pr_esc_stack_lvl ((i,_),e) = 
+let pr_esc_stack_lvl ((i,s),e) = 
   fmt_open_vbox 0;
-  pr_vwrap_naive ("level"^(string_of_int i)^" :")
+  pr_vwrap_naive ("Level:"^(string_of_int i)^":"^s^":")
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) e;
+		  pr_vwrap "State:" pr_context_short fs)) e;
   fmt_close_box ()
 
 (* should this include must failures? *)
@@ -1353,7 +1360,7 @@ let pr_successful_states e = match e with
   | _ ->   
   pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) e
+		  pr_vwrap "State:" pr_context_short fs)) e
 
 let pr_esc_stack e = match e with
   | [] 
@@ -1630,7 +1637,7 @@ let string_of_specs d =  List.fold_left  (fun a c -> a ^" "^(string_of_spec c ))
 
 let string_of_sharp st = match st with
 	| Sharp_ct t -> string_of_flow_formula "" t
-	| Sharp_v  f -> "flow_var "^f
+	| Sharp_id  f -> "flow_var "^f
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
@@ -1707,7 +1714,7 @@ let rec string_of_exp = function
   | New ({exp_new_class_name = id;
 	exp_new_arguments = idl;
 	exp_new_pos = l}) -> 
-        "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
+        "new " ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
 	| EmptyArray b -> "Empty Array" (* An Hoa *)
   | Print (i, l)-> "print " ^ (string_of_int i) 
@@ -1719,15 +1726,15 @@ let rec string_of_exp = function
 	      match st with
 	        | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
 	            (match eo with 
-		          |Sharp_prog_var e -> "return " ^ (snd e)
+		          |Sharp_var e -> "return " ^ (snd e)
 		          | _ -> "return")
 	          else  (match eo with 
-		        | Sharp_prog_var e -> "throw " ^ (snd e)
-		        | Sharp_finally e -> "throw " ^ e ^":"^(string_of_sharp st)
+		        | Sharp_var e -> "throw " ^ (snd e)
+		        | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
 		        | _ -> "throw "^(string_of_sharp st))
 	        | _ -> (match eo with 
-		        | Sharp_prog_var e -> "throw " ^ (snd e)
-		        | Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
+		        | Sharp_var e -> "throw " ^ (snd e)
+		        | Sharp_flow e -> "throw " ^ e ^":" ^(string_of_sharp st)
 		        | _ -> "throw "^(string_of_sharp st)))end 
   | SCall ({exp_scall_type = _;
 	exp_scall_method_name = id;
@@ -2222,6 +2229,7 @@ Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
+Cformula.print_nflow := string_of_nflow;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
@@ -2229,6 +2237,8 @@ Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
+Cformula.print_esc_stack := string_of_esc_stack;;
+Cformula.print_failesc_context := string_of_failesc_context;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;

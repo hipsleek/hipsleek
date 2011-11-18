@@ -140,12 +140,12 @@ and coercion_type = Iast.coercion_type
     
 and sharp_flow = 
   | Sharp_ct of F.flow_formula
-  | Sharp_v of ident
+  | Sharp_id of ident
         
 and sharp_val = 
-  | Sharp_no_val 
-  | Sharp_finally of ident
-  | Sharp_prog_var of typed_ident
+  | Sharp_no_val (* captures flow without a value *)
+  | Sharp_flow of ident   (* capture flow explicitly and a value*)
+  | Sharp_var of typed_ident (* captures flow through a var *)
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
@@ -1239,7 +1239,7 @@ let rec check_proper_return cret_type exc_list f =
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
 			else if not (List.exists (fun c-> 
-                let _ =print_endline "XX" in F.subsume_flow c fl_int) exc_list) then
+                (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type is not covered by the throw list";}
 			else if not(overlap_flow_type fl_int res_t) then
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}

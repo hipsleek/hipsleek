@@ -226,6 +226,7 @@ let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 let print_ext_formula = ref(fun (c:ext_formula) -> "printer not initialized")
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
+
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list l = match l with 
@@ -2501,6 +2502,9 @@ let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
+let print_nflow = ref(fun (c:nflow) -> "printer not initialized")
+let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
+let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
 
 let is_one_context (c:context) =
   match c with
@@ -3473,21 +3477,39 @@ let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_
   let res_s = merge_success s1 s2 in
   let e1 = match e1 with | [] -> [((0,""),[])] | _-> e1 in
   let e2 = match e2 with | [] -> [((0,""),[])] | _-> e2 in
+(*
+type: esc_stack ->
+  esc_stack -> (Globals.control_path_id_strict * branch_ctx list) list
+
+*)
   let rec merge_esc e1 e2 = 
     match e1,e2 with
     | [],[] -> []
     | (l1,b1)::z1,(l2,b2)::z2 ->
-      if not ((fst l1)==(fst l2)) then 
-        Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context lbl mismatch\n"}
-      else (l1,merge_success b1 b2)::(merge_esc z1 z2)
+          let flag = not ((fst l1)==(fst l2)) in
+          (if flag then 
+            print_endline ("WARNING MISMATCH at merge_esc:\n"^(!print_esc_stack e1)^"\n"^(!print_esc_stack e2)))
+          ; (l1,merge_success b1 b2)::(merge_esc z1 z2)
+      (* if not ((fst l1)==(fst l2)) then  *)
+      (*   Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context lbl mismatch\n"} *)
     | _ ->   
       print_string ("stack e1: "^ (f e1)^":"^" stack e2: "^(f e2)^":"^"\n");
-      Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context \n"} in  
+      Err.report_error {Err.error_loc = no_pos;  Err.error_text = "mismatched number in merge_esc methd \n"} in
+  let merge_esc e1 e2 =
+    let pr1 x = "#"^(!print_esc_stack x)^"#" in
+    Gen.Debug.no_2 "merge_esc" pr1 pr1 pr_no merge_esc e1 e2 in
+
   let res_e = merge_esc e1 e2 in  
     (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f1,s1))); *)
     (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f2,s2))); *)
     (* print_string ("\nAfter :"^(Cprinter.summary_partial_context (res_f,res_s))); *)
     (res_f,res_e,res_s)
+
+
+let merge_failesc_context_or f (((f1,e1,s1):failesc_context) as x1) (((f2,e2,s2):failesc_context) as x2) : failesc_context =
+  let pr = !print_failesc_context in
+  Gen.Debug.no_2 "merge_failesc_context_or" pr pr pr
+      (fun _ _ -> merge_failesc_context_or f (x1) (x2)) x1 x2
 
 
 let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2),  remove_dupl_false ((snd pc1)@(snd pc2)) ) 
@@ -4970,6 +4992,12 @@ let splitter_failesc_context  (nf:nflow) (cvar:typed_ident option) (fn_esc:conte
 						let r = List.map (fun (p,c)-> splitter_wrapper p c nf cvar elim_ex_fn fn_esc ) sl in
 						let re,rs = List.split r in
 						(fl,push_esc_elem el (List.concat re),(List.concat rs))) pl 
+
+let splitter_failesc_context  (nf:nflow) (cvar:typed_ident option) (fn_esc:context -> context)   
+	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
+  let pr = !print_list_failesc_context in
+  let pr2 = !print_nflow in
+  Gen.Debug.no_2 "splitter_failesc_context" pr2 pr pr (fun _ _ -> splitter_failesc_context nf cvar fn_esc elim_ex_fn pl) nf pl
 	
 let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 

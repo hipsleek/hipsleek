@@ -943,7 +943,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
           ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
           :: prog3.I.prog_data_decls;} in
-  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (2)) in *)
+  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (2)) in
   (* let _ = I.find_empty_static_specs prog2 in *)
 
   let prog1 = { prog2 with
@@ -955,11 +955,11 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
       I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
 
   (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
-  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (4)) in *)
+  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (4)) in
   (* let _ = I.find_empty_static_specs prog0 in *)
   let _ = I.build_hierarchy prog0 in
   (* let _ = print_string "trans_prog :: I.build_hierarchy PASSED\n" in *)
-  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (5)) in *)
+  let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (5)) in
   let check_overridding = Chk.overridding_correct prog0 in
   let check_field_dup = Chk.no_field_duplication prog0 in
   let check_method_dup = Chk.no_method_duplication prog0 in
@@ -969,7 +969,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
     ( begin
       (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (10)) in *)
 	  Gen.ExcNumbering.compute_hierarchy 1 ();
-      (* let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in *)
+      let _ = print_flush (Gen.ExcNumbering.string_of_exc_list (11)) in
 	  let prims,prim_rels = gen_primitives prog0 in
 	  (* let prims,prim_rels = ([],[]) in *)
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
@@ -1026,7 +1026,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 	      let c = (mark_recursive_call prog cprog5) in 
-          (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (12)) in *)
+          let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (12)) in
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 		  c)))
 	end)
@@ -2793,7 +2793,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_sharp_type = C.void_type;
                         C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
                         C.exp_sharp_unpack = false;
-                        C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
+                        C.exp_sharp_val = Cast.Sharp_var (ct,fn);
                         C.exp_sharp_path_id = pi;
                         C.exp_sharp_pos = pos}) in
                     let tmp_e1 = C.Seq { 
@@ -3082,8 +3082,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           match ot with 
                             | I.Const_flow c -> (C.Sharp_ct 
                                   {CF.formula_flow_interval = (Gen.ExcNumbering.get_hash_of_exc c); CF.formula_flow_link = None})
-                            | I.Var_flow c -> (C.Sharp_v c));
-                      C.exp_sharp_val = Cast.Sharp_finally 
+                            | I.Var_flow c -> (C.Sharp_id c));
+                      C.exp_sharp_val = Cast.Sharp_flow 
                               (match oe with	
                                 | I.Var ve -> ve.I.exp_var_name
                                 | _ -> Err.report_error { Err.error_loc = pos; 
@@ -3108,7 +3108,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   | Named ot ->  {CF.formula_flow_interval = (Gen.ExcNumbering.get_hash_of_exc ot); CF.formula_flow_link = None}
                                   | _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
                             C.exp_sharp_unpack = false;
-                            C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
+                            C.exp_sharp_val = Cast.Sharp_var (ct,fn);
                             C.exp_sharp_path_id = pi;
                             C.exp_sharp_pos = pos }) in
                         let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
@@ -3128,7 +3128,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     match ot with 
                       | I.Const_flow c -> (C.Sharp_ct 
                             {CF.formula_flow_interval = (Gen.ExcNumbering.get_hash_of_exc c); CF.formula_flow_link = None})
-                      | I.Var_flow c -> (C.Sharp_v c));
+                      | I.Var_flow c -> (C.Sharp_id c));
                 C.exp_sharp_val = Cast.Sharp_no_val;
                 C.exp_sharp_pos = pos;
                 C.exp_sharp_path_id = pi;}), C.void_type) in r				

@@ -560,14 +560,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_unpack = un;(*true if it must get the new flow from the second element of the current flow pair*)
           exp_sharp_path_id = pid;
           exp_sharp_pos = pos})	-> 
-	          (*let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_context_list ctx)^"\n") in
-	            let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in*)
+	          let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in
+	          let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in
+	          let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in
 	          let nctx = match v with 
-	            | Sharp_prog_var (t,v) -> 
+	            | Sharp_var (t,v) -> 
 		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
 		              let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
 		              ctx1
-	            | Sharp_finally v -> 
+	            | Sharp_flow v -> 
 		              let fct es = 
 		                let rest, b_rez = CF.get_var_type v es.CF.es_formula in
 		                if b_rez then
@@ -585,7 +586,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             (idf,idf,(fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula nf es.CF.es_formula})) nctx
 			          else CF.transform_list_failesc_context 
                         (idf,idf,(fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_to_link_f !flow_store es.CF.es_formula no_pos})) nctx
-                | Sharp_v v -> CF.transform_list_failesc_context 
+                | Sharp_id v -> CF.transform_list_failesc_context 
 			          (idf,idf,
                       (fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store pos) es.CF.es_formula}))
                           nctx in
@@ -612,6 +613,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
 		else ctx in
 	let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
+    let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in
+    let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in
     (* if (Gen.is_empty cl) then fl
        else *)	    
     let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in
