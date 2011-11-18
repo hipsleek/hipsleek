@@ -76,66 +76,64 @@ let pr_mater_source ms = match ms with
   
 let pr_match_type (e:match_type):unit =
   match e with
-    | Root -> fmt_string "Root"
+    | Root -> 
+          fmt_open_hbox (); 
+          fmt_string "Root";
+          fmt_close_box();
     | MaterializedArg (mv,ms) -> 
-      fmt_string "MaterializedArg "; pr_mater_prop mv;fmt_string " " ;pr_mater_source ms    
+          fmt_open_hbox ();
+          fmt_string "MaterializedArg "; 
+          pr_mater_prop mv;
+          fmt_space () ;
+          pr_mater_source ms;
+          fmt_close_box();
     | WArg -> fmt_string "WArg"
 
+
 let pr_match_res (c:match_res):unit =
-  fmt_string "{ match_res_lhs_node "; pr_h_formula c.match_res_lhs_node;
-  fmt_string "\n match_res_lhs_rest "; pr_h_formula c.match_res_lhs_rest;
-  fmt_string "\n match_res_holes "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;  
-  fmt_string "\n match_res_type "; pr_match_type c.match_res_type;
-  fmt_string "\n match_res_rhs_node "; pr_h_formula c.match_res_rhs_node;
-  fmt_string "\n match_res_rhs_rest "; pr_h_formula c.match_res_rhs_rest;
-  fmt_string "}"
+  fmt_open_vbox 1;
+  pr_vwrap "Type: " pr_match_type c.match_res_type;
+  pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
+  pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
+  fmt_close ()
+  (* fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest; *)
+  (* fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest; *)
+  (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
+  (* fmt_string "}" *)
+
   
 let pr_simpl_match_res (c:match_res):unit = 
-fmt_string "(";
-  fmt_string "\n LHS "; pr_h_formula c.match_res_lhs_node;
-  fmt_string "\n RHS "; pr_h_formula c.match_res_rhs_node;
-  fmt_string ")"
-
-(*LDK*)
-let pr_action a = match a with
-  | Undefined_action e -> "==> Undefined_action"
-  | M_match e -> "==> Match"
-  | M_fold e ->  "==> Fold"
-  | M_unfold (e,i) -> ("==> Unfold "^(string_of_int i))
-  | M_base_case_unfold e ->  "==> Base case unfold"
-  | M_base_case_fold e ->   "==> Base case fold"
-  | M_rd_lemma e ->  "==> Right distributive lemma"
-  | M_lemma (e,s) ->  ("==> "^(match s with | None -> "any lemma" | Some c-> "lemma "
-        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
-  | M_Nothing_to_do s ->  ("Nothing can be done: "^s)
-  | M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note: "^(string_of_h_formula h))
-  | Seq_action l -> "seq:"
-  | Search_action l -> "search:"
-  | Cond_action l -> "Cond:"
-  | M_lhs_case l -> "lhs_case:"
-
-let string_of_action a = pr_action a
+  fmt_open_vbox 1;
+  pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
+  pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
+  fmt_close ()
+(* fmt_string "("; *)
+(*   fmt_string "\n LHS "; pr_h_formula c.match_res_lhs_node; *)
+(*   fmt_string "\n RHS "; pr_h_formula c.match_res_rhs_node; *)
+(*   fmt_string ")" *)
 
 let rec pr_action_res pr_mr a = match a with
-  | Undefined_action e -> pr_mr e; fmt_string "==> Undefined_action"
-  | M_match e -> pr_mr e; fmt_string "==> Match"
-  | M_fold e -> pr_mr e; fmt_string "==> Fold"
-  | M_unfold (e,i) -> pr_mr e; fmt_string ("==> Unfold "^(string_of_int i))
-  | M_base_case_unfold e -> pr_mr e; fmt_string "==> Base case unfold"
-  | M_base_case_fold e -> pr_mr e; fmt_string "==> Base case fold"
-  | M_rd_lemma e -> pr_mr e; fmt_string "==> Right distributive lemma"
-  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some c-> "lemma "
+  | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
+  | M_match e -> pr_mr e; fmt_string "=>Match"
+  | M_fold e -> pr_mr e; fmt_string "=>Fold"
+  | M_unfold (e,i) -> pr_mr e; fmt_string ("=>Unfold "^(string_of_int i))
+  | M_base_case_unfold e -> pr_mr e; fmt_string "=>BaseCaseUnfold"
+  | M_base_case_fold e -> pr_mr e; fmt_string "=>BaseCaseFold"
+  | M_rd_lemma e -> pr_mr e; fmt_string "=>RightDistrLemma"
+  | M_lemma (e,s) -> pr_mr e; fmt_string ("=>"^(match s with | None -> "AnyLemma" | Some c-> "Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
-  | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
-  | M_unmatched_rhs_data_node h -> fmt_string ("Unmatched RHS data note: "^(string_of_h_formula h))
-  | Cond_action l -> fmt_string "COND:"; pr_seq "" (pr_action_wt_res pr_mr) l
-  | Seq_action l -> fmt_string "SEQ:"; pr_seq "" (pr_action_wt_res pr_mr) l
-  | Search_action l -> fmt_string "SEARCH:"; pr_seq "" (pr_action_wt_res pr_mr) l
-  | M_lhs_case e -> pr_mr e; fmt_string "==> LSH case analysis"
+  | M_Nothing_to_do s -> fmt_string ("NothingToDo: "^s)
+  | M_unmatched_rhs_data_node h -> fmt_string ("UnmatchedRHSData: "^(string_of_h_formula h))
+  | Cond_action l -> pr_seq_nocut "=>COND:" (pr_action_wt_res pr_mr) l
+  | Seq_action l -> pr_seq_vbox "=>SEQ:" (pr_action_wt_res pr_mr) l
+  | Search_action l -> 
+        fmt_open_vbox 1;
+        pr_seq_vbox "=>SEARCH:" (pr_action_wt_res pr_mr) l;
+        fmt_close();
+  | M_lhs_case e -> pr_mr e; fmt_string "=>LHSCaseAnalysis"
 
-and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
-  fmt_string ("(Weigh:"^(string_of_int w)^")")
-
+and pr_action_wt_res pr_mr (w,a) = 
+  fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
 let string_of_action_res_simpl (e:action) = poly_string_of_pr (pr_action_res pr_simpl_match_res) e
 
 let string_of_action_res_simpl_0 (e:action) = poly_string_of_pr (pr_action_res (fun _ -> fmt_string " ")) e
