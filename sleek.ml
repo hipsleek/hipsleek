@@ -55,7 +55,7 @@ let terminator = '.'
 module M = Lexer.Make(Token.Token)
 
 let parse_file (parse) (source_file : string) =
-	(* let _ = print_endline "parse_file 1" in *)
+	let _ = print_endline "parse_file 1" in
 	try
 		let cmds = parse source_file in 
 		let _ = (List.map (fun c -> (
@@ -159,13 +159,13 @@ let main () =
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
   let _ = Gen.ExcNumbering.compute_hierarchy 3 () in
-  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in *)
+  (* let _ = print_endline ("GenExcNum"^(Gen.ExcNumbering.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with
       | Scriptarguments.NativeFE -> NF.parse x
       | Scriptarguments.XmlFE -> XF.parse x in
-  (* let parse x = Gen.Debug.no_1 "parse" pr_id string_of_command parse x in *)
+  let parse x = Gen.Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
     try
       if (!inter) then 
@@ -213,9 +213,11 @@ let main () =
               if !inter then prompt := "- "
         done
       else 
+        (* let _ = print_endline "Prior to parse_file" in *)
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
       | End_of_file -> print_string ("\n")
+      (* | Not_found -> print_string ("Not found exception caught!\n") *)
 
 (* let main () =  *)
 (*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
@@ -228,7 +230,9 @@ let _ =
   end else
     (Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
+    (* let _ = print_endline "before main" in *)
     main ();
+    (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     let _ = 
       if (!Globals.profiling && not !inter) then 

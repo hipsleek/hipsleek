@@ -69,7 +69,7 @@ and ext_variance_formula =
 		formula_var_label : int option;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
 		formula_var_escape_clauses : Cpure.formula list;
-	    formula_var_continuation : struc_formula;
+	  formula_var_continuation : struc_formula;
 		formula_var_pos : loc
 	}
 
@@ -189,6 +189,27 @@ and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
 (* utility functions *)
+
+let empty_ext_variance_formula =
+	{
+		formula_var_label = None;
+		formula_var_measures = [];
+		formula_var_escape_clauses = [];
+	  formula_var_continuation = [];
+		formula_var_pos = no_pos;
+	}
+
+let rec has_variance_struc struc_f =
+  List.exists (fun ef -> has_variance_ext ef) struc_f
+  
+and has_variance_ext ext_f = 
+  match ext_f with
+    | ECase { formula_case_branches = cl } ->
+        List.exists (fun (_, sf) -> has_variance_struc sf) cl
+    | EBase { formula_ext_continuation = cont } ->
+        has_variance_struc cont
+    | EAssume _ -> false
+    | EVariance _ -> true
 
 (* generalized to data and view *)
 let get_ptr_from_data h =
@@ -2350,7 +2371,8 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
 
 
 
- (* context functions *)
+ (* co
+ntext functions *)
 	
   
   
@@ -2445,10 +2467,8 @@ and fail_type =
   | ContinuationErr of fail_context    
   | Or_Continuation of (fail_type * fail_type)
 
-and term_context = {
-	tc_temp : int;							   
-}
-      
+
+(* Fail | List of Successes *)
 and list_context = 
   | FailCtx of fail_type 
   | SuccCtx of context list
@@ -2457,13 +2477,17 @@ and branch_fail = path_trace * fail_type
 
 and branch_ctx =  path_trace * context
 
+(* disjunction of state with failures and partial success *)
+(* a state is successful if it has empty branch_fail *)
 and partial_context = (branch_fail list) * (branch_ctx list)  
     (* disjunct of failures and success *)
 
+(* successful partial states that have escaped through exceptions *)
 and esc_stack = ((control_path_id_strict * branch_ctx list) list)
 
 and failesc_context = (branch_fail list) * esc_stack * (branch_ctx list)
 
+(* conjunct of context in the form of /\(f1|f2 ..s1|s2|s3) *)
 and list_partial_context = partial_context list
  
 and list_failesc_context = failesc_context list 
@@ -3029,6 +3053,10 @@ let false_ctx flowt pos =
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
 
+let false_es flowt pos = 
+  let x =  mkFalse flowt pos in
+    {(empty_es flowt pos) with es_formula = x;}
+
 and true_ctx flowt pos = Ctx (empty_es flowt pos)
 
 let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos)
@@ -3324,7 +3352,6 @@ let isSuccessListFailescCtx cl =
 
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
-
 
 let isNonFalseListFailescCtx cl = 
  List.exists (fun (_,el,ss)-> 
@@ -3956,6 +3983,29 @@ and struc_to_formula f0 :formula =
   let pr1 = !print_struc_formula in
   let pr2 = !print_formula in
   Gen.Debug.no_1 "struc_to_formula" pr1 pr2 struc_to_formula_x f0
+
+(* An Hoa : construct pre-condition from a structured spec formula *)
+let rec struc_to_precond_formula (f0 : struc_formula) : formula =
+	let rec ext_to_precond_formula (f : ext_formula) : formula =
+	match f with
+	| ECase b ->
+		let fold_function a (c1, c2) = 
+			if (isConstEFalse c2) then a 
+			else 
+				let c1 = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) c1 in 
+					(mkOr a (normalize_combine (mkBase HTrue c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos) (struc_to_precond_formula c2) b.formula_case_pos) b.formula_case_pos) in
+		let r = if (List.length b.formula_case_branches) >0 then
+			List.fold_left fold_function (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches 
+		else mkTrue (mkTrueFlow ()) b.formula_case_pos in
+			push_exists b.formula_case_exists r
+	| EBase b -> 
+		let e = normalize_combine b.formula_ext_base (struc_to_precond_formula b.formula_ext_continuation) b.formula_ext_pos in
+		let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
+			nf
+	| EAssume (_,b,_) -> (* Eliminate assume by making it true *) formula_of_heap HTrue no_pos 
+	| EVariance b -> struc_to_precond_formula b.formula_var_continuation in	
+    formula_of_disjuncts (List.map ext_to_precond_formula f0)
+(* An Hoa : end of pre-condition construction *)
 
 and formula_to_struc_formula (f:formula):struc_formula =
 	let rec helper (f:formula):struc_formula = match f with
@@ -5252,6 +5302,93 @@ and extr_lhs_b (es:entail_state) =
   formula_base_pos = no_pos } in
   b1
 
+(** An Hoa : SECTION SIMPLIFY FORMULAE AND CONTEXT **)
+	
+let rec simplify_list_failesc_context (ctx : list_failesc_context) (bv : CP.spec_var list) = 
+	List.map (fun x -> simplify_failesc_context x bv) ctx
+	
+and simplify_failesc_context (ctx : failesc_context) (bv : CP.spec_var list) = 
+	match ctx with
+		| (brfaillist,escstk,brctxlist) -> 
+			let newbrctxlist = List.map (fun x -> simplify_branch_context x bv) brctxlist in
+				(brfaillist,escstk,newbrctxlist)
+			
+and simplify_branch_context (brctx : branch_ctx) (bv : CP.spec_var list) =
+	match brctx with
+		| (pathtrc, ctx) ->
+			let newctx = simplify_context ctx bv in
+				(pathtrc, newctx)
+
+and simplify_context (ctx : context) (bv : CP.spec_var list) = 
+	match ctx with
+		| Ctx ({ es_formula = esformula;
+				  es_heap = esheap;
+				  es_pure = espure;
+				  es_evars = esevars;
+				  es_ivars = esivars;
+				  es_ante_evars = esanteevars;
+				  es_gen_expl_vars = esgenexplvars; 
+				  es_gen_impl_vars = esgenimplvars; 
+				  es_unsat_flag = esunsatflag;
+				  es_pp_subst = esppsubst;
+				  es_arith_subst = esarithsubst;
+				  es_success_pts = essuccesspts;
+				  es_residue_pts = esresiduepts;
+				  es_id = esid;
+				  es_orig_ante   = esorigante; 
+				  es_orig_conseq = esorigconseq;
+				  es_path_label = espathlabel;
+				  es_prior_steps = espriorsteps;
+				  es_var_measures = esvarmeasures;
+				  es_var_label = esvarlabel;
+				  es_var_ctx_lhs = esvarctxlhs;
+				  es_var_ctx_rhs = esvarctxrhs;
+				  es_var_subst = esvarsubst;
+				  es_rhs_eqset = esrhseqset;
+				  es_cont = escont;
+				  es_crt_holes = escrtholes;
+				  es_hole_stk = esholestk;
+				  es_aux_xpure_1 = esauxxpure1;
+				  es_subst = essubst; 
+				  es_aux_conseq = esauxconseq;
+					} as es) -> 
+						let sesfml = simplify_formula esformula bv in
+							Ctx { es with es_formula = sesfml }
+		| OCtx (ctx1, ctx2) -> 
+					OCtx (simplify_context ctx1 bv, simplify_context ctx2 bv)
+
+and simplify_formula (f : formula) (bv : CP.spec_var list) = 
+	match f with
+		| Base ({formula_base_heap = heap;
+						formula_base_pure = pure;} as fb) -> 
+			let newheap,newpure,strrep = simplify_heap_pure heap pure bv in
+			Base ({fb with formula_base_heap = newheap;
+						formula_base_pure = newpure;})
+		| Or ({formula_or_f1 = f1;
+	        formula_or_f2 = f2;} as fo) -> 
+			Or ({fo with formula_or_f1 = simplify_formula f1 bv;
+					formula_or_f2 = simplify_formula f2 bv;})
+		| Exists ({formula_exists_qvars = qvars;
+	            formula_exists_heap = heap;
+	            formula_exists_pure = pure;} as fe) ->
+			let newheap,newpure,strrep = simplify_heap_pure heap pure bv in
+			let nqvars = List.append (h_fv newheap) (MCP.mfv newpure) in (* Remove redundant quantified variables *)
+			let nqvars = Gen.BList.intersect_eq CP.eq_spec_var qvars nqvars in
+			Exists ({fe with formula_exists_qvars = nqvars;
+	            formula_exists_heap = newheap;
+	            formula_exists_pure = newpure;})
+
+(** An Hoa : simplify a heap formula with the constraints, bv stores the base variables **)
+(** STEP 1 : replace variables that could be replaced by "original variables" **)
+(** STEP 2 : remove constraints concerning "unreachable" variables i.e. var without references **)
+and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var list) =
+	let f = MCP.pure_of_mix p in
+	let sst,strrep = CP.reduce_pure f bv in
+	let nh = h_subst sst h in
+	let np = MCP.simplify_mix_formula (MCP.memo_subst sst p) in
+		(nh, np, strrep)
+
+(** An Hoa : SECTION PARTIAL STRUCTURE **)
 
 (**
  * An Hoa : general function to print a collection.

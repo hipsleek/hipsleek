@@ -171,6 +171,9 @@ let process_pred_def pdef =
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
+let process_pred_def pdef = 
+  Gen.Debug.no_1 "process_pred_def" pr_no pr_no process_pred_def pdef
+
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
@@ -185,6 +188,8 @@ let process_pred_def_4_iast pdef =
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
+let process_pred_def_4_iast pdef = 
+  Gen.Debug.no_1 "process_pred_def_4_iast" pr_no pr_no process_pred_def_4_iast pdef
 
 
 let convert_pred_to_cast () = 
@@ -203,6 +208,8 @@ let convert_pred_to_cast () =
   let _ = if !Globals.print_core then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5
 
+let convert_pred_to_cast () = 
+  Gen.Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
 
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =
@@ -268,6 +275,9 @@ let process_data_def ddef =
         dummy_exception() ;
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
+
+let process_data_def ddef =
+  Gen.Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
 
 (** An Hoa : Second stage of parsing : iprog already contains the whole input.
              We do a reparse in order to distinguish between data & enum that
@@ -386,6 +396,9 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
      Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
+  (* let length_ctx ctx = match ctx with *)
+  (*   | CF.FailCtx _ -> 0 *)
+  (*   | CF.SuccCtx ctx0 -> List.length ctx0 in *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)

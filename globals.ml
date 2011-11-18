@@ -10,9 +10,14 @@ type bformula_label = int
 	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
+
 and control_path_id_strict = formula_label
-and control_path_id = control_path_id_strict  option(*identifier for if, catch, call*)
+
+and control_path_id = control_path_id_strict  option
+    (*identifier for if, catch, call*)
+
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
+
 type path_trace = (control_path_id_strict * path_label) list
 
 and loc = {
@@ -426,7 +431,7 @@ let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
-let no_cache_formula = ref false
+let no_cache_formula = ref true
 
 let enable_incremental_proving = ref false
 
