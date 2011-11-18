@@ -455,7 +455,7 @@ $output_file = "log";
 				  ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 					["sleek9.slk","Valid.Fail.Valid.Valid."],
 
-                    ["norm1.slk","Fail.Valid.Fail."],
+                    ["norm1.slk","Fail.Valid.Fail.Valid."],
                     #["norm2.slk","Valid.Valid.Valid.Valid.Valid.Fail."],
 					["norm3.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
 					["norm4.slk","Valid.Valid.Valid."],
@@ -468,7 +468,7 @@ $output_file = "log";
 					["frac2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail."],
 					["frac3.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Fail.Fail."],
 					["split_simple.slk","Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-					#["combine_data.slk","Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+					["combine_data.slk","Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
 					["combine_simple.slk","Valid.Valid.Fail.Valid.Fail.Valid.Valid."]
                   #,
                                         #["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],

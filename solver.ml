@@ -3623,7 +3623,7 @@ and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
 (*TO CHECK: *)
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
   let fct es = 
-	let l_inst = es.es_gen_expl_vars@es.es_gen_impl_vars in
+	let l_inst = es.es_gen_expl_vars@es.es_gen_impl_vars@es.es_ivars in
     let f = MCP.find_rel_constraints f l_inst in
     let nf = 
       let f2 = if (es.es_evars = []) then f else 
@@ -5308,7 +5308,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                 Currently, we do not add the whole rhs_p into the residue.
                   We only instatiate ivars and expl_vars in
                 heap_entail_conjunct_helper *)
-		            (* es_pure = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br)); (\*LDK*\) *)
+          (*TO CHECK: important to instantiate ivars*)
+		  es_pure = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br)); (*LDK*)
 
 		  es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 			| Some s1,Some s2 -> (s1,s2)::a

@@ -7094,8 +7094,8 @@ and merge_partial_h_formula f =
 	let sc = split_star_h f in
 	(* let _ = print_endline ("[merge_partial_h_formula] split separation conjunction = { " ^ (String.concat " ; " (List.map !print_h_formula sc)) ^ " }") in *)
 	let dns,vns = List.partition is_data sc in
-	(* let _ = print_endline ("[merge_partial_h_formula] data nodes = " ^ (string_of_set !print_h_formula dns)) in
-	let _ = print_endline ("[merge_partial_h_formula] other nodes = " ^ (string_of_set !print_h_formula vns)) in *)
+	(* let _ = print_endline ("[merge_partial_h_formula] data nodes = " ^ (string_of_set !print_h_formula dns)) in *)
+	(* let _ = print_endline ("[merge_partial_h_formula] other nodes = " ^ (string_of_set !print_h_formula vns)) in *)
 	(* Collect the data pointers *)
 	let dnrootptrs = List.map get_ptr_from_data dns in
 	let dnrootptrs = Gen.BList.remove_dups_eq CP.eq_spec_var dnrootptrs in

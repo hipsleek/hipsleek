@@ -11,7 +11,7 @@ pred cellp<v> == self::cell<v>
 
 lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0.
 
-lemma "combineCell" self::cell(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0  <- self::cell(f1)<v> * self::cell(f2)<v> &  0.0<f<=1.0.
+//lemma "combineCell" self::cell(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0  <- self::cell(f1)<v> * self::cell(f2)<v> &  0.0<f<=1.0.
 
 lemma "normalizeCell" self::cell(f1)<n1> * self::cell(f2)<n2> & n1=n2 -> self::cell(f1+f2)<n1>.
 
@@ -47,5 +47,7 @@ checkentail x::cell(0.4)<v1> * x::cell(0.3)<v1>  |- x::cell(f)<v>.
 //print residue. //valid, COMBINE
 // succeeds with 8 answers
 
-
-
+//(8)
+checkentail x::cell(0.4)<v1> * x::cell(0.6)<v1>  |- x::cell(0.5)<v2>.
+print residue. //valid, COMBINE
+// succeeds with 2 answers
