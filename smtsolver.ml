@@ -83,7 +83,7 @@ let rec smt_of_typ t =
 let smt_of_spec_var sv =
 	(CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
 
-let smt_typed_var_of_spec_var sv =
+let smt_of_typed_spec_var sv =
   try
 	"(" ^ (smt_of_spec_var sv) ^ " " ^ (smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
   with _ ->
@@ -190,9 +190,9 @@ let rec smt_of_formula f =
 	| CP.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
 	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula p) ^ ")"
 	| CP.Forall (sv, p, _,_) ->
-		"(forall (" ^ (smt_typed_var_of_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")"
+		"(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")"
 	| CP.Exists (sv, p, _,_) ->
-		"(exists (" ^ (smt_typed_var_of_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")"
+		"(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (smt_of_formula p) ^ ")"
 
 let smt_of_formula f =
   Gen.Debug.no_1 "smt_of_formula" !print_pure pr_id smt_of_formula f 
@@ -343,11 +343,15 @@ let add_axiom h dir c =
 		(* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
 		let params = List.append (CP.fv h) (CP.fv c) in
 		let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
-		let smt_params = String.concat " " (List.map smt_typed_var_of_spec_var params) in
+		let smt_params = String.concat " " (List.map smt_of_typed_spec_var params) in
 		let op = match dir with 
 					| IMPLIES -> "=>" 
 					| IFF -> "=" in
-		let cache_smt_input = "(assert (forall (" ^ smt_params ^ ")\n\t(" ^ op ^ " " ^ (smt_of_formula h) ^ "\n\t" ^ (smt_of_formula c) ^ ")))\n" in
+		let cache_smt_input = "(assert " ^ 
+				(if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
+				"\t(" ^ op ^ " " ^ (smt_of_formula h) ^ 
+				"\n\t" ^ (smt_of_formula c) ^ ")" ^ (* close the main part of the axiom *)
+				(if params = [] then "" else ")") (* close the forall if added *) ^ ")\n" (* close the assert *) in
 		(* Add 'h dir c' to the global axioms *)
 		let new_axiom = { axiom_direction = dir;
 						axiom_hypothesis = h;
@@ -447,7 +451,8 @@ type smtprover =
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let timeout = ref 2.0
+(* let sat_timeout = ref 2.0
+let imply_timeout = ref 15.0 *)
 let prover_pid = ref 0
 let prover_process = ref {
 	name = "smtsolver";
@@ -470,7 +475,7 @@ let command_for prover =
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
 
 (* Runs the specified prover and returns output *)
-let run prover input =
+let run prover input timeout =
 	let out_stream = open_out infile in
 	output_string out_stream input;
 	close_out out_stream;
@@ -480,7 +485,7 @@ let run prover input =
 		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
 			get_answer !prover_process.inchannel input in
 	let res = try
-			Procutils.PrvComms.maybe_raise_timeout fnc () !timeout 
+			Procutils.PrvComms.maybe_raise_timeout fnc () timeout
 		with
 			| _ -> begin (* exception : return the safe result to ensure soundness *)
 				Printexc.print_backtrace stdout;
@@ -749,11 +754,11 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 		let a0 = fst bc in
 		let c0 = snd bc in
 		(* check the base case first *)
-		let bcv = smt_imply a0 c0 prover in
+		let bcv = smt_imply a0 c0 prover 15.0 in
 			if bcv then (* base case is valid *)
 				let a1 = fst ic in
 				let c1 = snd ic in
-				smt_imply a1 c1 prover (* check induction case *)
+					smt_imply a1 c1 prover 15.0 (* check induction case *)
 			else false
 
 (**
@@ -764,20 +769,20 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
  * If it is unsatisfiable, the original implication is true.
  * We also consider unknown is the same as sat
  *)
-and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
 	(* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
 	let res, should_run_smt = if (has_exists conseq) then
-		try (Omega.imply ante conseq "" !timeout, false) with | _ -> (false, true)
+		try (Omega.imply ante conseq "" timeout, false) with | _ -> (false, true)
 	else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
 		let _ = !set_generated_prover_input input in
-		let output = run prover input in
+		let output = run prover input timeout in
 		let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 		let res = match output.sat_result with
 			| Sat -> false
 			| UnSat -> true
-			| Unknown -> try Omega.imply ante conseq "" !timeout with | _ -> false in
+			| Unknown -> try Omega.imply ante conseq "" !imply_timeout with | _ -> false in
 		let _ = process_stdout_print ante conseq input output res in
 			res
 	else
@@ -790,26 +795,29 @@ and has_exists conseq = match conseq with
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
-let imply ante conseq = 
-	smt_imply ante conseq Z3
+let imply ante conseq timeout = 
+	smt_imply ante conseq Z3 timeout
 
 (**
  * Test for satisfiability
  * We also consider unknown is the same as sat
  *)
-let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool = 
+let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
 	let input = to_smt f None prover in
-	let output = run prover input in
+	let output = run prover input timeout in
 	let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
 	(* let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in *)
 		res
 
+let default_is_sat_timeout = 2.0
+
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
 	let pr = !print_pure in
-	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
+	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover default_is_sat_timeout) f
+
 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3
