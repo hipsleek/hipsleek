@@ -3469,42 +3469,42 @@ let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context)
     (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f2,s2))); *)
     (* print_string ("\nAfter :"^(Cprinter.summary_partial_context (res_f,res_s))); *)
     (res_f,res_s)
-    
-let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_context) : failesc_context =
-  let s1 = remove_dupl_false s1 in
-  let s2 = remove_dupl_false s2 in
-   let (res_f,pt_fail_list) = merge_fail f1 f2 in
-  let res_s = merge_success s1 s2 in
-  let e1 = match e1 with | [] -> [((0,""),[])] | _-> e1 in
-  let e2 = match e2 with | [] -> [((0,""),[])] | _-> e2 in
+
 (*
 type: esc_stack ->
   esc_stack -> (Globals.control_path_id_strict * branch_ctx list) list
 
 *)
-  let rec merge_esc e1 e2 = 
-    match e1,e2 with
+let rec merge_esc f e1 e2 = 
+  match e1,e2 with
     | [],[] -> []
     | (l1,b1)::z1,(l2,b2)::z2 ->
           let flag = not ((fst l1)==(fst l2)) in
           (if flag then 
             print_endline ("WARNING MISMATCH at merge_esc:\n"^(!print_esc_stack e1)^"\n"^(!print_esc_stack e2)))
-          ; (l1,merge_success b1 b2)::(merge_esc z1 z2)
-      (* if not ((fst l1)==(fst l2)) then  *)
-      (*   Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context lbl mismatch\n"} *)
+          ; (l1,merge_success b1 b2)::(merge_esc f z1 z2)
+              (* if not ((fst l1)==(fst l2)) then  *)
+              (*   Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context lbl mismatch\n"} *)
     | _ ->   
-      print_string ("stack e1: "^ (f e1)^":"^" stack e2: "^(f e2)^":"^"\n");
-      Err.report_error {Err.error_loc = no_pos;  Err.error_text = "mismatched number in merge_esc methd \n"} in
-  let merge_esc e1 e2 =
-    let pr1 x = "#"^(!print_esc_stack x)^"#" in
-    Gen.Debug.no_2 "merge_esc" pr1 pr1 pr_no merge_esc e1 e2 in
+          print_string ("stack e1: "^ (f e1)^":"^" stack e2: "^(f e2)^":"^"\n");
+          Err.report_error {Err.error_loc = no_pos;  Err.error_text = "mismatched number in merge_esc methd \n"} 
 
-  let res_e = merge_esc e1 e2 in  
-    (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f1,s1))); *)
-    (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f2,s2))); *)
-    (* print_string ("\nAfter :"^(Cprinter.summary_partial_context (res_f,res_s))); *)
-    (res_f,res_e,res_s)
+let merge_esc f e1 e2 =
+  let pr1 x = "#"^(!print_esc_stack x)^"#" in
+  Gen.Debug.no_2 "merge_esc" pr1 pr1 pr_no (fun _ _ -> merge_esc f e1 e2) e1 e2 
 
+let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_context) : failesc_context =
+  let s1 = remove_dupl_false s1 in
+  let s2 = remove_dupl_false s2 in
+  let (res_f,pt_fail_list) = merge_fail f1 f2 in
+  let res_s = merge_success s1 s2 in
+  let e1 = match e1 with | [] -> [((0,""),[])] | _-> e1 in
+  let e2 = match e2 with | [] -> [((0,""),[])] | _-> e2 in
+  let res_e = merge_esc f e1 e2 in  
+  (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f1,s1))); *)
+  (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f2,s2))); *)
+  (* print_string ("\nAfter :"^(Cprinter.summary_partial_context (res_f,res_s))); *)
+  (res_f,res_e,res_s)
 
 let merge_failesc_context_or f (((f1,e1,s1):failesc_context) as x1) (((f2,e2,s2):failesc_context) as x2) : failesc_context =
   let pr = !print_failesc_context in

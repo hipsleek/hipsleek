@@ -10,30 +10,20 @@ class e5 extends e4 {}
 // also no upcasting from e4<> to e1<>
 void m1 (ref int i, e1 z) throws e1
 	requires true
-	ensures i>0 & i'=i & flow e1
-      or 1<=i' & i'<=2 & flow __norm
+	ensures i<=0 & i'=i+2 & flow __norm
+         or i>0 & i'=2 & flow e5
         ;//'
 {
-  dprint;
   try{
-    dprint;
-    if (i>0) {
 	try{
-      //i=i+1;
+      if (i>0) raise new e1();
       dprint;
-		if (i>0) 
-          { 
-            dprint;
-            raise new e1();
-            dprint;
-          }
-        dprint;
-        i=1;
-	}catch (e2 v){
+      i=i+2;
+	}catch (e1 v){
 		i=2;
+        raise new e5();
 	};
-    }
-  } catch (e2 v) {
+  } catch (e3 v) {
     assert false;
   };
 }

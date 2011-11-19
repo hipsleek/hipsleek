@@ -558,7 +558,8 @@ let set_tmp_files_path () =
 		Unix.Unix_error (_, _, _) -> (););
 	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
 	end
-	
+
+
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number

@@ -361,6 +361,7 @@ let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not be
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
 let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
+let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
@@ -1224,7 +1225,10 @@ let get_catch_of_exp e = match e with
 	| Catch e -> e
 	| _  -> Error.report_error {Err.error_loc = pos_of_exp e; Err.error_text = "malformed expression, expecting catch clause"}
   
-  
+(* let get_catch_of_exp e = *)
+(*   let pr = !print_prog_exp in *)
+(*   Gen.Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
+
 let rec check_proper_return cret_type exc_list f = 
   let overlap_flow_type fl res_t = match res_t with 
 	| Named ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)

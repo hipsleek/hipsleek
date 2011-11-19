@@ -250,7 +250,7 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
       else (fmt_cut(); fmt_string sep_str)  (* must be Before *)
     | None -> fmt_string sep_str in 
   pr_list_open_sep 
-      (fun () -> (f_o box_opt);  fmt_string op; fmt_string open_str; opt_cut())
+      (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
       (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt)) 
       (fun () -> f_s sep_opt sep_str) 
       f_empty  f xs
@@ -1342,11 +1342,22 @@ let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
 let pr_esc_stack_lvl ((i,s),e) = 
-  fmt_open_vbox 0;
-  pr_vwrap_naive ("Level:"^(string_of_int i)^":"^s^":")
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context_short fs)) e;
-  fmt_close_box ()
+  if (e==[]) 
+  then
+    begin
+      fmt_open_hbox ();
+      fmt_string ("Try-Block:"^(string_of_int i)^":"^s^":");
+      fmt_close_box()
+    end
+  else
+    begin
+      fmt_open_vbox 0;
+      pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
+          (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
+		      pr_vwrap "State:" pr_context_short fs)) e;
+      fmt_close_box ()
+    end
+
 
 (* should this include must failures? *)
 let pr_failed_states e = match e with
@@ -1367,7 +1378,7 @@ let pr_esc_stack e = match e with
   | [((0,""),[])] -> ()
   | _ ->
     fmt_open_vbox 0;
-    pr_vwrap_naive "Escaped States:"
+    pr_vwrap_naive_nocut "Escaped States:"
     (pr_seq_vbox "" pr_esc_stack_lvl) e;
     fmt_close_box ()
 
@@ -2242,6 +2253,7 @@ Cformula.print_failesc_context := string_of_failesc_context;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
+Cast.print_prog_exp := string_of_exp;;
 Cast.print_formula := string_of_pure_formula;;
 Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;

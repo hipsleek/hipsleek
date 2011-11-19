@@ -1655,8 +1655,11 @@ struct
   let clean_duplicates ()= 
 	exc_list := remove_dups1 !exc_list
 
+  let exc_cnt = new counter 0
+
   let reset_exc_hierarchy () =
     let _ = clean_duplicates () in
+    let _ = exc_cnt # reset in
     let el = List.fold_left (fun acc (a,b,_) -> 
         if a="" then acc else (a,b,(0,0))::acc) [] !exc_list in
     exc_list := el
@@ -1664,7 +1667,7 @@ struct
   let string_of_exc_list (i:int) =
     let x = !exc_list in
     let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int)) (List.map (fun (a,e,p) -> (a,e,p)) x) in
-    "Exception List "^(string_of_int i)^":\n"^el
+    "Exception List "^(string_of_int i)^": "^(string_of_int (List.length x))^"members \n"^el
 
 
   let get_hash_of_exc (f:string): Globals.nflow = 
@@ -1712,11 +1715,22 @@ struct
   let compute_hierarchy () =
     let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
 	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
-	  if ((List.length l1)==0) then let i = (Globals.fresh_int()) in let j = (Globals.fresh_int()) in ([(f1,f2,(i,i))],(i,j))
-	  else let ll,(mn,mx) = List.fold_left (fun (t,(o_min,o_max)) (a,b,(c,d))-> let temp_l,(n_min, n_max) = (lrr a b) in 
-	  (temp_l@t,((if ((o_min== -1)||(n_min<o_min)) then n_min else o_min),(if (o_max<n_max) then n_max else o_max)))			
-	  ) ([],(-1,-1)) l1 in
-	  ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
+	  if ((List.length l1)==0) then 
+        let i = exc_cnt # inc_and_get 
+        (* let j = (Globals.fresh_int()) in  *)
+        in ([(f1,f2,(i,i))],(i,i))
+	  else 
+        let ll,(mn,mx) = List.fold_left 
+          (fun (t,(o_min,o_max)) (a,b,(c,d)) -> 
+              let temp_l,(n_min, n_max) = (lrr a b) 
+              in (temp_l@t
+                  ,( (if ((o_min== -1)||(n_min<o_min)) then n_min else o_min)
+                     ,(if (o_max<n_max) then n_max else o_max)))) 
+          ([],(-1,-1)) 
+          l1 
+        in let _ = exc_cnt # inc in  (* to account for internal node *)      
+        ( ((f1,f2,(mn,mx+1))::ll) ,(mn,mx+1)) 
+    in
     (* let r,_ = (lrr Globals.top_flow "") in *)
     (* why did lrr below cause segmentation problem for sleek? *)
     let _ = reset_exc_hierarchy () in
