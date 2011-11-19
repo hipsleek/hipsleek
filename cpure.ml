@@ -7,6 +7,7 @@
 
 open Globals
 open Gen.Basic
+open Exc
 
 (* spec var *)
 type spec_var =

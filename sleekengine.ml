@@ -74,7 +74,7 @@ let clear_cprog () =
 let clear_all () =
   Debug.clear_debug_log ();
   Tpdispatcher.clear_prover_log ();
-  Gen.ExcNumbering.clear_exc_list ();
+  Exc.clear_exc_list ();
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
@@ -114,7 +114,7 @@ let check_data_pred_name name :bool =
 (*     try *)
 (*       iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls; *)
 (*       Iast.build_exc_hierarchy true iprog; *)
-(*       Gen.ExcNumbering.c_h (); *)
+(*       Exc.c_h (); *)
 (*       let cddef = AS.trans_data iprog ddef in *)
 (*       if !Globals.print_core then  *)
 (*         print_string (Cprinter.string_of_data_decl cddef ^"\n"); *)
@@ -265,7 +265,7 @@ let process_data_def ddef =
       try
 	iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
 	(* let _ = Iast.build_exc_hierarchy true iprog in *)
-	(* let _ = Gen.ExcNumbering.compute_hierarchy 2 () in *)
+	(* let _ = Exc.compute_hierarchy 2 () in *)
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	  !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls

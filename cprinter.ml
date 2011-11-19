@@ -2,6 +2,7 @@
 
 open Format
 open Globals 
+open Exc
 open Lexing 
 open Cast 
 open Cformula
@@ -953,9 +954,9 @@ let pr_mix_formula_branches (f,l) = match f with
 
 let rec string_of_flow_formula f c = 
   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
+	  ")="^(Exc.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
-let rec string_of_nflow n = (Gen.ExcNumbering.get_closest n)
+let rec string_of_nflow n = (Exc.get_closest n)
 
 let rec string_of_sharp_flow sf = match sf with
   | Sharp_ct ff -> "#"^(string_of_flow_formula "" ff)
@@ -1373,14 +1374,18 @@ let pr_successful_states e = match e with
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
 		  pr_vwrap "State:" pr_context_short fs)) e
 
-let pr_esc_stack e = match e with
-  | [] 
-  | [((0,""),[])] -> ()
-  | _ ->
+let is_empty_esc_state e =
+  List.for_all (fun (_,lst) -> lst==[]) e
+
+let pr_esc_stack e = 
+  if is_empty_esc_state e then ()
+  else
+    begin
     fmt_open_vbox 0;
     pr_vwrap_naive_nocut "Escaped States:"
     (pr_seq_vbox "" pr_esc_stack_lvl) e;
     fmt_close_box ()
+    end
 
 let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
@@ -1702,7 +1707,7 @@ let rec string_of_exp = function
     end
   | Catch b->   
         let c = b.exp_catch_flow_type in
-	    "\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Gen.ExcNumbering.get_closest c)^ 
+	    "\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Exc.get_closest c)^ 
 	        (match b.exp_catch_flow_var with 
 	          | Some c -> (" @"^c^" ")
 	          | _ -> " ")^

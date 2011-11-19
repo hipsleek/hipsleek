@@ -6,6 +6,7 @@
 
 open Globals
 open Gen
+open Exc
 
 module Err = Error
 module CP = Cpure
@@ -530,10 +531,10 @@ and overlapping n p : bool = not(non_overlapping n p)
 and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
 
 and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2
-and is_top_flow p :bool = (equal_flow_interval !Globals.top_flow_int p)
+and is_top_flow p :bool = (equal_flow_interval !top_flow_int p)
 
 
-and is_sleek_mustbug_flow p: bool = (equal_flow_interval !Globals.error_flow_int p)
+and is_sleek_mustbug_flow p: bool = (equal_flow_interval !error_flow_int p)
 and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
 
 and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
@@ -2548,7 +2549,7 @@ let rec set_must_error_from_one_ctx ctx msg ft=
                     | _ -> report_error no_pos "Cformula.set_must_error_from_one_ctx: should be basic reason here"
               )
             in
-            Ctx {es with  es_formula = substitute_flow_into_f  !Globals.error_flow_int es.es_formula;
+            Ctx {es with  es_formula = substitute_flow_into_f  !error_flow_int es.es_formula;
                 es_must_error = Some (msg,instance_ft)}
         end
     | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg ft, set_must_error_from_one_ctx ctx2 msg ft)
@@ -2966,7 +2967,7 @@ let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_cont
 
 
 let mk_empty_frame () : (h_formula * int ) = 
-  let hole_id = Globals.fresh_int () in
+  let hole_id = fresh_int () in
     (Hole(hole_id), hole_id)
 
 let rec empty_es flowt pos = 
@@ -3472,7 +3473,7 @@ let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context)
 
 (*
 type: esc_stack ->
-  esc_stack -> (Globals.control_path_id_strict * branch_ctx list) list
+  esc_stack -> (control_path_id_strict * branch_ctx list) list
 
 *)
 let rec merge_esc f e1 e2 = 
@@ -4175,14 +4176,14 @@ and res_retrieve stab clean_res fl =
 	if clean_res then  
 		try 
 			let r = Some (Hashtbl.find stab res) in
-			(if (subsume_flow !exc_flow_int (Gen.ExcNumbering.get_hash_of_exc fl)) then (Hashtbl.remove stab res) else ());
+			(if (subsume_flow !exc_flow_int (Exc.get_hash_of_exc fl)) then (Hashtbl.remove stab res) else ());
 			r
 		with Not_found -> None
 	else None
 
 	
 and res_replace stab rl clean_res fl =
-	if clean_res&&(subsume_flow !exc_flow_int (Gen.ExcNumbering.get_hash_of_exc fl)) then 
+	if clean_res&&(subsume_flow !exc_flow_int (Exc.get_hash_of_exc fl)) then 
 		((Hashtbl.remove stab res);
 		match rl with 
 			| None -> () 
@@ -4857,20 +4858,20 @@ let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) : list_faile
 
 	  
 let normalize_max_renaming_list_partial_context f pos b ctx = 
-    if !Globals.max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
+    if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx = 
-    if !Globals.max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
+    if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
       
 let normalize_max_renaming f pos b ctx = 
-  if !Globals.max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx
+  if !max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx
   else transform_list_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 
 let normalize_max_renaming_s f pos b ctx = 
-  if !Globals.max_renaming then transform_context (normalize_es f pos b) ctx
+  if !max_renaming then transform_context (normalize_es f pos b) ctx
   else transform_context (normalize_clash_es f pos b) ctx
 
   
@@ -4930,7 +4931,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
       	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos) no_pos in
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
       	  let ctx1 = push_exists_context [CP.mkRes rest] ctx1 in
-      	  if !Globals.elim_exists then elim_ex_fn ctx1 else  ctx1
+      	  if !elim_exists then elim_ex_fn ctx1 else  ctx1
         end
           
 (* convert entail state to ctx with nf flow *)

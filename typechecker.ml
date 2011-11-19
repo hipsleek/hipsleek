@@ -1,4 +1,5 @@
 open Globals
+open Exc
 open Solver
 open Cast
 open Gen.Basic

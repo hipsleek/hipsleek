@@ -2,9 +2,8 @@
 
 
 type ident = string
-type constant_flow = ident
 
-type nflow = (int*int)(*numeric representation of flow*)
+(* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
 	
@@ -253,33 +252,6 @@ let push_opt_val_rev opt v = match opt with
   | None -> None
   | Some s -> Some (v, s)
 
-(* global constants *)
-
-
-let flow = "flow"
-let top_flow = "__flow"
-(*let any_flow = "__Any"*)
-let n_flow = "__norm"
-let cont_top = "__Cont_top"
-let brk_top = "__Brk_top"
-let c_flow = "__c-flow"
-let raisable_class = "__Exc"
-let ret_flow = "__Ret"
-let spec_flow = "__Spec"
-let false_flow = "__false"
-let abnormal_flow = "__abnormal"
-let stub_flow = "__stub"
-let error_flow = "__Error"
-
-let n_flow_int = ref ((-1,-1):nflow)
-let ret_flow_int = ref ((-1,-1):nflow)
-let spec_flow_int = ref ((-1,-1):nflow)
-let top_flow_int = ref ((-2,-2):nflow)
-let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
-let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
-(* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
-let false_flow_int = (0,0)
-let stub_flow_int = (-3,-3)
 
 let res = "res"
 

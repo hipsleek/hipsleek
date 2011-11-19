@@ -158,8 +158,8 @@ let main () =
   } in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = Gen.ExcNumbering.compute_hierarchy 3 () in
-  (* let _ = print_endline ("GenExcNum"^(Gen.ExcNumbering.string_of_exc_list (1))) in *)
+  let _ = Exc.compute_hierarchy 3 () in
+  (* let _ = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with

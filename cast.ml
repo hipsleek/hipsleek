@@ -6,6 +6,7 @@
 
 open Globals
 open Gen.Basic
+open Exc
 
 module F = Cformula
 module P = Cpure
@@ -1231,7 +1232,7 @@ let get_catch_of_exp e = match e with
 
 let rec check_proper_return cret_type exc_list f = 
   let overlap_flow_type fl res_t = match res_t with 
-	| Named ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
+	| Named ot -> F.overlapping fl (Exc.get_hash_of_exc ot)
 	| _ -> false in
   let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
@@ -1249,7 +1250,7 @@ let rec check_proper_return cret_type exc_list f =
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
 			else ()			
 		  else 
-			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
+			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
 			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
 			  Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
@@ -1269,7 +1270,7 @@ let rec check_proper_return cret_type exc_list f =
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
 			  else ()			
 		  else 
-			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
+			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			   (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
 			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
 			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}

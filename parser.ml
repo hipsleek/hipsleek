@@ -1,5 +1,6 @@
 open Camlp4
 open Globals
+open Exc
 open Iast
 open Token
 open Sleekcommons
