@@ -3101,7 +3101,7 @@ let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_con
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
 
 let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
-let mk_failesc_context (c:context) (lab:path_trace) : (failesc_context) = ([], [],[ (lab, c) ] ) 
+let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c) ] ) 
 
 let rec is_empty_esc_stack (e:esc_stack) : bool = match e with
   | [] -> false
@@ -3498,8 +3498,9 @@ let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_
   let s2 = remove_dupl_false s2 in
   let (res_f,pt_fail_list) = merge_fail f1 f2 in
   let res_s = merge_success s1 s2 in
-  let e1 = match e1 with | [] -> [((0,""),[])] | _-> e1 in
-  let e2 = match e2 with | [] -> [((0,""),[])] | _-> e2 in
+  (* WN[((0,""),[])] : this should be added at the beginning of each proc, and not here *)
+  (* let e1 = match e1 with | [] -> [((0,""),[])] | _-> e1 in *)
+  (* let e2 = match e2 with | [] -> [((0,""),[])] | _-> e2 in *)
   let res_e = merge_esc f e1 e2 in  
   (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f1,s1))); *)
   (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f2,s2))); *)

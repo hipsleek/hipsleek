@@ -88,7 +88,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		          let ctx1 = CF.set_flow_in_context_override
 			        { CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = None} ctx1 in
 		          let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
-		          let lfe = [CF.mk_failesc_context ctx1 []] in 
+                  (* need to add initial esc_stack *)
+                  let init_esc = [((0,""),[])] in
+		          let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in 
 			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 			      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
 			      if (CF.isFailListPartialCtx res_ctx) then false
