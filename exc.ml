@@ -11,37 +11,64 @@ let empty_flow : nflow = (-1,-2)
 
 let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
 
+let is_subset_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2)
+      = s2<=s1 && b1<=b2
+
 let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       if is_empty_flow(f1) then true
       else if is_empty_flow(f2) then false
-      else s2<=s1 && b1<=b2
+      else is_subset_flow_ne f1 f2
+
+let is_overlap_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+       (s2<=s1 && s1<=b2) ||  (s2<=b1 && b1<=b2)
 
 let is_overlap_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       if is_empty_flow(f1) || is_empty_flow(f2) then false
-      else (s2<=s1 && s1<=b2) ||  (s2<=b1 && b1<=b2)
+      else is_overlap_ne f1 f2
 
 let is_next_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       s2==b1+1
 
-let is_eq_flow (((s1,b1):nflow)) (((s2,b2):nflow)) =
+let is_eq_flow_ne (((s1,b1):nflow)) (((s2,b2):nflow)) =
       s1==b1 && s2==b2
+
+let is_eq_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+      if is_empty_flow(f1) then
+        if (is_empty_flow f2) then true
+        else false
+      else is_eq_flow_ne f1 f2
 
 let union_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       if (is_empty_flow f1) || (is_empty_flow f2) then empty_flow
       else ((min s1 s2),(max b1 b2))
+let order_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+  if (is_subset_flow_ne f1 f2) then
+    if (is_subset_flow_ne f2 f1) then 0
+    else 1
+  else if (is_subset_flow_ne f2 f1) then -1
+  else if s1<s2 then 2
+  else -2
 
-let minus (s1,b1) (s2,b2) = 
-  let r1 = if (s1==s2) then [] else [(s1,s2-1)] in
-  let r2 = if (b1==b2) then [] else [(b2+1,b1)] in
-  r1@r2
-    
+let order_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+  if (is_empty_flow f1) then 
+    if (is_empty_flow f2) then 0
+    else 1
+  else if (is_empty_flow f2) then -1
+  else order_flow_ne f1 f2
+
+
 let subtract_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-      if is_empty_flow(f1) || is_empty_flow(f2) then []
-      else if (is_subset_flow f1 f2) then minus f2 f1
-      else if is_subset_flow f2 f1 then minus f1 f2
-      else if not(is_overlap_flow f1 f2) then [f1]
-      else if s2<=b1 then [(s1,s2-1)]
-      else [(s2,s1-1)]
+  let minus (s1,b1) (s2,b2) = 
+    (* fst is larger than than the second *)
+    let r1 = if (s1==s2) then [] else [(s1,s2-1)] in
+    let r2 = if (b1==b2) then [] else [(b2+1,b1)] in
+    r1@r2 in
+  if is_empty_flow(f1) || is_empty_flow(f2) then []
+  else if (is_subset_flow f1 f2) then minus f2 f1
+  else if is_subset_flow f2 f1 then minus f1 f2
+  else if not(is_overlap_flow f1 f2) then [f1]
+  else if s2<=b1 then [(s1,s2-1)]
+  else [(s2,s1-1)]
 
 
 let subtract (f1:nflow_n) (n:nflow) : nflow_n =
