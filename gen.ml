@@ -72,6 +72,14 @@ struct
 
   let is_empty l = match l with [] -> true | _ -> false
 
+  let rec last_ne l a  = match l with
+    | [] -> a
+    | x::xs -> last_ne l x
+
+  let last l = match l with
+    | [] -> raise Not_found
+    | x::xs -> last_ne l x
+
   let spacify i = 
     let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
     function [] -> ""
