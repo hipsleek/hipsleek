@@ -413,12 +413,17 @@ let run_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formu
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ctx = CF.build_context_infer ectx ante vars no_pos in
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
 
   (* Abductive inference *)
-  (* let new_ante = Solver.abduce ante conseq vars in *)  
-  let new_ante = ante in
+  let new_ante = if not(!do_infer_spec) then ante 
+    else Solver.abduce ctx !cprog ante conseq vars 
+  in
+(*  let new_ante = ante in*)
 
-  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+(*  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in*)
   let ctx = CF.build_context ectx new_ante no_pos in
   let _ = if !Globals.print_core then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula new_ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in

@@ -233,6 +233,8 @@ let common_arguments = [
 
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
+  (* pre/post spec inference *)
+  ("--infer", Arg.Set Globals.do_infer_spec, "Enable spec inference");
   ] 
 
 (* arguments/flags used only by hip *)	

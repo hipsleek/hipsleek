@@ -2014,7 +2014,10 @@ and formula_of_disjuncts (f:formula list) : formula=
     | [] -> (mkTrue (mkTrueFlow()) no_pos)
     | x::xs -> List.fold_left (fun a c-> mkOr a c no_pos) x xs
 
-and rename_struc_bound_vars (f:struc_formula):struc_formula =
+and rename_struc_bound_vars (f:struc_formula) = 
+  Gen.Debug.no_1 "rename_struc_bound_vars" (!print_struc_formula) (!print_struc_formula) rename_struc_bound_vars_x f
+
+and rename_struc_bound_vars_x (f:struc_formula):struc_formula =
   let rec helper (f:ext_formula):ext_formula = match f with
 	| ECase b-> 
 		  let sst3 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_case_exists in
@@ -2044,12 +2047,12 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula =
   List.map helper f
 
 
-and rename_bound_vars (f : formula) = rename_bound_vars_x f
+(*and rename_bound_vars (f : formula) = rename_bound_vars_x f*)
 
-(*
-  and rename_bound_vars (f : formula) = 
+
+and rename_bound_vars (f : formula) = 
   Gen.Debug.no_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
-*)
+
 
 and rename_bound_vars_x (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -3512,13 +3515,26 @@ match c_pid with
   
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
-	  let es = estate_of_context ctx pos in
+    let es = match ctx with
+      | Ctx es1 -> es1
+      | _ -> Err.report_error {Err.error_loc = pos;
+        Err.error_text = "estate_of_context: disjunctive or fail context"}
+    in
 		Ctx ({es with es_formula = f;es_unsat_flag =false})
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = _}) -> 
 	  let c1 = build_context ctx f1 pos in
 	  let c2 = build_context ctx f2 pos in
 		or_context c1 c2
-	
+
+let rec build_context_infer ctx f vars pos = match f with
+  | Base _ | Exists _ -> 
+    let es = estate_of_context ctx pos in
+    Ctx ({es with es_formula = f; es_unsat_flag = false; es_infer_vars = vars})
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = _}) -> 
+    let c1 = build_context_infer ctx f1 vars pos in
+    let c2 = build_context_infer ctx f2 vars pos in
+    or_context c1 c2
+
 (* 09.05.2008 ---*)		
 
 and set_context_formula (ctx : context) (f : formula) : context = match ctx with

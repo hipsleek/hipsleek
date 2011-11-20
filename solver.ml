@@ -20,6 +20,11 @@ module TP = Tpdispatcher
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
 (* let crt_phase = ref (None);; *)
 
+let res_ante: Cformula.formula list ref = ref []
+let res_conseq: Cformula.formula list ref = ref []
+let res_lctx: Cformula.context list ref = ref []
+let rhs_pure_part: Mcpure.mix_formula list ref = ref [] 
+
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref false
 
@@ -3543,7 +3548,12 @@ and heap_entail_split_rhs_phases_x
     (* 		    es_subst = ([], []); *)
     (* 		})) ctx_0 *)
     (* in *)
-
+    let _, rhs_pure, _, _, _ = Cformula.split_components conseq in
+    let list = Mcpure.ptr_equations_with_null rhs_pure in
+(*    List.iter (fun (a,b) -> print_endline ("(" ^ (Cprinter.string_of_spec_var a) ^ ", " ^ (Cprinter.string_of_spec_var b) ^ ")")) list;*)
+(*    print_endline ("RHSPURE" ^ Cprinter.string_of_mix_formula rhs_pure);*)
+    if List.length (!rhs_pure_part) = 0 || not(!do_infer_spec) || List.length list > 0 then ()
+    else rhs_pure_part := !rhs_pure_part @ [rhs_pure];
     let h1, h2, h3 = split_phase(*_debug_rhs*) h in
     if(is_true h1) && (is_true h2) && (is_true h3) then
       (* no heap on the RHS *)
@@ -4223,9 +4233,9 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
   Debug.devel_pprint ("heap_entail_conjunct:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
-	(*print_string ("heap_entail_conjunct:"
-  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
-  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*)
+(*	print_endline ("heap_entail_conjunct:"                 *)
+(*  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)   *)
+(*  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*)
     (* <<<<<<< solver.ml *)
    (* print_string "start\n";flush(stdout); let r = *)
     heap_entail_conjunct_helper prog is_folding  ctx0 conseq rhs_matched_set pos
@@ -4240,7 +4250,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
   Debug.devel_pprint ("heap_entail_conjunct_helper:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
-	(*print_string ("\nAn Hoa :: heap_entail_conjunct_helper:" ^ "\nContext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nConsequence:\n" ^ (Cprinter.string_of_formula conseq));*)
+    (*print_string ("\nAn Hoa :: heap_entail_conjunct_helper:" ^ "\nContext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nConsequence:\n" ^ (Cprinter.string_of_formula conseq));*)
     match ctx0 with
       | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
       | Ctx estate -> begin
@@ -5452,7 +5462,7 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
 	(* print_endline ("[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
-	(* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
+(* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs));*)
 	(* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
   Debug.devel_pprint ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
@@ -5590,13 +5600,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let new_es' = new_es in (* {new_es with (\* es_evars = new_es.es_evars @ (snd new_subst); *\) es_must_match = false} in *)
     let new_es = pop_exists_estate ivars (* (fst new_subst) *) new_es' in
     let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
-	(* print_endline ("[do_match] output LHS = " ^ (Cprinter.string_of_context_short new_ctx)); *)
-	(* print_endline ("[do_match] output RHS = " ^ (Cprinter.string_of_formula new_conseq)); *)
+(* print_endline ("[do_match] output LHS = " ^ (Cprinter.string_of_context_short new_ctx));*)
+(* print_endline ("[do_match] output RHS = " ^ (Cprinter.string_of_formula new_conseq));   *)
     Debug.devel_pprint ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx)) pos;
     Debug.devel_pprint ("do_match (after): RHS:"
 	^ (Cprinter.string_of_formula new_conseq)) pos;
+    res_ante := [new_ante];
+    res_conseq := [new_conseq];
+    res_lctx := [new_ctx] @ !res_lctx;
     let res_es1, prf1 = (*heap_entail_split_rhs_phases*) heap_entail_conjunct prog is_folding  new_ctx new_conseq
-      (rhs_matched_set @ [r_var]) pos in
+      (rhs_matched_set @ [r_var]) pos in    
     (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
 
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
@@ -5779,6 +5792,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
        posib_inst is the list of view args that are case vars
   *)
   let view_to_fold = CF.h_subst rho view_to_fold in
+  if MCP.isConstMTrue rhs_p || not(!do_infer_spec) then ()
+  else rhs_pure_part := !rhs_pure_part @ [rhs_p];
   let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd (* false *) use_case pos in
   if not (CF.isFailCtx fold_rs) then
       let b = { formula_base_heap = resth2;
@@ -7325,4 +7340,88 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
     let (lfc,prf) = heap_entail_failesc_prefix_init prog is_folding  false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
     (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
   end
+
+(* unfold-left, unfold-right, match, remove *)
+let preprocess ctx0 prog iante iconseq ivars (init: Cformula.formula list ref) =
+  let _ = heap_entail_conjunct prog true ctx0 iconseq [] no_pos in
+  let new_ante = if List.length (!res_ante) = 0 then iante else List.hd (!res_ante) in
+  let new_conseq = if List.length (!res_conseq) = 0 
+  then failwith "Error in preprocess" else List.hd (!res_conseq) in
+  (new_ante, new_conseq, ivars)
+
+let substitute_var cform var = match cform with
+  | Base {formula_base_heap = h} ->    
+    Cformula.subst [(get_node_var h, var)] cform
+  | _ -> failwith "Error in substitute_var"
+
+let abduce ctx0 prog ante conseq vars =
+  let h = Cformula.formula_of_heap HTrue no_pos in  
+  let get_missing_frame iante iconseq ivars = match iante with
+    | h -> iconseq
+    | _ -> h
+  (* missing *)
+  in
+  let inits = ref [] in
+  let (oante, oconseq, ovars) = 
+    preprocess ctx0 prog ante (struc_to_formula conseq) vars inits in  
+(*  let h = {h_formula_view_node = CP.SpecVar(Named "node","p",Unprimed); *)
+(*    h_formula_view_name = "ll";                                         *)
+(*    h_formula_view_derv = false;                                        *)
+(*    h_formula_view_imm = false;                                         *)
+(*    h_formula_view_arguments = [CP.SpecVar(Int,"m",Unprimed)];          *)
+(*    h_formula_view_modes = [];                                          *)
+(*    h_formula_view_coercible = false;                                   *)
+(*    h_formula_view_origins = [];                                        *)
+(*    h_formula_view_original = true;                                     *)
+(*    h_formula_view_lhs_case = true;                                     *)
+(*    h_formula_view_unfold_num = 0;                                      *)
+(*    h_formula_view_label = None;                                        *)
+(*    h_formula_view_remaining_branches = None;                           *)
+(*    h_formula_view_pruning_conditions = [];                             *)
+(*    h_formula_view_pos = no_pos} in                                     *)
+(*  let missing_frame = [ViewNode h] in                                   *)
+  let missing_frame = get_missing_frame oante oconseq ovars in
+(*  let missing_frame = substitute_var missing_frame (List.hd vars) in*)
+(*  Cprinter.pr_formula missing_frame;                                  *)
+(*  print_newline ();                                                   *)
+(*  print_endline (Cprinter.string_of_context_short (List.hd !res_lctx));*)
+  let aux = Cformula.formula_of_context (List.hd !res_lctx) in
+  let (_,pure_aux,_,_,_) = Cformula.split_components aux in
+(*  List.iter (fun a -> print_endline ("CTX: " ^ Cprinter.string_of_context_short a)) (!res_lctx);      *)
+(*  List.iter (fun a -> print_endline ("PURExx: " ^ Cprinter.string_of_mix_formula a)) (!rhs_pure_part);*)
+  print_string ("FML: " ^ Cprinter.string_of_formula aux);
+  print_newline ();
+  print_string ("PURE:" ^ Cprinter.string_of_mix_formula pure_aux);
+  print_newline ();
+(*  let aux = Cformula.formula_of_mix_formula pure_aux no_pos in*)
+(*  let aux = filter aux Cformula.get*)
+  let missing_frame = 
+    Cformula.compose_formula missing_frame aux [] Cformula.Flow_combine no_pos in
+  (* + inits *)
+  print_string ("PRE: " ^ Cprinter.string_of_formula missing_frame);
+  print_newline ();
+  let abduced_ante = 
+    Cformula.compose_formula ante missing_frame [] Cformula.Flow_combine no_pos 
+  in
+  let (_,mf,_,_,_) = Cformula.split_components abduced_ante in
+  let is_sat = TP.is_sat_mix_sub_no mf (ref 1) true true in
+  do_infer_spec := false;
+  if not is_sat then ante 
+  else abduced_ante
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

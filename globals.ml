@@ -451,6 +451,9 @@ let infer_slicing = ref false
 (* Options for invariants *)
 let do_infer_inv = ref false
 
+(* Options for spec inference *)
+let do_infer_spec = ref false
+
 let add_count (t: int ref) = 
 	t := !t+1
 
