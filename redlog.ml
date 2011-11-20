@@ -1335,7 +1335,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let rec rl_of_exp varsmap e = match e with
 		| CP.Null _ -> "null" (* null serves as a symbollic variable *)
 		| CP.Var (v, _) -> (try List.assoc v varsmap with 
-			| Not_found -> let _ = print_endline ("Variable " ^ v ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
+			| Not_found -> let _ = print_endline ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
 		| CP.IConst (i, _) -> string_of_int i
 		| CP.FConst (f, _) -> string_of_float f
 		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
