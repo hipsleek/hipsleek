@@ -59,6 +59,7 @@ let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       else if is_empty_flow(f2) then false
       else is_subset_flow_ne f1 f2
 
+(* is f1 an exact flow for subtype f2 *)
 let is_exact_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
        s1==b1 & b1==b2
 
@@ -78,7 +79,7 @@ let is_overlap_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       if is_empty_flow(f1) || is_empty_flow(f2) then false
       else is_overlap_flow_ne f1 f2
 
-let is_next_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+let is_next_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       s2==b1+1
 
 let is_eq_flow_ne (((s1,b1):nflow)) (((s2,b2):nflow)) =
@@ -112,6 +113,7 @@ let order_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
   else if (is_empty_flow f2) then -1
   else order_flow_ne f1 f2
 
+(* f1 - f2 *)
 let subtract_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
   let minus (s1,b1) (s2,b2) = 
     (* fst is larger than than the second *)
@@ -188,14 +190,16 @@ let rec is_overlap_lflow (l1:lflow) (l2:lflow) =
 let is_overlap_dflow (((d1,l1):dflow) as f1) (((d2,l2):dflow) as f2) =
   is_overlap_lflow l1 l2
 
+let sort_flow (xs:(ident * ident * nflow) list) =
+  List.sort (fun (_,_,n1) (_,_,n2) -> order_flow_ne n2 n1) xs
 
 
 
 (* global constants *)
 
+(*let any_flow = "__Any"*)
 let flow = "flow"
 let top_flow = "__flow"
-(*let any_flow = "__Any"*)
 let n_flow = "__norm"
 let cont_top = "__Cont_top"
 let brk_top = "__Brk_top"
@@ -208,16 +212,15 @@ let abnormal_flow = "__abnormal"
 let stub_flow = "__stub"
 let error_flow = "__Error"
 
+(* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
 let n_flow_int = ref ((-1,-1):nflow)
 let ret_flow_int = ref ((-1,-1):nflow)
 let spec_flow_int = ref ((-1,-1):nflow)
 let top_flow_int = ref ((-2,-2):nflow)
 let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
-(* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
 let false_flow_int = (0,0)
 let stub_flow_int = (-3,-3)
-
 
   (*hairy stuff for exception numbering*)
   (* TODO : should be changed to use Ocaml graph *)
@@ -233,6 +236,10 @@ let clear_exc_list () =
   top_flow_int := (-2,-2);
   exc_flow_int := (-2,-2);
   exc_list := []
+
+let sort_exc_list () =
+  let lst = !exc_list in
+  exc_list := sort_flow lst
 
 let remove_dups1 (n:flow_entry list) = Gen.BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
 
@@ -274,13 +281,6 @@ let exc_sub_type (t1 : constant_flow) (t2 : constant_flow): bool =
 	else
 	  ((r11>=r21)&&(r12<=r22))
 
-(* TODO : to determine subtype based on intervals *)
-let flow_sub_type (t1 : nflow) (t2 : nflow): bool 
-      = false
-
-(* TODO : to determine overlap based on intervals *)
-let flow_overlap (t1 : nflow) (t2 : nflow): bool 
-      = false
 
 (*let exc_int_sub_type ((t11,t12):nflow)	((t21,t22):nflow):bool = if (t11==0 && t12==0) then true else ((t11>=t21)&&(t12<=t22))*)
 
@@ -304,6 +304,22 @@ let get_closest ((min,max):nflow):(string) =
 	          else (a,(c,d)) in
   let r,_ = (get !exc_list) in r
 
+
+let get_closest_new elist (((min,max):nflow) as nf):(string) = 
+  let res = List.filter (fun (_,_,n) -> (is_subset_flow_ne nf n)) elist in
+  match res with
+    | [] -> "## cannot find flow type"
+    | (s,_,_)::_ -> s
+
+let get_closest (((min,max):nflow) as nf):(string) = 
+  let a1 = get_closest nf in
+  let a2 = (* "XXX" *) get_closest_new !exc_list nf in
+  if (a1=a2) then a1
+  else 
+    let pr = pr_pair string_of_int string_of_int in
+    print_endline ("WN : get_closest"^(pr nf)^" new :"^a2^" old :"^a1);
+    a1
+
 let add_edge(n1:string)(n2:string):bool =
   let _ =  exc_list := !exc_list@ [(n1,n2,false_flow_int)] in
   true
@@ -314,11 +330,11 @@ let add_edge(n1:string)(n2:string):bool =
 (*constructs the mapping between class/data def names and interval
   types*)
 (* FISHY : cannot be called multiple times, lead to segmentation problem in lrr proc *)
-let compute_hierarchy () =
+let compute_hierarchy_aux cnt elist =
   let rec lrr (f1:string)(f2:string):(((string*string*nflow) list)*nflow) =
-	let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
+	let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) elist in
 	if ((List.length l1)==0) then 
-      let i = exc_cnt # inc_and_get 
+      let i = cnt # inc_and_get 
         (* let j = (Globals.fresh_int()) in  *)
       in ([(f1,f2,(i,i))],(i,i))
 	else 
@@ -330,16 +346,18 @@ let compute_hierarchy () =
                     ,(if (o_max<n_max) then n_max else o_max)))) 
         ([],(-1,-1)) 
         l1 
-      in let _ = exc_cnt # inc in  (* to account for internal node *)      
+      in let _ = cnt # inc in  (* to account for internal node *)      
       ( ((f1,f2,(mn,mx+1))::ll) ,(mn,mx+1)) 
   in
   (* let r,_ = (lrr top_flow "") in *)
   (* why did lrr below cause segmentation problem for sleek? *)
-  let _ = reset_exc_hierarchy () in
+  (* let _ = reset_exc_hierarchy () in *)
   (* let _ = print_flush "c-h 1" in *)
   let r,_ = (lrr "" "") in
   (* let _ = print_flush "c-h 2" in *)
-  let _ = exc_list := r in
+  r
+
+let update_values() =
   n_flow_int := (get_hash_of_exc n_flow);
   ret_flow_int := (get_hash_of_exc ret_flow);
   spec_flow_int := (get_hash_of_exc spec_flow);
@@ -349,6 +367,12 @@ let compute_hierarchy () =
     (* ; Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow) *)
     (* ;Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow) *)
     (* ;let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
+
+let compute_hierarchy () =
+  let _ = reset_exc_hierarchy () in
+  exc_list := compute_hierarchy_aux exc_cnt !exc_list;
+  update_values ()
+  
 
 let compute_hierarchy i () =
   let pr () = string_of_exc_list 0 in
@@ -363,3 +387,75 @@ let has_cycles ():bool =
 	else (List.exists (fun c-> (cc c (c::visited))) sons) in	
   (cc top_flow [top_flow])
 
+class exc_table =
+object (self)
+  val mutable elist = ([]:flow_entry list)
+  val mutable cnt = new counter 0
+  method clear = 
+    begin
+      n_flow_int := empty_flow;
+      ret_flow_int := empty_flow;
+      spec_flow_int := empty_flow;
+      top_flow_int := empty_flow;
+      exc_flow_int := empty_flow;
+      elist <- []
+    end
+  method sort = 
+    begin
+      elist <- sort_flow elist
+    end
+  method clean =
+    begin
+      elist <- remove_dups1 elist
+    end
+  method string_of =
+    begin
+      let x = elist in
+      let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int)) 
+        (List.map (fun (a,e,p) -> (a,e,p)) x) in
+      "Exception List : "^(string_of_int (List.length x))^"members \n"^el
+    end
+  method get_hash (f:string) : nflow =
+    begin
+      if ((String.compare f stub_flow)==0) then 
+	    Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
+      else
+	    let rec get (lst:(string*string*nflow)list):nflow = match lst with
+	      | [] -> false_flow_int
+	      | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
+		    else get rst in
+        (get elist)
+    end
+  method add_edge (n1:string)(n2:string):bool =
+    begin
+      (elist <- elist@ [(n1,n2,false_flow_int)]);
+      true
+    end
+  method reset_exc = 
+    begin
+      let _ = clean_duplicates () in        
+      let _ = cnt # reset in
+      let el = List.fold_left (fun acc (a,b,_) -> 
+          if a="" then acc else (a,b,(0,0))::acc) [] elist in
+      elist <- el
+    end
+  method update =
+    begin
+      n_flow_int := self # get_hash n_flow;
+      ret_flow_int := self # get_hash ret_flow;
+      spec_flow_int := self # get_hash spec_flow;
+      top_flow_int := self # get_hash top_flow;
+      exc_flow_int := self # get_hash abnormal_flow;
+      error_flow_int := self # get_hash error_flow
+    end
+  method compute =
+    begin
+      let _ = self # reset_exc in
+      elist <- compute_hierarchy_aux cnt elist;
+      self # update
+    end
+  method closest (((min,max):nflow) as nf):(string) = 
+    begin
+      get_closest_new elist nf 
+    end
+end;;
