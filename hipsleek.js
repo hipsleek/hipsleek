@@ -1,3 +1,9 @@
+/**
+ Display module to populate content of the HTML
+ @author Vu An Hoa
+ */
+
+
 /*
  Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
  */

@@ -475,10 +475,15 @@ let push_term_checking pos reachable =
     let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
     html_output := !html_output ^ "<li class=\"Collapsed term\">Termination checking at " ^ line_loc ^ 
     (if not reachable then "\n<ul>Unreachable recursive call" else "") ^ "\n<ul>"	
-	
+(*	
 let push_pop_entail_variance (es, f, res) = html_output := 
 	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Well-foundedness checking" ^ "\n<ul>" ^
   (Cprinter.html_of_formula es) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed") ^ "</ul></li>"
+*)
+let push_entail_variance (es, f) = html_output := 
+	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Well-foundedness checking" ^ "\n<ul>" ^
+  (Cprinter.html_of_formula es) ^ Cprinter.html_vdash ^
+  (Cprinter.html_of_pure_formula f)
 
 let push_pop_unreachable_variance () = html_output := 
 	!html_output ^ "<li class=\"Collapsed termunreach" ^ "\">Unreachable" ^ "</ul></li>" 
