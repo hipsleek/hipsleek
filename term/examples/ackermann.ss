@@ -1,7 +1,7 @@
 int ack(int m, int n)
-requires m>=0 & n>=0
-variance (1) [m, n]
-ensures res>=0;
+	requires m>=0 & n>=0
+	variance [m, n]
+	ensures res>0;
 {
 	if (m == 0) {
 		return n+1;

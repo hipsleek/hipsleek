@@ -2911,7 +2911,8 @@ and heap_entail_variance_x
 	    | Some i -> i
 	  in
 	
-	  if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then (* Case 1: In loop *)
+	  (*if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then*) (* Case 1: In loop *)
+    if (var_label_lhs = var_label_rhs) then 
 	    let _ = print_string ("Termination: loop at state (" ^ (string_of_int var_label_lhs) ^ ") " ^ 
 		    (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) in
 	    let lhs_measures = es.es_var_measures in
@@ -2965,21 +2966,29 @@ and heap_entail_variance_x
 	  
 	    if res then
 		    Debug.print_info "Termination" 
-			    ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
+			    ("Checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
 	    else
 	    	Debug.print_info "Termination" 
-			    ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
-
+			    ("Checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
+    
+    (*
 	  else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then (* Case 2: Base case *)
 	    Debug.print_info "Termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
 	  else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then (* Case 3: Non-terminating cases *)
 	    Debug.print_info "Termination" ("non-terminating state ") loc
-	  else if (var_label_lhs > var_label_rhs) then (* Case 4: Loop transition: state transition at boundary of loop *)
+	  *)
+    else if (var_label_lhs > var_label_rhs) then (* Case 4: Loop transition: state transition at boundary of loop *)
 	    (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
-	    Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
-		    " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc
+      if (var_label_rhs > 0) then
+	      Debug.print_info "Termination" ("Transition from variance " ^ (string_of_int var_label_lhs) ^ 
+		      " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc
+      else if (var_label_rhs == 0) then
+        Debug.print_info "Termination" ("Terminating state " ^ (string_of_int var_label_rhs)) loc
+      else 
+        Debug.print_info "Termination" ("Non-terminating state " ^ (string_of_int var_label_rhs)) loc
+
 	  else (* Case 5: Reverved loop transtion: might lead to non-terminating case *)
-	    Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
+	    Debug.print_info "Termination" ("Transition from variance " ^ (string_of_int var_label_lhs) ^ 
 		    " to " ^ (string_of_int var_label_rhs) ^ " : invalid") loc
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
