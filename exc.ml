@@ -390,11 +390,45 @@ let has_cycles ():bool =
 	else (List.exists (fun c-> (cc c (c::visited))) sons) in	
   (cc top_flow [top_flow])
 
-class exc_table =
-object (self)
+module type ETABLE =
+   sig
+     type t
+     type fe = (ident * ident * t)
+     val n_flow_int : t ref
+     val ret_flow_int : t ref
+     val spec_flow_int : t ref
+     val top_flow_int : t ref 
+     val exc_flow_int : t ref
+     val error_flow_int  : t ref
+     val false_flow_int : t ref
+     class exc :
+       object ('a)
+         val mutable elist : fe list
+         (* val mutable cnt : counter *)
+         method string_of : string
+         method get_hash : ident -> t
+         method add_edge : ident -> ident -> unit
+         method compute_hierarchy : unit
+         method get_closest : t -> string
+       end
+   end;;
+ 
+module ETABLE_NFLOW : ETABLE =
+   struct
+     type t = nflow
+            type fe = (ident * ident * nflow)
+     let n_flow_int = ref empty_flow
+     let ret_flow_int = ref empty_flow 
+     let spec_flow_int = ref empty_flow 
+     let top_flow_int = ref empty_flow
+     let exc_flow_int = ref empty_flow
+     let error_flow_int  = ref empty_flow
+     let false_flow_int = ref empty_flow
+     class exc =
+       object (self)
   val mutable elist = ([]:flow_entry list)
   val mutable cnt = new counter 0
-  method clear = 
+  method private clear = 
     begin
       n_flow_int := empty_flow;
       ret_flow_int := empty_flow;
@@ -404,11 +438,11 @@ object (self)
       error_flow_int := empty_flow;
       elist <- []
     end
-  method sort = 
+  method private sort = 
     begin
       elist <- sort_flow elist
     end
-  method clean =
+  method private clean =
     begin
       elist <- remove_dups1 elist
     end
@@ -425,17 +459,16 @@ object (self)
 	    Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
       else
 	    let rec get (lst:(string*string*nflow)list):nflow = match lst with
-	      | [] -> false_flow_int
+	      | [] -> !false_flow_int
 	      | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
 		    else get rst in
         (get elist)
     end
-  method add_edge (n1:string)(n2:string):bool =
+  method add_edge (n1:string)(n2:string):unit =
     begin
-      (elist <- elist@ [(n1,n2,false_flow_int)]);
-      true
+      (elist <- elist@ [(n1,n2,!false_flow_int)])
     end
-  method reset_exc = 
+  method private reset_exc = 
     begin
       let _ = self # clean in        
       let _ = cnt # reset in
@@ -443,7 +476,7 @@ object (self)
           if a="" then acc else (a,b,(0,0))::acc) [] elist in
       elist <- el
     end
-  method update_values =
+  method private update_values =
     begin
       n_flow_int := self # get_hash n_flow;
       ret_flow_int := self # get_hash ret_flow;
@@ -456,10 +489,13 @@ object (self)
     begin
       let _ = self # reset_exc in
       elist <- compute_hierarchy_aux cnt elist;
-      self # update_values
+      self # update_values;
+      self # sort
     end
   method get_closest (((min,max):nflow) as nf):(string) = 
     begin
       fst(get_closest_new elist nf) 
     end
-end;;
+       end
+   end;;
+
