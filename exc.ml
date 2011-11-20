@@ -9,8 +9,43 @@ type lflow = (nflow list)
 
 type dflow = nflow * lflow (* orig_exc, current list *)
 
+(*  WN/Khanh: TODO  *)
+(*  (i) add notion of exact type *)
+(*  (ii) add holes in nflow type *)
+(*
+           subtype  exact
+   __Exc    12-16    16
+     |
+     e1     12-15    15
+     |
+     e2     12-14    14
+   /    \
+  e3    e4
+  12    13
+   
+  (e1,__Exc,(12,15)),
+  (e2,e1,(12,14)),
+  (e4,e2,(13,13)),
+  (e3,e2,(12,12)),
+
+*)
+
 (* Khanh : need to generalise our code to 
-   use dflow instead of nflow *)
+   use dflow instead of nflow 
+   e.g in the code:
+     try {
+       .. throw v(of e1)
+       // D & flow e1
+     } catch (e2 v) {
+       // D & flow norm
+     }
+     // D & flow e1-e2
+  The flow  e1-e2 which is
+  captured as 
+  (e1, e1-e2)
+  = ((12,15),[(12,15)-(12,14)])
+  = ((12,15),[(15,15)])
+*)
 
 let empty_flow : nflow = (-1,0)
 
@@ -139,32 +174,21 @@ let rec is_subset_lflow (l1:lflow) (l2:lflow) =
 let is_subset_dflow (((d1,l1):dflow) as f1) (((d2,l2):dflow) as f2) =
   is_subset_lflow l1 l2 
 
-(* TODO : to implement *)  
+let rec is_overlap_lflow (l1:lflow) (l2:lflow) =
+  match l1 with
+    | [] -> false
+    | ((s1,b1) as n1)::l1a ->
+          match l2 with
+            | [] -> false
+            | ((s2,b2) as n2)::l2a ->
+                  if is_overlap_flow_ne n1 n2 then true
+                  else if s1<s2 then is_overlap_lflow l1a l2
+                  else is_overlap_lflow l1 l2a
 
 let is_overlap_dflow (((d1,l1):dflow) as f1) (((d2,l2):dflow) as f2) =
-  false
+  is_overlap_lflow l1 l2
 
 
-(*  WN/Khanh: TODO  *)
-(*  (i) add notion of exact type *)
-(*  (ii) add holes in nflow type *)
-(*
-           subtype  exact
-   __Exc    12-16    16
-     |
-     e1     12-15    15
-     |
-     e2     12-14    14
-   /    \
-  e3    e4
-  12    13
-   
-  (e1,__Exc,(12,15)),
-  (e2,e1,(12,14)),
-  (e4,e2,(13,13)),
-  (e3,e2,(12,12)),
-
-*)
 
 
 (* global constants *)
