@@ -304,16 +304,19 @@ let get_closest ((min,max):nflow):(string) =
 	          else (a,(c,d)) in
   let r,_ = (get !exc_list) in r
 
-
-let get_closest_new elist (((min,max):nflow) as nf):(string) = 
+(* -2 : unknown; -1 - partial flow; 0 - exact type; 1 - full flow *)
+let get_closest_new elist (((min,max):nflow) as nf):(string * int) = 
   let res = List.filter (fun (_,_,n) -> (is_subset_flow_ne nf n)) elist in
   match res with
-    | [] -> "## cannot find flow type"
-    | (s,_,_)::_ -> s
+    | [] -> ("## cannot find flow type",-2)
+    | (s,_,nf2)::_ -> (s, 
+      if is_exact_flow_ne nf nf2 then 0
+      else if is_eq_flow_ne nf nf2 then 1
+      else -1)
 
 let get_closest (((min,max):nflow) as nf):(string) = 
   let a1 = get_closest nf in
-  let a2 = (* "XXX" *) get_closest_new !exc_list nf in
+  let (a2,_) = (* "XXX" *) get_closest_new !exc_list nf in
   if (a1=a2) then a1
   else 
     let pr = pr_pair string_of_int string_of_int in
@@ -398,6 +401,7 @@ object (self)
       spec_flow_int := empty_flow;
       top_flow_int := empty_flow;
       exc_flow_int := empty_flow;
+      error_flow_int := empty_flow;
       elist <- []
     end
   method sort = 
@@ -433,13 +437,13 @@ object (self)
     end
   method reset_exc = 
     begin
-      let _ = clean_duplicates () in        
+      let _ = self # clean in        
       let _ = cnt # reset in
       let el = List.fold_left (fun acc (a,b,_) -> 
           if a="" then acc else (a,b,(0,0))::acc) [] elist in
       elist <- el
     end
-  method update =
+  method update_values =
     begin
       n_flow_int := self # get_hash n_flow;
       ret_flow_int := self # get_hash ret_flow;
@@ -448,14 +452,14 @@ object (self)
       exc_flow_int := self # get_hash abnormal_flow;
       error_flow_int := self # get_hash error_flow
     end
-  method compute =
+  method compute_hierarchy =
     begin
       let _ = self # reset_exc in
       elist <- compute_hierarchy_aux cnt elist;
-      self # update
+      self # update_values
     end
-  method closest (((min,max):nflow) as nf):(string) = 
+  method get_closest (((min,max):nflow) as nf):(string) = 
     begin
-      get_closest_new elist nf 
+      fst(get_closest_new elist nf) 
     end
 end;;
