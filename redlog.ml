@@ -1323,22 +1323,19 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let unks = Gen.BList.difference_eq CP.eq_spec_var unks bv in
 	(*let unks = List.append unks bv in*)
 	(*let _ = print_endline ("Rearranged list of unknowns : " ^ (!CP.print_svl unks)) in*)
-
-
 	(* Swap all primed variables *)
 	let red_unks, unksmap, unksrmap = rl_vars_map unks bv in
 	(*let red_bv, bvmaps, bvrmap = rl_vars_map bv in*)
-
 	(* Generate the reduce list of unknowns *)
 	let input_unknowns = List.map CP.name_of_spec_var red_unks in
 	let input_unknowns = "{" ^ (String.concat "," input_unknowns) ^ "}" in
 	(*let _ = print_endline "\nVariables to solve for : " in
 	let _ = print_endline input_unknowns in*)
-
-	(* Generate reduce equations *)
+	(* Internal function to generate reduce equations *)
 	let rec rl_of_exp varsmap e = match e with
 		| CP.Null _ -> "null" (* null serves as a symbollic variable *)
-		| CP.Var (v, _) -> (try List.assoc v varsmap with | Not_found -> failwith "solve : variable not found in variable mapping!")
+		| CP.Var (v, _) -> (try List.assoc v varsmap with 
+			| Not_found -> let _ = print_endline ("Variable " ^ v ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
 		| CP.IConst (i, _) -> string_of_int i
 		| CP.FConst (f, _) -> string_of_float f
 		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
@@ -1347,17 +1344,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 		(*| CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " / " ^ (rl_of_exp varsmap e2) ^ ")"*)
 		| _ -> failwith ("solve : unsupported expression!" ^ (!CP.print_exp e))
 	in
-	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
-	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
-	(*let _ = print_endline "\nInput equations: " in
-	let _ = print_endline input_eqns in*)
-
-	(* Pipe the solve request to reduce process *)
-	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
-	(*let _ = print_endline ("\nReduce input command:" ^ input_command) in*)
-	let _ = send_cmd input_command in
-
-	(** Internal function to read reduce output **)
+	(* Internal function to read reduce output *)
 	let rec read_stream () =
  		let line = Gen.trim_str (input_line !process.inchannel) in
 		let l = String.length line in
@@ -1368,12 +1355,23 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 			else 
 				line ^ (read_stream ())
 	in
+	try
+	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
+	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
+	(*let _ = print_endline "\nInput equations: " in
+	let _ = print_endline input_eqns in*)
 
+	(* Pipe the solve request to reduce process *)
+	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
+	(*let _ = print_endline ("\nReduce input command:" ^ input_command) in*)
+	let _ = send_cmd input_command in
 	(* Read, parse and return *)
 	let red_result = read_stream () in
 	(*let _ = print_endline ("\nOriginal solution : " ^ red_result) in*)
 	let sst,strrep = parse_reduce_solution red_result bv unksrmap in
 		(sst,strrep)
+	with
+	| _ -> ([],[])
 ;;
 
 (* Set the equation solver in Cpure *)
