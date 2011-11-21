@@ -2281,6 +2281,7 @@ and get_var_type v (f: formula): (typ * bool) =
 
 and get_result_type (f: formula): (typ * bool) = get_var_type res_name f
 
+and get_exc_result_type (f: formula): (typ * bool) = get_var_type eres_name f
   
 and disj_count (f0 : formula) = match f0 with
   | Or ({formula_or_f1 = f1;
@@ -3566,7 +3567,7 @@ let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  Gen.Debug.ho_2 "list_failesc_context_or" 
+  Gen.Debug.no_2 "list_failesc_context_or" 
       pr pr pr
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
 
@@ -4938,12 +4939,12 @@ let fold_partial_context_left_union (c_l:(list_partial_context list)) = match (L
   | 1 -> (List.hd c_l)
   | _ -> List.fold_left (fun a c->  list_partial_context_union a c) (List.hd c_l) (List.tl c_l)
 
-(* convert entail state to ctx with nf flow and quantify res
+(* convert entail state to ctx with nf flow and quantify eres
    variable *)
 (* need also a binding to catch handler's bound var *)
 let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
     (elim_ex_fn: context -> context) = 
-  let rest, b_rez = get_result_type c.es_formula in
+  let res_typ, b_rez = get_exc_result_type c.es_formula in
   let ctx = (Ctx {c with es_formula = 
       (substitute_flow_into_f !n_flow_int c.es_formula) } )  in
   match cvar with
@@ -4951,12 +4952,19 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
     | Some (cvt,cvn) ->        
         if not(b_rez) then ctx
         else begin
-      	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos) no_pos in
+      	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (res_typ, cvn, Primed)) (CP.mkeRes res_typ) no_pos) no_pos in
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
-      	  let ctx1 = push_exists_context [CP.mkRes rest] ctx1 in
+      	  let ctx1 = push_exists_context [CP.mkeRes res_typ] ctx1 in
       	  if !elim_exists then elim_ex_fn ctx1 else  ctx1
         end
-          
+
+let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
+    (elim_ex_fn: context -> context) = 
+  let pr1 = pr_option (pr_pair string_of_typ pr_id) in
+  let pr2 = !print_entail_state in
+  Gen.Debug.no_2 "conv_elim_res" pr1 pr2 !print_context_short
+      (fun _ _ -> conv_elim_res cvar c elim_ex_fn) cvar c
+
 (* convert entail state to ctx with nf flow *)
 let conv (c:entail_state) (nf:nflow) = (Ctx {c 
 with es_formula = 
@@ -5004,7 +5012,7 @@ let splitter_wrapper p c nf cvar elim_ex_fn fn_esc =
 	match (r_esc,r_caught) with
 	| None, None -> Err.report_error {Err.error_loc = no_pos;
 								Err.error_text = "Split can not return both empty contexts\n"}
-  | Some cl,None -> ([(p,fn_esc cl)],[])
+    | Some cl,None -> ([(p,fn_esc cl)],[])
 	| None, Some c -> ([],[(p,c)])
 	| Some cl,Some c ->  ([(p,fn_esc cl)],[(p,c)])
 								

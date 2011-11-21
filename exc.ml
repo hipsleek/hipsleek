@@ -54,20 +54,20 @@ let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
 let is_subset_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2)
       = s2<=s1 && b1<=b2
 
-let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-      if is_empty_flow(f1) then true
-      else if is_empty_flow(f2) then false
-      else is_subset_flow_ne f1 f2
+(* let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
+(*       if is_empty_flow(f1) then true *)
+(*       else if is_empty_flow(f2) then false *)
+(*       else is_subset_flow_ne f1 f2 *)
 
 (* is f1 an exact flow for subtype f2 *)
 let is_exact_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
        s1==b1 & b1==b2
 
-let is_exact_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-  if is_empty_flow f1 then
-    if is_empty_flow f2 then true
-    else false
-else is_exact_flow_ne f1 f2
+(* let is_exact_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
+(*   if is_empty_flow f1 then *)
+(*     if is_empty_flow f2 then true *)
+(*     else false *)
+(* else is_exact_flow_ne f1 f2 *)
 
 
 let is_exact_lflow lst mf =
@@ -85,9 +85,9 @@ let is_non_overlap_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
 let is_overlap_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
        not(is_non_overlap_flow_ne f1 f2)
 
-let is_overlap_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-      if is_empty_flow(f1) || is_empty_flow(f2) then false
-      else is_overlap_flow_ne f1 f2
+(* let is_overlap_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
+(*       if is_empty_flow(f1) || is_empty_flow(f2) then false *)
+(*       else is_overlap_flow_ne f1 f2 *)
 
 let is_next_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       s2==b1+1
@@ -95,11 +95,11 @@ let is_next_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
 let is_eq_flow_ne (((s1,b1):nflow)) (((s2,b2):nflow)) =
       s1==s2 && b1==b2
 
-let is_eq_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-      if is_empty_flow(f1) then
-        if (is_empty_flow f2) then true
-        else false
-      else is_eq_flow_ne f1 f2
+(* let is_eq_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
+(*       if is_empty_flow(f1) then *)
+(*         if (is_empty_flow f2) then true *)
+(*         else false *)
+(*       else is_eq_flow_ne f1 f2 *)
 
 let union_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       ((min s1 s2),(max b1 b2))
@@ -116,12 +116,12 @@ let order_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
   else if s1<s2 then 2
   else -2
 
-let order_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-  if (is_empty_flow f1) then 
-    if (is_empty_flow f2) then 0
-    else 1
-  else if (is_empty_flow f2) then -1
-  else order_flow_ne f1 f2
+(* let order_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
+(*   if (is_empty_flow f1) then  *)
+(*     if (is_empty_flow f2) then 0 *)
+(*     else 1 *)
+(*   else if (is_empty_flow f2) then -1 *)
+(*   else order_flow_ne f1 f2 *)
 
 (* f1 - f2 *)
 let subtract_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
@@ -136,9 +136,9 @@ let subtract_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
   else if s2<=b1 then [(s1,s2-1)]
   else [(s2,s1-1)]
 
-let subtract_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-  if is_empty_flow(f1) || is_empty_flow(f2) then []
-  else subtract_flow_ne f1 f2
+(* let subtract_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
+(*   if is_empty_flow(f1) || is_empty_flow(f2) then [] *)
+(*   else subtract_flow_ne f1 f2 *)
 
 let rec subtract_lflow_ne (lf:lflow) (n:nflow) : lflow =
   match lf with
@@ -147,7 +147,7 @@ let rec subtract_lflow_ne (lf:lflow) (n:nflow) : lflow =
           let r = subtract_flow_ne x n in
           r@(subtract_lflow_ne lf n)
 
-(* assumes that lf are non-empty valid flows *)
+(* assumes that lf is a valid flows *)
 let subtract_lflow (lf:lflow) (n:nflow) : lflow =
       if (is_empty_flow n) then lf
       else subtract_lflow_ne lf n

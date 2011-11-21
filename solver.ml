@@ -2314,9 +2314,7 @@ and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_
   let pr2 xs = pr_list (pr_pair pr_sv pr_sv) xs in
   Gen.Debug.no_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars 
 
-
-
-
+(* WN : why isn't this in cformula.ml? *)
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
 and elim_exists (f0 : formula) : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
