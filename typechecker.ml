@@ -1,5 +1,5 @@
 open Globals
-open Exc
+open Exc.ETABLE_NFLOW
 open Solver
 open Cast
 open Gen.Basic

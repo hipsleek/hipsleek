@@ -6,7 +6,7 @@
 
 open Globals
 open Gen.Basic
-open Exc
+open Exc.ETABLE_NFLOW
 
 module F = Iformula
 module P = Ipure

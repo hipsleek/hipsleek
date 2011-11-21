@@ -2,6 +2,7 @@
 
 
 type ident = string
+type constant_flow = string
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 

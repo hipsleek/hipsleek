@@ -7,7 +7,8 @@
 
 open Globals
 open Gen.Basic
-open Exc
+open Exc.ETABLE_NFLOW
+
 
 (* spec var *)
 type spec_var =

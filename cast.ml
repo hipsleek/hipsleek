@@ -6,7 +6,9 @@
 
 open Globals
 open Gen.Basic
-open Exc
+open Exc.ETABLE_NFLOW
+type n
+
 
 module F = Cformula
 module P = Cpure
@@ -1232,7 +1234,7 @@ let get_catch_of_exp e = match e with
 
 let rec check_proper_return cret_type exc_list f = 
   let overlap_flow_type fl res_t = match res_t with 
-	| Named ot -> F.overlapping fl (Exc.get_hash_of_exc ot)
+	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
   let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->

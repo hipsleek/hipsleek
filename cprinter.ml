@@ -2,7 +2,7 @@
 
 open Format
 open Globals 
-open Exc
+open Exc.ETABLE_NFLOW
 open Lexing 
 open Cast 
 open Cformula
@@ -953,10 +953,9 @@ let pr_mix_formula_branches (f,l) = match f with
   | MCP.OnePF f -> pr_pure_formula_branches (f,l)
 
 let rec string_of_flow_formula f c = 
-  "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	  ")="^(Exc.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
+  "{"^f^","^string_of_flow c.formula_flow_interval^"="^(exlist # get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
-let rec string_of_nflow n = (Exc.get_closest n)
+let rec string_of_nflow n = (exlist # get_closest n)
 
 let rec string_of_sharp_flow sf = match sf with
   | Sharp_ct ff -> "#"^(string_of_flow_formula "" ff)
@@ -1581,7 +1580,7 @@ let rec string_of_formula_exp_list l = match l with
 
 let string_of_flow_store l = (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
 	(let rr = h.formula_store_value.formula_flow_interval in
-	(string_of_int (fst rr))^"-"^(string_of_int (snd rr)))^" ")) l))
+	(string_of_flow rr))^" ")) l))
 
 
 let rec string_of_t_formula = function
@@ -1707,7 +1706,7 @@ let rec string_of_exp = function
     end
   | Catch b->   
         let c = b.exp_catch_flow_type in
-	    "\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Exc.get_closest c)^ 
+	    "\n catch "^(string_of_flow c)^"="^(exlist # get_closest c)^ 
 	        (match b.exp_catch_flow_var with 
 	          | Some c -> (" @"^c^" ")
 	          | _ -> " ")^

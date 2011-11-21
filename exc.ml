@@ -398,45 +398,64 @@ let has_cycles ():bool =
 
 module type ETABLE =
   sig
-    type t
+    type nflow
       (* type fe = (ident * ident * t) *)
-    val n_flow_int : t ref
-    val ret_flow_int : t ref
-    val spec_flow_int : t ref
-    val top_flow_int : t ref 
-    val exc_flow_int : t ref
-    val error_flow_int : t ref
-    val false_flow_int : t ref
-    val empty_flow : t 
-    val is_empty_flow : t -> bool
-    val is_exact_flow : t -> t -> bool
+    val flow : ident
+    val top_flow : ident
+    val n_flow : ident
+    val cont_top : ident
+    val brk_top : ident
+    val c_flow : ident
+    val raisable_class : ident
+    val ret_flow : ident
+    val spec_flow : ident
+    val false_flow : ident
+    val abnormal_flow : ident
+    val stub_flow : ident
+    val error_flow : ident
+    val n_flow_int : nflow ref
+    val ret_flow_int : nflow ref
+    val spec_flow_int : nflow ref
+    val top_flow_int : nflow ref 
+    val exc_flow_int : nflow ref
+    val error_flow_int : nflow ref
+    val false_flow_int : nflow
+    val empty_flow : nflow 
+    val is_false_flow : nflow -> bool
+    val is_empty_flow : nflow -> bool
+    val is_exact_flow : nflow -> nflow -> bool
       (* is fst the exact flow of snd *)
-    val is_exact_flow : t -> t -> bool
-    val is_full_flow : t -> t -> bool
-    val is_partial_flow : t -> t -> bool
-    val is_subset_flow : t -> t -> bool
-    val is_eq_flow : t -> t -> bool
-    val is_overlap_flow : t -> t -> bool
-    val order_flow : t -> t -> int
-    val norm_flow : t -> t 
-    val subtract_flow : t -> t -> t
+    val is_exact_flow : nflow -> nflow -> bool
+    val is_full_flow : nflow -> nflow -> bool
+    val is_partial_flow : nflow -> nflow -> bool
+    val is_subset_flow : nflow -> nflow -> bool
+    val is_eq_flow : nflow -> nflow -> bool
+    val is_overlap_flow : nflow -> nflow -> bool
+    val order_flow : nflow -> nflow -> int
+    val norm_flow : nflow -> nflow 
+    val string_of_flow : nflow -> string
+    val subtract_flow : nflow -> nflow -> nflow
+    val intersect_flow : nflow -> nflow -> nflow
+    val subtract_flow_l : nflow -> nflow -> nflow list
     class exc :
     object ('a)
       (* val mutable elist : fe list *)
       (* val mutable cnt : counter *)
       method string_of : string
-      method get_hash : ident -> t
+      method get_hash : ident -> nflow
       method add_edge : ident -> ident -> unit
       method compute_hierarchy : unit
-      method get_closest : t -> string
+      method get_closest : nflow -> string
       method has_cycles : bool
+      method sub_type : ident -> ident -> bool 
     end
+    val exlist : exc
    end;;
  
 module ETABLE_NFLOW : ETABLE =
 struct
-  type t = nflow
-  type fe = (ident * ident * t)
+  type nflow = (int*int)(*numeric representation of flow*)
+  type flow_entry = (ident * ident * nflow)
   let empty_flow : nflow = (-1,0)
   let n_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow 
@@ -444,7 +463,7 @@ struct
   let top_flow_int = ref empty_flow
   let exc_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow
-  let false_flow_int = ref empty_flow
+  let false_flow_int = empty_flow
   let flow = "flow"
   let top_flow = "__flow"
   let n_flow = "__norm"
@@ -459,6 +478,7 @@ struct
   let stub_flow = "__stub"
   let error_flow = "__Error"
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
+  let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2  
   let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
     if is_empty_flow(f1) then true
     else if is_empty_flow(f2) then false
@@ -494,18 +514,21 @@ struct
       else 1
     else if (is_empty_flow f2) then -1
     else order_flow_ne f1 f2
-  let subtract_flow_list (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+  let subtract_flow_l (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
     if is_empty_flow(f1) || is_empty_flow(f2) then []
     else subtract_flow_ne f1 f2
   let norm_flow (nf:nflow)  =
     if (is_empty_flow nf) then empty_flow
     else nf
+  let string_of_flow = pr_pair string_of_int string_of_int
   let subtract_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-    let x = subtract_flow_list f1 f2 in
+    let x = subtract_flow_l f1 f2 in
     match x with
       | [] -> empty_flow
       | [x] -> x
       | _ -> f1
+  let intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
+
   class exc =
   object (self)
     val mutable elist = ([]:flow_entry list)
@@ -541,14 +564,14 @@ struct
 	      Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
         else
 	      let rec get (lst:(string*string*nflow)list):nflow = match lst with
-	        | [] -> !false_flow_int
+	        | [] -> false_flow_int
 	        | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
 		      else get rst in
           (get elist)
       end
     method add_edge (n1:string)(n2:string):unit =
       begin
-        (elist <- elist@ [(n1,n2,!false_flow_int)])
+        (elist <- elist@ [(n1,n2,false_flow_int)])
       end
     method private reset_exc = 
       begin
@@ -586,7 +609,15 @@ struct
 	      else (List.exists (fun c-> (cc c (c::visited))) sons) in	
         (cc top_flow [top_flow])
       end
+    method sub_type (t1 : ident) (t2 : ident): bool = 
+      begin
+        let n1 = self#get_hash t1 in
+        let n2 = self#get_hash t2
+        in is_subset_flow n1 n2
+      end
   end
+  let exlist = new exc
+
 end;;
 
 (* Khanh : TODO : module to support dflow *)
@@ -601,7 +632,7 @@ struct
   let top_flow_int = ref empty_flow
   let exc_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow
-  let false_flow_int = ref empty_flow
+  let false_flow_int = empty_flow
   let flow = "flow"
   let top_flow = "__flow"
   let n_flow = "__norm"

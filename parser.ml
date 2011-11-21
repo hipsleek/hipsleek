@@ -1,6 +1,6 @@
 open Camlp4
 open Globals
-open Exc
+open Exc.ETABLE_NFLOW
 open Iast
 open Token
 open Sleekcommons

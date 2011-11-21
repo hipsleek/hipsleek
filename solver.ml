@@ -5,7 +5,7 @@ todo: disable the default logging for omega
 *)
 
 open Globals
-open Exc
+open Exc.ETABLE_NFLOW
 open Cast
 open Cformula
 open Prooftracer
@@ -4335,13 +4335,13 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 		                let h1, p1, fl1, br1, t1 = split_components ante in
 		                let h2, p2, fl2, br2, t2 = split_components conseq in
 			            (* let _ = print_string "pp 1\n" in*)
-			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff 1 fl2 fl1) then 
+			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 
 			              let _ = print_string ("got: "^(Cprinter.string_of_formula ante)^"|-"^(Cprinter.string_of_formula conseq)^"\n\n") in
 			              (SuccCtx [false_ctx fl1 pos], UnsatAnte)
 			            else					  
 			              (*  let _ = print_string "pp 2\n" in*)
 			              (* let _ = print_string ("bol : "^(string_of_bool ((CF.is_false_flow fl2.formula_flow_interval)))^"\n") in*)
-			              if (not(CF.is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff 2 fl2 fl1) then begin
+			              if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then begin
 			                Debug.devel_pprint ("heap_entail_conjunct_helper: "
 						    ^ "conseq has an incompatible flow type"
 						    ^ "\ncontext:\n"
@@ -4354,12 +4354,12 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                               begin
                                 let err_msg =
                                   if (CF.subsume_flow_f !error_flow_int fl1) then
-                                    ("1.2: " ^ (Exc.get_closest fl1.CF.formula_flow_interval))
+                                    ("1.2: " ^ (exlist # get_closest fl1.CF.formula_flow_interval))
                                   else
                                     "1.2: conseq has an incompatible flow type"
                                 in
                                 (*let _ = print_endline ("locle 1:"^
-                                  (Exc.get_closest fl1.CF.formula_flow_interval) ) in*)
+                                  (exlist # get_closest fl1.CF.formula_flow_interval) ) in*)
                                 let fe = mk_failure_may err_msg in
                                 let may_flow_failure =
 			                      FailCtx (Basic_Reason ({fc_message = err_msg;
@@ -4376,7 +4376,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                             else
                               let err_msg,fe =
                                 if CF.subsume_flow_f !error_flow_int fl1 then
-                                  let err_name = (Exc.get_closest fl1.CF.formula_flow_interval) in
+                                  let err_name = (exlist # get_closest fl1.CF.formula_flow_interval) in
                                   let err_msg = "1.1: " ^ err_name in
                                   (err_msg,
                                   mk_failure_must err_msg err_name [])
@@ -4387,7 +4387,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                                   mk_failure_must err_msg err_name [])
                               in
                               (*let _ = print_endline ("locle 2:"^
-                                (Exc.get_closest fl1.CF.formula_flow_interval) ) in*)
+                                (exlist # get_closest fl1.CF.formula_flow_interval) ) in*)
 			                  (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
 							  fc_current_lhs = estate;
 							  fc_orig_conseq = struc_formula_of_formula conseq pos;

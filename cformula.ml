@@ -6,7 +6,7 @@
 
 open Globals
 open Gen
-open Exc
+open Exc.ETABLE_NFLOW
 
 module Err = Error
 module CP = Cpure
@@ -525,49 +525,61 @@ and mkAndType f1 f2 = match f1 with
 	end
         
 (*assume none is invalid*)
-and non_overlapping (n1,n2) (p1,p2) : bool = n1>p2 || p1>n2
+(* and non_overlapping (n1,n2) (p1,p2) : bool = n1>p2 || p1>n2 *)
+and non_overlapping t1 t2 : bool = not(is_overlap_flow t1 t2)
   
-and overlapping n p : bool = not(non_overlapping n p)
-and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
+and overlapping n p : bool = is_overlap_flow n p
 
-and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2
+(* and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2)) *)
+
+(* and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2 *)
 and is_top_flow p :bool = (equal_flow_interval !top_flow_int p)
 
 
 and is_sleek_mustbug_flow p: bool = (equal_flow_interval !error_flow_int p)
 and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
 
-and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
+and equal_flow_interval (t1:nflow) (t2:nflow) : bool = 
+  is_eq_flow t1 t2
+
 
 (*first subsumes the second*)
-and subsume_flow_x (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+(* and subsume_flow_x (n1,n2)(p1,p2) : bool =  *)
+(* if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2)  *)
 
-and subsume_flow n p : bool = 
-  let pr1 = pr_pair string_of_int  string_of_int in
-  Gen.Debug.no_2 "subsume_flow" pr1 pr1 string_of_bool subsume_flow_x n p 
+and subsume_flow (t1:nflow) (t2:nflow) : bool =
+  is_subset_flow t1 t2
 
-and overlap_flow t1 t2 : bool = (subsume_flow t1 t2) || (subsume_flow t2 t1)
+(* and subsume_flow n p : bool =  *)
+(*   let pr1 = pr_pair string_of_int  string_of_int in *)
+(*   Gen.Debug.no_2 "subsume_flow" pr1 pr1 string_of_bool subsume_flow_x n p  *)
 
-and subtract_flow (n1,n2) (p1,p2)  : (nflow list) = 
-  if n1<p1 then (n1,p1-1)::(subtract_flow (p1,n2) (p1,p2))
-  else if n2>p2 then [(p2+1,n2)]
-  else []
+(* and overlap_flow t1 t2 : bool = (subsume_flow t1 t2) || (subsume_flow t2 t1) *)
+
+
+and overlap_flow t1 t2 : bool = is_overlap_flow t1 t2
+
+and subtract_flow_list t1 t2  : (nflow list) = 
+   subtract_flow_l t1 t2
+  (* if n1<p1 then (n1,p1-1)::(subtract_flow_list (p1,n2) (p1,p2)) *)
+  (* else if n2>p2 then [(p2+1,n2)] *)
+  (* else [] *)
 
 and disjoint_flow t1 t2 : bool = not(overlap_flow t1 t2) 
 
-and subsume_flow_f (n1,n2) f :bool = subsume_flow (n1,n2) f.formula_flow_interval
+and subsume_flow_f t1 f :bool = subsume_flow t1 f.formula_flow_interval
 
-and subsume_flow_ff_x f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formula_flow_interval
+and subsume_flow_ff f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formula_flow_interval
 
-and subsume_flow_ff i f1 f2 :bool = 
-  let pr = !print_flow_formula in
-  Gen.Debug.no_2_num i "subsume_flow_ff" pr pr string_of_bool subsume_flow_ff_x f1 f2
+(* and subsume_flow_ff i f1 f2 :bool =  *)
+(*   let pr = !print_flow_formula in *)
+(*   Gen.Debug.no_2_num i "subsume_flow_ff" pr pr string_of_bool subsume_flow_ff_x f1 f2 *)
 
-and overlap_flow_ff_x f1 f2 :bool = overlap_flow f1.formula_flow_interval f2.formula_flow_interval
+and overlap_flow_ff f1 f2 :bool = overlap_flow f1.formula_flow_interval f2.formula_flow_interval
 
-and overlap_flow_ff f1 f2 :bool = 
-  let pr = !print_flow_formula in
-  Gen.Debug.no_2 "subsume_flow_ff" pr pr string_of_bool overlap_flow_ff_x f1 f2
+(* and overlap_flow_ff f1 f2 :bool =  *)
+(*   let pr = !print_flow_formula in *)
+(*   Gen.Debug.no_2 "subsume_flow_ff" pr pr string_of_bool overlap_flow_ff_x f1 f2 *)
 
 and get_flow_from_stack c l pos = 
   try
@@ -577,9 +589,9 @@ and get_flow_from_stack c l pos =
 	  Err.error_loc = pos;
 	  Err.error_text = "the flow var stack \n"^
 		  (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
-			  (let rr = h.formula_store_value.formula_flow_interval in
-			  (string_of_int (fst rr))^(string_of_int (snd rr)))^" ")) l))^
-		  "\ndoes not contain "^c}
+			  (string_of_flow (h.formula_store_value.formula_flow_interval) ^" "))) l))^
+		  "\ndoes not contain "^c
+   }
 
 and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = n}
@@ -4176,14 +4188,14 @@ and res_retrieve stab clean_res fl =
 	if clean_res then  
 		try 
 			let r = Some (Hashtbl.find stab res) in
-			(if (subsume_flow !exc_flow_int (Exc.get_hash_of_exc fl)) then (Hashtbl.remove stab res) else ());
+			(if (subsume_flow !exc_flow_int (exlist # get_hash fl)) then (Hashtbl.remove stab res) else ());
 			r
 		with Not_found -> None
 	else None
 
 	
 and res_replace stab rl clean_res fl =
-	if clean_res&&(subsume_flow !exc_flow_int (Exc.get_hash_of_exc fl)) then 
+	if clean_res&&(subsume_flow !exc_flow_int (exlist # get_hash fl)) then 
 		((Hashtbl.remove stab res);
 		match rl with 
 			| None -> () 
@@ -4957,7 +4969,7 @@ let rec splitter (c:context)
 	      else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
           else (* let t_caught = intersect_flow nf
                   ff.formula_flow_interval in *)
-	        let t_escape_lst = subtract_flow ff.formula_flow_interval nf in
+	        let t_escape_lst = subtract_flow_list ff.formula_flow_interval nf in
             (Some (conv_elim_res cvar b elim_ex_fn), (* change caught item to normal flow *)
 	        conv_lst b t_escape_lst)
       | OCtx (b1,b2) -> 
