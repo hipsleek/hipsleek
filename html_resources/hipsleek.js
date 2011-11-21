@@ -1,3 +1,72 @@
+/**
+ Display module to populate content of the HTML
+ @author Vu An Hoa
+ */
+
+function getHTML(obj) {
+	var result = "<div class=\"toggle_on_click " + obj.type + "\"";
+	if (obj.type == "proc") {
+		result += " id=\"content-proc-" + obj.name + "\">";
+	} else if (obj.type == "precnd_arracc") {
+		result += ">" + "Array access";
+	} else if (obj.type == "precnd_arrupdt") {
+		result += ">" + "Array update";
+	} else if (obj.type == "precnd") {
+		result += ">" + "Procedure call";
+	}	else if (obj.type == "post") {
+		result += ">" + "Post-condition";
+	} else if (obj.type == "assert") {
+		result += ">" + "Assertion";
+	} else if (obj.type == "pureimply") {
+		result += ">" + obj.formula;
+	} else result += ">";
+	result += "<div class=\"childs\">";
+	if (obj.childs != null) {
+		for(var i = 0; i < obj.childs.length; i++) {
+			result += getHTML(obj.childs[i]);
+		}
+	}
+	result += "</div>";
+	result += "</div>";
+	return result;
+}
+
+var currently_displayed_id = "";
+
+// Set up the HTML DOM
+function setup() {
+	// Set the file name in the header
+	$("#header").html(srcfilename);
+
+	// Generate HTML content and set up the navigation panel with appropriate call back functions
+	var content_proc = "";
+	for(i = 0; i < jsonproof.length; i++) {
+		var p = jsonproof[i];
+		if (p.type == "proc") {
+			content_proc += getHTML(p);
+			var navid = "nav-proc-" + p.name;
+			$("#nav-proc-list").append("<li><span id=\"" + navid + "\">" + p.name + "</span></li>");
+			$("#" + navid).click(function(){
+				var orgid = this.id.substring("3");
+				if (currently_displayed_id != "") {
+					$("#content"+currently_displayed_id).hide();
+					$("#nav"+currently_displayed_id).removeClass("selected");
+				}
+				$("#"+this.id).addClass("selected");
+				$("#content"+orgid).show();
+				currently_displayed_id = orgid;
+			});
+		}
+	}
+	$("#content-proc").html(content_proc);
+	for(i = 0; i < jsonproof.length; i++) {
+		var p = jsonproof[i];
+		if (p.type == "proc") {
+			$("#content-proc-" + p.name).hide();
+		}
+	}
+}
+
 /*
  Script obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
  */

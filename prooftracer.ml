@@ -390,6 +390,7 @@ let log_proof prf =
 (* The resources (i.e. the 4 files hipsleek.css, hipsleek.js, plus.gif, minus.gif) should be put in the same directory as the executable *)
 let resources_dir_url = "file://" ^ Gen.get_path Sys.executable_name
 
+
 let html_output = ref ""
 
 let html_output_file = ref ""
@@ -402,7 +403,9 @@ let convert_to_html s =
 		res
 
 let push_proc proc = let unmin_name = Cast.unmingle_name proc.Cast.proc_name in 
-	html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "\n<ul>" (* ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>" *)
+	begin
+		html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "\n<ul>"; (* ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>" *)
+	end
 
 let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
 
@@ -415,7 +418,6 @@ let push_list_failesc_context_struct_entailment lctx sf =
 
 let push_list_partial_context_formula_entailment lctx sf =
 	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_partial_context lctx) ^ Cprinter.html_vdash ^ (Cprinter.html_of_formula sf) 
-
 
 (* let push_list_failesc_context ctx =
 	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>"
@@ -513,10 +515,13 @@ let html_of_hip_source src =
 				(new_accumulated,new_line_no)) ("",1) srclines in
 		"<table>" ^ res ^ "</table>"
 	
+(* An Hoa : experiment with JSON storage of proof *)
+let jsonproof = ref "var jsonproof = ["
 
 let initialize_html source_file_name = let source = (Gen.SysUti.string_of_file source_file_name) in
 	let source_html = html_of_hip_source source in
 	begin
+	jsonproof := "var srcfilename = " ^ (strquote source_file_name) ^ ";" ^ !jsonproof;
 	html_output_file := source_file_name ^ "_proof.html";
 	html_output := 
 "<html>
@@ -538,8 +543,105 @@ let post_process_html () = 	html_output := !html_output ^
 </body>
 </html>"
 		
+
+(* An Hoa : experiment with JSON storage of proof *)
+
+(* End a json object by closing the array enclosing the collection of childs and then the object itself by a closing brace; the final comma is used to separate array elements *)
+let end_object () =
+	jsonproof := !jsonproof ^ "\n]},"
+
+let add_proc proc =
+	let unmin_name = Cast.unmingle_name proc.Cast.proc_name in
+		jsonproof := !jsonproof ^ "
+{	type : \"proc\",
+	name : " ^ (strquote unmin_name) ^ ",
+	childs : ["
+
+let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
+
+let start_with s p = if (String.length s >= String.length p) then
+		String.sub s 0 (String.length p) = p
+	else false
+
+let add_list_failesc_context_struct_entailment lctx sf =
+	jsonproof := !jsonproof ^ "
+{
+	type : \"listfailesc\",
+	context : " ^ (strquote (Cprinter.html_of_list_failesc_context lctx)) ^ ", 
+	fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ ",
+	childs : ["
+
+let add_list_partial_context_formula_entailment lctx sf =
+	jsonproof := !jsonproof ^ "
+{
+	type : \"listfailesc\",
+	context : " ^ (strquote (Cprinter.html_of_list_partial_context lctx)) ^ ", 
+	fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ ",
+	childs : ["
+
+let add_pre fce = match fce with
+	| Cast.SCall {
+		Cast.exp_scall_type = t;
+		Cast.exp_scall_method_name = mn;
+		Cast.exp_scall_arguments = args;
+		Cast.exp_scall_is_rec = ir;
+		Cast.exp_scall_path_id = pid;
+		Cast.exp_scall_pos = pos } ->
+		let unmin_name = Cast.unmingle_name mn in
+		if List.mem unmin_name primitive_procs then false
+		else begin
+			let lineloc = line_number_of_pos pos in
+			let precndtype = if (start_with unmin_name "array_get_elm_at___") then
+					"precnd_arracc"
+				else if (start_with unmin_name "update___") then
+					"precnd_arrupdt"
+				else "precnd" in
+			jsonproof :=  !jsonproof ^ "
+		{	type : " ^ (strquote precndtype) ^ ",
+			line : " ^ (strquote lineloc) ^ ",
+			childs : [";
+			true
+		end
+	| _ -> failwith "push_pre: unexpected expr"
+		
+let add_assert_assume ae = match ae with
+	| Cast.Assert {
+		Cast.exp_assert_asserted_formula = fa;
+		Cast.exp_assert_assumed_formula = fas;
+		Cast.exp_assert_path_id = pid;
+		Cast.exp_assert_pos = pos } -> 
+	let lineloc = line_number_of_pos pos in
+		jsonproof := !jsonproof ^ "
+		{	type : \"assert\",
+			line : " ^ (strquote lineloc) ^ ",
+			childs : ["
+	| _ -> failwith "push_assert_assume: unexpected expr"
+
+let add_post () = 
+	jsonproof := !jsonproof ^ "
+	{	type : \"post\",
+		childs : ["
+
+(*let push_term () = jsonproof := 
+	!jsonproof ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"*)
+			
+let add_pure_imply ante conseq is_valid prover_name prover_input prover_output = 
+	jsonproof := !jsonproof ^ "\n				{ type : \"pureimply\"," ^ (*	prover_input : " ^ (strquote prover_input) ^ ",*) "	prover_output : " ^ (strquote prover_output) ^ ", prover : " ^ (strquote prover_name) ^ ", is_valid : " ^ (strquote (string_of_bool is_valid)) ^ ",	formula : " ^ (strquote ((Cprinter.html_of_pure_formula ante) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula conseq))) ^ "},"
+
+(* End of JSON proof generator *)
+
 let write_html_output () =
+	let resource_dir = (Gen.get_path Sys.executable_name) ^ "html_resources/" in
+	let template = Gen.SysUti.string_of_file (resource_dir ^ "hipsleek.html") in
+	let setup_script = !jsonproof ^ "\n];\n" in
+	let htmloutres = Str.global_replace (Str.regexp_string "//$SETUP_SCRIPT") setup_script template in
+	let htmloutres = Str.global_replace (Str.regexp_string "$$RESOURCE_DIR_URL$$") ("file://" ^ resource_dir) htmloutres in
+	(* let _ = print_endline !jsonproof in *)
 	let _ = post_process_html () in
 	let chn = open_out !html_output_file in
+	let chntest = open_out "testjason.html" in
 		output_string chn !html_output;
-		close_out chn;;
+		output_string chntest htmloutres;
+		close_out chn;
+		close_out chntest;;
+

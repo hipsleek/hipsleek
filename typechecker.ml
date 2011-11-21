@@ -131,6 +131,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
           				begin
           					Prooftracer.push_assert_assume e0;
+          					Prooftracer.add_assert_assume e0;
 							Tpdispatcher.push_suppress_imply_output_state ();
 							Tpdispatcher.unsuppress_imply_output ();
           				end in
@@ -157,6 +158,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           rs in 
 					let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                   			begin
+                  				Prooftracer.end_object ();
+                  				(* Prooftracer.end_object (); *)
+                  				Prooftracer.pop_div ();
                   				Prooftracer.pop_div ();
 								Tpdispatcher.restore_suppress_imply_output_state ();
                   			end in
@@ -515,6 +519,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             Tpdispatcher.push_suppress_imply_output_state ();
             Tpdispatcher.unsuppress_imply_output ();
             Prooftracer.push_pre e0;
+            Prooftracer.add_pre e0;
           (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
           end else false in
 
@@ -525,6 +530,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         let _ = if !print_proof && scall_pre_cond_pushed then 
           begin
             Prooftracer.pop_div ();
+            Prooftracer.end_object ();
             Tpdispatcher.restore_suppress_imply_output_state ();
             (* print_endline "OK.\n" *)
           end in 
@@ -633,6 +639,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = if !print_proof then
 			begin
 				Prooftracer.push_post ();
+				Prooftracer.add_post ();
 				Prooftracer.push_list_partial_context_formula_entailment ctx post;
 				Tpdispatcher.push_suppress_imply_output_state ();
 				Tpdispatcher.unsuppress_imply_output ();
@@ -659,6 +666,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = if !print_proof then 
     		begin
 	    		Tpdispatcher.restore_suppress_imply_output_state ();
+    			(* Prooftracer.end_object (); *)
+    			Prooftracer.end_object ();
     			Prooftracer.pop_div ();
     			Prooftracer.pop_div ();
 		    	(* print_endline "DONE!" *)
@@ -716,10 +725,18 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			let init_form = nox in
 			let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
 			let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-			let _ = if !print_proof then Prooftracer.push_proc proc in
+			let _ = if !print_proof then begin 
+				Prooftracer.push_proc proc;
+				Prooftracer.add_proc proc;
+				end
+			in
 			let pp, exc = try (* catch exception to close the section appropriately *)
 				(check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body, None) with | _ as e -> (false, Some e) in
-		    let _ = if !print_proof then Prooftracer.pop_div () in
+		    let _ = if !print_proof then begin
+					Prooftracer.pop_div ();
+					Prooftracer.end_object ();
+				end
+				in
 		    let _ = match exc with | Some e -> raise e | None -> () in
 			let result = if pp then begin
 							print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
