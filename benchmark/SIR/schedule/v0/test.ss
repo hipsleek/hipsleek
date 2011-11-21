@@ -10,15 +10,15 @@ dll<p,n> == self = null & n = 0
   or self::node2<_ ,_,p , q> * q::dll<self, n-1> // = q1 
   inv n >= 0;
 
-coercion self::dll<p,n> & a>=0 & b>=0 & n=a+b 
-  <-> self::dll<q,a>*q::dll<p,b>;
+//coercion self::dll<p,n> & a>=0 & b>=0 & n=a+b 
+//  <-> self::dll<q,a>*q::dll<p,b>;
 
-dll2<p,r,l,n> == self=r & p=l & n=0
+dll2<p,r,l,n> == self=r & p=l & n=0 // l: last node
   or self::node2<_,_,p,q> * q::dll2<self,r,l,n-1> // = q1 
   inv n >= 0;
 
-coercion self::dll2<p,r,l,n> & a>=0 & b>=0 & n=a+b 
-  <-> self::dll2<p,q,l1,a>*q::dll2<l1,r,l,b>;
+//coercion self::dll2<p,r,l,n> & a>=0 & b>=0 & n=a+b 
+//  <-> self::dll2<p,q,l1,a>*q::dll2<l1,r,l,b>;
 
 node2 get_first(node2 x)
   requires x::dll<p, n>//::node2<a,b,p,q> * p
@@ -101,6 +101,7 @@ node2 append_ele(node2 x, node2 a)
   ensures res::dll2<_,r,l, m> & m = n+1;
 
 
+/*
 void upgrade(int prio, int ratio, ref node2 prio_queue1, ref node2 prio_queue2, ref node2 prio_queue3)
 requires prio_queue1::dll2<p1,r1,z1,n1> * prio_queue2::dll2<p2,r2,z2,n2> * prio_queue3::dll2<p3,r3,z3,n3> &
   prio>0 & prio <=3 & ratio >=1
@@ -126,7 +127,7 @@ requires prio_queue1::dll2<p1,r1,z1,n1> * prio_queue2::dll2<p2,r2,z2,n2> * prio_
     node2 proc;
     node2 src_queue, dest_queue;
 
-    if (prio >= /*MAXPRIO*/3)
+    if (prio >= /*MAXPRIO 3)
 	return;
     if (prio == 1) {
       src_queue =  prio_queue1;
@@ -158,3 +159,4 @@ requires prio_queue1::dll2<p1,r1,z1,n1> * prio_queue2::dll2<p2,r2,z2,n2> * prio_
     }
   assume (false);
 }
+*/

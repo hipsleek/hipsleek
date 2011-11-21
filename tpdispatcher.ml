@@ -44,7 +44,7 @@ let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" 
 let sat_cache = ref (Hashtbl.create 200)
 let impl_cache = ref (Hashtbl.create 200)
 
-let prover_arg = ref "omega"
+let prover_arg = ref "oc"
 let external_prover = ref false
 let external_host_ports = ref []
 let webserver = ref false
@@ -319,8 +319,10 @@ let set_tp tp_str =
   prover_arg := tp_str;  
   let prover_str = ref [] in
   if tp_str = "dp" then tp := DP
-  else if tp_str = "omega" then
-	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
+  (*else if tp_str = "omega" then
+	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
+  else if (String.sub tp_str 0 2) = "oc" then
+    (Omega.omegacalc := tp_str; tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "cvcl" then 
 	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 

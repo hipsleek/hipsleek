@@ -37,7 +37,7 @@ if($root){
 else
 	{
 		$exempl_path = ".";
-		$exec_path = '../..';
+		$exec_path = '../';
 	}
 
 if($prover){
@@ -601,23 +601,13 @@ $output_file = "log";
 
 # list of file, string with result of each entailment&lemma....
 %sleek_files=(
-    "sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-                      ["sleek1.slk","Fail."],
-                      ["sleek10.slk","Valid.Fail."],
-                      ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-                      ["sleek3.slk","Valid.Valid.Fail.Valid."],
-                      ["sleek4.slk","Valid.Valid."],
-                      ["sleek6.slk","Valid.Valid."],
-                      ["sleek7.slk","Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-                      # slow in sleek8.slk due to search
-                      ["sleek8.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["sleek9.slk","Valid.Valid.Valid.Fail.Valid.Valid."],
-                      ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-                      #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-                      ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-                      ["imm/imm4.slk","Valid.Fail."],
-                      ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "sleek"=>[["err1.slk","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may."],
+			   ["err3.slk","must.must.must.must.must.must.may.must.must."],
+			   ["err4.slk","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid.Valid."],
+			   ["err5.slk","may.must.Valid.may.Valid.must.must.must.must.may.Valid.may.must."], #operators
+			   ["err6.slk","must.Valid.may.may.must.Valid."],
+			   ["err7.slk","Valid.must.must.must.must.Valid.may.may.Valid.must.must.Valid."]],
     "sleek_wo_lemma_check"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
               ["sleek1.slk","Fail."],
               ["sleek10.slk","Valid.Fail."],
@@ -770,7 +760,7 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      $exempl_path_full = "$exempl_path/sleek";
+      $exempl_path_full = "$exempl_path";
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
       }
@@ -782,32 +772,41 @@ sub sleek_process_file  {
 			{
 			print "Checking $test->[0]\n";
 			$output = `$sleek $script_arguments $exempl_path_full/$test->[0] 2>&1`;
+			#print $output;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
 			$pos = 0;
 			$r = "";
 			while($pos >= 0)
 			{
-				$i = index($output, "Valid",$pos);
-				$j = index($output, "Fail",$pos);
-				if ($i==-1 && $j == -1)
+				$i = index($output, "Valid.",$pos);
+				$j = index($output, "Fail.(must)",$pos);
+				$k = index($output, "Fail.(may)",$pos);
+				#print "i=".$i ." j=". $j. " k=" . $k;
+				if ($i==-1 && $j == -1 && $k == -1)
 					{$pos = -1;}
 				else
 				{
-					if(($i<$j || $j==-1)&& ($i>=0))
+					if((($i<$j || $j==-1) && ($i<$k || $k == -1))&& ($i>=0))
 					{
 						$pos=$i+3;
 						$r = $r ."Valid.";
 					}
-					else
+					elsif (($j<$k || ($k == -1))&& ($j>=0))
 					{
 						$pos=$j+3;
-						$r = $r ."Fail.";
+						$r = $r ."must.";
+					}
+					else
+					{
+						$pos=$k+3;
+						$r = $r ."may.";
 					}
 				}
 				if ($pos >=length($output)) 
 				{$pos = -1;}
 			}
+			#print "r=" . $r . "\n";
 			if($r !~ /^$test->[1]$/)
 			{
 				print "Unexpected result with : $test->[0]\n";
