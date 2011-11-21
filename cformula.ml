@@ -3051,7 +3051,7 @@ let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
 let false_ctx flowt pos = 
 	let x = mkFalse flowt pos in
-	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
+	Ctx ({(empty_es flowt pos) with es_formula = x; es_orig_ante = x; })
 
 let false_es flowt pos = 
   let x =  mkFalse flowt pos in
@@ -3059,7 +3059,7 @@ let false_es flowt pos =
 
 and true_ctx flowt pos = Ctx (empty_es flowt pos)
 
-let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos)
+let mkFalse_branch_ctx = ([], false_ctx mkFalseFlow no_pos)
 
 let rec contains_immutable_ctx (ctx : context) : bool =
   match ctx with
@@ -3356,7 +3356,7 @@ let isNonFalseListPartialCtx cl =
 let isNonFalseListFailescCtx cl = 
  List.exists (fun (_,el,ss)-> 
   let ess = (colapse_esc_stack el)@ss in
-  ((List.length ess) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ess )) cl
+  ((List.length ess) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ess)) cl
 
 let keep_failure_failesc_context ((c,es,sc): failesc_context) : failesc_context =
   (c,[],[])
@@ -3383,7 +3383,7 @@ let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isA
 (*       else (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) *)
 
 let remove_dupl_false (sl:branch_ctx list) = 
-  let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
+  let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc)) sl) in
   if nl==[] then 
     if (sl==[]) then [mkFalse_branch_ctx]
     else [List.hd(sl)]
@@ -3399,7 +3399,6 @@ let remove_dupl_false (sl:branch_ctx list) =
 let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
 
 let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
-
 
 let remove_dupl_false_pc_list (fs_list:list_partial_context) = 
   let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
@@ -3670,7 +3669,7 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 (*TODO: expand simplify_context to normalize by flow type *)
 and simplify_context (ctx:context):context = 
 	if (allFalseCtx ctx) then (false_ctx (mkFalseFlow) no_pos)
-								else  ctx
+	else  ctx
 		
 and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
 	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
@@ -4648,12 +4647,12 @@ let transform_partial_context f ((fail_c, succ_c):partial_context) : partial_con
   let s_res = List.map (fun (lbl, ctx) -> (lbl, transform_context f_c ctx) ) succ_c in
     (f_res,s_res)
 	
-let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failesc_context = 
+let transform_failesc_context f ((fail_c, esc_c, succ_c): failesc_context): failesc_context = 
   let ff,fe,fs = f in
-  let rf = List.map (fun (lbl, ctx) -> (lbl, transform_fail_ctx ff ctx) ) fail_c in
+  let rf = List.map (fun (lbl, ctx) -> (lbl, transform_fail_ctx ff ctx)) fail_c in
   let re = fe esc_c in
-  let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx) ) succ_c in
-  (rf, re,rs)
+  let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx)) succ_c in
+  (rf,re,rs)
     
 let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
   List.map (transform_partial_context f) c

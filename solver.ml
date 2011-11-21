@@ -1263,13 +1263,18 @@ and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
 
-
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
-  let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
-  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now prog (ref 1))) r in
+  Gen.Debug.no_2 "combine_list_failesc_context_and_unsat_now"
+    Cprinter.string_of_list_failesc_context
+    Cprinter.string_of_mix_formula
+    Cprinter.string_of_list_failesc_context
+    (fun _ _ -> combine_list_failesc_context_and_unsat_now_x prog ctx f) ctx f
+
+and combine_list_failesc_context_and_unsat_now_x prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
+  let r = transform_list_failesc_context (idf, idf, (combine_es_and prog f true)) ctx in
+  let r = transform_list_failesc_context (idf, idf, (elim_unsat_es_now prog (ref 1))) r in
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
-
 
 and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context = 
   let r = transform_context (combine_es_and prog f true) ctx in
@@ -2164,8 +2169,11 @@ and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_stat
   let f = es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
-  if not b then Ctx{es with es_unsat_flag = true } else 
-	false_ctx (flow_formula_of_formula es.es_formula) no_pos
+  if not b then Ctx { es with es_unsat_flag = true } 
+  else 
+    let fctx = false_ctx (flow_formula_of_formula es.es_formula) no_pos in
+    CF.transform_context (fun e -> CF.Ctx 
+      {e with CF.es_var_ctx_lhs = es.CF.es_var_ctx_lhs}) fctx
 
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula= match f with
   | Or _ -> elim_unsat_all prog f 
@@ -2473,9 +2481,11 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
 
 and heap_entail_struc_failesc_context (prog : prog_decl) (is_folding : bool) 
       (has_post: bool)(cl : failesc_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
-  Gen.Debug.no_1 "heap_entail_struc_failesc_context" (fun _ -> "?") (fun _ -> "?") (fun x -> 
-      heap_entail_struc_failesc_context_x prog is_folding
-          (has_post)(cl) (conseq) pos (pid) f to_string) conseq
+  Gen.Debug.ho_1 "heap_entail_struc_failesc_context" 
+    Cprinter.string_of_failesc_context 
+    (fun (cl, _) -> Cprinter.string_of_list_failesc_context cl) 
+    (fun x -> heap_entail_struc_failesc_context_x prog is_folding has_post cl
+    conseq pos pid f to_string) cl
 
 
 and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool) 
@@ -2888,9 +2898,12 @@ and heap_entail_variance_x
   let ctx = (CF.Ctx es) in
 
   if CF.isAnyFalseCtx ctx then (* Unreachable state *)
-	  let _ = Debug.print_info "Termination" "Unreachable state" loc in
-	  let _ = if !print_proof then Prooftracer.push_term_checking loc false in
-	  let _ = if !print_proof then Prooftracer.pop_div () in ()
+    let _ = Debug.print_info "Termination" "Unreachable state" loc in
+    let _ = if !print_proof then 
+      Prooftracer.push_term_checking loc false;
+      Prooftracer.push_pop_term_unreachable_context es.CF.es_var_ctx_lhs;
+      Prooftracer.pop_div () in
+	  ()
   else
 	  let _ = if !print_proof then Prooftracer.push_term_checking loc true in
 	  let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e ->
@@ -7304,6 +7317,14 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
   ^"\n") pos; 
   let res,prf = heap_entail_failesc_prefix_init prog is_folding  has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2")) in
   (CF.list_failesc_context_simplify res,prf)
+
+let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
+	(cl : list_failesc_context)(conseq:struc_formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
+  let pr = Cprinter.string_of_list_failesc_context in
+  Gen.Debug.ho_1 "heap_entail_struc_list_failesc_context_init"
+  pr (fun (cl, _) -> pr cl)
+  (fun _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq
+  pos pid) cl
   
 
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)

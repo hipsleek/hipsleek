@@ -38,28 +38,29 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
 	  | Cformula.ECase b ->
-		List.for_all (fun (c1, c2) -> 
-		  let mn = Cast.unmingle_name (proc.Cast.proc_name) in
-		  let f_formula = fun f -> None in
-		  let f_b_formula (pf, il) = match pf with
-			| CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
-			| _ -> None
-		  in
-		  let f_exp = function
-			| CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
-			| _ -> None
-		  in
-		  let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
-		  (* Termination: Add source condition *)
-		  let nctx = CF.transform_context (fun es ->
-			CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in
+		  List.for_all (fun (c1, c2) ->
+        (* Termination: Add function name into names of its variables *)
+		    let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+		    let f_formula = fun f -> None in
+		    let f_b_formula (pf, il) = match pf with
+			    | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
+			    | _ -> None
+		    in
+		    let f_exp = function
+			    | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+			    | _ -> None
+		    in
+		    let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
+		    (* Termination: Add source condition *)
+		    let nctx = CF.transform_context (fun es ->
+			    CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in
 
-		  (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+		    let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
 		  
-		  let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
-		  let r = check_specs_a prog proc nctx c2 e0 in
-		  (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
-		  r) b.Cformula.formula_case_branches
+		    let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
+		    let r = check_specs_a prog proc nctx c2 e0 in
+		    (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
+		    r) b.Cformula.formula_case_branches
 	  | Cformula.EBase b ->
 	        let nctx = 
 	          if !Globals.max_renaming 
@@ -69,8 +70,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 	        r
 	  | Cformula.EVariance b ->
-			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
-			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
+			  let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
+          CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
+			    CF.es_var_label = b.CF.formula_var_label}) ctx in
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
             let _ = post_pos#set (CF.pos_of_formula post_cond) in
@@ -170,27 +172,30 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (ps@res)
 	          end
         | Assign ({ exp_assign_lhs = v;
-          exp_assign_rhs = rhs;
-          exp_assign_pos = pos}) -> begin
+                    exp_assign_rhs = rhs;
+                    exp_assign_pos = pos}) -> begin
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
-	        let fct c1 = 
-	          if (CF.subsume_flow_f !n_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
-	            let t = Gen.unsome (type_of_exp rhs) in
-	            let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
-	            let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in
+	          
+            let fct c1 = 
+	            if (CF.subsume_flow_f !n_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
+	              let t = Gen.unsome (type_of_exp rhs) in
+	              let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
+	              let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in
                 let ctx1 = (CF.Ctx c1) in
                 let _ = CF.must_consistent_context "assign 1a" ctx1  in
                 (* TODO : eps bug below *)
-	            let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] CF.Flow_combine pos in
+	              let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] CF.Flow_combine pos in
                 let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in
-	            let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
+	              let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
                 let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in
-	            let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
+	              let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
                 let _ = CF.must_consistent_context "assign 4" resctx  in
-		        resctx 
-	          else (CF.Ctx c1) in
-	        let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
+		            resctx 
+	            else (CF.Ctx c1) 
+            in
+            
+	          let res = CF.transform_list_failesc_context (idf, idf, fct) ctx1 in
             let _ = CF.must_consistent_list_failesc_context "assign final" res  in
             res
 	      end
@@ -316,7 +321,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
 	        let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
 	        Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx)) pos;
-	        let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+          let else_ctx = combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
 	        Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx)) pos;
 	        let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
 	        let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
@@ -436,7 +441,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        (* free vars = linking vars that appear both in pre and are not formal arguments *)
           let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                                 (Gen.BList.difference_eq CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*))
-                                   (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
+                                (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
           (* free vars get to be substituted by fresh vars *)
           let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
           let renamed_spec = 
@@ -465,26 +470,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                     CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
                 (lb,estk,nlbctx)) sctx
           in
-          (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
-            (Cprinter.string_of_pos pos) ^ "\n" ^
-            (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
+          
           let renamed_spec = CF.subst_struc st1 renamed_spec in
           let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
           let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
           let pre2 = CF.subst_struc_pre st2 renamed_spec in
           let new_spec = (Cprinter.string_of_struc_formula pre2) in
-          (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in*)
           (* Termination checking *)
-          let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
+          let str_debug_variance = if (ir) then 
+            "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " 
+            ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
           let _ = Debug.devel_pprint (str_debug_variance) pos in
           let _ = if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
             (* Termination: Add a false entail state for 
              * unreachable recursive call if variance exists *)
             var_checked_list := !var_checked_list @ [(
-              {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
+              {(CF.false_es CF.mkFalseFlow pos) with 
+                  CF.es_var_label = Some (-1); 
+                  CF.es_var_loc = pos; }, 
               CF.empty_ext_variance_formula)];
           in 
-          (*print_string (str_debug_variance ^ "\n");*) 
           
           (* TODO: call the entailment checking function in solver.ml *)
           let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
@@ -494,7 +499,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 						let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
             let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
 						let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
-            (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
+            (* The context returned by heap_entail_struc_list_failesc_context_init, rs, 
+             * is the context with unbound existential variables initialized & matched. *)
             let _ = PTracer.log_proof prf in
 
             (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
@@ -505,10 +511,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     
         (* Call check_pre_post with debug information *)
         let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
-          let _ = Cprinter.string_of_list_failesc_context in
+          let pr1 = Cprinter.string_of_list_failesc_context in
           let pr2 = Cprinter.summary_list_failesc_context in
           let pr3 = Cprinter.string_of_struc_formula in
-            Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+          Gen.Debug.loop_2_no "check_pre_post" pr3 pr1 pr1 (fun _ _ -> check_pre_post org_spec sctx should_output_html) org_spec sctx in
 
         let scall_pre_cond_pushed = if !print_proof then
           begin
@@ -871,15 +877,21 @@ let check_proc_wrapper_map_net prog (proc,num) =
 
 
 let rec equalpf_a f1 f2 =
+  let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
+                Tpdispatcher.suppress_imply_output () end in
   let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
   let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
+  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
   r1 & r2
 
 and equalpf f1 f2 = Gen.Debug.no_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
 
 and comparepf_a f1 f2 =
+  let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
+                Tpdispatcher.suppress_imply_output () end in
   let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
   let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
+  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
   if (r1 & r2) then 0
   else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
 	
