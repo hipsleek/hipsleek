@@ -626,7 +626,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
 								C.exp_try_path_id = fresh_strict_branch_point_id "";
 								C.exp_try_body =  (seq_elim b.C.exp_seq_exp1);
 								C.exp_catch_clause = (C.Catch{
-														  C.exp_catch_flow_type = !n_flow_int;
+														  C.exp_catch_flow_type = !norm_flow_int;
 														  C.exp_catch_flow_var = None;
 														  C.exp_catch_var = Some (Void, 
 														  (fresh_var_name "_sq_" b.C.exp_seq_pos.start_pos.Lexing.pos_lnum));
@@ -1750,7 +1750,7 @@ and set_pre_flow f =
   Gen.Debug.no_1 "set_pre_flow" pr pr set_pre_flow_x f
 
 and set_pre_flow_x f = 
-  let nf = {	Cformula.formula_flow_interval = !n_flow_int;
+  let nf = {	Cformula.formula_flow_interval = !norm_flow_int;
   Cformula.formula_flow_link =None} in
   let helper f0 = match f0 with
     | Cformula.EBase b-> Cformula.EBase {b with
@@ -1758,7 +1758,7 @@ and set_pre_flow_x f =
 		  Cformula.formula_ext_continuation = set_pre_flow_x b.Cformula.formula_ext_continuation}
     | Cformula.ECase b-> Cformula.ECase {b with 
           Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow_x c2))) b.Cformula.formula_case_branches;}
-    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,((* Cformula.substitute_flow_in_f !n_flow_int !top_flow_int  *)b2),b3)
+    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,((* Cformula.substitute_flow_in_f !norm_flow_int !top_flow_int  *)b2),b3)
 	| Cformula.EVariance b -> Cformula.EVariance {b with
 		  Cformula.formula_var_continuation = set_pre_flow_x b.Cformula.formula_var_continuation
 	  }

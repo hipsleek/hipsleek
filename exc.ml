@@ -389,7 +389,7 @@ module type ETABLE =
     val abnormal_flow : ident
     val stub_flow : ident
     val error_flow : ident
-    val n_flow_int : nflow ref
+    val norm_flow_int : nflow ref
     val ret_flow_int : nflow ref
     val spec_flow_int : nflow ref
     val top_flow_int : nflow ref 
@@ -426,31 +426,16 @@ module type ETABLE =
       method compute_hierarchy : unit
       method get_closest : nflow -> string
       method has_cycles : bool
-      method sort : unit
-      method clean : unit
+      (* method sort : unit *)
+      method remove_dupl : unit
       method clear : unit
       method sub_type_obj : ident -> ident -> bool 
     end
     val exlist : exc
    end;;
- 
-module ETABLE_NFLOW : ETABLE =
+
+module ET_const =
 struct
-  type nflow = (int*int)(*numeric representation of flow*)
-  type flow_entry = (ident * ident * nflow)
-  let empty_flow : nflow = (-1,0)
-  let n_flow_int = ref empty_flow
-  let ret_flow_int = ref empty_flow 
-  let spec_flow_int = ref empty_flow 
-  (* let top_flow_int = ref  ((-2,-2):nflow) *)
-  (* let exc_flow_int = ref  ((-2,-2):nflow)  *)
-  (* let error_flow_int  = ref  ((-2,-2):nflow)  *)
-  (* let false_flow_int =  (0,0)  *)
-  let top_flow_int = ref empty_flow 
-  let abnormal_flow_int = ref empty_flow
-  let raisable_flow_int = ref empty_flow
-  let error_flow_int  = ref empty_flow 
-  let false_flow_int = empty_flow 
   let flow = "flow"
   let top_flow = "__flow"
   let n_flow = "__norm"
@@ -462,8 +447,24 @@ struct
   let spec_flow = "__Spec"
   let false_flow = "__false"
   let abnormal_flow = "__abnormal"
-  let stub_flow = "__stub"
+  let stub_flow = "__stub" (* temp stub flow used by parser *)
   let error_flow = "__Error"
+end;;
+ 
+module ETABLE_NFLOW : ETABLE =
+struct
+  include ET_const
+  type nflow = (int*int)(*numeric representation of flow*)
+  type flow_entry = (ident * ident * nflow)
+  let empty_flow : nflow = (-1,0)
+  let norm_flow_int = ref empty_flow
+  let ret_flow_int = ref empty_flow 
+  let spec_flow_int = ref empty_flow
+  let top_flow_int = ref empty_flow 
+  let abnormal_flow_int = ref empty_flow
+  let raisable_flow_int = ref empty_flow
+  let error_flow_int  = ref empty_flow 
+  let false_flow_int = empty_flow 
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
   let get_closest_new elist (((min,max):nflow) as nf):(string * int) =
     if is_empty_flow nf then (false_flow,1)
@@ -472,9 +473,9 @@ struct
       match res with
         | [] -> ("## cannot find flow type",-2)
         | (s,_,nf2)::_ -> (s, 
-          if is_exact_flow_ne nf nf2 then 0
-          else if is_eq_flow_ne nf nf2 then 1
-          else -1)
+          if is_exact_flow_ne nf nf2 then 0 (* exact *)
+          else if is_eq_flow_ne nf nf2 then 1 (* full *)
+          else -1) (* partial *)
   let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2  
   let is_subsume_flow (n1,n2)(p1,p2) : bool =
     if (is_false_flow (p1,p2)) then true 
@@ -533,9 +534,9 @@ struct
     let rec lrr (f1:string)(f2:string):(((string*string*nflow) list)*nflow) =
 	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) elist in
 	  if ((List.length l1)==0) then 
-        let i = cnt # inc_and_get 
-          (* let j = (Globals.fresh_int()) in  *)
-        in ([(f1,f2,(i,i))],(i,i))
+        let i = cnt # inc_and_get in
+        let j = cnt # inc_and_get in
+          ([(f1,f2,(i,j))],(i,j))
 	  else 
         let ll,(mn,mx) = List.fold_left 
           (fun (t,(o_min,o_max)) (a,b,(c,d)) -> 
@@ -556,7 +557,7 @@ struct
     val mutable cnt = new counter 0
     method clear = 
       begin
-        n_flow_int := empty_flow;
+        norm_flow_int := empty_flow;
         ret_flow_int := empty_flow;
         spec_flow_int := empty_flow;
         top_flow_int := empty_flow;
@@ -565,11 +566,11 @@ struct
         error_flow_int := empty_flow;
         elist <- []
       end
-    method sort = 
+    method private sort = 
       begin
         elist <- sort_flow elist
       end
-    method clean =
+    method remove_dupl =
       begin
         elist <- remove_dups1 elist
       end
@@ -598,7 +599,7 @@ struct
       end
     method private reset_exc = 
       begin
-        let _ = self # clean in        
+        let _ = self # remove_dupl in        
         let _ = cnt # reset in
         let el = List.fold_left (fun acc (a,b,_) -> 
             if a="" then acc else (a,b,(0,0))::acc) [] elist in
@@ -606,7 +607,7 @@ struct
       end
     method private update_values =
       begin
-        n_flow_int := self # get_hash n_flow;
+        norm_flow_int := self # get_hash n_flow;
         ret_flow_int := self # get_hash ret_flow;
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
@@ -623,7 +624,11 @@ struct
       end
     method get_closest (((min,max):nflow) as nf):(string) = 
       begin
-        fst(get_closest_new elist nf) 
+        let (s,t)=(get_closest_new elist nf) in
+        s ^ (
+            if t==0 then "#E" (* exact ann *)
+            else if t!=1 then "#P" (* partial ann *)
+            else "") (* full *)
       end
     method has_cycles : bool =
       begin
@@ -662,29 +667,17 @@ end;;
 (* Khanh : TODO : module to support dflow *)
 module ETABLE_DFLOW  (* : ETABLE *) =
 struct
+  include ET_const
   type t = dflow
   type fe = (ident * ident * t)
   let empty_flow : dflow = ((-1,0),[])
-  let n_flow_int = ref empty_flow
+  let norm_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
   let top_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow
   let false_flow_int = empty_flow
-  let flow = "flow"
-  let top_flow = "__flow"
-  let n_flow = "__norm"
-  let cont_top = "__Cont_top"
-  let brk_top = "__Brk_top"
-  let c_flow = "__c-flow"
-  let raisable_class = "__Exc"
-  let ret_flow = "__Ret"
-  let spec_flow = "__Spec"
-  let false_flow = "__false"
-  let abnormal_flow = "__abnormal"
-  let stub_flow = "__stub"
-  let error_flow = "__Error"
   let is_empty_flow ((a,b),lst) = lst==[] || a<0 || (a>b)
   let is_subset_flow (f1:t) (f2:t) = is_subset_dflow f1 f2
 end;;
