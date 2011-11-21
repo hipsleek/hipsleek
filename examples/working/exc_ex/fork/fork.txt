@@ -1,0 +1,41 @@
+(i) exception with a thread id
+(ii) non-lexical (thread allowed to escape)
+(iii) new type, called thread
+(iv) some vars may be temporarily made inaccessible
+     to avoid race conflict?
+     alternatively, its access is tightly controlled.
+(v) vars can also be made into resources
+
+syntax:
+
+  thread t = fork f(v1,..,vn);
+  join(t)  ==> catch (thread v) -> 
+                  if v=t then add conjunctively to norm
+                  else rethrow
+
+
+Example:
+
+  void inc(Cell x)
+    requires x::Cell<i>
+    ensures x::Cell<i+1>;
+  {
+      // x::Cell<i>
+      x.val++;
+      // x::Cell<i+1>
+  }
+  
+  void pairinc(cell x, cell y)
+  requires x::Cell<i>*y::Cell<z>
+  ensures x::Cell<i+1>*y::Cell<z+1>;
+  {
+    // x::Cell<i>*y::Cell<z>
+    thread t = fork inc(x);
+    // y::Cell<z> & t=id & x!=null & flow __norm
+    // or x::Cell<i+1> & flow thread(id)
+    inc(y);
+    // y::Cell<z+1> & t=id & x!=null & flow __norm
+    // or x::Cell<i+1> & flow thread(id)
+    join(t);
+    // y::Cell<z+1> * x::Cell<i+1> & t=i & x!=null & flow __norm
+  }

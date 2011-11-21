@@ -2,6 +2,7 @@
 
 open Format
 open Globals 
+open Exc.ETABLE_NFLOW
 open Lexing 
 open Cast 
 open Cformula
@@ -250,7 +251,7 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
       else (fmt_cut(); fmt_string sep_str)  (* must be Before *)
     | None -> fmt_string sep_str in 
   pr_list_open_sep 
-      (fun () -> (f_o box_opt);  fmt_string op; fmt_string open_str; opt_cut())
+      (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
       (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt)) 
       (fun () -> f_s sep_opt sep_str) 
       f_empty  f xs
@@ -952,8 +953,13 @@ let pr_mix_formula_branches (f,l) = match f with
   | MCP.OnePF f -> pr_pure_formula_branches (f,l)
 
 let rec string_of_flow_formula f c = 
-  "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
+  "{"^f^","^string_of_flow c.formula_flow_interval^"="^(exlist # get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
+
+let rec string_of_nflow n = (exlist # get_closest n)
+
+let rec string_of_sharp_flow sf = match sf with
+  | Sharp_ct ff -> "#"^(string_of_flow_formula "" ff)
+  | Sharp_id id -> "#"^id
 
 let rec pr_formula_base e =
   match e with
@@ -1140,7 +1146,8 @@ let summary_partial_context (l1,l2) =  "PC("^string_of_int (List.length l1) ^", 
 
 let summary_failesc_context (l1,l2,l3) =  
 	"FEC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
-	(* ^" "^(summary_list_path_trace l3) *)^")"
+	^" "^(summary_list_path_trace l3)
+    ^")"
 
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
@@ -1334,12 +1341,23 @@ let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
-let pr_esc_stack_lvl ((i,_),e) = 
-  fmt_open_vbox 0;
-  pr_vwrap_naive ("level"^(string_of_int i)^" :")
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) e;
-  fmt_close_box ()
+let pr_esc_stack_lvl ((i,s),e) = 
+  if (e==[]) 
+  then
+    begin
+      fmt_open_hbox ();
+      fmt_string ("Try-Block:"^(string_of_int i)^":"^s^":");
+      fmt_close_box()
+    end
+  else
+    begin
+      fmt_open_vbox 0;
+      pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
+          (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
+		      pr_vwrap "State:" pr_context_short fs)) e;
+      fmt_close_box ()
+    end
+
 
 (* should this include must failures? *)
 let pr_failed_states e = match e with
@@ -1353,16 +1371,20 @@ let pr_successful_states e = match e with
   | _ ->   
   pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) e
+		  pr_vwrap "State:" pr_context_short fs)) e
 
-let pr_esc_stack e = match e with
-  | [] 
-  | [((0,""),[])] -> ()
-  | _ ->
+let is_empty_esc_state e =
+  List.for_all (fun (_,lst) -> lst==[]) e
+
+let pr_esc_stack e = 
+  if is_empty_esc_state e then ()
+  else
+    begin
     fmt_open_vbox 0;
-    pr_vwrap_naive "Escaped States:"
+    pr_vwrap_naive_nocut "Escaped States:"
     (pr_seq_vbox "" pr_esc_stack_lvl) e;
     fmt_close_box ()
+    end
 
 let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
@@ -1558,7 +1580,7 @@ let rec string_of_formula_exp_list l = match l with
 
 let string_of_flow_store l = (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
 	(let rr = h.formula_store_value.formula_flow_interval in
-	(string_of_int (fst rr))^"-"^(string_of_int (snd rr)))^" ")) l))
+	(string_of_flow rr))^" ")) l))
 
 
 let rec string_of_t_formula = function
@@ -1630,7 +1652,7 @@ let string_of_specs d =  List.fold_left  (fun a c -> a ^" "^(string_of_spec c ))
 
 let string_of_sharp st = match st with
 	| Sharp_ct t -> string_of_flow_formula "" t
-	| Sharp_v  f -> "flow_var "^f
+	| Sharp_id  f -> "flow_var "^f
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
@@ -1651,10 +1673,10 @@ let rec string_of_exp = function
 	        str1 ^ " " ^ str2
 	      end in
 	    string_of_formula_label pid s 
-	(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
-      a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
-	(*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
-      (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
+	        (*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+              a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
+	        (*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
+              (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
         id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
@@ -1684,7 +1706,7 @@ let rec string_of_exp = function
     end
   | Catch b->   
         let c = b.exp_catch_flow_type in
-	    "\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Gen.ExcNumbering.get_closest c)^ 
+	    "\n catch "^(string_of_flow c)^"="^(exlist # get_closest c)^ 
 	        (match b.exp_catch_flow_var with 
 	          | Some c -> (" @"^c^" ")
 	          | _ -> " ")^
@@ -1697,7 +1719,7 @@ let rec string_of_exp = function
 	exp_cond_else_arm = e2;
 	exp_cond_path_id = pid;
 	exp_cond_pos = l}) -> 
-        string_of_control_path_id_opt pid ("if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" )
+        string_of_control_path_id_opt pid ("if (" ^ id ^ ") [" ^(string_of_exp e1) ^ "]\nelse [" ^ (string_of_exp e2) ^ "]\n" )
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _ -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 
@@ -1707,9 +1729,9 @@ let rec string_of_exp = function
   | New ({exp_new_class_name = id;
 	exp_new_arguments = idl;
 	exp_new_pos = l}) -> 
-        "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
+        "new " ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
-	| EmptyArray b -> "Empty Array" (* An Hoa *)
+  | EmptyArray b -> "Empty Array" (* An Hoa *)
   | Print (i, l)-> "print " ^ (string_of_int i) 
   | Sharp ({exp_sharp_flow_type = st;
 	exp_sharp_val = eo;
@@ -1717,17 +1739,19 @@ let rec string_of_exp = function
 	exp_sharp_pos = l}) ->begin
       string_of_control_path_id_opt pid (
 	      match st with
-	        | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
-	            (match eo with 
-		          |Sharp_prog_var e -> "return " ^ (snd e)
-		          | _ -> "return")
-	          else  (match eo with 
-		        | Sharp_prog_var e -> "throw " ^ (snd e)
-		        | Sharp_finally e -> "throw " ^ e ^":"^(string_of_sharp st)
-		        | _ -> "throw "^(string_of_sharp st))
+	        | Sharp_ct f ->  
+                  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) 
+                  then
+	                (match eo with 
+		              |Sharp_var e -> "return " ^ (snd e)
+		              | _ -> "return")
+	              else  (match eo with 
+		            | Sharp_var e -> "throw " ^ (snd e)
+		            | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
+		            | _ -> "throw "^(string_of_sharp st))
 	        | _ -> (match eo with 
-		        | Sharp_prog_var e -> "throw " ^ (snd e)
-		        | Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
+		        | Sharp_var e -> "throw " ^ (snd e)
+		        | Sharp_flow e -> "throw " ^ e ^":" ^(string_of_sharp st)
 		        | _ -> "throw "^(string_of_sharp st)))end 
   | SCall ({exp_scall_type = _;
 	exp_scall_method_name = id;
@@ -2222,6 +2246,7 @@ Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
+Cformula.print_nflow := string_of_nflow;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
@@ -2229,9 +2254,12 @@ Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
+Cformula.print_esc_stack := string_of_esc_stack;;
+Cformula.print_failesc_context := string_of_failesc_context;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
+Cast.print_prog_exp := string_of_exp;;
 Cast.print_formula := string_of_pure_formula;;
 Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
