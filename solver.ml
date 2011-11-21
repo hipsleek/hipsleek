@@ -2314,9 +2314,7 @@ and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_
   let pr2 xs = pr_list (pr_pair pr_sv pr_sv) xs in
   Gen.Debug.no_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars 
 
-
-
-
+(* WN : why isn't this in cformula.ml? *)
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
 and elim_exists (f0 : formula) : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
@@ -2514,7 +2512,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 (* and heap_entail_struc_init_bug (prog : prog_decl) (is_folding : bool)  (has_post: bool) ante_flow (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = *)
 (*   let conseq_flow = CF.flow_formula_of_struc_formula conseq in *)
 (*   let post_check =  if CF.subsume_flow_f !Globals.error_flow_int conseq_flow then true else false in *)
-(*   let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int conseq_flow.CF.formula_flow_interval conseq ) in *)
+(*   let conseq = (Cformula.substitute_flow_in_struc_f !norm_flow_int conseq_flow.CF.formula_flow_interval conseq ) in *)
 (*   let (ans,prf) = heap_entail_struc_init prog is_folding has_post cl conseq pos pid in *)
 (*   (CF.convert_must_failure_to_value ans ante_flow conseq post_check, prf) *)
 
@@ -2524,7 +2522,7 @@ and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has
 
 and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
   let f1 = CF.struc_formula_is_eq_flow conseq !error_flow_int in
-  let f2 = CF.list_context_is_eq_flow cl !n_flow_int in
+  let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in
   if f1 && f2 then
     begin
       let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in

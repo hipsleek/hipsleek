@@ -12,31 +12,24 @@ data node{int i; node n;}
 // also no upcasting from e4<> to e1<>
 void m1 (ref int i, e1 z) throws e1
 	requires z::e1<>
-	//ensures i'=3 or eres::e1<> & i>0;
 	ensures 
-        eres::e4<> & i>0 & i'=2 & flow e4 
-        or eres::e1<> & i>0 & i'=i & flow e1
-        or z::e1<> & i<=0 & i'=i & flow __norm
+        //i>0 & i'=1 & flow e1 
+        true & (i>0 & i'=3 | i<=0 & i'=i+1) & flow __norm
         ;//'
 {   
-	try{
-		if (i>0) 
+    if (i>0) 
           { //assume false;
             try {
-            raise z; //new e1();
-            } catch (e2 v)
+              i=1;
+              raise z; //new e1();
+            } catch (e1 v)
             {
-              raise v;
-            };
-        dprint;
-          }
-	}catch (e2 v){
-		i=2;
-		raise new e4();
-        dprint;
-	};
-    assume false;
-	i=3;
+              i=2;
+              assert true;
+              dprint; // need to quantify eres
+             };
+    }
+	i=i+1;
     dprint;
 }
 

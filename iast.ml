@@ -1465,7 +1465,7 @@ let inbuilt_build_exc_hierarchy () =
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
   let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
-  let _ = if clean then (exlist # clean ) in
+  let _ = if clean then (exlist # remove_dupl ) in
 	if (exlist # has_cycles) then begin
 	  print_string ("Error: Exception hierarchy has cycles\n");
 	  failwith ("Exception hierarchy has cycles\n");
