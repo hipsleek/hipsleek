@@ -5,6 +5,7 @@
 open Globals
 open Sleekcommons
 open Gen.Basic
+open Exc.ETABLE_NFLOW
 
 module H = Hashtbl
 module I = Iast
@@ -74,7 +75,7 @@ let clear_cprog () =
 let clear_all () =
   Debug.clear_debug_log ();
   Tpdispatcher.clear_prover_log ();
-  Gen.ExcNumbering.clear_exc_list ();
+  exlist # clear;
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
@@ -114,7 +115,7 @@ let check_data_pred_name name :bool =
 (*     try *)
 (*       iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls; *)
 (*       Iast.build_exc_hierarchy true iprog; *)
-(*       Gen.ExcNumbering.c_h (); *)
+(*       Exc.c_h (); *)
 (*       let cddef = AS.trans_data iprog ddef in *)
 (*       if !Globals.print_core then  *)
 (*         print_string (Cprinter.string_of_data_decl cddef ^"\n"); *)
@@ -131,8 +132,8 @@ let process_pred_def pdef =
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog  h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
@@ -178,8 +179,8 @@ let process_pred_def_4_iast pdef =
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
@@ -265,7 +266,7 @@ let process_data_def ddef =
       try
 	iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
 	(* let _ = Iast.build_exc_hierarchy true iprog in *)
-	(* let _ = Gen.ExcNumbering.compute_hierarchy 2 () in *)
+	(* let _ = Exc.compute_hierarchy 2 () in *)
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	  !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls
