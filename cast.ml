@@ -144,6 +144,7 @@ and coercion_type = Iast.coercion_type
 and sharp_flow = 
   | Sharp_ct of F.flow_formula
   | Sharp_id of ident
+
         
 and sharp_val = 
   | Sharp_no_val (* captures flow without a value *)
@@ -359,6 +360,11 @@ and exp = (* expressions keep their types *)
   | While of exp_while
   | Sharp of exp_sharp
   | Try of exp_try
+
+
+let get_sharp_flow sf = match sf with
+  | Sharp_ct ff -> ff.F.formula_flow_interval
+  | Sharp_id id -> exlist # get_hash id
 
 let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized")
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
@@ -1147,8 +1153,7 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 (*   end *)
 (*   |  _ -> t1 = t2 *)
 
-let sub_type (t1 : typ) (t2 : typ) = 
-  Globals.sub_type t1 t2
+let sub_type (t1 : typ) (t2 : typ) = sub_type t1 t2
 
 and exp_to_check (e:exp) :bool = match e with
   | CheckRef _

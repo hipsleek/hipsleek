@@ -384,6 +384,20 @@ and isAnyConstFalse f = match f with
 			(is_false_flow fl.formula_flow_interval)
   | _ -> false
 
+
+and isAllConstFalse f = match f with
+  | Exists ({formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_branches = br; 
+    formula_exists_flow = fl;})
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_branches = br; 
+    formula_base_flow = fl;}) ->
+        (h = HFalse || MCP.isConstMFalse p || (List.filter (fun (_,f) -> CP.isConstFalse f) br <> []))||
+			(is_false_flow fl.formula_flow_interval)
+  | _ -> false
+
 and isConstDFalse f = 
   match f with
 	| EBase b -> (isAnyConstFalse b.formula_ext_base)  
@@ -544,11 +558,11 @@ and equal_flow_interval (t1:nflow) (t2:nflow) : bool =
 
 
 (*first subsumes the second*)
-(* and subsume_flow_x (n1,n2)(p1,p2) : bool =  *)
-(* if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2)  *)
+(* and subsume_flow_x (n1,n2)(p1,p2) : bool = *)
+(* if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) *)
 
 and subsume_flow (t1:nflow) (t2:nflow) : bool =
-  is_subset_flow t1 t2
+  is_subsume_flow t1 t2
 
 (* and subsume_flow n p : bool =  *)
 (*   let pr1 = pr_pair string_of_int  string_of_int in *)
@@ -703,7 +717,7 @@ and flow_formula_of_struc_formula (f:struc_formula):flow_formula=
   fold_left_compare_flows flow_list
 
 and substitute_flow_in_f to_flow from_flow (f:formula):formula = 
-  Gen.Debug.no_1 "substitute_flow_in_f" !print_formula !print_formula (fun _ -> substitute_flow_in_f_x to_flow from_flow f) f
+  Gen.Debug.no_3 "substitute_flow_in_f" string_of_flow string_of_flow !print_formula !print_formula (fun _ _ _ -> substitute_flow_in_f_x to_flow from_flow f) to_flow from_flow f
 
 and substitute_flow_in_f_x to_flow from_flow (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
@@ -2250,7 +2264,7 @@ and view_node_types (f:formula):ident list =
   Other utilities.
 *)
 
-and get_var_type v (f: formula): (typ * bool) = 
+and get_var_type_x v (f: formula): (typ * bool) = 
   let fv_list = fv f in
   let res_list = CP.remove_dups_svl (List.filter (fun c-> ((String.compare v (CP.name_of_spec_var c))==0)) fv_list) in
   match List.length res_list with
@@ -2258,7 +2272,14 @@ and get_var_type v (f: formula): (typ * bool) =
 	| 1 -> (CP.type_of_spec_var (List.hd res_list),true)
 	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "could not find a coherent "^v^" type"}
 
-and get_result_type (f: formula): (typ * bool) = get_var_type res f
+and get_var_type v (f: formula): (typ * bool) = 
+  let pr2 = pr_pair string_of_typ string_of_bool in
+  Gen.Debug.no_2 "get_var_type" 
+      pr_id !print_formula pr2
+      (fun _ _ -> get_var_type_x v f) v f
+
+
+and get_result_type (f: formula): (typ * bool) = get_var_type res_name f
 
   
 and disj_count (f0 : formula) = match f0 with
@@ -3402,7 +3423,7 @@ let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isA
 let remove_dupl_false (sl:branch_ctx list) = 
   let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
   if nl==[] then 
-    if (sl==[]) then [mkFalse_branch_ctx]
+    if (sl==[]) then []
     else [List.hd(sl)]
   else nl
 
@@ -3542,6 +3563,12 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
+
+let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
+  let pr = !print_list_failesc_context in
+  Gen.Debug.ho_2 "list_failesc_context_or" 
+      pr pr pr
+      (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
 
 
 let add_cond_label_partial_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,sl):partial_context) =
@@ -4184,24 +4211,8 @@ and case_to_disjunct_x f  =
 List.concat (List.map helper f)
 
 
-and res_retrieve stab clean_res fl =
-	if clean_res then  
-		try 
-			let r = Some (Hashtbl.find stab res) in
-			(if (subsume_flow !exc_flow_int (exlist # get_hash fl)) then (Hashtbl.remove stab res) else ());
-			r
-		with Not_found -> None
-	else None
 
-	
-and res_replace stab rl clean_res fl =
-	if clean_res&&(subsume_flow !exc_flow_int (exlist # get_hash fl)) then 
-		((Hashtbl.remove stab res);
-		match rl with 
-			| None -> () 
-			| Some e-> Hashtbl.add stab res e) 
-	else ()
-	
+
 (* start label - can be simplified *)	
 let get_start_label ctx = match ctx with
   | FailCtx _ -> ""

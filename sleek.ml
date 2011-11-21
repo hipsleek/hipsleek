@@ -18,6 +18,7 @@ open Globals
 open Sleekcommons
 open Sleekengine
 open Gen.Basic
+open Exc.ETABLE_NFLOW
 
 module H = Hashtbl
 module I = Iast
@@ -158,7 +159,7 @@ let main () =
   } in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = Exc.compute_hierarchy 3 () in
+  let _ = exlist # compute_hierarchy  in
   (* let _ = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =

@@ -633,7 +633,9 @@ and is_formula_arith (f:formula) :bool = match f with
         
 (* smart constructor *)
 
-and mkRes t = SpecVar (t, res, Unprimed)
+and mkRes t = SpecVar (t, res_name, Unprimed)
+
+and mkeRes t = SpecVar (t, eres_name, Unprimed)
 
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
 

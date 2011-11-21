@@ -76,7 +76,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	  | Cformula.EAssume (x,post_cond,post_label) ->
             let _ = post_pos#set (CF.pos_of_formula post_cond) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
-	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
+	        (* let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in *)
 	        if (Cformula.isAnyFalseCtx ctx1) then
 		      let _ = print_string ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 				  (Cprinter.string_of_context_short ctx)) in 
@@ -93,7 +93,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
                   let init_esc = [((0,""),[])] in
 		          let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in 
 			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
+	              (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 			      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
+	              (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
 			        let tmp_ctx = check_post prog proc res_ctx post_cond (Cformula.pos_of_formula post_cond) post_label in
@@ -387,7 +389,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed))
 	          vs field_types in
 	        let heap_node = CF.DataNode ({
-                CF.h_formula_data_node = CP.SpecVar (Named c, res, Unprimed);
+                CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_imm = false;
                 CF.h_formula_data_arguments =(*type_var :: ext_var :: *) heap_args;
@@ -403,7 +405,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        res
 	      end;
         | Null pos ->
-	          let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Named "", res, Unprimed)) pos) (CP.Null pos) pos in
+	          let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Named "", res_name, Unprimed)) pos) (CP.Null pos) pos in
 	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
@@ -542,7 +544,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_seq_pos = pos}) -> begin
 	        let ctx1 = check_exp prog proc ctx e1 post_start_label (*flow_store*) in 
             (* Astsimp ensures that e1 is of type void *)
-	        check_exp prog proc ctx1 e2 post_start_label (*flow_store*)
+            (* let _ = print_endline ("WN C1:"^(Cprinter.string_of_list_failesc_context ctx1)) in *)
+	        let ctx2= check_exp prog proc ctx1 e2 post_start_label (*flow_store*) in
+            (* let _ = print_endline ("WN C2:"^(Cprinter.string_of_list_failesc_context ctx2)) in *)
+            ctx2
 	      end
         | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ctx
         | This ({exp_this_type = t;
@@ -567,11 +572,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_path_id = pid;
           exp_sharp_pos = pos})	-> 
 	          (* let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
-	          (* let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
-	          (* let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
+	          let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in
+	          let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in
 	          let nctx = match v with 
 	            | Sharp_var (t,v) -> 
-		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
+                        let t1 = (get_sharp_flow ft) in
+                        let _ = print_endline ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) in
+                        let vr = if is_subset_flow t1 !raisable_flow_int then (CP.mkeRes t)
+                        else (CP.mkRes t) in
+		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr (CP.SpecVar (t, v, Primed)) pos)) pos in
 		              let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
 		              ctx1
 	            | Sharp_flow v -> 
@@ -619,8 +628,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	  CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
 	else ctx in
 	let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
-    (* let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in *)
-    (* let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
+    let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in
+    let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in
     (* if (Gen.is_empty cl) then fl
        else *)	    
     let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in
@@ -638,8 +647,8 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
           r ) pos ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
-  (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)
+  let _ = print_string ("got into check_post on the succCtx branch\n") in
+  let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in
   let _ = if !print_proof then
 	begin
 	  Prooftracer.push_post ();

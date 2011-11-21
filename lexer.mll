@@ -1,6 +1,6 @@
 {
 open Globals
-open Exc
+open Exc.ETABLE_NFLOW
 
 open Token
 (** A signature for specialized tokens. *)

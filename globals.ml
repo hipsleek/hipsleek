@@ -190,21 +190,6 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
-let rec sub_type (t1 : typ) (t2 : typ) = 
-  match t1,t2 with
-    | UNK, _ -> true
-    | Named c1, Named c2 ->
-          if c1=c2 then true
-          else c1=""
-    | Array (et1,d1), Array (et2,d2) ->
-          if (d1 = d2) then sub_type et1 et2
-          else false
-    | BagT et1, BagT et2 -> sub_type et1 et2
-    | List et1, List et2 -> sub_type et1 et2
-    | Int, NUM        -> true
-    | Float, NUM        -> true
-    | p1, p2 -> p1=p2
-;;
 
 
 let rec s_i_list l c = match l with 
@@ -254,7 +239,9 @@ let push_opt_val_rev opt v = match opt with
   | Some s -> Some (v, s)
 
 
-let res = "res"
+let res_name = "res"
+
+let eres_name = "eres"
 
 let self = "self"
 

@@ -1673,10 +1673,10 @@ let rec string_of_exp = function
 	        str1 ^ " " ^ str2
 	      end in
 	    string_of_formula_label pid s 
-	(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
-      a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
-	(*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
-      (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
+	        (*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+              a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
+	        (*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
+              (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
         id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
@@ -1719,7 +1719,7 @@ let rec string_of_exp = function
 	exp_cond_else_arm = e2;
 	exp_cond_path_id = pid;
 	exp_cond_pos = l}) -> 
-        string_of_control_path_id_opt pid ("if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" )
+        string_of_control_path_id_opt pid ("if (" ^ id ^ ") [" ^(string_of_exp e1) ^ "]\nelse [" ^ (string_of_exp e2) ^ "]\n" )
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _ -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 
@@ -1731,7 +1731,7 @@ let rec string_of_exp = function
 	exp_new_pos = l}) -> 
         "new " ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
-	| EmptyArray b -> "Empty Array" (* An Hoa *)
+  | EmptyArray b -> "Empty Array" (* An Hoa *)
   | Print (i, l)-> "print " ^ (string_of_int i) 
   | Sharp ({exp_sharp_flow_type = st;
 	exp_sharp_val = eo;
@@ -1739,14 +1739,16 @@ let rec string_of_exp = function
 	exp_sharp_pos = l}) ->begin
       string_of_control_path_id_opt pid (
 	      match st with
-	        | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
-	            (match eo with 
-		          |Sharp_var e -> "return " ^ (snd e)
-		          | _ -> "return")
-	          else  (match eo with 
-		        | Sharp_var e -> "throw " ^ (snd e)
-		        | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
-		        | _ -> "throw "^(string_of_sharp st))
+	        | Sharp_ct f ->  
+                  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) 
+                  then
+	                (match eo with 
+		              |Sharp_var e -> "return " ^ (snd e)
+		              | _ -> "return")
+	              else  (match eo with 
+		            | Sharp_var e -> "throw " ^ (snd e)
+		            | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
+		            | _ -> "throw "^(string_of_sharp st))
 	        | _ -> (match eo with 
 		        | Sharp_var e -> "throw " ^ (snd e)
 		        | Sharp_flow e -> "throw " ^ e ^":" ^(string_of_sharp st)

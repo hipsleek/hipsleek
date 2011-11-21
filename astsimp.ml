@@ -72,6 +72,9 @@ let is_view_recursive (n:ident) =
       true)
   else List.mem n !view_rec 
 
+
+
+
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
 
 (** An Hoa : List of undefined data types **)
@@ -106,6 +109,40 @@ and string_of_var_kind k = string_of_typ k
   (*   	| Unknown -> "unknown"  *)
   (*   	| Known d->  *)
   (*   ("known "^(string_of_typ d)) ) *)
+
+let res_retrieve stab clean_res fl =
+	if clean_res then  
+		try 
+			let r = Some (Hashtbl.find stab res_name) in
+			(if (CF.subsume_flow !raisable_flow_int (exlist # get_hash fl)) 
+            then (Hashtbl.remove stab res_name) 
+            else ());
+			r
+		with Not_found -> None
+	else None
+
+let res_retrieve stab clean_res fl =
+  let pr = pr_id in
+  Gen.Debug.no_eff_2 "res_retrieve" [true]
+      string_of_stab
+      pr pr_no
+      (fun _ _ -> res_retrieve stab clean_res fl) stab fl
+
+	
+let res_replace stab rl clean_res fl =
+	if clean_res&&(CF.subsume_flow !raisable_flow_int (exlist # get_hash fl)) then 
+		((Hashtbl.remove stab res_name);
+		match rl with 
+			| None -> () 
+			| Some e-> Hashtbl.add stab res_name e) 
+	else ()
+	
+let res_replace stab rl clean_res fl =
+  let pr = pr_id in
+  Gen.Debug.no_eff_2 "res_replace" [true]
+      string_of_stab
+      pr pr_no
+      (fun _ _ -> res_replace stab rl clean_res fl) stab fl
 
 let prim_buffer = Buffer.create 1024
 
@@ -169,7 +206,6 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
 
 let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list) 
       = (* AN HOA : modify return types *)
-  let pr_no x = "?" in
 	(*  let prd = pr_list Iprinter.string_of_proc_decl in*)
    let pr = pr_pair pr_no (pr_list Iprinter.string_of_rel_decl) in
   Gen.Debug.no_1 "gen_primitives" pr_no pr gen_primitives prog
@@ -938,7 +974,8 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   (*                      I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls; *)
   (*         } *)
   (* in *)
-  (* let _ = print_endline (exlist # string_of ) in *)
+  let _ = exlist # compute_hierarchy in
+  let _ = print_endline (exlist # string_of ) in
   let prog3 = prog4 in
   let prog2 = { prog4 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
@@ -967,7 +1004,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   then
     ( begin
       (* let _ = print_flush (Exc.string_of_exc_list (10)) in *)
-	  exlist # compute_hierarchy;
+	  (* exlist # compute_hierarchy; *)
       (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
 	  let prims,prim_rels = gen_primitives prog0 in
 	  (* let prims,prim_rels = ([],[]) in *)
@@ -1204,7 +1241,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
   let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
 
-  if (List.mem res cf_fv) || (List.mem res pf_fv) || (List.mem res pf_b_fvs) then
+  if (List.mem res_name cf_fv) || (List.mem res_name pf_fv) || (List.mem res_name pf_b_fvs) then
     Err.report_error
         {
             Err.error_loc = IF.pos_of_struc_formula view_formula1;
@@ -1792,7 +1829,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
         id = fresh_int () } in
     (ignore (List.map add_param all_args);
-	let _ = H.add stab res { sv_info_kind = cret_type;id = fresh_int () } in
+	let _ = H.add stab res_name { sv_info_kind = cret_type;id = fresh_int () } in
+	let _ = H.add stab eres_name { sv_info_kind = Named raisable_class ;id = fresh_int () } in
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
@@ -1804,7 +1842,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	else ()) ;
 	let _ = Cast.check_proper_return cret_type exc_list (dynamic_specs_list@static_specs_list) in
 	(* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
-	let _ = H.remove stab res in
+    (* let _ = print_endline "WN : removing result here" in *)
+	let _ = H.remove stab res_name in
 	let body =match proc.I.proc_body with
 	  | None -> None
 	  | Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
@@ -1837,7 +1876,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let final_dynamic_specs_list = dynamic_specs_list in
     let _ = 
       let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
-      let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((cret_type,res)::args) in
+      let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args) in
       if (ffv!=[]) then 
         Error.report_error { 
             Err.error_loc = no_pos; 
@@ -2586,7 +2625,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	    I.exp_catch_flow_var = cfv;
 	    I.exp_catch_body = cb;	
 	    I.exp_catch_pos = pos}->	
-            if not (exlist # sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
+            if not (exlist # sub_type_obj cvt c_flow) then Err.report_error { Err.error_loc = pos; 
 		    Err.error_text = "can not catch a not raisable object" }
             else begin
 		      match cv with
@@ -2607,7 +2646,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			            (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
 			            let new_bd, ct2 = helper cb in
 				        (*let _ = print_string ("\n rrr2 -> \n") in*)
-			            let ct = if (exlist # sub_type cvt raisable_class) then trans_type prog (Named cvt) pos else Named cvt in
+			            let ct = if (exlist # sub_type_obj cvt raisable_class) then trans_type prog (Named cvt) pos else Named cvt in
 				        E.pop_scope();
 				        let r = C.Catch {C.exp_catch_flow_type = (match ct with 
 						  | Named ot-> (exlist # get_hash ot) 
@@ -2769,7 +2808,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             | None -> 
                   if CP.are_same_types cret_type C.void_type then
                     (C.Sharp ({ C.exp_sharp_type = C.void_type;
-                    C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
+                    C.exp_sharp_flow_type = C.Sharp_ct 
+                      {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
                     C.exp_sharp_val = Cast.Sharp_no_val;
                     C.exp_sharp_unpack = false;
                     C.exp_sharp_path_id = pi;
@@ -3068,7 +3108,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       | Iast.Cast _ -> failwith (Iprinter.string_of_exp ie)
       | Iast.Break _ -> failwith (Iprinter.string_of_exp ie)
       | Iast.Continue _ -> failwith (Iprinter.string_of_exp ie)
-      | I.Raise ({ I.exp_raise_type = ot;
+      | I.Raise ({ 
+        I.exp_raise_type = ot;
         I.exp_raise_val = oe;
         I.exp_raise_from_final = ff;
         I.exp_raise_path_id = pi;
@@ -3094,7 +3135,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     else
                       let e_pos = Iast.get_exp_pos oe in
                       let ce, ct = helper oe in						
-                      if exlist # sub_type (string_of_typ ct) raisable_class then 							 
+                      if exlist # sub_type_obj (string_of_typ ct) raisable_class then 							 
                         let fn = (fresh_ty_var_name (ct) pos.start_pos.Lexing.pos_lnum) in
                         let vd = C.VarDecl { C.exp_var_decl_type = ct;
                         C.exp_var_decl_name = fn;
@@ -3123,7 +3164,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         (tmp_e2, Void)
                       else Err.report_error { Err.error_loc = pos; 
                       Err.error_text = "can not raise a not raisable object" }
-              | None -> (C.Sharp({C.exp_sharp_type = C.void_type;
+              | None -> (
+                C.Sharp({C.exp_sharp_type = C.void_type;
                 C.exp_sharp_unpack = false;
                 C.exp_sharp_flow_type = (
                     match ot with 
@@ -3762,7 +3804,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
       | Iformula.EAssume (b,y)->	(*add res, self*)
             (*let _ = H.add stab res { sv_info_kind = cret_type; } in*)
-            let nb = trans_formula prog true (self::res::fvars) false b stab true in				
+            let nb = trans_formula prog true (self::res_name::eres_name::fvars) false b stab true in				
             (*let _ = H.remove stab res in*)
             Cformula.EAssume ([],nb,y)
       | Iformula.ECase b-> 	
@@ -3809,7 +3851,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   let pre_fv = List.map CP.name_of_spec_var (Gen.BList.difference_eq (=) (Cformula.struc_fv r) tmp_vars) in
   let r = if ((List.mem self pre_fv) || (List.mem self post_fv))&&sp then
     Err.report_error { Err.error_loc = Cformula.pos_of_struc_formula r; Err.error_text ="self is not allowed in pre/postcondition";}
-  else if List.mem res pre_fv then
+  else if List.mem res_name pre_fv then
     Err.report_error{ Err.error_loc = Cformula.pos_of_struc_formula r; Err.error_text = "res is not allowed in precondition";}
   else r  in
   let _ = type_store_clean_up r stab in
@@ -3818,7 +3860,9 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let prb = string_of_bool in
-  Gen.Debug.no_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
+  Gen.Debug.no_eff_5 "trans_formula" [true] string_of_stab 
+      (add_str "quantify" prb) 
+      (add_str "cleanres" prb) Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
           (f0 : IF.formula) stab (clean_res:bool)) stab quantify clean_res fvars f0
 
@@ -3838,7 +3882,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_flow = fl;
             IF.formula_base_branches = br;
             IF.formula_base_pos = pos} ->(
-            let rl = Cformula.res_retrieve stab clean_res fl in
+            let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then 
               (gather_type_info_pure prog (IF.flatten_branches p br) stab;
               gather_type_info_heap prog h stab) else () in 					
@@ -3853,7 +3897,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                     Gen.HashUti.copy_keys fvars tmp_stab stab;))
                   else ()) 
               else () in 
-            (Cformula.res_replace stab rl clean_res fl);ch)
+            (res_replace stab rl clean_res fl);ch)
       | IF.Exists	{
             IF.formula_exists_qvars = qvars;
             IF.formula_exists_heap = h;
@@ -3861,7 +3905,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_flow = fl;
             IF.formula_exists_branches = br;
             IF.formula_exists_pos = pos} -> (
-            let rl = Cformula.res_retrieve stab clean_res fl in
+            let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then (gather_type_info_pure prog (IF.flatten_branches p br) stab;
             gather_type_info_heap prog h stab) else () in 
             let f1 = IF.Base {
@@ -3882,7 +3926,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
 		        Gen.HashUti.copy_keys fvars tmp_stab stab;))
 		      else ())
             else () in
-	        (Cformula.res_replace stab rl clean_res fl);ch) 
+	        (res_replace stab rl clean_res fl);ch) 
   in (* An Hoa : Add measure to combine partial heaps into a single heap *)
   let cf = helper f0 in
   let cf = CF.merge_partial_heaps cf in
@@ -5203,13 +5247,13 @@ and gather_type_info_formula_x prog f0 stab filter_res =
     | Iformula.Or b-> ( gather_type_info_formula_x prog b.Iformula.formula_or_f1 stab filter_res;
 	  gather_type_info_formula_x prog b.Iformula.formula_or_f2 stab filter_res)
     | Iformula.Exists b -> 
-	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_exists_flow in
+	      let rl = res_retrieve stab filter_res b.Iformula.formula_exists_flow in
 	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap);	
-	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_exists_flow) 
+	      (res_replace stab rl filter_res b.Iformula.formula_exists_flow) 
     | Iformula.Base b ->
-	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_base_flow in
+	      let rl = res_retrieve stab filter_res b.Iformula.formula_base_flow in
 	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap);
-	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow) 
+	      (res_replace stab rl filter_res b.Iformula.formula_base_flow) 
 
 and type_store_clean_up (f:Cformula.struc_formula) stab = () (*if stab to big,  -> get list of quantified vars, remove them from stab*)
   
@@ -6460,7 +6504,7 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   let gl_proc_args = gl_v@ f.Iast.proc_args in
   let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) gl_proc_args) in
   let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) gl_proc_args) in
-  let p = (res,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
+  let p = (res_name,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
   let strad_s = 
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
@@ -6477,7 +6521,7 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
       None -> None 
     | Some f->
           let f,_ = case_rename_var_decls f in
-          let r,_,_ = (case_normalize_exp prog h2 [(res,Unprimed)] f) in
+          let r,_,_ = (case_normalize_exp prog h2 [(res_name,Unprimed)] f) in
           Some r in
   {f with Iast.proc_static_specs =nst;
       Iast.proc_dynamic_specs = ndn;			
@@ -6492,8 +6536,8 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
   (*let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
   let tmp_views = List.map (fun c-> 
-	  let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
-	  let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
+	  let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
+	  let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
 	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
 	  { c with Iast.view_formula = 	wf;}) tmp_views in
   (*let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)

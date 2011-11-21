@@ -5,6 +5,7 @@
 open Globals
 open Sleekcommons
 open Gen.Basic
+open Exc.ETABLE_NFLOW
 
 module H = Hashtbl
 module I = Iast
@@ -74,7 +75,7 @@ let clear_cprog () =
 let clear_all () =
   Debug.clear_debug_log ();
   Tpdispatcher.clear_prover_log ();
-  Exc.clear_exc_list ();
+  exlist # clear;
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
@@ -131,8 +132,8 @@ let process_pred_def pdef =
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog  h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
@@ -178,8 +179,8 @@ let process_pred_def_4_iast pdef =
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);

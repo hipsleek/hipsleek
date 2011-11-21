@@ -525,7 +525,7 @@ cid:
 						if String.contains t '\'' then (* Remove the primed in the identifier *)
 							(Str.global_replace (Str.regexp "[']") "" t,Primed) 
 						else (t,Unprimed)
-   | `RES _                 	-> (res, Unprimed)
+   | `RES _                 	-> (res_name, Unprimed)
    | `SELFT _               	-> (self, Unprimed)
    | `THIS _               		-> (this, Unprimed)]];
 
