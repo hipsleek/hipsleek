@@ -1264,6 +1264,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 				print_endline (get_generated_prover_input ());
 				print_endline (">>> " ^ (string_of_prover !tp) ^ " ORIGINAL OUTPUT >>>");
 				print_endline (get_prover_original_output ()); *)
+				Prooftracer.add_pure_imply ante conseq r (string_of_prover !tp) (get_generated_prover_input ()) (get_prover_original_output ());
 				Prooftracer.pop_div ();
 				(* print_endline (">>> VERDICT : " ^ (if r then "VALID" else "INVALID") ^ " >>>"); *)
 			end
