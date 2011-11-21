@@ -661,3 +661,6 @@ end
 
 (* An Hoa : option to print proof *)
 let print_proof = ref false
+
+(* Create a quoted version of a string, for example, hello --> "hello" *)
+let strquote s = "\"" ^ s ^ "\""

@@ -600,46 +600,30 @@ $output_file = "log";
     );
 
 # list of file, string with result of each entailment&lemma....
+# the pattern to add a new program below: ["program_name", "default options", "lemma validity check results", "checkentail results"]
 %sleek_files=(
-    "sleek"=>[["sleek.slk", "","Valid.Valid.Valid.Fail."],
-                      ["sleek1.slk", "", "Fail."],
-                      ["sleek10.slk", "", "Valid.Fail."],
-                      ["sleek2.slk", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-                      ["sleek3.slk", "", "Valid.Valid.Fail.Valid."],
-                      ["sleek4.slk", "", "Valid.Valid."],
-                      ["sleek6.slk", "", "Valid.Valid."],
-                      ["sleek7.slk", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+    "sleek"=>[["sleek.slk", "","", "Valid.Valid.Valid.Fail."],
+                      ["sleek1.slk", "", "", "Fail."],
+                      ["sleek10.slk", "", "", "Valid.Fail."],
+                      ["sleek2.slk", "", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+                      ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek4.slk", "", "", "Valid.Valid."],
+                      ["sleek6.slk", "", "", "Valid.Valid."],
+                      ["sleek7.slk", "", "Valid.", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
                       # slow in sleek8.slk due to search
-                      ["sleek8.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["sleek9.slk", "", "Valid.Valid.Valid.Fail.Valid.Valid."],
-                      ["imm/imm1.slk", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+                      ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
+                      ["imm/imm1.slk", "", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
                       #["imm/imm2.slk", "", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["imm/imm2.slk", "", "Fail.Valid.Fail.Valid.Fail."],
-                      ["imm/imm3.slk", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
-                      ["imm/imm4.slk", "", "Valid.Fail."],
-                      ["imm/imm-hard.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "sleek_wo_lem"=>[["sleek.slk", "", "Valid.Valid.Valid.Fail."],
-              ["sleek1.slk", "", "Fail."],
-              ["sleek10.slk", "", "Valid.Fail."],
-              ["sleek2.slk", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-              ["sleek3.slk", "", "Valid.Fail.Valid."],
-              ["sleek4.slk", "", "Valid.Valid."],
-              ["sleek6.slk", "", "Valid.Valid."],
-              ["sleek7.slk", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-              # slow in sleek8.slk due to search
-              ["sleek8.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["sleek9.slk", "", "Valid.Fail.Valid.Valid."],
-              ["imm/imm1.slk", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
-              #["imm/imm2.slk", "", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["imm/imm2.slk", "", "Fail.Valid.Fail.Valid.Fail."],
-              ["imm/imm3.slk", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
-              ["imm/imm4.slk", "", "Valid.Fail."],
-              ["imm/imm-hard.slk", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "lemmas"=>[["lemmas/lemma_check01.slk", " --enable-check-lemmas ", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check02.slk", " --enable-check-lemmas ", "Fail.Valid."],
-              ["lemmas/lemma_check03.slk", " --enable-check-lemmas ", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check04.slk", " --enable-check-lemmas ", "Valid.Fail.Fail."],
-              ["lemmas/lemma_check06.slk", " --enable-check-lemmas ", "Valid.Valid.Valid.Fail.Fail.Fail."]]
+                      ["imm/imm2.slk", "", "", "Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk", "", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
+                      ["imm/imm4.slk", "", "", "Valid.Fail."],
+                      ["imm/imm-hard.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "lemmas"=>[["lemmas/lemma_check01.slk", " --enable-check-lemmas ", "Valid.Valid.Fail.", ""],
+              ["lemmas/lemma_check02.slk", " --enable-check-lemmas ", "Fail.Valid.", ""],
+              ["lemmas/lemma_check03.slk", " --enable-check-lemmas ", "Valid.Valid.Fail.", ""],
+              ["lemmas/lemma_check04.slk", " --enable-check-lemmas ", "Valid.Fail.Fail.", ""],
+              ["lemmas/lemma_check06.slk", " --enable-check-lemmas ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]]
 
     );
 
@@ -774,9 +758,9 @@ sub sleek_process_file  {
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
       }
-      if ($script_arguments=~"--disable-check-lemmas"){
-          $param =~ s/sleek/sleek_wo_lemma_check/;
-      }
+      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      if ($script_arguments=~"--enable-check-lemmas"){ $lem = 1; } 
+#      elsif ($script_arguments=~"--disable-check-lemmas"){ $lem = 0; }
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
 			{
@@ -785,31 +769,19 @@ sub sleek_process_file  {
 			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
-			$pos = 0;
-			$r = "";
-			while($pos >= 0)
-			{
-				$i = index($output, "Valid",$pos);
-				$j = index($output, "Fail",$pos);
-				if ($i==-1 && $j == -1)
-					{$pos = -1;}
-				else
-				{
-					if(($i<$j || $j==-1)&& ($i>=0))
-					{
-						$pos=$i+3;
-						$r = $r ."Valid.";
-					}
-					else
-					{
-						$pos=$j+3;
-						$r = $r ."Fail.";
-					}
-				}
-				if ($pos >=length($output)) 
-				{$pos = -1;}
-			}
-			if($r !~ /^$test->[2]$/)
+            my $lemmas_results = "";
+            my $entail_results = "";
+            my @lines = split /\n/, $output; 
+            foreach my $line (@lines) { 
+                if($line =~ m/Entailing lemma/){
+                    if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
+                    elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
+                }elsif($line =~ m/Entail/){
+                    if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                    elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                }
+            }
+			if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)))
 			{
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
