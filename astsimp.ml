@@ -408,46 +408,52 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 (* convert HeapNode2 to HeapNode *)
 let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
   match h0 with
-  | IF.Star (({ IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } as h))
-      ->
-      let tmp1 = convert_heap2_heap prog h1 in
-      let tmp2 = convert_heap2_heap prog h2
-      in
-        IF.Star
-          {
-            (h)
-            with
+    | IF.Star (({ IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.Star { (h) with
             IF.h_formula_star_h1 = tmp1;
-            IF.h_formula_star_h2 = tmp2;
-          }
-  | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
-  | _ -> h0
+            IF.h_formula_star_h2 = tmp2; }
+    | IF.Conj (({ IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.Conj { (h) with
+            IF.h_formula_conj_h1 = tmp1;
+            IF.h_formula_conj_h2 = tmp2; }
+    | IF.Phase (({ IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.Phase { (h) with
+            IF.h_formula_phase_rd = tmp1;
+            IF.h_formula_phase_rw = tmp2; }
+    | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
+    | IF.HTrue | IF.HFalse | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
   match f0 with
-  | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
-      let tmp1 = convert_heap2 prog f1 in
-      let tmp2 = convert_heap2 prog f2
-      in IF.Or { (f) with IF.formula_or_f1 = tmp1; IF.formula_or_f2 = tmp2; }
-  | IF.Base (({ IF.formula_base_heap = h0 } as f)) ->
-      let h = convert_heap2_heap prog h0
-      in IF.Base { (f) with IF.formula_base_heap = h; }
-  | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) ->
-      let h = convert_heap2_heap prog h0
-      in IF.Exists { (f) with IF.formula_exists_heap = h; }
+    | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
+          let tmp1 = convert_heap2 prog f1 in
+          let tmp2 = convert_heap2 prog f2
+          in IF.Or { (f) with IF.formula_or_f1 = tmp1; IF.formula_or_f2 = tmp2; }
+    | IF.Base (({ IF.formula_base_heap = h0 } as f)) ->
+          let h = convert_heap2_heap prog h0
+          in IF.Base { (f) with IF.formula_base_heap = h; }
+    | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) ->
+          let h = convert_heap2_heap prog h0
+          in IF.Exists { (f) with IF.formula_exists_heap = h; }
 
 and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 with
-	| Iformula.EAssume (b,tag)-> Iformula.EAssume ((convert_heap2 prog b),tag)
-	| Iformula.ECase b -> Iformula.ECase {b with Iformula.formula_case_branches = (List.map (fun (c1,c2)-> (c1,(convert_struc2 prog c2))) b.Iformula.formula_case_branches)};
-	| Iformula.EBase b -> Iformula.EBase{b with 
-		 Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
-		 Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation}
-	| Iformula.EVariance b -> Iformula.EVariance {b with
-									Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation
-		}
+  | Iformula.EAssume (b,tag)-> Iformula.EAssume ((convert_heap2 prog b),tag)
+  | Iformula.ECase b -> Iformula.ECase {b with Iformula.formula_case_branches = (List.map (fun (c1,c2)-> (c1,(convert_struc2 prog c2))) b.Iformula.formula_case_branches)};
+  | Iformula.EBase b -> Iformula.EBase{b with 
+		Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
+		Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation}
+  | Iformula.EVariance b -> Iformula.EVariance {b with
+		Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation
+	}
 
 and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula = 
-	List.map (convert_ext2 prog ) f0 
+  List.map (convert_ext2 prog ) f0 
 	  
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
@@ -460,8 +466,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
             (* if c = vname *)
             (* then [] *)
             (* else *)
-              (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
-              with | Not_found -> [])
+            (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
+            with | Not_found -> [])
       | _ -> [] in
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
     match f with
@@ -513,11 +519,11 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
     if not(mr==[]) 
-     then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
+    then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
     g
-    (* if DfsNG.has_cycle g *)
-    (* then failwith "View definitions are mutually recursive" *)
-    (* else g *)
+        (* if DfsNG.has_cycle g *)
+        (* then failwith "View definitions are mutually recursive" *)
+        (* else g *)
   in
 
   let g = build_graph view_decls0 in
@@ -1803,6 +1809,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	  | Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
 	(* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
 	let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+	(** An Hoa : compute the important variables **)
+	let ftypes, fnames = List.split args in
+	(* fsvars are the spec vars corresponding to the parameters *)
+	let imp_vars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+(*	let _ = print_string "Function parameters : " in                    *)
+(*	let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
+	(** An Hoa : end **)
 	let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
 	let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
 	let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
@@ -1811,6 +1824,15 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let final_static_specs_list =
 	  if Gen.is_empty static_specs_list then Cast.mkEAssume_norm proc.I.proc_loc
 	  else static_specs_list in
+	(** An Hoa : print out final_static_specs_list for inspection **)
+(*	let _ = print_string "Static spec list : " in                                      *)
+(*	let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in*)
+	let imp_spec_vars = collect_important_vars_in_spec final_static_specs_list in
+	let imp_vars = List.append imp_vars imp_spec_vars in
+	let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)
+(*	let _ = print_string "Important variables found: " in               *)
+(*	let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
+	(** An Hoa : end **)
 	let final_dynamic_specs_list = dynamic_specs_list in
     let _ = 
       let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
@@ -1823,6 +1845,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
              C.proc_name = proc.I.proc_mingled_name;
              C.proc_args = args;
              C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
+						 C.proc_important_vars = imp_vars; (* An Hoa *)
              C.proc_static_specs = final_static_specs_list;
              C.proc_dynamic_specs = final_dynamic_specs_list;
              C.proc_static_specs_with_pre =  [];
@@ -1832,6 +1855,45 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
              C.proc_loc = proc.I.proc_loc;} in 
 	     (E.pop_scope (); cproc))))
 
+(** An Hoa : collect important variables in the specification
+							Important variables are the ones that appears in the
+							post-condition. Those variables are necessary in order
+							to prove the final correctness. **)
+and collect_important_vars_in_spec (spec : Cformula.struc_formula) : (CP.spec_var list) =
+	(** An Hoa : Internal function to collect important variables in the an ext_formula **)	
+	let helper f =
+		match f with
+			| CF.ECase ({CF.formula_case_branches = branches;
+								CF.formula_case_exists = vars;
+								CF.formula_case_pos = pos }) -> 
+(*									let _ = print_endline "collect_important_vars_in_spec ==> ECase" in *)
+(*									let _ = print_endline (Cprinter.string_of_spec_var_list vars) in    *)
+										List.fold_left (fun x y -> List.append x (collect_important_vars_in_spec (snd y))) [] branches 
+			| CF.EBase (	{CF.formula_ext_explicit_inst = evars;
+								CF.formula_ext_implicit_inst = ivars;
+								CF.formula_ext_exists = qvars;
+								CF.formula_ext_base = base;
+								CF.formula_ext_continuation = cont;
+								CF.formula_ext_pos = pos }) ->
+(*									let _ = print_endline "collect_important_vars_in_spec ==> EBase" in                           *)
+(*									let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in              *)
+(*									let _ = print_endline ("ivars = " ^ (Cprinter.string_of_spec_var_list ivars)) in              *)
+(*									let _ = print_endline ("qvars = " ^ (Cprinter.string_of_spec_var_list qvars)) in              *)
+(*									let _ = print_endline ("formula = " ^ (Cprinter.string_of_formula base)) in                   *)
+(*									let _ = print_endline ("continuation formula = " ^ (Cprinter.string_of_struc_formula cont)) in*)
+(*									let _ = collect_important_vars_in_spec cont in                                                *)
+										ivars
+  		| CF.EAssume (vars,fa,_) -> []
+(*									let _ = print_endline "collect_important_vars_in_spec ==> EAssume" in         *)
+(*									let _ = print_endline ("vars = " ^ (Cprinter.string_of_spec_var_list vars)) in*)
+(*									let _ = print_endline ("formula = " ^ (Cprinter.string_of_formula fa)) in     *)
+(*										vars*)
+  		| CF.EVariance _ -> []
+	(** An Hoa : end helper **)
+	in
+		List.fold_left (fun x y -> List.append x (helper y)) [] spec 
+(** An Hoa : end collect_important_vars_in_spec **)
+	
 (* transform coercion lemma from iast to cast *)
 and trans_coercions (prog : I.prog_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =

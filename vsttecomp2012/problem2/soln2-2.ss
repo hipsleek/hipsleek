@@ -53,6 +53,7 @@ ensures  res::valueK<> ;
 {
  anode val1, val2, val11, val2c;
  anode tmp1, tmp2, tmp3;
+	bool b = isApply(t);
  if (isApply(t)) {
    // apply
    val1 = reduction(t.fn);
@@ -74,7 +75,8 @@ ensures  res::valueK<> ;
        tmp2 = new anode(0,val1.arg,val2c);
        t.fn = tmp1;
        t.arg = tmp2;
-       return reduction(t);
+       anode temp = reduction(t);
+       return temp;
      }
    }
  } else return t; 

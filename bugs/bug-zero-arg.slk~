@@ -1,0 +1,47 @@
+
+data node {
+     int val;
+     node next;
+}.
+
+pred Cell<i> == self::node<i,_> 
+inv self!=null.
+
+// should fail
+// parser problem?
+ checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@I.
+
+/*
+// should succeed
+checkentail (x::Cell<>@I) ; y::Cell<> |- y::Cell<>@I.
+// residue emp
+
+// should succeed
+checkentail (x::Cell<>@I) ; y::Cell<> |- y::Cell<>.
+// residue emp
+
+// should succeed with residue
+// cannot parse
+// checkentail (x::Cell<>@I) ; y::Cell<> |- (x::<>@I); true
+//residue: y::Cell<>.
+
+// should succeed with residue
+// cannot parse
+// checkentail x::Cell<>@I * y::Cell<> |- (y::Cell<>@I) ; true.
+//residue: x::Cell<>@I * y::Cell<>
+
+// should succeed with residue
+ checkentail (x::Cell<>@I) ; y::Cell<> |- y::Cell<>@I.
+//residue: emp
+
+// should succeed with residue
+// cannot parse
+// checkentail x::Cell<>@I * y::Cell<>  |- (y::Cell<>@I) ; true.
+//residue: x::Cell<>@I * y::Cell<>
+
+// fail
+checkentail x::Cell<>@I * y::Cell<>  |- x::Cell<> .
+checkentail x::Cell<>@I * y::Cell<>  |- y::Cell<> .
+
+checkentail x::Cell<> * y::Cell<>  |- x::Cell<> .
+*/

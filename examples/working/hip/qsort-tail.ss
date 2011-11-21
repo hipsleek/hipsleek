@@ -43,15 +43,21 @@ bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
 inv n >= 0;
 
 
+//coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> -> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg;
 /* lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg); */
 
-lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg);
+// @D ann below is not critical but makes it verify much quicker
+lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1>@D * t::node<lg, null> & lg1<=lg);
+//coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <- self::lseg<n-1, t, sm, lg1>@D * t::node<lg, null> & lg1<=lg;
 
 /*
 lemma "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2; 
 */
 
-lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> (exists lg1,sm2: self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & lg1<=sm2);
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2);
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  
+      <- self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D & lg1<=sm2;
 
 
 void qsort(ref node x, ref node tx)
