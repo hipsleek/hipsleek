@@ -325,7 +325,7 @@ and mkTrueFlow () =
 
 and mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
 
-and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link = None;}
+and mkNormalFlow () = { formula_flow_interval = !norm_flow_int; formula_flow_link = None;}
 
 and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_link = None;}
 
@@ -615,8 +615,8 @@ and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f 
 	formula_or_pos = b.formula_or_pos}
 		
 and set_flow_in_formula (n:flow_formula) (f:formula):formula = match f with
-  | Base b-> Base {b with formula_base_flow = if (subsume_flow_f !n_flow_int b.formula_base_flow) then n else b.formula_base_flow}
-  | Exists b-> Exists {b with formula_exists_flow = if (subsume_flow_f !n_flow_int b.formula_exists_flow) then n else b.formula_exists_flow}
+  | Base b-> Base {b with formula_base_flow = if (subsume_flow_f !norm_flow_int b.formula_base_flow) then n else b.formula_base_flow}
+  | Exists b-> Exists {b with formula_exists_flow = if (subsume_flow_f !norm_flow_int b.formula_exists_flow) then n else b.formula_exists_flow}
   | Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
 	formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
 	formula_or_pos = b.formula_or_pos}
@@ -626,7 +626,7 @@ and set_flow_to_link_f flow_store f pos = match f with
   | Base b-> Base {b with formula_base_flow = 
 			if (equal_flow_interval b.formula_base_flow.formula_flow_interval false_flow_int) then b.formula_base_flow
 			else
-			  if (subsume_flow !n_flow_int b.formula_base_flow.formula_flow_interval ) then
+			  if (subsume_flow !norm_flow_int b.formula_base_flow.formula_flow_interval ) then
 				match b.formula_base_flow.formula_flow_link with
 				  | None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
 				  | Some v -> get_flow_from_stack v flow_store pos
@@ -634,7 +634,7 @@ and set_flow_to_link_f flow_store f pos = match f with
   | Exists b-> Exists {b with formula_exists_flow = 
 			if (equal_flow_interval b.formula_exists_flow.formula_flow_interval false_flow_int) then b.formula_exists_flow
 			else
-			  if (subsume_flow !n_flow_int b.formula_exists_flow.formula_flow_interval ) then 
+			  if (subsume_flow !norm_flow_int b.formula_exists_flow.formula_flow_interval ) then 
 				match b.formula_exists_flow.formula_flow_link with
 				  | None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
 				  | Some v -> get_flow_from_stack v flow_store pos
@@ -4843,16 +4843,16 @@ and add_exist_vars_to_ctx_list (ctx : list_context) (evars	: CP.spec_var list) :
 
 
 and change_ret_flow_ctx ctx_list =
-  transform_list_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})
+  transform_list_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !norm_flow_int !ret_flow_int es.es_formula;})
     ,(fun c->c)) ctx_list
 
 and change_ret_flow_partial_ctx ctx_list = 
-  transform_list_partial_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})
+  transform_list_partial_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !norm_flow_int !ret_flow_int es.es_formula;})
     ,(fun c->c)) ctx_list
     
 and change_ret_flow_failesc_ctx ctx_list = 
   transform_list_failesc_context 
-    (idf,idf,(fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})) ctx_list
+    (idf,idf,(fun es -> Ctx{es with es_formula = substitute_flow_in_f !norm_flow_int !ret_flow_int es.es_formula;})) ctx_list
     
 let add_path_id ctx (pi1,pi2) = match pi1 with
 	| None -> ctx
@@ -4946,7 +4946,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
     (elim_ex_fn: context -> context) = 
   let res_typ, b_rez = get_exc_result_type c.es_formula in
   let ctx = (Ctx {c with es_formula = 
-      (substitute_flow_into_f !n_flow_int c.es_formula) } )  in
+      (substitute_flow_into_f !norm_flow_int c.es_formula) } )  in
   match cvar with
     | None -> ctx
     | Some (cvt,cvn) ->        

@@ -87,7 +87,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		        let r = 
 		          flow_store := [];
 		          let ctx1 = CF.set_flow_in_context_override
-			        { CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = None} ctx1 in
+			        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
 		          let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
                   (* need to add initial esc_stack *)
                   let init_esc = [((0,""),[])] in
@@ -186,7 +186,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
 	        let fct c1 = 
-	          if (CF.subsume_flow_f !n_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
+	          if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
 	            let t = Gen.unsome (type_of_exp rhs) in
 	            let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
 	            let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in
@@ -638,7 +638,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     (* let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
     (* if (Gen.is_empty cl) then fl
        else *)	    
-    let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in
+    let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)
         
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
