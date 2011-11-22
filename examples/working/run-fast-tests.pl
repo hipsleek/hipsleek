@@ -55,7 +55,7 @@ else{
         $prover = "$1";
     }
     else{
-	$prover = "omega";
+	$prover = "oc";
     }
 }
 

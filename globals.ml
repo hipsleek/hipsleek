@@ -2,9 +2,9 @@
 
 
 type ident = string
-type constant_flow = ident
+type constant_flow = string
 
-type nflow = (int*int)(*numeric representation of flow*)
+(* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
 	
@@ -190,21 +190,6 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
-let rec sub_type (t1 : typ) (t2 : typ) = 
-  match t1,t2 with
-    | UNK, _ -> true
-    | Named c1, Named c2 ->
-          if c1=c2 then true
-          else c1=""
-    | Array (et1,d1), Array (et2,d2) ->
-          if (d1 = d2) then sub_type et1 et2
-          else false
-    | BagT et1, BagT et2 -> sub_type et1 et2
-    | List et1, List et2 -> sub_type et1 et2
-    | Int, NUM        -> true
-    | Float, NUM        -> true
-    | p1, p2 -> p1=p2
-;;
 
 
 let rec s_i_list l c = match l with 
@@ -253,35 +238,10 @@ let push_opt_val_rev opt v = match opt with
   | None -> None
   | Some s -> Some (v, s)
 
-(* global constants *)
 
+let res_name = "res"
 
-let flow = "flow"
-let top_flow = "__flow"
-(*let any_flow = "__Any"*)
-let n_flow = "__norm"
-let cont_top = "__Cont_top"
-let brk_top = "__Brk_top"
-let c_flow = "__c-flow"
-let raisable_class = "__Exc"
-let ret_flow = "__Ret"
-let spec_flow = "__Spec"
-let false_flow = "__false"
-let abnormal_flow = "__abnormal"
-let stub_flow = "__stub"
-let error_flow = "__Error"
-
-let n_flow_int = ref ((-1,-1):nflow)
-let ret_flow_int = ref ((-1,-1):nflow)
-let spec_flow_int = ref ((-1,-1):nflow)
-let top_flow_int = ref ((-2,-2):nflow)
-let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
-let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
-(* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
-let false_flow_int = (0,0)
-let stub_flow_int = (-3,-3)
-
-let res = "res"
+let eres_name = "eres"
 
 let self = "self"
 
@@ -558,7 +518,8 @@ let set_tmp_files_path () =
 		Unix.Unix_error (_, _, _) -> (););
 	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
 	end
-	
+
+
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
@@ -700,3 +661,6 @@ end
 
 (* An Hoa : option to print proof *)
 let print_proof = ref false
+
+(* Create a quoted version of a string, for example, hello --> "hello" *)
+let strquote s = "\"" ^ s ^ "\""
