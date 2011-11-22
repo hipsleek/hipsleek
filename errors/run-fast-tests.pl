@@ -21,7 +21,8 @@ GetOptions( "stop"  => \$stop,
             "log-string=s" => \$str_log,
             "bags" => \$bags,
             "term" => \$term,
-            "lists" => \$lists
+            "lists" => \$lists,
+			"errors" => \$errors
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
@@ -37,7 +38,8 @@ if($root){
 else
 	{
 		$exempl_path = ".";
-		$exec_path = '../';
+		$exec_path = '../..';
+		$exec_errors_path = '../';
 	}
 
 if($prover){
@@ -166,6 +168,7 @@ $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip ";
 $sleek = "$exec_path/sleek ";
+if($errors){$sleek = "$exec_errors_path/sleek ";}
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
@@ -601,36 +604,35 @@ $output_file = "log";
 
 # list of file, string with result of each entailment&lemma....
 %sleek_files=(
-    "sleek"=>[["err1.slk","must.may.must.must.may.must.may.must.must.Valid.may.must."],
-               ["err2.slk","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may."],
-			   ["err3.slk","must.must.must.must.must.must.may.must.must."],
-			   ["err4.slk","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid.Valid."],
-			   ["err5.slk","may.must.Valid.may.Valid.must.must.must.must.may.Valid.may.must."], #operators
-			   ["err6.slk","must.Valid.may.may.must.Valid."],
-			   ["err7.slk","Valid.must.must.must.must.Valid.may.may.Valid.must.must.Valid."]],
-    "sleek_wo_lemma_check"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-              ["sleek1.slk","Fail."],
-              ["sleek10.slk","Valid.Fail."],
-              ["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-              ["sleek3.slk","Valid.Fail.Valid."],
-              ["sleek4.slk","Valid.Valid."],
-              ["sleek6.slk","Valid.Valid."],
-              ["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-              # slow in sleek8.slk due to search
-              ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["sleek9.slk","Valid.Fail.Valid.Valid."],
-              ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-              #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-              ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-              ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-              ["imm/imm4.slk","Valid.Fail."],
-              ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
-    "lemmas"=>[["lemmas/lemma_check01.slk", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check02.slk", "Fail.Valid."],
-              ["lemmas/lemma_check03.slk", "Valid.Valid.Fail."],
-              ["lemmas/lemma_check04.slk", "Valid.Fail.Fail."],
-              ["lemmas/lemma_check06.slk", "Valid.Valid.Valid.Fail.Fail.Fail."]]
-
+    "sleek"=>[["sleek.slk", "","", "Valid.Valid.Valid.Fail."],
+                      ["sleek1.slk", "", "", "Fail."],
+                      ["sleek10.slk", "", "", "Valid.Fail."],
+                      ["sleek2.slk", "", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+                      ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek4.slk", "", "", "Valid.Valid."],
+                      ["sleek6.slk", "", "", "Valid.Valid."],
+                      ["sleek7.slk", "", "Valid.", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+                      # slow in sleek8.slk due to search
+                      ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
+                      ["imm/imm1.slk", "", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+                      #["imm/imm2.slk", "", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["imm/imm2.slk", "", "", "Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk", "", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
+                      ["imm/imm4.slk", "", "", "Valid.Fail."],
+                      ["imm/imm-hard.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "lemmas"=>[["lemmas/lemma_check01.slk", " --enable-check-lemmas ", "Valid.Valid.Fail.", ""],
+              ["lemmas/lemma_check02.slk", " --enable-check-lemmas ", "Fail.Valid.", ""],
+              ["lemmas/lemma_check03.slk", " --enable-check-lemmas ", "Valid.Valid.Fail.", ""],
+              ["lemmas/lemma_check04.slk", " --enable-check-lemmas ", "Valid.Fail.Fail.", ""],
+              ["lemmas/lemma_check06.slk", " --enable-check-lemmas ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
+    "errors"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may."],
+			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
+			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid.Valid."],
+			   ["err5.slk","","may.must.Valid.may.Valid.must.must.must.must.may.Valid.may.must."], #operators
+			   ["err6.slk","","must.Valid.may.may.must.Valid."],
+			   ["err7.slk","","Valid.must.must.must.must.Valid.may.may.Valid.must.must.Valid."]]
     );
 
 if($timings){
@@ -641,7 +643,9 @@ if($timings){
 }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
-sleek_process_file();
+if ($errors) {sleek_errors_process_file();}
+else {sleek_process_file();}
+
 hip_process_file();
 close(LOGFILE);
 
@@ -760,62 +764,117 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      $exempl_path_full = "$exempl_path";
+      $exempl_path_full = "$exempl_path/sleek";
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
       }
-      if ($script_arguments=~"--disable-check-coercions"){
-          $param =~ s/sleek/sleek_wo_lemma_check/;
-      }
+      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      if ($script_arguments=~"--enable-check-lemmas"){ $lem = 1; } 
+#      elsif ($script_arguments=~"--disable-check-lemmas"){ $lem = 0; }
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
 			{
 			print "Checking $test->[0]\n";
-			$output = `$sleek $script_arguments $exempl_path_full/$test->[0] 2>&1`;
-			#print $output;
+            $script_args = $script_arguments." $test->[1]";
+			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
-			$pos = 0;
-			$r = "";
-			while($pos >= 0)
-			{
-				$i = index($output, "Valid.",$pos);
-				$j = index($output, "Fail.(must)",$pos);
-				$k = index($output, "Fail.(may)",$pos);
-				#print "i=".$i ." j=". $j. " k=" . $k;
-				if ($i==-1 && $j == -1 && $k == -1)
-					{$pos = -1;}
-				else
-				{
-					if((($i<$j || $j==-1) && ($i<$k || $k == -1))&& ($i>=0))
-					{
-						$pos=$i+3;
-						$r = $r ."Valid.";
-					}
-					elsif (($j<$k || ($k == -1))&& ($j>=0))
-					{
-						$pos=$j+3;
-						$r = $r ."must.";
-					}
-					else
-					{
-						$pos=$k+3;
-						$r = $r ."may.";
-					}
-				}
-				if ($pos >=length($output)) 
-				{$pos = -1;}
+            my $lemmas_results = "";
+            my $entail_results = "";
+            my @lines = split /\n/, $output; 
+            foreach my $line (@lines) { 
+                if($line =~ m/Entailing lemma/){
+                    if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
+                    elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
+                }elsif($line =~ m/Entail/){
+                    if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                    elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                }
+            }
+		    if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)))
+            {
+				print "Unexpected result with : $test->[0]\n";
+				$error_count++;
+				$error_files = $error_files . " " . $test->[0];
 			}
+            if($timings) {
+               # log_one_line_of_timings ($test->[0],$output);
+            }
+		}
+	}
+}
+
+sub sleek_errors_process_file  {
+	print "must/may errors tests:\n";
+  foreach $param (@param_list)
+  {
+      $exempl_path_full = "$exempl_path";
+      if ("$param" =~ "errors") {
+          print "Starting sleek must/may errors tests:\n";
+      }
+      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      if ($script_arguments=~"--enable-check-lemmas"){ $lem = 1; } 
+#      elsif ($script_arguments=~"--disable-check-lemmas"){ $lem = 0; }
+      $t_list = $sleek_files{"errors"};#$param
+      foreach $test (@{$t_list})
+			{
+			print "Checking $test->[0]\n";
+            $script_args = $script_arguments." $test->[1]";
+			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
+			print LOGFILE "\n======================================\n";
+	        print LOGFILE "$output";
+			# $pos = 0;
+			$r = "";
+			 my @lines = split /\n/, $output; 
+            foreach my $line (@lines) { 
+				#print $line . " locle\n";
+                if($line =~ m/Entail/){
+					$j = index($line, "Fail.(must)",0);
+				    $k = index($line, "Fail.(may)",0);
+                    if($line =~ m/Valid/) { $r = $r ."Valid."; }
+                    elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+					elsif($k >= 0)  { $r = $r ."may.";}
+                }
+            }
+			# while($pos >= 0)
+			# {
+				# $i = index($output, "Valid.",$pos);
+				# $j = index($output, "Fail.(must)",$pos);
+				# $k = index($output, "Fail.(may)",$pos);
+				# #print "i=".$i ." j=". $j. " k=" . $k;
+				# if ($i==-1 && $j == -1 && $k == -1)
+					# {$pos = -1;}
+				# else
+				# {
+					# if((($i<$j || $j==-1) && ($i<$k || $k == -1))&& ($i>=0))
+					# {
+						# $pos=$i+3;
+						# $r = $r ."Valid.";
+					# }
+					# elsif (($j<$k || ($k == -1))&& ($j>=0))
+					# {
+						# $pos=$j+3;
+						# $r = $r ."must.";
+					# }
+					# else
+					# {
+						# $pos=$k+3;
+						# $r = $r ."may.";
+					# }
+				# }
+				# if ($pos >=length($output)) 
+				# {$pos = -1;}
+			# }
 			#print "r=" . $r . "\n";
-			if($r !~ /^$test->[1]$/)
+			if($r !~ /^$test->[2]$/)
 			{
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}  
+			}
             if($timings) {
                # log_one_line_of_timings ($test->[0],$output);
-            }  
+            }
 		}
 	}
 }
