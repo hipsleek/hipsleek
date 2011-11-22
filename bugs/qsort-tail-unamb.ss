@@ -87,11 +87,10 @@ lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1  <-
 
 
 void qsort(ref node x, ref node tx)
-	requires x::bnd_tail<n, tx, sm, lg> 
+ requires x::bnd_tail<n, tx, sm, lg> & n>0
  case 
-{ n=0 -> ensures x'=null;
-  n=1 -> ensures x'::node<v,null> & tx'=x';
- (n<0|n>1) -> 
+{ n=1 -> ensures x'::node<v,null> & tx'=x' & x'=x;
+  n!=1 -> 
     ensures x'::ll_tail<n, tx', sm1, lg1> 
     & sm <= sm1 & lg1 <= lg ;
 }
@@ -130,7 +129,7 @@ void qsort(ref node x, ref node tx)
 			tx = ty;
             //dprint;
             assert x'::ll_tail<_, _, _, _>; //'
-            assume false;
+            //assume false;
 			return;
 		}
 	}
