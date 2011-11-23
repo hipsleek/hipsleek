@@ -24,7 +24,7 @@ relation unitdec(int[] a, int i, int j) ==
 
 bool searchzero(int[] a, int i, int j, ref int k)
 	requires [al,ah] dom(a,al,ah) & al <= i & j <= ah 
-				& unitdec(a, i, j) & induce(j - i)
+				& unitdec(a, i, j)
 	ensures res & i <= k' <= j & a[k'] = 0 or 
 				!res & alldiff(a, 0, i, j);
 {
