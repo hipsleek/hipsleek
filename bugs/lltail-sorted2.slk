@@ -4,29 +4,28 @@ data node {
 }.
 
 
-
+/*
 pred lseg<n, p, sm, lg> == case {
-  n=0 -> [] self=p & sm<=lg;
+  n=0 -> [] self=p & sm=lg;
  (n!=0) -> [nn] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
                & sm<=sm1 & nn=n-1; 
                //& (n-1<=0 & sm=sm1 | n-1>0 & sm<=sm1) & nn=n-1 ;
   }	inv n >= 0 & sm<=lg. //(n=0 & sm=lg | n>0 & sm<=lg).
  // inv n>=0 & (n<=1 & sm=lg | n>1 & sm<=lg). 
+*/
 
-/*
 pred lseg<n, p, sm, lg> == case {
   n=0 -> [] self=p & sm=lg;
  (n=1) -> [] self::node<sm, p> & sm=lg; //sm<=lg;
- (n<0|n>1) -> [] self::node<sm, r> * 
+ (n<0|n>1) -> [nn] self::node<sm, r> * 
            r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1;
   }
 	inv n >= 0 & sm<=lg.
-*/
 
 lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0 -> 
 (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
 
-lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1  <- 
+lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1>=1 & n2 >=0  <- 
 (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D 
      & lg1<=sm2).
 
