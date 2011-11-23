@@ -461,6 +461,24 @@ let sort_flow (xs:(ident * ident * nflow) list) =
 (* 	else (List.exists (fun c-> (cc c (c::visited))) sons) in	 *)
 (*   (cc top_flow [top_flow]) *)
 
+let sub_type_gen exlist (t1 : typ) (t2 : typ) = 
+  let rec sub t1 t2 =
+  match t1,t2 with
+    | UNK, _ -> true
+    | Named c1, Named c2 ->
+          if c1=c2 then true
+          else if c1="" then true
+          else exlist # sub_type_obj c1 c2
+    | Array (et1,d1), Array (et2,d2) ->
+          if (d1 = d2) then sub et1 et2
+          else false
+    | BagT et1, BagT et2 -> sub et1 et2
+    | List et1, List et2 -> sub et1 et2
+    | Int, NUM        -> true
+    | Float, NUM        -> true
+    | p1, p2 -> p1=p2 
+  in sub t1 t2
+
 module type ETABLE =
   sig
     type nflow
@@ -735,22 +753,22 @@ struct
       end
   end
   let exlist = new exc
-  let rec sub_type (t1 : typ) (t2 : typ) = 
-    match t1,t2 with
-      | UNK, _ -> true
-      | Named c1, Named c2 ->
-            if c1=c2 then true
-            else if c1="" then true
-            else exlist # sub_type_obj c1 c2
-      | Array (et1,d1), Array (et2,d2) ->
-            if (d1 = d2) then sub_type et1 et2
-            else false
-      | BagT et1, BagT et2 -> sub_type et1 et2
-      | List et1, List et2 -> sub_type et1 et2
-      | Int, NUM        -> true
-      | Float, NUM        -> true
-      | p1, p2 -> p1=p2
-  ;;
+  let sub_type = sub_type_gen exlist 
+  (*   match t1,t2 with *)
+  (*     | UNK, _ -> true *)
+  (*     | Named c1, Named c2 -> *)
+  (*           if c1=c2 then true *)
+  (*           else if c1="" then true *)
+  (*           else exlist # sub_type_obj c1 c2 *)
+  (*     | Array (et1,d1), Array (et2,d2) -> *)
+  (*           if (d1 = d2) then sub_type et1 et2 *)
+  (*           else false *)
+  (*     | BagT et1, BagT et2 -> sub_type et1 et2 *)
+  (*     | List et1, List et2 -> sub_type et1 et2 *)
+  (*     | Int, NUM        -> true *)
+  (*     | Float, NUM        -> true *)
+  (*     | p1, p2 -> p1=p2 *)
+  (* ;; *)
 end;;
 
 (* Khanh : TODO : module to support dflow *)
@@ -1034,21 +1052,22 @@ struct
       end
   end
   let exlist = new exc
-  let rec sub_type (t1 : typ) (t2 : typ) = 
-    match t1,t2 with
-      | UNK, _ -> true
-      | Named c1, Named c2 ->
-            if c1=c2 then true
-            else if c1="" then true
-            else exlist # sub_type_obj c1 c2
-      | Array (et1,d1), Array (et2,d2) ->
-            if (d1 = d2) then sub_type et1 et2
-            else false
-      | BagT et1, BagT et2 -> sub_type et1 et2
-      | List et1, List et2 -> sub_type et1 et2
-      | Int, NUM        -> true
-      | Float, NUM        -> true
-      | p1, p2 -> p1=p2
-  ;;
+  let sub_type = sub_type_gen exlist
+  (* let rec sub_type (t1 : typ) (t2 : typ) =  *)
+  (*   match t1,t2 with *)
+  (*     | UNK, _ -> true *)
+  (*     | Named c1, Named c2 -> *)
+  (*           if c1=c2 then true *)
+  (*           else if c1="" then true *)
+  (*           else exlist # sub_type_obj c1 c2 *)
+  (*     | Array (et1,d1), Array (et2,d2) -> *)
+  (*           if (d1 = d2) then sub_type et1 et2 *)
+  (*           else false *)
+  (*     | BagT et1, BagT et2 -> sub_type et1 et2 *)
+  (*     | List et1, List et2 -> sub_type et1 et2 *)
+  (*     | Int, NUM        -> true *)
+  (*     | Float, NUM        -> true *)
+  (*     | p1, p2 -> p1=p2 *)
+  (* ;; *)
 end;;
 
