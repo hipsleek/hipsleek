@@ -270,7 +270,7 @@ and exp_sharp = {
 }
     
 and exp_catch = { 
-    exp_catch_flow_type : dflow (* nflow *) ;
+    exp_catch_flow_type : nflow (* nflow *) ;
     exp_catch_flow_var : ident option;
     exp_catch_var : typed_ident option;
     exp_catch_body : exp;			
