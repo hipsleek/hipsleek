@@ -5,9 +5,9 @@ open Globals
 
 type nflow = (int*int)(*numeric representation of flow*)
 
-type lflow = (nflow list)
+(* type lflow = (nflow list) *)
 
-type dflow = nflow * lflow (* orig_exc, current list *)
+(* type dflow = nflow * lflow (\* orig_exc, current list *\) *)
 
 
 (*========================================*)
@@ -136,9 +136,9 @@ let list_pair_of_set s =
   = ((12,15),[(15,15)])
 *)
 
-let empty_flow : nflow = (-1,0)
+(* let empty_flow : nflow = (-1,0) *)
 
-let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
+(* let is_empty_flow ((a,b):nflow) = a<0 || (a>b) *)
 
 let is_subset_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2)
       = s2<=s1 && b1<=b2
@@ -159,14 +159,14 @@ let is_exact_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
 (* else is_exact_flow_ne f1 f2 *)
 
 
-let is_exact_lflow lst mf =
-  try 
-    let x = last lst 
-    in is_exact_flow_ne x mf
-  with _ -> false
+(* let is_exact_lflow lst mf = *)
+(*   try  *)
+(*     let x = last lst  *)
+(*     in is_exact_flow_ne x mf *)
+(*   with _ -> false *)
 
-let is_exact_dflow (mf, lst) =
-      is_exact_lflow lst mf
+(* let is_exact_dflow (mf, lst) = *)
+(*       is_exact_lflow lst mf *)
 
 let is_non_overlap_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
        b1<s2 || b2<s1
@@ -193,9 +193,9 @@ let is_eq_flow_ne (((s1,b1):nflow)) (((s2,b2):nflow)) =
 let union_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
       ((min s1 s2),(max b1 b2))
 
-let union_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-      if (is_empty_flow f1) || (is_empty_flow f2) then empty_flow
-      else union_flow_ne f1 f2
+(* let union_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
+(*       if (is_empty_flow f1) || (is_empty_flow f2) then empty_flow *)
+(*       else union_flow_ne f1 f2 *)
 
 let order_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
   if (is_subset_flow_ne f1 f2) then
@@ -230,64 +230,64 @@ let subtract_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
 (*   if is_empty_flow(f1) || is_empty_flow(f2) then [] *)
 (*   else subtract_flow_ne f1 f2 *)
 
-let rec subtract_lflow_ne (lf:lflow) (n:nflow) : lflow =
-  match lf with
-    | [] -> []
-    | x::lf -> 
-          let r = subtract_flow_ne x n in
-          r@(subtract_lflow_ne lf n)
+(* let rec subtract_lflow_ne (lf:lflow) (n:nflow) : lflow = *)
+(*   match lf with *)
+(*     | [] -> [] *)
+(*     | x::lf ->  *)
+(*           let r = subtract_flow_ne x n in *)
+(*           r@(subtract_lflow_ne lf n) *)
 
 (* assumes that lf is a valid flows *)
-let subtract_lflow (lf:lflow) (n:nflow) : lflow =
-      if (is_empty_flow n) then lf
-      else subtract_lflow_ne lf n
+(* let subtract_lflow (lf:lflow) (n:nflow) : lflow = *)
+(*       if (is_empty_flow n) then lf *)
+(*       else subtract_lflow_ne lf n *)
 
-let subtract_dflow (((mf,lf):dflow) as df) (n:nflow) : dflow =
-      if (is_empty_flow n) then df
-      else (mf,subtract_lflow_ne lf n)
+(* let subtract_dflow (((mf,lf):dflow) as df) (n:nflow) : dflow = *)
+(*       if (is_empty_flow n) then df *)
+(*       else (mf,subtract_lflow_ne lf n) *)
 
-let is_empty_dflow ((mf,lf):dflow) : bool = lf==[]
+(* let is_empty_dflow ((mf,lf):dflow) : bool = lf==[] *)
 
-let rec norm_lflow_aux ((s,b) as n) (l:lflow)  =
-  match l with
-    |  [] -> l
-    | ((s2,b2) as n2)::xs ->
-          if b+1==s2 then norm_lflow_aux (s,b2) xs
-          else n::(norm_lflow_aux n2 xs)
+(* let rec norm_lflow_aux ((s,b) as n) (l:lflow)  = *)
+(*   match l with *)
+(*     |  [] -> l *)
+(*     | ((s2,b2) as n2)::xs -> *)
+(*           if b+1==s2 then norm_lflow_aux (s,b2) xs *)
+(*           else n::(norm_lflow_aux n2 xs) *)
 
-let norm_lflow (l:lflow)  =
-  match l with
-    |  [] -> l
-    | x::xs -> norm_lflow_aux x l
+(* let norm_lflow (l:lflow)  = *)
+(*   match l with *)
+(*     |  [] -> l *)
+(*     | x::xs -> norm_lflow_aux x l *)
 
-let rec is_subset_lflow (l1:lflow) (l2:lflow) =
-  match l1 with
-    | [] -> true
-    | (s1,b1)::l1a ->
-          match l2 with
-            | [] -> false
-            | (s2,b2)::l2a -> 
-                  if s2<=s1 then
-                    if b1<=b2 then is_subset_lflow l1a l2
-                    else false
-                  else is_subset_lflow l1 l2a
+(* let rec is_subset_lflow (l1:lflow) (l2:lflow) = *)
+(*   match l1 with *)
+(*     | [] -> true *)
+(*     | (s1,b1)::l1a -> *)
+(*           match l2 with *)
+(*             | [] -> false *)
+(*             | (s2,b2)::l2a ->  *)
+(*                   if s2<=s1 then *)
+(*                     if b1<=b2 then is_subset_lflow l1a l2 *)
+(*                     else false *)
+(*                   else is_subset_lflow l1 l2a *)
 
-let is_subset_dflow (((d1,l1):dflow) as f1) (((d2,l2):dflow) as f2) =
-  is_subset_lflow l1 l2 
+(* let is_subset_dflow (((d1,l1):dflow) as f1) (((d2,l2):dflow) as f2) = *)
+(*   is_subset_lflow l1 l2  *)
 
-let rec is_overlap_lflow (l1:lflow) (l2:lflow) =
-  match l1 with
-    | [] -> false
-    | ((s1,b1) as n1)::l1a ->
-          match l2 with
-            | [] -> false
-            | ((s2,b2) as n2)::l2a ->
-                  if is_overlap_flow_ne n1 n2 then true
-                  else if s1<s2 then is_overlap_lflow l1a l2
-                  else is_overlap_lflow l1 l2a
+(* let rec is_overlap_lflow (l1:lflow) (l2:lflow) = *)
+(*   match l1 with *)
+(*     | [] -> false *)
+(*     | ((s1,b1) as n1)::l1a -> *)
+(*           match l2 with *)
+(*             | [] -> false *)
+(*             | ((s2,b2) as n2)::l2a -> *)
+(*                   if is_overlap_flow_ne n1 n2 then true *)
+(*                   else if s1<s2 then is_overlap_lflow l1a l2 *)
+(*                   else is_overlap_lflow l1 l2a *)
 
-let is_overlap_dflow (((d1,l1):dflow) as f1) (((d2,l2):dflow) as f2) =
-  is_overlap_lflow l1 l2
+(* let is_overlap_dflow (((d1,l1):dflow) as f1) (((d2,l2):dflow) as f2) = *)
+(*   is_overlap_lflow l1 l2 *)
 
 let sort_flow (xs:(ident * ident * nflow) list) =
   List.sort (fun (_,_,n1) (_,_,n2) -> order_flow_ne n2 n1) xs
@@ -755,12 +755,13 @@ end;;
 
 (* Khanh : TODO : module to support dflow *)
 (*most methods are implemented using set theory*)
-module ETABLE_DFLOW  (* : ETABLE *) =
+module ETABLE_DFLOW : ETABLE  =
 struct
   include ET_const
-  type nflow = (int*int)
-  type lflow = (nflow list)
-  type dflow = nflow * lflow
+  type nf = (int*int)
+  type lflow = (nf list)
+  type dflow = nf * lflow
+  type nflow = dflow
   (* type t = dflow *)
   (* type fe = (ident * ident * t) *)
   type flow_entry = (ident * ident * dflow)
@@ -885,11 +886,11 @@ struct
     let pr_pair_int_list = pr_list (fun (a,b) -> pr_pair_int (a,b)) in
     pr_pair (pr_pair_int) (pr_pair_int_list) f1
   (*this is not used at all. only use subtract_flow_l*)
-  let subtract_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) =
+  let subtract_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow =
     let x = subtract_flow_l f1 f2 in
     match x with
-      | [] -> [empty_flow]
-      | _ ->  x
+      | [] -> empty_flow
+      | a::_ ->  a
           (* ((s1,b1),x) (\* ??? not sure*\) *)
 
   let intersect_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow =
@@ -948,7 +949,7 @@ struct
         error_flow_int := empty_flow;
         elist <- []
       end
-    method sort = 
+    method private sort = 
       begin
         elist <- sort_flow elist (*?? name conflict*)
       end
@@ -956,7 +957,7 @@ struct
       begin
         elist <- remove_dups1 elist
       end
-    method clean =
+    method private clean =
       begin
         elist <- remove_dups1 elist
       end
