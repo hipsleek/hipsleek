@@ -1,0 +1,23 @@
+
+data node {
+     int val;
+     node next;
+}.
+
+pred Cell<> == self::node<i,_> 
+inv self!=null.
+
+checkentail x::Cell<>@I * y::Cell<>  |- x::Cell<> .
+
+checkentail (x::Cell<>@I) ; y::Cell<> |- x::Cell<>.
+/*
+ERROR: at File "bug-zero-arg.slk",Line:13,Col:13 
+Message: malfunction: heap node 2 still present
+*/
+
+/*
+checkentail x::Cell<> * y::Cell<>  |- x::Cell<> .
+
+checkentail x::Cell<> * y::Cell<>  |- x::Cell<>@I .
+
+*/

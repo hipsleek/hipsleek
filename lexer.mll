@@ -1,5 +1,6 @@
 {
 open Globals
+open Exc.ETABLE_NFLOW
 
 open Token
 (** A signature for specialized tokens. *)
@@ -121,7 +122,7 @@ module Make (Token : SleekTokenS)
 	 ("checkentail", CHECKENTAIL);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
-	 ("coercion", COERCION);
+	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
    ("combine", COMBINE);
 	 ("const", CONST);
@@ -195,7 +196,7 @@ module Make (Token : SleekTokenS)
    ("variance", VARIANCE);
 	 ("while", WHILE);
    ("with", WITH);
-	 (flow, FLOW Globals.flow);]
+	 (flow, FLOW flow);]
 }
   
   

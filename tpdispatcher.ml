@@ -43,7 +43,7 @@ let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" 
 let sat_cache = ref (Hashtbl.create 200)
 let impl_cache = ref (Hashtbl.create 200)
 
-let prover_arg = ref "omega"
+let prover_arg = ref "oc"
 let external_prover = ref false
 let external_host_ports = ref []
 let webserver = ref false
@@ -367,8 +367,10 @@ let rec check_prover_existence prover_cmd_str =
 let set_tp tp_str =
   prover_arg := tp_str;  
   let prover_str = ref [] in
-  if tp_str = "omega" then
-	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
+  (*else if tp_str = "omega" then
+	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
+  if (String.sub tp_str 0 2) = "oc" then
+    (Omega.omegacalc := tp_str; tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "cvcl" then 
 	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 
@@ -1183,13 +1185,13 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
                 (* Cvc3.imply ante conseq imp_no *)
       end
-    | Z3 -> Smtsolver.imply ante conseq
+  | Z3 -> Smtsolver.imply ante conseq timeout
     | Isabelle -> Isabelle.imply ante conseq imp_no
   | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
-		    (called_prover :="smtsolver " ; Smtsolver.imply ante conseq (*imp_no timeout*))
+		    (called_prover :="smtsolver " ; Smtsolver.imply ante conseq timeout (*imp_no timeout*))
   | AUTO ->
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         begin
@@ -1201,7 +1203,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         end
       else if (is_array_constraint ante) || (is_array_constraint conseq) then
         begin
-          (called_prover :="smtsolver "; Smtsolver.imply ante conseq)
+          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
         end
       else
         begin
@@ -1210,7 +1212,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | OZ ->
       if (is_array_constraint ante) || (is_array_constraint conseq) then
         begin
-          (called_prover :="smtsolver "; Smtsolver.imply ante conseq)
+          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
         end
       else
         begin
@@ -1261,7 +1263,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         Mona.imply ante conseq imp_no
       else
-        Smtsolver.imply ante conseq
+        Smtsolver.imply ante conseq timeout
   in
 	let _ = if should_output () then
 			begin
@@ -1272,6 +1274,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 				print_endline (get_generated_prover_input ());
 				print_endline (">>> " ^ (string_of_prover !tp) ^ " ORIGINAL OUTPUT >>>");
 				print_endline (get_prover_original_output ()); *)
+				Prooftracer.add_pure_imply ante conseq r (string_of_prover !tp) (get_generated_prover_input ()) (get_prover_original_output ());
 				Prooftracer.pop_div ();
 				(* print_endline (">>> VERDICT : " ^ (if r then "VALID" else "INVALID") ^ " >>>"); *)
 			end

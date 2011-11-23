@@ -5,7 +5,7 @@ data MyP {
 
 MyI<j,k,x> == self::MyP<j,k> & j<=x<=k inv j<=x<=k;
 
-coercion "A" self::MyI<j,k,x> & j<=x<=k -> self::MyP<j,k>;
+lemma "A" self::MyI<j,k,x> & j<=x<=k -> self::MyP<j,k>;
 
 void p(MyP p) 
   requires p::MyP<10,12>

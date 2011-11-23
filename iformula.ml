@@ -5,6 +5,8 @@
 *)
 
 open Globals
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 module P = Ipure
 
 

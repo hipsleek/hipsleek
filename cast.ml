@@ -6,6 +6,10 @@
 
 open Globals
 open Gen.Basic
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
+type n
+
 
 module F = Cformula
 module P = Cpure
@@ -100,7 +104,8 @@ and axiom_decl = {
 and proc_decl = { 
     proc_name : ident;
     proc_args : typed_ident list;
-	proc_return : typ;
+		proc_return : typ;
+		proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     proc_static_specs_with_pre : Cformula.struc_formula;
     proc_dynamic_specs : Cformula.struc_formula;
@@ -147,12 +152,13 @@ and coercion_type = Iast.coercion_type
 
 and sharp_flow = 
   | Sharp_ct of F.flow_formula
-  | Sharp_v of ident
+  | Sharp_id of ident
+
         
 and sharp_val = 
-  | Sharp_no_val 
-  | Sharp_finally of ident
-  | Sharp_prog_var of typed_ident
+  | Sharp_no_val (* captures flow without a value *)
+  | Sharp_flow of ident   (* capture flow explicitly and a value*)
+  | Sharp_var of typed_ident (* captures flow through a var *)
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
@@ -264,7 +270,7 @@ and exp_sharp = {
 }
     
 and exp_catch = { 
-    exp_catch_flow_type : nflow ;
+    exp_catch_flow_type : dflow (* nflow *) ;
     exp_catch_flow_var : ident option;
     exp_catch_var : typed_ident option;
     exp_catch_body : exp;			
@@ -365,10 +371,16 @@ and exp = (* expressions keep their types *)
   | Sharp of exp_sharp
   | Try of exp_try
 
+
+let get_sharp_flow sf = match sf with
+  | Sharp_ct ff -> ff.F.formula_flow_interval
+  | Sharp_id id -> exlist # get_hash id
+
 let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized")
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
 let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
+let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
@@ -1197,8 +1209,7 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 (*   end *)
 (*   |  _ -> t1 = t2 *)
 
-let sub_type (t1 : typ) (t2 : typ) = 
-  Globals.sub_type t1 t2
+let sub_type (t1 : typ) (t2 : typ) = sub_type t1 t2
 
 and exp_to_check (e:exp) :bool = match e with
   | CheckRef _
@@ -1278,37 +1289,40 @@ let get_catch_of_exp e = match e with
 	| Catch e -> e
 	| _  -> Error.report_error {Err.error_loc = pos_of_exp e; Err.error_text = "malformed expression, expecting catch clause"}
   
-  
+(* let get_catch_of_exp e = *)
+(*   let pr = !print_prog_exp in *)
+(*   Gen.Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
+
 let rec check_proper_return cret_type exc_list f = 
   let overlap_flow_type fl res_t = match res_t with 
-	| Named ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
+	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
   let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
 		  if b_rez then
-			if (F.equal_flow_interval !n_flow_int fl_int) then 
+			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
 			else if not (List.exists (fun c-> 
-                let _ =print_endline "XX" in F.subsume_flow c fl_int) exc_list) then
+                (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type is not covered by the throw list";}
 			else if not(overlap_flow_type fl_int res_t) then
 			  Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
 			else ()			
 		  else 
-			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
+			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
+			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
 			  Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()
 	| F.Exists b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
 		  if b_rez then
-			if (F.equal_flow_interval !n_flow_int fl_int) then 
+			if (F.equal_flow_interval !norm_flow_int fl_int) then 
 			  if not (sub_type res_t cret_type) then 					
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
@@ -1319,9 +1333,9 @@ let rec check_proper_return cret_type exc_list f =
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
 			  else ()			
 		  else 
-			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
+			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			   (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
+			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
 			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in

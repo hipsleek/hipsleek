@@ -1,5 +1,7 @@
 open Camlp4
 open Globals
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 open Iast
 open Token
 open Sleekcommons
@@ -525,7 +527,7 @@ cid:
 						if String.contains t '\'' then (* Remove the primed in the identifier *)
 							(Str.global_replace (Str.regexp "[']") "" t,Primed) 
 						else (t,Unprimed)
-   | `RES _                 	-> (res, Unprimed)
+   | `RES _                 	-> (res_name, Unprimed)
    | `SELFT _               	-> (self, Unprimed)
    | `THIS _               		-> (this, Unprimed)]];
 
@@ -1129,7 +1131,7 @@ decl:
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  p=proc_decl                  -> Proc p
-  | `COERCION; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
+  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
 
 type_decl: 
   [[ t= data_decl  -> Data t

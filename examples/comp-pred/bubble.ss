@@ -76,7 +76,7 @@ bool bubble1(node xs)
 			flag = true; 
 
 			if (!tmp) {
-				if (xs.next.next != null) { // this is the coercion step
+				if (xs.next.next != null) { // this is the lemma step
 					id1(xs.next.next);
 				}
 			}

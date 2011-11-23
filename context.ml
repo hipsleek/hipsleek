@@ -144,6 +144,8 @@ let string_of_action_res e = poly_string_of_pr (pr_action_res pr_match_res) e
 
 let string_of_action_wt_res e = poly_string_of_pr (pr_action_wt_res pr_match_res) e
 
+let string_of_action_wt_res0 e = poly_string_of_pr (pr_action_wt_res (fun _ -> fmt_string "")) e
+
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
    
 let action_get_holes a = match a with
@@ -542,7 +544,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       
 and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
-  let pr2 = string_of_action_wt_res  in
+  let pr2 = string_of_action_wt_res0  in
   Gen.Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
 
 (*
@@ -670,11 +672,13 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       (*filtering our Normalize coercions to avoid non-termination*)
                       let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case != Cast.Normalize) prog.prog_left_coercions) vl_name vr_name in
                       let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name in
-                      let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else []in
-                      let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
-                      (* if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *) *)
-                      (* else *)
-					  left_act@right_act 
+                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
+                    let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
+                    (* let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in *)
+                    (* let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in *)
+                    (* if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (c,None))] *\) (\* only targetted lemma *\) *)
+                    (* else *)
+                    left_act@right_act
                   end
                   else  [] in
               let l4 = 
@@ -689,7 +693,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               let vr_vdef = look_up_view_def_raw view_decls vr_name in
               let vr_self_pts = vr_vdef.view_pt_by_self in
               let vr_view_orig = vr.h_formula_view_original in
-                                let vr_view_derv = vr.h_formula_view_derv in
+                  let vr_view_derv = vr.h_formula_view_derv in
                   let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
                   let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
@@ -795,7 +799,7 @@ and process_matches prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_
   let pr = Cprinter.string_of_h_formula   in
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
-  let pr3 = string_of_action_wt_res in
+  let pr3 = string_of_action_wt_res0 in
   Gen.Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = match l with

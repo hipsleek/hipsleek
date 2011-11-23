@@ -6,6 +6,8 @@
 
 open Globals
 open Gen.Basic
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 
 module F = Iformula
 module P = Ipure
@@ -1026,6 +1028,10 @@ and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list
   else (dl,el)
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+  Gen.Debug.no_1 "syn_data_name" pr_no pr_no
+      (fun _ -> syn_data_name_x data_decls view_decls) () 
+
+and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
   (*let vl = List.map (fun v -> v.view_name) view_decls in*)
   (* An Hoa : Implement the equality checking *)
   (** [Internal] replaces aliases of self by it. **)
@@ -1140,7 +1146,14 @@ and fixpt_data_name (view_ans)  =
 (* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
 
 and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
-  let fetch r = List.concat (List.map (fun id -> let (_,a,_)=List.find (fun (v,_,_)-> v.view_name=id) view_ans in a) r) in 
+  let fetch r = List.concat (List.map 
+      (fun id -> 
+          try 
+          let (_,a,_) = List.find (fun (v,_,_)-> v.view_name=id) view_ans in a
+          with Not_found -> 
+              []
+      )
+      r) in 
   let r = List.map (fun (v,a,r) -> (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
   let check (v,a1,_) (_,a2,_) c = 
     let d1=List.length a1 in
@@ -1176,7 +1189,7 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr x = "?" in 
-  Gen.Debug.no_1 "fixpt_data_name" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
+  Gen.Debug.no_1 "set_check_fixpt" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
@@ -1432,36 +1445,36 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
 (* 		| Not_found -> false *)
 (* 	  *\) *)
 
-let sub_type t1 t2 = Globals.sub_type t1 t2
+let sub_type t1 t2 = sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
 let inbuilt_build_exc_hierarchy () =
-  let _  = Gen.ExcNumbering.add_edge top_flow "" in
-  let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
-  let _ = (Gen.ExcNumbering.add_edge abnormal_flow c_flow) in
-  let _ = (Gen.ExcNumbering.add_edge raisable_class abnormal_flow) in
-  let _ = (Gen.ExcNumbering.add_edge "__others" abnormal_flow) in
-  let _ = (Gen.ExcNumbering.add_edge ret_flow "__others") in
-  let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
-  let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
-  let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
-  let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
+  let _  = exlist # add_edge top_flow "" in
+  let _ = (exlist # add_edge c_flow top_flow) in
+  let _ = (exlist # add_edge "__abort" top_flow) in
+  let _ = (exlist # add_edge n_flow c_flow) in
+  let _ = (exlist # add_edge abnormal_flow c_flow) in
+  let _ = (exlist # add_edge raisable_class abnormal_flow) in
+  let _ = (exlist # add_edge "__others" abnormal_flow) in
+  let _ = (exlist # add_edge ret_flow "__others") in
+  let _ = (exlist # add_edge cont_top "__others") in
+  let _ = (exlist # add_edge brk_top "__others") in
+  let _ = (exlist # add_edge spec_flow "__others") in
+  let _ = (exlist # add_edge error_flow top_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
-  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
-  let _ = if clean then (Gen.ExcNumbering.clean_duplicates ()) in
-	if (Gen.ExcNumbering.has_cycles ()) then begin
+  let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
+  let _ = if clean then (exlist # remove_dupl ) in
+	if (exlist # has_cycles) then begin
 	  print_string ("Error: Exception hierarchy has cycles\n");
 	  failwith ("Exception hierarchy has cycles\n");
 	end 
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
-  let pr _ = Gen.ExcNumbering.string_of_exc_list 33 in
+  let pr _ = exlist # string_of in
   Gen.Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =
