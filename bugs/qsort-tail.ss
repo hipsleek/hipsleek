@@ -53,6 +53,7 @@ ll_tail<n, t, sm, lg> ==
 inv n>=1 & self!=null & sm<=lg;
 */
 
+
 // bounded list with tail
 bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
 	or self::node<v, null> & t = self & n = 1 & sm <= v <= lg
