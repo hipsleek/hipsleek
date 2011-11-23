@@ -755,12 +755,13 @@ end;;
 
 (* Khanh : TODO : module to support dflow *)
 (*most methods are implemented using set theory*)
-module ETABLE_DFLOW  (* : ETABLE *) =
+module ETABLE_DFLOW : ETABLE  =
 struct
   include ET_const
-  type nflow = (int*int)
-  type lflow = (nflow list)
-  type dflow = nflow * lflow
+  type nf = (int*int)
+  type lflow = (nf list)
+  type dflow = nf * lflow
+  type nflow = dflow
   (* type t = dflow *)
   (* type fe = (ident * ident * t) *)
   type flow_entry = (ident * ident * dflow)
@@ -885,11 +886,11 @@ struct
     let pr_pair_int_list = pr_list (fun (a,b) -> pr_pair_int (a,b)) in
     pr_pair (pr_pair_int) (pr_pair_int_list) f1
   (*this is not used at all. only use subtract_flow_l*)
-  let subtract_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) =
+  let subtract_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow =
     let x = subtract_flow_l f1 f2 in
     match x with
-      | [] -> [empty_flow]
-      | _ ->  x
+      | [] -> empty_flow
+      | a::_ ->  a
           (* ((s1,b1),x) (\* ??? not sure*\) *)
 
   let intersect_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow =
@@ -948,7 +949,7 @@ struct
         error_flow_int := empty_flow;
         elist <- []
       end
-    method sort = 
+    method private sort = 
       begin
         elist <- sort_flow elist (*?? name conflict*)
       end
@@ -956,7 +957,7 @@ struct
       begin
         elist <- remove_dups1 elist
       end
-    method clean =
+    method private clean =
       begin
         elist <- remove_dups1 elist
       end
