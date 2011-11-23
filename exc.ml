@@ -220,7 +220,7 @@ let subtract_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
     let r1 = if (s1==s2) then [] else [(s1,s2-1)] in
     let r2 = if (b1==b2) then [] else [(b2+1,b1)] in
     r1@r2 in
-  if (is_subset_flow_ne f1 f2) then minus f2 f1
+  if (is_subset_flow_ne f1 f2) then []
   else if is_subset_flow_ne f2 f1 then minus f1 f2
   else if not(is_overlap_flow_ne f1 f2) then [f1]
   else if s2<=b1 then [(s1,s2-1)]
