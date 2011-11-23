@@ -373,6 +373,10 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       end
   end
 
+let is_sat (pe : formula)  (sat_no : string): bool =
+  let pf = !print_pure in
+  Gen.Debug.ho_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
+
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
@@ -416,6 +420,10 @@ let is_valid (pe : formula) timeout: bool =
             sat
         end
   end
+
+let is_valid (pe : formula) timeout: bool =
+  let pf = !print_pure in
+  Gen.Debug.ho_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   (*print_endline "LOCLE: imply";*)
@@ -517,7 +525,7 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
+  Gen.Debug.ho_1 "Omega.simplify" pf pf simplify pe
 
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)
