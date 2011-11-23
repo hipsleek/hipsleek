@@ -5637,3 +5637,13 @@ let mark_derv_self name f =
        | EVariance _ -> failwith "marh_derv_self: not expecting assume or variance\n" in
     List.map h_ext f in
   (h_struc f)
+
+
+let rec push_case_f pf sf = 
+  let helper f = match f with 
+    | ECase f -> ECase {f with formula_case_branches = List.map (fun (c1,c2)-> (CP.mkAnd c1 pf no_pos, c2)) f.formula_case_branches}
+    | EBase f -> EBase {f with formula_ext_continuation = push_case_f pf f.formula_ext_continuation}
+    | EVariance v -> EVariance {v with formula_var_continuation = push_case_f pf v.formula_var_continuation}
+    | EAssume _ -> f
+  in
+  List.map helper sf
