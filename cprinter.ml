@@ -2,7 +2,8 @@
 
 open Format
 open Globals 
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 open Lexing 
 open Cast 
 open Cformula
@@ -955,7 +956,10 @@ let pr_mix_formula_branches (f,l) = match f with
 let rec string_of_flow_formula f c = 
   "{"^f^","^string_of_flow c.formula_flow_interval^"="^(exlist # get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
-let rec string_of_nflow n = (exlist # get_closest n)
+(* let rec string_of_nflow n = (exlist # get_closest n) *)
+let rec string_of_dflow n = (exlist # get_closest n)
+
+(* let rec string_of_dflow n = (exlist # get_closest n) *)
 
 let rec string_of_sharp_flow sf = match sf with
   | Sharp_ct ff -> "#"^(string_of_flow_formula "" ff)
@@ -2246,7 +2250,8 @@ Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
-Cformula.print_nflow := string_of_nflow;;
+(* Cformula.print_nflow := string_of_nflow;; *)
+Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;

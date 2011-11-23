@@ -5,7 +5,8 @@ todo: disable the default logging for omega
 *)
 
 open Globals
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 open Cast
 open Cformula
 open Prooftracer
