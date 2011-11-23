@@ -6,7 +6,8 @@
 
 open Globals
 open Gen
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 
 module Err = Error
 module CP = Cpure
@@ -108,7 +109,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_label : formula_label option;
                         formula_exists_pos : loc }
 
-and flow_formula = {  formula_flow_interval : nflow;
+and flow_formula = {  formula_flow_interval : dflow; (* nflow; *)
                       formula_flow_link : (ident option)}
 and flow_store = {
 	formula_store_name : ident;
@@ -553,15 +554,20 @@ and is_top_flow p :bool = (equal_flow_interval !top_flow_int p)
 and is_sleek_mustbug_flow p: bool = (equal_flow_interval !error_flow_int p)
 and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
 
-and equal_flow_interval (t1:nflow) (t2:nflow) : bool = 
-  is_eq_flow t1 t2
+(* and equal_flow_interval (t1:nflow) (t2:nflow) : bool =  *)
+(*   is_eq_flow t1 t2 *)
 
+and equal_flow_interval t1 t2 : bool = 
+  is_eq_flow t1 t2
 
 (*first subsumes the second*)
 (* and subsume_flow_x (n1,n2)(p1,p2) : bool = *)
 (* if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) *)
 
-and subsume_flow (t1:nflow) (t2:nflow) : bool =
+(* and subsume_flow (t1:nflow) (t2:nflow) : bool = *)
+(*   is_subsume_flow t1 t2 *)
+
+and subsume_flow t1 t2 : bool =
   is_subsume_flow t1 t2
 
 (* and subsume_flow n p : bool =  *)
@@ -4966,17 +4972,17 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
       (fun _ _ -> conv_elim_res cvar c elim_ex_fn) cvar c
 
 (* convert entail state to ctx with nf flow *)
-let conv (c:entail_state) (nf:nflow) = (Ctx {c 
+let conv (c:entail_state) (nf(* :nflow *)) = (Ctx {c 
 with es_formula = 
 (substitute_flow_into_f nf c.es_formula) } )   
 
-let conv_lst (c:entail_state) (nf_lst:nflow list) = 
+let conv_lst (c:entail_state) (nf_lst(*: nflow list *)) = 
   match nf_lst with
     | [] -> None
     | x::xs -> Some (List.fold_left (fun acc_ctx y -> mkOCtx (conv c y) acc_ctx no_pos) (conv c x)  xs)
 
 let rec splitter (c:context) 
-    (nf:nflow) (cvar:typed_ident option)  (elim_ex_fn: context -> context)
+    (nf(* :nflow *)) (cvar:typed_ident option)  (elim_ex_fn: context -> context)
     (* : (context option, context option) (\* caught under nf flow, escaped from nf flow*\)   *)
     =
   let rec helper c = 

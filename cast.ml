@@ -6,7 +6,8 @@
 
 open Globals
 open Gen.Basic
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 type n
 
 

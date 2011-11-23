@@ -2,7 +2,8 @@
 
 open Format
 open Globals 
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 open Lexing 
 open Cast 
 open Cformula
