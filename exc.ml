@@ -850,7 +850,7 @@ struct
       else if (is_subset_flow f2 f1) then -1 (*f2 is subset of f1*)
       else if s1<s2 then 2
       else -2
-  let get_closest_new elist (((min,max):dflow) as nf):(string * int) =
+  let get_closest_new elist ((((min,max),lst):dflow) as nf):(string * int) =
     if is_empty_flow nf then (false_flow,1)
     else
       let res = List.filter (fun (_,_,n) -> (is_subset_flow nf n)) elist in
@@ -864,13 +864,15 @@ struct
     List.sort (fun (_,_,n1) (_,_,n2) -> order_flow n2 n1) xs
   (*f1-f2*) 
   (*??? substract_flow_f vs subtract_flow*)
-  let subtract_flow_l  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : lflow =
+  let subtract_flow_l  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow list =
     if is_empty_flow(f1) || is_empty_flow(f2) then []
     else
-      let s1 = set_of_list_pair lst1 in
-      let s2 = set_of_list_pair lst2 in
-      let s3 = IntSet.diff s1 s2 in (*s1 - s2*)
-      list_pair_of_set s3
+      let ss1 = set_of_list_pair lst1 in
+      let ss2 = set_of_list_pair lst2 in
+      let ss3 = IntSet.diff ss1 ss2 in (*ss1 - ss2*)
+      let rs = list_pair_of_set ss3 in
+      [((s1,b1),rs)] (*a single flow*)
+      (* List.map (fun (a,b) -> ((s1,b1),[(a,b)])) rs (\* different flows *\) *)
   let norm_flow (nf:dflow)  =
     if (is_empty_flow nf) then empty_flow
     else 
@@ -882,11 +884,13 @@ struct
     let pr_pair_int = pr_pair (string_of_int) (string_of_int) in
     let pr_pair_int_list = pr_list (fun (a,b) -> pr_pair_int (a,b)) in
     pr_pair (pr_pair_int) (pr_pair_int_list) f1
+  (*this is not used at all. only use subtract_flow_l*)
   let subtract_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) =
     let x = subtract_flow_l f1 f2 in
     match x with
-      | [] -> empty_flow
-      | _ -> ((s1,b1),x) (* ??? not sure*)
+      | [] -> [empty_flow]
+      | _ ->  x
+          (* ((s1,b1),x) (\* ??? not sure*\) *)
 
   let intersect_flow  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow =
     if (is_empty_flow f1) then f1
@@ -908,8 +912,9 @@ struct
       let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) elist in
       if ((List.length l1)==0) then
         let i = cnt # inc_and_get in
+        let j = cnt # inc_and_get in
         (* let j = (Globals.fresh_int()) in  *)
-        let dfl = ((i,i),[(i,i)])in
+        let dfl = ((i,j),[(i,j)])in
         ([(f1,f2,dfl)],dfl)
       else
         let init = ((-1,-1), [(-1,-1)]) in
@@ -1005,7 +1010,12 @@ struct
       end
     method get_closest (((min,max):dflow) as nf):(string) =
       begin
-        fst(get_closest_new elist nf)
+        let (s,t)=(get_closest_new elist nf) in
+        s ^ (
+            if t==0 then "#E" (* exact ann *)
+            else if t!=1 then "#P" (* partial ann *)
+            else "") (* full *)
+        (* fst(get_closest_new elist nf) *)
       end
     method has_cycles : bool =
       begin

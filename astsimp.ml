@@ -976,7 +976,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   (*         } *)
   (* in *)
   let _ = exlist # compute_hierarchy in
-  let _ = print_endline (exlist # string_of ) in
+  (* let _ = print_endline (exlist # string_of ) in *)
   let prog3 = prog4 in
   let prog2 = { prog4 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})

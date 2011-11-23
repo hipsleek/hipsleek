@@ -579,7 +579,7 @@ and subsume_flow t1 t2 : bool =
 
 and overlap_flow t1 t2 : bool = is_overlap_flow t1 t2
 
-and subtract_flow_list t1 t2  : (nflow list) = 
+and subtract_flow_list t1 t2  (* : (nflow list) *) = 
    subtract_flow_l t1 t2
   (* if n1<p1 then (n1,p1-1)::(subtract_flow_list (p1,n2) (p1,p2)) *)
   (* else if n2>p2 then [(p2+1,n2)] *)
@@ -2543,7 +2543,8 @@ let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
-let print_nflow = ref(fun (c:nflow) -> "printer not initialized")
+(* let print_flow = ref(fun (c:nflow) -> "printer not initialized") *)
+let print_flow = ref(fun (c:dflow) -> "printer not initialized")
 let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
 
@@ -5025,20 +5026,20 @@ let splitter_wrapper p c nf cvar elim_ex_fn fn_esc =
 (* fn transforms context to list of partial context *)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
-let splitter_failesc_context  (nf:nflow) (cvar:typed_ident option) (fn_esc:context -> context)   
+let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)   
 	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
    List.map (fun (fl,el,sl)->
 						let r = List.map (fun (p,c)-> splitter_wrapper p c nf cvar elim_ex_fn fn_esc ) sl in
 						let re,rs = List.split r in
 						(fl,push_esc_elem el (List.concat re),(List.concat rs))) pl 
 
-let splitter_failesc_context  (nf:nflow) (cvar:typed_ident option) (fn_esc:context -> context)   
+let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)   
 	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  let pr2 = !print_nflow in
+  let pr2 = !print_flow in
   Gen.Debug.no_2 "splitter_failesc_context" pr2 pr pr (fun _ _ -> splitter_failesc_context nf cvar fn_esc elim_ex_fn pl) nf pl
 	
-let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
+let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)   
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 
 	(elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context = 
 	

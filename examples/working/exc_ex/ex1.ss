@@ -21,13 +21,16 @@ void m1 (ref int i, e1 z) throws e1
             dprint;
           }
         i=1;
+        dprint;
 	}catch (e1 v){
 		i=2;
+        dprint;
 	};
   } catch (e1 v) {
     assert false;
     raise new e1();
   };
+  dprint;
 }
 
 
