@@ -14,7 +14,7 @@ function getHTML(obj) {
 		for(var i = 0; i < obj.items.length; i++) {
 			var itemhtml = getHTML(obj.items[i]);
 			if (itemhtml != "")
-				result += "<tr><td class=\"expandable\" style=\"width:492px\">" + itemhtml + "</td></tr>";
+				result += "<tr><td class=\"expandable\">" + itemhtml + "</td></tr>";
 		}
 		result += "</table>"
 	} else if (obj.type == "precnd_arracc") {
@@ -28,7 +28,11 @@ function getHTML(obj) {
 	} else if (obj.type == "assert") {
 		result += ">" + "<b>Assertion at line " + obj.line + "</b>";
 	} else if (obj.type == "pureimply") {
-		result += ">" + obj.formula;
+		if (obj.is_valid == "true")
+				cls = "ok";
+			else
+				cls = "notok";
+		result += ">" + "<span class=\"" + cls + "\">" + obj.formula + "</span>";
 	} else result += ">";
 
 	if (obj.type != "proc") {
