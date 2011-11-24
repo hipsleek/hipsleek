@@ -408,7 +408,7 @@ non_empty_command:
       | `PRED;t=view_decl     -> PredDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
-	  | `AXIOM;t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
       | t=captureresidue_cmd  -> CaptureResidue t

@@ -49,7 +49,7 @@ axiom fact(n,f) ==> (n = 0 & f = 1 | n > 0 & forall(f1 : !(fact(n-1,f1)) | f = f
 
 //checkentail fib(1,f) & fact(1,g) |- f <= g.
 
-//checkentail n > 1 & fib(n-1,f1) & fib(n-2,f2) & fact(n-1,g1) & fact(n-2,g2) & f1 <= g1 & f2 <= g2 & fib(n,f) & fact(n,g) |- f = f1 + f2 & g = n * g1 & g1 = (n-1) * g2.
+checkentail n > 1 & fib(n-1,f1) & fib(n-2,f2) & fact(n-1,g1) & fact(n-2,g2) & f1 <= g1 & f2 <= g2 & fib(n,f) & fact(n,g) |- f = f1 + f2 & g = n * g1 & g1 = (n-1) * g2.
 
 //checkentail n > 1 & fib(n-1,f1) & fib(n-2,f2) & fact(n-1,g1) & fact(n-2,g2) & f1 <= g1 & f2 <= g2 & fib(n,f) & fact(n,g) |- f <= g.
 
@@ -57,10 +57,9 @@ axiom fact(n,f) ==> (n = 0 & f = 1 | n > 0 & forall(f1 : !(fact(n-1,f1)) | f = f
 
 //checkentail n > 1 & f = f1 + f2 & 0 <= f1 <= g1 & 0 <= f2 <= g2 & g = g1 * n & g1 = (n-1) * g2 |- f <= g.
 
-
-void test(int n, int f1, int f2, int g1, int g2, int f, int g)
+/*void test(int n, int f1, int f2, int g1, int g2, int f, int g)
 	requires n > 1 & fib(n-1,f1) & fib(n-2,f2) & fact(n-1,g1) & fact(n-2,g2) & f1 <= g1 & f2 <= g2 & fib(n,f) & fact(n,g)
 	ensures f = f1 + f2 & g = n * g1 & g1 = (n-1) * g2;
 {
 	return;
-}
+}*/
