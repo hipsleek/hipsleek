@@ -51,7 +51,7 @@ axiom fact(n,f) & n > 0 ==> forall(f1 : !(fact(n-1,f1)) | f = f1 * n).
 
 //checkentail fib(n,f) & fact(n,g) |- f <= g.
 
-checkentail fib(0,f) & fact(0,g) |- f = 1 & g = 1 & f <= g.
+checkentail fib(0,f) & fact(0,g) |- f <= g.
 
 checkentail fib(1,f) & fact(1,g) |- f <= g.
 
@@ -62,10 +62,3 @@ checkentail n > 1 & fib(n-1,f1) & fib(n-2,f2) & fact(n-1,g1) & fact(n-2,g2) & f1
 // after removing all relational information, we are left with
 
 //checkentail n > 1 & f = f1 + f2 & 0 <= f1 <= g1 & 0 <= f2 <= g2 & g = g1 * n & g1 = (n-1) * g2 |- f <= g.
-
-/*void test(int n, int f1, int f2, int g1, int g2, int f, int g)
-	requires n > 1 & fib(n-1,f1) & fib(n-2,f2) & fact(n-1,g1) & fact(n-2,g2) & f1 <= g1 & f2 <= g2 & fib(n,f) & fact(n,g)
-	ensures f = f1 + f2 & g = n * g1 & g1 = (n-1) * g2;
-{
-	return;
-}*/
