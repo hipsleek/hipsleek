@@ -92,8 +92,8 @@ let consistent_memoised_group (m:memoised_group) : bool =
   if r==[] then 
     if r2==[] then true
     else
-      let s = ("WARNING: FreeVars unused :"^(!print_svl r2)) in
-      let _ = report_warning no_pos s in
+     (* let s = ("WARNING: FreeVars unused :"^(!print_svl r2)) in
+      let _ = report_warning no_pos s in*)
       true
   else 
     let s = ("ERROR : FreeVars not captured:"^(!print_svl r)) in
@@ -2355,3 +2355,11 @@ let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_gr
    trans_mix_formula f 0 (mf_all, pf_all) 
     ((fun _ _ ->0) , p_arg) f_comb
    
+(** An Hoa : Simplify the mix formula by removing duplicates and redundant constraints. **)
+let simplify_mix_formula mf =
+	match mf with 		
+		| MemoF _ -> mf
+		| OnePF f -> 
+			let nf = remove_dup_constraints f in
+			let nf = remove_redundant_constraints nf in
+				OnePF nf

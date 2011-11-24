@@ -22,7 +22,7 @@ ls<p,n> == self = p & n = 0
 	or self::node<_, q> * q::ls<p,n-1> 
   inv n >= 0;
 
-// coercion "lseg2" self::ls<p, n> <- self::ls<q, n1> * q::ls<p, n2> & n=n1+n2;
+// lemma "lseg2" self::ls<p, n> <- self::ls<q, n1> * q::ls<p, n2> & n=n1+n2;
 
   
 node source(node n)

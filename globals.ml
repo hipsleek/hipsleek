@@ -1,19 +1,23 @@
 (* global types and utility functions *)
 
 
-
 type ident = string
-type constant_flow = ident
+type constant_flow = string
 
-type nflow = (int*int)(*numeric representation of flow*)
+(* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
 	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
+
 and control_path_id_strict = formula_label
-and control_path_id = control_path_id_strict  option(*identifier for if, catch, call*)
+
+and control_path_id = control_path_id_strict  option
+    (*identifier for if, catch, call*)
+
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
+
 type path_trace = (control_path_id_strict * path_label) list
 
 and loc = {
@@ -67,15 +71,73 @@ type mode =
 (*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
 (*   | List          -> "list" *)
 
-let proving_loc : (loc option) ref = ref None
+let no_pos = 
+	let no_pos1 = { Lexing.pos_fname = "";
+				   Lexing.pos_lnum = 0;
+				   Lexing.pos_bol = 0; 
+				   Lexing.pos_cnum = 0 } in
+	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
-let set_proving_loc p =
-  proving_loc := Some p
 
-let clear_proving_loc () =
-  proving_loc := None
+let string_of_loc (p : loc) = 
+    Printf.sprintf "File \"%s\",Line:%d,Col:%d"
+    p.start_pos.Lexing.pos_fname 
+    p.start_pos.Lexing.pos_lnum
+	(p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
+;;
 
+let string_of_pos (p : Lexing.position) = 
+    Printf.sprintf "(Line:%d,Col:%d)"
+    p.Lexing.pos_lnum
+	(p.Lexing.pos_cnum-p.Lexing.pos_bol)
+;;
 
+(* let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")" *)
+(* ;; *)
+
+(* An Hoa *)
+let line_number_of_pos p = string_of_int (p.start_pos.Lexing.pos_lnum)
+
+let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
+
+let string_of_loc_by_char_num (l : loc) = 
+  Printf.sprintf "(%d-%d)"
+    l.start_pos.Lexing.pos_cnum
+    l.end_pos.Lexing.pos_cnum
+
+class prog_loc =
+   object 
+     val mutable lc = None
+     method is_avail : bool = match lc with
+       | None -> false
+       | Some _ -> true
+     method set (nl:loc) = lc <- Some nl
+     method get :loc = match lc with
+       | None -> no_pos
+       | Some p -> p
+     method reset = lc <- None
+     method string_of : string = match lc with
+       | None -> "None"
+       | Some l -> (string_of_loc l)
+     method string_of_pos : string = match lc with
+       | None -> "None"
+       | Some l -> (string_of_pos l.start_pos)
+   end;;
+
+let proving_loc  = new prog_loc
+
+let post_pos = new prog_loc
+(* let post_pos = ref no_pos *)
+(* let set_post_pos p = post_pos := p *)
+
+let entail_pos = ref no_pos
+let set_entail_pos p = entail_pos := p
+
+(* let set_proving_loc p = proving_loc#set p *)
+(*   (\* proving_loc := Some p *\) *)
+
+(* let clear_proving_loc () = proving_loc#reset *)
+(*   (\* proving_loc := None *\) *)
 
 (* pretty printing for types *)
 let rec string_of_typ = function 
@@ -96,6 +158,25 @@ let rec string_of_typ = function
 		(string_of_typ et) ^ (repeat r)
 ;;
 
+(* aphanumeric name *)
+let rec string_of_typ_alpha = function 
+   (* may be based on types used !! *)
+  | UNK          -> "Unknown"
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | NUM          -> "NUM"
+  | BagT t        -> "bag_"^(string_of_typ t)
+  | TVar t        -> "TVar_"^(string_of_int t)
+  | List t        -> "list_"^(string_of_typ t)
+  (* | Prim t -> string_of_prim_type t  *)
+  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Array (et, r) -> (* An Hoa *)
+	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
+		(string_of_typ et) ^ (repeat r)
+;;
+
 let subs_tvar_in_typ t (i:int) nt =
   let rec helper t = match t with
     | TVar j -> if i==j then nt else t
@@ -109,21 +190,6 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
-let rec sub_type (t1 : typ) (t2 : typ) = 
-  match t1,t2 with
-    | UNK, _ -> true
-    | Named c1, Named c2 ->
-          if c1=c2 then true
-          else c1=""
-    | Array (et1,d1), Array (et2,d2) ->
-          if (d1 = d2) then sub_type et1 et2
-          else false
-    | BagT et1, BagT et2 -> sub_type et1 et2
-    | List et1, List et2 -> sub_type et1 et2
-    | Int, NUM        -> true
-    | Float, NUM        -> true
-    | p1, p2 -> p1=p2
-;;
 
 
 let rec s_i_list l c = match l with 
@@ -131,7 +197,25 @@ let rec s_i_list l c = match l with
   | h::[] -> h 
   | h::t -> h ^ c ^ (s_i_list t c)
 ;;
+
 let string_of_ident_list l = "["^(s_i_list l ",")^"]"
+;;
+
+let is_substr s id =
+  let len_s = String.length s in
+  try
+    let s_id = String.sub id 0 len_s in
+    if (s = s_id) then true
+    else false
+  with _ -> false
+;;
+ 
+let is_dont_care_var id =
+  if is_substr "#" id 
+  then true
+  (* else if is_substr "Anon_" id then true *)
+  else false
+;;
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
@@ -154,51 +238,17 @@ let push_opt_val_rev opt v = match opt with
   | None -> None
   | Some s -> Some (v, s)
 
-(* global constants *)
 
-let no_pos = 
-	let no_pos1 = { Lexing.pos_fname = "";
-				   Lexing.pos_lnum = 0;
-				   Lexing.pos_bol = 0; 
-				   Lexing.pos_cnum = 0 } in
-	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
+let res_name = "res"
 
-let post_pos = ref no_pos
-let set_post_pos p = post_pos := p
-
-let entail_pos = ref no_pos
-let set_entail_pos p = entail_pos := p
-
-let flow = "flow"
-let top_flow = "__flow"
-(*let any_flow = "__Any"*)
-let n_flow = "__norm"
-let cont_top = "__Cont_top"
-let brk_top = "__Brk_top"
-let c_flow = "__c-flow"
-let raisable_class = "__Exc"
-let ret_flow = "__Ret"
-let spec_flow = "__Spec"
-let false_flow = "__false"
-let abnormal_flow = "__abnormal"
-let stub_flow = "__stub"
-let error_flow = "__Error"
-
-let n_flow_int = ref ((-1,-1):nflow)
-let ret_flow_int = ref ((-1,-1):nflow)
-let spec_flow_int = ref ((-1,-1):nflow)
-let top_flow_int = ref ((-2,-2):nflow)
-let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
-let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
-(* let may_error_flow_int = ref ((-2,-2):nflow) (\*norm or error*\) *)
-let false_flow_int = (0,0)
-let stub_flow_int = (-3,-3)
-
-let res = "res"
+let eres_name = "eres"
 
 let self = "self"
 
 let this = "this"
+
+let is_self_ident id = self=id
+
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -235,7 +285,9 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref false
+let allow_imm = ref true
+
+let ann_derv = ref false
 
 let print_proc = ref false
 
@@ -269,9 +321,15 @@ let simplify_pure = ref false
 
 let enable_norm_simp = ref false
 
+let print_version_flag = ref false
+
 let n_xpure = ref 1
 
-let check_coercions = ref true
+let check_coercions = ref false
+
+let num_self_fold_search = ref 0
+
+let self_fold_search_flag = ref false
 
 let show_gist = ref false
 
@@ -333,10 +391,11 @@ let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
-let no_cache_formula = ref false
+let no_cache_formula = ref true
 
 let enable_incremental_proving = ref false
 
+let disable_multiple_specs =ref false
 
   (*for cav experiments*)
   let f_1_slice = ref false
@@ -347,10 +406,16 @@ let enable_incremental_proving = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
 
+(* for Termination *)
+  let term_auto_number = ref false
+  
 (* Options for slicing *)
 let do_slicing = ref false
 let opt_imply = ref 0
 let infer_slicing = ref false
+
+(* Options for invariants *)
+let do_infer_inv = ref false
 
 let add_count (t: int ref) = 
 	t := !t+1
@@ -453,7 +518,8 @@ let set_tmp_files_path () =
 		Unix.Unix_error (_, _, _) -> (););
 	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
 	end
-	
+
+
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
@@ -470,6 +536,9 @@ let reset_int2 () =
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
+
+let fresh_ty_var_name (t:typ)(ln:int):string = 
+	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_var_name (tn:string)(ln:int):string = 
 	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
@@ -509,18 +578,6 @@ let fresh_formula_cache_no  () =
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
-let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
-	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
-
-let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
-;;
-
-let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
-
-let string_of_loc_by_char_num (l : loc) = 
-  Printf.sprintf "(%d-%d)"
-    l.start_pos.Lexing.pos_cnum
-    l.end_pos.Lexing.pos_cnum
 
 let seq_local_number = ref 0
 
@@ -602,4 +659,8 @@ class type ['a] incremMethodsType = object
   (* method add_to_context: 'a -> unit *)
 end
 
+(* An Hoa : option to print proof *)
+let print_proof = ref false
 
+(* Create a quoted version of a string, for example, hello --> "hello" *)
+let strquote s = "\"" ^ s ^ "\""

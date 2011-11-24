@@ -32,7 +32,7 @@
 	 ("break", BREAK);
 	 ("case",CASE);
 	 ("class", CLASS);
-	 ("coercion", COERCION);
+	 (* ("coercion", COERCION); *)
      ("combine", COMBINE);
 	 ("conseq", CONSEQ);
 	 ("const", CONST);
@@ -64,6 +64,7 @@
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
      ("join",JOIN);
+     ("lemma", LEMMA);
 	 ("len", LENGTH);
 	 ("max", MAX);
 	 ("min", MIN);

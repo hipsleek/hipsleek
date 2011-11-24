@@ -105,7 +105,7 @@ flush stdout
 %token CASE
 %token CBRACE
 %token CLASS
-%token COERCION
+(* %token COERCION *)
 %token COLON
 %token COLONCOLON
 %token COLONCOLONCOLON
@@ -154,6 +154,7 @@ flush stdout
 %token INLIST
 %token <string> JAVA
 %token LEFTARROW
+%token LEMMA
 %token LENGTH
 %token <float> LITERAL_FLOAT
 %token <int> LITERAL_INTEGER
@@ -1110,7 +1111,6 @@ bconstr
 ;
 
 /* constraint expressions */
---->line 1098
 cexp
   : additive_cexp { $1 }
   /* bags */
@@ -1352,7 +1352,7 @@ constructor_header
 ;
 
 coercion_decl
-  : COERCION opt_name disjunctive_constr coercion_direction disjunctive_constr SEMICOLON {  
+  : LEMMA opt_name disjunctive_constr coercion_direction disjunctive_constr SEMICOLON {  
   let body = F.subst_stub_flow top_flow $5 in
 	{ coercion_type = $4;
 	  coercion_name = (let v=$2 in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
@@ -1364,7 +1364,7 @@ coercion_decl
 	}
   }
 /*
-  | COERCION opt_name disjunctive_constr coercion_direction disjunctive_constr proof_block {
+  | LEMMA opt_name disjunctive_constr coercion_direction disjunctive_constr proof_block {
 	  { coercion_type = $4;
 		coercion_name = $2;
 		coercion_head = $3;

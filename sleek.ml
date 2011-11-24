@@ -18,6 +18,7 @@ open Globals
 open Sleekcommons
 open Sleekengine
 open Gen.Basic
+open Exc.ETABLE_NFLOW
 
 module H = Hashtbl
 module I = Iast
@@ -40,10 +41,11 @@ let set_source_file arg =
   source_files := arg :: !source_files
 
 let print_version () =
-  print_string ("SLEEK: A Separation Logic Entailment Checker");
-  print_string ("Prototype version.");
-  (*  print_string ("Copyright (C) 2005-2007 by Nguyen Huu Hai, Singapore-MIT Alliance."); *)
-  print_string ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.")
+  print_endline ("SLEEK: A Separation Logic Entailment Checker");
+  print_endline ("Version 1.0");
+  print_endline ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.");
+  print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
+  print_endline ("Copyright @ PLS2 @ NUS")
 
 let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
@@ -54,7 +56,7 @@ let terminator = '.'
 module M = Lexer.Make(Token.Token)
 
 let parse_file (parse) (source_file : string) =
-	(* let _ = print_endline "parse_file 1" in *)
+	let _ = print_endline "parse_file 1" in
 	try
 		let cmds = parse source_file in 
 		let _ = (List.map (fun c -> (
@@ -62,7 +64,7 @@ let parse_file (parse) (source_file : string) =
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
 				                 | RelDef rdef -> process_rel_def rdef
-								 | AxiomDef adef -> process_axiom_def adef (* An Hoa *)
+								 | AxiomDef adef -> process_axiom_def adef (* An Hoa : Bug detected in MUTUALLY DEPENDENT relations! *)
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
@@ -91,7 +93,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
       | RelDef rdef -> process_rel_def rdef
-      | AxiomDef _  (* An Hoa *)
+      | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
 	  | LemmaDef _
 	  | CaptureResidue _
 	  | LetDef _
@@ -157,14 +159,14 @@ let main () =
   } in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = Gen.ExcNumbering.compute_hierarchy 3 () in
-  (* let _ = print_endline (Gen.ExcNumbering.string_of_exc_list (1)) in *)
+  let _ = exlist # compute_hierarchy  in
+  (* let _ = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with
       | Scriptarguments.NativeFE -> NF.parse x
       | Scriptarguments.XmlFE -> XF.parse x in
-  (* let parse x = Gen.Debug.no_1 "parse" pr_id string_of_command parse x in *)
+  let parse x = Gen.Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
     try
       if (!inter) then 
@@ -212,9 +214,11 @@ let main () =
               if !inter then prompt := "- "
         done
       else 
+        (* let _ = print_endline "Prior to parse_file" in *)
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
       | End_of_file -> print_string ("\n")
+      (* | Not_found -> print_string ("Not found exception caught!\n") *)
 
 (* let main () =  *)
 (*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
@@ -222,12 +226,14 @@ let main () =
 let _ = 
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
-  if !Scriptarguments.print_version_flag then begin
+  if !Globals.print_version_flag then begin
 	print_version ()
   end else
     (Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
+    (* let _ = print_endline "before main" in *)
     main ();
+    (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     let _ = 
       if (!Globals.profiling && not !inter) then 

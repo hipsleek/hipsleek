@@ -210,9 +210,11 @@ let rec check fd coq_file_name : bool=
 ;;
 let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
+let decidez_vo_dir = Gen.get_path Sys.executable_name
+
 (* starting Coq in interactive mode *)
 let start () =
-  coq_channels := Unix.open_process "coqtop -require decidez 2> /dev/null";
+  coq_channels := Unix.open_process ("coqtop -require " ^ decidez_vo_dir ^ "decidez 2> /dev/null");
   coq_running := true;
   print_string "Coq started\n"; flush stdout
 

@@ -4,8 +4,11 @@
   core pure constraints, including arithmetic and pure pointer
 *)
 
+
 open Globals
 open Gen.Basic
+open Exc.ETABLE_NFLOW
+
 
 (* spec var *)
 type spec_var =
@@ -20,6 +23,9 @@ let is_hole_spec_var sv = match sv with
 			It seems inefficient to me; but simpler to do!
 	 *)
   (* | Array of typ  *)
+
+let is_self_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n = self
 
 
 type formula =
@@ -195,6 +201,30 @@ let rec contains_exists (f:formula) : bool =  match f with
     | Not(f1,_,_)
     | Forall (_ ,f1,_,_) -> (contains_exists f1)  
     | Exists _ -> true
+
+let rec exp_contains_spec_var (e : exp) : bool =
+  match e with
+  | Var (SpecVar (t, _, _), _) -> true
+  | Add (e1, e2, _) 
+  | Subtract (e1, e2, _) 
+  | Mult (e1, e2, _)
+  | Max (e1, e2, _) 
+  | Min (e1, e2, _) 
+  | Div (e1, e2, _) 
+  | ListCons (e1, e2, _) 
+  | BagDiff (e1, e2, _) -> (exp_contains_spec_var e1) || (exp_contains_spec_var e2)
+  | ListHead (e, _) 
+  | ListLength (e, _) 
+  | ListTail (e, _)
+  | ListReverse (e, _) -> (exp_contains_spec_var e)    
+  | List (el, _)
+  | ListAppend (el, _) 
+  | Bag (el, _)
+  | BagUnion (el, _) 
+  | BagIntersect (el, _) -> List.fold_left (fun a b -> a || (exp_contains_spec_var b)) false el
+  | ArrayAt _ -> true
+  | _ -> false
+    
 
 let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
@@ -603,7 +633,9 @@ and is_formula_arith (f:formula) :bool = match f with
         
 (* smart constructor *)
 
-and mkRes t = SpecVar (t, res, Unprimed)
+and mkRes t = SpecVar (t, res_name, Unprimed)
+
+and mkeRes t = SpecVar (t, eres_name, Unprimed)
 
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
 
@@ -1556,7 +1588,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let npf = match pf with
   | BConst _ -> pf
   | BVar (bv, pos) ->
-        if List.fold_left (fun curr -> fun (fr,_) -> curr or eq_spec_var bv fr) false sst   then
+        if List.exists (fun (fr,_) -> eq_spec_var bv fr) sst   then
           failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
         else
           pf
@@ -1632,7 +1664,9 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   | BConst _ -> pf
   | BVar (bv, pos) ->
         if eq_spec_var bv fr then
-          failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+		match t with 
+			| Var (t,_) -> BVar (t,pos)
+			| _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
         else
           pf
   | Lt (a1, a2, pos) -> Lt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -4078,7 +4112,7 @@ let rec simp_addsub e1 e2 loc =
 (* and norm_exp_aux (e:exp) = match e with  *)
 
 and norm_exp (e:exp) = 
-  let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in
+  (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
     | Null _ | IConst _ | FConst _ -> e
@@ -5753,7 +5787,7 @@ let find_relevant_constraints bfl fv =
   let parts = group_related_vars bfl in
   List.filter (fun (svl,lkl,bfl) -> (*fst (check_dept fv (svl, lkl))*) true) parts
 
-(* An Hoa : remove primitive formula if should_elim returns true *)
+(* An Hoa : REMOVE PRIMITIVE CONSTRAINTS IF should_elim EVALUATE TO true *)
 let remove_primitive should_elim e =
 	let rec elim_formula f = match f with
 		| BForm ((bf, _) , _) -> if (should_elim bf) then None else Some f
@@ -5792,4 +5826,44 @@ let remove_primitive should_elim e =
 		match r with
 			| None -> mkTrue no_pos
 			| Some f -> f
+
+(** An Hoa : SIMPLIFY PURE FORMULAE **)
 	
+(* An Hoa : remove redundant identity constraints. *)
+let rec remove_redundant_constraints (f : formula) : formula = match f with
+	| BForm ((b,a),l) -> BForm ((remove_redundant_constraints_b b,a),l)
+	| And (f1,f2,l) -> 
+		let g1 = remove_redundant_constraints f1 in
+		let g2 = remove_redundant_constraints f2 in
+			mkAnd g1 g2 l
+	| Or (f1,f2,l,p) ->
+		let g1 = remove_redundant_constraints f1 in
+		let g2 = remove_redundant_constraints f2 in
+			mkOr g1 g2 l p
+	| _ -> f
+
+and remove_redundant_constraints_b f = match f with  
+	| Eq (e1,e2,l) -> 
+		let r = eqExp_f eq_spec_var e1 e2 in 
+			if r then BConst (true,no_pos) else f
+	| _ -> f
+
+(* Reference to function to solve equations in module Redlog. To be initialized in redlog.ml *)
+let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> (([],[]) : (((spec_var * spec_var) list) * ((spec_var * string) list))))
+
+(* An Hoa : Reduce the formula by removing redundant atomic formulas and variables given the list of "important" variables *)
+let rec reduce_pure (f : formula) (bv : spec_var list) =
+	(* Split f into collections of conjuction *)
+	let c = split_conjunctions f in
+	(* Pick out the term that are atomic *)
+	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c in 
+	let bf = List.fold_left  (fun a x -> 
+        match x with | BForm ((y,_),_) -> y::a
+          | _ -> a) [] bf in
+	(* Pick out equality from all atomic *)
+	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf in
+	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p) | _ -> failwith "Eq fail!") ebf in
+	let eqns = List.map (fun (e1,e2,p) -> (e1,e2)) ebf in
+	(* Solve the equation to find the substitution *)
+	let sst,strrep = !solve_equations eqns bv in
+		(sst,strrep)
