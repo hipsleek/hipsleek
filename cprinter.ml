@@ -462,7 +462,7 @@ let string_of_spec_var x =
         | Primed -> "'"
         | Unprimed -> "" )
 
-let add_frac c frac =
+let add_perm c frac =
   match frac with
     | None -> c^"()"
     | Some v -> c^"("^(string_of_spec_var v)^")"
@@ -855,14 +855,14 @@ let rec pr_h_formula h =
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
-      h_formula_data_frac_perm = frac; (*LDK*)
+      h_formula_data_perm = frac; (*LDK*)
       h_formula_data_origins = origs;
       h_formula_data_original = original;
       h_formula_data_pos = pos;
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
 			(** [Internal] Replace the specvars at positions of holes with '-' **)
-        let c = add_frac c frac in
+        let c = add_perm c frac in
 			let rec replace_holes svl hs n = 
 				if hs = [] then svl
 				else let sv = List.hd svl in
@@ -891,7 +891,7 @@ let rec pr_h_formula h =
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
 	  h_formula_view_imm = imm;
-      h_formula_view_frac_perm = frac; (*LDK*)
+      h_formula_view_perm = frac; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
       h_formula_view_original = original;
@@ -900,7 +900,7 @@ let rec pr_h_formula h =
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
-        let c = add_frac c frac in
+        let c = add_perm c frac in
           fmt_open_hbox ();
          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid;  *)

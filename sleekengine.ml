@@ -7,6 +7,7 @@ open Sleekcommons
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.ETABLE_DFLOW
+open Perm1
 
 module H = Hashtbl
 module I = Iast
@@ -511,10 +512,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*add default full permission = 1.0 to ante; 
     need to add type of full perm to stab
   *)
-  let ante = CF.add_mix_formula_to_formula CF.full_perm_constraint ante  in
+  let ante = CF.add_mix_formula_to_formula full_perm_constraint ante  in
 
   let vk = AS.fresh_proc_var_kind stab Float in
-  let _ = H.add stab Cformula.full_perm_var_name vk in
+  let _ = H.add stab full_perm_name vk in
 
   (* let _ = print_string ("run_entail_check:" *)
   (*                       ^ "\n stab = "^(AS.string_of_stab stab) *)

@@ -3,6 +3,7 @@ open Cast
 open Cformula
 open Prooftracer
 open Gen.Basic
+open Perm1
 
 module CP = Cpure
 module PR = Cprinter
@@ -152,23 +153,23 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
                       h_formula_view_origins = origs;
                       (* h_formula_view_original = original; (*LDK: unused*) *)
                       h_formula_view_remaining_branches = br1;
-                      h_formula_view_frac_perm = frac1; (*LDK*)
+                      h_formula_view_perm = frac1; (*LDK*)
                       h_formula_view_arguments = ps1} (* as h1 *)),
       ViewNode ({ h_formula_view_node = p2;
                   h_formula_view_name = c2;
                   h_formula_view_remaining_branches = br2;
-                  h_formula_view_frac_perm = frac2; (*LDK*)
+                  h_formula_view_perm = frac2; (*LDK*)
                   h_formula_view_arguments = ps2} (* as h2 *))
 	    | DataNode ({ h_formula_data_node = p1;
 	                  h_formula_data_name = c1;
 	                  h_formula_data_origins = origs;
 	                  h_formula_data_remaining_branches = br1;
-	                  h_formula_data_frac_perm = frac1; (*LDK*)
+	                  h_formula_data_perm = frac1; (*LDK*)
 	                  h_formula_data_arguments = ps1} (* as h1 *)),
       DataNode ({ h_formula_data_node = p2;
 	              h_formula_data_name = c2;
 	              h_formula_data_remaining_branches = br2;
-	              h_formula_data_frac_perm = frac2; (*LDK*)
+	              h_formula_data_perm = frac2; (*LDK*)
 	              h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
             let lhs_guard_new,coer_rhs_new1,extra_heap_new = match frac1,frac2 with
@@ -182,8 +183,8 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
                   (*We propagate fractional permission from view node to lemma node*)
                   let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in
                   let extra = CF.subst_avoid_capture_h (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) extra_heap in
-                  let extra, svl =  propagate_frac_h_formula extra f1 in
-                  let rhs = propagate_frac_formula rhs f1 in
+                  let extra, svl =  propagate_perm_h_formula extra f1 in
+                  let rhs = propagate_perm_formula rhs f1 in
                   (guard,rhs,extra)
               | None, Some f2 ->
                   let guard = CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard in
@@ -353,23 +354,23 @@ let normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
 (*                       h_formula_view_origins = origs; *)
 (*                   (\* h_formula_view_original = original; (\*LDK: unused*\) *\) *)
 (*                       h_formula_view_remaining_branches = br1; *)
-(*                       h_formula_view_frac_perm = frac1; (\*LDK*\) *)
+(*                       h_formula_view_perm = frac1; (\*LDK*\) *)
 (*                       h_formula_view_arguments = ps1} (\* as h1 *\)), *)
 (*       ViewNode ({ h_formula_view_node = p2; *)
 (*                   h_formula_view_name = c2; *)
 (*                   h_formula_view_remaining_branches = br2; *)
-(*                   h_formula_view_frac_perm = frac2; (\*LDK*\) *)
+(*                   h_formula_view_perm = frac2; (\*LDK*\) *)
 (*                   h_formula_view_arguments = ps2} (\* as h2 *\)) *)
 (* 	    | DataNode ({ h_formula_data_node = p1; *)
 (* 	                  h_formula_data_name = c1; *)
 (* 	                  h_formula_data_origins = origs; *)
 (* 	                  h_formula_data_remaining_branches = br1; *)
-(* 	                  h_formula_data_frac_perm = frac1; (\*LDK*\) *)
+(* 	                  h_formula_data_perm = frac1; (\*LDK*\) *)
 (* 	                  h_formula_data_arguments = ps1} (\* as h1 *\)), *)
 (*       DataNode ({ h_formula_data_node = p2; *)
 (* 	              h_formula_data_name = c2; *)
 (* 	              h_formula_data_remaining_branches = br2; *)
-(* 	              h_formula_data_frac_perm = frac2; (\*LDK*\) *)
+(* 	              h_formula_data_perm = frac2; (\*LDK*\) *)
 (* 	              h_formula_data_arguments = ps2} (\* as h2 *\)) when CF.is_eq_node_name(\*is_eq_view_spec*\) c1 c2 (\*c1=c2 && (br_match br1 br2) *\) -> *)
 (*             let lhs_guard_new = match frac1,frac2 with *)
 (*               | Some f1, Some f2 -> *)

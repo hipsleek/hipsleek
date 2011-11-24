@@ -73,10 +73,6 @@ and exp =
   | Var of (spec_var * loc)
   | IConst of (int * loc)
   | FConst of (float * loc)
-
- (* (\*LDK: fractional permission*\) *)
- (*  | FracConst of (float * loc) *)
-
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -312,10 +308,6 @@ let rec get_exp_type (e : exp) : typ =
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ -> Int
   | FConst _ -> Float
-
-  (* (\*LDK*\) *)
-  (* | FracConst _ -> Float *)
-
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
@@ -451,10 +443,6 @@ and afv (af : exp) : spec_var list =
   | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
   | IConst _ -> []
   | FConst _ -> []
-
-  (* (\*LDK*\) *)
-  (* | FracConst _ -> [] *)
-
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
@@ -536,10 +524,6 @@ and is_zero_int (e : exp) : bool = match e with
 
 and is_zero_float (e : exp) : bool = match e with
   | FConst (0.0, _) -> true
-
-  (* (\*LDK*\) *)
-  (* | FracConst (0.0, _) -> true *)
-
   | _ -> false
 
 and is_var (e : exp) : bool =
@@ -551,10 +535,6 @@ and is_num (e : exp) : bool =
   match e with
   | IConst _ -> true
   | FConst _ -> true
-
-  (* (\*LDK*\) *)
-  (* | FracConst _ -> true *)
-
   | _ -> false
 
 and to_int_const e t =
@@ -4860,11 +4840,6 @@ let rec imply_disj_orig ante_disj conseq t_imply imp_no =
     | h :: rest ->
 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
 	    if r1 then
-
-          (* (\*LDK*\) *)
-          (* let _ = print_string ("imply_disj_orig:  r1 = true \n") in *)
-
-
 	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)

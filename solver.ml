@@ -11,6 +11,8 @@ open Cast
 open Cformula
 open Prooftracer
 open Gen.Basic
+open Perm1
+
 
 module CP = Cpure
 module PR = Cprinter
@@ -469,7 +471,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list) = 
     match h0 with
       | DataNode ({h_formula_data_node = p;
-                   h_formula_data_frac_perm = frac;
+                   h_formula_data_perm = frac;
 		h_formula_data_pos = pos}) ->
             (* let i = fresh_int2 () in *)
             (*LDK: not check for alias*)
@@ -481,7 +483,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
               | None ->
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , [])
               | Some f ->
-                  let frac_inv = mkFracInv f in
+                  let frac_inv = mkPermInv f in
                   let res = CP.mkAnd non_null frac_inv no_pos in
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [])
             )
@@ -489,7 +491,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 	        (* (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , []) *)
       | ViewNode ({ h_formula_view_node = p;
 		h_formula_view_name = c;
-		h_formula_view_frac_perm = frac; (*Viewnode does not neccessary have invariant on fractional permission*)
+		h_formula_view_perm = frac; (*Viewnode does not neccessary have invariant on fractional permission*)
 		h_formula_view_arguments = vs;
 		h_formula_view_remaining_branches = rm_br;
 		h_formula_view_pos = pos}) ->
@@ -511,7 +513,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
                 | None ->
 	                CP.mkTrue pos
                 | Some f ->
-                    mkFracInv f
+                    mkPermInv f
               ) in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
             (* match rm_br with *)
@@ -697,7 +699,7 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
 and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
-                  h_formula_data_frac_perm = frac;
+                  h_formula_data_perm = frac;
 	  h_formula_data_label = lbl;
 	  h_formula_data_pos = pos}) ->
           let non_zero = CP.BForm ( (CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in
@@ -706,7 +708,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
               | None ->
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [],[p])
               | Some f ->
-                  let frac_inv = mkFracInv f in
+                  let frac_inv = mkPermInv f in
                   let res = CP.mkAnd non_zero frac_inv no_pos in
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [], [p])
             )
@@ -717,7 +719,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     (*       (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p]) *)
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
-	  h_formula_view_frac_perm = frac; (*Viewnode does not neccessary have invariant on fractional permission*)
+	  h_formula_view_perm = frac; (*Viewnode does not neccessary have invariant on fractional permission*)
 	  h_formula_view_arguments = vs;
 	  h_formula_view_remaining_branches = lbl_lst;
 	  h_formula_view_pos = pos}) ->
@@ -736,7 +738,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                     | None ->
 	                    CP.mkTrue pos
                     | Some f ->
-                        mkFracInv f
+                        mkPermInv f
                   ) in
                   let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
                     (*add fractional invariant*)
@@ -1543,7 +1545,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 	  h_formula_view_unfold_num = old_uf;
 	  h_formula_view_label = v_lbl;
 	  h_formula_view_remaining_branches = brs;
-      h_formula_view_frac_perm = frac;
+      h_formula_view_perm = frac;
 	  h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
           let uf = old_uf+uf in
           if CP.mem p aset then
@@ -1575,7 +1577,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                     let renamed_view_formula = 
                       (match frac with 
                         | None -> renamed_view_formula
-                        | Some f -> Cformula.propagate_frac_formula renamed_view_formula f) 
+                        | Some f -> Cformula.propagate_perm_formula renamed_view_formula f) 
                     in
 
                     (* let _ = print_string ("unfold_heap_x: ViewNode: after propagate " *)
@@ -2003,7 +2005,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
     h_formula_view_imm = imm;
     h_formula_view_label = pid;
     h_formula_view_remaining_branches = r_brs;
-    h_formula_view_frac_perm = frac; 
+    h_formula_view_perm = frac; 
     h_formula_view_arguments = vs}) -> begin
       try
         let vdef = match vd with 
@@ -2032,7 +2034,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let renamed_view_formula =
           (match frac with
             | None -> renamed_view_formula
-            | Some f -> Cformula.propagate_frac_struc_formula renamed_view_formula f)
+            | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f)
         in
 
 	    (* (\*LDK*\) *)
@@ -3697,21 +3699,21 @@ and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : 
     | ViewNode ({ h_formula_view_node = p1;
 	  h_formula_view_name = c1;
 	  h_formula_view_origins = origs;
-	  h_formula_view_frac_perm = frac1;
+	  h_formula_view_perm = frac1;
 	  h_formula_view_arguments = ps1}),
 	  ViewNode ({h_formula_view_node = p2;
 	  h_formula_view_name = c2;
-	  h_formula_view_frac_perm = frac2;
+	  h_formula_view_perm = frac2;
 	  h_formula_view_arguments = ps2}) (* when c1=c2 -> *)
 
     | DataNode ({ h_formula_data_node = p1;
 	  h_formula_data_name = c1;
 	  h_formula_data_origins = origs;
-	  h_formula_data_frac_perm = frac1;
+	  h_formula_data_perm = frac1;
 	  h_formula_data_arguments = ps1}),
 	  DataNode ({h_formula_data_node = p2;
 	  h_formula_data_name = c2;
-	  h_formula_data_frac_perm = frac2;
+	  h_formula_data_perm = frac2;
 	  h_formula_data_arguments = ps2}) when c1=c2 ->
 	      begin
 	        (* apply the substitution *) (*LDK: do we need to check for frac ???*)
@@ -5944,10 +5946,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
     let l_args, l_node_name, l_frac = match l_node with
       | DataNode {h_formula_data_name = l_node_name;
-                  h_formula_data_frac_perm = frac;
+                  h_formula_data_perm = frac;
                   h_formula_data_arguments = l_args}
       | ViewNode {h_formula_view_name = l_node_name;
-                  h_formula_view_frac_perm = frac;
+                  h_formula_view_perm = frac;
                   h_formula_view_arguments = l_args} ->
           (l_args, l_node_name,frac)
           (* (match frac with *)
@@ -5957,11 +5959,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
     let r_args, r_node_name, r_var, r_frac = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
-                  h_formula_data_frac_perm = frac;
+                  h_formula_data_perm = frac;
                   h_formula_data_arguments = r_args;
                   h_formula_data_node = r_var}
       | ViewNode {h_formula_view_name = r_node_name;
-                  h_formula_view_frac_perm = frac;
+                  h_formula_view_perm = frac;
                   h_formula_view_arguments = r_args;
                   h_formula_view_node = r_var} ->
           (r_args, r_node_name, r_var,frac)
@@ -6378,7 +6380,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       | DataNode ({ h_formula_data_node = p2;
         h_formula_data_name = c2;
         h_formula_data_imm = imm2;
-        h_formula_data_frac_perm = frac;
+        h_formula_data_perm = frac;
         h_formula_data_arguments = v2;
         h_formula_data_label = pid;
         h_formula_data_remaining_branches =r_rem_brs;
@@ -6387,7 +6389,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       | ViewNode ({ h_formula_view_node = p2;
         h_formula_view_name = c2;
         h_formula_view_imm = imm2;
-        h_formula_view_frac_perm = frac; (*LDK*)
+        h_formula_view_perm = frac; (*LDK*)
         h_formula_view_arguments = v2;
         h_formula_view_label = pid;
         h_formula_view_remaining_branches = r_rem_brs;
@@ -6409,7 +6411,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	  h_formula_view_imm = get_view_imm ln2;
       h_formula_view_original = original2;
       h_formula_view_unfold_num = unfold_num;
-      h_formula_view_frac_perm = frac; (*LDK*)
+      h_formula_view_perm = frac; (*LDK*)
       h_formula_view_arguments = List.tl new_v2;
       h_formula_view_modes = get_view_modes ln2;
       h_formula_view_coercible = true;
@@ -7294,24 +7296,24 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 	    h_formula_view_name = c1;
 	    h_formula_view_origins = origs;
 	    h_formula_view_remaining_branches = br1;
-	    h_formula_view_frac_perm = frac1; (*LDK*)
+	    h_formula_view_perm = frac1; (*LDK*)
 	    h_formula_view_arguments = ps1} (* as h1 *)),
         ViewNode ({ h_formula_view_node = p2;
 	    h_formula_view_name = c2;
 	    h_formula_view_remaining_branches = br2;
-	    h_formula_view_frac_perm = frac2; (*LDK*)
+	    h_formula_view_perm = frac2; (*LDK*)
 	    h_formula_view_arguments = ps2} (* as h2 *)) (* when CF.is_eq_view_name(\*is_eq_view_spec*\) h1 h2 (\*c1=c2 && (br_match br1 br2) *\) *)
 
 	  | DataNode ({ h_formula_data_node = p1;
 	    h_formula_data_name = c1;
 	    h_formula_data_origins = origs;
 	    h_formula_data_remaining_branches = br1;
-	    h_formula_data_frac_perm = frac1; (*LDK*)
+	    h_formula_data_perm = frac1; (*LDK*)
 	    h_formula_data_arguments = ps1} (* as h1 *)),
         DataNode ({ h_formula_data_node = p2;
 	    h_formula_data_name = c2;
 	    h_formula_data_remaining_branches = br2;
-	    h_formula_data_frac_perm = frac2; (*LDK*)
+	    h_formula_data_perm = frac2; (*LDK*)
 	    h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
 	      (* the lemma application heuristic:
@@ -7379,12 +7381,12 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                       (*We propagate fractional permission from view node to lemma node*)
                       let guard = CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard in
                       let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in
-                      (* (\*add_frac adds f1 into any None*\) *)
-                      (* let rhs1 = (add_frac rhs f1) in *)
+                      (* (\*add_perm adds f1 into any None*\) *)
+                      (* let rhs1 = (add_perm rhs f1) in *)
                       (*propagate_frac create a new fresh_var at any None and add freshvar = f1*)
-                      let rhs2 = propagate_frac_formula rhs f1 in
+                      let rhs2 = propagate_perm_formula rhs f1 in
 
-                      (* let _ = print_string ("rewrite_coercion: after add_frac" *)
+                      (* let _ = print_string ("rewrite_coercion: after add_perm" *)
                       (*                       ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs) *)
                       (*                       ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1) *)
                       (*                       (\* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *\) *)
@@ -7523,12 +7525,12 @@ and rewrite_coercion_x prog ctx estate node f coer lhs_b rhs_b target_b weaken p
       h_formula_view_origins = origs;
       (* h_formula_view_original = original; (*LDK: unused*) *)
       h_formula_view_remaining_branches = br1;
-      h_formula_view_frac_perm = frac1; (*LDK*)
+      h_formula_view_perm = frac1; (*LDK*)
       h_formula_view_arguments = ps1} (* as h1 *)),
 	  ViewNode ({ h_formula_view_node = p2;
       h_formula_view_name = c2;
       h_formula_view_remaining_branches = br2;
-      h_formula_view_frac_perm = frac2; (*LDK*)
+      h_formula_view_perm = frac2; (*LDK*)
       h_formula_view_arguments = ps2} (* as h2 *)) 
           (* when CF.is_eq_view_name(\*is_eq_view_spec*\) h1 h2  (\* c1=c2 && (br_match br1 br2) *\)->  *)
 
@@ -7536,12 +7538,12 @@ and rewrite_coercion_x prog ctx estate node f coer lhs_b rhs_b target_b weaken p
 	    h_formula_data_name = c1;
 	    h_formula_data_origins = origs;
 	    h_formula_data_remaining_branches = br1;
-	    h_formula_data_frac_perm = frac1; (*LDK*)
+	    h_formula_data_perm = frac1; (*LDK*)
 	    h_formula_data_arguments = ps1} (* as h1 *)),
         DataNode ({ h_formula_data_node = p2;
 	    h_formula_data_name = c2;
 	    h_formula_data_remaining_branches = br2;
-	    h_formula_data_frac_perm = frac2; (*LDK*)
+	    h_formula_data_perm = frac2; (*LDK*)
 	    h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
 begin
@@ -7588,12 +7590,12 @@ begin
                       (*We propagate fractional permission from view node to lemma node*)
                       let guard = CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard in
                       let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in
-                      (* (\*add_frac adds f1 into any None*\) *)
-                      (* let rhs1 = (add_frac rhs f1) in *)
+                      (* (\*add_perm adds f1 into any None*\) *)
+                      (* let rhs1 = (add_perm rhs f1) in *)
                       (*propagate_frac create a new fresh_var at any None and add freshvar = f1*)
-                      let rhs2 = propagate_frac_formula rhs f1 in
+                      let rhs2 = propagate_perm_formula rhs f1 in
 
-                      (* let _ = print_string ("rewrite_coercion: after add_frac" *)
+                      (* let _ = print_string ("rewrite_coercion: after add_perm" *)
                       (*                       ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs) *)
                       (*                       ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1) *)
                       (*                       (\* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *\) *)
@@ -8014,23 +8016,23 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
                   h_formula_view_origins = origs;
       (* h_formula_view_original = original; (*LDK: unused*) *)
                   h_formula_view_remaining_branches = br1;
-                  h_formula_view_frac_perm = frac1; (*LDK*)
+                  h_formula_view_perm = frac1; (*LDK*)
                   h_formula_view_arguments = ps1} (* as h1 *)),
   ViewNode ({ h_formula_view_node = p2;
               h_formula_view_name = c2;
               h_formula_view_remaining_branches = br2;
-              h_formula_view_frac_perm = frac2; (*LDK*)
+              h_formula_view_perm = frac2; (*LDK*)
               h_formula_view_arguments = ps2} (* as h2 *)) 
 	| DataNode ({ h_formula_data_node = p1;
 	              h_formula_data_name = c1;
 	              h_formula_data_origins = origs;
 	              h_formula_data_remaining_branches = br1;
-	              h_formula_data_frac_perm = frac1; (*LDK*)
+	              h_formula_data_perm = frac1; (*LDK*)
 	              h_formula_data_arguments = ps1} (* as h1 *)),
   DataNode ({ h_formula_data_node = p2;
 	          h_formula_data_name = c2;
 	          h_formula_data_remaining_branches = br2;
-	          h_formula_data_frac_perm = frac2; (*LDK*)
+	          h_formula_data_perm = frac2; (*LDK*)
 	          h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
         (*temporarily skip this step. What is it for???*)
@@ -8060,8 +8062,8 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
                   (*We propagate fractional permission from view node to lemma node*)
                   let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in
                   let extra = CF.subst_avoid_capture_h (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) extra_heap in
-                  let extra, svl =  propagate_frac_h_formula extra f1 in
-                  let rhs = propagate_frac_formula rhs f1 in
+                  let extra, svl =  propagate_perm_h_formula extra f1 in
+                  let rhs = propagate_perm_formula rhs f1 in
                   (guard,rhs,extra)
               | None, Some f2 ->
                   let guard = CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard in

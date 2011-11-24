@@ -440,7 +440,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
             []
     | ViewNode ({h_formula_view_node = p1;
 	  h_formula_view_imm = imm1;
-	  h_formula_view_frac_perm = frac1;
+	  h_formula_view_perm = frac1;
 	  h_formula_view_arguments = vs1;
 	  h_formula_view_name = c}) ->
           if (subtype imm imm1) then

@@ -4,6 +4,7 @@ open Exc.ETABLE_DFLOW
 open Solver
 open Cast
 open Gen.Basic
+open Perm1
 
 module CF = Cformula
 module CP = Cpure
@@ -261,7 +262,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_imm = imm;
-			    CF.h_formula_data_frac_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
+			    CF.h_formula_data_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)
                 CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
@@ -281,10 +282,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             *)
             let vheap = if (read_only)
                 then
-                  let read_f = CF.mkFracInv fresh_frac in
+                  let read_f = mkPermInv fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                 else
-                  let write_f = CF.mkFracWrite fresh_frac in
+                  let write_f = mkPermWrite fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
             in
 
@@ -423,7 +424,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_imm = false;
-		        CF.h_formula_data_frac_perm = None; (*LDK: deal later*)
+		        CF.h_formula_data_perm = None; (*LDK: deal later*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)
 
@@ -777,7 +778,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
           (*add default full permission = 1.0 to ante; 
             need to add type of full perm to stab
           *)
-          let init_form = CF.add_mix_formula_to_formula CF.full_perm_constraint init_form  in
+          let init_form = CF.add_mix_formula_to_formula full_perm_constraint init_form  in
 			    let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
 			let _ = if !print_proof then begin 
 				Prooftracer.push_proc proc;

@@ -293,7 +293,7 @@ let rec
       let tmp1 = look_for_anonymous_h_formula h1 in
       let tmp2 = look_for_anonymous_h_formula h2 in List.append tmp1 tmp2
   | IF.HeapNode { IF.h_formula_heap_arguments = args;
-                  IF.h_formula_heap_frac_perm = frac; (*LDK*)
+                  IF.h_formula_heap_perm = frac; (*LDK*)
                 } ->
       ( match frac with 
         | None -> let tmp1 = look_for_anonymous_exp_list args in tmp1
@@ -420,7 +420,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 	      IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-          IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm; (*LDK: not sure???*)
+          IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm; (*LDK: not sure???*)
           IF.h_formula_heap_arguments = hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
@@ -443,7 +443,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
                 IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
                 IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
                 IF.h_formula_heap_arguments = hargs;
-            IF.h_formula_heap_frac_perm = h0.IF.h_formula_heap2_frac_perm;(*LDK: not sure ???*)
+            IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;(*LDK: not sure ???*)
                 IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
                 IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
 			    IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
@@ -2376,7 +2376,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		              {
 		                  CF.h_formula_data_node = p;
 		                  CF.h_formula_data_name = c;
-		                  CF.h_formula_data_frac_perm = _; (*LDK*)
+		                  CF.h_formula_data_perm = _; (*LDK*)
 		                  CF.h_formula_data_arguments = _;
 		                  CF.h_formula_data_pos = _
 		              } ->
@@ -2392,7 +2392,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		              {
 		                  CF.h_formula_view_node = p;
 		                  CF.h_formula_view_name = c;
-		                  CF.h_formula_view_frac_perm = _; (*LDK*)
+		                  CF.h_formula_view_perm = _; (*LDK*)
 		                  CF.h_formula_view_arguments = _;
 		                  CF.h_formula_view_pos = _
 		              } -> if (CP.name_of_spec_var p) = v then c else ""
@@ -4227,7 +4227,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               IF.h_formula_heap_name = c;
 	          IF.h_formula_heap_derv = dr;
 	          IF.h_formula_heap_imm = imm;
-	          IF.h_formula_heap_frac_perm = frac; (*LDK*)
+	          IF.h_formula_heap_perm = frac; (*LDK*)
               IF.h_formula_heap_arguments = exps;
               IF.h_formula_heap_full = full;
               IF.h_formula_heap_pos = pos;
@@ -4288,7 +4288,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 					CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 					CF.h_formula_data_name = rootptr_type_name;
 					CF.h_formula_data_imm = imm;
-		            CF.h_formula_data_frac_perm = fracvar; (*??? TO CHECK: temporarily*)
+		            CF.h_formula_data_perm = fracvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
 		            CF.h_formula_data_original = true; (*??? temporarily*)
 					CF.h_formula_data_arguments = hvars;
@@ -4327,7 +4327,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       CF.h_formula_view_name = c;
 		              CF.h_formula_view_derv = dr;
 		              CF.h_formula_view_imm = imm;
-		            CF.h_formula_view_frac_perm = fracvar; (*LDK ???*)
+		            CF.h_formula_view_perm = fracvar; (*LDK ???*)
                       CF.h_formula_view_arguments = hvars;
                       CF.h_formula_view_modes = vdef.I.view_modes;
                       CF.h_formula_view_coercible = true;
@@ -4366,7 +4366,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                             CF.h_formula_data_node = new_v;
                             CF.h_formula_data_name = c;
 		                    CF.h_formula_data_imm = imm;
-		                  CF.h_formula_data_frac_perm = fracvar; (*LDK*)
+		                  CF.h_formula_data_perm = fracvar; (*LDK*)
                           CF.h_formula_data_origins = [];
 		                  CF.h_formula_data_original = true;
 		                    CF.h_formula_data_arguments = hvars;
@@ -6028,7 +6028,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 	        {
                 IF.h_formula_heap_node = (v, p); (* ident, primed *)
                 IF.h_formula_heap_arguments = ies; (* arguments *)
-               IF.h_formula_heap_frac_perm = frac;
+               IF.h_formula_heap_perm = frac;
                 IF.h_formula_heap_name = c; (* data/pred name *)
                 IF.h_formula_heap_pos = pos
 	        } ->
@@ -6242,7 +6242,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 	(*          match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
      *)
             (*if add frac perm if any*)
-                  match b.Iformula.h_formula_heap_frac_perm with
+                  match b.Iformula.h_formula_heap_perm with
                     | Some f ->
 	                    match_exp used_names (List.combine (f::b.Iformula.h_formula_heap_arguments) (""::labels)) pos
                     | None ->
@@ -6252,14 +6252,14 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 	      (*   match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in *)
 	        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
           (*split frac perm if any*)
-          let frac_var,hvars = match b.Iformula.h_formula_heap_frac_perm with
+          let frac_var,hvars = match b.Iformula.h_formula_heap_perm with
             | Some _ -> (Some (List.hd hvars), List.tl hvars)
             | None -> (None,hvars)
           in
 
 	      let new_h = IF.HeapNode{ b with 
               IF.h_formula_heap_arguments = hvars;
-              IF.h_formula_heap_frac_perm = frac_var;}
+              IF.h_formula_heap_perm = frac_var;}
 	        in (new_used_names, evars, new_h, (link_f, link_f_br))
       | IF.Star
 	          {

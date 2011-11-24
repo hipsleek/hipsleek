@@ -291,6 +291,8 @@ let elim_exists = ref true
 
 let allow_imm = ref false
 
+let allow_perm = ref true
+
 let ann_derv = ref false
 
 let print_proc = ref false
