@@ -272,31 +272,23 @@ let print_formula = ref (fun (c:formula) -> "cpure printer has not been initiali
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 
-let do_with_check_1 prover fn (pe : formula) arg : 'a option =
+let do_with_check msg prv_call (pe : formula) : 'a option =
   try
-    Some (fn pe arg)
+    Some (prv_call pe)
   with Illegal_Prover_Format s -> 
       begin
-        if not(prover="") then 
+        if not(msg="") then 
           begin
-            print_endline ("Illegal_Prover_Format for "^prover^" :"^s);
-            print_endline ("Formula :"^(!print_formula pe));
+            print_endline ("WARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            print_endline ("WARNING : Formula :"^(!print_formula pe));
           end;
         None
       end
 
-let do_with_check prover fn (pe : formula) : 'a option =
-  try
-    Some (fn pe)
-  with Illegal_Prover_Format s -> 
-      begin
-        if not(prover="") then 
-          begin
-            print_endline ("Illegal_Prover_Format for "^prover^" :"^s);
-            print_endline ("Formula :"^(!print_formula pe));
-          end;
-        None
-      end
+let do_with_check_default msg prv_call (pe : formula) (df:'a) : 'a =
+  match (do_with_check msg prv_call pe) with
+    | Some r -> r
+    | None -> df (* use a default answer if there is prover format error *)
 
 let bool_type = Bool
 

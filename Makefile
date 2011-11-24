@@ -18,7 +18,7 @@ OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: native decidez.vo
+all: byte decidez.vo
 #gui
 byte: hip.byte sleek.byte
 native: hip.native sleek.native

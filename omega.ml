@@ -375,10 +375,14 @@ let is_sat (pe : formula)  (sat_no : string): bool =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pf = !print_pure in
-  Gen.Debug.ho_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
+  Gen.Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
 
 let is_sat_with_check (pe : formula) sat_no : bool option =
-  do_with_check_1 "Omega is_sat" is_sat pe sat_no
+  do_with_check "" (fun x -> is_sat x sat_no) pe 
+
+let is_sat (pe : formula) sat_no : bool =
+  do_with_check_default "Omega is_sat" 
+      (fun x -> is_sat x sat_no) pe true
 
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
@@ -426,10 +430,14 @@ let is_valid (pe : formula) timeout: bool =
 
 let is_valid (pe : formula) timeout: bool =
   let pf = !print_pure in
-  Gen.Debug.ho_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
+  Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
 
 let is_valid_with_check (pe : formula) timeout : bool option =
-  do_with_check_1 "Omega is_valid" is_valid pe timeout
+  do_with_check "Omega is_valid" (fun x -> is_valid x timeout) pe
+
+let is_valid (pe : formula) timeout : bool =
+  do_with_check_default "Omega is_valid" 
+      (fun x -> is_valid x timeout) pe false
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   (*print_endline "LOCLE: imply";*)
@@ -531,7 +539,7 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Gen.Debug.ho_1 "Omega.simplify" pf pf simplify pe
+  Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
 
 
 (* let simplify_with_check (pe : formula) : formula option = *)
