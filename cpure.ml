@@ -109,6 +109,7 @@ and rounding_func =
   | Ceil
   | Floor
 
+
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
@@ -270,6 +271,32 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+
+let do_with_check_1 prover fn (pe : formula) arg : 'a option =
+  try
+    Some (fn pe arg)
+  with Illegal_Prover_Format s -> 
+      begin
+        if not(prover="") then 
+          begin
+            print_endline ("Illegal_Prover_Format for "^prover^" :"^s);
+            print_endline ("Formula :"^(!print_formula pe));
+          end;
+        None
+      end
+
+let do_with_check prover fn (pe : formula) : 'a option =
+  try
+    Some (fn pe)
+  with Illegal_Prover_Format s -> 
+      begin
+        if not(prover="") then 
+          begin
+            print_endline ("Illegal_Prover_Format for "^prover^" :"^s);
+            print_endline ("Formula :"^(!print_formula pe));
+          end;
+        None
+      end
 
 let bool_type = Bool
 

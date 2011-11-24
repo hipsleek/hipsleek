@@ -4,6 +4,11 @@
 type ident = string
 type constant_flow = string
 
+exception Illegal_Prover_Format of string
+
+let illegal_format s = raise (Illegal_Prover_Format s)
+
+
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
