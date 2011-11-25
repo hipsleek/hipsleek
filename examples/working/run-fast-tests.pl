@@ -625,7 +625,7 @@ $output_file = "log";
                       ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
                       ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
-                      ["imm/imm-hard.slk", " -imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+                      ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
     "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],

@@ -3101,6 +3101,10 @@ let false_ctx flowt pos =
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
 
+let false_ctx_with_orig_ante f flowt pos = 
+	let x = mkFalse flowt pos in
+	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; })
+
 let false_es flowt pos = 
   let x =  mkFalse flowt pos in
     {(empty_es flowt pos) with es_formula = x;}

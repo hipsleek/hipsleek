@@ -94,7 +94,7 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
       | RelDef rdef -> process_rel_def rdef
-      | AxiomDef _  (* An Hoa *)
+      | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
 	  | LemmaDef _
 	  | CaptureResidue _
 	  | LetDef _

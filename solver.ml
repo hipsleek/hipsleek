@@ -2168,7 +2168,7 @@ and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_stat
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
   if not b then Ctx{es with es_unsat_flag = true } else 
-	false_ctx (flow_formula_of_formula es.es_formula) no_pos
+	false_ctx_with_orig_ante f (flow_formula_of_formula es.es_formula) no_pos
 
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula= match f with
   | Or _ -> elim_unsat_all prog f 
