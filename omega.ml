@@ -381,8 +381,9 @@ let is_sat_with_check (pe : formula) sat_no : bool option =
   do_with_check "" (fun x -> is_sat x sat_no) pe 
 
 let is_sat (pe : formula) sat_no : bool =
-  do_with_check_default "Omega is_sat" 
-      (fun x -> is_sat x sat_no) pe true
+  try
+    is_sat pe sat_no
+  with Illegal_Prover_Format s -> failwith s
 
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
@@ -436,8 +437,13 @@ let is_valid_with_check (pe : formula) timeout : bool option =
   do_with_check "Omega is_valid" (fun x -> is_valid x timeout) pe
 
 let is_valid (pe : formula) timeout : bool =
-  do_with_check_default "Omega is_valid" 
-      (fun x -> is_valid x timeout) pe false
+  try
+    is_valid pe timeout
+  with Illegal_Prover_Format s -> failwith s
+
+(* let is_valid (pe : formula) timeout : bool = *)
+(*   do_with_check_default "Omega is_valid"  *)
+(*       (fun x -> is_valid x timeout) pe false *)
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   (*print_endline "LOCLE: imply";*)
