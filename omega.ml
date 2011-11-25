@@ -478,7 +478,22 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
       output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
-  
+
+let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
+  do_with_check2 "Omega imply" (fun a c -> imply a c imp_no timeout) ante conseq
+
+let imply (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
+  try
+    imply ante conseq imp_no timeout
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
+		print_endline ("and conseq Formula :"^(!print_pure conseq));
+        flush stdout;
+        failwith s
+      end
+
 let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 | ConstRel b ->
     if b then

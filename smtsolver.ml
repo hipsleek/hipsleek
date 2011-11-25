@@ -71,12 +71,10 @@ let rec smt_of_typ t =
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
 		| Int -> "Int"
 		| UNK -> 
-			Error.report_error {Error.error_loc = no_pos;
-			Error.error_text = "unexpected UNKNOWN type"}
+			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
 		| Void | (BagT _) | (TVar _) | List _ ->
-			Error.report_error {Error.error_loc = no_pos; 
-			Error.error_text = "spec not supported for SMT"}
+			illegal_format "z3.smt_of_typ: spec not supported for SMT"
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
 
@@ -87,8 +85,7 @@ let smt_of_typed_spec_var sv =
   try
 	"(" ^ (smt_of_spec_var sv) ^ " " ^ (smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
   with _ ->
-		Error.report_error {Error.error_loc = no_pos;
-		Error.error_text = ("problem with type of"^(!print_ty_sv sv))}
+		illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
 
 let rec smt_of_exp a =
@@ -96,26 +93,26 @@ let rec smt_of_exp a =
 	| CP.Null _ -> "0"
 	| CP.Var (sv, _) -> smt_of_spec_var sv
 	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
-	| CP.FConst _ -> failwith ("[smtsolver.ml]: ERROR in constraints (float should not appear here)")
+	| CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
 	| CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
 	| CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
 	| CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
 	(* UNHANDLED *)
-	| CP.Div _ -> failwith "[smtsolver.ml]: divide is not supported."
+	| CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
 	| CP.Bag ([], _) -> "0"
 	| CP.Max _
-	| CP.Min _ -> failwith ("Smtsolver.smt_of_exp: min/max should not appear here")
+	| CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
 	| CP.Bag _
 	| CP.BagUnion _
 	| CP.BagIntersect _
-	| CP.BagDiff _ -> failwith ("[smtsolver.ml]: ERROR in constraints (set should not appear here)")
+	| CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
 	| CP.List _ 
 	| CP.ListCons _
 	| CP.ListHead _
 	| CP.ListTail _
 	| CP.ListLength _
 	| CP.ListAppend _
-	| CP.ListReverse _ -> failwith ("[smtsolver.ml]: ERROR in constraints (lists should not appear here)")
+	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
@@ -157,9 +154,9 @@ let rec smt_of_b_formula b =
 	| CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
 	| CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
 	| CP.BagMax _ | CP.BagMin _ -> 
-			failwith ("smt_of_b_formula: BagMax/BagMin should not appear here.\n")
+			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
 	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
-			failwith ("smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -772,7 +769,11 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
 	(* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
 	let res, should_run_smt = if (has_exists conseq) then
-		try (Omega.imply ante conseq "" timeout, false) with | _ -> (false, true)
+		try (match (Omega.imply_with_check ante conseq "" timeout) with
+		     | None -> (false, true)
+			 | Some r -> (r, false)
+			 )
+		with | _ -> (false, true)
 	else (false, true) in
 	if (should_run_smt) then
 		let input = to_smt ante (Some conseq) prover in
@@ -798,6 +799,20 @@ and has_exists conseq = match conseq with
 let imply ante conseq timeout = 
 	smt_imply ante conseq Z3 timeout
 
+let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =
+  CP.do_with_check2 "z3 imply" (fun a c -> imply a c timeout) ante conseq
+
+let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
+  try
+    imply ante conseq timeout
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply z3.imply on ante Formula :"^(!print_pure ante));
+		print_endline ("and conseq Formula :"^(!print_pure conseq));
+        flush stdout;
+        failwith s
+      end
 (**
  * Test for satisfiability
  * We also consider unknown is the same as sat
@@ -822,6 +837,20 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3
 
+let is_sat_with_check (pe : CP.formula) sat_no : bool option =
+  CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
+
+let is_sat (pe : CP.formula) sat_no : bool =
+  try
+    is_sat pe sat_no
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply z3.is_sat on formula :"^(!print_pure pe));
+        flush stdout;
+        failwith s
+      end
+
 (* let is_sat f sat_no = Gen.Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
 
 
@@ -829,6 +858,13 @@ let is_sat f sat_no = smt_is_sat f sat_no Z3
  * To be implemented
  *)
 let simplify (f: CP.formula) : CP.formula = f
+
+let simplify (pe : CP.formula) : CP.formula =
+  match (CP.do_with_check "" simplify pe)
+  with 
+    | None -> pe
+    | Some f -> f
+
 let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
 

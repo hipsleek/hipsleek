@@ -285,6 +285,19 @@ let do_with_check msg prv_call (pe : formula) : 'a option =
         None
       end
 
+let do_with_check2 msg prv_call (ante : formula) (conseq : formula) : 'a option =
+  try
+    Some (prv_call ante conseq)
+  with Illegal_Prover_Format s -> 
+      begin
+        if not(msg="") then 
+          begin
+            print_endline ("WARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            (*print_endline ("WARNING : Formula :"^(!print_formula ante));*)
+          end;
+        None
+      end
+	  
 let do_with_check_default msg prv_call (pe : formula) (df:'a) : 'a =
   match (do_with_check msg prv_call pe) with
     | Some r -> r
