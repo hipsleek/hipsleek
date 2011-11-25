@@ -15,6 +15,9 @@ pred nateq<x> == self = null & x = null
 // then b must represents the same number
 checkentail a::nat<ma> * b::nateq<a> |- b::nat<ma>.
 
+// a, b represent the same number ==> they must be equal
+checkentail a::nat<ma> * b::nat<mb> & ma = mb |- b::nateq<a>.
+
 // self represents the sum of natural numbers pointed by x and y
 // define recursively by: 
 // x + y := y if x = 0
@@ -24,6 +27,19 @@ pred plus<x,y> == self::nateq<y> & x = null
 
 // if a-->[ma] & b-->[mb] & c = a+b then c-->[ma+mb]
 checkentail a::nat<ma> * b::nat<mb> * c::plus<a,b> |- c::nat<ma+mb>.
+
+// we define a different subtraction, namely
+// x - y := 0 if x <= y
+//       := usual x - y otherwise
+// i.e. recursively
+// x - y := 0 if x = 0
+//       := x if y = 0
+//       := x' - y' if x = S x' and y = S y'
+pred minus<x,y> == x = null & self = null
+	or y = null & self::nateq<x>
+	or x::S<n1> * y::S<n2> * self::minus<n1,n2>;
+
+
 
 
 
