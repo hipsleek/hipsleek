@@ -4536,7 +4536,7 @@ and gather_type_info_var_x (var : ident) stab (ex_t : spec_var_kind) pos : spec_
     else
     try
       let k = H.find stab var in
-      let tmp = must_unify(* _expect *) k.sv_info_kind ex_t stab pos in
+      let tmp = must_unify(* _expect *)  k.sv_info_kind ex_t stab pos in
       (k.sv_info_kind <- tmp); tmp
     with | Not_found -> 
         let vk = fresh_proc_var_kind stab ex_t in
