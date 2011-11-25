@@ -61,18 +61,18 @@ let rec omega_of_exp e0 = match e0 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-            | _ -> 
-                Error.report_error {
-                  Error.error_loc = l;
-                  Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
-                }
+            | _ -> illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+                (* Error.report_error { *)
+                (*   Error.error_loc = l; *)
+                (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+                (* } *)
             in rr
       in r
-  | Div (_, _, l) -> 
-      Error.report_error {
-        Error.error_loc = l;
-        Error.error_text ="[omega.ml] Divide is not supported."
-      }
+  | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
+      (* Error.report_error { *)
+      (*   Error.error_loc = l; *)
+      (*   Error.error_text ="[omega.ml] Divide is not supported." *)
+      (* } *)
   | Max _
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
@@ -383,7 +383,13 @@ let is_sat_with_check (pe : formula) sat_no : bool option =
 let is_sat (pe : formula) sat_no : bool =
   try
     is_sat pe sat_no
-  with Illegal_Prover_Format s -> failwith s
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.is_sat on formula :"^(!print_pure pe));
+        flush stdout;
+        failwith s
+      end
 
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
@@ -439,7 +445,14 @@ let is_valid_with_check (pe : formula) timeout : bool option =
 let is_valid (pe : formula) timeout : bool =
   try
     is_valid pe timeout
-  with Illegal_Prover_Format s -> failwith s
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
+        flush stdout;
+        failwith s
+      end
+
 
 (* let is_valid (pe : formula) timeout : bool = *)
 (*   do_with_check_default "Omega is_valid"  *)

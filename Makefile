@@ -37,19 +37,23 @@ xml/xml-light.cma:
 
 hip.byte: xml
 	@ocamlbuild $(OB_FLAGS) main.byte
-	cp -u _build/main.byte p-hip
+	cp -u _build/main.byte hip
+	cp -u _build/main.byte b-hip
 
 hip.native: xml
 	@ocamlbuild $(OB_FLAGS) main.native
 	cp -u _build/main.native hip
+	cp -u _build/main.byte n-hip
 
 sleek.byte: xml
 	@ocamlbuild $(OB_FLAGS) sleek.byte
-	cp -u _build/sleek.byte p-sleek
+	cp -u _build/sleek.byte sleek
+	cp -u _build/main.byte b-sleek
 
 sleek.native: xml
 	@ocamlbuild $(OB_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
+	cp -u _build/main.byte n-sleek
 
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
