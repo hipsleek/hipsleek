@@ -2075,7 +2075,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.ListNotIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lnotin> " ^ (html_of_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> (html_of_formula_exp e1) ^ " <perm> " ^ (html_of_formula_exp e2)
-	| P.RelForm (r, args, l) -> r ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+	| P.RelForm (r, args, l) -> "<i>" ^ r ^ "</i>(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
 
 let rec html_of_pure_formula f =
 	match f with
