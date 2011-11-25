@@ -5648,7 +5648,7 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
   let pr_rhs = Cprinter.string_of_mix_formula in
   let pr_es = Cprinter.string_of_entail_state in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.ho_5(*_opt t*) "existential_eliminator_helper" 
+  Gen.Debug.no_5(*_opt t*) "existential_eliminator_helper" 
       pr_es 
       (add_str "Var2Fold:" Cprinter.string_of_spec_var) 
       (add_str "Pred:" pr_id) 
@@ -5661,7 +5661,10 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
 (* this helper does not seem to eliminate anything *)
 and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
-  let pure = (*if !allow_imm then MCP.pure_ptr_equations estate.es_aux_conseq else*) MCP.pure_of_mix rhs_p in
+  let pure = 
+    if !allow_imm && (estate.es_imm_pure_stk!=[]) 
+    then MCP.pure_of_mix (List.hd estate.es_imm_pure_stk) 
+    else MCP.pure_of_mix rhs_p in
   let ptr_eq = MCP.ptr_equations_with_null rhs_p in
 
   (* below are equality in RHS taken away during --imm option *)

@@ -6,7 +6,7 @@ data node {
 // why unstructured form has nn & r as Ex rather than Expl,Impl?
 pred ll_c<n> == case {
  (n=0) -> [] self=null ; 
- (n!=0) -> [nn] self::node<_, r> * r::ll_c<nn> & nn=n-1;
+ (n!=0) -> [] (exists nn : self::node<_, r> * r::ll_c<nn> & nn=n-1);
   }
 	inv n >= 0.
 
@@ -52,6 +52,6 @@ checkentail x::node<_,null>
   |- x::ll_c<n>.
 */
 
-checkentail x::node<_,y> * y::node<_,null> & n=2
+checkentail x::node<_,y> * y::node<_,z> * z::node<_,null> & n=3
   |- x::ll_c<n>.
 print residue.
