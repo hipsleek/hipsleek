@@ -2459,6 +2459,7 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
+  es_imm_pure_stk : MCP.mix_formula list;
   es_must_error : (string * fail_type) option
   (* es_must_error : string option *)
 }
@@ -3041,6 +3042,7 @@ let rec empty_es flowt pos =
   es_aux_xpure_1 = MCP.mkMTrue pos;
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
+  es_imm_pure_stk = [];
   es_must_error = None;
 
 }

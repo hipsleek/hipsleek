@@ -47,10 +47,10 @@ checkentail x::node<_,y>*y::node<_,null>
   |- x::ll_c<n>.
 print residue.
 */
-
+/*
 checkentail x::node<_,null> 
   |- x::ll_c<n>.
-
+*/
 
 checkentail x::node<_,y> * y::node<_,null> & n=2
   |- x::ll_c<n>.
