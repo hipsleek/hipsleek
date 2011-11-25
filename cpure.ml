@@ -109,6 +109,7 @@ and rounding_func =
   | Ceil
   | Floor
 
+
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
@@ -270,6 +271,39 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+
+let do_with_check msg prv_call (pe : formula) : 'a option =
+  try
+    Some (prv_call pe)
+  with Illegal_Prover_Format s -> 
+      begin
+        if not(msg="") then 
+          begin
+            print_endline ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            print_endline ("WARNING : Formula :"^(!print_formula pe));
+          end;
+        None
+      end
+
+let do_with_check2 msg prv_call (ante : formula) (conseq : formula) : 'a option =
+  try
+    Some (prv_call ante conseq)
+  with Illegal_Prover_Format s -> 
+      begin
+        if not(msg="") then 
+          begin
+            print_endline ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            print_endline ("WARNING : Ante :"^(!print_formula ante));
+            print_endline ("WARNING : Conseq :"^(!print_formula conseq));
+          end;
+        None
+      end
+	  
+let do_with_check_default msg prv_call (pe : formula) (df:'a) : 'a =
+  match (do_with_check msg prv_call pe) with
+    | Some r -> r
+    | None -> df 
+       (* use a default answer if there is prover format error *)
 
 let bool_type = Bool
 
