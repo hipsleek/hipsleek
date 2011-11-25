@@ -149,7 +149,7 @@ let parse_file (parse) (source_file : string) =
   convert_pred_to_cast ();
   List.iter proc_one_lemma cmds;
   let cviews = !cprog.C.prog_view_decls in
-  let cviews = List.map (Astsimp.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
+  let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
    !cprog.C.prog_view_decls <- cviews;
    List.iter proc_one_cmd cmds 
 

@@ -462,11 +462,11 @@ let string_of_spec_var x =
         | Primed -> "'"
         | Unprimed -> "" )
 
-let add_perm c frac =
-  match frac with
-    | None -> c^"()"
-    | Some v -> c^"("^(string_of_spec_var v)^")"
-
+let string_of_cperm perm =
+  let perm_str = match perm with
+    | None -> ""
+    | Some f -> string_of_spec_var f
+  in if (!allow_perm) then "(" ^ perm_str ^ ")" else ""
 
 let string_of_imm imm = 
   if imm then "@I" else "" (*"@M"*)
@@ -684,7 +684,6 @@ let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
 let string_of_formula_type (t:formula_type):string = match t with | Simple -> "Simple" | _ -> "Complex"
 let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
-
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
@@ -829,8 +828,6 @@ let pr_mem_formula  (e : mem_formula) =
 (*     | [] -> fmt_string ";" *)
 (* ;; *)
 
-
-
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
   in
@@ -855,14 +852,14 @@ let rec pr_h_formula h =
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
-      h_formula_data_perm = frac; (*LDK*)
+      h_formula_data_perm = perm; (*LDK*)
       h_formula_data_origins = origs;
       h_formula_data_original = original;
       h_formula_data_pos = pos;
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
 			(** [Internal] Replace the specvars at positions of holes with '-' **)
-        let c = add_perm c frac in
+        let perm_str = string_of_cperm perm in
 			let rec replace_holes svl hs n = 
 				if hs = [] then svl
 				else let sv = List.hd svl in
@@ -879,7 +876,7 @@ let rec pr_h_formula h =
           (* pr_formula_label_opt pid; *)
 			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
-          pr_angle c pr_spec_var svs ;
+          pr_angle (c^perm_str) pr_spec_var svs ;
 	      pr_imm imm;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -891,7 +888,7 @@ let rec pr_h_formula h =
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
 	  h_formula_view_imm = imm;
-      h_formula_view_perm = frac; (*LDK*)
+      h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
       h_formula_view_original = original;
@@ -900,13 +897,13 @@ let rec pr_h_formula h =
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
-        let c = add_perm c frac in
+        let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid;  *)
           pr_spec_var sv; 
           fmt_string "::"; 
-          pr_angle c pr_spec_var svs;
+          pr_angle (c^perm_str) pr_spec_var svs;
 	      pr_imm imm;
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -957,7 +954,6 @@ let printer_of_pure_formula (crt_fmt: Format.formatter) (e:P.formula) : unit =
 
 (** convert h_formula  to a string via pr_h_formula *)
 let string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  pr_h_formula e
-
 
 let printer_of_h_formula (crt_fmt: Format.formatter) (e:h_formula) : unit =
   poly_printer_of_pr crt_fmt pr_h_formula e
@@ -1564,10 +1560,8 @@ let pr_view_base_case bc =
 	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) ()
     )
 
-
 (* pretty printing for a view *)
 let pr_view_decl v =
-  (* let _ = print_string ("pr_view_decl \n\n") in *)
   pr_mem:=false;
   let f bc =
     match bc with
@@ -2350,6 +2344,7 @@ Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
 Cformula.print_esc_stack := string_of_esc_stack;;
 Cformula.print_failesc_context := string_of_failesc_context;;
+Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
@@ -2364,6 +2359,7 @@ Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_view_decl := string_of_view_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
+print_coerc_decl_list := string_of_coerc_decl_list;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Smtsolver.print_ty_sv := string_of_typed_spec_var;;

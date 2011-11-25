@@ -6,6 +6,8 @@ open Cpure
 type iperm = Ipure.exp option
 type cperm = Cpure.spec_var option
 type cperm_var = Cpure.spec_var
+
+let cperm_typ = Float
 let empty_iperm = None
 let empty_perm = None
 let full_iperm = Some (Ipure.FConst (1.0, no_pos))
@@ -14,9 +16,14 @@ let full_iperm = Some (Ipure.FConst (1.0, no_pos))
 let full_perm_name = ("Anon_"^"full_perm")
 let perm_name = ("perm_")
 
-let full_perm = Some (Cpure.SpecVar (Float, full_perm_name, Unprimed))
+let full_perm = Some (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
 
 let fv_iperm = Ipure.afv
+
+let get_iperm perm =
+  match perm with
+    | None -> []
+    | Some f -> [f]
 
 let apply_one_iperm = Ipure.e_apply_one
 
@@ -95,6 +102,11 @@ let fv_cperm perm =
     | None -> []
     | Some f -> [f]
 
+let get_cperm perm =
+  match perm with
+    | None -> []
+    | Some f -> [f]
+
 let subst_var_perm ((fr, t) as s) perm =
         map_opt (Cpure.subst_var s) perm
 
@@ -102,3 +114,10 @@ let fresh_cperm_var = Cpure.fresh_spec_var
 
 let mkEq_cperm v1 v2 pos =
   Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
+
+(*can't not do it modularly because 
+we do not separate between printers for ipure and iformula*)
+(* let string_of_iperm perm = *)
+(*   match perm with *)
+(*     | None -> "" *)
+(*     | Some f -> Cpure.string_of_formula_exp f *)
