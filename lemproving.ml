@@ -165,7 +165,7 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     in
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
-    let num_id = "\nEntailing lemma \""^ lemma_name ^"\"" in
+    let num_id = "\nEntailing lemma "^ lemma_name ^"" in
     let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
     let (rs1, rs2) = match (rs_l2r, rs_r2l) with
       | (None, None) -> (empty_resid, empty_resid)

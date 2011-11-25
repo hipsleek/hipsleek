@@ -5868,3 +5868,76 @@ let rec reduce_pure (f : formula) (bv : spec_var list) =
 	(* Solve the equation to find the substitution *)
 	let sst,strrep = !solve_equations eqns bv in
 		(sst,strrep)
+
+
+let compute_instantiations_x pure_f v_of_int avail_v =
+  let ldisj = list_of_conjs pure_f in
+  let leqs = List.fold_left (fun a c-> match c with | BForm ((Eq(e1,e2,_),_),_) ->  (e1,e2)::a |_-> a) [] ldisj in
+  
+  let v_in v e = List.exists (eq_spec_var v) (afv e) in
+
+  let expose_one_var e v rhs_e :exp = 
+    let rec check_in_one (e1:exp) (e2:exp) (r1:exp) (r2:exp) :exp = 
+      if v_in v e1 then 
+        if v_in v e2 then raise Not_found 
+        else helper e1 r1 
+      else 
+        if v_in v e2 then helper e2 r2 
+        else failwith ("expecting var"^ (!print_sv v) ) 
+
+    and helper (e:exp) (rhs_e:exp) :exp = match e with 
+      | IConst _
+      | FConst _
+      | Null _ -> failwith ("expecting var"^ (!print_sv v) )
+      | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
+      | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
+      | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
+      | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))
+      | Div (e1,e2,p) -> check_in_one e1 e2 (Mult (rhs_e,e2,p)) (Mult (rhs_e,e1,p))
+	  (* expressions that can not be transformed *)
+      | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _ 
+      | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ -> raise Not_found in
+    helper e rhs_e in
+
+  let prep_eq (acc:(spec_var*exp) list) v e1 e2 = 
+    try 
+        if v_in v e1 then
+          if v_in v e2 then acc
+          else ((v,expose_one_var e1 v e2)::acc)
+        else 
+          if v_in v e2 then ((v,expose_one_var e2 v e1)::acc)
+          else acc
+    with 
+      | Not_found -> acc in
+
+  let rec compute_one l_stk l_eqs v = 
+    if List.exists (eq_spec_var v) l_stk then []
+    else
+      let l_eq_of_int =  List.fold_left (fun a (e1,e2) -> 
+          let l = Gen.BList.remove_dups_eq eq_spec_var (afv e1 @ afv e2) in
+          if List.exists (eq_spec_var v) l then (l,(e1,e2))::a
+          else a) [] l_eqs in
+
+      let l = List.fold_left (fun a (l_fv,(e1,e2))->
+          let rem_vars = Gen.BList.difference_eq eq_spec_var l_fv (v::avail_v) in
+          if rem_vars == [] then prep_eq a v e1 e2
+          else 
+            try
+                let l_subs = List.fold_left (fun a r_v -> match compute_one (v::l_stk) l_eqs r_v with 
+                  | [] -> raise Not_found
+                  | h::_ -> h::a) [] rem_vars in
+                prep_eq a v (a_apply_par_term l_subs e1) (a_apply_par_term l_subs e2) 
+            with | Not_found -> a
+      ) [] l_eq_of_int in
+      match l with 
+        |[] -> []
+        |h::t-> [h] in
+  let l_r = List.concat (List.map (compute_one [] leqs) v_of_int) in
+  List.map (fun (v,e) -> (v,BForm ((Eq (Var (v,no_pos),e,no_pos), None),None))) l_r 
+
+let compute_instantiations pure_f v_of_int avail_v =
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  let pr3 = pr_list (pr_pair !print_sv !print_formula) in
+  Gen.Debug.no_3  "compute_instantiations" pr1 pr2 pr2 pr3 (fun _ _ _ -> compute_instantiations_x pure_f v_of_int avail_v) pure_f v_of_int avail_v
+

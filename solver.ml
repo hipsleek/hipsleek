@@ -1813,19 +1813,19 @@ and fold_op p c vd v u loc =
 (**************************************************************)
 
 (* fold some constraints in ctx to view  *)
-and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) =
+and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:CP.formula option) (pos : loc): (list_context * proof) =
   let pr (x,_) = Cprinter.string_of_list_context x in
   let id x = x in
-  let ans = ("use-case : "^string_of_bool use_case)^"\n context:"^(Cprinter.string_of_context ctx)^"\n view:"^(Cprinter.string_of_h_formula view) in
+  let ans = ("use-case : "^(pr_option Cprinter.string_of_pure_formula use_case)^"\n context:"^(Cprinter.string_of_context ctx)^"\n view:"^(Cprinter.string_of_h_formula view)) in
   let pr2 x = match x with
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
   Gen.Debug.no_2 "fold_op" 
       pr2 id pr
-      (fun _ _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc)) vd ans
+      (fun _ _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) use_case (pos : loc)) vd ans
 
 
-and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
+and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:CP.formula option) (pos : loc): (list_context * proof) = match view with
   | ViewNode ({ h_formula_view_node = p;
     h_formula_view_name = c;
     h_formula_view_imm = imm;
@@ -1838,7 +1838,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
           | Some vd -> vd in
         (* is there a benefit for using case-construct during folding? *)
         let brs = filter_branches r_brs vdef.Cast.view_formula in
-        let form = if use_case then brs else Cformula.case_to_disjunct brs in
+        let form = if use_case= None then Cformula.case_to_disjunct brs else brs in 
         (* let form = Cformula.case_to_disjunct brs in *)
         let renamed_view_formula = rename_struc_bound_vars form in
 	    (****)  
@@ -1855,6 +1855,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
         let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
         let view_form = add_struc_origins view_form (get_view_origins view) in
         let view_form = CF.replace_struc_formula_label pid view_form in
+        let view_form = match use_case with | None -> view_form | Some f -> push_case_f f view_form in
         Debug.devel_pprint ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx)) pos;
         Debug.devel_pprint ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view)) pos;
         Debug.devel_pprint ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form)) pos;
@@ -3561,7 +3562,10 @@ and heap_entail_split_rhs_phases_x
   let ctx_with_rhs =  (* ctx_0 in *)
 	let (h, p, fl, b, t) = CF.split_components conseq in
     let eqns = (MCP.ptr_equations_without_null p) in
-    CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns)}) ctx_0 in
+    CF.set_context (fun es -> 
+        {es with 
+            es_rhs_eqset=(es.es_rhs_eqset@eqns);
+            es_imm_pure_stk=p::es.es_imm_pure_stk;}) ctx_0 in
   let helper ctx_00 h p (* mix pure *) (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     (* let ctx_0 = (Cformula.transform_context *)
     (* 	(fun es -> *)
@@ -5641,19 +5645,29 @@ and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
-  let pr p = pr_triple pr_svl pr_svl string_of_bool p in
+  let pr p = pr_pair pr_svl (pr_option Cprinter.string_of_pure_formula) p in
   let pr_rhs = Cprinter.string_of_mix_formula in
   let pr_es = Cprinter.string_of_entail_state in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.no_5(*_opt t*) "existential_eliminator_helper" pr_es Cprinter.string_of_spec_var pr_id 
-      Cprinter.string_of_spec_var_list pr_rhs pr 
-      (fun _ _ _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) estate var_to_fold c2 v2 rhs_p 
+  Gen.Debug.no_5(*_opt t*) "existential_eliminator_helper" 
+      pr_es 
+      (add_str "Var2Fold:" Cprinter.string_of_spec_var) 
+      (add_str "Pred:" pr_id) 
+      (add_str "SVL:" Cprinter.string_of_spec_var_list) 
+      (add_str "RHS pure:" pr_rhs) 
+      pr 
+      (fun _ _ _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) 
+      estate var_to_fold c2 v2 rhs_p 
 
 (* this helper does not seem to eliminate anything *)
 and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
-  let pure = rhs_p in
-  let ptr_eq = MCP.ptr_equations_with_null pure in
+  let pure = 
+    if !allow_imm && (estate.es_imm_pure_stk!=[]) 
+    then MCP.pure_of_mix (List.hd estate.es_imm_pure_stk) 
+    else MCP.pure_of_mix rhs_p in
+  let ptr_eq = MCP.ptr_equations_with_null rhs_p in
+
   (* below are equality in RHS taken away during --imm option *)
   (* let _ = print_line "Adding es_rhs_eqset into RHS ptrs" in *)
   let ptr_eq = (* Cprinter.app_sv_print *) ptr_eq@(estate.es_rhs_eqset) in 
@@ -5664,18 +5678,25 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
 	let subs_vars = List.combine vdef.view_vars v2 in
 	let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
 	let subs_vars = (sf,var_to_fold)::subs_vars in
-	let l_args = List.map (fun (c1,c2)-> 
+    let vars_of_int = List.fold_left (fun a (c1,c2)-> if (List.exists (comparator c1) vdef.view_case_vars) then  c2::a else a) [] subs_vars in
+    let vars_of_int = Gen.BList.intersect_eq comparator estate.es_gen_expl_vars vars_of_int in
+    let posib_inst = CP.compute_instantiations pure vars_of_int (CF.fv estate.es_formula) in
+	let l_args,pr = List.fold_left (fun (a,p) (c1,c2)->
 		if (List.exists (comparator c1) vdef.view_case_vars) then
-          let ex_vars = estate.es_evars@estate.es_gen_impl_vars in
+          let ex_vars = estate.es_evars@estate.es_gen_impl_vars@estate.es_gen_expl_vars in
 		  if (List.exists (comparator c2) ex_vars) then
-			let paset = Context.get_aset asets c2 in
-			List.find (fun c -> not (List.exists (comparator c) (ex_vars) )) paset 
-		  else c2
-		else c2					
-	) subs_vars in
-    let l_posib_inst = List.filter (fun (c1,_)-> List.exists (comparator c1) vdef.view_case_vars) subs_vars in
-    (l_args, snd (List.split l_posib_inst), true)
-  with | Not_found -> (var_to_fold::v2,[],false) 
+			try
+                let c21 = List.find (fun c -> not (List.exists (comparator c) (ex_vars) )) (Context.get_aset asets c2) in
+                (c21::a,p)
+            with
+              | Not_found ->
+                  let _,np = List.find (fun (v,_)-> comparator v c2) posib_inst in
+                  (c2::a,CP.mkAnd p np no_pos)
+		  else (c2::a,p)
+		else (c2::a,p)
+	) ([],Cpure.mkTrue no_pos) subs_vars in
+    (List.rev l_args, Some pr)
+  with | Not_found -> (var_to_fold::v2,None) 
 
 and inst_before_fold estate rhs_p view_vars = 
   let pr_sv = Cprinter.string_of_spec_var in
@@ -5770,9 +5791,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let original2 = if (is_view ln2) then (get_view_original ln2) else true in
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
-  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in
-  let (new_v2,posib_inst,use_case) = existential_eliminator_helper prog estate 
-    (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
+(*  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in*)
+  let (new_v2,case_inst) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
   let view_to_fold = ViewNode ({  
 	  h_formula_view_node = List.hd new_v2 (*var_to_fold*);
 	  h_formula_view_name = c2;
@@ -5805,8 +5825,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
     the remaining rhs pure, and a set of substitutions to be applied to the view node and the remaining conseq
     posib_inst is the list of view args that are case vars
   *)
-  let view_to_fold = CF.h_subst rho view_to_fold in
-  let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd (* false *) use_case pos in
+  (*let view_to_fold = CF.h_subst rho view_to_fold in*)
+  let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd (* false *) case_inst pos in
   if not (CF.isFailCtx fold_rs) then
     let b = { formula_base_heap = resth2;
     formula_base_pure = rhs_p;
@@ -5816,7 +5836,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
     formula_base_flow = rhs_fl;		
     formula_base_label = None;   
     formula_base_pos = pos } in
-    let b = match CF.subst rho (Base b) with | Base b -> b | _ -> failwith "expecting only Base" in
+    (*let b = match CF.subst rho (Base b) with | Base b -> b | _ -> failwith "expecting only Base" in*)
     let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in
     let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
     (tmp, prf)

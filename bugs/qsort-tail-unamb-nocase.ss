@@ -8,51 +8,17 @@ data node {
 	node next; 
 }
 
-// sorted lseg
-/*
-lseg<n, p, sm, lg> == self=p & n=0 & sm<=lg
-		or self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1<=lg
-	inv n >= 0 & sm<=lg;
-*/
 
-lseg<n, p, sm, lg> == case {
- (n=1) -> [] self::node<sm, p> & sm=lg; 
- (n!=1) -> [nn] self::node<sm, r> * 
-           r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1;
-  }
+lseg<n, p, sm, lg> == 
+   self::node<sm, p> & sm=lg & n=1
+or  self::node<sm, r> * r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1
 inv n >= 1 & sm<=lg;
 
-  /*
-lseg<n, p, sm, lg> == case {
-  n=0 -> [] self=p & sm<=lg;
- (n!=0) -> [nn] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
-               & sm<=sm1 & nn=n-1; 
-}	inv n >= 0 & sm<=lg;
-  */
-
-// sorted list with tail
-/*
-ll_tail<n, t, sm, lg> == self::node<sm, null> & t=self & n=1 & sm=lg
-		or self::node<sm, r> * r::ll_tail<n-1, t, sm1, lg> & r!=null & sm<=sm1
-	inv n>=0 & self!=null;
-*/
 
 ll_tail<n, t, sm, lg> == 
-   case {
-     n=2 -> [] self::node<sm, r> *r::node<lg,null> & t=r & n=2 & sm<=lg ;
-     n!=2 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1;
-   }
+   self::node<sm, r> *r::node<lg,null> & t=r & n=2 & sm<=lg 
+or self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1
 inv n>=2 & self!=null & sm<=lg;
-
-/*
-ll_tail<n, t, sm, lg> == 
-   case {
-     n=1 -> [] self::node<sm, null> & t=self & n=1 & sm=lg;
-     n!=1 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1;
-   }
-inv n>=1 & self!=null & sm<=lg;
-*/
-
 
 // bounded list with tail
 bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
@@ -88,11 +54,10 @@ lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1  <-
 
 
 void qsort(ref node x, ref node tx)
-	requires x::bnd_tail<n, tx, sm, lg> 
+ requires x::bnd_tail<n, tx, sm, lg> & n>0
  case 
-{ n=0 -> ensures x'=null;
-  n=1 -> ensures x'::node<v,null> & tx'=x';
- (n<0|n>1) -> 
+{ n=1 -> ensures x'::node<v,null> & tx'=x' & x'=x;
+  n!=1 -> 
     ensures x'::ll_tail<n, tx', sm1, lg1> 
     & sm <= sm1 & lg1 <= lg ;
 }
@@ -129,9 +94,9 @@ void qsort(ref node x, ref node tx)
 		else if (y != null) {
 			tx.next = y;
 			tx = ty;
-            //dprint;
-            assert x'::ll_tail<_, _, _, _>; //'
-            assume false;
+            dprint;
+            //assert x'::ll_tail<_, _, _, _>; //'
+            //assume false;
 			return;
 		}
 	}

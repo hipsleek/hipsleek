@@ -1,0 +1,34 @@
+data node {
+	int val;
+	node next;
+}.
+
+// below seems unsound as many variations still provable..
+
+
+pred ls<n,sm, lg> == case {
+ (n=1) -> [] self::node<sm, null> & sm=lg ; 
+ (n!=1) -> [nn] self::node<sm, r> * 
+           r::ls<nn,sm1, lg> & sm<=sm1 & nn=n-1;
+  }
+	inv n >= 1 & self!=null & sm<=lg.
+
+pred ls2<n,sm,lg> ==
+     self::node<sm, null> & sm=lg & n=1
+  or self::node<sm, r> * 
+           r::ls2<nn,sm1, lg> & sm<=sm1 & nn=n-1
+           inv n>=1 & self!=null & sm<=lg.
+
+checkentail x::node<a,null> 
+  |- x::ls<n,sm,lg>.
+print residue.
+
+checkentail x::node<a,y>*y::node<b,null> & a<=b
+  |- x::ls2<n,sm,lg>.
+print residue.
+
+
+// why is below failing case-spec defn
+// ans : n is not constrained on LHS
+checkentail x::node<a,y>*y::node<b,null> & a<=b
+  |- x::ls<n,sm,lg>.
