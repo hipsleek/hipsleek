@@ -7,6 +7,20 @@ axiom n=k & k>=0 ==> bin(n,k,1).
 axiom k=0 & n>=k ==> bin(n,k,1).
 axiom n>k & k>0 & bin(n-1,k,r1) & bin(n-1,k-1,r2) ==> bin(n,k,r1+r2).
 
+relation facta(int n, int f).
+axiom n=0 ==> facta(n,1).
+axiom n > 0 & facta(n-1,f1) ==> facta(n,n*f1).
+
+
+relation binf(int n, int k, int r) == 
+	(n = k & k>=0 & r = 1 | n>=k & k=0 & r=1 |
+     n>k & k>0 & exists(r1,r2:bin_n(n-1,k,r1) & bin_n(n-1,k-1,r2) & r = r1+r2)).
+
+axiom n=k & k>=0 ==> binf(n,k,1).
+axiom k=0 & n>=k ==> binf(n,k,1).
+axiom n>k & k>0 & facta(n,r1) & facta(k,r2) & facta(n-k,r3) &
+  r*r2*r3 = r1 ==> binf(n,k,r).
+
 int computebin(int n, int k)
   requires k>=0 & n>=k 
   ensures bin(n,k,res);
@@ -21,6 +35,21 @@ int computebin(int n, int k)
     }
 }
 
+int comp_bin(int n, int k)
+  requires k>=0 & n>=k 
+  ensures binf(n,k,res);
+{
+  if (k==0 || n==k)
+      {
+        assume facta(0,1);
+		return 1;
+      }
+  else {
+      assume false;
+      // this seems tough to prove!
+      return comp_bin(n-1,k-1)+comp_bin(n-1,k);
+    }
+}
 /*
 
 int effbin(int n, int k)

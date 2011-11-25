@@ -5,7 +5,9 @@ relation fib(int n, int f) ==
 
 relation fiba(int n, int f).
 
-axiom true ==> fiba(0,1) & fiba(1,1).
+  //axiom n=0 ==> fiba(n,1).
+  //axiom n=1 ==> fiba(n,1).
+axiom 0<=n & n<=1 ==> fiba(n,1).
 axiom n > 1 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
 
 int computefib(int n)
@@ -46,7 +48,10 @@ int fibwhile1(int n)
 	ensures fiba(n,res);
 	//ensures fib(n,res);
 {
-	assume fiba(0,1) & fiba(1,1);
+    assert fiba(0,1);
+    assert fiba(1,1);
+    assume fiba(0,1) & fiba(1,1);
+    // why can't assume be removed above?
 	return fibwhilehelper1(n,1,1);
 }
 
