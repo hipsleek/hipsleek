@@ -45,8 +45,8 @@ int factit(int n, int m, int acc)
 		return acc;
 	else
       {
-      int k=m+1; // causes a verification bug when k not present
-      return factit(n-1,k,k*acc);
+        int k=m+1; // causes a verification bug when k not present
+        return factit(n-1,k,k*acc);
       }
 }
 

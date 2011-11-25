@@ -11,7 +11,7 @@ axiom n > 1 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
 int computefib(int n)
 	requires n >= 0
     ensures fiba(n,res);
-	//ensures fib(n,res);
+    //ensures fib(n,res);
 {
 	if (n < 2)
 		return 1;

@@ -1051,7 +1051,7 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     is_valid wf imp_no    in
    let res = 
     if is_linear_formula f then
-      call_omega (lazy (Omega.is_valid f !timeout))
+      call_omega (lazy (Omega.is_valid_with_default f !timeout))
     else
       if has_eq f then
         let eef = elim_eq f in

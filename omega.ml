@@ -440,18 +440,11 @@ let is_valid (pe : formula) timeout: bool =
   Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
 
 let is_valid_with_check (pe : formula) timeout : bool option =
-  do_with_check "Omega is_valid" (fun x -> is_valid x timeout) pe
+  do_with_check "" (fun x -> is_valid x timeout) pe
 
-let is_valid (pe : formula) timeout : bool =
-  try
-    is_valid pe timeout
-  with Illegal_Prover_Format s -> 
-      begin
-        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-        print_endline ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
-        flush stdout;
-        failwith s
-      end
+let is_valid_with_default (pe : formula) timeout : bool =
+  do_with_check_default "" (fun x -> is_valid x timeout) pe false
+
 
 
 (* let is_valid (pe : formula) timeout : bool = *)
@@ -480,7 +473,7 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   result
 
 let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
-  do_with_check2 "Omega imply" (fun a c -> imply a c imp_no timeout) ante conseq
+  do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
   try
@@ -490,6 +483,17 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
         print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
         print_endline ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
 		print_endline ("and conseq Formula :"^(!print_pure conseq));
+        flush stdout;
+        failwith s
+      end
+
+let is_valid (pe : formula) timeout : bool =
+  try
+    is_valid pe timeout
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.is_CCvalid on Formula :"^(!print_pure pe));
         flush stdout;
         failwith s
       end
