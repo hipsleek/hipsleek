@@ -71,13 +71,9 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--disable-check-lemmas", Arg.Clear Globals.check_coercions,
+	("--dlp", Arg.Clear Globals.check_coercions,
 	"Disable Lemma Proving");
-	("--dlc", Arg.Clear Globals.check_coercions,
-	"Disable Lemma Proving");
-	("--enable-check-lemmas", Arg.Set Globals.check_coercions,
-	"Enable Lemma Proving");
-	("--elc", Arg.Set Globals.check_coercions,
+	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");

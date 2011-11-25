@@ -46,7 +46,7 @@ check self::lseg<n-1, t, sm, lg1> * t::node<lg, null>
 
 checkentail self::node<sm,t> * t::node<lg, null> 
       //& n=2 
-      & sm=lg1
+      & lg<sm
       |- self::ll_tail<m, t, xsm, xlg>.
 print residue.
 
