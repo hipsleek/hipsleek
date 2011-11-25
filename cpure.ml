@@ -279,7 +279,7 @@ let do_with_check msg prv_call (pe : formula) : 'a option =
       begin
         if not(msg="") then 
           begin
-            print_endline ("WARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            print_endline ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
             print_endline ("WARNING : Formula :"^(!print_formula pe));
           end;
         None
@@ -292,8 +292,9 @@ let do_with_check2 msg prv_call (ante : formula) (conseq : formula) : 'a option 
       begin
         if not(msg="") then 
           begin
-            print_endline ("WARNING : Illegal_Prover_Format for "^msg^" :"^s);
-            (*print_endline ("WARNING : Formula :"^(!print_formula ante));*)
+            print_endline ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            print_endline ("WARNING : Ante :"^(!print_formula ante));
+            print_endline ("WARNING : Conseq :"^(!print_formula conseq));
           end;
         None
       end
@@ -301,7 +302,8 @@ let do_with_check2 msg prv_call (ante : formula) (conseq : formula) : 'a option 
 let do_with_check_default msg prv_call (pe : formula) (df:'a) : 'a =
   match (do_with_check msg prv_call pe) with
     | Some r -> r
-    | None -> df (* use a default answer if there is prover format error *)
+    | None -> df 
+       (* use a default answer if there is prover format error *)
 
 let bool_type = Bool
 

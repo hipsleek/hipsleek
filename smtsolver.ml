@@ -424,7 +424,7 @@ let sat_type_from_string r input=
 		try
              let _ = Str.search_forward (Str.regexp "unexpected") r 0 in
               (print_string "Z3 translation failure!";
-              Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r^"\n input: "^input)})
+              Error.report_error { Error.error_loc = no_pos; Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
             with
               | Not_found -> Unknown
                     	
@@ -843,6 +843,8 @@ let is_sat f sat_no = smt_is_sat f sat_no Z3
 let is_sat_with_check (pe : CP.formula) sat_no : bool option =
   CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
 
+(* let is_sat f sat_no = Gen.Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
+
 let is_sat (pe : CP.formula) sat_no : bool =
   try
     is_sat pe sat_no
@@ -854,7 +856,6 @@ let is_sat (pe : CP.formula) sat_no : bool =
         failwith s
       end
 
-(* let is_sat f sat_no = Gen.Debug.loop_2_no "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no *)
 
 
 (**
