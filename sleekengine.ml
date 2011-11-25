@@ -5,7 +5,8 @@
 open Globals
 open Sleekcommons
 open Gen.Basic
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 
 module H = Hashtbl
 module I = Iast

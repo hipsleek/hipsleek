@@ -6,7 +6,8 @@
 
 open Globals
 open Gen
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 
 module Err = Error
 module CP = Cpure
@@ -108,7 +109,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_label : formula_label option;
                         formula_exists_pos : loc }
 
-and flow_formula = {  formula_flow_interval : nflow;
+and flow_formula = {  formula_flow_interval : nflow; 
                       formula_flow_link : (ident option)}
 and flow_store = {
 	formula_store_name : ident;
@@ -553,15 +554,20 @@ and is_top_flow p :bool = (equal_flow_interval !top_flow_int p)
 and is_sleek_mustbug_flow p: bool = (equal_flow_interval !error_flow_int p)
 and is_sleek_mustbug_flow_ff ff: bool = is_sleek_mustbug_flow ff.formula_flow_interval
 
-and equal_flow_interval (t1:nflow) (t2:nflow) : bool = 
-  is_eq_flow t1 t2
+(* and equal_flow_interval (t1:nflow) (t2:nflow) : bool =  *)
+(*   is_eq_flow t1 t2 *)
 
+and equal_flow_interval t1 t2 : bool = 
+  is_eq_flow t1 t2
 
 (*first subsumes the second*)
 (* and subsume_flow_x (n1,n2)(p1,p2) : bool = *)
 (* if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) *)
 
-and subsume_flow (t1:nflow) (t2:nflow) : bool =
+(* and subsume_flow (t1:nflow) (t2:nflow) : bool = *)
+(*   is_subsume_flow t1 t2 *)
+
+and subsume_flow t1 t2 : bool =
   is_subsume_flow t1 t2
 
 (* and subsume_flow n p : bool =  *)
@@ -573,7 +579,7 @@ and subsume_flow (t1:nflow) (t2:nflow) : bool =
 
 and overlap_flow t1 t2 : bool = is_overlap_flow t1 t2
 
-and subtract_flow_list t1 t2  : (nflow list) = 
+and subtract_flow_list t1 t2  (* : (nflow list) *) = 
    subtract_flow_l t1 t2
   (* if n1<p1 then (n1,p1-1)::(subtract_flow_list (p1,n2) (p1,p2)) *)
   (* else if n2>p2 then [(p2+1,n2)] *)
@@ -2459,6 +2465,7 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
+  es_imm_pure_stk : MCP.mix_formula list;
   es_must_error : (string * fail_type) option
   (* es_must_error : string option *)
 }
@@ -2537,7 +2544,8 @@ let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
-let print_nflow = ref(fun (c:nflow) -> "printer not initialized")
+(* let print_flow = ref(fun (c:nflow) -> "printer not initialized") *)
+let print_flow = ref(fun (c:nflow) -> "printer not initialized")
 let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
 
@@ -3041,6 +3049,7 @@ let rec empty_es flowt pos =
   es_aux_xpure_1 = MCP.mkMTrue pos;
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
+  es_imm_pure_stk = [];
   es_must_error = None;
 
 }
@@ -4970,17 +4979,17 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
       (fun _ _ -> conv_elim_res cvar c elim_ex_fn) cvar c
 
 (* convert entail state to ctx with nf flow *)
-let conv (c:entail_state) (nf:nflow) = (Ctx {c 
+let conv (c:entail_state) (nf(* :nflow *)) = (Ctx {c 
 with es_formula = 
 (substitute_flow_into_f nf c.es_formula) } )   
 
-let conv_lst (c:entail_state) (nf_lst:nflow list) = 
+let conv_lst (c:entail_state) (nf_lst(*: nflow list *)) = 
   match nf_lst with
     | [] -> None
     | x::xs -> Some (List.fold_left (fun acc_ctx y -> mkOCtx (conv c y) acc_ctx no_pos) (conv c x)  xs)
 
 let rec splitter (c:context) 
-    (nf:nflow) (cvar:typed_ident option)  (elim_ex_fn: context -> context)
+    (nf(* :nflow *)) (cvar:typed_ident option)  (elim_ex_fn: context -> context)
     (* : (context option, context option) (\* caught under nf flow, escaped from nf flow*\)   *)
     =
   let rec helper c = 
@@ -5023,20 +5032,20 @@ let splitter_wrapper p c nf cvar elim_ex_fn fn_esc =
 (* fn transforms context to list of partial context *)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
-let splitter_failesc_context  (nf:nflow) (cvar:typed_ident option) (fn_esc:context -> context)   
+let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)   
 	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
    List.map (fun (fl,el,sl)->
 						let r = List.map (fun (p,c)-> splitter_wrapper p c nf cvar elim_ex_fn fn_esc ) sl in
 						let re,rs = List.split r in
 						(fl,push_esc_elem el (List.concat re),(List.concat rs))) pl 
 
-let splitter_failesc_context  (nf:nflow) (cvar:typed_ident option) (fn_esc:context -> context)   
+let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)   
 	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  let pr2 = !print_nflow in
+  let pr2 = !print_flow in
   Gen.Debug.no_2 "splitter_failesc_context" pr2 pr pr (fun _ _ -> splitter_failesc_context nf cvar fn_esc elim_ex_fn pl) nf pl
 	
-let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
+let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)   
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 
 	(elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context = 
 	
@@ -5641,3 +5650,13 @@ let mark_derv_self name f =
        | EVariance _ -> failwith "marh_derv_self: not expecting assume or variance\n" in
     List.map h_ext f in
   (h_struc f)
+
+
+let rec push_case_f pf sf = 
+  let helper f = match f with 
+    | ECase f -> ECase {f with formula_case_branches = List.map (fun (c1,c2)-> (CP.mkAnd c1 pf no_pos, c2)) f.formula_case_branches}
+    | EBase f -> EBase {f with formula_ext_continuation = push_case_f pf f.formula_ext_continuation}
+    | EVariance v -> EVariance {v with formula_var_continuation = push_case_f pf v.formula_var_continuation}
+    | EAssume _ -> f
+  in
+  List.map helper sf
