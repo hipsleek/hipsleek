@@ -5645,7 +5645,7 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
   let pr_rhs = Cprinter.string_of_mix_formula in
   let pr_es = Cprinter.string_of_entail_state in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.no_5(*_opt t*) "existential_eliminator_helper" 
+  Gen.Debug.ho_5(*_opt t*) "existential_eliminator_helper" 
       pr_es 
       (add_str "Var2Fold:" Cprinter.string_of_spec_var) 
       (add_str "Pred:" pr_id) 
@@ -5784,7 +5784,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let original2 = if (is_view ln2) then (get_view_original ln2) else true in
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
-  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in
+(*  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in*)
   let (new_v2,case_inst) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
   let view_to_fold = ViewNode ({  
 	  h_formula_view_node = List.hd new_v2 (*var_to_fold*);
@@ -5818,7 +5818,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
     the remaining rhs pure, and a set of substitutions to be applied to the view node and the remaining conseq
     posib_inst is the list of view args that are case vars
   *)
-  let view_to_fold = CF.h_subst rho view_to_fold in
+  (*let view_to_fold = CF.h_subst rho view_to_fold in*)
   let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd (* false *) case_inst pos in
   if not (CF.isFailCtx fold_rs) then
     let b = { formula_base_heap = resth2;
@@ -5829,7 +5829,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
     formula_base_flow = rhs_fl;		
     formula_base_label = None;   
     formula_base_pos = pos } in
-    let b = match CF.subst rho (Base b) with | Base b -> b | _ -> failwith "expecting only Base" in
+    (*let b = match CF.subst rho (Base b) with | Base b -> b | _ -> failwith "expecting only Base" in*)
     let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in
     let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
     (tmp, prf)
