@@ -1227,7 +1227,13 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.incr_fixpt_view  prog.I.prog_data_decls prog.I.prog_view_decls
   else vdef.I.view_data_name in
   (vdef.I.view_data_name <- data_name;
+  let vtv = vdef.I.view_typed_vars in
+  List.iter (fun (t,c) -> 
+      if t=UNK 
+      then () 
+      else H.add stab c {sv_info_kind=t; id=fresh_int() }) vtv ;
   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
+  let _ = vdef.I.view_typed_vars <- [] in (* removing the typed arguments *)
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let (inv, inv_b) = vdef.I.view_invariant in
@@ -5325,10 +5331,10 @@ and gather_type_info_struc_f_x prog (f0:Iformula.struc_formula) stab =
     inner_collector f0;
     (* TODO WN : to remove check_shallow_var *)
     (* TODO WN : to avoid double parsing *)
-    (* re-collect type info, don't check for shallowing outer var this time *)
-    check_shallow_var := false;
-    inner_collector f0;
-    check_shallow_var := true
+    (* re-collect type info, don't check for shadowing outer var this time *)
+    (* check_shallow_var := false; *)
+    (* inner_collector f0; *)
+    (* check_shallow_var := true *)
   end
       
 (* and collect_type_info_heap prog (h0 : IF.h_formula) stab = *)

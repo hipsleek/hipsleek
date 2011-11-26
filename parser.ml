@@ -475,7 +475,7 @@ field_list2:[[
  (********** Views **********)
 
 view_decl: 
-  [[ vh=view_header; `EQEQ; vb=view_body; oi= opt_inv  
+  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv  
       -> { vh with view_formula = (fst vb); view_invariant = oi; try_case_inference = (snd vb) } ]];
 
 opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos, [])]];
@@ -501,17 +501,18 @@ branch: [[ `STRING (_,id);`COLON -> id ]];
 view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
-      let cids, br_labels = List.split cids in
-      if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then
-        report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed")
-      else
+      let cids_t, br_labels = List.split cids in
+      let _, cids = List.split cids_t in
+      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
+      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
+      (* else *)
         let modes = get_modes anns in
         { view_name = vn;
           view_data_name = "";
-          view_vars = List.map fst cids;
+          view_vars = (* List.map fst *) cids;
           view_labels = br_labels;
           view_modes = modes;
-          view_typed_vars = [];
+          view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_invariant = (P.mkTrue (get_pos_camlp4 _loc 1), []);
@@ -529,6 +530,8 @@ cid:
    | `RES _                 	-> (res_name, Unprimed)
    | `SELFT _               	-> (self, Unprimed)
    | `THIS _               		-> (this, Unprimed)]];
+
+
 
 (** An Hoa : Access extension. For example: in "x.node.value", ".node.value" is the idext **)
 (* idext:
@@ -557,7 +560,14 @@ cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst 
 (* annotated cid list *)
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
   
-ann_cid:[[ ob=opt_branch; c=cid; al=opt_ann_list ->((c, ob), al)]];
+c_typ:
+  [[ `COLON; t=typ -> t ]];
+
+cid_typ:
+  [[ `IDENTIFIER id ; t=OPT c_typ -> 
+      let ut = un_option t UNK in (ut,id) ]];
+
+ann_cid:[[ ob=opt_branch; c=cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 opt_ann_list: [[t=LIST0 ann -> t]];
   
@@ -1043,7 +1053,7 @@ typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
 rel_header:[[
-`REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists 
@@ -1256,7 +1266,7 @@ proc_decl:
    | h=proc_header -> h]];
   
 proc_header:
-  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
      mkProc id "" None false ot fpl t osl [] (get_pos_camlp4 _loc 1) None
      
@@ -1280,6 +1290,7 @@ constructor_header:
 
 opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
   
+
 fixed_parameter:
   [[ pm=OPT ref_t; t=typ; `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;

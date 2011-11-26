@@ -10,9 +10,9 @@ sll<n, sm, lg> ==
 	or	self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs 
 	inv n>=1 & sm<=lg;
 
-bnd<n,sm,bg> ==
+bnd<n,sm:int,bg> ==
  		self=null & n=0
-   	or	self::node<d,p> * p::bnd<n-1,sm,bg> & sm <= d < bg 
+  or	self::node<d,p> * p::bnd<n-1,sm,bg> & sm <= d< bg 
 	inv n >= 0;
 
 ll<n> == self=null & n=0
