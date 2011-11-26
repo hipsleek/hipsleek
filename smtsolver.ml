@@ -632,7 +632,10 @@ let process_stdout_print ante conseq input output res =
 		if !(outconfig.print_implication) then 
 			print_endline ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
 		if !(outconfig.print_input) then 
-			print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
+            begin
+			  print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
+              flush stdout;
+            end;
 		if !(outconfig.print_original_solver_output) then
 		begin
 			print_endline (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
@@ -640,6 +643,7 @@ let process_stdout_print ante conseq input output res =
 				| UnSat -> ">>> VERDICT: VALID!"
 				| Sat -> ">>> VERDICT: INVALID!"
 				| Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS INVALID.");
+            flush stdout;
 		end;
 		if (!(outconfig.print_implication) || !(outconfig.print_input) || !(outconfig.print_original_solver_output)) then
 			print_string "\n";
@@ -766,7 +770,13 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
    * If it is unsatisfiable, the original implication is true.
    * We also consider unknown is the same as sat
 *)
+
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
+  let pr = !print_pure in
+  Gen.Debug.loop_2_no "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+      (fun _ _ -> smt_imply_x ante conseq prover timeout) (ante,conseq) timeout
+
+and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
   let res, should_run_smt = if (has_exists conseq) then
 	try (match (Omega.imply_with_check ante conseq "" timeout) with
@@ -833,9 +843,11 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout
 let default_is_sat_timeout = 2.0
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
-	let pr = !print_pure in
-	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover default_is_sat_timeout) f
+  smt_is_sat f sat_no prover default_is_sat_timeout
 
+let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+	let pr = !print_pure in
+	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3
