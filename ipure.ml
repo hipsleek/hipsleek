@@ -236,6 +236,8 @@ and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkMult a1 a2 pos = Mult (a1, a2, pos)
 
+and mkAnnExp a1 t pos = Ann_Exp (a1, t)
+
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)

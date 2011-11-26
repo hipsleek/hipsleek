@@ -6,7 +6,7 @@ relation bin(int n, int k, int r).
 axiom n=k & k>=0 ==> bin(n,k,1).
 axiom k=0 & n>=k ==> bin(n,k,1).
 // type system cannot handle v1>v2 well - can wait..
-axiom bin(n-1,k,r1) & bin(n-1,k-1,r2) & n>k & k>0==> bin(n,k,r1+r2).
+  axiom  ((n:int)>k) & k>0 & bin(n-1,k,r1) & bin(n-1,k-1,r2) ==> bin(n,k,r1+r2).
 
 relation facta(int n, int f).
 axiom n=0 ==> facta(n,1).
