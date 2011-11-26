@@ -1,6 +1,7 @@
  (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW 
 open Printf
 open Gen.Basic
 open Gen.BList
@@ -4251,6 +4252,7 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
     | IP.Var ((v, p), pos) -> CP.Var ((trans_var (v,p) stab pos),pos)
+    | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
     | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
@@ -4535,7 +4537,7 @@ and gather_type_info_var_x (var : ident) stab (ex_t : spec_var_kind) pos : spec_
     else
     try
       let k = H.find stab var in
-      let tmp = must_unify(* _expect *) k.sv_info_kind ex_t stab pos in
+      let tmp = must_unify(* _expect *)  k.sv_info_kind ex_t stab pos in
       (k.sv_info_kind <- tmp); tmp
     with | Not_found -> 
         let vk = fresh_proc_var_kind stab ex_t in
@@ -4596,6 +4598,9 @@ and gather_type_info_exp_x a0 stab et =
     | IP.Null pos -> 
           let t = null_type in
           must_unify_expect t et stab pos
+    | IP.Ann_Exp (e,t) -> 
+          (* TODO WN : check if t<:et *)
+          gather_type_info_exp_x e stab t
     | IP.Var ((sv, sp), pos) -> 
           let t = gather_type_info_var sv stab et pos
           in t
@@ -5029,6 +5034,7 @@ and guess_type_of_exp_arith a0 stab =
 	          (* | IP.Div _ -> Known (Float) *)
     | IP.IConst _ -> Int
     | IP.FConst _ -> Float
+    | IP.Ann_Exp (_,t) -> t
     | _ -> UNK
 
 (* and collect_type_info_arith a0 stab expected_type = *)
@@ -5978,7 +5984,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
     let need_quant = Gen.BList.difference_eq (=) (Iformula.all_fv f) h in
     let _ = if not (List.for_all(fun (c1,c2)->c2==Unprimed)need_quant) then Err.report_error{ 
         Err.error_loc = Iformula.pos_of_formula f; 
-        Err.error_text = "existential vars should not be primed"; } in
+        Err.error_text = "call-by-value parameters & existential vars should not be primed"; } in
     (* let _ = if (List.length need_quant)>0 then  *)
     (*   print_string ("\n warning "^(string_of_loc (Iformula.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in *)
     Iformula.push_exists need_quant f in

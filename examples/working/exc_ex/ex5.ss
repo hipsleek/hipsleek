@@ -1,8 +1,7 @@
 class e1 extends __Exc {}
 
-class e3 extends __Exc {}
-
 class e2 extends e1    {}
+class e3 extends e1    {}
 class e4 extends e1    {}
 class e5 extends e1    {}
 
@@ -13,10 +12,10 @@ data node{int i; node n;}
 void m1 (ref int i, e1 z) throws e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
-	ensures 
-        eres::e4<> & i>0 & i'=2 & flow e4 
+  ensures 
+        eres::e4<> & i>0 & i'=2 & flow e4
         or eres::e1<> & i>0 & i'=i & flow e1
-        or z::e1<> & i<=0 & i'=i & flow __norm
+        or i'=3 & flow __norm
         ;//'
 {   
 	try{
@@ -24,21 +23,23 @@ void m1 (ref int i, e1 z) throws e1
           { //assume false;
             try {
             raise z; //new e1();
-            dprint;
+            //dprint;
             } catch (e2 v)
             {
-              raise v;
+              assert true;
+              //dprint;
             };
-            dprint;
+            //dprint;
           }
-	}catch (e2 v){
+	}catch (e4 v){
+      //dprint;
 		i=2;
 		raise new e4();
-        dprint;
+        //dprint;
 	};
-    assume false;
-	i=3;
-    dprint;
+    //assume false;
+    i=3;
+    //dprint;
 }
 
 
