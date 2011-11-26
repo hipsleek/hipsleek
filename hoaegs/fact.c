@@ -3,8 +3,8 @@ relation fact(int n, int f) ==
 	n >= 1 & exists(f1 : fact(n-1,f1) & f = n*f1)).
 
 relation facta(int n, int f).
-
-axiom true ==> facta(0,1).
+// using n=0 avoided some assume
+axiom n=0 ==> facta(n,1).
 axiom n > 0 & facta(n-1,f1) ==> facta(n,n*f1).
 
 int computefact(int n)
@@ -22,7 +22,7 @@ int fact2(int n)
   requires n>=0
   ensures facta(n,res);
 {
-  assume facta(0,1);
+  //assume facta(0,1);
   return factit(n,0,1);
 }
 
@@ -73,7 +73,7 @@ int fact_while(int n)
     ensures facta(n,res);
 {
   int r = 1;
-  assume facta(0,1);
+  //assume facta(0,1);
   while (n>0) 
     requires n>=0 
     ensures (exists f0: facta(n,f0) & r'=r*f0 & n'=0);
