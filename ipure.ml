@@ -44,6 +44,7 @@ and p_formula =
 
 (* Expression *)
 and exp = 
+  | Ann_Exp of (exp * typ)
   | Null of loc
   | Var of ((ident * primed) * loc) 
 	  (* variables could be of type pointer, int, bags, lists etc *)

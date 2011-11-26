@@ -105,6 +105,7 @@ let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l                  -> "null"
+  | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
   | P.Var (x, l)        -> (match x with 
 															|(id, p) -> id ^ (match p with 
 																									| Primed    -> "#'" 

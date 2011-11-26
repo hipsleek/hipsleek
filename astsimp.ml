@@ -4597,6 +4597,9 @@ and gather_type_info_exp_x a0 stab et =
     | IP.Null pos -> 
           let t = null_type in
           must_unify_expect t et stab pos
+    | IP.Ann_Exp (e,t) -> 
+          (* TODO WN : check if t<:et *)
+          gather_type_info_exp_x e stab t
     | IP.Var ((sv, sp), pos) -> 
           let t = gather_type_info_var sv stab et pos
           in t
@@ -5030,6 +5033,7 @@ and guess_type_of_exp_arith a0 stab =
 	          (* | IP.Div _ -> Known (Float) *)
     | IP.IConst _ -> Int
     | IP.FConst _ -> Float
+    | IP.Ann_Exp (_,t) -> t
     | _ -> UNK
 
 (* and collect_type_info_arith a0 stab expected_type = *)
