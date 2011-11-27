@@ -110,6 +110,8 @@ let common_arguments = [
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+	("--perm", Arg.Set Globals.allow_perm,"enable the use of immutability annotations");
+	("--dis-perm", Arg.Clear Globals.allow_perm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");
 	("--no-exists-elim", Arg.Clear Globals.elim_exists,
