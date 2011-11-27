@@ -1094,9 +1094,15 @@ and create_memo_group_no_slicing (l1:(b_formula * (formula_label option)) list) 
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   let l2 = to_slice1 @ to_slice2 @ l2 in
+  (* Normalize l1 and l2 to lists of atomic constraints *)
   let l1 = List.map (fun b -> Const_B b) l1 in
   let l2 = List.map (fun f -> Const_R f) l2 in
-  let sl = if !f_1_slice then [l1 @ l2] else split (l1 @ l2) in
+  let sl =
+    let l = l1 @ l2 in
+    if !f_1_slice then
+      let v = List.fold_left (fun a s -> a @ (fv_atom s)) [] l in
+      [(Gen.BList.remove_dups_eq eq_spec_var v, l)] 
+    else split l in
   slice_list_to_memo_pure sl status filter_merged_cons 
 
 (*add both imply and fail*)
