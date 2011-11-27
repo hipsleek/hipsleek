@@ -2,44 +2,13 @@ open Globals
 open Gen.Basic
 
 open Cpure
-
+open Slicing 
 (*
  -eprune = espec + ememo + eslice
  -espec enables specialization 
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
-
-type var_aset = Gen.EqMap(SV).emap 
-
-let empty_var_aset = EMapSV.mkEmpty 
-
-type memo_pure = memoised_group list
-
-and memoised_group = {
-    memo_group_fv : spec_var list;
-    memo_group_linking_vars : spec_var list;
-    memo_group_changed: bool;
-    memo_group_cons : memoised_constraint list;(*used for pruning*)
-    memo_group_slice: formula list; (*constraints that can not be used for pruning but belong to the current slice non-the less*)
-    memo_group_aset : var_aset; (* alias set *)
-}
-
-and memoised_constraint = {
-    (*memo_formula_mut: b_formula ref;
-    memo_status_mut : prune_status ref ;*)
-    memo_formula : b_formula;
-    memo_status : prune_status }
-
-and prune_status = 
-  (*| Fail_prune        (*constraint that is contradicted by the current state*)*)
-  | Implied_R      (*constraint that is superseeded by other constraints in the current state*)
-  | Implied_P
-  | Implied_N
-  (*| Implied of bool*)         (*constraint that can be deducted from the current state- including predicate invariants ,
-                                  the bool indicates the source true: orig 
-                                                                false: invariant*)
-  (*| Unknown_prune of bool*)   (*pruning constraint with unknown status, -bool indicates if it comes from an invariant*)
   
 let print_mp_f = ref (fun (c:memo_pure)-> " printing not initialized")
 let print_mg_f = ref (fun (c:memoised_group)-> " printing not initialized")
@@ -191,34 +160,33 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
 and group_mem_by_fv_x (lst: memo_pure):memo_pure =
   if !do_slicing then group_mem_by_fv_slicing lst
   else group_mem_by_fv_no_slicing lst
-    
-and group_mem_by_fv_no_slicing (lst: memo_pure):memo_pure = 
-  if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem "; failwith "multi slice problem" );lst)
+
+and group_mem_by_fv_no_slicing (lst: memo_pure) : memo_pure = 
+  if !f_1_slice then 
+    (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem"); lst)
   else
-    let n_l = List.fold_left (fun a d -> 
-	  let n_l = List.map (fun c -> ((bfv c.memo_formula),[(Some c, None, None)])) d.memo_group_cons in
-	  let n_l_f = List.map (fun f -> ((fv f),[(None, Some f, None)])) d.memo_group_slice in
-	  let n_l_a = (fun f -> ((get_elems_eq f),[(None, None, Some f )])) d.memo_group_aset in
-	  n_l_a :: (n_l @ n_l_f @ a)) [] lst in
+    let n_l = Slicing.flatten_memo_pure lst in
     
     let r = List.fold_left (fun acc (v_list, mem) -> 
-	  let l_merged, l_unmerged = List.partition (fun (v_l,_)-> 
-		(List.length (Gen.BList.intersect_eq eq_spec_var v_l v_list))>0) acc in
-	  let l_v,l_m = List.fold_left (fun (a1,a2)(c1,c2)-> (a1@c1,c2@a2)) (v_list,mem) l_merged in
-	  ((Gen.BList.remove_dups_eq eq_spec_var l_v),l_m)::l_unmerged ) [] n_l in
+	    let l_merged, l_unmerged = List.partition (fun (v_l,_)-> 
+		    (List.length (Gen.BList.intersect_eq eq_spec_var v_l v_list))>0) 
+        acc in
+	    let l_v,l_m = List.fold_left (fun (a1,a2)(c1,c2)-> (a1@c1,c2@a2)) (v_list,mem) l_merged in
+	    ((Gen.BList.remove_dups_eq eq_spec_var l_v),l_m)::l_unmerged) [] n_l in
     
-    List.map (fun (v_l,m_l)-> 
-	  let mc_l, f_l,a_l = List.fold_left (fun (a1,a2,a3) c -> match c with
-		| None, Some f , None -> (a1,f::a2,a3)
-		| Some f, None , None -> (f::a1,a2,a3)
-		| None, None, Some f -> (a1,a2,EMapSV.merge_eset(*_debug !print_sv_f*) f a3)
-		| _ -> (a1,a2,a3)) ([],[], empty_var_aset ) m_l in      
-	  { memo_group_fv = v_l;
-		memo_group_linking_vars = [];
-		memo_group_changed = true ; 
-		memo_group_cons = mc_l;
-		memo_group_slice = f_l;
-		memo_group_aset = a_l}) r  
+    List.map (fun (v_l,m_l) -> 
+	    let mc_l, f_l, a_l = List.fold_left (fun (a1,a2,a3) c -> match c with
+		    | None, Some f, None -> (a1, f::a2, a3)
+		    | Some f, None , None -> (f::a1, a2, a3)
+		    | None, None, Some f -> (a1, a2, EMapSV.merge_eset f a3)
+		    | _ -> (a1, a2, a3)) ([],[], empty_var_aset) m_l in      
+	    { memo_group_fv = v_l;
+		    memo_group_linking_vars = [];
+		    memo_group_changed = true ; 
+		    memo_group_cons = mc_l;
+		    memo_group_slice = f_l;
+		    memo_group_aset = a_l }) r  
+
 
 and group_mem_by_fv_slicing (lst: memo_pure):memo_pure = 
   if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem"; failwith "multi slice problem" );lst)
@@ -1122,8 +1090,17 @@ and create_memo_group_x (l1:(b_formula * (formula_label option)) list) (l2:formu
   if !do_slicing then create_memo_group_slicing l1 l2 status
   else create_memo_group_no_slicing l1 l2 status
 
+and create_memo_group_no_slicing (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	 
+  let l1, to_slice2 = anon_partition l1 in
+  let l1, to_slice1 = memo_norm l1 in
+  let l2 = to_slice1 @ to_slice2 @ l2 in
+  let l1 = List.map (fun b -> Const_B b) l1 in
+  let l2 = List.map (fun f -> Const_R f) l2 in
+  let sl = if !f_1_slice then [l1 @ l2] else split (l1 @ l2) in
+  slice_list_to_memo_pure sl status filter_merged_cons 
+
 (*add both imply and fail*)
-and create_memo_group_no_slicing (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
+and create_memo_group_no_slicing_old (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)

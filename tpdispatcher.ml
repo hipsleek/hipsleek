@@ -7,6 +7,7 @@ open Globals
 open Gen.Basic
 open Mcpure
 open Cpure
+open Slicing
 
 module CP = Cpure
 module MCP = Mcpure
@@ -451,10 +452,10 @@ let is_bag_constraint (e: CP.formula) : bool =
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
 
-let rec is_memo_bag_constraint (f:MCP.memo_pure): bool = 
+let rec is_memo_bag_constraint (f:memo_pure): bool = 
   List.exists (fun c-> 
-      (List.exists is_bag_constraint c.MCP.memo_group_slice)|| 
-      (List.exists (fun c-> match is_bag_b_constraint c.MCP.memo_formula with | Some b-> b |_ -> false) c.MCP.memo_group_cons)
+      (List.exists is_bag_constraint c.memo_group_slice)|| 
+      (List.exists (fun c-> match is_bag_b_constraint c.memo_formula with | Some b-> b |_ -> false) c.memo_group_cons)
   ) f
 
   (* Method checking whether a formula contains list constraints *)
@@ -531,10 +532,10 @@ let is_list_constraint (e: CP.formula) : bool =
   (*Gen.Debug.no_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
   Gen.Debug.no_1 "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool is_list_constraint_x e
 	
-let is_memo_list_constraint (f:MCP.memo_pure): bool = 
+let is_memo_list_constraint (f:memo_pure): bool = 
   List.exists (fun c-> 
-      (List.exists is_list_constraint c.MCP.memo_group_slice)|| 
-      (List.exists (fun c-> match is_list_b_formula c.MCP.memo_formula with | Some b-> b| _ -> false) c.MCP.memo_group_cons)
+      (List.exists is_list_constraint c.memo_group_slice)|| 
+      (List.exists (fun c-> match is_list_b_formula c.memo_formula with | Some b-> b| _ -> false) c.memo_group_cons)
   ) f  
   
 let is_mix_bag_constraint f = match f with
@@ -1606,7 +1607,7 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
   let r = List.fold_left (fun (r1,r2,r3) c->
     if not r1 then (r1,r2,r3)
     else 
-      let l = List.filter (fun d -> (List.length (Gen.BList.intersect_eq CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
+      let l = List.filter (fun d -> (List.length (Gen.BList.intersect_eq CP.eq_spec_var c.memo_group_fv d.memo_group_fv))>0) ante0 in
       let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true (*!no_LHS_prop_drop*) true l in
       let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) !no_RHS_prop_drop false [c] in
       let r1',r2',r3' = imply_timeout ant con imp_no timeout false None in 
@@ -1816,14 +1817,14 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   Gen.Debug.no_2 "is_sat_sub_no" (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno
 	
-let is_sat_memo_sub_no_orig (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
   if !f_2_slice then (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
   else
 	(*not (List.fold_left (fun a c -> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)*)
 	not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
-let is_sat_memo_sub_no_slicing (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bool =
   if (not (is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv)) then (* One slice is UNSAT *)
 	false
   else
@@ -1831,13 +1832,13 @@ let is_sat_memo_sub_no_slicing (f : MCP.memo_pure) sat_subno with_dupl with_inv 
 	(*List.fold_left (fun a f -> if not a then a else (is_sat_sub_no f sat_subno)) true f_l*)
 	not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_l)
 	  
-let rec is_sat_memo_sub_no_ineq_slicing (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+let rec is_sat_memo_sub_no_ineq_slicing (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   Gen.Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
 	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x1 mem sat_subno with_dupl with_inv) mem
 
-and is_sat_memo_sub_no_ineq_slicing_x1 (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   let is_sat_one_slice mg =
 	if (MCP.is_ineq_linking_memo_group mg)
 	then (* mg is a linking inequality *)
@@ -1862,9 +1863,9 @@ and is_sat_memo_sub_no_ineq_slicing_x1 (mem : MCP.memo_pure) sat_subno with_dupl
   in
   List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem
 
-and is_sat_memo_sub_no_ineq_slicing_x2 (mem : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   (* Aggressive search on inequalities *)
-  let is_sat_one_slice mg (kb : (bool option * MCP.memoised_group) list) =
+  let is_sat_one_slice mg (kb : (bool option * memoised_group) list) =
 	if (MCP.is_ineq_linking_memo_group mg)
 	then (* mg is a linking inequality *)
 	  (* For each fv v of a linking ineq, find all other slices that relates to v *)
@@ -1901,7 +1902,7 @@ and is_sat_memo_sub_no_ineq_slicing_x2 (mem : MCP.memo_pure) sat_subno with_dupl
 								 (pr_list (fun l_x -> pr_list (fun (_, x) -> Cprinter.string_of_memoised_group x) l_x) related_slices)) in
 		
 	    (* Filter slices without relationship, for example, keep x<=z and z<=y for x!=y *)
-		let rec filter_slices (l_l_slices : (bool * (bool option * MCP.memoised_group)) list list) = (* (is_marked, (is_sat, slice)) *)
+		let rec filter_slices (l_l_slices : (bool * (bool option * memoised_group)) list list) = (* (is_marked, (is_sat, slice)) *)
 		(* Only work if the initial size of ll_slices is 2 *)
 		(* Return a pair of used and unused slices *)
 		  match l_l_slices with
@@ -1977,7 +1978,7 @@ and is_sat_memo_sub_no_ineq_slicing_x2 (mem : MCP.memo_pure) sat_subno with_dupl
   let (res, _) = List.fold_left (fun (a_r, a_kb) mg -> if not a_r then (a_r, a_kb) else is_sat_one_slice mg a_kb) (true, kb) mem in
   res
 
-let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   (* Modified version with UNSAT optimization *)
   if !do_slicing && !multi_provers then
 	is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
@@ -1986,7 +1987,7 @@ let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
   else
 	is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
-let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
+let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Gen.Debug.no_1 "is_sat_memo_sub_no"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
