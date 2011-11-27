@@ -385,22 +385,15 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
-  (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-  (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
-  let rs1, _ = 
-  if not !Globals.disable_failure_explaining then
-    Solver.heap_entail_struc_init_bug_inv !cprog false false 
-        (CF.SuccCtx[ctx]) conseq no_pos None
-  else
-     Solver.heap_entail_struc_init !cprog false false 
-        (CF.SuccCtx[ctx]) conseq no_pos None
-  in
-  (* andreeac - for debugging - to delet: *)
-(*  let length_ctx ctx = match ctx with
-    | CF.FailCtx _ -> 0
-    | CF.SuccCtx ctx0 -> List.length ctx0 in*)
-  (* let _ = print_endline ( "\n Sleekengine.ml, run_entail_check 1:" ^ (string_of_int (length_ctx rs1)) ^" \n\n\t ############reidues#######" ^ (Cprinter.string_of_list_context rs1) ^ "\n ############END#######") in  *)
-  (* to delete *)
+  let run_proof () = 
+    try 
+         if not !Globals.disable_failure_explaining then
+           Solver.heap_entail_struc_init_bug_inv !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None
+         else
+           Solver.heap_entail_struc_init !cprog false false (CF.SuccCtx[ctx]) conseq no_pos None
+    with 
+      | Proof_restart -> run_proof ()  in
+  let rs1, _ = run_proof () in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)

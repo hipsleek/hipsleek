@@ -325,7 +325,7 @@ module Interactive_strategy : STRATEG =
       }
    end;;
 
-
+let def_strat_name = ref ""
 let c_strat = ref Default_strategy.sc ;;
 let strateg_repo = ref (Hashtbl.create 10);;
 Hashtbl.add !strateg_repo Default_strategy.sc.name Default_strategy.sc;;
