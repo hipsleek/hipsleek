@@ -1076,7 +1076,28 @@ let rec pr_numbered_list_formula (e:list_formula) (count:int) =
             pr_numbered_list_formula xs (count+1);
         end
 
+let pr_es_trace (trace:string list) : unit = 
+  let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
+  fmt_string s
+
+let rec pr_numbered_list_formula_trace (e:(formula*formula_trace) list) (count:int) =
+  match e with
+    | [] -> ""
+    | (a,b)::xs -> 
+        begin
+            fmt_string ("<" ^ (string_of_int count) ^ ">");
+            pr_formula a;
+            fmt_print_newline ();
+            fmt_string "[[";
+            pr_es_trace b;
+            fmt_string "]]";
+            fmt_print_newline ();
+            pr_numbered_list_formula_trace xs (count+1);
+        end
+
 let string_of_numbered_list_formula (e:list_formula) : string =  pr_numbered_list_formula e 1
+
+let string_of_numbered_list_formula_trace (e: (formula*formula_trace) list) : string =  pr_numbered_list_formula_trace e 1
 
 let string_of_list_f (f:'a->string) (e:'a list) : string =  
   "["^(String.concat "," (List.map f e))^"]"
@@ -1221,9 +1242,7 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
   (* if String.length(hdr)>7 then *)
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
-let pr_es_trace (trace:string list) : unit = 
-  let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
-  fmt_string s
+
 
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;

@@ -2863,6 +2863,9 @@ ntext functions *)
 (*type formula_cache_no = int
   
 type formula_cache_no_list = formula_cache_no list*)
+type formula_trace = string list
+
+type list_formula_trace = formula_trace list
 
 type entail_state = {
   es_formula : formula; (* can be any formula ; 
@@ -2909,7 +2912,7 @@ type entail_state = {
   es_aux_conseq : CP.formula;
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
-  es_trace : string list; (*LDK: to keep track of past operations: match,fold...*)
+  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
   es_is_normalizing : bool (*normalizing process*)
 }
 
@@ -4324,6 +4327,20 @@ and formula_of_context ctx0 = match ctx0 with
   | Ctx es -> 
       let mix_f,_ = es.es_pure in
       add_mix_formula_to_formula mix_f es.es_formula
+
+(*LDK: add es_pure into residue*)
+and formula_trace_of_context ctx0 = match ctx0 with
+  | OCtx (c1, c2) ->
+	  let f1,trace1 = formula_trace_of_context c1 in
+	  let f2,trace2  = formula_trace_of_context c2 in
+	  let f = mkOr f1 f2 no_pos in
+      let trace = trace1@["||OR||"]@trace2 in
+      (f,trace)
+  | Ctx es -> 
+      let mix_f,_ = es.es_pure in
+      let f = add_mix_formula_to_formula mix_f es.es_formula in
+      let trace = es.es_trace in
+      (f,trace)
   
 (* -- added 16.05.2008 *)  
 and formula_of_list_context (ctx : list_context) : formula =  match ctx with
@@ -4336,6 +4353,9 @@ and list_formula_of_list_context (ctx : list_context) : list_formula =  match ct
   | FailCtx _ -> []
   | SuccCtx ls -> List.map (formula_of_context) ls
 
+and list_formula_trace_of_list_context (ctx : list_context) : (formula*formula_trace) list =  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx ls -> List.map (formula_trace_of_context) ls
 
 (* filter out partial failure first *)
 and list_formula_of_list_partial_context (ls : list_partial_context) : list_formula =  

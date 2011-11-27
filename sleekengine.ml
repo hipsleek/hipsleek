@@ -470,7 +470,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
                         ^"\n\n") no_pos in
   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
-
+  let _ = Debug.devel_pprint ("\nrun_entail_check: after normalization"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n") no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !norm_flow_int [ctx]) in*)
@@ -597,8 +600,9 @@ let process_print_command pcmd0 = match pcmd0 with
         | None -> print_string ": no residue \n"
         (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
         (*       (CF.list_formula_of_list_context s))^"\n") *)
-        | Some s -> print_string ((Cprinter.string_of_numbered_list_formula
-              (CF.list_formula_of_list_context s))^"\n")
+        (*print all posible outcomes and their traces with numbering*)
+        | Some s -> print_string ((Cprinter.string_of_numbered_list_formula_trace
+              (CF.list_formula_trace_of_list_context s))^"\n")
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 

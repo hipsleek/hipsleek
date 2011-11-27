@@ -521,10 +521,16 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               let dr_data_orig = dr.h_formula_data_original in
               let dl_data_derv = dl.h_formula_data_derv in
               let dr_data_derv = dr.h_formula_data_derv in
+              let dl_flag, dr_flag = 
+                if !ann_derv then
+                  (not(dl_data_derv)),(not(dr_data_derv))
+                else
+                  dl_data_orig,dr_data_orig
+              in
               let l2 =
                 if ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 && 
-                           ((dl.h_formula_data_original==false && (dl.h_formula_data_origins!=[])) 
-                            || ((dr.h_formula_data_original==false && dr.h_formula_data_origins!=[])))) then [(0,M_match c)] (*force a MATCH after each lemma*)
+                           ((dl_flag==false && (dl.h_formula_data_origins!=[])) 
+                            || ((dr_flag==false && dr.h_formula_data_origins!=[])))) then [(0,M_match c)] (*force a MATCH after each lemma*)
                 else 
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(1,M_match c)]
                   else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
