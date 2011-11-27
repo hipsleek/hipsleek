@@ -4110,6 +4110,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 				let result_heap = CF.DataNode {
 					CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 					CF.h_formula_data_name = rootptr_type_name;
+		            CF.h_formula_data_derv = dr;
 					CF.h_formula_data_imm = imm;
 		            CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
@@ -4186,6 +4187,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                         let new_h = CF.DataNode {
                             CF.h_formula_data_node = new_v;
                             CF.h_formula_data_name = c;
+		                    CF.h_formula_data_derv = dr;
 		                    CF.h_formula_data_imm = imm;
 		                  CF.h_formula_data_perm = permvar; (*LDK*)
                           CF.h_formula_data_origins = [];

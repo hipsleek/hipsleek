@@ -14,7 +14,6 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
-
 type typed_ident = (typ * ident)
 
 and formula_type = 
@@ -152,6 +151,7 @@ h_formula_phase_pos : loc }
 
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
+                        h_formula_data_derv : bool;
                         h_formula_data_imm : bool;
                         h_formula_data_perm : cperm; (*LDK: permission*)
                         (*added to support fractional splitting of data nodes*)
@@ -168,9 +168,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
                         h_formula_view_imm : bool;
-
                         h_formula_view_perm : cperm; (*LDK: permission*)
-
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
                         h_formula_view_coercible : bool;
@@ -234,7 +232,6 @@ let get_ptr_from_data h =
     | DataNode f -> f.h_formula_data_node
     | ViewNode f -> f.h_formula_view_node
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
-
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
@@ -1101,7 +1098,6 @@ and get_node_perm (h : h_formula) = match h with
   | DataNode ({h_formula_data_perm = c}) -> c
   | _ -> failwith ("get_node_perm: invalid argument")
 
-
 and get_node_args (h : h_formula) = match h with
   | ViewNode ({h_formula_view_arguments = c}) 
   | DataNode ({h_formula_data_arguments = c}) -> c
@@ -1148,7 +1144,11 @@ and get_view_imm (h : h_formula) = match h with
 
 and get_view_derv (h : h_formula) = match h with
   | ViewNode ({h_formula_view_derv = dr}) -> dr
-  | _ -> failwith ("get_view_imm: not a view")
+  | _ -> failwith ("get_view_derv: not a view")
+
+and get_data_derv (h : h_formula) = match h with
+  | DataNode ({h_formula_data_derv = dr}) -> dr
+  | _ -> failwith ("get_data_derv not a data")
 
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in
@@ -1250,7 +1250,7 @@ and h_add_origs_to_node (v : string) (h : h_formula) origs =
 		       h_formula_star_pos = pos})
     | ViewNode vn -> if not((CP.name_of_spec_var vn.h_formula_view_node) = v) then
 	      ViewNode {vn with 
-	          h_formula_view_origins = origs @ vn.h_formula_view_origins; (*LDK ???*)
+	          h_formula_view_origins = origs @ vn.h_formula_view_origins;
 	          h_formula_view_original = false}
         else
 	      ViewNode {vn with 
@@ -1259,7 +1259,7 @@ and h_add_origs_to_node (v : string) (h : h_formula) origs =
 	          h_formula_view_original = false}
     | DataNode dn -> if not((CP.name_of_spec_var dn.h_formula_data_node) = v) then
 	      DataNode {dn with 
-	          h_formula_data_origins = origs @ dn.h_formula_data_origins; (*LDK ???*)
+	          h_formula_data_origins = origs @ dn.h_formula_data_origins;
 	          h_formula_data_original = false}
         else
 	      DataNode {dn with 
@@ -1283,7 +1283,6 @@ and add_origs_to_node (v:string) (f : formula) origs =
 
 (* the first matched node has orgins and its view_original=false *)
 (* , other nodes have their view_original=false *)
-
 (*ln: lhs name: name of heap node in the head of an coercion*)
 and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
   (*return a pair (is_first,h_formula), where is_first indicates
@@ -1438,6 +1437,19 @@ and add_original (f : formula) original =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_original e.formula_exists_heap original})
   in helper f
 
+and add_struc_original (f : struc_formula) original = 
+  let rec helper (f: struc_formula) =
+	let ext_f (f:ext_formula) = match f with
+	  | ECase b -> ECase {b with 
+            formula_case_branches = List.map (fun (c1,c2) -> (c1,(helper c2))) b.formula_case_branches;}
+	  | EBase b -> EBase {b with formula_ext_base = add_original b.formula_ext_base original ; 
+			formula_ext_continuation = helper b.formula_ext_continuation}
+	  | EAssume (x,b,y) ->  EAssume (x,(add_original b original),y)
+	  | EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
+	in
+	List.map ext_f f in	
+  helper f
+
 and set_lhs_case (f : formula) flag = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
@@ -1474,19 +1486,6 @@ and struc_formula_set_lhs_case (f:struc_formula) (flag:bool) : struc_formula =
             formula_var_continuation = struc_formula_set_lhs_case  b.formula_var_continuation flag}
   in
   List.map helper f	
-
-and add_struc_original (f : struc_formula) original = 
-  let rec helper (f: struc_formula) =
-	let ext_f (f:ext_formula) = match f with
-	  | ECase b -> ECase {b with 
-            formula_case_branches = List.map (fun (c1,c2) -> (c1,(helper c2))) b.formula_case_branches;}
-	  | EBase b -> EBase {b with formula_ext_base = add_original b.formula_ext_base original ; 
-			formula_ext_continuation = helper b.formula_ext_continuation}
-	  | EAssume (x,b,y) ->  EAssume (x,(add_original b original),y)
-	  | EVariance b -> EVariance {b with formula_var_continuation = helper b.formula_var_continuation}
-	in
-	List.map ext_f f in	
-  helper f
 
 and add_unfold_num (f : formula) uf = 
   let rec helper f = match f with
@@ -1704,28 +1703,6 @@ and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
 		new_sv :: new_vars
 
 (*LDK: substitue variales (t) in formula (f) by variables (fr)*)
-(* and subst_struc_avoid_capture_w_perm (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula) (permvar: CP.spec_var)  (rhs_p : MCP.mix_formula) : struc_formula = *)
-(*   Gen.Debug.no_5 "subst_struc_avoid_capture_w_perm" *)
-(*       !print_spec_var_list *)
-(*       !print_spec_var_list *)
-(*       !print_struc_formula *)
-(*       !print_spec_var *)
-(*       !print_mix_formula *)
-(*       !print_struc_formula *)
-(*       subst_struc_avoid_capture_w_perm_x fr t f permvar rhs_p *)
-      
-
-(* and subst_struc_avoid_capture_w_perm_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula) (permvar: CP.spec_var)  (rhs_p : MCP.mix_formula) :struc_formula = *)
-
-(*   let f' =  add_mix_formula_to_struc_formula rhs_p f in *)
-(*   let fresh_fr = CP.fresh_spec_vars fr in *)
-(*   let st1 = List.combine fr fresh_fr in *)
-(*   let st2 = List.combine fresh_fr t in *)
-(*   let f1 = subst_struc_w_perm st1 f' permvar in *)
-(*   let f2 = subst_struc_w_perm st2 f1 permvar in *)
-(*   f2 *)
-
-(*LDK: substitue variales (t) in formula (f) by variables (fr)*)
 and subst_struc_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula):struc_formula =
   let fresh_fr = CP.fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
@@ -1737,11 +1714,6 @@ and subst_struc sst (f : struc_formula) = match sst with
   | s :: rest -> subst_struc rest (apply_one_struc s f)
   | [] -> f
 
-(*LDK*)
-(* and subst_struc_w_perm sst (f : struc_formula) (permvar: CP.spec_var) : struc_formula  = match sst with *)
-(*   | s :: rest -> subst_struc_w_perm rest (apply_one_struc_w_perm s f permvar) permvar *)
-(*   | [] -> f *)
-        
 and subst_struc_pre sst (f : struc_formula) = 
   (* apply_par_struc_pre s f *)
   match sst with
@@ -1856,109 +1828,6 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
   let res = List.map helper f in
   res
 
-(* (\*LDK: add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *\) *)
-(* and add_perm_to_struc_formula  (f : struc_formula) (permvar: CP.spec_var):(struc_formula * CP.spec_var) =  *)
-(*   Gen.Debug.no_2 "add_perm_to_struc_formula"  *)
-(*       !print_struc_formula !print_spec_var  *)
-(*       (fun (f1,v1) -> "(" ^ !print_struc_formula f1 ^ "," ^ !print_spec_var v1 ^ ")") *)
-(*       add_perm_to_struc_formula_x f permvar *)
-
-(* (\*LDK: only heap need fractional permision spec var (perm) *\) *)
-(* and add_perm_to_struc_formula_x  (f : struc_formula) (permvar: CP.spec_var):(struc_formula* CP.spec_var) = *)
-(*   let rec helper (f:ext_formula):(ext_formula * CP.spec_var) = match f with *)
-(* 	| ECase b ->  *)
-(*         let _ = print_string ("[add_perm_to_struc_formula] Warning: fractional permission for ECase not added") in *)
-(*         (f,permvar) *)
-(* 	| EBase b -> *)
-
-(*         let _ = print_string ("ttt, add_perm_to_struc_formula:" *)
-(*                               ^ "\n  b.formula_ext_explicit_inst = " ^ (!print_spec_var_list  b.formula_ext_explicit_inst) *)
-(*                               ^ "\n  b.formula_ext_implicit_inst = " ^ (!print_spec_var_list  b.formula_ext_implicit_inst) *)
-(*                               ^ "\n  b.formula_ext_exists = " ^ (!print_spec_var_list  b.formula_ext_exists) *)
-(*                               ^ "\n b.formula_ext_base = " ^ (!print_formula b.formula_ext_base) *)
-(*                               ^ "\n b.formula_ext_continuation = " ^ (!print_struc_formula b.formula_ext_continuation) *)
-(*                               ^ "\n\n") in *)
-
-(*         let ext_base = b.formula_ext_base in *)
-(*         let (ext_base,ext_base_permvar) = add_perm_to_formula_ext_base ext_base permvar in *)
-(*         let _ = print_string ("ttt, add_perm_to_struc_formula: after add_perm_to_formula_ext_base \n") in *)
-(*         let (ext_cont_f, ext_cont_permvar) = (add_perm_to_struc_formula_x b.formula_ext_continuation permvar) in *)
-(*         let res_f =  *)
-(* 		  EBase ({ *)
-(* 			  formula_ext_explicit_inst = b.formula_ext_explicit_inst; *)
-(* 			  formula_ext_implicit_inst = b.formula_ext_implicit_inst; *)
-(* 			  formula_ext_exists = b.formula_ext_exists; *)
-(* 			  formula_ext_base = ext_base; *)
-(* 			  (\* formula_ext_base = apply_one_w_perm s  b.formula_ext_base permvar; *\) *)
-(* 			  formula_ext_continuation = ext_cont_f; *)
-(* 			  formula_ext_pos = b.formula_ext_pos	 *)
-(* 		  }) *)
-(*         in (res_f, ext_base_permvar) *)
-
-(* 	| EAssume (x,b,y)->  *)
-(*                 let _ = print_string ("[add_perm_to_struc_formula] Warning: fractional permission for EAssume not added") in *)
-(*                 (f,permvar) *)
-(* 	| EVariance b ->  *)
-(*         let (cont,cont_var) = add_perm_to_struc_formula_x b.formula_var_continuation permvar in *)
-(*         let res =  *)
-(*         EVariance ({ b with *)
-(* 		  formula_var_measures = b.formula_var_measures; *)
-(* 		  formula_var_escape_clauses = b.formula_var_escape_clauses; *)
-(* 		  formula_var_continuation = cont; *)
-(* 	  }) in *)
-(*         (res, cont_var) *)
-(*   in *)
-(*   let res = List.map helper f in *)
-(*   let res1,res2 = List.split res in *)
-(*   match res1 with *)
-(*     | [] -> (res1,permvar) *)
-(*     | _ -> (res1, List.hd res2) *)
-
-
-
-(*LDK: only heap need fractional permision spec var (perm) *)
-(* and apply_one_struc_w_perm  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula) (permvar: CP.spec_var):struc_formula =  *)
-(*   let rec helper (f:ext_formula):ext_formula = match f with *)
-(* 	| ECase b ->  *)
-(* 		  ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc_w_perm s c2 permvar)) ) b.formula_case_branches;}) *)
-(* 	| EBase b -> *)
-
-
-        (* let _ = print_string ("ttt, apply_one_struc_w_perm" *)
-        (*                       ^ "\n  b.formula_ext_explicit_inst = " ^ (!print_spec_var_list  b.formula_ext_explicit_inst) *)
-        (*                       ^ "\n  b.formula_ext_implicit_inst = " ^ (!print_spec_var_list  b.formula_ext_implicit_inst) *)
-        (*                       ^ "\n  b.formula_ext_exists = " ^ (!print_spec_var_list  b.formula_ext_exists) *)
-        (*                       ^ "\n b.formula_ext_base = " ^ (!print_formula b.formula_ext_base) *)
-        (*                       ^ "\n b.formula_ext_continuation = " ^ (!print_struc_formula b.formula_ext_continuation) *)
-        (*                       ^ "\n\n") in *)
-
-  (*       let ext_base = b.formula_ext_base in *)
-  (*       (\* let ext_base = add_perm_to_formula_ext_base ext_base permvar in *\) *)
-  (*       let impl_inst = b.formula_ext_implicit_inst in *)
-  (*       (\* let impl_inst = if (List.mem permvar b.formula_ext_implicit_inst) then impl_inst else (permvar::impl_inst) in *\) *)
-  (*   	  EBase ({ *)
-  (*   		  formula_ext_explicit_inst = List.map (subst_var s)  b.formula_ext_explicit_inst; *)
-  (*   		  formula_ext_implicit_inst = List.map (subst_var s) impl_inst; *)
-  (*   		  (\* formula_ext_implicit_inst = List.map (subst_var s)  b.formula_ext_implicit_inst; *\) *)
-  (*   		  formula_ext_exists = List.map (subst_var s)  b.formula_ext_exists; *)
-  (*   		  formula_ext_base = apply_one_w_perm s  ext_base permvar; *)
-  (*   		  (\* formula_ext_base = apply_one_w_perm s  b.formula_ext_base permvar; *\) *)
-  (*   		  formula_ext_continuation = apply_one_struc_w_perm s b.formula_ext_continuation permvar; *)
-  (*   		  formula_ext_pos = b.formula_ext_pos	 *)
-  (*   	  }) *)
-  (*   | EAssume (x,b,y)-> EAssume((subst_var_list [s] x),(apply_one_w_perm s b permvar),y) *)
-  (*   | EVariance b -> EVariance ({ b with *)
-  (*   	  formula_var_measures = List.map (fun (expr, bound) -> match bound with *)
-  (*   		| None -> ((CP.e_apply_one s expr), None) *)
-  (*   		| Some b_expr -> ((CP.e_apply_one s expr), Some (CP.e_apply_one s b_expr))) b.formula_var_measures; *)
-  (*   	  formula_var_escape_clauses = List.map (fun f -> CP.apply_one s f) b.formula_var_escape_clauses; *)
-  (*   	  formula_var_continuation = apply_one_struc_w_perm s b.formula_var_continuation permvar; *)
-  (*     }) *)
-  (* in	 *)
-  (* List.map helper f *)
-
-
-
 (*LDK : add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_formula  (f1_mix: MCP.mix_formula) (f2_f:formula) : formula =
   Gen.Debug.no_2 "add_mix_formula_to_formula_x" !print_mix_formula !print_formula
@@ -2030,26 +1899,6 @@ and add_pure_formula_to_mix_formula (pure_f: CP.formula) (mix_f: MCP.mix_formula
     | MCP.OnePF mix_f_pure -> 
         MCP.OnePF (add_formula_to_formula pure_f mix_f_pure)
   )
-
-(* and add_perm_formula_to_pure (p: MCP.mix_formula) (perm_p:CP.formula) =  *)
-(*   (  match p with *)
-(*     | MCP.MemoF m ->  *)
-(*         let _ = print_string ("[ add_perm_formula_to_pure] Warning: perm_p not added to MCP.MemoF") in *)
-(*         p *)
-(*     | MCP.OnePF p_f -> MCP.OnePF (add_perm_formula_to_pure_formula p_f perm_p)) *)
-
-
-(* and add_perm_formula_to_pure_formula (p_f: CP.formula) (perm_p:CP.formula) = *)
-(*   (CP.And (p_f,perm_p,no_pos)) *)
-(*   (\* ( match p_f with *\) *)
-(*   (\*   | CP.BForm (b,f_l) -> p_f *\) *)
-(*   (\*   | CP.And (e1,e2,l) -> p_f *\) *)
-(*   (\*   | CP.Or (e1,e2,f_l,l) -> p_f *\) *)
-(*   (\*   | CP.Not (e1,f_l, l) -> p_f *\) *)
-(*   (\*   | CP.Forall (v,e1,f_l, l) -> p_f *\) *)
-  (*   | CP.Exists (v,e1,f_l, l) -> p_f) *)
-
-
 
 (*and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
@@ -2152,6 +2001,7 @@ and h_subst sst (f : h_formula) =
 		}
   | DataNode ({h_formula_data_node = x; 
 							h_formula_data_name = c; 
+							h_formula_data_derv = dr; 
 							h_formula_data_imm = imm; 
 							h_formula_data_perm = perm; (*LDK*)
 							h_formula_data_arguments = svs; 
@@ -2164,6 +2014,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_pos = pos}) -> 
 		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
 							h_formula_data_name = c; 
+							h_formula_data_derv = dr; 
 							h_formula_data_imm = imm;  
 							h_formula_data_perm = map_opt (CP.subst_var_par sst) perm;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
@@ -2251,136 +2102,6 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
         formula_exists_label = lbl;
 		formula_exists_pos = pos})
 
-(*LDK: new*)
-(* and apply_one_w_perm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) (permvar: CP.spec_var) = match f with *)
-(*   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->  *)
-(*         Or ({formula_or_f1 = apply_one_w_perm s f1 permvar; formula_or_f2 =  apply_one_w_perm s f2 permvar; formula_or_pos = pos}) *)
-(*   | Base ({formula_base_heap = h;  *)
-(* 	formula_base_pure = p;  *)
-(* 	formula_base_type = t; *)
-(* 	(\* formula_base_imm = imm; *\) *)
-(* 	formula_base_flow = fl; *)
-(*     formula_base_branches = b; *)
-(*     formula_base_label = lbl; *)
-(* 	formula_base_pos = pos}) ->  *)
-
-(*       (\* let _  = print_string ("apply_one_w_perm: Base"  *\) *)
-(*       (\*                        ^ "\n f = " ^ (!print_formula f) *\) *)
-(*       (\*                        ^ "\n formula_base_heap = " ^ (!print_h_formula h) *\) *)
-(*       (\*                        ^ "\n formula_base_pure = " ^ (!print_mix_f p) *\) *)
-(*       (\*                        ^ "\n") in *\) *)
-      
-(*         Base ({formula_base_heap = h_apply_one_w_perm s h permvar;  *)
-(* 		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p);  *)
-(* 		formula_base_type = t; *)
-(* 		(\* formula_base_imm = imm; *\) *)
-(* 		formula_base_flow = fl; *)
-(*         formula_base_label = lbl; *)
-(*         formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b; *)
-(* 		formula_base_pos = pos}) *)
-(*   | Exists ({formula_exists_qvars = qsv;  *)
-(* 	formula_exists_heap = qh;  *)
-(* 	formula_exists_pure = qp;  *)
-(* 	formula_exists_type = tconstr; *)
-(* 	(\* formula_exists_imm = imm; *\) *)
-(* 	formula_exists_flow = fl; *)
-(*     formula_exists_branches = b; *)
-(*     formula_exists_label = lbl; *)
-(* 	formula_exists_pos = pos}) ->  *)
-
-(*       (\* let _  = print_string ("apply_one_w_perm: Exists, before add perm"  *\) *)
-(*       (\*                        ^ "\n f = " ^ (!print_formula f) *\) *)
-(*       (\*                        ^ "\n formula_base_heap = " ^ (!print_h_formula qh) *\) *)
-(*       (\*                        ^ "\n formula_base_pure = " ^ (!print_mix_f qp) *\) *)
-(*       (\*                        ^ "\n") in *\) *)
-
-(*       (\*   (\\*LDK: introduce a new fresh variable and assign it to perm*\\) *\) *)
-(*       (\* let nn_perm = ("flted_"^"perm"^(fresh_trailer ())) in *\) *)
-(* 	  (\* let nv_perm = Cpure.SpecVar (Float,nn_perm, Unprimed) in *\) *)
-(*       (\*   (\\*bind the new spec var and permvar*\\) *\) *)
-(*       (\* let pure_formula_perm = Cpure.BForm ( (Cpure.Eq ( *\) *)
-(*       (\*     (Cpure.Var (nv_perm,no_pos)), *\) *)
-(*       (\*     (Cpure.Var (permvar,no_pos)), *\) *)
-(*       (\*     no_pos *\) *)
-(*       (\* )),None) in *\) *)
-(*       (\* let qp1 = add_perm_formula_to_pure qp pure_formula_perm in *\) *)
-
-(*       (\* let _  = print_string ("apply_one_w_perm: Exists, after add perm"  *\) *)
-(*       (\*                        ^ "\n permvar = " ^ (!print_spec_var permvar)                                          ^ "\n nv_perm = " ^ (!print_spec_var nv_perm) *\) *)
-(*       (\*                        ^ "\n formula_base_heap, ph= = " ^ (!print_h_formula qh) *\) *)
-(*       (\*                        ^ "\n formula_base_pure, qp1 = " ^ (!print_mix_f qp1) *\) *)
-(*       (\*                        ^ "\n") in *\) *)
-
-(*       let rs = if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv)  *)
-(*           then f  *)
-(* 	      else  *)
-(*             (\* let qsv1 = if (List.mem permvar qsv) then qsv else permvar::qsv in *\) *)
-(*             Exists ({formula_exists_qvars = qsv;  *)
-(* 		                formula_exists_heap =  h_apply_one_w_perm s qh permvar;  *)
-(* 		                formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp);  *)
-(* 		                formula_exists_type = tconstr; *)
-(* 		(\* formula_exists_imm = imm; *\) *)
-(* 		                formula_exists_flow = fl; *)
-(*                         formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b; *)
-(*                         formula_exists_label = lbl; *)
-(* 		                formula_exists_pos = pos}) in *)
-(*       rs *)
-
-(*LDK: old*)
-(* and apply_one_w_perm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) (permvar: CP.spec_var) = match f with *)
-(*   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->  *)
-(*         Or ({formula_or_f1 = apply_one_w_perm s f1 permvar; formula_or_f2 =  apply_one_w_perm s f2 permvar; formula_or_pos = pos}) *)
-(*   | Base ({formula_base_heap = h;  *)
-(* 	formula_base_pure = p;  *)
-(* 	formula_base_type = t; *)
-(* 	(\* formula_base_imm = imm; *\) *)
-(* 	formula_base_flow = fl; *)
-(*     formula_base_branches = b; *)
-(*     formula_base_label = lbl; *)
-(* 	formula_base_pos = pos}) ->  *)
-
-(*       let _  = print_string ("apply_one_w_perm: Base"  *)
-(*                              ^ "\n f = " ^ (!print_formula f) *)
-(*                              ^ "\n formula_base_heap = " ^ (!print_h_formula h) *)
-(*                              ^ "\n formula_base_pure = " ^ (!print_mix_f p) *)
-(*                              ^ "\n") in *)
-      
-(*         Base ({formula_base_heap = h_apply_one_w_perm s h permvar;  *)
-(* 		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p);  *)
-(* 		formula_base_type = t; *)
-(* 		(\* formula_base_imm = imm; *\) *)
-(* 		formula_base_flow = fl; *)
-(*         formula_base_label = lbl; *)
-(*         formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b; *)
-(* 		formula_base_pos = pos}) *)
-(*   | Exists ({formula_exists_qvars = qsv;  *)
-(* 	formula_exists_heap = qh;  *)
-(* 	formula_exists_pure = qp;  *)
-(* 	formula_exists_type = tconstr; *)
-(* 	(\* formula_exists_imm = imm; *\) *)
-(* 	formula_exists_flow = fl; *)
-(*     formula_exists_branches = b; *)
-(*     formula_exists_label = lbl; *)
-(* 	formula_exists_pos = pos}) ->  *)
-
-(*       let _  = print_string ("apply_one_w_perm: Exists"  *)
-(*                              ^ "\n f = " ^ (!print_formula f) *)
-(*                              ^ "\n formula_base_heap = " ^ (!print_h_formula qh) *)
-(*                              ^ "\n formula_base_pure = " ^ (!print_mix_f qp) *)
-(*                              ^ "\n") in *)
-
-(* 	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f  *)
-(* 	    else Exists ({formula_exists_qvars = qsv;  *)
-(* 		formula_exists_heap =  h_apply_one_w_perm s qh permvar;  *)
-(* 		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp);  *)
-(* 		formula_exists_type = tconstr; *)
-(* 		(\* formula_exists_imm = imm; *\) *)
-(* 		formula_exists_flow = fl; *)
-(*         formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b; *)
-(*         formula_exists_label = lbl; *)
-(* 		formula_exists_pos = pos}) *)
-
-
 and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = match f with
   | Star ({h_formula_star_h1 = f1; 
 	h_formula_star_h2 = f2; 
@@ -2431,6 +2152,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         }
   | DataNode ({h_formula_data_node = x; 
 	h_formula_data_name = c; 
+    h_formula_data_derv = dr;
     h_formula_data_imm = imm; 
     h_formula_data_perm = perm; (*LDK*)
 	h_formula_data_origins = orgs;
@@ -2443,6 +2165,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_data_pos = pos}) -> 
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
+        h_formula_data_derv = dr;
     	h_formula_data_imm = imm;  
     	h_formula_data_perm = subst_var_perm s perm; (*LDK*)
 	    h_formula_data_origins = orgs;
@@ -2457,104 +2180,6 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | HTrue -> f
   | HFalse -> f
   | Hole _ -> f    
-
-(* and h_apply_one_w_perm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) (permvar: CP.spec_var) = match f with *)
-(*   | Star ({h_formula_star_h1 = f1;  *)
-(* 	h_formula_star_h2 = f2;  *)
-(* 	h_formula_star_pos = pos}) ->  *)
-(*         Star ({h_formula_star_h1 = h_apply_one_w_perm s f1 permvar;  *)
-(* 	    h_formula_star_h2 = h_apply_one_w_perm s f2 permvar;  *)
-(* 	    h_formula_star_pos = pos}) *)
-(*   | Phase ({h_formula_phase_rd = f1;  *)
-(* 	h_formula_phase_rw = f2;  *)
-(* 	h_formula_phase_pos = pos}) ->  *)
-(*         Phase ({h_formula_phase_rd = h_apply_one_w_perm s f1 permvar;  *)
-(* 	    h_formula_phase_rw = h_apply_one_w_perm s f2 permvar;  *)
-(* 	    h_formula_phase_pos = pos}) *)
-(*   | Conj ({h_formula_conj_h1 = f1;  *)
-(* 	h_formula_conj_h2 = f2;  *)
-(* 	h_formula_conj_pos = pos}) ->  *)
-(*         Conj ({h_formula_conj_h1 = h_apply_one_w_perm s f1 permvar;  *)
-(* 	    h_formula_conj_h2 = h_apply_one_w_perm s f2 permvar;  *)
-(* 	    h_formula_conj_pos = pos}) *)
-(*   | ViewNode ({h_formula_view_node = x;  *)
-(* 	h_formula_view_name = c;  *)
-(*     h_formula_view_imm = imm;  *)
-(* 	h_formula_view_perm = perm; (\*LDK*\) *)
-(* 	h_formula_view_arguments = svs;  *)
-(* 	h_formula_view_modes = modes; *)
-(* 	h_formula_view_coercible = coble; *)
-(* 	h_formula_view_origins = orgs; *)
-(* 	h_formula_view_original = original; *)
-(* 	h_formula_view_unfold_num = i; *)
-(* 	h_formula_view_label = lbl; *)
-(*     h_formula_view_remaining_branches = ann; *)
-(*     h_formula_view_pruning_conditions = pcond; *)
-(* 	h_formula_view_pos = pos} as g) ->  *)
-
-(*       (\* let _  = print_string ("h_apply_one_w_perm : ViewNode, ") in *\) *)
-(*       let perm1 = match perm with *)
-(*         | None ->  *)
-(*             (\* let _ = print_string "NONE -> permvar \n" in *\) *)
-(*             (Some permvar) *)
-(*         | Some f ->  *)
-(*             (\* let _ = print_string "SOME f \n" in *\) *)
-(*             perm *)
-(*       in *)
-(*         ViewNode {g with h_formula_view_node = subst_var s x;  *)
-(* 		(\* h_formula_view_name = c;  *\) *)
-(*         (\* h_formula_view_imm = imm;   *\) *)
-(*         h_formula_view_perm = map_opt (subst_var s) perm1;  (\*LDK*\) *)
-(* 		h_formula_view_arguments = List.map (subst_var s) svs; *)
-(* 	   (\*  h_formula_view_modes = modes; *\) *)
-(* 	   (\*  h_formula_view_coercible = coble; *\) *)
-(* 	   (\*  h_formula_view_origins = orgs; *\) *)
-(* 	   (\*  h_formula_view_original = original; *\) *)
-(* 	   (\* h_formula_view_unfold_num = i; *\) *)
-(* 	   (\*  h_formula_view_label = lbl; *\) *)
-(*        (\*  h_formula_view_remaining_branches = ann; *\) *)
-(*         h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond *)
-(* 		(\* h_formula_view_pos = pos *\) *)
-(*         } *)
-(*   | DataNode ({h_formula_data_node = x;  *)
-(* 	h_formula_data_name = c;  *)
-(*     h_formula_data_imm = imm;  *)
-(*     h_formula_data_perm = perm; (\*LDK*\) *)
-(* 	h_formula_data_origins = orgs; *)
-(* 	h_formula_data_original = original; *)
-(* 	h_formula_data_arguments = svs;  *)
-(*     h_formula_data_holes = holes; *)
-(* 	h_formula_data_label = lbl; *)
-(*     h_formula_data_remaining_branches = ann; *)
-(*     h_formula_data_pruning_conditions = pcond; *)
-(* 	h_formula_data_pos = pos}) ->  *)
-
-(*       (\* let _  = print_string ("h_apply_one_w_perm : DataNode, ") in *\) *)
-(*       let perm1 = match perm with *)
-(*         | None ->  *)
-(*             (\* let _ = print_string "NONE -> permvar \n" in *\) *)
-(*             (Some permvar) *)
-(*         | Some f ->  *)
-(*             (\* let _ = print_string "SOME f \n" in *\) *)
-(*             perm *)
-(*       in *)
-
-(*         DataNode ({h_formula_data_node = subst_var s x;  *)
-(* 		h_formula_data_name = c;  *)
-(*     	h_formula_data_imm = imm;   *)
-(*     	h_formula_data_perm = map_opt (subst_var s) perm1;  (\*LDK*\) *)
-(* 	    h_formula_data_origins = orgs; *)
-(* 	    h_formula_data_original = original; *)
-(* 		h_formula_data_arguments = List.map (subst_var s) svs; *)
-(*         h_formula_data_holes = holes; *)
-(* 		h_formula_data_label = lbl; *)
-(*         h_formula_data_remaining_branches = ann; *)
-(*         h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond; *)
-(* 		h_formula_data_pos = pos}) *)
-
-(*   | HTrue -> f *)
-(*   | HFalse -> f *)
-(*   | Hole _ -> f     *)
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
@@ -4938,228 +4563,6 @@ let split_star_conjunctions (f:h_formula): (h_formula list) =
   Gen.Debug.no_1 "split_star_conjunctions" !print_h_formula pr
   split_star_conjunctions_x f
 
-(*not used at the moment*)
-(* LDK: combining nodes using fractional perm manually,
-instead of using normalizing lemmas*)
-
-(* let normalize_perm_x (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula * CP.spec_var list) = *)
-(*   (\*partition t into 2 list: MUST-ALIAS list w.r.t h and the rest *\) *)
-(*   let rec partition (h:h_formula) (t:h_formula list) (p_f:MCP.mix_formula): h_formula list * h_formula list = *)
-(*     match t with *)
-(*       | [] -> [],[] *)
-(*       | x::xs -> *)
-(*           match h,x with *)
-(*             | DataNode dn1, DataNode dn2 ->  *)
-(*                 let n1 = dn1.h_formula_data_node in *)
-(*                 let svl = MCP.find_closure_mix_formula n1 p_f in (\*list of aliased nodes*\) *)
-(*                 let svl = if (List.mem n1 svl) then svl else n1::svl in *)
-(*                 (\*2 data nodes are aliased if having the MUST alised pointer name,  *)
-(*                   predicate name and the same length of lists of arguments*\) *)
-(*                 let n2 = dn2.h_formula_data_node in *)
-(*                 let b1 = if ((List.mem n2 svl)  (\*n2 is aliased with n1*\) *)
-(*                              && ((String.compare dn1.h_formula_data_name dn2.h_formula_data_name) == 0)  *)
-(*                              && ((List.length dn1.h_formula_data_arguments) == (List.length dn2.h_formula_data_arguments))) *)
-(*                     then true  *)
-(*                     else false in (\*have the same name*\) *)
-(*                 let res1,res2 = partition h xs p_f in *)
-(*                 if (b1) then (x::res1),res2 else res1,(x::res2) *)
-(*             | _ ->  *)
-(*                 let res1,res2 = partition h xs p_f in *)
-(*                 res1,(x::res2) *)
-(*   in *)
-
-(*   (\*combine 2 MUST-aliased nodes (x=y)*\) *)
-(*   (\*h::p(f1)<v1*> * y::p(f2)<v2*> * (h=y) *)
-(*   -> v1*=v2* & 0.0<f2<=1.0*\) *)
-(*   let create_constraints_one (h:h_formula) (y:h_formula) : (CP.formula list)= *)
-(*     match h,y with *)
-(*       | DataNode dnh, DataNode dny -> *)
-(*           let permy = dny.h_formula_data_perm in *)
-(*           let permvary =  match permy with *)
-(*             | Some f -> f *)
-(*             | None -> full_perm_var *)
-(*           in *)
-(*           let args_f = List.map2 (fun v1 v2 -> CP.mkEqVar v1 v2 no_pos) dnh.h_formula_data_arguments dny.h_formula_data_arguments in *)
-(*           let invf2 = mkPermInv permvary in *)
-(*           (invf2::args_f) *)
-(*       | _ -> *)
-(*           let _ = print_string "[cformula.ml] Warning: create_constraints_one only support data nodes \n" in *)
-(*           [] *)
-(*   in *)
-(*   (\*combine 2 MUST-aliased nodes (x=y)*\) *)
-(*   (\*x::p(f1)<v1*> * y::p(f2)<v2*> * (x=y) *)
-(*     -> x::p(f)<v1*> & f=f1+f2 & v1*=v2* & 0.0<f1,f2<=1.0*\) *)
-(*   let rec create_constraints (h:h_formula) (ls: h_formula list): (CP.formula list * CP.spec_var list) = *)
-(*     match h with *)
-(*       | DataNode dn -> *)
-(*           let h_permvar = *)
-(*             (match dn.h_formula_data_perm with *)
-(*               | None -> full_perm_var *)
-(*               | Some f -> f) *)
-(*           in *)
-(*           (\*h is aliased with all heap nodes in ls*\) *)
-(*           let rec collect_perm_vars (ls:h_formula list): (CP.spec_var list) = *)
-(*             match ls with *)
-(*               | [] -> [] *)
-(*               | x::xs ->  *)
-(*                   let res = collect_perm_vars xs in *)
-(*                   match x with *)
-(*                     | DataNode dn ->  *)
-(*                         (match dn.h_formula_data_perm with *)
-(*                           | None -> full_perm_var::res *)
-(*                           | Some f -> f::res) *)
-(*                     | _ ->  *)
-(*                         let _ = print_string "[cformula.ml] Warning: collect_perm_vars only support data nodes \n" in *)
-(*                         res *)
-(*           in  *)
-(*           (\*there is at least 1 element in xs*\) *)
-(*           let sum_perm_vars (xs:CP.spec_var list) : (CP.formula list * (CP.spec_var list))= *)
-(*             if ((List.length xs) <= 1) then [],[] (\*only h, no alias*\) *)
-(*             else  *)
-(*               (\*there are alias nodes -> sum up*\) *)
-(*               (\*fresh=f1+f2+...+fn*\) *)
-(*               let temp_var = CP.SpecVar (CP.type_of_spec_var (List.hd xs), "f", Unprimed) in *)
-(*               let fresh_var = Cpure.fresh_spec_var temp_var in *)
-(*               let rec add_exp (xs:CP.spec_var list) : (CP.exp)= *)
-(*                 (\*We know for sure that |xs|>=2*\) *)
-(*                 match xs with *)
-(*                   | x1::x2::[] ->  *)
-(*                       let add_exp_f = CP.Add ((CP.Var (x1, no_pos)),(CP.Var (x2, no_pos)), no_pos) in *)
-(*                       add_exp_f *)
-(*                   | h::t -> *)
-(*                       let res = add_exp t in *)
-(*                       CP.Add ((CP.Var (h, no_pos)),res, no_pos) *)
-(*                   | _ ->  *)
-(*                       let _ = print_string "[cformula.ml] Warning: add_exp : this can not happen \n" in *)
-(*                       CP.IConst (0,no_pos) *)
-(*               in *)
-(*               let rhs = add_exp xs in *)
-(*               let perm_f =   Cpure.BForm (((Cpure.Eq ( *)
-(*                   (Cpure.Var (fresh_var,no_pos)), *)
-(*                   rhs, *)
-(*                   no_pos *)
-(*               )),None),None) in *)
-(*               [perm_f], [fresh_var] *)
-(*           in *)
-
-(*           let permvars = collect_perm_vars ls in *)
-(*           let h_permvar_f, fresh_permvars = sum_perm_vars (h_permvar::permvars) in *)
-(*           let final_fs =  *)
-(*             if ((List.length ls) > 0) then  *)
-(*               let h_perm_inv:CP.formula = mkPermInv h_permvar in *)
-(*               h_perm_inv::h_permvar_f *)
-(*             else h_permvar_f *)
-(*           in *)
-(*           let rec create_args_constraints ls = *)
-(*             match ls with *)
-(*               | [] -> [] *)
-(*               | x::xs ->  *)
-(*                   let f1 = create_constraints_one h x in *)
-(*                   let f2 = create_args_constraints xs in  *)
-(*                   f1@f2 *)
-(*           in *)
-(*           let args_fs = create_args_constraints ls in *)
-(*           final_fs@args_fs, fresh_permvars *)
-
-(*             | _ ->  *)
-(*                 let _ = print_string "[cformula.ml] Warning: create_constraints only support data nodes \n" in *)
-(*                 [],[] *)
-(*   in *)
-(*   (\*processing normalization*\) *)
-(*   let rec helper (hs:h_formula list) (p_f:MCP.mix_formula) : (h_formula list * CP.formula list * CP.spec_var list) = *)
-(*     match hs with *)
-(*       | [] -> [],[],[] *)
-(*       | h::t -> *)
-(*           let ls1, ls2 = partition h t p_f in *)
-(*           let f1, vars1 = create_constraints h ls1 in (\*create constraints over aliased nodes*\) *)
-(*           (\*vars1 contains the fresh combined perm var, can be empty *\) *)
-(*           let new_h = match vars1 with *)
-(*             | [] -> h *)
-(*             | _ -> *)
-(*                 (match h with *)
-(*                   | DataNode dn -> *)
-(*                       DataNode {dn with h_formula_data_perm = Some (List.hd vars1)} *)
-(*                   | _ ->  *)
-(*                       let _ = print_string "[cformula.ml] Warning: create_constraints only support data nodes \n" in *)
-(*                       h) *)
-(*           in *)
-(*           let hs2,f2,vars2 = helper ls2 p_f in *)
-(*           new_h::hs2,f1@f2,vars1@vars2 *)
-(*   in *)
-(*   let hs = split_star_conjunctions h in *)
-(*   (\*processing here ...*\) *)
-(*   let hs1,ps1,vars1 = helper hs p in *)
-(*   let p1 = CP.join_conjunctions ps1 in *)
-(*   let new_p = add_pure_formula_to_mix_formula p1 p in *)
-(*   let res_opt = join_star_conjunctions_opt hs1 in *)
-(*   let res_h =  *)
-(*     (match (res_opt) with *)
-(*       | None ->  *)
-(*           let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in *)
-(*           h *)
-(*       | Some res_f -> res_f) *)
-(*   in *)
-(*   res_h,new_p,vars1 *)
-
-(*not used at the moment*)
-(* LDK: combining nodes using fractional perm manually,
-instead of using normalizing lemmas*)
-(* let normalize_perm (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula * CP.spec_var list) = *)
-(*   let pr (h,p,vs) = ((!print_h_formula h) ^ (!print_mix_formula p) ^ (!print_svl vs)) in *)
-(*   Gen.Debug.no_2 "normalize_perm"  *)
-(*       !print_h_formula !print_mix_formula pr *)
-(*       normalize_perm_x h p  *)
-
-(*not used at the moment*)
-(* LDK: combining nodes using fractional perm manually,
-instead of using normalizing lemmas*)
-(* let normalize_formula_w_perm_x (f:formula):formula =  *)
-(*   if (isAnyConstFalse f) then f *)
-(*   else match f with *)
-(*     | Base b  *)
-(*             (\* ({formula_base_heap = h;  *\) *)
-(* 	        (\*  formula_base_pure = p;  *\) *)
-(*             (\*  formula_base_branches = b; *\) *)
-(*             (\*  (\\* formula_base_imm = imm; *\\) *\) *)
-(* 	        (\*  formula_base_flow =fl; *\) *)
-(* 	        (\*  formula_base_type = t})  *\) *)
-(*         -> *)
-(*         let h = b.formula_base_heap in *)
-(*         let p = b.formula_base_pure in *)
-
-(*         let h1,p1,vs1 = normalize_perm h p in *)
-
-(*         Base {b with formula_base_heap=h1;formula_base_pure=p1} *)
-(*     (\*LDK: ??? how about vs1? Will be convert to EXIST form*\) *)
-(*     | Exists e *)
-(*             (\* ({formula_exists_heap = h;  *\) *)
-(* 	        (\*    formula_exists_pure = p;  *\) *)
-(*             (\*    formula_exists_branches = b; *\) *)
-(*             (\*    (\\* formula_exists_imm = imm; *\\) *\) *)
-(* 	        (\*    formula_exists_flow = fl; *\) *)
-(* 	        (\*    formula_exists_type = t})  *\) *)
-(*         ->  *)
-(*         let h = e.formula_exists_heap in *)
-(*         let p = e.formula_exists_pure in *)
-(*         let vs = e.formula_exists_qvars in *)
-(*         let h1,p1,vs1 = normalize_perm h p in *)
-
-(*         Exists {e with  *)
-(*             formula_exists_heap=h1; *)
-(*             formula_exists_pure=p1; *)
-(*             formula_exists_qvars=vs1@vs *)
-(*              } *)
-(*     | Or ({formula_or_pos = pos}) ->  *)
-(*                 let _ = print_string "[cformula.ml] Warning: normalize_perm not expect OR \n" in f *)
-
-
-(* (\*not used at the moment*\) *)
-(* (\* LDK: combining nodes using fractional perm manually, *)
-(* instead of using normalizing lemmas*\) *)
-(* let normalize_formula_w_perm (f:formula):formula =  *)
-(*   Gen.Debug.no_1 "normalize_formula_w_perm" !print_formula !print_formula *)
-(*       normalize_formula_w_perm_x f *)
-
 let type_of_formula (f: formula) : formula_type =
   if (isAnyConstFalse f) then Simple
   else match f with
@@ -6551,7 +5954,6 @@ and propagate_imm_struc_formula e =
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
 
-
 let propagate_perm_struc_formula_x e (permvar:cperm_var)=
   let f_e_f e = None  in
   let f_f e = Some (propagate_perm_formula e permvar) in
@@ -6847,7 +6249,9 @@ and combine_star_h cs = match cs with
 and merge_data_nodes_common_ptr dns = 
 	List.fold_left merge_two_nodes HTrue dns
 
-(*LDK: how to deal with perm perms???*)
+(*LDK: TO CHECK ??? how to deal with perms correctly
+Permissions v.s pertial fields
+*)
 (**
  * An Hoa : Supplementary function to merge two data nodes.
  **)
@@ -6855,6 +6259,7 @@ and merge_two_nodes dn1 dn2 =
 	match dn1 with
 	| DataNode { h_formula_data_node = dnsv1;
 		h_formula_data_name = n1;
+		h_formula_data_derv = dr1;
 		h_formula_data_imm = i1;
 		h_formula_data_arguments = args1;
         h_formula_data_perm = perm1;
@@ -6867,6 +6272,7 @@ and merge_two_nodes dn1 dn2 =
 		h_formula_data_pos = pos1 } -> (match dn2 with
 			| DataNode { h_formula_data_node = dnsv2;
 						h_formula_data_name = n2;
+						h_formula_data_derv = dr2;
 						h_formula_data_imm = i2;
 						h_formula_data_arguments = args2;
                         h_formula_data_perm = perm2;
@@ -6891,6 +6297,7 @@ and merge_two_nodes dn1 dn2 =
 							let not_clashed = List.for_all (fun x -> x) not_clashes in
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
+						                h_formula_data_derv = dr1; (*TO CHECK*)
 										h_formula_data_imm = i1;
 										h_formula_data_arguments = args;
                                         h_formula_data_perm = None; (*perm1? perm2???*)

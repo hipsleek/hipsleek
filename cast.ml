@@ -895,6 +895,7 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (*   end *)
   (* | [] -> [] *)
 
+(*a coercion can be simple, complex or normalizing*)
 let case_of_coercion (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let lhs_length = 
     match lhs with
@@ -1098,6 +1099,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_ext_var = P.SpecVar (Named ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
+							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
@@ -1117,6 +1119,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 			  if Gen.is_empty rest then
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
@@ -1137,6 +1140,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_link_p = P.SpecVar (Named ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
@@ -1543,9 +1547,6 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
     let vars = vars@uni_vars in
     let vars = P.remove_dups_svl vars in
     {view with view_uni_vars = vars}
-
-
-
 
 (*find and add uni_vars to view*)
 let add_uni_vars_to_view cprog (l2r_coers:coercion_decl list) (view:view_decl) : view_decl =

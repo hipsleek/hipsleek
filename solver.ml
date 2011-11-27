@@ -2083,51 +2083,6 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
-(* and extract_mix_formula_w_frac (rhs_p: MCP.mix_formula) (fracvar: CP.spec_var): MCP.mix_formula * MCP.mix_formula = *)
-(*   Gen.Debug.no_2 "extract_mix_formula_w_frac" *)
-(*       Cprinter.string_of_mix_formula Cprinter.string_of_spec_var *)
-(*       (Gen.pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula) *)
-(*       extract_mix_formula_w_frac_x rhs_p fracvar *)
-
-(* and extract_mix_formula_w_frac_x (rhs_p: MCP.mix_formula) (fracvar: CP.spec_var): MCP.mix_formula * MCP.mix_formula =  *)
-(*   (match rhs_p with *)
-(*     | MCP.MemoF _ ->  *)
-(*         let _ = print_string ("[extract_formula_w_frac]Warning: extract_formula_w_frac not added for MemoF \n") in *)
-(*         (rhs_p, rhs_p) *)
-(*     | MCP.OnePF pf -> *)
-(*         let (w_frac_pf, wo_frac_pf) = extract_formula_w_frac pf fracvar in *)
-(*         (MCP.OnePF w_frac_pf, MCP.OnePF wo_frac_pf) *)
-(*   ) *)
-
-(* and extract_formula_w_frac (pf: CP.formula) (fracvar: CP.spec_var): CP.formula * CP.formula =  *)
-(*   let vvars = fracvar::[] in *)
-(*   let rec helper (f:CP.formula) (vvars: CP.spec_var list) :CP.formula * CP.formula =  *)
-(*     (match f with *)
-(*       | CP.BForm _ ->  *)
-(*           if CP.disjoint (CP.fv f) vvars then  *)
-(*                   (\*if not contains fracvar*\) *)
-(*             (CP.mkTrue no_pos, f) *)
-(*           else  *)
-(*             (f , CP.mkTrue no_pos) *)
-(*       | CP.And(f1, f2, l) ->  *)
-(*           let w_frac_f1, wo_frac_f1 = helper f1 vvars in *)
-(*           let w_frac_f2, wo_frac_f2 = helper f2 vvars in *)
-(*           let w_frac_res =  CP.mkAnd w_frac_f1 w_frac_f2 l in *)
-(*           let wo_frac_res =  CP.mkAnd wo_frac_f1 wo_frac_f2 l in *)
-(*           (w_frac_res, wo_frac_res) *)
-(*       | _ ->  *)
-
-(*           let _ = print_string ("[extract_formula_w_frac] Warning: extract_formula_w_frac not added for OnePF of Or, Not, Forall, Exists \n") in *)
-(*           if CP.disjoint (CP.fv f) vvars then  *)
-(*                   (\*if not contains fracvar*\) *)
-(*             (CP.mkTrue no_pos, f) *)
-(*           else  *)
-(*             (f , CP.mkTrue no_pos) *)
-(*     ) *)
-(*   in helper pf vvars *)
-
-  
-
 (*LDK: add rhs_p*)
 and fold_op p c vd v (rhs_p: MCP.mix_formula) u loc =
   Gen.Profiling.no_2 "fold" (fold_op_x(*debug_2*) p c vd v rhs_p) u loc
@@ -5915,31 +5870,6 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 	        | OCtx (c1,c2) ->  (None,None)
 	        | Ctx c -> (None,Some c) *)
   end
-    
-(*create an equality constrain between LHS perm var and RHS perm var
-and add it to RHS pure formula (to_rhs) *)
-(* and create_bind_to_rhs (rhs_p:MCP.mix_formula) (l_f:CP.spec_var) (r_f:CP.spec_var) : MCP.mix_formula = *)
-(*     Gen.Debug.no_3 "create_bind_to_rhs"  *)
-(*         Cprinter.string_of_mix_formula  *)
-(*         Cprinter.string_of_spec_var  *)
-(*         Cprinter.string_of_spec_var  *)
-(*         Cprinter.string_of_mix_formula *)
-(*     create_bind_to_rhs_x rhs_p l_f r_f *)
-
-(* and create_bind_to_rhs_x (rhs_p:MCP.mix_formula) (l_f:CP.spec_var) (r_f:CP.spec_var) : MCP.mix_formula = *)
-(*   (match rhs_p with *)
-(*     | MCP.MemoF m -> *)
-(*         let _ = print_string ("[create_bind_to_rhs] Warning: rhs_p not added to MCP.MemoF \n") in *)
-(*         rhs_p *)
-(*     | MCP.OnePF p_f -> *)
-(*       let frac_p = Cpure.BForm ( ((Cpure.Eq ( *)
-(*           (Cpure.Var (l_f,no_pos)), *)
-(*           (Cpure.Var (r_f,no_pos)), *)
-(*           no_pos *)
-(*       )),None),None) in *)
-(*       let res = (CP.And (p_f,frac_p,no_pos)) in *)
-(*       (MCP.OnePF res) *)
-(*   ) *)
 
 (*LDK*)
 and do_lhs_case prog ante conseq estate lhs_node rhs_node is_folding pos =
@@ -6215,40 +6145,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
             (* explicit instantiation is like delaying the movement of the bindings for the free vars from the RHS to the LHS *)
             (********************************************************************)
-            (*TO CHECK: ??? should be re-considered, *)
-            (*this might be handled by subs_to_inst_vars*)
-            (*impl instatiation of frac vars*)
-            (* let to_lhs, to_rhs  = match l_perm, r_perm with *)
-            (*   | None, Some f2 -> *)
-            (*       if (List.mem f2 new_impl_vars) *)
-            (*       then *)
-            (* (\*instatiate f2*\) *)
-            (*         let f_pure = mkFullPerm_pure f2 in *)
-            (*         let to_lhs = CF.add_formula_to_formula to_lhs f_pure in *)
-            (*         (to_lhs,to_rhs) *)
-            (*       else *)
-            (* (\* let f_pure = mkFullPerm_pure f2 in *\) *)
-            (* (\* let to_rhs = CF.add_formula_to_formula to_rhs f_pure in *\) *)
-            (*         (to_lhs,to_rhs) *)
-            (*   | Some f1, None -> *)
-            (* (\* let f_pure = mkFullPerm_pure f1 in *\) *)
-            (* (\* let to_lhs = CF.add_formula_to_formula to_lhs f_pure in *\) *)
-            (*       (to_lhs,to_rhs) *)
-            (*   | Some f1, Some f2 -> *)
-            (* (\*should prove that |- f1>=f2*\) *)
-            (* (\* let f_pure = CP.mkGteVar f1 f2 no_pos in *\) *)
-            (* (\* let to_rhs = CF.add_formula_to_formula to_rhs f_pure in *\) *)
-            (*       (to_lhs,to_rhs) *)
-            (*   | _ -> to_lhs, to_rhs *)
-            (* in *)
-
-            (* (\*LDK*\) *)
-            (* let _ = print_string ("do_match_x: " *)
-            (*                       ^ "\n to_lhs = " ^ (Cprinter.string_of_pure_formula to_lhs) *)
-            (*                       ^ "\n to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) *)
-            (*                       ^ "\n ext_subst = " ^ (List.fold_left (fun str pair -> (Gen.string_of_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var pair) ^ ";" ^ str) "" ext_subst) *)
-            (*                       ^"\n\n") in *)
-
             let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
             let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
 	        (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
@@ -7440,16 +7336,6 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 	         - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
 	         - if the flag is false, we only use coerce&distribute&match
 	      *)
-
-
-
-          (* (\*LDK*\) *)
-          (* let _ = print_string ("do_universal:" *)
-          (*                       ^ "\n ### h1 = " ^ (Cprinter.string_of_h_formula (ViewNode h1)) *)
-          (*                       ^ "\n ### h2 = " ^ (Cprinter.string_of_h_formula (ViewNode h2)) *)
-          (*                       ^ "\n") in *)
-
-
 	      let apply_coer = (coer_target prog coer anode (CF.formula_of_base rhs_b) (CF.formula_of_base lhs_b)) in
           (* let f1=apply_coer in *)
           (* (\* let f2=(get_estate_must_match estate) in *\) *)
@@ -7490,8 +7376,10 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 , CF.mk_failure_none "failed coercion" )), Failure))
 	      else	(* we can apply coercion *)
 		    begin
-
-              (*??? why this way fail instead of the below*)
+		      (* if (not(!lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
+		      (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
+		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
+              (*subst perm variable when applicable*)
               let perms1,perms2 =
                 if (!Globals.allow_perm) then
                   match perm1,perm2 with
@@ -7506,13 +7394,8 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 else
                   ([],[])
                 in
-
-		      (* if (not(!lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
-		      (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
-		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
-                let fr_vars = perms2@(p2 :: ps2)in
-                let to_vars = perms1@(p1 :: ps1)in
-
+              let fr_vars = perms2@(p2 :: ps2)in
+              let to_vars = perms1@(p1 :: ps1)in
 		      let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
 		      let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture fr_vars to_vars f))) lhs_branches in
 		      let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
@@ -7525,50 +7408,6 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 else
                   coer_rhs_new1
               in
-
-              (*IMPORTANT for permissions*)
-		      (* let lhs_guard_new,coer_rhs_new1,lhs_branches_new = *)
-              (*   if (!Globals.allow_perm) then *)
-              (*     match perm1,perm2 with *)
-              (*       | Some f1, Some f2 -> *)
-              (*           let guard = CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard in *)
-              (*           let rhs = subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs in *)
-              (*           let br = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (f1::ps1)) f))) lhs_branches in *)
-              (*           (guard,rhs,br) *)
-              (*       | Some f1, None -> *)
-              (*         (\*We propagate fractional permission from view node to lemma node*\) *)
-              (*           let guard = CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard in *)
-              (*           let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in *)
-              (*         (\* (\\*add_perm adds f1 into any None*\\) *\) *)
-              (*         (\* let rhs1 = (add_perm rhs f1) in *\) *)
-              (*         (\*propagate_perm create a new fresh_var at any None and add freshvar = f1*\) *)
-              (*           let rhs2 = propagate_perm_formula rhs f1 in *)
-
-              (*         (\* let _ = print_string ("rewrite_coercion: after add_perm" *\) *)
-              (*         (\*                       ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs) *\) *)
-              (*         (\*                       ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1) *\) *)
-              (*         (\*                       (\\* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *\\) *\) *)
-              (*         (\*                       ^ "\n ### rhs2 = " ^ (Cprinter.string_of_formula rhs2) *\) *)
-              (*         (\*                       ^ "\n") in *\) *)
-              (*           let br = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) f))) lhs_branches in *)
-              (*           (guard,rhs2,br) *)
-              (*       | None, Some f2 -> *)
-              (*           let guard =  CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard in *)
-              (*           let rhs = subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs in *)
-              (*           let br = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) f))) lhs_branches in *)
-              (*           (guard,rhs,br) *)
-              (*       | None, None -> *)
-              (*           let guard = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
-              (*           let rhs = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
-              (*           let br = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in *)
-              (*           (guard,rhs,br) *)
-              (*   else *)
-		      (*     let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
-		      (*     let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in *)
-		      (*     let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
-              (*     (lhs_guard_new,coer_rhs_new1,lhs_branches_new) *)
-              (* in *)
-
 		      let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
 		      let _ = reset_int2 () in
 		      (*let xpure_lhs = xpure prog f in*)
@@ -7752,7 +7591,6 @@ begin
                 in
                 let fr_vars = perms2@(p2 :: ps2)in
                 let to_vars = perms1@(p1 :: ps1)in
-
 		        let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
 		        (*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture fr_vars to_vars f))) lhs_branches in*)
 		        let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
@@ -7767,50 +7605,6 @@ begin
                 in
 		        (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
 		        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
-
-
-
-
-
-		          (* let lhs_guard_new,coer_rhs_new1 =  *)
-                  (*   if (!Globals.allow_perm) then *)
-                  (*     match perm1,perm2 with *)
-                  (*       | Some f1, Some f2 -> *)
-                  (*           let guard = CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard in *)
-                  (*           let rhs = subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs in *)
-                  (*           (guard,rhs) *)
-                  (*       | Some f1, None -> *)
-                  (*     (\*We propagate permtional permission from view node to lemma node*\) *)
-                  (*           let guard = CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard in *)
-                  (*           let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in *)
-                  (*     (\* (\\*add_perm adds f1 into any None*\\) *\) *)
-                  (*     (\* let rhs1 = (add_perm rhs f1) in *\) *)
-                  (*     (\*propagate_perm create a new fresh_var at any None and add freshvar = f1*\) *)
-                  (*           let rhs2 = propagate_perm_formula rhs f1 in *)
-
-                  (*     (\* let _ = print_string ("rewrite_coercion: after add_perm" *\) *)
-                  (*     (\*                       ^ "\n ### rhs = " ^ (Cprinter.string_of_formula rhs) *\) *)
-                  (*     (\*                       ^ "\n ### f1 = " ^ (Cprinter.string_of_spec_var f1) *\) *)
-                  (*     (\*                       (\\* ^ "\n ### rhs1 = " ^ (Cprinter.string_of_formula rhs1) *\\) *\) *)
-                  (*     (\*                       ^ "\n ### rhs2 = " ^ (Cprinter.string_of_formula rhs2) *\) *)
-                  (*     (\*                       ^ "\n") in *\) *)
-
-                  (*           (guard,rhs2) *)
-                  (*       | None, Some f2 -> *)
-                  (*           let guard =  CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard in *)
-                  (*           let rhs = subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs in *)
-                  (*           (guard,rhs) *)
-                  (*       | None, None -> *)
-                  (*           let guard = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
-                  (*           let rhs = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
-                  (*           (guard,rhs) *)
-                  (*   else *)
-		          (*     let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
-		          (*   (\*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in*\) *)
-		          (*     let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
-                  (*     (lhs_guard_new,coer_rhs_new1) *)
-                  (* in *)
-
                 (* Currently, I am trying to change in advance at the trans_one_coer *)
                 (* Add origins to the body of the coercion which consists of *)
                 (*   several star-conjunction nodes. If there are multiple nodes *)
@@ -7820,7 +7614,6 @@ begin
                 (*   a MATCH for the first node. *)
 		        (* let coer_rhs_new = add_origins_to_coer coer_rhs_new1 ((\* coer.coercion_name ::  *\)origs) in *)
 		        (* let coer_rhs_new = add_origins coer_rhs_new1 ((\* coer.coercion_name ::  *\)origs) in *)
-
 		        let _ = reset_int2 () in
 		        let xpure_lhs, xpure_lhs_b, _, memset = xpure prog f in
 		        let xpure_lhs = MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs in 
@@ -7911,16 +7704,11 @@ and apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*
   else begin
     let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in(* Assume coercions have no branches *)
     let estate = CF.moving_ivars_to_evars estate anode in
-
-   (* (\*LDK*\) *)
    (*  let _ = print_string ("apply_universal_a: "  *)
    (*                        ^ "\n ### coer = " ^ (Cprinter.string_of_coercion coer) *)
    (*                        ^ "\n ### mkBase, f = " ^ (Cprinter.string_of_formula f) *)
    (*                        ^ "\n ### estate  = " ^ (Cprinter.string_of_entail_state estate) *)
    (*                        ^  "\n") in *)
-
-    (* let _ = print_string "apply_universal_a: 1 \n" in (\*LDK*\) *)
-    
     let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos in
     (*do_universal anode f coer*)
     do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
@@ -7964,21 +7752,16 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
   let ctx0 = Ctx estate in
   let c1 = get_node_name anode in
   let c2 = get_node_name ln2 in
-
   (* let _ = print_string ("xxx c1=" ^ (Cprinter.string_of_ident c1) *)
   (*                       ^ "\n c2=" ^ (Cprinter.string_of_ident c2) *)
   (*                       ^ "\n") in (\*LDK: ok *\) *)
-
   let ((coers1,coers2),univ_coers) = match c_opt with
     | None -> find_coercions c1 c2 prog anode ln2 
     | Some c -> 
-
-        (* (\*LDK*\) *)
         (* let _ = print_string ("do_coercion_x: Some c" *)
         (*   ^ "\n c = " ^ (Cprinter.string_of_coercion c) *)
         (*   ^ "\n c.coercion_univ_vars = " ^ (Cprinter.string_of_spec_var_list c.coercion_univ_vars) *)
         (*   ^ "\n\n") in *)
-
 		match c.coercion_type with
         | Iast.Left -> if c.coercion_univ_vars == [] then (([c],[]),[])
           else (([],[]),[c])
@@ -8091,19 +7874,15 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
   let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
   (*let _ = print_string("left coercion\n") in*)
   let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
-
-      let _ = Debug.devel_pprint ("apply_left_coercion: left_coercion:"
-                                  ^ "\ n### c1 = " ^ c1
-                                  ^ "\n ### anode = "^ (Cprinter.string_of_h_formula anode)
-                                  ^ "\n") pos in
-
+  let _ = Debug.devel_pprint ("apply_left_coercion: left_coercion:"
+                              ^ "\ n### c1 = " ^ c1
+                              ^ "\n ### anode = "^ (Cprinter.string_of_h_formula anode)
+                              ^ "\n") pos in
   let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
-
     let _ = Debug.devel_pprint ( "apply_left_coercion: after rewrite_coercion"
                                  ^ "\n ### ok = "^ (string_of_int ok)
                                  ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs)
                                  ^ "\n\n") pos in
-
   if ok>0 then begin
     (* lhs_b -> rhs_b *)
     (* anode |- _ *)
@@ -8150,12 +7929,10 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
     let f = CF.mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
-
   (* let _ = print_string ("apply_left_coercion_complex_x: before rename" *)
   (*                       ^ "\n ### coer_lhs = " ^ (Cprinter.string_of_formula coer_lhs) *)
   (*                       ^ "\n ### coer_rhs = " ^ (Cprinter.string_of_formula coer_rhs) *)
   (*                       ^ "\n") in *)
-
   (************************************************************************)
   (* rename the free vars in the lhs and rhs to avoid name collision *)
   (* between lemmas and entailment formulas*)
@@ -8166,24 +7943,19 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
   let coer_lhs = CF.subst tmp_rho coer_lhs in
   let coer_rhs = CF.subst tmp_rho coer_rhs in
   (************************************************************************)
-
   (* let _ = print_string ("apply_left_coercion_complex_x : after rename" *)
   (*                       ^ "\n ### lhs_fv = " ^ (Cprinter.string_of_spec_var_list lhs_fv) *)
   (*                       ^ "\n ### coer_lhs = " ^ (Cprinter.string_of_formula coer_lhs) *)
   (*                       ^ "\n ### coer_rhs = " ^ (Cprinter.string_of_formula coer_rhs) *)
   (*                       ^ "\n") in *)
-
   let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
-
   (* let _ = print_string ("apply_left_coercion_complex_x:" *)
   (*                       ^ "\n ### f = " ^ (Cprinter.string_of_formula f) *)
   (*                       ^ "\n ### coer_lhs = " ^ (Cprinter.string_of_formula coer_lhs) *)
   (*                       ^ "\n ### coer_rhs = " ^ (Cprinter.string_of_formula coer_rhs) *)
   (*                       ^ "\n ### coer_guard = " ^ (Cprinter.string_of_mix_formula lhs_guard) *)
   (*                       ^ "\n") in *)
-
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
-
   let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
   let head_node, rest = pick_up_node lhs_hs Globals.self in
   let extra_opt = join_star_conjunctions_opt rest in
@@ -8265,70 +8037,10 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
               else
                 (coer_rhs_new1,extra_heap_new)
             in
-
-            (* let lhs_guard_new,coer_rhs_new1,extra_heap_new = match perm1,perm2 with *)
-            (*   | Some f1, Some f2 -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard in *)
-            (*       let rhs = subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs in *)
-            (*       let extra = CF.subst_avoid_capture_h (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) extra_heap in *)
-            (*       (guard,rhs,extra) *)
-            (*   | Some f1, None -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard in *)
-            (*       (\*We propagate fractional permission from view node to lemma node*\) *)
-            (*       let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in *)
-            (*       let extra = CF.subst_avoid_capture_h (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) extra_heap in *)
-            (*       let extra, svl =  propagate_perm_h_formula extra f1 in *)
-            (*       let rhs = propagate_perm_formula rhs f1 in *)
-            (*       (guard,rhs,extra) *)
-            (*   | None, Some f2 -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard in *)
-            (*       let rhs = subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs in *)
-            (*       let extra = CF.subst_avoid_capture_h (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) extra_heap in *)
-            (*       (guard,rhs,extra) *)
-            (*   | None, None -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
-            (*       let rhs = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
-            (*       let extra =  CF.subst_avoid_capture_h (p2 :: ps2) (p1 :: ps1) extra_heap in *)
-            (*       (guard,rhs,extra) *)
-            (* in *)
-
-          (* let lhs_guard_new = match perm1,perm2 with *)
-          (*   | Some f1, Some f2 -> *)
-          (*       CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard *)
-          (*   | Some f1, None -> *)
-          (*       CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard *)
-          (*   | None, Some f2 -> *)
-          (*       CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard *)
-          (*   | None, None -> *)
-          (*       CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
-          (* in *)
-		  (* let coer_rhs_new1 = match perm1,perm2 with *)
-          (*   | Some f1, Some f2 -> *)
-          (*       subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs *)
-          (*   | Some f1, None -> *)
-          (*       subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs *)
-          (*   | None, Some f2 -> *)
-          (*       subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs *)
-          (*   | None, None -> *)
-          (*       subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
-
-          (* in *)
 		  let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name ::origs) in
-          (* let extra_heap_new = match perm1,perm2 with *)
-          (*   | Some f1, Some f2 -> *)
-          (*       CF.subst_avoid_capture_h (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) extra_heap *)
-          (*   | Some f1, None -> *)
-          (*       CF.subst_avoid_capture_h (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) extra_heap *)
-          (*   | None, Some f2 -> *)
-          (*       CF.subst_avoid_capture_h (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) extra_heap *)
-          (*   | None, None -> *)
-          (*       CF.subst_avoid_capture_h (p2 :: ps2) (p1 :: ps1) extra_heap *)
-          (* in *)
-          (* let extra_heap_new =  h_add_origins extra_heap_new [coer.coercion_name] in *)
           (*avoid apply a complex lemma twice*)
           let f = add_origins f [coer.coercion_name] in
           let f = add_original f false in
-
           let new_es_heap = CF.mkStarH anode estate.es_heap no_pos in (*consumed*)
           (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
           let old_trace = estate.es_trace in
@@ -8442,8 +8154,6 @@ and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_form
                 (res1,x::res2)
   in helper ls
 
-
-
 (*pickup a node named "name" from a list of nodes*)
 and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
   let rec pr xs = 
@@ -8545,7 +8255,6 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       (*                       ^ "\n ### anode = " ^ (Cprinter.string_of_h_formula anode) *)
 
       (*                       ^ "\n") in *)
-
       match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
         | ViewNode ({ h_formula_view_node = p1;
                       h_formula_view_name = c1;
@@ -8602,68 +8311,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
               else
                 (coer_rhs_new1,extra_heap_new)
             in
-
-
-            (* let lhs_guard_new,coer_rhs_new1,extra_heap_new = match perm1,perm2 with *)
-            (*   | Some f1, Some f2 -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard in *)
-            (*       let rhs = subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs in *)
-            (*       let extra = CF.subst_avoid_capture_h (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) extra_heap in *)
-            (*       (guard,rhs,extra) *)
-            (*   | Some f1, None -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard in *)
-            (*       (\*We propagate fractional permission from view node to lemma node*\) *)
-            (*       let rhs = subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs in *)
-            (*       let extra = CF.subst_avoid_capture_h (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) extra_heap in *)
-            (*       let extra, svl =  propagate_perm_h_formula extra f1 in *)
-            (*       let rhs = propagate_perm_formula rhs f1 in *)
-            (*       (guard,rhs,extra) *)
-            (*   | None, Some f2 -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard in *)
-            (*       let rhs = subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs in *)
-            (*       let extra = CF.subst_avoid_capture_h (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) extra_heap in *)
-            (*       (guard,rhs,extra) *)
-            (*   | None, None -> *)
-            (*       let guard = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in *)
-            (*       let rhs = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in *)
-            (*       let extra =  CF.subst_avoid_capture_h (p2 :: ps2) (p1 :: ps1) extra_heap in *)
-            (*       (guard,rhs,extra) *)
-            (* in *)
-
-
-
-            (* let lhs_guard_new = match perm1,perm2 with *)
-            (*   | Some f1, Some f2 -> *)
-            (*       CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard *)
-            (*   | Some f1, None -> *)
-            (*       CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard *)
-            (*   | None, Some f2 -> *)
-            (*       CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard *)
-            (*   | None, None -> *)
-            (*       CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
-            (* in *)
-		    (* let coer_rhs_new1 = match perm1,perm2 with *)
-            (*   | Some f1, Some f2 -> *)
-            (*       subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs *)
-            (*   | Some f1, None -> *)
-            (*       subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs *)
-            (*   | None, Some f2 -> *)
-            (*       subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs *)
-            (*   | None, None -> *)
-            (*       subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
-
-            (* in *)
 		    let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name :: *)origs) in
-            (* let extra_heap_new = match perm1,perm2 with *)
-            (*   | Some f1, Some f2 -> *)
-            (*       CF.subst_avoid_capture_h (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) extra_heap *)
-            (*   | Some f1, None -> *)
-            (*       CF.subst_avoid_capture_h (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) extra_heap *)
-            (*   | None, Some f2 -> *)
-            (*       CF.subst_avoid_capture_h (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) extra_heap *)
-            (*   | None, None -> *)
-            (*       CF.subst_avoid_capture_h (p2 :: ps2) (p1 :: ps1) extra_heap *)
-            (* in *)
             let new_es_heap = anode in (*consumed*)
             let old_trace = estate.es_trace in
             let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(normalizing)"::old_trace); es_is_normalizing = true} in
@@ -8753,118 +8401,6 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
   in
   helper estate h p (*start*)
 
-(*   let rec helper (estate:CF.entail_state) (h:h_formula) (p:MCP.mix_formula) : (h_formula*MCP.mix_formula) = *)
-(*     let hs = CF.split_star_conjunctions h in *)
-(*     let process_one anode coer h p = *)
-(*       let coer_lhs = coer.coercion_head in *)
-(*       let coer_rhs = coer.coercion_body in *)
-(*       (\************************************************************************\) *)
-(*       (\* rename the free vars in the lhs and rhs to avoid name collision *\) *)
-(*       (\* between lemmas and entailment formulas*\) *)
-(*       (\* let lhs_fv = (fv_rhs coer_lhs coer_rhs) in *\) *)
-(*       let lhs_fv = (CF.fv coer_lhs) in *)
-
-(*       let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in *)
-(*       let tmp_rho = List.combine lhs_fv fresh_lhs_fv in *)
-(*       let coer_lhs = CF.subst tmp_rho coer_lhs in *)
-(*       let coer_rhs = CF.subst tmp_rho coer_rhs in *)
-(*       (\************************************************************************\) *)
-(*       let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in *)
-(*       let lhs_hs = CF.split_star_conjunctions lhs_heap in (\*|lhs_hs|>1*\) *)
-(*       let head_node = List.hd lhs_hs in *)
-(*       let extra_opt = join_star_conjunctions_opt (List.tl lhs_hs) in *)
-(*       let extra_heap = *)
-(*         (match (extra_opt) with *)
-(*           | None -> *)
-(*               let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in *)
-(*               CF.HTrue *)
-(*           | Some res_f -> res_f) *)
-(*       in *)
-(*       match anode, head_node with (\*node -> current heap node | lhs_heap -> head of the coercion*\) *)
-(*         | ViewNode ({ h_formula_view_node = p1; *)
-(*                       h_formula_view_name = c1; *)
-(*                       h_formula_view_origins = origs; *)
-(*                   (\* h_formula_view_original = original; (\*LDK: unused*\) *\) *)
-(*                       h_formula_view_remaining_branches = br1; *)
-(*                       h_formula_view_perm = perm1; (\*LDK*\) *)
-(*                       h_formula_view_arguments = ps1} (\* as h1 *\)), *)
-(*       ViewNode ({ h_formula_view_node = p2; *)
-(*                   h_formula_view_name = c2; *)
-(*                   h_formula_view_remaining_branches = br2; *)
-(*                   h_formula_view_perm = perm2; (\*LDK*\) *)
-(*                   h_formula_view_arguments = ps2} (\* as h2 *\)) *)
-(* 	    | DataNode ({ h_formula_data_node = p1; *)
-(* 	                  h_formula_data_name = c1; *)
-(* 	                  h_formula_data_origins = origs; *)
-(* 	                  h_formula_data_remaining_branches = br1; *)
-(* 	                  h_formula_data_perm = perm1; (\*LDK*\) *)
-(* 	                  h_formula_data_arguments = ps1} (\* as h1 *\)), *)
-(*       DataNode ({ h_formula_data_node = p2; *)
-(* 	              h_formula_data_name = c2; *)
-(* 	              h_formula_data_remaining_branches = br2; *)
-(* 	              h_formula_data_perm = perm2; (\*LDK*\) *)
-(* 	              h_formula_data_arguments = ps2} (\* as h2 *\)) when CF.is_eq_node_name(\*is_eq_view_spec*\) c1 c2 (\*c1=c2 && (br_match br1 br2) *\) -> *)
-(*             let lhs_guard_new = match perm1,perm2 with *)
-(*               | Some f1, Some f2 -> *)
-(*                   CP.subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) lhs_guard *)
-(*               | Some f1, None -> *)
-(*                   CP.subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) lhs_guard *)
-(*               | None, Some f2 -> *)
-(*                   CP.subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) lhs_guard *)
-(*               | None, None -> *)
-(*                   CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard *)
-(*             in *)
-(* 		    let coer_rhs_new1 = match perm1,perm2 with *)
-(*               | Some f1, Some f2 -> *)
-(*                   subst_avoid_capture (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) coer_rhs *)
-(*               | Some f1, None -> *)
-(*                   subst_avoid_capture (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) coer_rhs *)
-(*               | None, Some f2 -> *)
-(*                   subst_avoid_capture (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) coer_rhs *)
-(*               | None, None -> *)
-(*                   subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs *)
-
-(*             in *)
-(* 		    let coer_rhs_new = add_origins coer_rhs_new1 ((\* coer.coercion_name :: *\)origs) in *)
-(*             let extra_heap_new = match perm1,perm2 with *)
-(*               | Some f1, Some f2 -> *)
-(*                   CF.subst_avoid_capture_h (p2 :: (f2 :: ps2)) (p1 :: (f1 :: ps1)) extra_heap *)
-(*               | Some f1, None -> *)
-(*                   CF.subst_avoid_capture_h (p2 :: (full_perm_var::ps2)) (p1 :: (f1::ps1)) extra_heap *)
-(*               | None, Some f2 -> *)
-(*                   CF.subst_avoid_capture_h (p2 :: (f2::ps2)) (p1 :: (full_perm_var::ps1)) extra_heap *)
-(*               | None, None -> *)
-(*                   CF.subst_avoid_capture_h (p2 :: ps2) (p1 :: ps1) extra_heap *)
-(*             in *)
-(*             let new_es_heap = anode in (\*consumed*\) *)
-(*             let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(Complex)"::old_trace)} in *)
-
-
-(*     in *)
-(*     let rec process (hs:h_formula list) = *)
-(*       match hs with *)
-(*         | [] -> (h,p) *)
-(*         | x::xs -> *)
-(*             (\* let c = look_up_coercion_def_raw coers *\) *)
-(*             let name = match x with *)
-(*               | ViewNode vn -> vn.h_formula_view_name *)
-(*               | DataNode dn -> dn.h_formula_data_name *)
-(*               | _ = *)
-(*               let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode or ViewNode ") in *)
-(*               "" *)
-(*             in *)
-(*             let c = look_up_coercion_def_raw coers name in *)
-
-(*     in process hs *)
-(* (\* *)
-(* process_one x *)
-(* if succeed -> helper *)
-(* else *)
-(* process xs *)
-(* *\) *)
-(*   in *)
-(*   helper estate h p *)
-
 and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl list): formula =
   if (isAnyConstFalse f) then f
   else
@@ -8905,12 +8441,10 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
 and normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
   Gen.Debug.no_1 "normalize_formula_w_coers" Cprinter.string_of_formula Cprinter.string_of_formula
       (fun _ -> normalize_formula_w_coers_x  prog estate f coers) f
-
-
-
-    (*******************************************************************************************************************************************************************************************)
-    (* apply_right_coercion *)
-    (*******************************************************************************************************************************************************************************************)
+      
+(*******************************************************************************************************************************************************************************************)
+(* apply_right_coercion *)
+(*******************************************************************************************************************************************************************************************)
 and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Gen.Debug.no_4 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion
@@ -8956,14 +8490,11 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
     let nctx = set_context (fun es -> {es with (* es_must_match = true; *)
         es_gen_impl_vars = new_iv; es_gen_expl_vars =  (es.es_gen_expl_vars@vl)}) ctx0 in
 	let new_ctx = SuccCtx [nctx] (* (set_context_must_match ctx0)] *) in
-
-
     (* let _ = print_string ("apply_right_coercion:" *)
     (*                       ^ "\n ### (RHS node) ln2 = " ^ (Cprinter.string_of_h_formula ln2)  *)
     (*                       ^ "\n ### new_rhs = " ^ (Cprinter.string_of_formula new_rhs)  *)
     (*                       ^ "\n ### new_ctx = " ^ (Cprinter.string_of_list_context new_ctx) *)
     (*                       ^ "\n\n") in *)
-
 	let res, tmp_prf = heap_entail prog is_folding new_ctx new_rhs pos in
     let res = set_list_context (fun es -> {es with (* es_must_match = estate.es_must_match; *)
         (* es_gen_impl_vars = estate.es_gen_impl_vars;  *)es_gen_expl_vars =  estate.es_gen_expl_vars}) res in

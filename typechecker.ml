@@ -42,16 +42,18 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     match spec with
 	  | Cformula.ECase b ->
 		    List.for_all (fun (c1, c2) -> 
-		  let mn = Cast.unmingle_name (proc.Cast.proc_name) in (*get proc_name*)
+		        let mn = Cast.unmingle_name (proc.Cast.proc_name) in (*get proc_name*)
 		        let f_formula = fun f -> None in
 		        let f_b_formula (pf, il) = match pf with
 			      | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
 			      | _ -> None
-		  in (*???*)
+		        in 
+                (*???*)
 		        let f_exp = function
 			      | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
 			      | _ -> None
-		  in (*???*)
+		        in 
+                (*???*)
 		        let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
 		        (* Termination: Add source condition *)
 		        let nctx = CF.transform_context (fun es ->
@@ -80,7 +82,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
             let _ = post_pos#set (CF.pos_of_formula post_cond) in
-          Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+            Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        let _ = Debug.devel_pprint ("\n check_specs: EAssume: pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") no_pos in
 	        if (Cformula.isAnyFalseCtx ctx1) then
@@ -145,7 +147,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
           	begin
           	  Prooftracer.push_assert_assume e0;
-          					Prooftracer.add_assert_assume e0;
+          	  Prooftracer.add_assert_assume e0;
 			  Tpdispatcher.push_suppress_imply_output_state ();
 			  Tpdispatcher.unsuppress_imply_output ();
           	end in
@@ -172,9 +174,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       rs in 
 			  let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                 begin
-                  				Prooftracer.end_object ();
-                  				(* Prooftracer.end_object (); *)
-                  				Prooftracer.pop_div ();
+                  	Prooftracer.end_object ();
+                  	(* Prooftracer.end_object (); *)
+                  	Prooftracer.pop_div ();
                   Prooftracer.pop_div ();
 				  Tpdispatcher.restore_suppress_imply_output_state ();
                 end in
@@ -261,6 +263,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let vdatanode = CF.DataNode ({
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;
+			    CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
 			    CF.h_formula_data_imm = imm;
 			    CF.h_formula_data_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
@@ -423,6 +426,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let heap_node = CF.DataNode ({
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
+		        CF.h_formula_data_derv = false;
 		        CF.h_formula_data_imm = false;
 		        CF.h_formula_data_perm = None; (*LDK: deal later*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)

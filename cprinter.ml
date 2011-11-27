@@ -849,6 +849,7 @@ let rec pr_h_formula h =
           pr_list_op op_conj f_b args
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
+	  h_formula_data_derv = dr;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
@@ -878,6 +879,7 @@ let rec pr_h_formula h =
           pr_spec_var sv; fmt_string "::";
           pr_angle (c^perm_str) pr_spec_var svs ;
 	      pr_imm imm;
+	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	      if original then fmt_string "[Orig]"
@@ -2204,6 +2206,7 @@ let rec html_of_h_formula h = match h with
 			String.concat html_op_conj (List.map html_of_h_formula args)
 	| DataNode ({h_formula_data_node = sv;
 				h_formula_data_name = c;
+                h_formula_data_derv = dr;
 				h_formula_data_imm = imm;
 				h_formula_data_arguments = svs;
 				h_formula_data_holes = hs; 
