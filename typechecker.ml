@@ -4,7 +4,7 @@ open Exc.ETABLE_DFLOW
 open Solver
 open Cast
 open Gen.Basic
-open Perm1
+open Perm
 
 module CF = Cformula
 module CP = Cpure

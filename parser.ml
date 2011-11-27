@@ -7,7 +7,7 @@ open Token
 open Sleekcommons
 open Gen.Basic
 
-open Perm1
+open Perm
 
   module F = Iformula
   module P = Ipure

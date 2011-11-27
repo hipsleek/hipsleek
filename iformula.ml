@@ -7,7 +7,7 @@
 open Globals
 (* open Exc.ETABLE_NFLOW *)
 open Exc.ETABLE_DFLOW
-open Perm1
+open Perm
 module P = Ipure
 
 

@@ -5,7 +5,7 @@ open Exc.ETABLE_DFLOW
 open Printf
 open Gen.Basic
 open Gen.BList
-open Perm1
+open Perm
   
 module C = Cast
   

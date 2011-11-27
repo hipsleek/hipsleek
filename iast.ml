@@ -8,7 +8,7 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.ETABLE_DFLOW
-open Perm1
+open Perm
 
 module F = Iformula
 module P = Ipure
