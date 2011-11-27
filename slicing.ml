@@ -116,14 +116,18 @@ let split (cl : atomic_constraint list) : slice list =
         (vp1, fp1)::p2
   in List.map (fun (_, s) -> s) (helper cl)
 *)
+(*
+let same_slice_auto (q : atomic_constraint) (s : slice) : bool =
+  let s_label, _ = s in
+  Gen.BList.overlap_eq eq_spec_var (fv_atom q) s_label
+*)
 let rec split (cl : atomic_constraint list) : slice list = 
   match cl with
   | [] -> []
   | a::p ->
       let pl = split p in
       let va = fv_atom a in
-      let p1, p2 = List.partition (fun (vb, _) -> 
-        Gen.BList.overlap_eq eq_spec_var va vb) pl in
+      let p1, p2 = List.partition (fun (vb, _) -> Gen.BList.overlap_eq eq_spec_var va vb) pl in
       let vp1, fp1 = List.split p1 in
       let vp1 = Gen.BList.remove_dups_eq eq_spec_var (va @ (List.concat vp1)) in
       let fp1 = a::(List.concat fp1) in
@@ -138,7 +142,8 @@ let slice_to_memo_group (s : slice) (status : prune_status) filter_merged_cons :
         | Some (v1, v2) -> (c, s, add_equiv_eq_with_const a v1 v2)
         | _ -> let pos = { memo_formula = b; memo_status = status } in 
           (pos::c, s, a))
-      | Const_R f -> (c, f::s, a)) ([], [], empty_var_aset) fs in
+      | Const_R f -> (c, f::s, a)) 
+    ([], [], empty_var_aset) fs in
   {
     memo_group_fv = vs;
     memo_group_linking_vars = [];

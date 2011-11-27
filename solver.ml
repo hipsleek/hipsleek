@@ -2725,7 +2725,7 @@ and count_octx x = match x with
 and heap_entail_conjunct_lhs_struc
       p is_folding  has_post ctx conseq 
       pos pid : (list_context * proof) = 
-  let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
+  (*let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx * "^(Cprinter.string_of_context_short x)) in*)
   Gen.Debug.no_2 "heap_entail_conjunct_lhs_struc"
       (Cprinter.string_of_context) (Cprinter.string_of_struc_formula)
       (fun (a,b) -> Cprinter.string_of_list_context a)

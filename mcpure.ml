@@ -1113,41 +1113,44 @@ and create_memo_group_no_slicing_old (l1:(b_formula * (formula_label option)) li
   let l2 = to_slice1 @ to_slice2 @ l2 in
   let l2 = List.map (fun c-> (None, Some c)) l2 in
   let l1 = List.map (fun c-> (Some c, None)) l1 in  
-  let ll  = List.fold_left ( fun a f ->
-	let fv = match f with
-	  | None, Some c -> fv c
-	  | Some c, None -> bfv c
-	  | _-> [] in
-	let rec f_rec fv a = 
-      let r1,r2 =
-		if !f_1_slice then (a,[]) (* No slicing *)
-		else (* Auto slicing *)
-		  List.partition (fun (v,_,_)-> (List.length (Gen.BList.intersect_eq eq_spec_var fv v))>0) a in
-	  if r1 = [] then ([],r2)
-	  else
-		let n_fv = List.fold_left (fun ac (v,_,_)-> ac@v) fv r1 in
-		let x1,x2 = f_rec n_fv r2 in
-		(r1@x1,x2) in
-	let to_merge, no_merge = f_rec fv a in
-	let merg_fv,merg_bf, merg_f  = List.fold_left (fun (a1,a2,a3)(c1,c2,c3)-> (a1@c1,a2@c2,a3@c3)) ([],[],[]) to_merge in
-	let merg_fv = remove_dups_svl (merg_fv@fv) in
-	match f with 
-	  | None, Some c -> (merg_fv,merg_bf,c::merg_f)::no_merge 
-	  | Some c, None -> (merg_fv,c::merg_bf,merg_f)::no_merge 
-	  | _-> no_merge) [] (l1@l2) in
+  let ll  = List.fold_left (fun a f ->
+	  let fv = match f with
+	    | None, Some c -> fv c
+	    | Some c, None -> bfv c
+	    | _-> [] in
+	  let rec f_rec fv a = 
+      let r1, r2 =
+		    if !f_1_slice then (a,[]) (* No slicing *)
+		    else (* Auto slicing *)
+		      List.partition (fun (v,_,_)-> (List.length (Gen.BList.intersect_eq eq_spec_var fv v))>0) a 
+      in
+	    if r1 = [] then ([],r2)
+	    else
+		    let n_fv = List.fold_left (fun ac (v,_,_)-> ac@v) fv r1 in
+		    let x1, x2 = f_rec n_fv r2 in
+		    (r1@x1, x2) 
+    in
+	  let to_merge, no_merge = f_rec fv a in
+	  let merg_fv,merg_bf, merg_f  = List.fold_left (fun (a1,a2,a3)(c1,c2,c3)-> (a1@c1,a2@c2,a3@c3)) ([],[],[]) to_merge in
+	  let merg_fv = remove_dups_svl (merg_fv@fv) in
+	  match f with 
+	    | None, Some c -> (merg_fv,merg_bf,c::merg_f)::no_merge 
+	    | Some c, None -> (merg_fv,c::merg_bf,merg_f)::no_merge 
+	    | _-> no_merge) [] (l1@l2) 
+  in
   let r = List.map (fun (vars,bfs,fs)-> 
-	let nfs,aset = List.fold_left (fun (a,s) c-> 
+	  let nfs,aset = List.fold_left (fun (a,s) c-> 
 	  match get_bform_eq_args_with_const c with 
-		| Some(v1,v2) -> (a,add_equiv_eq_with_const(*_debug*) s v1 v2)
-		| _ -> let pos = {memo_formula=c;memo_status = status} in
-			   ((pos::a),s)) ([],empty_var_aset) bfs in
-	{
-	  memo_group_fv = vars;
-	  memo_group_linking_vars = [];
-	  memo_group_cons = filter_merged_cons aset [nfs];
-	  memo_group_slice = fs;
-	  memo_group_changed = true;
-	  memo_group_aset = aset;}) ll in
+	  | Some(v1,v2) -> (a,add_equiv_eq_with_const(*_debug*) s v1 v2)
+	  | _ -> let pos = {memo_formula=c;memo_status = status} in
+	    ((pos::a),s)) ([],empty_var_aset) bfs in
+	  {
+	    memo_group_fv = vars;
+	    memo_group_linking_vars = [];
+	    memo_group_cons = filter_merged_cons aset [nfs];
+	    memo_group_slice = fs;
+	    memo_group_changed = true;
+	    memo_group_aset = aset;}) ll in
   r
 
 and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
