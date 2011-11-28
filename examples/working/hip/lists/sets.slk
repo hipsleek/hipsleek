@@ -6,19 +6,33 @@ axiom forall(i: s[i] = 0) ==> emptyset(s).
 
 relation setunion(int[] a, int[] b, int[] c).
 axiom setunion(a,b,c) ==> forall(i: !(c[i] = 1) | (a[i] = 1 | b[i] = 1)).
-axiom forall(i: !(c[i] = 1) | (a[i] = 1 | b[i] = 1)) ==> setunion(a,b,c).
 axiom setunion(a,b,c) ==> forall(i: !(a[i] = 1) | c[i] = 1).
 axiom setunion(a,b,c) ==> forall(i: !(b[i] = 1) | c[i] = 1).
+axiom setunion(a,b,c) ==> forall(i: !(a[i] = 0 & b[i] = 0) | (c[i]=0)).
+axiom forall(i: (!(c[i] = 1) | (a[i] = 1 | b[i] = 1))
+      & (!(c[i]=0) | (a[i]=0 & b[i]=0))) ==> setunion(a,b,c).
 
 relation setinter(int[] a, int[] b, int[] c).
 axiom setinter(a,b,c) ==> forall(i: !(c[i] = 1) | (a[i] = 1 & b[i] = 1)).
-axiom forall(i: !(c[i] = 1) | (a[i] = 1 & b[i] = 1)) ==> setinter(a,b,c).
 axiom setinter(a,b,c) ==> forall(i: !(a[i] = 0) | c[i] = 0).
 axiom setinter(a,b,c) ==> forall(i: !(b[i] = 0) | c[i] = 0).
 axiom setinter(a,b,c) ==> forall(i: !(a[i] = 1 & b[i] = 1) | (c[i]=1)).
-
+axiom forall(i: (!(c[i] = 1) | (a[i] = 1 & b[i] = 1))
+      & (!(c[i]=0) | (a[i]=0 | b[i]=0))) ==> setinter(a,b,c).
+ 
 checkentail s1[0] = 1 & s2[1] = 1 & setunion(s1,s2,s3) |- s3[1] = 1. //valid s3 = union s1 s2
 
 checkentail s1[0] = 1 & s2[1] = 1 & setunion(s1,s2,s3) |- emptyset(s3). //invalid
 
 checkentail s1[0] = 1 & s2[0] = 1 & setinter(s1,s2,s3) |- s3[0] = 1. //valid 
+
+checkentail s1[0] = 0 & s2[0] = 0 & setunion(s1,s2,s3) |- s3[0] = 0. //valid s3 = union s1 s2
+
+checkentail s1[0] = 1 & s2[0] = 0 & setinter(s1,s2,s3) |- s3[0] = 0. //valid 
+
+// checkentail S1={a} & S2={b} & S3={a,b} |- S1=S2+S3
+// guess need to use update_array..
+
+// checkentail S1={a} & S2={b} & S3={a,b} |- S2=S2/\S3
+
+// checkentail y in S & forall x in S. s>5 |- y>=3
