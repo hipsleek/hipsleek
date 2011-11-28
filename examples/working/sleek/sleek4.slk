@@ -5,7 +5,7 @@ pred ll<n> == self = null & n = 0
 	inv n >= 0.
 
 pred sortl<n, mi> == self = null & n = 0
-	or self::node<v, r> * r::sortl<n - 1, k> & v <= k
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
 	inv n >= 0.
 
 let $f1 = x::sortl<a, b>.
