@@ -4709,7 +4709,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : uni
   match p0 with
     | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
-          (gather_type_info_pure prog p1 stab; gather_type_info_pure prog p2 stab)
+          (gather_type_info_pure_x prog p1 stab; gather_type_info_pure_x prog p2 stab)
     | IP.Not (p1, _, pos) -> gather_type_info_pure_x prog p1 stab 
     | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
 	      if (H.mem stab qv) then
@@ -4725,7 +4725,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : uni
             begin
               let new_et = fresh_tvar stab in
               let vk = fresh_proc_var_kind stab new_et in
-              H.add stab qv vk; gather_type_info_pure prog qf stab
+              H.add stab qv vk; gather_type_info_pure_x prog qf stab
             end
 
 and gather_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
