@@ -1,7 +1,7 @@
  (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
 (* open Exc.ETABLE_NFLOW *)
-open Exc.ETABLE_DFLOW 
+open Exc.GTable 
 open Printf
 open Gen.Basic
 open Gen.BList

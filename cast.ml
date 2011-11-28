@@ -7,7 +7,7 @@
 open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
-open Exc.ETABLE_DFLOW
+open Exc.GTable
 type n
 
 

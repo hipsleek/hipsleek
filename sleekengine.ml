@@ -6,7 +6,7 @@ open Globals
 open Sleekcommons
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
-open Exc.ETABLE_DFLOW
+open Exc.GTable
 open Perm
 
 module H = Hashtbl

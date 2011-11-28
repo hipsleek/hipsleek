@@ -19,7 +19,7 @@ open Sleekcommons
 open Sleekengine
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
-open Exc.ETABLE_DFLOW
+open Exc.GTable
 
 module H = Hashtbl
 module I = Iast

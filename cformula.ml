@@ -7,7 +7,7 @@
 open Globals
 open Gen
 (* open Exc.ETABLE_NFLOW *)
-open Exc.ETABLE_DFLOW
+open Exc.GTable
 open Perm
 
 module Err = Error
@@ -153,7 +153,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
                         h_formula_data_derv : bool;
                         h_formula_data_imm : bool;
-                        h_formula_data_perm : cperm; (*LDK: permission*)
+                        h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
