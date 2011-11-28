@@ -1,0 +1,21 @@
+relation emptyset(int[] s).
+axiom emptyset(s)  ==> forall(i: s[i] = 0).
+axiom forall(i: s[i] = 0) ==> emptyset(s).
+
+relation setunion(int[] a, int[] b, int[] c).
+axiom setunion(a,b,c) ==> forall(i: !(c[i] = 1) | (a[i] = 1 | b[i] = 1)).
+axiom forall(i: !(c[i] = 1) | (a[i] = 1 | b[i] = 1)) ==> setunion(a,b,c).
+axiom setunion(a,b,c) ==> forall(i: !(a[i] = 1) | c[i] = 1).
+axiom setunion(a,b,c) ==> forall(i: !(b[i] = 1) | c[i] = 1).
+
+relation setinter(int[] a, int[] b, int[] c).
+axiom setinter(a,b,c) ==> forall(i: !(c[i] = 1) | (a[i] = 1 & b[i] = 1)).
+axiom forall(i: !(c[i] = 1) | (a[i] = 1 & b[i] = 1)) ==> setinter(a,b,c).
+axiom setunion(a,b,c) ==> forall(i: !(a[i] = 0) | c[i] = 0).
+axiom setunion(a,b,c) ==> forall(i: !(b[i] = 0) | c[i] = 0).
+
+checkentail s1[0] = 1 & s2[1] = 1 & setunion(s1,s2,s3) |- s3[1] = 1. //valid s3 = union s1 s2
+
+checkentail s1[0] = 1 & s2[1] = 1 & setunion(s1,s2,s3) |- emptyset(s3). //invalid
+
+checkentail s1[0] = 1 & s2[0] = 1 & setinter(s1,s2,s3) |- s3[0] = 1. //valid 
