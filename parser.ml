@@ -967,6 +967,7 @@ non_array_type:
   [[ `INT                -> int_type
    | `FLOAT              -> float_type 
    | `BOOL               -> bool_type
+   | `SEQ; `OPAREN; t=non_array_type; `CPAREN -> (*asankhs - added typ for sequences *) List (t)
    | `IDENTIFIER id      -> Named id ]];  
 
 array_type:
@@ -1015,7 +1016,7 @@ hpred_header: [[`IDENTIFIER id; t=opt_type_var_list; `LT; t2=opt_typed_arg_list;
 
 typed_arg:
    [[ t=typ -> ()
-    | `SET;  `OSQUARE; t=typ;  `CSQUARE -> ()
+    | `SET;  `OSQUARE; t= typ;  `CSQUARE -> ()
     | `SET;  `OSQUARE; t=typ;  `CSQUARE; `COLON; t3=SELF -> ()
     | t=typ; `OSQUARE; t2=typ; `CSQUARE -> ()
     | t=typ; `OSQUARE; t2=typ; `CSQUARE; `COLON; t3=SELF -> ()
