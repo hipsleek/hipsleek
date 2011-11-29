@@ -83,9 +83,9 @@ let common_arguments = [
     "Show gist when implication fails");
 	("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
 	"Hull precondition invariant at call sites");
-	("--sat-timeout", Arg.Set_float Globals.sat_timeout,
+	("--sat-timeout", Arg.Set_float Globals.sat_timeout_limit,
 	"Timeout for sat checking");
-	("--imply-timeout", Arg.Set_float Globals.imply_timeout,
+	("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
     "Timeout for imply checking");
 	("--log-proof", Arg.String Prooftracer.set_proof_file,
     "Log (failed) proof to file");
