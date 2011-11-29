@@ -432,8 +432,8 @@ let omega_err = ref false
 
 let seq_number = ref 10
 
-let sat_timeout = ref 10.
-let imply_timeout = ref 10.
+let sat_timeout_limit = ref 2.
+let imply_timeout_limit = ref 3.
   
 (* let reporter = ref (fun _ -> raise Not_found) *)
 

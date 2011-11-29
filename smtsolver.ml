@@ -451,7 +451,7 @@ let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 (* let sat_timeout = ref 2.0
 let imply_timeout = ref 15.0 *)
-let z3_timeout = 2.0
+let z3_sat_timeout_limit = 2.0
 let prover_pid = ref 0
 let prover_process = ref {
 	name = "smtsolver";
@@ -821,11 +821,11 @@ let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string)
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
   try
-      let timeo = match timeout with
-        | 0. -> z3_timeout
-        |_ -> timeout
-      in
-    imply ante conseq timeo
+      (* let timeo = match timeout with *)
+      (*   | 0. -> z3_timeout *)
+      (*   |_ -> timeout *)
+      (* in *)
+    imply ante conseq timeout
   with Illegal_Prover_Format s -> 
       begin
         print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
@@ -834,6 +834,11 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
         flush stdout;
         failwith s
       end
+
+let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
+  Gen.Debug.loop_1 "smt.imply" string_of_float string_of_bool
+      (fun _ -> imply ante conseq timeout) timeout
+
 (**
  * Test for satisfiability
  * We also consider unknown is the same as sat
@@ -852,7 +857,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout
 (*let default_is_sat_timeout = 2.0*)
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
-  smt_is_sat f sat_no prover z3_timeout
+  smt_is_sat f sat_no prover z3_sat_timeout_limit
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
 	let pr = !print_pure in
