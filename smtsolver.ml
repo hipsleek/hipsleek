@@ -767,7 +767,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
    * We also consider unknown is the same as sat
 *)
 and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
-  (*let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in*)
+  let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n"); flush stdout in
   let res, should_run_smt = if (has_exists conseq) then
 	try (match (Omega.imply_with_check ante conseq "" timeout) with
 	  | None -> (false, true)
@@ -821,7 +821,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  * We also consider unknown is the same as sat
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
-	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
+	let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n"); flush stdout in
 	let input = to_smt f None prover in
 	let output = run prover input timeout in
 	let res = match output.sat_result with
