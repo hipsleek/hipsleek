@@ -387,7 +387,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  let res =  write tmp_form !Globals.sat_timeout false in
+  let res =  write tmp_form !Globals.sat_timeout_limit false in
   if !log_all_flag == true then
 	output_string log_all ("[isabelle.ml]: imply --> "^(string_of_bool res)^"\n");
   res
@@ -403,7 +403,7 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
 				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
-	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None)) !Globals.sat_timeout sat_no) in
+	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None)) !Globals.sat_timeout_limit sat_no) in
     if !log_all_flag == true then
 	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
     (not answ)

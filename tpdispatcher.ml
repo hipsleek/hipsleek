@@ -771,7 +771,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         end
       else
         begin
-          (Smtsolver(*Omega*).is_sat f sat_no);
+          (Omega.is_sat f sat_no);
         end
   | Mona | MonaH -> Mona.is_sat f sat_no
   | CO -> 
@@ -921,7 +921,7 @@ let simplify (f : CP.formula) : CP.formula =
           | Coq -> (* Coq.simplify f *)
                 if (is_list_constraint f) then
                   (Coq.simplify f)
-                else ((*Omega*)Smtsolver.simplify f)
+                else (Omega.simplify f)
           | Mona | MonaH (* -> Mona.simplify f *) ->
                 if (is_bag_constraint f) then
                   (Mona.simplify f)
@@ -1049,7 +1049,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | Coq -> (* Coq.hull f *)
       if (is_list_constraint f) then
 		(Coq.hull f)
-	  else ((*Omega*)Smtsolver.hull f)
+	  else (Omega.hull f)
   | Mona   -> Mona.hull f  
   | MonaH  (* -> Mona.hull f  *)
   | OM ->
@@ -1183,7 +1183,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
-		    (called_prover :="smtsolver " ; Smtsolver.imply ante conseq timeout (*imp_no timeout*))
+		    (called_prover :="omega " ; Omega.imply ante conseq ("subst Coq"^imp_no) timeout)
   | AUTO ->
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         begin
@@ -1695,13 +1695,13 @@ Gen.Debug.no_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pur
       (fun (r, _, _) -> string_of_bool r)
       (fun ante0 conseq0 -> imply ante0 conseq0 imp_no do_cache process) ante0 conseq0
 
-and imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no 0. do_cache process
+and imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no !imply_timeout_limit do_cache process
 ;;
 
-let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
+let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit
 ;;
 
-let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
+let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit
 ;;
 
 (* CP.formula -> string -> 'a -> bool *)
