@@ -560,7 +560,7 @@ let to_smt_v2 ante conseq logic fvars info =
 	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x) ^ ")\n") ante_clauses in 
 	let ante_str = String.concat "" ante_strs in
 	let conseq_str = smt_of_formula conseq in
-		("(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^
+		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^*)
             ";Sequence Axioms \n" ^
                 seq_axioms ^
 			";Variables declarations\n" ^ 

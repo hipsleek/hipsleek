@@ -30,7 +30,7 @@
 (! (and (=> (< n (length s0))(= (index (append s0 s1) n) (index s0 n))) (=> (<= (length s0) n) (= (index(append s0 s1) n) (- (index s1 n) (length s0))))) 
 :pattern ((index (append s0 s1) n)))))
 
-(declare-fun isin ((Seq (Int)) Int) Bool)
+(declare-fun isin (Int (Seq (Int))) Bool)
 ;isin Axioms
 (assert (forall ((x Int) (s (Seq Int)))
 (! (iff (isin x s) (exists ((i Int)) (! (and (<= 0 i) (and (< i (length s)) (= (index s i) x))) :pattern ((index s i))))) :pattern ((isin x s)))))
@@ -41,7 +41,7 @@
 (assert (forall ((s (Seq Int)) (v Int) (x Int))
 (! (iff (isin x (insert v s)) (or (= v x) (isin x s))) :pattern ((isin x (insert v s))))))
 
-(declare-fun isnotin ((Seq (Int)) Int) Bool)
+(declare-fun isnotin (Int (Seq (Int))) Bool)
 ;isnotin Axioms
 (assert (forall ((x Int) (s (Seq Int)))
 (! (iff (isnotin x s) (forall ((i Int)) (! (and (<= 0 i) (and (< i (length s)) (not (= (index s i) x)))) :pattern ((index s i))))) :pattern ((isnotin x s)))))
