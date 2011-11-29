@@ -31,7 +31,7 @@ relation primerel(int p, int n) ==
 
 //checkentail true |- prime(2).
 //checkentail true |- !(prime(4)).
-//checkentail primerel(n,i) & i<n & !(divides(i,n)) |- primerel(n, 1 + i).
+//checkentail primerel(n,i) & i<n & !(divides(i,n)) & j=i+1|- primerel(n, j).
 //checkentail p > 1 & primerel(p,p) |- prime(p).
 
 
@@ -47,15 +47,21 @@ bool is_prime1(int n)
 }
 
 bool is_prime1_helper(int n, int i)
-	requires primerel(n, i)
+	requires primerel(n, i) & 2 <= i <= n
 	ensures (res & primerel(n,n) | !res & !(primerel(n,n)));
 {
 	if (i >= n)
 		return true;
-	else if (isdivby(n,i))
+	else if (isdivby(n,i)) {
+      assume false;
 		return false;
-	else 
-		return is_prime1_helper(n,i+1);
+    }
+	else {
+      dprint;
+      bool r = is_prime1_helper(n,i+1);
+      assume false;
+	  return r;
+    }
 }
 
 bool isdivby(int n, int m)
