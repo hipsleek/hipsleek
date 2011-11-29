@@ -391,6 +391,7 @@ type sat_type =
 	| Sat		(* solver returns sat *)
 	| UnSat		(* solver returns unsat *)
 	| Unknown	(* solver returns unknown or there is an exception *)
+	| Aborted (* solver returns an exception *)
 
 (* Record structure to store information parsed from the output 
  * of the SMT solver.
@@ -402,11 +403,8 @@ type smt_output = {
 		(* expand with other information : proof, time, error, warning, ... *)
 	}
 	
-let string_of_smt_output output = String.concat "\n" output.original_output_text
-	(* match output.sat_result with
-	| Sat -> "sat"
-	| UnSat -> "unsat"
-	| Unknown -> "unknown|timeout" *)
+let string_of_smt_output output = 
+  (String.concat "\n" output.original_output_text)
 
 (* Collect all Z3's output into a list of strings *)
 let rec collect_output chn accumulated_output : string list =
@@ -474,7 +472,7 @@ let command_for prover =
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
 
 (* Runs the specified prover and returns output *)
-let run prover input timeout =
+let run st prover input timeout =
 	let out_stream = open_out infile in
     (*let _ = print_endline ("input: " ^ input) in*)
 	output_string out_stream input;
@@ -489,9 +487,10 @@ let run prover input timeout =
 		with
 			| _ -> begin (* exception : return the safe result to ensure soundness *)
 				Printexc.print_backtrace stdout;
+                print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
 				Unix.kill !prover_process.pid 9;
 				ignore (Unix.waitpid [] !prover_process.pid);
-				{ original_output_text = []; sat_result = Unknown; }
+				{ original_output_text = []; sat_result = Aborted; }
 				end 
 	in
 	let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
@@ -643,9 +642,10 @@ let process_stdout_print ante conseq input output res =
 		begin
 			print_endline (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
 			print_endline (match output.sat_result with
-				| UnSat -> ">>> VERDICT: VALID!"
-				| Sat -> ">>> VERDICT: INVALID!"
-				| Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS INVALID.");
+				| UnSat -> ">>> VERDICT: UNSAT/VALID!"
+				| Sat -> ">>> VERDICT: FAILED!"
+				| Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS FAILED."
+	            | Aborted -> ">>> VERDICT: ABORTED! CONSIDERED AS FAILED.");
             flush stdout;
 		end;
 		if (!(outconfig.print_implication) || !(outconfig.print_input) || !(outconfig.print_original_solver_output)) then
@@ -791,12 +791,13 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
   if (should_run_smt) then
 	let input = to_smt ante (Some conseq) prover in
 	let _ = !set_generated_prover_input input in
-	let output = run prover input timeout in
+	let output = run "is_imply" prover input timeout in
 	let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 	let res = match output.sat_result with
 	  | Sat -> false
 	  | UnSat -> true
 	  | Unknown -> false
+	  | Aborted -> false
             (* try Omega.imply ante conseq "" !imply_timeout  *)
             (* with | _ -> false *)
     in
@@ -836,7 +837,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
       end
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Gen.Debug.loop_1 "smt.imply" string_of_float string_of_bool
+  Gen.Debug.loop_1_no "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
@@ -847,7 +848,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout
 	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
 	let input = to_smt f None prover in
     (*let _ = print_endline ("smt_is_sat : " ^ input) in*)
-	let output = run prover input timeout in
+	let output = run "is_unsat" prover input timeout in
 	let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
