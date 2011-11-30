@@ -564,6 +564,7 @@ let to_smt_v2 ante conseq logic fvars info =
 	let conseq_str = smt_of_formula conseq in
 		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^*)
             ";Sequence Axioms \n" ^
+            "(set-option :pull-nested-quantifiers true)\n" ^
                 seq_axioms ^
 			";Variables declarations\n" ^ 
 				smt_var_decls ^ 
