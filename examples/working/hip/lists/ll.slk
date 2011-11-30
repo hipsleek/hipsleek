@@ -4,11 +4,20 @@ data node {
 }.
 
 /* view for a singly linked list */
-pred ll<L1:seq(int),n:int> == self = null & L1 = [||]
-	or self::node<v, r> * r::ll<L2,n> & L1 = (v+n):::L2. //bug with v+n
+//pred ll<L1:seq(int),n:int> == self = null & L1 = [||]
+//	or self::node<v, r> * r::ll<L2,n> & L1 = v:::L2. //bug with v+n
 
-checkentail x::node<a,null> |- x::ll<L,_> & length(L,1). 
-checkentail x::node<a,null> |- x::ll<L,_> & len(L) > 2. 
-checkentail x::node<a,null> |- x::ll<L,_>.
+//checkentail x::node<a,y>*y::node<b,null> |- x::ll<L,_>.
+//checkentail x::node<a,y>*y::node<b,null> |- [m] x::ll<L,_> & length(L,m) & m=2. 
+//checkentail x::node<a,y>*y::node<b,null> |- [m] x::ll<L,_> & length(L,m) & m!=2. // unsound if valid!
+//checkentail x::node<a,null> |- [m] x::ll<L,_> & length(L,m) & m=1. 
+//checkentail x::node<a,null> |- [m] x::ll<L,_> & length(L,m) & m>0. 
+//checkentail x::node<a,null> |- x::ll<L,_> & length(L,1). 
+//checkentail x::node<a,null> |- (exists m: x::ll<L,_> & length(L,m) & m>2). 
+//checkentail x::node<a,null> |- x::ll<L,_>.
+checkentail L1=[|1|] & L3=[|1,2|] |- true.
+// parsed as L1=[|1|] & L3=1 & L3=2 !
+//checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- append(L1,L2,L3).
+
 
 print residue.

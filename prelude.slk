@@ -41,7 +41,8 @@ axiom forall(i: ((c[i] = 1) & (a[i] = 1 & b[i] = 1))
 //Theory of Sequences (Lists)
 relation length(seq(int) s, int n).
 axiom n = 0 ==> length([||],n).
-axiom n > 0 ==> length(s,n) & forall(v: length(v:::s,n+1)).
+//axiom n > 0 ==> length(s,n) & forall(v: length(v:::s,n+1)).
+axiom n > 0 & length(s,n-1)  ==> forall(v: length(v:::s,n)).
 //axiom s = [||] ==> length(s,0).
 //axiom length(s,0) ==> s = [||].  
 //axiom s = v:::[||] ==> length(s,1).
@@ -50,9 +51,14 @@ axiom n > 0 ==> length(s,n) & forall(v: length(v:::s,n+1)).
 //axiom length(s,n) ==> n >= 0 & length(x:::s,n+1).
 
 relation append(seq(int) a, seq(int) b, seq(int) c).
-axiom append(a,b,c) & length(c,n) & length(a,l) & length(b,m) ==> n = l + m.
+//axiom append(a,b,c) & length(c,n) & length(a,l) & length(b,m) ==> n = l + m.
+//axiom append(L1,L2,R) & length(L1,l) & length(L2,m) & n=l+m ==> length(R,n) .
 axiom append(a,b,ab) & append(ab,c,abc) ==> append(a,bc,abc) & append(b,c,bc).
+axiom  B=C ==> append([||],B,C). 
+axiom  B=C ==> append(B,[||],C). 
+axiom  append(L1,L2,R) ==> append(v:::L1,L2,v:::R). 
 
+/*
 relation index(seq(int) s, int i, int v).
 axiom length(s,n) & i = n ==> index(v:::s, i, v).
 axiom index(c,i,v) & append(a,b,c) & length(a,l) & length(b,m) & 
@@ -77,9 +83,11 @@ axiom isnotin(x,s) & !(x = v)  ==> isnotin(x,v:::s).
 relation reverse(seq(int) u, seq(int) v).
 axiom reverse(a,b) & length(a,n) & length(b,m) ==> n = m.
 axiom reverse(a,b) & index(a,i,v) & length(a,n) ==> index(b,n-i,v).
-axiom reverse(a,b) ==> reverse(b,a).
+//axiom reverse(a,b) ==> reverse(b,a). //not true!
 
 relation alleqn(int n, seq(int) s).
 axiom alleqn(n,s) ==> forall(i: index(s,i,n)).
+*/
+
 
 relation permutation(seq(int) a, seq(int) b).
