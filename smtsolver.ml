@@ -260,11 +260,14 @@ and collect_bformula_info b = match b with
 	| CP.BagNotIn _ 
 	| CP.BagSub _
 	| CP.BagMin _
-	| CP.BagMax _ 
-	| CP.ListIn _
-	| CP.ListNotIn _
-	| CP.ListAllN _
-	| CP.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+	| CP.BagMax _ -> default_formula_info(* Unsupported bag; but leave this default_formula_info instead of a fail_with*) 
+	| CP.ListIn (e1, e2, _) 
+	| CP.ListNotIn (e1, e2, _) 
+	| CP.ListAllN (e1, e2, _) 
+	| CP.ListPerm (e1, e2, _) ->
+			let ef1 = collect_exp_info e1 in
+			let ef2 = collect_exp_info e2 in
+			combine_formula_info ef1 ef2(* default_formula_info *)
 	| CP.RelForm (r,args,_) ->
 		if r = "update_array" then
 			default_formula_info 
@@ -286,14 +289,17 @@ and collect_exp_info e = match e with
 	| CP.Bag _
 	| CP.BagUnion _
 	| CP.BagIntersect _
-	| CP.BagDiff _
-	| CP.List _
-	| CP.ListCons _
-	| CP.ListHead _
-	| CP.ListTail _
-	| CP.ListLength _
-	| CP.ListAppend _
-	| CP.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
+	| CP.BagDiff _ -> default_formula_info (* Unsupported bag; but leave this default_formula_info instead of a fail_with *)
+	| CP.ListCons (e1, e2, _) -> 
+			let ef1 = collect_exp_info e1 in
+			let ef2 = collect_exp_info e2 in
+			combine_formula_info ef1 ef2
+	| CP.ListHead (e, _) 
+	| CP.ListTail (e, _) 
+	| CP.ListLength (e, _) 
+	| CP.ListReverse (e, _) -> collect_exp_info e
+	| CP.List (i, _) 
+	| CP.ListAppend (i, _) 
 	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =

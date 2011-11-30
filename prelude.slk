@@ -40,12 +40,14 @@ axiom forall(i: ((c[i] = 1) & (a[i] = 1 & b[i] = 1))
 
 //Theory of Sequences (Lists)
 relation length(seq(int) s, int n).
-axiom s = [||] ==> length(s,0).
-axiom length(s,0) ==> s = [||].  
-axiom s = v:::[||] ==> length(s,1).
-axiom length(s,1) ==> s = v:::[||].
-axiom length(x:::s,n) ==> length(s,n-1).
-axiom length(s,n) ==> n >= 0 & length(x:::s,n+1).
+axiom n = 0 ==> length([||],n).
+axiom n > 0 ==> length(s,n) & forall(v: length(v:::s,n+1)).
+//axiom s = [||] ==> length(s,0).
+//axiom length(s,0) ==> s = [||].  
+//axiom s = v:::[||] ==> length(s,1).
+//axiom length(s,1) ==> s = v:::[||].
+//axiom length(x:::s,n) ==> length(s,n-1).
+//axiom length(s,n) ==> n >= 0 & length(x:::s,n+1).
 
 relation append(seq(int) a, seq(int) b, seq(int) c).
 axiom append(a,b,c) & length(c,n) & length(a,l) & length(b,m) ==> n = l + m.
