@@ -514,7 +514,7 @@ let run st prover input timeout =
 			Procutils.PrvComms.maybe_raise_timeout fnc () timeout
 		with
 			| _ -> begin (* exception : return the safe result to ensure soundness *)
-				Printexc.print_backtrace stdout;
+				(* Printexc.print_backtrace stdout; *)
                 print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
 				Unix.kill !prover_process.pid 9;
 				ignore (Unix.waitpid [] !prover_process.pid);
@@ -683,15 +683,15 @@ let to_smt_v2 ante conseq logic fvars info =
 	let ante_str = String.concat "" ante_strs in
 	let conseq_str = smt_of_formula conseq in
 		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^ *)
-			(*";Variables declarations\n" ^ *)
+			";Variables declarations\n" ^
 				smt_var_decls ^
-			(* ";Relations declarations\n" ^ *)
+			";Relations declarations\n" ^
 				rel_decls ^
-			(*";Axioms assertions\n" ^ *)
+			";Axioms assertions\n" ^
 				axiom_asserts ^
-			(*";Antecedent\n" ^ *)
+			";Antecedent\n" ^
 				ante_str ^
-			(*";Negation of Consequence\n" ^*)
+			";Negation of Consequence\n" ^
            "(assert (not " ^ conseq_str ^ "))\n" ^
 			"(check-sat)\n")
 	
@@ -994,7 +994,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) (timeou
 	let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
-	(* let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in *)
+	let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in
 		res
     else res
 
