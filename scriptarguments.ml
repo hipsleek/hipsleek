@@ -97,6 +97,8 @@ let common_arguments = [
 	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
+    ("--log-z3", Arg.Set Smtsolver.log_all_flag,
+	"Log all formulae sent to z3 in file allinput.z3");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
 	"Log all formulae sent to Isabelle in file allinput.thy");
 	("--log-coq", Arg.Set Coq.log_all_flag,
