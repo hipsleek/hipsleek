@@ -164,8 +164,7 @@ let rec smt_of_b_formula b =
  	| CP.ListIn (e1, e2, _) -> "(isin " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
     | CP.ListNotIn (e1, e2, _) ->  "(isnotin " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
     | CP.ListAllN (e1, e2, _) ->  "(alln " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
-    | CP.ListPerm _ -> 
-			illegal_format ("z3.smt_of_b_formula: ListPerm not added yet.\n")
+    | CP.ListPerm (e1, e2, _) ->  "(perm " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)

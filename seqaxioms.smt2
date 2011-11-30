@@ -86,3 +86,5 @@
 ;alln axioms
 (assert (forall ((x Int) (s (Seq Int)))
 (! (=> (alln x s)  (forall ((i Int)) (! (= (index s i) x) :pattern ((index s i))))) :pattern ((alln x s)))))
+
+(declare-fun perm ((Seq (Int)) (Seq (Int))) Bool)

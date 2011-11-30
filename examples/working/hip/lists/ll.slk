@@ -7,8 +7,8 @@ data node {
 pred ll<L1:seq(int),n:int> == self = null & L1 = [||]
 	or self::node<v, r> * r::ll<L2,n> & L1 = (v+n):::L2. //bug with v+n
 
-checkentail x::node<a,null> |- x::ll<L,_> & len(L)=1. 
-checkentail x::node<a,null> |- x::ll<L,_> & len(L)>2. 
+checkentail x::node<a,null> |- x::ll<L,_> & length(L,m) & m = 1. 
+checkentail x::node<a,null> |- x::ll<L,_> & length(L,m) & m > 2. 
 checkentail x::node<a,null> |- x::ll<L,_>.
 
 print residue.
