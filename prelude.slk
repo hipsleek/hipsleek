@@ -1,0 +1,80 @@
+//Theory of Arrays
+relation induce(int value) == true.
+
+relation dom(int[] a, int low, int high).
+axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
+
+relation domb(bool[] a, int low, int high).
+axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
+
+relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
+
+relation update_array_1d(int[] a, int[] r, int val, int i).
+
+relation update_array_2d(int[,] a, int[,] r, int val, int i, int j).
+
+relation amodr(int[] a, int[] b, int i, int j) == 
+	forall(k : (i<=k & k<=j | a[k] = b[k])).
+
+relation bnd(int[] a, int i, int j, int low, int high) == 
+ 	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
+
+//Theory of Sets
+relation emptyset(int[] s).
+axiom emptyset(s)  ==> forall(i: s[i] = 0).
+axiom forall(i: s[i] = 0) ==> emptyset(s).
+
+relation setunion(int[] a, int[] b, int[] c).
+axiom setunion(a,b,c) ==> forall(i: ((c[i] = 1) & (a[i] = 1 | b[i] = 1))
+      | ((c[i]=0) & (a[i]=0 & b[i]=0))).
+axiom forall(i: ((c[i] = 1) & (a[i] = 1 | b[i] = 1))
+      | ((c[i]=0) & (a[i]=0 & b[i]=0))) ==> setunion(a,b,c).
+
+relation setinter(int[] a, int[] b, int[] c).
+axiom setinter(a,b,c) ==> forall(i: ((c[i] = 1) & (a[i] = 1 & b[i] = 1))
+      | ((c[i]=0) & (a[i]=0 | b[i]=0))).
+axiom forall(i: ((c[i] = 1) & (a[i] = 1 & b[i] = 1))
+      | ((c[i]=0) & (a[i]=0 | b[i]=0))) ==> setinter(a,b,c).
+
+//Theory of Multisets (Bags)
+
+//Theory of Sequences (Lists)
+relation length(seq(int) s, int n).
+axiom s = [||] ==> length(s,0).
+axiom length(s,0) ==> s = [||].  
+axiom length(s,n) ==> n >= 0 & forall(x: length(x:::s,n+1)).
+
+relation append(seq(int) a, seq(int) b, seq(int) c).
+axiom append(a,b,c) & length(c,n) & length(a,l) & length(b,m) ==> n = l + m.
+axiom append(a,b,ab) & append(ab,c,abc) ==> append(a,bc,abc) & append(b,c,bc).
+
+relation index(seq(int) s, int i, int v).
+axiom length(s,n) & i = n ==> index(v:::s, i, v).
+axiom index(c,i,v) & append(a,b,c) & length(a,l) & length(b,m) & 
+	(index(a,i,w) & i < l | index(b,i-l,w) & i >= l) ==> v = w.
+
+relation isin(int x, seq(int) s).
+axiom isin(x,s) ==> exists(i: i >=0 & index(s,i,x) & length(s,n) & n > i). 
+axiom exists(i: i >=0 & index(s,i,x) & length(s,n) & n > i) ==> isin(x,s).
+axiom isin(x,c) & append(a,b,c) ==> isin(x,a) | isin(x,b). 
+axiom isin(x,a) | isin(x,b) ==> isin(x,c) & append(a,b,c).
+axiom isin(x,v:::s) ==> x = v | isin(x,s). 
+axiom isin(x,s) | x = v  ==> isin(x,v:::s).
+
+relation isnotin(int x, seq(int) s).
+axiom isnotin(x,s) ==> forall(i: i >=0 & !(index(s,i,x)) & length(s,n) & n > i). 
+axiom forall(i: i >=0 & !(index(s,i,x)) & length(s,n) & n > i) ==> isnotin(x,s).
+axiom isnotin(x,c) & append(a,b,c) ==> isnotin(x,a) & isnotin(x,b). 
+axiom isnotin(x,a) & isnotin(x,b) ==> isnotin(x,c) & append(a,b,c).
+axiom isnotin(x,v:::s) ==> !(x = v) & isnotin(x,s). 
+axiom isnotin(x,s) & !(x = v)  ==> isnotin(x,v:::s).
+
+relation reverse(seq(int) u, seq(int) v).
+axiom reverse(a,b) & length(a,n) & length(b,m) ==> n = m.
+axiom reverse(a,b) & index(a,i,v) & length(a,n) ==> index(b,n-i,v).
+axiom reverse(a,b) ==> reverse(b,a).
+
+relation alleqn(int n, seq(int) s).
+axiom alleqn(n,s) ==> forall(i: index(s,i,n)).
+
+relation permutation(seq(int) a, seq(int) b).
