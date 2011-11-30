@@ -27,12 +27,12 @@
 ;:pattern ((index (insert v s) i)))))
 
 (assert (forall ((s (Seq Int)) (i Int) (v Int)) 
-(! (=> (= i (length s)) (= (index (insert v s) i) v))) 
-:pattern ((index (insert v s) i))))
+(! (=> (= i (length s)) (= (index (insert v s) i) v)) 
+:pattern ((index (insert v s) i)))))
 
 (assert (forall ((s0 (Seq Int)) (s1 (Seq Int)) (n Int)) 
-(! (and (=> (< n (length s0))(= (index (append s0 s1) n) (index s0 n))) (=> (<= (length s0) n) (= (index(append s0 s1) n) (index s1 (- n (length s0)))) 
-:pattern ((index (append s0 s1) n)))))))
+(! (and (=> (< n (length s0))(= (index (append s0 s1) n) (index s0 n))) (=> (<= (length s0) n) (= (index(append s0 s1) n) (index s1 (- n (length s0)))))) 
+:pattern ((index (append s0 s1) n)))))
 
 (declare-fun isin (Int (Seq (Int))) Bool)
 ;isin Axioms
