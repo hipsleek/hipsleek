@@ -480,7 +480,6 @@ let log_all_flag = ref false
 let z3_restart_interval = ref (-1)
 let log_all = open_out ("allinput.z3")
 
-let path_to_z3 = "z3" (*"z3"*)
 let smtsolver_name = ref ("z3": string)
 
 let set_process (proc: Globals.prover_process_t) = 
@@ -491,8 +490,8 @@ let command_for prover =
 (*	match prover with
 	| Z3 -> *)
   (match !smtsolver_name with
-    | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
-    | "z3-3.2" -> ("z3-3.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | "z3" -> ("z3-3.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     )
 (*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
@@ -565,7 +564,7 @@ and start() =
       print_string "Starting z3... \n"; flush stdout;
       last_test_number := !test_number;
       (*("z312", path_to_z3, [|path_to_z3; "-smt2";"-si"|])*)
-      let _ = if !smtsolver_name = "z3-3.2" then
+      let _ = if !smtsolver_name = "z3" then
             Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"|]) set_process prelude else
             Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
       in
@@ -921,11 +920,11 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
   if (should_run_smt) then
 	let input = to_smt ante (Some conseq) prover in
 	let _ = !set_generated_prover_input input in
-	let output = if !smtsolver_name = "z3-3.2" then
+	let output = if !smtsolver_name = "z3-2.19" then
+          run "is_imply" prover input timeout
+        else
           check_formula input timeout
-            else
-              	run "is_imply" prover input timeout
-        in
+    in
 	let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 	let res = match output.sat_result with
 	  | Sat -> false
@@ -988,9 +987,10 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) (timeou
 	let input = to_smt f None prover in
     (*let _ = print_endline ("smt_is_sat : " ^ input) in*)
 	let output =
-      if !smtsolver_name = "z3-3.2" then check_formula input timeout
-      else run "is_unsat" prover input timeout
+      if !smtsolver_name = "z3-2.19" then run "is_unsat" prover input timeout
+      else check_formula input timeout
     in
+    let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 	let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
