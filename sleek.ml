@@ -56,23 +56,10 @@ let prompt = ref "SLEEK> "
 let terminator = '.'
 module M = Lexer.Make(Token.Token)
 
-let rec process_primitives (parse) (file_list: string list) : command list list =
-    match file_list with
-    | [] -> []
-    | hd::tl ->
-               let header_filename = String.sub hd 1 ((String.length hd) - 2) in
-               let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
-               (*let _ = print_string ("\n WN : prelude here"^new_filename^"\n") in *)
-               let primitives = (parse new_filename) in
-                           primitives :: (process_primitives parse tl) 
-
-(*asankhs: added sleek prelude*)
-(*let prelude_cmds = List.flatten (process_primitives (Gen.BList.remove_dups_eq (=) !Globals.sleek_header_file_list))*)
-
 let parse_file (parse) (source_file : string) =
 	let _ = print_endline "parse_file 1" in
 	try
-		let cmds =  (List.flatten (process_primitives parse (Gen.BList.remove_dups_eq (=) !Globals.sleek_header_file_list))) @ (parse source_file) in 
+		let cmds = parse source_file in 
 		let _ = (List.map (fun c -> (
 							match c with
 								 | DataDef ddef -> process_data_def ddef
@@ -96,7 +83,7 @@ let parse_file (parse) (source_file : string) =
 let parse_file (parse) (source_file : string) =
   let rec parse_first (cmds:command list) : (command list)  =
     try 
-       (List.flatten (process_primitives parse (Gen.BList.remove_dups_eq (=) !Globals.sleek_header_file_list)))@(parse source_file) 
+       parse source_file 
 	with
 	  | End_of_file -> List.rev cmds
       | M.Loc.Exc_located (l,t)-> 

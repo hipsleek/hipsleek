@@ -771,7 +771,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         end
       else
         begin
-          (Omega.is_sat f sat_no);
+          (Smtsolver(*Omega*).is_sat f sat_no);
         end
   | Mona | MonaH -> Mona.is_sat f sat_no
   | CO -> 
@@ -921,7 +921,7 @@ let simplify (f : CP.formula) : CP.formula =
           | Coq -> (* Coq.simplify f *)
                 if (is_list_constraint f) then
                   (Coq.simplify f)
-                else (Omega.simplify f)
+                else ((*Omega*)Smtsolver.simplify f)
           | Mona | MonaH (* -> Mona.simplify f *) ->
                 if (is_bag_constraint f) then
                   (Mona.simplify f)
@@ -1049,7 +1049,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | Coq -> (* Coq.hull f *)
       if (is_list_constraint f) then
 		(Coq.hull f)
-	  else (Omega.hull f)
+	  else ((*Omega*)Smtsolver.hull f)
   | Mona   -> Mona.hull f  
   | MonaH  (* -> Mona.hull f  *)
   | OM ->
@@ -1183,7 +1183,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
-		    (called_prover :="omega " ; Omega.imply ante conseq ("subst Coq"^imp_no) timeout)
+		    (called_prover :="smtsolver " ; Smtsolver.imply ante conseq timeout (*imp_no timeout*))
   | AUTO ->
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         begin

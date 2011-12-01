@@ -179,7 +179,6 @@ module Make (Token : SleekTokenS)
 	 ("return", RETURN);
 	 ("self", SELFT "self");
    ("set",SET);
-   ("seq",SEQ);
 	 ("split", SPLIT);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
