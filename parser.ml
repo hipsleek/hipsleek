@@ -137,7 +137,10 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_f f2 -> (match f1 with 
                              | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), None )) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
-  | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
+  | Pure_c f1, Pure_c f2 -> (match (f1,f2) with 
+                             | P.Var (v1,_), P.Var(v2,_ ) -> 
+                             Pure_f(fct (P.BForm (((P.mkBVar v1 (get_pos 1)), None), None )) (P.BForm (((P.mkBVar v2 (get_pos 1)), None), None))) 
+                             | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp")
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
@@ -173,7 +176,10 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                                  Pure_f (P.mkAnd f1 tmp (get_pos 2))
                                                | _ -> report_error (get_pos 1) "error should be an equality exp" )
                             | _ -> report_error (get_pos 1) "error should be a binary exp" )
-  | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
+(*  | Pure_c f1, Pure_f f2 -> (match f2 with 
+                             | P.BVar (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), None )) f2)
+                             | _ -> report_error (get_pos 1) "not a boolean ") *)
+  | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form"  
 
 
 (* Use the Stream.npeek to look ahead the TOKENS *)
@@ -880,7 +886,8 @@ cexp_w :
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
      | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
      | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
-     | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
+ 
+     | `NOT; `OPAREN; c= pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))
     
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
