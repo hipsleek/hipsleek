@@ -135,7 +135,7 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
                              | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (((P.mkBVar v (get_pos 1)), None), None)))
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp in var" )
   | Pure_c f1, Pure_f f2 -> (match f1 with 
-                             | P.Var (v,_) -> Pure_f(fct (P.BForm (((P. v (get_pos 1)), None), None )) f2)
+                             | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), None )) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
   | Pure_c f1, Pure_c f2 -> (match (f1,f2) with 
                              | P.Var (v1,_), P.Var(v2,_ ) -> 
