@@ -1,0 +1,27 @@
+//four point status
+//complete
+//pure
+//1. bot
+checkentail false |- n = 3.
+
+//2. ok
+checkentail n>4 |- n > 3.
+
+//3. must
+checkentail n>3 |- n <2.
+
+//3. may
+checkentail n>3 |- n > 4.
+
+//heap
+
+//5. bot
+
+
+//6. ok
+
+
+//7. must
+
+
+//8. may
