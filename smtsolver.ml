@@ -78,7 +78,9 @@ let rec smt_of_typ t =
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
 		| Void | (BagT _) | (TVar _) -> 	illegal_format "z3.smt_of_typ: spec not supported for SMT"
-        | List t ->  "(Seq " ^ (smt_of_typ t) ^ ")"		
+        	| List t -> (match t with
+				| (TVar _) -> "(Seq Int)"
+				| _ -> "(Seq " ^ (smt_of_typ t) ^ ")"	)
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
 
@@ -113,7 +115,9 @@ let rec smt_of_exp a =
 	| CP.BagUnion _
 	| CP.BagIntersect _
 	| CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
-	| CP.List (alist, _) -> let list_exps = List.map smt_of_exp alist in (gen_list_exp "(insert " list_exps ")")
+	| CP.List (alist, _) -> (match alist with
+				| x::xs -> let list_exps = List.map smt_of_exp (x::xs) in (gen_list_exp "(insert " list_exps ")")
+				| [] -> " nil")
 	| CP.ListCons (a1, a2, _) -> "(insert " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
 	| CP.ListHead (a, _) -> "(head " ^ (smt_of_exp a) ^ ")"  
 	| CP.ListTail (a, _) -> "(tail " ^ (smt_of_exp a) ^ ")"
