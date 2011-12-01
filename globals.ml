@@ -256,6 +256,8 @@ let is_self_ident id = self=id
 
 
 (*precluded files*)
+let seq_axioms_file = "seqaxioms.smt2" (*asankhs: file containing z3 axioms for sequences*)
+let sleek_header_file_list = ref (["\"prelude.slk\""] : string list)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
 
