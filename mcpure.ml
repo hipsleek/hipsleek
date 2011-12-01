@@ -63,8 +63,8 @@ let consistent_memoised_group (m:memoised_group) : bool =
   if r==[] then 
     if r2==[] then true
     else
-      let s = ("WARNING: FreeVars unused: "^(!print_svl r2)) in
-      let _ = report_warning no_pos s in
+      (*let s = ("WARNING: FreeVars unused: "^(!print_svl r2)) in
+      let _ = report_warning no_pos s in*)
       true
   else 
     let s = ("ERROR: FreeVars not captured: "^(!print_svl r)) in
@@ -1249,8 +1249,25 @@ and split_mem_grp (g:memoised_group): memo_pure =
 and split_mem_grp_x (g:memoised_group): memo_pure =
   if !do_slicing then split_mem_grp_slicing g
   else split_mem_grp_no_slicing g
-	
-and split_mem_grp_no_slicing (g:memoised_group): memo_pure =   
+
+and split_mem_grp_no_slicing (g : memoised_group) : memo_pure = 
+  if !f_1_slice then [g]
+  else
+    let l1 = List.map (fun c -> Const_B c.memo_formula) g.memo_group_cons in
+    let l2 = List.map (fun f -> Const_R f) g.memo_group_slice in
+    let l3 = List.map (fun (v1, v2) -> Const_E (v1, v2)) (get_equiv_eq_with_const g.memo_group_aset) in
+    let sl = split (l1 @ l2 @ l3) in
+    let mp = slice_list_to_memo_pure sl Implied_N filter_merged_cons in (* Implied_N is a dummy status *) 
+    (* Restore the status for every memoised_constraint *)
+    List.map (fun mg -> 
+      let mc = List.map (fun c ->
+        List.find (fun gc -> gc.memo_formula = c.memo_formula) g.memo_group_cons 
+      ) mg.memo_group_cons in
+      { mg with memo_group_cons = mc }
+    ) mp
+
+(* BUGS: Constraints without free variables will be removed implicitly *)    
+and split_mem_grp_no_slicing_org (g:memoised_group): memo_pure =   
   if !f_1_slice then [g]
   else
     let leq_all = get_equiv_eq_with_const g.memo_group_aset in
