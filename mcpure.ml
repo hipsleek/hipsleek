@@ -48,7 +48,7 @@ let print_sv_f = ref (fun (c:spec_var)-> "spec var printing not initialized")
 let print_sv_l_f = ref (fun (c:spec_var list)-> "spec var list printing not initialized")
 let print_bf_f = ref (fun (c:b_formula)-> "b formula printing not initialized")
 let print_p_f_f = ref (fun (c:formula)-> " formula printing not initialized")
-let print_exp_f = ref(fun (c:exp) -> "exp_printing") 
+let print_exp_f = ref(fun (c:exp) -> "exp_printing")
 (* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
 
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
@@ -2188,7 +2188,12 @@ and pick_relevant_lhs_constraints_opt_2_1 fv ante_disj = (* exhausted search - T
 	)
 	[] n_partitions
 
-and pick_relevant_lhs_constraints_opt_2 fv ante_disj = (* exhausted search *)
+and pick_relevant_lhs_constraints_opt_2 fv ante_disj =
+  Gen.Debug.no_2 "pick_relevant_lhs_constraints_opt_2"
+	!print_sv_l_f !print_mp_f !print_mp_f
+	pick_relevant_lhs_constraints_opt_2_x fv ante_disj
+	
+and pick_relevant_lhs_constraints_opt_2_x fv ante_disj = (* exhausted search *)
   let rec exhaustive_collect fv ante =
 	let (n_fv, n_ante1, r_ante) = List.fold_left
 	  (fun (afv, amc, rmc) mg ->
@@ -2206,7 +2211,12 @@ and pick_relevant_lhs_constraints_opt_2 fv ante_disj = (* exhausted search *)
   let r = exhaustive_collect fv ante_disj in
   let _ = Gen.Profiling.pop_time "--opt-imply 2" in r
 
-and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
+and pick_relevant_lhs_constraints_opt_3 fv ante_disj =
+  Gen.Debug.no_2 "pick_relevant_lhs_constraints_opt_3"
+	!print_sv_l_f !print_mp_f !print_mp_f
+	pick_relevant_lhs_constraints_opt_3_x fv ante_disj
+												 
+and pick_relevant_lhs_constraints_opt_3_x fv ante_disj = (* exhausted search *)
   let rec exhaustive_collect_with_selection fv ante =
 	let (n_fv, n_ante1, r_ante) = List.fold_left
 	  (fun (afv, amc, rmc) (mg_ulv, mg) ->

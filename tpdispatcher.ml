@@ -1,5 +1,4 @@
 (*
-
   Choose with theorem prover to prove formula
 *)
 

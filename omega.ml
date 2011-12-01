@@ -120,7 +120,7 @@ and omega_of_formula f  = match f with
 
 
 let omegacalc = "oc"
-let modified_omegacalc = "/usr/local/bin/oc5"
+let modified_omegacalc = "/usr/local/bin/oc"
 (* TODO: fix oc path *)
 (*let omegacalc = "/home/locle/workspace/hg/error_specs/sleekex/omega_modified/omega_calc/obj/oc"*)
 
