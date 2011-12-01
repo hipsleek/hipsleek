@@ -1177,7 +1177,7 @@ and string_of_failure_kind e_kind=
 match e_kind with
   | Failure_May _ -> "MAY"
   | Failure_Must _ -> "MUST"
-  | Failure_None _ -> "None"
+  | Failure_Bot _ -> "Bot"
   | Failure_Valid -> "Valid"
 
 let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)

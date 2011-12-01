@@ -2723,7 +2723,7 @@ and count_octx x = match x with
 and heap_entail_conjunct_lhs_struc
       p is_folding  has_post ctx conseq 
       pos pid : (list_context * proof) = 
-  let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
+  (*let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in*)
   Gen.Debug.no_2 "heap_entail_conjunct_lhs_struc"
       (Cprinter.string_of_context) (Cprinter.string_of_struc_formula)
       (fun (a,b) -> Cprinter.string_of_list_context a)
@@ -5002,7 +5002,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
   let memo_r_br = List.map (fun (c1,c2)-> (c1,MCP.memoise_add_pure_N (MCP.mkMTrue pos) c2)) rhs_p_br in
 
-  let (r_rez,r_succ_match, r_fail_match, (fc_kind, (contra_list, must_list, may_list))) = List.fold_left fold_fun  (true,[],None, (Failure_None "Wat?", ([],[],[])))
+  let (r_rez,r_succ_match, r_fail_match, (fc_kind, (contra_list, must_list, may_list))) = List.fold_left fold_fun  (true,[],None, (Failure_Valid, ([],[],[])))
     (("", rhs_p) :: memo_r_br) in
 	(*let _ = print_string ("An Hoa :: memo_r_br =\n") in*)
 	(*let _ = List.map (fun (c1,c2) -> print_string (c1 ^ Cprinter.string_of_mix_formula c2)) memo_r_br in*)   
@@ -5050,7 +5050,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
                 | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
                 | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
                       (* this denotes a maybe error *)
-                | CF.Failure_None _ -> estate.es_formula
+                | CF.Failure_Bot _ -> estate.es_formula
                 | CF.Failure_Valid -> estate.es_formula
       } in
       let fc_template = {
@@ -6277,7 +6277,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                             | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
                             | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
                                   (* this denotes a maybe error *)
-                            | CF.Failure_None _
+                            | CF.Failure_Bot _
                             | CF.Failure_Valid -> estate.es_formula
                   } in
                   let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in

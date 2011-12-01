@@ -2404,10 +2404,17 @@ and context =
 
 and steps = string list
 
+(*      MAY
+
+ VALID       MUST
+
+        BOT
+*)
+
 and failure_kind =
   | Failure_May of string
   | Failure_Must of string
-  | Failure_None of string
+  | Failure_Bot of string
   | Failure_Valid
 
 and fail_explaining = {
@@ -2524,7 +2531,7 @@ let isFailCtx_gen cl = match cl with
 	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
     (* | _ -> false *)
 
-let mk_failure_none_raw msg = Failure_None msg
+let mk_failure_none_raw msg = Failure_Bot msg
 
 let mk_failure_must_raw msg = Failure_Must msg
 
@@ -2600,40 +2607,63 @@ let list_context_is_eq_flow (f:list_context) (ff)  : bool=
 
 let get_failure_fe (f:fail_explaining) = f.fe_kind
 
+(*gen_land*)
+let gen_land (m1,e1) (m2,e2) = match m1,m2 with
+  | Failure_Bot _, _ -> m1, e1
+      (*report_error no_pos "Failure_None not expected in gen_and"*)
+  | _, Failure_Bot _ -> m2, e2
+      (*report_error no_pos "Failure_None not expected in gen_and"*)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("land["^m1^","^m2^"]"),None)
+  | Failure_May m1, _ -> m2, e2
+  | _ , Failure_May m2 -> m1,e1
+  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("land["^m1^","^m2^"]"),e1 (*combine state here?*)
+  | Failure_Must m1, Failure_Valid -> Failure_May ("land["^m1^",Valid]"), None (*combine state here?*)
+  | Failure_Valid, x  -> (m2,e2)
+
+(*gen_rand*)
 let gen_and (m1,e1) (m2,e2) = match m1,m2 with
-  | Failure_None _, _ -> report_error no_pos "Failure_None not expected in gen_and"
-  | _, Failure_None _ -> report_error no_pos "Failure_None not expected in gen_and"
-  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("and["^m1^","^m2^"]"),e1
+  | Failure_Bot m, _ -> Failure_Bot m, e1
+      (*report_error no_pos "Failure_None not expected in gen_and"*)
+  | _, Failure_Bot m -> Failure_Bot m, e2
+      (*report_error no_pos "Failure_None not expected in gen_and"*)
+  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("rand["^m1^","^m2^"]"),e1 (*combine state here?*)
   | Failure_Must m, _ -> Failure_Must m,e1
   | _, Failure_Must m -> Failure_Must m,e2
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("and["^m1^","^m2^"]"),None)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("rand["^m1^","^m2^"]"),None)
   | Failure_May m, _ -> Failure_May m,None
   | _, Failure_May m -> Failure_May m,None
   | Failure_Valid, x  -> (m2,e2)
   (* | x, Failure_Valid -> x *)
 
 (* state to be refined to accurate one for must-bug *)
+(*gen_lor*)
 let gen_or (m1,e1) (m2,e2) : (failure_kind * (entail_state option)) = match m1,m2 with
-  | Failure_None _, _ -> report_error no_pos "Failure_None not expected in gen_or"
-  | _, Failure_None _ -> report_error no_pos "Failure_None not expected in gen_or"
-  | Failure_May m1, Failure_May m2 -> Failure_May ("or["^m1^","^m2^"]"), None
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("lor["^m1^","^m2^"]"), e1 (*combine state here?*)
+(* report_error no_pos "Failure_None not expected in gen_or" *)
+  | Failure_Bot _, _ ->  m2, e2
+      (* report_error no_pos "Failure_None not expected in gen_or" *)
+  | _, Failure_Bot _ -> m1,e1
+      (*report_error no_pos "Failure_None not expected in gen_or"*)
+  | Failure_May m1, Failure_May m2 -> Failure_May ("lor["^m1^","^m2^"]"), None
   | Failure_May m, _ -> Failure_May m, None
   | _, Failure_May m -> Failure_May m,None
-  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("or["^m1^","^m2^"]"),e1)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("or["^m^",valid]"),None)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("or["^m^",valid]"),None)
+  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("lor["^m1^","^m2^"]"),e1)
+  | Failure_Must m, Failure_Valid -> (Failure_May ("lor["^m^",valid]"),None)
+  | Failure_Valid, Failure_Must m -> (Failure_May ("lor["^m^",valid]"),None)
   (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)
   (* | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]") *)
   | Failure_Valid, x  -> (m2,e2)
   (* | x, Failure_Valid -> x *)
 
+(*gen_ror*)
 let gen_union (m1,e1) (m2,e2) = match m1,m2 with
-  | Failure_None _, x -> (m2,e2)
-  | x, Failure_None _ -> (m1,e1)
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("ror["^m1^","^m2^"]"), e1 (*combine state here?*)
+  | Failure_Bot _, x -> m1,e1 (* (m2,e2) *)
+  | x, Failure_Bot _ -> m2,e2 (*(m1,e1)*)
   | Failure_Valid, _ -> (Failure_Valid,None)
   | _, Failure_Valid -> (Failure_Valid,None)
-  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("union["^m1^","^m2^"]"),e1)
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("may["^m1^","^m2^"]"),None)
+  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("ror["^m1^","^m2^"]"),e1)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("ror["^m1^","^m2^"]"),None)
   | Failure_May _,  _ -> (m1,e1)
   | _, Failure_May _ -> (m2,e2)
 
@@ -2665,7 +2695,7 @@ let get_may_failure_fe (f:fail_explaining) =
   match f.fe_kind with
     | Failure_May m | Failure_Must m -> Some m 
     | Failure_Valid -> Some "proven valid here"
-    | Failure_None _ -> None
+    | Failure_Bot _ -> None
 
 (* let rec get_may_failure_ft (f:fail_type) = *)
 (*   match f with *)
@@ -2684,7 +2714,7 @@ let get_may_failure_ft f =
     | Failure_Must m -> Some ("must:"^m)
     | Failure_May m -> Some (m)
     | Failure_Valid -> Some ("Failure_Valid")
-    | Failure_None m -> Some ("Failure_None"^m)
+    | Failure_Bot m -> Some ("Failure_None"^m)
 
 let get_may_failure (f:list_context) =
   match f with
