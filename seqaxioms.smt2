@@ -70,6 +70,14 @@
 (assert (forall ((s (Seq Int)) (i Int))
 (! (= (index (rev s) i) (index s (- (length s) i))) :pattern ((index (rev s) i)))))
 
+(assert (forall ((s (Seq Int)))
+(! (and (= (append (rev s) nil) (rev s))  (= (append nil (rev s)) (rev s))) 
+:pattern((append (rev s) nil) (append nil (rev s))))))
+
+(assert (forall ((s (Seq Int)) (v Int))
+(! (= (rev (insert v s)) (append (rev s) (insert v nil)))   
+:pattern((rev (insert v s))))))
+
 (declare-fun eq ((Seq (Int)) (Seq (Int))) Bool)
 ;eq axioms
 (assert (forall ((s0 (Seq Int)) (s1 (Seq Int)))

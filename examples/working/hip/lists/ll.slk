@@ -25,7 +25,9 @@ pred ll<L1:seq(int),n:int> == self = null & L1 = [||]
 // parsed as L1=[|1|] & L3=1 & L3=2 ! fixed
 //checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- append(L1,L2,L3).
 //checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- app(L1,L2) = L3.
-checkentail s1 = [|1|] & s2 = [||] & s3 = [|1|] |- app(s2,s1) = app(s3,s1).
-
+//checkentail s1 = [|1|] & s2 = [||] & s3 = [|1|] |- app(s2,s1) = app(s3,s1).
+//checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- rev(app(s1,s2)) = rev(s3).
+//checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- rev(app(s1,s2)) = s3.
+checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- app(rev(s3),s2) = app(s2,s1,s2).
 
 print residue.
