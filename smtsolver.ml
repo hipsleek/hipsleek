@@ -474,7 +474,7 @@ let command_for prover =
 	| Z3 -> *)
   (match !smtsolver_name with
     | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
-    | "z3-3.2" -> ("z3-3.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     )
 (*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
@@ -545,9 +545,10 @@ and start() =
       print_string "Starting z3... \n"; flush stdout;
       last_test_number := !test_number;
       (*("z312", path_to_z3, [|path_to_z3; "-smt2";"-si"|])*)
-      let _ = if !smtsolver_name = "z3-3.2" then
-            Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"|]) set_process prelude else
+      let _ = if !smtsolver_name = "z3-2.19" then
             Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
+          else
+           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"|]) set_process prelude
       in
       is_z3_running := true;
    (*   let  _ = print_endline "locle: start" in ()*)
@@ -887,10 +888,10 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
     if ((Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
       ("(set-option :mbqi true)\n" ^ input)
     else input in*)
-		let output = if !smtsolver_name = "z3-3.2" then
-          check_formula input !timeout
+		let output = if !smtsolver_name = "z3-2.19" then
+              run prover input
             else
-              	run prover input
+              check_formula input !timeout
         in
 		let res = match output.sat_result with
 			| Sat -> false
@@ -927,8 +928,8 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
       ("(set-option :mbqi true)\n" ^ input)
     else input in *)
 	let output =
-      if !smtsolver_name = "z3-3.2" then check_formula input !timeout
-      else run prover input
+      if !smtsolver_name = "z3-2.19" then run prover input
+      else check_formula input !timeout
     in
 	let res = match output.sat_result with
 		| UnSat -> false
