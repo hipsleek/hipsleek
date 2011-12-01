@@ -51,6 +51,7 @@ type formula_info = {
 		is_linear          : bool;
 		is_quantifier_free : bool;
 		contains_array     : bool;
+        contains_list      : bool;
 		relations          : ident list; (* list of relations that the formula mentions *)
 		axioms             : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
 	}
@@ -91,8 +92,8 @@ let smt_of_typed_spec_var sv =
 		illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
 let rec gen_list_exp str_fst xs  str_last = match xs with
-  | [] -> "nil"
-  | z::zs -> str_fst  ^ z ^ (gen_list_exp str_fst zs ")" ) ^ str_last
+  | [] -> " nil"
+  | z::zs -> str_fst  ^ z ^" "^ (gen_list_exp str_fst zs ")" ) ^ str_last
 
 let rec smt_of_exp a =
 	match a with
@@ -117,7 +118,7 @@ let rec smt_of_exp a =
 	| CP.ListHead (a, _) -> "(head " ^ (smt_of_exp a) ^ ")"  
 	| CP.ListTail (a, _) -> "(tail " ^ (smt_of_exp a) ^ ")"
 	| CP.ListLength (a, _) -> "(length " ^ (smt_of_exp a) ^ ")"
-	| CP.ListAppend (alist, _) ->  let list_exps = List.map smt_of_exp alist in (gen_list_exp "(append " list_exps "nil)")
+	| CP.ListAppend (alist, _) ->  let list_exps = List.map smt_of_exp alist in (gen_list_exp "(append " list_exps ")")
 	| CP.ListReverse (a, _) -> "(rev " ^ (smt_of_exp a) ^ ")" (*illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)") *)
 	| CP.ArrayAt (a, idx, l) ->  
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx 
@@ -211,6 +212,7 @@ let default_formula_info = {
 	is_linear = true; 
 	is_quantifier_free = true; 
 	contains_array = false; 
+    contains_list = false;
 	relations = []; 
 	axioms = []; }
 
@@ -265,9 +267,9 @@ and collect_bformula_info b = match b with
 	| CP.ListNotIn (e1, e2, _) 
 	| CP.ListAllN (e1, e2, _) 
 	| CP.ListPerm (e1, e2, _) ->
-			let ef1 = collect_exp_info e1 in
+		    let ef1 = collect_exp_info e1 in
 			let ef2 = collect_exp_info e2 in
-			combine_formula_info ef1 ef2(* default_formula_info *)
+			let ifl = combine_formula_info ef1 ef2 in {ifl with contains_list = true;}(* default_formula_info *)
 	| CP.RelForm (r,args,_) ->
 		if r = "update_array" then
 			default_formula_info 
@@ -293,19 +295,20 @@ and collect_exp_info e = match e with
 	| CP.ListCons (e1, e2, _) -> 
 			let ef1 = collect_exp_info e1 in
 			let ef2 = collect_exp_info e2 in
-			combine_formula_info ef1 ef2
+			let ifl = combine_formula_info ef1 ef2 in {ifl with contains_list = true;} 
 	| CP.ListHead (e, _) 
 	| CP.ListTail (e, _) 
 	| CP.ListLength (e, _) 
-	| CP.ListReverse (e, _) -> collect_exp_info e
-	| CP.List (i, _) 
-	| CP.ListAppend (i, _) 
+	| CP.ListReverse (e, _) -> let ifl = collect_exp_info e in {ifl with contains_list = true;}
+	| CP.List (elist, _) 
+	| CP.ListAppend (elist, _) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in {result with contains_list = true;}
 	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =
 	{is_linear = if1.is_linear && if2.is_linear;
 	is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
 	contains_array = if1.contains_array || if2.contains_array;
+	contains_list = if1.contains_list || if2.contains_list;
 	relations = List.append if1.relations if2.relations;
 	axioms = List.append if1.axioms if2.axioms;}
 
@@ -316,6 +319,8 @@ and combine_formula_info_list infos =
 								(List.map (fun x -> x.is_quantifier_free) infos);
 	contains_array = List.fold_left (fun x y -> x || y) false 
 								(List.map (fun x -> x.contains_array) infos);
+	contains_list = List.fold_left (fun x y -> x || y) false 
+								(List.map (fun x -> x.contains_list) infos);
 	relations = List.flatten (List.map (fun x -> x.relations) infos);
 	axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
 
@@ -461,6 +466,10 @@ type smtprover =
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
+    (*asankhs: adding seq axioms, will later change it look up info before adding *)
+    (*Sequence Axioms*)
+let seq_axioms_filename = (Gen.get_path Sys.executable_name) ^ seq_axioms_file   
+let seq_axioms  = string_of_file (seq_axioms_filename) 
 (* let sat_timeout = ref 2.0
 let imply_timeout = ref 15.0 *)
 let z3_sat_timeout_limit = 2.0
@@ -547,12 +556,10 @@ let logic_for_formulas f1 f2 =
 
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
-    (*asankhs: adding seq axioms, will later change it look up info before adding *)
-    (*Sequence Axioms*)
-    let seq_axioms_filename = (Gen.get_path Sys.executable_name) ^ seq_axioms_file in   
-    let seq_axioms  = string_of_file (seq_axioms_filename) in
+    (*check info has list constraints*)
+    let if_seq_axioms = if info.contains_list then seq_axioms else "" in 
 	(* Variable declarations *)
-	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in 
+	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in   
 	let smt_var_decls = String.concat "" smt_var_decls in
 	(* Relations that appears in the ante and conseq *)
 	let used_rels = info.relations in
@@ -570,7 +577,7 @@ let to_smt_v2 ante conseq logic fvars info =
 		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^*)
             ";Sequence Axioms \n" ^
             "(set-option :pull-nested-quantifiers true)\n" ^
-                seq_axioms ^
+                if_seq_axioms ^
 			";Variables declarations\n" ^ 
 				smt_var_decls ^ 
 			";Relations declarations\n" ^ 

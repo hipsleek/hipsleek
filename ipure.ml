@@ -50,7 +50,7 @@ and exp =
 	  (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   | FConst of (float * loc)
-  (*| Tuple of (exp list * loc)*)
+  | Tuple of (exp list * loc)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)

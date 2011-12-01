@@ -20,6 +20,12 @@
 (assert (forall ((l1 (Seq Int)) (l2 (Seq Int))) 
 (! (= (length (append l1 l2)) (+ (length l1) (length l2))) :pattern ((length(append l1 l2))))))
 
+(assert (forall ((s (Seq Int)))
+(! (and (= (append s nil) s)  (= (append nil s) s)) :pattern((append s nil) (append nil s)))))
+
+(assert (forall ((s (Seq Int)) (t (Seq Int)) (x Int))
+(! (= (append (insert x s) t) (insert x (append s t))) :pattern ((append (insert x s) t)))))
+
 (declare-fun index ((Seq (Int)) Int) Int)
 ;Index Axioms
 ;(assert (forall ((s (Seq Int)) (i Int) (v Int)) 
@@ -71,7 +77,7 @@
 :pattern ((index s0 j) (index s1 j)))))) :pattern((eq s0 s1)))))
 
 (assert (forall ((s0 (Seq Int)) (s1 (Seq Int)))
-(! (=> (eq s0 s1) (= s0 s1)) :pattern ((eq s0 s1)))))
+(! (iff (eq s0 s1) (= s0 s1)) :pattern ((eq s0 s1)))))
 
 (assert (forall ((s0 (Seq Int)) (s1 (Seq Int)))
 (! (iff (eq (rev s0) (rev s1)) (eq s0 s1)) :pattern ((eq (rev s0) (rev s1))))))
