@@ -1,13 +1,10 @@
 open Globals
 open Gen.Basic
-open Gen.SysUti
 module CP = Cpure
 
 module StringSet = Set.Make(String)
 
-
-
-let set_generated_prover_input = ref (fun _ -> ()) 
+let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
 (* Pure formula printing function, to be intialized by cprinter module *)
@@ -76,8 +73,8 @@ let rec smt_of_typ t =
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
-		| Void | (BagT _) | (TVar _) -> 	illegal_format "z3.smt_of_typ: spec not supported for SMT"
-        | List t ->  "(Seq " ^ (smt_of_typ t) ^ ")"		
+		| Void | (BagT _) | (TVar _) | List _ ->
+			illegal_format "z3.smt_of_typ: spec not supported for SMT"
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
 
@@ -90,9 +87,6 @@ let smt_of_typed_spec_var sv =
   with _ ->
 		illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
-let rec gen_list_exp str_fst xs  str_last = match xs with
-  | [] -> "nil"
-  | z::zs -> str_fst  ^ z ^ (gen_list_exp str_fst zs ")" ) ^ str_last
 
 let rec smt_of_exp a =
 	match a with
@@ -105,22 +99,22 @@ let rec smt_of_exp a =
 	| CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
 	(* UNHANDLED *)
 	| CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
- 	| CP.Bag ([], _) -> "0"
+	| CP.Bag ([], _) -> "0"
 	| CP.Max _
 	| CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
 	| CP.Bag _
 	| CP.BagUnion _
 	| CP.BagIntersect _
 	| CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
-	| CP.List (alist, _) -> let list_exps = List.map smt_of_exp alist in (gen_list_exp "(insert " list_exps ")")
-	| CP.ListCons (a1, a2, _) -> "(insert " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| CP.ListHead (a, _) -> "(head " ^ (smt_of_exp a) ^ ")"  
-	| CP.ListTail (a, _) -> "(tail " ^ (smt_of_exp a) ^ ")"
-	| CP.ListLength (a, _) -> "(length " ^ (smt_of_exp a) ^ ")"
-	| CP.ListAppend (alist, _) ->  let list_exps = List.map smt_of_exp alist in (gen_list_exp "(append " list_exps "nil)")
-	| CP.ListReverse (a, _) -> "(rev " ^ (smt_of_exp a) ^ ")" (*illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)") *)
-	| CP.ArrayAt (a, idx, l) ->  
-		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx 
+	| CP.List _ 
+	| CP.ListCons _
+	| CP.ListHead _
+	| CP.ListTail _
+	| CP.ListLength _
+	| CP.ListAppend _
+	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+	| CP.ArrayAt (a, idx, l) -> 
+		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 
 let rec smt_of_b_formula b =
 	let (pf,_) = b in
@@ -161,10 +155,8 @@ let rec smt_of_b_formula b =
 	| CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
 	| CP.BagMax _ | CP.BagMin _ -> 
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
- 	| CP.ListIn (e1, e2, _) -> "(isin " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
-    | CP.ListNotIn (e1, e2, _) ->  "(isnotin " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
-    | CP.ListAllN (e1, e2, _) ->  "(alln " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
-    | CP.ListPerm (e1, e2, _) ->  "(perm " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
+	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
+			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -174,7 +166,7 @@ let rec smt_of_b_formula b =
 			let value = List.nth smt_args 2 in
 			let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
 			let last_index = List.hd index in
- 			let rem_index = List.rev (List.tl index) in
+			let rem_index = List.rev (List.tl index) in
 			let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
 			let arr_select = List.rev arr_select in
 			let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
@@ -258,14 +250,11 @@ and collect_bformula_info b = match b with
 	| CP.BagNotIn _ 
 	| CP.BagSub _
 	| CP.BagMin _
-	| CP.BagMax _ -> default_formula_info(* Unsupported bag; but leave this default_formula_info instead of a fail_with*) 
-	| CP.ListIn (e1, e2, _) 
-	| CP.ListNotIn (e1, e2, _) 
-	| CP.ListAllN (e1, e2, _) 
-	| CP.ListPerm (e1, e2, _) ->
-			let ef1 = collect_exp_info e1 in
-			let ef2 = collect_exp_info e2 in
-			combine_formula_info ef1 ef2(* default_formula_info *)
+	| CP.BagMax _ 
+	| CP.ListIn _
+	| CP.ListNotIn _
+	| CP.ListAllN _
+	| CP.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
 	| CP.RelForm (r,args,_) ->
 		if r = "update_array" then
 			default_formula_info 
@@ -287,17 +276,14 @@ and collect_exp_info e = match e with
 	| CP.Bag _
 	| CP.BagUnion _
 	| CP.BagIntersect _
-	| CP.BagDiff _ -> default_formula_info (* Unsupported bag; but leave this default_formula_info instead of a fail_with *)
-	| CP.ListCons (e1, e2, _) -> 
-			let ef1 = collect_exp_info e1 in
-			let ef2 = collect_exp_info e2 in
-			combine_formula_info ef1 ef2
-	| CP.ListHead (e, _) 
-	| CP.ListTail (e, _) 
-	| CP.ListLength (e, _) 
-	| CP.ListReverse (e, _) -> collect_exp_info e
-	| CP.List (i, _) 
-	| CP.ListAppend (i, _) 
+	| CP.BagDiff _
+	| CP.List _
+	| CP.ListCons _
+	| CP.ListHead _
+	| CP.ListTail _
+	| CP.ListLength _
+	| CP.ListAppend _
+	| CP.ListReverse _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
 	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =
@@ -679,12 +665,8 @@ let to_smt_v2 ante conseq logic fvars info =
   (*let _ = print_endline ("ante = " ^ (!print_pure ante)) in
   let _ = print_endline ("cons = " ^ (!print_pure conseq)) in*)
   
-    (*asankhs: adding seq axioms, will later change it look up info before adding *)
-    (*Sequence Axioms*)
-    let seq_axioms_filename = (Gen.get_path Sys.executable_name) ^ seq_axioms_file in   
-    let seq_axioms  = string_of_file (seq_axioms_filename) in
 	(* Variable declarations *)
-	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in 
+	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in
 	let smt_var_decls = String.concat "" smt_var_decls in
 	(* Relations that appears in the ante and conseq *)
 	let used_rels = info.relations in
@@ -694,17 +676,14 @@ let to_smt_v2 ante conseq logic fvars info =
 	(* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
 	let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
 	(* Antecedent and consequence : split /\ into small asserts for easier management *)
-	let ante_clauses = CP.split_conjunctions ante in 
+	let ante_clauses = CP.split_conjunctions ante in
 	let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
-	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x) ^ ")\n") ante_clauses in 
+	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x) ^ ")\n") ante_clauses in
 	let ante_str = String.concat "" ante_strs in
 	let conseq_str = smt_of_formula conseq in
-		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^*)
-            ";Sequence Axioms \n" ^
-            "(set-option :pull-nested-quantifiers true)\n" ^
-                seq_axioms ^
+		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^ *)
 			";Variables declarations\n" ^
-				smt_var_decls ^ 
+				smt_var_decls ^
 			";Relations declarations\n" ^
 				rel_decls ^
 			";Axioms assertions\n" ^
@@ -936,12 +915,7 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
   (*let _ = print_endline ("ante: " ^(!print_pure ante)) in *)
   (*let _ = print_endline ("conseq: " ^(!print_pure conseq)) in *)
   let res, should_run_smt = if (((*has_exists*)Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
-		try let ores = (Omega.imply_with_check ante conseq "" timeout) in
-            (match ores with
-              | None -> (false, true)
-              | Some r -> (r, false)
-            )
-        with | _ -> (false, true)
+		try (Omega.imply ante conseq "" timeout, false) with | _ -> (true, false)
 	else (false, true) in
   if (should_run_smt) then
 	let input = to_smt ante (Some conseq) prover in
@@ -1006,13 +980,8 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) (timeout: float) : bool = 
 	(*let _ = print_endline ("is_sat: " ^(!print_pure f)) in*)
-  let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f) then
-		try let ores = (Omega.is_sat_with_check f sat_no) in
-            ( match ores with
-              | None -> (true, true)
-              | Some r -> (r, false)
-            )
-        with | _ -> (true, true)
+  let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
+		try (Omega.is_sat f sat_no, false) with | _ -> (true, false)
 	else (false, true) in
 	if (should_run_smt) then
 	let input = to_smt f None prover in
