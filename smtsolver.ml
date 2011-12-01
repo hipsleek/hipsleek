@@ -77,7 +77,7 @@ let rec smt_of_typ t =
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
-		| Void | (BagT _) | (TVar _) -> 	illegal_format "z3.smt_of_typ: spec not supported for SMT"
+		| Void | (BagT _) | (TVar _) -> 	illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
         	| List t -> (match t with
 				| (TVar _) -> "(Seq Int)"
 				| _ -> "(Seq " ^ (smt_of_typ t) ^ ")"	)
