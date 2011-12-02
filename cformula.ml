@@ -2500,6 +2500,15 @@ let get_must_error_from_ctx cs =
         | Some (msg,_) -> Some msg)
     | _ -> None
 
+let get_bot_status_from_ctx cs=
+  match cs with
+    | [Ctx es] ->
+        ( match formula_is_eq_flow es.es_formula false_flow_int with
+          | true -> Some ""
+          | false -> None
+        )
+    | _ -> None
+
 let rec set_must_error_from_one_ctx ctx msg ft=
   match ctx with
     | Ctx es ->
@@ -2691,6 +2700,11 @@ let get_must_failure_ft f =
     | Failure_Must m -> Some m
     | _ -> None
 
+let get_bot_status_ft f =
+  match (get_failure_ft f) with
+    | Failure_Bot m -> Some m
+    | _ -> None
+
 let get_may_failure_fe (f:fail_explaining) =
   match f.fe_kind with
     | Failure_May m | Failure_Must m -> Some m 
@@ -2767,6 +2781,11 @@ let get_must_failure (ft:list_context) =
 	| SuccCtx cs -> get_must_error_from_ctx cs
     (* | _ -> None *)
 
+let get_bot_status (ft:list_context) =
+  match ft with
+    | FailCtx f -> get_bot_status_ft f
+	| SuccCtx cs -> get_bot_status_from_ctx cs
+
 let extract_failure_msg rs=
  if not !Globals.disable_failure_explaining then
    match get_must_failure rs with
@@ -2782,6 +2801,8 @@ let is_may_failure_fe (f:fail_explaining) = (get_may_failure_fe f) != None
 let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
 
 let is_may_failure (f:list_context) = (get_may_failure f) != None
+
+let is_bot_status (f:list_context) = (get_bot_status f) != None
 
 let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option =
      match (get_must_es_msg_ft ft) with
@@ -3608,11 +3629,13 @@ and change_flow_ctx from_fl to_fl ctx_list =
 		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
 	List.map helper ctx_list
 
-and change_flow_into_ctx to_fl ctx_list =
-	let rec helper c = match c with
-		| Ctx c -> Ctx {c with es_formula = substitute_flow_into_f to_fl c.es_formula;}
-		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
-	List.map helper ctx_list
+and change_flow_into_ctx to_fl ctx =
+  match ctx with
+	| Ctx c -> Ctx {c with es_formula = substitute_flow_into_f to_fl c.es_formula;}
+	| OCtx (c1,c2)-> OCtx ((change_flow_into_ctx to_fl c1), (change_flow_into_ctx to_fl c2))
+
+and change_flow_into_ctx_list to_fl ctx_list =
+	List.map (change_flow_into_ctx to_fl) ctx_list
 
 
 and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verified:bool): list_context =
@@ -3624,7 +3647,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
                   match bug_verified with
                     | true ->
                         (*change flow to the flow at the beginning*)
-                        let new_ctx_lst = change_flow_into_ctx ante_flow [Ctx es] in
+                        let new_ctx_lst = change_flow_into_ctx_list ante_flow [Ctx es] in
                         SuccCtx new_ctx_lst
                     | false ->
                         (*update es_must_error*)

@@ -407,22 +407,30 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s -> "(must) cause:"^s 
+            | Some s -> "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
+        (*should check bot with is_bot_status*)
         else ""
       in
-      print_string (num_id^": Fail. "^s^"\n")
+      print_string (num_id^": Fail."^s^"\n")
           (*if !Globals.print_err_sleek then *)
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
   else
     begin
-	  print_string (num_id^": Valid.\n")
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
-    end  
+        let s =
+        if not !Globals.disable_failure_explaining then
+          match CF.list_context_is_eq_flow residue false_flow_int with
+            | true -> "(bot)"
+            | false -> (*expect normal (OK) here*) ""
+        else ""
+        in
+        print_string (num_id^": Valid. "^s^"\n")
+        (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
+    end
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
@@ -437,7 +445,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
-
+(*
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let index = (sleek_proof_counter#inc_and_get) in
   try 
@@ -470,7 +478,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   with e ->
       let _ =  Error.process_exct(e)in
       print_string "exception in entail check\n"
-
+*)
 
 let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
   try 

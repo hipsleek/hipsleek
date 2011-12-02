@@ -1,18 +1,19 @@
 //four point status
 //complete
 //pure
-//1. bot
+//1. Valid. (bot)
 checkentail false |- n = 3.
-/*
-//2. ok
+//print residue.
+
+//2. Valid
 checkentail n>4 |- n > 3.
 
-//3. must
+//3. Fail. (must)
 checkentail n>3 |- n <2.
 
-//3. may
+//3. Fail. (may)
 checkentail n>3 |- n > 4.
-*/
+
 //heap
 
 //5. bot

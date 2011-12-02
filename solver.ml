@@ -2661,8 +2661,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
   ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
     if isAnyFalseCtx ctx then
+      (*set context as bot*)
+      let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in
       (* check this first so that false => false is true (with false residual) *)
-      ((SuccCtx [ctx]), UnsatAnte)
+      ((SuccCtx [bot_ctx]), UnsatAnte)
     else(* if isConstFalse conseq then
 	       (--[], UnsatConseq)
 	       else *)if isConstETrue conseq then
