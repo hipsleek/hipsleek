@@ -97,4 +97,4 @@
 (! (iff (alln n s) (forall ((x Int)) (and (iff (isin x s) (= x n)) (iff (isnotin x s) (not (= x n)))))) :pattern((alln n s)))))
 
 (declare-fun perm ((Seq (Int)) (Seq (Int))) Bool)
-;Perm Axioms
+;Perm axioms

@@ -501,7 +501,7 @@ let command_for prover =
 (* Runs the specified prover and returns output *)
 let run st prover input timeout =
 	let out_stream = open_out infile in
-    (*let _ = print_endline ("input: " ^ input) in*)
+    (* let _ = print_endline ("input: " ^ input) in*)
 	output_string out_stream input;
 	close_out out_stream;
 	let (cmd, cmd_arg) = command_for prover in
