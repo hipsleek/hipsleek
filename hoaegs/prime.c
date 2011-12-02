@@ -93,9 +93,11 @@ axiom primerel(n,n) ==> prime(n).
 
 axiom prime(n) ==> primerel(n,n).
 
+// Cannot be verified if we use "|" in place of "or"
+// So a case analysis is important here!
 bool is_prime2(int n) 
 	requires n >= 0
-	ensures (res & prime(n) | !res & !(prime(n)));
+	ensures res & prime(n) or !res & !(prime(n));
 {
 	if (n < 2)
 		return false;
@@ -109,7 +111,7 @@ bool is_prime2(int n)
 
 bool is_prime2_helper(int n, int p)
 	requires !(divides(2,n)) & 3 <= p <= n & !(divides(2,p)) & primerel(n,p)
-	ensures (res & primerel(n,n) | !res & !(primerel(n,n)));
+	ensures res & primerel(n,n) or !res & !(primerel(n,n));
 {
 	if (p >= n)
 		return true;
@@ -132,10 +134,9 @@ bool is_prime2_helper(int n, int p)
 	}
 }
 
-/*
 bool is_prime3(int n)
 	requires n >= 0
-	ensures (res & prime(n) | !res & !(prime(n)));
+	ensures res & prime(n) or !res & !(prime(n));
 {
 	if (n < 2)
 		return false;
@@ -144,22 +145,25 @@ bool is_prime3(int n)
 	else if (isdivby(n,2))
 		return false;
 	else
-		return is_prime2_helper(n,3);
+		return is_prime3_helper(n,3);
 }
 
 axiom n > 0 & primerel(n,p) & p * p > n ==> primerel(n,n).
 
 bool is_prime3_helper(int n, int p)
 	requires !(divides(2,n)) & 3 <= p <= n & !(divides(2,p)) & primerel(n,p)
-	ensures (res & primerel(n,n) | !res & !(primerel(n,n)));
+	ensures res & primerel(n,n) or !res & !(primerel(n,n));
 {
-	if (p * p >= n)
+	if (p * p > n)
 		return true;
-	else if (isdivby(n,p))
+	else if (isdivby(n,p)) {
+		// Need a theorem here
+		// if p^2 <= n and p >= 3 then p < n
+		assert p < n;
+		assume p < n;
 		return false;
+	}
 	else {
-		// Issue 1 : cannot show that if p is odd, n is odd then p + 1 does not divide n. Note that this is necessary to derive the fact that p <= n - 2 as well.
-		// Issue 2 : require a hint to show that primerel(n,p+1)
 		assert divides(2,p+1);
 		assume divides(2,p+1);
 		assert !(divides(p+1,n));
@@ -170,7 +174,6 @@ bool is_prime3_helper(int n, int p)
 		assume primerel(n,p+1);
 		assert primerel(n,p+2);
 		assume primerel(n,p+2);
-		return is_prime2_helper(n,p+2);
+		return is_prime3_helper(n,p+2);
 	}
 }
-*/
