@@ -1,45 +1,39 @@
 (define-sort Seq (T) (List T))
-
 (declare-fun length ((Seq (Int))) Int)
+
 ;Length Axioms
 (assert (forall ((l (Seq Int))) (! (>= (length l) 0) :pattern ((length l)))))
-
 (assert (forall ((l (Seq Int)) (x Int)) 
 (! (= (length (insert x l)) (+ (length l) 1 )) :pattern ((length (insert x l))))))
-
 (assert (forall ((x Int)) 
 (! (= (length (insert x nil)) 1) :pattern ((length (insert x nil))))))
-
 (assert (= (length nil) 0))
-
 (assert (forall ((l (Seq Int))) 
 (! (=> (= (length l) 0) (= l nil)) :pattern ((length l)))))
 
 (declare-fun append ((Seq (Int)) (Seq (Int))) (Seq (Int)))
+
 ;Append Axioms
 (assert (forall ((l1 (Seq Int)) (l2 (Seq Int))) 
 (! (= (length (append l1 l2)) (+ (length l1) (length l2))) :pattern ((length(append l1 l2))))))
 
 (declare-fun index ((Seq (Int)) Int) Int)
+
 ;Index Axioms
 (assert (forall ((s (Seq Int)) (i Int) (v Int)) 
-(! (and (=> (= i (length s)) (= (index (insert v s) i) v)) (=> (not (= i (length s))) (= (index (insert v s) i) (index s i)))) 
-:pattern ((index (insert v s) i)))))
+(! (and (=> (= i (length s)) (= (index (insert v s) i) v)) (=> (not (= i (length s))) (= (index (insert v s) i) (index s i)))) :pattern ((index (insert v s) i)))))
 
 (assert (forall ((s0 (Seq Int)) (s1 (Seq Int)) (n Int)) 
-(! (and (=> (< n (length s0))(= (index (append s0 s1) n) (index s0 n))) (=> (<= (length s0) n) (= (index(append s0 s1) n) (- (index s1 n) (length s0))))) 
-:pattern ((index (append s0 s1) n)))))
+(! (and (=> (< n (length s0))(= (index (append s0 s1) n) (index s0 n))) (=> (<= (length s0) n) (= (index(append s0 s1) n) (- (index s1 n) (length s0))))) :pattern ((index (append s0 s1) n)))))
 
 (declare-fun isin ((Seq (Int)) Int) Bool)
+
 ;isin Axioms
-(assert (forall ((s (Seq Int)) (x Int))
-(! (iff (isin s x) (exists ((i Int)) (! (and (<= 0 i) (and (< i (length s)) (= (index s i) x))) :pattern ((index s i))))) :pattern ((isin s x)))))
+(assert (forall ((s (Seq Int)) (x Int)) (! (iff (isin s x) (exists ((i Int)) (! (and (<= 0 i) (and (< i (length s)) (= (index s i) x))) :pattern ((index s i))))) :pattern ((isin s x)))))
 
-(assert (forall ((s0 (Seq Int)) (s1 (Seq Int)) (x Int)) 
-(! (iff (isin (append s0 s1) x) (or (isin s0 x) (isin s1 x))) :pattern ((isin (append s0 s1) x)))))
+(assert (forall ((s0 (Seq Int)) (s1 (Seq Int)) (x Int)) (! (iff (isin (append s0 s1) x) (or (isin s0 x) (isin s1 x))) :pattern ((isin (append s0 s1) x)))))
 
-(assert (forall ((s (Seq Int)) (v Int) (x Int))
-(! (iff (isin (insert v s) x) (or (= v x) (isin s x))) :pattern ((isin (insert v s) x)))))
+(assert (forall ((s (Seq Int)) (v Int) (x Int)) (! (iff (isin (insert v s) x) (or (= v x) (isin s x))) :pattern ((isin (insert v s) x)))))
 
 (declare-fun isnotin ((Seq (Int)) Int) Bool)
 ;isnotin Axioms

@@ -468,6 +468,7 @@ type smtprover =
 	| Yices
 
 (* Global settings *)
+let t_o_cnt = new Gen.counter 0
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
     (*asankhs: adding seq axioms, will later change it look up info before adding - done *)
@@ -498,6 +499,18 @@ let command_for prover =
 	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
 
+let proc_save_timeout st input =
+  try
+    if (Sys.is_directory "tmp") then
+      begin
+        let i = string_of_int(t_o_cnt # get) in
+        let out_stream = open_out ("tmp/timeout_"^st^"_"^i^".smt2") in
+        output_string out_stream input;
+        close_out out_stream
+      end
+  with _ -> ()
+
+
 (* Runs the specified prover and returns output *)
 let run st prover input timeout =
 	let out_stream = open_out infile in
@@ -514,7 +527,9 @@ let run st prover input timeout =
 		with
 			| _ -> begin (* exception : return the safe result to ensure soundness *)
 				Printexc.print_backtrace stdout;
-                print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
+                let i = string_of_int (t_o_cnt # inc_and_get) in
+                print_endline ("WARNING ("^i^") for "^st^" : Restarting prover due to timeout");
+                proc_save_timeout st input;
 				Unix.kill !prover_process.pid 9;
 				ignore (Unix.waitpid [] !prover_process.pid);
 				{ original_output_text = []; sat_result = Aborted; }
