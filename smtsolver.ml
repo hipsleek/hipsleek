@@ -299,12 +299,12 @@ and collect_exp_info e = match e with
 	| CP.ListCons (e1, e2, _) -> 
 			let ef1 = collect_exp_info e1 in
 			let ef2 = collect_exp_info e2 in
-			let ifl = combine_formula_info ef1 ef2 in {ifl with contains_list = true;} 
+			let ifl = combine_formula_info ef1 ef2 in ifl (*in {ifl with contains_list = true;} *)
 	| CP.ListHead (e, _) 
-	| CP.ListTail (e, _) 
+	| CP.ListTail (e, _)  
 	| CP.ListLength (e, _) 
 	| CP.ListReverse (e, _) -> let ifl = collect_exp_info e in {ifl with contains_list = true;}
-	| CP.List (elist, _) 
+	| CP.List (elist, _) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in result 
 	| CP.ListAppend (elist, _) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in {result with contains_list = true;}
 	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
@@ -501,7 +501,7 @@ let command_for prover =
 (* Runs the specified prover and returns output *)
 let run st prover input timeout =
 	let out_stream = open_out infile in
-    (* let _ = print_endline ("input: " ^ input) in*)
+    (*let _ = print_endline ("input: " ^ input) in*)
 	output_string out_stream input;
 	close_out out_stream;
 	let (cmd, cmd_arg) = command_for prover in
@@ -561,7 +561,7 @@ let logic_for_formulas f1 f2 =
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
     (*check info has list constraints*)
-    let if_seq_axioms = if info.contains_list then seq_axioms else "" in 
+    let if_seq_axioms = if info.contains_list then seq_axioms else "(define-sort Seq (T) (List T))" in 
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in   
 	let smt_var_decls = String.concat "" smt_var_decls in

@@ -1,4 +1,5 @@
 (set-option :pull-nested-quantifiers true)
+
 (define-sort Seq (T) (List T))
 
 (declare-fun length ((Seq (Int))) Int)
@@ -12,9 +13,6 @@
 
 (assert (forall ((l (Seq Int)) (x Int)) 
 (! (= (length (insert x l)) (+ (length l) 1 )) :pattern ((length (insert x l))))))
-
-;(assert (forall ((x Int)) 
-;(! (= (length (insert x nil)) 1) :pattern ((length (insert x nil))))))
 
 (declare-fun append ((Seq (Int)) (Seq (Int))) (Seq (Int)))
 ;Append Axioms
