@@ -110,8 +110,10 @@ let common_arguments = [
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
-	("--perm", Arg.Set Globals.allow_perm,"enable the use of immutability annotations");
-	("--dis-perm", Arg.Clear Globals.allow_perm,"disable the use of immutability annotations");
+	("--fperm", Arg.Set Globals.allow_fperm,"enable the use of fractional permission");
+	("--dis-fperm", Arg.Clear Globals.allow_fperm,"disable the use of fractional permission");
+	("--cperm", Arg.Set Globals.allow_cperm,"enable the use of counting permission");
+	("--dis-cperm", Arg.Clear Globals.allow_cperm,"disable the use of counting permission");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");
 	("--no-exists-elim", Arg.Clear Globals.elim_exists,
@@ -140,6 +142,8 @@ let common_arguments = [
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-3.2"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "auto" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	("-perm", Arg.Symbol (["fperm"; "cperm"], Perm.set_perm),
+	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
 	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
