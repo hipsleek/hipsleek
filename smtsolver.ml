@@ -408,9 +408,14 @@ let string_of_smt_output output =
 let rec icollect_output chn accumulated_output : string list =
 	let output = try
 					 let line = input_line chn in
-                    (* let _ = print_endline ("locle2" ^ line) in*)
+                     (*let _ = print_endline ("z3out: " ^ line) in*)
                      if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
-					 icollect_output chn (accumulated_output @ [line])
+                       begin
+                          (*  if ((String.sub line 0 6) = "(error") then
+                              illegal_format "z3.icollect_output: unexpected format or configuration"
+					        else *)
+                              icollect_output chn (accumulated_output @ [line])
+                       end
                     else accumulated_output @ [line]
 				with
 					| End_of_file -> accumulated_output in
@@ -565,7 +570,7 @@ and start() =
       last_test_number := !test_number;
       (*("z312", path_to_z3, [|path_to_z3; "-smt2";"-si"|])*)
       let _ = if !smtsolver_name = "z3" then
-            Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"|]) set_process prelude else
+            Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"; "/t:2"|]) set_process prelude else
             Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
       in
       is_z3_running := true;
@@ -610,7 +615,7 @@ let check_formula f timeout =
         let new_f =
           "(push)\n" ^ f ^ "(pop)\n"
         in
-        (*let _ = print_endline ("locle: check\n " ^ new_f) in*)
+        (*let _ = print_endline ("z3in:\n " ^ new_f) in*)
         output_string (!prover_process.outchannel) new_f;
         flush (!prover_process.outchannel);
 
@@ -914,9 +919,13 @@ and smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
 and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (*let _ = print_endline ("ante: " ^(!print_pure ante)) in *)
   (*let _ = print_endline ("conseq: " ^(!print_pure conseq)) in *)
-  let res, should_run_smt = if (((*has_exists*)Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
-		try (Omega.imply ante conseq "" timeout, false) with | _ -> (true, false)
-	else (false, true) in
+   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists conseq) then
+  try (match (Omega.imply_with_check ante conseq "" timeout) with
+	  | None -> (false, true)
+	  | Some r -> (r, false)
+	)
+	with | _ -> (false, true)
+  else (false, true) in
   if (should_run_smt) then
 	let input = to_smt ante (Some conseq) prover in
 	let _ = !set_generated_prover_input input in
@@ -980,8 +989,13 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) (timeout: float) : bool = 
 	(*let _ = print_endline ("is_sat: " ^(!print_pure f)) in*)
-  let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
-		try (Omega.is_sat f sat_no, false) with | _ -> (true, false)
+  let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f) then
+		try let ropt = (Omega.is_sat_with_check f sat_no) in
+            ( match ropt with
+              | Some r -> (r, false)
+              | None -> (true, true)
+            )
+        with | _ -> (true, false)
 	else (false, true) in
 	if (should_run_smt) then
 	let input = to_smt f None prover in
