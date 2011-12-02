@@ -10,13 +10,15 @@ open Cpure
   type cperm_var = Cpure.spec_var
   let cperm_typ = Int
   let empty_iperm = None
-  let empty_perm = None
+  (* let empty_perm = None *)
   let full_iperm = Some (Ipure.IConst (1, no_pos))
   (*LDK: a specvar to indicate FULL permission*)
   let full_perm_name = ("Anon_"^"full_perm")
   let perm_name = ("perm_")
   let full_perm = Some (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
-  let fv_iperm = Ipure.afv
+  let fv_iperm p = match p with
+       | Some e -> (Ipure.afv e)
+       | None -> []
   let get_iperm perm =
     match perm with
       | None -> []

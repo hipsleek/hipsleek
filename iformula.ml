@@ -444,18 +444,12 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
              real information inside *)
               h_formula_heap_perm = perm; (*LDK*)
               h_formula_heap_arguments = b} ->
-     let perm_vars =  match perm with
-       | Some f -> (fv_iperm f)
-       | None -> []
-     in
+     let perm_vars = fv_iperm perm in
      Gen.BList.remove_dups_eq (=) (perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;
                 h_formula_heap2_perm = perm; (*LDK*)
 		h_formula_heap2_arguments = b}-> 
-     let perm_vars =  match perm with
-       | Some f -> (fv_iperm f)
-       | None -> []
-     in
+     let perm_vars =  fv_iperm perm in
       Gen.BList.remove_dups_eq (=)  (perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
   | HTrue -> [] 
   | HFalse -> [] 
