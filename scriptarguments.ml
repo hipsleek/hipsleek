@@ -110,10 +110,10 @@ let common_arguments = [
 	("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
-	("--fperm", Arg.Set Globals.allow_fperm,"enable the use of fractional permission");
-	("--dis-fperm", Arg.Clear Globals.allow_fperm,"disable the use of fractional permission");
-	("--cperm", Arg.Set Globals.allow_cperm,"enable the use of counting permission");
-	("--dis-cperm", Arg.Clear Globals.allow_cperm,"disable the use of counting permission");
+	(* ("--fperm", Arg.Set Globals.allow_fperm,"enable the use of fractional permission"); *)
+	(* ("--dis-fperm", Arg.Clear Globals.allow_fperm,"disable the use of fractional permission"); *)
+	(* ("--cperm", Arg.Set Globals.allow_cperm,"enable the use of counting permission"); *)
+	(* ("--dis-cperm", Arg.Clear Globals.allow_cperm,"disable the use of counting permission"); *)
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");
 	("--no-exists-elim", Arg.Clear Globals.elim_exists,

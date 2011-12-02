@@ -14,94 +14,125 @@ type cperm = Cpure.spec_var option
 
 type cperm_var = Cpure.spec_var
 
-let perm = ref No
+let string_of_perm_type t =
+  match t with
+    | Frac -> "Frac"
+    | Count -> "Count"
+    | No -> "No"
 
-let set_perm perm_str = 
-  if perm_str = "fperm" then perm:=Frac
-  else if perm_str = "cperm" then perm:=Count
-  else perm:= No
+let perm = ref Frac
 
-let allow_perm :bool = 
+let allow_perm ():bool = 
+  let _ = print_string ("perm.ml: allow_perm (): " ^ (string_of_perm_type !perm) ^ "\n\n") in
   match !perm with
-    | Frac
+    | Frac -> true
     | Count -> true
     | No -> false
 
-let cperm_typ = if (!allow_cperm) then Cperm.cperm_typ
-    else Fperm.cperm_typ
+let set_perm perm_str = 
+  let _ = print_string ("perm.ml : set_perm: " ^ perm_str ^ "\n") in
+  let _ = if perm_str = "fperm" then perm:=Frac
+  else if perm_str = "cperm" then perm:=Count
+  else perm:= No in
+  print_string ((string_of_perm_type !perm) ^ (string_of_bool (allow_perm ())))
 
-let empty_iperm = if (!allow_cperm) then Cperm.empty_iperm
-    else Fperm.empty_iperm
+let cperm_typ () = 
+  match !perm with
+    | Count -> Cperm.cperm_typ
+    | _ -> Fperm.cperm_typ
 
-let empty_perm = if (!allow_cperm) then Cperm.empty_perm
-    else Fperm.empty_perm
+let empty_iperm () = 
+  match !perm with
+    | Count -> Cperm.empty_iperm
+    | _ ->Fperm.empty_iperm
 
-let full_iperm = if (!allow_cperm) then Cperm.full_iperm
-    else Fperm.full_iperm
+let empty_perm () =   match !perm with
+    | Count -> Cperm.empty_perm
+    | _ -> Fperm.empty_perm
+
+let full_iperm () =   match !perm with
+    | Count -> Cperm.full_iperm
+    | _ -> Fperm.full_iperm
 
 (*LDK: a specvar to indicate FULL permission*)
-let full_perm_name = if (!allow_cperm) then Cperm.full_perm_name
-    else Fperm.full_perm_name
+let full_perm_name () =   match !perm with
+    | Count -> Cperm.full_perm_name
+    | _ -> Fperm.full_perm_name
 
-let perm_name = if (!allow_cperm) then Cperm.perm_name
-    else Fperm.perm_name
+let perm_name ()=   match !perm with
+    | Count -> Cperm.perm_name
+    | _ -> Fperm.perm_name
 
-let full_perm = if (!allow_cperm) then Cperm.full_perm
-    else Fperm.full_perm
+let full_perm ()=   match !perm with
+    | Count -> Cperm.full_perm
+    | _ -> Fperm.full_perm
 
-let fv_iperm = if (!allow_cperm) then Cperm.fv_iperm
-    else Fperm.fv_iperm
+let fv_iperm =   match !perm with
+    | Count -> Cperm.fv_iperm
+    | _ -> Fperm.fv_iperm
 
-let get_iperm = if (!allow_cperm) then Cperm.get_iperm
-    else Fperm.get_iperm
+let get_iperm p =  match !perm with
+    | Count -> Cperm.get_iperm p
+    | _ -> Fperm.get_iperm p
 
-let apply_one_iperm = if (!allow_cperm) then Cperm.apply_one_iperm
-    else Fperm.apply_one_iperm
+let apply_one_iperm =   match !perm with
+    | Count -> Cperm.apply_one_iperm
+    | _ -> Fperm.apply_one_iperm
 
-let full_perm_var = if (!allow_cperm) then Cperm.full_perm_var
-    else Fperm.full_perm_var
+let full_perm_var =  match !perm with
+    | Count -> Cperm.full_perm_var
+    | _ -> Fperm.full_perm_var
 
 (*LDK: a constraint to indicate FULL permission = 1.0*)
-let full_perm_constraint = 
-  let _ =   print_string ("perm.ml: cperm = " ^ string_of_bool !Globals.allow_cperm  
-                          ^ " fperm =" ^ string_of_bool !Globals.allow_fperm
-                          ^ "\n") in
-  if (!Globals.allow_cperm==true) then Cperm.full_perm_constraint
-    else Fperm.full_perm_constraint
+let full_perm_constraint () =   match !perm with
+    | Count -> Cperm.full_perm_constraint
+    | _ -> Fperm.full_perm_constraint
 
-let mkFullPerm_pure = if (!allow_cperm) then Cperm.mkFullPerm_pure
-    else Fperm.mkFullPerm_pure
+let mkFullPerm_pure =   match !perm with
+    | Count -> Cperm.mkFullPerm_pure
+    | _ -> Fperm.mkFullPerm_pure
 
-let mkFullPerm_pure_from_ident = if (!allow_cperm) then Cperm.mkFullPerm_pure_from_ident
-    else Fperm.mkFullPerm_pure_from_ident
+let mkFullPerm_pure_from_ident =   match !perm with
+    | Count -> Cperm.mkFullPerm_pure_from_ident
+    | _ -> Fperm.mkFullPerm_pure_from_ident
 
 (*create fractional permission invariant 0<f<=1*)
-let mkPermInv = if (!allow_cperm) then Cperm.mkPermInv
-    else Fperm.mkPermInv
+let mkPermInv =   match !perm with
+    | Count -> Cperm.mkPermInv
+    | _ -> Fperm.mkPermInv
 
-let mkPermWrite = if (!allow_cperm) then Cperm.mkPermWrite
-    else Fperm.mkPermWrite
+let mkPermWrite =   match !perm with
+    | Count -> Cperm.mkPermWrite
+    | _ -> Fperm.mkPermWrite
 
-let float_out_iperm = if (!allow_cperm) then Cperm.float_out_iperm
-    else Fperm.float_out_iperm
+let float_out_iperm =   match !perm with
+    | Count -> Cperm.float_out_iperm
+    | _ -> Fperm.float_out_iperm
 
-let float_out_mix_max_iperm = if (!allow_cperm) then Cperm.float_out_mix_max_iperm
-    else Fperm.float_out_mix_max_iperm
+let float_out_mix_max_iperm =   match !perm with
+    | Count -> Cperm.float_out_mix_max_iperm
+    | _ -> Fperm.float_out_mix_max_iperm
 
-let fv_cperm =if (!allow_cperm) then  Cperm.fv_cperm
-    else Fperm.fv_cperm
+let fv_cperm p = match !perm with
+    | Count -> Cperm.fv_cperm p
+    | _ -> Fperm.fv_cperm p
 
-let get_cperm = if (!allow_cperm) then Cperm.get_cperm
-     else Fperm.get_cperm
+let get_cperm p = match !perm with
+    | Count -> Cperm.get_cperm p
+    | _ -> Fperm.get_cperm p
 
-let subst_var_perm = if (!allow_cperm) then Cperm.subst_var_perm
-    else Fperm.subst_var_perm
+let subst_var_perm =   match !perm with
+    | Count -> Cperm.subst_var_perm
+    | _ -> Fperm.subst_var_perm
 
-let fresh_cperm_var = if (!allow_cperm) then Cperm.fresh_cperm_var
-    else Fperm.fresh_cperm_var
+let fresh_cperm_var =   match !perm with
+    | Count -> Cperm.fresh_cperm_var
+    | _ -> Fperm.fresh_cperm_var
 
-let mkEq_cperm = if (!allow_cperm) then Cperm.mkEq_cperm
-    else Fperm.mkEq_cperm
+let mkEq_cperm =   match !perm with
+    | Count ->  Cperm.mkEq_cperm
+    | _ -> Fperm.mkEq_cperm
+
 
 (*can't not do it modularly because 
 we do not separate between printers for ipure and iformula*)

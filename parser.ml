@@ -670,7 +670,7 @@ simple2:  [[ t= opt_type_var_list -> ()]];
 simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; frac = opt_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
     (*ignore permission if applicable*)
-  let frac = if !allow_perm then frac else empty_iperm in
+  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
      match hl with
         | ([],t) -> F.mkHeapNode2 c id dr true false false false frac t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id dr true false false false frac t ofl (get_pos_camlp4 _loc 2)]];
@@ -680,25 +680,25 @@ simple_heap_constr:
   [[ 
     peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
     (*ignore permission if applicable*)
-    let frac = if !allow_perm then frac else empty_iperm in
+    let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
     (match hl with
         | ([],t) -> F.mkHeapNode2 c id dr true false false false frac t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c id dr true false false false frac t ofl (get_pos_camlp4 _loc 2))
   | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
-  let frac = if !allow_perm then frac else empty_iperm in
+  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id dr false false false false frac t ofl (get_pos_camlp4 _loc 2)
       | (t,_)  -> F.mkHeapNode c id dr false false false false frac t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> 
-    let frac = if !allow_perm then 
-          full_iperm
+    let frac = if (Perm.allow_perm ()) then 
+          full_iperm ()
         else 
-          empty_iperm 
+          empty_iperm ()
     in
 	F.mkHeapNode ("",Primed) "" false (*dr*) false false false false frac [] None  (get_pos_camlp4 _loc 1)
 	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
-  let frac = if !allow_perm then frac else empty_iperm in
+  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
     (match hl with
         | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr true false false false frac t ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr true false false false frac t ofl (get_pos_camlp4 _loc 2))

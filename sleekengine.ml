@@ -424,17 +424,17 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
   (*                       ^"\n\n") in *)
   let ante = 
-    if (!Globals.allow_perm) then
+    if (Perm.allow_perm ()) then
       (*add default full permission to ante; 
         need to add type of full perm to stab *)
-    let _ =   print_string ("sleekengine.ml: cperm = " ^ string_of_bool !Globals.allow_cperm  
-                            ^ " fperm =" ^ string_of_bool !Globals.allow_fperm
-                            ^ "\n") in
-      let full = Perm.full_perm_constraint in
+    (* let _ =   print_string ("sleekengine.ml: cperm = " ^ string_of_bool Perm.allow_cperm   *)
+    (*                         ^ " fperm =" ^ string_of_bool !Globals.allow_fperm *)
+    (*                         ^ "\n") in *)
+      let full = Perm.full_perm_constraint () in
       let _ = print_string ("\n run_entail_check:"
                             ^ "\n ### full = "^(Cprinter.string_of_mix_formula full)
                             ^"\n\n") in
-      CF.add_mix_formula_to_formula Perm.full_perm_constraint ante
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
   let _ = print_string ("\n run_entail_check:"
@@ -442,7 +442,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
                         ^"\n\n") in
 
   let vk = AS.fresh_proc_var_kind stab Float in
-  let _ = H.add stab full_perm_name vk in
+  let _ = H.add stab (full_perm_name ()) vk in
   (* let _ = print_string ("run_entail_check:" *)
   (*                       ^ "\n stab = "^(AS.string_of_stab stab) *)
   (*                       ^"\n\n") in *)

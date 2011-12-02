@@ -5796,7 +5796,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_name = c; (* data/pred name *)
                 IF.h_formula_heap_pos = pos
 	        } ->
-          let ft = cperm_typ in
+          let ft = cperm_typ () in
           let gather_type_info_perm p stab = match p with
             | None -> ()
             | Some e -> gather_type_info_exp e stab ft; () in

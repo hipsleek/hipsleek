@@ -466,7 +466,7 @@ let string_of_cperm perm =
   let perm_str = match perm with
     | None -> ""
     | Some f -> string_of_spec_var f
-  in if (!allow_perm) then "(" ^ perm_str ^ ")" else ""
+  in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
 
 let string_of_imm imm = 
   if imm then "@I" else "" (*"@M"*)

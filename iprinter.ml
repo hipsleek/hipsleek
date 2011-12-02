@@ -271,7 +271,7 @@ let string_of_iperm perm =
         | None -> ""
         | Some f -> string_of_formula_exp f
       in
-      if (!allow_perm) then "(" ^ perm_str ^ ")" else ""
+      if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
 ;;
 
 (* pretty printing for a heap formula *)

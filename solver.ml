@@ -385,12 +385,12 @@ and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.m
 
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
   if (!Globals.allow_imm) then 
-    if (!Globals.allow_perm) then 
+    if (Perm.allow_perm ()) then 
       xpure_heap_symbolic_perm prog h0 which_xpure
     else
       xpure_heap_symbolic prog h0 which_xpure
   else
-    if (!Globals.allow_perm) then 
+    if (Perm.allow_perm ()) then 
       let a, b, c = xpure_heap_perm prog h0 which_xpure in
       (a, b, [], c)
     else
@@ -407,7 +407,7 @@ and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branc
 (* xpure approximation with memory enumeration *)
 and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
   (*use different xpure functions*)
-  let xpure_h = if (!Globals.allow_perm) then xpure_heap_perm else xpure_heap_mem_enum in
+  let xpure_h = if (Perm.allow_perm ()) then xpure_heap_perm else xpure_heap_mem_enum in
   let mset = formula_2_mem f0 prog in 
   let rec xpure_helper  (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list) = 
     match f0 with
@@ -667,7 +667,7 @@ and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branc
 and xpure_symbolic_x (prog : prog_decl) (f0 : formula) : 
       (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
   (*use different xpure functions*)
-  let xpure_h = if (!Globals.allow_perm) then xpure_heap_symbolic_perm else xpure_heap_symbolic in
+  let xpure_h = if (Perm.allow_perm ()) then xpure_heap_symbolic_perm else xpure_heap_symbolic in
   let mset = formula_2_mem f0 prog in 
   let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = match f0 with
     | Or ({ formula_or_f1 = f1;
@@ -1744,7 +1744,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 
 		            (*if any, propagate the fractional permission inside the definition *)
                     let renamed_view_formula = 
-                      if (!Globals.allow_perm) then
+                      if (Perm.allow_perm ()) then
                         (match perm with 
                           | None -> renamed_view_formula
                           | Some f -> Cformula.propagate_perm_formula renamed_view_formula f) 
@@ -2150,7 +2150,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 		(*LDK: IMPORTANT
           if any, propagate the fractional permission inside the definition *)
         let renamed_view_formula =
-          if (!Globals.allow_perm) then
+          if (Perm.allow_perm ()) then
           (match perm with
             | None -> renamed_view_formula
             | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f)
@@ -2171,7 +2171,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 
         (*propagate*)
         let view_form = 
-          if (!Globals.allow_perm) then
+          if (Perm.allow_perm ()) then
             (match perm with
               | None -> view_form
               | Some permvar ->
@@ -2206,7 +2206,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
           if frac var is an existential variable, transfer it into folded view*)
         (*add fracvar into list of parameters*)
         let vs = 
-          if (!Globals.allow_perm) then
+          if (Perm.allow_perm ()) then
             match perm with
               | None -> vs
               | Some f -> f::vs
@@ -6075,7 +6075,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             (*LDK: using fractional permission introduces 1 more spec var
               We also need to add 1 more label*)
             let rho_0, label_list = 
-              if (!Globals.allow_perm) then
+              if (Perm.allow_perm ()) then
                 (match l_perm, r_perm with
                   | Some f1, Some f2 ->
                       let rho_0 = List.combine (f2::r_args) (f1::l_args) in
@@ -6471,7 +6471,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 
     let b = match CF.subst rho (Base b) with | Base b -> b | _ -> failwith "expecting only Base" in
     let perms = 
-      if (!Globals.allow_perm) then
+      if (Perm.allow_perm ()) then
         get_cperm perm
       else []
     in
@@ -7381,7 +7381,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
               (*subst perm variable when applicable*)
               let perms1,perms2 =
-                if (!Globals.allow_perm) then
+                if (Perm.allow_perm ()) then
                   match perm1,perm2 with
                   | Some f1, Some f2 ->
                       ([f1],[f2])
@@ -7400,7 +7400,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 		      let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture fr_vars to_vars f))) lhs_branches in
 		      let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
               let coer_rhs_new1 =
-                if (!Globals.allow_perm) then
+                if (Perm.allow_perm ()) then
                   match perm1,perm2 with
                     | Some f1, None ->
                         propagate_perm_formula coer_rhs_new1 f1
@@ -7576,7 +7576,7 @@ begin
 		      begin
 		        (* apply \rho (G)	and \rho(B) *)
                 let perms1,perms2 =
-                  if (!Globals.allow_perm) then
+                  if (Perm.allow_perm ()) then
                     match perm1,perm2 with
                       | Some f1, Some f2 ->
                           ([f1],[f2])
@@ -7595,7 +7595,7 @@ begin
 		        (*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture fr_vars to_vars f))) lhs_branches in*)
 		        let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
                 let coer_rhs_new1 =
-                  if (!Globals.allow_perm) then
+                  if (Perm.allow_perm ()) then
                     match perm1,perm2 with
                       | Some f1, None ->
                           propagate_perm_formula coer_rhs_new1 f1
@@ -8007,7 +8007,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
 	           fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];}, CF.mk_failure_none "12")), [])
         else
             let perms1,perms2 =
-              if (!Globals.allow_perm) then
+              if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, Some f2 ->
                       ([f1],[f2])
@@ -8026,7 +8026,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
 		    let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
             let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
             let coer_rhs_new1,extra_heap_new =
-              if (!Globals.allow_perm) then
+              if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, None ->
                       (*propagate perm into coercion*)
@@ -8281,7 +8281,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
 	              h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
             let perms1,perms2 =
-              if (!Globals.allow_perm) then
+              if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, Some f2 ->
                       ([f1],[f2])
@@ -8300,7 +8300,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
 		    let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
             let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
             let coer_rhs_new1,extra_heap_new =
-              if (!Globals.allow_perm) then
+              if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, None ->
                       (*propagate perm into coercion*)

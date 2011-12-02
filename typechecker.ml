@@ -782,7 +782,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
           (*add default full permission = 1.0 to ante; 
             need to add type of full perm to stab
           *)
-          let init_form = CF.add_mix_formula_to_formula full_perm_constraint init_form  in
+          let init_form = CF.add_mix_formula_to_formula (full_perm_constraint ()) init_form  in
 			    let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
 			let _ = if !print_proof then begin 
 				Prooftracer.push_proc proc;
