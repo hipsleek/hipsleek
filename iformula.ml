@@ -993,7 +993,9 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
   | Ipure.Var _ -> (e, None)
   | Ipure.IConst _ -> (e, None)
   | Ipure.FConst _ -> (e, None)
-  | Ipure.Ann_Exp (e,_) -> float_out_exp_min_max e
+  | Ipure.Ann_Exp (e,t) -> (* need to preserve Ann_Exp *)
+        let (f,r) = float_out_exp_min_max e in
+        (Ipure.Ann_Exp (f,t),r)
   | Ipure.Add (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

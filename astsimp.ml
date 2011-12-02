@@ -5779,8 +5779,14 @@ and print_stab (stab : spec_var_table) =
 
 and case_normalize_pure_formula hp b f = f
 
-(*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_expl (f:Iformula.formula):
+      (Iformula.formula* ((ident*primed)list) * ((ident*primed)list)) = 
+  let pr = Iprinter.string_of_formula in
+  let pr1 (f,_,_) = Iprinter.string_of_formula f in
+  Gen.Debug.no_1 "case_normalize_renamed_formula" pr pr1 (fun _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) f
+
+(*moved the liniarization to case_normalize_renamed_formula*)
+and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib_expl (f:Iformula.formula):
       Iformula.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
