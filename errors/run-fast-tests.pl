@@ -632,7 +632,8 @@ $output_file = "log";
 			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid.bot."],
 			   ["err5.slk","","may.must.Valid.may.Valid.must.must.must.must.may.Valid.may.must."], #operators
 			   ["err6.slk","","must.Valid.may.may.must.Valid."],
-			   ["err7.slk","","Valid.must.must.must.must.Valid.may.may.Valid.must.must.Valid."]]
+			   ["err7.slk","","Valid.must.must.must.must.Valid.may.may.Valid.must.must.Valid."],
+               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
     );
 
 if($timings){
@@ -803,7 +804,7 @@ sub sleek_process_file  {
 		}
 	}
 }
-
+#./run-fast-tests.pl sleek --errors
 sub sleek_errors_process_file  {
 	print "must/may errors tests:\n";
   foreach $param (@param_list)
