@@ -16,14 +16,22 @@ pred ll<L1:seq(int),n:int> == self = null & L1 = [||]
 //checkentail x::node<a,null> |- x::ll<L,_> & length(L,1). 
 //checkentail x::node<a,null> |- (exists m: x::ll<L,_> & length(L,m) & m>2). 
 //checkentail x::node<a,null> |- x::ll<L,_>.
-//checkentail L1=[|1|] & L3=[|1,2|] |- true.
-// parsed as L1=[|1|] & L3=1 & L3=2 !
-//checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- append(L1,L2,L3).
-//checkentail v=2 & L=v:::L2 & L2=[||] |- len(L)=1.
-//checkentail L1=[|1,2,3|] & L2 =[|3,2,1|] |- rev(L1)=L2. 
-//checkentail L1=[|1,2,3|] & L2 =[|3,2,1|] |- rev(rev(L1))=L1. 
-checkentail L2=(v:int):::L1 & L3 = app(L1,[|v|]) |- rev(L2)=L3. // fail
-//checkentail L1 = app(L2,L3) & L4=rev(L1) |- L4=app(rev(L3),rev(L2)). // fail
+checkentail L1=[|1|] & L3=[|1,2|] |- true.  // parsed as L1=[|1|] & L3=1 & L3=2 !
+checkentail v=2 & L=v:::L2 & L2=[||] |- len(L)=1.
+checkentail L1=[|1,2,3|] & L2 =[|3,2,1|] |- rev(L1)=L2. 
+checkentail L1=[|1,2,3|] & L2 =[|3,2,1|] |- rev(rev(L1))=L1. 
+checkentail L2=(v:int):::L1 & L3 = app(L1,[|v|]) |- rev(L2)=L3. // fail this is not valid as rev(L2) = rev(L1)::v and L3 = L1::v
+checkentail L2=(v:int):::L1 & L3 = app(rev(L1),[|v|]) |- rev(L2)=L3. // this is valid
+checkentail L1 = app(L2,L3) & L4 = rev(L1) |- L4 = app(rev(L3),rev(L2)). // fail fixed
+checkentail L1=[|1,2,3|] & L2 =v:::L1 |- 1 inlist L2 . 
+checkentail L1=[|1,2,3|] & L2 =v:::L1 |- v inlist L2 . 
+checkentail L1=[|1,2,3|] & L2 =v:::L1 & v = 4 |- 4 inlist L2. 
+checkentail L1=[|1,2,3|] & L2 =v:::L1 & v = 4 |- 4 inlist L1.
+checkentail L1=[|1,2,3|] & L2 =v:::L1 & v = 4 |- 4 notinlist L2. 
+checkentail L1=[|1,2,3|] & L2 =v:::L1 & v = 4 |- 4 notinlist L1.
+checkentail L1=[|1,2,3|] & L2 =v:::L1 |- v notinlist L2 .
+checkentail L1=[|1,1,1|] & L2 =v:::L1 |- alln(1,L1).
+checkentail L1=[|1,1,1|] & L2 =v:::L1 |- alln(v,L2).
+checkentail L1 = [|1|] & L2 = app(rev(L1),L3) & alln(1,L3) |- alln(1, app(L1,L2)).
 
-
-print residue.
+//print residue.

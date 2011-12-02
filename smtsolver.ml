@@ -166,10 +166,10 @@ let rec smt_of_b_formula b =
 	| CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
 	| CP.BagMax _ | CP.BagMin _ -> 
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
- 	| CP.ListIn (e1, e2, _) -> "(isin " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
-    | CP.ListNotIn (e1, e2, _) ->  "(isnotin " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
-    | CP.ListAllN (e1, e2, _) ->  "(alln " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
-    | CP.ListPerm (e1, e2, _) ->  "(perm " ^ (smt_of_exp e1) ^ (smt_of_exp e2)  ^ ")"
+ 	| CP.ListIn (e1, e2, _) -> "(isin " ^ (smt_of_exp e1) ^ "  "^(smt_of_exp e2)  ^ ")"
+    | CP.ListNotIn (e1, e2, _) ->  "(isnotin " ^ (smt_of_exp e1) ^ " " ^ (smt_of_exp e2)  ^ ")"
+    | CP.ListAllN (e1, e2, _) ->  "(alln " ^ (smt_of_exp e1) ^ " " ^ (smt_of_exp e2)  ^ ")"
+    | CP.ListPerm (e1, e2, _) ->  "(perm " ^ (smt_of_exp e1) ^ " " ^ (smt_of_exp e2)  ^ ")"
 	| CP.RelForm (r, args, l) ->
 		let smt_args = List.map smt_of_exp args in 
 		(* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -470,7 +470,7 @@ type smtprover =
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-    (*asankhs: adding seq axioms, will later change it look up info before adding *)
+    (*asankhs: adding seq axioms, will later change it look up info before adding - done *)
     (*Sequence Axioms*)
 let seq_axioms_filename = (Gen.get_path Sys.executable_name) ^ seq_axioms_file   
 let seq_axioms  = string_of_file (seq_axioms_filename) 
@@ -580,7 +580,6 @@ let to_smt_v2 ante conseq logic fvars info =
 	let conseq_str = smt_of_formula conseq in
 		((*"(set-logic AUFNIA" (* ^ (string_of_logic logic) *) ^ ")\n" ^*)
             ";Sequence Axioms \n" ^
-            "(set-option :pull-nested-quantifiers true)\n" ^
                 if_seq_axioms ^
 			";Variables declarations\n" ^ 
 				smt_var_decls ^ 
