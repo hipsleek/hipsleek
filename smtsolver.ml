@@ -800,7 +800,7 @@ and has_exists conseq = match conseq with
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq timeout = 
-	smt_imply ante conseq Z3 timeout
+	smt_imply ante conseq Z3 15.0 (* timeout *) (* TODO restore the timeout *)
 
 let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =
   CP.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
@@ -822,6 +822,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	let _ = if !(outconfig.print_implication) then begin print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n"); flush stdout end in
+	let f = CP.remove_primitive (fun x -> match x with | CP.RelForm (_,_,_) -> true | _ -> false) f in
 	let input = to_smt f None prover in
 	let output = run prover input timeout in
 	let res = match output.sat_result with

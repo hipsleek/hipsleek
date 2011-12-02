@@ -58,9 +58,9 @@ axiom true ==> (divides(2,n) | divides(2,n+1)).
 bool isdivby(int n, int m)
 	requires true
 	ensures res & divides(m,n) or !res & !(divides(m,n));
-{
-	return n % m == 0;
-}
+//{
+//	return n % m == 0;
+//}
 
 // Check if n is prime by trying to divide n by all 1 < m < n
 bool is_prime1(int n)
@@ -83,13 +83,20 @@ bool is_prime1_helper(int n, int i)
 		return false;
 	else {
 		// encounter syntactical issue of Z3, solved by adding additional assert/assume so that it can match the argument
-		assert primerel(n,i);
+		assert primerel(n,i+1);
 		assume primerel(n,i+1);
 		return is_prime1_helper(n,i+1);
 	}
 }
 
-bool is_prime2(int n) {
+axiom primerel(n,n) ==> prime(n).
+
+axiom prime(n) ==> primerel(n,n).
+
+bool is_prime2(int n) 
+	requires n >= 0
+	ensures (res & prime(n) | !res & !(prime(n)));
+{
 	if (n < 2)
 		return false;
 	else if (n == 2)
@@ -124,3 +131,46 @@ bool is_prime2_helper(int n, int p)
 		return is_prime2_helper(n,p+2);
 	}
 }
+
+/*
+bool is_prime3(int n)
+	requires n >= 0
+	ensures (res & prime(n) | !res & !(prime(n)));
+{
+	if (n < 2)
+		return false;
+	else if (n == 2)
+		return true;
+	else if (isdivby(n,2))
+		return false;
+	else
+		return is_prime2_helper(n,3);
+}
+
+axiom n > 0 & primerel(n,p) & p * p > n ==> primerel(n,n).
+
+bool is_prime3_helper(int n, int p)
+	requires !(divides(2,n)) & 3 <= p <= n & !(divides(2,p)) & primerel(n,p)
+	ensures (res & primerel(n,n) | !res & !(primerel(n,n)));
+{
+	if (p * p >= n)
+		return true;
+	else if (isdivby(n,p))
+		return false;
+	else {
+		// Issue 1 : cannot show that if p is odd, n is odd then p + 1 does not divide n. Note that this is necessary to derive the fact that p <= n - 2 as well.
+		// Issue 2 : require a hint to show that primerel(n,p+1)
+		assert divides(2,p+1);
+		assume divides(2,p+1);
+		assert !(divides(p+1,n));
+		assume !(divides(p+1,n));
+		assert p+2 <= n;
+		assume p+2 <= n;
+		assert primerel(n,p+1);
+		assume primerel(n,p+1);
+		assert primerel(n,p+2);
+		assume primerel(n,p+2);
+		return is_prime2_helper(n,p+2);
+	}
+}
+*/
