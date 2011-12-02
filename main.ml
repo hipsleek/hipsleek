@@ -211,15 +211,6 @@ let process_source_full source =
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
-(* let process_perm() = *)
-(*   if (Perm.allow_fperm || Perm.allow_cperm) then Globals.allow_perm () := true; *)
-(*   if ((not !Globals.allow_fperm) && not(!Globals.allow_cperm)) then Globals.allow_perm () := false; *)
-(*   (\*fperm is default. if turn on cperm, disable fperm*\) *)
-(*   (\* if (!Globals.allow_cperm) then Globals.allow_fperm := false *\) *)
-(*   Globals.allow_perm () := true; *)
-(*   Globals.allow_fperm := false; *)
-(*   Globals.allow_cperm := true *)
-
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
@@ -241,7 +232,6 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
-  (* process_perm(); *)
   if !Globals.print_version_flag then begin
 	print_version ()
   end else

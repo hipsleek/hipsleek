@@ -291,12 +291,6 @@ let elim_exists = ref true
 
 let allow_imm = ref false
 
-(* let allow_perm  = ref true (\*permissions in general*\) *)
-
-(* let allow_fperm = ref true (\*fractional permissions. By default, use fperm*\) *)
-
-(* let allow_cperm = ref false (\*counting permissions*\) *)
-
 let ann_derv = ref false
 
 let print_proc = ref false

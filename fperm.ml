@@ -56,16 +56,7 @@ open Cpure
     )),None),None)
   (*LDK: a constraint to indicate FULL permission = 1.0*)
   let full_perm_constraint = 
-    (* let _ =   print_string ("fperm.ml: cperm = " ^ string_of_bool !Globals.allow_cperm   *)
-    (*                         ^ " fperm =" ^ string_of_bool !Globals.allow_fperm *)
-    (*                         ^ "\n") in *)
     Mcpure.OnePF (mkPermWrite full_perm_var)
-
-(* (Cpure.BForm (((Cpure.Eq ( *)
-(*       (Cpure.Var (full_perm_var,no_pos)), *)
-(*       (Cpure.FConst (1.0,no_pos)), *)
-(*       no_pos *)
-(*   )), None),None)) *)
   let float_out_iperm perm pos = 
     match perm with
       | None -> (None, [])

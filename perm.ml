@@ -23,18 +23,15 @@ let string_of_perm_type t =
 let perm = ref Frac
 
 let allow_perm ():bool = 
-  let _ = print_string ("perm.ml: allow_perm (): " ^ (string_of_perm_type !perm) ^ "\n\n") in
   match !perm with
     | Frac -> true
     | Count -> true
     | No -> false
 
 let set_perm perm_str = 
-  let _ = print_string ("perm.ml : set_perm: " ^ perm_str ^ "\n") in
-  let _ = if perm_str = "fperm" then perm:=Frac
+  if perm_str = "fperm" then perm:=Frac
   else if perm_str = "cperm" then perm:=Count
-  else perm:= No in
-  print_string ((string_of_perm_type !perm) ^ (string_of_bool (allow_perm ())))
+  else perm:= No
 
 let cperm_typ () = 
   match !perm with
@@ -132,14 +129,6 @@ let fresh_cperm_var =   match !perm with
 let mkEq_cperm =   match !perm with
     | Count ->  Cperm.mkEq_cperm
     | _ -> Fperm.mkEq_cperm
-
-
-(*can't not do it modularly because 
-we do not separate between printers for ipure and iformula*)
-(* let string_of_iperm perm = *)
-(*   match perm with *)
-(*     | None -> "" *)
-(*     | Some f -> Cpure.string_of_formula_exp f *)
 
 (* module PERM_const = *)
 (* struct *)

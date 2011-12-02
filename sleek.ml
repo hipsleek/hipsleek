@@ -232,23 +232,9 @@ let main () =
 (* let main () =  *)
 (*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
-(* let process_perm() = *)
-(*   if (!Globals.allow_fperm || !Globals.allow_cperm) then Globals.allow_perm () := true; *)
-(*   if ((not !Globals.allow_fperm) && not(!Globals.allow_cperm)) then Globals.allow_perm () := false; *)
-(*   (\* (\\*fperm is default. if turn on cperm, disable fperm*\\) *\) *)
-(*   (\* if (!Globals.allow_cperm) then Globals.allow_fperm := false  *\) *)
-(*   print_string ("sleek.ml: " ^ string_of_bool !allow_cperm ^ "\n"); *)
-(*   Globals.allow_perm () := true; *)
-(*   Globals.allow_fperm := false; *)
-(*   Globals.allow_cperm := true; *)
-(*   print_string ("sleek.ml: cperm = " ^ string_of_bool !Globals.allow_cperm   *)
-(*                 ^ " fperm =" ^ string_of_bool !Globals.allow_fperm *)
-(*                 ^ "\n") *)
-
 let _ = 
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
-  (* process_perm(); *)
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
