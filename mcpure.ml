@@ -159,13 +159,30 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
 	
 and group_mem_by_fv_x (lst: memo_pure):memo_pure =
   if !do_slicing then group_mem_by_fv_slicing lst
-  else group_mem_by_fv_no_slicing lst
+  else group_mem_by_fv_no_slicing_org lst
 
-and group_mem_by_fv_no_slicing (lst: memo_pure) : memo_pure = 
+(* TODO: Might be more expensive than the original function *)  
+and group_mem_by_fv_no_slicing (lst: memo_pure) : memo_pure =
+  if !f_1_slice then
+    (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem"); lst)
+  else
+    (*let l = Memo_Constr.memo_constr_of_memo_pure lst in
+    let n_l = Memo_Constr_AuS.constr_of_atom_list l in
+    let sl = Memo_AuS.split n_l in
+    Memo_Formula.memo_pure_of_memo_slice sl None*)
+    let l = MG_Constr_AuS.constr_of_atom_list lst in
+    let sl = MG_AuS.split l in
+    Memo_Formula.memo_pure_of_mg_slice sl None
+
+and group_mem_by_fv_no_slicing_org (lst: memo_pure) : memo_pure = 
   if !f_1_slice then 
     (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem"); lst)
   else
-    let n_l = Slicing.flatten_memo_pure lst in
+    let n_l = List.fold_left (fun a d -> 
+	    let n_c = List.map (fun c -> ((bfv c.memo_formula), [(Some c, None, None)])) d.memo_group_cons in
+	    let n_f = List.map (fun f -> ((fv f), [(None, Some f, None)])) d.memo_group_slice in
+	    let n_a = (fun f -> ((get_elems_eq f), [(None, None, Some f)])) d.memo_group_aset in
+      (a @ n_c @ n_f @ [n_a])) [] lst in
     
     let r = List.fold_left (fun acc (v_list, mem) -> 
 	    let l_merged, l_unmerged = List.partition (fun (v_l,_)-> 

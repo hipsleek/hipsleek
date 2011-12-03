@@ -196,11 +196,25 @@ struct
     let l2 = List.map (fun f -> Memo_F f) mg.memo_group_slice in
     let l3 = List.map (fun (v1, v2) -> Memo_E (v1, v2)) (get_equiv_eq_with_const mg.memo_group_aset) in
     l1@l2@l3
+
+  let memo_constr_of_memo_pure (mp: memo_pure) : t list =
+    List.concat (List.map memo_constr_of_memo_group mp) 
 end;;
 
 module Memo_AuS = S_AUTO (Syn_Label_AuS) (Memo_Constr);;
 module Memo_Constr_AuS = CONSTR (Syn_Label_AuS) (Memo_Constr);;
 module Memo_Slice_AuS = SLICE (Syn_Label_AuS) (Memo_Constr);;
+
+
+module Memo_Group = 
+struct
+  type t = memoised_group
+  let fv (mg: t) : spec_var list = mg.memo_group_fv
+end;;
+ 
+module MG_AuS = S_AUTO (Syn_Label_AuS) (Memo_Group);;
+module MG_Constr_AuS = CONSTR (Syn_Label_AuS) (Memo_Group);;
+module MG_Slice_AuS = SLICE (Syn_Label_AuS) (Memo_Group);;
 
 
 module Memo_Formula =
@@ -209,6 +223,7 @@ struct
   module M = Memo_Constr
   module PS_AuS = SLICE (Syn_Label_AuS) (Pure_Constr)
   module MS_AuS = SLICE (Syn_Label_AuS) (Memo_Constr)
+  module MGS_AuS = SLICE (Syn_Label_AuS) (Memo_Group)
 
   let memo_group_of_pure_slice (s: PS_AuS.t) (status: prune_status) f_opt : memoised_group =
     let vs = Gen.BList.remove_dups_eq eq_spec_var (PS_AuS.get_label s) in
@@ -262,10 +277,32 @@ struct
   let memo_pure_of_memo_slice (sl: MS_AuS.t list) f_opt : memo_pure = 
     List.map (fun s -> memo_group_of_memo_slice s f_opt) sl
 
+  let memo_group_of_mg_slice (s: MGS_AuS.t) f_opt : memoised_group =
+    let vs = Gen.BList.remove_dups_eq eq_spec_var (MGS_AuS.get_label s) in
+    let cons, slice, aset = List.fold_left (
+      fun (c, s, a) mg -> 
+        (c@mg.memo_group_cons, s@mg.memo_group_slice, EMapSV.merge_eset a mg.memo_group_aset)
+    ) ([], [], empty_var_aset) (snd s)
+    in
+    let cons = match f_opt with
+    | None -> cons
+    | Some f -> f aset [cons]
+    in
+    {
+      memo_group_fv = vs;
+      memo_group_linking_vars = [];
+      memo_group_cons = cons;
+      memo_group_slice = slice;
+      memo_group_changed = true;
+      memo_group_aset = aset;
+    }
+    
+  let memo_pure_of_mg_slice (sl: MGS_AuS.t list) f_opt : memo_pure = 
+    List.map (fun s -> memo_group_of_mg_slice s f_opt) sl
+
 end;;
 
 
-  
 (*
 (* Transform a slice to a memoised group *)
 let atom_constr_to_memo_constr (a: atom_constr) (status: prune_status) : memo_constr =
