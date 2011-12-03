@@ -198,6 +198,8 @@ let error_flow_int  = ref ((-2,-2):nflow) (*must error*)
 let false_flow_int = (0,0)
 let stub_flow_int = (-3,-3)
 
+let sl_error = "separation entailment"
+
 let res = "res"
 
 let self = "self"

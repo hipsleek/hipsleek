@@ -1180,13 +1180,20 @@ match e_kind with
   | Failure_Bot _ -> "Bot"
   | Failure_Valid -> "Valid"
 
+and string_of_failure_kind_full e_kind=
+match e_kind with
+  | Failure_May s -> "MAY:" ^s
+  | Failure_Must s -> "MUST"^s
+  | Failure_Bot _ -> "Bot"
+  | Failure_Valid -> "Valid"
+
 let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)
 
 let string_of_fail_explaining fe=
   fmt_open_vbox 1;
   pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
   pr_vwrap "fe_name: " fmt_string (fe.fe_name);
-  pr_vwrap "fe_kind: " fmt_string (string_of_list_loc fe.fe_locs);
+  pr_vwrap "fe_locs: " fmt_string (string_of_list_loc fe.fe_locs);
 (*  fe_sugg = struc_formula *)
   fmt_close ()
 
@@ -1236,7 +1243,7 @@ let rec pr_fail_type_x (e:fail_type) =
 let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
-    | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
+    | Trivial_Reason fe -> fmt_string (" Trivial fail : "^ (string_of_failure_kind_full fe.fe_kind))
     | Basic_Reason (br,fe) -> 
           (string_of_fail_explaining fe);
           if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") else (pr_fail_estate br)
@@ -1942,6 +1949,8 @@ Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
+Cformula.print_failure_kind_full := string_of_failure_kind_full;;
+Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;

@@ -484,7 +484,7 @@ let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma
   try 
     run_entail_check iante0 iconseq0
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason " exception in lemma proving ")) in
+      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_may "exception in lemma proving" "lemma"))) in
       (false, rs)
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -561,7 +561,7 @@ let process_lemma ldef =
     in
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
-    let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
+    let empty_resid = CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_may "empty residue" "lemma")) in
     let residues = match (rs_l2r, rs_r2l) with
       | (None, None) -> empty_resid
       | (None, Some rs) 

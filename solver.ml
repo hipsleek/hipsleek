@@ -2977,7 +2977,7 @@ and heap_entail_conjunct_lhs_struc_x
 	  ((fold_context_left l1),(mkCaseStep ctx conseq l2))
     else 
       (* TODO : can do a stronger falsity check on LHS *)
-	  (CF.mkFailCtx_in(Trivial_Reason "struc conseq is [] meaning false") , UnsatConseq)
+	  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "struc conseq is [] meaning false" Globals.sl_error)) , UnsatConseq)
   (* ((SuccCtx [ctx]),TrueConseq) *)
   in
   let adv_u = advance_unfold_struc prog ctx_00 conseq in
@@ -3356,7 +3356,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	  | Ctx es -> process_entail_state es 
 	  | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
   else (* Dummy result & set dup = false to do the usual checking. *)
-	((FailCtx (Trivial_Reason "Dummy list_context"), Prooftracer.TrueConseq) ,false)
+	((FailCtx (Trivial_Reason (CF.mk_failure_must "Dummy list_context" Globals.sl_error)), Prooftracer.TrueConseq) ,false)
   in
   if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
 	temp 
@@ -4516,8 +4516,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                     (err_msg,
                                     mk_failure_must err_msg err_name)
                                 in
-                                let _ = print_endline ("locle 2:"^
-                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in
+                                (*let _ = print_endline ("locle 2:"^
+                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in *)
 			                    (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
 							  fc_current_lhs = estate;
 							  fc_orig_conseq = struc_formula_of_formula conseq pos;
@@ -5428,7 +5428,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 			    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 			    fc_current_conseq = conseq;
 			    fc_failure_pts = match (get_node_label rhs_node) with | Some s-> [s] | _ -> [];},
-            CF.mk_failure_must "9999" "")), UnsatConseq)
+            CF.mk_failure_must "9999" Globals.sl_error)), UnsatConseq)
       | Some (bc1,(base1,branches1)) -> 
 
             (* let _ = print_string ("do_base_case_unfold_only_x:"  *)
@@ -5471,7 +5471,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 				    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 				    fc_current_conseq = conseq;
 				    fc_failure_pts = match (get_node_label rhs_node) with | Some s-> [s] | _ -> [];},
-                CF.mk_failure_must "99" "")),TrueConseq)
+                CF.mk_failure_must "99" Globals.sl_error)),TrueConseq)
               end
             end in
     let _ = Gen.Profiling.pop_time "empty_predicate_testing" in
@@ -5519,7 +5519,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 			    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 			    fc_current_conseq = conseq;
 			    fc_failure_pts = match (get_node_label rhs_node) with | Some s-> [s] | _ -> [];},
-                                          CF.mk_failure_must "9999" "")), UnsatConseq)
+                                          CF.mk_failure_must "9999" Globals.sl_error)), UnsatConseq)
       |  Some (bc1,(base1,branches1)) ->
              (*Turn off lhs_case flag to disable further case analysis *)
              let new_ante = CF.set_lhs_case_of_a_view ante c1 false in
@@ -5659,7 +5659,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	(* let _ = print_endline ("[do_match] remaining l_node and r_node = { " ^ PR.string_of_h_formula rem_l_node ^ " ; " ^ PR.string_of_h_formula rem_r_node ^ " }") in *)
 	match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
 	  | DataNode _ -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cannot match LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, 
-  CF.mk_failure_must "99" "")), NoAlias)
+  CF.mk_failure_must "99" Globals.sl_error)), NoAlias)
 	  | _ -> 
 	        (* An Hoa : end added code *)
             let label_list = try 
@@ -6025,7 +6025,7 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 and do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let vd = (vdef_fold_use_bc prog rhs_node) in
   if (vd==None) then   (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
-  CF.mk_failure_must "99" "")), NoAlias)
+  CF.mk_failure_must "99" Globals.sl_error)), NoAlias)
   else do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
 and do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos = 
@@ -6124,7 +6124,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
           let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" "separation reduction")), NoAlias)
+		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" Globals.sl_error)), NoAlias)
           else
             let new_estate = {estate with es_formula = Base{lhs_b with formula_base_heap = lhs_rest}} in
 			(*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
@@ -6152,7 +6152,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           let curr_unfold_num = (get_view_unfold_num lhs_node)+unfold_num in
           if (curr_unfold_num>1) then 
             (CF.mkFailCtx_in(Basic_Reason(mkFailContext "ensuring finite unfold" estate conseq (get_node_label lhs_node) pos,
-            CF.mk_failure_must "infinite unfolding" "separation reduction")),NoAlias)
+            CF.mk_failure_must "infinite unfolding" Globals.sl_error)),NoAlias)
           else
             let delta1 = Gen.Profiling.no_1 "1_unfold" (unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num) pos in (* update unfold_num *)
             let ctx1 = build_context (Ctx estate) delta1 pos in
@@ -6168,7 +6168,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             (do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos) rhs_b in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "base_case_unfold failed" estate conseq (get_node_label rhs_node) pos
-                  , CF.mk_failure_must "base case unfold failed" "separation entailment")),NoAlias)
+                  , CF.mk_failure_must "base case unfold failed" Globals.sl_error)),NoAlias)
                   (*use UNION, so return MUST, final res = latter case*)
             | Some x -> x)
     | Context.M_base_case_fold {
@@ -6186,7 +6186,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           let ans = do_lhs_case prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos in
           (match ans with
             | None -> (CF.mkFailCtx_in(Basic_Reason(mkFailContext "lhs_case failed" estate conseq (get_node_label rhs_node) pos
-                  , CF.mk_failure_must "lhs case analysis failed" "separation entailment")),NoAlias)
+                  , CF.mk_failure_must "lhs case analysis failed" Globals.sl_error)),NoAlias)
             | Some x -> x)
 
     | Context.M_rd_lemma {
@@ -6208,9 +6208,9 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             | Some c -> ()(* print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") *) in
           let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
           (r1,Search r2)
-    | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" "")), NoAlias)
+    | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error)), NoAlias)
     | Context.M_Nothing_to_do s -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-      CF.mk_failure_must ("Nothing_to_do?"^s) "separation entailment")), NoAlias)
+      CF.mk_failure_must ("Nothing_to_do?"^s) Globals.sl_error)), NoAlias)
     | Context.M_unmatched_rhs_data_node rhs ->
           (* TODO : obtain xpure0 of RHS
              (i) check if it is unsat, or
@@ -6246,7 +6246,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                     !Globals.error_flow_int estate.CF.es_formula} in
             (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                          CF.mk_failure_must s "")), NoAlias)
+                                          CF.mk_failure_must s Globals.sl_error)), NoAlias)
           else
             begin
               (*check disj memset*)
@@ -6302,17 +6302,17 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                           !Globals.top_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                  CF.mk_failure_must s "separation entailment")), NoAlias)
+                  CF.mk_failure_must s Globals.sl_error)), NoAlias)
             end
     | Context.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
-              , CF.mk_failure_must "sequential action - not handled" "separation entailment")), NoAlias)
+              , CF.mk_failure_must "sequential action - not handled" Globals.sl_error)), NoAlias)
     | Context.Cond_action l ->
           let rec helper l = match l with
            | [] ->           
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
-                      , CF.mk_failure_must "Cond action - none succeeded" "separation entailment")), NoAlias)
+                      , CF.mk_failure_must "Cond action - none succeeded" Globals.sl_error)), NoAlias)
            | [(_,act)] -> process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
            | (_,act)::xs ->
                   let (r1,prf1) = process_action prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
@@ -6729,7 +6729,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 				fc_orig_conseq = estate.es_orig_conseq;
 				fc_current_conseq = CF.formula_of_heap HFalse pos;
 				fc_failure_pts = match (get_node_label node) with | Some s-> [s] | _ -> [];}
-                , CF.mk_failure_must "failed coercion" "separation entailment")), Failure))
+                , CF.mk_failure_must "failed coercion" Globals.sl_error)), Failure))
 	      else	(* we can apply coercion *)
 		    begin
 		      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
@@ -6775,7 +6775,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 			fc_orig_conseq = estate.es_orig_conseq;
 			fc_current_conseq = CF.formula_of_heap HFalse pos;
 			fc_failure_pts = [];}
-            , CF.mk_failure_must "11" "separation entailment")), Failure)
+            , CF.mk_failure_must "11" Globals.sl_error)), Failure)
   end
 
 
@@ -6957,7 +6957,7 @@ and apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*
 	  fc_orig_conseq = estate.es_orig_conseq;
 	  fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	  fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];}
-      , CF.mk_failure_must "12" "separation entailment")), Failure)
+      , CF.mk_failure_must "12" Globals.sl_error)), Failure)
   else begin
     let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in(* Assume coercions have no branches *)
     let estate = CF.moving_ivars_to_evars estate anode in
@@ -7010,7 +7010,8 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
   in 
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
     || not(is_original_match anode ln2)
-  then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
+  then (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "no lemma found in both LHS and RHS nodes (do coercion)" 
+                                            Globals.sl_error)), [])
   else begin 
     Debug.devel_pprint ("do_coercion: estate :" ^ (Cprinter.string_of_entail_state estate) ^ "\n") pos;
     Debug.devel_pprint ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
@@ -7054,7 +7055,8 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       let prf = List.concat (List.map (fun (c,p) -> if final_res==(isFailCtx c) then p else []) r1) in
       (res,prf) in
     let m = List.fold_right (fun x r -> match x with None -> r | Some x -> x::r ) [univ_r;left_r;right_r] [] in
-    if m==[] then (CF.mkFailCtx_in(Trivial_Reason "cannot find matching node in antecedent (do coercion)"), [])
+    if m==[] then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must 
+                         "cannot find matching node in antecedent (do coercion)" Globals.sl_error)), [])
     else proc m
   end
     (* match univ_r,left_r,right_r with *)
@@ -7137,7 +7139,8 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
 	  fc_prior_steps = estate.es_prior_steps;
 	  fc_orig_conseq = estate.es_orig_conseq;
 	  fc_current_conseq = CF.formula_of_heap HFalse pos; 
-	  fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];}, CF.mk_failure_must "12" "separation entailment")), [])
+	  fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];}, 
+                                            CF.mk_failure_must "12" Globals.sl_error)), [])
     (*******************************************************************************************************************************************************************************************)
     (* apply_right_coercion *)
     (*******************************************************************************************************************************************************************************************)
@@ -7195,7 +7198,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
     fc_orig_conseq = estate.es_orig_conseq;
     fc_current_conseq = CF.formula_of_heap HFalse pos;
     fc_failure_pts = match (get_node_label ln2) with | Some s-> [s] | _ -> [];},
-    CF.mk_failure_must "13" "separation entailment")), [])
+    CF.mk_failure_must "13" Globals.sl_error)), [])
         (* else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application"; *)
         (* fc_current_lhs = estate; *)
         (* fc_prior_steps = estate.es_prior_steps; *)

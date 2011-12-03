@@ -2437,7 +2437,7 @@ and fail_context = {
     
 and fail_type =
   | Basic_Reason of (fail_context * fail_explaining)
-  | Trivial_Reason of string
+  | Trivial_Reason of fail_explaining
   | Or_Reason of (fail_type * fail_type)
   | And_Reason of (fail_type * fail_type)
   | Union_Reason of (fail_type * fail_type)
@@ -2473,6 +2473,48 @@ let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
+let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
+let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
+
+let rec empty_es flowt pos = 
+	let x = mkTrue flowt pos in
+{
+  es_formula = x;
+  es_heap = HTrue;
+  es_pure = (MCP.mkMTrue pos , []);
+  es_evars = [];
+  (* es_must_match = false; *)
+  es_ivars = [];
+  (* es_expl_vars = []; *)
+  es_ante_evars = [];
+  es_gen_expl_vars = []; 
+  es_gen_impl_vars = []; 
+  es_pp_subst = [];
+  es_unsat_flag = true;
+  es_arith_subst = [];
+  es_success_pts = [];
+  es_residue_pts  = [];
+  es_id = 0 ;
+  es_orig_ante = x;
+  es_orig_conseq = [mkETrue flowt pos] ;
+  es_rhs_eqset = [];
+  es_path_label  =[];
+  es_prior_steps  = [];
+  es_var_measures = [];
+  es_var_label = None;
+  es_var_ctx_lhs = CP.mkTrue pos;
+  es_var_ctx_rhs = CP.mkTrue pos;
+  es_var_subst = [];
+  (*es_cache_no_list = [];*)
+  es_cont = [];
+  es_crt_holes = [];
+  es_hole_stk = [];
+  es_aux_xpure_1 = MCP.mkMTrue pos;
+  es_subst = ([], []);
+  es_aux_conseq = CP.mkTrue pos;
+  es_must_error = None;
+
+}
 
 let is_one_context (c:context) =
   match c with
@@ -2617,80 +2659,138 @@ let list_context_is_eq_flow (f:list_context) (ff)  : bool=
 let get_failure_fe (f:fail_explaining) = f.fe_kind
 
 (*gen_land*)
-let gen_land (m1,e1) (m2,e2) = match m1,m2 with
-  | Failure_Bot _, _ -> m1, e1
+let gen_land (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
+  | Failure_Bot _, _ -> m1, n1, e1
       (*report_error no_pos "Failure_None not expected in gen_and"*)
-  | _, Failure_Bot _ -> m2, e2
+  | _, Failure_Bot _ -> m2, n2, e2
       (*report_error no_pos "Failure_None not expected in gen_and"*)
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("land["^m1^","^m2^"]"),None)
-  | Failure_May m1, _ -> m2, e2
-  | _ , Failure_May m2 -> m1,e1
-  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("land["^m1^","^m2^"]"),e1 (*combine state here?*)
-  | Failure_Must m1, Failure_Valid -> Failure_May ("land["^m1^",Valid]"), None (*combine state here?*)
-  | Failure_Valid, x  -> (m2,e2)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("land["^m1^","^m2^"]"),n1,None)
+  | Failure_May m1, _ -> m2, n2, e2
+  | _ , Failure_May m2 -> m1,n1, e1
+  | Failure_Must m1, Failure_Must m2 ->
+      ( match (n1,n2) with
+        | sl_error, _ -> (Failure_Must m2, n2, e2)
+        | _ , sl_error -> (Failure_Must m1, n1, e1)
+        | _ -> Failure_Must ("land["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+      )
+  | Failure_Must m1, Failure_Valid -> Failure_May ("land["^m1^",Valid]"), n1, None (*combine state here?*)
+  | Failure_Valid, x  -> (m2, n2, e2)
 
 (*gen_rand*)
-let gen_and (m1,e1) (m2,e2) = match m1,m2 with
-  | Failure_Bot m, _ -> Failure_Bot m, e1
+let gen_rand_x (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
+  | Failure_Bot m, _ -> Failure_Bot m, n1,e1
       (*report_error no_pos "Failure_None not expected in gen_and"*)
-  | _, Failure_Bot m -> Failure_Bot m, e2
+  | _, Failure_Bot m -> Failure_Bot m, n2, e2
       (*report_error no_pos "Failure_None not expected in gen_and"*)
-  | Failure_Must m1, Failure_Must m2 -> Failure_Must ("rand["^m1^","^m2^"]"),e1 (*combine state here?*)
-  | Failure_Must m, _ -> Failure_Must m,e1
-  | _, Failure_Must m -> Failure_Must m,e2
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("rand["^m1^","^m2^"]"),None)
-  | Failure_May m, _ -> Failure_May m,None
-  | _, Failure_May m -> Failure_May m,None
-  | Failure_Valid, x  -> (m2,e2)
+  | Failure_Must m1, Failure_Must m2 ->
+      if (n1=sl_error) then (Failure_Must m2, n2, e2)
+      else if (n2= sl_error) then (Failure_Must m1, n1, e1)
+      else Failure_Must ("rand["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
+  | Failure_Must m, _ -> Failure_Must m, n1, e1
+  | _, Failure_Must m -> Failure_Must m, n2, e2
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("rand["^m1^","^m2^"]"),n1,None)
+  | Failure_May m, _ -> Failure_May m,n1,None
+  | _, Failure_May m -> Failure_May m,n2,None
+  | Failure_Valid, x  -> (m2,n2,e2)
   (* | x, Failure_Valid -> x *)
+
+let gen_rand (m1,n1,e1) (m2,n2,e2)=
+  let pr (m, n , e) = (!print_failure_kind_full m) ^ ", name: " ^ n in
+  let pr1 (m, n, e) = let tmp = (!print_failure_kind_full m) ^ ", name: " ^ n in
+                       match e with
+                         | None -> tmp
+                         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
+  in
+  Gen.Debug.no_2 "gen_rand" pr pr pr1 (fun x y -> gen_rand_x x y) (m1,n1,e1) (m2,n2,e2)
 
 (* state to be refined to accurate one for must-bug *)
 (*gen_lor*)
-let gen_or (m1,e1) (m2,e2) : (failure_kind * (entail_state option)) = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("lor["^m1^","^m2^"]"), e1 (*combine state here?*)
+let gen_lor_x (m1,n1,e1) (m2,n2,e2) : (failure_kind * string * (entail_state option)) = match m1,m2 with
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("lor["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
 (* report_error no_pos "Failure_None not expected in gen_or" *)
-  | Failure_Bot _, _ ->  m2, e2
+  | Failure_Bot _, _ ->  m2, n2,e2
       (* report_error no_pos "Failure_None not expected in gen_or" *)
-  | _, Failure_Bot _ -> m1,e1
+  | _, Failure_Bot _ -> m1,n1,e1
       (*report_error no_pos "Failure_None not expected in gen_or"*)
-  | Failure_May m1, Failure_May m2 -> Failure_May ("lor["^m1^","^m2^"]"), None
-  | Failure_May m, _ -> Failure_May m, None
-  | _, Failure_May m -> Failure_May m,None
-  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("lor["^m1^","^m2^"]"),e1)
-  | Failure_Must m, Failure_Valid -> (Failure_May ("lor["^m^",valid]"),None)
-  | Failure_Valid, Failure_Must m -> (Failure_May ("lor["^m^",valid]"),None)
+  | Failure_May m1, Failure_May m2 -> Failure_May ("lor["^m1^","^m2^"]"),n1, None
+  | Failure_May m, _ -> Failure_May m, n1,None
+  | _, Failure_May m -> Failure_May m,n2,None
+  | Failure_Must m1, Failure_Must m2 ->
+      if (n1=sl_error) then (Failure_Must m2, n2, e2)
+      else if (n2= sl_error) then (Failure_Must m1, n1, e1)
+      else (Failure_Must ("lor["^m1^","^m2^"]"), n1, e1)
+  | Failure_Must m, Failure_Valid -> (Failure_May ("lor["^m^",valid]"),n1,None)
+  | Failure_Valid, Failure_Must m -> (Failure_May ("lor["^m^",valid]"),n2,None)
   (* | _, Failure_Must m -> Failure_May ("or["^m^",unknown]") *)
   (* | Failure_Must m,_ -> Failure_May ("or["^m^",unknown]") *)
-  | Failure_Valid, x  -> (m2,e2)
+  | Failure_Valid, x  -> (m2,n2,e2)
   (* | x, Failure_Valid -> x *)
 
-(*gen_ror*)
-let gen_union (m1,e1) (m2,e2) = match m1,m2 with
-  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("ror["^m1^","^m2^"]"), e1 (*combine state here?*)
-  | Failure_Bot _, x -> m1,e1 (* (m2,e2) *)
-  | x, Failure_Bot _ -> m2,e2 (*(m1,e1)*)
-  | Failure_Valid, _ -> (Failure_Valid,None)
-  | _, Failure_Valid -> (Failure_Valid,None)
-  | Failure_Must m1, Failure_Must m2 -> (Failure_Must ("ror["^m1^","^m2^"]"),e1)
-  | Failure_May m1, Failure_May m2 -> (Failure_May ("ror["^m1^","^m2^"]"),None)
-  | Failure_May _,  _ -> (m1,e1)
-  | _, Failure_May _ -> (m2,e2)
+let gen_lor (m1,n1,e1) (m2,n2,e2)=
+  let pr (m, n , e) = (!print_failure_kind_full m) ^ ", name: " ^ n in
+  let pr1 (m, n, e) = let tmp = (!print_failure_kind_full m) ^ ", name: " ^ n in
+                       match e with
+                         | None -> tmp
+                         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
+  in
+  Gen.Debug.no_2 "gen_lor" pr pr pr1 (fun x y -> gen_lor_x x y) (m1,n1,e1) (m2,n2,e2)
 
-let rec get_failure_es_ft (ft:fail_type) : (failure_kind * (entail_state option)) =
+
+(*gen_ror*)
+(*
+  - m: failure_kind (must/may/bot/valid)
+  - n: name of failure (logical/separation entailment). should reduce separation entailment
+  - e: current entailment
+*)
+let gen_ror_x (m1, n1, e1) (m2, n2, e2) = match m1,m2 with
+  | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("ror["^m1^","^m2^"]"), n1,e1 (*combine state here?*)
+  | Failure_Bot _, x -> m1,n1,e1 (* (m2,e2) *)
+  | x, Failure_Bot _ -> m2,n2,e2 (*(m1,e1)*)
+  | Failure_Valid, _ -> (Failure_Valid,"",None)
+  | _, Failure_Valid -> (Failure_Valid,"",None)
+  | Failure_Must m1, Failure_Must m2 ->
+      if (n1=sl_error && e2 != None) then (Failure_Must m2, n2, e2)
+      else if (n2 =sl_error && e1 != None) then(Failure_Must m1, n1, e1)
+      else (Failure_Must ("ror["^m1^","^m2^"]"),n1, e1)
+  | Failure_May m1, Failure_May m2 -> (Failure_May ("ror["^m1^","^m2^"]"),n1,None)
+  | Failure_May _,  _ -> (m1,n1,e1)
+  | _, Failure_May _ -> (m2,n2,e2)
+
+let gen_ror (m1,n1,e1) (m2,n2,e2)=
+  let pr (m, n , e) = (!print_failure_kind_full m) ^ ", name: " ^ n in
+  let pr1 (m, n, e) = let tmp = (!print_failure_kind_full m) ^ ", name: " ^ n in
+                       match e with
+                         | None -> tmp
+                         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
+  in
+  Gen.Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
+
+
+let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
   match ft with
-    | Basic_Reason (fc,fe) -> 
-          let f = get_failure_fe fe in
-          if (is_must_failure_fe fe) then (f,Some fc.fc_current_lhs)
-          else (f,None)
-    | Or_Reason (f1,f2) -> gen_or (helper f1) (helper f2)
-    | And_Reason (f1,f2) -> gen_and (helper f1) (helper f2)
-    | Union_Reason (f1,f2) -> gen_union (helper f1) (helper f2)
-    | ContinuationErr _ -> (Failure_May "Continuation_Err",None)
-    | Or_Continuation (f1,f2) -> gen_or (helper f1) (helper f2)
-          (* report_error no_pos "get_must_failure : or continuation encountered" *)
-    | _ -> (Failure_May "Unknown", None)
-  in helper ft
+    | Basic_Reason (fc,fe) ->
+        (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)
+        let f = get_failure_fe fe in
+        if (is_must_failure_fe fe) then (f, fe.fe_name, Some fc.fc_current_lhs)
+        else (f,fe.fe_name, None)
+    | Or_Reason (f1,f2) -> gen_lor (helper f1) (helper f2)
+    | And_Reason (f1,f2) -> gen_rand (helper f1) (helper f2)
+    | Union_Reason (f1,f2) -> gen_ror (helper f1) (helper f2)
+    | ContinuationErr _ -> (Failure_May "Continuation_Err", "Continuation", None)
+    | Or_Continuation (f1,f2) -> gen_lor (helper f1) (helper f2)
+    (* report_error no_pos "get_must_failure : or continuation encountered" *)
+    | Trivial_Reason fe -> (fe.fe_kind, fe.fe_name, None)
+  in
+  let (f, _, oes) = helper ft in (f, oes)
+
+let get_failure_es_ft (ft:fail_type) : (failure_kind * (entail_state option)) =
+  let pr1 (m, e) = let tmp = (!print_failure_kind_full m) in
+                       match e with
+                         | None -> tmp
+                         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
+  in
+  Gen.Debug.no_1 "get_failure_es_ft" !print_fail_type pr1 (fun x -> get_failure_es_ft_x x) ft
 
 let get_failure_ft (ft:fail_type) : (failure_kind) =
   fst (get_failure_es_ft ft)
@@ -2768,7 +2868,8 @@ let get_must_es_msg_ft ft =
   (* let msg = get_must_failure_ft ft in *)
   match es,msg with
     | Some es, Failure_Must msg -> Some (es,msg)
-    | None, Failure_Must ms -> report_error no_pos "INCONSISTENCY with get_must_es_msg_ft"
+    | None, Failure_Must msg -> Some (empty_es ( mkTrueFlow ()) no_pos,msg) (*may be Trivial fail*)
+    (*report_error no_pos "INCONSISTENCY with get_must_es_msg_ft"*)
     | _, _ -> None
  
 let get_must_failure (ft:list_context) =
@@ -2978,46 +3079,6 @@ let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_cont
 let mk_empty_frame () : (h_formula * int ) = 
   let hole_id = Globals.fresh_int () in
     (Hole(hole_id), hole_id)
-
-let rec empty_es flowt pos = 
-	let x = mkTrue flowt pos in
-{
-  es_formula = x;
-  es_heap = HTrue;
-  es_pure = (MCP.mkMTrue pos , []);
-  es_evars = [];
-  (* es_must_match = false; *)
-  es_ivars = [];
-  (* es_expl_vars = []; *)
-  es_ante_evars = [];
-  es_gen_expl_vars = []; 
-  es_gen_impl_vars = []; 
-  es_pp_subst = [];
-  es_unsat_flag = true;
-  es_arith_subst = [];
-  es_success_pts = [];
-  es_residue_pts  = [];
-  es_id = 0 ;
-  es_orig_ante = x;
-  es_orig_conseq = [mkETrue flowt pos] ;
-  es_rhs_eqset = [];
-  es_path_label  =[];
-  es_prior_steps  = [];
-  es_var_measures = [];
-  es_var_label = None;
-  es_var_ctx_lhs = CP.mkTrue pos;
-  es_var_ctx_rhs = CP.mkTrue pos;
-  es_var_subst = [];
-  (*es_cache_no_list = [];*)
-  es_cont = [];
-  es_crt_holes = [];
-  es_hole_stk = [];
-  es_aux_xpure_1 = MCP.mkMTrue pos;
-  es_subst = ([], []);
-  es_aux_conseq = CP.mkTrue pos;
-  es_must_error = None;
-
-}
 
 let mk_not_a_failure =
   Basic_Reason ({
@@ -4631,7 +4692,7 @@ let trans_context (c: context) (arg: 'a)
 
 let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
-    | Trivial_Reason s -> c
+    | Trivial_Reason _ -> c
     | Basic_Reason (br,fe) -> Basic_Reason ((f br), fe)
     | ContinuationErr br -> ContinuationErr (f br)
     | Or_Reason (ft1,ft2) -> Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
@@ -4671,7 +4732,7 @@ let list_failesc_to_partial (c:list_failesc_context): list_partial_context =
 let rec fold_fail_context f (c:fail_type) = 
   (*let f_br,f_or,f_and = f in*)
   match c with
-    | Trivial_Reason br -> f c []
+    | Trivial_Reason _ -> f c []
     | Basic_Reason br -> f c []
     | ContinuationErr br -> f c []
     | Or_Reason (ft1,ft2) | Union_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
