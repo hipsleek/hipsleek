@@ -251,16 +251,16 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* ************ */
 /* Concurrency  */
 /* ************ */
-data tid{
-}
+/* data tid{ */
+/* } */
 
-void fork(tid id)
-  requires true
-  ensures id::tid<>;
+/* void fork(tid id) */
+/*   requires true */
+/*   ensures id::tid<>; */
 
-void join1(tid id)
-  requires id::tid<>
-  ensures true;
+/* void join1(tid id) */
+/*   requires id::tid<> */
+/*   ensures true; */
 
 /* ************ */
 /* Concurrency  */
