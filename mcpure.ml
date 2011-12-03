@@ -2,60 +2,60 @@ open Globals
 open Gen.Basic
 
 open Cpure
-open Slicing 
+open Slicing
+
 (*
- -eprune = espec + ememo + eslice
+ eprune = espec + ememo + eslice
  -espec enables specialization 
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
   
-let print_mp_f = ref (fun (c:memo_pure)-> " printing not initialized")
-let print_mg_f = ref (fun (c:memoised_group)-> " printing not initialized")
-let print_mc_f = ref (fun (c:memoised_constraint)-> "printing not initialized")
-let print_sv_f = ref (fun (c:spec_var)-> "spec var printing not initialized")
-let print_sv_l_f = ref (fun (c:spec_var list)-> "spec var list printing not initialized")
-let print_bf_f = ref (fun (c:b_formula)-> "b formula printing not initialized")
-let print_p_f_f = ref (fun (c:formula)-> " formula printing not initialized")
-let print_exp_f = ref(fun (c:exp) -> "exp_printing") 
+let print_mp_f = ref (fun (c: memo_pure) -> "printing not initialized")
+let print_mg_f = ref (fun (c: memoised_group) -> "printing not initialized")
+let print_mc_f = ref (fun (c: memoised_constraint) -> "printing not initialized")
+let print_sv_f = ref (fun (c: spec_var) -> "spec_var printing not initialized")
+let print_sv_l_f = ref (fun (c: spec_var list) -> "spec_var list printing not initialized")
+let print_bf_f = ref (fun (c: b_formula) -> "b_formula printing not initialized")
+let print_p_f_f = ref (fun (c: formula) -> "formula printing not initialized")
+let print_exp_f = ref(fun (c: exp) -> "exp printing not initialized") 
 (* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
 
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
 
 let print_alias_set aset = EMapSV.string_of aset
 
-(* with const for get_equiv_eq + form_formula__eq *)
+(* with const for get_equiv_eq + form_formula_eq *)
 (* converts an equiv set into a formula *)
-let fold_aset (f:var_aset):formula = 
-  List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos) 
+let fold_aset (f: var_aset) : formula = 
+  List.fold_left (fun a (c1, c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos) 
     (mkTrue no_pos) (get_equiv_eq_with_const f)
 
-let fold_aset (f:var_aset):formula =
+let fold_aset (f: var_aset) : formula =
   Gen.Debug.no_1 "fold_aset" print_alias_set !print_p_f_f fold_aset f 
 
-let fv_memoised_constraint ({memo_formula = bf}:memoised_constraint) : spec_var list 
+let fv_memoised_constraint ({ memo_formula = bf }: memoised_constraint) : spec_var list 
   = bfv bf
                                 
-
-let fv_memoised_group (m:memoised_group) : spec_var list =
+let fv_memoised_group (m: memoised_group) : spec_var list =
   match m with
-  {memo_group_cons = mc_ls;
-   memo_group_slice = f_ls;
-   memo_group_aset = eq_set}  ->  
+  { memo_group_cons = mc_ls;
+    memo_group_slice = f_ls;
+    memo_group_aset = eq_set }  ->  
     let v1 = List.concat (List.map fv_memoised_constraint mc_ls) in
     let v2 = List.concat (List.map fv f_ls) in
-    let v3 = List.filter (fun x -> not(is_const x)) (fv_var_aset eq_set) in
+    let v3 = List.filter (fun x -> not (is_const x)) (fv_var_aset eq_set) in
     v1@v2@v3
 
-let repatch_memoised_group (m:memoised_group) : memoised_group =
+let repatch_memoised_group (m: memoised_group) : memoised_group =
   let new_vars = fv_memoised_group m in
-  {m with memo_group_fv = new_vars} 
+  { m with memo_group_fv = new_vars } 
 
-let repatch_memo_pure (ms:memo_pure) : memo_pure =
+let repatch_memo_pure (ms: memo_pure) : memo_pure =
   List.map repatch_memoised_group ms
 
 (* v2 must be a subset of v1 *)
-let consistent_memoised_group (m:memoised_group) : bool =
+let consistent_memoised_group (m: memoised_group) : bool =
   let v1 = m.memo_group_fv in
   let v2 = fv_memoised_group m in
   let r = Gen.BList.difference_eq eq_spec_var v2 v1 in
@@ -67,7 +67,7 @@ let consistent_memoised_group (m:memoised_group) : bool =
       let _ = report_warning no_pos s in*)
       true
   else 
-    let s = ("ERROR: FreeVars not captured: "^(!print_svl r)) in
+    let s = ("ERROR: FreeVars not captured: " ^ (!print_svl r)) in
     let _ = report_warning no_pos s in
     false
 
@@ -1095,18 +1095,18 @@ and create_memo_group_no_slicing (l1:(b_formula * (formula_label option)) list) 
   let l1, to_slice1 = memo_norm l1 in
   let l2 = to_slice1 @ to_slice2 @ l2 in
   (* Normalize l1 and l2 to lists of atomic constraints *)
-  let l1 = List.map (fun b -> Const_B b) l1 in
-  let l2 = List.map (fun f -> Const_R f) l2 in
+  let l1 = List.map (fun b -> Pure_Constr.atom_of_b_formula b) l1 in
+  let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
   let sl =
     let l = l1 @ l2 in
     if !f_1_slice then (* No slicing *)
-      let v = List.fold_left (fun a s -> a @ (fv_atom s)) [] l in
+      let v = List.fold_left (fun a s -> a @ (Pure_Constr.fv s)) [] l in
       [(Some (Gen.BList.remove_dups_eq eq_spec_var v), l)] 
     else 
-      let n_l = List.map atom_to_constr l in (* List of slices (atomic constraints with syntactic label) *)
-      split n_l 
+      let n_l = Pure_Constr_AuS.constr_of_atom_list l in (* List of atomic constraints with syntactic label *)
+      Pure_AuS.split n_l 
   in
-  slice_list_to_memo_pure sl status filter_merged_cons 
+  Memo_Formula.memo_pure_of_pure_slice sl status (Some filter_merged_cons) 
 
 (*add both imply and fail*)
 and create_memo_group_no_slicing_old (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
@@ -1237,10 +1237,6 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
 	  memo_group_aset = aset;}) ll in
   r
 	
-and create_memo_group_debug ll l2 = 
-  Gen.Debug.no_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
-      (!print_mp_f) create_memo_group ll l2
-
 (* with_const; use get_equiv_eq *)
 (*
   This attempts to split g into multiple groups if 
@@ -1256,19 +1252,11 @@ and split_mem_grp_x (g:memoised_group): memo_pure =
 and split_mem_grp_no_slicing (g : memoised_group) : memo_pure = 
   if !f_1_slice then [g]
   else
-    let l, ps_tab = memo_group_to_constrs g in 
-    let sl = split l in
-    let mp = slice_list_to_memo_pure sl Implied_P filter_merged_cons in (* Implied_N is a dummy status *) 
-    (* Restore the status for every memoised_constraint *)
-    List.map (fun mg -> 
-      let mc = List.map (fun c ->
-        { c with memo_status = 
-          try Hashtbl.find ps_tab c.memo_formula 
-          with _ -> report_error no_pos "[mcpure.ml]: split_mem_grp error" } 
-      ) mg.memo_group_cons in
-      { mg with memo_group_cons = mc }
-    ) mp
-
+    let l =  Memo_Constr.memo_constr_of_memo_group g in
+    let n_l = Memo_Constr_AuS.constr_of_atom_list l in 
+    let sl = Memo_AuS.split n_l in
+    Memo_Formula.memo_pure_of_memo_slice sl None 
+   
 (* BUGS: Constraints without free variables will be removed implicitly *)    
 and split_mem_grp_no_slicing_org (g:memoised_group): memo_pure =   
   if !f_1_slice then [g]
