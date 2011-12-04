@@ -15,7 +15,7 @@ pred neg_ll<n> == self = null & n = 0
 lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __Error.
 //lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __Error.
 
-//OR
+//LOR
 /*
 or{must,valid} --> may
 or{must,must} --> must
@@ -36,10 +36,20 @@ checkentail n>2 or n>4 |- n>1.
 // 4. or{valid,may} --> may
 checkentail n>2 or n>0 |- n>1.
 
+// 5. or{must,may} --> may
+checkentail n<1 or n>0 |- n>1.
+
 //pointer
+//6. or{must,valid} --> may
+checkentail x::ll<n> & n > 3 or x=null |- x::node<_,_>.
 
+//7. or{must,must} --> must
+checkentail x=null or x::node<_,null> |- x::ll<m> & m > 2.
 
-//AND
+//8. or{valid,may} --> may
+checkentail x::ll<n> & n > 3 or x::ll<m> |- x::node<_,_>.
+
+//RAND
 /*
 and{valid,valid} --> valid
 and{must,valid} --> must
@@ -47,30 +57,25 @@ and{may,valid} --> may
 */
 
 //pure
-//5. and{valid,valid} --> valid
+//9. and{valid,valid} --> valid
  checkentail n>3 & p>6 |- n>1 & p>2.
 
-// 6. and{must,valid} --> must; 
+//10. and{must,valid} --> must;
  checkentail n>3 & p>6 |- n<1 & p>2.
 
-// 7. and{must,must} --> must
+//11. and{must,must} --> must
  checkentail n>3 & p>6 |- n<1 & p<2.
 
-// 8. and{may,must} --> must
+//12. and{may,must} --> must
  checkentail n>1 & p>6 |- n>3 & p<2.
 
-// 9. and{must,may} --> must
+//13. and{must,may} --> must
  checkentail n>1 & p>6 |- p<2 & n>3.
 
-// 10. and{may,valid} --> may; 
+//14. and{may,valid} --> may;
  checkentail n>3 & p>6 |- n>4 & p>2.
 
-
-
-
 //pointer
-
-
 
 //ROR
 /*
@@ -79,24 +84,25 @@ union{may,must} --> may
 */
 //pure
 
-//11. union{valid,may} --> valid
+//15. ror{valid,may} --> valid
  checkentail n>3 |- n>1 or n>5 .
 
-//12. union{must,may} --> may // FIXED : DETECTED AS A MUST BUG
+//16. ror{must,may} --> may
  checkentail n>3 |- n<1 or n>5 .
 
-//13. union{must,must} --> must
+//17. ror{must,must} --> must
  checkentail n>3 |- n<1 or n<2 .
 
+//heap
+//18. ror{valid,must} --> valid
+checkentail  x::node<_,null>  |-  x::ll<n> or x=null.
 
 //proof search for separation entailment
-
-//14. must fail. cause:213  true |-  n=0 & 0<n (RHS: contradiction).
+//19. must fail. cause:213  true |-  n=0 & 0<n (RHS: contradiction).
 //separation entailment must errors are eliminated
 checkentail x::ll<m> & m=0 |- x::ll<n> & n>0.
 
-
-//15. must fail. cause:213  true |-  n=0 & 0<n (RHS: contradiction).
+//20. must fail. cause:213  true |-  n=0 & 0<n (RHS: contradiction).
 //separation entailment must errors are eliminated
 checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
 

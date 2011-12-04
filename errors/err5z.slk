@@ -11,6 +11,6 @@ checkentail x::ll<n> & n>2 |- x=null.
 //Entail (1): Fail.(must) cause:213  null!=x |-  null=x (must-bug).
 
 checkentail x::ll<n> & n>3 |- x::node<_,null>.
-//Entail (2): Fail.(may) cause:213  true |-  null=r_75 (may-bug).
+//Entail (2): Fail.(must) cause:213  null!=r_70 |-  null=r_70 (must-bug). FIXED
 
 

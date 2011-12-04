@@ -18,7 +18,7 @@ checkentail n>4 |- n > 3.
 //3. Fail. (must)
 checkentail n>3 |- n <2.
 
-//3. Fail. (may)
+//4. Fail. (may)
 checkentail n>3 |- n > 4.
 
 //heap
@@ -33,3 +33,4 @@ checkentail  x::ll<m> & m>3 |- x::node<_, null> .
 
 //8. Fail. (may)
 checkentail  x::ll<m> & m>3 |- x::ll<n> & n>5.
+

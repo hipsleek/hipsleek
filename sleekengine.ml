@@ -126,7 +126,7 @@ let check_data_pred_name name :bool =
 (*   end *)
 
 let process_pred_def pdef = 
-    
+  (*let _ = print_endline  ("4: prune in pred check") in*)
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
@@ -362,12 +362,15 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   let _ = residues := None in
   let stab = H.create 103 in
-  let ante = meta_to_formula iante0 false [] stab in    
+  let ante = meta_to_formula iante0 false [] stab in
+  (*let _ = print_endline "1: prune ante in check entailment" in*)
   let ante = Solver.prune_preds !cprog true ante in
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+  (*let _ = print_endline "2: prune conseq in check entailment" in*)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+  (*let _ = print_endline "3: prune conseq in check entailment" in*)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)

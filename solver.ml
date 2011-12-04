@@ -3167,8 +3167,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 		(*print_string ("An Hoa CHECKPOINT 2664 :: heap_entail_after_sat\n");
 		  print_string ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs" ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*) 
         (* print_string ("going: "^(Cprinter.string_of_formula es.es_formula)^"\n") ;*)
-        (*let es = {es with es_formula = prune_preds prog es.es_formula} in
-          let conseq = prune_preds prog conseq in*)
+        let es = {es with es_formula = prune_preds prog true es.es_formula} in
+        let conseq = prune_preds prog true conseq in
         let es = (CF.add_to_estate_with_steps es ss) in
         let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
 		(*print_string ("heap_entail_after_sat: output context:\n" ^ (Cprinter.string_of_list_context tmp) ^ "\n");*)  
@@ -4488,8 +4488,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                       else
                                         "1.2: conseq has an incompatible flow type"
                                     in
-                                    let _ = print_endline ("locle 1:"^
-                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in
+                                   (* let _ = print_endline ("locle 1:"^
+                                                 (Gen.ExcNumbering.get_closest fl1.CF.formula_flow_interval) ) in *)
                                     let fe = mk_failure_may err_msg "LHS flow > RHS flow" in
                                 let may_flow_failure =
 			                        FailCtx (Basic_Reason ({fc_message = err_msg;
@@ -4664,14 +4664,14 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
 	List.fold_left fold_fun2 false branches
   else res 
 
-(*maximising must bug with AND (error information)*)
+(*maximising must bug with RAND (error information)*)
 and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
   let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr2 = pr_pair (Cprinter.string_of_failure_kind) (pr_triple pr3 pr3 pr3) in
   Gen.Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
 
-(*maximising must bug with AND (error information)*)
+(*maximising must bug with RAND (error information)*)
 and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
   if not !Globals.disable_failure_explaining then
     let r = ref (-9999) in
@@ -4908,11 +4908,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
         let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
         let new_ante0, new_conseq0 = heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos in
         let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
-
-		(*let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^
-		  "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^
-		  "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in*)
-
+(*
+		let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^
+		  "NEW ANTECEDENT0 = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^
+          "NEW ANTECEDENT1 = " ^ (Cprinter.string_of_mix_formula new_ante1) ^ "\n" ^
+		  "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in
+*)
 
 	    (* 26.03.2009 simplify the pure part *)
 	    (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
@@ -6147,7 +6148,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_rhs_rest = rhs_rest;} -> 
           do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
-    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
+    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) ->
+       (* let _ = print_endline "unfold" in*)
           let lhs_var = get_node_var lhs_node in
           let curr_unfold_num = (get_view_unfold_num lhs_node)+unfold_num in
           if (curr_unfold_num>1) then 
@@ -6164,6 +6166,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
     | Context.M_base_case_unfold {
           Context.match_res_lhs_node = lhs_node;
           Context.match_res_rhs_node = rhs_node;}->
+       (* let _ = print_endline "base case unfold" in*)
           let ans = Gen.Profiling.no_1 "3_unfold" 
             (do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos) rhs_b in
           (match ans with
