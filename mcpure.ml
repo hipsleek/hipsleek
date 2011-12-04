@@ -1162,7 +1162,7 @@ and create_memo_group_no_slicing (l1:(b_formula * (formula_label option)) list) 
   Memo_Formula.memo_pure_of_pure_slice sl status (Some filter_merged_cons) 
 
 (*add both imply and fail*)
-and create_memo_group_no_slicing_old (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
+and create_memo_group_no_slicing_org (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
@@ -1209,7 +1209,27 @@ and create_memo_group_no_slicing_old (l1:(b_formula * (formula_label option)) li
 	    memo_group_aset = aset;}) ll in
   r
 
-and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
+and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
+  let l1, to_slice2 = anon_partition l1 in
+  let l1, to_slice1 = memo_norm l1 in
+  let l2 = to_slice1 @ to_slice2 @ l2 in
+  (* Normalize l1 and l2 to lists of atomic constraints *)
+  let l1 = List.map (fun b -> 
+    let n_b = if !opt_ineq then trans_eq_bform b else b in
+    Pure_Constr.atom_of_b_formula n_b) l1 in
+  let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
+  let sl =
+    let l = l1 @ l2 in
+    if !f_1_slice then (* No slicing *)
+      let v = List.fold_left (fun a s -> a @ (Pure_Constr.fv s)) [] l in
+      [(Some (Gen.BList.remove_dups_eq eq_spec_var v, []), l)] 
+    else 
+      let n_l = Pure_Constr_AnS.constr_of_atom_list l in (* List of atomic constraints with syntactic label *)
+      Pure_AnS.split n_l 
+  in
+  Memo_Formula.memo_pure_of_pure_slice_AnS sl status (Some filter_merged_cons)    
+  
+and create_memo_group_slicing_org (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)

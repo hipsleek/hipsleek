@@ -5780,7 +5780,8 @@ and bfv_with_slicing_label bf =
 	(fun (nlv, lv) -> (pr_list !print_sv nlv) ^ (pr_list !print_sv lv))
 	bfv_with_slicing_label_x bf
 
-and bfv_with_slicing_label_x bf = (* OUT: (non-linking vars, linking vars) of b_formula *)
+and bfv_with_slicing_label_x bf = 
+(* OUT: (strongly-linking vars, weakly-linking vars) of b_formula *)
   let (_, sl) = bf in
   let v_bf = bfv bf in
     match sl with

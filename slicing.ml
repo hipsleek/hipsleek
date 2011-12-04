@@ -38,6 +38,10 @@ module type ATOM_TYPE =
 sig
   type t
   val fv: t -> spec_var list
+  (* afv (fv with annotation) returns the pair 
+   * of strongly linking variables
+   * and weakly linking variables of the input *)
+  val afv: t -> (spec_var list * spec_var list)
 end;;
 
 (* Signature of Label *)
@@ -88,7 +92,7 @@ struct
 end;;
 
 (* Signature of Slicing Framework *)  
-module type S_FRAMEWORK =
+module type S_FRAMEWORK_SIG =
   functor (Label: LABEL_TYPE) ->
   functor (Atom: ATOM_TYPE) ->
 sig
@@ -98,9 +102,8 @@ sig
   val split: constr list -> slice list
 end;;
 
-(* Automatic Slicing 
- * An instance of Slicing Framework *)
-module S_AUTO : S_FRAMEWORK =
+(* Implementation of Slicing Framework *)
+module S_FRAMEWORK : S_FRAMEWORK_SIG =
   functor (Label: LABEL_TYPE) ->
   functor (Atom: ATOM_TYPE) ->
 struct
@@ -144,6 +147,40 @@ struct
     Gen.BList.overlap_eq eq_spec_var l1 l2
 end;;
 
+(* Syntatic Label for Annotated Slicing *
+ * Suitable for weakly linking constraint and
+ * weakly linking variable *) 
+
+module Syn_Label_AnS =
+  functor (Atom: ATOM_TYPE) ->
+struct
+  (* Pair of strongly and weakly linking variables *)
+  type t = spec_var list * spec_var list
+
+  let empty : t = ([], [])
+  
+  let label_of (a: Atom.t) : t = Atom.afv a 
+  
+  let merge (l1: t) (l2: t) : t =
+    let (sv1, wv1) = l1 in
+    let (sv2, wv2) = l2 in
+    (sv1@sv2, wv1@wv2)
+  
+  let merge_list (l: t list) : t = 
+    let (sl, wl) = List.split l in
+    (List.concat sl, List.concat wl)
+  
+  let is_rel (l1: t) (l2: t) : bool =
+    let (sv1, wv1) = l1 in
+    let (sv2, wv2) = l2 in
+    if (sv1 = [] && sv2 = []) then
+      (* Keep the linking constraints separately *)
+      (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
+    else 
+      (Gen.BList.overlap_eq eq_spec_var sv1 sv2) && 
+      (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
+end;;
+
 module Pure_Constr =
 struct
   type t = 
@@ -154,15 +191,24 @@ struct
     match constr with
     | Pure_B b -> bfv b
     | Pure_F f -> fv f
+
+  let afv (constr: t) : (spec_var list * spec_var list) =
+    match constr with
+    | Pure_B b -> bfv_with_slicing_label b
+    | Pure_F f -> fv_with_slicing_label f
   
   let atom_of_b_formula (b: b_formula) : t = Pure_B b
 
   let atom_of_formula (f: formula) : t = Pure_F f
 end;;
 
-module Pure_AuS = S_AUTO (Syn_Label_AuS) (Pure_Constr);;
+module Pure_AuS = S_FRAMEWORK (Syn_Label_AuS) (Pure_Constr);;
 module Pure_Constr_AuS = CONSTR (Syn_Label_AuS) (Pure_Constr);;
 module Pure_Slice_AuS = SLICE (Syn_Label_AuS) (Pure_Constr);;
+
+module Pure_AnS = S_FRAMEWORK (Syn_Label_AnS) (Pure_Constr);;
+module Pure_Constr_AnS = CONSTR (Syn_Label_AnS) (Pure_Constr);;
+module Pure_Slice_AnS = SLICE (Syn_Label_AnS) (Pure_Constr);;
 
 
 module Memo_Constr =
@@ -184,6 +230,8 @@ struct
         | (false, true) -> [v1]
         | (false, false) -> [v1; v2]
 
+  let afv (constr: t) : (spec_var list * spec_var list) = ([], []) 
+
   let memo_constr_of_pure_constr (a: P.t) (status: prune_status) : t = 
     match a with
     | P.Pure_B b -> (match get_bform_eq_args_with_const b with
@@ -201,7 +249,7 @@ struct
     List.concat (List.map memo_constr_of_memo_group mp) 
 end;;
 
-module Memo_AuS = S_AUTO (Syn_Label_AuS) (Memo_Constr);;
+module Memo_AuS = S_FRAMEWORK (Syn_Label_AuS) (Memo_Constr);;
 module Memo_Constr_AuS = CONSTR (Syn_Label_AuS) (Memo_Constr);;
 module Memo_Slice_AuS = SLICE (Syn_Label_AuS) (Memo_Constr);;
 
@@ -210,9 +258,10 @@ module Memo_Group =
 struct
   type t = memoised_group
   let fv (mg: t) : spec_var list = mg.memo_group_fv
+  let afv (constr: t) : (spec_var list * spec_var list) = ([], [])
 end;;
  
-module MG_AuS = S_AUTO (Syn_Label_AuS) (Memo_Group);;
+module MG_AuS = S_FRAMEWORK (Syn_Label_AuS) (Memo_Group);;
 module MG_Constr_AuS = CONSTR (Syn_Label_AuS) (Memo_Group);;
 module MG_Slice_AuS = SLICE (Syn_Label_AuS) (Memo_Group);;
 
@@ -221,10 +270,18 @@ module Memo_Formula =
 struct
   module P = Pure_Constr
   module M = Memo_Constr
+  
+  (* Automatic Slicing *)
   module PS_AuS = SLICE (Syn_Label_AuS) (Pure_Constr)
   module MS_AuS = SLICE (Syn_Label_AuS) (Memo_Constr)
   module MGS_AuS = SLICE (Syn_Label_AuS) (Memo_Group)
+  
+  (* Annotated Slicing *)
+  module PS_AnS = SLICE (Syn_Label_AnS) (Pure_Constr)
+  module MS_AnS = SLICE (Syn_Label_AnS) (Memo_Constr)
+  module MGS_AnS = SLICE (Syn_Label_AnS) (Memo_Group)
 
+  (* Utilities of Automatic Slicing *)
   let memo_group_of_pure_slice (s: PS_AuS.t) (status: prune_status) f_opt : memoised_group =
     let vs = Gen.BList.remove_dups_eq eq_spec_var (PS_AuS.get_label s) in
     let cons, slice, aset = List.fold_left (
@@ -300,6 +357,32 @@ struct
   let memo_pure_of_mg_slice (sl: MGS_AuS.t list) f_opt : memo_pure = 
     List.map (fun s -> memo_group_of_mg_slice s f_opt) sl
 
+  (* Utilities of Annotated Slicing *)
+  let memo_group_of_pure_slice_AnS (s: PS_AnS.t) (status: prune_status) f_opt : memoised_group =
+    let sv, wv = PS_AnS.get_label s in
+    let cons, slice, aset = List.fold_left (
+      fun (c, s, a) p_ctr -> match p_ctr with 
+      | P.Pure_B b -> (match get_bform_eq_args_with_const b with
+        | Some (v1, v2) -> (c, s, add_equiv_eq_with_const a v1 v2)
+        | _ -> let mc = { memo_formula = b; memo_status = status } in
+          (mc::c, s, a))
+      | P.Pure_F f -> (c, f::s, a)
+    ) ([], [], empty_var_aset) (snd s) in
+    let cons = match f_opt with
+      | None -> cons
+      | Some f -> f aset [cons]
+    in
+    {
+      memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var (sv@wv);
+      memo_group_linking_vars = Gen.BList.remove_dups_eq eq_spec_var wv;
+      memo_group_cons = cons;
+      memo_group_slice = slice;
+      memo_group_changed = true;
+      memo_group_aset = aset;
+    }
+
+  let memo_pure_of_pure_slice_AnS (sl: PS_AnS.t list) (status: prune_status) f_opt : memo_pure = 
+    List.map (fun s -> memo_group_of_pure_slice_AnS s status f_opt) sl
 end;;
 
 
