@@ -172,7 +172,7 @@ and group_mem_by_fv_no_slicing (lst: memo_pure) : memo_pure =
     Memo_Formula.memo_pure_of_memo_slice sl None*)
     let l = MG_Constr_AuS.constr_of_atom_list lst in
     let sl = MG_AuS.split l in
-    Memo_Formula.memo_pure_of_mg_slice sl None
+    PMF_AuS.memo_pure_of_mg_slice sl None
 
 and group_mem_by_fv_no_slicing_org (lst: memo_pure) : memo_pure = 
   if !f_1_slice then 
@@ -263,7 +263,7 @@ and regroup_memo_group_no_slicing (lst: memo_pure) : memo_pure =
   else
     let l = MG_Constr_AuS.constr_of_atom_list lst in
     let sl = MG_AuS.split l in
-    Memo_Formula.memo_pure_of_mg_slice sl None
+    PMF_AuS.memo_pure_of_mg_slice sl None
 
 and regroup_memo_group_no_slicing_org (lst : memo_pure) : memo_pure = 
   if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem " ;failwith "multi slice problem" );lst) 
@@ -940,7 +940,7 @@ and merge_mems_nx_no_slicing (l1: memo_pure) (l2: memo_pure) slice_check_dups: m
       else
         let l = MG_Constr_AuS.constr_of_atom_list (l1@l2) in
         let sl = MG_AuS.split l in
-        let merged_mp = Memo_Formula.memo_pure_of_mg_slice sl (Some filter_merged_cons) in
+        let merged_mp = PMF_AuS.memo_pure_of_mg_slice sl (Some filter_merged_cons) in
         if (not slice_check_dups) then merged_mp
         else List.map (fun mg -> { mg with memo_group_slice =
           (Gen.Profiling.push_time "merge_mems_r_dups";
@@ -1159,7 +1159,7 @@ and create_memo_group_no_slicing (l1:(b_formula * (formula_label option)) list) 
       let n_l = Pure_Constr_AuS.constr_of_atom_list l in (* List of atomic constraints with syntactic label *)
       Pure_AuS.split n_l 
   in
-  Memo_Formula.memo_pure_of_pure_slice sl status (Some filter_merged_cons) 
+  PMF_AuS.memo_pure_of_pure_slice sl status (Some filter_merged_cons) 
 
 (*add both imply and fail*)
 and create_memo_group_no_slicing_org (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
@@ -1227,7 +1227,7 @@ and create_memo_group_slicing (l1:(b_formula * (formula_label option)) list) (l2
       let n_l = Pure_Constr_AnS.constr_of_atom_list l in (* List of atomic constraints with syntactic label *)
       Pure_AnS.split n_l 
   in
-  Memo_Formula.memo_pure_of_pure_slice_AnS sl status (Some filter_merged_cons)    
+  PMF_AnS.memo_pure_of_pure_slice sl status (Some filter_merged_cons)    
   
 and create_memo_group_slicing_org (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =	  
   let l1, to_slice2 = anon_partition l1 in
@@ -1328,7 +1328,7 @@ and split_mem_grp_no_slicing (g : memoised_group) : memo_pure =
     let l =  Memo_Constr.memo_constr_of_memo_group g in
     let n_l = Memo_Constr_AuS.constr_of_atom_list l in 
     let sl = Memo_AuS.split n_l in
-    Memo_Formula.memo_pure_of_memo_slice sl None 
+    PMF_AuS.memo_pure_of_memo_slice sl None 
    
 (* BUGS: Constraints without free variables will be removed implicitly *)    
 and split_mem_grp_no_slicing_org (g:memoised_group): memo_pure =   

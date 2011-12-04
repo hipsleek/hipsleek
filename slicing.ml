@@ -54,6 +54,7 @@ sig
   val merge: t -> t -> t
   val merge_list: t list -> t
   val is_rel: t -> t -> bool
+  val fv_of_label: t -> (spec_var list * spec_var list)
 end;;
 
 (* Atomic Constraint with Label *)
@@ -139,12 +140,19 @@ module Syn_Label_AuS =
   functor (Atom: ATOM_TYPE) ->
 struct
   type t = spec_var list
+  
   let empty : t = []
+  
   let label_of (a: Atom.t) : t = Atom.fv a
+  
   let merge (l1: t) (l2: t) : t = l1@l2
+  
   let merge_list (l: t list) : t = List.concat l
+  
   let is_rel (l1: t) (l2: t) : bool =
     Gen.BList.overlap_eq eq_spec_var l1 l2
+
+  let fv_of_label (l: t) : (spec_var list * spec_var list) = (l, [])
 end;;
 
 (* Syntatic Label for Annotated Slicing *
@@ -179,6 +187,8 @@ struct
     else 
       (Gen.BList.overlap_eq eq_spec_var sv1 sv2) && 
       (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
+	  
+  let fv_of_label (l: t) : (spec_var list * spec_var list) = l
 end;;
 
 module Pure_Constr =
@@ -265,25 +275,23 @@ module MG_AuS = S_FRAMEWORK (Syn_Label_AuS) (Memo_Group);;
 module MG_Constr_AuS = CONSTR (Syn_Label_AuS) (Memo_Group);;
 module MG_Slice_AuS = SLICE (Syn_Label_AuS) (Memo_Group);;
 
-
 module Memo_Formula =
+  functor (Label: LABEL_TYPE) -> 
 struct
   module P = Pure_Constr
   module M = Memo_Constr
-  
-  (* Automatic Slicing *)
-  module PS_AuS = SLICE (Syn_Label_AuS) (Pure_Constr)
-  module MS_AuS = SLICE (Syn_Label_AuS) (Memo_Constr)
-  module MGS_AuS = SLICE (Syn_Label_AuS) (Memo_Group)
-  
-  (* Annotated Slicing *)
-  module PS_AnS = SLICE (Syn_Label_AnS) (Pure_Constr)
-  module MS_AnS = SLICE (Syn_Label_AnS) (Memo_Constr)
-  module MGS_AnS = SLICE (Syn_Label_AnS) (Memo_Group)
 
+  module PS = SLICE (Label) (Pure_Constr)
+  module MS = SLICE (Label) (Memo_Constr)
+  module MGS = SLICE (Label) (Memo_Group)
+  
+  module PL = Label (Pure_Constr)
+  module ML = Label (Memo_Constr)
+  module MGL = Label (Memo_Group)
+  
   (* Utilities of Automatic Slicing *)
-  let memo_group_of_pure_slice (s: PS_AuS.t) (status: prune_status) f_opt : memoised_group =
-    let vs = Gen.BList.remove_dups_eq eq_spec_var (PS_AuS.get_label s) in
+  let memo_group_of_pure_slice (s: PS.t) (status: prune_status) f_opt : memoised_group =
+    let sv, ws = PL.fv_of_label (PS.get_label s) in
     let cons, slice, aset = List.fold_left (
       fun (c, s, a) p_ctr -> match p_ctr with 
       | P.Pure_B b -> (match get_bform_eq_args_with_const b with
@@ -297,19 +305,19 @@ struct
       | Some f -> f aset [cons]
     in
     {
-      memo_group_fv = vs;
-      memo_group_linking_vars = [];
+      memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var (sv@ws);
+      memo_group_linking_vars = Gen.BList.remove_dups_eq eq_spec_var ws;
       memo_group_cons = cons;
       memo_group_slice = slice;
       memo_group_changed = true;
       memo_group_aset = aset;
     }
 
-  let memo_pure_of_pure_slice (sl: PS_AuS.t list) (status: prune_status) f_opt : memo_pure = 
+  let memo_pure_of_pure_slice (sl: PS.t list) (status: prune_status) f_opt : memo_pure = 
     List.map (fun s -> memo_group_of_pure_slice s status f_opt) sl
 
-  let memo_group_of_memo_slice (s: MS_AuS.t) f_opt : memoised_group =
-    let vs = Gen.BList.remove_dups_eq eq_spec_var (MS_AuS.get_label s) in
+  let memo_group_of_memo_slice (s: MS.t) f_opt : memoised_group =
+    let sv, wv = ML.fv_of_label (MS.get_label s) in
     let cons, slice, aset = List.fold_left (
       fun (c, s, a) m_ctr -> match m_ctr with 
       | M.Memo_B (b, status) -> 
@@ -323,19 +331,19 @@ struct
     | Some f -> f aset [cons]
     in
     {
-      memo_group_fv = vs;
-      memo_group_linking_vars = [];
+      memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var (sv@wv);
+      memo_group_linking_vars = Gen.BList.remove_dups_eq eq_spec_var wv;
       memo_group_cons = cons;
       memo_group_slice = slice;
       memo_group_changed = true;
       memo_group_aset = aset;
     }
 
-  let memo_pure_of_memo_slice (sl: MS_AuS.t list) f_opt : memo_pure = 
+  let memo_pure_of_memo_slice (sl: MS.t list) f_opt : memo_pure = 
     List.map (fun s -> memo_group_of_memo_slice s f_opt) sl
 
-  let memo_group_of_mg_slice (s: MGS_AuS.t) f_opt : memoised_group =
-    let vs = Gen.BList.remove_dups_eq eq_spec_var (MGS_AuS.get_label s) in
+  let memo_group_of_mg_slice (s: MGS.t) f_opt : memoised_group =
+    let sv, wv = MGL.fv_of_label (MGS.get_label s) in
     let cons, slice, aset = List.fold_left (
       fun (c, s, a) mg -> 
         (c@mg.memo_group_cons, s@mg.memo_group_slice, EMapSV.merge_eset a mg.memo_group_aset)
@@ -346,33 +354,6 @@ struct
     | Some f -> f aset [cons]
     in
     {
-      memo_group_fv = vs;
-      memo_group_linking_vars = [];
-      memo_group_cons = cons;
-      memo_group_slice = slice;
-      memo_group_changed = true;
-      memo_group_aset = aset;
-    }
-    
-  let memo_pure_of_mg_slice (sl: MGS_AuS.t list) f_opt : memo_pure = 
-    List.map (fun s -> memo_group_of_mg_slice s f_opt) sl
-
-  (* Utilities of Annotated Slicing *)
-  let memo_group_of_pure_slice_AnS (s: PS_AnS.t) (status: prune_status) f_opt : memoised_group =
-    let sv, wv = PS_AnS.get_label s in
-    let cons, slice, aset = List.fold_left (
-      fun (c, s, a) p_ctr -> match p_ctr with 
-      | P.Pure_B b -> (match get_bform_eq_args_with_const b with
-        | Some (v1, v2) -> (c, s, add_equiv_eq_with_const a v1 v2)
-        | _ -> let mc = { memo_formula = b; memo_status = status } in
-          (mc::c, s, a))
-      | P.Pure_F f -> (c, f::s, a)
-    ) ([], [], empty_var_aset) (snd s) in
-    let cons = match f_opt with
-      | None -> cons
-      | Some f -> f aset [cons]
-    in
-    {
       memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var (sv@wv);
       memo_group_linking_vars = Gen.BList.remove_dups_eq eq_spec_var wv;
       memo_group_cons = cons;
@@ -380,11 +361,13 @@ struct
       memo_group_changed = true;
       memo_group_aset = aset;
     }
-
-  let memo_pure_of_pure_slice_AnS (sl: PS_AnS.t list) (status: prune_status) f_opt : memo_pure = 
-    List.map (fun s -> memo_group_of_pure_slice_AnS s status f_opt) sl
+    
+  let memo_pure_of_mg_slice (sl: MGS.t list) f_opt : memo_pure = 
+    List.map (fun s -> memo_group_of_mg_slice s f_opt) sl
 end;;
 
+module PMF_AuS = Memo_Formula (Syn_Label_AuS);;
+module PMF_AnS = Memo_Formula (Syn_Label_AnS);;
 
 (*
 (* Transform a slice to a memoised group *)
