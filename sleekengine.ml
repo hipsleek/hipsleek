@@ -138,21 +138,13 @@ let process_pred_def pdef =
 	  try
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-
-        (* let _ = print_string ("process_pred_def: before case_normalize_..." *)
-        (*                       ^ "\n\n") in *)
-
 		let wf,_ = AS.case_normalize_struc_formula iprog  h p pdef.Iast.view_formula false false [] in
-
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
-        (* let _ = print_string ("process_pred_def: before trans_view" *)
-       (*                       ^ "\n\n") in *)
-		let _ = if !Globals.print_input then print_string (Iprinter.string_of_view_decl new_pdef ^"\n") else () in
- 		let cpdef = AS.trans_view iprog new_pdef in
+		let cpdef = AS.trans_view iprog new_pdef in
 		let old_vdec = !cprog.C.prog_view_decls in
 		!cprog.C.prog_view_decls <- (cpdef :: !cprog.C.prog_view_decls);
 (* added 07.04.2008	*)	
@@ -175,11 +167,7 @@ let process_pred_def pdef =
     let n_cpdef = {n_cpdef with 
         C.view_formula =  Solver.prune_pred_struc !cprog true n_cpdef.C.view_formula ;
         C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds !cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
-        let _ = if !Globals.print_input then print_string "TODO : print input AST here(2)!" in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
-
-        (* let n_cpdef = Astsimp.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions n_cpdef in (\*why this is not call by SLEEK ???*\) *)
-
 		!cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
@@ -224,8 +212,6 @@ let convert_pred_to_cast () =
   let cprog5 = if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else cprog4 in
   let _ = if !Globals.print_input then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if !Globals.print_core then print_string (Cprinter.string_of_program cprog5) else () in
-  (* let _ = print_string ("convert_pred_to_cast: end" *)
-  (*                       ^ "\n\n") in *)
   cprog := cprog5
 
 let convert_pred_to_cast () = 
@@ -373,13 +359,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = AS.case_normalize_formula iprog h mf in
-      (* let _ = print_string ("meta_to_formula:" *)
-      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
-      (*                       ^ "\n\n") in *)
       let _ = Astsimp.gather_type_info_formula iprog wf stab false in
-      (* let _ = print_string ("meta_to_formula:" *)
-      (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
-      (*                       ^ "\n\n") in *)
       let r = AS.trans_formula iprog quant fv_idents false wf stab false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
@@ -412,66 +392,22 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in    
-  (* let _ = print_string ("run_entail_check:" *)
-  (*                       ^ "\n stab = "^(AS.string_of_stab stab) *)
-  (*                       ^"\n\n") in *)
-  (* let _ = print_string ("\nrun_entail_check: before Solver.prune_preds" *)
-  (*                       ^ "\n ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^"\n\n") in *)
   (*--eps => prune*)
   let ante = Solver.prune_preds !cprog true ante in
-  (* let _ = print_string ("\n run_entail_check: after Solver.prune_preds" *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^"\n\n") in *)
   let ante = 
     if (Perm.allow_perm ()) then
       (*add default full permission to ante; 
         need to add type of full perm to stab *)
-      (* let full = Perm.full_perm_constraint () in *)
-      (* let _ = print_string ("\n run_entail_check:" *)
-      (*                       ^ "\n ### full = "^(Cprinter.string_of_mix_formula full) *)
-      (*                       ^"\n\n") in *)
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  (* let _ = print_string ("\n run_entail_check:" *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^"\n\n") in *)
-
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
-  (* let _ = print_string ("run_entail_check:" *)
-  (*                       ^ "\n stab = "^(AS.string_of_stab stab) *)
-  (*                       ^"\n\n") in *)
-  (* let _ = print_string ("\n run_entail_check:" *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^"\n\n") in *)
   let _ = flush stdout in
-  (* let ante = (match ante with *)
-  (*   | Base b -> *)
-  (*   | _ ->  *)
-  (*       let _ = print_string ("[run_entail_check] Warning: ante should be matched with Base b \n") in *)
-  (*       ante)  *)
-  (* in *)
   let fvs = CF.fv ante in
-  (* let _ = print_string ("run_entail_check:" *)
-  (*                       ^ "\n fvs = "^(Cprinter.string_of_spec_var_list fvs) *)
-  (*                       ^"\n\n") in *)
   let fv_idents = List.map CP.name_of_spec_var fvs in
-  (* let _ = print_string ("run_entail_check:" *)
-  (*                       ^ "\n fv_idents = "^(Cprinter.string_of_ident_list fv_idents ",") *)
-  (*                       ^ "\n stab = " ^ (AS.string_of_stab stab) *)
-  (*                       ^"\n\n") in *)
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
-  (* let _ = print_string ("run_entail_check:" *)
-  (*                       ^ "\n conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-  (*                       ^"\n\n") in *)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
-  (* (\*LDK: cformula of ante and conseq*\) *)
-  (* let _ = print_string ("\nrun_entail_check:" *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-  (*                       ^"\n\n") in *)
   let _ = Debug.devel_pprint ("\nrun_entail_check:"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -490,14 +426,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (* An Hoa TODO uncomment  *)
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
-  (* let _ = print_string ("\n ctx = "^(Cprinter.string_of_context ctx)^"\n\n\n") in *)
-  (* let _ = print_string ("run_entail_check:" *)
-  (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
-  (*                       ^"\n\n") in *)
-  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in (*LDK:exception in entail check is thrawn here*)
-  (* let _ = print_string ("\nrun_entail_check: after elim_unsat_es" *)
-  (*                       ^ "\n ### ctx = "^(Cprinter.string_of_context ctx) *)
-  (*                       ^"\n\n") in *)
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then

@@ -5,7 +5,6 @@
 *)
 
 open Globals
-(* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
 module P = Ipure

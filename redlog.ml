@@ -1119,8 +1119,6 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   in
   let res = 
     if is_linear_formula f then
-      (* (\*LDK*\) *)
-      (* let _ = print_string ("[Redlog] imply_no_cache: is_linear_formula = true \n") in *)
       call_omega (lazy (Omega.is_valid f !timeout))
     (* (is_valid f imp_no) *)
     else
@@ -1145,19 +1143,8 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   Gen.Debug.no_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
 
 let imply ante conseq imp_no =
-
-  (* let f1 = (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in *)
-  (* let _ = print_string ("imply: before normalize"  *)
-  (*                       ^ "f1 = " ^ string_of_formula f1 *)
-  (*                       ^ "\n\n") in *)
-
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
-
-  (* let _ = print_string ("imply: after normalize"  *)
-  (*                       ^ "f = " ^ string_of_formula f *)
-  (*                       ^ "\n\n") in *)
-
-  (*LDK: example of normalize: a => b <=> !a v b *)
+  (*example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
   let fstring = string_of_formula sf in
   log DEBUG ("\n#imply " ^ imp_no);
@@ -1173,12 +1160,6 @@ let imply ante conseq imp_no =
         log DEBUG "Cached.";
         res
       with Not_found ->
-          
-          (* let _ = print_string "[redlog.ml] imply: no cache \n" in *)
-          (* let _ = print_string ("[redlog.ml] imply:"  *)
-          (*                       ^ "\n f = " ^ (string_of_formula f) *)
-          (*                       ^ "\n\n") in *)
-          
           let res, time = imply_no_cache f imp_no in
           let _ = if time > cache_threshold then
                 Hashtbl.add !impl_cache fstring res
@@ -1237,30 +1218,6 @@ let simplify (f: CP.formula) : CP.formula =
           log ERROR (Printexc.to_string e);
           f
 
-(* (\*LDK: this is not correct because a floating point formula *)
-(* can also be linear formula; therefore it is passed to Omega.simplify*\) *)
-(* let simplify (f: CP.formula) : CP.formula = *)
-(*   if is_linear_formula f then *)
-(*     Omega.simplify f *)
-(*   else if (!no_simplify) then *)
-(*     f *)
-(*   else *)
-(*     try *)
-(*       let simpler_f = simplify_with_redlog f in *)
-(*       let simpler_f = *)
-(*         if (is_linear_formula simpler_f) then *)
-(*           Omega.simplify simpler_f *)
-(*         else *)
-(*           simpler_f *)
-(*       in *)
-(*       log DEBUG "\n#simplify"; *)
-(*       log DEBUG ("original: " ^ (string_of_formula f)); *)
-(*       log DEBUG ("simplified: " ^ (string_of_formula simpler_f)); *)
-(*       simpler_f *)
-(*     with _ as e -> *)
-(*       log ERROR "Error while simplifying with redlog"; *)
-(*       log ERROR (Printexc.to_string e); *)
-(*       f *)
 
 (* unimplemented *)
 

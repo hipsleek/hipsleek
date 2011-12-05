@@ -1,6 +1,5 @@
  (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
-(* open Exc.ETABLE_NFLOW *)
 open Exc.GTable 
 open Printf
 open Gen.Basic
@@ -1982,10 +1981,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let univ_vars = compute_univ () in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
-  (* let _ = print_string ("trans_one_coercion: " *)
-  (*                       ^ "\n ### c_lhs = " ^ (Cprinter.string_of_formula c_lhs) *)
-  (*                       ^ "\n ### c_rhs = " ^ (Cprinter.string_of_formula c_rhs) *)
-  (*                       ^ "\n\n") in *)
   (*LDK: TODO: check for interraction with lemma proving*)
   (*pass lhs_heap into add_origs *)
   let lhs_heap ,_,_,_, _  = Cformula.split_components c_lhs in
@@ -2024,10 +2019,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* c_body_norm is used only for proving l2r part of a lemma (left & equiv lemmas) *)
   let h = List.map (fun c-> (c,Unprimed)) lhs_fnames0 in
   let p = List.map (fun c-> (c,Primed)) lhs_fnames0 in
-
-        (* let _ = print_string ("trans_one_coercion: before case_normalize_...1 " *)
-        (*                       ^ "\n\n") in *)
-
   let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula coer.I.coercion_body) false true [] in
   (* let _ = print_string ("\ntsimp.ml, trans_one_coercion, cs_body_normwf " ^ (Iprinter.string_of_struc_formula wf)) in *)
   let quant = true in
@@ -2044,28 +2035,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@rhs_fnames) in
   let h = List.map (fun c-> (c,Unprimed)) fnames in
   let p = List.map (fun c-> (c,Primed)) fnames in
-  (* let _ = print_string ("trans_one_coercion: before case_normalize_... 2" *)
-  (*                       ^ "\n ### coer= " ^ (Iprinter.string_of_coerc_decl coer) *)
-  (*                       ^ "\n ### new_head= " ^ (Iprinter.string_of_formula new_head) *)
-  (*                       ^ "\n ### new_head_struc= " ^ (Iprinter.string_of_struc_formula (Iformula.formula_to_struc_formula new_head)) *)
-  (*                       ^ "\n ### fnames= " ^ (string_of_ident_list fnames) *)
-  (*                       ^ "\n ### stab= " ^ (string_of_stab stab) *)
-  (*                       ^ "\n\n") in *)
-
   let wf,_ = case_normalize_struc_formula prog h p (Iformula.formula_to_struc_formula new_head) false true [] in
   let quant = true in
-
-  (* let _ = print_string ("trans_one_coercion: before trans_I2C_... " *)
-  (*                       ^ "\n ### wf = " ^ (Iprinter.string_of_struc_formula wf) *)
-  (*                       ^ "\n ### fnames= " ^ (string_of_ident_list fnames) *)
-  (*                       ^ "\n ### stab= " ^ (string_of_stab stab) *)
-  (*                       ^ "\n\n") in *)
-
   let cs_head_norm = trans_I2C_struc_formula prog quant (* fv_names  *) fnames  wf stab false in
-
-  (* let _ = print_string ("trans_one_coercion: before struc_to_formula... " *)
-  (*                       ^ "\n\n") in *)
-
   let c_head_norm = CF.struc_to_formula cs_head_norm in
 
   (* ======================= *)
@@ -2079,10 +2051,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in *)
   (* let c_lhs_exist = trans_formula prog true ((\* self ::  *\)rhs_fnames) false coer.I.coercion_head stab false in  (\* why not lhs_fnames?*\) *)
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
-  (* let _ = print_string ("trans_one_coercion: " *)
-  (*                       ^ "\n ### c_lhs = " ^ (Cprinter.string_of_formula c_lhs) *)
-  (*                       ^ "\n ### c_rhs = " ^ (Cprinter.string_of_formula c_rhs) *)
-  (*                       ^ "\n\n") in *)
   let rhs_name =
     try find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body)
     with | _ -> "" in
@@ -3900,12 +3868,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
       | Iformula.EBase b-> 			
             let nc = trans_struc_formula_hlp b.Iformula.formula_ext_continuation 
               (fvars @ (fst (List.split(Iformula.heap_fv b.Iformula.formula_ext_base))))in
-            (* let _ = print_string ("trans_I2C_struc_formula_x: Iformula.EBase " *)
-            (*                       ^"\n stab = "^(string_of_stab stab) *)
-            (*                       ^"\n f0 = " ^ (Iprinter.string_of_ext_formula f0)  *)
-            (*                       ^"\n") in *)
             let nb = trans_formula prog quantify fvars false b.Iformula.formula_ext_base stab false in
-            (* let _  = print_string "trans_I2C_struc_formula_x: Iformula.EBase \n" in *)
             let ex_inst = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_explicit_inst in
             let ext_impl = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_implicit_inst in
             let ext_exis = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_exists in
@@ -4305,16 +4268,10 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
     | IP.Not (f, lbl, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf lbl pos
     | IP.Forall ((v, p), f, lbl, pos) ->
           let pf = trans_pure_formula f stab in
-          
-          (* let _ = print_string ("trans_pure_formula: IP.Forall ") in *)
-
           let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) stab pos) in
           let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
     | IP.Exists ((v, p), f, lbl, pos) ->
           let pf = trans_pure_formula f stab in
-
-          (* let _ = print_string ("trans_pure_formula: IP.Exists ") in *)
-
           let sv = trans_var (v,p) stab pos in
 	      CP.mkExists [ sv ] pf lbl pos
 			  
