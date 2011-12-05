@@ -9,7 +9,7 @@
 relation sumarray(int[] a, int i, int j, int s) == 
 	(i > j & s = 0 | i = j & s = a[i] | i < j & sumarray(a,i+1,j,s-a[i])).
 
-axiom i < j & sumarray(a,i,j-1,s-a[j]) ==> sumarray(a, i, j, s).
+axiom i < j & sumarray(a,i,j-1,s-a[j]) |- sumarray(a, i, j, s).
 
 //relation sumarray(int[] a, int i, int j, int s) == 
 //	(i > j & s = 0 | i = j & s = a[i] | i < j & sumarray(a,i,j-1,s-a[j])).

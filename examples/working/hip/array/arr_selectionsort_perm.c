@@ -16,26 +16,26 @@ relation upperbndprev(int[] a, int[] b, int i, int j) ==
 
 relation permutation(int[] a, int[] b, int i, int j).
 
-axiom true ==> permutation(a,a,i,j).
+axiom true |- permutation(a,a,i,j).
 
 // Reflexivity
-axiom i <= j & forall(k : k < i | k > j | a[k] = b[k])  ==> permutation(a,b,i,j).
+axiom i <= j & forall(k : k < i | k > j | a[k] = b[k])  |- permutation(a,b,i,j).
 
 // Symmetry
-axiom permutation(a,b,i,j) ==> permutation(b,a,i,j).
+axiom permutation(a,b,i,j) |- permutation(b,a,i,j).
 
 // Transitivity
-axiom permutation(a,b,i,j) & permutation(b,c,i,j) ==> permutation(a,c,i,j).
+axiom permutation(a,b,i,j) & permutation(b,c,i,j) |- permutation(a,c,i,j).
 
 // Composition of two disjoint permutations 
-axiom permutation(a,b,i,j) & permutation(a,b,j,k) ==> permutation(a,b,i,k).
+axiom permutation(a,b,i,j) & permutation(a,b,j,k) |- permutation(a,b,i,k).
 
 // Extensionality : special case of composition
 // This special case is necessary to prove insertion sort
-axiom permutation(a,b,i,j) & a[j+1] = b[j+1] ==> permutation(a,b,i,j+1).
+axiom permutation(a,b,i,j) & a[j+1] = b[j+1] |- permutation(a,b,i,j+1).
 
 // Transposition
-axiom forall(k : (k = i | k = j | a[k] = b[k])) & a[i] = b[j] & a[j] = b[i] & u <= i <= v & u <= j <= v ==> permutation(a,b,u,v).
+axiom forall(k : (k = i | k = j | a[k] = b[k])) & a[i] = b[j] & a[j] = b[i] & u <= i <= v & u <= j <= v |- permutation(a,b,u,v).
 
 // Smallest index that gives maximum value in the array
 int array_index_of_max(int[] a, int i, int j)

@@ -172,27 +172,27 @@ $output_file = "log";
 %hip_files=(
 	# AN HOA : ADDED ARRAY TESTING EXAMPLES
 	"array"=>[
-		["arr_at.java",1,"","main","SUCCESS"],
-		["arr_binarysearch.java",1,"","binary_search","SUCCESS"],
-		["arr_search_decrease_less_than_two.java",1,"","searchzero","FAIL"], # induction required
-		["arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
-		["arr_bubblesort_perm.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
-		["arr_double.java",1,"","doublearr","SUCCESS"],
-		["arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
-		["arr_init.java",1,"","zinit","SUCCESS"],
-		["arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
-		["arr_insertsort_perm.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
-		["arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
-		["arr_max.java",1,"","max_value_of_array","SUCCESS"],
-		["arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
-		["arr_new_exp.java",1,"","main","SUCCESS"],
-		["arr_nqueens.java",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
-		["arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
-		["arr_rev.java",1,"","arrayrev","SUCCESS"],
-		["arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
-		["arr_selectionsort_perm.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
-		["arr_sparse.java",3,"--imm","create","SUCCESS","get","SUCCESS","setsa","SUCCESS"],
-		["arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
+		["arr_at.c",1,"","main","SUCCESS"],
+		["arr_binarysearch.c",1,"","binary_search","SUCCESS"],
+		["arr_search_decrease_less_than_two.c",1,"","searchzero","FAIL"], # induction required
+		["arr_bubblesort.c",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["arr_bubblesort_perm.c",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["arr_double.c",1,"","doublearr","SUCCESS"],
+		["arr_extract_nonzeros.c",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
+		["arr_init.c",1,"","zinit","SUCCESS"],
+		["arr_insertsort.c",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["arr_insertsort_perm.c",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["arr_invert.c",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
+		["arr_max.c",1,"","max_value_of_array","SUCCESS"],
+		["arr_mergesort.c",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
+		["arr_new_exp.c",1,"","main","SUCCESS"],
+		["arr_nqueens.c",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
+		["arr_qsort.c",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
+		["arr_rev.c",1,"","arrayrev","SUCCESS"],
+		["arr_selectionsort.c",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["arr_selectionsort_perm.c",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["arr_sparse.c",3,"--imm","create","SUCCESS","get","SUCCESS","setsa","SUCCESS"],
+		["arr_sum.c",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],

@@ -22,7 +22,7 @@ type rel_def = {
 		rel_vars : CP.spec_var list;
 		related_rels : ident list;
 		related_axioms : int list;
-		induction_values : CP.exp list;
+		rel_induction_values : CP.exp list;
 		rel_cache_smt_declare_fun : string;
 	}
 
@@ -47,6 +47,7 @@ type formula_info = {
 		contains_array     : bool;
 		relations          : ident list; (* list of relations that the formula mentions *)
 		axioms             : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
+		induction_values   : CP.exp list; (* candidates to do induction on *)
 	}
 
 
@@ -201,7 +202,8 @@ let default_formula_info = {
 	is_quantifier_free = true; 
 	contains_array = false; 
 	relations = []; 
-	axioms = []; }
+	axioms = [];
+	induction_values = [];}
 
 (* Collect information about a formula f or combined information about 2 formulas *)
 let rec collect_formula_info f = 
@@ -290,7 +292,8 @@ and combine_formula_info if1 if2 =
 	is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
 	contains_array = if1.contains_array || if2.contains_array;
 	relations = List.append if1.relations if2.relations;
-	axioms = List.append if1.axioms if2.axioms;}
+	axioms = List.append if1.axioms if2.axioms;
+	induction_values = List.append if1.induction_values if2.induction_values; }
 
 and combine_formula_info_list infos =
 	{is_linear = List.fold_left (&&) true 
@@ -300,7 +303,8 @@ and combine_formula_info_list infos =
 	contains_array = List.fold_left (fun x y -> x || y) false 
 								(List.map (fun x -> x.contains_array) infos);
 	relations = List.flatten (List.map (fun x -> x.relations) infos);
-	axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
+	axioms = List.flatten (List.map (fun x -> x.axioms) infos);
+	induction_values = List.flatten (List.map (fun x -> x.induction_values) infos);}
 
 and compact_formula_info info =
 	{ info with relations = Gen.BList.remove_dups_eq (=) info.relations;
@@ -369,7 +373,7 @@ let add_relation rname rargs rform rind =
 				rel_vars = rargs;
 				related_rels = []; (* to be filled up by add_axiom *)
 				related_axioms = []; (* to be filled up by add_axiom *)
-				induction_values = rind;
+				rel_induction_values = rind;
 				rel_cache_smt_declare_fun = cache_smt_input; } in
 	begin
 		global_rel_defs := !global_rel_defs @ [rdef];
