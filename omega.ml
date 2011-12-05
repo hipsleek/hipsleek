@@ -5,9 +5,12 @@ open Globals
 open Gen.Basic
 open Cpure
 
+let set_generated_prover_input = ref (fun _ -> ())
+let set_prover_original_output = ref (fun _ -> ())
+
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
-let in_timeout = ref 20.0 (* default timeout is 15 seconds *)
+let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
 
 (***********)
 let test_number = ref 0
@@ -58,21 +61,26 @@ let rec omega_of_exp e0 = match e0 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-            | _ -> 
-                Error.report_error {
-                  Error.error_loc = l;
-                  Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
-                }
+            | _ -> illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+                (* Error.report_error { *)
+                (*   Error.error_loc = l; *)
+                (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+                (* } *)
             in rr
       in r
-  | Div (_, _, l) -> 
-      Error.report_error {
-        Error.error_loc = l;
-        Error.error_text ="[omega.ml] Divide is not supported."
-      }
+  | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
+      (* Error.report_error { *)
+      (*   Error.error_loc = l; *)
+      (*   Error.error_text ="[omega.ml] Divide is not supported." *)
+      (* } *)
   | Max _
-  | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
-  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
+  | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
+  | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
+  | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint")
+(*
+(ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
+ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
+*)
 
 and omega_of_b_formula b =
   let (pf, _) = b in
@@ -107,7 +115,7 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
+  | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
 and omega_of_formula f  = match f with
   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
@@ -146,13 +154,7 @@ let start() =
   if not !is_omega_running then begin
       print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
-	  let path_to_omega = !omegacalc (*
-		if Sys.file_exists modified_omegacalc then
-		  let _ = print_string "Using modified Omega... \n"; flush stdout; in
-		  modified_omegacalc
-		else omegacalc  *)
-      in
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", path_to_omega, [||]) set_process prelude in
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
   end
 
@@ -248,6 +250,8 @@ let check_formula f timeout =
         
         let result = ref true in
         let str = read_last_line_from_in_channel (!process.inchannel) in
+        (* An Hoa : set original output *)
+        let _ = !set_prover_original_output str in
         let n = String.length str in
         if n > 7 then
           begin
@@ -316,7 +320,7 @@ let rec omega_of_var_list (vars : ident list) : string = match vars with
 let get_vars_formula (p : formula):(string list) =
   let svars = fv p in
   (*if List.length svars >= !oc_maxVars then (false, []) else*)
-    List.map omega_of_spec_var svars
+  List.map omega_of_spec_var svars
 
 (*
   Use Omega Calculator to test if a formula is valid -- some other
@@ -325,7 +329,6 @@ let get_vars_formula (p : formula):(string list) =
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
-  Gen.Profiling.inc_counter "stat_omega_count_sat";
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
@@ -349,6 +352,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
                 check_formula 1 fomega !in_timeout
             with
               | End_of_file ->
+                  (*let _ = print_endline "SAT: End_of_file" in*)
                   restart ("End_of_file when checking #SAT \n");
                   true
               | exc ->
@@ -369,11 +373,29 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       end
   end
 
+let is_sat (pe : formula)  (sat_no : string): bool =
+  let pf = !print_pure in
+  Gen.Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
+
+let is_sat_with_check (pe : formula) sat_no : bool option =
+  do_with_check "" (fun x -> is_sat x sat_no) pe 
+
+let is_sat (pe : formula) sat_no : bool =
+  try
+    is_sat pe sat_no
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.is_sat on formula :"^(!print_pure pe));
+        flush stdout;
+        failwith s
+      end
+
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
-	let _ = Gen.Profiling.inc_counter "stat_omega_count_valid" in
       let pvars = get_vars_formula pe in
+      (*if not safe then true else*)
       (*if not safe then true else*)
         begin
 	        omega_subst_lst := [];
@@ -382,7 +404,8 @@ let is_valid (pe : formula) timeout: bool =
             let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
     (*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-
+			(* An Hoa : set generated input *)
+			let _ = !set_generated_prover_input fomega in
             if !log_all_flag then begin
                 (*output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
                 output_string log_all (Gen.new_line_str^"#is_valid" ^Gen.new_line_str);
@@ -395,6 +418,7 @@ let is_valid (pe : formula) timeout: bool =
                   not (check_formula 2 (fomega ^ "\n") !in_timeout)
               with
                 | End_of_file ->
+                    (*let _ = print_endline "IMPLY: End_of_file" in*)
                     restart ("IMPLY : End_of_file when checking \n");
                     true
                 | exc ->
@@ -412,9 +436,24 @@ let is_valid (pe : formula) timeout: bool =
         end
   end
 
-let imply (ante : formula) (conseq : formula) (imp_no : string) (timeout:float) : bool =
+let is_valid (pe : formula) timeout: bool =
+  let pf = !print_pure in
+  Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
+
+let is_valid_with_check (pe : formula) timeout : bool option =
+  do_with_check "" (fun x -> is_valid x timeout) pe
+
+let is_valid_with_default (pe : formula) timeout : bool =
+  do_with_check_default "" (fun x -> is_valid x timeout) pe false
+
+
+
+(* let is_valid (pe : formula) timeout : bool = *)
+(*   do_with_check_default "Omega is_valid"  *)
+(*       (fun x -> is_valid x timeout) pe false *)
+
+let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   (*print_endline "LOCLE: imply";*)
-  Gen.Profiling.inc_counter "stat_omega_count_imply";
   incr test_number;
   (*
     let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
@@ -422,6 +461,7 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) (timeout:float) 
     let tmp2 = mkExists fvars tmp1 no_pos in
     not (is_valid tmp2)
    *)
+  
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   	
   let result = is_valid tmp_form !in_timeout in
@@ -432,7 +472,33 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) (timeout:float) 
       output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
-  
+
+let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
+  do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
+
+let imply (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
+  try
+    imply ante conseq imp_no timeout
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
+		print_endline ("and conseq Formula :"^(!print_pure conseq));
+        flush stdout;
+        failwith s
+      end
+
+let is_valid (pe : formula) timeout : bool =
+  try
+    is_valid pe timeout
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.is_CCvalid on Formula :"^(!print_pure pe));
+        flush stdout;
+        failwith s
+      end
+
 let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 | ConstRel b ->
     if b then
@@ -451,7 +517,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
         tmp2
     in
     if List.length aelist0 != List.length vars_list0 then
-      failwith ("match_var: numbers of arguments do not match")
+      illegal_format ("match_var: numbers of arguments do not match")
     else
       match_helper vars_list0 aelist0 f0
 | UnionRel (r1, r2) ->
@@ -513,6 +579,16 @@ let simplify (pe : formula) : formula =
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
   Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
+
+
+(* let simplify_with_check (pe : formula) : formula option = *)
+(*   do_with_check "Omega simplify" simplify pe *)
+
+let simplify (pe : formula) : formula =
+  match (do_with_check "" simplify pe)
+  with 
+    | None -> pe
+    | Some f -> f
 
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)
