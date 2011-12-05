@@ -19,7 +19,7 @@ let print_version () =
   print_endline ("HIP: A Verifier for Heap Manipulating Programs");
   print_endline ("Version 1.0");
   print_endline ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.");
-  print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
+  print_endline ("IT IS FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
 (******************************************)
@@ -32,7 +32,7 @@ let parse_file_full file_name =
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-      print_string "Parsing...\n"; flush stdout;
+      print_string ("Parsing "^file_name^" ...\n"); flush stdout;
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
       let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
