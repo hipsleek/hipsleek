@@ -98,7 +98,9 @@ and rel_decl = {
 (** An Hoa : axiom *)
 and axiom_decl = {
 		axiom_hypothesis : P.formula;
-		axiom_conclusion : P.formula; }
+		axiom_conclusion : P.formula;
+		axiom_derive_dir : derivation_direction;
+	}
     
 and proc_decl = { 
     proc_name : ident;

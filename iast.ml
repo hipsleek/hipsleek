@@ -65,7 +65,9 @@ and rel_decl = { rel_name : ident;
 and axiom_decl = {
 			axiom_hypothesis : P.formula ;
 			axiom_conclusion : P.formula ;
-		  }
+			axiom_derive_dir : derivation_direction;
+		}
+
 
 and hopred_decl = { hopred_name : ident;
           hopred_mode : branch_label;

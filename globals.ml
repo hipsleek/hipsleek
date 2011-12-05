@@ -35,6 +35,10 @@ and primed =
   | Primed
   | Unprimed
 
+and derivation_direction =
+	| Implies
+	| Iff
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)

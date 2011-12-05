@@ -1074,9 +1074,14 @@ rel_body:[[ (* formulas {
 ]];
 
 axiom_decl:[[
-	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
+	`AXIOM; lhs=pure_constr; `DERIVE; rhs=pure_constr ->
 		{ axiom_hypothesis = lhs;
-		  axiom_conclusion = rhs; }
+		  axiom_conclusion = rhs; 
+			axiom_derive_dir = Implies; }
+| `AXIOM; lhs=pure_constr; `EDERIVE; rhs=pure_constr ->
+		{ axiom_hypothesis = lhs;
+		  axiom_conclusion = rhs; 
+			axiom_derive_dir = Iff; }
 ]];
 
  (*end of sleek part*)   

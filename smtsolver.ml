@@ -28,14 +28,10 @@ type rel_def = {
 (* TODO use hash table for fast retrieval *)
 let global_rel_defs = ref ([] : rel_def list)
 
-type axiom_type = 
-	| IMPLIES
-	| IFF
-
 type axiom_def = {
-		axiom_direction	 : axiom_type;
-		axiom_hypothesis	: CP.formula;
-		axiom_conclusion	: CP.formula;
+		axiom_derive_dir  : derivation_direction;
+		axiom_hypothesis  : CP.formula;
+		axiom_conclusion  : CP.formula;
 		related_relations : ident list;
 		axiom_cache_smt_assert : string;
 	}
@@ -342,15 +338,16 @@ let add_axiom h dir c =
 		let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
 		let smt_params = String.concat " " (List.map smt_of_typed_spec_var params) in
 		let op = match dir with 
-					| IMPLIES -> "=>" 
-					| IFF -> "=" in
+					| Implies -> "=>" 
+					| Iff -> "=" in
 		let cache_smt_input = "(assert " ^ 
 				(if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
 				"\t(" ^ op ^ " " ^ (smt_of_formula h) ^ 
 				"\n\t" ^ (smt_of_formula c) ^ ")" ^ (* close the main part of the axiom *)
 				(if params = [] then "" else ")") (* close the forall if added *) ^ ")\n" (* close the assert *) in
 		(* Add 'h dir c' to the global axioms *)
-		let new_axiom = { axiom_direction = dir;
+		let new_axiom = {
+						axiom_derive_dir = dir;
 						axiom_hypothesis = h;
 						axiom_conclusion = c;
 						related_relations = related_relations (* info.relations TODO must we compute closure ? *);
@@ -379,7 +376,7 @@ let add_relation rname rargs rform =
 		| CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
 		| _ -> (* add an axiom to describe the definition *)
 			let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
-				add_axiom h IFF rform;
+				add_axiom h Iff rform;
 	end
 	
 

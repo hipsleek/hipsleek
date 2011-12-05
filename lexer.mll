@@ -299,6 +299,7 @@ rule tokenizer file_name = parse
   | '|' { OR }
   | "||" { OROR }
   | "|-" { (* (print_string "der\n"; *)DERIVE }
+  | "|--|" { (* (print_string "der\n"; *)EDERIVE }
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

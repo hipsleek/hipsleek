@@ -1371,9 +1371,11 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let chyp = trans_pure_formula adef.I.axiom_hypothesis stab in
   let ccln = trans_pure_formula adef.I.axiom_conclusion stab in
   (* let _ = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
-  { 	C.axiom_hypothesis = chyp;
-  C.axiom_conclusion = ccln; }
-      (* END : trans_axiom *) 
+  {	C.axiom_hypothesis = chyp;
+  	C.axiom_conclusion = ccln; 
+		C.axiom_derive_dir = adef.I.axiom_derive_dir;
+	}
+(* END : trans_axiom *) 
 
 and rec_grp prog :ident list =
   let r = List.map (fun c-> (c.Iast.view_name, (Iformula.view_node_types_struc c.Iast.view_formula))) prog.Iast.prog_view_decls in	

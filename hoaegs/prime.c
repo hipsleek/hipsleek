@@ -6,42 +6,54 @@
 relation divides(int m, int n).
 
 // definition
-axiom n = 0 ==> divides(m,n).
-axiom 0 < n < m ==> !(divides(m,n)).
-axiom divides(m,n) ==> divides(m,n-m).
-axiom divides(m,n) ==> divides(m,n+m).
+axiom n = 0 |- divides(m,n).
+axiom 0 < n < m |- !(divides(m,n)).
+axiom divides(m,n) |- divides(m,n-m).
+axiom divides(m,n) |- divides(m,n+m).
 
 // and some properties
-axiom n = m ==> divides(m,n).
-axiom n = m*k ==> divides(m,n).
-axiom divides(m,n) & divides(m,p) ==> divides(m,n+p).
-axiom divides(m,n) ==> divides(m,k*n).
-axiom divides(m,n) & divides(n,p) ==> divides(m,p).
-axiom m > 0 & n > 0 & divides(m,n) ==> m <= n.
-axiom divides(m,n) ==> exists(k : n = m * k).
+axiom n = m |- divides(m,n).
+axiom n = m*k |- divides(m,n).
+axiom divides(m,n) & divides(m,p) |- divides(m,n+p).
+axiom divides(m,n) |- divides(m,k*n).
+axiom divides(m,n) & divides(n,p) |- divides(m,p).
+axiom m > 0 & n > 0 & divides(m,n) |- m <= n.
+axiom divides(m,n) |- exists(k : n = m * k).
 
 relation prime(int p).
 
 // definition
-axiom prime(p) ==> p > 1.
-axiom p > 1 & forall(m : m <= 1 | m >= p | !(divides(m,p))) ==> prime(p).
-axiom prime(p) & divides(m,p) ==> m = 1 | m = p | m = -p.
-axiom p = a * b & 1 < a < p & 1 < b < p ==> !(prime(p)).
+axiom prime(p) |- p > 1.
+axiom p > 1 & forall(m : m <= 1 | m >= p | !(divides(m,p))) |- prime(p).
+axiom prime(p) & divides(m,p) |- m = 1 | m = p | m = -p.
+axiom p = a * b & 1 < a < p & 1 < b < p |- !(prime(p)).
 
 // p is not divisible by all m in range [2,3,...,n-1]
 relation primerel(int p, int n) ==
 	forall(m : m <= 1 | m >= n | !(divides(m,p))).
 
+axiom primerel(n,n) |- prime(n).
+
+axiom prime(n) |- primerel(n,n).
+
+//checkentail n > 0 & primerel(n,p) & p * p > n |- primerel(n,n).
+//checkentai !(primerel(n,n)) & n > 0 & p * p > n |- !(primerel(n,p)).
+//checkentail n = a * b & 0 <= a <= b |- a * a  <= n.
+//checkentail divides(a,n) |- (exists u : divides(u,n) & u * u <= n).
+axiom n > 0 & primerel(n,p) & p * p > n |- primerel(n,n).
+
 //checkentail true |- prime(2).
 //checkentail true |- !(prime(4)).
-axiom primerel(n,i) & !(divides(i,n)) ==> primerel(n,i+1).
+
+axiom primerel(n,i) & !(divides(i,n)) |- primerel(n,i+1).
 //checkentail primerel(n,i) & i<n & !(divides(i,n)) & j=i+1 |- primerel(n,j).
+
 //checkentail p > 1 & primerel(p,p) |- prime(p).
 //checkentail divides(m,0) |- divides(m,m).
 //checkentail divides(m,m) |- divides(m,m*q).
 //checkentail 0<=q & n=0+(m*q) & (0+1)<=m & (m+m)<=n & m<=n & 1<=m & 0<=n |- divides(m,n).
 
-axiom true ==> (divides(2,n) | divides(2,n+1)).
+axiom true |- (divides(2,n) | divides(2,n+1)).
 //checkentail true |- (divides(2,n) | divides(2,n+1)).
 //proof by induction
 //checkentail n = 0 |- (divides(2,n) | divides(2,n+1)).
@@ -88,10 +100,6 @@ bool is_prime1_helper(int n, int i)
 		return is_prime1_helper(n,i+1);
 	}
 }
-
-axiom primerel(n,n) ==> prime(n).
-
-axiom prime(n) ==> primerel(n,n).
 
 // Cannot be verified if we use "|" in place of "or"
 // So a case analysis is important here!
@@ -148,7 +156,6 @@ bool is_prime3(int n)
 		return is_prime3_helper(n,3);
 }
 
-axiom n > 0 & primerel(n,p) & p * p > n ==> primerel(n,n).
 
 bool is_prime3_helper(int n, int p)
 	requires !(divides(2,n)) & 3 <= p <= n & !(divides(2,p)) & primerel(n,p)

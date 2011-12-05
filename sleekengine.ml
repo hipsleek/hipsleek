@@ -254,7 +254,7 @@ let process_axiom_def adef = begin
 	let cadef = AS.trans_axiom iprog adef in
 		!cprog.C.prog_axiom_decls <- (cadef :: !cprog.C.prog_axiom_decls);
 	(* Forward the axiom to the smt solver. *)
-	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
+	Smtsolver.add_axiom cadef.C.axiom_hypothesis cadef.C.axiom_derive_dir cadef.C.axiom_conclusion;
 end
 	
 let process_data_def ddef =
