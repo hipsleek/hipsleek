@@ -212,13 +212,13 @@ struct
   let atom_of_formula (f: formula) : t = Pure_F f
 end;;
 
-module Pure_AuS = S_FRAMEWORK (Syn_Label_AuS) (Pure_Constr);;
-module Pure_Constr_AuS = CONSTR (Syn_Label_AuS) (Pure_Constr);;
-module Pure_Slice_AuS = SLICE (Syn_Label_AuS) (Pure_Constr);;
+module Pure_AuS         = S_FRAMEWORK (Syn_Label_AuS) (Pure_Constr);;
+module Pure_Constr_AuS  = CONSTR      (Syn_Label_AuS) (Pure_Constr);;
+module Pure_Slice_AuS   = SLICE       (Syn_Label_AuS) (Pure_Constr);;
 
-module Pure_AnS = S_FRAMEWORK (Syn_Label_AnS) (Pure_Constr);;
-module Pure_Constr_AnS = CONSTR (Syn_Label_AnS) (Pure_Constr);;
-module Pure_Slice_AnS = SLICE (Syn_Label_AnS) (Pure_Constr);;
+module Pure_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Pure_Constr);;
+module Pure_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Pure_Constr);;
+module Pure_Slice_AnS   = SLICE       (Syn_Label_AnS) (Pure_Constr);;
 
 
 module Memo_Constr =
@@ -240,7 +240,11 @@ struct
         | (false, true) -> [v1]
         | (false, false) -> [v1; v2]
 
-  let afv (constr: t) : (spec_var list * spec_var list) = ([], []) 
+  let afv (constr: t) : (spec_var list * spec_var list) =
+    match constr with
+    | Memo_B (bf, _) -> bfv_with_slicing_label bf
+    | Memo_F f -> fv_with_slicing_label f
+    | Memo_E _ -> (fv constr, []) 
 
   let memo_constr_of_pure_constr (a: P.t) (status: prune_status) : t = 
     match a with
@@ -259,21 +263,34 @@ struct
     List.concat (List.map memo_constr_of_memo_group mp) 
 end;;
 
-module Memo_AuS = S_FRAMEWORK (Syn_Label_AuS) (Memo_Constr);;
-module Memo_Constr_AuS = CONSTR (Syn_Label_AuS) (Memo_Constr);;
-module Memo_Slice_AuS = SLICE (Syn_Label_AuS) (Memo_Constr);;
+module Memo_AuS         = S_FRAMEWORK (Syn_Label_AuS) (Memo_Constr);;
+module Memo_Constr_AuS  = CONSTR      (Syn_Label_AuS) (Memo_Constr);;
+module Memo_Slice_AuS   = SLICE       (Syn_Label_AuS) (Memo_Constr);;
+
+module Memo_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Memo_Constr);;
+module Memo_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Memo_Constr);;
+module Memo_Slice_AnS   = SLICE       (Syn_Label_AnS) (Memo_Constr);;
 
 
 module Memo_Group = 
 struct
   type t = memoised_group
+  
   let fv (mg: t) : spec_var list = mg.memo_group_fv
-  let afv (constr: t) : (spec_var list * spec_var list) = ([], [])
+  
+  let afv (mg: t) : (spec_var list * spec_var list) = 
+    let wv = mg.memo_group_linking_vars in
+    let sv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv wv in
+    (sv, wv)
 end;;
  
-module MG_AuS = S_FRAMEWORK (Syn_Label_AuS) (Memo_Group);;
-module MG_Constr_AuS = CONSTR (Syn_Label_AuS) (Memo_Group);;
-module MG_Slice_AuS = SLICE (Syn_Label_AuS) (Memo_Group);;
+module MG_AuS         = S_FRAMEWORK (Syn_Label_AuS) (Memo_Group);;
+module MG_Constr_AuS  = CONSTR      (Syn_Label_AuS) (Memo_Group);;
+module MG_Slice_AuS   = SLICE       (Syn_Label_AuS) (Memo_Group);;
+
+module MG_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Memo_Group);;
+module MG_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Memo_Group);;
+module MG_Slice_AnS   = SLICE       (Syn_Label_AnS) (Memo_Group);;
 
 module Memo_Formula =
   functor (Label: LABEL_TYPE) -> 
