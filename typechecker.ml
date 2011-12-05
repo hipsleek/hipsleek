@@ -284,13 +284,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
               Othewiese, false -> write -> f=1.0
             *)
-            let vheap = if (read_only)
+            let vheap = 
+              if (Perm.allow_perm ()) then 
+                if (read_only)
                 then
                   let read_f = mkPermInv fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                 else
                   let write_f = mkPermWrite fresh_frac in
                   CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+              else
+                vheap
             in
 
 		    let vheap = prune_preds prog false vheap in
@@ -775,33 +779,38 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    let ftypes, fnames = List.split proc.proc_args in
 			    (* fsvars are the spec vars corresponding to the parameters *)
 			    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
-			let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
+			    let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
 			    let init_form = nox in
 			    let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
           (*add default full permission = 1.0 to ante; 
             need to add type of full perm to stab
           *)
-          let init_form = CF.add_mix_formula_to_formula (full_perm_constraint ()) init_form  in
-			    let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-			let _ = if !print_proof then begin 
-				Prooftracer.push_proc proc;
-				Prooftracer.start_compound_object ();
+                let init_form =
+                  if (Perm.allow_perm ()) then
+                    CF.add_mix_formula_to_formula (full_perm_constraint ()) init_form
+                  else
+                    init_form
+                in
+		        let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
+			    let _ = if !print_proof then begin 
+				    Prooftracer.push_proc proc;
+				    Prooftracer.start_compound_object ();
 				end
-			in
+			    in
 			    let pp, exc = try (* catch exception to close the section appropriately *)
-				  (check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body, None) with | _ as e -> (false, Some e) in
-		    let _ = if !print_proof then begin
+				                  (check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body, None) with | _ as e -> (false, Some e) in
+		        let _ = if !print_proof then begin
 					Prooftracer.pop_div ();
 					Prooftracer.add_proc proc pp;
 				end
 				in
 		        let _ = match exc with | Some e -> raise e | None -> () in
 			    let result = if pp then begin
-				  print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
-		      	  true
+				    print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
+		      	    true
 	        	end else begin
-	        	  print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n"); 
-	        	  false 
+	        	    print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n"); 
+	        	    false 
 	        	end in
 	      		result
 		      end
