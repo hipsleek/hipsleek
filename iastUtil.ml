@@ -625,7 +625,7 @@ let rec check_exp_if_use_before_declare
              ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^", col "
              ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                                - pos.start_pos.Lexing.pos_bol))
-             ^" is not declared"}
+             ^" is not declared (Bind)"}
       else Some ()
     | Var x ->
       let v = x.exp_var_name in
@@ -651,7 +651,7 @@ let rec check_exp_if_use_before_declare
              ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^", col "
              ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                                - pos.start_pos.Lexing.pos_bol))
-             ^" is not declared"}
+             ^" is not declared (Var)"}
       else Some ()
     | _ -> None
   in iter_exp_args_imp e (local,global) stk f f_args f_imp
@@ -874,16 +874,30 @@ let rename_proc gvs proc : proc_decl =
   }
 
 
+(* let rename_prog prog : prog_decl =  *)
+(*   let gvs = to_IS (List.concat ( *)
+(*     let fun0 (a,b,c) = a in (\*find var idents*\) *)
+(*     let fun1 a = List.map fun0 a.exp_var_decl_decls in *)
+(*     List.map fun1 prog.prog_global_var_decls)) *)
+(*   in  *)
+(*   let prog = float_var_decl_prog prog in *)
+(*   map_proc prog (rename_proc gvs)  *)
+
 let rename_prog prog : prog_decl = 
-  let gvs = to_IS (List.concat (
-    let fun0 (a,b,c) = a in
+  (*find var idents*)
+  let var_idents =  (List.concat (
+    let fun0 (a,b,c) = a in 
     let fun1 a = List.map fun0 a.exp_var_decl_decls in
     List.map fun1 prog.prog_global_var_decls))
-  in 
+  in
+  (*find proc idents*)
+  let proc_idents = 
+    let fun0 (proc: proc_decl) : ident = proc.proc_name in
+    List.map fun0 prog.prog_proc_decls
+  in
+  let gvs = to_IS (var_idents@proc_idents) in
   let prog = float_var_decl_prog prog in
   map_proc prog (rename_proc gvs) 
-
-
 
 (********free var************)
 let rec find_free_read_write (e:exp) bound 
@@ -1217,7 +1231,8 @@ let add_globalv_to_mth_prog prog =
 let add_globalv_to_mth_prog prog = 
   Gen.Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
 
-  
+(*iprims: primitives in the header files
+prog: current program*)  
 let pre_process_of_iprog iprims prog = 
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;

@@ -1,0 +1,27 @@
+/*
+ * LDK
+ * Test for UNFOLDING
+
+//UNFOLD
+x::ll(p)<n> |- self = null & n = 0
+	or x::node(p)<next = r> * r::ll(p)<n - 1>.
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+checkentail x::ll(1.0)<n> & n > 3 |- x::node(1.0)<next = r1> * r1::node(1.0)<next = r2> & r2=null.//fail
+
+checkentail x::ll(1.0)<n> & n = 2 |- x::node(1.0)<next = r1> * r1::node(1.0)<next = r2> & r2=null.
+print residue. //valid
+
+checkentail x::ll(1.0)<n> & n = 2 |- x::node(f)<next = r1> * r1::node(1.0)<next = r2> & r2=null.
+print residue. //valid
+
+checkentail x::ll(1.0)<n> & n = 2 |- x::node(f)<next = r1> * r1::node(f1)<next = r2> & r2=null & f1=f.
+print residue. //valid
+

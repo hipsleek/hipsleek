@@ -1,0 +1,34 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv n>=1.
+	 
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+//lemma self::lseg(f)<n, p> & n = a + b & a,b >=0 -> self::lseg(f)<a, r> * r::lseg(f)<b, p>.
+lemma self::lseg(1.0)<n, p> & n = a + b & a,b >=0 -> self::lseg(1.0)<a, r> * r::lseg(1.0)<b, p>.
+
+//lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
+//lemma self::ll_tail(f)<t, n> <-> self::lseg(f)<n-1, t> * t::node(f)<_, null>.
+lemma self::ll_tail(1.0)<t, n> <-> self::lseg(1.0)<n-1, t> * t::node(1.0)<_, null>.
+
+//lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
+	
+
+checkentail x::lseg(1.0)<n, p> & n = 10 |- x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n2, r2> * r2::lseg(1.0)<n3, r3> & n1 = 3 & n2 = 4 & n3 = 2.
+// valid 
+
+checkentail x::ll_tail(1.0)<r3, n> & n = 11 |- x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n2, r2> * r2::lseg(1.0)<n3, r3> & n1 = 3 & n2 = 4 & n3 = 2.
+// fail
+
+checkentail x::ll_tail(1.0)<r3, n> & n = 11 |- x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n2, r2> * r2::lseg(1.0)<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
+// valid
+
+checkentail x::ll_tail(1.0)<p, n> & n = 11 |- x::lseg(1.0)<n1, r1> * r1::lseg(1.0)<n2, r2> * r2::lseg(1.0)<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
+print residue.
+// valid with r3=p

@@ -1,0 +1,41 @@
+Issues for Fractional Permission
+================================
+
+1. allow split/combine for both nodes and predicates;
+   these should be automatically generated.
+   should we use a general meta-rules? 
+   rather a rule for each node & each predicate.
+
+2. after each split, there must always be a direct match;
+   can this be mandated?
+
+3. should combine be done in a separate normalization
+   step? more effective than using a combine lemma.
+
+4. no split when LHS and RHS are full nodes.
+
+5. do we need to write a separate rule for fractional defn?
+   can this be generated?
+
+6. Can fractional predicate be different from normal predicate?
+
+    x::node<x,y> = x::node#<x,y>@f & f=1
+
+
+Examples:
+
+  x::node<a,b> |- x::node(f)<x,y> & f>0
+
+  x::node(f)<a,b> & f=1 |- x::node<x,y>
+
+  x::node<a,b> |- x::node<x,y>
+
+  x::node(f1)<a,b>@ |- x::node(f2)<x,y>
+
+
+
+
+
+
+
+
