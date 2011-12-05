@@ -7,7 +7,7 @@ open Cpure
 type perm_type =
   | Frac (*fractional permissions*)
   | Count (*counting permissions*)
-  | No
+  | NoPerm
 
 type iperm = Ipure.exp option (*type of permission in iformula*)
 
@@ -19,20 +19,21 @@ let string_of_perm_type t =
   match t with
     | Frac -> "Frac"
     | Count -> "Count"
-    | No -> "No"
+    | NoPerm -> "NoPerm"
 
-let perm = ref Frac
+(* let perm = ref Frac *)
+let perm = ref NoPerm
 
 let allow_perm ():bool = 
   match !perm with
     | Frac -> true
     | Count -> true
-    | No -> false
+    | NoPerm -> false
 
 let set_perm perm_str = 
   if perm_str = "fperm" then perm:=Frac
   else if perm_str = "cperm" then perm:=Count
-  else perm:= No
+  else perm:= NoPerm
 
 (*Some constants*)
 module PERM_const =
