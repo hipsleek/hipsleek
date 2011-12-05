@@ -105,6 +105,7 @@ let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l                  -> "null"
+  | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
   | P.Var (x, l)        -> (match x with 
 															|(id, p) -> id ^ (match p with 
 																									| Primed    -> "#'" 
@@ -547,8 +548,14 @@ let rec string_of_exp = function
   | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Raise ({exp_raise_type = tb;
 			exp_raise_path_id = pid;
-			exp_raise_val = b;}) -> string_of_control_path_id_opt pid 
-				("raise "^(match b with | None -> let r = match tb with | Const_flow cf-> cf | Var_flow cf -> cf in r | Some bs-> (string_of_exp bs))^ "\n")
+			exp_raise_val = b;}) -> 
+        let ft = match tb with 
+                      | Const_flow cf-> "CF"^cf
+                      | Var_flow cf -> "VF"^cf in
+        string_of_control_path_id_opt pid 
+				("raise "^(match b with 
+                  | None -> ft
+                  | Some bs-> "EXPR:"^ft^(string_of_exp bs))^ "\n")
   | Try ({	exp_try_block = bl;
 			exp_catch_clauses = cl;
 			exp_finally_clause = fl;})

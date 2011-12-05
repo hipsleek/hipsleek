@@ -2835,7 +2835,7 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
 	            let r = helper b.formula_case_branches in
 	            let r = match r with
 	              | None -> begin
-                             List.map (fun (c1, c2) ->
+                                      List.map (fun (c1, c2) ->
 						  (*let _ = print_string ("\nhelper_inner: c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in*)
 						  (*let _ = print_string ("\nhelper_inner: ctx: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in
@@ -2974,7 +2974,7 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
                       Error.report_warning {
 				Error.error_loc = post_pos#get;
 				Error.error_text = ("[inner entailer" ^ (string_of_int i) ^ "] unexpected dealing with OCtx " ^ (string_of_int (count_octx ctx22)) ^ "\n" ^ (Cprinter.string_of_context_short ctx22))
-                	}
+                     }
 	  | _ -> () in
 	if (List.length conseq) > 0 then	
 	  (* this call captures an OCtx, why?? *)
@@ -2987,7 +2987,7 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
 	else 
 	  (* TODO : can do a stronger falsity check on LHS *)
 	  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "struc conseq is [] meaning false" Globals.sl_error)) , UnsatConseq)
-          (* ((SuccCtx [ctx]),TrueConseq) *)
+		  (* ((SuccCtx [ctx]),TrueConseq) *)
   in
   inner_entailer 8 ctx_00 conseq 
 	  (*let adv_u = advance_unfold_struc prog ctx_00 conseq in
@@ -3213,8 +3213,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 		(*print_string ("An Hoa CHECKPOINT 2664 :: heap_entail_after_sat\n");
 		  print_string ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs" ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*) 
         (* print_string ("going: "^(Cprinter.string_of_formula es.es_formula)^"\n") ;*)
-        let es = {es with es_formula = prune_preds prog true es.es_formula} in
-        let conseq = prune_preds prog true conseq in
+       (* let es = {es with es_formula = prune_preds prog true es.es_formula} in *)
+       (* let conseq = prune_preds prog true conseq in *)
         let es = (CF.add_to_estate_with_steps es ss) in
         let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
 		(*print_string ("heap_entail_after_sat: output context:\n" ^ (Cprinter.string_of_list_context tmp) ^ "\n");*)  
@@ -3222,8 +3222,12 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
       end
 
 and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) 
-      = Gen.Debug.no_2 "heap_entail_conjunct_lhs" Cprinter.string_of_context Cprinter.string_of_formula Cprinter.(fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
-  (fun ctx conseq -> heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos) ctx conseq 
+      = Gen.Debug.no_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
+  (fun ctx -> 
+      (* print_string "hstart\n"; flush(stdout); let r = *)
+      heap_entail_conjunct_lhs_x  prog is_folding  ctx conseq pos
+          (*in print_string "hstop\n"; r *)
+  ) ctx
 
 (* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
 
@@ -3335,14 +3339,10 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	   let _ = print_string "\n" in *)
 	(* Collect and sort the data and view predicates *)
 	let dv = collect_data_view h in
-	(*let _ = print_endline ("process_entail_state: eset: " ^ (P.EMapSV.string_of eset)) in
-	  let _ = print_endline ("process_entail_state: dv:") in
-	  let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in*)
 	let dv = List.sort
 	  (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset)
 	  dv in
-	(*let _ = print_endline ("process_entail_state: sorted dv:") in
-	  let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in*)
+	(* let _ = List.map (fun x -> print_endline (PR.string_of_h_formula x)) dv in *)
 	(* Produce an action to perform *)
 	let action = generate_action dv eset in
 	(* Process the action to get the new entail state *)
@@ -3354,11 +3354,10 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     formula_base_label = None;
     formula_base_pos = no_pos } in
 	let res = process_action 0 prog es conseq b b action [] is_folding pos in
-	(*let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
-	  let _ = print_endline (PR.string_of_entail_state es) in
-	  let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in
-	  let (lctx, _) = res in
-	  let _ = print_endline (PR.string_of_list_context lctx) in*)
+	(* let _ = print_endline "AN HOA : THE CONTEXT BEFORE UNFOLDING" in 
+	   let _ = print_endline (PR.string_of_entail_state es) in
+	   let _ = print_endline "AN HOA : NEW CONTEXT AFTER UNFOLDING OF DUPLICATED ROOTS" in 
+	   let _ = print_endline (PR.string_of_list_context lctx) in *)
 	(res, match action with
 	  | Context.M_Nothing_to_do _ -> false
 	  | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
@@ -4508,7 +4507,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                                 in
                                 (*let _ = print_endline ("locle 1:"^
                                   (exlist # get_closest fl1.CF.formula_flow_interval) ) in*)
-                                let fe = mk_failure_may err_msg in
+                                let fe = mk_failure_may err_msg unkdefined_error in
                                 let may_flow_failure =
 			                      FailCtx (Basic_Reason ({fc_message = err_msg;
 							      fc_current_lhs = estate;
@@ -4617,9 +4616,6 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
   (*let _ = print_string ("\nheap_entail_build_mix_formula_check: conseq: "^(Cprinter.string_of_mix_formula conseq)) in*)
   let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
   let tmp1 = (*MCP.memo_pure_push_exists*) elim_exists_mix_formula inner_vars conseq no_pos in
-
-  (*let _ = print_string ("heap_entail_build_mix_formula_check: new_conseq (tmp1): " ^ (Cprinter.string_of_mix_formula tmp1) ^ "\n") in*)
-  
   let tmp1 = MCP.memo_pure_push_exists outer_vars tmp1 in
   (ante,tmp1)
 
@@ -4740,9 +4736,9 @@ and build_and_failures_x (failure_code:string) ((contra_list, must_list, may_lis
               let msg = failure_code ^ " " ^
                 (String.concat "; " (List.map build_failure_msg failure_list)) ^ " ("  ^ failure_string ^ ")." in
               let fe = match fk with
-                |  Failure_May _ -> mk_failure_may msg "logical bug"
-                | Failure_Must _ -> (mk_failure_must msg "logical bug")
-              | _ -> {fe_kind = fk; fe_name = "" ;fe_locs=[]}
+                |  Failure_May _ -> mk_failure_may msg Globals.logical_error
+                | Failure_Must _ -> (mk_failure_must msg Globals.logical_error)
+                | _ -> {fe_kind = fk; fe_name = "" ;fe_locs=[]}
               in
               Some (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
     in
@@ -4764,11 +4760,11 @@ and build_and_failures_x (failure_code:string) ((contra_list, must_list, may_lis
       | Some ft -> FailCtx ft
       | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
             let msg =  "use different strategies in proof searching (slicing)" in
-           let fe =  mk_failure_may msg "" in
-           FailCtx (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
+           let fe =  mk_failure_may msg "logical bug" in
+            FailCtx (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
   else
     let msg = "failed in entailing pure formula(s) in conseq" in
-    CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg ""))
+    CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg "logical bug"))
 
 (** An Hoa : Extract the relations that appears in the input formula
     *  RETURN : a list of b_formula, each of which is a RelForm  
@@ -6170,7 +6166,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
           let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" "separation reduction" [])), NoAlias)
+		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
           else
             let new_estate = {estate with es_formula = Base{lhs_b with formula_base_heap = lhs_rest}} in
 			(*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
@@ -6204,7 +6200,12 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
             let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
             let ctx1 = build_context (Ctx estate) delta1 pos in
 			let ctx1 = set_unsat_flag ctx1 true in
-			let res_rs, prf1 = heap_entail_one_context prog is_folding ctx1 conseq pos in
+            let rec prune_helper c =
+              match c with
+                | OCtx (c1,c2) -> OCtx(prune_helper c1, prune_helper c2)
+                | Ctx es -> Ctx ({es with es_formula = prune_preds prog true es.es_formula})
+            in
+			let res_rs, prf1 = heap_entail_one_context prog is_folding (prune_helper ctx1) (*ctx1*) conseq pos in
 			let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
 			(res_rs, prf)
 
@@ -6320,7 +6321,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                 let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                         !error_flow_int estate.CF.es_formula} in
                 (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") "" [])), NoAlias)
+                mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") sl_error)), NoAlias)
               else
                 let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
                 (*
@@ -6342,7 +6343,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec
                   (build_and_failures "15.3" (contra_list, must_list, may_list) fc_template, UnsatConseq)
                 else
                   let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
-                    ^ " (may-bug)."in
+                    ^ " (must-bug)."in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                           !top_flow_int estate.CF.es_formula} in
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,

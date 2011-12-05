@@ -1,0 +1,41 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+         or self::node<next = r> * r::ls<p> & self!=p
+         inv true.
+
+pred ls_c<p> == case {
+     self=p -> [] self = p ;
+     self!=p ->  [] self::node<_,r> * r::ls_c<p> ; 
+     }
+     inv true.
+
+checkentail x::node<_,r>*r::ls<p> |- x::ls<p>.
+
+// case-rule is unsound when there are different residue.
+checkentail x::node<_,r>*r::ls_c<p> |- x::ls_c<p>.
+
+checkentail x::node<_,r>*r::node<_,p> |- x::ls<p>.
+print residue.
+/*
+Entail (3): Fail. (may) cause:may[213  r_120=r & x!=r_120 |-  r_120=p;  r_120=r & x!=r_120 |-  x!=p (may-bug).,213  true |-  x=p (may-bug).]
+*/
+
+checkentail x::node<_,r>*r::node<_,p> |- x::ls_c<p>.
+print residue.
+/*
+ true & x!=p & r_150=r & r_150!=p & r_158=p & {FLOW,(27,27)=__norm} LOC: _0_0
+ or r::node<Anon_35,p>@M & x!=p & r_150=r & r_150=p &
+    {FLOW,(27,27)=__norm} LOC: _0_0
+ or x::node<Anon_34,r>@M * r::node<Anon_35,p>@M & x=p &
+    {FLOW,(27,27)=__norm} LOC: _0_0
+*/
+
+checkentail x::node<_,r>*r::node<_,p> |- x::ls<r>.
+print residue.
+
+
+checkentail x::node<_,r>*r::node<_,p> |- x::ls_c<r>.
+print residue.
+
+

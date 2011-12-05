@@ -19,7 +19,7 @@ ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
 	inv n>=0;
 
-coercion self::sll<n, sm, lg> -> self::ll<n>;
+lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 node id(node xs)
   requires xs::sll<n,_,_>

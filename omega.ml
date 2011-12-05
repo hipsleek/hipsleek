@@ -396,7 +396,6 @@ let is_valid (pe : formula) timeout: bool =
   begin
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
-      (*if not safe then true else*)
         begin
 	        omega_subst_lst := [];
             let fstr = omega_of_formula pe in

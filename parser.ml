@@ -1,5 +1,7 @@
 open Camlp4
 open Globals
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 open Iast
 open Token
 open Sleekcommons
@@ -145,10 +147,6 @@ let cexp_to_pure1 fct f = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), None), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
-let cexp_to_pure_slicing fct f sl = match f with
-  | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None))
-  | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
-
 let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
@@ -201,6 +199,7 @@ let peek_try =
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
+         | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
          | [GT,_;VARIANCE,_] -> raise Stream.Failure 
          | [GT,_;_] -> ()
@@ -376,57 +375,16 @@ let rec set_il_formula f il =
 	| _ -> f
 
 and set_il_b_formula bf il =
-  Gen.Debug.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula
-	(fun bf -> set_il_b_formula_x bf il) bf
-	  
-and set_il_b_formula_x bf il =
-  let (pf, o_il) = bf in
-  match o_il with
-	| None -> (pf, il)
-	| Some (_, _, l_exp) ->
-	  match il with
-		| None -> bf
-		| Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
-	  
+  let (pf, _) = bf in (pf, il)
+
 and set_il_exp exp il =
-  let (pe, _) = exp in (pe, il)
-
-and contain_vars_pure_double f =
-  match f with
-	| Pure_f _ -> false
-	| Pure_c pc -> P.contain_vars_exp pc
-
-and set_slicing_utils_pure_double f il =
-  let pr_pure_double = function
-	| Pure_f pf -> Iprinter.string_of_pure_formula pf
-	| Pure_c pc -> Iprinter.string_of_formula_exp pc
-  in 
-  Gen.Debug.no_2 "set_slicing_utils_pure_double"
-	pr_pure_double 
-	string_of_bool
-	pr_pure_double
-	set_slicing_utils_pure_double_x f il
+  let (pe, _) = exp in (pe, il)				   
 				   
-and set_slicing_utils_pure_double_x f il =
-  (*
-	il = true  -> Pure_f pf is a linking constraint
-	il = false -> Pure_f pf is not a linking constraint,
-	              but we need to find its linking variables
-                  or linking expressions in !F.linking_exp_list,
-	              if any. Those linking variables/expressions
-	              were added into the list at Pure_c cases.
-  *)
+and set_slicing_utils_pure_double f il =
   if !Globals.do_slicing then
 	match f with
-	  | Pure_f pf ->
-		let ls = P.find_lexp_formula pf !F.linking_exp_list in
-		if (ls == [] && not il) then f
-		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
-	  (*if il then Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), [])))
-	  else
-		let ls = P.find_lexp_formula pf !F.linking_exp_list in
-		if (ls == []) then f
-		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))*)
+	| Pure_f pf -> let ls = P.find_lexp_formula pf !F.linking_exp_list in
+				   Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
 	| Pure_c pc -> let _ = Hashtbl.add !F.linking_exp_list pc 0 in f
   else f
 				   
@@ -451,7 +409,7 @@ non_empty_command:
       | `PRED;t=view_decl     -> PredDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
-	  | `AXIOM;t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
       | t=captureresidue_cmd  -> CaptureResidue t
@@ -517,10 +475,14 @@ field_list2:[[
  (********** Views **********)
 
 view_decl: 
-  [[ vh=view_header; `EQEQ; vb=view_body; oi= opt_inv  
+  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv  
       -> { vh with view_formula = (fst vb); view_invariant = oi; try_case_inference = (snd vb) } ]];
 
 opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos, [])]];
+
+opt_derv: [[t=OPT derv -> un_option t false ]];
+
+derv : [[ `DERV -> true ]];
 
 inv: 
   [[`INV; pc=pure_constr; ob=opt_branches -> (pc,ob)
@@ -536,21 +498,21 @@ opt_branch:[[t=OPT branch -> un_option t ""]];
 
 branch: [[ `STRING (_,id);`COLON -> id ]];
 
-
 view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
-      let cids, br_labels = List.split cids in
-      if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then
-        report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed")
-      else
+      let cids_t, br_labels = List.split cids in
+      let _, cids = List.split cids_t in
+      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
+      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
+      (* else *)
         let modes = get_modes anns in
         { view_name = vn;
           view_data_name = "";
-          view_vars = List.map fst cids;
+          view_vars = (* List.map fst *) cids;
           view_labels = br_labels;
           view_modes = modes;
-          view_typed_vars = [];
+          view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_invariant = (P.mkTrue (get_pos_camlp4 _loc 1), []);
@@ -565,9 +527,11 @@ cid:
 						if String.contains t '\'' then (* Remove the primed in the identifier *)
 							(Str.global_replace (Str.regexp "[']") "" t,Primed) 
 						else (t,Unprimed)
-   | `RES _                 	-> (res, Unprimed)
+   | `RES _                 	-> (res_name, Unprimed)
    | `SELFT _               	-> (self, Unprimed)
    | `THIS _               		-> (this, Unprimed)]];
+
+
 
 (** An Hoa : Access extension. For example: in "x.node.value", ".node.value" is the idext **)
 (* idext:
@@ -596,7 +560,14 @@ cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst 
 (* annotated cid list *)
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
   
-ann_cid:[[ ob=opt_branch; c=cid; al=opt_ann_list ->((c, ob), al)]];
+c_typ:
+  [[ `COLON; t=typ -> t ]];
+
+cid_typ:
+  [[ `IDENTIFIER id ; t=OPT c_typ -> 
+      let ut = un_option t UNK in (ut,id) ]];
+
+ann_cid:[[ ob=opt_branch; c=cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 opt_ann_list: [[t=LIST0 ann -> t]];
   
@@ -704,32 +675,32 @@ heap_wr:
 simple2:  [[ t= opt_type_var_list; `LT -> (* let _ = print_endline "PASSED simple2." in *)()]];
    
 simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
      match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2)]];
+        | ([],t) -> F.mkHeapNode2 c id dr true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id dr true false false false t ofl (get_pos_camlp4 _loc 2)]];
 
 simple_heap_constr:
   [[ 
-    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
     (match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
+        | ([],t) -> F.mkHeapNode2 c id dr true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id dr true false false false t ofl (get_pos_camlp4 _loc 2))
+  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)
+      | ([],t) -> F.mkHeapNode2 c id dr false false false false t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id dr false false false false t ofl (get_pos_camlp4 _loc 2))
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false (*dr*) false false false false [] None  (get_pos_camlp4 _loc 1)
 	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-  | peek_heap; c=cid; `COLONCOLON; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+  | peek_heap; c=cid; `COLONCOLON; simple2; hl= opt_general_h_args; `GT;  `IMM; dr=opt_derv; ofl= opt_formula_label ->
     (match hl with
-        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name true false false false t ofl (get_pos_camlp4 _loc 2)
-        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name true false false false t ofl (get_pos_camlp4 _loc 2))
-  | peek_heap; c=cid; `COLONCOLON; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
+        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr true false false false t ofl (get_pos_camlp4 _loc 2))
+  | peek_heap; c=cid; `COLONCOLON; simple2; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name false false false false t ofl (get_pos_camlp4 _loc 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)
+      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr false false false false t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr false false false false t ofl (get_pos_camlp4 _loc 2))
+  (* | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" dr false false false false [] None  (get_pos_camlp4 _loc 1) *)
   ]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
@@ -769,79 +740,71 @@ slicing_label: [[ `DOLLAR -> true ]];
 
 cexp_w :
   [ "pure_lbl"
-      [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
+    [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
 
   | "slicing_label"
-	  [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
-	  
+	[ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
+  
   | "pure_or" RIGHTA
-	  [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
-	  
+   [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
+  
   | "pure_and" RIGHTA
-	  [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
+   [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
 
   |"bconstrp" RIGHTA
-      [  lc=SELF; `NEQ;  cl=SELF       ->
-	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f (*false*) (if !opt_ineq then (*(contain_vars_pure_double lc) && (contain_vars_pure_double cl)*) true else false)
-	  | lc=SELF; `EQ;   cl=SELF  ->
-	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f false
-      ]  
-  | "bconstr" 
-      [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl *)
-       (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl  *)
-       (* |  *)
-		lc=SELF; `LTE;    cl=SELF       ->
-		let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+    [  lc=SELF; `NEQ;  cl=SELF       ->
+		let f = cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 		set_slicing_utils_pure_double f false
-      | lc=SELF; `LT;     cl=SELF       ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f false
-      | lc=SELF; peek_try; `GT;     cl=SELF       ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f false
-      | lc=SELF; `GTE;    cl=SELF       ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f false
-      | (*peek_try;*) lc=SELF(*cid*); `IN_T;   cl=SELF                      ->
-	  let cid, pos = match lc with
-		| Pure_c (P.Var (t, l)) -> (t, l)
-		| _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
-	 (*let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in*)
-	  let f = cexp_to_pure1 (fun c2 -> P.BagIn (cid,c2,pos)) cl in
-	  set_slicing_utils_pure_double f false
-      | (*peek_try;*) lc=SELF(*cid*); `NOTIN;  cl=SELF                      ->
-	  let cid, pos = match lc with
-		| Pure_c (P.Var (t, l)) -> (t, l)
-		| _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
-	 (*let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in*)
-	  let f = cexp_to_pure1 (fun c2 -> P.BagNotIn(cid,c2,pos)) cl in
-	  set_slicing_utils_pure_double f false
-	  | lc=SELF; `SUBSET; cl=SELF                            ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
-	  set_slicing_utils_pure_double f false
-      | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
-	  let f = Pure_f (P.BForm ((P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None), None)) in
-	  set_slicing_utils_pure_double f false
-      | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
-	  let f = Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None))  in
-	  set_slicing_utils_pure_double f false
-      | lc=SELF; `INLIST; cl=SELF                ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
-	  set_slicing_utils_pure_double f false
-      | lc=SELF; `NOTINLIST; cl=SELF             ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
-	  set_slicing_utils_pure_double f false
-      | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
-	  set_slicing_utils_pure_double f false
-      | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
-	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
-	  set_slicing_utils_pure_double f false]
+	 | lc=SELF; `EQ;   cl=SELF  ->
+		let f = cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+		set_slicing_utils_pure_double f false
+    ]  
+  | "bconstr" 
+    [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl *)
+     (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl  *)
+     (* |  *)
+	   lc=SELF; `LTE;    cl=SELF       ->
+			let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+			set_slicing_utils_pure_double f false
+     | lc=SELF; `LT;     cl=SELF       ->
+			let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+			set_slicing_utils_pure_double f false
+     | lc=SELF; peek_try; `GT;     cl=SELF       ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `GTE;    cl=SELF       ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	   set_slicing_utils_pure_double f false
+     | peek_try; lc=cid; `IN_T;   cl=SELF                      ->
+	 let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in
+	 set_slicing_utils_pure_double f false
+     | peek_try; lc=cid; `NOTIN;  cl=SELF                      ->
+	 let f = cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos_camlp4 _loc 2))) cl  in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `SUBSET; cl=SELF                            ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false
+     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
+	 let f = Pure_f (P.BForm ((P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None), None)) in
+	 set_slicing_utils_pure_double f false
+     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
+	 let f = Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None))  in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `INLIST; cl=SELF                ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false
+     | lc=SELF; `NOTINLIST; cl=SELF             ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false
+     | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
+	 set_slicing_utils_pure_double f false
+     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
+	 let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
+	 set_slicing_utils_pure_double f false]
 
-	  
-	  
+ 
+   
   | "pure_paren" 
       [peek_pure; `OPAREN;  dc=SELF; `CPAREN -> dc ] 
 
@@ -875,6 +838,9 @@ cexp_w :
       | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos_camlp4 _loc 2)) t1 t2  
      (*| t =cexp_w                                                 -> t *)]
 
+   | "ann_exp"
+     [e=SELF ; `COLON; ty=typ               
+             -> apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e]
 
   | "una"
       [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
@@ -1087,7 +1053,7 @@ typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
 rel_header:[[
-`REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists 
@@ -1169,7 +1135,7 @@ decl:
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  p=proc_decl                  -> Proc p
-  | `COERCION; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
+  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
@@ -1300,7 +1266,7 @@ proc_decl:
    | h=proc_header -> h]];
   
 proc_header:
-  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
      mkProc id "" None false ot fpl t osl [] (get_pos_camlp4 _loc 1) None
      
@@ -1324,6 +1290,7 @@ constructor_header:
 
 opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
   
+
 fixed_parameter:
   [[ pm=OPT ref_t; t=typ; `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;

@@ -505,15 +505,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   Debug.devel_pprint (to_print^"\n") pos;
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
-                                  let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+                  let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
 
-                  (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*) 
+                  (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
+ 
                   if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs in	       
+                  rs in
                 (* Call check_pre_post with debug information *)
                 let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
@@ -528,6 +529,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             				Prooftracer.push_pre e0;
                     (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
                   end else false in
+
                 let res = if (CF.isFailListFailescCtx ctx) then
 				  let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
                   ctx 

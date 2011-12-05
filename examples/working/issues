@@ -1,0 +1,28 @@
+=====================================================
+(1) context simplification have some overheads
+hip --eps --sctx --enable-check-lemmas
+All test results were as expected.
+real	3m24.073s
+user	2m5.184s
+sys	0m39.866s
+
+hip --eps --enable-check-lemmas
+All test results were as expected.
+real	2m3.660s
+user	1m26.201s
+sys	0m27.106s
+
+sleek --eps --sctx --enable-check-lemmas
+Total number of errors: 2 in files:
+  imm/imm1.slk imm/imm3.slk.
+real	0m17.276s
+user	0m10.601s
+sys	0m5.660s
+
+hip --eps --enable-check-lemmas
+Total number of errors: 2 in files:
+  imm/imm1.slk imm/imm3.slk.
+real	0m11.052s
+user	0m6.064s
+sys	0m4.348s
+=====================================================

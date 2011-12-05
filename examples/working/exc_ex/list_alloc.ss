@@ -21,7 +21,7 @@ ensures res::node<val, next> & flow __norm or res::no_mem_exc<> & flow no_mem_ex
 
 void dealloc (ref node x)
 requires x::node<>
-ensures x' = null;
+ensures x' = null; //'
 
 // strong guarantee
 void list_alloc_main(int n, ref node x) throws no_mem_exc
@@ -31,7 +31,8 @@ ensures x'::ll<n> & flow __norm or res::no_mem_exc<> & x' = null & flow no_mem_e
 
 void list_alloc(int n, int i, ref node x) throws no_mem_exc
 requires x::ll<i> & n>=i & i>=0
-ensures x'::ll<n> & flow __norm or res::no_mem_exc<> & x' = null & flow no_mem_exc;
+ensures x'::ll<n> & flow __norm 
+   or res::no_mem_exc<> & x' = null & flow no_mem_exc;
 {
 	if (n > i) {
 		try {

@@ -431,7 +431,7 @@ let rec collect_output chn accumulated_output : string list =
 let sat_type_from_string r input=
 	if (r = "sat") then Sat
 	else if (r = "unsat") then UnSat
-	else 
+	else
 		try
              let _ = Str.search_forward (Str.regexp "unexpected") r 0 in
               (print_string "Z3 translation failure!";
@@ -439,11 +439,11 @@ let sat_type_from_string r input=
             with
               | Not_found -> Unknown
 
-let iget_answer chn =
+let iget_answer chn input=
 	let output = icollect_output chn [] in
     let solver_sat_result = List.nth output (List.length output - 1) in
 	{ original_output_text = output;
-	  sat_result = sat_type_from_string solver_sat_result; }
+	  sat_result = sat_type_from_string solver_sat_result input; }
 
 let get_answer chn input=
 	let output = collect_output chn [] in
@@ -463,6 +463,8 @@ type smtprover = Z3
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 (* let sat_timeout = ref 2.0
+let imply_timeout = ref 15.0 *)
+let z3_sat_timeout_limit = 2.0
 let prover_pid = ref 0
 let prover_process = ref {
 	name = "z3";
@@ -521,6 +523,7 @@ let run st prover input timeout =
 		with
 			| _ -> begin (* exception : return the safe result to ensure soundness *)
 				Printexc.print_backtrace stdout;
+                print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
 				Unix.kill !prover_process.pid 9;
 				ignore (Unix.waitpid [] !prover_process.pid);
 				{ original_output_text = []; sat_result = Aborted; }
@@ -621,7 +624,7 @@ let check_formula f timeout =
         output_string (!prover_process.outchannel) new_f;
         flush (!prover_process.outchannel);
 
-        iget_answer (!prover_process.inchannel)
+        iget_answer (!prover_process.inchannel) f
       in
       let fail_with_timeout () = 
         restart ("[z3.ml]Timeout when checking sat!" ^ (string_of_float timeout));
@@ -928,15 +931,13 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
   else (false, true) in
   if (should_run_smt) then
 	let input = to_smt ante (Some conseq) prover in
-    (*    let new_input =
-    if ((Cpure.contains_exists conseq) or (Cpure.contains_exists ante))  then
-      ("(set-option :mbqi true)\n" ^ input)
-    else input in*)
-		let output = if !smtsolver_name = "z3-2.19" then
-              run prover input
+	let _ = !set_generated_prover_input input in
+        let output = if !smtsolver_name = "z3-2.19" then
+              run "is_imply" prover input timeout
             else
-              check_formula input !timeout
+              check_formula input timeout
         in
+        let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 	let res = match output.sat_result with
 	  | Sat -> false
 	  | UnSat -> true
@@ -947,7 +948,8 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
     in
 	let _ = process_stdout_print ante conseq input output res in
 	res
-	else res
+  else
+	res
 and has_exists conseq = match conseq with
   | CP.Exists _ -> true
   | _ -> false
@@ -989,7 +991,12 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
   let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
-		try (Omega.is_sat f sat_no, false) with | _ -> (true, false)
+		try let optr= (Omega.is_sat_with_check f sat_no) in
+        ( match optr with
+          | Some r -> (r, false)
+          | None -> (true, false)
+        )
+        with | _ -> (true, false)
 	else (false, true) in
 	if (should_run_smt) then
 	let input = to_smt f None prover in
@@ -998,8 +1005,8 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout
       ("(set-option :mbqi true)\n" ^ input)
     else input in *)
 	let output =
-      if !smtsolver_name = "z3-2.19" then run prover input
-      else check_formula input !timeout
+      if !smtsolver_name = "z3-2.19" then run "is_unsat" prover input timeout
+      else check_formula input timeout
     in
 	let res = match output.sat_result with
 		| UnSat -> false
@@ -1015,7 +1022,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover): bool =
 	let pr = !print_pure in
-	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no Z3) f
+	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
 
 (* see imply *)
 let is_sat f sat_no =

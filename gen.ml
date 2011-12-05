@@ -33,9 +33,14 @@ struct
 
   let pr_id x = x
 
+  let pr_var_prime (id,p) = match p with
+    | Globals.Primed -> id^"'"
+    | Globals.Unprimed -> id
+
   let print_flush s = print_endline (s); flush stdout
 
   let pr_no x = "?"
+  let pr_none x = "?"
 
   let pr_unit x = "()"
 
@@ -53,7 +58,7 @@ struct
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
 
- let add_str s f xs = s^(f xs)
+ let add_str s f xs = s^":"^(f xs)
 
   let opt_to_list o = match o with
     | None -> []
@@ -66,6 +71,14 @@ struct
   let fnone (c:'a):'a option = None
 
   let is_empty l = match l with [] -> true | _ -> false
+
+  let rec last_ne l a  = match l with
+    | [] -> a
+    | x::xs -> last_ne l x
+
+  let last l = match l with
+    | [] -> raise Not_found
+    | x::xs -> last_ne l x
 
   let spacify i = 
     let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
@@ -392,32 +405,32 @@ class counter x_init =
      method string_of : string= (string_of_int ctr)
    end;;
 
-class ['a] stack2 xinit =
-   object 
-	val def = xinit
-	val mutable stk = []
-	method push (i:'a) = stk <- i::stk
-	method pop = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> stk <- xs
-   method top : 'a = match stk with 
-       | [] -> def
-       | x::xs -> x
-	method len = List.length stk
-end;;
+(* class ['a] stack2 xinit = *)
+(*    object  *)
+(* 	val def = xinit *)
+(* 	val mutable stk = [] *)
+(* 	method push (i:'a) = stk <- i::stk *)
+(* 	method pop = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> stk <- xs *)
+(*    method top : 'a = match stk with  *)
+(*        | [] -> def *)
+(*        | x::xs -> x *)
+(* 	method len = List.length stk *)
+(* end;; *)
 
-class ['a] stack3  =
-   object 
-	val mutable stk = []
-	method push (i:'a) = stk <- i::stk
-	method pop = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> stk <- xs
-   method top : 'a = match stk with 
-       | [] -> raise Stack_Error
-       | x::xs -> x
-	method len = List.length stk
-end;;
+(* class ['a] stack3  = *)
+(*    object  *)
+(* 	val mutable stk = [] *)
+(* 	method push (i:'a) = stk <- i::stk *)
+(* 	method pop = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> stk <- xs *)
+(*    method top : 'a = match stk with  *)
+(*        | [] -> raise Stack_Error *)
+(*        | x::xs -> x *)
+(* 	method len = List.length stk *)
+(* end;; *)
 
 (* module Stack4  = *)
 (*    struct  *)
@@ -463,9 +476,9 @@ module ErrorUti =
 struct
   (** Error-handling functions. *)
 
-  let (stkint:int stack2) = new stack2 (-1)
+  (* let (stkint:int stack2) = new stack2 (-1) *)
 
- let (stkint:int stack3) = new stack3 
+  (* let (stkint:int stack3) = new stack3  *)
 
   let error_list = new stack "error - stack underflow" (fun x -> x)
 
@@ -1668,124 +1681,13 @@ let break_lines_1024 (input : string) : string =
 
 end;;
 
-module ExcNumbering =
-struct
+(* module ExcNumbering = *)
+(* struct *)
 
-  open Basic
-
-  (*hairy stuff for exception numbering*)
-  (* TODO : should be changed to use Ocaml graph *)
-
-  type flow_entry = string * string * Globals.nflow 
-
-  let exc_list = ref ([]:flow_entry list)
-
-  let clear_exc_list () =
-    Globals.n_flow_int := (-1,-1);
-    Globals.ret_flow_int := (-1,-1);
-    Globals.spec_flow_int := (-1,-1);
-    Globals.top_flow_int := (-2,-2);
-    Globals.exc_flow_int := (-2,-2);
-    exc_list := []
-
-  let remove_dups1 (n:flow_entry list) = BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
-
-  let clean_duplicates ()= 
-	exc_list := remove_dups1 !exc_list
-
-  let reset_exc_hierarchy () =
-    let _ = clean_duplicates () in
-    let el = List.fold_left (fun acc (a,b,_) -> 
-        if a="" then acc else (a,b,(0,0))::acc) [] !exc_list in
-    exc_list := el
-
-  let string_of_exc_list (i:int) =
-    let x = !exc_list in
-    let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int)) (List.map (fun (a,e,p) -> (a,e,p)) x) in
-    "Exception List "^(string_of_int i)^":\n"^el
+(*   open Basic *)
 
 
-  let get_hash_of_exc (f:string): Globals.nflow = 
-    if ((String.compare f Globals.stub_flow)==0) then 
-	  Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error found stub flow")}
-    else
-	  let rec get (lst:(string*string*Globals.nflow)list):Globals.nflow = match lst with
-	    | [] -> Globals.false_flow_int
-	    | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
-		  else get rst in
-      (get !exc_list)
-
-  (*t1 is a subtype of t2*)
-  let exc_sub_type (t1 : Globals.constant_flow) (t2 : Globals.constant_flow): bool = 
-    let r11,r12 = get_hash_of_exc t1 in
-    if ((r11==0) && (r12==0)) then false
-    else
-	  let r21,r22 = get_hash_of_exc t2 in
-	  if ((r21==0) && (r22==0)) then true
-	  else
-	    ((r11>=r21)&&(r12<=r22))
-
-  (*let exc_int_sub_type ((t11,t12):Globals.nflow)	((t21,t22):Globals.nflow):bool = if (t11==0 && t12==0) then true else ((t11>=t21)&&(t12<=t22))*)
-
-  let get_closest ((min,max):Globals.nflow):(string) = 
-    let rec get (lst:(string*string*Globals.nflow) list):string*Globals.nflow = match lst  with
-	  | [] -> (Globals.false_flow,Globals.false_flow_int)
-	  | (a,b,(c,d)):: rest-> if (c==min && d==max) then (a,(c,d)) (*a fits perfect*)
-	    else let r,(minr,maxr) = (get rest) in
-	    if (minr==c && maxr==d)||(c>min)||(d<max) then (r,(minr,maxr)) (*the rest fits perfect or a is incompatible*)
-	    else if (minr>min)||(maxr<max) then (a,(c,d)) (*the rest is incompatible*)
-	    else if ((min-minr)<=(min-c) && (maxr-max)<=(d-max)) then (r,(minr,maxr))
-	    else (a,(c,d)) in
-    let r,_ = (get !exc_list) in r
-
-  let add_edge(n1:string)(n2:string):bool =
-	let _ =  exc_list := !exc_list@ [(n1,n2,Globals.false_flow_int)] in
-	true
-
-  let add_edge(n1:string)(n2:string):bool =
-    Debug.no_2 "add_edge" pr_id pr_id string_of_bool add_edge n1 n2
-
-  (*constructs the mapping between class/data def names and interval types*) 
- (* FISHY : cannot be called multiple times, lead to segmentation problem in lrr proc *)
-  let compute_hierarchy () =
-    let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
-	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
-	  if ((List.length l1)==0) then let i = (Globals.fresh_int()) in let j = (Globals.fresh_int()) in ([(f1,f2,(i,i))],(i,j))
-	  else let ll,(mn,mx) = List.fold_left (fun (t,(o_min,o_max)) (a,b,(c,d))-> let temp_l,(n_min, n_max) = (lrr a b) in 
-	  (temp_l@t,((if ((o_min== -1)||(n_min<o_min)) then n_min else o_min),(if (o_max<n_max) then n_max else o_max)))			
-	  ) ([],(-1,-1)) l1 in
-	  ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
-    (* let r,_ = (lrr Globals.top_flow "") in *)
-    (* why did lrr below cause segmentation problem for sleek? *)
-    let _ = reset_exc_hierarchy () in
-    (* let _ = print_flush "c-h 1" in *)
-    let r,_ = (lrr "" "") in
-    (* let _ = print_flush "c-h 2" in *)
-    let _ = exc_list := r in
-    Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
-    Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);
-    Globals.spec_flow_int := (get_hash_of_exc Globals.spec_flow);
-    Globals.top_flow_int := (get_hash_of_exc Globals.top_flow);
-    Globals.exc_flow_int := (get_hash_of_exc Globals.abnormal_flow);
-    Globals.error_flow_int := (get_hash_of_exc Globals.error_flow)
-    (* ; Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow) *)
-    (* ;Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow) *)
-    (* ;let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*)
-
-  let compute_hierarchy i () =
-    let pr () = string_of_exc_list 0 in
-     Debug.no_1_num i "compute_hierarchy" pr pr (fun _ -> compute_hierarchy()) ()
-
-
-  (* TODO : use a graph module here! *)
-  let has_cycles ():bool =
-	let rec cc (crt:string)(visited:string list):bool = 
-	  let sons = List.fold_left (fun a (d1,d2,_)->if ((String.compare d2 crt)==0) then d1::a else a) [] !exc_list in
-	  if (List.exists (fun c-> (List.exists (fun d->((String.compare c d)==0)) visited)) sons) then true
-	  else (List.exists (fun c-> (cc c (c::visited))) sons) in	
-	(cc Globals.top_flow [Globals.top_flow])
-
-end;;
+(* end;; *)
 
 module Stackable =
 struct

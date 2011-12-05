@@ -2,10 +2,12 @@
 
 open Format
 open Globals 
+(* open Exc.ETABLE_NFLOW *)
+open Exc.ETABLE_DFLOW
 open Lexing 
 open Cast 
 open Cformula
-(* open Gen.Basic *)
+open Gen.Basic 
 
 module P = Cpure
 module MP = Mcpure
@@ -239,20 +241,25 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   let f_c x = match x with
     | Some(s,i) -> fmt_close();
     | None -> () in
+  let opt_cut () = match box_opt with
+    | Some(s,i) -> 
+          if s="V" then fmt_cut()
+          else  ()
+    | None -> () in
   let f_s x sep = match x with
     | Some s -> if s="A" then (fmt_string sep_str; fmt_cut())
       else if s="AB" then (fmt_cut(); fmt_string sep_str; fmt_cut()) 
       else (fmt_cut(); fmt_string sep_str)  (* must be Before *)
     | None -> fmt_string sep_str in 
   pr_list_open_sep 
-      (fun () -> (f_o box_opt);  fmt_string op; fmt_string open_str)
-      (fun () -> fmt_string close_str; (f_c box_opt)) 
+      (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
+      (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt)) 
       (fun () -> f_s sep_opt sep_str) 
       f_empty  f xs
 
  (** invoke pr_args_gen  *)   
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
-  pr_args_gen (fun () -> fmt_string (op^open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
+  pr_args_gen (fun () -> fmt_string (op(* ^open_str^close_str *)) ) box_opt sep_opt op open_str close_str sep_str f xs
 
  (** invoke pr_args_gen and print nothing when xs  is empty  *)      
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
@@ -456,7 +463,10 @@ let string_of_spec_var x =
         | Unprimed -> "" )
 
 let string_of_imm imm = 
-  if imm then "@I" else "@M"
+  if imm then "@I" else "" (*"@M"*)
+
+let string_of_derv dr = 
+  if dr then "@D" else ""
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
@@ -465,6 +475,8 @@ let pr_typed_spec_var x = fmt_string (string_of_typed_spec_var x)
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
 let pr_imm x = fmt_string (string_of_imm x)
+
+let pr_derv x = fmt_string (string_of_derv x)
 
 let string_of_ident x = x
 
@@ -569,7 +581,7 @@ let rec pr_formula_exp (e:P.exp) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
     | P.Null l -> fmt_string "null"
-    | P.Var (x, l) -> fmt_string ((*string_of_typed_spec_var*)string_of_spec_var x)
+    | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
     | P.FConst (f, l) -> fmt_float f
     | P.Add (e1, e2, l) -> 
@@ -859,6 +871,7 @@ let rec pr_h_formula h =
           fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
+	  h_formula_view_derv = dr;
 	  h_formula_view_imm = imm;
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
@@ -869,12 +882,13 @@ let rec pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
           fmt_open_hbox ();
-         (if pid==None then fmt_string "NN " else fmt_string "SS ");
-          pr_formula_label_opt pid; 
+         (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+          (* pr_formula_label_opt pid;  *)
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle c pr_spec_var svs;
 	      pr_imm imm;
+	      pr_derv dr;
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
 	  if original then fmt_string "[Orig]"
 	  else fmt_string "[Derv]";
@@ -940,8 +954,16 @@ let pr_mix_formula_branches (f,l) = match f with
   | MCP.OnePF f -> pr_pure_formula_branches (f,l)
 
 let rec string_of_flow_formula f c = 
-  "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
+  "{"^f^","^string_of_flow c.formula_flow_interval^"="^(exlist # get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
+
+(* let rec string_of_nflow n = (exlist # get_closest n) *)
+let rec string_of_dflow n = (exlist # get_closest n)
+
+(* let rec string_of_dflow n = (exlist # get_closest n) *)
+
+let rec string_of_sharp_flow sf = match sf with
+  | Sharp_ct ff -> "#"^(string_of_flow_formula "" ff)
+  | Sharp_id id -> "#"^id
 
 let rec pr_formula_base e =
   match e with
@@ -1128,12 +1150,15 @@ let summary_partial_context (l1,l2) =  "PC("^string_of_int (List.length l1) ^", 
 
 let summary_failesc_context (l1,l2,l3) =  
 	"FEC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
-	(* ^" "^(summary_list_path_trace l3) *)^")"
+	^" "^(summary_list_path_trace l3)
+    ^")"
 
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
 let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_failesc_context lc))^"]"
 
+let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
+				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
   (* if String.length(hdr)>7 then *)
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
@@ -1143,30 +1168,32 @@ let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
   pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure; 
-  (* pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
+  (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
   (*pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;*)
   (*pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;*)
-  (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
+  (*pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
   pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
   pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_vwrap "es_aux_conseq: "  (pr_pure_formula) es.es_aux_conseq; 
+  pr_wrap_test "es_imm_pure_stk: " Gen.is_empty  (pr_seq "" pr_mix_formula) es.es_imm_pure_stk;
   pr_vwrap "es_must_error: "  (pr_opt (fun (s,_) -> fmt_string s)) (es.es_must_error); 
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_wrap_test "es_var_measures: " Gen.is_empty (pr_seq "" pr_formula_exp) es.es_var_measures;
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
-	| None -> "None"
-	| Some i -> string_of_int i)) es.es_var_label;
+                                                    | None -> "None"
+                                                    | Some i -> string_of_int i)) es.es_var_label;
+  pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
+  pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
+  pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
   fmt_close ()
-
-
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
 let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_printer_of_pr fmt pr_estate es
@@ -1326,12 +1353,23 @@ let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
-let pr_esc_stack_lvl ((i,_),e) = 
-  fmt_open_vbox 0;
-  pr_vwrap_naive ("level"^(string_of_int i)^" :")
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) e;
-  fmt_close_box ()
+let pr_esc_stack_lvl ((i,s),e) = 
+  if (e==[]) 
+  then
+    begin
+      fmt_open_hbox ();
+      fmt_string ("Try-Block:"^(string_of_int i)^":"^s^":");
+      fmt_close_box()
+    end
+  else
+    begin
+      fmt_open_vbox 0;
+      pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
+          (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
+		      pr_vwrap "State:" pr_context_short fs)) e;
+      fmt_close_box ()
+    end
+
 
 (* should this include must failures? *)
 let pr_failed_states e = match e with
@@ -1345,16 +1383,20 @@ let pr_successful_states e = match e with
   | _ ->   
   pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) e
+		  pr_vwrap "State:" pr_context_short fs)) e
 
-let pr_esc_stack e = match e with
-  | [] 
-  | [((0,""),[])] -> ()
-  | _ ->
+let is_empty_esc_state e =
+  List.for_all (fun (_,lst) -> lst==[]) e
+
+let pr_esc_stack e = 
+  if is_empty_esc_state e then ()
+  else
+    begin
     fmt_open_vbox 0;
-    pr_vwrap_naive "Escaped States:"
+    pr_vwrap_naive_nocut "Escaped States:"
     (pr_seq_vbox "" pr_esc_stack_lvl) e;
     fmt_close_box ()
+    end
 
 let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
@@ -1481,7 +1523,9 @@ let pr_view_decl v =
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
+  pr_vwrap  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.view_pt_by_self);
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
+  pr_vwrap  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
   pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with 
     | None -> ()
@@ -1527,8 +1571,6 @@ let rec string_of_ident_list l c = match l with
 
 let str_ident_list l = string_of_ident_list l "," ;;
 let str_ident_list l = "["^(string_of_ident_list l ",")^"]" ;;
-let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
-				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
 let string_of_constraint_relation m = match m with
   | Cpure.Unknown -> " ?  "
@@ -1550,7 +1592,7 @@ let rec string_of_formula_exp_list l = match l with
 
 let string_of_flow_store l = (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
 	(let rr = h.formula_store_value.formula_flow_interval in
-	(string_of_int (fst rr))^"-"^(string_of_int (snd rr)))^" ")) l))
+	(string_of_flow rr))^" ")) l))
 
 
 let rec string_of_t_formula = function
@@ -1589,6 +1631,8 @@ let rec string_of_spec_var_list_noparen l = match l with
 
 let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
 
+let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
+
 (*
 let rec string_of_spec = function
 	| SCase {scase_branches= br;} ->
@@ -1620,7 +1664,7 @@ let string_of_specs d =  List.fold_left  (fun a c -> a ^" "^(string_of_spec c ))
 
 let string_of_sharp st = match st with
 	| Sharp_ct t -> string_of_flow_formula "" t
-	| Sharp_v  f -> "flow_var "^f
+	| Sharp_id  f -> "flow_var "^f
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
@@ -1641,10 +1685,10 @@ let rec string_of_exp = function
 	        str1 ^ " " ^ str2
 	      end in
 	    string_of_formula_label pid s 
-	(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
-      a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
-	(*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
-      (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
+	        (*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+              a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
+	        (*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
+              (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
         id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
@@ -1674,7 +1718,7 @@ let rec string_of_exp = function
     end
   | Catch b->   
         let c = b.exp_catch_flow_type in
-	    "\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Gen.ExcNumbering.get_closest c)^ 
+	    "\n catch "^(string_of_flow c)^"="^(exlist # get_closest c)^ 
 	        (match b.exp_catch_flow_var with 
 	          | Some c -> (" @"^c^" ")
 	          | _ -> " ")^
@@ -1687,7 +1731,7 @@ let rec string_of_exp = function
 	exp_cond_else_arm = e2;
 	exp_cond_path_id = pid;
 	exp_cond_pos = l}) -> 
-        string_of_control_path_id_opt pid ("if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" )
+        string_of_control_path_id_opt pid ("if (" ^ id ^ ") [" ^(string_of_exp e1) ^ "]\nelse [" ^ (string_of_exp e2) ^ "]\n" )
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _ -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 
@@ -1697,9 +1741,9 @@ let rec string_of_exp = function
   | New ({exp_new_class_name = id;
 	exp_new_arguments = idl;
 	exp_new_pos = l}) -> 
-        "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
+        "new " ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
-	| EmptyArray b -> "Empty Array" (* An Hoa *)
+  | EmptyArray b -> "Empty Array" (* An Hoa *)
   | Print (i, l)-> "print " ^ (string_of_int i) 
   | Sharp ({exp_sharp_flow_type = st;
 	exp_sharp_val = eo;
@@ -1707,17 +1751,19 @@ let rec string_of_exp = function
 	exp_sharp_pos = l}) ->begin
       string_of_control_path_id_opt pid (
 	      match st with
-	        | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
-	            (match eo with 
-		          |Sharp_prog_var e -> "return " ^ (snd e)
-		          | _ -> "return")
-	          else  (match eo with 
-		        | Sharp_prog_var e -> "throw " ^ (snd e)
-		        | Sharp_finally e -> "throw " ^ e ^":"^(string_of_sharp st)
-		        | _ -> "throw "^(string_of_sharp st))
+	        | Sharp_ct f ->  
+                  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) 
+                  then
+	                (match eo with 
+		              |Sharp_var e -> "return " ^ (snd e)
+		              | _ -> "return")
+	              else  (match eo with 
+		            | Sharp_var e -> "throw " ^ (snd e)
+		            | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
+		            | _ -> "throw "^(string_of_sharp st))
 	        | _ -> (match eo with 
-		        | Sharp_prog_var e -> "throw " ^ (snd e)
-		        | Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
+		        | Sharp_var e -> "throw " ^ (snd e)
+		        | Sharp_flow e -> "throw " ^ e ^":" ^(string_of_sharp st)
 		        | _ -> "throw "^(string_of_sharp st)))end 
   | SCall ({exp_scall_type = _;
 	exp_scall_method_name = id;
@@ -1770,7 +1816,7 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Left -> "==>"
-  | Iast.Right -> "<==="
+  | Iast.Right -> "<=="
   | Iast.Equiv -> "<==>" ;;
 
 
@@ -1925,6 +1971,269 @@ let app_sv_print xs ys =
     end
 ;;
 
+(* An Hoa : formula to HTML output facility *)
+
+(* HTML for operators *)
+let html_op_add = " + " 
+let html_op_sub = " - " 
+let html_op_mult = " &sdot; " 
+let html_op_div = " &divide; " 
+let html_op_max = "<b>max</b>" 
+let html_op_min = "<b>min</b>" 
+let html_op_union = " &cup; " 
+let html_op_intersect = " &cap; " 
+let html_op_diff = " \\ " 
+let html_op_lt = " &lt; " 
+let html_op_lte = " &le; " 
+let html_op_gt = " &gt; " 
+let html_op_gte = " &ge; " 
+let html_op_eq = " = " 
+let html_op_neq = " &ne; " 
+let html_op_and = " &and; "  
+let html_op_or = " &or; "  
+let html_op_not = " &not; "  
+let html_op_star = " &lowast; "  
+let html_op_phase = " ; "  
+let html_op_conj = " &and; "  
+let html_op_f_or = " <b>or</b> " 
+let html_op_lappend = "<b>append</b>"
+let html_op_cons = " ::: "
+let html_op_in = " &isin; "
+let html_op_notin = " &notin; "
+let html_op_subset = " &sub; "
+
+(* Other characters *)
+let html_exist = " &exist; "
+let html_forall = " &forall; "
+let html_mapsto = " &#8614; " (* |-> *)
+let html_vdash = " &#8866; " (* |- character in HTML *)
+let html_left_angle_bracket = "&lang;"
+let html_right_angle_bracket = "&rang;"
+let html_data_field_hole = "&loz;"
+let html_prime = "&prime;"
+
+let html_of_spec_var sv = match sv with
+	| P.SpecVar (t,n,p) -> n ^ (match p with
+		| Primed -> html_prime 
+		| Unprimed -> "")
+
+let html_of_spec_var_list svl = String.concat ", " (List.map html_of_spec_var svl)
+
+let rec html_of_formula_exp e =
+	 match e with
+    | P.Null l -> "<b>null</b>"
+    | P.Var (x, l) -> html_of_spec_var x
+    | P.IConst (i, l) -> string_of_int i
+    | P.FConst (f, l) -> string_of_float f
+    | P.Add (e1, e2, l) -> 
+          let args = bin_op_to_list op_add_short exp_assoc_op e in
+          String.concat html_op_add (List.map html_of_formula_exp args)
+    | P.Mult (e1, e2, l) -> 
+          let args = bin_op_to_list op_mult_short exp_assoc_op e in
+          String.concat html_op_mult (List.map html_of_formula_exp args)
+    | P.Max (e1, e2, l) -> 
+          let args = bin_op_to_list op_max_short exp_assoc_op e in
+          html_op_max ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+    | P.Min (e1, e2, l) -> 
+          let args = bin_op_to_list op_min_short exp_assoc_op e in
+          html_op_min ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+    | P.Bag (elist, l) 	-> "{" ^ (String.concat "," (List.map html_of_formula_exp elist)) ^ "}"
+    | P.BagUnion (args, l) -> 
+		let args = bin_op_to_list op_union_short exp_assoc_op e in
+		String.concat html_op_union (List.map html_of_formula_exp args)
+    | P.BagIntersect (args, l) -> 
+		let args = bin_op_to_list op_intersect_short exp_assoc_op e in
+		String.concat html_op_intersect (List.map html_of_formula_exp args)
+    | P.Subtract (e1, e2, l) ->
+		(html_of_formula_exp e1) ^ html_op_sub ^ (html_of_formula_exp e2)
+    | P.Div (e1, e2, l) ->
+	    (html_of_formula_exp e1) ^ html_op_div ^ (html_of_formula_exp e2)
+    | P.BagDiff (e1, e2, l) -> 
+		(html_of_formula_exp e1) ^ " \ " ^ (html_of_formula_exp e2)
+    | P.List (elist, l) -> "[" ^ (String.concat "," (List.map html_of_formula_exp elist)) ^ "]"
+    | P.ListAppend (elist, l) -> String.concat html_op_lappend (List.map html_of_formula_exp elist)
+    | P.ListCons (e1, e2, l)  ->  (html_of_formula_exp e1) ^ html_op_cons ^ (html_of_formula_exp e2)
+    | P.ListHead (e, l) -> "<b>head</b>(" ^ (html_of_formula_exp e) ^ ")"
+    | P.ListTail (e, l) -> "<b>tail</b>(" ^ (html_of_formula_exp e) ^ ")"
+    | P.ListLength (e, l) -> "<b>len</b>(" ^ (html_of_formula_exp e) ^ ")"
+    | P.ListReverse (e, l)  -> "<b>rev</b>(" ^ (html_of_formula_exp e) ^ ")"
+	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
+
+let rec html_of_pure_b_formula f = match f with
+    | P.BConst (b,l) -> "<b>" ^ (string_of_bool b) ^ "</b>"
+    | P.BVar (x, l) -> html_of_spec_var x
+    | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)
+    | P.Lte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lte ^ (html_of_formula_exp e2)
+    | P.Gt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gt ^ (html_of_formula_exp e2)
+    | P.Gte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gte ^ (html_of_formula_exp e2)
+    | P.Eq (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_eq ^ (html_of_formula_exp e2)
+    | P.Neq (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_neq ^ (html_of_formula_exp e2)
+    | P.EqMax (e1, e2, e3, l) -> 
+    	let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
+		let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
+		let args = arg2@arg3 in
+			(html_of_formula_exp e1) ^ html_op_eq ^ html_op_max ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+    | P.EqMin (e1, e2, e3, l) -> 
+    	let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
+		let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
+		let args = arg2@arg3 in
+			(html_of_formula_exp e1) ^ html_op_eq ^ html_op_min ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+    | P.BagIn (v, e, l) -> (html_of_spec_var v) ^ html_op_in ^ (html_of_formula_exp e)
+    | P.BagNotIn (v, e, l) -> (html_of_spec_var v) ^ html_op_notin ^ (html_of_formula_exp e)
+    | P.BagSub (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subset ^ (html_of_formula_exp e2)
+    | P.BagMin (v1, v2, l) -> (html_of_spec_var v1) ^ html_op_eq ^ html_op_min ^ (string_of_spec_var v2) 
+    | P.BagMax (v1, v2, l) -> (html_of_spec_var v1) ^ html_op_eq ^ html_op_max ^ (string_of_spec_var v2)
+    | P.ListIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lin> " ^ (html_of_formula_exp e2)
+    | P.ListNotIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lnotin> " ^ (html_of_formula_exp e2)
+    | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)
+    | P.ListPerm (e1, e2, l) -> (html_of_formula_exp e1) ^ " <perm> " ^ (html_of_formula_exp e2)
+	| P.RelForm (r, args, l) -> r ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+
+let rec html_of_pure_formula f =
+	match f with
+    | P.BForm ((bf,_),_) -> html_of_pure_b_formula bf
+    | P.And (f1, f2, l) -> 
+		let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
+		let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
+		let args = arg1@arg2 in
+			"(" ^ (String.concat html_op_and (List.map html_of_pure_formula args)) ^ ")"
+    | P.Or (f1, f2, lbl,l) -> 
+		let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
+		let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
+		let args = arg1@arg2 in
+			"(" ^ (String.concat html_op_or (List.map html_of_pure_formula args)) ^ ")"
+    | P.Not (f1, lbl, l) -> html_op_not ^ (html_of_pure_formula f1)
+    | P.Forall (x, f1,lbl, l) ->
+    	html_forall ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
+    | P.Exists (x, f1, lbl, l) ->
+    	html_exist ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
+
+let rec html_of_h_formula h = match h with
+	| Star ({h_formula_star_h1 = h1;
+			h_formula_star_h2 = h2;
+			h_formula_star_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_star (List.map html_of_h_formula args)
+	| Phase ({h_formula_phase_rd = h1;
+			h_formula_phase_rw = h2;
+			h_formula_phase_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_phase (List.map html_of_h_formula args)
+	| Conj ({h_formula_conj_h1 = h1;
+			h_formula_conj_h2 = h2;
+			h_formula_conj_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_conj_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_conj (List.map html_of_h_formula args)
+	| DataNode ({h_formula_data_node = sv;
+				h_formula_data_name = c;
+				h_formula_data_imm = imm;
+				h_formula_data_arguments = svs;
+				h_formula_data_holes = hs; 
+				h_formula_data_pos = pos;
+				h_formula_data_remaining_branches = ann;
+				h_formula_data_label = pid})-> 
+			let html_svs,_ = List.fold_left (fun (l,n) sv ->
+				let nsv = if (List.mem n hs) then html_data_field_hole else html_of_spec_var sv in (nsv::l,n+1)) ([],0) svs in
+			let html_svs = List.rev html_svs in
+				(html_of_spec_var sv) ^ html_mapsto ^ c ^  html_left_angle_bracket ^ (String.concat "," html_svs) ^ html_right_angle_bracket 
+	| ViewNode ({h_formula_view_node = sv; 
+				h_formula_view_name = c; 
+				h_formula_view_derv = dr;
+				h_formula_view_imm = imm;
+				h_formula_view_arguments = svs; 
+				h_formula_view_origins = origs;
+				h_formula_view_original = original;
+				h_formula_view_lhs_case = lhs_case;
+				h_formula_view_label = pid;
+				h_formula_view_remaining_branches = ann;
+				h_formula_view_pruning_conditions = pcond;
+				h_formula_view_pos =pos}) ->
+			(html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket
+	| HTrue -> "<b>true</b>"
+	| HFalse -> "<b>false</b>"
+	| Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
+
+let rec html_of_formula e = match e with
+	| Or ({formula_or_f1 = f1;
+			formula_or_f2 = f2;
+			formula_or_pos = pos}) ->
+		let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in
+		let arg2 = bin_op_to_list op_f_or_short formula_assoc_op f2 in
+		let args = arg1@arg2 in
+			String.concat " <b>or</b>\n" (List.map html_of_formula args)
+	| Base ({formula_base_heap = h;
+			formula_base_pure = p;
+			formula_base_branches = b;
+			formula_base_type = t;
+			formula_base_flow = fl;
+			formula_base_label = lbl;
+			formula_base_pos = pos}) ->
+		(html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
+	| Exists ({formula_exists_qvars = svs;
+			formula_exists_heap = h;
+			formula_exists_pure = p;
+			formula_exists_branches = b;
+			formula_exists_type = t;
+			formula_exists_flow = fl;
+			formula_exists_label = lbl;
+			formula_exists_pos = pos}) ->
+		html_exist ^ (html_of_spec_var_list svs) ^ " : " ^ (html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
+
+let rec html_of_ext_formula f = match f with
+	| ECase { formula_case_exists = ee;
+					formula_case_branches = case_list;
+					formula_case_pos = _ } ->
+		"ECase " ^ (String.concat " &oplus; " (List.map (fun (case_guard,case_fml) -> (html_of_pure_formula case_guard) ^ " ==> " ^ (html_of_struc_formula case_fml)) case_list))
+	| EBase { formula_ext_implicit_inst = ii;
+					formula_ext_explicit_inst = ei;
+					formula_ext_exists = ee;
+					formula_ext_base = fb;
+					formula_ext_continuation = cont;
+					formula_ext_pos = _ } ->
+		"EBase " ^ (if not (Gen.is_empty(ee@ii@ei)) then "exists " ^ "(Expl)" ^ (html_of_spec_var_list ei) ^ "(Impl)" ^ (html_of_spec_var_list ii) ^ "(ex)" ^ (html_of_spec_var_list ee)	else "") ^ (html_of_formula fb) ^ (if not(Gen.is_empty(cont)) then  html_of_struc_formula cont else "")
+	| EAssume (x,b,(y1,y2)) ->
+		"EAssume " ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
+	| EVariance { formula_var_label = label;
+							formula_var_measures = measures;
+							formula_var_escape_clauses = escape_clauses;
+							formula_var_continuation = cont; } -> ""
+
+and html_of_struc_formula f = 
+	if f==[] then "[]" else 
+	String.concat "|| " (List.map html_of_ext_formula f)
+
+let html_of_estate es = "{ " ^ html_of_formula es.es_formula ^ " }"
+
+let html_of_context ctx = 
+  let args = bin_op_to_list "|" ctx_assoc_op ctx in
+  let args = List.fold_left (fun a x -> 
+      match x with 
+        | Ctx es -> es::a
+        | _ -> a) [] args in
+  String.concat "<br /><br /><b>OR</b> " (List.map html_of_estate args)
+
+(* TODO implement *)
+let html_of_fail_type f = ""
+
+let html_of_failesc_context (fs,es,ss) =
+	let htmlfs = if fs = [] then "&empty;" else "{" ^ (String.concat " , " (List.map html_of_fail_type fs)) ^ "}" in
+	let htmlss = if ss = [] then "&empty;" else "{" ^ (String.concat "<br /><br /><b>OR</b> " (List.map (fun (pt, c) -> html_of_context c) ss)) ^ "}" in
+		"[Failed state : " ^ htmlfs ^ "<br />\n" ^ "Successful states : " ^ htmlss ^ "]"
+
+let html_of_list_failesc_context lctx = String.concat "<br /><br /><b>AND</b> " (List.map html_of_failesc_context lctx)
+
+let html_of_partial_context (fs,ss) =
+	html_of_failesc_context (fs,[],ss)
+
+let html_of_list_partial_context lctx = String.concat "<br /><br /><b>AND</b> " (List.map html_of_partial_context lctx)
+;;
+
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
@@ -1951,6 +2260,8 @@ Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
 Cformula.print_failure_kind_full := string_of_failure_kind_full;;
 Cformula.print_fail_type := string_of_fail_type;;
+(* Cformula.print_nflow := string_of_nflow;; *)
+Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
@@ -1958,15 +2269,20 @@ Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
+Cformula.print_esc_stack := string_of_esc_stack;;
+Cformula.print_failesc_context := string_of_failesc_context;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
+Cast.print_prog_exp := string_of_exp;;
 Cast.print_formula := string_of_pure_formula;;
 Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Cast.print_view_decl := string_of_view_decl;
+Cast.print_coercion := string_of_coerc_long;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
+Smtsolver.print_ty_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;

@@ -1,0 +1,24 @@
+  *  Contact information (email):
+Wei Ngan, Chin           (chinwn@comp.nus.edu.sg)
+An Hoa, Vu               (vuanhoa@comp.nus.edu.sg)
+Cristian, Gherghina      (cristian@comp.nus.edu.sg)
+Ton-Chanh, Le  (chanhle@comp.nus.edu.sg)
+
+*  detailed description of the submitted solutions: properties that have been specified and/or proved, restrictions and/or generalizations, anything that may facilitate the review;
+*  detailed instructions to replay the solutions, including the software to use, URLs to get it from, compilation commands, etc.
+
+
+Solution  description in either description-soln.txt
+or as comments in the program.
+
+  Manual - README-HIP.txt
+
+  * PROBLEM 1: Solved all aspects.
+  * PROBLEM 2: Solved all aspects.
+  * PROBLEM 3: Solved all aspects.
+  * PROBLEM 4: Solved all aspects, except completeness & harness.
+  * PROBLEM 5: Solved all aspects, except completeness.
+
+  System will be in:
+  http://loris-7.ddns.comp.nus.edu.sg/~project
+

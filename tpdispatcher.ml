@@ -764,7 +764,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
               | _ -> Cvc3.is_sat f sat_no
                     (* Cvc3.is_sat f sat_no *)
           end
- | Z3 -> Smtsolver.is_sat f sat_no
+  | Z3 -> Smtsolver.is_sat f sat_no 
   | Isabelle -> Isabelle.is_sat f sat_no
   | Coq -> (*Coq.is_sat f sat_no*)
       if (is_list_constraint f) then
@@ -916,7 +916,7 @@ let simplify (f : CP.formula) : CP.formula =
           | None -> f
     else
       (Gen.Profiling.push_time "simplify";
-    try
+      try
 	    let r = match !tp with
           | Isabelle -> Isabelle.simplify f
           | Coq -> (* Coq.simplify f *)
@@ -925,7 +925,7 @@ let simplify (f : CP.formula) : CP.formula =
                 else ((*Omega*)Smtsolver.simplify f)
           | Mona | MonaH (* -> Mona.simplify f *) ->
                 if (is_bag_constraint f) then
-                   (Mona.simplify f)
+                  (Mona.simplify f)
                 else
                   (* exist x, f0 ->  eexist x, x>0 /\ f0*)
                   let f1 = CP.add_gte0_for_mona f in
@@ -956,7 +956,6 @@ let simplify (f : CP.formula) : CP.formula =
                   Mona.simplify f
                 else
                   Smtsolver.simplify f
-
           | AUTO ->
                 if (is_bag_constraint f) then
                   begin
@@ -989,9 +988,7 @@ let simplify (f : CP.formula) : CP.formula =
             (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
 	    (* To recreate <IL> relation after simplifying *)
            (*let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in*)
-
-		 (* To recreate <IL> relation after simplifying *)
-if !Globals.do_slicing then
+          if !Globals.do_slicing then
 	      let rel_vars_lst =
 		    let bfl = CP.break_formula f in
 		    (*let bfl_no_il = List.filter
@@ -999,7 +996,7 @@ if !Globals.do_slicing then
 			  (fun (_,il) -> match il with
 			  | None -> true
 			  | _ -> false) bfl in*)
-                    (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
+                  (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
 		  in
 		  CP.set_il_formula_with_dept_list r rel_vars_lst
 	    else r

@@ -1,0 +1,24 @@
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+// this was proven wrong in "compete" branch
+//wrong
+checkentail (x::ll<n>@I); y::ll<m>@I * ((t::ll<a>@I); z::ll<m>) & n > 0  
+  |- (y::ll<m2>@I * t::ll<a2>@I).
+print residue. // ?? hole in the residue
+// x ; y * (t;z)
+//6. Valid
+
+
+checkentail (x::ll<n>@I); y::ll<m> & n > 0  
+  |- y::ll<a2>@I.
+
+checkentail (x::ll<n>@I); y::ll<m> & n > 0  
+  |- y::ll<a2>.
+print residue.
+
+checkentail (x::ll<n>@I); y::ll<m>@I * ((z::ll<m>@I); t::ll<a>@I) & n > 0  
+  |- (y::ll<m2>@I * t::ll<a2>@I).
+

@@ -92,6 +92,8 @@ let start () =
         send_cmd "load_package redlog";
         send_cmd "rlset ofsf";
         send_cmd "on rlnzden";
+		send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
+		send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
       in
       let set_process proc = process := proc in
       let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
@@ -271,7 +273,7 @@ let rl_of_b_formula b =
       let a3 = rl_of_exp e3 in
       "((" ^ a1 ^ " = " ^ a2 ^ " and " ^ a2 ^ " <= " ^ a3 ^ ") or ("
       ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " >= " ^ a3 ^ "))"
-  | _ -> failwith "redlog: bags is not supported"
+  | _ -> failwith "Redlog: constraint is not supported"
 
 let rec rl_of_formula f0 = 
   match f0 with
@@ -1051,7 +1053,7 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     is_valid wf imp_no    in
    let res = 
     if is_linear_formula f then
-      call_omega (lazy (Omega.is_valid f !timeout))
+      call_omega (lazy (Omega.is_valid_with_default f !timeout))
     else
 	  let _ = Gen.Profiling.inc_counter "stat_redlog_count_imply" in
       if has_eq f then
@@ -1133,3 +1135,248 @@ let pairwisecheck (f: CP.formula): CP.formula =
     Omega.pairwisecheck f 
   else 
     f
+
+(** An Hoa : EQUATION SOLVING FACILITY **)
+
+(* An Hoa : Helper function to create a list of strings of form [prefix{n}, prefix{n-1},...,prefix{1}]
+ @remark  Since reduce poses restrictions on the name of variables, this function is necessary to standardize variables to a safe form. In particular, we convert base variables to y1,y2,... (these variables will serve as parameters) and the rest to x1,x2,... (for unknowns). *)
+let rec enum_str_prefix prefix n =
+		if (n == 0) then []
+		else let l = enum_str_prefix prefix (n-1) in
+			(prefix ^ (string_of_int n))::l
+
+(* An Hoa : Map a list of spec var to red log vars
+	@return The list of new variables, the correspondence between old variables and new vars (for instance (h',hprmd) to indicate h' --> hprmd), the reverse correspondence between new variable names & the original variables. *)
+let rl_vars_map (vars : CP.spec_var list) (bv : CP.spec_var list) =
+	let helper prefix vars = 
+		let numvars = List.length vars in
+		let rlvarsnames = enum_str_prefix prefix numvars in
+		let newvars = List.map2 (fun v w -> CP.SpecVar (CP.type_of_spec_var v, w, Unprimed)) vars rlvarsnames in
+		let vars_map = List.map2 (fun v w -> (v,w)) vars rlvarsnames in
+		let vars_rev_map = List.map2 (fun v w -> (CP.name_of_spec_var w,v)) vars newvars in
+		(*let _ = print_endline "Variable standardization :" in
+		let _ = List.map (fun (x,y) -> print_endline (x ^ "<--->" ^ (!CP.print_sv y))) vars_rev_map in*)
+			(newvars, vars_map, vars_rev_map)
+	in
+	let newvars, vars_map, vars_rev_map = helper "x" vars in
+	let newbv, bv_map, bv_rev_map = helper "y" bv in
+		(List.append newvars newbv, List.append vars_map bv_map, List.append vars_rev_map bv_rev_map)
+;;
+
+(* An Hoa : Parse the assignments *)
+let parse_assignment (assignment : string) : (string * string) =
+	try 
+		let i = String.index assignment '=' in
+		let l = String.length assignment in
+		let lhs = String.sub assignment 0 i in
+		let lhs = Gen.SysUti.trim_str lhs in
+		let rhs = String.sub assignment (i+1) (l-i-1) in
+		let rhs = Gen.SysUti.trim_str rhs in
+		(*let _ = print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n") in*)
+			(lhs,rhs)
+	with
+		| Not_found -> let _ = print_string ("parse_assignment is called with input " ^ assignment) 
+							in ("","")
+;;
+
+
+(* An Hoa : Group equal variables into lists *)
+let group_eq_vars (ass : (string * string) list) =
+	(* Since reduce already order the right hand side, we only need 
+	to group the variables according to the string representation of 
+	the right hand side *)
+	let ass_sorted = List.sort (fun (l1,r1) (l2,r2) -> String.compare r1 r2) ass in
+	(*let _ = print_endline "\nSorted assignments:" in
+	let _ = List.map (fun (lhs,rhs) -> print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n")) ass_sorted in*)
+
+	(** Internal function to partition the solution **)
+	let rec partition (a : (string * string) list) (res : (string * (string list)) list) = 
+		match a with
+		| [] -> res
+		| (lhs,rhs)::a1 -> match res with
+			| [] -> partition a1 [(rhs,[lhs])]
+			| h::t -> let r = fst h in
+				let l = snd h in
+				let newres = if (String.compare rhs r == 0) then
+					List.append [(r, List.append [lhs] l)] t
+				else
+					List.append [(rhs,[lhs])] res
+				in
+					(partition a1 newres)
+
+	in
+	let grouped_vars = partition ass_sorted [] in
+	(*let _ = print_endline "\nPartitioning result:" in
+	let _ = List.map (fun (x,y) -> print_string ((String.concat " = " y) ^ " = " ^ x ^ "\n"))
+			grouped_vars in*)
+		grouped_vars
+;;	
+
+
+(* An Hoa : parse the solution given out by reduce. Assume that solution is of the form 
+{ { (var = exp)* }+ }
+and that ONLY ONE root is obtained! *)
+let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * CP.spec_var) list) : (CP.spec_var * CP.spec_var) list * (CP.spec_var * string) list=
+	let l = String.length solution in
+	(* Remove the braces { and } at the beginning & end of the list of solution *)
+	if (l = 0 || solution.[0] = '*') then 
+		([],[]) 
+	else
+
+	let solution = String.sub solution 1 (l-2) in
+	let l = String.length solution in
+	if (l == 0) then ([],[])
+	else (* Remove the braces { and } at the beginning & end of the list of solution *)
+		let solution = if (solution.[0] == '{') then String.sub solution 1 (l-2) else solution in
+		let assignments = Str.split (Str.regexp_string ",") solution in
+		let result = List.map parse_assignment assignments in
+
+		(* Extract parameters that are not in bv *)
+		let solved_vars = List.map fst result in
+		let all_vars = List.map fst revmap in
+		let param_vars = Gen.BList.difference_eq (fun x y -> x = y) all_vars solved_vars in
+		(*let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
+		let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in
+		(*let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
+		let result = List.append result (List.map (fun x -> (x,x)) param_vars) in
+		(*let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in
+		let _ = print_endline ("Variable fully solved : " ^ (String.concat "," vars_fully_solved)) in*)
+
+		(* From the solution, find the string representation *)
+		let rec recover_strrep e m = (** Given an expression and a map of safe variable --> real variable, recover the real expression **)
+			match m with
+				| [] -> e
+				| (v,s)::t -> let et = recover_strrep e t in
+					let rex = Str.regexp v in
+					let res = Str.global_replace rex (CP.string_of_spec_var s) et in
+						res
+		in
+		let strrep = try
+			List.map (fun (x,y) -> (List.assoc x revmap,recover_strrep y revmap)) result 
+		with
+			| Not_found -> let _ = print_endline "Assoc NotFound at strrep" in []
+		in
+		(* let _ = print_endline "String representations: " in
+		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " --> " ^ y)) strrep in *)
+
+		(* Convert back to our system format *)
+		let eqclasses = List.map snd (group_eq_vars result) in
+		let eqclasses = List.map (fun vnamelist -> List.map (fun vname -> try
+				List.assoc vname revmap
+			with | Not_found -> let _ = print_endline "Assoc NotFound at eqclasses" in failwith ""
+		) vnamelist) eqclasses in
+		(*let _ = print_endline "Equivalent classes : " in
+		let _ = List.map (fun x -> print_endline (!CP.print_svl x)) eqclasses in*)
+		(* Build the substitution map *)
+		
+		(** Internal function to select a candidate to do replacement in an equivalent class **)
+		let select_sub_cand (c : CP.spec_var list) =
+			let intc = Gen.BList.intersect_eq CP.eq_spec_var bv c in
+				if (intc == []) then List.hd c else List.hd intc
+		in
+		let candidates = List.map select_sub_cand eqclasses in
+
+		(** Remove unsubstitutable targets **)
+		let filter_target (c : CP.spec_var list) =
+			let c = List.filter (fun x -> not (CP.is_primed x)) c in
+			let c = List.filter (fun x -> not (Gen.BList.mem_eq CP.eq_spec_var x bv)) c in
+				c
+		in
+		let replace_targets = List.map filter_target eqclasses in
+		let sst = List.map2 (fun x y -> List.map (fun z -> (z,x)) y) candidates replace_targets in
+		let sst = List.flatten sst in
+		let sst = List.filter (fun (x,y) -> not (CP.eq_spec_var x y)) sst in
+		(*let _ = print_endline "Replacements : " in
+		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in*)
+			(sst, strrep)
+;;
+
+
+(* An Hoa : Make use of reduce for equation solving facility.
+	@param eqns -> List of equations; no max, min, inequality, ...
+	@param bv -> List of equation parameters
+	@return a list of binding (var,exp) indicating the root
+    TODO move all the occurences of "res" to bv; this is the safest
+		approach because this is the final back-end
+ *)
+let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
+	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
+	(*let _ = print_endline "solve_eqns :: starting reduce ..." in*)
+	(*let _ = print_endline "Initiating solving sequence ..." in*)
+	let _ = start () in
+	(*let _ = print_endline "solve_eqns :: reduce started!" in*)
+
+	(* filter out the array accesses *)
+	let rec contains_no_arr e = match e with
+		| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ -> true
+		| CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) -> (contains_no_arr e1) && (contains_no_arr e2)
+		| CP.ArrayAt _ -> false
+		| _ -> false (* filter out all multiplication as well *) in
+	let eqns = List.filter (fun (x,y) -> contains_no_arr x && contains_no_arr y) eqns in
+
+	(* Pick out the variables in the equations *)
+	let unks = List.map (fun (e1,e2) -> List.append (CP.afv e1) (CP.afv e2)) eqns in
+	let unks = List.flatten unks in
+	
+	(* Rearrange the variables so that parameters lies at the end! *)
+	(*let _ = print_endline ("Base variables : " ^ (!CP.print_svl bv)) in*)
+	let bv = List.append (List.filter (fun x -> match x with | CP.SpecVar (_,"res",_) -> true | _ -> false) unks) bv in (* Add res to bv *)
+	let bv = Gen.BList.remove_dups_eq CP.eq_spec_var bv in
+	let bv = Gen.BList.intersect_eq CP.eq_spec_var bv unks in
+	(*let _ = print_endline ("Base variables appeared in formulas: " ^ (!CP.print_svl bv)) in*)
+	let unks = Gen.BList.difference_eq CP.eq_spec_var unks bv in
+	(*let unks = List.append unks bv in*)
+	(*let _ = print_endline ("Rearranged list of unknowns : " ^ (!CP.print_svl unks)) in*)
+	(* Swap all primed variables *)
+	let red_unks, unksmap, unksrmap = rl_vars_map unks bv in
+	(*let red_bv, bvmaps, bvrmap = rl_vars_map bv in*)
+	(* Generate the reduce list of unknowns *)
+	let input_unknowns = List.map CP.name_of_spec_var red_unks in
+	let input_unknowns = "{" ^ (String.concat "," input_unknowns) ^ "}" in
+	(*let _ = print_endline "\nVariables to solve for : " in
+	let _ = print_endline input_unknowns in*)
+	(* Internal function to generate reduce equations *)
+	let rec rl_of_exp varsmap e = match e with
+		| CP.Null _ -> "null" (* null serves as a symbollic variable *)
+		| CP.Var (v, _) -> (try List.assoc v varsmap with 
+			| Not_found -> let _ = print_endline ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
+		| CP.IConst (i, _) -> string_of_int i
+		| CP.FConst (f, _) -> string_of_float f
+		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
+		| CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " - " ^ (rl_of_exp varsmap e2) ^ ")"
+		(*| CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " * " ^ (rl_of_exp varsmap e2) ^ ")"*)
+		(*| CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " / " ^ (rl_of_exp varsmap e2) ^ ")"*)
+		| _ -> failwith ("solve : unsupported expression!" ^ (!CP.print_exp e))
+	in
+	(* Internal function to read reduce output *)
+	let rec read_stream () =
+ 		let line = Gen.trim_str (input_line !process.inchannel) in
+		let l = String.length line in
+			if (l == 0) then 
+				"" 
+			else if (line.[l-1] == '$') then 
+				String.sub line 0 (l-1)
+			else 
+				line ^ (read_stream ())
+	in
+	try
+	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
+	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
+	(*let _ = print_endline "\nInput equations: " in
+	let _ = print_endline input_eqns in*)
+
+	(* Pipe the solve request to reduce process *)
+	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
+	(*let _ = print_endline ("\nReduce input command:" ^ input_command) in*)
+	let _ = send_cmd input_command in
+	(* Read, parse and return *)
+	let red_result = read_stream () in
+	(*let _ = print_endline ("\nOriginal solution : " ^ red_result) in*)
+	let sst,strrep = parse_reduce_solution red_result bv unksrmap in
+		(sst,strrep)
+	with
+	| _ -> ([],[])
+;;
+
+(* Set the equation solver in Cpure *)
+Cpure.solve_equations := solve_eqns;;
