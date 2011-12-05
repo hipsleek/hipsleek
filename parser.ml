@@ -1041,8 +1041,8 @@ opt_fct_list:[[ t = OPT fct_list -> []]];
 
 
 (************ An Hoa :: Relations ************)
-rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body; iv=opt_ind_spec (* opt_inv *) -> 
-	{ rh with rel_formula = rb (* (fst $3) *); rel_induction_values = iv; (* rel_invariant = $4; *) }
+rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body  (* opt_inv *) -> 
+	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *) }
 	(* [4/10/2011] allow for declaration of relation without body; such relations are constant true and need to be axiomatized using axioms declarations. *)
 	| rh=rel_header -> rh
   | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
@@ -1053,7 +1053,7 @@ typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
 rel_header:[[
-`REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN;  iv=opt_ind_spec ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists 
@@ -1066,7 +1066,7 @@ rel_header:[[
 		  { rel_name = id;
 			rel_typed_vars = tl;
 			rel_formula = P.mkTrue no_pos; (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
-			rel_induction_values = []; }
+			rel_induction_values = iv; }
 ]];
 
 rel_body:[[ (* formulas { 

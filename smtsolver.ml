@@ -22,6 +22,7 @@ type rel_def = {
 		rel_vars : CP.spec_var list;
 		related_rels : ident list;
 		related_axioms : int list;
+		induction_values : CP.exp list;
 		rel_cache_smt_declare_fun : string;
 	}
 
@@ -356,7 +357,7 @@ let add_axiom h dir c =
 	end
 
 (* Interface function to add a new relation *)
-let add_relation rname rargs rform =
+let add_relation rname rargs rform rind =
 	if (is_update_array_relation rname) then () else
 	(* Cache the declaration for this relation *)
 	let cache_smt_input = 
@@ -368,6 +369,7 @@ let add_relation rname rargs rform =
 				rel_vars = rargs;
 				related_rels = []; (* to be filled up by add_axiom *)
 				related_axioms = []; (* to be filled up by add_axiom *)
+				induction_values = rind;
 				rel_cache_smt_declare_fun = cache_smt_input; } in
 	begin
 		global_rel_defs := !global_rel_defs @ [rdef];
