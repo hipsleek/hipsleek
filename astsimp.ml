@@ -1349,9 +1349,11 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let _ = gather_type_info_pure prog rdef.I.rel_formula stab in
   let crf = trans_pure_formula rdef.I.rel_formula stab in
   (* let _ = Smtsolver.add_rel_def (Smtsolver.RelDefn (rdef.I.rel_name, rel_sv_vars, crf)) in *)
+	let ivs = List.map (fun x -> trans_pure_exp x stab) rdef.I.rel_induction_values in
   {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
-  C.rel_formula = crf; }
+  C.rel_formula = crf;
+	C.rel_induction_values = ivs; }
       (* END : trans_rel *)
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =

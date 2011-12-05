@@ -59,6 +59,7 @@ and rel_decl = { rel_name : ident;
 			rel_typed_vars : (typ * ident) list;
 		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
 		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
+			rel_induction_values : P.exp list;
 		  (* try_case_inference: bool *)}
 
 (* [4/10/2011] An Hoa: axiom for pure constraints *)

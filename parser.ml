@@ -898,7 +898,7 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]]; 
 
-(* cexp_list: [[t=LIST1 cexp_w SEP `COMMA -> t]]; *)
+cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]]; 
 
 (********** Procedures and Coercion **********)
 
@@ -1041,8 +1041,8 @@ opt_fct_list:[[ t = OPT fct_list -> []]];
 
 
 (************ An Hoa :: Relations ************)
-rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
-	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *) }
+rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body; iv=opt_ind_spec (* opt_inv *) -> 
+	{ rh with rel_formula = rb (* (fst $3) *); rel_induction_values = iv; (* rel_invariant = $4; *) }
 	(* [4/10/2011] allow for declaration of relation without body; such relations are constant true and need to be axiomatized using axioms declarations. *)
 	| rh=rel_header -> rh
   | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
@@ -1065,12 +1065,21 @@ rel_header:[[
 		let modes = get_modes anns in *)
 		  { rel_name = id;
 			rel_typed_vars = tl;
-			rel_formula = P.mkTrue no_pos; (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)}
+			rel_formula = P.mkTrue no_pos; (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
+			rel_induction_values = []; }
 ]];
 
 rel_body:[[ (* formulas { 
     ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) } *)
 	pc=pure_constr -> pc (* Only allow pure constraint in relation definition. *)
+]];
+
+opt_ind_spec: [[
+	s=OPT ind_spec -> un_option s []
+]];
+
+ind_spec : [[
+	`INDUCTION; p=cexp_list -> p
 ]];
 
 axiom_decl:[[

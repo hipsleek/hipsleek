@@ -79,6 +79,7 @@ and rel_decl = {
     rel_name : ident; 
     rel_vars : P.spec_var list;
     rel_formula : P.formula;
+		rel_induction_values : P.exp list;
     (* rel_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of rel_vars*)
        rel_labels : branch_label list;
        rel_modes : mode list;
