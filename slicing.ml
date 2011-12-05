@@ -50,11 +50,12 @@ module type LABEL_TYPE =
 sig
   type t
   val empty: t
-  val label_of:  Atom.t -> t
+  val label_of_atom:  Atom.t -> t
   val merge: t -> t -> t
   val merge_list: t list -> t
   val is_rel: t -> t -> bool
-  val fv_of_label: t -> (spec_var list * spec_var list)
+  (* fv_of_label returns list of strongly and weakly linking variables *)
+  val fv_of_label: t -> (spec_var list * spec_var list) 
 end;;
 
 (* Atomic Constraint with Label *)
@@ -67,11 +68,11 @@ struct
   
   let get_label (constr: t) : ALabel.t =
     match (fst constr) with
-    | None -> ALabel.label_of (snd constr)
+    | None -> ALabel.label_of_atom (snd constr)
     | Some l -> l
 
   let constr_of_atom (a: Atom.t) : t =
-    (Some (ALabel.label_of a), a)
+    (Some (ALabel.label_of_atom a), a)
 
   let constr_of_atom_list (al: Atom.t list) : t list =
     List.map constr_of_atom al
@@ -88,7 +89,7 @@ struct
   let get_label (slice: t) : ALabel.t =
     match (fst slice) with
     | None -> List.fold_left (fun acc c -> 
-        ALabel.merge acc (ALabel.label_of c)) (ALabel.empty) (snd slice)
+        ALabel.merge acc (ALabel.label_of_atom c)) (ALabel.empty) (snd slice)
     | Some l -> l
 end;;
 
@@ -143,7 +144,7 @@ struct
   
   let empty : t = []
   
-  let label_of (a: Atom.t) : t = Atom.fv a
+  let label_of_atom (a: Atom.t) : t = Atom.fv a
   
   let merge (l1: t) (l2: t) : t = l1@l2
   
@@ -167,7 +168,7 @@ struct
 
   let empty : t = ([], [])
   
-  let label_of (a: Atom.t) : t = Atom.afv a 
+  let label_of_atom (a: Atom.t) : t = Atom.afv a 
   
   let merge (l1: t) (l2: t) : t =
     let (sv1, wv1) = l1 in
