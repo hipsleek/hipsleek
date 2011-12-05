@@ -9,7 +9,7 @@ open Cpure
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
-type var_aset = Gen.EqMap(SV).emap 
+type var_aset = Gen.EqMap(SV).emap
 
 let empty_var_aset = EMapSV.mkEmpty 
 
@@ -658,12 +658,12 @@ and combine_memo_branch b (f, l) =
     | "" -> f
     | s -> try memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
-and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
-  Gen.Debug.no_3 "merge_mems" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
-	!print_mp_f merge_mems_x l1 l2 slice_check_dups
-	
 and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
   merge_mems_check l1 l2 slice_check_dups
+  
+and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
+  Gen.Debug.no_2 "merge_mems" !print_mp_f !print_mp_f !print_mp_f
+     (fun _ _ ->  merge_mems_x l1 l2 slice_check_dups) l1 l2
 
 and merge_mems_check (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
   let r = merge_mems_nx l1 l2 slice_check_dups in
@@ -850,7 +850,7 @@ and memoise_add_pure_aux_x (l: memo_pure) (p:formula) status : memo_pure =
     let r = merge_mems l m2 true in
     (*let r = List.concat (List.map split_mem_grp r) in*)
     Gen.Profiling.pop_time "add_pure"; r)
-        
+
 and memoise_add_pure_aux l p status : memo_pure = 
   let pr1 = !print_mp_f in
   let pr2 = !print_p_f_f in
@@ -1325,6 +1325,7 @@ and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure =
   else
     memo_pure_push_exists_all ((fun w f p-> mkExists w f None p),false) qv c no_pos
 
+(*foldleft ONLY. The first part do nothing at all*)        
 and memo_norm (l:(b_formula * (formula_label option)) list): b_formula list * formula list =
   Gen.Debug.no_1 "memo_norm" (fun l -> List.fold_left (fun a (bf,_) -> a ^ (!print_bf_f bf)) "" l)
 	(fun (bfl, fl) ->
@@ -2109,7 +2110,19 @@ let merge_mems_m = merge_mems
 let merge_mems f1 f2 slice_dup = match (f1,f2) with
   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup)
   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos)
-  | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"}
+  | OnePF f1_f, MemoF f2_m -> 
+      MemoF (memoise_add_pure_N f2_m f1_f)
+  | MemoF f1_m, OnePF f2_f ->
+      MemoF (memoise_add_pure_N f1_m f2_f)
+
+(* let merge_mems f1 f2 slice_dup = match (f1,f2) with *)
+(*   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup) *)
+(*   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos) *)
+(*   | OnePF f1, MemoF f2 -> *)
+(*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 1 \n" in MemoF f2 *)
+(*   | MemoF f1, OnePF f2 -> *)
+(*       let _ = print_string "[mcpure.ml]Warning: merge mems: mix of memo and pure formulas 2 \n" in MemoF f1 *)
+  (* | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"} *)
   
   
 let merge_mems_debug f1 f2 slice_dup = 
@@ -2262,11 +2275,11 @@ let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula *
     let f,r = trans_formula e arg pf pa f_comb in
     (OnePF f,r)
     
-
+(*find constraints in f that related to specvar in v_l*)    
 let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
   | MemoF f -> 
 MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
-  | OnePF f -> OnePF (find_rel_constraints f v_l)
+  | OnePF f -> OnePF (Cpure.find_rel_constraints f v_l)
   
 let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; memo_group_aset=[]}) f
 	
@@ -2278,8 +2291,42 @@ let filter_complex_inv f = match f with
 	
 let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isConstTrue b) bl)
 
+let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
+  let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
+    match vv with
+      | (v1,v2)::xs -> 
+          let v3 = if (List.mem v1 vs) then Some v2
+              else if (List.mem v2 vs) then Some v1
+              else None 
+          in
+          (match v3 with
+            | None -> helper vs xs
+            | Some x -> helper (x::vs) xs)
+      | [] -> vs
+  in
+  helper [v] vv
 
+let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = 
+  let vv= ptr_equations_with_null f in
+  find_closure v vv
 
+let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list = 
+  Gen.Debug.no_2 "find_closure_mix_formula" 
+      !print_sv_f
+      !print_mix_f
+      !print_sv_l_f
+      find_closure_mix_formula_x v f
+
+let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = 
+  let vv= ptr_equations_with_null f in
+  find_closure v vv
+
+let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list = 
+  Gen.Debug.no_2 "find_closure_mix_formula" 
+      !print_sv_f
+      !print_mix_f
+      !print_sv_l_f
+      find_closure_mix_formula_x v f
 
 let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = 
   let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in
