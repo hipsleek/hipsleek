@@ -44,6 +44,7 @@ and p_formula =
 
 (* Expression *)
 and exp = 
+  | Ann_Exp of (exp * typ)
   | Null of loc
   | Var of ((ident * primed) * loc) 
 	  (* variables could be of type pointer, int, bags, lists etc *)
@@ -239,6 +240,8 @@ and mkAdd a1 a2 pos = Add (a1, a2, pos)
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkMult a1 a2 pos = Mult (a1, a2, pos)
+
+and mkAnnExp a1 t pos = Ann_Exp (a1, t)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
@@ -722,6 +725,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Var _ -> (e, None)
   | IConst _ -> (e, None)
   | FConst _ -> (e, None)
+  | Ann_Exp (e,_) -> float_out_exp_min_max e
   | Add (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

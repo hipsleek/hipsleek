@@ -1032,7 +1032,7 @@ and float_out_min_max (f :  formula) :  formula =
 (*   | Ipure.Null _ -> (e, None) *)
 (*   | Ipure.Var _ -> (e, None) *)
 (*   | Ipure.IConst _ -> (e, None) *)
-(*   | Ipure.FConst _ -> (e, None) *)
+(*  | Ipure.Ann_Exp (e,_) -> float_out_exp_min_max e *)
 (*   | Ipure.Add (e1, e2, l) -> *)
 (* 			let ne1, np1 = float_out_exp_min_max e1 in *)
 (* 			let ne2, np2 = float_out_exp_min_max e2 in *)

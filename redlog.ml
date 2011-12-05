@@ -1120,8 +1120,8 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   let res = 
     if is_linear_formula f then
       (* (\*LDK*\) *)
+      call_omega (lazy (Omega.is_valid_with_default f !timeout))
       (* let _ = print_string ("[Redlog] imply_no_cache: is_linear_formula = true \n") in *)
-      call_omega (lazy (Omega.is_valid f !timeout))
     (* (is_valid f imp_no) *)
     else
       if has_eq f then

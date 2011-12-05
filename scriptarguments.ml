@@ -71,9 +71,9 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--disable-check-lemmas", Arg.Clear Globals.check_coercions,
+	("--dlp", Arg.Clear Globals.check_coercions,
 	"Disable Lemma Proving");
-	("--enable-check-lemmas", Arg.Set Globals.check_coercions,
+	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
@@ -83,9 +83,9 @@ let common_arguments = [
     "Show gist when implication fails");
 	("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
 	"Hull precondition invariant at call sites");
-	("--sat-timeout", Arg.Set_float Globals.sat_timeout,
+	("--sat-timeout", Arg.Set_float Globals.sat_timeout_limit,
 	"Timeout for sat checking");
-	("--imply-timeout", Arg.Set_float Globals.imply_timeout,
+	("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
     "Timeout for imply checking");
 	("--log-proof", Arg.String Prooftracer.set_proof_file,
     "Log (failed) proof to file");

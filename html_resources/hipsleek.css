@@ -8,8 +8,12 @@ body {
 }
 	
 #header {
-	width:100%;
-	height:8%;
+	width:695px;
+	height:40px;
+	border-style:solid;
+	border-width:5px;
+	border-color:silver;
+	border-radius:15px;
 	text-align:center;
 	vertical-align:middle;
 	color : green;
@@ -18,11 +22,13 @@ body {
 }
 	
 #nav {
-	width:20%;
-	height:92%;
-	/* color:white; */
-	/* background-color:green; */
-	position:fixed;
+	width:200px;
+	height:460px;
+	border-style:solid;
+	border-width:5px;
+	border-color:red;
+	border-radius:5px;
+	position:absolute;
 	left:0px;
 }
 
@@ -32,8 +38,6 @@ body {
 }
 			
 #nav li {
-	/*background-color:navy;*/
-	/*color:white;*/
 	padding:3px 0px 2px 0px;
 	width:80%;
 }
@@ -42,38 +46,49 @@ body {
 	background-color:orange;
 }
 
-#nav a:hover {
-	background-color:orange;
+span.ok {
+	padding:0px 0px 0px 20px;
+	background: url(tick.svg) no-repeat left top;
+	background-size:15px;
+}
+
+span.notok {
+	padding:0px 0px 0px 20px;
+	background: url(cross.svg) no-repeat left top;
+	background-size:15px;
 }
 
 #nav .selected {
 	font-weight:bold;
-	/*color:white;*/
-	/*background-color:Darkorange;*/
 }
 
 #content_src_container {
-	width:80%;
-	height:92%;
-	position:fixed;
-	right:0px;
+	position:absolute;
+	left:210px;
 }
 
 #content {
-	/*width:80%;*/
-	height:70%;
-	/* background-color:green; */
-	/*position:fixed;
-	right:0px;*/
+	width:500px;
+	height:300px;
+	border-style:solid;
+	border-width:5px;
+	border-color:green;
+	border-radius:5px;
+}
+
+.verification-table td {
+	border:3px solid #98bf21;
+	padding:3px 7px 2px 7px;
+	width:492px;
 }
 
 #srclink {
-	/*width:80%;*/
-	height:30%;	
-	/* background-color:red; */
-	/*position:fixed;
-	bottom:0px;
-	right:0px;*/
+	width:500px;
+	height:150px;
+	border-style:solid;
+	border-width:5px;
+	border-color:blue;
+	border-radius:5px;
 }
 
 /* Styles specific to this particular page */
@@ -82,132 +97,3 @@ body {
 	width: 100%;
 	overflow: auto;
 }
-
-/*
- Style sheet obtained from http://www.ridgway.co.za/archive/2005/10/30/asimplecssbasedtreeview.aspx
- Modified by An Hoa
- */
-
-/*h1 {
-	color : green;
-}
-
-.progsource {
-	border-style : double;
-	font-family : Arial;
-}
-
-.progsource td {
-	padding-right : 20px;
-}
-
-tr.OddSourceLine {
-	background: white !important;
-}
-
-tr.EvenSourceLine {
-	background: #F0F0F0 !important;
-}
-
-.proc {
-	border-style : double;
-	font-family : Arial;
-}
-
-.procdef {
-	color:blue;
-	font-size : 0.75em;
-	font-weight : normal;
-	font-family : monospace;
-}
-
-.pre {
-	background : aliceblue;
-	font-weight : normal;
-	font-family : Arial;
-}
-
-.post {
-	background : burlywood;
-	font-weight : normal;
-	font-family : Arial;
-}
-
-.term {
-	font-weight : normal;
-	font-family : Arial;
-	border-style : double;
-}
-
-.proverinput {
-	color : black;
-	font-size : 0.75em;
-	background : goldenrod;
-	font-weight : normal;
-	font-family : monospace;
-	border-style : double;
-}
-
-.proveroutput {
-	color : darkmagenta;
-	font-size : 0.75em;
-	background : greenyellow;
-	font-weight : normal;
-	font-family : monospace;
-	border-style : double;
-}
-
-.pureimplyvalid {
-	color : green;
-	font-weight : normal;
-	border-style : dashed;
-}
-
-.pureimplyinvalid {
-	color : red;
-	font-weight : normal;
-	border-style : dashed;
-}
-
-.TreeView 
-{
-    font: Verdana;
-    line-height: 20px;
-	cursor: pointer; 
-	font-style: normal;
-}
-
-.TreeView li
-{
-	padding: 0 0 0 20px;
-    float : left;
-    width : 95%;
-    list-style: none;
-}
-
-.TreeView, .TreeView ul
-{
-    margin: 0;
-    padding: 0;
-}
-
-li.Expanded 
-{
-    background: url(minus.gif) no-repeat left top;
-}
-
-li.Expanded ul
-{
-	display: block;
-}
-
-li.Collapsed 
-{
-	background: url(plus.gif) no-repeat left top;
-}
-
-li.Collapsed ul
-{
-    display: none;
-
-}*/

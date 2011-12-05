@@ -2910,6 +2910,7 @@ type entail_state = {
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
+  es_imm_pure_stk : MCP.mix_formula list;
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
@@ -3495,6 +3496,7 @@ let rec empty_es flowt pos =
   es_aux_xpure_1 = MCP.mkMTrue pos;
   es_subst = ([], []);
   es_aux_conseq = CP.mkTrue pos;
+  es_imm_pure_stk = [];
   es_must_error = None;
   es_trace = [];
   es_is_normalizing = false;
@@ -3547,6 +3549,10 @@ let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 let false_ctx flowt pos = 
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
+
+let false_ctx_with_orig_ante f flowt pos = 
+	let x = mkFalse flowt pos in
+	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; })
 
 let false_es flowt pos = 
   let x =  mkFalse flowt pos in
@@ -6399,3 +6405,12 @@ let mark_derv_self name f =
     List.map h_ext f in
   (h_struc f)
 
+
+let rec push_case_f pf sf = 
+  let helper f = match f with 
+    | ECase f -> ECase {f with formula_case_branches = List.map (fun (c1,c2)-> (CP.mkAnd c1 pf no_pos, c2)) f.formula_case_branches}
+    | EBase f -> EBase {f with formula_ext_continuation = push_case_f pf f.formula_ext_continuation}
+    | EVariance v -> EVariance {v with formula_var_continuation = push_case_f pf v.formula_var_continuation}
+    | EAssume _ -> f
+  in
+  List.map helper sf

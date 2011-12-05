@@ -4,6 +4,11 @@
 type ident = string
 type constant_flow = string
 
+exception Illegal_Prover_Format of string
+
+let illegal_format s = raise (Illegal_Prover_Format s)
+
+
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
@@ -431,8 +436,8 @@ let omega_err = ref false
 
 let seq_number = ref 10
 
-let sat_timeout = ref 10.
-let imply_timeout = ref 10.
+let sat_timeout_limit = ref 2.
+let imply_timeout_limit = ref 3.
   
 (* let reporter = ref (fun _ -> raise Not_found) *)
 

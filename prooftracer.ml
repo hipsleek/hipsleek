@@ -516,6 +516,8 @@ let html_of_hip_source src =
 		"<table>" ^ res ^ "</table>"
 	
 (* An Hoa : experiment with JSON storage of proof *)
+let jsondecls = ref ""
+
 let jsonproof = ref "var jsonproof = ["
 
 let initialize_html source_file_name = let source = (Gen.SysUti.string_of_file source_file_name) in
@@ -546,16 +548,13 @@ let post_process_html () = 	html_output := !html_output ^
 
 (* An Hoa : experiment with JSON storage of proof *)
 
-(* End a json object by closing the array enclosing the collection of childs and then the object itself by a closing brace; the final comma is used to separate array elements *)
-let end_object () =
-	jsonproof := !jsonproof ^ "\n]},"
+(* start a compound JSON object, a compound object must have a field items which is an array consisting of component objects *)
+let start_compound_object () =
+	jsonproof := !jsonproof ^ "{ items : ["
 
-let add_proc proc =
+let add_proc proc vres =
 	let unmin_name = Cast.unmingle_name proc.Cast.proc_name in
-		jsonproof := !jsonproof ^ "
-{	type : \"proc\",
-	name : " ^ (strquote unmin_name) ^ ",
-	childs : ["
+		jsonproof := !jsonproof ^ "], type : \"proc\", name : " ^ (strquote unmin_name) ^ ", success : " ^ (strquote (string_of_bool vres)) ^ "},\n"
 
 let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
 
@@ -564,20 +563,10 @@ let start_with s p = if (String.length s >= String.length p) then
 	else false
 
 let add_list_failesc_context_struct_entailment lctx sf =
-	jsonproof := !jsonproof ^ "
-{
-	type : \"listfailesc\",
-	context : " ^ (strquote (Cprinter.html_of_list_failesc_context lctx)) ^ ", 
-	fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ ",
-	childs : ["
+	jsonproof := !jsonproof ^ "], type : \"listfailesc\", context : " ^ (strquote (Cprinter.html_of_list_failesc_context lctx)) ^ ", fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ "},\n"
 
 let add_list_partial_context_formula_entailment lctx sf =
-	jsonproof := !jsonproof ^ "
-{
-	type : \"listfailesc\",
-	context : " ^ (strquote (Cprinter.html_of_list_partial_context lctx)) ^ ", 
-	fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ ",
-	childs : ["
+	jsonproof := !jsonproof ^ "], type : \"listfailesc\", context : " ^ (strquote (Cprinter.html_of_list_partial_context lctx)) ^ ", fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ "},\n"
 
 let add_pre fce = match fce with
 	| Cast.SCall {
@@ -588,20 +577,10 @@ let add_pre fce = match fce with
 		Cast.exp_scall_path_id = pid;
 		Cast.exp_scall_pos = pos } ->
 		let unmin_name = Cast.unmingle_name mn in
-		if List.mem unmin_name primitive_procs then false
-		else begin
-			let lineloc = line_number_of_pos pos in
-			let precndtype = if (start_with unmin_name "array_get_elm_at___") then
-					"precnd_arracc"
-				else if (start_with unmin_name "update___") then
-					"precnd_arrupdt"
-				else "precnd" in
-			jsonproof :=  !jsonproof ^ "
-		{	type : " ^ (strquote precndtype) ^ ",
-			line : " ^ (strquote lineloc) ^ ",
-			childs : [";
-			true
-		end
+		let is_primitive = List.mem unmin_name primitive_procs in
+		let lineloc = line_number_of_pos pos in
+		let precndtype = if (start_with unmin_name "array_get_elm_at___") then "precnd_arracc" else if (start_with unmin_name "update___") then "precnd_arrupdt" else "precnd" in
+			jsonproof :=  !jsonproof ^ "], type : " ^ (strquote precndtype) ^ ", line : " ^ (strquote lineloc) ^ ", is_primitive : " ^ (strquote (string_of_bool is_primitive)) ^ "},\n"
 	| _ -> failwith "push_pre: unexpected expr"
 		
 let add_assert_assume ae = match ae with
@@ -611,22 +590,17 @@ let add_assert_assume ae = match ae with
 		Cast.exp_assert_path_id = pid;
 		Cast.exp_assert_pos = pos } -> 
 	let lineloc = line_number_of_pos pos in
-		jsonproof := !jsonproof ^ "
-		{	type : \"assert\",
-			line : " ^ (strquote lineloc) ^ ",
-			childs : ["
+		jsonproof := !jsonproof ^ "], type : \"assert\", line : " ^ (strquote lineloc) ^ "},\n"
 	| _ -> failwith "push_assert_assume: unexpected expr"
 
 let add_post () = 
-	jsonproof := !jsonproof ^ "
-	{	type : \"post\",
-		childs : ["
+	jsonproof := !jsonproof ^ "], type : \"post\"},\n"
 
 (*let push_term () = jsonproof := 
 	!jsonproof ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"*)
 			
 let add_pure_imply ante conseq is_valid prover_name prover_input prover_output = 
-	jsonproof := !jsonproof ^ "\n				{ type : \"pureimply\"," ^ (*	prover_input : " ^ (strquote prover_input) ^ ",*) "	prover_output : " ^ (strquote prover_output) ^ ", prover : " ^ (strquote prover_name) ^ ", is_valid : " ^ (strquote (string_of_bool is_valid)) ^ ",	formula : " ^ (strquote ((Cprinter.html_of_pure_formula ante) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula conseq))) ^ "},"
+	jsonproof := !jsonproof ^ "{ type : \"pureimply\"," ^ (*	prover_input : " ^ (strquote prover_input) ^ ",*) "	prover_output : " ^ (strquote prover_output) ^ ", prover : " ^ (strquote prover_name) ^ ", is_valid : " ^ (strquote (string_of_bool is_valid)) ^ ",	formula : " ^ (strquote ((Cprinter.html_of_pure_formula ante) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula conseq))) ^ "},\n"
 
 (* End of JSON proof generator *)
 
