@@ -7,7 +7,8 @@
 open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
-open Exc.ETABLE_DFLOW
+open Exc.GTable
+open Perm
 
 module F = Iformula
 module P = Ipure
@@ -42,6 +43,7 @@ and data_decl = { data_name : ident;
 
 and view_decl = { view_name : ident; 
 		  mutable view_data_name : ident;
+          (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
 		  view_vars : ident list;
 		  view_labels : branch_label list;
 		  view_modes : mode list;

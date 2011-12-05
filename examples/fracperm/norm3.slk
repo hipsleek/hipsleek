@@ -1,0 +1,52 @@
+/*
+ * LDK
+ * Explicit normalization with complex LHS
+ *
+*/
+
+data node { int val ; node next }.
+
+pred ls<n, p> == self = p & n = 0
+         or self::node<next = r> * r::ls<n - 1, p> & self!=p
+         inv n >= 0.
+
+
+lemma "COMBls" self::ls<n1,p1> * p1::ls<n2,p2> * p2::node<a,b> -> self::ls<n1+n2,p2> * p2::node<a,b>.
+
+//lemma "COMBls2" self::ls<n1,p1> * p1::ls<n2,p2> -> self::ls<n1+n2,p2>.
+
+//lemma "COMBls3" self::ls<n1,p1> * p1::ls<n2,p2> * p2::ls<n3,p3> * p3::node<a,b> -> self::ls<n1+n2+n3,p3> * p3::node<a,b>.
+
+
+//(1)
+checkentail x::ls<3,p1> * p2::ls<2,p> & p1=p2 |- x::ls<5,r>.
+// valid with "COMBls2", otherwise fail
+
+//(2)
+checkentail x::ls<3,p1> * p1::ls<2,p> * p::node<a,b> |- x::ls<5,r>.
+print residue.
+// valid with "COMBls", r=p
+
+//(3)
+checkentail x::ls<3,p1> * p2::ls<2,p> * p::node<_,_> & p1=p2 |- x::ls<5,r>.
+// valid with r=p
+print residue.
+
+//(4)
+checkentail x::ls<n1,p1> * p2::ls<n2,p> * p::node<_,_> & p1=p2 |- x::ls<n1+n2,r>.
+print residue. // valid with r=p
+
+//(5)
+checkentail x::ls<n1,p1> * p2::ls<n2,p> * p::node<_,_> & p1=p2 |- x::ls<n,r>.
+// valid with 2 answers? YEAP
+print residue.
+
+//(6)
+checkentail x::ls<n1,p1> * p2::ls<n2,p> * p::node<_,_> & p1=p2 |- x::ls<n,p>.
+// valid with only one answer? YEAP
+print residue.
+
+
+//checkentail x::ls<n1,p1> * p1::ls<n2,p2> * p2::ls<n3,p3> * p3::node<a,b> |- x::ls<n1+n2+n3,r>.
+//print residue.
+

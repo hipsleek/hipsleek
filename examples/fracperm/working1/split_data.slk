@@ -1,0 +1,78 @@
+data node { int val ; node next }.
+
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0 .
+
+
+//(1)
+checkentail x::cell(f1)<v> |- x::cell(f2)<v2>.
+print residue. //valid, MATCH and SPLIT
+
+//(2)
+checkentail x::cell<v1> |- x::cell(f2)<v2>.
+print residue. //valid, MATCH and SPLIT
+
+//(3)
+checkentail x::cell(1.0)<v1> |-  x::cell(f1)<v1> & f1>=1.0.
+print residue. //valid, 2 residues MATCH and SPLIT
+
+//(4)
+checkentail x::cell(1.0)<v1> |-  x::cell(0.5)<v1>.
+print residue. // SPLIT
+
+//(5)
+checkentail x::cell(1/2)<v1> |-  x::cell(3/4)<v1>.
+print residue. //fail
+
+//(6)
+checkentail x::cell(1.0)<v> |-  x::cell(f1)<v> & f1=0.2.
+print residue. //valid, 1 residue
+
+//(7)
+checkentail x::cell(1.0)<v1> |-  x::cell(0.4)<v1> * x::cell(0.5)<v1>.
+print residue. //valid, 1 residue
+
+//(8)
+checkentail x::cell(1.0)<v1> |-  x::cell(0.6)<v1> * x::cell(0.5)<v1>.
+print residue. //fail
+
+//(9)
+checkentail x::cell(1.0)<v> |-  x::cell(f1)<v> * x::cell(f2)<v> * x::cell(f3)<v> & f1=0.2 & f2=0.3 & f3=0.5 .
+print residue. //valid, 1 residue
+
+//(10)
+checkentail x::cell(1.0)<v> |-  x::cell(f1)<v> * x::cell(f2)<v> * x::cell(f3)<v> & f1=0.2 & f2=0.3 & f3=0.4 .
+print residue. //valid, 1 residue
+
+//(11)
+checkentail x::cell(1.0)<v> |-  x::cell(f1)<v> * x::cell(f2)<v> * x::cell(f3)<v> & f1=0.2 & f2=0.3 & f3=0.6 .
+print residue. //fail
+
+//(12)
+checkentail x::cell(f1)<v> & 0.0<f2 & f1>f2 |- x::cell(f2)<v2>.
+print residue. //valid, only SPLIT
+
+//(13)
+checkentail x::cell<v1> & 1>f2>0|- x::cell(f2)<v2>.
+print residue. //valid, only SPLIT
+
+//(14)
+checkentail x::cell<v1>  |- x::cell(f2)<v2> & 1>=f2>0.
+print residue. //valid, both MATCH and SPLIT
+
+//(15)
+checkentail x::cell(f1)<v1>  |- x::cell(f2)<v2> & f2=0.5.
+print residue. //invalid
+
+//(16)
+checkentail x::cell(f1)<v1>  |- x::cell(f2)<v2> & 1.0>=f2>0.0.
+print residue. //valid, both MATCH and SPLIT (2 answer)
+
+//(17)
+checkentail x::cell(f1)<v1>  |- x::cell(f2)<v2> & 0.5>=f2>0.0.
+print residue. //valid, both MATCH and SPLIT (1 answer)

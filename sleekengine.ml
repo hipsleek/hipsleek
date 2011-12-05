@@ -130,7 +130,9 @@ let check_data_pred_name name :bool =
 (*   end *)
 
 let process_pred_def pdef = 
-  (*let _ = print_endline  ("4: prune in pred check") in*)
+  (* TODO : how come this method not called? *)
+  (* let _ = print_string ("process_pred_def:" *)
+  (*                       ^ "\n\n") in *)
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
@@ -389,7 +391,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in
   (*let _ = print_endline "1: prune ante in check entailment" in*)
-  (*let ante = Solver.prune_preds !cprog true ante in *)
+  let ante = Solver.prune_preds !cprog true ante in
   let ante = 
     if (Perm.allow_perm ()) then
       (*add default full permission to ante; 
@@ -399,7 +401,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   in
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
-  let _ = flush stdout in
+(*  let _ = flush stdout in*)
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
