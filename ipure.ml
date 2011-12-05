@@ -162,7 +162,7 @@ and afv (af : exp) : (ident * primed) list = match af with
 						if (id.[0] = '#') then [] else [sv]
   | IConst _ -> []
   | FConst _ -> []
-  | Ann_Exp (e,_) -> afv af
+  | Ann_Exp (e,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
