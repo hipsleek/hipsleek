@@ -6,7 +6,6 @@
 
 open Globals
 open Gen
-(* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
 
@@ -2082,19 +2081,10 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
     formula_exists_branches = b;
     formula_exists_label = lbl;
 	formula_exists_pos = pos}) -> 
-
-      (* let qp1 =  MCP.regroup_memo_group (MCP.m_apply_one s qp) in *)
-      (* let _ = print_string ("[cformula]  apply_one : Exists "  *)
-      (*                       ^ "\n ### qp = " ^ (!print_mix_formula qp)  *)
-      (*                       ^ "\n ### qp1 = " ^ (!print_mix_formula qp1)  *)
-      (*                       ^ "\n\n") in *)
-
 	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	    else Exists ({formula_exists_qvars = qsv; 
 		formula_exists_heap =  h_apply_one s qh; 
-		formula_exists_pure = 
-
-                MCP.regroup_memo_group (MCP.m_apply_one s qp); 
+		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp); 
 		formula_exists_type = tconstr;
 		(* formula_exists_imm = imm; *)
 		formula_exists_flow = fl;

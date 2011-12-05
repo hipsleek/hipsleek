@@ -140,7 +140,7 @@ let list_pair_of_set s =
 
 (* let is_empty_flow ((a,b):nflow) = a<0 || (a>b) *)
 
-let is_subset_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2)
+let is_subset_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)
       = s2<=s1 && b1<=b2
 
 (* let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
@@ -149,7 +149,7 @@ let is_subset_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2)
 (*       else is_subset_flow_ne f1 f2 *)
 
 (* is f1 an exact flow for subtype f2 *)
-let is_exact_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+let is_exact_flow_ne ((s1,b1):nflow) ((s2,b2):nflow) =
        s1==b1 & b1==b2
 
 (* let is_exact_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
@@ -168,7 +168,7 @@ let is_exact_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
 (* let is_exact_dflow (mf, lst) = *)
 (*       is_exact_lflow lst mf *)
 
-let is_non_overlap_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+let is_non_overlap_flow_ne ((s1,b1):nflow) ((s2,b2):nflow) =
        b1<s2 || b2<s1
 
 let is_overlap_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
@@ -178,7 +178,7 @@ let is_overlap_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
 (*       if is_empty_flow(f1) || is_empty_flow(f2) then false *)
 (*       else is_overlap_flow_ne f1 f2 *)
 
-let is_next_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+let is_next_flow_ne ((s1,b1):nflow) ((s2,b2):nflow) =
       s2==b1+1
 
 let is_eq_flow_ne (((s1,b1):nflow)) (((s2,b2):nflow)) =
@@ -190,7 +190,7 @@ let is_eq_flow_ne (((s1,b1):nflow)) (((s2,b2):nflow)) =
 (*         else false *)
 (*       else is_eq_flow_ne f1 f2 *)
 
-let union_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
+let union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow) =
       ((min s1 s2),(max b1 b2))
 
 (* let union_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
