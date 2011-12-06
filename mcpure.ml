@@ -884,106 +884,57 @@ and memo_pure_push_exists_slice (f_simp,do_split) (qv:spec_var list) (f0:memo_pu
 (* pushes the exists into the individual groups, 
  * picks the simple and complex constraints related to qv, 
  * combines them into a formula *)
-and memo_pure_push_exists_slice_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =
-  if !do_slicing then memo_pure_push_exists_slice_slicing (f_simp,do_split) qv f0 pos
-  else memo_pure_push_exists_slice_no_slicing (f_simp,do_split) qv f0 pos
-  (*memo_pure_push_exists_slice_slicing (f_simp,do_split) qv f0 pos*)
-
-and memo_pure_push_exists_slice_no_slicing (f_simp, do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =  
-  (* Builds a formula to be simplified with the constraints related to qv *) 
+and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: memo_pure) pos : memo_pure =  
+  (* Builds a formula to be simplified with the constraints related to qv *)
+  (* Ex x, y. A(x) /\ B(y) <-> Ex x. A(x) /\ Ex y. B(y) iff x notin FV(B) /\ y notin FV(A) *)
+  
+  (* Get relevant constraints with respect to qv *)  
   let pick_rel_constraints slice cons aset =
     let equiv_lst = get_equiv_eq_with_const aset in
-    let nas, drp3 = List.partition (fun (c1,c2)-> (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) equiv_lst in
-    let r,drp1 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var (bfv c.memo_formula) qv))>0) cons in
-    let r = List.filter (fun c-> not (c.memo_status=Implied_R)) r in
-    let ns,drp2 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var (fv c) qv))>0) slice in 
-    let aset = List.fold_left  ( fun a (c1,c2) -> add_equiv_eq_with_const a c1 c2) empty_var_aset drp3 in 
-    let fand1 = List.fold_left (fun a c-> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
-    let fand2 = List.fold_left (fun a c-> mkAnd a c pos) fand1 ns in
-    let fand3 =List.fold_left (fun a (c1,c2)-> mkAnd a (BForm (((form_bform_eq_with_const c1 c2), None),None))  no_pos) fand2 nas in
+    let nas, drp3 = List.partition (fun (c1, c2) -> (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) equiv_lst in
+    let r, drp1 = List.partition (fun c -> (Gen.BList.overlap_eq eq_spec_var (bfv c.memo_formula) qv)) cons in
+    let r = List.filter (fun c -> not (c.memo_status = Implied_R)) r in
+    let ns, drp2 = List.partition (fun c -> (Gen.BList.overlap_eq eq_spec_var (fv c) qv)) slice in 
+    let aset = List.fold_left (fun a (c1, c2) -> add_equiv_eq_with_const a c1 c2) empty_var_aset drp3 in 
+    let fand1 = List.fold_left (fun a c -> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
+    let fand2 = List.fold_left (fun a c -> mkAnd a c pos) fand1 ns in
+    let fand3 = List.fold_left (fun a (c1, c2) -> mkAnd a (BForm (((form_bform_eq_with_const c1 c2), None), None)) pos) fand2 nas in
     (fand3, drp1, drp2, aset)
   in
   
+  (* Simplify relevant constraints and form new memo groups *)
   let helper mg =
-    if not (Gen.BList.overlap_eq eq_spec_var qv mg.memo_group_fv) then [mg] 
-    else 
-      let (to_simpl, rem_cons, rem_slice, rem_aset) = pick_rel_constraints mg.memo_group_slice mg.memo_group_cons mg.memo_group_aset in
-      let after_simpl = f_simp qv to_simpl pos in
-      let after_elim_trues = List.filter (fun c-> not (isConstTrue c))(split_conjunctions after_simpl) in
-
-      let r = {
-        memo_group_fv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv qv;
-	      memo_group_linking_vars = [];
-	      memo_group_changed = true;
-	      memo_group_cons = rem_cons;
-	      memo_group_slice = rem_slice @ after_elim_trues;
-	      memo_group_aset = rem_aset;
-      } in
-	    if do_split then split_mem_grp r else [r] 
+    let (to_simpl, rem_cons, rem_slice, rem_aset) = pick_rel_constraints mg.memo_group_slice mg.memo_group_cons mg.memo_group_aset in
+	let after_simpl = f_simp qv to_simpl pos in
+	let after_elim_trues = List.filter (fun c -> not (isConstTrue c)) (split_conjunctions after_simpl) in
+	
+	let n_memo_group_fv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv qv in
+	let n_memo_group_lv = Gen.BList.difference_eq eq_spec_var
+	  (Gen.BList.remove_dups_eq eq_spec_var mg.memo_group_linking_vars) qv in
+	
+	let r = {
+      memo_group_fv = n_memo_group_fv;
+	  memo_group_linking_vars = n_memo_group_lv;
+	  memo_group_changed = true;
+	  memo_group_cons = rem_cons;
+	  memo_group_slice = rem_slice @ after_elim_trues;
+	  memo_group_aset = rem_aset;
+    } in
+	if do_split then split_mem_grp r else [r] 
   in
-  List.concat (List.map helper f0)
-
-and pick_rel_constraints qv slice cons aset pos =
-  let equiv_lst = get_equiv_eq_with_const aset in
-  let nas, drp3 = List.partition (fun (c1,c2)-> (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) equiv_lst in
-  let r,drp1 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var (bfv c.memo_formula) qv))>0) cons in
-  let r = List.filter (fun c -> not (c.memo_status=Implied_R)) r in
-  let ns,drp2 = List.partition (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var (fv c) qv))>0) slice in 
-  let aset = List.fold_left  (fun a (c1,c2) -> add_equiv_eq_with_const a c1 c2) empty_var_aset drp3 in 
-  let fand1 = List.fold_left (fun a c-> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
-  let fand2 = List.fold_left (fun a c-> mkAnd a c pos) fand1 ns in
-  let fand3 = List.fold_left (fun a (c1,c2)-> mkAnd a (BForm (((form_bform_eq_with_const c1 c2), None),None)) no_pos) fand2 nas in
-  (fand3, drp1, drp2, aset)
-
-and memo_pure_push_exists_slice_slicing (f_simp, do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =  
-  (* Builds a formula to be simplified with the constraints related to qv *)
-  (* Ex x, y. A(x) /\ B(y) <-> Ex x. A(x) /\ Ex y. B(y) iff x notin FV(B) /\ y notin FV(A) *)
-    
+  
   let _ = Gen.Profiling.push_time "push_exists_slicing" in
+  (* Consider only constraints which are relevant to qv *)
   let rel_mg, non_rel_mg = List.partition (fun mg -> Gen.BList.overlap_eq eq_spec_var qv mg.memo_group_fv) f0 in
-
-  let helper mg =
-    (*
-    let l =  Memo_Constr.memo_constr_of_memo_group g in
-    let (to_simpl, r) = List.partition (fun c -> 
-      Gen.BList.overlap_eq eq_spec_var (Memo_Constr.fv c) qv) l in
-    let to_simpl = List.filter (fun c -> match c with
-      | Memo_Constr.Memo_B (_, status) -> not (status = Implied_R)
-      | _ -> true
-    ) to_simpl in
-    let f_to_simpl = List.fold_left (fun a c -> 
-      mkAnd a (Memo_Constr.formula_of_memo_constr c) pos
-    ) (mkTrue pos) to_simpl in
-    let after_simpl = f_simp qv f_to_simpl pos in
-    let after_elim_trues = List.filter (fun c -> not (isConstTrue c)) (split_conjunctions after_simpl) in
-    *)
-
-    let (to_simpl, rem_cons, rem_slice, rem_aset) = pick_rel_constraints qv mg.memo_group_slice mg.memo_group_cons mg.memo_group_aset pos in
-    let after_simpl = f_simp qv to_simpl pos in
-    let after_elim_trues = List.filter (fun c -> not (isConstTrue c)) (split_conjunctions after_simpl) in
-
-	  let n_memo_group_fv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv qv in
-	  let rd_memo_group_lv = Gen.BList.remove_dups_eq eq_spec_var mg.memo_group_linking_vars in
-    let r =
-	  { memo_group_fv = n_memo_group_fv;
-		  memo_group_linking_vars = Gen.BList.difference_eq eq_spec_var rd_memo_group_lv qv;
-		  memo_group_changed = true;
-		  memo_group_cons = rem_cons;
-		  memo_group_slice = rem_slice @ after_elim_trues;
-		  memo_group_aset = rem_aset;
-	  } in
-	  if do_split then split_mem_grp r else [r]
+  let n_rel_mg = 
+    if !do_slicing then (* Merge relevant constraints together - Soundness *)
+	  let l = MG_Constr_AnS.constr_of_atom_list rel_mg in
+	  let sl = MG_AnS.split_by_fv qv l in
+	  MF_AnS.memo_pure_of_mg_slice sl None
+    else rel_mg
   in
- 
-  let l = MG_Constr_AnS.constr_of_atom_list rel_mg in
-  let sl = MG_AnS.split_by_fv qv l in
-  let n_rel_mg = MF_AnS.memo_pure_of_mg_slice sl None in 
-
   let res = (List.concat (List.map helper n_rel_mg)) @ non_rel_mg in
-
   let _ = Gen.Profiling.pop_time "push_exists_slicing" in res
-
-
   
 (* Pushes exists qv over f0. It takes two steps:
    First: searches for substitutions in the eq set,
