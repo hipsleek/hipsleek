@@ -1278,9 +1278,11 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;
-  pr_vwrap "es_infer_heap:  " pr_h_formula es.es_infer_heap;
-  pr_vwrap "es_infer_pure:  " pr_pure_formula es.es_infer_pure;
-  pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs;
+  pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
+  pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
+  pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures; 
+  pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs; 
+  (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   fmt_close ()
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
@@ -2362,6 +2364,7 @@ Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
+Cformula.print_list_context := string_of_list_context;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
 (* Cformula.print_nflow := string_of_nflow;; *)

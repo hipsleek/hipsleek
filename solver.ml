@@ -4900,8 +4900,10 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                                 (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) 
                                   (estate.es_infer_pures @ [MCP.pure_of_mix p2])) pos) in
                               let infer_pure = Omega.simplify (CP.mkAnd infer_pure (filter_var infer_pure2 infer_vars) pos) in
-                              let infer_pure = if CP.isConstTrue infer_pure & pure_part_aux = false then CP.mkFalse pos else infer_pure in
-                              {estate with es_infer_vars = infer_vars; es_infer_heap = infer_heap; 
+                              let infer_pure = 
+                                if CP.isConstTrue infer_pure & pure_part_aux = false
+                                then [CP.mkFalse pos] else [infer_pure] in
+                              {estate with es_infer_vars = infer_vars; es_infer_heap = [infer_heap]; 
                                            es_infer_pure = infer_pure; es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix p2)]}
                              )
                           in
@@ -5365,8 +5367,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
         let pure_part2 = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) 
           (estate.es_infer_pures @ [MCP.pure_of_mix rhs_p])) in
 (*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula infer_pure);*)
-        let infer_pure = if Omega.is_sat pure_part2 "0" = false then CP.mkFalse pos else infer_pure in
-        {estate with es_infer_heap = HTrue; es_infer_pure = infer_pure;
+        let infer_pure = if Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [infer_pure] in
+        {estate with es_infer_heap = []; es_infer_pure = infer_pure;
                      es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]}
       else estate 
     in
@@ -5443,8 +5445,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 (*        print_endline ("PURE1: " ^ Cprinter.string_of_pure_formula pure_part);*)
 (*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula pure_part2);*)
         let pure_part = if (CP.isConstTrue pure_part & pure_part_aux = false) 
-            || Omega.is_sat pure_part2 "0" = false then CP.mkFalse pos else pure_part in
-        {estate with es_infer_heap = HTrue; es_infer_pure = pure_part; 
+            || Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [pure_part] in
+        {estate with es_infer_heap = []; es_infer_pure = pure_part; 
                      es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]}
       )
     in
@@ -6214,6 +6216,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
+  (* let _ = print_endline "CA:1" in *)
   let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing pos in
   process_action 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
@@ -6617,6 +6620,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   (* let rhs_lst = [] in *)
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
+  (* let _ = print_endline "CA:2" in *)
   (0,Context.compute_actions_x prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst  estate.es_is_normalizing no_pos)
 
 and process_unfold_x prog estate conseq a is_folding pos has_post pid =
@@ -8690,10 +8694,12 @@ let rec get_precondition ft vars pos =
   let simplify = fun f vars -> Omega.simplify (filter_var (Omega.simplify f) vars) in
   match ft with
   | Basic_Reason (fc, fe) ->
-    let h = fc.fc_current_lhs.es_infer_heap in
+    let h = CF.conv_infer_heap fc.fc_current_lhs.es_infer_heap in
     let new_vars = Cformula.h_fv h in
     let vars = Gen.Basic.remove_dups (vars @ new_vars) in
-    let p = MCP.mix_of_pure (simplify (fc.fc_current_lhs.es_infer_pure) vars) in
+    (* WN : why is es_infer_pure needed below? *)
+    let p = MCP.mix_of_pure (simplify (CP.mkTrue no_pos) vars) in
+    (* let p = MCP.mix_of_pure (simplify (fc.fc_current_lhs.es_infer_pure) vars) in *)
     let label = fc.fc_current_lhs.es_infer_label in
     (CF.mkBase h p TypeTrue (CF.mkTrueFlow ()) [] pos, label)
   | Trivial_Reason s -> (hlabel1, hlabel2)
@@ -8752,6 +8758,7 @@ let infer_pre ctx prog ante conseq vars =
   let precond = match fctx with
     | SuccCtx _ -> CF.formula_of_heap HTrue no_pos
     | FailCtx ft -> fst (get_precondition ft vars no_pos)
+          (* WN : why is precondition embedded inside a failure? *)
   in
   print_endline ("\nPRECOND: " ^ Cprinter.string_of_formula precond);
 (*  print_endline (Cprinter.string_of_list_context_short fctx);*)

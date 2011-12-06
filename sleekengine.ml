@@ -521,6 +521,15 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end  
 
+let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
+  let _ = (print_entail_result valid residue num_id) in
+  if valid then
+    let pr = CF.extract_pre_list_context residue in
+    match pr with
+      | None -> () (* No precondition inferred *)
+      | Some f -> print_endline ("Pre: "^(Cprinter.string_of_formula f))
+      
+
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
@@ -537,7 +546,7 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
   let num_id = "Infer  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let valid, rs = run_infer ivars iante0 iconseq0 in
-    print_entail_result valid rs num_id
+    print_entail_result_with_pre valid rs num_id
   with _ -> print_exc num_id
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =

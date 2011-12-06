@@ -2914,10 +2914,10 @@ type entail_state = {
   es_infer_label: formula;
 (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
 (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
-  es_infer_heap : h_formula; (* output heap inferred *)
-  es_infer_pure : CP.formula; (* output pure inferred *)
-  es_infer_invs : CP.formula list;
-  es_infer_pures : CP.formula list
+  es_infer_heap : h_formula list; (* output heap inferred *)
+  es_infer_pure : CP.formula list; (* output pure inferred *)
+  es_infer_pures : CP.formula list; (* WN : why is this from conseq needed?; why cannot combine *)
+  es_infer_invs : CP.formula list (* WN : what is this? *)
 }
 
 and context = 
@@ -2989,6 +2989,7 @@ and list_failesc_context = failesc_context list
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
+let print_list_context = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
@@ -3505,8 +3506,8 @@ let rec empty_es flowt pos =
   es_is_normalizing = false;
   es_infer_vars = [];
   es_infer_label = x;
-  es_infer_heap = HTrue;
-  es_infer_pure = (CP.mkTrue no_pos);
+  es_infer_heap = []; (* HTrue; *)
+  es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_invs = [];
   es_infer_pures = [];
 }
@@ -6542,6 +6543,23 @@ let rec init_caller context =
   | OCtx (ctx1, ctx2) -> OCtx (init_caller ctx1, init_caller ctx2)
   | Ctx es -> Ctx ({es with es_infer_label = elim_quan es.es_formula})
 
+let conv_infer_heap hs =
+  let rec helper hs h = match hs with
+    | [] -> h
+    | x::xs -> 
+          let acc = 
+	        Star({h_formula_star_h1 = x;
+	        h_formula_star_h2 = h;
+	        h_formula_star_pos = no_pos})
+          in helper xs acc in
+  match hs with
+    | [] -> HTrue 
+    | x::xs -> helper xs x
+
+let extract_pre_list_context x = 
+  (* TODO : this has to be implemented by extracting from es_infer_* *)
+  (* print_endline (!print_list_context x); *)
+  None
 
 
 
