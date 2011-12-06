@@ -909,8 +909,12 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
 	let after_elim_trues = List.filter (fun c -> not (isConstTrue c)) (split_conjunctions after_simpl) in
 	
 	let n_memo_group_fv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv qv in
-	let n_memo_group_lv = Gen.BList.difference_eq eq_spec_var
-	  (Gen.BList.remove_dups_eq eq_spec_var mg.memo_group_linking_vars) qv in
+	let n_memo_group_lv = 
+	  if !do_slicing then 
+	    Gen.BList.difference_eq eq_spec_var
+	      (Gen.BList.remove_dups_eq eq_spec_var mg.memo_group_linking_vars) qv
+	  else []
+	in
 	
 	let r = {
       memo_group_fv = n_memo_group_fv;
