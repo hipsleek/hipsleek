@@ -2873,8 +2873,8 @@ type entail_state = {
   es_ante_evars : CP.spec_var list;
   (* es_must_match : bool; *)
   (*used by late instantiation*)
-  es_gen_expl_vars: CP.spec_var list; (* implicit instantiation var*)
-  es_gen_impl_vars: CP.spec_var list; (* explicit instantiation var*)
+  es_gen_expl_vars: CP.spec_var list; (* explicit instantiation var*)
+  es_gen_impl_vars: CP.spec_var list; (* implicit instantiation var*)
   (* to indicate if unsat check has been done for current state *)
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
@@ -2911,11 +2911,11 @@ type entail_state = {
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
   es_is_normalizing : bool; (*normalizing process*)
   es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
-  es_infer_label: formula;
+  es_infer_label: formula; 
 (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
 (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
-  es_infer_heap : h_formula list; (* output heap inferred *)
-  es_infer_pure : CP.formula list; (* output pure inferred *)
+  es_infer_heap : h_formula list; (* output : pre heap inferred *)
+  es_infer_pure : CP.formula list; (* output : pre pure inferred *)
   es_infer_pures : CP.formula list; (* WN : why is this from conseq needed?; why cannot combine *)
   es_infer_invs : CP.formula list (* WN : what is this? *)
 }

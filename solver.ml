@@ -6665,7 +6665,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
           CF.mk_failure_none ("Nothing_to_do?"^s))), NoAlias)
     | Context.M_unmatched_rhs_data_node rhs ->
-          let r = Inf.infer_heap_nodes estate rhs in 
+          let r = Inf.infer_heap_nodes estate rhs conseq in 
           (* TODO : obtain xpure0 of RHS
              (i) check if it is unsat, or
              (ii) check if negated term implied by LHS
