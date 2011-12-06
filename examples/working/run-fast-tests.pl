@@ -630,7 +630,15 @@ $output_file = "log";
               ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
-              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]]
+              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
+    "errors"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
+			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
+			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
+			   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
+			   ["err6.slk","","must.Valid.may.may.must.Valid."],
+			   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
+               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
 
     );
 
@@ -758,11 +766,20 @@ sub sleek_process_file  {
   foreach $param (@param_list)
   {
       my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $err = 0;
+      if ("$param" =~ "errors") {
+          print "Starting sleek must/may errors tests:\n";
+         # sleek_errors_process_file();
+         # continue;
+          $exempl_path_full = "$exec_path/errors";
+          $err = 1;
+      }
       if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
-      $exempl_path_full = "$exempl_path/sleek";
+      
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
+          $exempl_path_full = "$exempl_path/sleek";
       }else {
           $exempl_path_full = "$exempl_path_full/$param";
           print "Starting sleek-$param tests:\n";
@@ -788,8 +805,21 @@ sub sleek_process_file  {
                     if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
                     elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
                 }elsif($line =~ m/Entail/){
-                    if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
-                    elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                    if( $err == 1) {
+                        $i = index($line, "Valid. (bot)",0);
+                        $h = index($line, "Valid.",0);
+                        $j = index($line, "Fail.(must)",0);
+                        $k = index($line, "Fail.(may)",0);
+                        #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                        if($i >= 0) { $r = $r ."bot."; }
+                        elsif($h >= 0) { $r = $r ."Valid."; }
+                        elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                        elsif($k >= 0)  { $r = $r ."may.";}
+                    }
+                    else {
+                        if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                        elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                    }
                 }
             }
 			if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)))
@@ -803,4 +833,48 @@ sub sleek_process_file  {
             }
 		}
 	}
+}
+
+#./run-fast-tests.pl sleek --errors
+sub sleek_errors_process_file  {
+      $exempl_path_full = "$exec_path/errors"; #"$exempl_path";
+
+      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      if ($script_arguments=~"--enable-check-lemmas"){ $lem = 1; } 
+#      elsif ($script_arguments=~"--disable-check-lemmas"){ $lem = 0; }
+      $t_list = $sleek_files{"errors"};#$param
+      foreach $test (@{$t_list})
+      {
+			print "Checking $test->[0]\n";
+            $script_args = $script_arguments." $test->[1]";
+			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
+			print LOGFILE "\n======================================\n";
+	        print LOGFILE "$output";
+			# $pos = 0;
+			$r = "";
+			 my @lines = split /\n/, $output; 
+            foreach my $line (@lines) { 
+				#print $line . " locle\n";
+                if($line =~ m/Entail/){
+                    $i = index($line, "Valid. (bot)",0);
+                    $h = index($line, "Valid.",0);
+					$j = index($line, "Fail.(must)",0);
+				    $k = index($line, "Fail.(may)",0);
+                  #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                    if($i >= 0) { $r = $r ."bot."; }
+                    elsif($h >= 0) { $r = $r ."Valid."; }
+                    elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+					elsif($k >= 0)  { $r = $r ."may.";}
+                }
+            }
+			if($r !~ /^$test->[2]$/)
+			{
+				print "Unexpected result with : $test->[0]\n";
+				$error_count++;
+				$error_files = $error_files . " " . $test->[0];
+			}
+            if($timings) {
+               # log_one_line_of_timings ($test->[0],$output);
+            }
+      }
 }
