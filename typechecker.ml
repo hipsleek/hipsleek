@@ -463,6 +463,135 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  exp_scall_path_id = pid;
 			  exp_scall_pos = pos}) ->
 		      begin
+                let mn_str = Cast.unmingle_name mn in
+                (*=========================*)
+                (*=======FORK==============*)
+                (*=========================*)
+                if (mn_str=Globals.fork_name) then 
+                  let _ = print_endline ("\ncheck_exp: fork is a special function" 
+                                         ^ (mn ^ "(" ^ (Cprinter.string_of_ident_list vs ",") ^ ")" ^ (if (ir) then " rec" else ""))) in
+                  (*fork has at least 2 arguments. This was checked at trans_exp*)
+                  let tid_var = List.nth vs 0 in (*tid*)
+                  let fn = List.nth vs 1 in (*method name*)
+                  let fargs = (List.tl (List.tl vs)) in
+                  let proc = look_up_proc_def_no_mingling pos prog.prog_proc_decls fn in
+                  (* let _ = print_endline ("check_exp: proc = " ^ (Cprinter.string_of_proc_decl 0 proc)) in *)
+	              let farg_types, farg_names = List.split proc.proc_args in
+	              let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+	              let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) fargs farg_types in
+                  (* Internal function to check pre/post condition of the fork call. *)
+	              let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
+                    (* Termination: Stripping the "variance" feature from org_spec
+				       if the call is not a recursive call *)
+                    (*TO CHECK: neccessary -> YES*)
+			        let stripped_spec = if ir then org_spec else
+                          let rec strip_variance ls = match ls with
+                            | [] -> []
+                            | spec::rest -> match spec with
+                                  | Cformula.EVariance e -> (strip_variance e.Cformula.formula_var_continuation)@(strip_variance rest)
+                                  | Cformula.EBase b -> (Cformula.EBase {b with Cformula.formula_ext_continuation = strip_variance b.Cformula.formula_ext_continuation})::(strip_variance rest)
+                                  | Cformula.ECase c -> (Cformula.ECase {c with Cformula.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.Cformula.formula_case_branches})::(strip_variance rest)
+                                  | _ -> spec::(strip_variance rest)
+                          in strip_variance org_spec
+                    in
+                    (* org_spec -> stripped_spec *)
+	                (* free vars = linking vars that appear both in pre and are not formal arguments *)
+                    let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
+                      (Gen.BList.difference_eq CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*))
+                           (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
+                    (* free vars get to be substituted by fresh vars *)
+                    let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
+                    let renamed_spec = 
+                      if !Globals.max_renaming then (Cformula.rename_struc_bound_vars stripped_spec(*org_spec*))
+                      else (Cformula.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context sctx))
+                    in
+                    let st1 = List.combine pre_free_vars pre_free_vars_fresh in
+                    (*let _ = print_string (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
+                    let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
+                    let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
+                    (* Termination: Cache the subst for output pretty printing *)
+                    let sctx = if not ir then sctx else
+                          let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name fn))) to_vars fr_vars in
+                          List.map (fun fctx ->
+                              let (lb,estk,lbctx) = fctx in
+                              let nlbctx = List.map (fun bctx ->
+                                  let (pt,ctx) = bctx in
+                                  let nctx = CF.transform_context (fun es -> 
+                                      CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst; 
+                                          CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
+                              (lb,estk,nlbctx)) sctx
+                    in
+                    (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
+                      (Cprinter.string_of_pos pos) ^ "\n" ^
+                      (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
+                    let renamed_spec = CF.subst_struc st1 renamed_spec in
+                    let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+                    let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
+                    let pre2 = CF.subst_struc_pre st2 renamed_spec in
+                    let new_spec = (Cprinter.string_of_struc_formula pre2) in
+                    (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in*)
+                    (*Termination checking *) (*TO CHECK: neccessary ???*)
+                    let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ fn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
+                    let _ = Debug.devel_pprint (str_debug_variance) pos in
+                    let _ = 
+                      if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
+                        (* Termination: Add a false entail state for 
+                         * unreachable recursive call if variance exists *)
+                        var_checked_list := !var_checked_list @ [(
+                            {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
+                            CF.empty_ext_variance_formula)];
+                    in 
+                    (*print_string (str_debug_variance ^ "\n");*) 
+
+                    (* TODO: call the entailment checking function in solver.ml *)
+                    let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
+                    let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
+                    Debug.devel_pprint (to_print^"\n") pos;
+				    (* An Hoa : output the context and new spec before checking pre-condition *)
+				    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
+                    let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+				    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
+                    (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
+                    let _ = PTracer.log_proof prf in
+                    let _ = print_string (("\n[fork] res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in
+                    if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
+                      Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
+                    rs 
+                  in
+
+                  (* Call check_pre_post with debug information *)
+                  let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
+                  (* let _ = Cprinter.string_of_list_failesc_context in *)
+                    let pr2 = Cprinter.summary_list_failesc_context in
+                    let pr3 = Cprinter.string_of_struc_formula in
+                    Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
+				  let _ = if !print_proof then Prooftracer.start_compound_object () in
+
+                  let scall_pre_cond_pushed = if !print_proof then
+                        begin
+                            Tpdispatcher.push_suppress_imply_output_state ();
+                            Tpdispatcher.unsuppress_imply_output ();
+            				Prooftracer.push_pre e0;
+                  (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
+                        end else false in
+                  
+                  let res = if (CF.isFailListFailescCtx ctx) then
+				        let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
+                        ctx 
+                      else check_pre_post proc.proc_static_specs_with_pre ctx scall_pre_cond_pushed
+                  in
+				  let _ = if !print_proof then Prooftracer.add_pre e0 in
+                  let _ = if !print_proof && scall_pre_cond_pushed then 
+                        begin
+                            Prooftracer.pop_div ();
+                            Tpdispatcher.restore_suppress_imply_output_state ();
+                        (* print_endline "OK.\n" *)
+                        end in 
+                  res
+                else
+                (*=========================*)
+                (*=== NORMAL METHOD CALL ==*)
+                (*=========================*)
                 let _ = proving_loc#set pos in
 	            let proc = look_up_proc_def pos prog.prog_proc_decls mn in
 	            let farg_types, farg_names = List.split proc.proc_args in
@@ -549,20 +678,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
-
-                  (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
-			      
+                  let _ = print_string (("\n[SCall] res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in
                   if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs in	        
-                
+                  rs 
+                in
                 (* Call check_pre_post with debug information *)
                 let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
                   let pr2 = Cprinter.summary_list_failesc_context in
                   let pr3 = Cprinter.string_of_struc_formula in
                   Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx should_output_html) org_spec sctx in
-								let _ = if !print_proof then Prooftracer.start_compound_object () in
+				let _ = if !print_proof then Prooftracer.start_compound_object () in
                 let scall_pre_cond_pushed = if !print_proof then
                   begin
                     Tpdispatcher.push_suppress_imply_output_state ();
@@ -570,18 +697,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             				Prooftracer.push_pre e0;
                     (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
                   end else false in
-
+                
                 let res = if (CF.isFailListFailescCtx ctx) then
 				  let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
                   ctx 
-                else check_pre_post proc.proc_static_specs_with_pre ctx scall_pre_cond_pushed in
-								let _ = if !print_proof then Prooftracer.add_pre e0 in
+                else check_pre_post proc.proc_static_specs_with_pre ctx scall_pre_cond_pushed
+                in
+				let _ = if !print_proof then Prooftracer.add_pre e0 in
                 let _ = if !print_proof && scall_pre_cond_pushed then 
-                  begin
-                    Prooftracer.pop_div ();
-                    Tpdispatcher.restore_suppress_imply_output_state ();
-                    (* print_endline "OK.\n" *)
-                  end in 
+                      begin
+                          Prooftracer.pop_div ();
+                          Tpdispatcher.restore_suppress_imply_output_state ();
+                      (* print_endline "OK.\n" *)
+                      end in 
                 res
               end
         | Seq ({exp_seq_type = te2;

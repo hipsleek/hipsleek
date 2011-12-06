@@ -961,9 +961,17 @@ let find_free_vars (e:exp) bound : IS.t =
   IS.union rs ws
 
 
-let find_free_read_write_of_proc proc : (IS.t * IS.t) = 
+let find_free_read_write_of_proc proc prog: (IS.t * IS.t) = 
+  (*find proc idents*)
+  let proc_idents = 
+    let fun0 (proc: proc_decl) : ident = proc.proc_name in
+    List.map fun0 prog.prog_proc_decls
+  in
   let pv v = v.param_name in
-  let pargs = to_IS (List.map pv proc.proc_args) in
+  let args = (List.map pv proc.proc_args) in
+  (*alow passing procedure name as an argument
+    by adding proc idents into the list of arguments*)
+  let pargs = to_IS (args@proc_idents) in
   let (rs,ws) = 
     match proc.proc_body with
     | None -> (IS.empty, IS.empty)
@@ -1038,7 +1046,7 @@ let ngscc cg = IGC.scc cg
 let create_progfreeht_of_prog prog = 
   let ht = H.create 10 in
   let fun0 proc = 
-    H.add ht proc.proc_name (find_free_read_write_of_proc proc)
+    H.add ht proc.proc_name (find_free_read_write_of_proc proc prog)
   in 
   List.iter fun0 prog.prog_proc_decls;
   ht
@@ -1109,7 +1117,7 @@ let is_
 
 let merge1 ht mss = 
 *)
-
+(*hash: ident -> typ*)
 let ht_of_gvdef gvdefs =
   let h = H.create 10 in
   let fun0 gv = 
@@ -1123,24 +1131,25 @@ let ht_of_gvdef gvdefs =
 let param_of_v ht md lc nm = 
   let t = H.find ht nm in
   match t with 
-  | Bool | Float | Int | Void | List _  ->
-      { param_type = t;
-        param_name = nm;
-        param_mod = md;
-        param_loc = lc;
-      }
-  | _ ->
-      { param_type = t;
-        param_name = nm;
-        param_mod = RefMod;
-        param_loc = lc;
-      }
+    | Bool | Float | Int | Void | List _  ->
+        { param_type = t;
+          param_name = nm;
+          param_mod = md;
+          param_loc = lc;
+        }
+    | _ ->
+        { param_type = t;
+          param_name = nm;
+          param_mod = RefMod;
+          param_loc = lc;
+        }
 
 let add_free_var_to_proc gvdefs ht proc = 
   let ght = ht_of_gvdef gvdefs in
   let (rs,ws) = H.find ht proc.proc_name in
-  (*let _ = print_endline ("proc rs:"^ string_of_IS rs) in
-    let _ = print_endline ("proc ws:"^ string_of_IS ws) in*)
+  (* let _ = print_endline ("proc:"^ proc.proc_name) in *)
+  (* let _ = print_endline ("proc rs:"^ string_of_IS rs) in *)
+  (* let _ = print_endline ("proc ws:"^ string_of_IS ws) in *)
   let fun0 md is = 
     List.map (param_of_v ght md proc.proc_loc) (from_IS is)
   in
@@ -1208,18 +1217,19 @@ let add_globalv_to_mth_prog prog =
   let cg = callgraph_of_prog prog in
   (* let _ = print_string "1\n" in *)
   let ht = create_progfreeht_of_prog prog in
-  (* let _ = print_string "2\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after create_progfreeht_of_prog\n" in *)
   let scclist = List.rev (ngscc_list cg) in
   (* let _ = print_string "2a\n" in *)
   let sccfv = merge1 ht scclist in
-  (* let _ = print_string "3\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after merge1\n" in *)
   let mscc = push_freev1 cg sccfv in
+  (* let _ = print_endline "add_globalv_to_mth_prog: after push_freev1\n" in *)
   let _ = update_ht0 ht mscc in
-  (* let _ = print_string "4\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after update_ht0\n" in *)
   let newsig_procs = 
     List.map (add_free_var_to_proc prog.prog_global_var_decls ht) 
       prog.prog_proc_decls in
-  (* let _ = print_string "5\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after add_free_var_to_proc\n" in *)
   let new_procs = 
     List.map (map_body_of_proc (addin_callargs_of_exp ht))
       newsig_procs in
@@ -1244,9 +1254,9 @@ let pre_process_of_iprog iprims prog =
   let prog = float_var_decl_prog prog in
   (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
   let prog = rename_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] 2\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] after rename_prog\n" in *)
   let prog = add_globalv_to_mth_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] 3\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] after pre_process_of_iprog\n" in *)
   prog
 
 let pre_process_of_iprog iprims prog = 

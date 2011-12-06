@@ -1022,6 +1022,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
             (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
+      (* let _ = print_endline ("trans_prog: allnames = " ^ (string_of_ident_list all_names)) in *)
       let dups = Gen.BList.find_dups_eq (=) all_names in
       (* let _ = I.find_empty_static_specs prog in *)
       if not (Gen.is_empty dups) then
@@ -2632,7 +2633,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_nrecv_arguments = args;
             I.exp_call_nrecv_path_id = pi;
             I.exp_call_nrecv_pos = pos } ->
-		    (* let _ = print_string "trans_exp :: case CallNRecv\n" in *)
+            (* let _ = print_endline ("trans-exp: CallNRecv: mn = " ^ mn) in *)
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
@@ -2648,6 +2649,37 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_recv_arguments = args;
                 I.exp_call_recv_path_id = pi;
                 I.exp_call_recv_pos = pos; } in helper call_recv)
+            else if (mn=Globals.fork_name) then
+              (*fork is a generic functions. Its arguments can vary*)
+              (*fork has at least tid and a method*)
+              if (List.length args <2) then
+                Err.report_error { Err.error_loc = pos; Err.error_text = "fork has less then 2 arguments"; }
+              else
+              let fun0 arg = 
+                let (e,ct) = helper arg in
+                ct
+              in
+              let arg_types = List.map fun0 args in
+              if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts arg_types then
+                Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
+              else
+                let ret_ct  = Globals.Void in
+                let positions = List.map I.get_exp_pos args in
+                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+                let call_e = C.SCall {
+                    C.exp_scall_type = ret_ct;
+                    C.exp_scall_method_name = mingled_mn;
+                    C.exp_scall_arguments = arg_vars;
+				    C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                    C.exp_scall_pos = pos;
+                    C.exp_scall_path_id = pi; } in
+                let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                ((C.Block {
+                    C.exp_block_type = ret_ct;
+                    C.exp_block_body = seq_1;
+                    C.exp_block_local_vars = local_vars;
+                    C.exp_block_pos = pos; }),ret_ct)
+              (* Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");} *)
             else (try 
               let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
               if ( != ) (List.length args) (List.length pdef.I.proc_args) then
@@ -3042,7 +3074,22 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       ((C.IConst {
                           C.exp_iconst_val = ei.E.enum_value;
                           C.exp_iconst_pos = pos; }), ct)
-            with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
+            with | Not_found -> 
+                  let proc_idents = 
+                    let fun0 (proc: I.proc_decl) : ident = proc.I.proc_name in
+                    List.map fun0 prog.I.prog_proc_decls
+                  in
+                  if (List.mem v proc_idents) then
+                    (*procedure as an argument*)
+                    (* let _ = print_endline ("trans_exp: before trans_typ") in *)
+                    let ct = trans_type prog Globals.Void pos in
+                    (* let _ = print_endline ("trans_exp: after trans_typ") in *)
+                    ((C.Var {
+                        C.exp_var_type = ct;
+                        C.exp_var_name = v;
+                        C.exp_var_pos = pos; }), ct)
+                  else
+                    Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
       | I.VarDecl {
             I.exp_var_decl_type = t;
             I.exp_var_decl_decls = decls;

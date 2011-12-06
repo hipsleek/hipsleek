@@ -15,6 +15,11 @@ open Exc.GTable
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+let ident_of_spec_var (v:spec_var):ident = 
+  let _,id,_ = match v with
+    | SpecVar v1 -> v1
+  in id
+
 let is_hole_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n.[0] = '#'
 
