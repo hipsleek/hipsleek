@@ -75,10 +75,12 @@ struct
         res
     with 
       | Timeout ->  
-            Printf.eprintf " maybe_raise_and_catch_timeout : UNEXPECTED Timeout after %s secs" (string_of_float tsec);
+            Printf.eprintf " maybe_raise_and_catch_timeout : UNEXPECTED Timeout after %s secs \n" (string_of_float tsec);
+          flush stderr;
           (with_timeout ())
       | exc -> begin
-          Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s" (Printexc.to_string exc);
+          Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s \n" (Printexc.to_string exc);
+          flush stderr;
           raise exc
           (* print_endline "Non-timeout Exception from maybe_raise_and_catch" ;  *)
           (* with_timeout () *)

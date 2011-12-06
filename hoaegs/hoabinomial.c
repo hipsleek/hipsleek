@@ -36,10 +36,9 @@ axiom n >= 0 |- binom(n,n,1).
 axiom 0 < k <= n & binom(n,k-1,c1) & binom(n,k,c) |- c1*(n-k+1) = c*k.
 
 //checkentail n >= 0 & binom(n,2,c) |- 2 * c = n * (n - 1).
-checkentail n = 0 & binom(n,2,c) |- 2 * c = n * (n - 1).
-checkentail n > 0 & forall(n1,c1 : n1 < 0 | n1 >= n | !(binom(n1,2,c1)) | 2*c1 = n1 * (n1 - 1)) & binom(n,2,c) |- 2 * c = n * (n - 1).
+//checkentail n = 0 & binom(n,2,c) |- 2 * c = n * (n - 1).
+//checkentail n > 0 & forall(n1,c1 : n1 < 0 | n1 >= n | !(binom(n1,2,c1)) | 2*c1 = n1 * (n1 - 1)) & binom(n,2,c) |- 2 * c = n * (n - 1).
 
-/*
 int compute_binom(int n, int k)
 	requires 0 <= k <= n
 	ensures binom(n,k,res);
@@ -66,4 +65,3 @@ int compute_binom(int n, int k)
 int idiv(int x, int y)
 	requires y != 0
 	ensures res * y = x;
-*/

@@ -43,13 +43,13 @@ let common_arguments = [
 	"Print all the verification conditions, the input to external prover and its output.");
 	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
 	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
-	("--ahwytdi", Arg.Set Smtsolver.try_induction,
+	("--ahwytdi", Arg.Set Z3.try_induction,
 	"Try induction in case of failure implication."); (* An Hoa *)
-    ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
+    ("--smtimply", Arg.Set Z3.outconfig.Z3.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-    ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
+    ("--smtout", Arg.Set Z3.outconfig.Z3.print_original_solver_output,
     "Print the original output given by the SMT solver."); (* An Hoa *)
-    ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
+    ("--smtinp", Arg.Set Z3.outconfig.Z3.print_input,
     "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
@@ -83,9 +83,9 @@ let common_arguments = [
     "Show gist when implication fails");
 	("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
 	"Hull precondition invariant at call sites");
-	("--sat-timeout", Arg.Set_float Globals.sat_timeout,
+	("--sat-timeout", Arg.Set_float Globals.sat_timeout_limit,
 	"Timeout for sat checking");
-	("--imply-timeout", Arg.Set_float Globals.imply_timeout,
+	("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
     "Timeout for imply checking");
 	("--log-proof", Arg.String Prooftracer.set_proof_file,
     "Log (failed) proof to file");
@@ -97,6 +97,8 @@ let common_arguments = [
 	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
+    ("--log-z3", Arg.Set Z3.log_all_flag,
+	"Log all formulae sent to z3 in file allinput.z3");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
 	"Log all formulae sent to Isabelle in file allinput.thy");
 	("--log-coq", Arg.Set Coq.log_all_flag,
@@ -135,7 +137,7 @@ let common_arguments = [
 	"Stop checking on erroneous procedure");
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
-	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-3.2"; "zm"; "om";
+	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3-2.19"; "z3"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "auto" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,

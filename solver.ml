@@ -2639,7 +2639,7 @@ and sem_imply_add prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) = 
 	      if (sintactic_search c.es_formula p) then (ctx,true)
 	      else if only_syn then (print_string "only syn\n"; (ctx,false))
 	      else
-	        let b = (xpure_imply prog is_folding  c p !Globals.imply_timeout) in
+	        let b = (xpure_imply prog is_folding  c p !Globals.imply_timeout_limit) in
 	        if b then 
               ((Ctx {c with 
                   es_formula =(mkAnd_pure_and_branch 
@@ -4754,14 +4754,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	 		(*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp) in
 	 		  let _ = print_endline ("heap_entail_empty_rhs_heap_x : Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp) in*)
 			(* Temporarily suppress output of implication checking *)
-			let _ = Smtsolver.suppress_all_output () in
+			let _ = Z3.suppress_all_output () in
 			let _ = Tpdispatcher.push_suppress_imply_output_state () in
 	 		let _ = Tpdispatcher.suppress_imply_output () in
 	 		let inst = pure_match evarstoi lhs_pp rhs_pp in (* Do matching! *)
 	 		let lhs_pp = CP.mkAnd lhs_pp inst no_pos in 
 	 		let lhs_p = (MCP.OnePF lhs_pp) in
 			(* Unsuppress the printing *)
-	 		let _ = Smtsolver.unsuppress_all_output ()  in
+	 		let _ = Z3.unsuppress_all_output ()  in
 	 		let _ = Tpdispatcher.restore_suppress_imply_output_state () in
  	 		(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
 	 		lhs_p

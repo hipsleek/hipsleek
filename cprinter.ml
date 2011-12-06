@@ -2274,5 +2274,5 @@ Cast.print_mater_prop := string_of_mater_property;;
 Cast.print_view_decl := string_of_view_decl;
 Cast.print_coercion := string_of_coerc_long;;
 Omega.print_pure := string_of_pure_formula;;
-Smtsolver.print_pure := string_of_pure_formula;;
+Z3.print_pure := string_of_pure_formula;;
 Coq.print_p_f_f := string_of_pure_formula ;;

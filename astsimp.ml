@@ -1348,7 +1348,6 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   (* Need to collect the type information before translating the formula *)
   let _ = gather_type_info_pure prog rdef.I.rel_formula stab in
   let crf = trans_pure_formula rdef.I.rel_formula stab in
-  (* let _ = Smtsolver.add_rel_def (Smtsolver.RelDefn (rdef.I.rel_name, rel_sv_vars, crf)) in *)
 	let ivs = List.map (fun x -> trans_pure_exp x stab) rdef.I.rel_induction_values in
   {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
@@ -1372,7 +1371,6 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   (* Translate the hypothesis and conclusion *)
   let chyp = trans_pure_formula adef.I.axiom_hypothesis stab in
   let ccln = trans_pure_formula adef.I.axiom_conclusion stab in
-  (* let _ = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
   {	C.axiom_hypothesis = chyp;
   	C.axiom_conclusion = ccln; 
 		C.axiom_derive_dir = adef.I.axiom_derive_dir;

@@ -44,8 +44,8 @@ void insertion_sort(ref int[] a, int n)
 		
 		//assert a[n] = a'[n];
 		//assert permutation(a,a',0,n-1); // why this fail?
-		//assert permutation(a,a',0,n);
-		//assume permutation(a,a',0,n);
+		assert permutation(a,a',0,n);
+		assume permutation(a,a',0,n);
 		
 		insertelm(a,n);
 	}

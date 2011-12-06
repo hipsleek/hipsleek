@@ -240,7 +240,7 @@ let process_rel_def rdef =
 			iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
 			let crdef = AS.trans_rel iprog rdef in !cprog.C.prog_rel_decls <- (crdef :: !cprog.C.prog_rel_decls);
 			(* Forward the relation to the smt solver. *)
-			Smtsolver.add_relation crdef.C.rel_name crdef.C.rel_vars crdef.C.rel_formula crdef.C.rel_induction_values;
+			Z3.add_relation crdef.C.rel_name crdef.C.rel_vars crdef.C.rel_formula crdef.C.rel_induction_values;
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
@@ -254,7 +254,7 @@ let process_axiom_def adef = begin
 	let cadef = AS.trans_axiom iprog adef in
 		!cprog.C.prog_axiom_decls <- (cadef :: !cprog.C.prog_axiom_decls);
 	(* Forward the axiom to the smt solver. *)
-	Smtsolver.add_axiom cadef.C.axiom_hypothesis cadef.C.axiom_derive_dir cadef.C.axiom_conclusion;
+	Z3.add_axiom cadef.C.axiom_hypothesis cadef.C.axiom_derive_dir cadef.C.axiom_conclusion;
 end
 	
 let process_data_def ddef =
