@@ -3797,7 +3797,7 @@ and or_list_context_x c1 c2 = match c1,c2 with
         in
         FailCtx (Or_Reason (t1,t))
      | SuccCtx t1 ,FailCtx t2 ->
-        let t = if !Globals.do_infer then convert_suc_to_fail t1 
+        let t = if !Globals.do_infer then convert_suc_to_fail t1  (* WN : why? *)
           else mk_not_a_failure 
         in
         FailCtx (Or_Reason (t,t2))
