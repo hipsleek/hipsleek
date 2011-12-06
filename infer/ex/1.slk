@@ -24,9 +24,9 @@ WHY isn't below added to infer_heap?
 PRECOND:  x::ll<n>[Orig][LHSCase] & true & {FLOW,(1,20)=__flow}
 */
 
-infer [x] x=null & n=0 |- x::node<_,_>.
+//infer [x] x=null & n=0 |- x::node<a,b>.
 /*
-Result below is UNSOUND:
+Result below is not correct. Should infer x!=null instead.
 
 PRECOND:  x::node<Anon_29,Anon_30>[Orig] & true & {FLOW,(1,20)=__flow}
 Infer  (1): Valid.
@@ -40,6 +40,23 @@ Got below but expecting n!=0..
 
 Infer  (1): Fail. (must) cause:15.1 x=null |-  x!=null (must-bug).
 */
+//infer [x] x=null   |- x::node<a,b>.
+/*
+infer_heap_main inp1 : x::node<a,b>[Orig]
+infer_heap_main inp2 :[x]
+infer_heap_main inp3 :[x]
+infer_heap_main@1 EXIT out :([x,a,b], x::node<a,b>[Orig])
+*/
+
+//infer [x] x=null   |- x::node<a,b>*y::ll<n>.
+/*
+infer_heap_main inp1 : x::node<a,b>[Orig] * y::ll<n>[Orig][LHSCase]
+infer_heap_main inp2 :[x]
+infer_heap_main inp3 :[x]
+infer_heap_main@2 EXIT out :([x], x::node<a,b>[Orig] * true)
+*/
+
+infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
 
 
 //infer [n] x::ll<n> |- x::node<_,p> .

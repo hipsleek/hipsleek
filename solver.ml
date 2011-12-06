@@ -13,6 +13,7 @@ open Prooftracer
 open Gen.Basic
 open Perm
 
+module Inf = Infer
 module CP = Cpure
 module PR = Cprinter
 module MCP = Mcpure
@@ -4891,7 +4892,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
                                       lvars) tmp estate.es_infer_vars*)
                               in
                               let (infer_vars, infer_heap) = if h2 = HTrue then (estate.es_infer_vars, HTrue) else
-                                  CF.infer_heap_main h2 new_vars estate.es_infer_vars
+                                  Inf.infer_heap_main h2 new_vars estate.es_infer_vars
                               in
                               let infer_pure = Omega.simplify (filter_var (Omega.simplify pure_part) infer_vars) in
                               (*print_endline ("VARS: " ^ Cprinter.poly_string_of_pr Cprinter.pr_list_of_spec_var new_vars);*)
@@ -6666,7 +6667,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | Context.M_rd_lemma e ->  "Right distributive lemma"
     | Context.M_lemma (e,s) ->  ("lemma(" ^ (match s with | None -> "any lemma" | Some c-> (Cprinter.string_of_coercion_type c.coercion_type)^" "^c.coercion_name) ^ ")")
     | Context.M_Nothing_to_do s ->  ("Nothing "^s)
-    | Context.M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note")
+    | Context.M_unmatched_rhs_data_node h ->  ("Unmatched RHS data node")
     | Context.Seq_action l -> "seq"
     | Context.Cond_action l -> "Cond"
     | Context.Search_action l -> "search"
@@ -6779,6 +6780,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
           CF.mk_failure_none ("Nothing_to_do?"^s))), NoAlias)
     | Context.M_unmatched_rhs_data_node rhs ->
+          let r = Inf.infer_heap_nodes estate rhs in 
           (* TODO : obtain xpure0 of RHS
              (i) check if it is unsat, or
              (ii) check if negated term implied by LHS
@@ -8694,7 +8696,7 @@ let rec get_precondition ft vars pos =
   let simplify = fun f vars -> Omega.simplify (filter_var (Omega.simplify f) vars) in
   match ft with
   | Basic_Reason (fc, fe) ->
-    let h = CF.conv_infer_heap fc.fc_current_lhs.es_infer_heap in
+    let h = Inf.conv_infer_heap fc.fc_current_lhs.es_infer_heap in
     let new_vars = Cformula.h_fv h in
     let vars = Gen.Basic.remove_dups (vars @ new_vars) in
     (* WN : why is es_infer_pure needed below? *)

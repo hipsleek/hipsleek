@@ -11,6 +11,7 @@ open Perm
 
 module H = Hashtbl
 module I = Iast
+module Inf = Infer
 module C = Cast
 module CF = Cformula
 module CP = Cpure
@@ -524,7 +525,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
 let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
   let _ = (print_entail_result valid residue num_id) in
   if valid then
-    let pr = CF.extract_pre_list_context residue in
+    let pr = Inf.extract_pre_list_context residue in
     match pr with
       | None -> () (* No precondition inferred *)
       | Some f -> print_endline ("Pre: "^(Cprinter.string_of_formula f))

@@ -6450,71 +6450,7 @@ let rec push_case_f pf sf =
   in
   List.map helper sf
   
-let rec infer_heap_aux heap vars = match heap with
-  | ViewNode ({ h_formula_view_node = p;
-  h_formula_view_arguments = args})
-  | DataNode ({h_formula_data_node = p;
-  h_formula_data_arguments = args}) -> List.mem p vars
-  | Star ({h_formula_star_h1 = h1;
-    h_formula_star_h2 = h2;
-    h_formula_star_pos = pos})
-  | Conj ({h_formula_conj_h1 = h1;
-    h_formula_conj_h2 = h2;
-    h_formula_conj_pos = pos}) ->
-    infer_heap_aux h1 vars || infer_heap_aux h2 vars
-  | _ -> false
 
-let infer_heap_main iheap ivars old_vars = 
-  let rec infer_heap heap vars = 
-    match heap with
-    | ViewNode ({ h_formula_view_node = p;
-    h_formula_view_arguments = args})
-    | DataNode ({h_formula_data_node = p;
-    h_formula_data_arguments = args}) -> 
-      if List.mem p vars then 
-        (Gen.Basic.remove_dups (List.filter (fun x -> CP.name_of_spec_var x!= CP.name_of_spec_var p) 
-          vars @ args), heap) 
-      else (old_vars, HTrue)
-    | Star ({h_formula_star_h1 = h1;
-      h_formula_star_h2 = h2;
-      h_formula_star_pos = pos}) ->
-      let res1 = infer_heap_aux h1 vars in
-      let res2 = infer_heap_aux h2 vars in
-      if res1 then 
-        let (vars1, heap1) = infer_heap h1 vars in
-        let (vars2, heap2) = infer_heap h2 vars1 in
-        (vars2, Star ({h_formula_star_h1 = heap1;
-                       h_formula_star_h2 = heap2;
-                       h_formula_star_pos = pos}))
-      else
-      if res2 then 
-        let (vars2, heap2) = infer_heap h2 vars in
-        let (vars1, heap1) = infer_heap h1 vars2 in
-        (vars1, Star ({h_formula_star_h1 = heap1;
-                       h_formula_star_h2 = heap2;
-                       h_formula_star_pos = pos}))
-      else (old_vars, HTrue)
-    | Conj ({h_formula_conj_h1 = h1;
-      h_formula_conj_h2 = h2;
-      h_formula_conj_pos = pos}) ->
-      let res1 = infer_heap_aux h1 vars in
-      let res2 = infer_heap_aux h2 vars in
-      if res1 then 
-        let (vars1, heap1) = infer_heap h1 vars in
-        let (vars2, heap2) = infer_heap h2 vars1 in
-        (vars2, Conj ({h_formula_conj_h1 = heap1;
-                       h_formula_conj_h2 = heap2;
-                       h_formula_conj_pos = pos}))
-      else
-      if res2 then 
-        let (vars2, heap2) = infer_heap h2 vars in
-        let (vars1, heap1) = infer_heap h1 vars2 in
-        (vars1, Conj ({h_formula_conj_h1 = heap1;
-                       h_formula_conj_h2 = heap2;
-                       h_formula_conj_pos = pos}))
-      else (old_vars, HTrue)
-    | _ -> (old_vars, HTrue)
-  in infer_heap iheap ivars
 
 (*let rec normalize_fml fml = match fml with*)
 (*  | Exists _ -> fml                       *)
@@ -6543,23 +6479,7 @@ let rec init_caller context =
   | OCtx (ctx1, ctx2) -> OCtx (init_caller ctx1, init_caller ctx2)
   | Ctx es -> Ctx ({es with es_infer_label = elim_quan es.es_formula})
 
-let conv_infer_heap hs =
-  let rec helper hs h = match hs with
-    | [] -> h
-    | x::xs -> 
-          let acc = 
-	        Star({h_formula_star_h1 = x;
-	        h_formula_star_h2 = h;
-	        h_formula_star_pos = no_pos})
-          in helper xs acc in
-  match hs with
-    | [] -> HTrue 
-    | x::xs -> helper xs x
 
-let extract_pre_list_context x = 
-  (* TODO : this has to be implemented by extracting from es_infer_* *)
-  (* print_endline (!print_list_context x); *)
-  None
 
 
 
