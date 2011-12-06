@@ -774,16 +774,19 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
           match_res_holes = [];
           match_res_type = Root;
           match_res_rhs_node = rhs_node;
-          match_res_rhs_rest = rhs_rest;}) in (*(-1, Search_action [r])*)
-      let r1 = (2, M_fold {
-          match_res_lhs_node = HTrue; 
-          match_res_lhs_rest = lhs_h; 
-          match_res_holes = [];
-          match_res_type = Root;
-          match_res_rhs_node = rhs_node;
-          match_res_rhs_rest = rhs_rest;
-      }) in
-      (-1, (Cond_action [r;r1]))
+          match_res_rhs_rest = rhs_rest;}) in 
+      (* WN : why do we need to have a fold following a base-case fold?*)
+      (* changing to no_match found *)
+      (*(-1, Search_action [r])*)
+      (* let r1 = (2, M_fold { *)
+      (*     match_res_lhs_node = HTrue;  *)
+      (*     match_res_lhs_rest = lhs_h;  *)
+      (*     match_res_holes = []; *)
+      (*     match_res_type = Root; *)
+      (*     match_res_rhs_node = rhs_node; *)
+      (*     match_res_rhs_rest = rhs_rest; *)
+      (* }) in *)
+      (-1, (Cond_action [r;r0]))
     else r0
       (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
   | x::[] -> process_one_match prog is_normalizing x 
@@ -864,7 +867,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.no_3 "compute_actions" 
+  Gen.Debug.ho_3 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (* (add_str "LHS pure" pr3)  *)
