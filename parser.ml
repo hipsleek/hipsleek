@@ -893,7 +893,11 @@ checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
 
 infer_cmd:
-  [[ `INFER; `OSQUARE; il=id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> (il, t, b)]];
+  [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    match il with
+      | None -> ([], t, b)
+      | Some idl -> (idl, t, b)
+  ]];
 
 captureresidue_cmd:
   [[ `CAPTURERESIDUE; `DOLLAR; `IDENTIFIER id -> id ]];

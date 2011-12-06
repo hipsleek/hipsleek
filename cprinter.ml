@@ -1011,6 +1011,8 @@ let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
 
 let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_formula) e
 
+let pr_list_pure_formula (e:list_pure_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_pure_formula) e
+
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
 
 let string_of_list_f (f:'a->string) (e:'a list) : string =  
@@ -1173,6 +1175,11 @@ let pr_estate (es : entail_state) =
 	| Some i -> string_of_int i)) es.es_var_label;
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
+  pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
+  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;
+  pr_vwrap "es_infer_heap:  " pr_h_formula es.es_infer_heap;
+  pr_vwrap "es_infer_pure:  " pr_pure_formula es.es_infer_pure;
+  pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs;
   fmt_close ()
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
@@ -1246,7 +1253,10 @@ let rec pr_fail_type (e:fail_type) =
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason (br,fe) -> 
           (string_of_fail_explaining fe);
-          if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") else (pr_fail_estate br)
+          if fe.fe_kind=Failure_Valid then 
+            if !do_infer_spec then (pr_fail_estate br)
+            else fmt_string ("Failure_Valid") 
+          else (pr_fail_estate br)
     | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in

@@ -5632,11 +5632,21 @@ and get_spec_var_stab (v : ident) stab pos =
 	      Err.report_error
               { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
 
-and get_spec_var_stab_infer (v : ident) stab pos ante =
-  let vtyp = fst (CF.get_var_type v ante) in
-  match vtyp with  
-  | UNK -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
-  | t -> let sv = CP.SpecVar (t, v, Unprimed) in (*print_endline (v ^ ":" ^ (Globals.string_of_typ t)); *)sv
+and get_spec_var_stab_infer (v : ident) fvs pos =
+  let get_var_type v fv_list: (typ * bool) = 
+    let res_list = CP.remove_dups_svl (List.filter (fun c -> v = CP.name_of_spec_var c) fv_list) in
+    match res_list with
+	  | [] -> (Void,false)
+	  | [sv] -> (CP.type_of_spec_var sv,true)
+	  | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "could not find a coherent "^v^" type"}
+  in
+  let vtyp, check = get_var_type v fvs in
+  if check = false
+  then Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not found in both sides"; }
+  else
+    match vtyp with
+    | UNK -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
+    | t -> CP.SpecVar (t, v, Unprimed)
 
 and string_of_spec_var_kind (k : spec_var_kind) =
   string_of_typ k

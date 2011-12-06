@@ -80,6 +80,8 @@ and formula =
 
 and list_formula = formula list
 
+and list_pure_formula = CP.formula list
+
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
@@ -2407,8 +2409,13 @@ type entail_state = {
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
   es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
+  es_infer_label: formula;
+(*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
+(*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   es_infer_heap : h_formula; (* output heap inferred *)
-  es_infer_pure : CP.formula (* output pure inferred *)
+  es_infer_pure : CP.formula; (* output pure inferred *)
+  es_infer_invs : CP.formula list;
+  es_infer_pures : CP.formula list
 }
 
 and context = 
@@ -2986,8 +2993,11 @@ let rec empty_es flowt pos =
   es_aux_conseq = CP.mkTrue pos;
   es_must_error = None;
   es_infer_vars = [];
+  es_infer_label = x;
   es_infer_heap = HTrue;
-  es_infer_pure = (CP.mkTrue no_pos)
+  es_infer_pure = (CP.mkTrue no_pos);
+  es_infer_invs = [];
+  es_infer_pures = [];
 }
 
 let mk_not_a_failure =
@@ -3003,6 +3013,28 @@ let mk_not_a_failure =
       fe_name = "" ;fe_locs=[]
   }
 )
+
+let convert_suc_to_fail ctx = match ctx with
+  | [] -> report_error no_pos "Success context list is empty"
+  | [c] -> begin 
+    match c with
+    | Ctx estate -> 
+      Basic_Reason ({
+        fc_prior_steps = [];
+        fc_message = "Success";
+        fc_current_lhs =  estate;
+        fc_orig_conseq =  [mkETrue  (mkTrueFlow ()) no_pos];
+        fc_failure_pts = [];
+        fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
+      }, 
+      {
+        fe_kind = Failure_Valid;
+        fe_name = "" ;fe_locs=[]
+      })
+    | _ -> report_error no_pos "Success context is disjs"
+    end
+  | _ -> report_error no_pos "Success context list has length > 2"
+
 
 let invert ls = 
   let foo es =
@@ -3240,10 +3272,14 @@ and fold_context_left c_l =
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 ->
-         let t = mk_not_a_failure in
+        let t = if !do_infer_spec then convert_suc_to_fail t2 
+          else mk_not_a_failure 
+        in
         FailCtx (Or_Reason (t1,t))
      | SuccCtx t1 ,FailCtx t2 ->
-         let t = mk_not_a_failure in
+        let t = if !do_infer_spec then convert_suc_to_fail t1 
+          else mk_not_a_failure 
+        in
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
@@ -5447,3 +5483,101 @@ let mark_derv_self name f =
        | EVariance _ -> failwith "marh_derv_self: not expecting assume or variance\n" in
     List.map h_ext f in
   (h_struc f)
+
+let rec infer_heap_aux heap vars = match heap with
+  | ViewNode ({ h_formula_view_node = p;
+  h_formula_view_arguments = args})
+  | DataNode ({h_formula_data_node = p;
+  h_formula_data_arguments = args}) -> List.mem p vars
+  | Star ({h_formula_star_h1 = h1;
+    h_formula_star_h2 = h2;
+    h_formula_star_pos = pos})
+  | Conj ({h_formula_conj_h1 = h1;
+    h_formula_conj_h2 = h2;
+    h_formula_conj_pos = pos}) ->
+    infer_heap_aux h1 vars || infer_heap_aux h2 vars
+  | _ -> false
+
+let infer_heap_main iheap ivars old_vars = 
+  let rec infer_heap heap vars = 
+    match heap with
+    | ViewNode ({ h_formula_view_node = p;
+    h_formula_view_arguments = args})
+    | DataNode ({h_formula_data_node = p;
+    h_formula_data_arguments = args}) -> 
+      if List.mem p vars then 
+        (Gen.Basic.remove_dups (List.filter (fun x -> CP.name_of_spec_var x!= CP.name_of_spec_var p) 
+          vars @ args), heap) 
+      else (old_vars, HTrue)
+    | Star ({h_formula_star_h1 = h1;
+      h_formula_star_h2 = h2;
+      h_formula_star_pos = pos}) ->
+      let res1 = infer_heap_aux h1 vars in
+      let res2 = infer_heap_aux h2 vars in
+      if res1 then 
+        let (vars1, heap1) = infer_heap h1 vars in
+        let (vars2, heap2) = infer_heap h2 vars1 in
+        (vars2, Star ({h_formula_star_h1 = heap1;
+                       h_formula_star_h2 = heap2;
+                       h_formula_star_pos = pos}))
+      else
+      if res2 then 
+        let (vars2, heap2) = infer_heap h2 vars in
+        let (vars1, heap1) = infer_heap h1 vars2 in
+        (vars1, Star ({h_formula_star_h1 = heap1;
+                       h_formula_star_h2 = heap2;
+                       h_formula_star_pos = pos}))
+      else (old_vars, HTrue)
+    | Conj ({h_formula_conj_h1 = h1;
+      h_formula_conj_h2 = h2;
+      h_formula_conj_pos = pos}) ->
+      let res1 = infer_heap_aux h1 vars in
+      let res2 = infer_heap_aux h2 vars in
+      if res1 then 
+        let (vars1, heap1) = infer_heap h1 vars in
+        let (vars2, heap2) = infer_heap h2 vars1 in
+        (vars2, Conj ({h_formula_conj_h1 = heap1;
+                       h_formula_conj_h2 = heap2;
+                       h_formula_conj_pos = pos}))
+      else
+      if res2 then 
+        let (vars2, heap2) = infer_heap h2 vars in
+        let (vars1, heap1) = infer_heap h1 vars2 in
+        (vars1, Conj ({h_formula_conj_h1 = heap1;
+                       h_formula_conj_h2 = heap2;
+                       h_formula_conj_pos = pos}))
+      else (old_vars, HTrue)
+    | _ -> (old_vars, HTrue)
+  in infer_heap iheap ivars
+
+(*let rec normalize_fml fml = match fml with*)
+(*  | Exists _ -> fml                       *)
+(*  | Base formula_base -> fml              *)
+(*  | Or formula_or -> (* Formula in DNF *) *)
+
+let rec init_caller context = 
+  let elim_quan ante = match ante with
+    | Exists ({formula_exists_qvars = qvars;
+    formula_exists_heap = qh;
+    formula_exists_pure = qp;
+    formula_exists_type = qt;
+    formula_exists_flow = qfl;
+    formula_exists_branches = qb;
+    formula_exists_pos = pos}) ->
+      (* eliminating existential quantifiers from the LHS *)
+      (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
+      let ws = CP.fresh_spec_vars qvars in
+      let st = List.combine qvars ws in
+      let baref = mkBase qh qp qt qfl qb pos in
+      let new_baref = subst st baref
+      in new_baref
+    | _ -> ante
+  in
+  match context with
+  | OCtx (ctx1, ctx2) -> OCtx (init_caller ctx1, init_caller ctx2)
+  | Ctx es -> Ctx ({es with es_infer_label = elim_quan es.es_formula})
+
+
+
+
+

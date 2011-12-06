@@ -1,0 +1,46 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer[x] true |- x::node<v,q>  .
+infer[x] true |- x::ll<n>  .
+infer [p] x::node<1,p> |- x::ll<n> .
+infer [n] x::ll<n> |- x::node<_,p> .
+infer [n] x::ll<n> |- x::node<_,null>.
+
+infer [n] x::ll<n> & x=null  |- x::node<_,null>.  //==> n!=0
+infer [n] x::ll<n> & n=0 |- x::node<_,null>.  //==> n!=0
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.  //==> n=1
+infer [n] x::ll<n> & n<=1 |- x::node<_,null>.
+infer [n] x::ll<n> & n<=0 |- x::node<_,null>. // --> n>0
+
+infer [p] x::node<1,x2>*x2::node<3,p> |- x::ll<n> .
+infer [n] x::ll<n> |- x::node<_,y>*y::node<_,p> .
+infer [p] x::node<1,x2>*x2::node<3,p> |- x::ll<n> & n=4 .
+infer [p] x::node<1,p> |- x::node<a,x2>*x2::node<b,q> & q=null.
+infer [p] x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
+
+infer [p] x::node<1,p> |- x::node<1,x2>*x2::node<3,q> & q=null.
+infer [p] x::node<1,p> |- x::node<1,x2>*x2::ll<m> & m>3.
+infer [p] x::node<1,r>*r::node<a,p> |- x::node<1,x2>*x2::ll<m> & m>3.
+infer [n] x::ll<n> |- x::ll<m> & m>3.
+infer [n] x::ll<n> |- x::node<_,null>.
+
+infer [m] q::ll<m> |- q=null.
+infer [q] q=null |- q=null.
+infer [q] q::node<_,r>*r::ll<m2> |- q=null.
+infer [m] x::node<_,a>*a::ll<m> |- x::node<_,null> .
+infer [x] x::node<_,null> |- x=null.
+
+infer [x] x=null |- x!=null .
+infer [x] x=null |- x::node<_,null> .
+infer [x] x!=null |- x=null.
+infer [x] true |- x::node<_,null> .
+infer [] true |- x::node<_,null> .
+
+
