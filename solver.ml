@@ -6452,12 +6452,12 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
   let (mix_lf,bl,lsvl,mem_lf) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in
 (*  let pr = Cprinter.string_of_spec_var_list in *)
 (*  let _ = print_flush ("LHS - xpure (svl) :"^(pr lsvl)) in *)
-(*  let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in*)
+(*  let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in *)
 (*  let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in *)
 (*  let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
 (*  let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in *)
-(*  let _ = print_flush ("RHS - xpure (svl) :"^(pr rsvl)) in*)
-(*  let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_rf.mem_formula_mset)) in*)
+(* let _ = print_flush ("RHS - xpure (svl) :"^(pr rsvl)) in *)
+(*  let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_rf.mem_formula_mset)) in *)
 
   let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
  (*get list of pointers which equal NULL*)
@@ -6476,8 +6476,8 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
    (*change to must flow*)
     let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
             !error_flow_int estate.CF.es_formula} in
-    (Some (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                    CF.mk_failure_must s Globals.logical_error)), Failure)
+     (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                                    CF.mk_failure_must s Globals.logical_error), Failure)
   else
     begin
        (*check disj memset*)
@@ -6503,7 +6503,11 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
         let rhs_neq_nulls = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
         let rhs_mix_p = MCP.memoise_add_pure_N (*rhs_b.formula_base_pure*) temp rhs_disj_set_p in
         let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
-        let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
+        let rhs_mix_p_withlsNull_imm = if !allow_imm && (estate.es_imm_pure_stk!=[])
+            then MCP.memoise_add_pure_N rhs_mix_p_withlsNull  (MCP.pure_of_mix (List.hd estate.es_imm_pure_stk))
+            else rhs_mix_p_withlsNull
+        in
+        let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull_imm in
        (*contradiction on RHS?*)
         if not(TP.is_sat_sub_no rhs_p r) then
           (********************************************)
@@ -6512,14 +6516,16 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
          let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
          let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                  !error_flow_int estate.CF.es_formula} in
-         (Some (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                                         mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") logical_error)), UnsatConseq)
+         (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
+                                         mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") logical_error), UnsatConseq)
         else
           (********************************************)
           let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
          (*
            rhs_disj_set != null has been checked above. Separately check for better error classifying.
          *)
+         (*  let _ = print_flush ("LHS p:"^(Cprinter.string_of_pure_formula lhs_p)) in*)
+         (*  let _ = print_flush ("RHS p:"^(Cprinter.string_of_pure_formula rhs_p)) in*)
           if not(simple_imply lhs_p rhs_p) then
            (*err2.slk 9, 10 may-bug*)
             let (fc, (contra_list, must_list, may_list)) = check_maymust_failure lhs_p rhs_p in
@@ -6540,10 +6546,15 @@ and process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_ma
                 | FailCtx ft -> ft
                 | SuccCtx _ -> report_error no_pos "solver.ml:M_unmatched_rhs_data_node"
               )
-            in (Some lc,Failure)
+            in (lc,Failure)
           else
-           (*err2.slk 17, 31*)
-           (None, NoAlias)
+           (*err2.slk 17*)
+            let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
+              ^ " (must-bug)."in
+            let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
+                    !top_flow_int estate.CF.es_formula} in
+             (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                                            CF.mk_failure_may s Globals.logical_error), NoAlias)
     end
 
 
@@ -6855,19 +6866,20 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     end result is LOR of them
   *)
         begin
-             let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
+             let s = "15.5 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
               ^ " (must-bug)."in
             let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                     !error_flow_int estate.CF.es_formula} in
             let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
                                             CF.mk_failure_must s Globals.sl_error) in
-            let (olc, prf) = process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b rhs_h_matched_set pos in
-            let res_lc=
+            let (res_lc, prf) = process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b rhs_h_matched_set pos in
+           (* let res_lc=
               match olc with
                 | Some lc ->
                     (*LOR*) Or_Reason (unmatched_lhs, lc)
                 | None -> unmatched_lhs
-            in (CF.mkFailCtx_in res_lc, prf)
+              in *)
+           (CF.mkFailCtx_in res_lc, prf)
         end
     | Context.Seq_action l ->
           report_warning no_pos "Sequential action - not handled";
@@ -6875,7 +6887,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               , CF.mk_failure_must "sequential action - not handled" Globals.sl_error)), NoAlias)
     | Context.Cond_action l ->
           let rec helper l = match l with
-            | [] ->           
+            | [] ->
                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
                       , CF.mk_failure_must "Cond action - none succeeded" Globals.sl_error)), NoAlias)
             | [(_,act)] -> process_action 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
