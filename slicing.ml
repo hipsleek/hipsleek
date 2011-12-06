@@ -54,8 +54,10 @@ sig
   val merge: t -> t -> t
   val merge_list: t list -> t
   val is_rel: t -> t -> bool
+  val is_rel_by_fv: spec_var list -> t -> t -> bool
   (* fv_of_label returns list of strongly and weakly linking variables *)
-  val fv_of_label: t -> (spec_var list * spec_var list) 
+  val fv_of_label: t -> (spec_var list * spec_var list)
+  val label_of_fv: spec_var list -> t
 end;;
 
 (* Atomic Constraint with Label *)
@@ -100,8 +102,11 @@ module type S_FRAMEWORK_SIG =
 sig
   type constr = CONSTR(Label)(Atom).t
   type slice = SLICE(Label)(Atom).t
+  
   val same_slice: constr -> slice -> bool
   val split: constr list -> slice list
+
+  val split_by_fv: spec_var list -> constr list -> slice list 
 end;;
 
 (* Implementation of Slicing Framework *)
@@ -115,16 +120,16 @@ struct
   type constr = Constr.t
   type slice = Slice.t
 
-  let same_slice (c: constr) (s: slice) : bool =
-    let lc = Constr.get_label c in
-	  let ls = Slice.get_label s in
-	  ALabel.is_rel lc ls
-    
   let merge_slice_by_constr (c: constr) (sl: slice list) : slice =  
     let _, fc = c in
     let _, fsl = List.split sl in
     let n_label = ALabel.merge_list ((Constr.get_label c)::(List.map Slice.get_label sl)) in
     (Some n_label, fc::(List.concat fsl))
+
+  let same_slice (c: constr) (s: slice) : bool =
+    let lc = Constr.get_label c in
+	  let ls = Slice.get_label s in
+	  ALabel.is_rel lc ls
 
   let rec split (cl: constr list) : slice list = 
     match cl with
@@ -132,6 +137,20 @@ struct
     | a::p ->
       let pl = split p in
       let p1, p2 = List.partition (fun s -> same_slice a s) pl in
+      let np1 = merge_slice_by_constr a p1 in 
+      np1::p2
+
+  let same_slice_by_fv (vl: spec_var list) (c: constr) (s: slice) : bool =
+    let lc = Constr.get_label c in
+	  let ls = Slice.get_label s in
+	  ALabel.is_rel_by_fv vl lc ls
+
+  let rec split_by_fv (vl: spec_var list) (cl: constr list) : slice list = 
+    match cl with
+    | [] -> []
+    | a::p ->
+      let pl = split p in
+      let p1, p2 = List.partition (fun s -> same_slice_by_fv vl a s) pl in
       let np1 = merge_slice_by_constr a p1 in 
       np1::p2
 end;;
@@ -153,7 +172,15 @@ struct
   let is_rel (l1: t) (l2: t) : bool =
     Gen.BList.overlap_eq eq_spec_var l1 l2
 
+  (* With automatic slicing mechanism, two label 
+   * are always relevant by fv.
+   * So the function is not need,
+   * it is just a dummy function *)
+  let is_rel_by_fv (vl: spec_var list) (l1: t) (l2: t) : bool = false
+
   let fv_of_label (l: t) : (spec_var list * spec_var list) = (l, [])
+
+  let label_of_fv (v: spec_var list) : t = v 
 end;;
 
 (* Syntatic Label for Annotated Slicing *
@@ -188,8 +215,18 @@ struct
     else 
       (Gen.BList.overlap_eq eq_spec_var sv1 sv2) && 
       (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
-	  
+
+  (* Two label are relevant with respect to vl 
+   * if they share some common variables in vl *)
+  let is_rel_by_fv (vl: spec_var list) (l1: t) (l2: t) : bool =
+    let (sv1, wv1) = l1 in
+    let (sv2, wv2) = l2 in
+    let intersect = Gen.BList.intersect_eq eq_spec_var (sv1@wv1) (sv2@wv2) in
+		Gen.BList.overlap_eq eq_spec_var vl intersect
+
   let fv_of_label (l: t) : (spec_var list * spec_var list) = l
+
+  let label_of_fv (v: spec_var list) : t = (v, []) 
 end;;
 
 module Pure_Constr =
@@ -212,15 +249,6 @@ struct
 
   let atom_of_formula (f: formula) : t = Pure_F f
 end;;
-
-module Pure_AuS         = S_FRAMEWORK (Syn_Label_AuS) (Pure_Constr);;
-module Pure_Constr_AuS  = CONSTR      (Syn_Label_AuS) (Pure_Constr);;
-module Pure_Slice_AuS   = SLICE       (Syn_Label_AuS) (Pure_Constr);;
-
-module Pure_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Pure_Constr);;
-module Pure_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Pure_Constr);;
-module Pure_Slice_AnS   = SLICE       (Syn_Label_AnS) (Pure_Constr);;
-
 
 module Memo_Constr =
 struct
@@ -261,17 +289,14 @@ struct
     l1@l2@l3
 
   let memo_constr_of_memo_pure (mp: memo_pure) : t list =
-    List.concat (List.map memo_constr_of_memo_group mp) 
+    List.concat (List.map memo_constr_of_memo_group mp)
+
+  let formula_of_memo_constr (c: t) : formula =
+    match c with
+    | Memo_B (bf, _) -> BForm (bf, None)
+    | Memo_F f -> f
+    | Memo_E (v1, v2) -> BForm (((form_bform_eq_with_const v1 v2), None), None) 
 end;;
-
-module Memo_AuS         = S_FRAMEWORK (Syn_Label_AuS) (Memo_Constr);;
-module Memo_Constr_AuS  = CONSTR      (Syn_Label_AuS) (Memo_Constr);;
-module Memo_Slice_AuS   = SLICE       (Syn_Label_AuS) (Memo_Constr);;
-
-module Memo_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Memo_Constr);;
-module Memo_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Memo_Constr);;
-module Memo_Slice_AnS   = SLICE       (Syn_Label_AnS) (Memo_Constr);;
-
 
 module Memo_Group = 
 struct
@@ -285,14 +310,6 @@ struct
     (sv, wv)
 end;;
  
-module MG_AuS         = S_FRAMEWORK (Syn_Label_AuS) (Memo_Group);;
-module MG_Constr_AuS  = CONSTR      (Syn_Label_AuS) (Memo_Group);;
-module MG_Slice_AuS   = SLICE       (Syn_Label_AuS) (Memo_Group);;
-
-module MG_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Memo_Group);;
-module MG_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Memo_Group);;
-module MG_Slice_AnS   = SLICE       (Syn_Label_AnS) (Memo_Group);;
-
 module Memo_Formula =
   functor (Label: LABEL_TYPE) -> 
 struct
@@ -384,7 +401,102 @@ struct
     List.map (fun s -> memo_group_of_mg_slice s f_opt) sl
 end;;
 
-module PMF_AuS = Memo_Formula (Syn_Label_AuS);;
-module PMF_AnS = Memo_Formula (Syn_Label_AnS);;
+module MCP_Util = 
+  functor (Label: LABEL_TYPE) ->
+struct
+  module Pure_S         = S_FRAMEWORK (Label) (Pure_Constr)
+  module Pure_Constr_S  = CONSTR      (Label) (Pure_Constr)
+  module Pure_Slice_S   = SLICE       (Label) (Pure_Constr)
+  module Pure_Label     = Label       (Pure_Constr)
+
+  module Memo_S         = S_FRAMEWORK (Label) (Memo_Constr);;
+  module Memo_Constr_S  = CONSTR      (Label) (Memo_Constr);;
+  module Memo_Slice_S   = SLICE       (Label) (Memo_Constr);;
+
+  module MG_S           = S_FRAMEWORK (Label) (Memo_Group)
+  module MG_Constr_S    = CONSTR      (Label) (Memo_Group)
+  module MG_Slice_S     = SLICE       (Label) (Memo_Group)
+  
+  module MF_S           = Memo_Formula(Label)
+
+  let regroup_memo_group (lst: memo_pure) : memo_pure =
+    if !f_1_slice then 
+      (if (List.length lst)>1 then (print_string "multi slice problem"; failwith "multi slice problem"); lst)
+    else 
+      let l = MG_Constr_S.constr_of_atom_list lst in
+      let sl = MG_S.split l in
+      MF_S.memo_pure_of_mg_slice sl None
+
+  let group_mem_by_fv (lst: memo_pure) : memo_pure =
+    if !f_1_slice then
+      (if (List.length lst)>1 then (print_string "multi slice problem "; failwith "multi slice problem"); lst)
+    else 
+      let l = MG_Constr_S.constr_of_atom_list lst in
+      let sl = MG_S.split l in
+      MF_S.memo_pure_of_mg_slice sl None
+
+  let merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups filter_merged_cons : memo_pure = 
+    let r = 
+      if !f_1_slice then 
+		    (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem"; failwith "multi slice problem");      
+        let h1,h2 = (List.hd l1, List.hd l2) in
+		    let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
+		    [{
+          memo_group_fv = remove_dups_svl (h1.memo_group_fv @ h2.memo_group_fv);
+		      memo_group_linking_vars = remove_dups_svl (h1.memo_group_linking_vars @ h2.memo_group_linking_vars);
+		      memo_group_cons = filter_merged_cons na [h1.memo_group_cons; h2.memo_group_cons];
+		      memo_group_changed = true;
+		      memo_group_slice = h1.memo_group_slice @ h2.memo_group_slice;
+		      memo_group_aset = na;
+		    }])
+      else
+        let l = MG_Constr_S.constr_of_atom_list (l1@l2) in
+        let sl = MG_S.split l in
+        let merged_mp = MF_S.memo_pure_of_mg_slice sl (Some filter_merged_cons) in
+        if (not slice_check_dups) then merged_mp
+        else List.map (fun mg -> { mg with memo_group_slice =
+          (Gen.Profiling.push_time "merge_mems_r_dups";
+          let n_slice = Gen.BList.remove_dups_eq eq_pure_formula mg.memo_group_slice in
+			    Gen.Profiling.pop_time "merge_mems_r_dups"; n_slice)
+        }) merged_mp
+    in r
+
+  let create_memo_group (l1: b_formula list) (l2: formula list) 
+    (status: prune_status) filter_merged_cons : memo_pure =
+    (* Normalize l1 and l2 to lists of atomic constraints *)
+    let l1 = List.map (fun b -> 
+      let n_b = if !opt_ineq then trans_eq_bform b else b in
+      Pure_Constr.atom_of_b_formula n_b) l1 in
+    let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
+    let sl =
+      let l = l1 @ l2 in
+      if !f_1_slice then (* No slicing *)
+        let v = List.fold_left (fun a s -> a @ (Pure_Constr.fv s)) [] l in
+        let lbl = Pure_Label.label_of_fv (Gen.BList.remove_dups_eq eq_spec_var v) in
+        [(Some lbl, l)] 
+      else 
+        (* List of atomic constraints with syntactic label *)
+        let n_l = Pure_Constr_S.constr_of_atom_list l in
+        Pure_S.split n_l 
+    in
+    MF_S.memo_pure_of_pure_slice sl status (Some filter_merged_cons)
+
+  let split_mem_grp (g : memoised_group) : memo_pure = 
+    if !f_1_slice then [g]
+    else
+      let l =  Memo_Constr.memo_constr_of_memo_group g in
+      let n_l = Memo_Constr_S.constr_of_atom_list l in 
+      let sl = Memo_S.split n_l in
+      MF_S.memo_pure_of_memo_slice sl None 
+end;;
+
+module MG_AnS           = S_FRAMEWORK (Syn_Label_AnS) (Memo_Group)
+module MG_Constr_AnS    = CONSTR      (Syn_Label_AnS) (Memo_Group)
+module MG_Slice_AnS     = SLICE       (Syn_Label_AnS) (Memo_Group)
+module MF_AnS           = Memo_Formula(Syn_Label_AnS)
+
+module Memo_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Memo_Constr);;
+module Memo_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Memo_Constr);;
+module Memo_Slice_AnS   = SLICE       (Syn_Label_AnS) (Memo_Constr);;
 
 
