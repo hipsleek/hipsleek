@@ -2380,6 +2380,7 @@ Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
 Cformula.print_esc_stack := string_of_esc_stack;;
 Cformula.print_failesc_context := string_of_failesc_context;;
+Cformula.print_fail_type := string_of_fail_type;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;

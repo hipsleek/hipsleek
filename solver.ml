@@ -6601,11 +6601,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
           let lhs_var = get_node_var lhs_node in
-          let estate = if not !do_infer then estate 
-            else 
               (* WN : why is there a need for es_infer_invs *)
-              Inf.infer_for_unfold prog estate lhs_node pos
-          in
+          let estate =  Inf.infer_for_unfold prog estate lhs_node pos in
           let curr_unfold_num = (get_view_unfold_num lhs_node)+unfold_num in
           if (curr_unfold_num>1) then 
             (CF.mkFailCtx_in(Basic_Reason(mkFailContext "ensuring finite unfold" estate conseq (get_node_label lhs_node) pos,

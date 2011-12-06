@@ -2999,6 +2999,7 @@ let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer no
 let print_flow = ref(fun (c:nflow) -> "printer not initialized")
 let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
+let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
 let is_one_context (c:context) =
   match c with
@@ -3526,6 +3527,8 @@ let mk_not_a_failure =
   }
 )
 
+(* WN : what is the purpose of this conversion from SuccCtx to FailType? *)
+(* Is it really necessary? *)
 let convert_suc_to_fail ctx = match ctx with
   | [] -> report_error no_pos "Success context list is empty"
   | [c] -> begin 
@@ -3547,6 +3550,11 @@ let convert_suc_to_fail ctx = match ctx with
     end
   | _ -> report_error no_pos "Success context list has length > 2"
 
+
+let convert_suc_to_fail ctx = 
+  let pr = !print_context_list_short in
+  let prf = !print_fail_type in
+  Gen.Debug.ho_1 "convert_suc_to_fail" pr prf convert_suc_to_fail ctx
 
 let invert ls = 
   let foo es =
@@ -3792,12 +3800,14 @@ and fold_context_left c_l =
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 ->
-        let t = if !Globals.do_infer then convert_suc_to_fail t2 
+        let t = 
+          if !Globals.do_infer then convert_suc_to_fail t2 
           else mk_not_a_failure 
         in
         FailCtx (Or_Reason (t1,t))
      | SuccCtx t1 ,FailCtx t2 ->
-        let t = if !Globals.do_infer then convert_suc_to_fail t1  (* WN : why? *)
+        let t = 
+          if !Globals.do_infer then convert_suc_to_fail t1  (* WN : why? *)
           else mk_not_a_failure 
         in
         FailCtx (Or_Reason (t,t2))
