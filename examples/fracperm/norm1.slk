@@ -1,0 +1,33 @@
+/*
+ * LDK
+ * Explicit normalization with complex LHS
+ *
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+lemma self::ll(f1)<n1> * self::ll(f2)<n2> -> self::ll(f1+f2)<n1> & n1=n2.
+
+//(1)
+checkentail x::ll(0.5)<1> * x::ll(0.2)<2> |- false.
+// valid
+
+//(2)
+checkentail x::ll(0.5)<n1> * x::ll(0.6)<n2> |- n1=0.
+// valid
+
+//(3)
+checkentail x::ll(f1)<n1> * x::ll(f2)<n2> |- n1=n2.
+// valid with residue
+print residue.
+
+//(4)
+checkentail x::ll(f1)<n1> * x::ll(f2)<n2> |- x=null.
+// fail, may bug
+print residue.
+
+

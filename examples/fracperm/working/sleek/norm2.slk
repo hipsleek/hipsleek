@@ -1,0 +1,49 @@
+/*
+ * LDK
+ * Explicit normalization with complex LHS
+ * Wierd cases???
+*/
+
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+//lemma "EQ" self::lseg(f1)<n1,p1> * self::lseg(f2)<n2,p2> & n1=n2 -> self::lseg(f1+f2)<n1,p1> & p1=p2.
+// special case of "GE" lemma below
+
+//lemma "PTR" self::lseg(f1)<n1,p1> * self::lseg(f2)<n2,p2> & p1=p2 -> self::lseg(f1+f2)<n1,p1> & n1=n2. //not correct
+lemma "PTR" self::lseg(f1)<n1,p1> * self::lseg(f2)<n2,p2> & p1=p2 & n1=n2-> self::lseg(f1+f2)<n1,p1>.
+
+lemma "GE" self::lseg(f1)<n1,p1> * self::lseg(f2)<n2,p2> & p1=p2 & n2>=n1 -> self::lseg(f1+f2)<n1,p1> * p1::lseg(f2)<n2-n1,p2>.
+
+
+
+//(1)
+checkentail x::lseg(f1)<3,p> * x::lseg(f2)<2,p> |- false.
+// fail, true |- false
+
+//(2)
+checkentail x::lseg(f1)<3,p1> * x::lseg(f2)<2,p2> |- f1+f2 <= 1.0 .
+// valid
+
+//(3)
+checkentail x::lseg(0.5)<n1,p> * x::lseg(0.2)<n2,p> |- n1=n2.
+// valid
+
+//(4)
+checkentail x::lseg(0.5)<3,p1> * x::lseg(0.2)<2,p2> |- true.
+//print residue.
+// valid
+
+//(5)
+checkentail x::lseg(0.5)<2,p1> * x::lseg(0.2)<3,p2> |- true.
+//print residue.
+// valid
+
+//(6)
+checkentail x::lseg(f1)<n,p1> * x::lseg(f2)<n,p2> & p1!=p2 |- false.
+// valid
+
+

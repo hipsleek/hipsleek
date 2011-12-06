@@ -33,24 +33,32 @@ let add_error e = all_errors := e :: !all_errors
 (*   flush stdout; *)
 (*   failwith e.error_text *)
 
+  
 let report_error e =
- if post_pos#is_avail then
+ (if post_pos#is_avail then
        Printf.printf "\nContext of Verification Failure: %s"            
-           post_pos#string_of;
+           post_pos#string_of);
  (if proving_loc#is_avail then
        Printf.printf "\nLast Proving Location: %s\n"
-           proving_loc#string_of
-  else Printf.printf "\nERROR: at %s \nMessage: %s\n " 
+           proving_loc#string_of);
+ (Printf.printf "\nERROR: at %s \nMessage: %s\n " 
     (string_of_loc e.error_loc)
     e.error_text);
   flush stdout;
   failwith e.error_text
 
 let report_warning e =
-  if (not !suppress_warning_msg) then begin
+  if (not !suppress_warning_msg) then 
+    begin
     Printf.printf "\nWARNING: %s:%s\n"
         (string_of_loc e.error_loc)
-        e.error_text;
-    flush stdout
-  end else ()
+            e.error_text;
+        (* print_string ("report_warning: before flush" *)
+        (*               ^ "\n\n"); *)
+        flush stdout;
+
+        (* print_string ("report_warning: after flush" *)
+        (*               ^ "\n\n"); *)
+    end 
+  else ()
   (* failwith "Error detected : error.ml B" *)

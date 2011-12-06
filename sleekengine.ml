@@ -5,6 +5,9 @@
 open Globals
 open Sleekcommons
 open Gen.Basic
+(* open Exc.ETABLE_NFLOW *)
+open Exc.GTable
+open Perm
 
 module H = Hashtbl
 module I = Iast
@@ -13,6 +16,7 @@ module CF = Cformula
 module CP = Cpure
 module IF = Iformula
 module IP = Ipure
+module LP = Lemproving
 module AS = Astsimp
 
 module XF = Xmlfront
@@ -55,7 +59,7 @@ let cprog = ref { C.prog_data_decls = [];
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
 
-let residues = ref (None : CF.list_context option)
+let residues =  ref (None : CF.list_context option)
 
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
@@ -73,7 +77,7 @@ let clear_cprog () =
 let clear_all () =
   Debug.clear_debug_log ();
   Tpdispatcher.clear_prover_log ();
-  Gen.ExcNumbering.clear_exc_list ();
+  exlist # clear;
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
@@ -113,7 +117,7 @@ let check_data_pred_name name :bool =
 (*     try *)
 (*       iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls; *)
 (*       Iast.build_exc_hierarchy true iprog; *)
-(*       Gen.ExcNumbering.c_h (); *)
+(*       Exc.c_h (); *)
 (*       let cddef = AS.trans_data iprog ddef in *)
 (*       if !Globals.print_core then  *)
 (*         print_string (Cprinter.string_of_data_decl cddef ^"\n"); *)
@@ -126,12 +130,14 @@ let check_data_pred_name name :bool =
 (*   end *)
 
 let process_pred_def pdef = 
-    
+  (* TODO : how come this method not called? *)
+  (* let _ = print_string ("process_pred_def:" *)
+  (*                       ^ "\n\n") in *)
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog  h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
@@ -170,12 +176,15 @@ let process_pred_def pdef =
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
+let process_pred_def pdef = 
+  Gen.Debug.no_1 "process_pred_def" pr_no pr_no process_pred_def pdef
+
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
@@ -184,6 +193,8 @@ let process_pred_def_4_iast pdef =
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
+let process_pred_def_4_iast pdef = 
+  Gen.Debug.no_1 "process_pred_def_4_iast" pr_no pr_no process_pred_def_4_iast pdef
 
 
 let convert_pred_to_cast () = 
@@ -199,9 +210,12 @@ let convert_pred_to_cast () =
   let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then AS.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else cprog4 in
+  let _ = if !Globals.print_input then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if !Globals.print_core then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5
 
+let convert_pred_to_cast () = 
+  Gen.Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
 
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =
@@ -257,8 +271,9 @@ let process_data_def ddef =
       try
 	iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
 	(* let _ = Iast.build_exc_hierarchy true iprog in *)
-	(* let _ = Gen.ExcNumbering.compute_hierarchy 2 () in *)
+	(* let _ = Exc.compute_hierarchy 2 () in *)
 	let cddef = AS.trans_data iprog ddef in
+	let _ = if !Globals.print_input then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	  !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls
       with
@@ -268,6 +283,9 @@ let process_data_def ddef =
 	print_string (ddef.I.data_name ^ " is already defined.\n")
       end
 
+let process_data_def ddef =
+  Gen.Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
+
 (** An Hoa : Second stage of parsing : iprog already contains the whole input.
              We do a reparse in order to distinguish between data & enum that
              is deferred in case of mutually dependent data definition.
@@ -276,27 +294,33 @@ let perform_second_parsing_stage () =
 	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
 		!cprog.C.prog_data_decls <- cddefs
 	
-let rec meta_to_struc_formula_x (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
-  | MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)
-  | MetaFormLCF mf -> (Cformula.formula_to_struc_formula (List.hd mf))
+let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
+  let rec helper (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
+    match mf0 with
+  | MetaFormCF mf -> 
+      (Cformula.formula_to_struc_formula mf)
+  | MetaFormLCF mf -> 
+      (Cformula.formula_to_struc_formula (List.hd mf))
   | MetaForm mf -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true [] in
       AS.trans_I2C_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
-  | MetaVar mvar -> begin
+  | MetaVar mvar -> 
+      begin
       try 
         let mf = get_var mvar in
-          meta_to_struc_formula_x mf quant fv_idents stab
+          helper mf quant fv_idents stab
       with
         | Not_found ->
           dummy_exception() ;
           print_string (mvar ^ " is undefined.\n");
           raise SLEEK_Exception
       end
-  | MetaCompose (vs, mf1, mf2) -> begin
-      let cf1 = meta_to_struc_formula_x mf1 quant fv_idents stab in
-      let cf2 = meta_to_struc_formula_x mf2 quant fv_idents stab in
+  | MetaCompose (vs, mf1, mf2) -> 
+      begin
+      let cf1 = helper mf1 quant fv_idents stab in
+      let cf2 = helper mf2 quant fv_idents stab in
       let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
       let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
       res
@@ -311,12 +335,16 @@ let rec meta_to_struc_formula_x (mf0 : meta_formula) quant fv_idents stab : CF.s
       (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
       res
   | MetaEFormCF b -> b (* assume it has already been normalized *)
+  in helper mf0 quant fv_idents stab 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula =
-  let pr1 = string_of_meta_formula in
-  let pr2 = string_of_bool in
-  let pr3 = Cprinter.string_of_struc_formula in 
-  Gen.Debug.no_2 "meta_to_struc_formula" pr1 pr2 pr3 (fun _ _ -> meta_to_struc_formula_x mf0 quant fv_idents stab) mf0 quant
+
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Gen.Debug.no_4 "meta_to_struc_formula"
+  string_of_meta_formula
+  string_of_bool
+  string_of_ident_list
+  AS.string_of_stab
+  Cprinter.string_of_struc_formula
+  meta_to_struc_formula mf0 quant fv_idents stab
 
 (* An Hoa : DETECT THAT EITHER OF 
 AS.case_normalize_formula iprog h mf
@@ -333,8 +361,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
       let wf = AS.case_normalize_formula iprog h mf in
       let _ = Astsimp.gather_type_info_formula iprog wf stab false in
       let r = AS.trans_formula iprog quant fv_idents false wf stab false in
-      (*let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in
-      let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in*)
+      (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
+      (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
       r
   | MetaVar mvar -> begin
       try 
@@ -356,27 +384,50 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-		(* An Hoa : PRINT OUT THE INPUT *)
-		(*  let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in *)
+		(* (\* An Hoa : PRINT OUT THE INPUT *\) *)
+        (*LDK: iformula of ante and conseq*)
+		(*  let _ = print_string "Call [Sleekengine.run_entail_check] with\n" in *)
 		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
 		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   let _ = residues := None in
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in    
+  (*--eps => prune*)
   let ante = Solver.prune_preds !cprog true ante in
+  let ante = 
+    if (Perm.allow_perm ()) then
+      (*add default full permission to ante; 
+        need to add type of full perm to stab *)
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
+    else ante
+  in
+  let vk = AS.fresh_proc_var_kind stab Float in
+  let _ = H.add stab (full_perm_name ()) vk in
+  let _ = flush stdout in
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n") no_pos in
+  let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
+  let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
+  let _ = Debug.devel_pprint ("\nrun_entail_check: after normalization"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n") no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
-  (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
+  (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !norm_flow_int [ctx]) in*)
+  (* (\*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*\) *)
   (* let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in *)
-  (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
+  (* An Hoa TODO uncomment  *)
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
-  (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-  (*let ante_flow_ff = (CF.flow_formula_of_formula ante) in*)
+  (* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *)
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv !cprog false false 
@@ -385,12 +436,9 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
      Solver.heap_entail_struc_init !cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
-  (* andreeac - for debugging - to delet: *)
-  let length_ctx ctx = match ctx with
-    | CF.FailCtx _ -> 0
-    | CF.SuccCtx ctx0 -> List.length ctx0 in
-  (* let _ = print_endline ( "\n Sleekengine.ml, run_entail_check 1:" ^ (string_of_int (length_ctx rs1)) ^" \n\n\t ############reidues#######" ^ (Cprinter.string_of_list_context rs1) ^ "\n ############END#######") in  *)
-  (* to delete *)
+  (* let length_ctx ctx = match ctx with *)
+  (*   | CF.FailCtx _ -> 0 *)
+  (*   | CF.SuccCtx ctx0 -> List.length ctx0 in *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)
@@ -493,20 +541,9 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
 
-let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
-  try 
-    run_entail_check iante0 iconseq0
-  with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason " exception in lemma proving ")) in
-      (false, rs)
-
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   Gen.Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
-
-let process_lemma_check (iante0 : meta_formula) (iconseq0 : meta_formula) (lemma_name: string) =
-  let pr = string_of_meta_formula in
-  Gen.Debug.no_2 "process_lemma_check" pr pr (fun _ -> "?") (fun _ _ -> process_lemma_check iante0 iconseq0 lemma_name) iante0 iconseq0
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -514,95 +551,24 @@ let process_capture_residue (lvar : ident) =
       | Some s -> CF.list_formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
-let check_coercion coer lhs (rhs:CF.formula) =
-    let pos = CF.pos_of_formula coer.C.coercion_head in
-    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = CF.add_original lhs true in
-    let lhs = CF.reset_origins lhs in
-    let rhs = CF.add_original rhs true in
-    let rhs = CF.reset_origins rhs in
-    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
-    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
-    let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaFormCF rhs) coer.C.coercion_name
-
-let check_coercion coer lhs rhs =
-  let pr1 = Cprinter.string_of_coercion in
-  let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs) coer lhs rhs
-
-(* below expects struc_formula for rhs *)
-let check_coercion_struc coer lhs rhs =
-    let pos = CF.pos_of_formula coer.C.coercion_head in
-    let lhs = Solver.unfold_nth 9 (!cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = CF.add_original lhs true in
-    let lhs = CF.reset_origins lhs in
-    let rhs = CF.add_struc_original rhs true in
-    let rhs = CF.reset_struc_origins rhs in
-    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
-    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
-    let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_lemma_check (Sleekcommons.MetaFormCF lhs) (Sleekcommons.MetaEFormCF rhs) coer.C.coercion_name
-
-let check_left_coercion coer =
-  let ent_lhs =coer.C.coercion_head in
-  let ent_rhs = coer.C.coercion_body_norm in
-  check_coercion_struc coer ent_lhs ent_rhs
-
-let check_right_coercion coer =
-  let ent_rhs = coer.C.coercion_head_norm in
-  let ent_lhs = coer.C.coercion_body in
-  check_coercion coer ent_lhs ent_rhs 
-
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  (* TODO : WN print input_ast *)
+  let _ = if !Globals.print_input then print_string "TODO : print input AST here(3)!" in
   let _ = if !Globals.print_core then 
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
   !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
-  if !Globals.check_coercions then begin
-    let helper coercs check_coerc = match coercs with
-      | [] -> (true, None)
-      | coerc::[] -> let (valid, rs) = check_coerc coerc in (valid, Some rs)
-      | _ -> let _ = print_string "\n[sleekengine.ml] error at process_lemma: list of coercions should have max length of 1 \n" in 
-        (false, None)
-    in
-    let valid_l2r, rs_l2r = helper l2r check_left_coercion in
-    let valid_r2l, rs_r2l = helper r2l check_right_coercion in
-    let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
-    let residues = match (rs_l2r, rs_r2l) with
-      | (None, None) -> empty_resid
-      | (None, Some rs) 
-      | (Some rs, None) -> rs
-      | (Some rs1, Some rs2) -> CF.list_context_union rs1 rs2
-    in
-    let valid = valid_l2r && valid_r2l in
-    let num_id = "\nEntailing lemma \""^ (ldef.I.coercion_name) ^"\"" in
-    if valid then 
-      print_entail_result valid residues num_id
-    else begin
-      let num_id0, err_resid  = 
-        match ldef.I.coercion_type with
-          | I.Equiv -> begin
-                if (valid_l2r == false) then
-                  match rs_l2r with
-                    | Some rs -> (" (left-to-right) ", rs)
-                    | None -> (" (left-to-right) ",  empty_resid)
-                else
-                  match rs_r2l with
-                    | Some rs -> (" (right-to-left) ", rs)
-                    | None -> (" (right-to-left) ",  empty_resid)
-            end
-         | _ -> ("", residues) 
-      in
-      print_entail_result valid err_resid (num_id^num_id0)
-    end;
-  end
+  let get_coercion c_lst = match c_lst with 
+    | [c] -> Some c
+    | _ -> None in
+  let l2r = get_coercion l2r in
+  let r2l = get_coercion r2l in
+  residues := None;
+  residues := (LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type)
 
 let process_lemma ldef =
   Gen.Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
@@ -621,8 +587,11 @@ let process_print_command pcmd0 = match pcmd0 with
 	  if pcmd = "residue" then
       match !residues with
         | None -> print_string ": no residue \n"
-        | Some s -> print_string ((Cprinter.string_of_list_formula 
-              (CF.list_formula_of_list_context s))^"\n")
+        (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+        (*       (CF.list_formula_of_list_context s))^"\n") *)
+        (*print all posible outcomes and their traces with numbering*)
+        | Some s -> print_string ((Cprinter.string_of_numbered_list_formula_trace
+              (CF.list_formula_trace_of_list_context s))^"\n")
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 

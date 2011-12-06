@@ -39,6 +39,15 @@ negtlseg<p,f,d,n> ==
   or self::negtlseg<p,f,d+1,n> & f!=d 
   or self::tlseg<r,f,d+1,n1> * r::negtlseg<p,_,d+1,n2> & n=n1+n2 
   inv self!=null & n>=1 & f!=d; 
+/*
+disjoint:
+ P1 /\ P2 |- false
+ P1 /\ x=nil |- false
+ P2 /\ x=nil |- false
+
+universal
+ x::lseg<p,n> & n>0 <-> P1 \/ not(P1)
+*/
 
 /* can we show disjointness of
  (i) x=null
@@ -50,8 +59,8 @@ negtlseg<p,f,d,n> ==
 */
 
 // a provable lemma that tlseg gives at least one node
-//coercion self::tlseg<p,f,d,n>@I -> self::node<f,q>@I;
-//coercion self::negtlseg<p,f,d,n>@I -> self::node<f,q>@I ;
+//lemma self::tlseg<p,f,d,n>@I -> self::node<f,q>@I;
+//lemma self::negtlseg<p,f,d,n>@I -> self::node<f,q>@I ;
 
 bool is_empty(node x)
   requires true
@@ -68,7 +77,7 @@ int hd(node x)
     requires x::negtlseg<p,f,d,n>@I 
     ensures res=f;
 /*
-// can be proven with the coercion
+// can be proven with the lemma
 {
   return x.val;
 }

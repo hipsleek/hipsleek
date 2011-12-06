@@ -82,7 +82,7 @@ float mult___(float a, float b)
   requires true 
   ensures res = a * b;
 
-float div___(float a, float b) 
+float div___(float a, float b)
  case {
   b = 0.0 -> ensures true & flow __DivByZeroErr;
   b != 0.0 -> ensures res = a / b;
@@ -247,6 +247,24 @@ bool array_get_elm_at___1d(bool[] a, int i)
 int array_get_elm_at___2d(int[,] a, int i, int j) 
 	requires true
 	ensures res = a[i,j];
+
+/* ************ */
+/* Concurrency  */
+/* ************ */
+/* data tid{ */
+/* } */
+
+/* void fork(tid id) */
+/*   requires true */
+/*   ensures id::tid<>; */
+
+/* void join1(tid id) */
+/*   requires id::tid<> */
+/*   ensures true; */
+
+/* ************ */
+/* Concurrency  */
+/* ************ */
 
 int[] update___1d(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 

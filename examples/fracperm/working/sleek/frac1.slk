@@ -1,0 +1,68 @@
+/*
+ * LDK
+ * Test for exact MATCHING rules for data nodes and view nodes
+ * "exacts" means fractional permissions in both side should be eqal
+
+//MATCH
+x::ll(p)<n> |- x::ll(p)<m> .
+//residue := m=m
+
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//(1)
+checkentail x::node(1.0)<3,r1>  |- x::node(1.0)<3,r2>.
+print residue. //MATCH, valid
+
+//(2)
+checkentail x::node(1.0)<3,p>  |- x::node(f)<n,p1>.
+print residue. //MATCH, valid
+
+//(3)
+checkentail x::node(f1)<3,p>  |- x::node(f2)<n,p2>.
+print residue. //MATCH, valid
+
+//(4)
+checkentail x::node(0.5)<3,_>  |- x::node(1.0)<3,_>.
+print residue. //MATCH, fail
+
+//(5)
+checkentail x::node(f - 1.0)<v1,r1> & n=2  |- x::node(f1)<v2,r2>.
+print residue. //MATCH, valid
+
+//(6)
+checkentail x::node(f)<_,_> |- x!=null.
+print residue. //VALID
+
+//(7)
+checkentail x::node(f)<_,_> |- x!=null.
+print residue. //VALID
+
+//(8)
+checkentail x::ll(1.0)<3>  |- x::ll(1.0)<3>.
+print residue. //MATCH, valid
+
+//(9)
+checkentail x::ll(1.0)<3>  |- x::ll(f)<n>.
+print residue. //MATCH, valid
+
+//(10)
+checkentail x::ll(f1)<3>  |- x::ll(f2)<n>.
+print residue. //MATCH, valid
+
+//(11)
+checkentail x::ll(0.5)<3>  |- x::ll(1.0)<3>.
+print residue. //MATCH, fail
+
+//(12)
+checkentail x::ll(f - 1.0)<n> & n=2  |- x::ll(f1)<m>.
+print residue. //MATCH, valid
+
+//(13)
+checkentail x::ll(f)<1> |- x!=null.
+print residue. // valid
