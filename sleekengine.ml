@@ -466,8 +466,7 @@ let run_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formu
   let vars = List.map (fun v -> AS.get_spec_var_stab_infer v ((CF.fv ante) @ (CF.f_top_level_vars_struc conseq)) no_pos) ivars in
   
   (* Abductive inference *)
-  let new_ante = if not(!do_infer_spec) then ante 
-    else Solver.infer_pre ctx !cprog ante conseq vars 
+  let new_ante = Solver.infer_pre ctx !cprog ante conseq vars 
   in
 
   let ctx = CF.build_context ectx new_ante no_pos in
