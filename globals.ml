@@ -427,6 +427,7 @@ let do_infer_inv = ref false
 
 (* Options for specs inference *)
 let do_infer_spec = ref false
+let do_infer = ref false
 
 let add_count (t: int ref) = 
 	t := !t+1

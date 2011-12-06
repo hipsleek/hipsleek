@@ -23,8 +23,6 @@ module TP = Tpdispatcher
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
 (* let crt_phase = ref (None);; *)
 
-let do_infer = ref false
-
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref false
 
@@ -8682,6 +8680,8 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
 (**************** Precondition Inference ***************)
 (*******************************************************)
 
+let isOCtx = ref false
+
 let rec get_precondition ft vars pos = 
   let h = CF.formula_of_heap HTrue pos in
   let filter_var f vars = if CP.isConstFalse f then f else CP.filter_var f vars in 
@@ -8706,6 +8706,7 @@ let rec get_precondition ft vars pos =
     else
       let part1 = CF.compose_formula label1 res1 [] CF.Flow_combine pos in
       let part2 = CF.compose_formula label2 res2 [] CF.Flow_combine pos in
+      isOCtx := true;
       (CF.mkOr part1 part2 pos, h)
   | And_Reason (ft1, ft2) ->
     let (res1, label1) = get_precondition ft1 vars pos in
@@ -8741,9 +8742,12 @@ let infer_pre ctx prog ante conseq vars =
   in
   print_endline ("\nPRECOND: " ^ Cprinter.string_of_formula precond);
 (*  print_endline (Cprinter.string_of_list_context_short fctx);*)
-  let missing_frame = CF.formula_of_heap HTrue no_pos in
+  let missing_frame = precond in
   do_infer := false;
-  CF.compose_formula ante missing_frame [] CF.Flow_combine no_pos
+  if !isOCtx then ( 
+    isOCtx := false;
+    precond )
+  else CF.compose_formula ante missing_frame [] CF.Flow_combine no_pos
   
   
         
