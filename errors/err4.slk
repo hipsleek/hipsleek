@@ -98,7 +98,7 @@ checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
 //13 valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
 
-//14. may failure! WRONG
+//14. may failure!
 checkentail x::pos_ll<n> |- x::neg_ll<n> .
 /* 
 Entail(14)=Fail.(must) cause:12
@@ -157,7 +157,7 @@ Good Context: [es_formula: true & 3<x & {FLOW,(27,27)=__norm,}
 */
 
 //19.must. inconsistent must failure
-checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
+//checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
 /*
 __SleekMustErr seems empty. __SleekMustErr has not been supported yet.
 

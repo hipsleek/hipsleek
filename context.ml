@@ -249,6 +249,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
     | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm,p)
     | _ -> report_error no_pos "choose_context unexpected rhs formula\n" in
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
+
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let r_eqns =
     let eqns = (MCP.ptr_equations_without_null rhs_p)@rhs_es in
@@ -950,7 +951,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_3 "compute_actions" 
+  Gen.Debug.no_3 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (* (add_str "LHS pure" pr3)  *)

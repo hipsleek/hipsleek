@@ -3295,7 +3295,7 @@ let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state optio
     | Basic_Reason (fc,fe) ->
         (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)
         let f = get_failure_fe fe in
-        if (is_must_failure_fe fe) then (f, fe.fe_name, Some fc.fc_current_lhs)
+        if (is_must_failure_fe fe) then (f,  fe.fe_name, Some fc.fc_current_lhs)
         else (f,fe.fe_name, None)
     | Or_Reason (f1,f2) -> gen_lor (helper f1) (helper f2)
     | And_Reason (f1,f2) -> gen_rand (helper f1) (helper f2)

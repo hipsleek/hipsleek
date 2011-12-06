@@ -627,9 +627,9 @@ $output_file = "log";
               ["lemmas/lemma_check04.slk", " --enable-check-lemmas ", "Valid.Fail.Fail.", ""],
               ["lemmas/lemma_check06.slk", " --enable-check-lemmas ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
     "errors"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
-               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.must.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may."],
+               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
 			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
-			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid.bot."],
+			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
 			   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
 			   ["err6.slk","","must.Valid.may.may.must.Valid."],
 			   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],

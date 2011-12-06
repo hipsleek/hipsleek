@@ -21,7 +21,7 @@ checkentail x=y & y!=null |- x::node<_,_> .
 //2. err4.slk->19 must. inconsistent must failure
 checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
 
-//3. err4.slk->14 may failure!
+//3. err4.slk->14 may failure! --eps
 checkentail x::pos_ll<n> |- x::neg_ll<n>.
 
 //4. err4.slk->15 should be a must failure (not may) but needs an unfold of LHS
