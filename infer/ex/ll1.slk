@@ -43,4 +43,3 @@ infer [x] x!=null |- x=null.
 infer [x] true |- x::node<_,null> .
 infer [] true |- x::node<_,null> .
 
-

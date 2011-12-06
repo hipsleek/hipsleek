@@ -1254,7 +1254,7 @@ let rec pr_fail_type (e:fail_type) =
     | Basic_Reason (br,fe) -> 
           (string_of_fail_explaining fe);
           if fe.fe_kind=Failure_Valid then 
-            if !do_infer_spec then (pr_fail_estate br)
+            if !Globals.do_infer then (pr_fail_estate br)
             else fmt_string ("Failure_Valid") 
           else (pr_fail_estate br)
     | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br

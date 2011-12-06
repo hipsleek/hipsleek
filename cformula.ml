@@ -3272,12 +3272,12 @@ and fold_context_left c_l =
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 ->
-        let t = if !do_infer_spec then convert_suc_to_fail t2 
+        let t = if !Globals.do_infer then convert_suc_to_fail t2 
           else mk_not_a_failure 
         in
         FailCtx (Or_Reason (t1,t))
      | SuccCtx t1 ,FailCtx t2 ->
-        let t = if !do_infer_spec then convert_suc_to_fail t1 
+        let t = if !Globals.do_infer then convert_suc_to_fail t1 
           else mk_not_a_failure 
         in
         FailCtx (Or_Reason (t,t2))
