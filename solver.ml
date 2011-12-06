@@ -23,6 +23,8 @@ module TP = Tpdispatcher
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
 (* let crt_phase = ref (None);; *)
 
+let isOCtx = ref false
+
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref false
 
@@ -2976,7 +2978,8 @@ and heap_entail_after_sat_struc prog is_folding  has_post
 		  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 		  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
           let rs1, prf1 = heap_entail_after_sat_struc prog is_folding
-            has_post (if !do_infer then CF.init_caller c1 else c1) conseq pos pid (CF.add_to_steps ss "left OR 5 on ante") in
+            has_post (if !do_infer then (isOCtx := true; CF.init_caller c1) else c1) 
+            conseq pos pid (CF.add_to_steps ss "left OR 5 on ante") in
           let rs2, prf2 = heap_entail_after_sat_struc prog is_folding
             has_post (if !do_infer then CF.init_caller c2 else c2) conseq pos pid (CF.add_to_steps ss "right OR 5 on ante") in
 	      ((or_list_context rs1 rs2),(mkOrStrucLeft ctx conseq [prf1;prf2]))
@@ -8680,12 +8683,9 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
 (**************** Precondition Inference ***************)
 (*******************************************************)
 
-let isOCtx = ref false
-
 let rec get_precondition ft vars pos = 
-  let hlabel = CF.formula_of_heap HTrue pos in
+  let hlabel1 = CF.formula_of_heap HTrue pos in
   let hlabel2 = CF.formula_of_heap HFalse pos in
-  let k = CF.formula_of_heap HFalse pos in
   let filter_var f vars = if CP.isConstFalse f then f else CP.filter_var f vars in 
   let simplify = fun f vars -> Omega.simplify (filter_var (Omega.simplify f) vars) in
   match ft with
@@ -8696,23 +8696,30 @@ let rec get_precondition ft vars pos =
     let p = MCP.mix_of_pure (simplify (fc.fc_current_lhs.es_infer_pure) vars) in
     let label = fc.fc_current_lhs.es_infer_label in
     (CF.mkBase h p TypeTrue (CF.mkTrueFlow ()) [] pos, label)
-  | Trivial_Reason s -> (k,hlabel2)
+  | Trivial_Reason s -> (hlabel1, hlabel2)
     (*report_error pos ("get_precondition: do not support for Trivial_Reason \n")*)
   | Or_Reason (ft1, ft2) ->
     let (res1, label1) = get_precondition ft1 vars pos in
     let (res2, label2) = get_precondition ft2 vars pos in
+    if label1 = hlabel2 then (res2, label2)
+    else
+    if label2 = hlabel2 then (res1, label1)
+    else
     if label1 = label2 then 
       let res = CF.compose_formula res1 res2 [] CF.Flow_combine pos in
       let h,p,f,b,t = CF.split_components res in
       (CF.mkBase h (MCP.mix_of_pure (simplify (MCP.pure_of_mix p) vars)) t f b pos, label1)
     else
       let part1 = CF.compose_formula label1 res1 [] CF.Flow_combine pos in
-      let part2 = CF.compose_formula label2 res2 [] CF.Flow_combine pos in
-      isOCtx := true;
-      (CF.mkOr part1 part2 pos, hlabel)
+      let part2 = CF.compose_formula label2 res2 [] CF.Flow_combine pos in      
+      (CF.mkOr part1 part2 pos, hlabel1)
   | And_Reason (ft1, ft2) ->
     let (res1, label1) = get_precondition ft1 vars pos in
     let (res2, label2) = get_precondition ft2 vars pos in
+    if label1 = hlabel2 then (res2, label2)
+    else
+    if label2 = hlabel2 then (res1, label1)
+    else
     if label1 = label2 then 
       let res = CF.compose_formula res1 res2 [] CF.Flow_combine pos in
       let h,p,f,b,t = CF.split_components res in
@@ -8721,12 +8728,12 @@ let rec get_precondition ft vars pos =
   | Union_Reason (ft1, ft2) ->
     let (res1, label1) = get_precondition ft1 vars pos in
     let (res2, label2) = get_precondition ft2 vars pos in
+    if label1 = hlabel2 then (res2, label2)
+    else
+    if label2 = hlabel2 then (res1, label1)
+    else
     if label1 = label2 then (CF.mkOr res1 res2 pos, label1)
-    else
-    if label1 = hlabel2 then (CF.mkOr res1 res2 pos, label2)
-    else
-    if label2 = hlabel2 then (CF.mkOr res1 res2 pos, label1)
-    else report_error pos ("get_precondition: error in Union_Reason \n")    
+    else report_error pos ("get_precondition: error in Union_Reason \n")
   | ContinuationErr fc ->
     report_error pos ("get_precondition: do not support for ContinuationErr \n")
   | Or_Continuation (ft1, ft2) -> 
