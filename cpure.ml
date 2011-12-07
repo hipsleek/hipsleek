@@ -1305,6 +1305,9 @@ and subset (svs1 : spec_var list) (svs2 : spec_var list) =
 and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
 
+and diff_svl (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.filter (fun sv -> not(mem sv svs2)) svs1
+
 and are_same_types (t1 : typ) (t2 : typ) = match t1 with
   | Named c1 -> begin match t2 with
 	    (* | _ -> false *)
@@ -1359,16 +1362,12 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
-
-
-
 and fresh_old_name (s: string):string = 
   let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
   (*let _ = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
   n
       
-
 and fresh_spec_var (sv : spec_var) =
   let old_name = name_of_spec_var sv in
   let name = fresh_old_name old_name in
@@ -1379,6 +1378,14 @@ and fresh_spec_var (sv : spec_var) =
   SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
 
 and fresh_spec_vars (svs : spec_var list) = List.map fresh_spec_var svs
+
+and fresh_spec_var_prefix s (sv : spec_var) =
+  let old_name = s^"_"^name_of_spec_var sv in
+  let name = fresh_old_name old_name in
+  let t = type_of_spec_var sv in
+  SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
+
+and fresh_spec_vars_prefix s (svs : spec_var list) = List.map (fresh_spec_var_prefix s) svs
 
 (******************************************************************************************************************
 	                                                                                                               22.05.2008
