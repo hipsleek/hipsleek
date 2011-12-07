@@ -769,8 +769,6 @@ sub sleek_process_file  {
       my $err = 0;
       if ("$param" =~ "errors") {
           print "Starting sleek must/may errors tests:\n";
-         # sleek_errors_process_file();
-         # continue;
           $exempl_path_full = "$exec_path/errors";
           $err = 1;
       }
@@ -835,46 +833,3 @@ sub sleek_process_file  {
 	}
 }
 
-#./run-fast-tests.pl sleek --errors
-sub sleek_errors_process_file  {
-      $exempl_path_full = "$exec_path/errors"; #"$exempl_path";
-
-      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
-      if ($script_arguments=~"--enable-check-lemmas"){ $lem = 1; } 
-#      elsif ($script_arguments=~"--disable-check-lemmas"){ $lem = 0; }
-      $t_list = $sleek_files{"errors"};#$param
-      foreach $test (@{$t_list})
-      {
-			print "Checking $test->[0]\n";
-            $script_args = $script_arguments." $test->[1]";
-			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
-			print LOGFILE "\n======================================\n";
-	        print LOGFILE "$output";
-			# $pos = 0;
-			$r = "";
-			 my @lines = split /\n/, $output; 
-            foreach my $line (@lines) { 
-				#print $line . " locle\n";
-                if($line =~ m/Entail/){
-                    $i = index($line, "Valid. (bot)",0);
-                    $h = index($line, "Valid.",0);
-					$j = index($line, "Fail.(must)",0);
-				    $k = index($line, "Fail.(may)",0);
-                  #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
-                    if($i >= 0) { $r = $r ."bot."; }
-                    elsif($h >= 0) { $r = $r ."Valid."; }
-                    elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
-					elsif($k >= 0)  { $r = $r ."may.";}
-                }
-            }
-			if($r !~ /^$test->[2]$/)
-			{
-				print "Unexpected result with : $test->[0]\n";
-				$error_count++;
-				$error_files = $error_files . " " . $test->[0];
-			}
-            if($timings) {
-               # log_one_line_of_timings ($test->[0],$output);
-            }
-      }
-}

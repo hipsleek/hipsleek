@@ -171,7 +171,7 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) opt
     (match (vn1.h_formula_view_remaining_branches,vn2.h_formula_view_remaining_branches) with
       | None,None -> (true, None)
       | Some l1, Some l2 -> 
-		let need_prunning = Gen.BList.difference_eq (=) l1 l2 in		
+		let need_prunning = Gen.BList.difference_eq (=) l1 l2 in
 		if (List.length need_prunning)<=0 then (true,None) (* *)
 		else
           let v_def = look_up_view_def no_pos prog.prog_view_decls vn2.h_formula_view_name in
