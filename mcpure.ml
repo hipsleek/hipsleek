@@ -930,7 +930,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
   (* Consider only constraints which are relevant to qv *)
   let rel_mg, non_rel_mg = List.partition (fun mg -> Gen.BList.overlap_eq eq_spec_var qv mg.memo_group_fv) f0 in
   let n_rel_mg = 
-    if !do_slicing then (* Merge relevant constraints together - Soundness *)
+    if !do_slicing then (* Merge relevant constraints together - For soundness *)
       let l = MG_Constr_AnS.constr_of_atom_list rel_mg in
       let sl = MG_AnS.split_by_fv qv l in
       MF_AnS.memo_pure_of_mg_slice sl None
@@ -1436,9 +1436,14 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   else mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no
   
 and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
-  let n_ante =
-	  let fv = fv conseq in 
-	  List.filter (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) ante_disj in
+  let ps = MG_Constr_AuS.constr_of_atom_list ante_disj in
+  let f = MG_Slice_AuS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
+  let r = MG_AuS.get_ctr 1 f ps in
+
+  let n_ante = MG_Slice_AuS.atom_of_slice r in
+	  (*let fv = fv conseq in 
+	  List.filter (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var fv
+    c.memo_group_fv))>0) ante_disj in*)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
@@ -1449,6 +1454,23 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
   let r = t_imply r conseq ("imply_process_ante_no_slicing"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;
   r)
+
+and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
+  let (nlv, lv) = fv_with_slicing_label conseq in
+  let n_ante = pick_relevant_lhs_constraints !opt_imply (nlv, lv) ante_disj in
+
+  (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
+
+  let r = match with_disj with  
+    | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
+    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
+    | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
+  let _ = Debug.devel_pprint str no_pos in
+
+   (Gen.Profiling.push_time str_time;
+   let r = t_imply r conseq ("imply_process_ante_slicing"^(string_of_int !imp_no)) false None in
+   Gen.Profiling.pop_time str_time;
+   r)
 
 and pick_relevant_lhs_constraints choose_algo (nlv, lv) ante_disj =
   Gen.Debug.no_3 "pick_relevant_lhs_constraints"
@@ -1592,47 +1614,29 @@ and pick_relevant_lhs_constraints_opt_2 fv ante_disj = (* exhausted search *)
 
 and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
   let rec exhaustive_collect_with_selection fv ante =
-	let (n_fv, n_ante1, r_ante) = List.fold_left
-	  (fun (afv, amc, rmc) (mg_ulv, mg) ->
-		let cond_direct = Gen.BList.overlap_eq eq_spec_var afv mg_ulv in
-		(*let cond_link = ((List.length mg.memo_group_linking_vars) > 1) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in*)
-		let cond_link = (mg_ulv = []) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in
-		if (cond_direct || cond_link) then
-		  (afv@mg.memo_group_fv, amc@[mg], rmc)
-		else (afv, amc, rmc@[(mg_ulv, mg)])
-	  ) (fv, [], []) ante in
-	if n_fv = fv then n_ante1
-	else
-	  let n_ante2 = exhaustive_collect_with_selection n_fv r_ante in
-	  n_ante1 @ n_ante2
-  in
+	  let (n_fv, n_ante1, r_ante) = List.fold_left (fun (afv, amc, rmc) (mg_ulv, mg) ->
+		  let cond_direct = Gen.BList.overlap_eq eq_spec_var afv mg_ulv in
+		  (*let cond_link = ((List.length mg.memo_group_linking_vars) > 1) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in*)
+		  let cond_link = (mg_ulv = []) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_linking_vars afv) in
+		  if (cond_direct || cond_link) then
+		    (afv@mg.memo_group_fv, amc@[mg], rmc)
+		  else (afv, amc, rmc@[(mg_ulv, mg)])
+	    ) (fv, [], []) ante in
+	  if n_fv = fv then n_ante1
+	  else
+	    let n_ante2 = exhaustive_collect_with_selection n_fv r_ante in
+	    n_ante1 @ n_ante2
+    in
 
-  let ante_with_ulv = List.map
-	(fun mg ->
-	  let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
-	  (mg_ulv, mg)
-	) ante_disj in
+    let ante_with_ulv = List.map
+	  (fun mg ->
+	    let mg_ulv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv mg.memo_group_linking_vars in
+	    (mg_ulv, mg)
+	  ) ante_disj in
 
   let _ = Gen.Profiling.push_time "--opt-imply 3" in
   let r = exhaustive_collect_with_selection fv ante_with_ulv in
   let _ = Gen.Profiling.pop_time "--opt-imply 3" in r
-	
-and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
-  let (nlv, lv) = fv_with_slicing_label conseq in
-  let n_ante = pick_relevant_lhs_constraints !opt_imply (nlv, lv) ante_disj in
-
-  (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
-
-  let r = match with_disj with  
-    | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
-    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
-    | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
-  let _ = Debug.devel_pprint str no_pos in
-
-   (Gen.Profiling.push_time str_time;
-   let r = t_imply r conseq ("imply_process_ante_slicing"^(string_of_int !imp_no)) false None in
-   Gen.Profiling.pop_time str_time;
-   r)
 	
 let mimply_one_conj ante_memo0 conseq t_imply imp_no = 
   let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
