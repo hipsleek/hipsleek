@@ -472,6 +472,7 @@ module type ETABLE =
     val brk_top : ident
     val c_flow : ident
     val raisable_class : ident
+    val conj_class: ident (*conjunctive flow*)
     val ret_flow : ident
     val spec_flow : ident
     val false_flow : ident
@@ -484,6 +485,7 @@ module type ETABLE =
     val top_flow_int : nflow ref 
     val abnormal_flow_int : nflow ref
     val raisable_flow_int : nflow ref
+    val conj_flow_int : nflow ref
     val error_flow_int : nflow ref
     val false_flow_int : nflow
     val empty_flow : nflow 
@@ -532,6 +534,7 @@ struct
   let brk_top = "__Brk_top"
   let c_flow = "__c-flow"
   let raisable_class = "__Exc"
+  let conj_class = "__Conj" (*conjunctive flow*)
   let ret_flow = "__Ret"
   let spec_flow = "__Spec"
   let false_flow = "__false"
@@ -552,6 +555,7 @@ struct
   let top_flow_int = ref empty_flow 
   let abnormal_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
+  let conj_flow_int = ref empty_flow (*conjunctive flow*)
   let error_flow_int  = ref empty_flow 
   let false_flow_int = empty_flow 
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
@@ -652,6 +656,7 @@ struct
         top_flow_int := empty_flow;
         abnormal_flow_int := empty_flow;
         raisable_flow_int := empty_flow;
+        conj_flow_int := empty_flow;
         error_flow_int := empty_flow;
         elist <- []
       end
@@ -701,6 +706,7 @@ struct
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
+        conj_flow_int := self # get_hash conj_class;
         abnormal_flow_int := self # get_hash abnormal_flow;
         error_flow_int := self # get_hash error_flow
       end
@@ -773,6 +779,7 @@ struct
   let top_flow_int = ref empty_flow
   let abnormal_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
+  let conj_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow
   let false_flow_int = empty_flow
 
@@ -946,6 +953,7 @@ struct
         top_flow_int := empty_flow;
         abnormal_flow_int := empty_flow;
         raisable_flow_int := empty_flow;
+        conj_flow_int := empty_flow;
         error_flow_int := empty_flow;
         elist <- []
       end
@@ -999,6 +1007,7 @@ struct
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
+        conj_flow_int := self # get_hash conj_class;
         abnormal_flow_int := self # get_hash abnormal_flow;
         error_flow_int := self # get_hash error_flow
       end

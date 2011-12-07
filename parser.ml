@@ -1172,9 +1172,8 @@ global_var_decl:
   [[ `GLOBAL; lvt=local_variable_type; vd=variable_declarators; `SEMICOLON -> mkGlobalVarDecl lvt vd (get_pos_camlp4 _loc 1)]];
 
 (**************** Class ******************)
-
 class_decl:
-  [[ `CLASS; `IDENTIFIER id; par=OPT extends; `OBRACE; ml=member_list_opt; `CBRACE ->
+  [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
 		let t1 = List.map (fun (t, p) -> (t, p, false)) t1 in
@@ -1188,7 +1187,16 @@ class_decl:
 
 extends: [[`EXTENDS; `IDENTIFIER id -> id]];
 
-member_list_opt: [[t = LIST0 member SEP `SEMICOLON -> t]];
+class_body:
+      [[`OBRACE; fl=member_list; `CBRACE   ->  fl
+      | `OBRACE; `CBRACE                             -> []] ];
+
+one_member:
+ [[ m= member; `SEMICOLON -> m
+  | m = member -> m]];
+
+member_list: [[m = one_member; fl=member_list -> m::fl
+             | m=one_member -> [m]]];
 
 member:
  [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2) 

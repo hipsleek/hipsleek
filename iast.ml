@@ -1457,6 +1457,7 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (exlist # add_edge n_flow c_flow) in
   let _ = (exlist # add_edge abnormal_flow c_flow) in
   let _ = (exlist # add_edge raisable_class abnormal_flow) in
+  let _ = (exlist # add_edge conj_class abnormal_flow) in
   let _ = (exlist # add_edge "__others" abnormal_flow) in
   let _ = (exlist # add_edge ret_flow "__others") in
   let _ = (exlist # add_edge cont_top "__others") in
