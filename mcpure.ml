@@ -1461,7 +1461,7 @@ and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply 
 
   let ps = MG_Constr_AnS.constr_of_atom_list ante_disj in
   let f = MG_Slice_AnS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
-  let r = MG_AnS.get_ctr f ps in
+  let r = MG_AnS.get_ctr_n 2 f ps in
   let n_ante = MG_Slice_AnS.atom_of_slice r in
 
   (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
