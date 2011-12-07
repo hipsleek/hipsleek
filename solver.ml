@@ -8585,8 +8585,12 @@ let rec get_precondition ft vars pos =
     let new_vars = Cformula.h_fv h in
     let vars = Gen.Basic.remove_dups (vars @ new_vars) in
     (* WN : why is es_infer_pure needed below? *)
-    let p = MCP.mix_of_pure (simplify (CP.mkTrue no_pos) vars) in
-    (* let p = MCP.mix_of_pure (simplify (fc.fc_current_lhs.es_infer_pure) vars) in *)
+    (*let p = MCP.mix_of_pure (simplify (CP.mkTrue no_pos) vars) in*)
+    let p = match fc.fc_current_lhs.es_infer_pure with
+      | [] -> CP.mkTrue no_pos
+      | _ as list -> List.hd list
+    in 
+    let p = MCP.mix_of_pure (simplify p vars) in
     let label = fc.fc_current_lhs.es_infer_label in
     (CF.mkBase h p TypeTrue (CF.mkTrueFlow ()) [] pos, label)
   | Trivial_Reason s -> (hlabel1, hlabel2)

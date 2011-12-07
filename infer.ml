@@ -34,7 +34,7 @@ let infer_heap_main iheap ivars old_vars =
       if List.mem p vars then 
         (Gen.Basic.remove_dups (List.filter (fun x -> CP.name_of_spec_var x!= CP.name_of_spec_var p) 
           vars @ args), heap) 
-      else (old_vars, HTrue)
+      else (ivars, HTrue)
     | Star ({h_formula_star_h1 = h1;
       h_formula_star_h2 = h2;
       h_formula_star_pos = pos}) ->
@@ -53,7 +53,7 @@ let infer_heap_main iheap ivars old_vars =
         (vars1, Star ({h_formula_star_h1 = heap1;
                        h_formula_star_h2 = heap2;
                        h_formula_star_pos = pos}))
-      else (old_vars, HTrue)
+      else (ivars, HTrue)
     | Conj ({h_formula_conj_h1 = h1;
       h_formula_conj_h2 = h2;
       h_formula_conj_pos = pos}) ->
@@ -72,8 +72,8 @@ let infer_heap_main iheap ivars old_vars =
         (vars1, Conj ({h_formula_conj_h1 = heap1;
                        h_formula_conj_h2 = heap2;
                        h_formula_conj_pos = pos}))
-      else (old_vars, HTrue)
-    | _ -> (old_vars, HTrue)
+      else (ivars, HTrue)
+    | _ -> (ivars, HTrue)
   in infer_heap iheap ivars
 (*
 type: h_formula ->
