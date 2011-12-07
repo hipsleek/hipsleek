@@ -5,7 +5,7 @@
 open Globals
 open Cpure
 open Cformula
-
+open Musterr
 (*
   Each disjunct will be generated as a separate graph.
   Parameter n is used to attach a different number to
@@ -40,7 +40,7 @@ let rec dot_of_context_file prog ctx visib_names file0 =
 		  Sys.remove file
  
 
-and dot_of_context prog ctx visib_names = dot_of_formula prog (formula_of_list_context ctx) visib_names
+and dot_of_context prog ctx visib_names = dot_of_formula prog (Musterr.formula_of_list_context ctx) visib_names
 
 and dot_of_formula prog f visib_names =
   let buffer = Buffer.create 1024 in

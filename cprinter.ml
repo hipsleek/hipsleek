@@ -1,13 +1,14 @@
 (** pretty printing for formula and cast *)
 
 open Format
-open Globals 
+open Globals
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-open Lexing 
-open Cast 
+open Lexing
+open Cast
 open Cformula
-open Gen.Basic 
+open Musterr
+open Gen.Basic
 
 module P = Cpure
 module MP = Mcpure
@@ -2037,7 +2038,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
 let string_of_label_partial_context (fs,_) : string =
   if (Gen.is_empty fs) then "" else string_of_path_trace(fst(List.hd fs))
 
-let string_of_label_list_partial_context (cl:Cformula.list_partial_context) : string =
+let string_of_label_list_partial_context (cl:Musterr.list_partial_context) : string =
   if (Gen.is_empty cl) then "" else string_of_label_partial_context (List.hd cl)
 
 let string_of_label_failesc_context (fs,_,_) : string =
@@ -2047,17 +2048,17 @@ let string_of_label_failesc_context (fs,_,_) : string =
 if (Gen.is_empty cl) then "" else get_label_partial_context (List.hd cl)
 ;;*)
 
-let string_of_label_list_failesc_context (cl:Cformula.list_failesc_context) : string =
+let string_of_label_list_failesc_context (cl:Musterr.list_failesc_context) : string =
   if (Gen.is_empty cl) then "" else string_of_label_failesc_context (List.hd cl)
 ;;
 
-let string_of_failure_list_failesc_context (lc: Cformula.list_failesc_context) =  
-  let lc = Cformula.keep_failure_list_failesc_context lc
+let string_of_failure_list_failesc_context (lc: Musterr.list_failesc_context) =  
+  let lc = Musterr.keep_failure_list_failesc_context lc
   in string_of_list_failesc_context lc
 ;;
 
-let string_of_failure_list_partial_context (lc: Cformula.list_partial_context) =  
-  let lc = Cformula.keep_failure_list_partial_context lc
+let string_of_failure_list_partial_context (lc: Musterr.list_partial_context) =  
+  let lc = Musterr.keep_failure_list_partial_context lc
   in string_of_list_partial_context lc
 ;;
 
@@ -2075,7 +2076,7 @@ let app_sv_print xs ys =
 (* An Hoa : formula to HTML output facility *)
 
 (* HTML for operators *)
-let html_op_add = " + " 
+let html_op_add = " + "
 let html_op_sub = " - " 
 let html_op_mult = " &sdot; " 
 let html_op_div = " &divide; " 
@@ -2358,15 +2359,15 @@ Cformula.print_svl := string_of_spec_var_list;;
 Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
-Cformula.print_list_context_short := string_of_list_context_short;;
-Cformula.print_list_partial_context := string_of_list_partial_context;;
-Cformula.print_list_failesc_context := string_of_list_failesc_context;;
-Cformula.print_failure_kind_full := string_of_failure_kind_full;;
-Cformula.print_fail_type := string_of_fail_type;;
+Musterr.print_list_context_short := string_of_list_context_short;;
+Musterr.print_list_partial_context := string_of_list_partial_context;;
+Musterr.print_list_failesc_context := string_of_list_failesc_context;;
+Musterr.print_failure_kind_full := string_of_failure_kind_full;;
+Musterr.print_fail_type := string_of_fail_type;;
 (* Cformula.print_nflow := string_of_nflow;; *)
 Cformula.print_flow := string_of_flow;;
-Cformula.print_context_short := string_of_context_short;;
-Cformula.print_entail_state := string_of_entail_state(* _short *);;
+Musterr.print_context_short := string_of_context_short;;
+Musterr.print_entail_state := string_of_entail_state(* _short *);;
 Redlog.print_formula := string_of_pure_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
@@ -2374,8 +2375,8 @@ Cformula.print_mix_f := string_of_mix_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
-Cformula.print_esc_stack := string_of_esc_stack;;
-Cformula.print_failesc_context := string_of_failesc_context;;
+Musterr.print_esc_stack := string_of_esc_stack;;
+Musterr.print_failesc_context := string_of_failesc_context;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;

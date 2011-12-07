@@ -25,6 +25,7 @@ open Globals
 
 module CP = Cpure
 module CF = Cformula
+module ME = Musterr
 
 (*
   type for proof or disproof.
@@ -50,97 +51,94 @@ type proof =
   | UnsatAnte
   | UnsatConseq
   | TrueConseq
-  | Failure 
+  | Failure
   | PECase of case_step
   | PEBase of base_step
   | PEAssume of assume_step
   | PEEx of eex_step
   | Search of proof list
-  | Unknown 
+  | Unknown
 
-and ex_step = { ex_step_ante : CF.context;
+and ex_step = { ex_step_ante : ME.context;
 				ex_step_conseq : CF.formula;
 				ex_step_old_vars : CP.spec_var list;
 				ex_step_new_vars : CP.spec_var list;
 				ex_step_proof : proof }
-	
-and or_left = { or_left_ante : CF.context;
+
+and or_left = { or_left_ante : ME.context;
 				or_left_conseq : CF.formula;
 				or_left_proofs : proof list (* all proofs here must succeed *) }
-	
-and or_struc_left = { or_struc_left_ante : CF.context;
+
+and or_struc_left = { or_struc_left_ante : ME.context;
 					or_struc_left_conseq : CF.struc_formula;
 					or_struc_left_proofs : proof list (* all proofs here must succeed *) }
 
-	
-and or_right = { or_right_ante : CF.context;
+and or_right = { or_right_ante : ME.context;
 				 or_right_conseq : CF.formula;
 				 or_right_proofs : proof list (* at least one must succeed *) }
 
-and match_step = { match_step_ante : CF.context;
+and match_step = { match_step_ante : ME.context;
 				   match_step_conseq : CF.formula;
 				   match_step_node : CF.h_formula;
 				   match_step_proofs : proof list (* there can be more than one sub proof if coercion occurs. *) }
 
-and mmatch_step = { mmatch_step_ante : CF.context;
+and mmatch_step = { mmatch_step_ante : ME.context;
 					mmatch_step_conseq : CF.formula;
 					mmatch_step_node : CF.h_formula;
 					mmatch_step_proofs : proof list (* there can be more than one sub proof if coercion occurs. *) }
 
-
-and fold_step = { fold_step_ante : CF.context;
+and fold_step = { fold_step_ante : ME.context;
 				  fold_step_conseq : CF.formula;
 				  fold_step_var : CP.spec_var;
 				  fold_step_fold_proof : proof; (* recursive proof of folding *)
 				  fold_step_proofs : proof list (* proofs after fold. There may be more than one of them *) }
 
-and unfold_step = { unfold_step_ante : CF.context;
+and unfold_step = { unfold_step_ante : ME.context;
 					unfold_step_conseq : CF.formula;
 					unfold_step_node : CF.h_formula;
 					unfold_step_proof : proof }
 
-and pure_step = { pure_step_estate : CF.entail_state;
+and pure_step = { pure_step_estate : ME.entail_state;
 				  pure_step_ante : CP.formula;
 				  pure_step_conseq : CP.formula;
 				  pure_step_success : bool;
 				  pure_step_gist : CP.formula option }
  
 and coercion_step = { coercion_step_name : ident;
-					  coercion_step_ante : CF.context;
+					  coercion_step_ante : ME.context;
 					  coercion_step_conseq : CF.formula;
 					  coercion_step_coercion : (CF.formula * CF.formula);
 					  coercion_step_proof : proof }
 
-and coercion2_step = { coercion2_step_ante : CF.context;
+and coercion2_step = { coercion2_step_ante : ME.context;
 					   coercion2_step_conseq : CF.formula;
 					   coercion2_step_proofs : proof list }
 
-and context_list = { context_list_ante : CF.context list;
+and context_list = { context_list_ante : ME.context list;
 					 context_list_conseq : CF.struc_formula;
 					 context_list_proofs : proof list }
 
-and case_step = { case_context: CF.context;
+and case_step = { case_context: ME.context;
 				  case_form: CF.struc_formula;
 				  case_proofs: proof list}
 
-and base_step = { base_context: CF.context;
+and base_step = { base_context: ME.context;
 				  base_form: CF.struc_formula;
 				  base_proof: proof;
 				  cont_proof: proof}
 
-and assume_step = { assume_context : CF.context;
+and assume_step = { assume_context : ME.context;
 					assume_formula : CF.formula}
-and eex_step = {eex_context: CF.context;
+and eex_step = {eex_context: ME.context;
 				eex_formula: CF.struc_formula;
 				eex_proof: proof}
-					 
-					 
+
 let mkCoercionLeft ctx conseq clhs crhs prf name = CoercionLeft { coercion_step_name = name;
 																  coercion_step_ante = ctx;
 																  coercion_step_conseq = conseq;
 																  coercion_step_coercion = (clhs, crhs);
 																  coercion_step_proof = prf }
-  
+
 let mkCoercionRight ctx conseq clhs crhs prf name = CoercionRight { coercion_step_name = name;
 																	coercion_step_ante = ctx;
 																	coercion_step_conseq = conseq;

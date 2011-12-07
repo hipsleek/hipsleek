@@ -19,6 +19,7 @@ module IF = Iformula
 module IP = Ipure
   
 module CF = Cformula
+module ME = Musterr
 (* module GV = Globalvars*)
   
 module CP = Cpure
@@ -1162,7 +1163,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
   let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
 	let ctx =
-      CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
+      ME.build_context (ME.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
     let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
 
 
@@ -1172,11 +1173,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	  let _ = print_string ("\ncompute_view_x_formula: RHS \n" ^ (Cprinter.string_of_formula formula) ^ "\n") in*)
 
 	let (rs, _) =
-	  Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos
+	  Solver.heap_entail_init prog false (ME.SuccCtx [ ctx ]) formula pos
     in
 	(* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
     (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
-let _ = if not(CF.isFailCtx rs)
+let _ = if not(ME.isFailCtx rs)
     then
       (vdef.C.view_x_formula <- (xform, xform_b);
       vdef.C.view_addr_vars <- addr_vars;
@@ -1186,8 +1187,9 @@ let _ = if not(CF.isFailCtx rs)
       Err.report_error
           {
               Err.error_loc = pos;
-              Err.error_text = "view formula does not entail supplied invariant\n";} in ()
-                                                                                            (* print_string ("\nAstsimp.ml: bef error") *)
+              Err.error_text = "view formula does not entail supplied invariant\n";
+          } in ()
+    (* print_string ("\nAstsimp.ml: bef error") *)
     )
   else ();
   if !Globals.print_x_inv && (n = 0)
@@ -5701,9 +5703,9 @@ and try_unify_view_type_args prog c vdef v ies stab pos =
   let (vt_u,tmp_r) = List.partition (fun (ty,_) -> ty==UNK) tmp_r in
   if (Gen.is_empty vt_u)
   then
-    let pr_exp = pr_list Iprinter.string_of_formula_exp in
-    let pr_ty = pr_list (pr_pair string_of_typ pr_id) in
-    let pr_out = pr_list (pr_pair string_of_spec_var_kind pr_id) in
+   (* let pr_exp = pr_list Iprinter.string_of_formula_exp in *)
+   (* let pr_ty = pr_list (pr_pair string_of_typ pr_id) in *)
+   (* let pr_out = pr_list (pr_pair string_of_spec_var_kind pr_id) in *)
     (* let helper e t = Gen.Debug.no_2 "WN-helper1" pr_exp pr_ty pr_out helper e t in *)
     let _ = (List.map (fun (t, n) -> gather_type_info_var n stab (t) pos) tmp_r) in
     ()
