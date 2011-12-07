@@ -1,0 +1,36 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+infer [x] n=0 & x=y  |- y::ll<n>.
+// expected pre: x::ll<n31> & n31=n
+// expected infer_vars : [n31]
+// expected residue: n31=n & n=0 & x=y & n31>=0
+
+print residue.
+/*
+
+infer_heap_nodes
+infer var: [x]
+new infer var: [inf_n_31]
+root: Some(y)
+rhs node:  y::ll<n_28>[Orig][LHSCase]
+renamed rhs node:  y::ll<inf_n_31>[Orig][LHSCase]
+root in iv: true
+
+Here, root_in_iv indicates that root is
+in the infer set.
+
+New heap node to add to LHS is:
+    y::ll<inf_n_31>
+New infer var is:
+    [inf_n_31]
+
+
+*/
