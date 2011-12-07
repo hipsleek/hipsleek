@@ -1438,7 +1438,7 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
 and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
   let ps = MG_Constr_AuS.constr_of_atom_list ante_disj in
   let f = MG_Slice_AuS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
-  let r = MG_AuS.get_ctr 1 f ps in
+  let r = MG_AuS.get_ctr_n 1 f ps in
 
   let n_ante = MG_Slice_AuS.atom_of_slice r in
 	  (*let fv = fv conseq in 
@@ -1456,8 +1456,13 @@ and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imp
   r)
 
 and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
-  let (nlv, lv) = fv_with_slicing_label conseq in
-  let n_ante = pick_relevant_lhs_constraints !opt_imply (nlv, lv) ante_disj in
+  (*let (nlv, lv) = fv_with_slicing_label conseq in
+  let n_ante = pick_relevant_lhs_constraints !opt_imply (nlv, lv) ante_disj in*)
+
+  let ps = MG_Constr_AnS.constr_of_atom_list ante_disj in
+  let f = MG_Slice_AnS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
+  let r = MG_AnS.get_ctr f ps in
+  let n_ante = MG_Slice_AnS.atom_of_slice r in
 
   (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
 

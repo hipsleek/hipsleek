@@ -120,7 +120,9 @@ sig
   (* split_by_fv is used in Quantifier pushing *)
   val split_by_fv: spec_var list -> constr list -> slice list
 
-  val get_ctr: int -> slice -> constr list -> slice
+  val get_ctr_n: int -> slice -> constr list -> slice
+  val get_ctr: slice -> constr list -> slice
+
 end;;
 
 (* Implementation of Slicing Framework *)
@@ -179,15 +181,24 @@ struct
     let ls = Constr.get_label s in
     ALabel.rel_is_rel lf ls
   
-  let rec get_ctr (n: int) (f: slice) (ps: constr list) : slice =
+  let rec get_ctr_n (n: int) (f: slice) (ps: constr list) : slice =
     if (n = 0) then Slice.empty 
     else
       let rel_ctr, non_rel_ctr = List.partition (fun s -> is_relevant f s) ps in
       if rel_ctr = [] then Slice.empty
       else
         let r1 = merge_constr_by_slice f rel_ctr in
-        let r2 = get_ctr (n-1) r1 non_rel_ctr in
+        let r2 = get_ctr_n (n-1) r1 non_rel_ctr in
         Slice.merge r1 r2
+
+  let rec get_ctr (f: slice) (ps: constr list) : slice =
+    let rel_ctr, non_rel_ctr = List.partition (fun s -> is_relevant f s) ps in
+    if rel_ctr = [] then Slice.empty
+    else
+      let r1 = merge_constr_by_slice f rel_ctr in
+      let r2 = get_ctr r1 non_rel_ctr in
+      Slice.merge r1 r2
+
 end;;
 
 (* Syntactic Label for Automatic Slicing *)
@@ -258,7 +269,12 @@ struct
       (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
 
   (* For IsRelevant meta-predicate *)
-  let rel_is_rel (l1: t) (l2: t) = true
+  let rel_is_rel (q: t) (x: t) = 
+    let v_q = (fst q) @ (snd q) in
+    let sv_x = fst x in
+    let wv_x = snd x in
+    (Gen.BList.overlap_eq eq_spec_var v_q sv_x) ||
+    (sv_x = [] && (Gen.BList.subset_eq eq_spec_var wv_x v_q))
 
   (* Two label are relevant with respect to vl 
    * if they share some common variables in vl *)
