@@ -472,7 +472,7 @@ let run_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formu
   in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
 
-  let ctx = Solver.init_vars ctx vars in 
+  let ctx = Inf.init_vars ctx vars in 
   
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
