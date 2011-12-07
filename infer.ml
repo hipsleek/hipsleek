@@ -12,17 +12,42 @@ module MCP = Mcpure
 let no_infer estate = (estate.es_infer_vars == [])
 
 let is_inferred_pre estate = 
-  let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_heap)) in
+  let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in
   if r>0 then true else false
 
+let rec is_inferred_pre_ctx ctx = 
+  match ctx with
+  | Ctx estate -> is_inferred_pre estate 
+  | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
 
-let rec collect_pre_pure ctx = match ctx with
+let is_inferred_pre_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> false
+  | SuccCtx lst -> List.exists is_inferred_pre_ctx lst
+
+(* let rec is_inferred_pre_list_context = match ctx with *)
+(*   | Ctx estate -> is_inferred_pre estate  *)
+(*   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2) *)
+
+let rec collect_pre_pure ctx = 
+  match ctx with
   | Ctx estate -> estate.es_infer_pure 
   | OCtx (ctx1, ctx2) -> (collect_pre_pure ctx1) @ (collect_pre_pure ctx2) 
 
-let rec collect_pre_heap ctx = match ctx with
+let rec collect_pre_heap ctx = 
+  match ctx with
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
+let collect_pre_heap_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx lst -> List.concat (List.map collect_pre_heap lst)
+
+let collect_pre_pure_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx lst -> List.concat (List.map collect_pre_pure lst)
 
 let rec init_vars ctx vars = match ctx with
   | Ctx estate -> Ctx {estate with es_infer_vars = vars}

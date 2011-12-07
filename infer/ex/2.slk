@@ -7,9 +7,9 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
-infer [y] true |- y::node<a,b>.
-
+//infer [y] true |- y::node<a,b>.
 //infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
+infer [y] true |- y::ll<n>.
 
 
 //infer [x] n=0 & x=y  |- y::ll<n>.

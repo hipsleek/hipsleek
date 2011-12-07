@@ -531,8 +531,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   flush stdout;
   let res =
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
-    else ((not (CF.isFailCtx rs)))
-  in
+    else ((not (CF.isFailCtx rs))) in 
   (res, rs)
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -565,12 +564,19 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
 
 let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
   let _ = (print_entail_result valid residue num_id) in
-  if valid then
-    let pr = Inf.extract_pre_list_context residue in
-    match pr with
-      | None -> () (* No precondition inferred *)
-      | Some f -> print_endline ("Pre: "^(Cprinter.string_of_formula f))
-      
+  let rs = residue in
+  if (valid && Inf.is_inferred_pre_list_context rs) then
+    begin
+      let lh = Inf.collect_pre_heap_list_context rs in
+      let lp = Inf.collect_pre_pure_list_context rs in
+      print_endline ("Inferred Heap:"^(pr_list Cprinter.string_of_h_formula lh));    
+      print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
+    end
+    (* let pr = Inf.extract_pre_list_context residue in *)
+    (* match pr with *)
+    (*   | None -> () (\* No precondition inferred *\) *)
+    (*   | Some f -> print_endline ("Pre: "^(Cprinter.string_of_formula f)) *)
+     
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
