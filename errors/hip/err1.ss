@@ -9,6 +9,6 @@ requires index >=0 & index <3
   else index = index +2;
 
   i = index;
-  dprint;
+  //dprint;
   return i;
 }

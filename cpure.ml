@@ -30,7 +30,7 @@ let is_self_spec_var sv = match sv with
 
 
 type formula =
-  | BForm of (b_formula  *(formula_label option))
+  | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option)* loc)
@@ -1497,7 +1497,7 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
         if (var_in_target v sst) then
           let fresh_v = fresh_spec_var v in
           Exists  (fresh_v, apply_subs sst (apply_subs [(v, fresh_v)] qf), lbl, pos)
-        else Exists  (v, apply_subs sst qf, lbl, pos)
+        else Exists (v, apply_subs sst qf, lbl, pos)
 
 
 (* cannot change to a let, why? *)
@@ -2373,7 +2373,9 @@ and elim_exists_with_ineq (f0: formula): formula =
           mkForall [qvar] eqf lbl pos
     | BForm _ -> f0
 
-
+and elim_exists (f0 : formula) : formula =
+  let pr = !print_formula in
+  Gen.Debug.no_1 "elim_exists" pr pr elim_exists_x f0
 
 
 
@@ -2439,9 +2441,10 @@ and elim_exists_x (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
+(*
 and elim_exists (f0 : formula) : formula = 
   Gen.Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
-
+*)
 (*
 add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
 add_gte_0@144 EXIT out : exists(b_113:0<=b_113 & 
@@ -4015,81 +4018,81 @@ let map_b_formula_arg (bf: b_formula) (arg: 'a) (f_bf, f_e) f_arg : b_formula =
   fst (trans_b_formula bf arg new_f f_arg voidf)
 	
 let transform_b_formula f (e:b_formula) :b_formula = 
-	let (f_b_formula, f_exp) = f in
-	let r =  f_b_formula e in 
-	match r with
+  let (f_b_formula, f_exp) = f in
+  let r =  f_b_formula e in 
+  match r with
 	| Some e1 -> e1
 	| None  ->
 	  let (pf,il) = e in
 	  let npf = match pf with	  
-	  | BConst _
-	  | BVar _ 
-	  | BagMin _ 
-	  | BagMax _ -> pf
-	  | Lt (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Lt (ne1,ne2,l)
-	  | Lte (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Lte (ne1,ne2,l)
-	  | Gt (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Gt (ne1,ne2,l)
-	  | Gte (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Gte (ne1,ne2,l)
-	  | Eq (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Eq (ne1,ne2,l)
-	  | Neq (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		Neq (ne1,ne2,l)
-	  | EqMax (e1,e2,e3,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		let ne3 = transform_exp f_exp e3 in
-		EqMax (ne1,ne2,ne3,l)	  
-	  | EqMin (e1,e2,e3,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		let ne3 = transform_exp f_exp e3 in
-		EqMin (ne1,ne2,ne3,l)
-		  (* bag formulas *)
-	  | BagIn (v,e,l)->
-		let ne1 = transform_exp f_exp e in
-		BagIn (v,ne1,l)
-	  | BagNotIn (v,e,l)->
-		let ne1 = transform_exp f_exp e in
-		BagNotIn (v,ne1,l)
-	  | BagSub (e1,e2,l) ->
-		let ne1 = transform_exp f_exp e1 in
-		let ne2 = transform_exp f_exp e2 in
-		BagSub (ne1,ne2,l)
-    | ListIn (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListIn (ne1,ne2,l)
-    | ListNotIn (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListNotIn (ne1,ne2,l)
-    | ListAllN (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListAllN (ne1,ne2,l)
-    | ListPerm (e1,e2,l) ->
-	    let ne1 = transform_exp f_exp e1 in
-      let ne2 = transform_exp f_exp e2 in
-      ListPerm (ne1,ne2,l)
+		| BConst _
+		| BVar _ 
+		| BagMin _ 
+		| BagMax _ -> pf
+		| Lt (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Lt (ne1,ne2,l)
+		| Lte (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Lte (ne1,ne2,l)
+		| Gt (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Gt (ne1,ne2,l)
+		| Gte (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Gte (ne1,ne2,l)
+		| Eq (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Eq (ne1,ne2,l)
+		| Neq (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  Neq (ne1,ne2,l)
+		| EqMax (e1,e2,e3,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  let ne3 = transform_exp f_exp e3 in
+		  EqMax (ne1,ne2,ne3,l)	  
+		| EqMin (e1,e2,e3,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  let ne3 = transform_exp f_exp e3 in
+		  EqMin (ne1,ne2,ne3,l)
+	  (* bag formulas *)
+		| BagIn (v,e,l)->
+		  let ne1 = transform_exp f_exp e in
+		  BagIn (v,ne1,l)
+		| BagNotIn (v,e,l)->
+		  let ne1 = transform_exp f_exp e in
+		  BagNotIn (v,ne1,l)
+		| BagSub (e1,e2,l) ->
+		  let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  BagSub (ne1,ne2,l)
+		| ListIn (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListIn (ne1,ne2,l)
+		| ListNotIn (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListNotIn (ne1,ne2,l)
+		| ListAllN (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListAllN (ne1,ne2,l)
+		| ListPerm (e1,e2,l) ->
+	      let ne1 = transform_exp f_exp e1 in
+		  let ne2 = transform_exp f_exp e2 in
+		  ListPerm (ne1,ne2,l)
 		| RelForm (r, args, l) -> (* An Hoa *)
-			let nargs = List.map (transform_exp f_exp) args in
-			RelForm (r,nargs,l)
+		  let nargs = List.map (transform_exp f_exp) args in
+		  RelForm (r,nargs,l)
 	  in (npf,il)
 	  
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
@@ -4439,8 +4442,6 @@ let get_sub_debug s n m =
   let _ = print_string ("get_sub out:"^r^"\n") in
   r
 
-
-
 (* get args from a bform formula *)
 let get_bform_eq_args_aux conv (bf:b_formula) =
   let (pf,_) = bf in
@@ -4458,8 +4459,8 @@ let get_bform_eq_args (bf:b_formula) =
   get_bform_eq_args_aux (fun x -> x) bf
 
 let mk_sp_const (i:int) = 
-          let n= const_prefix^(string_of_int i)
-          in SpecVar ((Int), n , Unprimed) 
+  let n= const_prefix^(string_of_int i)
+  in SpecVar ((Int), n , Unprimed) 
 
 let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
   match e with
@@ -5857,7 +5858,8 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
 (* Forced Slicing                                  *)	
 (*=================================================*)
 	
-(* For assigning <IL> fields after doing simplify *)
+(* For assigning <IL> fields after doing simplify  
+   Used by TP.simplify to recover <IL> information *)
 let rec break_formula (f: formula) : b_formula list =
   match f with
 	| BForm (bf, _) -> [bf]

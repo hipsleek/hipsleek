@@ -551,11 +551,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let _ = PTracer.log_proof prf in
 
                   (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
-			      
+ 
                   if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs in	        
-                
+                  rs in
                 (* Call check_pre_post with debug information *)
                 let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
@@ -820,6 +819,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
+	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
     check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin

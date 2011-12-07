@@ -719,6 +719,12 @@ struct
     else Error.report_error {Error.error_loc = Globals.no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
+  let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
+    let b = is_one2one f (get_elems s) in
+    if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
+    else Error.report_error {Error.error_loc = Globals.no_pos; 
+							 Error.error_text = ("rename_eset : f is not 1-to-1 map")}
+
   (* s - from var; t - to var *)
   let norm_subs_eq (subs:epair) : epair =
     let rec add (f,t) acc = match acc with
@@ -735,16 +741,16 @@ struct
     let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
     eqlst
 
-let rename_eset_allow_clash (f:elem -> elem) (s:emap) : emap =
-  let sl = get_elems s in
-  let tl = List.map f sl in
-  if (BList.check_no_dups_eq eq tl) then
-    List.map (fun (e,k) -> (f e,k)) s
-  else
-  let s1 = List.combine sl tl in
-  let e2= norm_subs_eq s1 in
-  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
-    List.map (fun (e,k) -> (f e,k)) ns
+  let rename_eset_allow_clash (f:elem -> elem) (s:emap) : emap =
+	let sl = get_elems s in
+	let tl = List.map f sl in
+	if (BList.check_no_dups_eq eq tl) then
+      List.map (fun (e,k) -> (f e,k)) s
+	else
+	  let s1 = List.combine sl tl in
+	  let e2= norm_subs_eq s1 in
+	  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
+      List.map (fun (e,k) -> (f e,k)) ns
 
 end;;
 
@@ -835,7 +841,7 @@ struct
   (*     let _ = print_string (s^" out :"^(pr_o r)^"\n") in *)
   (*     r *)
 
-  let ho_aux lz (loop_d:bool) (test:'z -> bool) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+  let ho_aux lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
     let pr_args xs =
       let rec helper (i:int) args = match args with
         | [] -> ()
@@ -848,6 +854,25 @@ struct
           if (a1=(List.nth args (i-1))) then helper xs
           else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in
       helper xs in
+    let (test,pr_o) = match g with
+      | None -> (test,pr_o)
+      | Some g -> 
+            let res = ref (None:(string option)) in
+            let new_test z =
+              (try
+                let r = g e in
+                let rs = pr_o r in              
+                if String.compare (pr_o z) rs==0 then false
+                else (res := Some rs; true)
+              with ex ->  
+                  (res := Some (" OLD COPY : EXIT Exception"^(Printexc.to_string ex)^"!\n");
+                  true)) in
+            let new_pr_o x = (match !res with
+              | None -> pr_o x
+              | Some s -> ("DIFFERENT RESULT from PREVIOUS METHOD"^
+                    ("\n PREV :"^s)^
+                    ("\n NOW :"^(pr_o x)))) in
+            (new_test, new_pr_o) in
     let s,h = push_call s in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
     flush stdout;
@@ -876,31 +901,33 @@ struct
       | b::bs, (i,s)::xs -> if b then (i,s)::(hp bs xs) else (hp bs xs) in
     hp bs xs
 
-  let ho_1_opt_aux (flags:bool list) (loop_d:bool) (test:'z -> bool) (s:string) (pr1:'a->string) (pr_o:'z->string)  (f:'a -> 'z) (e1:'a) : 'z =
+  let ho_1_opt_aux (flags:bool list) (loop_d:bool) (test:'z -> bool) g (s:string) (pr1:'a->string) (pr_o:'z->string)  (f:'a -> 'z) (e1:'a) : 'z =
     let a1 = pr1 e1 in
     let lz = choose flags [(1,lazy (pr1 e1))] in
     let f  = f in
-    ho_aux lz loop_d test s [a1] pr_o  f e1
+    ho_aux lz loop_d test g s [a1] pr_o  f  e1
 
 
-  let ho_2_opt_aux (flags:bool list) (loop_d:bool) (test:'z -> bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string)  (f:'a -> 'b -> 'z) 
+  let ho_2_opt_aux (flags:bool list) (loop_d:bool) (test:'z -> bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string)  (f:'a -> 'b -> 'z) 
         (e1:'a) (e2:'b) : 'z =
     let a1 = pr1 e1 in
     let a2 = pr2 e2 in
     let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2))] in
     let f  = f e1 in
-    ho_aux lz loop_d test s [a1;a2] pr_o f e2
+    let g  = match g with None -> None | Some g -> Some (g e1) in
+    ho_aux lz loop_d test g s [a1;a2] pr_o f e2
 
-  let ho_3_opt_aux  (flags:bool list) (loop_d:bool) (test:'z -> bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string)  (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+  let ho_3_opt_aux  (flags:bool list) (loop_d:bool) (test:'z -> bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string)  (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
     let a1 = pr1 e1 in
     let a2 = pr2 e2 in
     let a3 = pr3 e3 in
     let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3))] in
     let f  = f e1 e2 in
-    ho_aux lz loop_d test s [a1;a2;a3] pr_o f e3
+    let g  = match g with None -> None | Some g -> Some (g e1 e2) in
+    ho_aux lz loop_d test g s [a1;a2;a3] pr_o f e3
 
 
-  let ho_4_opt_aux (flags:bool list) (loop_d:bool) (test:'z->bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
+  let ho_4_opt_aux (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
         (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
     let a1 = pr1 e1 in
     let a2 = pr2 e2 in
@@ -908,10 +935,11 @@ struct
     let a4 = pr4 e4 in
     let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3)); (4,lazy (pr4 e4))] in
     let f  = f e1 e2 e3 in
-    ho_aux lz loop_d test s [a1;a2;a3;a4] pr_o f e4
+    let g  = match g with None -> None | Some g -> Some (g e1 e2 e3) in
+    ho_aux lz loop_d test g s [a1;a2;a3;a4] pr_o f e4
 
 
-  let ho_5_opt_aux (flags:bool list) (loop_d:bool) (test:'z -> bool)  (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+  let ho_5_opt_aux (flags:bool list) (loop_d:bool) (test:'z -> bool)  g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
         (pr5:'e->string) (pr_o:'z->string) 
         (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
     let a1 = pr1 e1 in
@@ -921,10 +949,11 @@ struct
     let a5 = pr5 e5 in
     let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3)); (4,lazy (pr4 e4)); (5,lazy (pr5 e5))] in
     let f  = f e1 e2 e3 e4 in
-    ho_aux lz loop_d test s [a1;a2;a3;a4;a5] pr_o f e5
+    let g  = match g with None -> None | Some g -> Some (g e1 e2 e3 e4) in
+    ho_aux lz loop_d test g s [a1;a2;a3;a4;a5] pr_o f e5
 
 
-  let ho_6_opt_aux (flags:bool list) (loop_d:bool) (test:'z->bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+  let ho_6_opt_aux (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
         (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) 
         (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
     let a1 = pr1 e1 in
@@ -935,35 +964,43 @@ struct
     let a6 = pr6 e6 in
     let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3)); (4,lazy (pr4 e4)); (5,lazy (pr5 e5)); (6,lazy (pr6 e6))] in
     let f  = f e1 e2 e3 e4 e5 in
-    ho_aux lz loop_d test s [a1;a2;a3;a4;a5;a6] pr_o f e6
+    let g  = match g with None -> None | Some g -> Some (g e1 e2 e3 e4 e5) in
+    ho_aux lz loop_d test g s [a1;a2;a3;a4;a5;a6] pr_o f e6
 
-  let ho_1_opt f = ho_1_opt_aux [] false f
-  let ho_2_opt f = ho_2_opt_aux [] false f
-  let ho_3_opt f = ho_3_opt_aux [] false f
-  let ho_4_opt f = ho_4_opt_aux [] false f
-  let ho_5_opt f = ho_5_opt_aux [] false f
-  let ho_6_opt f = ho_6_opt_aux [] false f
+  let ho_1_opt f = ho_1_opt_aux [] false f None
+  let ho_2_opt f = ho_2_opt_aux [] false f None
+  let ho_3_opt f = ho_3_opt_aux [] false f None
+  let ho_4_opt f = ho_4_opt_aux [] false f None
+  let ho_5_opt f = ho_5_opt_aux [] false f None
+  let ho_6_opt f = ho_6_opt_aux [] false f None
 
-  let ho_1 s = ho_1_opt_aux [] false (fun _ -> true) s
-  let ho_2 s = ho_2_opt_aux [] false (fun _ -> true) s
-  let ho_3 s = ho_3_opt_aux [] false (fun _ -> true) s
-  let ho_4 s = ho_4_opt_aux [] false (fun _ -> true) s
-  let ho_5 s = ho_5_opt_aux [] false (fun _ -> true) s
-  let ho_6 s = ho_6_opt_aux [] false (fun _ -> true) s
+  let ho_1 s = ho_1_opt_aux [] false (fun _ -> true) None s
+  let ho_2 s = ho_2_opt_aux [] false (fun _ -> true) None s
+  let ho_3 s = ho_3_opt_aux [] false (fun _ -> true) None s
+  let ho_4 s = ho_4_opt_aux [] false (fun _ -> true) None s
+  let ho_5 s = ho_5_opt_aux [] false (fun _ -> true) None s
+  let ho_6 s = ho_6_opt_aux [] false (fun _ -> true) None s
 
-  let ho_eff_1 s l = ho_1_opt_aux l false (fun _ -> true) s
-  let ho_eff_2 s l = ho_2_opt_aux l false (fun _ -> true) s
-  let ho_eff_3 s l = ho_3_opt_aux l false (fun _ -> true) s
-  let ho_eff_4 s l = ho_4_opt_aux l false (fun _ -> true) s
-  let ho_eff_5 s l = ho_5_opt_aux l false (fun _ -> true) s
-  let ho_eff_6 s l = ho_6_opt_aux l false (fun _ -> true) s
+  let ho_1_cmp g = ho_1_opt_aux [] false (fun _ -> true) (Some g) 
+  let ho_2_cmp g = ho_2_opt_aux [] false (fun _ -> true) (Some g) 
+  let ho_3_cmp g = ho_3_opt_aux [] false (fun _ -> true) (Some g) 
+  let ho_4_cmp g = ho_4_opt_aux [] false (fun _ -> true) (Some g) 
+  let ho_5_cmp g = ho_5_opt_aux [] false (fun _ -> true) (Some g) 
+  let ho_6_cmp g = ho_6_opt_aux [] false (fun _ -> true) (Some g) 
 
-  let loop_1 s = ho_1_opt_aux [] true (fun _ -> true) s
-  let loop_2 s = ho_2_opt_aux [] true (fun _ -> true) s
-  let loop_3 s = ho_3_opt_aux [] true (fun _ -> true) s
-  let loop_4 s = ho_4_opt_aux [] true (fun _ -> true) s
-  let loop_5 s = ho_5_opt_aux [] true (fun _ -> true) s
-  let loop_6 s = ho_6_opt_aux [] true (fun _ -> true) s
+  let ho_eff_1 s l = ho_1_opt_aux l false (fun _ -> true) None s
+  let ho_eff_2 s l = ho_2_opt_aux l false (fun _ -> true) None s
+  let ho_eff_3 s l = ho_3_opt_aux l false (fun _ -> true) None s
+  let ho_eff_4 s l = ho_4_opt_aux l false (fun _ -> true) None s
+  let ho_eff_5 s l = ho_5_opt_aux l false (fun _ -> true) None s
+  let ho_eff_6 s l = ho_6_opt_aux l false (fun _ -> true) None s
+
+  let loop_1 s = ho_1_opt_aux [] true (fun _ -> true) None s
+  let loop_2 s = ho_2_opt_aux [] true (fun _ -> true) None s
+  let loop_3 s = ho_3_opt_aux [] true (fun _ -> true) None s
+  let loop_4 s = ho_4_opt_aux [] true (fun _ -> true) None s
+  let loop_5 s = ho_5_opt_aux [] true (fun _ -> true) None s
+  let loop_6 s = ho_6_opt_aux [] true (fun _ -> true) None s
 
   let loop_1_no _ _ _ s = s
   let loop_2_no _ _ _ _ s = s
@@ -972,7 +1009,6 @@ struct
   let loop_5_no _ _ _ _ _ _ _ s = s
   let loop_6_no _ _ _ _ _ _ _ _ s = s
 
-  
   let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str
   let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str
   let ho_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_3 str
@@ -993,6 +1029,13 @@ struct
   let no_4 _ _ _ _ _ _ f = f
   let no_5 _ _ _ _ _ _ _ f = f
   let no_6 _ _ _ _ _ _ _ _ f = f
+
+  let no_1_cmp _ _ _ _ f = f
+  let no_2_cmp _ _ _ _ _ f = f
+  let no_3_cmp _ _ _ _ _ _ f = f
+  let no_4_cmp _ _ _ _ _ _ _ f = f
+  let no_5_cmp _ _ _ _ _ _ _ _ f = f
+  let no_6_cmp _ _ _ _ _ _ _ _ _ f = f
 
   let no_eff_1 _ _ _ _ f = f
   let no_eff_2 _ _ _ _ _ f = f

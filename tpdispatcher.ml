@@ -397,7 +397,9 @@ let set_tp tp_str =
      prover_str := "mona"::!prover_str;)
   else if tp_str = "coq" then
 	(tp := Coq; prover_str := "coqtop"::!prover_str;)
-  else if (String.sub tp_str 0 2) = "z3" then
+  (*else if tp_str = "z3" then 
+	(tp := Z3; prover_str := "z3"::!prover_str;)*)
+   else if (String.sub tp_str 0 2) = "z3" then
 	(Smtsolver.smtsolver_name := tp_str; tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
     (tp := Redlog; prover_str := "redcsl"::!prover_str;)
@@ -686,13 +688,13 @@ let filtering_flag = ref true
 let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
   ef
-
+	
 let elim_exists (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Gen.Debug.no_1 "elim_exists" pr pr elim_exists f
-
+  
 let assumption_filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
- (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
+  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
     (CP.filter_ante ante conseq, conseq)
 	(* let fvar = CP.fv conseq in *)
@@ -759,7 +761,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
               (Omega.is_sat f sat_no);
             end
     | CvcLite -> Cvclite.is_sat f sat_no
-    | Cvc3 -> 
+  | Cvc3 -> 
           begin
             match !provers_process with
               |Some proc -> Cvc3.is_sat_increm !provers_process f sat_no
@@ -881,7 +883,6 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
         r
     in res
 
-
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
@@ -916,7 +917,7 @@ let simplify (f : CP.formula) : CP.formula =
     if !external_prover then 
       match Netprover.call_prover (Simplify f) with
           Some res -> res
-        | None -> f
+          | None -> f
     else
       (Gen.Profiling.push_time "simplify";
       try
@@ -985,23 +986,26 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (Omega.simplify f);
                   end
-          | _ -> Omega.simplify f in
+         | _ -> Omega.simplify f in
         Gen.Profiling.pop_time "simplify";
-	    (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
+
+            (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
 	    (* To recreate <IL> relation after simplifying *)
-	    (*let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in*)
-	    if !Globals.do_slicing then
+           (*let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in*)
+          if !Globals.do_slicing then
 	      let rel_vars_lst =
 		    let bfl = CP.break_formula f in
 		    (*let bfl_no_il = List.filter
+
 			  (fun (_,il) -> match il with
 			  | None -> true
 			  | _ -> false) bfl in*)
-		    (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
+                  (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
 		  in
 		  CP.set_il_formula_with_dept_list r rel_vars_lst
 	    else r
       with | _ -> f)
+
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
@@ -1046,7 +1050,6 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   (*   end); *)
   let pf = Cprinter.string_of_pure_formula in
   Gen.Debug.no_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
-
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
@@ -1164,7 +1167,7 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 					suppress_imply_out := h;
 					suppress_imply_output_stack := t;
 				end
-  
+
 let tp_imply_no_cache ante conseq imp_no timeout process =	
 	let _ = if should_output () then
 		begin
@@ -1186,7 +1189,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
                 (* Cvc3.imply ante conseq imp_no *)
       end
   | Z3 -> Smtsolver.imply ante conseq timeout
-    | Isabelle -> Isabelle.imply ante conseq imp_no
+  | Isabelle -> Isabelle.imply ante conseq imp_no
   | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
@@ -1218,21 +1221,21 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         begin
           (called_prover :="omega "; Omega.imply ante conseq imp_no timeout);
         end
-    | Mona | MonaH -> Mona.imply ante conseq imp_no 
-    | CO -> 
-          begin
+  | Mona | MonaH -> Mona.imply ante conseq imp_no 
+  | CO -> 
+      begin
         let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
-            match result1 with
-              | Some f -> f
-              | None -> (* CVC Lite is not sure is this case, try Omega *)
-                    omega_count := !omega_count + 1;
-                    Omega.imply ante conseq imp_no timeout
-          end
-    | CM -> 
-          begin
-            if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-              Mona.imply ante conseq imp_no
-            else
+        match result1 with
+        | Some f -> f
+        | None -> (* CVC Lite is not sure is this case, try Omega *)
+            omega_count := !omega_count + 1;
+            Omega.imply ante conseq imp_no timeout
+      end
+  | CM -> 
+      begin
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          Mona.imply ante conseq imp_no
+        else
               let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
               match result1 with
                 | Some f -> f

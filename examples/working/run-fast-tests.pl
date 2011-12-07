@@ -43,7 +43,7 @@ else
 if($prover){
 	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
-		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'zm' => 'zm');
+		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm');
 	if (!exists($provers{$prover})){
         print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
@@ -632,7 +632,15 @@ $output_file = "log";
               ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
-              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]]
+              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
+    "errors"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
+			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
+			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
+			   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
+			   ["err6.slk","","must.Valid.may.may.must.Valid."],
+			   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
+               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
 
     );
 
@@ -760,11 +768,18 @@ sub sleek_process_file  {
   foreach $param (@param_list)
   {
       my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $err = 0;
+      if ("$param" =~ "errors") {
+          print "Starting sleek must/may errors tests:\n";
+          $exempl_path_full = "$exec_path/errors";
+          $err = 1;
+      }
       if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
-      $exempl_path_full = "$exempl_path/sleek";
+      
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
+          $exempl_path_full = "$exempl_path/sleek";
       }else {
           $exempl_path_full = "$exempl_path_full/$param";
           print "Starting sleek-$param tests:\n";
@@ -790,8 +805,21 @@ sub sleek_process_file  {
                     if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
                     elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
                 }elsif($line =~ m/Entail/){
-                    if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
-                    elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                    if( $err == 1) {
+                        $i = index($line, "Valid. (bot)",0);
+                        $h = index($line, "Valid.",0);
+                        $j = index($line, "Fail.(must)",0);
+                        $k = index($line, "Fail.(may)",0);
+                        #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                        if($i >= 0) { $r = $r ."bot."; }
+                        elsif($h >= 0) { $r = $r ."Valid."; }
+                        elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                        elsif($k >= 0)  { $r = $r ."may.";}
+                    }
+                    else {
+                        if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                        elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                    }
                 }
             }
 			if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)))
@@ -806,3 +834,4 @@ sub sleek_process_file  {
 		}
 	}
 }
+

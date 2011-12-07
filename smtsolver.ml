@@ -13,7 +13,7 @@ let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
 let print_ty_sv = ref (fun (c:CP.spec_var) -> " printing not initialized")
 
 (***************************************************************
-                  GLOBAL VARIABLES & TYPES                      
+                  GLOBAL VARIABLES & TYPES
  **************************************************************)
 
 (* Types for relations and axioms*)
@@ -52,6 +52,7 @@ type formula_info = {
 		axioms             : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
 	}
 
+let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 
 (***************************************************************
             TRANSLATE CPURE FORMULA TO SMT FORMULA              
@@ -311,7 +312,7 @@ and compact_formula_info info =
 
 
 (***************************************************************
-                      AXIOMS AND RELATIONS                      
+                      AXIOMS AND RELATIONS
  **************************************************************)
 
 (* Interface function to add a new axiom *)
@@ -384,7 +385,7 @@ let add_relation rname rargs rform =
 	
 
 (***************************************************************
-                            INTERACTION                         
+                            INTERACTION
  **************************************************************)
 
 type sat_type = 
@@ -407,6 +408,17 @@ let string_of_smt_output output =
   (String.concat "\n" output.original_output_text)
 
 (* Collect all Z3's output into a list of strings *)
+let rec icollect_output chn accumulated_output : string list =
+	let output = try
+					 let line = input_line chn in
+                    (* let _ = print_endline ("locle2" ^ line) in*)
+                     if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
+					 icollect_output chn (accumulated_output @ [line])
+                    else accumulated_output @ [line]
+				with
+					| End_of_file -> accumulated_output in
+		output
+
 let rec collect_output chn accumulated_output : string list =
 	let output = try
 					let line = input_line chn in
@@ -419,15 +431,21 @@ let rec collect_output chn accumulated_output : string list =
 let sat_type_from_string r input=
 	if (r = "sat") then Sat
 	else if (r = "unsat") then UnSat
-	else 
+	else
 		try
              let _ = Str.search_forward (Str.regexp "unexpected") r 0 in
               (print_string "Z3 translation failure!";
               Error.report_error { Error.error_loc = no_pos; Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
             with
               | Not_found -> Unknown
-                    	
-let get_answer chn input =
+
+let iget_answer chn input=
+	let output = icollect_output chn [] in
+    let solver_sat_result = List.nth output (List.length output - 1) in
+	{ original_output_text = output;
+	  sat_result = sat_type_from_string solver_sat_result input; }
+
+let get_answer chn input=
 	let output = collect_output chn [] in
 	let solver_sat_result = List.nth output (List.length output - 1) in
 		{ original_output_text = output;
@@ -439,10 +457,7 @@ let remove_file filename =
 	with
 		| e -> ignore e
 
-type smtprover =
-	| Z3
-	| Cvc3
-	| Yices
+type smtprover = Z3
 
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
@@ -452,7 +467,7 @@ let imply_timeout = ref 15.0 *)
 let z3_sat_timeout_limit = 2.0
 let prover_pid = ref 0
 let prover_process = ref {
-	name = "smtsolver";
+	name = "z3";
 	pid = 0;
 	inchannel = stdin;
 	outchannel = stdout;
@@ -461,18 +476,39 @@ let prover_process = ref {
 
 let smtsolver_name = ref ("z3": string)
 
+let z3_call_count: int ref = ref 0
+let is_z3_running = ref false
+
+
+(***********)
+let test_number = ref 0
+let last_test_number = ref 0
+let log_all_flag = ref false
+let z3_restart_interval = ref (-1)
+let log_all = open_out ("allinput.z3")
+
+let path_to_z3 = "z3" (*"z3"*)
+let smtsolver_name = ref ("z3": string)
+(*let command_for prover ("z3", path_to_z3, [|"z3"; "-smt2"; infile; ("> "^ outfile)|] )*)
+
+let set_process (proc: Globals.prover_process_t) = 
+  prover_process := proc
+
+(*for z3-2.19*)
 let command_for prover =
-	match prover with
-	| Z3 -> (match !smtsolver_name with
-          | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
-          | "z3-3.2" -> ("z3-3.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
-		  | _ -> failwith "smtsolver, command_for: unexpected pattern"
+(*	match prover with
+	| Z3 -> *)
+  (match !smtsolver_name with
+    | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+    | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
     )
-	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
+(*	| Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
 	| Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
+*)
 
 (* Runs the specified prover and returns output *)
 let run st prover input timeout =
+  (*let _ = print_endline "z3-2.19" in*)
 	let out_stream = open_out infile in
     (*let _ = print_endline ("input: " ^ input) in*)
 	output_string out_stream input;
@@ -497,7 +533,110 @@ let run st prover input timeout =
 	remove_file infile;
 	remove_file outfile;
 		res
-		
+
+(*for z3-3.2*)
+let rec prelude () = ()
+(*
+let init_str = "(set-option :PULL_NESTED_QUANTIFIERS true)\n" in
+   output_string (!prover_process.outchannel) init_str;
+   flush (!prover_process.outchannel);
+*)
+(*
+  begin
+ (* let line = input_line (! prover_process.inchannel) in
+	  let _ = print_endline line in
+	(if !log_all_flag then
+          output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") ); *)
+  (*set logic*)
+   let init_str = "(set-logic AUFNIA)\n" in
+(set-option :PULL_NESTED_QUANTIFIERS true)
+   output_string (!prover_process.outchannel) init_str;
+   flush (!prover_process.outchannel);
+
+ (* let finished = ref false in
+  while not !finished do
+ *)
+ (*   let line = input_line (! prover_process.inchannel) in
+	  let _ = print_endline line in
+	(if !log_all_flag then
+          output_string log_all ("[z3.ml]: >> " ^ line ^ "\nz3 is running\n") );*)
+(*
+    if ((String.length line)>=0) then finished := true;
+  done
+*)
+ end
+*)
+
+(* start z3 system in a separated process and load redlog package *)
+and start() =
+  if not !is_z3_running then begin
+      print_string "Starting z3... \n"; flush stdout;
+      last_test_number := !test_number;
+      (*("z312", path_to_z3, [|path_to_z3; "-smt2";"-si"|])*)
+      let _ = if !smtsolver_name = "z3-2.19" then
+            Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
+          else
+           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"|]) set_process prelude
+      in
+      is_z3_running := true;
+   (*   let  _ = print_endline "locle: start" in ()*)
+  end
+
+(* stop Z3 system *)
+let stop () =
+  if !is_z3_running then begin
+    let num_tasks = !test_number - !last_test_number in
+    print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); flush stdout;
+    let _ = Procutils.PrvComms.stop !log_all_flag log_all !prover_process num_tasks Sys.sigkill (fun () -> ()) in
+    is_z3_running := false;
+  end
+
+(* restart Z3 system *)
+let restart reason =
+  if !is_z3_running then begin
+    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations ") in
+    Procutils.PrvComms.restart !log_all_flag log_all reason "z3" start stop
+  end
+  else begin
+    let _ = print_string (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations ") in ()
+    end
+
+
+(* send formula to z3 and receive result -true/false/unknown*)
+let check_formula f timeout =
+  (*  try*)
+  begin
+      if not !is_z3_running then start ()
+      else if (!z3_call_count = !z3_restart_interval) then
+        begin
+	        restart("Regularly restart:1 ");
+	        z3_call_count := 0;
+        end;
+      let fnc f = 
+        (*let _ = print_endline "check" in*)
+        let _ = incr z3_call_count in
+        (*due to global stack - incremental, push current env into a stack before working and
+        removing it after that. may be improved *)
+        let new_f =
+          "(push)\n" ^ f ^ "(pop)\n"
+        in
+        (*let _ = print_endline ("locle: check\n " ^ new_f) in*)
+        output_string (!prover_process.outchannel) new_f;
+        flush (!prover_process.outchannel);
+
+        iget_answer (!prover_process.inchannel) f
+      in
+      let fail_with_timeout () = 
+        restart ("[z3.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+        { original_output_text = []; sat_result = Unknown; } in
+      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
+      res
+  end
+
+let check_formula f timeout =
+  Gen.Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
+      check_formula f timeout
+
 
 (***************************************************************
    GENERATE SMT INPUT FOR IMPLICATION/SATISFIABILITY CHECKING   
@@ -533,6 +672,9 @@ let logic_for_formulas f1 f2 =
 
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
+  (*let _ = print_endline ("ante = " ^ (!print_pure ante)) in
+  let _ = print_endline ("cons = " ^ (!print_pure conseq)) in*)
+  
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in
 	let smt_var_decls = String.concat "" smt_var_decls in
@@ -597,9 +739,8 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
 	let conseq_fv = CP.fv conseq in
 	let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
 	let logic = logic_for_formulas ante conseq in
-	let res = match prover with
-		| Z3 ->	to_smt_v2 ante conseq logic all_fv info
-		| Cvc3 | Yices ->	to_smt_v1 ante conseq logic all_fv
+	let res = to_smt_v2 ante conseq logic all_fv info
+	(*	| Cvc3 | Yices ->	to_smt_v1 ante conseq logic all_fv*)
 	in res
 	
 	
@@ -791,8 +932,12 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
   if (should_run_smt) then
 	let input = to_smt ante (Some conseq) prover in
 	let _ = !set_generated_prover_input input in
-	let output = run "is_imply" prover input timeout in
-	let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
+        let output = if !smtsolver_name = "z3-2.19" then
+              run "is_imply" prover input timeout
+            else
+              check_formula input timeout
+        in
+        let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
 	let res = match output.sat_result with
 	  | Sat -> false
 	  | UnSat -> true
@@ -805,7 +950,6 @@ and smt_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprov
 	res
   else
 	res
-		
 and has_exists conseq = match conseq with
   | CP.Exists _ -> true
   | _ -> false
@@ -846,26 +990,44 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	(* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
+  let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
+		try let optr= (Omega.is_sat_with_check f sat_no) in
+        ( match optr with
+          | Some r -> (r, false)
+          | None -> (true, false)
+        )
+        with | _ -> (true, false)
+	else (false, true) in
+	if (should_run_smt) then
 	let input = to_smt f None prover in
-    (*let _ = print_endline ("smt_is_sat : " ^ input) in*)
-	let output = run "is_unsat" prover input timeout in
+(*    let new_input =
+    if (Cpure.contains_exists f) then
+      ("(set-option :mbqi true)\n" ^ input)
+    else input in *)
+	let output =
+      if !smtsolver_name = "z3-2.19" then run "is_unsat" prover input timeout
+      else check_formula input timeout
+    in
 	let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
-	(* let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in *)
+	let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in
 		res
+    else res
 
 (*let default_is_sat_timeout = 2.0*)
 
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   smt_is_sat f sat_no prover z3_sat_timeout_limit
 
-let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover): bool =
 	let pr = !print_pure in
 	Gen.Debug.no_1 "smt_is_sat" pr string_of_bool (fun _ -> smt_is_sat f sat_no prover) f
 
 (* see imply *)
-let is_sat f sat_no = smt_is_sat f sat_no Z3
+let is_sat f sat_no =
+ (*  let _ = print_endline "locle: sat" in*)
+  smt_is_sat f sat_no Z3
 
 let is_sat_with_check (pe : CP.formula) sat_no : bool option =
   CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
@@ -888,7 +1050,10 @@ let is_sat (pe : CP.formula) sat_no : bool =
 (**
  * To be implemented
  *)
-let simplify (f: CP.formula) : CP.formula = f
+let simplify (f: CP.formula) : CP.formula = (*f*)
+  (*let _ = print_endline "locle: simplify" in*)
+  try (Omega.simplify f) with | _ -> f
+
 
 let simplify (pe : CP.formula) : CP.formula =
   match (CP.do_with_check "" simplify pe)
