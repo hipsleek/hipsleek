@@ -8,7 +8,7 @@ class thread extends __Exc{
   int id
   }
 
-void fork(int id, ref int n)
+void fork1(int id, ref int n)
 requires true & flow __norm
   ensures eres::thread<id> &  n'=n+1 & flow thread;
 {
@@ -22,7 +22,7 @@ void incXY(ref int x,ref int y)
 {
   int id;
   try{
-  fork(id,x); // imitate x++;
+  fork1(id,x); // imitate x++;
   //at this point, need to create concurrent flows
   dprint;
   int abc;

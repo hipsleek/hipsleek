@@ -76,7 +76,7 @@ and ext_variance_formula =
 		formula_var_label : int option;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
 		formula_var_escape_clauses : Cpure.formula list;
-	  formula_var_continuation : struc_formula;
+	    formula_var_continuation : struc_formula;
 		formula_var_pos : loc
 	}
 
@@ -5656,10 +5656,10 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
       (substitute_flow_into_f !norm_flow_int c.es_formula) } )  in
   match cvar with
     | None -> ctx
-    | Some (cvt,cvn) ->        
+    | Some (cvt,cvn) ->
         if not(b_rez) then ctx
         else begin
-      	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (res_typ, cvn, Primed)) (CP.mkeRes res_typ) no_pos) no_pos in
+      	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (res_typ, cvn, Primed)) (CP.mkeRes res_typ) no_pos) no_pos in (*eres=cvn*)
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
       	  let ctx1 = push_exists_context [CP.mkeRes res_typ] ctx1 in
       	  if !elim_exists then elim_ex_fn ctx1 else  ctx1
@@ -5675,7 +5675,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
 (* convert entail state to ctx with nf flow *)
 let conv (c:entail_state) (nf(* :nflow *)) = (Ctx {c 
 with es_formula = 
-(substitute_flow_into_f nf c.es_formula) } )   
+(substitute_flow_into_f nf c.es_formula) } )
 
 let conv_lst (c:entail_state) (nf_lst(*: nflow list *)) = 
   match nf_lst with

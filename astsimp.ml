@@ -2726,7 +2726,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			            ( C.Catch{C.exp_catch_flow_type = (exlist # get_hash c_flow);
 			            C.exp_catch_flow_var = cfv;
 			            C.exp_catch_var = Some (Void,x);
-			            C.exp_catch_body = new_bd;																					   
+			            C.exp_catch_body = new_bd;
 			            C.exp_catch_pos = pos;},ct2) end
 			          else begin
 			            E.push_scope();
@@ -2742,7 +2742,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						  | _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
 					    C.exp_catch_flow_var = cfv;
 					    C.exp_catch_var = Some (ct,alpha);
-					    C.exp_catch_body = new_bd;																					   
+					    C.exp_catch_body = new_bd;
 					    C.exp_catch_pos = pos;
 					    } in (r,ct2) end
 		        | None ->  

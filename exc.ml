@@ -1061,5 +1061,5 @@ struct
   ;;
 end;;
 
-module GTable = ETABLE_NFLOW
+module GTable = ETABLE_DFLOW
 

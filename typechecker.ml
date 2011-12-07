@@ -117,6 +117,42 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   (* let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
   List.for_all do_spec_verification spec_list
 
+(*=======split_pre_post ->  ========*)
+(*TO DO: ECase*)
+and split_pre_post_ext (spec:CF.ext_formula) : (CF.struc_formula * CF.struc_formula) =
+  match spec with
+    | Cformula.EVariance e -> 
+        (*ignore EVariance*)
+        split_pre_post_struc e.CF.formula_var_continuation
+    | Cformula.EBase b -> 
+        let f = b.Cformula.formula_ext_base in
+        let pre,post = split_pre_post_struc b.CF.formula_ext_continuation in
+        let new_b = CF.EBase {b with CF.formula_ext_continuation=[]} in
+        (new_b::pre,post)
+    | Cformula.ECase c -> 
+        let _ = print_string "[split_pre_post_ext] Warning: not support ECase " in
+        ([spec],[])
+    | Cformula.EAssume _ -> ([],[spec])
+
+and split_pre_post_struc (specs:CF.struc_formula) : (CF.struc_formula * CF.struc_formula) =
+  match specs with
+    | [] -> ([],[])
+    | spec::rest -> 
+        let pre,post = split_pre_post_struc rest in
+        let pre1,post1 = split_pre_post_ext spec in
+        (pre1@pre,post1@post)
+
+and split_specs_x (specs:CF.struc_formula) : (CF.struc_formula * CF.struc_formula) =
+  split_pre_post_struc specs
+
+(*split pre/post of a spec*)
+(*TO DO: split multiple specs*)
+and split_specs (specs:CF.struc_formula) : (CF.struc_formula * CF.struc_formula) =
+  let pr (ls1,ls2) = ("\n ###pre= " ^ (Cprinter.string_of_struc_formula ls1) ^ "\n ###post=" ^ (Cprinter.string_of_struc_formula ls2)) in
+  Gen.Debug.ho_1 "split_specs" Cprinter.string_of_struc_formula pr
+      split_specs_x specs
+(*=======split_pre_post <- ========*)
+
 and check_exp prog proc ctx e0 label =
   let pr_pn x = x.proc_name in
   let pr = Cprinter.string_of_list_failesc_context in
@@ -479,6 +515,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	              let farg_types, farg_names = List.split proc.proc_args in
 	              let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	              let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) fargs farg_types in
+                  (*=======check_pre_post========*)
                   (* Internal function to check pre/post condition of the fork call. *)
 	              let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                     (* Termination: Stripping the "variance" feature from org_spec
@@ -549,7 +586,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     Debug.devel_pprint (to_print^"\n") pos;
 				    (* An Hoa : output the context and new spec before checking pre-condition *)
 				    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
-                    let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+
+                    (*entail pre and then post instead of both*)
+                    let pre,post = split_specs pre2 in
+                    let rs_pre, prf_pre = heap_entail_struc_list_failesc_context_init prog false true sctx pre pos pid in
+                    let rs, prf = heap_entail_struc_list_failesc_context_init prog false true rs_pre post pos pid in
+                    (*TO DO NEXT: entail pre-cond only, put post-cond into a concurrent flow*)
+
+                    (* let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in *)
 				    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                     let _ = PTracer.log_proof prf in
@@ -558,7 +602,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                     rs 
                   in
-
+                  (*=======check_pre_post - END ========*)
                   (* Call check_pre_post with debug information *)
                   let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
@@ -574,7 +618,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             				Prooftracer.push_pre e0;
                   (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
                         end else false in
-                  
                   let res = if (CF.isFailListFailescCtx ctx) then
 				        let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
                         ctx 
@@ -745,9 +788,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_unpack = un;(*true if it must get the new flow from the second element of the current flow pair*)
           exp_sharp_path_id = pid;
           exp_sharp_pos = pos})	-> 
-	          (* let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
-	          (* let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
-	          (* let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
+	          let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in
+	          let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in
+	          let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in
 	          let nctx = match v with 
 	            | Sharp_var (t,v) -> 
                         let t1 = (get_sharp_flow ft) in
@@ -787,11 +830,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      let cc = get_catch_of_exp cc in
               let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
 	          let ctx1 = check_exp prog proc ctx body post_start_label in
+              let _ = print_endline ("\ncheck_exp: Try: before pop_esc_level"^(Cprinter.string_of_list_failesc_context ctx1)) in
+              (*convert from*)
               let ctx2 = CF.pop_esc_level_list ctx1 pid in
+              let _ = print_endline ("check_exp: Try: after pop_esc_level_list"^(Cprinter.string_of_list_failesc_context ctx2)) in
               let ctx3 = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx2 in
+              let _ = print_endline ("check_exp: Try: after push_esc_level"^(Cprinter.string_of_list_failesc_context ctx3)) in
               let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
                 (fun c -> CF.add_path_id c (Some pid,0)) elim_exists_ctx ctx3 in
+              let _ = print_endline ("check_exp: Try: after splitter_failesc_context"^(Cprinter.string_of_list_failesc_context ctx4)) in
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
+              let _ = print_endline ("check_exp: Try: after catch_body"^(Cprinter.string_of_list_failesc_context ctx5)) in
               CF.pop_esc_level_list ctx5 pid
 	    | _ -> 
 	          failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
