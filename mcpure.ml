@@ -905,26 +905,25 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
   (* Simplify relevant constraints and form new memo groups *)
   let helper mg =
     let (to_simpl, rem_cons, rem_slice, rem_aset) = pick_rel_constraints mg.memo_group_slice mg.memo_group_cons mg.memo_group_aset in
-	let after_simpl = f_simp qv to_simpl pos in
-	let after_elim_trues = List.filter (fun c -> not (isConstTrue c)) (split_conjunctions after_simpl) in
-	
-	let n_memo_group_fv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv qv in
-	let n_memo_group_lv = 
-	  if !do_slicing then 
-	    Gen.BList.difference_eq eq_spec_var
-	      (Gen.BList.remove_dups_eq eq_spec_var mg.memo_group_linking_vars) qv
-	  else []
-	in
-	
-	let r = {
-      memo_group_fv = n_memo_group_fv;
-	  memo_group_linking_vars = n_memo_group_lv;
-	  memo_group_changed = true;
-	  memo_group_cons = rem_cons;
-	  memo_group_slice = rem_slice @ after_elim_trues;
-	  memo_group_aset = rem_aset;
-    } in
-	if do_split then split_mem_grp r else [r] 
+    let after_simpl = f_simp qv to_simpl pos in
+    let after_elim_trues = List.filter (fun c -> not (isConstTrue c)) (split_conjunctions after_simpl) in
+    let n_memo_group_fv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv qv in
+    let n_memo_group_lv = 
+      if !do_slicing then 
+        Gen.BList.difference_eq eq_spec_var
+          (Gen.BList.remove_dups_eq eq_spec_var mg.memo_group_linking_vars) qv
+      else []
+  in
+
+  let r = {
+    memo_group_fv = n_memo_group_fv;
+    memo_group_linking_vars = n_memo_group_lv;
+    memo_group_changed = true;
+    memo_group_cons = rem_cons;
+    memo_group_slice = rem_slice @ after_elim_trues;
+    memo_group_aset = rem_aset;
+  } in
+  if do_split then split_mem_grp r else [r] 
   in
   
   let _ = Gen.Profiling.push_time "push_exists_slicing" in
@@ -932,9 +931,9 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
   let rel_mg, non_rel_mg = List.partition (fun mg -> Gen.BList.overlap_eq eq_spec_var qv mg.memo_group_fv) f0 in
   let n_rel_mg = 
     if !do_slicing then (* Merge relevant constraints together - Soundness *)
-	  let l = MG_Constr_AnS.constr_of_atom_list rel_mg in
-	  let sl = MG_AnS.split_by_fv qv l in
-	  MF_AnS.memo_pure_of_mg_slice sl None
+      let l = MG_Constr_AnS.constr_of_atom_list rel_mg in
+      let sl = MG_AnS.split_by_fv qv l in
+      MF_AnS.memo_pure_of_mg_slice sl None
     else rel_mg
   in
   let res = (List.concat (List.map helper n_rel_mg)) @ non_rel_mg in
