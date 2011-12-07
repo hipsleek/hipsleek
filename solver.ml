@@ -612,7 +612,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list) = 
     match h0 with
       | DataNode ({h_formula_data_node = p;
-                   h_formula_data_perm = frac;
+        h_formula_data_perm = frac;
 		h_formula_data_pos = pos}) ->
             (* let i = fresh_int2 () in *)
             (*LDK: not check for alias*)
@@ -622,14 +622,14 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             (*LDK: add fractional invariant 0<f<=1, if applicable*)
             (match frac with
               | None ->
-	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , [])
+	                (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , [])
               | Some f ->
-                  let frac_inv = mkPermInv f in
-                  let res = CP.mkAnd non_null frac_inv no_pos in
-	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [])
+                    let frac_inv = mkPermInv f in
+                    let res = CP.mkAnd non_null frac_inv no_pos in
+	                (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [])
             )
 
-	        (* (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , []) *)
+	  (* (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , []) *)
       | ViewNode ({ h_formula_view_node = p;
 		h_formula_view_name = c;
 		h_formula_view_perm = frac; (*Viewnode does not neccessary have invariant on fractional permission*)
@@ -652,9 +652,9 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             let frac_inv =
               (match frac with
                 | None ->
-	                CP.mkTrue pos
+	                  CP.mkTrue pos
                 | Some f ->
-                    mkPermInv f
+                      mkPermInv f
               ) in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
             (* match rm_br with *)
@@ -667,7 +667,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
             (* in *)
             (match inv_opt with
               | None -> 
-	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv , [])
+	                (MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv , [])
 
               (* (MCP.mkMTrue no_pos, []) *)
               | Some xp1 ->
@@ -677,7 +677,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
                       | _ -> xp1 in
 
                     (*LDK: ??? be careful to handle frac var properly. 
-                    Currently, no fracvar in view definition*)
+                      Currently, no fracvar in view definition*)
                     let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                     let to_svs = p :: vs in
                     let (f, b) = vinv in
@@ -709,10 +709,10 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
   in
   let ph, pb = xpure_heap_helper prog h0 which_xpure in
   (ph, pb,  memset)
-  (* (\*LDK: temporary disable UNSAT BAGA check*\) *)
-  (* if (is_sat_mem_formula memset) then  *)
-  (*   (ph, pb,  memset) *)
-  (* else (MCP.mkMFalse no_pos, pb, memset)   *)
+      (* (\*LDK: temporary disable UNSAT BAGA check*\) *)
+      (* if (is_sat_mem_formula memset) then  *)
+      (*   (ph, pb,  memset) *)
+      (* else (MCP.mkMFalse no_pos, pb, memset)   *)
 
 and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Gen.Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
@@ -939,24 +939,24 @@ and xpure_heap_symbolic_perm_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_f
 and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
-                  h_formula_data_perm = frac;
+      h_formula_data_perm = frac;
 	  h_formula_data_label = lbl;
 	  h_formula_data_pos = pos}) ->
           let non_zero = CP.BForm ( (CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in
-            (*LDK: add fractional invariant 0<f<=1, if applicable*)
-            (match frac with
-              | None ->
+          (*LDK: add fractional invariant 0<f<=1, if applicable*)
+          (match frac with
+            | None ->
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [],[p])
-              | Some f ->
+            | Some f ->
                   let frac_inv = mkPermInv f in
                   let res = CP.mkAnd non_zero frac_inv no_pos in
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [], [p])
-            )
-    (* | DataNode ({ h_formula_data_node = p; *)
-	(*   h_formula_data_label = lbl; *)
-	(*   h_formula_data_pos = pos}) -> *)
-    (*       let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in *)
-    (*       (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p]) *)
+          )
+              (* | DataNode ({ h_formula_data_node = p; *)
+	          (*   h_formula_data_label = lbl; *)
+	          (*   h_formula_data_pos = pos}) -> *)
+              (*       let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in *)
+              (*       (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [], [p]) *)
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
 	  h_formula_view_perm = frac; (*Viewnode does not neccessary have invariant on fractional permission*)
@@ -972,18 +972,18 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
             print_string ("to svs: "^(pr_list Cprinter.string_of_spec_var to_svs)^"\n");*)
           (match lbl_lst with
             | None -> (*--imm only*)
-            (*LDK: add fractional invariant 0<f<=1, if applicable*)
-                let frac_inv =
-                  (match frac with
-                    | None ->
-	                    CP.mkTrue pos
-                    | Some f ->
-                        mkPermInv f
-                  ) in
+                  (*LDK: add fractional invariant 0<f<=1, if applicable*)
+                  let frac_inv =
+                    (match frac with
+                      | None ->
+	                        CP.mkTrue pos
+                      | Some f ->
+                            mkPermInv f
+                    ) in
                   let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
-                    (*add fractional invariant*)
-                    let frac_inv_mix = MCP.OnePF frac_inv in
-                    let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
+                  (*add fractional invariant*)
+                  let frac_inv_mix = MCP.OnePF frac_inv in
+                  let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
 
 
                   (*let from_addrs = vdef.view_addr_vars in*)
@@ -1879,22 +1879,22 @@ and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
       *)
 
 (*
-and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
-      (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
-      (vvars : CP.spec_var list) (pos : loc) 
-      =
+  and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
+  (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
+  (vvars : CP.spec_var list) (pos : loc) 
+  =
   let vv = evars (*impl_inst_vars*) in
   Gen.Debug.no_2 "split_universal" 
-      (fun (f,_)->Cprinter.string_of_pure_formula f)
-      (fun _ -> 
-          ("\n ### evars = " ^ Cprinter.string_of_spec_var_list evars)
-          ^"\n ### impl_inst_vars = "^(Cprinter.string_of_spec_var_list impl_inst_vars)
-          ^"\n ### expl_inst_vars = "^(Cprinter.string_of_spec_var_list expl_inst_vars)
-          ^"\n ### vvars = "^ (Cprinter.string_of_spec_var_list vvars)) 
-      (fun ((f1,_),(f2,_),_) -> 
-          ( "\n ### to_ante = " ^ Cprinter.string_of_pure_formula f1)
-          ^"\n ### to_conseq = "^ (Cprinter.string_of_pure_formula f2)) 
-      (fun f vv -> split_universal_x f evars expl_inst_vars impl_inst_vars vvars pos)
+  (fun (f,_)->Cprinter.string_of_pure_formula f)
+  (fun _ -> 
+  ("\n ### evars = " ^ Cprinter.string_of_spec_var_list evars)
+  ^"\n ### impl_inst_vars = "^(Cprinter.string_of_spec_var_list impl_inst_vars)
+  ^"\n ### expl_inst_vars = "^(Cprinter.string_of_spec_var_list expl_inst_vars)
+  ^"\n ### vvars = "^ (Cprinter.string_of_spec_var_list vvars)) 
+  (fun ((f1,_),(f2,_),_) -> 
+  ( "\n ### to_ante = " ^ Cprinter.string_of_pure_formula f1)
+  ^"\n ### to_conseq = "^ (Cprinter.string_of_pure_formula f2)) 
+  (fun f vv -> split_universal_x f evars expl_inst_vars impl_inst_vars vvars pos)
 *)
 
 and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
@@ -2159,13 +2159,13 @@ and fold_op p c vd v (rhs_p: MCP.mix_formula) u loc =
 
 (*LDK: add rhs_p*)
 and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula) (use_case:CP.formula option) (pos : loc): (list_context * proof) =
-(* and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:CP.formula option) (pos : loc): (list_context * proof) = *)
+  (* and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:CP.formula option) (pos : loc): (list_context * proof) = *)
   let pr (x,_) = Cprinter.string_of_list_context x in
   let id x = x in
   let ans = ((* ("use-case : "^string_of_bool use_case) *)
-             (* ^ *)"\n context:"^(Cprinter.string_of_context ctx)
-             ^"\n rhs view :"^(Cprinter.string_of_h_formula view) 
-             ^"\n rhs_p (pure) :"^(Cprinter.string_of_mix_formula rhs_p)) in
+      (* ^ *)"\n context:"^(Cprinter.string_of_context ctx)
+      ^"\n rhs view :"^(Cprinter.string_of_h_formula view) 
+      ^"\n rhs_p (pure) :"^(Cprinter.string_of_mix_formula rhs_p)) in
   let pr2 x = match x with
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
@@ -2176,157 +2176,157 @@ and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula
 
 and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formula)
       (use_case:CP.formula option) (pos : loc): (list_context * proof) = match view with
-  | ViewNode ({ h_formula_view_node = p;
-    h_formula_view_name = c;
-    h_formula_view_imm = imm;
-    h_formula_view_label = pid;
-    h_formula_view_remaining_branches = r_brs;
-    h_formula_view_perm = perm; 
-    h_formula_view_arguments = vs}) -> begin
-      try
-        let vdef = match vd with 
-          | None -> look_up_view_def_raw prog.Cast.prog_view_decls c 
-          | Some vd -> vd in
-        (* is there a benefit for using case-construct during folding? *)
-        let brs = filter_branches r_brs vdef.Cast.view_formula in
-        (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
-        let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
-        (*let form = Cformula.case_to_disjunct brs in *)
-        let renamed_view_formula = rename_struc_bound_vars form in
-	    (****)  
-        let renamed_view_formula = 
-	      if imm then 
-	        Cformula.propagate_imm_struc_formula renamed_view_formula 
-	      else
-	        renamed_view_formula
-        in 
-	    (***)
+        | ViewNode ({ h_formula_view_node = p;
+          h_formula_view_name = c;
+          h_formula_view_imm = imm;
+          h_formula_view_label = pid;
+          h_formula_view_remaining_branches = r_brs;
+          h_formula_view_perm = perm; 
+          h_formula_view_arguments = vs}) -> begin
+            try
+              let vdef = match vd with 
+                | None -> look_up_view_def_raw prog.Cast.prog_view_decls c 
+                | Some vd -> vd in
+              (* is there a benefit for using case-construct during folding? *)
+              let brs = filter_branches r_brs vdef.Cast.view_formula in
+              (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
+              let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
+              (*let form = Cformula.case_to_disjunct brs in *)
+              let renamed_view_formula = rename_struc_bound_vars form in
+	          (****)  
+              let renamed_view_formula = 
+	            if imm then 
+	              Cformula.propagate_imm_struc_formula renamed_view_formula 
+	            else
+	              renamed_view_formula
+              in 
+	          (***)
 
-		(*LDK: IMPORTANT
-          if any, propagate the fractional permission inside the definition *)
-        let renamed_view_formula =
-          if (Perm.allow_perm ()) then
-          (match perm with
-            | None -> renamed_view_formula
-            | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f)
-          else renamed_view_formula
-        in
-        let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)):: vdef.view_vars in
-        let to_vars = p :: vs in
-        let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
+		      (*LDK: IMPORTANT
+                if any, propagate the fractional permission inside the definition *)
+              let renamed_view_formula =
+                if (Perm.allow_perm ()) then
+                  (match perm with
+                    | None -> renamed_view_formula
+                    | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f)
+                else renamed_view_formula
+              in
+              let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)):: vdef.view_vars in
+              let to_vars = p :: vs in
+              let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
 
-        (*ENHANCE universal lemmas:
-          propagate constraint on univ_vars into view_form*)
-        let uni_vars = vdef.view_uni_vars in
-        let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
-        let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
-        let view_form = add_mix_formula_to_struc_formula to_fold_view view_form 
-        in
-        (*propagate*)
-        let view_form = 
-          if (Perm.allow_perm ()) then
-            (match perm with
-              | None -> view_form
-              | Some permvar ->
-                  let to_fold_view = MCP.find_rel_constraints rhs_p [permvar] in
-                  add_mix_formula_to_struc_formula to_fold_view view_form)
-          else view_form
-        in
-        let view_form = add_struc_origins view_form (get_view_origins view) in
-        let view_form = CF.replace_struc_formula_label pid view_form in
-        let view_form = match use_case with | None -> view_form | Some f -> push_case_f f view_form in
-        Debug.devel_pprint ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx)) pos;
-        Debug.devel_pprint ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view)) pos;
-        Debug.devel_pprint ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form)) pos;
-        let estate = estate_of_context ctx pos in
-        (*LDK: propagate es_vars from the estate to FOLD context
-        to avoid proving es_vars as universal vars when finishing FOLDING*)
-        (*Because we propagate some pure constrains into view formula 
-          when FOLDING. we also have to propagate es_vars from the 
-          estate into FOLDING context to avoid. Is it SOUND? Indeed, 
-          we need to propagate es_vars whose constraints are propagated 
-          into view formula when FOLDING.*)
-  		(*TO CHECK: does the below give new information instead of the above*)
-        (*LDK: IMPORTANT
-          if frac var is an existential variable, transfer it into folded view*)
-        (*add fracvar into list of parameters*)
-        let vs = 
-          if (Perm.allow_perm ()) then
-            match perm with
-              | None -> vs
-              | Some f -> f::vs
-          else vs
-        in
-        (* vs may contain non-existential free vars! *)
-        (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in *)
-        let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in 
-        (* TODO : why must es_gen_impl_vars to be added to es_vars ??? *)
-        let new_es = {estate with es_evars = estate.es_evars@impl_vars (*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*)} in
-        (* let new_es = estate in *)
-        let new_ctx = Ctx new_es in
-	    (*let new_ctx = set_es_evars ctx vs in*)
-        let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form pos None in
-        (* let rs0 = remove_impl_evars rs0 impl_vars in *)
-        (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
-        (* let _ = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in *)
-        (* let _ = print_string ("\nafter fold: " ^ (Cprinter.string_of_list_context rs0)) in *)
-        let tmp_vars = p :: (estate.es_evars @ vs) in
-	    (**************************************)
-	    (*        process_one 								*)
-	    (**************************************)
-        let rec process_one_x (ss:CF.steps) rs1  =
-	      Debug.devel_pprint ("fold: process_one: rs1:\n"^ (Cprinter.string_of_context rs1)) pos;
-	      match rs1 with
-	        | OCtx (c1, c2) ->
-		          (*
-		            It is no longer safe to assume that rs will be conjunctive.
-		            The recursive folding entailment call (via case splitting
-		            for example) can turn ctx to a disjunctive one, hence making
-		            rs disjunctive.
-		          *)
-		          let tmp1 = process_one_x (CF.add_to_steps ss "left OR 3 on ante") c1 in
-		          let tmp2 = process_one_x (CF.add_to_steps ss "right OR 3 on ante") c2 in
-		          let tmp3 = (mkOCtx tmp1 tmp2 pos) in
-		          tmp3
-	        | Ctx es ->
-		          (* let es = estate_of_context rs pos in *)
-                  let es = CF.overwrite_estate_with_steps es ss in
-		          let w = Gen.BList.difference_eq CP.eq_spec_var  es.es_evars tmp_vars in
-		          let tmp_pure = elim_exists_pure w es.es_pure true pos in
-                  (*LDK: remove duplicated conjuncts in the estate, 
-                    which are generated because one perm var can be folded 
-                    into many perm vars in many heap nodes. These generated
-                  permvars might create many duplicated constraints*)
-                  let mix_f, rest = tmp_pure in
-                  let mix_f = CF.remove_dupl_conj_eq_mix_formula mix_f in
-                  let tmp_pure = mix_f,rest in 
-		          let res_rs = Ctx {es with es_evars = estate.es_evars;
-				      es_pure = tmp_pure; es_prior_steps = (ss @ es.es_prior_steps);} in
-		          Debug.devel_pprint ("fold: context at beginning of fold: "
-				  ^ (Cprinter.string_of_spec_var p) ^ "\n"
-				  ^ (Cprinter.string_of_context ctx)) pos;
-		          Debug.devel_pprint ("fold: context at end of fold: "
-				  ^ (Cprinter.string_of_spec_var p) ^ "\n"
-				  ^ (Cprinter.string_of_context res_rs)) pos;
-		          Debug.devel_pprint ("fold: es.es_pure: "
-				  ^ (Cprinter.string_of_mix_formula_branches es.es_pure)) pos;
-		          res_rs in
-        let process_one (ss:CF.steps) fold_rs1 = 
-          let pr = Cprinter.string_of_context  in
-          Gen.Debug.no_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
+              (*ENHANCE universal lemmas:
+                propagate constraint on univ_vars into view_form*)
+              let uni_vars = vdef.view_uni_vars in
+              let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
+              let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
+              let view_form = add_mix_formula_to_struc_formula to_fold_view view_form 
+              in
+              (*propagate*)
+              let view_form = 
+                if (Perm.allow_perm ()) then
+                  (match perm with
+                    | None -> view_form
+                    | Some permvar ->
+                          let to_fold_view = MCP.find_rel_constraints rhs_p [permvar] in
+                          add_mix_formula_to_struc_formula to_fold_view view_form)
+                else view_form
+              in
+              let view_form = add_struc_origins view_form (get_view_origins view) in
+              let view_form = CF.replace_struc_formula_label pid view_form in
+              let view_form = match use_case with | None -> view_form | Some f -> push_case_f f view_form in
+              Debug.devel_pprint ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx)) pos;
+              Debug.devel_pprint ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view)) pos;
+              Debug.devel_pprint ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form)) pos;
+              let estate = estate_of_context ctx pos in
+              (*LDK: propagate es_vars from the estate to FOLD context
+                to avoid proving es_vars as universal vars when finishing FOLDING*)
+              (*Because we propagate some pure constrains into view formula 
+                when FOLDING. we also have to propagate es_vars from the 
+                estate into FOLDING context to avoid. Is it SOUND? Indeed, 
+                we need to propagate es_vars whose constraints are propagated 
+                into view formula when FOLDING.*)
+  		      (*TO CHECK: does the below give new information instead of the above*)
+              (*LDK: IMPORTANT
+                if frac var is an existential variable, transfer it into folded view*)
+              (*add fracvar into list of parameters*)
+              let vs = 
+                if (Perm.allow_perm ()) then
+                  match perm with
+                    | None -> vs
+                    | Some f -> f::vs
+                else vs
+              in
+              (* vs may contain non-existential free vars! *)
+              (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in *)
+              let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in 
+              (* TODO : why must es_gen_impl_vars to be added to es_vars ??? *)
+              let new_es = {estate with es_evars = estate.es_evars@impl_vars (*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*)} in
+              (* let new_es = estate in *)
+              let new_ctx = Ctx new_es in
+	          (*let new_ctx = set_es_evars ctx vs in*)
+              let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form pos None in
+              (* let rs0 = remove_impl_evars rs0 impl_vars in *)
+              (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
+              (* let _ = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in *)
+              (* let _ = print_string ("\nafter fold: " ^ (Cprinter.string_of_list_context rs0)) in *)
+              let tmp_vars = p :: (estate.es_evars @ vs) in
+	          (**************************************)
+	          (*        process_one 								*)
+	          (**************************************)
+              let rec process_one_x (ss:CF.steps) rs1  =
+	            Debug.devel_pprint ("fold: process_one: rs1:\n"^ (Cprinter.string_of_context rs1)) pos;
+	            match rs1 with
+	              | OCtx (c1, c2) ->
+		                (*
+		                  It is no longer safe to assume that rs will be conjunctive.
+		                  The recursive folding entailment call (via case splitting
+		                  for example) can turn ctx to a disjunctive one, hence making
+		                  rs disjunctive.
+		                *)
+		                let tmp1 = process_one_x (CF.add_to_steps ss "left OR 3 on ante") c1 in
+		                let tmp2 = process_one_x (CF.add_to_steps ss "right OR 3 on ante") c2 in
+		                let tmp3 = (mkOCtx tmp1 tmp2 pos) in
+		                tmp3
+	              | Ctx es ->
+		                (* let es = estate_of_context rs pos in *)
+                        let es = CF.overwrite_estate_with_steps es ss in
+		                let w = Gen.BList.difference_eq CP.eq_spec_var  es.es_evars tmp_vars in
+		                let tmp_pure = elim_exists_pure w es.es_pure true pos in
+                        (*LDK: remove duplicated conjuncts in the estate, 
+                          which are generated because one perm var can be folded 
+                          into many perm vars in many heap nodes. These generated
+                          permvars might create many duplicated constraints*)
+                        let mix_f, rest = tmp_pure in
+                        let mix_f = CF.remove_dupl_conj_eq_mix_formula mix_f in
+                        let tmp_pure = mix_f,rest in 
+		                let res_rs = Ctx {es with es_evars = estate.es_evars;
+				            es_pure = tmp_pure; es_prior_steps = (ss @ es.es_prior_steps);} in
+		                Debug.devel_pprint ("fold: context at beginning of fold: "
+				        ^ (Cprinter.string_of_spec_var p) ^ "\n"
+				        ^ (Cprinter.string_of_context ctx)) pos;
+		                Debug.devel_pprint ("fold: context at end of fold: "
+				        ^ (Cprinter.string_of_spec_var p) ^ "\n"
+				        ^ (Cprinter.string_of_context res_rs)) pos;
+		                Debug.devel_pprint ("fold: es.es_pure: "
+				        ^ (Cprinter.string_of_mix_formula_branches es.es_pure)) pos;
+		                res_rs in
+              let process_one (ss:CF.steps) fold_rs1 = 
+                let pr = Cprinter.string_of_context  in
+                Gen.Debug.no_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
 
-	    let res = match rs0 with
-          | FailCtx _ -> rs0
-          | SuccCtx l -> SuccCtx (List.map (process_one []) l) in
-	    (res, fold_prf)
-      with
-	    | Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
-    end
-  | _ ->
-        Debug.devel_pprint ("fold: second parameter is not a view: "
-		^ (Cprinter.string_of_h_formula view)) pos;
-        report_error no_pos ("fold: second parameter is not a view\n") 
-	        (*([], Failure)*)
+	          let res = match rs0 with
+                | FailCtx _ -> rs0
+                | SuccCtx l -> SuccCtx (List.map (process_one []) l) in
+	          (res, fold_prf)
+            with
+	          | Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
+          end
+        | _ ->
+              Debug.devel_pprint ("fold: second parameter is not a view: "
+		      ^ (Cprinter.string_of_h_formula view)) pos;
+              report_error no_pos ("fold: second parameter is not a view\n") 
+	              (*([], Failure)*)
 
 and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pr1 = Cprinter.string_of_list_context in
@@ -2856,7 +2856,7 @@ and heap_entail_struc_list_failesc_context (prog : prog_decl) (is_folding : bool
       (conseq) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =           
   let pr1 = Cprinter.string_of_list_failesc_context in
   let pr2 (x,_) = Cprinter.string_of_list_failesc_context x in
-Gen.Debug.no_1 "heap_entail_struc_list_failesc_context" pr1 pr2
+  Gen.Debug.no_1 "heap_entail_struc_list_failesc_context" pr1 pr2
       (fun _ -> heap_entail_struc_list_failesc_context_x prog is_folding  has_post cl 
           (conseq) pos pid f to_string) cl
 
@@ -3348,99 +3348,99 @@ and heap_entail_variance_x
   let ctx = (CF.Ctx es) in
 
   if CF.isAnyFalseCtx ctx then (* Unreachable state *)
-	  let _ = Debug.print_info "Termination" "Unreachable state" loc in
-	  let _ = if !print_proof then Prooftracer.push_term_checking loc false in
-	  let _ = if !print_proof then Prooftracer.pop_div () in ()
+	let _ = Debug.print_info "Termination" "Unreachable state" loc in
+	let _ = if !print_proof then Prooftracer.push_term_checking loc false in
+	let _ = if !print_proof then Prooftracer.pop_div () in ()
   else
-	  let _ = if !print_proof then Prooftracer.push_term_checking loc true in
-	  let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e ->
-		  let str = Cprinter.string_of_formula_exp e in
-		  if rs = "" then str else rs ^ ", " ^ str) "" el) ^ "]" in
+	let _ = if !print_proof then Prooftracer.push_term_checking loc true in
+	let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e ->
+		let str = Cprinter.string_of_formula_exp e in
+		if rs = "" then str else rs ^ ", " ^ str) "" el) ^ "]" in
 
   	let _ = Debug.print_info "Termination" 
-	    ("Transition from state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ 
-		   " to state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) loc in
+	  ("Transition from state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ 
+		  " to state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) loc in
 
-	  let var_label_rhs = match e.formula_var_label with
-	    | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
-	    | Some i -> i
+	let var_label_rhs = match e.formula_var_label with
+	  | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
+	  | Some i -> i
   	in
 
-	  let var_label_lhs = match es.es_var_label with
-	    | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
-	    | Some i -> i
-	  in
+	let var_label_lhs = match es.es_var_label with
+	  | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
+	  | Some i -> i
+	in
 	
-	  if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then (* Case 1: In loop *)
-	    let _ = print_string ("Termination: loop at state (" ^ (string_of_int var_label_lhs) ^ ") " ^ 
-		    (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) in
-	    let lhs_measures = es.es_var_measures in
-	    let rhs_measures = e.formula_var_measures in
-	    let rec binding lhs_m rhs_m =
-		  if ((List.length lhs_m) != (List.length rhs_m)) then
-		    report_error no_pos ("Termination: variance checking: LHS does not match RHS \n")
-		  else match lhs_m with
-		    | [] -> []
-		    | h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
-	    let binding_measures = binding lhs_measures rhs_measures in
+	if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then (* Case 1: In loop *)
+	  let _ = print_string ("Termination: loop at state (" ^ (string_of_int var_label_lhs) ^ ") " ^ 
+		  (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) in
+	  let lhs_measures = es.es_var_measures in
+	  let rhs_measures = e.formula_var_measures in
+	  let rec binding lhs_m rhs_m =
+		if ((List.length lhs_m) != (List.length rhs_m)) then
+		  report_error no_pos ("Termination: variance checking: LHS does not match RHS \n")
+		else match lhs_m with
+		  | [] -> []
+		  | h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
+	  let binding_measures = binding lhs_measures rhs_measures in
 	  
-	    let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m1>=lb1 & m2>n2 & m2>=lb2 *) 
-		    let (_, term_formula) = List.fold_right (fun (l,r) (flag,res) ->
-			    let lower_bound = match (snd r) with
-			      | None -> report_error no_pos ("Termination: variance checking: error with lower bound in termination checking \n")
-			      | Some exp -> exp in
-			    let boundedness_checking_formula = CP.BForm ((CP.mkGte l lower_bound loc, None), None) in
-			    let lexico_ranking_formula = 
-			      if flag then CP.BForm ((CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None), None)
-			      else CP.BForm ((CP.mkEq l (fst r) loc, None), None) in
-			    let f = CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc in	
-			    (false, CP.mkAnd f res loc)) lst_measures (true, CP.mkTrue loc)
-		    in
-		    (*let _ = print_string ("\nTermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
+	  let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m1>=lb1 & m2>n2 & m2>=lb2 *) 
+		let (_, term_formula) = List.fold_right (fun (l,r) (flag,res) ->
+			let lower_bound = match (snd r) with
+			  | None -> report_error no_pos ("Termination: variance checking: error with lower bound in termination checking \n")
+			  | Some exp -> exp in
+			let boundedness_checking_formula = CP.BForm ((CP.mkGte l lower_bound loc, None), None) in
+			let lexico_ranking_formula = 
+			  if flag then CP.BForm ((CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None), None)
+			  else CP.BForm ((CP.mkEq l (fst r) loc, None), None) in
+			let f = CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc in	
+			(false, CP.mkAnd f res loc)) lst_measures (true, CP.mkTrue loc)
+		in
+		(*let _ = print_string ("\nTermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
         let _ = if !print_proof then Prooftracer.push_entail_variance (es.CF.es_formula, term_formula) in     
-		    (*let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
+		(*let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
          * Tpdispatcher.suppress_imply_output () end in*)
-		    let (rs, _) = (heap_entail_conjunct_lhs_struc prog false false ctx [mkEBase term_formula loc] no_pos None) in
-		    (*let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end
+		let (rs, _) = (heap_entail_conjunct_lhs_struc prog false false ctx [mkEBase term_formula loc] no_pos None) in
+		(*let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end
          * in*)
         let _ = if !print_proof then Prooftracer.pop_div(); in 
         
-	  	  let res = not (CF.isFailCtx rs) in
-		    (*let _ = if !print_proof then Prooftracer.push_pop_entail_variance
+	  	let res = not (CF.isFailCtx rs) in
+		(*let _ = if !print_proof then Prooftracer.push_pop_entail_variance
          * (es.CF.es_formula, term_formula, res) in*)
-		    res
-	    in
+		res
+	  in
 
-	    let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
-		    List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
-	    in
-	    (*
-		  let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
-		  if (List.exists (fun (rs, prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
-	    *)
-	    let res = List.exists (fun lm -> fun_check_term lm) lexico_measures in
+	  let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
+		List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
+	  in
+	  (*
+		let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
+		if (List.exists (fun (rs, prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
+	  *)
+	  let res = List.exists (fun lm -> fun_check_term lm) lexico_measures in
 	  
-	    let _ = if !print_proof then Prooftracer.push_pop_entail_variance_res res in
-	    let _ = if !print_proof then begin Prooftracer.pop_div (); end in
+	  let _ = if !print_proof then Prooftracer.push_pop_entail_variance_res res in
+	  let _ = if !print_proof then begin Prooftracer.pop_div (); end in
 	  
-	    if res then
-		    Debug.print_info "Termination" 
-			    ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
-	    else
-	    	Debug.print_info "Termination" 
-			    ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
+	  if res then
+		Debug.print_info "Termination" 
+			("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
+	  else
+	    Debug.print_info "Termination" 
+			("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
 
-	  else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then (* Case 2: Base case *)
-	    Debug.print_info "Termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
-	  else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then (* Case 3: Non-terminating cases *)
-	    Debug.print_info "Termination" ("non-terminating state ") loc
-	  else if (var_label_lhs > var_label_rhs) then (* Case 4: Loop transition: state transition at boundary of loop *)
-	    (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
-	    Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
-		    " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc
-	  else (* Case 5: Reverved loop transtion: might lead to non-terminating case *)
-	    Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
-		    " to " ^ (string_of_int var_label_rhs) ^ " : invalid") loc
+	else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then (* Case 2: Base case *)
+	  Debug.print_info "Termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
+	else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then (* Case 3: Non-terminating cases *)
+	  Debug.print_info "Termination" ("non-terminating state ") loc
+	else if (var_label_lhs > var_label_rhs) then (* Case 4: Loop transition: state transition at boundary of loop *)
+	  (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
+	  Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
+		  " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc
+	else (* Case 5: Reverved loop transtion: might lead to non-terminating case *)
+	  Debug.print_info "Termination" ("transition from variance " ^ (string_of_int var_label_lhs) ^ 
+		  " to " ^ (string_of_int var_label_rhs) ^ " : invalid") loc
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   Gen.Debug.no_2 "heap_entail_init"
@@ -3551,15 +3551,15 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
       end
 
 and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) = 
-     let pr1 = (fun _ -> "prog_decl") in
-    let pr2 = string_of_bool in
-    let pr3 = Cprinter.string_of_context in
-    let pr4 = Cprinter.string_of_formula in
-    let pr5 = string_of_loc in
-    let pr_res (ctx,proof) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)
-                                           ^ "\n proof = " ^ (string_of_proof proof)
-                                           ^"\n\n") in
-    Gen.Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  let pr1 = (fun _ -> "prog_decl") in
+  let pr2 = string_of_bool in
+  let pr3 = Cprinter.string_of_context in
+  let pr4 = Cprinter.string_of_formula in
+  let pr5 = string_of_loc in
+  let pr_res (ctx,proof) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)
+  ^ "\n proof = " ^ (string_of_proof proof)
+  ^"\n\n") in
+  Gen.Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
 
@@ -4916,7 +4916,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 				                  (* in *)
 
                                   (* explicit instantiation
-                                    this will move some constraint to the LHS*)
+                                     this will move some constraint to the LHS*)
                                   (*LDK: 25/08/2011, also instatiate ivars*)                          
                                   (*this move_expl_inst call can occur at the end of folding and also 
                                     at the end of entailments of stages possibly leading to duplications of instantiations
@@ -4953,10 +4953,10 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
         end
 
 and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
-  (*let _ = print_string ("An Hoa :: heap_entail_build_mix_formula_check :: INPUTS\n" ^
-	"EXISTENTIAL VARIABLES = " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evars)) ^ "\n" ^
-	"ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante) ^ "\n" ^
-	"CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq)  ^ "\n") in*)  
+  (* let _ = print_string ("An Hoa :: heap_entail_build_mix_formula_check :: INPUTS\n" ^ *)
+  (* "EXISTENTIAL VARIABLES = " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evars)) ^ "\n" ^ *)
+  (* "ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante) ^ "\n" ^ *)
+  (* "CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq)  ^ "\n") in   *)
   let avars = MCP.mfv ante in
   let sevars = (* List.map CP.to_int_var *) evars in
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
@@ -5085,7 +5085,7 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
       match failure_list with
         | [] -> None
         | _ ->
-          let msg = "(failure_code="^failure_code ^ ") " ^
+              let msg = "(failure_code="^failure_code ^ ") " ^
                 (String.concat "; " (List.map build_failure_msg failure_list)) ^ " ("  ^ failure_string ^ ")." in
               let fe = match fk with
                 |  Failure_May _ -> mk_failure_may msg failure_name
@@ -5218,11 +5218,11 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
-(* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
-	(* let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^ *)
-	(* "ENTAIL STATE = " ^ (Cprinter.string_of_estate estate) ^ "\n" ^ *)
-	(* "LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^ *)
-	(* "RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in *)
+  (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
+  (* let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^ *)
+  (* "ENTAIL STATE = " ^ (Cprinter.string_of_estate estate) ^ "\n" ^ *)
+  (* "LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^ *)
+  (* "RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in *)
 
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
@@ -5276,9 +5276,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
         let new_ante0, new_conseq0 = heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos in
         let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
 
-	(* let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^ *)
-	(* "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^ *)
-	(* "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in *)
+	    (* let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^ *)
+	    (* "NEW ANTECEDENT = " ^ (Cprinter.string_of_mix_formula new_ante0) ^ "\n" ^ *)
+	    (* "NEW CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula new_conseq0)  ^ "\n") in *)
 
 
 	    (* 26.03.2009 simplify the pure part *)
@@ -5991,31 +5991,31 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* Debug.devel_pprint ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs)) pos; *)
     let l_args, l_node_name, l_perm = match l_node with
       | DataNode {h_formula_data_name = l_node_name;
-                  h_formula_data_perm = perm;
-                  h_formula_data_arguments = l_args}
+        h_formula_data_perm = perm;
+        h_formula_data_arguments = l_args}
       | ViewNode {h_formula_view_name = l_node_name;
-                  h_formula_view_perm = perm;
-                  h_formula_view_arguments = l_args} ->
-          (l_args, l_node_name,perm)
+        h_formula_view_perm = perm;
+        h_formula_view_arguments = l_args} ->
+            (l_args, l_node_name,perm)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
     let r_args, r_node_name, r_var, r_perm = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
-                  h_formula_data_perm = perm;
-                  h_formula_data_arguments = r_args;
-                  h_formula_data_node = r_var}
+        h_formula_data_perm = perm;
+        h_formula_data_arguments = r_args;
+        h_formula_data_node = r_var}
       | ViewNode {h_formula_view_name = r_node_name;
-                  h_formula_view_perm = perm;
-                  h_formula_view_arguments = r_args;
-                  h_formula_view_node = r_var} ->
-          (r_args, r_node_name, r_var,perm)
+        h_formula_view_perm = perm;
+        h_formula_view_arguments = r_args;
+        h_formula_view_node = r_var} ->
+            (r_args, r_node_name, r_var,perm)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in     
 
 	(* An Hoa : found out that the current design of do_match 
-	will eventually remove both nodes. Here, I detected that 
-	l_h & r_h captures the heap part. In order to capture 
-	the remaining part, we need to update l_h and r_h with 
-	the remaining of the l_node and r_node after matching 
-	(respectively. *)
+	   will eventually remove both nodes. Here, I detected that 
+	   l_h & r_h captures the heap part. In order to capture 
+	   the remaining part, we need to update l_h and r_h with 
+	   the remaining of the l_node and r_node after matching 
+	   (respectively. *)
     let l_h,l_p,l_fl,l_b,l_t = split_components estate.es_formula in
     let r_h,r_p,r_fl,r_b,r_t = split_components rhs in
 	(* An Hoa : match l_node and r_node and push the remain to l_h, r_h *)
@@ -6066,19 +6066,19 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               if (Perm.allow_perm ()) then
                 (match l_perm, r_perm with
                   | Some f1, Some f2 ->
-                      let rho_0 = List.combine (f2::r_args) (f1::l_args) in
-                      let label_list = (""::label_list) in
-                      (rho_0, label_list)
+                        let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+                        let label_list = (""::label_list) in
+                        (rho_0, label_list)
                   | None, Some f2 ->
-                      let rho_0 = List.combine (f2::r_args) (full_perm_var::l_args) in
-                      let label_list = (""::label_list) in
-                      (rho_0, label_list)
+                        let rho_0 = List.combine (f2::r_args) (full_perm_var::l_args) in
+                        let label_list = (""::label_list) in
+                        (rho_0, label_list)
                   | Some f1, None ->
-                      let rho_0 = List.combine (full_perm_var::r_args) (f1::l_args) in
-                      let label_list = (""::label_list) in
-                      (rho_0, label_list)
+                        let rho_0 = List.combine (full_perm_var::r_args) (f1::l_args) in
+                        let label_list = (""::label_list) in
+                        (rho_0, label_list)
                   | _ -> let rho_0 = List.combine r_args l_args in
-                         (rho_0, label_list)
+                    (rho_0, label_list)
                 )
               else  
                 let rho_0 = List.combine r_args l_args in (* without branch label *)
@@ -6191,7 +6191,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
   process_action 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-(*LDK*)
+  (*LDK*)
   Gen.Debug.no_3 "heap_entail_non_empty_rhs_heap" 
       Cprinter.string_of_formula_base 
       Cprinter.string_of_formula
@@ -6199,8 +6199,8 @@ and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_
       (pr_pair Cprinter.string_of_list_context string_of_proof) 
       (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set
 
-  (* Gen.Debug.loop_3_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula *)
-  (*     Cprinter.string_of_spec_var_list (fun _ -> "?") (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set *)
+(* Gen.Debug.loop_3_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula *)
+(*     Cprinter.string_of_spec_var_list (fun _ -> "?") (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set *)
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -6245,12 +6245,12 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
           let ex_vars = estate.es_evars@estate.es_gen_impl_vars@estate.es_gen_expl_vars in
 		  if (List.exists (comparator c2) ex_vars) then
 			try
-                let c21 = List.find (fun c -> not (List.exists (comparator c) (ex_vars) )) (Context.get_aset asets c2) in
-                (c21::a,p)
+              let c21 = List.find (fun c -> not (List.exists (comparator c) (ex_vars) )) (Context.get_aset asets c2) in
+              (c21::a,p)
             with
               | Not_found ->
-                  let _,np = List.find (fun (v,_)-> comparator v c2) posib_inst in
-                  (c2::a,CP.mkAnd p np no_pos)
+                    let _,np = List.find (fun (v,_)-> comparator v c2) posib_inst in
+                    (c2::a,CP.mkAnd p np no_pos)
 		  else (c2::a,p)
 		else (c2::a,p)
 	) ([],Cpure.mkTrue no_pos) subs_vars in
@@ -6313,12 +6313,12 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
   let pr (x,_) = Cprinter.string_of_list_context x in
   let pr1 (conseq, rhs_node, vd ,rhs_rest,rhs_b) =
-                          ("\n conseq = "^(Cprinter.string_of_formula conseq)
-                          ^ "\n rhs_node = "^(Cprinter.string_of_h_formula rhs_node)
-                          ^ "\n vd = "^(pr2 vd)
-                          ^ "\n rhs_rest = "^(Cprinter.string_of_h_formula rhs_rest)
-                          ^ "\n rhs_b = "^(Cprinter.string_of_formula_base rhs_b)
-                          ^ "") in
+    ("\n conseq = "^(Cprinter.string_of_formula conseq)
+    ^ "\n rhs_node = "^(Cprinter.string_of_h_formula rhs_node)
+    ^ "\n vd = "^(pr2 vd)
+    ^ "\n rhs_rest = "^(Cprinter.string_of_h_formula rhs_rest)
+    ^ "\n rhs_b = "^(Cprinter.string_of_formula_base rhs_b)
+    ^ "") in
   Gen.Debug.no_3(* _no *)  "do_fold_w_ctx" 
       Cprinter.string_of_context
       (* Cprinter.string_of_entail_state *)
@@ -6328,18 +6328,18 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
       (fun _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos) 
       fold_ctx (* estate *) (conseq, rhs_node, vd ,rhs_rest,rhs_b) is_folding
 
-  (* Gen.Debug.loop_3(\* _no *\)  "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_h_formula pr2 pr *)
-  (*     (fun _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos)  *)
-  (*     fold_ctx rhs_node vd *)
-      (*
-        ln2 = p2 (node) c2 (name) v2 (arguments) r_rem_brs (remaining branches) r_p_cond (pruning conditions) pos2 (pos)
-        resth2 = rhs_h - ln2
-        ctx0?
-        is_folding?
-      *)
+(* Gen.Debug.loop_3(\* _no *\)  "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_h_formula pr2 pr *)
+(*     (fun _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos)  *)
+(*     fold_ctx rhs_node vd *)
+(*
+  ln2 = p2 (node) c2 (name) v2 (arguments) r_rem_brs (remaining branches) r_p_cond (pruning conditions) pos2 (pos)
+  resth2 = rhs_h - ln2
+  ctx0?
+  is_folding?
+*)
 
 (*LDK:
-ln2: node to fold
+  ln2: node to fold
 
 *)
 and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding pos = 
@@ -6372,7 +6372,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
   (*TO CHECK: what for ??? instantiate before folding*)
-(*  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in*)
+  (*  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in*)
   let (new_v2,case_inst) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
   let view_to_fold = ViewNode ({  
 	  h_formula_view_node = List.hd new_v2 (*var_to_fold*);
@@ -6710,7 +6710,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   (* let rhs_lst = [] in *)
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
-   (0,Context.compute_actions_x prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst  estate.es_is_normalizing no_pos)
+  (0,Context.compute_actions_x prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst  estate.es_is_normalizing no_pos)
 
 and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   match a with
@@ -6739,29 +6739,29 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
       a estate 
 
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
-	let _ = Debug.devel_pprint ("process_action:"
-                                ^ "\n ### action = " ^ (Context.string_of_action_res a)
-                                ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state estate)
-                                ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
-                                ^ "\n\n")  pos in
+  let _ = Debug.devel_pprint ("process_action:"
+  ^ "\n ### action = " ^ (Context.string_of_action_res a)
+  ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state estate)
+  ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
+  ^ "\n\n")  pos in
   (*add tracing into the entailment state*)
-    let action_name:string = match a with
-      | Context.Undefined_action e -> "Undefined_action"
-      | Context.M_match e -> "Match"
-      | Context.M_fold e ->  "Fold"
-      | Context.M_unfold (e,i) -> ("Unfold "^(string_of_int i))
-      | Context.M_base_case_unfold e ->  "Base case unfold"
-      | Context.M_base_case_fold e ->   "Base case fold"
-      | Context.M_rd_lemma e ->  "Right distributive lemma"
-      | Context.M_lemma (e,s) ->  ("lemma(" ^ (match s with | None -> "any lemma" | Some c-> (Cprinter.string_of_coercion_type c.coercion_type)^" "^c.coercion_name) ^ ")")
-      | Context.M_Nothing_to_do s ->  ("Nothing "^s)
-      | Context.M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note")
-      | Context.Seq_action l -> "seq"
-      | Context.Cond_action l -> "Cond"
-      | Context.Search_action l -> "search"
-      | Context.M_lhs_case l -> "lhs_case"
-    in
-    let estate = {estate with es_trace = action_name::estate.es_trace} in
+  let action_name:string = match a with
+    | Context.Undefined_action e -> "Undefined_action"
+    | Context.M_match e -> "Match"
+    | Context.M_fold e ->  "Fold"
+    | Context.M_unfold (e,i) -> ("Unfold "^(string_of_int i))
+    | Context.M_base_case_unfold e ->  "Base case unfold"
+    | Context.M_base_case_fold e ->   "Base case fold"
+    | Context.M_rd_lemma e ->  "Right distributive lemma"
+    | Context.M_lemma (e,s) ->  ("lemma(" ^ (match s with | None -> "any lemma" | Some c-> (Cprinter.string_of_coercion_type c.coercion_type)^" "^c.coercion_name) ^ ")")
+    | Context.M_Nothing_to_do s ->  ("Nothing "^s)
+    | Context.M_unmatched_rhs_data_node h ->  ("Unmatched RHS data note")
+    | Context.Seq_action l -> "seq"
+    | Context.Cond_action l -> "Cond"
+    | Context.Search_action l -> "search"
+    | Context.M_lhs_case l -> "lhs_case"
+  in
+  let estate = {estate with es_trace = action_name::estate.es_trace} in
   let r1,r2 = match a with
     | Context.M_match {
           Context.match_res_lhs_node = lhs_node;
@@ -7284,7 +7284,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 	    h_formula_view_remaining_branches = br2;
 	    h_formula_view_perm = perm2; (*LDK*)
 	    h_formula_view_arguments = ps2} (* as h2 *)) (* when CF.is_eq_view_name(\*is_eq_view_spec*\) h1 h2 (\*c1=c2 && (br_match br1 br2) *\) *)
-      (*lemmas can also be applied to data node*)
+            (*lemmas can also be applied to data node*)
 	  | DataNode ({ h_formula_data_node = p1;
 	    h_formula_data_name = c1;
 	    h_formula_data_origins = origs;
@@ -7297,101 +7297,101 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 	    h_formula_data_perm = perm2; (*LDK*)
 	    h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
-	      (* the lemma application heuristic:
-	         - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
-	         - if the flag is false, we only use coerce&distribute&match
-	      *)
-	      let apply_coer = (coer_target prog coer anode (CF.formula_of_base rhs_b) (CF.formula_of_base lhs_b)) in
-          (* let f1=apply_coer in *)
-          (* (\* let f2=(get_estate_must_match estate) in *\) *)
-          (* let f3=List.mem coer.coercion_body_view origs in *)
-          (* let f4=is_cycle_coer coer origs in *)
-          (* let f5=is_distributive coer in *)
-          (* let f6=(!enable_distribution) in *)
-	      (* if (!lemma_heuristic && 		(\* use coerce&match together with the history mechanism *\) *)
-		  (*     (not(apply_coer) 					(\* the target is not present *\) *)
-		  (*     (\* or (get_estate_must_match estate) *\))  (\* must match *\) *)
-		  (* && (List.mem coer.coercion_body_view origs *)
-		  (* or is_cycle_coer coer origs)) (\* there is a cycle *\) *)
-		  (*   or 	(not(!lemma_heuristic) &&   (\* use coerce&distribute&match*\) *)
-		  (*       (not(apply_coer) or 				(\* the target is not present *\) *)
-		  (*           ((\* (get_estate_must_match estate) 	(\\* must match *\\) *\) *)
-		  (*           (\* &&  *\)(not(!enable_distribution) 		(\* distributive coercion is not allowed *\) *)
-		  (*   	    or not(is_distributive coer))))) 	(\* coercion is not distributive *\) *)
-          if (not(apply_coer) or (is_cycle_coer coer origs))
-	      then
-            (* let s = (pr_list string_of_bool [f1;f3;f4;f5;f6]) in *)
-		    (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!"(* ^s *)) pos; 
-		    (CF.mkFailCtx_in(Basic_Reason( { 
-				fc_message ="failed coercion application";
-				fc_current_lhs = estate;
-				fc_prior_steps = estate.es_prior_steps;
-				fc_orig_conseq = estate.es_orig_conseq;
-				fc_current_conseq = CF.formula_of_heap HFalse pos;
-				fc_failure_pts = match (get_node_label node) with | Some s-> [s] | _ -> [];}
+	        (* the lemma application heuristic:
+	           - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
+	           - if the flag is false, we only use coerce&distribute&match
+	        *)
+	        let apply_coer = (coer_target prog coer anode (CF.formula_of_base rhs_b) (CF.formula_of_base lhs_b)) in
+            (* let f1=apply_coer in *)
+            (* (\* let f2=(get_estate_must_match estate) in *\) *)
+            (* let f3=List.mem coer.coercion_body_view origs in *)
+            (* let f4=is_cycle_coer coer origs in *)
+            (* let f5=is_distributive coer in *)
+            (* let f6=(!enable_distribution) in *)
+	        (* if (!lemma_heuristic && 		(\* use coerce&match together with the history mechanism *\) *)
+		    (*     (not(apply_coer) 					(\* the target is not present *\) *)
+		    (*     (\* or (get_estate_must_match estate) *\))  (\* must match *\) *)
+		    (* && (List.mem coer.coercion_body_view origs *)
+		    (* or is_cycle_coer coer origs)) (\* there is a cycle *\) *)
+		    (*   or 	(not(!lemma_heuristic) &&   (\* use coerce&distribute&match*\) *)
+		    (*       (not(apply_coer) or 				(\* the target is not present *\) *)
+		    (*           ((\* (get_estate_must_match estate) 	(\\* must match *\\) *\) *)
+		    (*           (\* &&  *\)(not(!enable_distribution) 		(\* distributive coercion is not allowed *\) *)
+		    (*   	    or not(is_distributive coer))))) 	(\* coercion is not distributive *\) *)
+            if (not(apply_coer) or (is_cycle_coer coer origs))
+	        then
+              (* let s = (pr_list string_of_bool [f1;f3;f4;f5;f6]) in *)
+		      (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!"(* ^s *)) pos; 
+		      (CF.mkFailCtx_in(Basic_Reason( { 
+				  fc_message ="failed coercion application";
+				  fc_current_lhs = estate;
+				  fc_prior_steps = estate.es_prior_steps;
+				  fc_orig_conseq = estate.es_orig_conseq;
+				  fc_current_conseq = CF.formula_of_heap HFalse pos;
+				  fc_failure_pts = match (get_node_label node) with | Some s-> [s] | _ -> [];}
                 , CF.mk_failure_must "failed coercion" Globals.sl_error)), Failure))
-	      else	(* we can apply coercion *)
-		    begin
-		      (* if (not(!lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
-		      (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
-		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
-              (*subst perm variable when applicable*)
-              let perms1,perms2 =
-                if (Perm.allow_perm ()) then
-                  match perm1,perm2 with
-                  | Some f1, Some f2 ->
-                      ([f1],[f2])
-                  | Some f1, None ->
-                      ([f1],[full_perm_var])
-                  | None, Some f2 ->
-                      ([full_perm_var],[f2])
-                  | None, None ->
-                      ([],[])
-                else
-                  ([],[])
+	        else	(* we can apply coercion *)
+		      begin
+		        (* if (not(!lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
+		        (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
+		        (* the \rho substitution \rho (B) and  \rho(G) is performed *)
+                (*subst perm variable when applicable*)
+                let perms1,perms2 =
+                  if (Perm.allow_perm ()) then
+                    match perm1,perm2 with
+                      | Some f1, Some f2 ->
+                            ([f1],[f2])
+                      | Some f1, None ->
+                            ([f1],[full_perm_var])
+                      | None, Some f2 ->
+                            ([full_perm_var],[f2])
+                      | None, None ->
+                            ([],[])
+                  else
+                    ([],[])
                 in
-              let fr_vars = perms2@(p2 :: ps2)in
-              let to_vars = perms1@(p1 :: ps1)in
-		      let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
-		      let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture fr_vars to_vars f))) lhs_branches in
-		      let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
-              let coer_rhs_new1 =
-                if (Perm.allow_perm ()) then
-                  match perm1,perm2 with
-                    | Some f1, None ->
-                        propagate_perm_formula coer_rhs_new1 f1
-                    | _ -> coer_rhs_new1
-                else
-                  coer_rhs_new1
-              in
-		      let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
-		      let _ = reset_int2 () in
-		      (*let xpure_lhs = xpure prog f in*)
-		      (*************************************************************************************************************************************************************************)
-		      (* delay the guard check *)
-		      (* for now, just add it to the consequent *)
-		      (*************************************************************************************************************************************************************************)
-		      (* let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in *)
-		      (* let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
-		      (* let _ = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
-		      let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
-		      (* add the guard to the consequent  - however, the guard check is delayed *)
-              (* ?? *)
-		      let formula,to_aux_conseq = 
-                if !allow_imm then (replace_branches lhs_branches_new (mkTrue (mkTrueFlow ()) pos),lhs_guard_new)
-                else (replace_branches lhs_branches_new (formula_of_pure_N lhs_guard_new pos), CP.mkTrue pos) in
-		      let new_conseq = normalize 9 conseq formula pos in
-		      let new_estate = {estate with
-				  (* es_evars = f_univ_vars @ estate.es_evars; *)
-				  (* the new universal vars to be instantiated *)
-				  es_ivars = f_univ_vars @ estate.es_ivars;
-				  es_formula = new_f;
-				  (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_aux_conseq pos; *)
-				  (* es_must_match = true *)} in
-		      let new_ctx = Ctx new_estate in
-		      let res, prf = heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
-		      (add_to_aux_conseq res to_aux_conseq pos, prf)
-		    end
+                let fr_vars = perms2@(p2 :: ps2)in
+                let to_vars = perms1@(p1 :: ps1)in
+		        let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
+		        let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture fr_vars to_vars f))) lhs_branches in
+		        let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+                let coer_rhs_new1 =
+                  if (Perm.allow_perm ()) then
+                    match perm1,perm2 with
+                      | Some f1, None ->
+                            propagate_perm_formula coer_rhs_new1 f1
+                      | _ -> coer_rhs_new1
+                  else
+                    coer_rhs_new1
+                in
+		        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+		        let _ = reset_int2 () in
+		        (*let xpure_lhs = xpure prog f in*)
+		        (*************************************************************************************************************************************************************************)
+		        (* delay the guard check *)
+		        (* for now, just add it to the consequent *)
+		        (*************************************************************************************************************************************************************************)
+		        (* let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in *)
+		        (* let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
+		        (* let _ = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
+		        let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
+		        (* add the guard to the consequent  - however, the guard check is delayed *)
+                (* ?? *)
+		        let formula,to_aux_conseq = 
+                  if !allow_imm then (replace_branches lhs_branches_new (mkTrue (mkTrueFlow ()) pos),lhs_guard_new)
+                  else (replace_branches lhs_branches_new (formula_of_pure_N lhs_guard_new pos), CP.mkTrue pos) in
+		        let new_conseq = normalize 9 conseq formula pos in
+		        let new_estate = {estate with
+				    (* es_evars = f_univ_vars @ estate.es_evars; *)
+				    (* the new universal vars to be instantiated *)
+				    es_ivars = f_univ_vars @ estate.es_ivars;
+				    es_formula = new_f;
+				    (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_aux_conseq pos; *)
+				    (* es_must_match = true *)} in
+		        let new_ctx = Ctx new_estate in
+		        let res, prf = heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
+		        (add_to_aux_conseq res to_aux_conseq pos, prf)
+		      end
 	  | _ -> (CF.mkFailCtx_in(Basic_Reason ( { 
 			fc_message ="failed coercion application, found data but expected view";
 			fc_current_lhs = estate;
@@ -7443,7 +7443,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (
         1: true & __norm
         2: true & __Error
       *)
-(*LDK: return the a new formula (new_f) after apply coercion into f*)
+      (*LDK: return the a new formula (new_f) after apply coercion into f*)
 and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos : (int * formula) =
   (* This function also needs to add the name and the origin list
      of the source view to the origin list of the target view. It
@@ -7478,20 +7478,20 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
       h_formula_view_perm = perm2; (*LDK*)
       h_formula_view_arguments = ps2} (* as h2 *)) 
           (* when CF.is_eq_view_name(\*is_eq_view_spec*\) h1 h2  (\* c1=c2 && (br_match br1 br2) *\)->  *)
-    (*lemmas can be applied to data node as well*)
+          (*lemmas can be applied to data node as well*)
 	| DataNode ({ h_formula_data_node = p1;
-	    h_formula_data_name = c1;
-	    h_formula_data_origins = origs;
-	    h_formula_data_remaining_branches = br1;
-	    h_formula_data_perm = perm1; (*LDK*)
-	    h_formula_data_arguments = ps1} (* as h1 *)),
-        DataNode ({ h_formula_data_node = p2;
-	    h_formula_data_name = c2;
-	    h_formula_data_remaining_branches = br2;
-	    h_formula_data_perm = perm2; (*LDK*)
-	    h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
+	  h_formula_data_name = c1;
+	  h_formula_data_origins = origs;
+	  h_formula_data_remaining_branches = br1;
+	  h_formula_data_perm = perm1; (*LDK*)
+	  h_formula_data_arguments = ps1} (* as h1 *)),
+      DataNode ({ h_formula_data_node = p2;
+	  h_formula_data_name = c2;
+	  h_formula_data_remaining_branches = br2;
+	  h_formula_data_perm = perm2; (*LDK*)
+	  h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
-begin
+          begin
 	        (*************************************************************)
 	        (* replace with the coerce&match mechanism *)
 	        (*************************************************************)
@@ -7529,13 +7529,13 @@ begin
                   if (Perm.allow_perm ()) then
                     match perm1,perm2 with
                       | Some f1, Some f2 ->
-                          ([f1],[f2])
+                            ([f1],[f2])
                       | Some f1, None ->
-                          ([f1],[full_perm_var])
+                            ([f1],[full_perm_var])
                       | None, Some f2 ->
-                          ([full_perm_var],[f2])
+                            ([full_perm_var],[f2])
                       | None, None ->
-                          ([],[])
+                            ([],[])
                   else
                     ([],[])
                 in
@@ -7548,7 +7548,7 @@ begin
                   if (Perm.allow_perm ()) then
                     match perm1,perm2 with
                       | Some f1, None ->
-                          propagate_perm_formula coer_rhs_new1 f1
+                            propagate_perm_formula coer_rhs_new1 f1
                       | _ -> coer_rhs_new1
                   else
                     coer_rhs_new1
@@ -7586,33 +7586,33 @@ begin
                   in
 			      (fst_res, new_f)
 		        else if !case_split then begin
-                      (*LDK: 
-                        - Not yet handle perm in this case
-                        - case_split is probably for view nodes only
-                      *)
-                      match node with
-                        | ViewNode h1 ->
-		          (*
-		            Doing case splitting based on the guard.
-		          *)
-		          Debug.devel_pprint
-		              ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
-		          let neg_guard = CP.mkNot lhs_guard_new None pos in
-                  let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
-		          let f0 = normalize 10 f (formula_of_heap node pos) pos in
-		          let f1 = normalize 11 f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
-			      (* unfold the case with the negation of the guard. *)
-		          let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
-		          let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
-			      (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
-		          let new_f = mkOr f1 f2 pos in
-			      (* if (not(!lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
-			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
-			      (1, new_f)
-                        | _ -> 
-                            let _ = print_string ("[Solver.ml] Warning: This case not yet handled properly \n") in
-		                    let new_f = normalize_replace f coer_rhs_new pos in
-			                (1, new_f)
+                  (*LDK: 
+                    - Not yet handle perm in this case
+                    - case_split is probably for view nodes only
+                  *)
+                  match node with
+                    | ViewNode h1 ->
+		                  (*
+		                    Doing case splitting based on the guard.
+		                  *)
+		                  Debug.devel_pprint
+		                      ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
+		                  let neg_guard = CP.mkNot lhs_guard_new None pos in
+                          let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
+		                  let f0 = normalize 10 f (formula_of_heap node pos) pos in
+		                  let f1 = normalize 11 f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
+			              (* unfold the case with the negation of the guard. *)
+		                  let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
+		                  let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
+			              (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
+		                  let new_f = mkOr f1 f2 pos in
+			              (* if (not(!lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
+			              (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
+			              (1, new_f)
+                    | _ -> 
+                          let _ = print_string ("[Solver.ml] Warning: This case not yet handled properly \n") in
+		                  let new_f = normalize_replace f coer_rhs_new pos in
+			              (1, new_f)
 		        end else begin
 		          Debug.devel_pprint
 		              ("rewrite_coercion: guard is not satisfied, " ^ "no splitting.\n") pos;
@@ -7680,7 +7680,7 @@ and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_
       (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
 
 (*
-- c_opt : coercion declaration
+  - c_opt : coercion declaration
 *)
 
 and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
@@ -7801,63 +7801,63 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t 
 and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   (*left-coercion can be simple or complex*)
   if (coer.coercion_case = Cast.Simple) then
-  (*simple lemmas with simple lhs with single node*)
-  let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
-  (*let _ = print_string("left coercion\n") in*)
-  let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
-  let _ = Debug.devel_pprint ("apply_left_coercion: left_coercion:"
-                              ^ "\ n### c1 = " ^ c1
-                              ^ "\n ### anode = "^ (Cprinter.string_of_h_formula anode)
-                              ^ "\n") pos in
-  let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
+    (*simple lemmas with simple lhs with single node*)
+    let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
+    (*let _ = print_string("left coercion\n") in*)
+    let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
+    let _ = Debug.devel_pprint ("apply_left_coercion: left_coercion:"
+    ^ "\ n### c1 = " ^ c1
+    ^ "\n ### anode = "^ (Cprinter.string_of_h_formula anode)
+    ^ "\n") pos in
+    let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
     let _ = Debug.devel_pprint ( "apply_left_coercion: after rewrite_coercion"
-                                 ^ "\n ### ok = "^ (string_of_int ok)
-                                 ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs)
-                                 ^ "\n\n") pos in
-  if ok>0 then begin
-  (* lhs_b -> rhs_b *)
+    ^ "\n ### ok = "^ (string_of_int ok)
+    ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs)
+    ^ "\n\n") pos in
+    if ok>0 then begin
+(* lhs_b -> rhs_b *)
   (* anode |- _ *)
   (* unfold by removing LHS head anode, and replaced with rhs_b into new_lhs to continue *)
-    let new_ctx1 = build_context ctx0 new_lhs pos in
-	(* let new_ctx = set_context_formula ctx0 new_lhs in *)
-    let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
-    let res, tmp_prf = heap_entail prog is_folding new_ctx conseq pos in
-    let new_res =
-      if ok == 1 then res
-      else CF.invert_outcome res
-    in
-    let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
-	  coer.coercion_body tmp_prf coer.coercion_name
-    in
-	(new_res, [prf])
-  end else (CF.mkFailCtx_in( Basic_Reason ( { 
-	  fc_message ="failed left coercion application";
-	  fc_current_lhs = estate;
-	  fc_prior_steps = estate.es_prior_steps;
-	  fc_orig_conseq = estate.es_orig_conseq;
-	  fc_current_conseq = CF.formula_of_heap HFalse pos; 
+      let new_ctx1 = build_context ctx0 new_lhs pos in
+	  (* let new_ctx = set_context_formula ctx0 new_lhs in *)
+      let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
+      let res, tmp_prf = heap_entail prog is_folding new_ctx conseq pos in
+      let new_res =
+        if ok == 1 then res
+        else CF.invert_outcome res
+      in
+      let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
+	    coer.coercion_body tmp_prf coer.coercion_name
+      in
+	  (new_res, [prf])
+    end else (CF.mkFailCtx_in( Basic_Reason ( { 
+	    fc_message ="failed left coercion application";
+	    fc_current_lhs = estate;
+	    fc_prior_steps = estate.es_prior_steps;
+	    fc_orig_conseq = estate.es_orig_conseq;
+	    fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	  fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];}, 
                                             CF.mk_failure_must "12" Globals.sl_error)), [])
-    else
-      (*COMPLEX or NORMALIZING lemmas with multiple nodes in the lhs*)
-      (* (\*LDK: ok*\) *)
-      (* let _ = print_string ("mmmm, heap_entail_non_empty_rhs_heap: " *)
-      (* ^ "left_coercion: c1 = " *)
-      (* ^ c1 ^ "\n") in *)
-      let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
-                                  ^ "left_coercion: c1 = "
-                                  ^ c1 ^ "\n") pos in
-      apply_left_coercion_complex  estate coer prog conseq ctx0 resth1 anode lhs_b rhs_b c1 is_folding pos
+  else
+    (*COMPLEX or NORMALIZING lemmas with multiple nodes in the lhs*)
+    (* (\*LDK: ok*\) *)
+    (* let _ = print_string ("mmmm, heap_entail_non_empty_rhs_heap: " *)
+    (* ^ "left_coercion: c1 = " *)
+    (* ^ c1 ^ "\n") in *)
+    let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
+    ^ "left_coercion: c1 = "
+    ^ c1 ^ "\n") pos in
+    apply_left_coercion_complex  estate coer prog conseq ctx0 resth1 anode lhs_b rhs_b c1 is_folding pos
 
 
 
 (*TOCHECK: use pickup node to pickup the self node*)
 (*LDK: COMPLEX lemmas are treated in a different way*)
 and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_b rhs_b c1 is_folding pos =
-    (*simple lemmas with simple lhs with single node*)
-    let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
-    (*let _ = print_string("left coercion\n") in*)
-    let f = CF.mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
+  (*simple lemmas with simple lhs with single node*)
+  let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
+  (*let _ = print_string("left coercion\n") in*)
+  let f = CF.mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
   (* let _ = print_string ("apply_left_coercion_complex_x: before rename" *)
@@ -7893,62 +7893,62 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
   let extra_heap = 
     (match (extra_opt) with
       | None -> 
-          let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-          CF.HTrue
+            let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
+            CF.HTrue
       | Some res_f -> res_f)
   in
   match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
     | ViewNode ({ h_formula_view_node = p1;
-                  h_formula_view_name = c1;
-                  h_formula_view_origins = origs;
+      h_formula_view_name = c1;
+      h_formula_view_origins = origs;
       (* h_formula_view_original = original; (*LDK: unused*) *)
-                  h_formula_view_remaining_branches = br1;
-                  h_formula_view_perm = perm1; (*LDK*)
-                  h_formula_view_arguments = ps1} (* as h1 *)),
-  ViewNode ({ h_formula_view_node = p2;
-              h_formula_view_name = c2;
-              h_formula_view_remaining_branches = br2;
-              h_formula_view_perm = perm2; (*LDK*)
-              h_formula_view_arguments = ps2} (* as h2 *)) 
+      h_formula_view_remaining_branches = br1;
+      h_formula_view_perm = perm1; (*LDK*)
+      h_formula_view_arguments = ps1} (* as h1 *)),
+      ViewNode ({ h_formula_view_node = p2;
+      h_formula_view_name = c2;
+      h_formula_view_remaining_branches = br2;
+      h_formula_view_perm = perm2; (*LDK*)
+      h_formula_view_arguments = ps2} (* as h2 *)) 
 	| DataNode ({ h_formula_data_node = p1;
-	              h_formula_data_name = c1;
-	              h_formula_data_origins = origs;
-	              h_formula_data_remaining_branches = br1;
-	              h_formula_data_perm = perm1; (*LDK*)
-	              h_formula_data_arguments = ps1} (* as h1 *)),
-  DataNode ({ h_formula_data_node = p2;
-	          h_formula_data_name = c2;
-	          h_formula_data_remaining_branches = br2;
-	          h_formula_data_perm = perm2; (*LDK*)
-	          h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
+	  h_formula_data_name = c1;
+	  h_formula_data_origins = origs;
+	  h_formula_data_remaining_branches = br1;
+	  h_formula_data_perm = perm1; (*LDK*)
+	  h_formula_data_arguments = ps1} (* as h1 *)),
+      DataNode ({ h_formula_data_node = p2;
+	  h_formula_data_name = c2;
+	  h_formula_data_remaining_branches = br2;
+	  h_formula_data_perm = perm2; (*LDK*)
+	  h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
-        (*temporarily skip this step. What is it for???*)
-	    (* let apply_coer = (coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
+          (*temporarily skip this step. What is it for???*)
+	      (* let apply_coer = (coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
 
-        if (is_cycle_coer coer origs)
-	    then
-          (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
-		  let _ = Debug.devel_pprint("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *)) pos in
-           (CF.mkFailCtx_in( Basic_Reason ( { 
-	           fc_message ="failed left coercion application: in a cycle";
-	           fc_current_lhs = estate;
-	           fc_prior_steps = estate.es_prior_steps;
-	           fc_orig_conseq = estate.es_orig_conseq;
-	           fc_current_conseq = CF.formula_of_heap HFalse pos; 
+          if (is_cycle_coer coer origs)
+	      then
+            (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
+		    let _ = Debug.devel_pprint("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *)) pos in
+            (CF.mkFailCtx_in( Basic_Reason ( { 
+	            fc_message ="failed left coercion application: in a cycle";
+	            fc_current_lhs = estate;
+	            fc_prior_steps = estate.es_prior_steps;
+	            fc_orig_conseq = estate.es_orig_conseq;
+	            fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	           fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
                                             CF.mk_failure_must "12" Globals.sl_error)), [])
-        else
+          else
             let perms1,perms2 =
               if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, Some f2 ->
-                      ([f1],[f2])
+                        ([f1],[f2])
                   | Some f1, None ->
-                      ([f1],[full_perm_var])
+                        ([f1],[full_perm_var])
                   | None, Some f2 ->
-                      ([full_perm_var],[f2])
+                        ([full_perm_var],[f2])
                   | None, None ->
-                      ([],[])
+                        ([],[])
               else
                 ([],[])
             in
@@ -7961,100 +7961,100 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
               if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, None ->
-                      (*propagate perm into coercion*)
-                      let rhs = propagate_perm_formula coer_rhs_new1 f1 in
-                      let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
-                      (rhs,extra)
+                        (*propagate perm into coercion*)
+                        let rhs = propagate_perm_formula coer_rhs_new1 f1 in
+                        let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
+                        (rhs,extra)
                   | _ -> (coer_rhs_new1, extra_heap_new)
               else
                 (coer_rhs_new1,extra_heap_new)
             in
-		  let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name ::origs) in
-          (*avoid apply a complex lemma twice*)
-          let f = add_origins f [coer.coercion_name] in
-          let f = add_original f false in
-          let new_es_heap = CF.mkStarH anode estate.es_heap no_pos in (*consumed*)
-          (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
-          let old_trace = estate.es_trace in
-          let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(Complex)"::old_trace)} in
-          let new_ctx1 = Ctx new_estate in
-          let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
-          (*prove extra heap + guard*)
-          let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in 
-          (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in *)           
-	      Debug.devel_pprint ("apply_left_coercion_complex: check extra heap") pos;
-	      Debug.devel_pprint ("apply_left_coercion_complex: new_ctx after folding: "
-		                      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		                      ^ (Cprinter.string_of_context new_ctx1)) pos;
-	      Debug.devel_pprint ("apply_left_coercion_complex: conseq_extra:\n"
-		                      ^ (Cprinter.string_of_formula conseq_extra)) pos;
+		    let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name ::origs) in
+            (*avoid apply a complex lemma twice*)
+            let f = add_origins f [coer.coercion_name] in
+            let f = add_original f false in
+            let new_es_heap = CF.mkStarH anode estate.es_heap no_pos in (*consumed*)
+            (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
+            let old_trace = estate.es_trace in
+            let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(Complex)"::old_trace)} in
+            let new_ctx1 = Ctx new_estate in
+            let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
+            (*prove extra heap + guard*)
+            let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in 
+            (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in *)           
+	        Debug.devel_pprint ("apply_left_coercion_complex: check extra heap") pos;
+	        Debug.devel_pprint ("apply_left_coercion_complex: new_ctx after folding: "
+		    ^ (Cprinter.string_of_spec_var p2) ^ "\n"
+		    ^ (Cprinter.string_of_context new_ctx1)) pos;
+	        Debug.devel_pprint ("apply_left_coercion_complex: conseq_extra:\n"
+		    ^ (Cprinter.string_of_formula conseq_extra)) pos;
 
-          let check_res, check_prf = heap_entail prog false new_ctx conseq_extra pos in
+            let check_res, check_prf = heap_entail prog false new_ctx conseq_extra pos in
 
-	      Debug.devel_pprint ("apply_left_coercion_complex: after check extra heap: "
-		  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		  ^ (Cprinter.string_of_list_context check_res)) pos;
+	        Debug.devel_pprint ("apply_left_coercion_complex: after check extra heap: "
+		    ^ (Cprinter.string_of_spec_var p2) ^ "\n"
+		    ^ (Cprinter.string_of_list_context check_res)) pos;
 
-          (*PROCCESS RESULT*)
-          let rec process_one_x (ss:CF.steps) res = match res with
-            | OCtx (c1, c2) ->
-	            let tmp1, prf1 = process_one_x (add_to_steps ss "left OR 4 in ante") c1 in
-	            let tmp2, prf2 = process_one_x  (add_to_steps ss "right OR 4 in ante") c2 in
-	            let tmp3 = or_list_context tmp1 tmp2 in
-	            let prf3 = Prooftracer.mkOrLeft res f [prf1; prf2] in
-	            (tmp3, prf3)
-            | Ctx es ->
-                let es = CF.overwrite_estate_with_steps es ss in
-                (* rhs_coerc * es.es_formula /\ lhs.p |-  conseq*)
-                (* let es_formula = es.es_formula in *)
-                (* let es_formula_heap,_,es_flow,es_branches, _ = split_components es_formula in *)
-                (* let new_es_f = mkBase es_formula_heap (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue es_flow es_branches pos in *)
-                (* let new_ante1 = normalize_combine coer_rhs_new new_es_f no_pos in *)
+            (*PROCCESS RESULT*)
+            let rec process_one_x (ss:CF.steps) res = match res with
+              | OCtx (c1, c2) ->
+	                let tmp1, prf1 = process_one_x (add_to_steps ss "left OR 4 in ante") c1 in
+	                let tmp2, prf2 = process_one_x  (add_to_steps ss "right OR 4 in ante") c2 in
+	                let tmp3 = or_list_context tmp1 tmp2 in
+	                let prf3 = Prooftracer.mkOrLeft res f [prf1; prf2] in
+	                (tmp3, prf3)
+              | Ctx es ->
+                    let es = CF.overwrite_estate_with_steps es ss in
+                    (* rhs_coerc * es.es_formula /\ lhs.p |-  conseq*)
+                    (* let es_formula = es.es_formula in *)
+                    (* let es_formula_heap,_,es_flow,es_branches, _ = split_components es_formula in *)
+                    (* let new_es_f = mkBase es_formula_heap (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue es_flow es_branches pos in *)
+                    (* let new_ante1 = normalize_combine coer_rhs_new new_es_f no_pos in *)
 
-                let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
-                let new_ante = add_mix_formula_to_formula lhs_p new_ante1 in
-                let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
-                let new_ctx = (Ctx new_es) in
+                    let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
+                    let new_ante = add_mix_formula_to_formula lhs_p new_ante1 in
+                    let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
+                    let new_ctx = (Ctx new_es) in
 
-	            Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check") pos;
-	            Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check: new_ctx = \n" ^ (Cprinter.string_of_context new_ctx)) pos;
-	            Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check: conseq = " ^ (Cprinter.string_of_formula conseq)) pos;
-
-
-	            let rest_rs, prf = heap_entail_one_context prog is_folding new_ctx conseq pos in
+	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check") pos;
+	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check: new_ctx = \n" ^ (Cprinter.string_of_context new_ctx)) pos;
+	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: resume entail check: conseq = " ^ (Cprinter.string_of_formula conseq)) pos;
 
 
-	            Debug.devel_pprint ("apply_left_coercion_complex: process_one: after resume entail check: rest_res =  " ^ (Cprinter.string_of_list_context check_res)) pos;
+	                let rest_rs, prf = heap_entail_one_context prog is_folding new_ctx conseq pos in
 
-                (rest_rs,prf)
-          in
-          let process_one (ss:CF.steps) res = 
-            let pr1 = Cprinter.string_of_context  in
-            let pr2 (c,_) = Cprinter.string_of_list_context c in
-            Gen.Debug.no_1 "apply_left_coercion_complex: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) res) res in
 
-          (match check_res with 
-            | FailCtx _ -> 
-                let _ = Debug.devel_pprint ("apply_left_coercion_complex: extra state of the lhs is not satisfied \n") pos in
-                (CF.mkFailCtx_in( Basic_Reason ( { 
-	                fc_message ="failed left coercion application: can not match extra heap";
-	                fc_current_lhs = estate;
-	                fc_prior_steps = estate.es_prior_steps;
-	                fc_orig_conseq = estate.es_orig_conseq;
-	                fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	                Debug.devel_pprint ("apply_left_coercion_complex: process_one: after resume entail check: rest_res =  " ^ (Cprinter.string_of_list_context check_res)) pos;
+
+                    (rest_rs,prf)
+            in
+            let process_one (ss:CF.steps) res = 
+              let pr1 = Cprinter.string_of_context  in
+              let pr2 (c,_) = Cprinter.string_of_list_context c in
+              Gen.Debug.no_1 "apply_left_coercion_complex: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) res) res in
+
+            (match check_res with 
+              | FailCtx _ -> 
+                    let _ = Debug.devel_pprint ("apply_left_coercion_complex: extra state of the lhs is not satisfied \n") pos in
+                    (CF.mkFailCtx_in( Basic_Reason ( { 
+	                    fc_message ="failed left coercion application: can not match extra heap";
+	                    fc_current_lhs = estate;
+	                    fc_prior_steps = estate.es_prior_steps;
+	                    fc_orig_conseq = estate.es_orig_conseq;
+	                    fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	                fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
                                                  CF.mk_failure_must "12" Globals.sl_error)), [])
-            | SuccCtx res -> 
-	            let t1,p1 = List.split (List.map (process_one []) res) in
-	            let t1 = fold_context_left t1 in
-	            (t1,p1))
+              | SuccCtx res -> 
+	                let t1,p1 = List.split (List.map (process_one []) res) in
+	                let t1 = fold_context_left t1 in
+	                (t1,p1))
     | _ -> 
-        (CF.mkFailCtx_in( Basic_Reason ( { 
-	        fc_message ="failed left coercion application, can not match head node";
-	        fc_current_lhs = estate;
-	        fc_prior_steps = estate.es_prior_steps;
-	        fc_orig_conseq = estate.es_orig_conseq;
-	        fc_current_conseq = CF.formula_of_heap HFalse pos; 
+          (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed left coercion application, can not match head node";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	        fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
                                           CF.mk_failure_must "12" Globals.sl_error)), [])
 
@@ -8066,26 +8066,26 @@ and apply_left_coercion_complex estate coer prog conseq ctx0 resth1 anode lhs_b 
 (*pickup a node named "name" from a list of nodes*)
 and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
   let rec helper ls =
-  match ls with
-    | [] -> CF.HTrue,[]
-    | x::xs ->
-        match x with
-          | ViewNode ({h_formula_view_node = c})
-          | DataNode ({h_formula_data_node = c}) ->
+    match ls with
+      | [] -> CF.HTrue,[]
+      | x::xs ->
+            match x with
+              | ViewNode ({h_formula_view_node = c})
+              | DataNode ({h_formula_data_node = c}) ->
 
-              let c_str = (CP.name_of_spec_var c) in
-              let ri = try  (String.rindex c_str '_') with  _ -> (String.length c_str) in
-              let c_name = (String.sub c_str 0 ri)  in
-              (* let _ = print_string ("pick_up_node:" ^ c_name ^ " &&"  ^ name ^ "\n\n " ) in *)
-              if ((String.compare c_name name) ==0)
-              then
-                (x,xs)
-              else
-                let res1,res2 = helper xs in
-                (res1,x::res2)
-          | _ ->
-              let res1,res2 = helper xs in
-                (res1,x::res2)
+                    let c_str = (CP.name_of_spec_var c) in
+                    let ri = try  (String.rindex c_str '_') with  _ -> (String.length c_str) in
+                    let c_name = (String.sub c_str 0 ri)  in
+                    (* let _ = print_string ("pick_up_node:" ^ c_name ^ " &&"  ^ name ^ "\n\n " ) in *)
+                    if ((String.compare c_name name) ==0)
+                    then
+                      (x,xs)
+                    else
+                      let res1,res2 = helper xs in
+                      (res1,x::res2)
+              | _ ->
+                    let res1,res2 = helper xs in
+                    (res1,x::res2)
   in helper ls
 
 (*pickup a node named "name" from a list of nodes*)
@@ -8127,8 +8127,8 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
         let extra_heap =
           (match (extra_opt) with
             | None ->
-                let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-                CF.HTrue
+                  let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
+                  CF.HTrue
             | Some res_f -> res_f)
         in
         let h_vars = CF.h_fv head_node in
@@ -8179,8 +8179,8 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       let extra_heap =
         (match (extra_opt) with
           | None ->
-              let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
-              CF.HTrue
+                let _ = print_string "[normalize_perm] Warning: List of conjunctions can not be empty \n" in
+                CF.HTrue
           | Some res_f -> res_f)
       in
       (* let _ = print_string ("normalize_w_coers: before and after renamed" *)
@@ -8191,102 +8191,102 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       (*                       ^ "\n") in *)
       match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
         | ViewNode ({ h_formula_view_node = p1;
-                      h_formula_view_name = c1;
-                      h_formula_view_origins = origs;
-                      (* h_formula_view_original = original; (*LDK: unused*) *)
-                      h_formula_view_remaining_branches = br1;
-                      h_formula_view_perm = perm1; (*LDK*)
-                      h_formula_view_arguments = ps1} (* as h1 *)),
-      ViewNode ({ h_formula_view_node = p2;
-                  h_formula_view_name = c2;
-                  h_formula_view_remaining_branches = br2;
-                  h_formula_view_perm = perm2; (*LDK*)
-                  h_formula_view_arguments = ps2} (* as h2 *))
+          h_formula_view_name = c1;
+          h_formula_view_origins = origs;
+          (* h_formula_view_original = original; (*LDK: unused*) *)
+          h_formula_view_remaining_branches = br1;
+          h_formula_view_perm = perm1; (*LDK*)
+          h_formula_view_arguments = ps1} (* as h1 *)),
+          ViewNode ({ h_formula_view_node = p2;
+          h_formula_view_name = c2;
+          h_formula_view_remaining_branches = br2;
+          h_formula_view_perm = perm2; (*LDK*)
+          h_formula_view_arguments = ps2} (* as h2 *))
 	    | DataNode ({ h_formula_data_node = p1;
-	                  h_formula_data_name = c1;
-	                  h_formula_data_origins = origs;
-	                  h_formula_data_remaining_branches = br1;
-	                  h_formula_data_perm = perm1; (*LDK*)
-	                  h_formula_data_arguments = ps1} (* as h1 *)),
-      DataNode ({ h_formula_data_node = p2;
-	              h_formula_data_name = c2;
-	              h_formula_data_remaining_branches = br2;
-	              h_formula_data_perm = perm2; (*LDK*)
-	              h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
+	      h_formula_data_name = c1;
+	      h_formula_data_origins = origs;
+	      h_formula_data_remaining_branches = br1;
+	      h_formula_data_perm = perm1; (*LDK*)
+	      h_formula_data_arguments = ps1} (* as h1 *)),
+          DataNode ({ h_formula_data_node = p2;
+	      h_formula_data_name = c2;
+	      h_formula_data_remaining_branches = br2;
+	      h_formula_data_perm = perm2; (*LDK*)
+	      h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
-            let perms1,perms2 =
-              if (Perm.allow_perm ()) then
-                match perm1,perm2 with
-                  | Some f1, Some f2 ->
-                      ([f1],[f2])
-                  | Some f1, None ->
-                      ([f1],[full_perm_var])
-                  | None, Some f2 ->
-                      ([full_perm_var],[f2])
-                  | None, None ->
-                      ([],[])
-              else
-                ([],[])
-            in
-            let fr_vars = perms2@(p2 :: ps2)in
-            let to_vars = perms1@(p1 :: ps1)in
-            let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
-		    let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
-            let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
-            let coer_rhs_new1,extra_heap_new =
-              if (Perm.allow_perm ()) then
-                match perm1,perm2 with
-                  | Some f1, None ->
-                      (*propagate perm into coercion*)
-                      let rhs = propagate_perm_formula coer_rhs_new1 f1 in
-                      let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
-                      (rhs,extra)
-                  | _ -> (coer_rhs_new1, extra_heap_new)
-              else
-                (coer_rhs_new1,extra_heap_new)
-            in
-		    let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name :: *)origs) in
-            let new_es_heap = anode in (*consumed*)
-            let old_trace = estate.es_trace in
-            let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(normalizing)"::old_trace); es_is_normalizing = true} in
-            let new_ctx1 = Ctx new_estate in
-            let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
-            (*prove extra heap + guard*)
-            let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
-            (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in  *)
+              let perms1,perms2 =
+                if (Perm.allow_perm ()) then
+                  match perm1,perm2 with
+                    | Some f1, Some f2 ->
+                          ([f1],[f2])
+                    | Some f1, None ->
+                          ([f1],[full_perm_var])
+                    | None, Some f2 ->
+                          ([full_perm_var],[f2])
+                    | None, None ->
+                          ([],[])
+                else
+                  ([],[])
+              in
+              let fr_vars = perms2@(p2 :: ps2)in
+              let to_vars = perms1@(p1 :: ps1)in
+              let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
+		      let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+              let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
+              let coer_rhs_new1,extra_heap_new =
+                if (Perm.allow_perm ()) then
+                  match perm1,perm2 with
+                    | Some f1, None ->
+                          (*propagate perm into coercion*)
+                          let rhs = propagate_perm_formula coer_rhs_new1 f1 in
+                          let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
+                          (rhs,extra)
+                    | _ -> (coer_rhs_new1, extra_heap_new)
+                else
+                  (coer_rhs_new1,extra_heap_new)
+              in
+		      let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name :: *)origs) in
+              let new_es_heap = anode in (*consumed*)
+              let old_trace = estate.es_trace in
+              let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(normalizing)"::old_trace); es_is_normalizing = true} in
+              let new_ctx1 = Ctx new_estate in
+              let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
+              (*prove extra heap + guard*)
+              let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
+              (* let conseq_extra = mkBase extra_heap_new (MCP.OnePF (CP.mkTrue no_pos)) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in  *)
 
-	        Debug.devel_pprint ("normalize_w_coers:process_one: check extra heap") no_pos;
-	        Debug.devel_pprint ("normalize_w_coers:process_one: new_ctx: "
-		                        ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		                        ^ (Cprinter.string_of_context new_ctx1)) no_pos;
-	        Debug.devel_pprint ("normalize_w_coers:process_one: conseq_extra:\n"
-		                        ^ (Cprinter.string_of_formula conseq_extra)) no_pos;
+	          Debug.devel_pprint ("normalize_w_coers:process_one: check extra heap") no_pos;
+	          Debug.devel_pprint ("normalize_w_coers:process_one: new_ctx: "
+		      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
+		      ^ (Cprinter.string_of_context new_ctx1)) no_pos;
+	          Debug.devel_pprint ("normalize_w_coers:process_one: conseq_extra:\n"
+		      ^ (Cprinter.string_of_formula conseq_extra)) no_pos;
 
-            let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
+              let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
 
-	        Debug.devel_pprint ("normalize_w_coers:process_one: after check extra heap: "
-		                        ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-		                        ^ (Cprinter.string_of_list_context check_res)) no_pos;
+	          Debug.devel_pprint ("normalize_w_coers:process_one: after check extra heap: "
+		      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
+		      ^ (Cprinter.string_of_list_context check_res)) no_pos;
 
-          (*PROCCESS RESULT*)
-            match check_res with 
-              | FailCtx _ -> 
-                (*false, return dummy h and p*)
-                  (false, estate, h,p)
-              | SuccCtx res -> 
-                (*we expect only one result*)
-                  let ctx = List.hd res in
-                  match ctx with
-                    | OCtx (c1, c2) ->
-                        let _ = print_string ("[solver.ml] Warning: normalize_w_coers:process_one: expect only one context \n") in
-                        (false,estate,h,p)
-                    | Ctx es ->
-                        let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
-                        let new_ante = add_mix_formula_to_formula p new_ante1 in
-                        let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
-                        let h1,p1,_,_,_ = split_components new_ante in
-                        let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
-                        (true,new_es,h1,p1)
+              (*PROCCESS RESULT*)
+              match check_res with 
+                | FailCtx _ -> 
+                      (*false, return dummy h and p*)
+                      (false, estate, h,p)
+                | SuccCtx res -> 
+                      (*we expect only one result*)
+                      let ctx = List.hd res in
+                      match ctx with
+                        | OCtx (c1, c2) ->
+                              let _ = print_string ("[solver.ml] Warning: normalize_w_coers:process_one: expect only one context \n") in
+                              (false,estate,h,p)
+                        | Ctx es ->
+                              let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
+                              let new_ante = add_mix_formula_to_formula p new_ante1 in
+                              let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
+                              let h1,p1,_,_,_ = split_components new_ante in
+                              let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
+                              (true,new_es,h1,p1)
     in
     let process_one estate anode rest coer h p =
       let pr (c1,c2,c3,c4) = string_of_bool c1 ^ "||" ^ Cprinter.string_of_entail_state c2 in 
@@ -8297,37 +8297,37 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
     let rec process_one_h h_lst =
       match h_lst with
         | [] -> 
-            (*so far, could not find any entailment -> can not normalize*)
-            h,p
+              (*so far, could not find any entailment -> can not normalize*)
+              h,p
         | (anode,rest)::xs ->
-            (*for each pair (anode,rest), find a list of coercions*)
-            let name = match anode with
-              | ViewNode vn -> vn.h_formula_view_name
-              | DataNode dn -> dn.h_formula_data_name
-              | _ -> 
-              let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode or ViewNode \n") in
-              ""
-            in
-            let c_lst = look_up_coercion_def_raw coers name in (*list of coercions*)
-            let lst = List.map (fun c -> (c,anode,rest)) c_lst in
-            (*process a triple (coer,anode,res)*)
-            let rec process_one_coerc lst =
-              match lst with
-                | [] -> 
-                    (*so far, there is no entailment -> process the rest of pairs of (anode,rest)*)
-                    process_one_h xs 
-                | ((coer,anode,res)::xs1) ->
-                    (*for each triple, try to find a posible entailment*)
-                    let res,res_es,res_h,res_p = process_one estate anode rest coer h p in
-                    if (res) (*we could find a result*)
-                    then
-                      (*restart and normalize the new estate*)
-                      helper res_es res_h res_p
-                    else
-                      (*otherwise, try the rest*)
-                      process_one_coerc xs1
-            in
-            process_one_coerc lst
+              (*for each pair (anode,rest), find a list of coercions*)
+              let name = match anode with
+                | ViewNode vn -> vn.h_formula_view_name
+                | DataNode dn -> dn.h_formula_data_name
+                | _ -> 
+                      let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode or ViewNode \n") in
+                      ""
+              in
+              let c_lst = look_up_coercion_def_raw coers name in (*list of coercions*)
+              let lst = List.map (fun c -> (c,anode,rest)) c_lst in
+              (*process a triple (coer,anode,res)*)
+              let rec process_one_coerc lst =
+                match lst with
+                  | [] -> 
+                        (*so far, there is no entailment -> process the rest of pairs of (anode,rest)*)
+                        process_one_h xs 
+                  | ((coer,anode,res)::xs1) ->
+                        (*for each triple, try to find a posible entailment*)
+                        let res,res_es,res_h,res_p = process_one estate anode rest coer h p in
+                        if (res) (*we could find a result*)
+                        then
+                          (*restart and normalize the new estate*)
+                          helper res_es res_h res_p
+                        else
+                          (*otherwise, try the rest*)
+                          process_one_coerc xs1
+              in
+              process_one_coerc lst
     in
     (*split into pairs of (single node * the rest)  *)
     let h_lst = split_linear_node_guided [] h in
@@ -8351,25 +8351,25 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
     let rec helper f =
       match f with
         | Base b ->
-            let h = b.formula_base_heap in
-            let p = b.formula_base_pure in
-            (* let t = b.formula_base_type in *)
-            (* let fl = b.formula_base_flow in *)
-            (* let br = b.formula_base_branches in *)
-            let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
-            Base {b with formula_base_heap=h;formula_base_pure=p}
+              let h = b.formula_base_heap in
+              let p = b.formula_base_pure in
+              (* let t = b.formula_base_type in *)
+              (* let fl = b.formula_base_flow in *)
+              (* let br = b.formula_base_branches in *)
+              let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
+              Base {b with formula_base_heap=h;formula_base_pure=p}
         | Exists e ->
-            let h = e.formula_exists_heap in
-            let p = e.formula_exists_pure in
-            (* let t = e.formula_exists_type in *)
-            (* let fl = e.formula_exists_flow in *)
-            (* let br = e.formula_exists_branches in *)
-            let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
-            Exists {e with formula_exists_heap=h; formula_exists_pure=p }
+              let h = e.formula_exists_heap in
+              let p = e.formula_exists_pure in
+              (* let t = e.formula_exists_type in *)
+              (* let fl = e.formula_exists_flow in *)
+              (* let br = e.formula_exists_branches in *)
+              let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
+              Exists {e with formula_exists_heap=h; formula_exists_pure=p }
         | Or o ->
-	        let f1 = helper o.formula_or_f1 in
-	        let f2 = helper o.formula_or_f2 in
-            Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
+	          let f1 = helper o.formula_or_f1 in
+	          let f2 = helper o.formula_or_f2 in
+              Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
     in helper f
 
 and normalize_formula_w_coers prog estate (f:formula) (coers:coercion_decl list): formula =
@@ -8593,18 +8593,18 @@ and transform_null (eqs) :(CP.b_formula list) = List.map (fun c ->
       | Cpure.Lte _ -> c
       | Cpure.Eq (e1,e2,l) -> 
 		    if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		  if (Cpure.is_zero_int e2) then (Cpure.Eq (e1,(Cpure.Null l),l), il)
+		      if (Cpure.is_zero_int e2) then (Cpure.Eq (e1,(Cpure.Null l),l), il)
 		      else (Cpure.Neq (e1,(Cpure.Null l),l), il)
 		    else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		  if (Cpure.is_zero_int e1) then (Cpure.Eq (e2,(Cpure.Null l),l), il)
+		      if (Cpure.is_zero_int e1) then (Cpure.Eq (e2,(Cpure.Null l),l), il)
 		      else (Cpure.Neq (e2,(Cpure.Null l),l), il)
 		    else c
       | Cpure.Neq (e1,e2,l)-> 
 		    if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		  if (Cpure.is_zero_int e2) then (Cpure.Neq (e1,(Cpure.Null l),l), il)
+		      if (Cpure.is_zero_int e2) then (Cpure.Neq (e1,(Cpure.Null l),l), il)
 		      else c
 		    else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		  if (Cpure.is_zero_int e1) then (Cpure.Neq (e2,(Cpure.Null l),l), il)
+		      if (Cpure.is_zero_int e1) then (Cpure.Neq (e2,(Cpure.Null l),l), il)
 		      else c
 		    else c
       | _ -> c

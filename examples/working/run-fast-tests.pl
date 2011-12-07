@@ -164,7 +164,9 @@ if($timings){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip ";
+$hip = "$exec_path/n-hip ";
+# changed to native hip, as byte-hip too slow
+# please use make native
 $sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
