@@ -461,22 +461,19 @@ let run_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formu
   let conseq = Solver.prune_pred_struc !cprog true conseq in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
-  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
 
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> AS.get_spec_var_stab_infer v ((CF.fv ante) @ (CF.f_top_level_vars_struc conseq)) no_pos) ivars in
-  
-  (* Abductive inference *)
-  let new_ante = Solver.infer_pre ctx !cprog ante conseq vars 
-  in
 
-  let ctx = CF.build_context ectx new_ante no_pos in
   let _ = if !Globals.print_core 
-    then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula new_ante)
+    then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
       ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
     else () 
   in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+
+  let ctx = Solver.init_vars ctx vars in 
+  
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv !cprog false false 
