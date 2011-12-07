@@ -9,6 +9,9 @@ pred ll<n> == self = null & n = 0
 
 infer [y] true |- y::node<a,b>.
 
+//infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
+
+
 //infer [x] n=0 & x=y  |- y::ll<n>.
 // expected pre: x::ll<n31> & n31=n
 // expected infer_vars

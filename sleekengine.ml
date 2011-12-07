@@ -491,6 +491,50 @@ let run_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formu
   in
   (res, rs)
   
+let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let _ = residues := None in
+  let stab = H.create 103 in
+  let ante = meta_to_formula iante0 false [] stab in
+  let ante = Solver.prune_preds !cprog true ante in
+  let fvs = CF.fv ante in
+  let fv_idents = List.map CP.name_of_spec_var fvs in
+  let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+  let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+
+  (* List of vars needed for abduction process *)
+  let vars = List.map (fun v -> AS.get_spec_var_stab_infer v ((CF.fv ante) @ (CF.f_top_level_vars_struc conseq)) no_pos) ivars in
+  let new_ante = ante in
+  let ctx = Inf.init_vars ctx vars in
+  (* Abductive inference *)
+  (* let new_ante = Solver.infer_pre ctx !cprog ante conseq vars  *)
+  (* in *)
+  (* let ctx = CF.build_context ectx new_ante no_pos in *)
+  let _ = if !Globals.print_core 
+    then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula new_ante)
+      ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
+    else () 
+  in
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+  let rs1, _ = 
+    if not !Globals.disable_failure_explaining then
+      Solver.heap_entail_struc_init_bug_inv !cprog false false 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+    else
+      Solver.heap_entail_struc_init !cprog false false 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+  in
+  let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  residues := Some rs;
+  flush stdout;
+  let res =
+    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
+    else ((not (CF.isFailCtx rs)))
+  in
+  (res, rs)
+
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
@@ -543,7 +587,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
   let num_id = "Infer  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
-    let valid, rs = run_infer ivars iante0 iconseq0 in
+    let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
     print_entail_result_with_pre valid rs num_id
   with _ -> print_exc num_id
 

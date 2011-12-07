@@ -6669,6 +6669,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           begin
           match r with
             | Some (new_iv,new_rn) -> 
+                  let _ = Debug.devel_pprint ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")  pos in
                   let estate = 
                     {estate with 
                         es_infer_vars = new_iv; 
@@ -8653,13 +8654,13 @@ let rec get_precondition ft vars pos =
   | Or_Continuation (ft1, ft2) -> 
     report_error pos ("get_precondition: do not support for Or_Continuation \n")
 
-let rec init_vars ctx vars = match ctx with
-  | Ctx estate -> Ctx {estate with es_infer_vars = vars}
-  | OCtx (ctx1, ctx2) -> OCtx (init_vars ctx1 vars, init_vars ctx2 vars)
+(* let rec init_vars ctx vars = match ctx with *)
+(*   | Ctx estate -> Ctx {estate with es_infer_vars = vars} *)
+(*   | OCtx (ctx1, ctx2) -> OCtx (init_vars ctx1 vars, init_vars ctx2 vars) *)
 
 let infer_pre ctx prog ante conseq vars =
   do_infer := true;
-  let ctx = init_vars ctx vars in 
+  let ctx = Inf.init_vars ctx vars in 
   let (fctx, _) = heap_entail_struc_init prog false false 
     (CF.SuccCtx[ctx]) conseq no_pos None
   in
