@@ -455,8 +455,10 @@ let string_of_spec_var x =
         | Primed -> "'"
         | Unprimed -> "" )
 
-let string_of_imm imm = 
-  if imm then "@I" else "" (*"@M"*)
+let string_of_imm imm = match imm with
+  | Imm -> "@I"
+  | Lend -> "@L"
+  | _ -> "@M"
 
 let string_of_derv dr = 
   if dr then "@D" else ""

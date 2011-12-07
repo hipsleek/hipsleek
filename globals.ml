@@ -25,6 +25,8 @@ and primed =
   | Primed
   | Unprimed
 
+and heap_ann = Lend | Imm | Mutable
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)

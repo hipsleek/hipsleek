@@ -8,7 +8,7 @@ bigint<v> == self = null & v = 0 or
      inv v >= 0;
 
 node clone(node x)
-  requires x::bigint<v>@I
+  requires x::bigint<v>@L
   ensures res::bigint<v>;
 {
   if (x == null) return x;
@@ -16,7 +16,7 @@ node clone(node x)
 }
 
 int int_value(node x)
-  requires x::bigint<v>@I
+  requires x::bigint<v>@L
   ensures res = v;
 {
   if (x == null) return 0;
@@ -46,7 +46,7 @@ node bigint_of(int v)
 }
 
 node add_one_digit(node x, int c)
-  requires x::bigint<v>@I & 0 <= c <= 9
+  requires x::bigint<v>@L & 0 <= c <= 9
   ensures res::bigint<v+c> ;
 {
   if (x == null) 
@@ -58,7 +58,7 @@ node add_one_digit(node x, int c)
 }
 
 node test(node x) 
- requires x::bigint<v>@I
+ requires x::bigint<v>@L
  ensures res::bigint<2*v>;
 {
   //assume false;
@@ -67,7 +67,7 @@ node test(node x)
 }
 
 node add_c(node x, node y, int c)
-   requires (x::bigint<v1>@I & y::bigint<v2>@I) & 0 <= c <= 1
+   requires (x::bigint<v1>@L & y::bigint<v2>@L) & 0 <= c <= 1
   ensures res::bigint<v1+v2+c>;
 {
   if (x == null) {
@@ -97,10 +97,10 @@ node add_c(node x, node y, int c)
 }
 
 node add(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
+  requires (x::bigint<v1>@L & y::bigint<v2>@L) & true
   ensures res::bigint<v1+v2>;
 /*
-  requires x::bigint<v1>@I * y::bigint<v2>@I
+  requires x::bigint<v1>@L * y::bigint<v2>@L
   ensures res::bigint<v1+v2>;
 */
 {
@@ -108,7 +108,7 @@ node add(node x, node y)
 }
 
 node sub_one_digit(node x, int c)
-  requires x::bigint<v>@I & 0 <= c <= 9 & c <= v
+  requires x::bigint<v>@L & 0 <= c <= 9 & c <= v
   ensures res::bigint<v-c>;
 {
   if (x == null) return null;
@@ -119,10 +119,10 @@ node sub_one_digit(node x, int c)
 
 node sub_c(node x, node y, int c)
 /*
-  requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
+  requires x::bigint<v1>@L * y::bigint<v2>@L & 0 <= c <= 1 & v1 >= v2+c
   ensures res::bigint<v1-v2-c>;
 */
- requires (y::bigint<v2>@I & x::bigint<v1>@I) & 0 <= c <= 1 & v1 >= v2+c
+ requires (y::bigint<v2>@L & x::bigint<v1>@L) & 0 <= c <= 1 & v1 >= v2+c
  ensures res::bigint<v1-v2-c>;
 {
   if (x == null) return null;
@@ -139,10 +139,10 @@ node sub_c(node x, node y, int c)
 }
 
 node sub(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & v1 >= v2
+  requires (x::bigint<v1>@L & y::bigint<v2>@L) & v1 >= v2
   ensures res::bigint<v1-v2>;
 /*
-  requires x::bigint<v1>@I * y::bigint<v2>@I & v1 >= v2
+  requires x::bigint<v1>@L * y::bigint<v2>@L & v1 >= v2
   ensures res::bigint<v1-v2>;
 */
 {
@@ -150,7 +150,7 @@ node sub(node x, node y)
 }
 
 node mult_c(node x, int d, int c)
-  requires x::bigint<v>@I & 0 <= c <= 9 & 0 <= d <= 9 
+  requires x::bigint<v>@L & 0 <= c <= 9 & 0 <= d <= 9 
   ensures res::bigint<v*d+c>;
 {
   if (x == null || d==0) {
@@ -172,18 +172,18 @@ node mult_c(node x, int d, int c)
 
 /* left shift all digits one pos (multiplied by ten) */
 node shift_left(node x)
-  requires x::bigint<v>@I
-  ensures res::bigint<v*10>@I;
+  requires x::bigint<v>@L
+  ensures res::bigint<v*10>@L;
 {
   if (x == null) return x;
   return new node(0, x);
 }
 
 node mult(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
+  requires (x::bigint<v1>@L & y::bigint<v2>@L) & true
   ensures res::bigint<v1*v2>;
 /*
-  requires x::bigint<v1>@I * y::bigint<v2>@I
+  requires x::bigint<v1>@L * y::bigint<v2>@L
   ensures res::bigint<v1*v2>;
 */
 {
@@ -197,7 +197,7 @@ node mult(node x, node y)
 }
 
 bool is_zero(node x)
-  requires x::bigint<v>@I
+  requires x::bigint<v>@L
   ensures true & (res & v = 0 | !res & v != 0);
 {
   if (x == null) return true;
@@ -206,7 +206,7 @@ bool is_zero(node x)
 }
 
 bool is_equal(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I)
+  requires (x::bigint<v1>@L & y::bigint<v2>@L)
   ensures true & (res & v1 = v2 | !res & v1 != v2);
 {
   if (x == null) {
@@ -225,7 +225,7 @@ bool is_equal(node x, node y)
 }
 
 int compare(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I)
+  requires (x::bigint<v1>@L & y::bigint<v2>@L)
   ensures true & (res = 0 & v1 = v2 | res = 1 & v1 > v2 | res = -1 & v1 < v2);
  /*
   // fail: why?

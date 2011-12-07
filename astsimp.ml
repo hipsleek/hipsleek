@@ -2295,7 +2295,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_var_pos = pos;
                                 } in
                                 let (tmp_e, tmp_t) =
-			                      flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos 
+			                      flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid Mutable pos 
 			                    in
 			                    
                                 let fn_decl = if new_var then C.VarDecl {
@@ -2397,7 +2397,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_bind_bound_var = (vt, v);
                                     C.exp_bind_fields = List.combine vs_types vs;
                                     C.exp_bind_body = ce;
-                                    C.exp_bind_imm = false; (* can it be true? *)
+                                    C.exp_bind_imm = Mutable; (* can it be true? *)
 				                    C.exp_bind_pos = pos;
                                     C.exp_bind_path_id = pid; }), te)))
                         | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
@@ -2650,9 +2650,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			else
               let r = 
 	            if (!Globals.allow_imm) then
-	              flatten_to_bind prog proc e (List.rev fs) None pid true pos
+	              flatten_to_bind prog proc e (List.rev fs) None pid Lend pos (* ok to have it lend instead of Imm? *)
 	            else
-	              flatten_to_bind prog proc e (List.rev fs) None pid false pos
+	              flatten_to_bind prog proc e (List.rev fs) None pid Mutable pos
 	          in
               (* let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in *)
               r
@@ -3295,7 +3295,7 @@ and compact_field_access_sequence prog root_type field_seq =
   res
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
-      (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) pos =
+      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) pos =
   match rev_fs with
     | f :: rest ->
           let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm pos in
@@ -3357,7 +3357,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_bound_var = ((Named dname), fn);
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
-				C.exp_bind_imm = imm;
+		C.exp_bind_imm = imm;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in
@@ -5807,8 +5807,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
         (fun _ -> linearize_heap used_names f) f  in
   let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
-    let heap = Iformula.normalize_h_formula heap in 
-    (* let _ = print_string("normalized heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in   *)
+    let heap = Immutable.normalize_h_formula heap false in 
     let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
     let new_p = Ipure.mkAnd cp link_f pos in
     let new_br = IP.merge_branches new_br link_f_br in
