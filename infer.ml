@@ -83,7 +83,7 @@ let infer_heap_main iheap ivars old_vars =
   let pr1 = !print_h_formula in
   let prv = !print_svl in
   let pr2 = pr_pair prv pr1 in
-  Gen.Debug.ho_3 "infer_heap_main" pr1 prv prv pr2 infer_heap_main iheap ivars old_vars
+  Gen.Debug.no_3 "infer_heap_main" pr1 prv prv pr2 infer_heap_main iheap ivars old_vars
 
 let conv_infer_heap hs =
   let rec helper hs h = match hs with
@@ -177,7 +177,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq =
   (* let _ = print_endline ("RHS impl vars: "^(!print_svl es.es_gen_impl_vars)) in *)
   (* let _ = print_endline ("RHS expl vars: "^(!print_svl es.es_gen_expl_vars)) in *)
   (* let _ = print_endline ("imm pure stack: "^(pr_list !print_mix_formula es.es_imm_pure_stk)) in *)
-  None
+  if b then Some (new_iv,new_h)
+  else None
 
 let infer_lhs_conjunct estate lhs_xpure rhs_xpure h2 p2 pos =
   if no_infer estate then estate

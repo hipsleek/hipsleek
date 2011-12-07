@@ -2217,6 +2217,9 @@ and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) =
 and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_replace pos
 
+and normalize_combine_heap (f1 : formula) (f2 : h_formula) 
+      = normalize_combine_star f1 (formula_of_heap f2 no_pos) no_pos
+
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
 and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f1 with

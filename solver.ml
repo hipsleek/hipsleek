@@ -4847,18 +4847,18 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_branches = br2;
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
-                          let estate = 
-                            (* if not !do_infer then estate *)
-                            (* else *)
-                            (*   begin *)
-                              let lhs_xpure,_,_,_ = xpure prog ante in
-                              let rhs_xpure,_,_,_ = xpure prog conseq in
-                              Inf.infer_lhs_conjunct estate lhs_xpure rhs_xpure h2 p2 pos 
-                             (*  {estate with es_infer_vars = infer_vars; es_infer_heap = [infer_heap];  *)
-                             (*               es_infer_pure = infer_pure; es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix p2)]} *)
-                             (* end *)
-                          in
-                          let ctx0 = Ctx estate in
+                                  let estate = 
+                                    (* if not !do_infer then estate *)
+                                    (* else *)
+                                    (*   begin *)
+                                    let lhs_xpure,_,_,_ = xpure prog ante in
+                                    let rhs_xpure,_,_,_ = xpure prog conseq in
+                                    Inf.infer_lhs_conjunct estate lhs_xpure rhs_xpure h2 p2 pos 
+                                        (*  {estate with es_infer_vars = infer_vars; es_infer_heap = [infer_heap];  *)
+                                        (*               es_infer_pure = infer_pure; es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix p2)]} *)
+                                        (* end *)
+                                  in
+                                  let ctx0 = Ctx estate in
 				                  heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 rhs_h_matched_set pos
 				                end
 	          end
@@ -5299,10 +5299,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   if r_rez then begin (* Entailment is valid *)
     let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
     (*let _ = print_string ("res_delta : " ^ (Cprinter.string_of_formula res_delta) ^ "\n") in*)
-(*    let lhs_xpure,_,_,_ = xpure prog res_delta in                                                       *)
-(*    let pure_part = Omega.simplify (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) in*)
-(*    let pure_part = CP.filter_var pure_part estate.es_infer_vars in                                     *)
-(*    let pure_part = Omega.simplify pure_part in                                                         *)
+    (*    let lhs_xpure,_,_,_ = xpure prog res_delta in                                                       *)
+    (*    let pure_part = Omega.simplify (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) in*)
+    (*    let pure_part = CP.filter_var pure_part estate.es_infer_vars in                                     *)
+    (*    let pure_part = Omega.simplify pure_part in                                                         *)
     let estate = Inf.infer_empty_rhs estate lhs_p rhs_p pos in
 	if is_folding then begin
       (*LDK: the rhs_p is considered a part of residue and 
@@ -5342,9 +5342,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     let estate = 
       (* if not !do_infer then estate else  *)
       (*   begin *)
-        let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
-        Inf.infer_empty_rhs2 estate lhs_xpure rhs_p pos 
-      (* end *)
+      let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
+      Inf.infer_empty_rhs2 estate lhs_xpure rhs_p pos 
+          (* end *)
     in
     Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
     (*compute lub of estate.es_formula and current fc_flow*)
@@ -6601,7 +6601,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
           let lhs_var = get_node_var lhs_node in
-              (* WN : why is there a need for es_infer_invs *)
+          (* WN : why is there a need for es_infer_invs *)
           let estate =  Inf.infer_for_unfold prog estate lhs_node pos in
           let curr_unfold_num = (get_view_unfold_num lhs_node)+unfold_num in
           if (curr_unfold_num>1) then 
@@ -6666,120 +6666,137 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           CF.mk_failure_none ("Nothing_to_do?"^s))), NoAlias)
     | Context.M_unmatched_rhs_data_node rhs ->
           let r = Inf.infer_heap_nodes estate rhs conseq in 
-          (* TODO : obtain xpure0 of RHS
-             (i) check if it is unsat, or
-             (ii) check if negated term implied by LHS
-          *)
-          (* check LHS to see if null -> must error else may error *)
-          let (mix_rf,br,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
-          (* let _ = print_flush "UNMATCHED RHS" in *)
-          (*
-          (*let (mix_lf,bl,lsvl,mem_lf) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in*)
-            let pr = Cprinter.string_of_spec_var_list in
-            let _ = print_flush "UNMATCHED RHS" in
-            let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in
-            let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in
-          (* let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
-            let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in
-            let _ = print_flush ("RHS - xpure (svl) :"^(pr rsvl)) in
-            let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_rf.mem_formula_mset)) in
-          *)
-          let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
-          (*get list of pointers which equal NULL*)
-          let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
-          let lhs_p = List.fold_left
-            (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
-          let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
-          (*all LHS = null |- RHS != null*)
-          if (simple_imply lhs_p rhs_p) then
-            let new_lhs_p = filter_redundant lhs_p rhs_p in
-            let new_rhs_p = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
-            let s = "15.1" ^ (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- " ^
-              (Cprinter.string_of_pure_formula new_rhs_p) ^ " (must-bug)." in
-            (*change to must flow*)
-            let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
-                    !error_flow_int estate.CF.es_formula} in
-            (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-            CF.mk_failure_must s "" [])), NoAlias)
-          else
-            begin
-              (*check disj memset*)
-              let r = ref (-9999) in
-              (*
-                example 19 of err2.slk should be handled here.
-                checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_>
-                - add disjoint pointers into LHS pure formula
-                - for example if RHS contains {x,y}, the constraint x!=y will be added to LHS pure formula
-              *)
-              let rhs_disj_set_p = CP.mklsPtrNeqEqn
-                (rsvl @ (Gen.BList.remove_dups_eq (CP.eq_spec_var) rhs_h_matched_set)) no_pos in
-              (*use global information here*)
-              let rhs_disj_set_p =
-                match rhs_disj_set_p with
-                  | Some p1 -> p1
-                  | _ -> CP.mkTrue no_pos
-              in
-              let rhs_neq_nulls = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
-              let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure rhs_disj_set_p in
-              let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
-              let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
-              (*contradiction on RHS?*)
-              if not(TP.is_sat_sub_no rhs_p r) then
-                (*contradiction on RHS*)
-                let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
-                let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
-                        !error_flow_int estate.CF.es_formula} in
-                (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") "" [])), NoAlias)
-              else
-                let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
-                (*
-                  rhs_disj_set != null has been checked above. Separately check for better error classifying.
-                *)
-                if not(simple_imply lhs_p rhs_p) then
-                  (*should check may-must here*)
-                  let (fc, (contra_list, must_list, may_list)) = check_maymust_failure lhs_p rhs_p in
-                  let new_estate = {
-                      estate with es_formula =
-                          match fc with
-                            | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                            | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
-                                  (* this denotes a maybe error *)
-                            | CF.Failure_None _
-                            | CF.Failure_Valid -> estate.es_formula
-                  } in
-                  let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
-                  (build_and_failures "15.3" (contra_list, must_list, may_list) fc_template, UnsatConseq)
-                else
-                  let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
-                    ^ " (may-bug)."in
-                  let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
-                          !top_flow_int estate.CF.es_formula} in
-                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                  CF.mk_failure_may s)), NoAlias)
-            end
-    | Context.Seq_action l ->
-          report_warning no_pos "Sequential action - not handled";
-          (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
-              , CF.mk_failure_none "sequential action - not handled" )), NoAlias)
-    | Context.Cond_action l ->
-          let rec helper l = match l with
-            | [] ->           
-                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
-                      , CF.mk_failure_may "Cond action - none succeeded" )), NoAlias)
-            | [(_,act)] -> process_action 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
-            | (_,act)::xs ->
-                  let (r,prf) = process_action 131 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
-                  if isFailCtx r then helper xs
-                  else (r,prf)
-          in helper l
-    | Context.Search_action l ->
-          let r = List.map (fun (_,a1) -> process_action 14 prog estate conseq lhs_b rhs_b a1
-              rhs_h_matched_set is_folding pos) l in
-          let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in
-          (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
-          
-          (ctx_lst, pf) in
+          begin
+          match r with
+            | Some (new_iv,new_rn) -> 
+                  let estate = 
+                    {estate with 
+                        es_infer_vars = new_iv; 
+                        es_formula = CF.normalize_combine_heap estate.es_formula new_rn;
+                        es_infer_heap = estate.es_infer_heap@[new_rn];
+                    } in
+                  let ctx1 = (Ctx estate) in
+			      let ctx1 = set_unsat_flag ctx1 true in
+			      let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
+                  (r1,prf) 
+            | None ->
+                  (
+                    (* TODO : obtain xpure0 of RHS
+                       (i) check if it is unsat, or
+                       (ii) check if negated term implied by LHS
+                    *)
+                    (* check LHS to see if null -> must error else may error *)
+                    let (mix_rf,br,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
+                    (* let _ = print_flush "UNMATCHED RHS" in *)
+                    (*
+                    (*let (mix_lf,bl,lsvl,mem_lf) = xpure_heap_symbolic prog lhs_b.formula_base_heap 0 in*)
+                      let pr = Cprinter.string_of_spec_var_list in
+                      let _ = print_flush "UNMATCHED RHS" in
+                      let _ = print_flush ("LHS :"^(Cprinter.string_of_formula (Base lhs_b))) in
+                      let _ = print_flush ("RHS :"^(Cprinter.string_of_formula (Base rhs_b))) in
+                    (* let _ = print_flush ("RHS - data :"^(Cprinter.string_of_h_formula rhs)) in *)
+                      let _ = print_flush ("RHS - xpure (mix_f) :"^(Cprinter.string_of_mix_formula mix_rf)) in
+                      let _ = print_flush ("RHS - xpure (svl) :"^(pr rsvl)) in
+                      let _ = print_flush ("RHS - xpure (mem_f) :"^(pr_list pr mem_rf.mem_formula_mset)) in
+                    *)
+                    let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
+                    (*get list of pointers which equal NULL*)
+                    let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
+                    let lhs_p = List.fold_left
+                      (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
+                    let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
+                    (*all LHS = null |- RHS != null*)
+                    if (simple_imply lhs_p rhs_p) then
+                      let new_lhs_p = filter_redundant lhs_p rhs_p in
+                      let new_rhs_p = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
+                      let s = "15.1" ^ (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- " ^
+                        (Cprinter.string_of_pure_formula new_rhs_p) ^ " (must-bug)." in
+                      (*change to must flow*)
+                      let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
+                              !error_flow_int estate.CF.es_formula} in
+                      (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                      CF.mk_failure_must s "" [])), NoAlias)
+                    else
+                      begin
+                        (*check disj memset*)
+                        let r = ref (-9999) in
+                        (*
+                          example 19 of err2.slk should be handled here.
+                          checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_>
+                          - add disjoint pointers into LHS pure formula
+                          - for example if RHS contains {x,y}, the constraint x!=y will be added to LHS pure formula
+                        *)
+                        let rhs_disj_set_p = CP.mklsPtrNeqEqn
+                          (rsvl @ (Gen.BList.remove_dups_eq (CP.eq_spec_var) rhs_h_matched_set)) no_pos in
+                        (*use global information here*)
+                        let rhs_disj_set_p =
+                          match rhs_disj_set_p with
+                            | Some p1 -> p1
+                            | _ -> CP.mkTrue no_pos
+                        in
+                        let rhs_neq_nulls = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
+                        let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure rhs_disj_set_p in
+                        let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
+                        let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
+                        (*contradiction on RHS?*)
+                        if not(TP.is_sat_sub_no rhs_p r) then
+                          (*contradiction on RHS*)
+                          let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
+                          let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
+                                  !error_flow_int estate.CF.es_formula} in
+                          (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
+                          mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") "" [])), NoAlias)
+                        else
+                          let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
+                          (*
+                            rhs_disj_set != null has been checked above. Separately check for better error classifying.
+                          *)
+                          if not(simple_imply lhs_p rhs_p) then
+                            (*should check may-must here*)
+                            let (fc, (contra_list, must_list, may_list)) = check_maymust_failure lhs_p rhs_p in
+                            let new_estate = {
+                                estate with es_formula =
+                                    match fc with
+                                      | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
+                                      | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
+                                            (* this denotes a maybe error *)
+                                      | CF.Failure_None _
+                                      | CF.Failure_Valid -> estate.es_formula
+                            } in
+                            let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
+                            (build_and_failures "15.3" (contra_list, must_list, may_list) fc_template, UnsatConseq)
+                          else
+                            let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
+                              ^ " (may-bug)."in
+                            let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
+                                    !top_flow_int estate.CF.es_formula} in
+                            (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                            CF.mk_failure_may s)), NoAlias)
+                      end
+                  )
+          end
+            | Context.Seq_action l ->
+                  report_warning no_pos "Sequential action - not handled";
+                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
+                      , CF.mk_failure_none "sequential action - not handled" )), NoAlias)
+            | Context.Cond_action l ->
+                  let rec helper l = match l with
+                    | [] ->           
+                          (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
+                              , CF.mk_failure_may "Cond action - none succeeded" )), NoAlias)
+                    | [(_,act)] -> process_action 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
+                    | (_,act)::xs ->
+                          let (r,prf) = process_action 131 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
+                          if isFailCtx r then helper xs
+                          else (r,prf)
+                  in helper l
+            | Context.Search_action l ->
+                  let r = List.map (fun (_,a1) -> process_action 14 prog estate conseq lhs_b rhs_b a1
+                      rhs_h_matched_set is_folding pos) l in
+                  let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in
+                  (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
+                  
+                  (ctx_lst, pf) in
   if (Context.is_complex_action a) then (r1,r2) else 
     (push_hole_action a r1,r2)
 
