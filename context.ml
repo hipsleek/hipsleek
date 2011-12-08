@@ -854,6 +854,7 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normali
     match r with
       | [] -> M_Nothing_to_do "no nodes on RHS"
       | xs -> 
+        (* Need to sort xs so that M_base_case_fold is after M_unmatched_rhs_data_node *)
             (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
             let ys = sort_wt r in 
             List.hd (ys)

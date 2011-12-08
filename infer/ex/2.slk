@@ -100,3 +100,46 @@ New infer var is:
 
 
 */
+
+
+
+infer [p] x::node<1,p> |- x::ll<n> .
+/*
+- Add alias in inferred pure
+- Problem with success context (which will be made to be fail later)
+
+heap_entail_conjunct@10@2 ENTRY :false
+
+heap_entail_conjunct@10@2
+heap_entail_conjunct inp1 :false
+heap_entail_conjunct inp2 : es_formula: 
+  true & flted_11_30=1 & q_31=p & inf_flted_7_41+1=n & {FLOW,(17,18)=__norm}
+ es_pure: true
+ es_heap: q_31::ll<inf_flted_7_41>[Orig] * x::node<flted_11_30,p>[Orig]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+ es_trace: 
+  search ==> Fold ==> search ==> Match ==> Cond ==> Unmatched RHS data node ==> search ==> Cond ==> Match ==> 
+ es_var_ctx_lhs: true
+ es_var_ctx_rhs: true
+ es_var_loc:  0:0
+ es_infer_vars: [p]
+heap_entail_conjunct inp3 : true & inf_flted_7_41+1=n & {FLOW,(17,18)=__norm}
+heap_entail_conjunct@10 EXIT out : 
+Good Context: [es_formula: 
+                true & flted_11_30=1 & q_31=p & inf_flted_7_41+1=n &
+                {FLOW,(17,18)=__norm}
+               es_pure: true
+               es_heap: q_31::ll<inf_flted_7_41>[Orig] * x::node<flted_11_30,p>[Orig]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None
+               es_trace: 
+                search ==> Fold ==> search ==> Match ==> Cond ==> Unmatched RHS data node ==> search ==> Cond ==> Match ==> 
+               es_var_ctx_lhs: true
+               es_var_ctx_rhs: true
+               es_var_loc:  0:0
+               es_infer_vars: [p]]
+
+*/

@@ -5887,9 +5887,9 @@ and get_spec_var_stab_infer_x (v : ident) fvs pos =
 	  | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "could not find a coherent "^v^" type"}
   in
   let vtyp, check = get_var_type v fvs in
-(*  if check = false                                                                                  *)
-(*  then Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not found in both sides"; }*)
-(*  else                                                                                              *)
+  if check = false
+  then Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not found in both sides"; }
+  else
     match vtyp with
     | UNK -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
     | t -> CP.SpecVar (t, v, Unprimed)
