@@ -204,9 +204,9 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq =
           let new_iv = (CP.diff_svl (arg2@iv) rt_al) in
           (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv) in
   let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in
-  let _ = print_endline ("infer_heap_nodes") in
-  let _ = print_endline ("infer var: "^(!print_svl iv)) in
-  let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in
+  (* let _ = print_endline ("infer_heap_nodes") in *)
+  (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
+  (* let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in *)
   (* (\* let _ = print_endline ("LHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) lhs_als)) in *\) *)
   (* (\* let _ = print_endline ("RHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) rhs_als)) in *\) *)
   (* let _ = print_endline ("root: "^(pr_option (fun (r,_,_,_) -> !print_sv r) rt)) in *)

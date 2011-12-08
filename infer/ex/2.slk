@@ -13,8 +13,8 @@ pred ll<n> == self = null & n = 0
 // ok
 //infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
 
-// not working
-//infer [y] true |- y::node<a,null>.
+// not working (Thai : Please fix)
+infer [y] true |- y::node<a,null>.
 /*
 //must fix inferring of pure condition on empty_rhs
 Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null (may-bug).
@@ -24,31 +24,16 @@ Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null 
 //infer [m] y::ll<m> |- y::ll<n>.
 
 
-// not working
+// OK
 //infer [y] true |- y::ll<n>.
 /*
-result below indicates a base-case unfold which should not
-have succeeded! 
+fixed base-case unfold problem due to y being made existential.
 
-!!!:0: 0: [entail:0][post:0]do_base_case_unfold attempt for :  y::ll<inf_27>[Orig][LHSCase]
-
-!!!:0: 0: [entail:0][post:0]IMP #20
-
-!!!:0: 0: [entail:0][post:0]ante:  y=null & inf_27=0 | y!=null & 1<=inf_27
-
-!!!:0: 0: [entail:0][post:0]conseq:  exists(y:y=null | inf_27=0)
-
-!!!:0: 0: [entail:0][post:0]IMP #3.0
-
-!!!:0: 0: [entail:0][post:0]SAT #21
-
-!!!:0: 0: [entail:0][post:0] y=null & inf_27=0 & (y=null | inf_27=0)
-
-!!!:0: 0: [entail:0][post:0]do_base_case_unfold attempt : successful :  y::ll<inf_27>[Orig][LHSCase]
- Start Ante : y::ll<inf_27>[Orig][LHSCase] & true & {FLOW,(17,18)=__norm}
- New Ante : [
-  true & y=null & inf_27=0 & (y=null | inf_27=0) & {FLOW,(17,18)=__norm}
-  ]
+Infer  (1): Valid.
+Inferred Heap:[ y::ll<inf_27>[Orig][LHSCase]]
+Inferred Pure:[]
+<1>true & n=inf_27 &
+{FLOW,(17,18)=__norm}
 
 */
 

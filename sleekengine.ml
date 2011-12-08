@@ -497,7 +497,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let ante = meta_to_formula iante0 false [] stab in
   let ante = Solver.prune_preds !cprog true ante in
   let fvs = CF.fv ante in
-  let fv_idents = List.map CP.name_of_spec_var fvs in
+  let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
   let conseq = Solver.prune_pred_struc !cprog true conseq in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in

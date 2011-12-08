@@ -2995,16 +2995,27 @@ and heap_entail_after_sat_struc prog is_folding  has_post
 	    (filter_set tmp, prf)
       end
 
-and sem_imply_add prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) = match ctx with
+and sem_imply_add prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) = 
+  let pr1 = Cprinter.string_of_context_short in
+  let pr2 = Cprinter.string_of_pure_formula in
+  let pr3 = pr_pair pr1 string_of_bool in
+  Gen.Debug.no_2 "sem_imply_add" pr1 pr2 pr3 
+      (fun _ _ -> sem_imply_add_x prog is_folding  ctx (p:CP.formula) only_syn) ctx p
+
+
+and sem_imply_add_x prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) = match ctx with
   | OCtx _ -> report_error no_pos ("sem_imply_add: OCtx encountered \n")
   | Ctx c -> 
         if (CP.isConstTrue p) then (ctx,true)
         else
-	      if (sintactic_search c.es_formula p) then (ctx,true)
+	      if (sintactic_search c.es_formula p) then 
+            (* let _ = print_endline "syn true!" in *)
+            (ctx,true)
 	      else if only_syn then (print_string "only syn\n"; (ctx,false))
 	      else
 	        let b = (xpure_imply prog is_folding  c p !Globals.imply_timeout_limit) in
 	        if b then 
+              (* let _ = print_endline "xpure true!" in *)
               ((Ctx {c with 
                   es_formula =(mkAnd_pure_and_branch 
 				      c.es_formula 
@@ -4897,6 +4908,12 @@ and heap_entail_build_pure_check_a (evars : CP.spec_var list) (ante : CP.formula
   (ante, tmp1)
 	  
 and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : bool = 
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_2 "xpure_imply" pr1 pr2 string_of_bool
+      (fun _ _ -> xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout) lhs rhs_p
+
+and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : bool = 
   let imp_subno = ref 0 in
   let estate = lhs in
   let pos = no_pos in
@@ -5705,16 +5722,16 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 		es_var_ctx_rhs = estate.es_var_ctx_rhs;
 		es_var_subst = estate.es_var_subst
 	} in
-    (* let _ = print_string ("do_base_case_unfold_only_x:"  *)
+    (* let vd = lhs_vd in *)
+    (* let _ = print_string ("do_base_case_unfold_only_x:" *)
     (*                       ^ "\n ###  vd.view_name = " ^ (Cprinter.string_of_ident vd.view_name) *)
     (*                       ^ "\n ###  vd.view_base_case = " ^ (Cprinter.string_of_view_base_case  vd.view_base_case) *)
-    (*                       ^ "\n ###  vd.view_raw_base_case = " ^  *)
+    (*                       ^ "\n ###  vd.view_raw_base_case = " ^ *)
     (*                           (match vd.view_raw_base_case with *)
     (*                             | None -> "" *)
     (*                             | Some f -> (Cprinter.string_of_formula f) *)
     (*                           ) *)
     (*                       ^ "\n\n") in *)
-
     let na,prf = match lhs_vd.view_base_case with
       | None ->  Debug.devel_pprint ("do_base_case_unfold attempt : unsuccessful for : " ^
 	        (Cprinter.string_of_h_formula lhs_node)) pos;
