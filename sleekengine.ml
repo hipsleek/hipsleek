@@ -647,8 +647,10 @@ let process_print_command pcmd0 = match pcmd0 with
         (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
         (*       (CF.list_formula_of_list_context s))^"\n") *)
         (*print all posible outcomes and their traces with numbering*)
-        | Some s -> print_string ((Cprinter.string_of_numbered_list_formula_trace
-              (CF.list_formula_trace_of_list_context s))^"\n")
+        | Some s -> 
+               print_string (
+                  (Cprinter.string_of_numbered_list_formula_no_trace
+              (CF.list_formula_trace_of_list_context s))^"\n" )
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 

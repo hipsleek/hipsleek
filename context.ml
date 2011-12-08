@@ -49,6 +49,7 @@ and action =
   | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
   | M_Nothing_to_do of string
+  | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula)
   (* perform a list of actions until there is one succeed*)
   | Cond_action of action_wt list
@@ -124,6 +125,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_lemma (e,s) -> pr_mr e; fmt_string ("=>"^(match s with | None -> "AnyLemma" | Some c-> "Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo: "^s)
+  | M_infer_heap (h,_) -> fmt_string ("InferHeap: "^(string_of_h_formula h))
   | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData: "^(string_of_h_formula h))
   | Cond_action l -> pr_seq_nocut "=>COND:" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "=>SEQ:" (pr_action_wt_res pr_mr) l
@@ -770,7 +772,9 @@ and process_matches prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_
 
 and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
   match l with
-    | [] -> let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+    | [] -> 
+          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+          let ri = (2,M_infer_heap (rhs_node,rhs_rest)) in
       if (is_view rhs_node) && (get_view_original rhs_node) then
         let r = (2, M_base_case_fold { 
             match_res_lhs_node = HTrue; 
@@ -790,7 +794,7 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
         (*     match_res_rhs_node = rhs_node; *)
         (*     match_res_rhs_rest = rhs_rest; *)
         (* }) in *)
-        (-1, (Cond_action [r;r0]))
+        (-1, (Cond_action [ri;r;r0]))
       else r0
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 

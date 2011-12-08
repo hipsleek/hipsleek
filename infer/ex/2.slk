@@ -61,21 +61,30 @@ Inferred Pure:[]
 //infer []  y::node<aa,null> |- [a] y::node<a,null> & a>0.
 //OK
 //infer [aa]  y::node<aa,null> |- y::node<a,null> & a>0.
-/*
-//must fix inferring of pure condition on empty_rhs
-Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null (may-bug).
-*/
+
 
 // OK
-//infer [m] y::ll<m> |- y::ll<n>.
-
-
-// Not working
-//infer [y] true |- y::ll<n>.
+infer [m] y::ll<m> |- y::ll<n>.
 /*
+WN : this has 2 answers but the 2nd is a special
+     case of the first.  Good to eliminate the 2nd case.
+<1>true & n=m &
+{FLOW,(17,18)=__norm}
+
+<2>y::ll<m>[Orig][LHSCase] & m=0 & n=0 &
+{FLOW,(17,18)=__norm}
+*/
+
+
+// bug with false state?
+infer [y] true |- y::ll<n>.
+/*
+ERROR : exception in Infer  (4) check
+: no residue 
+
 Thai: Still has problem with remaining vars.
-WN : add a new Infer_Inst action that comes before
-     base-case fold.
+WN : Infer_heap action should fix this problem since
+    it comes before base-case fold.
 */
 /*
 fixed base-case unfold problem due to y being made existential.
@@ -95,7 +104,7 @@ Inferred Pure:[]
 // expected infer_vars
 // expected residue: n31=n & n=0 & x=y & n31>=0
 
-//print residue.
+print residue.
 /*
 
 infer_heap_nodes

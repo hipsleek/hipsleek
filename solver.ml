@@ -6578,22 +6578,23 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
   ^ "\n\n")  pos in
   (*add tracing into the entailment state*)
-  let action_name:string = match a with
-    | Context.Undefined_action e -> "Undefined_action"
-    | Context.M_match e -> "Match"
-    | Context.M_fold e ->  "Fold"
-    | Context.M_unfold (e,i) -> ("Unfold "^(string_of_int i))
-    | Context.M_base_case_unfold e ->  "Base case unfold"
-    | Context.M_base_case_fold e ->   "Base case fold"
-    | Context.M_rd_lemma e ->  "Right distributive lemma"
-    | Context.M_lemma (e,s) ->  ("lemma(" ^ (match s with | None -> "any lemma" | Some c-> (Cprinter.string_of_coercion_type c.coercion_type)^" "^c.coercion_name) ^ ")")
-    | Context.M_Nothing_to_do s ->  ("Nothing "^s)
-    | Context.M_unmatched_rhs_data_node (h,_) ->  ("Unmatched RHS data node")
-    | Context.Seq_action l -> "seq"
-    | Context.Cond_action l -> "Cond"
-    | Context.Search_action l -> "search"
-    | Context.M_lhs_case l -> "lhs_case"
-  in
+  let action_name:string = Context.string_of_action_res_simpl a in
+  (* match a with *)
+  (*   | Context.Undefined_action e -> "Undefined_action" *)
+  (*   | Context.M_match e -> "Match" *)
+  (*   | Context.M_fold e ->  "Fold" *)
+  (*   | Context.M_unfold (e,i) -> ("Unfold "^(string_of_int i)) *)
+  (*   | Context.M_base_case_unfold e ->  "Base case unfold" *)
+  (*   | Context.M_base_case_fold e ->   "Base case fold" *)
+  (*   | Context.M_rd_lemma e ->  "Right distributive lemma" *)
+  (*   | Context.M_lemma (e,s) ->  ("lemma(" ^ (match s with | None -> "any lemma" | Some c-> (Cprinter.string_of_coercion_type c.coercion_type)^" "^c.coercion_name) ^ ")") *)
+  (*   | Context.M_Nothing_to_do s ->  ("Nothing "^s) *)
+  (*   | Context.M_unmatched_rhs_data_node (h,_) ->  ("Unmatched RHS data node") *)
+  (*   | Context.Seq_action l -> "seq" *)
+  (*   | Context.Cond_action l -> "Cond" *)
+  (*   | Context.Search_action l -> "search" *)
+  (*   | Context.M_lhs_case l -> "lhs_case" *)
+  (* in *)
   let estate = {estate with es_trace = action_name::estate.es_trace} in
   let r1,r2 = match a with
     | Context.M_match {
@@ -6690,7 +6691,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | Context.M_Nothing_to_do s -> 
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
           CF.mk_failure_none ("Nothing_to_do?"^s))), NoAlias)
+    (* to Thai : please move inference code from M_unmatched_rhs here
+       and then restore M_unmatched_rhs to previous code without
+       any inference *)
+    | Context.M_infer_heap (rhs,rhs_rest) ->
+          (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap" estate (Base rhs_b) None pos,
+          CF.mk_failure_none ("infer_heap not yet implemented"))), NoAlias)
     | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
+
 (*      let _,lhs_p,_,_,_ = CF.split_components (estate.es_formula) in              *)
 (*      let lhs_xpure = lhs_p in                                                    *)
 (*      let rhs_xpure,_,_,_ = xpure prog conseq in                                  *)
