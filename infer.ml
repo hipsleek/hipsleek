@@ -12,6 +12,22 @@ module MCP = Mcpure
 module CF = Cformula
 
 let no_infer estate = (estate.es_infer_vars == [])
+ 
+let remove_infer_vars estate =
+  let iv = estate.es_infer_vars in
+  if (iv==[]) then (estate,iv)
+  else ({estate with es_infer_vars=[];}, iv) 
+
+let rec restore_infer_vars_ctx iv ctx = 
+  match ctx with
+  | Ctx estate -> Ctx {estate with es_infer_vars=iv;}
+  | OCtx (ctx1, ctx2) -> OCtx (restore_infer_vars_ctx iv ctx1, restore_infer_vars_ctx iv ctx2)
+
+let restore_infer_vars iv cl =
+  if (iv==[]) then cl
+  else match cl with
+    | FailCtx _ -> cl
+    | SuccCtx lst -> SuccCtx (List.map (restore_infer_vars_ctx iv) lst)
 
 let is_inferred_pre estate = 
   let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in

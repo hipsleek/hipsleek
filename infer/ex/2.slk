@@ -10,7 +10,8 @@ pred ll<n> == self = null & n = 0
 // ok
 //infer [y] true |- y::node<a,b> * b::node<c,d>.
 // fail
-infer [y] true |- y::node<a,b>.
+//infer [y] true |- y::node<a,b>.
+//print residue.
 /*
 Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_b_30=b (may-bug).
 */
@@ -64,22 +65,24 @@ Inferred Pure:[]
 
 
 // OK
-infer [m] y::ll<m> |- y::ll<n>.
+//infer [m] y::ll<m> |- y::ll<n>.
+//print residue.
 /*
-WN : this has 2 answers but the 2nd is a special
-     case of the first.  Good to eliminate the 2nd case.
+WN : only one answer when inference is disabled
+     for base-case-fold
+
 <1>true & n=m &
 {FLOW,(17,18)=__norm}
 
-<2>y::ll<m>[Orig][LHSCase] & m=0 & n=0 &
-{FLOW,(17,18)=__norm}
 */
 
 
-// bug with false state?
+// bug with false state? why!
 infer [y] true |- y::ll<n>.
+print residue.
+
 /*
-ERROR : exception in Infer  (4) check
+exception in Infer  (3) check
 : no residue 
 
 Thai: Still has problem with remaining vars.
@@ -104,7 +107,6 @@ Inferred Pure:[]
 // expected infer_vars
 // expected residue: n31=n & n=0 & x=y & n31>=0
 
-print residue.
 /*
 
 infer_heap_nodes

@@ -6655,7 +6655,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;} ->
           if (estate.es_cont != []) then (CF.mkFailCtx_in (ContinuationErr (mkFailContext "try the continuation" estate (Base rhs_b) (get_node_label rhs_node) pos)), NoAlias)
-		  else do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
+		  else
+            (* NO inference for base-case fold *)
+            let (estate,iv) = Inf.remove_infer_vars estate in
+            let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+            (Inf.restore_infer_vars iv cl,prf)
     | Context.M_lhs_case {
           Context.match_res_lhs_node = lhs_node;
           Context.match_res_rhs_node = rhs_node;}->
