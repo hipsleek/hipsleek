@@ -4637,7 +4637,7 @@ and heap_entail_split_lhs_phases_x
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Gen.Debug.loop_3 "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  Gen.Debug.loop_3_no "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
 
@@ -6588,7 +6588,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | Context.M_rd_lemma e ->  "Right distributive lemma"
     | Context.M_lemma (e,s) ->  ("lemma(" ^ (match s with | None -> "any lemma" | Some c-> (Cprinter.string_of_coercion_type c.coercion_type)^" "^c.coercion_name) ^ ")")
     | Context.M_Nothing_to_do s ->  ("Nothing "^s)
-    | Context.M_unmatched_rhs_data_node h ->  ("Unmatched RHS data node")
+    | Context.M_unmatched_rhs_data_node (h,_) ->  ("Unmatched RHS data node")
     | Context.Seq_action l -> "seq"
     | Context.Cond_action l -> "Cond"
     | Context.Search_action l -> "search"
@@ -6690,7 +6690,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | Context.M_Nothing_to_do s -> 
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
           CF.mk_failure_none ("Nothing_to_do?"^s))), NoAlias)
-    | Context.M_unmatched_rhs_data_node rhs ->
+    | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
 (*      let _,lhs_p,_,_,_ = CF.split_components (estate.es_formula) in              *)
 (*      let lhs_xpure = lhs_p in                                                    *)
 (*      let rhs_xpure,_,_,_ = xpure prog conseq in                                  *)
@@ -6703,7 +6703,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 (*          let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in*)
 (*          (r1,prf)                                                                *)
 (*        | None -> (                                                               *)
-          let r = Inf.infer_heap_nodes estate rhs conseq in 
+          let r = Inf.infer_heap_nodes estate rhs rhs_rest conseq in 
           begin
           match r with
             | Some (new_iv,new_rn,new_p) -> 

@@ -4,6 +4,7 @@ open Gen
 open Exc.GTable
 open Perm
 open Cformula
+open Context
 
 module Err = Error
 module CP = Cpure
@@ -190,7 +191,7 @@ let build_var_aset lst = CP.EMapSV.build_eset lst
   end
 *)
 
-let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq = 
+let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq = 
   let iv = es.es_infer_vars in
   let rt = get_args_h_formula rhs in
   let lhs_als = get_alias_formula es.es_formula in
@@ -233,7 +234,16 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq =
       let _,new_p,_,_,_ = CF.split_components es.es_formula in
       let new_p = simplify (MCP.pure_of_mix new_p) iv in
       (* TODO WN : push a match action on must_action_stk *)
-      Some (new_iv,new_h,new_p)
+      let r = {
+          match_res_lhs_node = new_h;
+          match_res_lhs_rest = HTrue;
+          match_res_holes = [];
+          match_res_type = Root;
+          match_res_rhs_node = rhs;
+          match_res_rhs_rest = rhs_rest;} in
+      let act = M_match r in
+      (must_action_stk # push act;
+      Some (new_iv,new_h,new_p))
     end
   else None
 

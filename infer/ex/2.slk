@@ -10,7 +10,7 @@ pred ll<n> == self = null & n = 0
 // ok
 //infer [y] true |- y::node<a,b> * b::node<c,d>.
 // fail
-//infer [y,b] true |- y::node<a,b>.
+infer [y] true |- y::node<a,b>.
 /*
 Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_b_30=b (may-bug).
 */
@@ -21,7 +21,7 @@ Infer  (1): Valid.
 Inferred Heap:[ y::node<inf_27,inf_28>[Orig], y::ll<inf_31>[Orig][LHSCase]]
 */
 
-infer [y] y=null |- y::node<a,b>.
+//infer [y] y=null |- y::node<a,b>.
 /*
 Inferred Heap:[ y::node<inf_26,inf_27>[Orig]]
 
@@ -35,9 +35,11 @@ TODO : introduce a must action step that would force
  compute action to perform a particular action on the next run
 */
 
-//infer [y,b] true |- y::node<a,b> * b::node<c,d>.
+//infer [y] true |- y::node<a,b> * b::node<c,d>.
 /*
-Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_b_33=b (may-bug).
+Inferred Heap:[ y::node<inf_28,inf_29>[Orig], b::node<inf_30,inf_31>[Orig]]
+Inferred Pure:[]
+<1>true & a=inf_28 & b=inf_29 & c=inf_30 & d=inf_31 &
 */
 
 //infer [y] true |- y::node<a,b> * b::ll<m>.
@@ -47,6 +49,17 @@ Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_b_33=b (may-bug).
 
 // ok
 //infer [y] true |- y::node<a,null>.
+// ok
+//infer [y] true |- (exists a: y::node<a,null> & a>0).
+// ok
+//infer [y] true |- [a] y::node<a,null> & a>0
+
+// Below goes into a loop! why?.
+//checkentail  y::node<1,null> |- y::node<a,null> & a>0.
+//OK
+//infer [aa]  y::node<aa,null> |- (exists a: y::node<a,null> & a>0).
+//infer []  y::node<aa,null> |- [a] y::node<a,null> & a>0.
+infer [aa]  y::node<aa,null> |- y::node<a,null> & a>0.
 /*
 //must fix inferring of pure condition on empty_rhs
 Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null (may-bug).
@@ -57,9 +70,11 @@ Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null 
 
 
 // Not working
-infer [y] true |- y::ll<n>.
+//infer [y] true |- y::ll<n>.
 /*
 Thai: Still has problem with remaining vars.
+WN : add a new Infer_Inst action that comes before
+     base-case fold.
 */
 /*
 fixed base-case unfold problem due to y being made existential.
@@ -79,7 +94,7 @@ Inferred Pure:[]
 // expected infer_vars
 // expected residue: n31=n & n=0 & x=y & n31>=0
 
-print residue.
+//print residue.
 /*
 
 infer_heap_nodes
@@ -103,7 +118,7 @@ New infer var is:
 
 
 
-infer [p] x::node<1,p> |- x::ll<n> .
+//infer [p] x::node<1,p> |- x::ll<n> .
 /*
 - Add alias in inferred pure
 - Problem with success context (which will be made to be fail later)

@@ -931,7 +931,8 @@ checkentail_cmd:
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
     match il with
-      | None -> report_error no_pos ("Empty list of input vars needed to be inferred")
+      | None -> ([],t,b)
+(* report_error no_pos ("Empty list of input vars needed to be inferred") *)
       | Some idl -> (idl, t, b)
   ]];
 
