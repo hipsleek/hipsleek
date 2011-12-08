@@ -3557,7 +3557,7 @@ let convert_suc_to_fail ctx = match ctx with
 let convert_suc_to_fail ctx = 
   let pr = !print_context_list_short in
   let prf = !print_fail_type in
-  Gen.Debug.ho_1 "convert_suc_to_fail" pr prf convert_suc_to_fail ctx
+  Gen.Debug.no_1 "convert_suc_to_fail" pr prf convert_suc_to_fail ctx
 
 let invert ls = 
   let foo es =
@@ -3804,14 +3804,14 @@ and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 ->
         let t = 
-          if !Globals.do_infer then convert_suc_to_fail t2 
-          else mk_not_a_failure 
+          (* if !Globals.do_infer then convert_suc_to_fail t2  *)
+          (* else  *)mk_not_a_failure 
         in
         FailCtx (Or_Reason (t1,t))
      | SuccCtx t1 ,FailCtx t2 ->
         let t = 
-          if !Globals.do_infer then convert_suc_to_fail t1  (* WN : why? *)
-          else mk_not_a_failure 
+          (* if !Globals.do_infer then convert_suc_to_fail t1  (\* WN : why? *\) *)
+          (* else *) mk_not_a_failure 
         in
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)

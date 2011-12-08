@@ -199,14 +199,14 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq =
   let (b,args,inf_vars,new_h,new_iv) = match rt with (* is rt captured by iv *)
     | None -> false,[],[],HTrue,iv
     | Some (r,args,arg2,h) -> 
-          let rt_al = CP.EMapSV.find_equiv_all r lhs_aset in (* set of alias with root of rhs *)
+          let rt_al = [r]@(CP.EMapSV.find_equiv_all r lhs_aset) in (* set of alias with root of rhs *)
           let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)
-          let new_iv = arg2@(CP.diff_svl iv rt_al) in
+          let new_iv = (CP.diff_svl (arg2@iv) rt_al) in
           (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv) in
   let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in
-  (* let _ = print_endline ("infer_heap_nodes") in *)
-  (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
-  (* let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in *)
+  let _ = print_endline ("infer_heap_nodes") in
+  let _ = print_endline ("infer var: "^(!print_svl iv)) in
+  let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in
   (* (\* let _ = print_endline ("LHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) lhs_als)) in *\) *)
   (* (\* let _ = print_endline ("RHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) rhs_als)) in *\) *)
   (* let _ = print_endline ("root: "^(pr_option (fun (r,_,_,_) -> !print_sv r) rt)) in *)
@@ -286,27 +286,32 @@ let infer_lhs_conjunct estate lhs_xpure rhs_xpure h2 p2 pos =
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
-  (* if no_infer estate then estate *)
-  (* else *)
-  (*   let _ = DD.devel_pprint ("\n inferring_empty_rhs:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)
-  (*   let rec filter_var f vars = match f with *)
-  (*     | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p) *)
-  (*     | _ -> CP.filter_var f vars *)
-  (*   in *)
-  (*   let infer_pure = MCP.pure_of_mix rhs_p in *)
-  (*   let infer_pure = if CP.isConstTrue infer_pure then infer_pure *)
-  (*   else CP.mkAnd (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix lhs_p) pos *)
-  (*   in  *)
-  (*   (\*        print_endline ("PURE: " ^ Cprinter.string_of_pure_formula infer_pure);*\) *)
-  (*   let infer_pure = Omega.simplify (filter_var infer_pure estate.es_infer_vars) in *)
-  (*   let pure_part2 = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)  *)
-  (*       (estate.es_infer_pures @ [MCP.pure_of_mix rhs_p])) in *)
-  (*   (\*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula infer_pure);*\) *)
-  (*   let infer_pure = if Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [infer_pure] in *)
-  (*     {estate with es_infer_heap = []; es_infer_pure = infer_pure; *)
-  (*         es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]} *)
+
+let infer_empty_rhs_old estate lhs_p rhs_p pos =
+  if no_infer estate then estate
+  else
+    let _ = DD.devel_pprint ("\n inferring_empty_rhs:"^(!print_formula estate.es_formula)^ "\n\n")  pos in
+    let rec filter_var f vars = match f with
+      | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
+      | _ -> CP.filter_var f vars
+    in
+    let infer_pure = MCP.pure_of_mix rhs_p in
+    let infer_pure = if CP.isConstTrue infer_pure then infer_pure
+    else CP.mkAnd (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix lhs_p) pos
+    in
+    (*        print_endline ("PURE: " ^ Cprinter.string_of_pure_formula infer_pure);*)
+    let infer_pure = Omega.simplify (filter_var infer_pure estate.es_infer_vars) in
+    let pure_part2 = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
+        (estate.es_infer_pures @ [MCP.pure_of_mix rhs_p])) in
+    (*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula infer_pure);*)
+    let infer_pure = if Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [infer_pure] in
+      {estate with es_infer_heap = []; es_infer_pure = infer_pure;
+          es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]}
 
 let infer_empty_rhs2 estate lhs_xpure rhs_p pos =
+  estate
+
+let infer_empty_rhs2_old estate lhs_xpure rhs_p pos =
   if no_infer estate then estate
   else
     let _ = DD.devel_pprint ("\n inferring_empty_rhs2:"^(!print_formula estate.es_formula)^ "\n\n")  pos in
@@ -352,6 +357,9 @@ let infer_empty_rhs2 estate lhs_xpure rhs_p pos =
 
 (* what does this method do? *)
 let infer_for_unfold prog estate lhs_node pos =
+              estate
+
+let infer_for_unfold_old prog estate lhs_node pos =
   if no_infer estate then estate
   else
     let _ = DD.devel_pprint ("\n inferring_for_unfold:"^(!print_formula estate.es_formula)^ "\n\n")  pos in

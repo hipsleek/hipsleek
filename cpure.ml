@@ -1305,8 +1305,12 @@ and subset (svs1 : spec_var list) (svs2 : spec_var list) =
 and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
 
-and diff_svl (svs1 : spec_var list) (svs2 : spec_var list) =
+and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
+
+and diff_svl (svs1 : spec_var list) (svs2 : spec_var list) =
+  Gen.Debug.no_2 "diff svl" !print_svl !print_svl !print_svl diff_svl_x svs1 svs2
+
 
 and are_same_types (t1 : typ) (t2 : typ) = match t1 with
   | Named c1 -> begin match t2 with
