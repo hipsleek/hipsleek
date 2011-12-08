@@ -8,6 +8,7 @@ open Cformula
 module Err = Error
 module CP = Cpure
 module MCP = Mcpure
+module CF = Cformula
 
 let no_infer estate = (estate.es_infer_vars == [])
 
@@ -223,8 +224,53 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq =
   if b then Some (new_iv,new_h)
   else None
 
-let infer_lhs_conjunct estate lhs_xpure rhs_xpure h2 p2 pos =
-  estate
+let infer_pure estate lhs_xpure rhs_xpure rhs_p pos =
+  if no_infer estate then None
+  else
+    let check_sat = Omega.is_sat (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_xpure) pos) "0" in
+    let rec filter_var f vars = match f with
+      | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
+      | _ -> if Omega.is_sat f "0" then CP.filter_var f vars else CP.mkFalse pos
+    in
+    let simplify = fun f vars -> Omega.simplify (filter_var (Omega.simplify f) vars) in
+    let iv = estate.es_infer_vars in
+    let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in
+    if check_sat then
+      let rhs_p = simplify (MCP.pure_of_mix rhs_p) iv in
+      let rhs_p = simplify (CP.mkAnd rhs_p invariants pos) iv in
+      let args = CP.fv rhs_p in 
+      let new_iv = (CP.diff_svl iv args) in
+      let new_estate =
+        {estate with 
+          es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula rhs_p pos) pos;
+          es_infer_pure = estate.es_infer_pure@[rhs_p];
+          es_infer_vars = new_iv
+        }
+      in
+      Some (rhs_p, new_estate)
+    else
+      let mkNot purefml =
+        let conjs = CP.split_conjunctions purefml in
+        let conjs = List.map (fun c -> CP.mkNot_s c) conjs in
+        List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs
+      in      
+      let lhs_simplified = simplify (MCP.pure_of_mix lhs_xpure) iv in
+      let new_p = simplify (CP.mkAnd (mkNot lhs_simplified) invariants pos) iv in
+      let new_estate =
+        {estate with 
+          es_formula = CF.mkFalse (CF.mkTrueFlow ()) pos;
+          es_infer_pure = estate.es_infer_pure@[new_p];
+        }
+      in
+(*      print_endline ("VARS: " ^ Cprinter.poly_string_of_pr Cprinter.pr_list_of_spec_var estate.es_infer_vars);*)
+(*      print_endline ("PURE1: " ^ Cprinter.string_of_mix_formula lhs_xpure);                                   *)
+(*      print_endline ("PURE: " ^ Cprinter.string_of_pure_formula new_p);                                       *)
+(*      print_endline ("FML: " ^ Cprinter.string_of_formula (CF.mkFalse (CF.mkTrueFlow ()) pos));               *)
+      Some (new_p, new_estate)
+
+       
+  
+  
   (* if no_infer estate then estate *)
   (* else *)
   (*   let _ = DD.devel_pprint ("\n inferring_lhs_conjunct:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)

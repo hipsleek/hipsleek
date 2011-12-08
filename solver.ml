@@ -4858,18 +4858,19 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_branches = br2;
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
-                                  let estate = 
-                                    (* if not !do_infer then estate *)
-                                    (* else *)
-                                    (*   begin *)
-                                    let lhs_xpure,_,_,_ = xpure prog ante in
-                                    let rhs_xpure,_,_,_ = xpure prog conseq in
-                                    Inf.infer_lhs_conjunct estate lhs_xpure rhs_xpure h2 p2 pos 
-                                        (*  {estate with es_infer_vars = infer_vars; es_infer_heap = [infer_heap];  *)
-                                        (*               es_infer_pure = infer_pure; es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix p2)]} *)
-                                        (* end *)
-                                  in
-                                  let ctx0 = Ctx estate in
+(*                                  let estate =                                                                                                          *)
+(*                                    (* if not !do_infer then estate *)                                                                                  *)
+(*                                    (* else *)                                                                                                          *)
+(*                                    (*   begin *)                                                                                                       *)
+(*                                    let lhs_xpure,_,_,_ = xpure prog ante in                                                                            *)
+(*                                    let rhs_xpure,_,_,_ = xpure prog conseq in                                                                          *)
+(*                                    Inf.infer_non_empty_rhs estate lhs_xpure rhs_xpure pos                                                              *)
+(*                                        (*  {estate with es_infer_vars = infer_vars; es_infer_heap = [infer_heap];  *)                                  *)
+(*                                        (*               es_infer_pure = infer_pure; es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix p2)]} *)*)
+(*                                        (* end *)                                                                                                       *)
+(*                                  in                                                                                                                    *)
+(*                                  let ctx0 = Ctx estate in                                                                                              *)
+(*                                  let ctx0 = set_unsat_flag ctx0 true in                                                                                *)
 				                  heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 rhs_h_matched_set pos
 				                end
 	          end
@@ -5320,7 +5321,22 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     (*    let pure_part = Omega.simplify (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) in*)
     (*    let pure_part = CP.filter_var pure_part estate.es_infer_vars in                                     *)
     (*    let pure_part = Omega.simplify pure_part in                                                         *)
-    let estate = Inf.infer_empty_rhs estate lhs_p rhs_p pos in
+(*    let lhs_xpure = lhs_p in                                                                                   *)
+(*    let rhs_xpure = rhs_p in                                                                                   *)
+(*    let r = Inf.infer_pure estate lhs_xpure rhs_xpure pos in                                                   *)
+(*    match r with                                                                                               *)
+(*      | Some new_p ->                                                                                          *)
+(*        let estate =                                                                                           *)
+(*          {estate with                                                                                         *)
+(*            es_formula = CF.mkFalse (CF.mkTrueFlow ()) pos;                                                    *)
+(*            es_infer_pure = estate.es_infer_pure@[new_p];                                                      *)
+(*          }                                                                                                    *)
+(*        in                                                                                                     *)
+(*        let ctx1 = (Ctx estate) in                                                                             *)
+(*        let ctx1 = set_unsat_flag ctx1 true in                                                                 *)
+(*        let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in*)
+(*        (r1,prf)                                                                                               *)
+(*     | None ->                                                                                                 *)
 	if is_folding then begin
       (*LDK: the rhs_p is considered a part of residue and 
         is added to es_pure only when folding.
@@ -5355,14 +5371,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 	  (SuccCtx[res_ctx], prf)
 	end
   end
-  else begin
-    let estate = 
-      (* if not !do_infer then estate else  *)
-      (*   begin *)
-      let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
-      Inf.infer_empty_rhs2 estate lhs_xpure rhs_p pos 
-          (* end *)
-    in
+  else 
+    let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
+    let rhs_xpure = rhs_p in
+    let r = Inf.infer_pure estate lhs_xpure rhs_xpure rhs_p pos in
+    match r with
+      | Some (new_p, new_estate) ->        
+        let ctx1 = (Ctx new_estate) in
+        let ctx1 = set_unsat_flag ctx1 true in
+        let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in
+        (r1,prf)
+     | None ->
+      begin
     Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
     (*compute lub of estate.es_formula and current fc_flow*)
     (*
@@ -6698,6 +6718,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 			      let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
                   (r1,prf) 
             | None ->
+                (*let _,lhs_p,_,_,_ = CF.split_components (estate.es_formula) in*)
+                let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
+                let rhs_xpure,_,_,_ = xpure prog conseq in
+                let _,rhs_p,_,_,_ = CF.split_components conseq in
+                let r = Inf.infer_pure estate lhs_xpure rhs_xpure rhs_p pos in
+                begin
+                match r with
+                  | Some (new_p, new_estate) ->                    
+                    let ctx1 = (Ctx new_estate) in
+                    let ctx1 = set_unsat_flag ctx1 true in
+                    let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
+                    (r1,prf)
+                  | None ->
                   (
                     (* TODO : obtain xpure0 of RHS
                        (i) check if it is unsat, or
@@ -6792,6 +6825,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                             CF.mk_failure_may s)), NoAlias)
                       end
                   )
+              end
           end
             | Context.Seq_action l ->
                   report_warning no_pos "Sequential action - not handled";

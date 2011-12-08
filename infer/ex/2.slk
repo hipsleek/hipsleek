@@ -13,7 +13,7 @@ pred ll<n> == self = null & n = 0
 // ok
 //infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
 
-// not working (Thai : Please fix)
+// ok
 infer [y] true |- y::node<a,null>.
 /*
 //must fix inferring of pure condition on empty_rhs
@@ -24,8 +24,11 @@ Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null 
 //infer [m] y::ll<m> |- y::ll<n>.
 
 
-// OK
-//infer [y] true |- y::ll<n>.
+// Not working
+infer [y] true |- y::ll<n>.
+/*
+Thai: Still has problem with remaining vars.
+*/
 /*
 fixed base-case unfold problem due to y being made existential.
 
