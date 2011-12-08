@@ -5873,6 +5873,12 @@ and get_spec_var_stab (v : ident) stab pos =
               { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
 
 and get_spec_var_stab_infer (v : ident) fvs pos =
+  let pr_sv = Cprinter.string_of_spec_var in
+  Gen.Debug.no_2 "get_spec_var_stab_infer" 
+      pr_id (pr_list pr_sv) pr_sv
+      (fun _ _ -> get_spec_var_stab_infer_x v fvs pos) v fvs
+
+and get_spec_var_stab_infer_x (v : ident) fvs pos =
   let get_var_type v fv_list: (typ * bool) = 
     let res_list = CP.remove_dups_svl (List.filter (fun c -> v = CP.name_of_spec_var c) fv_list) in
     match res_list with

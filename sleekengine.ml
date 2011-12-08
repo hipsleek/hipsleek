@@ -505,7 +505,8 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
 
   (* List of vars needed for abduction process *)
-  let vars = List.map (fun v -> AS.get_spec_var_stab_infer v ((CF.fv ante) @ (CF.f_top_level_vars_struc conseq)) no_pos) ivars in
+  let vars = List.map (fun v -> AS.get_spec_var_stab_infer v ((CF.fv ante) @ (* (CF.f_top_level_vars_struc conseq) *)
+      (CF.struc_fv conseq)  ) no_pos) ivars in
   let new_ante = ante in
   let ctx = Inf.init_vars ctx vars in
   (* Abductive inference *)

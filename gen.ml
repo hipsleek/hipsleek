@@ -391,6 +391,7 @@ class ['a] stack (x_init:'a) (epr:'a->string)  =
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
+     method is_empty = stk == []
      method len = List.length stk
      method reverse = stk <- List.rev stk
      (* method set_pr f = elem_pr <- f *)

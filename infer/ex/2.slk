@@ -8,13 +8,45 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 // ok
-//infer [y] true |- y::node<a,b>.
+//infer [y] true |- y::node<a,b> * b::node<c,d>.
+// fail
+//infer [y,b] true |- y::node<a,b>.
+/*
+Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_b_30=b (may-bug).
+*/
+
+//infer [y] true |- y::node<a,b> * y::ll<m>.
+/*
+Infer  (1): Valid.
+Inferred Heap:[ y::node<inf_27,inf_28>[Orig], y::ll<inf_31>[Orig][LHSCase]]
+*/
+
+infer [y] y=null |- y::node<a,b>.
+/*
+Inferred Heap:[ y::node<inf_26,inf_27>[Orig]]
+
+TODO : if inferred heap node causes a contradiction, we
+should infer a pure conflicting condition instead, where possible.
+
+y=null    * y::node<..>   ==> y!=null
+y::node<...> * y::node<..> ==> y=null
+
+TODO : introduce a must action step that would force
+ compute action to perform a particular action on the next run
+*/
+
+//infer [y,b] true |- y::node<a,b> * b::node<c,d>.
+/*
+Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_b_33=b (may-bug).
+*/
+
+//infer [y] true |- y::node<a,b> * b::ll<m>.
 
 // ok
 //infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
 
 // ok
-infer [y] true |- y::node<a,null>.
+//infer [y] true |- y::node<a,null>.
 /*
 //must fix inferring of pure condition on empty_rhs
 Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null (may-bug).

@@ -1624,10 +1624,15 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)
   
-and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list = 
+and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list =
+  let pr1 = !print_struc_formula in
+  let pr2 = !print_svl in
+  Gen.Debug.no_1 "f_top_level_vars_struc" pr1 pr2 f_top_level_vars_struc_x f
+
+and f_top_level_vars_struc_x (f:struc_formula) : CP.spec_var list = 
   let helper f = match f with
-  | ECase c-> List.concat (List.map (fun (_,c) -> f_top_level_vars_struc c) c.formula_case_branches)
-  | EBase b -> 	(f_top_level_vars b.formula_ext_base) @ (f_top_level_vars_struc b.formula_ext_continuation)
+  | ECase c-> List.concat (List.map (fun (_,c) -> f_top_level_vars_struc_x c) c.formula_case_branches)
+  | EBase b -> 	(f_top_level_vars b.formula_ext_base) @ (f_top_level_vars_struc_x b.formula_ext_continuation)
   | EAssume _ -> []
   | EVariance _ -> [] in
   List.concat (List.map helper f)

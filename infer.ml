@@ -202,7 +202,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq =
     | Some (r,args,arg2,h) -> 
           let rt_al = [r]@(CP.EMapSV.find_equiv_all r lhs_aset) in (* set of alias with root of rhs *)
           let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)
-          let new_iv = (CP.diff_svl (arg2@iv) rt_al) in
+          (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
+          let new_iv = arg2@iv in
           (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv) in
   let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in
   (* let _ = print_endline ("infer_heap_nodes") in *)
@@ -221,7 +222,11 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) conseq =
   (* (\* let _ = print_endline ("RHS impl vars: "^(!print_svl es.es_gen_impl_vars)) in *\) *)
   (* (\* let _ = print_endline ("RHS expl vars: "^(!print_svl es.es_gen_expl_vars)) in *\) *)
   (* (\* let _ = print_endline ("imm pure stack: "^(pr_list !print_mix_formula es.es_imm_pure_stk)) in *\) *)
-  if b then Some (new_iv,new_h)
+  if b then 
+    begin
+    (* TODO WN : push a match action on must_action_stk *)
+    Some (new_iv,new_h)
+    end
   else None
 
 let infer_pure estate lhs_xpure rhs_xpure rhs_p pos =
