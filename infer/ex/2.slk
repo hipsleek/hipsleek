@@ -59,7 +59,8 @@ Inferred Pure:[]
 //OK
 //infer [aa]  y::node<aa,null> |- (exists a: y::node<a,null> & a>0).
 //infer []  y::node<aa,null> |- [a] y::node<a,null> & a>0.
-infer [aa]  y::node<aa,null> |- y::node<a,null> & a>0.
+//OK
+//infer [aa]  y::node<aa,null> |- y::node<a,null> & a>0.
 /*
 //must fix inferring of pure condition on empty_rhs
 Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_17_31=null (may-bug).
