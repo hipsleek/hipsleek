@@ -564,7 +564,13 @@ struct
       let l =  Memo_Constr.memo_constr_of_memo_group g in
       let n_l = Memo_Constr_S.constr_of_atom_list l in 
       let sl = Memo_S.split n_l in
-      MF_S.memo_pure_of_memo_slice sl None 
+      MF_S.memo_pure_of_memo_slice sl None
+
+  let get_rel_ctr (n: int) (pf: formula) (mp: Memo_Group.t list) : Memo_Group.t list = 
+    let ps = MG_Constr_S.constr_of_atom_list mp in
+    let f = MG_Slice_S.slice_of_atom (Memo_Group.atom_of_formula pf) in
+    let r = MG_S.get_ctr_n n f ps in
+    MG_Slice_S.atom_of_slice r
 end;;
 
 module MG_AnS           = S_FRAMEWORK (Syn_Label_AnS) (Memo_Group)

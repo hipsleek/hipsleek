@@ -1436,14 +1436,15 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   else mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no
   
 and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
-  let ps = MG_Constr_AuS.constr_of_atom_list ante_disj in
+  (*let ps = MG_Constr_AuS.constr_of_atom_list ante_disj in
   let f = MG_Slice_AuS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
   let r = MG_AuS.get_ctr_n 1 f ps in
 
-  let n_ante = MG_Slice_AuS.atom_of_slice r in
+  let n_ante = (*MG_Slice_AuS.atom_of_slice r in*)
 	  (*let fv = fv conseq in 
 	  List.filter (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var fv
-    c.memo_group_fv))>0) ante_disj in*)
+    c.memo_group_fv))>0) ante_disj in*)*)
+  let n_ante = AutoS.get_rel_ctr 1 conseq ante_disj in 
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
@@ -1459,10 +1460,12 @@ and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply 
   (*let (nlv, lv) = fv_with_slicing_label conseq in
   let n_ante = pick_relevant_lhs_constraints !opt_imply (nlv, lv) ante_disj in*)
 
-  let ps = MG_Constr_AnS.constr_of_atom_list ante_disj in
+  (*let ps = MG_Constr_AnS.constr_of_atom_list ante_disj in
   let f = MG_Slice_AnS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
   let r = MG_AnS.get_ctr_n 2 f ps in
-  let n_ante = MG_Slice_AnS.atom_of_slice r in
+  let n_ante = MG_Slice_AnS.atom_of_slice r in*)
+
+  let n_ante = AnnoS.get_rel_ctr 2 conseq ante_disj in
 
   (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
 
