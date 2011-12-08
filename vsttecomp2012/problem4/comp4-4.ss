@@ -29,8 +29,8 @@ tlseg<p,f,d,n> ==
   inv self!=null & n>=1 & f>=d ;
 
 // a provable lemma that tlseg gives at least one node
- coercion self::tlseg<p,f,d,n> -> self::node<f,q>;
-//coercion self::negtlseg<p,f,d,n> -> self::node<f,q> ;
+ lemma self::tlseg<p,f,d,n> -> self::node<f,q>;
+//lemma self::negtlseg<p,f,d,n> -> self::node<f,q> ;
 
 bool is_empty(node x)
   requires true

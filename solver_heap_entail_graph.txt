@@ -1,0 +1,64 @@
+Difference between failesc_context and partial_context ?
+
+checkexp_a --> check_pre_post
+	heap_entail_struc_list_failesc_context_init
+		heap_entail_failesc_prefix_init
+			heap_entail_struc_list_failesc_context
+				heap_entail_struc_list_failesc_context_x
+					heap_entail_struc_failesc_context
+						heap_entail_struc_failesc_context_x ::: take in a entailment function which depends only on heap_entail_one_context_struc_nth and then it combines the resulting list of context and give out the final output context
+				heap_entail_agressive_prunning ::: wrapper function to choose to performed prunning, take in an entail function
+		heap_entail_one_context_struc_nth
+			heap_entail_one_context_struc_x
+				heap_entail_after_sat_struc
+					heap_entail_conjunct_lhs_struc
+						heap_entail_conjunct_lhs_struc_x
+							heap_entail_one_context
+								heap_entail_one_context_a
+									heap_entail_after_sat
+										heap_entail_after_sat_x
+											heap_entail_conjunct_lhs
+												heap_entail_conjunct_lhs_x
+													heap_entail_split_rhs_phases
+														heap_entail_split_rhs_phases_x
+															heap_entail_conjunct
+																...
+															heap_n_pure_entail
+																heap_n_pure_entail_x
+																	heap_entail_split_lhs_phases
+																		...
+																	one_ctx_entail
+																		one_ctx_entail_x
+																			heap_entail_conjunct
+																				...
+															heap_entail_rhs_read_phase
+																heap_entail_split_lhs_phases
+																	...
+															heap_entail_rhs_nested_phase
+																...
+													heap_entail_conjunct
+														heap_entail_conjunct_x
+															heap_entail_conjunct_helper
+																heap_entail_non_empty_rhs_heap
+																	heap_entail_non_empty_rhs_heap_x
+																		process_action
+																heap_entail_empty_rhs_heap ::: no heap on rhs; this will be pure theorem proving part
+							heap_entail_struct
+								heap_entail_one_context_struc_nth
+									heap_entail_one_context_struc_x
+										heap_entail_after_sat_struc
+											...
+
+
+
+check_post --> check_post_x
+	heap_entail_list_partial_context_init
+		heap_entail_agressive_prunning : call with entail function {heap_entail_prefix_init}
+		heap_entail_prefix_init : call with {heap_entail_one_context_new} as parameter
+			heap_entail_struc_list_partial_context : apply {heap_entail_struc_partial_context} on each context in the list of {partial_context} using a supplied entail function (as a parameter) to do entailment and then combine the result using {list_partial_context_union}
+				list_partial_context_union (in cformula) : take in two lists of partial_context and remove all the false partial_context ===> list of contexts are neither CONJUNCTION nor DISJUNCTION of contexts, just a list of feasible execution states 
+		heap_entail_one_context_new
+			...
+
+check_prog
+	heap_entail_variance

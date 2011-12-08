@@ -1,0 +1,225 @@
+I have three points to make.
+
+First since permission are fraction, we probably need
+redlog to handle its exact reasoning. Fortunately,
+this prover is already supported by our system.
+
+Second, for any given heap node:
+
+     x::node[p]<_,null> 
+  or x::ll[p]<n>
+
+we expect the following invariant to hold:
+
+  0<p<=1
+
+Having such an permission invariant allows us 
+to avoid the need to write logic related to 
+permission which should hold by default.
+
+Thirdly, one of the splitting rule needed for reasoning
+can be written as follows:
+
+ forall p1,p2:
+  x::p[p]<..> & 0<p1,p2<1 & p=p1+p2
+    <=> x::p[p1]<..> * x::p[p2]<..>
+
+Here, the split provides  flexibility to p1,p2 through
+the use of universal quantifier.  This is important
+for unfold (lhs->rhs) reasoning, as follows:
+
+ forall p1,p2:
+  x::p[p]<..> & 0<p1,p2<1 & p=p1+p2
+    => x::p[p1]<..> * x::p[p2]<..>
+
+We cannot use the following which would be too weak:
+
+  x::p[p]<..>
+    => exists p1,p2. x::p[p1]<..> * x::p[p2]<..> 
+         & 0<p1,p2<1 & p=p1+p2
+
+This is because it gives some p1,p2 which may not have the conditions
+we require.
+
+In the reverse direction, we can use the folding mechanism
+which would use the following instead:
+
+  x::p[p]<..>
+    <= exists p1,p2. x::p[p1]<..> * x::p[p2]<..> 
+         & 0<p1,p2<1 & p=p1+p2
+
+There is a similar lemma which we used for the lseg predicate.
+
+ forall n1,n2:
+  x::lseg<n,p> & n1,n2>=0 & n=n1+n2
+    <==> x::lseg<n1,q> * q::lseg<n2,p>
+
+You can play with it at examples/working/sleek/sleek{7,8}.slk
+to see its versaility. In our implementation, we have to
+handle universal lemma proving in a special way. The standard
+mechanism works for only existential quantifier which is weak.
+
+Lent Notation (This part is similar to @I immutable annotation)
+=============
+
+With permission accounting:
+
+  requires [p]x::ll<n> & 0<p<=1
+  ensures  [p]x::ll<n> & res=1
+
+With Lent using @I immutability annotation, we can more concisely 
+write it as:
+
+  requires x::ll<n>@I
+  ensures  res=1
+
+In the case of fractional permission, we may use the
+following instead:
+
+  requires [p](H->x::ll<n>) & 0<p<=1
+  ensures  [p] H & res=1
+
+Here, H denotes the heap state that is matched against
+x::ll<n>. This heap state is being preserved by the
+immutable predicate, as it appears explicitly in H.
+
+As a short-cut, we may use the following :
+
+  requires [p@I]x::ll<n>
+  ensures  res=1
+
+We should investigate how immutable example can be handled
+here in a concise and precise way.
+
+=====================================
+
+Bag of Addresses with Permissions
+---------------------------------
+
+Instead of {x,y}, we will add permission to each
+distinct location, e.g: (p1,x),(p2,y)}
+
+ Three rules, we may add are:
+
+ {(p1,x),(p2,x)} & D       ==> {(p1+p2,x)} & D
+
+ {(p1,x),(p2,y)} & p1+p2>1 |- x!=y
+
+ {(p,x)} & p>1             |- false
+
+=====================================
+
+Related Work:
+
+ Can we have counting and full fractional permissions?
+
+
+=================================================
+LDK:
+=================================================
+Specifications with fractional permission
+
+To avoid clashing with late instantiation notation [], we
+decide to annotate fractional permission as follow:
+
+       p::c[perm]<v*>
+
+=================================================
+The use of zero permission x::node[0]<..>. (NOT USE)
+
+When we talk about zero permission, we think about the ability to 
+know whether a heap part exists without actual write/read to it.
+
+As a user, we don't need to know about this information because 
+what a user wants is to read, write heap locations. For examples, 
+
+x.f =...
+...=... x.f ...
+
+Checking for nullness (x=null or x!=null) or allocating a heap part 
+(x=new node<...>) are considered a read/write permission to the 
+variable itself, not the heap part. Therefore, zero permission for
+a heap part is NOT NECESSARY.
+
+However, as an entailment checker, I think, zero permission does add
+new capability. Breaking into [0]x::ll<n>*[1]x::ll<n>, proceeding
+to update the second version, the first version is carried along.
+I think about the case whereby we have to prove that we don't have
+permission to call a procedure that needs certain permission such as:
+
+x::ll[0]<n> |- x::ll[1/2]<n> 
+
+which is obviously false when comparing 0<1/2.
+
+If we don't support zero permission, we have
+
+... |- x::ll[1/2]<n>
+
+What should the entailment does in this situation? Will we have to unfold
+ x::ll<n> forever???  [A] NO, ENTAILMENT checker can figure out this.
+
+If there is a way to falsify this entailment, then
+zero permission is NOT NEEDED.
+
+=================================================
+I categorize fraction permission to 2 cases
+
+- Full permission (read or write) denoted as:
+x::node[1]<..> or x::node<..>
+
+- Read permission: x::node[v]<..> & 0<v=<1
+
+Permission invariant 0<p<=1 is expected for each heap node.
+Therefore, x::node[v]<..> & (v>1 or v=<0) ::= false
+
+Note: Read permission with  0<v=<1 is weaker than that with
+ 0<v<1
+=================================================
+LOSE is omitted because we assume no memory leak due to lost
+residue.
+
+//LOSE
+x::node[p]<_,null> & p1<p 
+  |- x::node[p1]<_,null>.
+// NO RESIDUE
+
+=================================================
+Regarding the EQUIVALENCE rule
+
+[EQUIV]
+forall p1,p2:
+  x::p[p1]<..> & 0<=p1,p2<=1 & p=p1+p2
+    <=> x::p[p1]<..> * x::p[p2]<..>
+
+[SPLIT2]
+forall p1,p2:
+  x::p[p]<..> & 0<=p1,p2<=1 & p=p1+p2
+    => x::p[p1]<..> * x::p[p2]<..>
+
+[JOIN2]
+  x::p[p]<..>
+    <= exists p1,p2: x::p[p1]<..> * x::p[p2]<..>
+        & 0<=p1,p2<=1 & p=p1+p2
+
+I was able to prove that
+
+[EQUIV] = [SPLIT2]+[JOIN2]
+
+=================================================
+Mr Hai's thesis and CAV08 paper are very helpful.
+
+=================================================
+Lent Notation (@I immutable annotation)
+
+I think, the immutablility annotation can be kept unchanged.
+
+  requires x::ll[p]<n>@I
+  ensures  res=1
+
+However, its meaning with added fractional permission is under
+investigation.
+
+=================================================
+Can we have counting and full fractional permissions?
+
+Could you elaborate on this?

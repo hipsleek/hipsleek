@@ -102,9 +102,17 @@ let string_of_var (c1,c2) = c1^(match c2 with | Primed -> "#'"| _ -> "");;
 let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
 
 
+let string_of_typed_var (t,id) = "(" ^ (string_of_typ t) ^ "," ^  id  ^ ")";;
+
+let rec string_of_typed_var_list l = match l with 
+  | [] -> ""
+  | h::[] -> (string_of_typed_var h) 
+  | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
+
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l                  -> "null"
+  | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
   | P.Var (x, l)        -> (match x with 
 															|(id, p) -> id ^ (match p with 
 																									| Primed    -> "#'" 
@@ -256,6 +264,17 @@ let is_bool_f = function
   | _                  -> false 
 ;;
 
+(*can not put this in perm.ml 
+because we do not have separate printer
+for ipure and iformula*)
+let string_of_iperm perm =
+      let perm_str =   match perm with
+        | None -> ""
+        | Some f -> string_of_formula_exp f
+      in
+      if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
+;;
+
 (* pretty printing for a heap formula *)
 let rec string_of_h_formula = function 
   | F.Star ({F.h_formula_star_h1 = f1;
@@ -285,22 +304,24 @@ let rec string_of_h_formula = function
 
   | F.HeapNode ({F.h_formula_heap_node = x;
 		 F.h_formula_heap_name = id;
+         F.h_formula_heap_perm = perm; (*LDK*)
 		 F.h_formula_heap_arguments = pl;
 		 F.h_formula_heap_imm = imm;
 		 F.h_formula_heap_label = pi;
-		 F.h_formula_heap_pos = l}) -> 				 
-      string_of_formula_label_opt pi				 
-	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm))
-	
+		 F.h_formula_heap_pos = l}) ->
+      let perm_str = string_of_iperm perm in
+	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm))
   | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
 		  F.h_formula_heap2_imm = imm;
+          F.h_formula_heap2_perm = perm; (*LDK*)
 		  F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
-	string_of_formula_label_opt pi
-	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm))
+      let perm_str = string_of_iperm perm in
+      string_of_formula_label_opt pi
+	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm))
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 
@@ -554,8 +575,14 @@ let rec string_of_exp = function
   | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Raise ({exp_raise_type = tb;
 			exp_raise_path_id = pid;
-			exp_raise_val = b;}) -> string_of_control_path_id_opt pid 
-				("raise "^(match b with | None -> let r = match tb with | Const_flow cf-> cf | Var_flow cf -> cf in r | Some bs-> (string_of_exp bs))^ "\n")
+			exp_raise_val = b;}) -> 
+        let ft = match tb with 
+                      | Const_flow cf-> "CF"^cf
+                      | Var_flow cf -> "VF"^cf in
+        string_of_control_path_id_opt pid 
+				("raise "^(match b with 
+                  | None -> ft
+                  | Some bs-> "EXPR:"^ft^(string_of_exp bs))^ "\n")
   | Try ({	exp_try_block = bl;
 			exp_catch_clauses = cl;
 			exp_finally_clause = fl;})
@@ -610,6 +637,8 @@ let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
 ;;
+
+let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
 let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 

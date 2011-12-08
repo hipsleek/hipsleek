@@ -16,7 +16,7 @@ valueK<> ==
   or self::anode<0,f,a> * f::anode<1,null,null> * a::valueK<> // K v
   inv self!=null;
 
-coercion self::valueK<> -> self::termK<>;
+lemma self::valueK<> -> self::termK<>;
 
 anode clone (anode t)
 requires t::valueK<>@I

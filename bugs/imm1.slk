@@ -1,5 +1,4 @@
 
-
 data node { int val ; node next }.
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n-1> 
@@ -9,5 +8,8 @@ pred ll<n> == self = null & n = 0
 //print residue.
 
 
-checkentail (x::ll<n>@L); p::ll<_>*((y::ll<_>@L); z::ll<_>) & n > 0 |- (x::ll<n>@L & y::ll<m2>@L).
+//checkentail (x::ll<n>@L); p::ll<_>*((y::ll<_>@L); z::ll<_>) & n > 0 |- (x::ll<n>@L & y::ll<m2>@L).
+//print residue.
+
+checkentail p::node<_,q> * q::ll<_> |- p::ll<_>.
 print residue.

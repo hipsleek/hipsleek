@@ -20,9 +20,9 @@ dcl<s> == self = null & s = 0
         or self::node<_, r1, r2> * r2::dsegN<s - 1,self, self, r1>
 	inv s >= 0;
 
-//coercion "coer1" self::dsegN<p, n, t> <-> t::dsegP<self, p, n>;
+//lemma "coer1" self::dsegN<p, n, t> <-> t::dsegP<self, p, n>;
 
-coercion "coer2" self::dsegN<s, p, n, t> & s > 0 
+lemma "coer2" self::dsegN<s, p, n, t> & s > 0 
 	<-> self::dsegN<s - 1, p, t, r> * t::node<_, r, n>;
 
 /* merging */

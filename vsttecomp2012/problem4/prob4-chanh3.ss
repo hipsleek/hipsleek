@@ -58,7 +58,7 @@ void pop(ref node x)
 	x = x.next;
 }
 
-//coercion "lsegbrk" self::lseg<p,n> & n=a+b & a>0 & b>0 & n>=2 -> self::lseg<q,a> * q::lseg<p,b>;
+//lemma "lsegbrk" self::lseg<p,n> & n=a+b & a>0 & b>0 & n>=2 -> self::lseg<q,a> * q::lseg<p,b>;
 
 tree build_rec (int d, ref node s)
  requires s::lseg<null,n,mx>

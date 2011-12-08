@@ -6,6 +6,9 @@
 
 open Globals
 open Gen.Basic
+(* open Exc.ETABLE_NFLOW *)
+open Exc.GTable
+open Perm
 
 module F = Iformula
 module P = Ipure
@@ -40,6 +43,7 @@ and data_decl = { data_name : ident;
 
 and view_decl = { view_name : ident; 
 		  mutable view_data_name : ident;
+          (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
 		  view_vars : ident list;
 		  view_labels : branch_label list;
 		  view_modes : mode list;
@@ -1442,36 +1446,36 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
 (* 		| Not_found -> false *)
 (* 	  *\) *)
 
-let sub_type t1 t2 = Globals.sub_type t1 t2
+let sub_type t1 t2 = sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
 let inbuilt_build_exc_hierarchy () =
-  let _  = Gen.ExcNumbering.add_edge top_flow "" in
-  let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
-  let _ = (Gen.ExcNumbering.add_edge abnormal_flow c_flow) in
-  let _ = (Gen.ExcNumbering.add_edge raisable_class abnormal_flow) in
-  let _ = (Gen.ExcNumbering.add_edge "__others" abnormal_flow) in
-  let _ = (Gen.ExcNumbering.add_edge ret_flow "__others") in
-  let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
-  let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
-  let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
-  let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
+  let _  = exlist # add_edge top_flow "" in
+  let _ = (exlist # add_edge c_flow top_flow) in
+  let _ = (exlist # add_edge "__abort" top_flow) in
+  let _ = (exlist # add_edge n_flow c_flow) in
+  let _ = (exlist # add_edge abnormal_flow c_flow) in
+  let _ = (exlist # add_edge raisable_class abnormal_flow) in
+  let _ = (exlist # add_edge "__others" abnormal_flow) in
+  let _ = (exlist # add_edge ret_flow "__others") in
+  let _ = (exlist # add_edge cont_top "__others") in
+  let _ = (exlist # add_edge brk_top "__others") in
+  let _ = (exlist # add_edge spec_flow "__others") in
+  let _ = (exlist # add_edge error_flow top_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
-  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
-  let _ = if clean then (Gen.ExcNumbering.clean_duplicates ()) in
-	if (Gen.ExcNumbering.has_cycles ()) then begin
+  let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
+  let _ = if clean then (exlist # remove_dupl ) in
+	if (exlist # has_cycles) then begin
 	  print_string ("Error: Exception hierarchy has cycles\n");
 	  failwith ("Exception hierarchy has cycles\n");
 	end 
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
-  let pr _ = Gen.ExcNumbering.string_of_exc_list 33 in
+  let pr _ = exlist # string_of in
   Gen.Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =

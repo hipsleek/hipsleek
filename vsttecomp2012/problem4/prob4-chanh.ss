@@ -52,7 +52,7 @@ void pop(ref node x)
 	x = x.next;
 }
 
-coercion "lsegbreakmerge" self::lseg<p, b+c> <-> self::lseg<q, b> * q::lseg<p, c>;
+lemma "lsegbreakmerge" self::lseg<p, b+c> <-> self::lseg<q, b> * q::lseg<p, c>;
 
 tree build_rec (int d, ref node s)
 

@@ -18,7 +18,7 @@ sll<n, sm, lg> ==
 	or self::node<_, r> * r::ll<n-1>
    inv n>=0;
 
-coercion self::sll<n, sm, lg> -> self::ll<n>;
+lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 node partition(ref node xs, int c)
   requires xs::bnd<n, sm, bg> & sm <= c <= bg

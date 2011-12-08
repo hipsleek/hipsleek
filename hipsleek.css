@@ -33,14 +33,12 @@ tr.EvenSourceLine {
 	color:blue;
 	font-size : 0.75em;
 	font-weight : normal;
-	/* border-style : groove; */
 	font-family : monospace;
 }
 
 .pre {
 	background : aliceblue;
 	font-weight : normal;
-	/* border-style : solid; */
 	font-family : Arial;
 }
 
@@ -48,7 +46,6 @@ tr.EvenSourceLine {
 	background : burlywood;
 	font-weight : normal;
 	font-family : Arial;
-	/* border-style : ridge; */
 }
 
 .term {
@@ -97,7 +94,6 @@ tr.EvenSourceLine {
 
 .TreeView li
 {
-    /* The padding is for the tree view nodes */
 	padding: 0 0 0 20px;
     float : left;
     width : 95%;
@@ -128,4 +124,5 @@ li.Collapsed
 li.Collapsed ul
 {
     display: none;
+
 }

@@ -24,7 +24,7 @@ negtlseg<p,d,n> ==
   or self::negtlseg<r,d+1,n1> * r::negtlseg<p,d+1,n2> & n=n1+n2
   inv n>=0; 
   
-coercion self::negtlseg<p,d,n> & n>0 -> self::node<dd,q>;
+lemma self::negtlseg<p,d,n> & n>0 -> self::node<dd,q>;
 
 bool is_empty(node x)
   requires true

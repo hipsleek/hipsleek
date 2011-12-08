@@ -10,12 +10,20 @@ inv self!=null.
 // fail
 checkentail (x::Cell<_>@L) ; y::Cell<_> |- x::Cell<_>@I.
 
+ checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@C.
+
+// should valid
+// parser problem?
+ checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@I; true.
+//expected residue: (x::Cell<_>@I);y::Cell<>.
 
 checkentail y::Cell<_>@I |- y::Cell<_>.
 // fail
 
 
 checkentail y::Cell<_>@L |- y::Cell<_>@L.
+//should valid
+checkentail (x::Cell<_>@I) ; y::Cell<_> |- y::Cell<_>@I; true.
 print residue.
 // residue: y::Cell<_>@L
 
@@ -156,3 +164,5 @@ ensures  res=n
 x::ll<n>@I * (res::teelsegI<x,pp,0,m> * pp::ll<m>@I)@E
  m=0
 */
+ m=0
+

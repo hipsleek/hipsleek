@@ -19,7 +19,7 @@ let print_version () =
   print_endline ("HIP: A Verifier for Heap Manipulating Programs");
   print_endline ("Version 1.0");
   print_endline ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.");
-  print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
+  print_endline ("IT IS FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
 (******************************************)
@@ -32,7 +32,7 @@ let parse_file_full file_name =
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-      print_string "Parsing...\n"; flush stdout;
+      print_string ("Parsing "^file_name^" ...\n"); flush stdout;
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
       let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
@@ -45,7 +45,7 @@ let parse_file_full file_name =
 		(*let _ = print_endline "Primitive relations : " in
 		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
 
-			prog 
+			prog
     with
 		End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
@@ -92,9 +92,9 @@ let process_source_full source =
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
-  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in
+  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
-  let prims_list = process_primitives new_h_files in
+  let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
 
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
@@ -129,7 +129,7 @@ let process_source_full source =
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
-    let _ = print_string ("Translating to core language...\n"); flush stdout in
+    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
 	(* Forward axioms and relations declarations to SMT solver module *)
 	let _ = List.map (fun crdef -> Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
@@ -211,7 +211,6 @@ let process_source_full source =
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
-	  
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
@@ -236,6 +235,10 @@ let main1 () =
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
+  let _ = Printexc.record_backtrace !Globals.trace_failure in
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
+
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
       Globals.procs_verified := ["f3"];

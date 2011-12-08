@@ -1,4 +1,4 @@
-  heap_entail_struc_list_failesc_context_init (*called in typechecker -> *)
+heap_entail_struc_list_failesc_context_init (*called in typechecker -> *)
     |->heap_entail_failesc_prefix_init 
         |->heap_entail_agressive_prunning  
             |-> heap_entail_struc_list_failesc_context (*called in typechecker *)

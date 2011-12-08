@@ -40,9 +40,9 @@ negtlseg<p,d,n> ==
   inv self!=null & n>=1; 
 
 // a provable lemma that tlseg gives at least one node
-coercion self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d;
+lemma self::tlseg<p,d,n> -> self::node<dd,q> & dd>=d;
 
-coercion self::negtlseg<p,d,n> -> self::node<dd,q> & dd!=d;
+lemma self::negtlseg<p,d,n> -> self::node<dd,q> & dd!=d;
 
 bool is_empty(node x)
   requires true
