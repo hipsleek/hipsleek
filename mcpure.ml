@@ -1432,53 +1432,23 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
  (fun with_disj ante_disj conseq -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
 
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
-  if !do_slicing then mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no
-  else mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no
-  
-and mimply_process_ante_no_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
-  (*let ps = MG_Constr_AuS.constr_of_atom_list ante_disj in
-  let f = MG_Slice_AuS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
-  let r = MG_AuS.get_ctr_n 1 f ps in
-
-  let n_ante = (*MG_Slice_AuS.atom_of_slice r in*)
-	  (*let fv = fv conseq in 
-	  List.filter (fun c -> (List.length (Gen.BList.intersect_eq eq_spec_var fv
-    c.memo_group_fv))>0) ante_disj in*)*)
-  let n_ante = AutoS.get_rel_ctr 1 conseq ante_disj in 
+  let n_ante = 
+    if !do_slicing then 
+      AnnoS.get_rel_ctr 2 conseq ante_disj
+    else
+      AutoS.get_rel_ctr 1 conseq ante_disj
+  in
+  (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
-  
+
   (Gen.Profiling.push_time str_time;
-  let r = t_imply r conseq ("imply_process_ante_no_slicing"^(string_of_int !imp_no)) false None in
+  let r = t_imply r conseq ("imply_process_ante_slicing"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;
   r)
-
-and mimply_process_ante_slicing with_disj ante_disj conseq str str_time t_imply imp_no =
-  (*let (nlv, lv) = fv_with_slicing_label conseq in
-  let n_ante = pick_relevant_lhs_constraints !opt_imply (nlv, lv) ante_disj in*)
-
-  (*let ps = MG_Constr_AnS.constr_of_atom_list ante_disj in
-  let f = MG_Slice_AnS.slice_of_atom (Memo_Group.atom_of_formula conseq) in
-  let r = MG_AnS.get_ctr_n 2 f ps in
-  let n_ante = MG_Slice_AnS.atom_of_slice r in*)
-
-  let n_ante = AnnoS.get_rel_ctr 2 conseq ante_disj in
-
-  (*let _ = print_string ("mimply_process_ante_slicing: \n" ^ (!print_mp_f n_ante) ^ "\n") in*)
-
-  let r = match with_disj with  
-    | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
-    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
-    | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
-  let _ = Debug.devel_pprint str no_pos in
-
-   (Gen.Profiling.push_time str_time;
-   let r = t_imply r conseq ("imply_process_ante_slicing"^(string_of_int !imp_no)) false None in
-   Gen.Profiling.pop_time str_time;
-   r)
 
 and pick_relevant_lhs_constraints choose_algo (nlv, lv) ante_disj =
   Gen.Debug.no_3 "pick_relevant_lhs_constraints"
@@ -1684,11 +1654,7 @@ let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
 
-and imply_memo_x ante_memo0 conseq_memo t_imply imp_no =
-  if !do_slicing then imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no
-  else imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no
-
-and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
+and imply_memo_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
@@ -1700,33 +1666,6 @@ and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
     | [] -> (true,[],None)
-
-and imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
-    :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
-  (*if !opt_imply then
-	begin
-	  match conseq_memo with
-		| h :: rest -> 
-          let (r1,r2,r3) = (opt_imply_memo_group_slicing ante_memo0 h t_imply imp_no) in (* A -> B *)
-	      if r1 then 
-			let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in (* A -> C *)
-			(r1,r2@r22,r23)
-	      else (r1,r2,r3)
-		| [] -> (true,[],None)
-	end
-  else*)
-	begin
-	  match conseq_memo with
-		| h :: rest -> 
-          let r = fold_mem_lst_to_lst [h] !no_RHS_prop_drop false true in
-          let r = List.concat (List.map list_of_conjs r) in
-	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
-	      if r1 then 
-			let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in (* A -> C *)
-			(r1,r2@r22,r23)
-	      else (r1,r2,r3)
-		| [] -> (true,[],None)
-	end
 
 (*and opt_imply_memo_group_slicing ante_mc conseq_mg t_imply imp_no =
   let c_lv = conseq_mg.memo_group_linking_vars in
@@ -1746,7 +1685,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
        | h::t -> [List.fold_left (fun a c ->
           let na = EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
             {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv);
-			 memo_group_linking_vars = [];
+             memo_group_linking_vars = [];
              memo_group_cons = filter_merged_cons na [a.memo_group_cons; c.memo_group_cons];
              memo_group_changed = true;
              memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
@@ -2053,15 +1992,12 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 		| None -> false
 	) mg.memo_group_cons)) mem
   
- 
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   Gen.Debug.no_1 "exists_contradiction_eq"
 	!print_mp_f
 	string_of_bool
 	(fun mem -> exists_contradiction_eq mem ls) mem
 	  
-    
-  
 let constraint_collector p_sel f : (mix_formula * (b_formula * spec_var) list)=
    let f_comb f = List.concat f in
    let pf_f _ f= match f with
