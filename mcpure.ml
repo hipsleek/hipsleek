@@ -1566,6 +1566,7 @@ let isImpl_dupl c = match c.memo_status with | Implied_R -> true | _ -> false
 let isImplT c = match c.memo_status with | Implied_N -> true | _ -> false 
 let isCtrInSet aset s c =  List.exists (fun d-> eq_b_formula aset c.memo_formula d.memo_formula) s  
 
+(* WN : what does this cons_filter do? *)
 let cons_filter (g:memo_pure) (f:memoised_constraint->bool) : memo_pure = 
     List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
 
@@ -2240,6 +2241,11 @@ let get_subst_equation_mix_formula p qvar only_vars = match p with
 let mix_cons_filter f fct = match f with
   | MemoF f -> MemoF (cons_filter f fct)
   | OnePF _ -> f
+
+let mix_cons_filter f fct = 
+  let pr = !print_mix_f in
+  Gen.Debug.ho_1 "mix_cons_filter" pr pr 
+      (fun _ -> mix_cons_filter f fct) f
 
 let combine_mix_branch (s:string) (f:mix_formula * 'a) = match (fst f) with
   | MemoF mf -> MemoF (combine_memo_branch s (mf,snd f))
