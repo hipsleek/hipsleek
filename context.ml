@@ -806,10 +806,12 @@ and sort_wt_x (ys: action_wt list) : action list =
           let rw = (fst h) in
           (* WHY did we pick only ONE when rw==0?*)
           (*Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
-          if (rw==0) then h 
+          if (rw==0) then h
           else (rw,Search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
-        -> 
+        ->
+        (*drop ummatched actions if possible*)
+        let l = drop_unmatched_action l in
           let l = List.map recalibrate_wt l in
           let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
           (rw,Cond_action l)
@@ -821,6 +823,21 @@ and sort_wt_x (ys: action_wt list) : action list =
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
+
+  and drop_unmatched_action l=
+    let rec helper acs rs=
+      match acs with
+        | [] -> rs
+        | ac::ss ->
+            ( match ac with
+              | (_, M_unmatched_rhs_data_node _) -> helper ss rs
+              | _ -> helper ss (ac::rs)
+            )
+    in
+    match l with
+      | [] -> []
+      | [a] -> []
+      | _ -> helper l []
 
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
