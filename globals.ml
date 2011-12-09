@@ -424,7 +424,7 @@ let disable_multiple_specs =ref false
   let no_memoisation = ref false
   let no_incremental = ref false
   let no_LHS_prop_drop = ref false
-  let no_RHS_prop_drop = ref true
+  let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
 
 (* for Termination *)

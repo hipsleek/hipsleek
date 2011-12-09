@@ -41,6 +41,7 @@ and prune_status =
   (*| Unknown_prune of bool*)   (*pruning constraint with unknown status, -bool indicates if it comes from an invariant*)
   
 let print_mp_f = ref (fun (c:memo_pure)-> " printing not initialized")
+let print_mp_full = ref (fun (c:memo_pure)-> " printing not initialized")
 let print_mg_f = ref (fun (c:memoised_group)-> " printing not initialized")
 let print_mc_f = ref (fun (c:memoised_constraint)-> "printing not initialized")
 let print_sv_f = ref (fun (c:spec_var)-> "spec var printing not initialized")
@@ -572,6 +573,18 @@ and memo_is_member_pure p mm =
 	  else match p with
 		| BForm ((Eq(Var(v1,_),Var(v2,_),_),_), _) -> EMapSV.is_equiv c.memo_group_aset v1 v2
 		| _ -> false ) mm
+
+
+and fold_mem_lst_to_lst_gen  (mem:memo_pure) with_R with_P with_slice with_disj: formula list =	
+  let prb = string_of_bool in
+  Gen.Debug.no_5 "fold_mem_lst_to_lst_gen" 
+      !print_mp_f 
+      (add_str "with redundant" prb)
+      (add_str "with propagated/inv" prb)
+      (add_str "with slice" prb)
+      (add_str "with disj" prb)
+      (pr_list !print_p_f_f)
+      (fun _ _ _ _ _ -> fold_mem_lst_to_lst_gen_x (mem:memo_pure) with_R with_P with_slice with_disj) mem  with_R with_P with_slice with_disj
       
 (* below with_const *)
 (* this extracts a list of formula from memo_pure ;
@@ -580,7 +593,7 @@ and memo_is_member_pure p mm =
    with_slice : takes the non-atomic ctrs
    with_disj : takes also non-atomic disjunctive ctrs
 *)
-and fold_mem_lst_to_lst_gen  (mem:memo_pure) with_R with_P with_slice with_disj: formula list=	
+and fold_mem_lst_to_lst_gen_x  (mem:memo_pure) with_R with_P with_slice with_disj: formula list=	
   let rec has_disj_f c = match c with | Or _ -> true | _ -> false  in			  
   let r = List.map (fun c -> 
 	  let slice = if with_slice then 
@@ -596,16 +609,18 @@ and fold_mem_lst_to_lst_gen  (mem:memo_pure) with_R with_P with_slice with_disj:
 	  asetf @ slice @ cons) mem in
   let r = List.map join_conjunctions r in
   r
-      
-and fold_mem_lst_to_lst mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
-and fold_mem_lst_to_lst_debug mem with_dupl with_inv with_slice = 
-  let r = fold_mem_lst_to_lst mem with_dupl with_inv with_slice in
-  print_string ("fold_mem_lst_to_lst input: "^(!print_mp_f mem)^"\n");
-  print_string ("fold_mem_lst_to_lst output: "^(print_p_f_l r)^"\n");
-  r
+
+and fold_mem_lst_to_lst mem with_dupl with_inv with_slice = 
+  fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
+
+(* and fold_mem_lst_to_lst_debug mem with_dupl with_inv with_slice =  *)
+(*   let r = fold_mem_lst_to_lst mem with_dupl with_inv with_slice in *)
+(*   print_string ("fold_mem_lst_to_lst input: "^(!print_mp_f mem)^"\n"); *)
+(*   print_string ("fold_mem_lst_to_lst output: "^(print_p_f_l r)^"\n"); *)
+(*   r *)
   
 and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj lst : formula = 
-  let r = fold_mem_lst_to_lst_gen lst with_dupl with_inv with_slice with_disj in
+  let r = fold_mem_lst_to_lst_gen_x lst with_dupl with_inv with_slice with_disj in
   List.fold_left (fun a c -> mkAnd a c no_pos) f_init r      
       
 and fold_mem_lst_no_disj (f_init:formula) with_dupl with_inv lst :formula= fold_mem_lst_gen f_init with_dupl with_inv true false lst
@@ -1936,8 +1951,13 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
             (r1,r2,r3)
     | [] -> (true,[],None)
 
+let mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
+  Gen.Debug.no_2 "mimply_conj"
+      (!print_mp_f) (pr_list !print_p_f_f) (fun (x,_,_) -> string_of_bool x)
+      (fun _ _ -> mimply_conj ante_memo0 conseq_conj t_imply imp_no) ante_memo0 conseq_conj
+
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
- Gen.Debug.ho_2 "imply_memo" (!print_mp_f)
+ Gen.Debug.no_2 "imply_memo" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1948,7 +1968,7 @@ and imply_memo_x ante_memo0 conseq_memo t_imply imp_no =
 
 and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
-  Gen.Debug.ho_2 "imply_memo_no_slicing"
+  Gen.Debug.no_2 "imply_memo_no_slicing"
       !print_mp_f !print_mp_f
       (fun (r,_,_) -> string_of_bool r)
       (fun _ _ -> imply_memo_no_slicing_x ante_memo0 conseq_memo t_imply imp_no)
@@ -1959,18 +1979,18 @@ and imply_memo_no_slicing_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
-          let r = fold_mem_lst_to_lst(*_debug*) [h] !no_RHS_prop_drop false true in
+          let r = fold_mem_lst_to_lst(*_debug*) [h] false !no_RHS_prop_drop true in
           let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
 	      if r1 then 
-	        let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in (* A -> C *)
+	        let r1,r22,r23 = (imply_memo ante_memo0 rest t_imply imp_no) in (* A -> C *)
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
     | [] -> (true,[],None)
 
 and imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
-  Gen.Debug.ho_2 "imply_memo_slicing"
+  Gen.Debug.no_2 "imply_memo_slicing"
       !print_mp_f !print_mp_f
       (fun (r,_,_) -> string_of_bool r)
       (fun _ _ -> imply_memo_slicing_x ante_memo0 conseq_memo t_imply imp_no)
@@ -1993,7 +2013,7 @@ and imply_memo_slicing_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
 	begin
 	  match conseq_memo with
 		| h :: rest -> 
-          let r = fold_mem_lst_to_lst(*_debug*) [h] !no_RHS_prop_drop false true in
+          let r = fold_mem_lst_to_lst(*_debug*) [h] false !no_RHS_prop_drop true in
           let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
 	      if r1 then 
@@ -2261,7 +2281,7 @@ let mix_cons_filter f fct = match f with
 
 let mix_cons_filter f fct = 
   let pr = !print_mix_f in
-  Gen.Debug.ho_1 "mix_cons_filter" pr pr 
+  Gen.Debug.no_1 "mix_cons_filter" pr pr 
       (fun _ -> mix_cons_filter f fct) f
 
 let combine_mix_branch (s:string) (f:mix_formula * 'a) = match (fst f) with

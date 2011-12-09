@@ -2415,7 +2415,7 @@ and elim_exists_pure w (f, b) lump pos =
 
 and elim_exists_mix_formula w f pos = 
   let pr = Cprinter.string_of_mix_formula in
-  Gen.Debug.ho_1 "elim_exists_mix_formula" pr pr
+  Gen.Debug.no_1 "elim_exists_mix_formula" pr pr
       (fun _ -> elim_exists_mix_formula_x w f pos) f
 
 and elim_exists_mix_formula_x w f pos = match f with
@@ -4975,7 +4975,7 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
 
 and heap_entail_build_mix_formula_check (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
   let pr = Cprinter.string_of_mix_formula in
-  Gen.Debug.ho_3 "heap_entail_build_mix_formula_check"  (fun l -> Cprinter.string_of_spec_var_list l) 
+  Gen.Debug.no_3 "heap_entail_build_mix_formula_check"  (fun l -> Cprinter.string_of_spec_var_list l) 
       pr pr (pr_pair pr pr)
       ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq       
 
@@ -5315,7 +5315,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
               end
 	      else new_conseq0
         in
-        let _ = print_endline ("WN: new_conseq0"^(Cprinter.string_of_mix_formula new_conseq0)) in
+        (* let _ = print_endline ("WN: new_conseq0"^(Cprinter.string_of_mix_formula new_conseq0)) in *)
         let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)
             (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
 	        (* <<<<<<< solver.ml *)
@@ -5605,7 +5605,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
-  Gen.Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Gen.Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
