@@ -222,6 +222,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
           let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)
           (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
           let new_iv = arg2@iv in
+          let alias = if List.mem r iv then [] else alias in
           (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias) in
   let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in
   (* let _ = print_endline ("infer_heap_nodes") in *)
@@ -247,7 +248,10 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
         | _ -> if Omega.is_sat f "0" then CP.filter_var f vars else CP.mkFalse no_pos
       in
-      let simplify = fun f vars -> Omega.simplify (filter_var (Omega.simplify f) vars) in
+      let simplify = fun f vars -> match vars with
+        | [] -> CP.mkTrue no_pos
+        | _ -> Omega.simplify (filter_var (Omega.simplify f) vars) 
+      in
       let _,new_p,_,_,_ = CF.split_components es.es_formula in
       let new_p = simplify (MCP.pure_of_mix new_p) alias in
       (* TODO WN : push a match action on must_action_stk *)

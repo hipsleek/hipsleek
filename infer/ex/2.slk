@@ -127,14 +127,29 @@ New infer var is:
 
 
 */
+//Ok
+//infer [x] true & x=y |- x::ll<n> .
+//Ok
+//infer [x] true & x=y |- y::ll<n> .
+
 //OK
-infer [q] q!=null |- q::ll<n> .
+//infer [q] q!=null |- q::ll<n> .
 
 infer [n] q!=null |- q::ll<n> .
 /*
 Should precondition be false?
 Infer  (3): Fail. (may) cause:15.4 no match for rhs data node: q (may-bug).
 */
+
+
+//infer [q] q=null |- q::ll<n> .
+//infer [n] q=null |- q::ll<n> .
+//infer [q] q!=null |- q::ll<n> .
+//infer [n] q!=null |- q::ll<n> .
+//infer [q] n=0 |- q::ll<n> .
+//infer [n] n=0 |- q::ll<n> .
+//infer [q] n!=0 |- q::ll<n> .
+//infer [n] n!=0 |- q::ll<n> .
 
 //infer [p] x::node<1,p> |- x::ll<n> .
 /*
