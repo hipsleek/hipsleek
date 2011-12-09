@@ -594,17 +594,21 @@ and fold_mem_lst_to_lst_gen  (mem:memo_pure) with_R with_P with_slice with_disj:
    with_disj : takes also non-atomic disjunctive ctrs
 *)
 and fold_mem_lst_to_lst_gen_x  (mem:memo_pure) with_R with_P with_slice with_disj: formula list=	
+  (* let _ = print_string ("fold_mem_lst_to_lst_gen: mem: " ^ (!print_mp_f mem) ^ "\n") in *)
   let rec has_disj_f c = match c with | Or _ -> true | _ -> false  in			  
   let r = List.map (fun c -> 
 	  let slice = if with_slice then 
-		if with_disj then c.memo_group_slice 
+		  if with_disj then c.memo_group_slice 
 		else List.filter (fun c -> not (has_disj_f c)) c.memo_group_slice
 	  else [] in
-	  let cons = List.filter (fun c -> match c.memo_status with 
-		| Implied_R -> with_R 
-		| Implied_N -> true 
-		| Implied_P-> with_P) c.memo_group_cons in
+	  (*let cons = List.filter (fun c -> match c.memo_status with 
+		  | Implied_R -> with_R 
+		  | Implied_N -> true 
+		  | Implied_P-> with_P) c.memo_group_cons in*)
+    let cons = c.memo_group_cons in
 	  let cons  = List.map (fun c-> (BForm(c.memo_formula, None))) cons in
+    (* let _ = print_string ("fold_mem_lst_to_lst_gen: cons: " ^ (pr_list *)
+    (* !print_p_f_f cons) ^ "\n") in *)
 	  let asetf = List.map (fun(c1,c2)-> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const c.memo_group_aset) in
 	  asetf @ slice @ cons) mem in
   let r = List.map join_conjunctions r in
@@ -1978,8 +1982,10 @@ and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
 and imply_memo_no_slicing_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
-    | h :: rest -> 
+    | h :: rest ->
+          (* let _ = print_string ("imply_memo: h: " ^ (!print_mg_f h) ^ "\n") in *)
           let r = fold_mem_lst_to_lst(*_debug*) [h] false !no_RHS_prop_drop true in
+          (* let _ = print_string ("imply_memo: r: " ^ (pr_list !print_p_f_f r) ^ "\n") in *)
           let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
 	      if r1 then 
