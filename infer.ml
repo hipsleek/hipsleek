@@ -13,10 +13,15 @@ module CF = Cformula
 
 let no_infer estate = (estate.es_infer_vars == [])
  
-let remove_infer_vars estate =
+let remove_infer_vars_old estate =
   let iv = estate.es_infer_vars in
   if (iv==[]) then (estate,iv)
   else ({estate with es_infer_vars=[];}, iv) 
+
+let remove_infer_vars estate rt =
+  let iv = estate.es_infer_vars in
+  if (iv==[]) then (estate,iv)
+  else ({estate with es_infer_vars=CP.diff_svl iv rt;}, iv) 
 
 let rec restore_infer_vars_ctx iv ctx = 
   match ctx with

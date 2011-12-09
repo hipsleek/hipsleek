@@ -6659,7 +6659,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* NO inference for base-case fold *)
             (* Removal of all vars seems to be strong *)
             (* Maybe only the root of view_node *)
-            let (estate,iv) = Inf.remove_infer_vars estate in
+            let rt = Inf.get_args_h_formula rhs_node in
+            let rt = match rt with
+             | None -> []
+             | Some (r,_,_,_) -> [r]
+            in 
+            let (estate,iv) = Inf.remove_infer_vars estate rt in
             let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos in
             (Inf.restore_infer_vars iv cl,prf)
     | Context.M_lhs_case {
