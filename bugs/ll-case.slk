@@ -17,6 +17,10 @@ pred ll<n> ==
   or self::node<_, r> * r::ll<nn> & nn=n-1
 	inv n>13.
 
+// UNSOUND BUG
+// ERROR : invariant does not hold but --eps option allowed it!
+
+
 /*
 checkentail x::node<_,null>
   |- x::ll<n>.

@@ -1937,7 +1937,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
     | [] -> (true,[],None)
 
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
- Gen.Debug.no_2 "imply_memo" (!print_mp_f)
+ Gen.Debug.ho_2 "imply_memo" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1947,6 +1947,15 @@ and imply_memo_x ante_memo0 conseq_memo t_imply imp_no =
   else imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no
 
 and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
+    :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
+  Gen.Debug.ho_2 "imply_memo_no_slicing"
+      !print_mp_f !print_mp_f
+      (fun (r,_,_) -> string_of_bool r)
+      (fun _ _ -> imply_memo_no_slicing_x ante_memo0 conseq_memo t_imply imp_no)
+      ante_memo0 conseq_memo
+
+
+and imply_memo_no_slicing_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
@@ -1960,6 +1969,14 @@ and imply_memo_no_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
     | [] -> (true,[],None)
 
 and imply_memo_slicing ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
+    :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+  Gen.Debug.ho_2 "imply_memo_slicing"
+      !print_mp_f !print_mp_f
+      (fun (r,_,_) -> string_of_bool r)
+      (fun _ _ -> imply_memo_slicing_x ante_memo0 conseq_memo t_imply imp_no)
+      ante_memo0 conseq_memo
+
+and imply_memo_slicing_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *) 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   (*if !opt_imply then
 	begin
