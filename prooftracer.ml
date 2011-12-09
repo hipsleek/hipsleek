@@ -26,7 +26,7 @@ open Globals
 module CP = Cpure
 module CF = Cformula
 module ME = Musterr
-
+module MEC = Musterr.ENV_COM
 (*
   type for proof or disproof.
   one of the leaves of a proof is successful node
@@ -59,77 +59,77 @@ type proof =
   | Search of proof list
   | Unknown
 
-and ex_step = { ex_step_ante : ME.context;
+and ex_step = { ex_step_ante : MEC.context;
 				ex_step_conseq : CF.formula;
 				ex_step_old_vars : CP.spec_var list;
 				ex_step_new_vars : CP.spec_var list;
 				ex_step_proof : proof }
 
-and or_left = { or_left_ante : ME.context;
+and or_left = { or_left_ante : MEC.context;
 				or_left_conseq : CF.formula;
 				or_left_proofs : proof list (* all proofs here must succeed *) }
 
-and or_struc_left = { or_struc_left_ante : ME.context;
+and or_struc_left = { or_struc_left_ante : MEC.context;
 					or_struc_left_conseq : CF.struc_formula;
 					or_struc_left_proofs : proof list (* all proofs here must succeed *) }
 
-and or_right = { or_right_ante : ME.context;
+and or_right = { or_right_ante : MEC.context;
 				 or_right_conseq : CF.formula;
 				 or_right_proofs : proof list (* at least one must succeed *) }
 
-and match_step = { match_step_ante : ME.context;
+and match_step = { match_step_ante : MEC.context;
 				   match_step_conseq : CF.formula;
 				   match_step_node : CF.h_formula;
 				   match_step_proofs : proof list (* there can be more than one sub proof if coercion occurs. *) }
 
-and mmatch_step = { mmatch_step_ante : ME.context;
+and mmatch_step = { mmatch_step_ante : MEC.context;
 					mmatch_step_conseq : CF.formula;
 					mmatch_step_node : CF.h_formula;
 					mmatch_step_proofs : proof list (* there can be more than one sub proof if coercion occurs. *) }
 
-and fold_step = { fold_step_ante : ME.context;
+and fold_step = { fold_step_ante : MEC.context;
 				  fold_step_conseq : CF.formula;
 				  fold_step_var : CP.spec_var;
 				  fold_step_fold_proof : proof; (* recursive proof of folding *)
 				  fold_step_proofs : proof list (* proofs after fold. There may be more than one of them *) }
 
-and unfold_step = { unfold_step_ante : ME.context;
+and unfold_step = { unfold_step_ante : MEC.context;
 					unfold_step_conseq : CF.formula;
 					unfold_step_node : CF.h_formula;
 					unfold_step_proof : proof }
 
-and pure_step = { pure_step_estate : ME.entail_state;
+and pure_step = { pure_step_estate : MEC.entail_state;
 				  pure_step_ante : CP.formula;
 				  pure_step_conseq : CP.formula;
 				  pure_step_success : bool;
 				  pure_step_gist : CP.formula option }
  
 and coercion_step = { coercion_step_name : ident;
-					  coercion_step_ante : ME.context;
+					  coercion_step_ante : MEC.context;
 					  coercion_step_conseq : CF.formula;
 					  coercion_step_coercion : (CF.formula * CF.formula);
 					  coercion_step_proof : proof }
 
-and coercion2_step = { coercion2_step_ante : ME.context;
+and coercion2_step = { coercion2_step_ante : MEC.context;
 					   coercion2_step_conseq : CF.formula;
 					   coercion2_step_proofs : proof list }
 
-and context_list = { context_list_ante : ME.context list;
+and context_list = { context_list_ante : MEC.context list;
 					 context_list_conseq : CF.struc_formula;
 					 context_list_proofs : proof list }
 
-and case_step = { case_context: ME.context;
+and case_step = { case_context: MEC.context;
 				  case_form: CF.struc_formula;
 				  case_proofs: proof list}
 
-and base_step = { base_context: ME.context;
+and base_step = { base_context: MEC.context;
 				  base_form: CF.struc_formula;
 				  base_proof: proof;
 				  cont_proof: proof}
 
-and assume_step = { assume_context : ME.context;
+and assume_step = { assume_context : MEC.context;
 					assume_formula : CF.formula}
-and eex_step = {eex_context: ME.context;
+and eex_step = {eex_context: MEC.context;
 				eex_formula: CF.struc_formula;
 				eex_proof: proof}
 

@@ -4,6 +4,8 @@ module AS = Astsimp
 module C  = Cast
 module CF = Cformula
 module ME = Musterr
+module MEC = Musterr.ENV_COM
+module MEEC = Musterr.ECtx
 module CP = Cpure
 module H  = Hashtbl
 module I  = Iast
@@ -36,21 +38,21 @@ let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog
   (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
   let conseq = lem_to_struc_cformula iconseq in
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
-  let ectx = ME.empty_ctx (CF.mkTrueFlow ()) no_pos in
-  let ctx = ME.build_context ectx ante no_pos in
+  let ectx = MEEC.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ctx = MEEC.build_context ectx ante no_pos in
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-  let ctx = ME.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
-  let rs1, _ = 
+  let ctx = MEEC.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
+  let rs1, _ =
   if not !Globals.disable_failure_explaining then
-    Solver.heap_entail_struc_init_bug_inv cprog false false (ME.SuccCtx[ctx]) conseq no_pos None
+    Solver.heap_entail_struc_init_bug_inv cprog false false (MEC.SuccCtx[ctx]) conseq no_pos None
   else
-     Solver.heap_entail_struc_init cprog false false (ME.SuccCtx[ctx]) conseq no_pos None
+     Solver.heap_entail_struc_init cprog false false (MEC.SuccCtx[ctx]) conseq no_pos None
   in
-  let rs = ME.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  let rs = ME.ELCtx.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   flush stdout;
   let res =
-    if !Globals.disable_failure_explaining then ((not (ME.isFailCtx rs)))
-    else ((not (ME.isFailCtx_gen rs)))
+    if !Globals.disable_failure_explaining then ((not (ME.ELCtx.isFailCtx rs)))
+    else ((not (ME.EMM.isFailCtx_gen rs)))
   in
   (res, rs)
 
@@ -64,7 +66,7 @@ let process_coercion_check iante iconseq (lemma_name: string)  (cprog: C.prog_de
   try 
     run_entail_check iante iconseq cprog
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (ME.FailCtx (ME.Trivial_Reason (ME.mk_failure_must "exception in lemma proving" lemma_error))) in
+      let rs = (MEC.FailCtx (MEC.Trivial_Reason (ME.EMM.mk_failure_must "exception in lemma proving" lemma_error))) in
       (false, rs)
 
 let process_coercion_check iante0 iconseq0 (lemma_name: string)  (cprog: C.prog_decl) =
@@ -138,14 +140,14 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   Gen.Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
-let print_entail_result (valid: bool) (residue: ME.list_context) (num_id: string) =
+let print_entail_result (valid: bool) (residue: MEC.list_context) (num_id: string) =
   if valid then print_string (num_id ^ ": Valid.\n")
-  else let s = 
+  else let s =
     if !Globals.disable_failure_explaining then ""
     else
-      match ME.get_must_failure residue with
-        | Some s -> "(must) cause:" ^ s 
-        | _ -> (match ME.get_may_failure residue with
+      match ME.EMM.get_must_failure residue with
+        | Some s -> "(must) cause:" ^ s
+        | _ -> (match ME.EMM.get_may_failure residue with
             | Some s -> "(may) cause:" ^ s
             | None -> "INCONSISTENCY : expected failure but success instead"
           )
@@ -153,8 +155,8 @@ let print_entail_result (valid: bool) (residue: ME.list_context) (num_id: string
 
 (* check the validity of the lemma where:
    l2r: "->" implication
-   r2l: "<-" implication 
-   cprog: cast program 
+   r2l: "<-" implication
+   cprog: cast program
    coerc_name: lemma name
    coerc_type: lemma type (Right, Left or Equiv)
 *)
@@ -167,18 +169,18 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
     let num_id = "\nEntailing lemma "^ lemma_name ^"" in
-    let empty_resid = ME.FailCtx (ME.Trivial_Reason (ME.mk_failure_must "empty residue" Globals.lemma_error)) in
+    let empty_resid = MEC.FailCtx (MEC.Trivial_Reason (ME.EMM.mk_failure_must "empty residue" Globals.lemma_error)) in
     let (rs1, rs2) = match (rs_l2r, rs_r2l) with
       | (None, None) -> (empty_resid, empty_resid)
       | (None, Some rsr) -> (empty_resid, rsr)
       | (Some rsl, None) -> (rsl, empty_resid)
       | (Some rsl_, Some rsr_) -> (rsl_, rsr_) in
     let residues = match lemma_type with
-      | I.Equiv -> 
-            let residue = ME.list_context_union rs1 rs2 in
+      | I.Equiv ->
+            let residue = ME.ELCtx.union_list_context rs1 rs2 in
             let valid = valid_l2r && valid_r2l in
             let _ = if valid then print_entail_result valid residue num_id
-            else 
+            else
               let _ = print_string (num_id ^ ": Fail. Details below:\n") in
               let _ = print_entail_result valid_l2r rs1 "\t \"->\" implication: " in
               print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
@@ -191,7 +193,7 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
   else None
 
 let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
-  let pr c = match c with 
+  let pr c = match c with
     | Some coerc -> Cprinter.string_of_coercion coerc
     | None -> ""
   in

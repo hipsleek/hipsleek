@@ -5,6 +5,8 @@
 open Globals
 open Sleekcommons
 open Gen.Basic
+open Musterr.ENV_COM
+open Musterr.ECtx
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
@@ -60,7 +62,7 @@ let cprog = ref { C.prog_data_decls = [];
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
 
-let residues =  ref (None : ME.list_context option)
+let residues =  ref (None : list_context option)
 
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
@@ -412,40 +414,40 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n") no_pos in
-  let es = ME.empty_es (CF.mkTrueFlow ()) no_pos in
+  let es = ME.ES.empty_es (CF.mkTrueFlow ()) no_pos in
   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
   let _ = Debug.devel_pprint ("\nrun_entail_check: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n") no_pos in
-  let ectx = ME.empty_ctx (CF.mkTrueFlow ()) no_pos in
-  let ctx = ME.build_context ectx ante no_pos in
+  let ectx = empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ctx = build_context ectx ante no_pos in
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !norm_flow_int [ctx]) in*)
   (* (\*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*\) *)
   (* let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in *)
   (* An Hoa TODO uncomment  *)
   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
-  let ctx = ME.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+  let ctx = transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *)
   let rs1, _ =
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv !cprog false false
-        (ME.SuccCtx[ctx]) conseq no_pos None
+        (SuccCtx[ctx]) conseq no_pos None
   else
      Solver.heap_entail_struc_init !cprog false false
-        (ME.SuccCtx[ctx]) conseq no_pos None
+        (SuccCtx[ctx]) conseq no_pos None
   in
   (* let length_ctx ctx = match ctx with *)
   (*   | CF.FailCtx _ -> 0 *)
   (*   | CF.SuccCtx ctx0 -> List.length ctx0 in *)
-  let rs = ME.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  let rs = ME.ELCtx.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)
   flush stdout;
   let res =
-    if not !Globals.disable_failure_explaining then ((not (ME.isFailCtx_gen rs)))
-    else ((not (ME.isFailCtx rs)))
+    if not !Globals.disable_failure_explaining then ((not (ME.EMM.isFailCtx_gen rs)))
+    else ((not (ME.ELCtx.isFailCtx rs)))
   in
   (res, rs)
 
@@ -454,14 +456,14 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
   Gen.Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
-let print_entail_result (valid: bool) (residue: ME.list_context) (num_id: string) =
+let print_entail_result (valid: bool) (residue: list_context) (num_id: string) =
   if not valid then
     begin
       let s =
         if not !Globals.disable_failure_explaining then
-          match ME.get_must_failure residue with
+          match ME.EMM.get_must_failure residue with
             | Some s -> "(must) cause:"^s
-            | _ -> (match ME.get_may_failure residue with
+            | _ -> (match ME.EMM.get_may_failure residue with
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
@@ -476,7 +478,7 @@ let print_entail_result (valid: bool) (residue: ME.list_context) (num_id: string
     begin
         let s =
         if not !Globals.disable_failure_explaining then
-          match ME.list_context_is_eq_flow residue false_flow_int with
+          match ME.ELCtx.list_context_is_eq_flow residue false_flow_int with
             | true -> "(bot)"
             | false -> (*expect normal (OK) here*) ""
         else ""
@@ -506,7 +508,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let process_capture_residue (lvar : ident) =
 	let flist = match !residues with
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
-      | Some s -> ME.list_formula_of_list_context s in
+      | Some s -> ME.ELCtx.list_formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
 let process_lemma ldef =
@@ -549,7 +551,7 @@ let process_print_command pcmd0 = match pcmd0 with
         (*       (CF.list_formula_of_list_context s))^"\n") *)
         (*print all posible outcomes and their traces with numbering*)
         | Some s -> print_string ((Cprinter.string_of_numbered_list_formula_trace
-              (ME.list_formula_trace_of_list_context s))^"\n")
+              (ME.ELCtx.list_formula_trace_of_list_context s))^"\n")
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 

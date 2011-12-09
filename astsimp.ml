@@ -1,6 +1,6 @@
  (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
-open Exc.GTable 
+open Exc.GTable
 open Printf
 open Gen.Basic
 open Gen.BList
@@ -20,6 +20,8 @@ module IP = Ipure
   
 module CF = Cformula
 module ME = Musterr
+module MEC = Musterr.ENV_COM
+module MEEC = Musterr.ECtx
 (* module GV = Globalvars*)
   
 module CP = Cpure
@@ -1163,7 +1165,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in*)
   let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
 	let ctx =
-      ME.build_context (ME.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
+      MEEC.build_context (MEEC.empty_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
     let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
 
 
@@ -1173,11 +1175,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	  let _ = print_string ("\ncompute_view_x_formula: RHS \n" ^ (Cprinter.string_of_formula formula) ^ "\n") in*)
 
 	let (rs, _) =
-	  Solver.heap_entail_init prog false (ME.SuccCtx [ ctx ]) formula pos
+	  Solver.heap_entail_init prog false (MEC.SuccCtx [ ctx ]) formula pos
     in
 	(* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
     (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
-let _ = if not(ME.isFailCtx rs)
+let _ = if not(ME.ELCtx.isFailCtx rs)
     then
       (vdef.C.view_x_formula <- (xform, xform_b);
       vdef.C.view_addr_vars <- addr_vars;

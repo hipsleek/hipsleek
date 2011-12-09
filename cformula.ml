@@ -2292,7 +2292,25 @@ and normalize_combine_phase (f1 : formula) (f2 : formula) (pos : loc) = match f1
 			resform
 		  end
     end
-	    
+
+and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
+	| Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
+	 print_string ("malfunction: inner or has not been converted to a CtxOr!");
+      Error.report_error {
+		Error.error_loc = pos;
+		Error.error_text = ("malfunction: inner or has not been converted to a CtxOr!") }
+	| Base ({ formula_base_pure = p;} as b) ->
+			let r1,r2 = (combine_and_pure f1 p f2) in
+			(Base{b with formula_base_pure = r1;}, r2)
+	| Exists ({formula_exists_qvars = evars;
+			   formula_exists_pure = p ;} as b) ->
+			if (List.length (Gen.BList.intersect_eq (=) (MCP.mfv f2) evars))=0 then
+				let r1,r2 = combine_and_pure f1 p f2 in
+				(Exists {b with formula_exists_pure = r1;},r2)
+				else
+					let rf1 = rename_bound_vars f1 in
+					(combine_and rf1 f2)
+
 (* -- 13.05.2008 *)
 (* normalizes but only renames the bound variables of f1 that clash with variables from fv(f2) *)
 and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -4360,3 +4378,42 @@ let rec push_case_f pf sf =
     | EAssume _ -> f
   in
   List.map helper sf
+
+(*********UNUSED MODULE: All methods are obsolete and should be removed******************)
+module CFORMULA_UNUSED=
+ struct
+(***************************************************************************************)
+(*unused - should be removed*)
+let mk_empty_frame () : (h_formula * int ) =
+  let hole_id = fresh_int () in
+    (Hole(hole_id), hole_id)
+
+(*unused - should be removed*)
+let rec add_post post f = List.map (fun c-> match c with
+  | EBase b ->
+      let fec = if (List.length b.formula_ext_continuation)>0 then
+                  add_post post b.formula_ext_continuation
+                else
+                  let (svs,pf,(i_lbl,s_lbl)) = post in
+                  [EAssume (svs,pf,(fresh_formula_label s_lbl))] in
+    EBase{b with formula_ext_continuation = fec}
+  | ECase b ->
+      let fcb1 = List.map (fun (c1,c2)->
+          if (List.length c2)>0 then
+          (c1,(add_post post c2))
+        else
+          let (svs,pf,(i_lbl,s_lbl)) = post in
+          (c1,[EAssume (svs,pf,(fresh_formula_label s_lbl))])) b.formula_case_branches  in
+      ECase {b with formula_case_branches  = fcb1;}
+  | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}
+  | EVariance b ->
+	  let fec = if (List.length b.formula_var_continuation)>0 then
+                  add_post post b.formula_var_continuation
+                else
+                  let (svs,pf,(i_lbl,s_lbl)) = post in
+                  [EAssume (svs,pf,(fresh_formula_label s_lbl))] in
+		EVariance {b with formula_var_continuation = fec}
+) f
+
+ end;;
+(********************END of IMPLEMENTATION of UNSED*********************)

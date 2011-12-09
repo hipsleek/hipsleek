@@ -1,6 +1,7 @@
 open Globals
 open Cformula
 open Musterr
+open Musterr.ENV_COM
 open Cast
 open Cprinter
 open Gen.Basic
@@ -1088,7 +1089,7 @@ and subtype (imm1 : bool) (imm2 : bool) : bool = not(imm2) or imm1
 
 
 (* utilities for handling lhs heap state continuation *)
-and push_cont_ctx (cont : h_formula) (ctx : Musterr.context) : Musterr.context =
+and push_cont_ctx (cont : h_formula) (ctx : context) : context =
   match ctx with
     | Ctx(es) -> Ctx(push_cont_es cont es)
     | OCtx(c1, c2) ->
@@ -1132,13 +1133,13 @@ and push_crt_holes_ctx (ctx : context) (holes : (h_formula * int) list) : contex
 	      let nc2 = push_crt_holes_ctx c2 holes in
 	      OCtx(nc1, nc2)
 
-and push_crt_holes_es (es : Musterr.entail_state) (holes : (h_formula * int) list) : Musterr.entail_state =
+and push_crt_holes_es (es : entail_state) (holes : (h_formula * int) list) : entail_state =
   {
       es with
           es_crt_holes = holes @ es.es_crt_holes;
   }
 
-and push_holes (es : Musterr.entail_state) : Musterr.entail_state =
+and push_holes (es : entail_state) : entail_state =
   {  es with
       es_hole_stk   = es.es_crt_holes::es.es_hole_stk;
       es_crt_holes = [];
@@ -1146,7 +1147,7 @@ and push_holes (es : Musterr.entail_state) : Musterr.entail_state =
 
 (* pop *)
 
-and pop_holes_es (es : Musterr.entail_state) : Musterr.entail_state =
+and pop_holes_es (es : entail_state) : entail_state =
   match es.es_hole_stk with
     | [] -> es
     | c2::stk -> {  es with
@@ -1169,7 +1170,7 @@ and subs_crt_holes_ctx (ctx : context) : context =
 	      let nc2 = subs_crt_holes_ctx c2 in
 	      OCtx(nc1, nc2)
 
-and subs_holes_es (es : Musterr.entail_state) : Musterr.entail_state =
+and subs_holes_es (es : entail_state) : entail_state =
   (* subs away current hole list *)
   {  es with
 	  es_crt_holes   = [];
