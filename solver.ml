@@ -5365,7 +5365,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     let rhs_xpure = rhs_p in
     let r = Inf.infer_pure estate lhs_xpure rhs_xpure pos in
     match r with
-      | Some (new_p, new_estate) ->        
+      | Some new_estate ->
         let ctx1 = (Ctx new_estate) in
         let ctx1 = set_unsat_flag ctx1 true in
         let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in
@@ -6661,8 +6661,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* Maybe only the root of view_node *)
             let rt = Inf.get_args_h_formula rhs_node in
             let rt = match rt with
-             | None -> []
-             | Some (r,_,_,_) -> [r]
+              | None -> []
+              | Some (r,args,_,_) -> 
+                let lhs_als = Inf.get_alias_formula estate.es_formula in
+                let lhs_aset = Inf.build_var_aset lhs_als in                
+                let alias = List.concat (List.map (fun a -> CP.EMapSV.find_equiv_all a lhs_aset) ([r]@args)) in
+                [r] @ alias
             in 
             let (estate,iv) = Inf.remove_infer_vars estate rt in
             let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos in
@@ -6727,24 +6731,41 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           match r with
             | Some (new_iv,new_rn,new_p) -> 
                   let _ = Debug.devel_pprint ("\n inferring_inst_rhs:"^(Cprinter.string_of_h_formula new_rn)^ "\n\n")  pos in
-                  let estate = 
+                  let new_estate = 
                     {estate with 
                         es_infer_vars = new_iv; 
                         es_formula = CF.normalize_combine_heap estate.es_formula new_rn;
                         es_infer_heap = estate.es_infer_heap@[new_rn];
                         es_infer_pure = estate.es_infer_pure@(if CP.isConstTrue new_p then [] else [new_p]);
-                    } in
-                  let ctx1 = (Ctx estate) in
-			      let ctx1 = set_unsat_flag ctx1 true in
-			      let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
-                  (r1,prf) 
+                    } 
+                  in
+                  let fml,_,_,_ = xpure prog new_estate.es_formula in
+                  let fml = MCP.pure_of_mix fml in
+                  if Omega.is_sat fml "0" then
+                    let ctx1 = (Ctx new_estate) in
+			        let ctx1 = set_unsat_flag ctx1 true in
+			        let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
+                    (r1,prf)
+                  else
+                    let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
+                    let rhs_xpure,_,_,_ = xpure prog conseq in
+                    let r = Inf.infer_pure estate lhs_xpure rhs_xpure pos in (
+                    match r with
+                      | Some new_estate ->
+                        let ctx1 = (Ctx new_estate) in
+                        let ctx1 = set_unsat_flag ctx1 true in
+                        let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
+                        (r1,prf)
+                      | None -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "unmatched_rhs_data_node" estate (Base rhs_b) None pos,
+                        CF.mk_failure_none ("Cannot infer heap and pure"))), NoAlias) 
+                    )
             | None ->
                 let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
                 let rhs_xpure,_,_,_ = xpure prog conseq in
                 let r = Inf.infer_pure estate lhs_xpure rhs_xpure pos in
                 begin
                 match r with
-                  | Some (new_p, new_estate) ->                    
+                  | Some new_estate ->
                     let ctx1 = (Ctx new_estate) in
                     let ctx1 = set_unsat_flag ctx1 true in
                     let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in

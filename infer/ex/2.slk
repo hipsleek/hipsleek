@@ -140,7 +140,8 @@ infer [n] q!=null |- q::ll<n> .
 Should precondition be false?
 Infer  (3): Fail. (may) cause:15.4 no match for rhs data node: q (may-bug).
 */
-
+//Ok
+infer [x] x=null |- x::node<_,null> .
 
 //infer [q] q=null |- q::ll<n> .
 //infer [n] q=null |- q::ll<n> .

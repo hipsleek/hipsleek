@@ -302,7 +302,7 @@ let infer_pure estate lhs_xpure rhs_xpure pos =
               es_infer_vars = new_iv
             }
           in
-          Some (new_p, new_estate)
+          Some new_estate
     else
       let mkNot purefml =
         let conjs = CP.split_conjunctions purefml in
@@ -322,7 +322,7 @@ let infer_pure estate lhs_xpure rhs_xpure pos =
             es_infer_vars = new_iv
           }
         in
-        Some (new_p, new_estate)
+        Some new_estate
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
