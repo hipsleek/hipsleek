@@ -214,14 +214,15 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   let lhs_aset = build_var_aset lhs_als in
   let rhs_als = get_alias_formula conseq in
   let rhs_aset = build_var_aset rhs_als in
-  let (b,args,inf_vars,new_h,new_iv) = match rt with (* is rt captured by iv *)
-    | None -> false,[],[],HTrue,iv
+  let (b,args,inf_vars,new_h,new_iv,alias) = match rt with (* is rt captured by iv *)
+    | None -> false,[],[],HTrue,iv,[]
     | Some (r,args,arg2,h) -> 
-          let rt_al = [r]@(CP.EMapSV.find_equiv_all r lhs_aset) in (* set of alias with root of rhs *)
+          let alias = CP.EMapSV.find_equiv_all r lhs_aset in
+          let rt_al = [r]@alias in (* set of alias with root of rhs *)
           let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)
           (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
           let new_iv = arg2@iv in
-          (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv) in
+          (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias) in
   let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in
   (* let _ = print_endline ("infer_heap_nodes") in *)
   (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
@@ -248,7 +249,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
       in
       let simplify = fun f vars -> Omega.simplify (filter_var (Omega.simplify f) vars) in
       let _,new_p,_,_,_ = CF.split_components es.es_formula in
-      let new_p = simplify (MCP.pure_of_mix new_p) iv in
+      let new_p = simplify (MCP.pure_of_mix new_p) alias in
       (* TODO WN : push a match action on must_action_stk *)
       let r = {
           match_res_lhs_node = new_h;
@@ -277,8 +278,8 @@ let infer_pure estate lhs_xpure rhs_xpure pos =
     let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in
     if check_sat then
       (* Temporarily *)
-      if List.length estate.es_trace > 0 & List.hd estate.es_trace = "Base case fold" then None
-      else
+(*      if List.length estate.es_trace > 0 & List.hd estate.es_trace = "Base case fold" then None*)
+(*      else                                                                                     *)
         let new_p = simplify fml iv in
         let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
         if CP.isConstTrue new_p then None

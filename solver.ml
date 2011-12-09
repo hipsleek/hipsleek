@@ -6725,7 +6725,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         es_infer_vars = new_iv; 
                         es_formula = CF.normalize_combine_heap estate.es_formula new_rn;
                         es_infer_heap = estate.es_infer_heap@[new_rn];
-                        es_infer_pure = estate.es_infer_pure@[new_p];
+                        es_infer_pure = estate.es_infer_pure@(if CP.isConstTrue new_p then [] else [new_p]);
                     } in
                   let ctx1 = (Ctx estate) in
 			      let ctx1 = set_unsat_flag ctx1 true in
