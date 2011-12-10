@@ -601,11 +601,10 @@ and fold_mem_lst_to_lst_gen_x  (mem:memo_pure) with_R with_P with_slice with_dis
 		  if with_disj then c.memo_group_slice 
 		else List.filter (fun c -> not (has_disj_f c)) c.memo_group_slice
 	  else [] in
-	  (*let cons = List.filter (fun c -> match c.memo_status with 
+	  let cons = List.filter (fun c -> match c.memo_status with 
 		  | Implied_R -> with_R 
 		  | Implied_N -> true 
-		  | Implied_P-> with_P) c.memo_group_cons in*)
-    let cons = c.memo_group_cons in
+		  | Implied_P-> with_P) c.memo_group_cons in
 	  let cons  = List.map (fun c-> (BForm(c.memo_formula, None))) cons in
     (* let _ = print_string ("fold_mem_lst_to_lst_gen: cons: " ^ (pr_list *)
     (* !print_p_f_f cons) ^ "\n") in *)
