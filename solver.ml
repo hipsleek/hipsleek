@@ -382,7 +382,7 @@ let rec xpure_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_l
 
 and xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
   let pr (m,_,_,_) = Cprinter.string_of_mix_formula m in
-  Gen.Debug.ho_1 "xpure" 
+  Gen.Debug.no_1 "xpure" 
       Cprinter.string_of_formula pr
       (fun _ -> xpure_x prog f0) f0
 
@@ -5145,7 +5145,7 @@ and pure_match (vars : CP.spec_var list) (lhs : CP.formula) (rhs : CP.formula) :
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.no_3 "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -6759,7 +6759,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     else
                       let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
                       let rhs_xpure,_,_,_ = xpure prog conseq in
-                      let _ = print_endline ("WN conseq:"^(Cprinter.string_of_formula conseq)) in
+                      (* let _ = print_endline ("WN conseq:"^(Cprinter.string_of_formula conseq)) in *)
                       let r = Inf.infer_pure_m 2 estate lhs_xpure rhs_xpure pos in (
                           match r with
                             | Some new_estate ->

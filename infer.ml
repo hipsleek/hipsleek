@@ -342,7 +342,7 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
 *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state in 
-      Gen.Debug.ho_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option pr2) 
+      Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option pr2) 
       (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
