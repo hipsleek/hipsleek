@@ -280,7 +280,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
     end
   else None
 
-let infer_pure estate lhs_xpure rhs_xpure pos =
+
+let infer_pure_m estate lhs_xpure rhs_xpure pos =
   if no_infer estate then None
   else
     let lhs_xpure = MCP.pure_of_mix lhs_xpure in
@@ -324,15 +325,25 @@ let infer_pure estate lhs_xpure rhs_xpure pos =
       if CP.isConstFalse new_p then None
       else
         let args = CP.fv new_p in 
-        let new_iv = (CP.diff_svl iv args) in
+        (* let new_iv = (CP.diff_svl iv args) in *)
         let new_estate =
           {estate with 
-            es_formula = CF.mkFalse (CF.mkTrueFlow ()) pos;
-            es_infer_pure = estate.es_infer_pure@[new_p];
-            es_infer_vars = new_iv
+            es_formula = CF.mkFalse (CF.mkNormalFlow ()) pos;
+            es_infer_pure = estate.es_infer_pure@[new_p]
+            (* ;es_infer_vars = new_iv *)
           }
         in
         Some new_estate
+
+let infer_pure_m i estate lhs_xpure rhs_xpure pos =
+(* type: Cformula.entail_state ->
+  MCP.mix_formula ->
+  MCP.mix_formula -> Globals.loc -> Cformula.entail_state option
+*)
+  let pr1 = !print_mix_formula in 
+  let pr2 = !print_entail_state in 
+      Gen.Debug.ho_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option pr2) 
+      (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
 
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
