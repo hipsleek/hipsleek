@@ -169,7 +169,7 @@ struct
     match cl with
     | [] -> []
     | a::p ->
-      let pl = split p in
+      let pl = split_by_fv vl p in
       let p1, p2 = List.partition (fun s -> same_slice_by_fv vl a s) pl in
       let np1 = merge_slice_by_constr a p1 in 
       np1::p2
