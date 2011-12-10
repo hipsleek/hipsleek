@@ -9,12 +9,10 @@ pred ll<n> == self = null & n = 0
 
 // ok
 //infer [y] true |- y::node<a,b> * b::node<c,d>.
-// fail
+// ok
 //infer [y] true |- y::node<a,b>.
 //print residue.
-/*
-Infer  (1): Fail. (may) cause:(failure_code=213)  true |-  inf_b_30=b (may-bug).
-*/
+
 
 //infer [y] true |- y::node<a,b> * y::ll<m>.
 /*
@@ -55,7 +53,6 @@ Inferred Pure:[]
 // ok
 //infer [y] true |- [a] y::node<a,null> & a>0
 
-// Below goes into a loop! why?.
 //checkentail  y::node<1,null> |- y::node<a,null> & a>0.
 //OK
 //infer [aa]  y::node<aa,null> |- (exists a: y::node<a,null> & a>0).
@@ -113,7 +110,7 @@ New infer var is:
 //infer [x] true & x=y |- x::ll<n> .
 //Ok
 //infer [x] true & x=y |- y::ll<n> .
-
+infer [n] x=null & n=0 |- x::node<_,_>.
 //OK
 //infer [q] q!=null |- q::ll<n> .
 

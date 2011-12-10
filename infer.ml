@@ -79,94 +79,19 @@ let collect_pre_pure_list_context ctx =
   | FailCtx _ -> []
   | SuccCtx lst -> List.concat (List.map collect_pre_pure lst)
 
-let rec init_vars ctx vars = match ctx with
-  | Ctx estate -> Ctx {estate with es_infer_vars = vars}
-  | OCtx (ctx1, ctx2) -> OCtx (init_vars ctx1 vars, init_vars ctx2 vars)
+let rec init_vars ctx infer_vars orig_vars = match ctx with
+  | Ctx estate -> Ctx {estate with es_infer_vars = infer_vars; es_orig_vars = orig_vars}
+  | OCtx (ctx1, ctx2) -> OCtx (init_vars ctx1 infer_vars orig_vars, init_vars ctx2 infer_vars orig_vars)
 
-let rec infer_heap_aux heap vars = match heap with
-  | ViewNode ({ h_formula_view_node = p;
-  h_formula_view_arguments = args})
-  | DataNode ({h_formula_data_node = p;
-  h_formula_data_arguments = args}) -> List.mem p vars
-  | Star ({h_formula_star_h1 = h1;
-    h_formula_star_h2 = h2;
-    h_formula_star_pos = pos})
-  | Conj ({h_formula_conj_h1 = h1;
-    h_formula_conj_h2 = h2;
-    h_formula_conj_pos = pos}) ->
-    infer_heap_aux h1 vars || infer_heap_aux h2 vars
-  | _ -> false
-
-let infer_heap_main iheap ivars old_vars = 
-  let rec infer_heap heap vars = 
-    match heap with
-    | ViewNode ({ h_formula_view_node = p;
-    h_formula_view_arguments = args})
-    | DataNode ({h_formula_data_node = p;
-    h_formula_data_arguments = args}) -> 
-      if List.mem p vars then 
-        (Gen.Basic.remove_dups (List.filter (fun x -> CP.name_of_spec_var x!= CP.name_of_spec_var p) 
-          vars @ args), heap) 
-      else (ivars, HTrue)
-    | Star ({h_formula_star_h1 = h1;
-      h_formula_star_h2 = h2;
-      h_formula_star_pos = pos}) ->
-      let res1 = infer_heap_aux h1 vars in
-      let res2 = infer_heap_aux h2 vars in
-      if res1 then 
-        let (vars1, heap1) = infer_heap h1 vars in
-        let (vars2, heap2) = infer_heap h2 vars1 in
-        (vars2, Star ({h_formula_star_h1 = heap1;
-                       h_formula_star_h2 = heap2;
-                       h_formula_star_pos = pos}))
-      else
-      if res2 then 
-        let (vars2, heap2) = infer_heap h2 vars in
-        let (vars1, heap1) = infer_heap h1 vars2 in
-        (vars1, Star ({h_formula_star_h1 = heap1;
-                       h_formula_star_h2 = heap2;
-                       h_formula_star_pos = pos}))
-      else (ivars, HTrue)
-    | Conj ({h_formula_conj_h1 = h1;
-      h_formula_conj_h2 = h2;
-      h_formula_conj_pos = pos}) ->
-      let res1 = infer_heap_aux h1 vars in
-      let res2 = infer_heap_aux h2 vars in
-      if res1 then 
-        let (vars1, heap1) = infer_heap h1 vars in
-        let (vars2, heap2) = infer_heap h2 vars1 in
-        (vars2, Conj ({h_formula_conj_h1 = heap1;
-                       h_formula_conj_h2 = heap2;
-                       h_formula_conj_pos = pos}))
-      else
-      if res2 then 
-        let (vars2, heap2) = infer_heap h2 vars in
-        let (vars1, heap1) = infer_heap h1 vars2 in
-        (vars1, Conj ({h_formula_conj_h1 = heap1;
-                       h_formula_conj_h2 = heap2;
-                       h_formula_conj_pos = pos}))
-      else (ivars, HTrue)
-    | _ -> (ivars, HTrue)
-  in infer_heap iheap ivars
-(*
-type: h_formula ->
-  CP.spec_var list -> CP.spec_var list -> CP.spec_var list * h_formula
-*)
-let infer_heap_main iheap ivars old_vars = 
-  let pr1 = !print_h_formula in
-  let prv = !print_svl in
-  let pr2 = Gen.pr_pair prv pr1 in
-  Gen.Debug.no_3 "infer_heap_main" pr1 prv prv pr2 infer_heap_main iheap ivars old_vars
-
-let conv_infer_heap hs =
+(*let conv_infer_heap hs =
   let rec helper hs h = match hs with
     | [] -> h
     | x::xs -> 
-          let acc = 
-	        Star({h_formula_star_h1 = x;
-	        h_formula_star_h2 = h;
-	        h_formula_star_pos = no_pos})
-          in helper xs acc in
+      let acc = 
+	    Star({h_formula_star_h1 = x;
+	      h_formula_star_h2 = h;
+	      h_formula_star_pos = no_pos})
+        in helper xs acc in
   match hs with
     | [] -> HTrue 
     | x::xs -> helper xs x
@@ -174,7 +99,7 @@ let conv_infer_heap hs =
 let extract_pre_list_context x = 
   (* TODO : this has to be implemented by extracting from es_infer_* *)
   (* print_endline (!print_list_context x); *)
-  None
+  None*)
 
 (* get exactly one root of h_formula *)
 let get_args_h_formula (h:h_formula) =
@@ -230,13 +155,13 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
     | None -> false,[],[],HTrue,iv,[]
     | Some (r,args,arg2,h) -> 
           let alias = CP.EMapSV.find_equiv_all r lhs_aset in
-          let rt_al = [r]@alias in (* set of alias with root of rhs *)
-          let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)
+          (*let rt_al = [r]@alias in (* set of alias with root of rhs *)*)
+          (*let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)*)
           (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
           let new_iv = arg2@iv in
           let alias = if List.mem r iv then [] else alias in
           (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias) in
-  let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in
+  (*let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in*)
   (* let _ = print_endline ("infer_heap_nodes") in *)
   (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
   (* let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in *)
@@ -265,7 +190,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         | _ -> Omega.simplify (filter_var (Omega.simplify f) vars) 
       in
       let _,new_p,_,_,_ = CF.split_components es.es_formula in
-      let new_p = simplify (MCP.pure_of_mix new_p) alias in
+      let new_p = simplify (MCP.pure_of_mix new_p) (CP.diff_svl alias es.es_orig_vars) in
       (* TODO WN : push a match action on must_action_stk *)
       let r = {
           match_res_lhs_node = new_h;

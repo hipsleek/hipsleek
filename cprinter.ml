@@ -1063,8 +1063,6 @@ let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
 
 let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_formula) e
 
-let pr_list_pure_formula (e:list_pure_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_pure_formula) e
-
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
 
 let rec pr_numbered_list_formula (e:list_formula) (count:int) =
@@ -1368,9 +1366,7 @@ let rec pr_fail_type (e:fail_type) =
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason (br,fe) -> 
           (string_of_fail_explaining fe);
-          if fe.fe_kind=Failure_Valid then 
-            if !Globals.do_infer then (pr_fail_estate br)
-            else fmt_string ("Failure_Valid") 
+          if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") 
           else (pr_fail_estate br)
     | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
     | Or_Reason _ ->

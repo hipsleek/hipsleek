@@ -87,8 +87,6 @@ and formula =
 
 and list_formula = formula list
 
-and list_pure_formula = CP.formula list
-
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
@@ -2918,6 +2916,7 @@ type entail_state = {
   (* es_must_error : string option *)
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
   es_is_normalizing : bool; (*normalizing process*)
+  es_orig_vars : CP.spec_var list; (* Used to differentiate original vars from new generated vars *)
   es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
   es_infer_label: formula; 
 (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
@@ -3513,6 +3512,7 @@ let rec empty_es flowt pos =
   es_must_error = None;
   es_trace = [];
   es_is_normalizing = false;
+  es_orig_vars = [];
   es_infer_vars = [];
   es_infer_label = x;
   es_infer_heap = []; (* HTrue; *)
@@ -3534,35 +3534,6 @@ let mk_not_a_failure =
       fe_name = "" ;fe_locs=[]
   }
 )
-
-(* WN : what is the purpose of this conversion from SuccCtx to FailType? *)
-(* Is it really necessary? *)
-let convert_suc_to_fail ctx = match ctx with
-  | [] -> report_error no_pos "Success context list is empty"
-  | [c] -> begin 
-    match c with
-    | Ctx estate -> 
-      Basic_Reason ({
-        fc_prior_steps = [];
-        fc_message = "Success";
-        fc_current_lhs =  estate;
-        fc_orig_conseq =  [mkETrue  (mkTrueFlow ()) no_pos];
-        fc_failure_pts = [];
-        fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
-      }, 
-      {
-        fe_kind = Failure_Valid;
-        fe_name = "" ;fe_locs=[]
-      })
-    | _ -> report_error no_pos "Success context is disjs"
-    end
-  | _ -> report_error no_pos "Success context list has length > 2"
-
-
-let convert_suc_to_fail ctx = 
-  let pr = !print_context_list_short in
-  let prf = !print_fail_type in
-  Gen.Debug.no_1 "convert_suc_to_fail" pr prf convert_suc_to_fail ctx
 
 let invert ls = 
   let foo es =
@@ -3808,15 +3779,11 @@ and fold_context_left c_l =
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 ->
-        let t = 
-          (* if !Globals.do_infer then convert_suc_to_fail t2  *)
-          (* else  *)mk_not_a_failure 
+        let t = mk_not_a_failure 
         in
         FailCtx (Or_Reason (t1,t))
      | SuccCtx t1 ,FailCtx t2 ->
-        let t = 
-          (* if !Globals.do_infer then convert_suc_to_fail t1  (\* WN : why? *\) *)
-          (* else *) mk_not_a_failure 
+        let t = mk_not_a_failure 
         in
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
