@@ -34,6 +34,13 @@ let restore_infer_vars iv cl =
     | FailCtx _ -> cl
     | SuccCtx lst -> SuccCtx (List.map (restore_infer_vars_ctx iv) lst)
 
+let rec get_all_args alias_of_root heap = match heap with
+  | ViewNode h -> h.h_formula_view_arguments
+  | Star s -> (get_all_args alias_of_root s.h_formula_star_h1) @ (get_all_args alias_of_root s.h_formula_star_h2)
+  | Conj c -> (get_all_args alias_of_root c.h_formula_conj_h1) @ (get_all_args alias_of_root c.h_formula_conj_h1)
+  | Phase p -> (get_all_args alias_of_root p.h_formula_phase_rd) @ (get_all_args alias_of_root p.h_formula_phase_rw) 
+  | _ -> []
+
 let is_inferred_pre estate = 
   let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in
   if r>0 then true else false
@@ -185,9 +192,9 @@ let get_args_h_formula (h:h_formula) =
     | _ -> None
 
 let get_alias_formula (f:formula) =
-	let (h, p, fl, b, t) = split_components f in
-    let eqns = (MCP.ptr_equations_without_null p) in
-    eqns
+  let (h, p, fl, b, t) = split_components f in
+  let eqns = (MCP.ptr_equations_without_null p) in
+  eqns
 
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
@@ -276,7 +283,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
 let infer_pure estate lhs_xpure rhs_xpure pos =
   if no_infer estate then None
   else
-    let fml = CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_xpure) pos in
+    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
+    let fml = CP.mkAnd lhs_xpure (MCP.pure_of_mix rhs_xpure) pos in
     let check_sat = Omega.is_sat fml "0" in
     let rec filter_var f vars = match f with
       | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
@@ -292,6 +300,8 @@ let infer_pure estate lhs_xpure rhs_xpure pos =
         let new_p = simplify fml iv in
         let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
         if CP.isConstTrue new_p then None
+(*        else                                                    *)
+(*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
         else
           let args = CP.fv new_p in 
           let new_iv = (CP.diff_svl iv args) in
@@ -309,7 +319,7 @@ let infer_pure estate lhs_xpure rhs_xpure pos =
         let conjs = List.map (fun c -> CP.mkNot_s c) conjs in
         List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs
       in      
-      let lhs_simplified = simplify (MCP.pure_of_mix lhs_xpure) iv in
+      let lhs_simplified = simplify lhs_xpure iv in
       let new_p = simplify (CP.mkAnd (mkNot lhs_simplified) invariants pos) iv in
       if CP.isConstFalse new_p then None
       else

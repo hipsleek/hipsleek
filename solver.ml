@@ -24,8 +24,6 @@ module TP = Tpdispatcher
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
 (* let crt_phase = ref (None);; *)
 
-let isOCtx = ref false
-
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref false
 
@@ -2979,11 +2977,10 @@ and heap_entail_after_sat_struc prog is_folding  has_post
 		  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 		  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
           let rs1, prf1 = heap_entail_after_sat_struc prog is_folding
-            has_post (if !do_infer then (isOCtx := true; CF.init_caller c1) else c1) 
-            conseq pos pid (CF.add_to_steps ss "left OR 5 on ante") in
+            has_post c1 conseq pos pid (CF.add_to_steps ss "left OR 5 on ante") in
           let rs2, prf2 = heap_entail_after_sat_struc prog is_folding
             (* WN : what is init_caller for? *)
-            has_post (if !do_infer then CF.init_caller c2 else c2) conseq pos pid (CF.add_to_steps ss "right OR 5 on ante") in
+            has_post c2 conseq pos pid (CF.add_to_steps ss "right OR 5 on ante") in
 	      ((or_list_context rs1 rs2),(mkOrStrucLeft ctx conseq [prf1;prf2]))
     | Ctx es -> begin
         Debug.devel_pprint ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
@@ -6664,9 +6661,16 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               | None -> []
               | Some (r,args,_,_) -> 
                 let lhs_als = Inf.get_alias_formula estate.es_formula in
-                let lhs_aset = Inf.build_var_aset lhs_als in                
-                let alias = List.concat (List.map (fun a -> CP.EMapSV.find_equiv_all a lhs_aset) ([r]@args)) in
-                [r] @ alias
+                let lhs_aset = Inf.build_var_aset lhs_als in
+                (* Alias of r *)
+                let alias = CP.EMapSV.find_equiv_all r lhs_aset in
+                let h,_,_,_,_ = CF.split_components estate.es_formula in
+                (* Args of viewnodes whose roots are alias of r *)
+                let arg_other = Inf.get_all_args alias h in
+                (* Alias of args *)
+                let alias_all = List.concat (List.map (fun a -> CP.EMapSV.find_equiv_all a lhs_aset) args) in
+                (* All the args related to the viewnode of interest *)
+                [r] @ args @ alias @ alias_all @ arg_other
             in 
             let (estate,iv) = Inf.remove_infer_vars estate rt in
             let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos in
@@ -6747,18 +6751,25 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 			        let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
                     (r1,prf)
                   else
-                    let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
-                    let rhs_xpure,_,_,_ = xpure prog conseq in
-                    let r = Inf.infer_pure estate lhs_xpure rhs_xpure pos in (
-                    match r with
-                      | Some new_estate ->
-                        let ctx1 = (Ctx new_estate) in
-                        let ctx1 = set_unsat_flag ctx1 true in
-                        let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
-                        (r1,prf)
-                      | None -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "unmatched_rhs_data_node" estate (Base rhs_b) None pos,
-                        CF.mk_failure_none ("Cannot infer heap and pure"))), NoAlias) 
-                    )
+                    let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var 
+                      (CF.get_ptr_from_data rhs)) ^ " (may-bug)."
+                    in
+                    (* Empty the action stack *)
+                    Context.must_action_stk # override [];
+                    (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
+                      CF.mk_failure_may (" Inferred heap made contradiction"))), NoAlias) 
+(*                    let lhs_xpure,_,_,_ = xpure prog estate.es_formula in                                                            *)
+(*                    let rhs_xpure,_,_,_ = xpure prog conseq in                                                                       *)
+(*                    let r = Inf.infer_pure estate lhs_xpure rhs_xpure pos in (                                                       *)
+(*                    match r with                                                                                                     *)
+(*                      | Some new_estate ->                                                                                           *)
+(*                        let ctx1 = (Ctx new_estate) in                                                                               *)
+(*                        let ctx1 = set_unsat_flag ctx1 true in                                                                       *)
+(*                        let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in                                     *)
+(*                        (r1,prf)                                                                                                     *)
+(*                      | None -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "unmatched_rhs_data_node" estate (Base rhs_b) None pos,*)
+(*                        CF.mk_failure_none ("Cannot infer heap and pure"))), NoAlias)                                                *)
+(*                    )                                                                                                                *)
             | None ->
                 let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
                 let rhs_xpure,_,_,_ = xpure prog conseq in
@@ -8766,10 +8777,7 @@ let infer_pre ctx prog ante conseq vars =
 (*  print_endline (Cprinter.string_of_list_context_short fctx);*)
   let missing_frame = precond in
   do_infer := false;
-  if !isOCtx then ( 
-    isOCtx := false;
-    precond )
-  else CF.compose_formula ante missing_frame [] CF.Flow_combine no_pos
+  CF.compose_formula ante missing_frame [] CF.Flow_combine no_pos
   
   
         

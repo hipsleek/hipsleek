@@ -126,13 +126,11 @@ Infer  (2): Fail. (may) cause:15.4 no match for rhs data node: q (may-bug).
 
 // WN : inferred pre make ante false
 // not sure if this is good idea in principle..
+// Raise failure context instead
 infer [x] x=null |- x::node<_,null>.
 print residue.
 /*
-Inferred Heap:[]
-Inferred Pure:[ x!=null]
-<1>false & false &
-{FLOW,(1,20)=__flow}
+Infer  (1): Fail. (may) cause: Inferred heap made contradiction
 */
 
 //infer [q] q=null |- q::ll<n> .
