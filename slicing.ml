@@ -1,9 +1,6 @@
 open Globals
 open Cpure
 
-(* Memoised Formula *)
-let empty_var_aset = EMapSV.mkEmpty
-
 (* Memoised structures *)
 type memo_pure = memoised_group list
 
@@ -22,12 +19,13 @@ and memoised_constraint = {
 }
 
 and prune_status = 
-  | Implied_R      (*constraint that is superseeded by other constraints in the current state*)
-  | Implied_P
-  | Implied_N
+  | Implied_R (* Redundant constraint - Need not be proven when present in conseq *)     
+  | Implied_P (* Propagated constraint - Need not be proven when present in conseq *)
+  | Implied_N (* Original constraint *)
 
 and var_aset = Gen.EqMap(SV).emap 
 
+let empty_var_aset = EMapSV.mkEmpty
 
 (************************************)
 (* Signatures for Slicing Framework *)
@@ -54,7 +52,9 @@ sig
   val label_of_atom:  Atom.t -> t
   val merge: t -> t -> t
   val merge_list: t list -> t
+  (* Used by SameSlice meta-predicate *)
   val cor_is_rel: t -> t -> bool
+  (* Used by IsRelevant meta-predicate *)
   val rel_is_rel: t -> t -> bool
   val is_rel_by_fv: spec_var list -> t -> t -> bool
   (* fv_of_label returns list of strongly and weakly linking variables *)
@@ -120,7 +120,11 @@ sig
   (* split_by_fv is used in Quantifier pushing *)
   val split_by_fv: spec_var list -> constr list -> slice list
 
+  (* Aggressive get_ctr *)
+  (* The integer parameters can be used to
+   * limit the completeness of searching *)
   val get_ctr_n: int -> slice -> constr list -> slice
+  (* Exhaustive get_ctr *)
   val get_ctr: slice -> constr list -> slice
 
 end;;
@@ -486,9 +490,9 @@ struct
   module Pure_Slice_S   = SLICE       (Label) (Pure_Constr)
   module Pure_Label     = Label       (Pure_Constr)
 
-  module Memo_S         = S_FRAMEWORK (Label) (Memo_Constr);;
-  module Memo_Constr_S  = CONSTR      (Label) (Memo_Constr);;
-  module Memo_Slice_S   = SLICE       (Label) (Memo_Constr);;
+  module Memo_S         = S_FRAMEWORK (Label) (Memo_Constr)
+  module Memo_Constr_S  = CONSTR      (Label) (Memo_Constr)
+  module Memo_Slice_S   = SLICE       (Label) (Memo_Constr)
 
   module MG_S           = S_FRAMEWORK (Label) (Memo_Group)
   module MG_Constr_S    = CONSTR      (Label) (Memo_Group)
@@ -516,7 +520,7 @@ struct
     let r = 
       if !f_1_slice then 
 		    (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem"; failwith "multi slice problem");      
-        let h1,h2 = (List.hd l1, List.hd l2) in
+        let h1, h2 = (List.hd l1, List.hd l2) in
 		    let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
 		    [{
           memo_group_fv = remove_dups_svl (h1.memo_group_fv @ h2.memo_group_fv);
@@ -583,8 +587,8 @@ module MG_Constr_AuS    = CONSTR      (Syn_Label_AuS) (Memo_Group)
 module MG_Slice_AuS     = SLICE       (Syn_Label_AuS) (Memo_Group)
 module MF_AuS           = Memo_Formula(Syn_Label_AuS)
 
-module Memo_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Memo_Constr);;
-module Memo_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Memo_Constr);;
-module Memo_Slice_AnS   = SLICE       (Syn_Label_AnS) (Memo_Constr);;
+module Memo_AnS         = S_FRAMEWORK (Syn_Label_AnS) (Memo_Constr)
+module Memo_Constr_AnS  = CONSTR      (Syn_Label_AnS) (Memo_Constr)
+module Memo_Slice_AnS   = SLICE       (Syn_Label_AnS) (Memo_Constr)
 
 

@@ -1272,7 +1272,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 			let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str pf in
 (*			print_endline (Cprinter.string_of_pure_formula pf ^ "a");    *)
 (*      print_endline (Cprinter.string_of_pure_formula new_pf ^ "a");*)
-      let memo_pf = memoise_add_pure_P (mkMTrue pos) new_pf in
+      let memo_pf_P = memoise_add_pure_P (mkMTrue pos) new_pf in
+      let memo_pf_N = memoise_add_pure_N (mkMTrue pos) new_pf in
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -1282,14 +1283,14 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_materialized_vars = mvars;
           C.view_data_name = data_name;
           C.view_formula = cf;
-          C.view_x_formula = (memo_pf, pf_b);
+          C.view_x_formula = (memo_pf_P, pf_b);
           C.view_addr_vars = [];
           C.view_baga = [];
           C.view_complex_inv = None;
-          C.view_user_inv = (memo_pf, pf_b);
+          C.view_user_inv = (memo_pf_N, pf_b);
           C.view_un_struc_formula = n_un_str;
-               C.view_base_case = None;
-               C.view_is_rec = ir;
+          C.view_base_case = None;
+          C.view_is_rec = ir;
           C.view_case_vars = Gen.BList.intersect_eq (=) view_sv_vars (Cformula.guard_vars cf);
           C.view_raw_base_case = rbc;
           C.view_prune_branches = [];
