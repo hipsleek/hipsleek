@@ -1,0 +1,33 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+// expecting x!=null to be inferred
+// with resude b::ll<n-1>.
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+/*
+// expecting x!=null 
+// & flow should be just __norm
+//infer [x] x=null |- x::node<_,b>.
+//print residue.
+/* got below:
+// where is b::ll<n-1> ??
+Infer  (1): Valid.
+<1>EXISTS(flted_7_40: true & flted_7_40+1=n & b=inf_38 &
+{FLOW,(17,18)=__norm})
+
+*/
+
+// weird error: why outcome differ from 4.slk
+/*
+Infer  (2): Valid.
+<1>true & Anon_28=inf_Anon_29 & b=inf_30 &
+{FLOW,(17,18)=__norm}
+*/
