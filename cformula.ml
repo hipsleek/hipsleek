@@ -6476,6 +6476,7 @@ let rec push_case_f pf sf =
   List.map helper sf
   
 
+      else (ivars, HTrue)
 
 (*let rec normalize_fml fml = match fml with*)
 (*  | Exists _ -> fml                       *)
