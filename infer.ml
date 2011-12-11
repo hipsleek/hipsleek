@@ -191,7 +191,6 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
       in
       let _,new_p,_,_,_ = CF.split_components es.es_formula in
       let new_p = simplify (MCP.pure_of_mix new_p) (CP.diff_svl alias es.es_orig_vars) in
-      (* TODO WN : push a match action on must_action_stk *)
       let r = {
           match_res_lhs_node = new_h;
           match_res_lhs_rest = HTrue;
@@ -200,7 +199,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
           match_res_rhs_node = rhs;
           match_res_rhs_rest = rhs_rest;} in
       let act = M_match r in
-      (must_action_stk # push act;
+      (
+          (* must_action_stk # push act; *)
       Some (new_iv,new_h,new_p))
     end
   else None

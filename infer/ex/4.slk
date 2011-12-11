@@ -9,8 +9,8 @@ pred ll<n> == self = null & n = 0
 
 // expecting x!=null 
 // & flow should be just __norm
-infer [x] x=null |- x::node<_,b>.
-print residue.
+//infer [x] x=null |- x::node<_,b>.
+//print residue.
 /* got below:
 Infer  (15): Valid.
 Inferred Heap:[]
@@ -24,9 +24,9 @@ Inferred Pure:[ x!=null]
 infer [x] x::ll<n> |- x::node<_,b>.
 print residue.
 /*
-Infer  (16): Valid.
-<1>true & Anon_172=inf_Anon_173 & b=inf_174 &
-{FLOW,(17,18)=__norm}
+Infer  (1): Valid.
+<<1>EXISTS(flted_7_40: b::ll<flted_7_40>[Orig] & flted_7_40+1=n &
+{FLOW,(17,18)=__norm})
 */
 
 
