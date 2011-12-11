@@ -6278,7 +6278,7 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
     ^ "\n rhs_rest = "^(Cprinter.string_of_h_formula rhs_rest)
     ^ "\n rhs_b = "^(Cprinter.string_of_formula_base rhs_b)
     ^ "") in
-  Gen.Debug.no_3(* _no *)  "do_fold_w_ctx" 
+  Gen.Debug.ho_3(* _no *)  "do_fold_w_ctx" 
       Cprinter.string_of_context
       (* Cprinter.string_of_entail_state *)
       pr1
