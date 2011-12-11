@@ -148,8 +148,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   let lhs_aset = build_var_aset lhs_als in
   let rhs_als = get_alias_formula conseq in
   let rhs_aset = build_var_aset rhs_als in
-  let (b,args,inf_vars,new_h,new_iv,alias) = match rt with (* is rt captured by iv *)
-    | None -> false,[],[],HTrue,iv,[]
+  let (b,args,inf_vars,new_h,new_iv,alias,r) = match rt with (* is rt captured by iv *)
+    | None -> false,[],[],HTrue,iv,[],[]
     | Some (r,args,arg2,h) -> 
           let alias = CP.EMapSV.find_equiv_all r lhs_aset in
           (*let rt_al = [r]@alias in (* set of alias with root of rhs *)*)
@@ -157,7 +157,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
           (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
           let new_iv = arg2@iv in
           let alias = if List.mem r iv then [] else alias in
-          (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias) in
+          (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias,[r]) in
   (*let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in*)
   (* let _ = print_endline ("infer_heap_nodes") in *)
   (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
@@ -178,16 +178,14 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   if b then 
     begin
       (* Take the alias as the inferred pure *)
-      let rec filter_var f vars = match f with
-        | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-        | _ -> if Omega.is_sat f "0" then CP.filter_var f vars else CP.mkFalse no_pos
+      let iv_al = CP.intersect iv alias in (* All relevant vars of interest *)
+      (* r certainly has one element *)
+      let r = List.hd r in
+      let r = CP.mkVar r no_pos in
+      let new_p = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
+        (CP.mkTrue no_pos) 
+        (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) 
       in
-      let simplify = fun f vars -> match vars with
-        | [] -> CP.mkTrue no_pos
-        | _ -> Omega.simplify (filter_var (Omega.simplify f) vars) 
-      in
-      let _,new_p,_,_,_ = CF.split_components es.es_formula in
-      let new_p = simplify (MCP.pure_of_mix new_p) (CP.diff_svl alias es.es_orig_vars) in
       let r = {
           match_res_lhs_node = new_h;
           match_res_lhs_rest = HTrue;
@@ -339,9 +337,19 @@ let infer_empty_rhs2 estate lhs_xpure rhs_p pos =
 (*     {estate with es_infer_heap = []; es_infer_pure = pure_part; *)
 (*         es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]} *)
 
-(* what does this method do? *)
+(* Calculate the invariant relating to unfolding *)
 let infer_for_unfold prog estate lhs_node pos =
-              estate
+  if no_infer estate then estate
+  else
+    let _ = DD.devel_pprint ("\n inferring_for_unfold:"^(!print_formula estate.es_formula)^ "\n\n")  pos in
+    let inv = match lhs_node with
+      | ViewNode ({h_formula_view_name = c}) ->
+        let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
+        let i = MCP.pure_of_mix (fst vdef.Cast.view_user_inv) in
+        if List.mem i estate.es_infer_invs then estate.es_infer_invs
+        else estate.es_infer_invs @ [i]
+      | _ -> estate.es_infer_invs
+    in {estate with es_infer_invs = inv} 
 
 let infer_for_unfold_old prog estate lhs_node pos =
   if no_infer estate then estate
