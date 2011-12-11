@@ -1,7 +1,5 @@
 open Globals
 open Cformula
-open Musterr
-open Musterr.ENV_COM
 open Cast
 open Cprinter
 open Gen.Basic
@@ -540,8 +538,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               in
               (*apply lemmas on data nodes*)
               (* using || results in some repeated answers but still terminates *)
-            (*  let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in*)
-            (*  let dr_new_orig = if !ann_derv then not(dr_data_derv) else dr_data_orig in*)
+              (*let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in*)
               let flag = 
                 if !ann_derv 
                 then (not(dl_data_derv) && not(dr_data_derv)) 
@@ -806,23 +803,23 @@ and sort_wt_x (ys: action_wt list) : action list =
           let rw = (fst h) in
           (* WHY did we pick only ONE when rw==0?*)
           (*Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
-          if (rw==0) then h
+          if (rw==0) then h 
           else (rw,Search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
         ->
         (*drop ummatched actions if possible*)
         let l = drop_unmatched_action l in
-          let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
-          (rw,Cond_action l)
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
     | Seq_action l ->
-          let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
-          (rw,Seq_action l)
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
-  (snd (List.split sl)) 
+  (snd (List.split sl))
 
   and drop_unmatched_action l=
     let rec helper acs rs=
@@ -1101,10 +1098,10 @@ and update_ctx_es_orig_conseq ctx new_conseq =
 
 
 (* I <: M *)
-(* return true if imm1 <: imm2 *)
+(* return true if imm1 <: imm2 *)	
 and subtype (imm1 : bool) (imm2 : bool) : bool = not(imm2) or imm1
 
-
+  
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : context) : context =
   match ctx with
@@ -1117,7 +1114,7 @@ and push_cont_es (cont : h_formula) (es : entail_state) : entail_state =
       es_cont = cont::es.es_cont;
   }
 
-and pop_cont_es (es : entail_state) : (h_formula * entail_state) =
+and pop_cont_es (es : entail_state) : (h_formula * entail_state) =  
   let cont = es.es_cont in
   let crt_cont, cont =
     match cont with
@@ -1135,14 +1132,14 @@ and push_crt_holes_list_ctx (ctx : list_context) (holes : (h_formula * int) list
   let pr1 = Cprinter.string_of_list_context in
   let pr2 = pr_no (* pr_list (pr_pair string_of_h_formula string_of_int ) *) in
   Gen.Debug.no_2 "push_crt_holes_list_ctx" pr1 pr2 pr1 (fun _ _-> push_crt_holes_list_ctx_x ctx holes) ctx holes
-
-and push_crt_holes_list_ctx_x (ctx : list_context) (holes : (h_formula * int) list) : list_context =
+      
+and push_crt_holes_list_ctx_x (ctx : list_context) (holes : (h_formula * int) list) : list_context = 
   match ctx with
     | FailCtx _ -> ctx
     | SuccCtx(cl) ->
 	      SuccCtx(List.map (fun x -> push_crt_holes_ctx x holes) cl)
 
-and push_crt_holes_ctx (ctx : context) (holes : (h_formula * int) list) : context =
+and push_crt_holes_ctx (ctx : context) (holes : (h_formula * int) list) : context = 
   match ctx with
     | Ctx(es) -> Ctx(push_crt_holes_es es holes)
     | OCtx(c1, c2) ->
@@ -1153,7 +1150,7 @@ and push_crt_holes_ctx (ctx : context) (holes : (h_formula * int) list) : contex
 and push_crt_holes_es (es : entail_state) (holes : (h_formula * int) list) : entail_state =
   {
       es with
-          es_crt_holes = holes @ es.es_crt_holes;
+          es_crt_holes = holes @ es.es_crt_holes; 
   }
 
 and push_holes (es : entail_state) : entail_state =
@@ -1173,13 +1170,13 @@ and pop_holes_es (es : entail_state) : entail_state =
 	  }
 
 (* substitute *)
-and subs_crt_holes_list_ctx (ctx : list_context) : list_context =
+and subs_crt_holes_list_ctx (ctx : list_context) : list_context = 
   match ctx with
     | FailCtx _ -> ctx
     | SuccCtx(cl) ->
 	      SuccCtx(List.map subs_crt_holes_ctx cl)
 
-and subs_crt_holes_ctx (ctx : context) : context =
+and subs_crt_holes_ctx (ctx : context) : context = 
   match ctx with
     | Ctx(es) -> Ctx(subs_holes_es es)
     | OCtx(c1, c2) ->

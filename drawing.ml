@@ -5,8 +5,7 @@
 open Globals
 open Cpure
 open Cformula
-open Musterr
-open Musterr.ELCtx
+
 (*
   Each disjunct will be generated as a separate graph.
   Parameter n is used to attach a different number to
