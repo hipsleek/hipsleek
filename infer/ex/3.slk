@@ -7,74 +7,170 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
-// ok
+// (1) Valid
 infer [y] true |- y::node<a,b> * b::node<c,d>.
 print residue.
+
+// (2) Valid
 infer [y] true |- y::node<a,b>.
 print residue.
+
+// (3) Valid
 infer [y] true |- y::ll<n>.
 print residue.
+
+// (4) OK to Fail
 infer [n] true |- y::ll<n>.
+print residue.
 /*
 Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 | n=n_48 & 1<=n_48 |-  n_48=n (may-bug).
 */
+
+// (5) Fail
+// TODO is it useful to infer n!=0 ?
 infer [n] n=0 |- y::ll<n>.
+print residue.
+/*
+Infer  (5): Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 & n=0 |-  n_70=n (may-bug).
+*/
 
-// OK
+// (6) Valid
 infer [n] n=0 & y=null |- y::ll<n>.
-
-// OK
-infer [n] n=1 & y=null |- y::ll<n>.
-
 print residue.
 
+// (7) Valid & inferred n=0
+infer [n] y=null |- y::ll<n>.  
+print residue.
 
+// (8) Fail
+infer [n] y!=null |- y::ll<n>. // fail
+print residue.
+
+// (9) OK (inferred n!=1)
+infer [n] n=1 & y=null |- y::ll<n>.
+print residue.
+
+// (10) Valid
 infer [y] true |- y::ll<n> & n=0.
 print residue.
 
-// WN : inferred pre make ante false
-// not sure if this is good idea in principle..
-// Raise failure context instead
+// (11) Valid : inferred x!=null
 infer [x] x=null |- x::node<_,null>.
 print residue.
-/*
-Infer  (1): Fail. (may) cause: Inferred heap made contradiction
-*/
 
+
+// (12) Inferred n=0
 infer [n] y::ll<n> |- y=null.
 print residue.
 
+// (13)
+// TODO why no inferred n=1?
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
+/*
+<1>true & Anon_136=inf_Anon_138 & flted_61_137=inf_flted_61_139 &
+{FLOW,(17,18)=__norm}
+*/
 
+// (14)
+// TODO: why no inferred n>0?
 infer [n] y::ll<n> |- y::node<_,b>.
 print residue.
+/*
+<1>EXISTS(flted_7_168: b::ll<flted_7_168>[Orig] & flted_7_168+1=n &
+{FLOW,(17,18)=__norm})
+*/
 
+// (15) inferred y=null
 infer [y] y::ll<n> |- y=null.
 print residue.
 
+// (16) fail
 infer [y] y::ll<n> |- y::node<_,null>.
 print residue.
 
 
-// expecting x!=null 
-// & flow should be just __norm
+// (17) fail
+// TODO : should infer n=1
+infer [y,n] y::ll<n> |- y::node<_,null>.
+print residue.
+
+// (18) inferred n=1
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+
+// (19) inferred x!=null
 infer [x] x=null |- x::node<_,b>.
 print residue.
-/* got below:
-Infer  (15): Valid.
-Inferred Heap:[]
-Inferred Pure:[ x!=null]
-<1>false & false &
-{FLOW,(1,20)=__flow}
-*/
 
 
-// expecting x!=null to be inferred
+// (20) 
+// TODO : expecting x!=null to be inferred
 infer [x] x::ll<n> |- x::node<_,b>.
 print residue.
 /*
 Infer  (16): Valid.
 <1>true & Anon_172=inf_Anon_173 & b=inf_174 &
+{FLOW,(17,18)=__norm}
+*/
+
+// (21) inferred n=1
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+
+// (22)
+infer [n] y::ll<n> |- y=null.
+print residue.
+// Inferred Pure:[ n=0]
+
+// (23)
+infer [n] y::ll<n> |- y::node<a,b>.
+print residue.
+//Inferred Pure:[ 1<=n | n<=(0 - 1)]
+// WN : should be better to use n!=0
+
+// (24)
+infer [y] true |- y::node<a,b> * y::node<_,_>.
+print residue.
+//Infer  (20): Valid.
+//Inferred Heap:[ y::node<inf_269,inf_270>[Orig], y::node<inf_Anon_271,inf_Anon_272>[Orig]]
+// WN : if inferred pre is FALSE, better to denote scenario as an error?
+
+// (25)
+infer [y] true |- y::node<a,b> * y::ll<m>.
+print residue.
+
+// (26)
+infer [y] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+//Inferred Heap:[ y::node<inf_310,inf_311>[Orig], b::ll<inf_m_315>[Orig][LHSCase]]
+//Inferred Pure:[ b=inf_311, a=inf_310 & b=inf_311 & inf_m_315=0 - 1]
+// inferred pre is false
+
+// (27)
+infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+Inferred Heap:[ y::node<inf_351,inf_352>[Orig], b::ll<inf_m_356>[Orig][LHSCase]]
+Inferred Pure:[ b=inf_352, a=inf_351 & b=inf_352 & inf_m_356=0 - 1 & m=0 - 1]
+<1>true & m+1=0 & a=inf_351 & b=inf_352 & a=inf_351 & b=inf_352 & 
+inf_m_356=0 - 1 & m=0 - 1 &
+{FLOW,(17,18)=__norm}
+*/
+
+
+// (28)
+infer [y,b] true |- y::node<a,b> * b::ll<m>.
+print residue.
+
+// (29)
+// TODO : why re-infer b!=null
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+Inferred Heap:[ y::node<inf_381,inf_b_382>[Orig], b::ll<inf_387>[Orig][LHSCase]]
+Inferred Pure:[ a=inf_381 & m=inf_387 & inf_b_382=b & b!=null]
+<1>true & b!=null & a=inf_381 & m=inf_387 & a=inf_381 & m=inf_387 & 
+inf_b_382=b & b!=null &
 {FLOW,(17,18)=__norm}
 */

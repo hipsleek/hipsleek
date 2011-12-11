@@ -21,8 +21,8 @@ Inferred Pure:[ x!=null]
 
 // expecting x!=null to be inferred
 // with resude b::ll<n-1>.
-infer [x] x::ll<n> |- x::node<_,b>.
-print residue.
+//infer [x] x::ll<n> |- x::node<_,b>.
+//print residue.
 /*
 Infer  (16): Valid.
 <1>true & Anon_172=inf_Anon_173 & b=inf_174 &
@@ -30,3 +30,26 @@ Infer  (16): Valid.
 */
 
 
+//infer [y,b] b=null |- y::node<a,b> * b::ll<m>.
+//print residue.
+/*
+// b=null already in ante..
+Infer  (2): Valid.
+Inferred Heap:[ y::node<inf_45,inf_b_46>[Orig]]
+Inferred Pure:[ a=inf_45 & inf_b_46=b & b=null]
+<1>true & b=null & a=inf_45 & m=0 & a=inf_45 & inf_b_46=b & b=null &
+{FLOW,(17,18)=__norm}
+*/
+
+
+// below requires remove_infer_vars_all
+// which example requires remove_infer_vars_partial?
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+// why did we get false?
+Infer  (26): Valid.
+Inferred Heap:[ y::node<inf_365,inf_b_366>[Orig]]
+Inferred Pure:[]
+<1>false & false & {FLOW,(17,18)=__norm}
+*/

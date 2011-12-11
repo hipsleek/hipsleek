@@ -6678,7 +6678,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     (* All the args related to the viewnode of interest *)
                     [r] @ args @ alias @ alias_all @ arg_other
             in 
-            let (estate,iv) = Inf.remove_infer_vars estate rt in
+            let (estate,iv) = Inf.remove_infer_vars_all estate (* rt *)in
             let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos in
             (Inf.restore_infer_vars iv cl,prf)
     | Context.M_lhs_case {
@@ -6720,8 +6720,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                  and then restore M_unmatched_rhs to previous code without
                  any inference *)
     | Context.M_infer_heap (rhs,rhs_rest) ->
-          (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap" estate (Base rhs_b) None pos,
-          CF.mk_failure_none ("infer_heap not yet implemented"))), NoAlias)
+          (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos,
+          CF.mk_failure_none ("infer_heap .. "))), NoAlias)
     | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
 
           (*      let _,lhs_p,_,_,_ = CF.split_components (estate.es_formula) in              *)
@@ -6913,7 +6913,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     (push_hole_action a r1,r2)
 
 and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
-
   let pr1 = Context.string_of_action_res_simpl in
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
