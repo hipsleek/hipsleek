@@ -3,6 +3,7 @@ open Globals
 module AS = Astsimp
 module C  = Cast
 module CF = Cformula
+module MME = Musterr.MME
 module CP = Cpure
 module H  = Hashtbl
 module I  = Iast
@@ -49,7 +50,7 @@ let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog
   flush stdout;
   let res =
     if !Globals.disable_failure_explaining then ((not (CF.isFailCtx rs)))
-    else ((not (CF.isFailCtx_gen rs)))
+    else ((not (MME.isFailCtx_gen rs)))
   in
   (res, rs)
 
@@ -63,7 +64,7 @@ let process_coercion_check iante iconseq (lemma_name: string)  (cprog: C.prog_de
   try 
     run_entail_check iante iconseq cprog
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error))) in
+      let rs = (CF.FailCtx (CF.Trivial_Reason (MME.mk_failure_must "exception in lemma proving" lemma_error))) in
       (false, rs)
 
 let process_coercion_check iante0 iconseq0 (lemma_name: string)  (cprog: C.prog_decl) =
@@ -142,9 +143,9 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   else let s = 
     if !Globals.disable_failure_explaining then ""
     else
-      match CF.get_must_failure residue with
+      match MME.get_must_failure residue with
         | Some s -> "(must) cause:" ^ s 
-        | _ -> (match CF.get_may_failure residue with
+        | _ -> (match MME.get_may_failure residue with
             | Some s -> "(may) cause:" ^ s
             | None -> "INCONSISTENCY : expected failure but success instead"
           )
@@ -166,7 +167,7 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
     let num_id = "\nEntailing lemma "^ lemma_name ^"" in
-    let empty_resid = CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "empty residue" Globals.lemma_error)) in
+    let empty_resid = CF.FailCtx (CF.Trivial_Reason (MME.mk_failure_must "empty residue" Globals.lemma_error)) in
     let (rs1, rs2) = match (rs_l2r, rs_r2l) with
       | (None, None) -> (empty_resid, empty_resid)
       | (None, Some rsr) -> (empty_resid, rsr)
@@ -174,7 +175,7 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
       | (Some rsl_, Some rsr_) -> (rsl_, rsr_) in
     let residues = match lemma_type with
       | I.Equiv -> 
-            let residue = CF.list_context_union rs1 rs2 in
+            let residue = MME.union_list_context rs1 rs2 in
             let valid = valid_l2r && valid_r2l in
             let _ = if valid then print_entail_result valid residue num_id
             else 

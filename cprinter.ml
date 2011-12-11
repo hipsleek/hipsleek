@@ -7,6 +7,7 @@ open Exc.GTable
 open Lexing 
 open Cast 
 open Cformula
+open Musterr.MME
 open Gen.Basic 
 
 module P = Cpure

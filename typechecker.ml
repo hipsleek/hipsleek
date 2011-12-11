@@ -7,6 +7,7 @@ open Gen.Basic
 open Perm
 
 module CF = Cformula
+module ME = Musterr
 module CP = Cpure
 module TP = Tpdispatcher
 module PTracer = Prooftracer
@@ -60,7 +61,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in (*???*)
 
 		        (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
-		        
+ 
 		        let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		        let r = check_specs_a prog proc nctx c2 e0 in
 		        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
@@ -77,15 +78,15 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	        r
 	  | Cformula.EVariance b ->
           Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
-			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
-			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
+			let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
+			    CF.es_var_label = b.Cformula.formula_var_label}) ctx in
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
             let _ = post_pos#set (CF.pos_of_formula post_cond) in
             Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        let _ = Debug.devel_pprint ("\n check_specs: EAssume: pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") no_pos in
-	        if (Cformula.isAnyFalseCtx ctx1) then
+	        if (CF.isAnyFalseCtx ctx1) then
 		      let _ = Debug.devel_pprint ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 				  (Cprinter.string_of_context_short ctx)) no_pos in 
 		      true
@@ -102,7 +103,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		          let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in 
 			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 	              (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
-			      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
+			      let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	              (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
@@ -118,33 +119,34 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   List.for_all do_spec_verification spec_list
 
 and check_exp prog proc ctx e0 label =
-  let pr_pn x = x.proc_name in
+  (*let pr_pn x = x.proc_name in*)
   let pr = Cprinter.string_of_list_failesc_context in
   Gen.Debug.loop_2_no "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
-and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
-  if (exp_to_check e0) then  
+and check_exp_a (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) e0 (post_start_label:formula_label):
+      CF.list_failesc_context =
+  if (exp_to_check e0) then 
     (* let _ = if (List.exists CF.isAnyFalseFailescCtx ctx) then *)
     (*   print_string ("\n false at :"^(Cprinter.string_of_exp e0))  *)
     (* else () in *)
-    CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0) 
+    CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
   else ();
-	let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 
+	let check_exp1 (ctx: CF.list_failesc_context): CF.list_failesc_context =
       match e0 with
 	    | Label e ->
 	          let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id in
 	          let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	          (check_exp prog proc ctx e.exp_label_exp post_start_label)
         | Unfold ({exp_unfold_var = sv;
-          exp_unfold_pos = pos}) -> 
+          exp_unfold_pos = pos}) ->
               unfold_failesc_context (prog,None) ctx sv true pos
 	              (* for code *)
         | Assert ({ exp_assert_asserted_formula = c1_o;
           exp_assert_assumed_formula = c2;
           exp_assert_path_id = (pidi,s);
-          exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
+          exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then
           	begin
           	  Prooftracer.push_assert_assume e0;
           	  Prooftracer.add_assert_assume e0;
@@ -162,32 +164,34 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let new_ctx = match c1_o with
                 | None -> ts
                 | Some c1 ->
-                      let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
-                      let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
-                      Debug.devel_pprint(*print_info "assert"*) to_print pos;
-                      let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 pos None in
-                      let _ = PTracer.log_proof prf in                    
-                      Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
-                      if CF.isSuccessListFailescCtx rs then 
-				        (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+                    let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
+                    let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in
+                    Debug.devel_pprint(*print_info "assert"*) to_print pos;
+                    let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 pos None in
+                    let _ = PTracer.log_proof prf in
+                    Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
+                    if CF.isSuccessListFailescCtx rs then
+				      (Debug.print_info "assert" (s ^(
+                          if (CF.isNonFalseListFailescCtx ts) then " : ok\n"
+                          else ": unreachable\n")) pos;
 				        Debug.pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
 				      else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
-                      rs in 
-			  let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
+                      rs in
+			  let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then
                 begin
-          					Prooftracer.add_assert_assume e0;
-                  	(* Prooftracer.end_object (); *)
-                 		Prooftracer.pop_div ();
-                 		Prooftracer.pop_div ();
-				  					Tpdispatcher.restore_suppress_imply_output_state ();
+          			Prooftracer.add_assert_assume e0;
+                  	    (* Prooftracer.end_object (); *)
+                 	Prooftracer.pop_div ();
+                 	Prooftracer.pop_div ();
+				  	Tpdispatcher.restore_suppress_imply_output_state ();
                 end in
               let res = match c2 with
                 | None -> ts
                 | Some c ->
-                      let c = prune_preds prog false c in (* specialise assumed formula *)
-                      let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
-                      let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
-                      List.map CF.remove_dupl_false_fe r in
+                    let c = prune_preds prog false c in (* specialise assumed formula *)
+                    let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
+                    let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
+                    List.map CF.remove_dupl_false_fe r in
               (ps@res)
 	      end
         | Assign ({ exp_assign_lhs = v;
@@ -195,8 +199,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assign_pos = pos}) -> begin
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
-	        let fct c1 = 
-	          if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
+	        let fct c1 =
+	          if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
 	            let t = Gen.unsome (type_of_exp rhs) in
 	            let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
 	            let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in
@@ -209,7 +213,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in
 	            let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
                 let _ = CF.must_consistent_context "assign 4" resctx  in
-		        resctx 
+		        resctx
 	          else (CF.Ctx c1) in
 	        let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
             let _ = CF.must_consistent_list_failesc_context "assign final" res  in
@@ -223,7 +227,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          if b then tmp1
 	          else CP.Not (tmp1, None, pos) in
 	        let f = CF.formula_of_pure_N tmp2 pos in
-	        CF.normalize_max_renaming_list_failesc_context f pos true ctx 
+	        CF.normalize_max_renaming_list_failesc_context f pos true ctx
 	    end
 
         | Bind ({ exp_bind_type = body_t;
@@ -234,7 +238,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_read_only = read_only;
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
-
             (* Debug.devel_pprint ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n") pos; *)
 	        let _ = proving_loc#set pos in
 	        let field_types, vs = List.split lvars in
@@ -279,13 +282,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
             (*Test whether fresh_frac is full permission or not
               writable -> fresh_frac = full_perm => normally
-              read-only -> fresh_frac != full_perm => in order to 
+              read-only -> fresh_frac != full_perm => in order to
               detect permission violation
               We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
               Othewiese, false -> write -> f=1.0
             *)
-            let vheap = 
-              if (Perm.allow_perm ()) then 
+            let vheap =
+              if (Perm.allow_perm ()) then
                 if (read_only)
                 then
                   let read_f = mkPermInv fresh_frac in
@@ -301,21 +304,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 			if (Gen.is_empty unfolded) then unfolded
-			else 
+			else
 	          let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap pos pid in
               let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	          let _ = PTracer.log_proof prf in
 	          let rs = CF.clear_entailment_history_failesc_list rs_prim in
               let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
-	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
+	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then
                 begin
-		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
-                      ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
-		          Debug.print_info ("(Cause of Bind Failure)")
-                      (Cprinter.string_of_failure_list_failesc_context rs) pos;
-		          rs
+		            Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")
+                        ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
+		            Debug.print_info ("(Cause of Bind Failure)")
+                        (Cprinter.string_of_failure_list_failesc_context rs) pos;
+		            rs
                 end
-              else 
+              else
                 begin
                   let tmp_res1 = check_exp prog proc rs body post_start_label in 
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
@@ -336,10 +339,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                   let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
                   res
-	                  
                 end
           end; (*end Bind*)
-	          
         | Block ({exp_block_type = t;
           exp_block_body = e;
           exp_block_local_vars = local_vars;
@@ -365,10 +366,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
 	        Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx)) pos;
 	        let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
-	        let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
+	        let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in
 	        let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
 	        let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
-	        let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
+	        let res = CF.or_list_failesc_context (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
 		    res
 	      end;
         | Dprint ({exp_dprint_string = str;
@@ -468,9 +469,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let farg_types, farg_names = List.split proc.proc_args in
 	            let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	            let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
-                
-                (* Internal function to check pre/post condition of the function call. *)        
-	            let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
+
+                (* Internal function to check pre/post condition of the function call. *)
+	            let check_pre_post org_spec (sctx: CF.list_failesc_context) should_output_html: CF.list_failesc_context =
                   (* Termination: Stripping the "variance" feature from org_spec
 				     if the call is not a recursive call *)
 			      let stripped_spec = if ir then org_spec else
@@ -512,8 +513,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let (lb,estk,lbctx) = fctx in
                         let nlbctx = List.map (fun bctx ->
                             let (pt,ctx) = bctx in
-                            let nctx = CF.transform_context (fun es -> 
-                                CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst; 
+                            let nctx = CF.transform_context (fun es ->
+                                CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst;
                                     CF.es_var_loc = pos}) ctx in (pt,nctx)) lbctx in
                         (lb,estk,nlbctx)) sctx
                   in
@@ -529,16 +530,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* Termination checking *)
                   let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
                   let _ = Debug.devel_pprint (str_debug_variance) pos in
-                  let _ = 
+                  let _ =
                     if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
-                      (* Termination: Add a false entail state for 
+                      (* Termination: Add a false entail state for
                        * unreachable recursive call if variance exists *)
                       var_checked_list := !var_checked_list @ [(
-                          {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, 
+                          {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos},
                           CF.empty_ext_variance_formula)];
-                  in 
-                  (*print_string (str_debug_variance ^ "\n");*) 
-                  
+                  in
+                  (*print_string (str_debug_variance ^ "\n");*)
                   (* TODO: call the entailment checking function in solver.ml *)
                   let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
@@ -556,7 +556,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                   rs in
                 (* Call check_pre_post with debug information *)
-                let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
+                let check_pre_post org_spec (sctx: CF.list_failesc_context) should_output_html: CF.list_failesc_context =
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
                   let pr2 = Cprinter.summary_list_failesc_context in
                   let pr3 = Cprinter.string_of_struc_formula in
@@ -571,16 +571,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   end else false in
 
                 let res = if (CF.isFailListFailescCtx ctx) then
-				  let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
-                  ctx 
-                else check_pre_post proc.proc_static_specs_with_pre ctx scall_pre_cond_pushed in
-								let _ = if !print_proof then Prooftracer.add_pre e0 in
-                let _ = if !print_proof && scall_pre_cond_pushed then 
+				      let _ = if !print_proof && scall_pre_cond_pushed
+                          then Prooftracer.append_html "Program state is unreachable." in
+                      ctx
+                    else check_pre_post proc.proc_static_specs_with_pre ctx scall_pre_cond_pushed in
+				let _ = if !print_proof then Prooftracer.add_pre e0 in
+                let _ = if !print_proof && scall_pre_cond_pushed then
                   begin
                     Prooftracer.pop_div ();
                     Tpdispatcher.restore_suppress_imply_output_state ();
                     (* print_endline "OK.\n" *)
-                  end in 
+                  end in
                 res
               end
         | Seq ({exp_seq_type = te2;
@@ -596,17 +597,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      end
         | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ctx
         | This ({exp_this_type = t;
-          exp_this_pos = pos}) -> 
+          exp_this_pos = pos}) ->
               begin
                 let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos)) pos in
-                CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
+                CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
               end
         | Var ({exp_var_type = t;
           exp_var_name = v;
-          exp_var_pos = pos}) -> 
+          exp_var_pos = pos}) ->
               begin
                 let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
-                CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
+                CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
               end
         | VarDecl _ -> ctx (* nothing to do *)
         | Unit pos -> ctx
@@ -615,12 +616,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_val = v; (*maybe none*)
           exp_sharp_unpack = un;(*true if it must get the new flow from the second element of the current flow pair*)
           exp_sharp_path_id = pid;
-          exp_sharp_pos = pos})	-> 
+          exp_sharp_pos = pos})	->
 	          (* let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
 	          (* let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
 	          (* let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
-	          let nctx = match v with 
-	            | Sharp_var (t,v) -> 
+	          let nctx = match v with
+	            | Sharp_var (t,v) ->
                         let t1 = (get_sharp_flow ft) in
                         (* let _ = print_endline ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) in *)
                         let vr = if is_subset_flow t1 !raisable_flow_int then (CP.mkeRes t)
@@ -628,8 +629,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr (CP.SpecVar (t, v, Primed)) pos)) pos in
 		              let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
 		              ctx1
-	            | Sharp_flow v -> 
-		              let fct es = 
+	            | Sharp_flow v ->
+		              let fct es =
 		                let rest, b_rez = CF.get_var_type v es.CF.es_formula in
 		                if b_rez then
                           let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos)) pos in
@@ -639,14 +640,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		              in
 		              CF.transform_list_failesc_context (idf,idf,fct) ctx
 	            | Sharp_no_val -> ctx in
-	          let r = match ft with 
-                | Sharp_ct nf -> 
-			          if not un then 
-                        CF.transform_list_failesc_context 
+	          let r = match ft with
+                | Sharp_ct nf ->
+			          if not un then
+                        CF.transform_list_failesc_context
                             (idf,idf,(fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula nf es.CF.es_formula})) nctx
-			          else CF.transform_list_failesc_context 
+			          else CF.transform_list_failesc_context
                         (idf,idf,(fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_to_link_f !flow_store es.CF.es_formula no_pos})) nctx
-                | Sharp_id v -> CF.transform_list_failesc_context 
+                | Sharp_id v -> CF.transform_list_failesc_context
 			          (idf,idf,
                       (fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store pos) es.CF.es_formula}))
                           nctx in
@@ -660,47 +661,49 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let ctx1 = check_exp prog proc ctx body post_start_label in
               let ctx2 = CF.pop_esc_level_list ctx1 pid in
               let ctx3 = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx2 in
-              let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
+              let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var)
                 (fun c -> CF.add_path_id c (Some pid,0)) elim_exists_ctx ctx3 in
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
-	    | _ -> 
-	          failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
-    let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
+	    | _ ->
+	        failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
+    let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx
     else ctx in
 	(* An Hoa : Simplify the context before checking *)
-	let ctx = if !simplify_context then 
-	  CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
+	let ctx = if !simplify_context then
+	  CF.simplify_list_failesc_context_w_brc ctx proc.Cast.proc_important_vars
 	else ctx in
 	let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
     (* let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in *)
     (* let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
     (* if (Gen.is_empty cl) then fl
-       else *)	    
+       else *)
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)
-        
-and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+
+and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos
+      (pid:formula_label): CF.list_partial_context  =
   (* let ctx = list_partial_context_and_unsat_now prog ctx in *)
   let _ = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2  
-      (fun _ _ -> 
+  Gen.Debug.no_2(* loop_2_no *) "check_post" Cprinter.string_of_pos pr2 pr2
+      (fun _ _ ->
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)
           r ) pos ctx
 
-and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos
+      (pid:formula_label): CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
   let _ = if !print_proof then
 	begin
-	  Prooftracer.push_post ();
-   	Prooftracer.start_compound_object ();
-	  Prooftracer.push_list_partial_context_formula_entailment ctx post;
-	  Tpdispatcher.push_suppress_imply_output_state ();
-	  Tpdispatcher.unsuppress_imply_output ();
+	    Prooftracer.push_post ();
+   	    Prooftracer.start_compound_object ();
+	    Prooftracer.push_list_partial_context_formula_entailment ctx post;
+	    Tpdispatcher.push_suppress_imply_output_state ();
+	    Tpdispatcher.unsuppress_imply_output ();
 	  (* print_endline "VERIFYING POST-CONDITION" *)
 	end in
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
@@ -711,7 +714,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
   (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
   (* let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
-  let final_state = 
+  let final_state =
     if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
   (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
   (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
@@ -721,27 +724,27 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint to_print pos;
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
-  let _ = if !print_proof then 
+  let _ = if !print_proof then
     begin
 	  	Tpdispatcher.restore_suppress_imply_output_state ();
-			Prooftracer.add_post ();
-      Prooftracer.pop_div ();
-      Prooftracer.pop_div ();
+		Prooftracer.add_post ();
+        Prooftracer.pop_div ();
+        Prooftracer.pop_div ();
 	  (* print_endline "DONE!" *)
 	end in
-  if (CF.isSuccessListPartialCtx rs) then 
+  if (CF.isSuccessListPartialCtx rs) then
     rs
   else begin
     (* get source code position of failed branches *)
-    (*let locs_of_failures = 
-      List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
+    (*let locs_of_failures =
+      List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs
       in*)
     (*let string_of_loc_list locs =
       List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
       in*)
     begin
-	  Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ") 
-          ("Postcondition cannot be derived from context\n") pos; 
+	  Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
+          ("Postcondition cannot be derived from context\n") pos;
 	  Debug.print_info ("(Cause of PostCond Failure)")
           (Cprinter.string_of_failure_list_partial_context rs) pos;
       Err.report_error {
@@ -764,24 +767,24 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
     && not (List.mem unmin_name !Inliner.inlined_procs)
   in
-  if check_flag then 
+  if check_flag then
   	begin
 	  match proc.proc_body with
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
 		      begin
-			    if !Globals.print_proc then 
+			    if !Globals.print_proc then
 				  print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
-			    print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-			    Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
-			    Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
-			    let ftypes, fnames = List.split proc.proc_args in
+			      print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
+			      Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
+			      Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
+			      let ftypes, fnames = List.split proc.proc_args in
 			    (* fsvars are the spec vars corresponding to the parameters *)
-			    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
-			    let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
-			    let init_form = nox in
-			    let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
-          (*add default full permission = 1.0 to ante; 
+			      let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+			      let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
+			      let init_form = nox in
+			      let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
+          (*add default full permission = 1.0 to ante;
             need to add type of full perm to stab
           *)
                 let init_form =
@@ -791,7 +794,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     init_form
                 in
 		        let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-			    let _ = if !print_proof then begin 
+			    let _ = if !print_proof then begin
 				    Prooftracer.push_proc proc;
 				    Prooftracer.start_compound_object ();
 				end
@@ -808,8 +811,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 				    print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
 		      	    true
 	        	end else begin
-	        	    print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n"); 
-	        	    false 
+	        	    print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n");
+	        	    false
 	        	end in
 	      		result
 		      end
@@ -1012,9 +1015,9 @@ let scc_numbering g =
 
   let mem e ls = List.fold_left (fun rs e1 -> if (equalpf e e1) then true else rs) false ls in
   let meml ls1 ls2 = List.fold_left (fun rs e -> if (mem e ls2) then true else rs) false ls1 in
-  
+
   let scc_graph = GS.empty in
-  
+
   let scc_graph = List.fold_left (fun sg (n,_) -> GS.add_vertex sg n) scc_graph scc_list in
 
   let scc_graph = List.fold_left (fun sg (n,l) ->
@@ -1025,7 +1028,7 @@ let scc_numbering g =
   let (nscc, fscc) = GSC.scc scc_graph in
 
   fun v -> List.fold_left (fun rs (n,l) -> if (mem v l) then (fscc n) else rs) 0 scc_list
-  
+
 
 let variance_numbering ls g =
   if !Globals.term_auto_number then
@@ -1048,10 +1051,10 @@ let variance_numbering ls g =
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
   else ls
-		
+
 let check_prog (prog : prog_decl) =
-	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
-    if !Globals.check_coercions then 
+	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in
+    if !Globals.check_coercions then
       begin
       print_string "Checking lemmas... ";
       (* ignore (check_coercion prog); *)

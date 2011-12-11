@@ -538,8 +538,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
               in
               (*apply lemmas on data nodes*)
               (* using || results in some repeated answers but still terminates *)
-              let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in
-              let dr_new_orig = if !ann_derv then not(dr_data_derv) else dr_data_orig in
+              (*let dl_new_orig = if !ann_derv then not(dl_data_derv) else dl_data_orig in*)
               let flag = 
                 if !ann_derv 
                 then (not(dl_data_derv) && not(dr_data_derv)) 
@@ -807,18 +806,35 @@ and sort_wt_x (ys: action_wt list) : action list =
           if (rw==0) then h 
           else (rw,Search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
-        -> 
-          let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
-          (rw,Cond_action l)
+        ->
+        (*drop ummatched actions if possible*)
+        let l = drop_unmatched_action l in
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
     | Seq_action l ->
-          let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
-          (rw,Seq_action l)
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
-  (snd (List.split sl)) 
+  (snd (List.split sl))
+
+  and drop_unmatched_action l=
+    let rec helper acs rs=
+      match acs with
+        | [] -> rs
+        | ac::ss ->
+            ( match ac with
+              | (_, M_unmatched_rhs_data_node _) -> helper ss rs
+              | _ -> helper ss (ac::rs)
+            )
+    in
+    match l with
+      | [] -> []
+      | [a] -> []
+      | _ -> helper l []
 
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
@@ -1087,13 +1103,13 @@ and subtype (imm1 : bool) (imm2 : bool) : bool = not(imm2) or imm1
 
   
 (* utilities for handling lhs heap state continuation *)
-and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =
+and push_cont_ctx (cont : h_formula) (ctx : context) : context =
   match ctx with
     | Ctx(es) -> Ctx(push_cont_es cont es)
     | OCtx(c1, c2) ->
 	      OCtx(push_cont_ctx cont c1, push_cont_ctx cont c2)
 
-and push_cont_es (cont : h_formula) (es : entail_state) : entail_state =  
+and push_cont_es (cont : h_formula) (es : entail_state) : entail_state =
   {  es with
       es_cont = cont::es.es_cont;
   }
@@ -1131,13 +1147,13 @@ and push_crt_holes_ctx (ctx : context) (holes : (h_formula * int) list) : contex
 	      let nc2 = push_crt_holes_ctx c2 holes in
 	      OCtx(nc1, nc2)
 
-and push_crt_holes_es (es : Cformula.entail_state) (holes : (h_formula * int) list) : Cformula.entail_state =
+and push_crt_holes_es (es : entail_state) (holes : (h_formula * int) list) : entail_state =
   {
       es with
           es_crt_holes = holes @ es.es_crt_holes; 
   }
-      
-and push_holes (es : Cformula.entail_state) : Cformula.entail_state = 
+
+and push_holes (es : entail_state) : entail_state =
   {  es with
       es_hole_stk   = es.es_crt_holes::es.es_hole_stk;
       es_crt_holes = [];
@@ -1145,7 +1161,7 @@ and push_holes (es : Cformula.entail_state) : Cformula.entail_state =
 
 (* pop *)
 
-and pop_holes_es (es : Cformula.entail_state) : Cformula.entail_state = 
+and pop_holes_es (es : entail_state) : entail_state =
   match es.es_hole_stk with
     | [] -> es
     | c2::stk -> {  es with
@@ -1168,7 +1184,7 @@ and subs_crt_holes_ctx (ctx : context) : context =
 	      let nc2 = subs_crt_holes_ctx c2 in
 	      OCtx(nc1, nc2)
 
-and subs_holes_es (es : Cformula.entail_state) : Cformula.entail_state = 
+and subs_holes_es (es : entail_state) : entail_state =
   (* subs away current hole list *)
   {  es with
 	  es_crt_holes   = [];
@@ -1188,10 +1204,10 @@ and apply_subs (crt_holes : (h_formula * int) list) (f : formula) : formula =
 	      let sf2 = apply_subs crt_holes f2 in
 	      mkOr sf1  sf2 pos
 
-and apply_subs_h_formula crt_holes (h : h_formula) : h_formula = 
-  let rec helper (i : int) crt_holes : h_formula = 
+and apply_subs_h_formula crt_holes (h : h_formula) : h_formula =
+  let rec helper (i : int) crt_holes : h_formula =
     (match crt_holes with
-	  | (h1, i1) :: rest -> 
+	  | (h1, i1) :: rest ->
 	        if i==i1 then h1
 	        else helper i rest
 	  | [] -> Hole(i))
@@ -1231,17 +1247,17 @@ type deprecated_find_node_result =
   | Deprecated_Failed (* p2 (of p2::c2<V2> coming from the RHS) is not in FV(LHS) *)
   | Deprecated_NoMatch (* p2 \in FV(LHS), but no aliased node is found *)
   | Deprecated_Match of match_res list (* found p1::c1<V1> such that p1=p2 *)
-  
+
 let rec pr_node_res (e:deprecated_find_node_result) =
   match e with
     | Deprecated_Failed -> fmt_string "Failed"
     | Deprecated_NoMatch -> fmt_string "NoMatch"
     | Deprecated_Match l -> pr_seq "Match" pr_match_res l
 let string_of_node_res e = poly_string_of_pr pr_node_res e
-  
+
 let deprecated_find_node_one prog node lhs_h lhs_p rhs_v pos : deprecated_find_node_result =
   let node = match node with | ViewNode v -> ViewNode{v with h_formula_view_node = rhs_v} | _ -> report_error pos "deprecated_find_node_one error" in
-  let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HTrue pos in 
+  let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HTrue pos in
   if Gen.is_empty matches then Deprecated_NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Deprecated_Match matches
 

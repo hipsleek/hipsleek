@@ -13,6 +13,7 @@ module H = Hashtbl
 module I = Iast
 module C = Cast
 module CF = Cformula
+module MME = Musterr.MME
 module CP = Cpure
 module IF = Iformula
 module IP = Ipure
@@ -427,12 +428,12 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *)
-  let rs1, _ = 
+  let rs1, _ =
   if not !Globals.disable_failure_explaining then
-    Solver.heap_entail_struc_init_bug_inv !cprog false false 
+    Solver.heap_entail_struc_init_bug_inv !cprog false false
         (CF.SuccCtx[ctx]) conseq no_pos None
   else
-     Solver.heap_entail_struc_init !cprog false false 
+     Solver.heap_entail_struc_init !cprog false false
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
   (* let length_ctx ctx = match ctx with *)
@@ -443,7 +444,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *)
   flush stdout;
   let res =
-    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
+    if not !Globals.disable_failure_explaining then ((not (MME.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs)))
   in
   (res, rs)
@@ -458,9 +459,9 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
     begin
       let s =
         if not !Globals.disable_failure_explaining then
-          match CF.get_must_failure residue with
+          match MME.get_must_failure residue with
             | Some s -> "(must) cause:"^s
-            | _ -> (match CF.get_may_failure residue with
+            | _ -> (match MME.get_may_failure residue with
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
@@ -488,12 +489,12 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
-  dummy_exception() ; 
+  dummy_exception() ;
   print_string ("exception in " ^ check_id ^ " check\n")
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
-  try 
+  try
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
@@ -515,11 +516,11 @@ let process_lemma ldef =
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
   (* TODO : WN print input_ast *)
   let _ = if !Globals.print_input then print_string "TODO : print input AST here(3)!" in
-  let _ = if !Globals.print_core then 
+  let _ = if !Globals.print_core then
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
   !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
-  let get_coercion c_lst = match c_lst with 
+  let get_coercion c_lst = match c_lst with
     | [c] -> Some c
     | _ -> None in
   let l2r = get_coercion l2r in
