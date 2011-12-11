@@ -7,11 +7,30 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
-infer [x] x=null |- x::node<_,b>.
+// TODO is it useful to infer n!=0 ?
+infer [n] n=0 |- y::ll<n>.
 print residue.
+/*
+Infer  (5): Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 & n=0 |-  n_70=n (may-bug).
+*/
 
-// expecting x!=null to be inferred
-// with resude b::ll<n-1>.
-infer [x] x::ll<n> |- x::node<_,b>.
+
+// (17) fail
+// TODO : should infer n=1
+infer [y,n] y::ll<n> |- y::node<_,null>.
 print residue.
+/*
+Infer  (17): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_95_221=nul
+l (may-bug).
+*/
 
+
+// (14)
+// TODO: why no inferred n>0?
+infer [n] y::ll<n> |- y::node<_,b>.
+print residue.
+/*
+Infer  (14): Valid.
+<1>EXISTS(flted_7_173: b::ll<flted_7_173>[Orig] & flted_7_173+1=n &
+{FLOW,(17,18)=__norm})
+*/

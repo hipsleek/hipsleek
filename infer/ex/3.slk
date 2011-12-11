@@ -58,12 +58,7 @@ print residue.
 infer [x] x=null |- x::node<_,null>.
 print residue.
 
-
-// (12) Inferred n=0
-infer [n] y::ll<n> |- y=null.
-print residue.
-
-// (13)
+// (12)
 // TODO why no inferred n=1?
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
@@ -72,7 +67,7 @@ print residue.
 {FLOW,(17,18)=__norm}
 */
 
-// (14)
+// (13)
 // TODO: why no inferred n>0?
 infer [n] y::ll<n> |- y::node<_,b>.
 print residue.
@@ -81,30 +76,49 @@ print residue.
 {FLOW,(17,18)=__norm})
 */
 
+// (14) Inferred n=0
+infer [n] y::ll<n> |- y=null.
+print residue.
+
 // (15) inferred y=null
 infer [y] y::ll<n> |- y=null.
 print residue.
 
-// (16) fail
+// (16) inferred y=null
+infer [y,n] y::ll<n> |- y=null.
+print residue.
+
+// (17) fail
 infer [y] y::ll<n> |- y::node<_,null>.
 print residue.
 
 
-// (17) fail
+// (18) fail
 // TODO : should infer n=1
 infer [y,n] y::ll<n> |- y::node<_,null>.
 print residue.
+/*
+Infer  (17): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_95_221=nul
+l (may-bug).
+*/
 
-// (18) inferred n=1
+// (19) inferred n=1
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=1]
+<1>EXISTS(q_248,flted_7_247: q_248::ll<flted_7_247>[Orig] & flted_7_247+
+1=n & n=1 &
+{FLOW,(17,18)=__norm})
+*/
 
-// (19) inferred x!=null
+// (20) inferred x!=null
 infer [x] x=null |- x::node<_,b>.
 print residue.
 
 
-// (20) 
+// (21) 
 // TODO : expecting x!=null to be inferred
 infer [x] x::ll<n> |- x::node<_,b>.
 print residue.
@@ -114,40 +128,40 @@ Infer  (16): Valid.
 {FLOW,(17,18)=__norm}
 */
 
-// (21) inferred n=1
+// (22) inferred n=1
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
 
-// (22)
+// (23)
 infer [n] y::ll<n> |- y=null.
 print residue.
 // Inferred Pure:[ n=0]
 
-// (23)
+// (24)
 infer [n] y::ll<n> |- y::node<a,b>.
 print residue.
 //Inferred Pure:[ 1<=n | n<=(0 - 1)]
 // WN : should be better to use n!=0
 
-// (24)
+// (25)
 infer [y] true |- y::node<a,b> * y::node<_,_>.
 print residue.
 //Infer  (20): Valid.
 //Inferred Heap:[ y::node<inf_269,inf_270>[Orig], y::node<inf_Anon_271,inf_Anon_272>[Orig]]
 // WN : if inferred pre is FALSE, better to denote scenario as an error?
 
-// (25)
+// (26)
 infer [y] true |- y::node<a,b> * y::ll<m>.
 print residue.
 
-// (26)
+// (27)
 infer [y] m=-1 |- y::node<a,b> * b::ll<m>.
 print residue.
 //Inferred Heap:[ y::node<inf_310,inf_311>[Orig], b::ll<inf_m_315>[Orig][LHSCase]]
 //Inferred Pure:[ b=inf_311, a=inf_310 & b=inf_311 & inf_m_315=0 - 1]
 // inferred pre is false
 
-// (27)
+// (28)
 infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
 print residue.
 /*
@@ -159,11 +173,11 @@ inf_m_356=0 - 1 & m=0 - 1 &
 */
 
 
-// (28)
+// (29)
 infer [y,b] true |- y::node<a,b> * b::ll<m>.
 print residue.
 
-// (29)
+// (30)
 // TODO : why re-infer b!=null
 infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
 print residue.
@@ -175,46 +189,10 @@ inf_b_382=b & b!=null &
 {FLOW,(17,18)=__norm}
 */
 
-infer [n] y::ll<n> |- y::node<_,null>.
-print residue.
-//Inferred Pure:[ n=1, 1<=n | n<=(0 - 1)]
-// WN : need better control over Omega.simplify
 
 
-infer [n] y::ll<n> |- y=null.
-print residue.
-// Inferred Pure:[ n=0]
-
-infer [n] y::ll<n> |- y::node<a,b>.
-print residue.
-//Inferred Pure:[ 1<=n | n<=(0 - 1)]
-// WN : should be better to use n!=0
-
-infer [y] true |- y::node<a,b> * y::node<_,_>.
-print residue.
-//Infer  (20): Valid.
-//Inferred Heap:[ y::node<inf_269,inf_270>[Orig], y::node<inf_Anon_271,inf_Anon_272>[Orig]]
-// WN : if inferred pre is FALSE, better to denote scenario as an error?
-
-infer [y] true |- y::node<a,b> * y::ll<m>.
-print residue.
 
 
-infer [y] true |- y::node<a,b> * b::ll<m>.
-print residue.
 
 
-infer [y] m=-1 |- y::node<a,b> * b::ll<m>.
-print residue.
-//Inferred Heap:[ y::node<inf_310,inf_311>[Orig], b::ll<inf_m_315>[Orig][LHSCase]]
-//Inferred Pure:[ b=inf_311, a=inf_310 & b=inf_311 & inf_m_315=0 - 1]
-// inferred pre is false
 
-infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
-print residue.
-
-infer [y,b] true |- y::node<a,b> * b::ll<m>.
-print residue.
-
-infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
-print residue.
