@@ -42,5 +42,21 @@ Inferred Pure:[ n!=0]
 */
 
 // (7) Valid & inferred n=0
-infer [n] y=null |- y::ll<n>.  
+//infer [n] y=null |- y::ll<n>.  
+//print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=0]
+<1>true & y=null & n=0 &
+*/
+
+// (9) Can improve inferred to n!=1 !!
+infer [n] n=1 & y=null |- y::ll<n>.
 print residue.
+/*
+Infer  (1): Valid.
+Inferred Heap:[]
+Inferred Pure:[ 2<=n | n<=0]
+<1>false & false &
+*/
+
