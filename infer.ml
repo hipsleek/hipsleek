@@ -201,6 +201,61 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
     end
   else None
 
+(* picks ctr from f that are related to vars *)
+(* may involve a weakening process *)
+let rec filter_var f vars = match f with
+  | CP.Or (f1,f2,l,p) -> 
+        CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
+  | _ -> 
+        if Omega.is_sat f "0" 
+        then CP.filter_var f vars 
+        else CP.mkFalse no_pos
+
+let filter_var f vars =
+  let pr = !print_pure_f in
+  Gen.Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
+
+(* TODO : this simplify could be improved *)
+let simplify f vars = Omega.simplify (filter_var (Omega.simplify f) vars)
+ 
+let simplify f vars =
+  let pr = !print_pure_f in
+  Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
+
+
+let infer_lhs_contra lhs_xpure ivars =
+  if ivars==[] then None
+  else
+    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
+    let check_sat = Omega.is_sat lhs_xpure "0" in
+    if not(check_sat) then None
+    else 
+      let f = simplify lhs_xpure ivars in
+      if CP.isConstTrue f then None
+      else Some (Redlog.negate_formula f)
+
+let infer_lhs_contra f ivars =
+  let pr = !print_mix_formula in
+  let pr2 = !print_pure_f in
+  Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) infer_lhs_contra f ivars
+
+let infer_lhs_contra_estate estate lhs_xpure pos =
+  let ivars = estate.es_infer_vars in
+  let r = infer_lhs_contra lhs_xpure ivars in
+  match r with
+    | None -> None
+    | Some pf ->
+        let new_estate =
+          {estate with 
+              es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos;
+              es_infer_pure = estate.es_infer_pure@[pf];
+          } in
+        Some new_estate
+
+let infer_lhs_contra_estate e f pos =
+  let pr0 = !print_entail_state in
+  let pr = !print_mix_formula in
+  Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option pr0) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
 
 let infer_pure_m estate lhs_xpure rhs_xpure pos =
   if no_infer estate then None
@@ -208,33 +263,28 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
     let lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let fml = CP.mkAnd lhs_xpure (MCP.pure_of_mix rhs_xpure) pos in
     let check_sat = Omega.is_sat fml "0" in
-    let rec filter_var f vars = match f with
-      | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-      | _ -> if Omega.is_sat f "0" then CP.filter_var f vars else CP.mkFalse pos
-    in
-    let simplify = fun f vars -> Omega.simplify (filter_var (Omega.simplify f) vars) in
     let iv = estate.es_infer_vars in
     let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in
     if check_sat then
       (* Temporarily *)
-(*      if List.length estate.es_trace > 0 & List.hd estate.es_trace = "Base case fold" then None*)
-(*      else                                                                                     *)
-        let new_p = simplify fml iv in
-        let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
-        if CP.isConstTrue new_p then None
-(*        else                                                    *)
-(*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
-        else
-          let args = CP.fv new_p in 
-          let new_iv = (CP.diff_svl iv args) in
-          let new_estate =
-            {estate with 
+      (*      if List.length estate.es_trace > 0 & List.hd estate.es_trace = "Base case fold" then None*)
+      (*      else                                                                                     *)
+      let new_p = simplify fml iv in
+      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
+      if CP.isConstTrue new_p then None
+        (*        else                                                    *)
+        (*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
+      else
+        let args = CP.fv new_p in 
+        let new_iv = (CP.diff_svl iv args) in
+        let new_estate =
+          {estate with 
               es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos;
               es_infer_pure = estate.es_infer_pure@[new_p];
               es_infer_vars = new_iv
-            }
-          in
-          Some new_estate
+          }
+        in
+        Some new_estate
     else
       let mkNot purefml =
         let conjs = CP.split_conjunctions purefml in
@@ -249,9 +299,9 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         (* let new_iv = (CP.diff_svl iv args) in *)
         let new_estate =
           {estate with 
-            es_formula = CF.mkFalse (CF.mkNormalFlow ()) pos;
-            es_infer_pure = estate.es_infer_pure@[new_p]
-            (* ;es_infer_vars = new_iv *)
+              es_formula = CF.mkFalse (CF.mkNormalFlow ()) pos;
+              es_infer_pure = estate.es_infer_pure@[new_p]
+                  (* ;es_infer_vars = new_iv *)
           }
         in
         Some new_estate

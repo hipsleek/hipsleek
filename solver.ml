@@ -2528,12 +2528,25 @@ and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
   if (es.es_unsat_flag) then Ctx es
   else elim_unsat_es_now prog sat_subno es
 
+
+and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
+  let rec helper c = match c with
+    | Ctx es -> elim_unsat_es prog sat_subno es
+    | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
+  in helper ctx
+
 and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
   if not b then Ctx{es with es_unsat_flag = true } else 
-	false_ctx_with_orig_ante f (flow_formula_of_formula es.es_formula) no_pos
+	false_ctx_with_orig_ante es f (flow_formula_of_formula es.es_formula) no_pos
+
+and elim_unsat_ctx_now (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
+  let rec helper c = match c with
+    | Ctx es -> elim_unsat_es_now prog sat_subno es
+    | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
+  in helper ctx
 
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula= match f with
   | Or _ -> elim_unsat_all prog f 
@@ -4661,6 +4674,7 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
         (* snd res is the residual. Otherwise     *)
         (* snd res is the constraint that causes  *)
         (* the check to fail.                     *)
+
 and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_conjunct_helper:"
@@ -6123,6 +6137,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
 
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
+  Debug.devel_pprint ("heap_entail_conjunct_non_empty_rhs_heap:"
+  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
+  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
   let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
   let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
   let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
@@ -6456,10 +6473,14 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
 
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
+  let (estate,iv) = Inf.remove_infer_vars_all estate (* rt *)in
   let vd = (vdef_fold_use_bc prog rhs_node) in
-  if (vd==None) then   (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
-  CF.mk_failure_must "99" "" [])), NoAlias)
-  else do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos
+  let (cl,prf) = 
+    if (vd==None) then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
+    CF.mk_failure_must "99" "" [])), NoAlias)
+    else do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos 
+  in  (Inf.restore_infer_vars iv cl,prf)
+
 
 and do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
@@ -6668,9 +6689,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                       (* All the args related to the viewnode of interest *)
                       [r] @ args @ alias @ alias_all @ arg_other
               in 
-            let (estate,iv) = Inf.remove_infer_vars_all estate (* rt *)in
-              let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos in
-              (Inf.restore_infer_vars iv cl,prf)
+              (* moved into do_base_fold *)
+            (* let (estate,iv) = Inf.remove_infer_vars_all estate (\* rt *\)in *)
+              let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
+                in (cl,prf)
+              (* (Inf.restore_infer_vars iv cl,prf) *)
       | Context.M_lhs_case {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_rhs_node = rhs_node;}->
@@ -6770,12 +6793,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 | None ->
                       let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
                       let rhs_xpure,_,_,_ = xpure prog conseq in
-                      let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in
+                      (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
+                      let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos in
                       begin
                         match r with
                           | Some new_estate ->
-                                let ctx1 = (Ctx new_estate) in
-                                let ctx1 = set_unsat_flag ctx1 true in
+                                (* explicitly force unsat checking to be done here *)
+                                let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
+                                (* let ctx1 = set_unsat_flag ctx1 false in  *)
                                 let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
                                 (r1,prf)
                           | None ->
