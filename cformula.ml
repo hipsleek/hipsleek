@@ -233,6 +233,7 @@ let get_ptr_from_data h =
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
@@ -2923,7 +2924,9 @@ type entail_state = {
 (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   es_infer_heap : h_formula list; (* output : pre heap inferred *)
   es_infer_pure : CP.formula list; (* output : pre pure inferred *)
-  es_infer_pures : CP.formula list; (* WN : why is this from conseq needed?; why cannot combine *)
+  (* WN : why is this from conseq needed?; why cannot combine *)
+  (* TODO : to remove! *)
+  es_infer_pures : CP.formula list;
   es_infer_invs : CP.formula list (* WN : what is this? *)
 }
 
@@ -2999,6 +3002,7 @@ let print_list_context_short = ref(fun (c:list_context) -> "printer not initiali
 let print_list_context = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
+let print_context = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
@@ -3431,15 +3435,53 @@ let es_simplify (e1:entail_state):entail_state =
 let es_simplify e1 = 
   let pr  = !print_entail_state in
   Gen.Debug.no_1 "es_simplify" pr pr es_simplify e1
+
+let rec collect_pre_pure ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_pure 
+  | OCtx (ctx1, ctx2) -> (collect_pre_pure ctx1) @ (collect_pre_pure ctx2) 
+
+let rec collect_pre_heap ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_heap 
+  | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
+let rec add_pre_heap ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_heap 
+  | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
+let add_infer_pure_to_ctx cp ctx =
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> Ctx {es with es_infer_pure = es.es_infer_pure@cp;}
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
+
+let add_infer_pure_to_ctx cp ctx =
+  Gen.Debug.no_1 "add_infer_pure_to_ctx"
+      (pr_list !print_pure_f) pr_no
+      (fun _ -> add_infer_pure_to_ctx cp ctx) cp
   
+(* f_ctx denotes false context *)
+let add_infer_pre f_ctx ctx =
+  let ch = collect_pre_heap f_ctx in
+  if (ch!=[]) then
+    let _ = print_endline "ERROR : non-pure heap inferred for false" in
+    report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
+  else
+    let cp = collect_pre_pure f_ctx in
+    if (cp!=[]) then add_infer_pure_to_ctx cp ctx
+    else ctx
+
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
   else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)
   (* true_ctx (mkTrueFlow ()) pos *)  (* not much point in checking
                                          for true *)
   (* else *) 
-  if isAnyFalseCtx ctx1 then ctx2
-  else if isAnyFalseCtx ctx2 then ctx1
+  if isAnyFalseCtx ctx1 then add_infer_pre ctx1 ctx2
+  else if isAnyFalseCtx ctx2 then add_infer_pre ctx2 ctx1
   else OCtx (ctx1,ctx2) 
 
 let or_context c1 c2 = mkOCtx c1 c2 no_pos   

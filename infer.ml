@@ -59,15 +59,6 @@ let is_inferred_pre_list_context ctx =
 (*   | Ctx estate -> is_inferred_pre estate  *)
 (*   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2) *)
 
-let rec collect_pre_pure ctx = 
-  match ctx with
-  | Ctx estate -> estate.es_infer_pure 
-  | OCtx (ctx1, ctx2) -> (collect_pre_pure ctx1) @ (collect_pre_pure ctx2) 
-
-let rec collect_pre_heap ctx = 
-  match ctx with
-  | Ctx estate -> estate.es_infer_heap 
-  | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
 let collect_pre_heap_list_context ctx = 
   match ctx with
@@ -200,6 +191,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
           match_res_rhs_rest = rhs_rest;} in
       let act = M_match r in
       (
+ (* WARNING : any dropping of match action must be followed by pop *)
           (* must_action_stk # push act; *)
       Some (new_iv,new_h,new_p))
     end
