@@ -39,3 +39,17 @@ Inferred Heap:[ y::node<inf_365,inf_b_366>[Orig]]
 Inferred Pure:[]
 <1>false & false & {FLOW,(17,18)=__norm}
 */
+*/
+
+
+// below requires remove_infer_vars_all
+// which example requires remove_infer_vars_partial?
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+// why did we get false?
+Infer  (26): Valid.
+Inferred Heap:[ y::node<inf_365,inf_b_366>[Orig]]
+Inferred Pure:[]
+<1>false & false & {FLOW,(17,18)=__norm}
+*/

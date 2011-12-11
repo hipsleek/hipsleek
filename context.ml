@@ -796,7 +796,7 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
         (*     match_res_rhs_rest = rhs_rest; *)
         (* }) in *)
         (* temp removal of infer-heap and base-case fold *)
-        (-1, (Cond_action [ ri; r; r0]))
+        (-1, (Cond_action [ (* ri; *) r; r0]))
       else r0
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 
