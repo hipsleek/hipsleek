@@ -78,3 +78,47 @@ Infer  (16): Valid.
 <1>true & Anon_172=inf_Anon_173 & b=inf_174 &
 {FLOW,(17,18)=__norm}
 */
+
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+//Inferred Pure:[ n=1, 1<=n | n<=(0 - 1)]
+// WN : need better control over Omega.simplify
+
+
+infer [n] y::ll<n> |- y=null.
+print residue.
+// Inferred Pure:[ n=0]
+
+infer [n] y::ll<n> |- y::node<a,b>.
+print residue.
+//Inferred Pure:[ 1<=n | n<=(0 - 1)]
+// WN : should be better to use n!=0
+
+infer [y] true |- y::node<a,b> * y::node<_,_>.
+print residue.
+//Infer  (20): Valid.
+//Inferred Heap:[ y::node<inf_269,inf_270>[Orig], y::node<inf_Anon_271,inf_Anon_272>[Orig]]
+// WN : if inferred pre is FALSE, better to denote scenario as an error?
+
+infer [y] true |- y::node<a,b> * y::ll<m>.
+print residue.
+
+
+infer [y] true |- y::node<a,b> * b::ll<m>.
+print residue.
+
+
+infer [y] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+//Inferred Heap:[ y::node<inf_310,inf_311>[Orig], b::ll<inf_m_315>[Orig][LHSCase]]
+//Inferred Pure:[ b=inf_311, a=inf_310 & b=inf_311 & inf_m_315=0 - 1]
+// inferred pre is false
+
+infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+
+infer [y,b] true |- y::node<a,b> * b::ll<m>.
+print residue.
+
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.

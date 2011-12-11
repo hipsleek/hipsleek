@@ -21,12 +21,21 @@ Inferred Pure:[ x!=null]
 
 // expecting x!=null to be inferred
 // with resude b::ll<n-1>.
-infer [x] x::ll<n> |- x::node<_,b>.
-print residue.
+//infer [x] x::ll<n> |- x::node<_,b>.
+//print residue.
 /*
-Infer  (1): Valid.
-<<1>EXISTS(flted_7_40: b::ll<flted_7_40>[Orig] & flted_7_40+1=n &
-{FLOW,(17,18)=__norm})
+Infer  (16): Valid.
+<1>true & Anon_172=inf_Anon_173 & b=inf_174 &
+{FLOW,(17,18)=__norm}
 */
 
 
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+// why did we get false?
+Infer  (26): Valid.
+Inferred Heap:[ y::node<inf_365,inf_b_366>[Orig]]
+Inferred Pure:[]
+<1>false & false & {FLOW,(17,18)=__norm}
+*/
