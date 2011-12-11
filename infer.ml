@@ -265,73 +265,73 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
 let infer_empty_rhs estate lhs_p rhs_p pos =
   estate
 
-let infer_empty_rhs_old estate lhs_p rhs_p pos =
-  if no_infer estate then estate
-  else
-    let _ = DD.devel_pprint ("\n inferring_empty_rhs:"^(!print_formula estate.es_formula)^ "\n\n")  pos in
-    let rec filter_var f vars = match f with
-      | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-      | _ -> CP.filter_var f vars
-    in
-    let infer_pure = MCP.pure_of_mix rhs_p in
-    let infer_pure = if CP.isConstTrue infer_pure then infer_pure
-    else CP.mkAnd (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix lhs_p) pos
-    in
-    (*        print_endline ("PURE: " ^ Cprinter.string_of_pure_formula infer_pure);*)
-    let infer_pure = Omega.simplify (filter_var infer_pure estate.es_infer_vars) in
-    let pure_part2 = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
-        (estate.es_infer_pures @ [MCP.pure_of_mix rhs_p])) in
-    (*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula infer_pure);*)
-    let infer_pure = if Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [infer_pure] in
-      {estate with es_infer_heap = []; es_infer_pure = infer_pure;
-          es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]}
+(* let infer_empty_rhs_old estate lhs_p rhs_p pos = *)
+(*   if no_infer estate then estate *)
+(*   else *)
+(*     let _ = DD.devel_pprint ("\n inferring_empty_rhs:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)
+(*     let rec filter_var f vars = match f with *)
+(*       | CP.Or (f1,f2,l,p) -> CP.Or (filter_var f1 vars, filter_var f2 vars, l, p) *)
+(*       | _ -> CP.filter_var f vars *)
+(*     in *)
+(*     let infer_pure = MCP.pure_of_mix rhs_p in *)
+(*     let infer_pure = if CP.isConstTrue infer_pure then infer_pure *)
+(*     else CP.mkAnd (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix lhs_p) pos *)
+(*     in *)
+(*     (\*        print_endline ("PURE: " ^ Cprinter.string_of_pure_formula infer_pure);*\) *)
+(*     let infer_pure = Omega.simplify (filter_var infer_pure estate.es_infer_vars) in *)
+(*     let pure_part2 = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) *)
+(*         (estate.es_infer_pures @ [MCP.pure_of_mix rhs_p])) in *)
+(*     (\*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula infer_pure);*\) *)
+(*     let infer_pure = if Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [infer_pure] in *)
+(*       {estate with es_infer_heap = []; es_infer_pure = infer_pure; *)
+(*           es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]} *)
 
 let infer_empty_rhs2 estate lhs_xpure rhs_p pos =
   estate
 
-let infer_empty_rhs2_old estate lhs_xpure rhs_p pos =
-  if no_infer estate then estate
-  else
-    let _ = DD.devel_pprint ("\n inferring_empty_rhs2:"^(!print_formula estate.es_formula)^ "\n\n")  pos in
-    (* let lhs_xpure,_,_,_ = xpure prog estate.es_formula in *)
-    let pure_part_aux = Omega.is_sat (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) "0" in
-    let rec filter_var_aux f vars = match f with
-      | CP.Or (f1,f2,l,p) -> CP.Or (filter_var_aux f1 vars, filter_var_aux f2 vars, l, p)
-      | _ -> CP.filter_var f vars
-    in
-    let filter_var f vars = 
-      if CP.isConstTrue (Omega.simplify f) then CP.mkTrue pos 
-      else
-        let res = filter_var_aux f vars in
-        if CP.isConstTrue (Omega.simplify res) then CP.mkFalse pos
-        else res
-    in
-    let invs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in
-    let pure_part = 
-      if pure_part_aux = false then
-        let mkNot purefml = 
-          let conjs = CP.split_conjunctions purefml in
-          let conjs = List.map (fun c -> CP.mkNot_s c) conjs in
-          List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs
-        in
-        let lhs_pure = CP.mkAnd (mkNot(Omega.simplify 
-            (filter_var (MCP.pure_of_mix lhs_xpure) estate.es_infer_vars))) invs pos in
-        (*print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula lhs_pure);*)
-        CP.mkAnd lhs_pure (MCP.pure_of_mix rhs_p) pos
-      else Omega.simplify (CP.mkAnd (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) invs pos)
-    in
-    let pure_part = filter_var (Omega.simplify pure_part) estate.es_infer_vars in
-    (*        print_endline ("PURE: " ^ Cprinter.string_of_mix_formula rhs_p);*)
-    let pure_part = Omega.simplify pure_part in
-    let pure_part2 = Omega.simplify (CP.mkAnd pure_part 
-        (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) 
-            (estate.es_infer_pures @ [MCP.pure_of_mix rhs_p])) pos) in
-    (*        print_endline ("PURE1: " ^ Cprinter.string_of_pure_formula pure_part);*)
-    (*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula pure_part2);*)
-    let pure_part = if (CP.isConstTrue pure_part & pure_part_aux = false) 
-      || Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [pure_part] in
-    {estate with es_infer_heap = []; es_infer_pure = pure_part;
-        es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]}
+(* let infer_empty_rhs2_old estate lhs_xpure rhs_p pos = *)
+(*   if no_infer estate then estate *)
+(*   else *)
+(*     let _ = DD.devel_pprint ("\n inferring_empty_rhs2:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)
+(*     (\* let lhs_xpure,_,_,_ = xpure prog estate.es_formula in *\) *)
+(*     let pure_part_aux = Omega.is_sat (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) "0" in *)
+(*     let rec filter_var_aux f vars = match f with *)
+(*       | CP.Or (f1,f2,l,p) -> CP.Or (filter_var_aux f1 vars, filter_var_aux f2 vars, l, p) *)
+(*       | _ -> CP.filter_var f vars *)
+(*     in *)
+(*     let filter_var f vars =  *)
+(*       if CP.isConstTrue (Omega.simplify f) then CP.mkTrue pos  *)
+(*       else *)
+(*         let res = filter_var_aux f vars in *)
+(*         if CP.isConstTrue (Omega.simplify res) then CP.mkFalse pos *)
+(*         else res *)
+(*     in *)
+(*     let invs = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in *)
+(*     let pure_part =  *)
+(*       if pure_part_aux = false then *)
+(*         let mkNot purefml =  *)
+(*           let conjs = CP.split_conjunctions purefml in *)
+(*           let conjs = List.map (fun c -> CP.mkNot_s c) conjs in *)
+(*           List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs *)
+(*         in *)
+(*         let lhs_pure = CP.mkAnd (mkNot(Omega.simplify  *)
+(*             (filter_var (MCP.pure_of_mix lhs_xpure) estate.es_infer_vars))) invs pos in *)
+(*         (\*print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula lhs_pure);*\) *)
+(*         CP.mkAnd lhs_pure (MCP.pure_of_mix rhs_p) pos *)
+(*       else Omega.simplify (CP.mkAnd (CP.mkAnd (MCP.pure_of_mix lhs_xpure) (MCP.pure_of_mix rhs_p) pos) invs pos) *)
+(*     in *)
+(*     let pure_part = filter_var (Omega.simplify pure_part) estate.es_infer_vars in *)
+(*     (\*        print_endline ("PURE: " ^ Cprinter.string_of_mix_formula rhs_p);*\) *)
+(*     let pure_part = Omega.simplify pure_part in *)
+(*     let pure_part2 = Omega.simplify (CP.mkAnd pure_part  *)
+(*         (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)  *)
+(*             (estate.es_infer_pures @ [MCP.pure_of_mix rhs_p])) pos) in *)
+(*     (\*        print_endline ("PURE1: " ^ Cprinter.string_of_pure_formula pure_part);*\) *)
+(*     (\*        print_endline ("PURE2: " ^ Cprinter.string_of_pure_formula pure_part2);*\) *)
+(*     let pure_part = if (CP.isConstTrue pure_part & pure_part_aux = false)  *)
+(*       || Omega.is_sat pure_part2 "0" = false then [CP.mkFalse pos] else [pure_part] in *)
+(*     {estate with es_infer_heap = []; es_infer_pure = pure_part; *)
+(*         es_infer_pures = estate.es_infer_pures @ [(MCP.pure_of_mix rhs_p)]} *)
 
 (* what does this method do? *)
 let infer_for_unfold prog estate lhs_node pos =

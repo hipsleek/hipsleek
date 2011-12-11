@@ -2924,9 +2924,7 @@ type entail_state = {
 (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   es_infer_heap : h_formula list; (* output : pre heap inferred *)
   es_infer_pure : CP.formula list; (* output : pre pure inferred *)
-  (* WN : why is this from conseq needed?; why cannot combine *)
-  (* TODO : to remove! *)
-  es_infer_pures : CP.formula list;
+  (* es_infer_pures : CP.formula list; *)
   es_infer_invs : CP.formula list (* WN : what is this? *)
 }
 
@@ -3560,7 +3558,7 @@ let rec empty_es flowt pos =
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_invs = [];
-  es_infer_pures = [];
+  (* es_infer_pures = []; *)
 }
 
 let mk_not_a_failure =
