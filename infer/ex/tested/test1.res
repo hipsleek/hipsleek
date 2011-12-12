@@ -50,44 +50,37 @@ Inferred Pure:[]
 
 
 Infer  (8): Valid.
-Inferred Heap:[ y::ll<inf_97>[Orig][LHSCase]]
-Inferred Pure:[]
-<1>true & x=y & n=inf_97 &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (9): Valid.
 <1>true & a=ia & b=ib &
 {FLOW,(17,18)=__norm}
 
 
-Infer  (10): Valid.
-Inferred Heap:[ y::node<inf_a_116,inf_flted_37_117>[Orig]]
-Inferred Pure:[ inf_flted_37_117=null & 1<=inf_a_116]
-<1>true & inf_flted_37_117=null & 1<=inf_a_116 &
+Infer  (9): Valid.
+Inferred Heap:[ y::node<inf_a_107,inf_flted_43_108>[Orig]]
+Inferred Pure:[ inf_flted_43_108=null & 1<=inf_a_107]
+<1>true & inf_flted_43_108=null & 1<=inf_a_107 &
 {FLOW,(17,18)=__norm}
 
 
-Infer  (11): Valid.
+Infer  (10): Valid.
 Inferred Heap:[]
 Inferred Pure:[ 1<=aa]
-<1>EXISTS(flted_40_133: true & flted_40_133=null & 1<=aa &
+<1>EXISTS(flted_47_124: true & flted_47_124=null & 1<=aa &
 {FLOW,(17,18)=__norm})
 
 
-Infer  (12): Valid.
+Infer  (11): Valid.
 <1>true & n=m &
 {FLOW,(17,18)=__norm}
 
 
-Infer  (13): Valid.
+Infer  (12): Valid.
 Inferred Heap:[]
 Inferred Pure:[ x!=null]
 <1>false & false &
 {FLOW,(17,18)=__norm}
 
 
-Infer  (14): Valid.
+Infer  (13): Valid.
 Inferred Heap:[]
 Inferred Pure:[ y!=null]
 <1>false & false &
@@ -95,4 +88,4 @@ Inferred Pure:[ y!=null]
 
 
 Halting Reduce... 
-Stop Omega... 172 invocations 
+Stop Omega... 141 invocations 
