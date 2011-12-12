@@ -51,10 +51,10 @@ Inferred Pure:[ inf_n_101=0]
 
 Infer  (9): Valid.
 Inferred Heap:[]
-Inferred Pure:[ 1>n & n>(0 - 1)]
+Inferred Pure:[ n=0]
 <1>false & false &
 {FLOW,(17,18)=__norm}
 
 
 Halting Reduce... 
-Stop Omega... 115 invocations 
+Stop Omega... 111 invocations 

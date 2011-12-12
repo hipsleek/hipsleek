@@ -15,7 +15,7 @@ Inferred Pure:[ n!=0]
 
 
 
-ERROR: at File "test5.slk",Line:18,Col:20 
+ERROR: at File "infer/ex/tested/test5.slk",Line:18,Col:20 
 Message: type table does not contain an entry for y' in ; (x node); (a int); (b node)
 , could it be an unused var?
 
@@ -38,4 +38,4 @@ inf_flted_30_119=null &
 
 
 Halting Reduce... 
-Stop Omega... 75 invocations 
+Stop Omega... 76 invocations 

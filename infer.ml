@@ -254,7 +254,7 @@ let infer_lhs_contra lhs_xpure ivars =
     let check_sat = Omega.is_sat lhs_xpure "0" in
     if not(check_sat) then None
     else 
-      let f = simplify lhs_xpure ivars in
+      let f = simplify_contra lhs_xpure ivars in
       let vf = CP.fv f in
       let over_v = CP.intersect vf ivars in
       if (over_v ==[]) then None
