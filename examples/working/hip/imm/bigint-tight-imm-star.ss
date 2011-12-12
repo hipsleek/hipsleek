@@ -174,12 +174,17 @@ node mult_c(node x, int d, int c)
 
 /* left shift all digits one pos (multiplied by ten) */
 node shift_left(node x)
-  requires x::bigint<v>@L
-  ensures res::bigint<v*10>@L;
+  case {
+    x=null -> ensures res=null;
+   x!=null -> ensures res::node<0,x>;
+  }
 {
-  if (x == null) return x;
-  return new node(0, x);
+  if (x == null) { return x;}
+  node t = new node(0, x);
+//  dprint;
+  return t;
 }
+
 
 node mult(node x, node y)
   requires x::bigint<v1>@L * y::bigint<v2>@L
