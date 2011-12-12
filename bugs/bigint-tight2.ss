@@ -57,9 +57,10 @@ node sub(node x, node y)
 
 node mult_c(node x, int d, int c)
   requires x::bigint<v> & 0 <= c <= 9 & 0 <= d <= 9 
-  ensures res::bigint<v*d+c> * x::bigint<v>;
+  ensures res::bigint<v*d+c>; // * x::bigint<v>;
 {
   if (x == null || d==0) {
+    assume false;
     if (c==0) return null;
     return new node(c, null);
   } else {
@@ -70,11 +71,17 @@ node mult_c(node x, int d, int c)
       // carry = ans/10;
       // ans = ans - carry*10;
       // ans = ans%10;
+      assume false;
+    }
+    else {
+      //assume false;
+      assume true;
     }
     node rest = mult_c(x.next, d, carry);
+    node rr = new node(ans, rest);
     dprint;
     //assume false; 
-    return new node(ans, rest);
+    return rr;
   }
 }
 
