@@ -931,17 +931,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      let cc = get_catch_of_exp cc in
               let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
 	          let ctx1 = check_exp prog proc ctx body post_start_label in
-              let _ = print_endline ("\ncheck_exp: Try: before pop_esc_level"^(Cprinter.string_of_list_failesc_context ctx1)) in
+              (* let _ = print_endline ("\ncheck_exp: Try: before pop_esc_level"^(Cprinter.string_of_list_failesc_context ctx1)) in *)
               (*convert from*)
               let ctx2 = CF.pop_esc_level_list ctx1 pid in
-              let _ = print_endline ("check_exp: Try: after pop_esc_level_list"^(Cprinter.string_of_list_failesc_context ctx2)) in
+              (* let _ = print_endline ("check_exp: Try: after pop_esc_level_list"^(Cprinter.string_of_list_failesc_context ctx2)) in *)
               let ctx3 = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx2 in
-              let _ = print_endline ("check_exp: Try: after push_esc_level"^(Cprinter.string_of_list_failesc_context ctx3)) in
+              (* let _ = print_endline ("check_exp: Try: after push_esc_level"^(Cprinter.string_of_list_failesc_context ctx3)) in *)
               let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
                 (fun c -> CF.add_path_id c (Some pid,0)) elim_exists_ctx ctx3 in
-              let _ = print_endline ("check_exp: Try: after splitter_failesc_context"^(Cprinter.string_of_list_failesc_context ctx4)) in
+              (* let _ = print_endline ("check_exp: Try: after splitter_failesc_context"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
-              let _ = print_endline ("check_exp: Try: after catch_body"^(Cprinter.string_of_list_failesc_context ctx5)) in
+              (* let _ = print_endline ("check_exp: Try: after catch_body"^(Cprinter.string_of_list_failesc_context ctx5)) in *)
               CF.pop_esc_level_list ctx5 pid
 	    | _ -> 
 	          failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
