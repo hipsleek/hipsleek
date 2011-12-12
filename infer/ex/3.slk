@@ -23,16 +23,12 @@ print residue.
 infer [n] true |- y::ll<n>.
 print residue.
 /*
-nferred Heap:[]
-Inferred Pure:[ false]
-<1>false & false &
-{FLOW,(17,18)=__norm}
 
 Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 | n=n_48 & 1<=n_48 |-  n_48=n (may-bug).
 */
 
 // (5) Fail
-// TODO is it useful to infer n!=0 ?
+// TODO we should infer n!=0 
 infer [n] n=0 |- y::ll<n>.
 print residue.
 /*
@@ -64,20 +60,26 @@ infer [x] x=null |- x::node<_,null>.
 print residue.
 
 // (12)
-// TODO why no inferred n=1?
+// Inferred n=1
+
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
 /*
-<1>true & Anon_136=inf_Anon_138 & flted_61_137=inf_flted_61_139 &
-{FLOW,(17,18)=__norm}
+Inferred Heap:[]
+Inferred Pure:[ n=1, n!=0 & 0<=n]
+<1>EXISTS(q_160,flted_7_159: q_160::ll<flted_7_159>[Orig] & flted_7_159=0 & 
+n=1 &
+{FLOW,(17,18)=__norm})
 */
 
 // (13)
-// TODO: why no inferred n>0?
+// inferred n>0
 infer [n] y::ll<n> |- y::node<_,b>.
 print residue.
 /*
-<1>EXISTS(flted_7_168: b::ll<flted_7_168>[Orig] & flted_7_168+1=n &
+Inferred Heap:[]
+Inferred Pure:[ n!=0 & 0<=n]
+<1>EXISTS(flted_7_179: b::ll<flted_7_179>[Orig] & flted_7_179+1=n &
 {FLOW,(17,18)=__norm})
 */
 
@@ -89,9 +91,15 @@ print residue.
 infer [y] y::ll<n> |- y=null.
 print residue.
 
-// (16) inferred y=null
+// (16) inferred y=null & n=0
 infer [y,n] y::ll<n> |- y=null.
 print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=0 & y=null]
+<1>y::ll<n>[Orig][LHSCase] & n=0 & y=null &
+{FLOW,(17,18)=__norm}
+*/
 
 // (17) fail
 infer [y] y::ll<n> |- y::node<_,null>.
@@ -99,12 +107,15 @@ print residue.
 
 
 // (18) fail
-// TODO : should infer n=1
+// Inferred n=1
 infer [y,n] y::ll<n> |- y::node<_,null>.
 print residue.
 /*
-Infer  (17): Fail. (may) cause:(failure_code=213)  true |-  inf_flted_95_221=nul
-l (may-bug).
+Inferred Heap:[]
+Inferred Pure:[ n=1, !(n=0 & y=null) & 0<=n]
+<1>EXISTS(q_236,flted_7_235: q_236::ll<flted_7_235>[Orig] & flted_7_235=0 & 
+n=1 &
+{FLOW,(17,18)=__norm})
 */
 
 // (19) inferred n=1
@@ -112,9 +123,9 @@ infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
 /*
 Inferred Heap:[]
-Inferred Pure:[ n=1]
-<1>EXISTS(q_248,flted_7_247: q_248::ll<flted_7_247>[Orig] & flted_7_247+
-1=n & n=1 &
+Inferred Pure:[ n=1, n!=0 & 0<=n]
+<1>EXISTS(q_260,flted_7_259: q_260::ll<flted_7_259>[Orig] & flted_7_259=0 & 
+n=1 &
 {FLOW,(17,18)=__norm})
 */
 
@@ -124,18 +135,25 @@ print residue.
 
 
 // (21) 
-// TODO : expecting x!=null to be inferred
+// Inferred x!=null
 infer [x] x::ll<n> |- x::node<_,b>.
 print residue.
 /*
-Infer  (16): Valid.
-<1>true & Anon_172=inf_Anon_173 & b=inf_174 &
-{FLOW,(17,18)=__norm}
+Inferred Heap:[]
+Inferred Pure:[ x!=null]
+<1>EXISTS(flted_7_285: b::ll<flted_7_285>[Orig] & flted_7_285+1=n &
+
 */
 
 // (22) inferred n=1
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=1, n!=0 & 0<=n]
+<1>EXISTS(q_309,flted_7_308: q_309::ll<flted_7_308>[Orig] & flted_7_308=0 & 
+n=1 &
+*/
 
 // (23)
 infer [n] y::ll<n> |- y=null.
@@ -145,7 +163,7 @@ print residue.
 // (24)
 infer [n] y::ll<n> |- y::node<a,b>.
 print residue.
-//Inferred Pure:[ 1<=n | n<=(0 - 1)]
+//Inferred Pure:[ n!=0 & 0<=n]
 // WN : should be better to use n!=0
 
 // (25)
@@ -183,15 +201,15 @@ infer [y,b] true |- y::node<a,b> * b::ll<m>.
 print residue.
 
 // (30)
-// TODO : why re-infer b!=null
+// OK
 infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
 print residue.
 /*
-Inferred Heap:[ y::node<inf_381,inf_b_382>[Orig], b::ll<inf_387>[Orig][LHSCase]]
-Inferred Pure:[ a=inf_381 & m=inf_387 & inf_b_382=b & b!=null]
-<1>true & b!=null & a=inf_381 & m=inf_387 & a=inf_381 & m=inf_387 & 
-inf_b_382=b & b!=null &
+Inferred Heap:[ y::node<inf_422,inf_b_423>[Orig], b::ll<inf_428>[Orig][LHSCase]]
+Inferred Pure:[ a=inf_422 & m=inf_428 & inf_b_423=b]
+<1>true & inf_422=a & inf_428=m & b=inf_b_423 & inf_b_423!=null &
 {FLOW,(17,18)=__norm}
+
 */
 
 

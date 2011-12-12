@@ -5372,7 +5372,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
     let rhs_xpure = rhs_p in
     let r = Inf.infer_pure_m 1 estate lhs_xpure rhs_xpure pos in
-    (* let r = Inf.infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos in *)
+    (* let _ = Inf.infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos in *)
     match r with
       | Some new_estate ->
             (* explicitly force unsat checking to be done here *)
@@ -6806,9 +6806,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 | None ->
                       let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
                       let rhs_xpure,_,_,_ = xpure prog conseq in
-                      let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in
+                      (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
                       (* Thai: change back to Inf.infer_pure *)
-                      (*let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos in*)
+                      let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos in
                       begin
                         match r with
                           | Some new_estate ->

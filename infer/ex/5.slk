@@ -7,33 +7,24 @@ pred ll<na> == self = null & na = 0
 	or self::node<_, q> * q::ll<na-1> 
   inv na >= 0.
 
-// TODO is it useful to infer n!=0 ?
-//infer [n] n=0 |- y::ll<n>.
-//print residue.
-/*
-Inferred Heap:[]
-Inferred Pure:[ n!=0]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-*/
 
 
 // (17) fail
 // TODO : is the disj necessary?
-//infer [y,n] y::ll<n> |- y::node<_,null>.
-//print residue.
+infer [y,n] y::ll<n> |- y::node<_,null>.
+print residue.
 /*
 Inferred Heap:[]
-Inferred Pure:[ n=1, y!=null & 1<=n | n<=(0 - 1) & y!=null]
-<1>EXISTS(q_56,flted_7_55: q_56::ll<flted_7_55>[Orig] & flted_7_55+1=n & 
-n=1 &
+Inferred Pure:[ n=1, !(n=0 & y=null)]
+<1>EXISTS(q_46,flted_7_45: q_46::ll<flted_7_45>[Orig] & flted_7_45=0 & n=1 &
+{FLOW,(17,18)=__norm})
 */
 
 
-// (14)
+// (2)
 // seems OK
-//infer [n] y::ll<n> |- y::node<_,b>.
-//print residue.
+infer [n] y::ll<n> |- y::node<_,b>.
+print residue.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n!=0]
@@ -41,69 +32,90 @@ Inferred Pure:[ n!=0]
 {FLOW,(17,18)=__norm})
 */
 
-// (7) Valid & inferred n=0
-//infer [n] y=null |- y::ll<n>.  
-//print residue.
+// (3) Valid & inferred n=0
+infer [n] y=null |- y::ll<n>.  
+print residue.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n=0]
 <1>true & y=null & n=0 &
 */
 
-// (9) Can improve inferred to n!=1 !!
-//infer [n] n=1 & y=null |- y::ll<n>.
-//print residue.
+// (4) Can improve inferred to n!=1 !!
+infer [n] n=1 & y=null |- y::ll<n>.
+print residue.
 /*
-Infer  (1): Valid.
 Inferred Heap:[]
-Inferred Pure:[ 2<=n | n<=0]
+Inferred Pure:[ n!=1]
 <1>false & false &
+{FLOW,(17,18)=__norm}
 */
 
-
-//infer [n] n=1 & y=null |- n=0.
-//print residue.
+// (5)
+infer [n] n=1 & y=null |- n=0.
+print residue.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n!=1]
 <1>false & false &
 */
 
-// stronger RHS
+// (6) stronger RHS
 infer [n] n>0 & n>m  |- n>3.
 print residue.
 /*
 Inferred Heap:[]
-Inferred Pure:[ m<n & 4<=n]
-<1>true & 0<n & m<n & m<n & 4<=n &
+Inferred Pure:[ 4<=n]
+<1>true & m<n & 4<=n &
 {FLOW,(17,18)=__norm}
-
-
-{
 */
 
-// stronger RHS
+// (7) stronger RHS
 infer [n] n>0 & n>m & m>4  |- n>8.
 print residue.
 /*
-Infer  (2): Valid.
 Inferred Heap:[]
-Inferred Pure:[ 5<=m & m<n & 9<=n]
-<1>true & 0<n & m<n & 4<m & 5<=m & m<n & 9<=n &
+Inferred Pure:[ 9<=n]
+<1>true & 5<=m & m<n & 9<=n &
+{FLOW,(17,18)=__norm}
 */
 
-// lhs & rhs -> false
+// (8) lhs & rhs -> false
+// TODO : should drop m
+// --> (exists m: m<n & 1<=n)
 infer [n] n>0 & n>m  |- false.
 print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ !(m<n & 1<=n)]
+<1>false & false &
+*/
 
-// lhs & rhs -> false
+// (9) lhs & rhs -> false
 infer [n,m] n>0 & n>m  |- false.
 print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ !(m<n & 1<=n)]
+<1>false & false &
+*/
 
-// lhs & rhs -> false but no n
+// (10) lhs & rhs -> false but no n
 infer [n] true  |- n=1 & n=2.
 print residue.
+/*
+Infer  (10): Fail. (must) cause:(failure_code=213)  true |-  n=2 & n=1 (RHS: contradiction).
+<1>true & true &
+{FLOW,(1,2)=__Error}
 
-// lhs & rhs -> false
+*/
+
+// (11) lhs & rhs -> false
 infer [n,m] n>0 & m=2  |- false.
 print residue.
+/*
+nferred Heap:[]
+Inferred Pure:[ !(m=2 & 1<=n)]
+<1>false & false &
+{FLOW,(17,18)=__norm}
+*/

@@ -255,7 +255,9 @@ let infer_lhs_contra lhs_xpure ivars =
     if not(check_sat) then None
     else 
       let f = simplify lhs_xpure ivars in
-      if CP.isConstFalse f then None
+      let vf = CP.fv f in
+      let over_v = CP.intersect vf ivars in
+      if (over_v ==[]) then None
       else Some (Redlog.negate_formula f)
 
 let infer_lhs_contra f ivars =
@@ -294,8 +296,11 @@ let infer_lhs_rhs_pure lhs_simp rhs_simp ivars (* evars *) =
   let check_sat = Omega.is_sat fml "0" in
   if not(check_sat) then
     (* lhs & rhs |- false *)
-    if CP.isConstFalse lhs_simp then None
-    else Some (Redlog.negate_formula lhs_simp)
+    let f = simplify lhs_simp ivars in
+    let vf = CP.fv f in
+    let over_v = CP.intersect vf ivars in
+    if (over_v ==[]) then None
+    else Some (Redlog.negate_formula f)
   else 
     (* rhs -> lhs *)
     None
