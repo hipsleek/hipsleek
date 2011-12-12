@@ -260,6 +260,7 @@ let is_self_ident id = self=id
 
 let fork_name = "fork"  (*generic, its args can vary*)
 let join_name = "join1"
+let thread_name = "Thread"  (*concurrent flow*)
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)

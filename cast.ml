@@ -259,12 +259,20 @@ and exp_seq = { exp_seq_type : typ;
     exp_seq_exp1 : exp;
     exp_seq_exp2 : exp;
     exp_seq_pos : loc }
-    
+
+(*For conjunctive flows*)
+and sharp_conj = {
+    sharp_conj_method_name : ident;
+    sharp_conj_arguments : ident list; 
+}
+
 and exp_sharp = {
   exp_sharp_type : typ;
     exp_sharp_flow_type :sharp_flow;(*the new flow*)
     exp_sharp_val :sharp_val;(*returned value*)
     exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
+    exp_sharp_is_conj_flow : bool;
+    exp_sharp_conj: sharp_conj option;
     exp_sharp_path_id : control_path_id;
     exp_sharp_pos : loc;
 }

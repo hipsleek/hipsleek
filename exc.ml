@@ -9,7 +9,6 @@ type nflow = (int*int)(*numeric representation of flow*)
 
 (* type dflow = nflow * lflow (\* orig_exc, current list *\) *)
 
-
 (*========================================*)
 (*LDK*)
 (*conversion between lflow, list and set*) 

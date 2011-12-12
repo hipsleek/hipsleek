@@ -6404,3 +6404,39 @@ let rec push_case_f pf sf =
     | EAssume _ -> f
   in
   List.map helper sf
+
+(*=======split_pre_post ->  ========*)
+(*TO DO: ECase*)
+let rec split_pre_post_ext (spec:ext_formula) : (struc_formula * struc_formula) =
+  match spec with
+    | EVariance e -> 
+        (*ignore EVariance*)
+        split_pre_post_struc e.formula_var_continuation
+    | EBase b -> 
+        let f = b.formula_ext_base in
+        let pre,post = split_pre_post_struc b.formula_ext_continuation in
+        let new_b = EBase {b with formula_ext_continuation=[]} in
+        (new_b::pre,post)
+    | ECase c -> 
+        let _ = print_string "[split_pre_post_ext] Warning: not support ECase " in
+        ([spec],[])
+    | EAssume _ -> ([],[spec])
+
+and split_pre_post_struc (specs:struc_formula) : (struc_formula * struc_formula) =
+  match specs with
+    | [] -> ([],[])
+    | spec::rest -> 
+        let pre,post = split_pre_post_struc rest in
+        let pre1,post1 = split_pre_post_ext spec in
+        (pre1@pre,post1@post)
+
+and split_specs_x (specs:struc_formula) : (struc_formula * struc_formula) =
+  split_pre_post_struc specs
+
+(*split pre/post of a spec*)
+(*TO DO: split multiple specs*)
+and split_specs (specs:struc_formula) : (struc_formula * struc_formula) =
+  let pr (ls1,ls2) = ("\n ###pre= " ^ (!print_struc_formula ls1) ^ "\n ###post=" ^ (!print_struc_formula ls2)) in
+  Gen.Debug.ho_1 "split_specs" !print_struc_formula pr
+      split_specs_x specs
+(*=======split_pre_post <- ========*)

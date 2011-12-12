@@ -983,7 +983,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
   (*         } *)
   (* in *)
   let _ = exlist # compute_hierarchy in
-  (* let _ = print_endline (exlist # string_of ) in *)
+  let _ = print_endline (exlist # string_of ) in
   let prog3 = prog4 in
   let prog2 = { prog4 with I.prog_data_decls =
           ({I.data_name = conj_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
@@ -1072,7 +1072,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
           let cprog4 = (add_pre_to_cprog cprog3) in
 	      let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 	      let c = (mark_recursive_call prog cprog5) in 
-          let _ = print_endline (exlist # string_of) in
+          (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	      (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 		  c)))
@@ -2665,23 +2665,94 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts arg_types then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
               else
-                let ret_ct  = Globals.Void in
-                let positions = List.map I.get_exp_pos args in
-                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
-                let call_e = C.SCall {
-                    C.exp_scall_type = ret_ct;
-                    C.exp_scall_method_name = mingled_mn;
-                    C.exp_scall_arguments = arg_vars;
-				    C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
-                    C.exp_scall_pos = pos;
-                    C.exp_scall_path_id = pi; } in
-                let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                let tid_var = List.nth args 0 in (*tid*)
+                let oe = I.New{
+                    I.exp_new_class_name = Globals.thread_name;
+                    I.exp_new_arguments = [tid_var];
+                    I.exp_new_pos = pos }
+                in
+                (*similar to raise Threads(id)*)
+                let e_pos = pos in
+                let ce, ct = helper oe in
+                (* let _ = print_endline ("trans_exp: trans_exp: I.CallNRecv : fork : ct =" ^ string_of_typ ct) in *)
+                (* let new_e,new_ct =  *)
+                if exlist # sub_type_obj (string_of_typ ct) conj_class then
+                  (*conjunctive flow*)
+                  let fn = (fresh_ty_var_name (ct) pos.start_pos.Lexing.pos_lnum) in
+                  let vd = C.VarDecl { C.exp_var_decl_type = ct;
+                                       C.exp_var_decl_name = fn;
+                                       C.exp_var_decl_pos = e_pos;} in
+                  let init_e = C.Assign { C.exp_assign_lhs = fn;
+                                          C.exp_assign_rhs = ce;
+                                          C.exp_assign_pos = e_pos;} in
+                  (* let ret_ct  = Globals.Void in *)
+                  let positions = List.map I.get_exp_pos args in
+                  let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+                  let method_name = List.nth arg_vars 1 in (*method name*)
+                  let method_args = (List.tl (List.tl arg_vars)) in
+                  (* fork arguments as a sharp_conj *)
+                  let s_conj = {
+                      C.sharp_conj_method_name = method_name;
+                      C.sharp_conj_arguments = method_args;
+                  } in
+                  let shar = C.Sharp ({
+                      C.exp_sharp_type = C.void_type;
+                      C.exp_sharp_flow_type = C.Sharp_ct (
+                          match ct with
+                            | Named ot ->  {CF.formula_flow_interval = (exlist # get_hash ot); CF.formula_flow_link = None}
+                            | _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
+                      C.exp_sharp_unpack = false;
+                      C.exp_sharp_val = Cast.Sharp_var (ct,fn);
+                      (*TO DO: add fname and args*)
+                      C.exp_sharp_is_conj_flow = true;
+                      C.exp_sharp_conj = Some s_conj;
+                      C.exp_sharp_path_id = pi;
+                      C.exp_sharp_pos = pos }) in
+                  let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
+                                       C.exp_seq_exp1 = init_e;
+                                       C.exp_seq_exp2 = shar;
+                                       C.exp_seq_pos = pos;} in
+                  let tmp_e2 = C.Seq { C.exp_seq_type = C.void_type;
+                                       C.exp_seq_exp1 = vd;
+                                       C.exp_seq_exp2 = tmp_e1;
+                                       C.exp_seq_pos = pos;} in 
+                  let tmp_e3 = C.Seq { C.exp_seq_type = C.void_type;
+                                       C.exp_seq_exp1 = init_seq;
+                                       C.exp_seq_exp2 = tmp_e2;
+                                       C.exp_seq_pos = pos;} in
                 ((C.Block {
-                    C.exp_block_type = ret_ct;
-                    C.exp_block_body = seq_1;
+                    C.exp_block_type = C.void_type;
+                    C.exp_block_body = tmp_e3;
                     C.exp_block_local_vars = local_vars;
-                    C.exp_block_pos = pos; }),ret_ct)
+                    C.exp_block_pos = pos; }),C.void_type)
+                else 
+                  Err.report_error { Err.error_loc = pos; 
+                                     Err.error_text = "fork: can not raise not conjunctive object" }
+                (* in *)
+                (* let _ = print_endline ("trans_exp: I.CallNRecv : fork"  *)
+                (*                        ^ "\n ### ie = " ^ (Iprinter.string_of_exp ie) *)
+                (*                        ^ "\n ### new_e = " ^ (Cprinter.string_of_exp new_e)) *)
+                (* in *)
+
+                (* let ret_ct  = Globals.Void in *)
+                (* let positions = List.map I.get_exp_pos args in *)
+                (* let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in *)
+                (* let call_e = C.SCall { *)
+                (*     C.exp_scall_type = ret_ct; *)
+                (*     C.exp_scall_method_name = mingled_mn; *)
+                (*     C.exp_scall_arguments = arg_vars; *)
+				(*     C.exp_scall_is_rec = false; (\* default value - it will be set later in trans_prog *\) *)
+                (*     C.exp_scall_pos = pos; *)
+                (*     C.exp_scall_path_id = pi; } in *)
+                (* let seq_1 = C.mkSeq ret_ct init_seq call_e pos in *)
+                (* ((C.Block { *)
+                (*     C.exp_block_type = ret_ct; *)
+                (*     C.exp_block_body = seq_1; *)
+                (*     C.exp_block_local_vars = local_vars; *)
+                (*     C.exp_block_pos = pos; }),ret_ct) *)
               (* Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");} *)
+            (*END FORK*)
+            (*Begin normal method call*)
             else (try 
               let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
               if ( != ) (List.length args) (List.length pdef.I.proc_args) then
@@ -2902,6 +2973,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                             {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
                     C.exp_sharp_val = Cast.Sharp_no_val;
                     C.exp_sharp_unpack = false;
+                    C.exp_sharp_is_conj_flow = false;
+                    C.exp_sharp_conj = None;
                     C.exp_sharp_path_id = pi;
                     C.exp_sharp_pos = pos}), C.void_type)
                   else
@@ -2925,6 +2998,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
                         C.exp_sharp_unpack = false;
                         C.exp_sharp_val = Cast.Sharp_var (ct,fn);
+                        C.exp_sharp_is_conj_flow = false;
+                        C.exp_sharp_conj = None;
                         C.exp_sharp_path_id = pi;
                         C.exp_sharp_pos = pos}) in
                     let tmp_e1 = C.Seq { 
@@ -3235,12 +3310,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 | I.Var ve -> ve.I.exp_var_name
                                 | _ -> Err.report_error { Err.error_loc = pos; 
                                   Err.error_text = "translation error, raise from finally raises"^ (Iprinter.string_of_exp oe)});
+                      C.exp_sharp_is_conj_flow = false;
+                      C.exp_sharp_conj = None;
                       C.exp_sharp_pos = pos;
                       C.exp_sharp_path_id = pi;}), C.void_type)
                     else
                       let e_pos = Iast.get_exp_pos oe in
-                      let ce, ct = helper oe in						
-                      if exlist # sub_type_obj (string_of_typ ct) raisable_class then 							 
+                      let ce, ct = helper oe in
+                      if exlist # sub_type_obj (string_of_typ ct) raisable_class then
                         let fn = (fresh_ty_var_name (ct) pos.start_pos.Lexing.pos_lnum) in
                         let vd = C.VarDecl { C.exp_var_decl_type = ct;
                         C.exp_var_decl_name = fn;
@@ -3256,6 +3333,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   | _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
                             C.exp_sharp_unpack = false;
                             C.exp_sharp_val = Cast.Sharp_var (ct,fn);
+                            C.exp_sharp_is_conj_flow = false;
+                            C.exp_sharp_conj = None;
                             C.exp_sharp_path_id = pi;
                             C.exp_sharp_pos = pos }) in
                         let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
@@ -3278,6 +3357,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 {CF.formula_flow_interval = (exlist # get_hash c); CF.formula_flow_link = None})
                           | I.Var_flow c -> (C.Sharp_id c));
                     C.exp_sharp_val = Cast.Sharp_no_val;
+                    C.exp_sharp_is_conj_flow = false;
+                    C.exp_sharp_conj = None;
                     C.exp_sharp_pos = pos;
                     C.exp_sharp_path_id = pi;}), C.void_type) in r				
       | Iast.Try {  
@@ -3321,6 +3402,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                               C.exp_sharp_flow_type = C.Sharp_ct 
                                                   {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = Some fl_var};
                                               C.exp_sharp_val = Cast.Sharp_no_val;
+                                              (*TO CHECK: is this correct ???*)
+                                              C.exp_sharp_is_conj_flow = false;
+                                              C.exp_sharp_conj = None;
                                               C.exp_sharp_unpack = false;
                                               C.exp_sharp_pos = pos;
                                               C.exp_sharp_path_id =None (* c.C.exp_catch_path_id*);
@@ -3344,6 +3428,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						  C.exp_sharp_flow_type = C.Sharp_ct 
 							  {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
 						  C.exp_sharp_val = Cast.Sharp_no_val;
+                          (*TO CHECK: is this conj correct ???*)
+                          C.exp_sharp_is_conj_flow = false;
+                          C.exp_sharp_conj = None;
 						  C.exp_sharp_unpack = true;
 						  C.exp_sharp_pos = pos;
 						  C.exp_sharp_path_id = None (*stub_branch_point_id "_spec_catch"*);

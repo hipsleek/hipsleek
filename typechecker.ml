@@ -60,7 +60,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in (*???*)
 
 		        (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
-		        
+
 		        let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		        let r = check_specs_a prog proc nctx c2 e0 in
 		        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
@@ -116,42 +116,6 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   in	
   (* let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
   List.for_all do_spec_verification spec_list
-
-(*=======split_pre_post ->  ========*)
-(*TO DO: ECase*)
-and split_pre_post_ext (spec:CF.ext_formula) : (CF.struc_formula * CF.struc_formula) =
-  match spec with
-    | Cformula.EVariance e -> 
-        (*ignore EVariance*)
-        split_pre_post_struc e.CF.formula_var_continuation
-    | Cformula.EBase b -> 
-        let f = b.Cformula.formula_ext_base in
-        let pre,post = split_pre_post_struc b.CF.formula_ext_continuation in
-        let new_b = CF.EBase {b with CF.formula_ext_continuation=[]} in
-        (new_b::pre,post)
-    | Cformula.ECase c -> 
-        let _ = print_string "[split_pre_post_ext] Warning: not support ECase " in
-        ([spec],[])
-    | Cformula.EAssume _ -> ([],[spec])
-
-and split_pre_post_struc (specs:CF.struc_formula) : (CF.struc_formula * CF.struc_formula) =
-  match specs with
-    | [] -> ([],[])
-    | spec::rest -> 
-        let pre,post = split_pre_post_struc rest in
-        let pre1,post1 = split_pre_post_ext spec in
-        (pre1@pre,post1@post)
-
-and split_specs_x (specs:CF.struc_formula) : (CF.struc_formula * CF.struc_formula) =
-  split_pre_post_struc specs
-
-(*split pre/post of a spec*)
-(*TO DO: split multiple specs*)
-and split_specs (specs:CF.struc_formula) : (CF.struc_formula * CF.struc_formula) =
-  let pr (ls1,ls2) = ("\n ###pre= " ^ (Cprinter.string_of_struc_formula ls1) ^ "\n ###post=" ^ (Cprinter.string_of_struc_formula ls2)) in
-  Gen.Debug.ho_1 "split_specs" Cprinter.string_of_struc_formula pr
-      split_specs_x specs
-(*=======split_pre_post <- ========*)
 
 and check_exp prog proc ctx e0 label =
   let pr_pn x = x.proc_name in
@@ -587,12 +551,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				    (* An Hoa : output the context and new spec before checking pre-condition *)
 				    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
 
-                    (*entail pre and then post instead of both*)
-                    let pre,post = split_specs pre2 in
+                    (* entail pre and then post instead of both *)
+                    let pre,post = CF.split_specs pre2 in
+                    let _ = Debug.devel_pprint ("chech_exp: fork:" ^ ("\n ###pre= " ^ (!print_struc_formula pre) ^ "\n ###post=" ^ (!print_struc_formula post))) no_pos in
                     let rs_pre, prf_pre = heap_entail_struc_list_failesc_context_init prog false true sctx pre pos pid in
                     let rs, prf = heap_entail_struc_list_failesc_context_init prog false true rs_pre post pos pid in
-                    (*TO DO NEXT: entail pre-cond only, put post-cond into a concurrent flow*)
+                    (* TO DO NEXT: entail pre-cond only, put post-cond into a concurrent flow *)
 
+                    (*=============================================*)
+                    (*this can be done at astsimp.ml*)
+                    (*First, create a new var pointing to Thread(id)*)
+                    (*assume it has type Thread*)
+                    (* let fn = (fresh_ty_var_name (Globals.Named "Thread") pos.start_pos.Lexing.pos_lnum) in *)
+                    (* let vd = C.VarDecl { C.exp_var_decl_type = (Globals.Named "Thread"); *)
+                    (*                      C.exp_var_decl_name = fn; *)
+                    (*                      C.exp_var_decl_pos = pos;} in *)
+
+                    (*=============================================*)
                     (* let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in *)
 				    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
@@ -786,6 +761,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_flow_type = ft;(*P.flow_typ*)
           exp_sharp_val = v; (*maybe none*)
           exp_sharp_unpack = un;(*true if it must get the new flow from the second element of the current flow pair*)
+          exp_sharp_is_conj_flow = is_conj;
+          exp_sharp_conj = conj;
           exp_sharp_path_id = pid;
           exp_sharp_pos = pos})	-> 
 	          let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in
@@ -793,13 +770,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in
 	          let nctx = match v with 
 	            | Sharp_var (t,v) -> 
-                        let t1 = (get_sharp_flow ft) in
+                    if (not is_conj) then
+                      let t1 = (get_sharp_flow ft) in
                         (* let _ = print_endline ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) in *)
-                        let vr = if is_subset_flow t1 !raisable_flow_int then (CP.mkeRes t)
-                        else (CP.mkRes t) in
+                      let vr = if is_subset_flow t1 !raisable_flow_int then (CP.mkeRes t)
+                          else (CP.mkRes t) in
 		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr (CP.SpecVar (t, v, Primed)) pos)) pos in
 		              let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
 		              ctx1
+                    else
+                      ctx
 	            | Sharp_flow v -> 
 		              let fct es = 
 		                let rest, b_rez = CF.get_var_type v es.CF.es_formula in

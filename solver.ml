@@ -3073,30 +3073,30 @@ and heap_entail_conjunct_lhs_struc_x
 	          (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
               (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
               let ctx = add_to_context_num 1 ctx11 "case rule" in
-	          if (List.length b.formula_case_exists)>0 then 
+	          if (List.length b.formula_case_exists)>0 then
 	            let ws = CP.fresh_spec_vars b.formula_case_exists in
 	            let st = List.combine b.formula_case_exists ws in
 	            let new_struc = subst_struc st [(ECase {b with formula_case_exists = []})]in
 	            let new_ctx = push_exists_context ws ctx in
-	            let nc,np = inner_entailer 1 new_ctx new_struc in 
+	            let nc,np = inner_entailer 1 new_ctx new_struc in
 	            (nc, (mkEexStep ctx [f] np))
 	          else if (List.length b.formula_case_branches )=0 then ((SuccCtx [ctx]),TrueConseq)
-	          else 
+	          else
 	            let rec helper l = match l with
 	              | [] -> None
-	              | (p,e)::t -> 
+	              | (p,e)::t ->
 		                let tt = (syn_imply ctx p) in
 		                (*print_string ("\n -------------:\n"^(Cprinter.string_of_context ctx)^"\n\n"^
 		                  (Cprinter.string_of_pure_formula p)^"\n\n"^(string_of_bool tt)^"\n") ;*)
 		                if tt then Some (p,e) else helper t in
-			    
+
 			    (* Find the branch whose condition is satisfied by the current context *)
 			    (* Because these conditions are disjoint, the context can only statisfy at most one condition *)
 	            let r = helper b.formula_case_branches in
 	            let r = match r with
 	              | None -> begin
 		              List.map (fun (c1, c2) -> 
-			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
+			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in
                           (*this unsat check is essential for completeness of result*)
 				          if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
 				          else
@@ -3104,8 +3104,8 @@ and heap_entail_conjunct_lhs_struc_x
 					        let n_ctx = CF.transform_context (
 					            fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx in
 
-					        (*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)					
-					        
+					        (*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
+
 					        let n_ctx = prune_ctx prog n_ctx in
 					        inner_entailer 2 n_ctx c2) b.formula_case_branches 
 				    end
