@@ -262,11 +262,11 @@ data tid{
 /*   requires id::tid<> */
 /*   ensures true; */
 
-void fork(tid id)
+void fork(int id)
   requires true
      ensures true;
 
-void join1(tid id)
+void join1(int id)
      requires true
   ensures true;
 

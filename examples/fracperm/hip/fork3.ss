@@ -56,7 +56,7 @@ void test_fork(ref int2 x,  ref int2 y)
      requires x::int2(f)<n1> * y::int2(f)<n2> & f=1.0
      ensures x'::int2(f)<n1+1> * y'::int2(f)<n2+1>; //'
 {
-  tid id;
+  int id;
   fork(id,inc,x); //under construction
   //inc(x);
   y.val++;

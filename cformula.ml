@@ -6437,6 +6437,6 @@ and split_specs_x (specs:struc_formula) : (struc_formula * struc_formula) =
 (*TO DO: split multiple specs*)
 and split_specs (specs:struc_formula) : (struc_formula * struc_formula) =
   let pr (ls1,ls2) = ("\n ###pre= " ^ (!print_struc_formula ls1) ^ "\n ###post=" ^ (!print_struc_formula ls2)) in
-  Gen.Debug.ho_1 "split_specs" !print_struc_formula pr
+  Gen.Debug.no_1 "split_specs" !print_struc_formula pr
       split_specs_x specs
 (*=======split_pre_post <- ========*)

@@ -111,6 +111,8 @@ and string_of_var_kind k = string_of_typ k
   (*   	| Known d->  *)
   (*   ("known "^(string_of_typ d)) ) *)
 
+let string_of_var_kind_list = pr_list string_of_var_kind
+
 let res_retrieve stab clean_res fl =
 	if clean_res then  
 		try 
@@ -2657,6 +2659,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               if (List.length args <2) then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "fork has less then 2 arguments"; }
               else
+              (*fork has at least tid and a method*)
               let fun0 arg = 
                 let (e,ct) = helper arg in
                 ct
@@ -2943,6 +2946,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               (let tmp = List.map (helper) args in
               let (cargs, cts) = List.split tmp in
               let parg_types = List.map (fun ft -> trans_type prog ft pos) field_types in
+              (* let _ = print_endline ("\ntrans_exp: I.New:"  *)
+              (*                        ^"### cts = " ^ (string_of_var_kind_list cts) *)
+              (*                        ^"### parg_types = " ^ (string_of_var_kind_list parg_types)) in *)
               if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match";}
               else ( let positions = Gen.repeat pos nargs in
