@@ -18,3 +18,14 @@ print residue.
 
 infer [x] n<0   |- x::ll<n>.
 print residue.
+
+infer [y] true |- y::node<a,b> * y::ll<m>.
+print residue.
+
+infer [y] true |- y::node<a,null>.
+print residue.
+
+infer [aa]  y::node<aa,null> |- y::node<a,null> & a>0.
+print residue.
+
+
