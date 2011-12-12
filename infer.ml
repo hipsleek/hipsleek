@@ -341,11 +341,15 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         (*        else                                                    *)
         (*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
       else
+        (* Simplify the pure of the residue *)
+        let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
+        let h, p, fl, b, t = CF.split_components new_es_formula in
+        let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
         let args = CP.fv new_p in 
         let new_iv = (CP.diff_svl iv args) in
         let new_estate =
           {estate with 
-              es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos;
+              es_formula = new_es_formula;
               es_infer_pure = estate.es_infer_pure@[new_p];
               es_infer_vars = new_iv
           }
