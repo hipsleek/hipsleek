@@ -35,6 +35,8 @@ and primed =
   | Primed
   | Unprimed
 
+and heap_ann = Lend | Imm | Mutable
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -304,7 +306,7 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref false
+let allow_imm = ref true
 
 let ann_derv = ref false
 

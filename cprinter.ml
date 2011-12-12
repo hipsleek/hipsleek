@@ -461,6 +461,13 @@ let string_of_spec_var x =
 	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
+let string_of_imm imm = match imm with
+  | Imm -> "@I"
+  | Lend -> "@L"
+  | _ -> "@M"
+
+
+
 
 let string_of_cperm perm =
   let perm_str = match perm with
@@ -468,8 +475,6 @@ let string_of_cperm perm =
     | Some f -> string_of_spec_var f
   in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
 
-let string_of_imm imm = 
-  if imm then "@I" else "" (*"@M"*)
 
 let string_of_derv dr = 
   if dr then "@D" else ""

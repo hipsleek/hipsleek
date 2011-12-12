@@ -1,47 +1,15 @@
 
-
 data node { int val ; node next }.
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n-1> 
 	inv n >= 0.
 
-
-// this failed with the "compete" system
-//checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  
-// |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
+//checkentail (x::ll<n>@L & y::node<_,r>@L*r::ll<m1>@L) & n > 0 |- (x::ll<n>@L & y::ll<m2>@L).
 //print residue.
-// t@I; z
-//2. Valid
 
 
-//checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  
-//  |- (x::ll<n>@I); t::ll<a>@I * y::ll<m>.
+//checkentail (x::ll<n>@L); p::ll<_>*((y::ll<_>@L); z::ll<_>) & n > 0 |- (x::ll<n>@L & y::ll<m2>@L).
+//print residue.
 
-
-checkentail (x::ll<n>@I); y::ll<m>@I 
-    |- x::ll<n>@I * y::ll<m>@I.
-
-checkentail (x::ll<n>@I); y::ll<m>@I 
-    |- x::ll<n>@I .
-
-checkentail (x::ll<n>@I); y::ll<m>@I 
-    |- x::ll<n>@I; true .
-
-checkentail (x::ll<n>@I); y::ll<m>@I 
-    |- true .
-
-checkentail (x::ll<n>@I); y::ll<m>@I 
-    |- (x::ll<n>@I); y::ll<m>@I.
-
-//checkentail (x::ll<n>@I); y::ll<m> * z::ll<m> * t::ll<a>@I & n > 0  
-// |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
-
-//checkentail (x::ll<n>@I);  t::ll<a>@I * y::ll<m> & n > 0  
-// |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
+checkentail p::node<_,q> * q::ll<_> |- p::ll<_>.
 print residue.
-//
-
-
-
-
-

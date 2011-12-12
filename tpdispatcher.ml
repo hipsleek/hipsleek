@@ -1512,8 +1512,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   let imp_no = (string_of_int !proof_no) in
   (* let _ = print_string ("\nTPdispatcher.ml: imply_timeout:" ^ imp_no) in *)
   Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
-  Debug.devel_pprint ("ante: " ^ (!print_pure ante0)) no_pos;
-  Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
+  Debug.devel_pprint ("imply_timeout: ante: " ^ (!print_pure ante0)) no_pos;
+  Debug.devel_pprint ("imply_timeout: conseq: " ^ (!print_pure conseq0)) no_pos;
   if !external_prover then 
 
     (* let _ = print_string ("imply_timeout: !external_prove \n ") in *)

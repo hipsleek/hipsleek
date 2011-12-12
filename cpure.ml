@@ -723,7 +723,7 @@ and is_float_bformula b =
       -> (is_float_exp e1) || (is_float_exp e2) || (is_float_exp e3)
   | _ -> false
 
-and is_float_formula f0 = 
+and is_float_formula_x f0 = 
   let rec helper f0= 
   match f0 with
     | BForm (b,_) -> is_float_bformula b
@@ -732,6 +732,11 @@ and is_float_formula f0 =
     | And (f1, f2, _) | Or (f1, f2, _,_) ->
         (helper f1) || (helper f2)
   in helper f0
+
+and is_float_formula f0 =
+  Gen.Debug.no_1 "is_float_formula" 
+      !print_formula string_of_bool
+      is_float_formula_x f0
 
 and is_object_type (t : typ) = match t with
   | Named _ -> true

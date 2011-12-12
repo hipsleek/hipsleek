@@ -191,7 +191,7 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    exp_bind_imm : bool;
+    exp_bind_imm : heap_ann;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
@@ -382,6 +382,7 @@ let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been in
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_spec_var_list = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
