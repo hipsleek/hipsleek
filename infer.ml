@@ -201,6 +201,20 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
     end
   else None
 
+(*
+type: Cformula.entail_state ->
+  Cformula.h_formula ->
+  Cformula.h_formula ->
+  Cformula.formula ->
+  (Cformula.CP.spec_var list * Cformula.h_formula * CP.formula) option
+*)
+let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq = 
+  let pr1 = !print_entail_state in
+  let pr2 = !print_h_formula in
+  (* let pr3 = pr_option (fun (a,b,c) -> (!print_svl a, pr2 b, !print_pure_f c)) in *)
+  Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr_no
+      (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq) es rhs
+
 (* picks ctr from f that are related to vars *)
 (* may involve a weakening process *)
 let rec filter_var f vars = match f with
@@ -222,7 +236,6 @@ let simplify f vars =
   let pr = !print_pure_f in
   Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
-
 let infer_lhs_contra lhs_xpure ivars =
   if ivars==[] then None
   else
@@ -231,7 +244,7 @@ let infer_lhs_contra lhs_xpure ivars =
     if not(check_sat) then None
     else 
       let f = simplify lhs_xpure ivars in
-      if CP.isConstTrue f then None
+      if CP.isConstFalse f then None
       else Some (Redlog.negate_formula f)
 
 let infer_lhs_contra f ivars =
@@ -256,6 +269,48 @@ let infer_lhs_contra_estate e f pos =
   let pr0 = !print_entail_state in
   let pr = !print_mix_formula in
   Gen.Debug.no_2 "infer_lhs_contra_estate" pr0 pr (pr_option pr0) (fun _ _ -> infer_lhs_contra_estate e f pos) e f
+
+(*
+   should this be done by ivars?
+   (i) (lhs & rhs contradict)
+       lhs & rhs --> false 
+       find a lhs to negate to make state false
+   (ii) rhs --> lhs (rhs is stronger)
+        find a stronger rhs to add to lhs
+*)
+let infer_lhs_rhs_pure lhs_simp rhs_simp ivars (* evars *) =
+  let fml = CP.mkAnd lhs_simp rhs_simp no_pos in
+  let check_sat = Omega.is_sat fml "0" in
+  if not(check_sat) then
+    (* lhs & rhs |- false *)
+    if CP.isConstFalse lhs_simp then None
+    else Some (Redlog.negate_formula lhs_simp)
+  else 
+    (* rhs -> lhs *)
+    None
+
+let infer_lhs_rhs_pure lhs rhs ivars =
+  let pr = !print_pure_f in
+  Gen.Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars
+
+let infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos =
+  let ivars = estate.es_infer_vars in
+  let lhs_xpure = MCP.pure_of_mix lhs_xpure in
+  let rhs_xpure = MCP.pure_of_mix rhs_xpure in
+  if ivars == [] then None
+  else 
+    let lhs_simp = simplify lhs_xpure ivars in
+    let rhs_simp = simplify rhs_xpure ivars in
+    let r = infer_lhs_rhs_pure lhs_simp rhs_simp ivars in
+    match r with
+      | None -> None
+      | Some pf ->
+            let new_estate =
+              {estate with 
+                  es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos;
+                  es_infer_pure = estate.es_infer_pure@[pf];
+              } in
+            Some new_estate
 
 let infer_pure_m estate lhs_xpure rhs_xpure pos =
   if no_infer estate then None
@@ -401,15 +456,15 @@ let infer_for_unfold prog estate lhs_node pos =
       | _ -> estate.es_infer_invs
     in {estate with es_infer_invs = inv} 
 
-let infer_for_unfold_old prog estate lhs_node pos =
-  if no_infer estate then estate
-  else
-    let _ = DD.devel_pprint ("\n inferring_for_unfold:"^(!print_formula estate.es_formula)^ "\n\n")  pos in
-    let inv = match lhs_node with
-      | ViewNode ({h_formula_view_name = c}) ->
-            let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
-            let i = MCP.pure_of_mix (fst vdef.Cast.view_user_inv) in
-            if List.mem i estate.es_infer_invs then estate.es_infer_invs
-            else estate.es_infer_invs @ [i]
-      | _ -> estate.es_infer_invs
-    in {estate with es_infer_invs = inv} 
+(* let infer_for_unfold_old prog estate lhs_node pos = *)
+(*   if no_infer estate then estate *)
+(*   else *)
+(*     let _ = DD.devel_pprint ("\n inferring_for_unfold:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)
+(*     let inv = match lhs_node with *)
+(*       | ViewNode ({h_formula_view_name = c}) -> *)
+(*             let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in *)
+(*             let i = MCP.pure_of_mix (fst vdef.Cast.view_user_inv) in *)
+(*             if List.mem i estate.es_infer_invs then estate.es_infer_invs *)
+(*             else estate.es_infer_invs @ [i] *)
+(*       | _ -> estate.es_infer_invs *)
+(*     in {estate with es_infer_invs = inv}  *)

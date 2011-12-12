@@ -5372,10 +5372,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
     let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
     let rhs_xpure = rhs_p in
     let r = Inf.infer_pure_m 1 estate lhs_xpure rhs_xpure pos in
+    (* let r = Inf.infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos in *)
     match r with
       | Some new_estate ->
-            let ctx1 = (Ctx new_estate) in
-            let ctx1 = set_unsat_flag ctx1 true in
+            (* explicitly force unsat checking to be done here *)
+            let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
+            (* let ctx1 = (Ctx new_estate) in *)
+            (* let ctx1 = set_unsat_flag ctx1 true in  *)
             let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in
             (r1,prf)
       | None ->
