@@ -3569,7 +3569,7 @@ let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  Gen.Debug.ho_2 "list_failesc_context_or" 
+  Gen.Debug.no_2 "list_failesc_context_or" 
       pr pr pr
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
 
