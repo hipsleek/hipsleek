@@ -58,6 +58,4 @@ print residue.
 infer [y] y=null |- y::node<a,b>.
 print residue.
 
-infer [p] x::node<1,p> |- x::ll<n> .
-print residue.
 

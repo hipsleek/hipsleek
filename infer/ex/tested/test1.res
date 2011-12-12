@@ -115,11 +115,5 @@ Inferred Pure:[ y!=null]
 {FLOW,(17,18)=__norm}
 
 
-Infer  (18): Valid.
-<1>EXISTS(flted_61_204: true & flted_61_204=1 & q_205=p & inf_flted_7_216+
-1=n &
-{FLOW,(17,18)=__norm})
-
-
 Halting Reduce... 
-Stop Omega... 240 invocations 
+Stop Omega... 221 invocations 

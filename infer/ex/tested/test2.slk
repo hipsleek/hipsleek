@@ -25,8 +25,5 @@ print residue.
 infer [n] n=0 |- q::ll<n> .
 print residue.
 
-infer [q] n!=0 |- q::ll<n> .
-print residue.
-
 infer [n] n!=0 |- q::ll<n> .
 print residue.

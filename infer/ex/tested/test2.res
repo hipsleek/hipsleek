@@ -30,14 +30,7 @@ Inferred Pure:[ inf_n_67=0]
 
 Infer  (6): Fail. (may) cause:(failure_code=15.3)  true |-  q!=null;  n=0 |-  n_77=n (may-bug).
 
-Infer  (7): Valid.
-Inferred Heap:[ q::ll<inf_n_91>[Orig][LHSCase]]
-Inferred Pure:[ inf_n_91=n & 1<=n | inf_n_91=n & n<=(0 - 1)]
-<1>true & (n=inf_n_91 & 1<=inf_n_91 | n=inf_n_91 & inf_n_91<=(0 - 1)) &
-{FLOW,(17,18)=__norm}
-
-
-Infer  (8): Fail. (may) cause:(failure_code=15.3)  true |-  q!=null (may-bug).
+Infer  (7): Fail. (may) cause:(failure_code=15.3)  true |-  q!=null (may-bug).
 
 Halting Reduce... 
-Stop Omega... 121 invocations 
+Stop Omega... 94 invocations 
