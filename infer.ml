@@ -215,6 +215,12 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr_no
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq) es rhs
 
+let is_elem_of conj conjs = 
+  let filtered = List.filter (fun c -> Omega.imply conj c "1" 100 && Omega.imply c conj "2" 100) conjs in
+  match filtered with
+    | [] -> false
+    | _ -> true
+
 (* picks ctr from f that are related to vars *)
 (* may involve a weakening process *)
 let rec filter_var f vars = match f with
@@ -324,6 +330,11 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
     if check_sat then
       let new_p = simplify fml iv in
       let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
+      let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
+      let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
+      let new_p_conjs = CP.list_of_conjs new_p in
+      let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
+        (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
       (* Thai: Should check if the precondition overlaps with the orig ante *)
       (* And simplify the pure in the residue *)
       if CP.isConstTrue new_p then None
