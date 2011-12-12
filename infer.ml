@@ -231,7 +231,8 @@ let filter_var f vars =
 
 (* TODO : this simplify could be improved *)
 let simplify f vars = Omega.simplify (filter_var (Omega.simplify f) vars)
- 
+let simplify_contra f vars = filter_var f vars
+
 let simplify f vars =
   let pr = !print_pure_f in
   Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
@@ -321,11 +322,10 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
     let iv = estate.es_infer_vars in
     let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in
     if check_sat then
-      (* Temporarily *)
-      (*      if List.length estate.es_trace > 0 & List.hd estate.es_trace = "Base case fold" then None*)
-      (*      else                                                                                     *)
       let new_p = simplify fml iv in
       let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
+      (* Thai: Should check if the precondition overlaps with the orig ante *)
+      (* And simplify the pure in the residue *)
       if CP.isConstTrue new_p then None
         (*        else                                                    *)
         (*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
@@ -341,13 +341,13 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         in
         Some new_estate
     else
-      let mkNot purefml =
+      (*let mkNot purefml =
         let conjs = CP.split_conjunctions purefml in
         let conjs = List.map (fun c -> CP.mkNot_s c) conjs in
         List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs
-      in      
+      in*)      
       let lhs_simplified = simplify lhs_xpure iv in
-      let new_p = simplify (CP.mkAnd (mkNot lhs_simplified) invariants pos) iv in
+      let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
       if CP.isConstFalse new_p then None
       else
         let args = CP.fv new_p in 
