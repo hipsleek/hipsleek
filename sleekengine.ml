@@ -455,13 +455,18 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in
   let ante = Solver.prune_preds !cprog true ante in
+  (* let csq_extra = meta_to_formula iconseq0 false [] stab in *)
+  (* let conseq_fvs = CF.fv csq_extra in *)
+  (* let _ = print_endline ("conseq vars"^(Cprinter.string_of_spec_var_list conseq_fvs)) in *)
   let fvs = CF.fv ante in
+  (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
+  (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
+  (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
   let conseq = Solver.prune_pred_struc !cprog true conseq in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
-
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)

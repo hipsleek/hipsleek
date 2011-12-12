@@ -3810,6 +3810,29 @@ and trans_var_x (ve, pe) stab pos =
                 Err.error_text = "type table does not contain an entry for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n, could it be an unused var?\n";
             }			
             
+and trans_var_safe (ve, pe) stab pos =
+  (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
+  (* if (ve.[0] = '#') then  *)
+  (*   CP.SpecVar (UNK,"#",Unprimed) *)
+  if (is_dont_care_var ve) then 
+	CP.SpecVar (UNK,ve,Unprimed)
+  else (* An Hoa : END *)
+	try
+      let ve_info = H.find stab ve
+      in
+      (match ve_info.sv_info_kind with
+        | UNK ->
+              Err.report_error
+                  {
+                      Err.error_loc = pos;
+                      Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";
+                  }
+        | t -> CP.SpecVar (t, ve, pe)
+
+      )
+    with Not_found ->   
+        CP.SpecVar (UNK, ve, pe)
+
 and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formula = 
   let rec inner_add_pre (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:Cformula.struc_formula): Cformula.struc_formula =
     let rec helper (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:Cformula.ext_formula):Cformula.ext_formula=
@@ -3900,8 +3923,9 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   (* let _ = collect_type_info_struc_f prog f0 stab in	 *)
   let _ = gather_type_info_struc_f prog f0 stab in
   let r = trans_struc_formula_hlp f0 fvars in
-  let cfvhp1 = List.map (fun c-> trans_var_nth 0 (c,Primed) stab (Iformula.pos_of_struc_formula f0)) fvars in
-  let cfvhp2 = List.map (fun c-> trans_var (c,Unprimed) stab (Iformula.pos_of_struc_formula f0)) fvars in
+  let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) stab (Iformula.pos_of_struc_formula f0)) fvars in
+  let cfvhp2 = List.map (fun sv -> match sv with | CP.SpecVar (t,v,_) -> CP.SpecVar(t,v,Unprimed)) cfvhp1 in
+  (* let cfvhp2 = List.map (fun c-> trans_var_safe (c,Unprimed) stab (Iformula.pos_of_struc_formula f0)) fvars in *)
   let cfvhp = cfvhp1@cfvhp2 in
   let _ = case_coverage cfvhp r in
   let tmp_vars  =  (Cformula.struc_post_fv r) in 
