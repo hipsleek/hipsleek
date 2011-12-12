@@ -1,0 +1,168 @@
+data node {
+     int val;
+     node next;
+}.
+
+pred Cell<i> == self::node<i,_> 
+inv self!=null.
+// M <: I <: L
+/*
+// fail
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- x::Cell<_>@I.
+
+ checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@C.
+
+// should valid
+// parser problem?
+ checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@I; true.
+//expected residue: (x::Cell<_>@I);y::Cell<>.
+
+checkentail y::Cell<_>@I |- y::Cell<_>.
+// fail
+
+
+checkentail y::Cell<_>@L |- y::Cell<_>@L.
+//should valid
+checkentail (x::Cell<_>@I) ; y::Cell<_> |- y::Cell<_>@I; true.
+print residue.
+// residue: y::Cell<_>@L
+
+checkentail y::Cell<_> |- y::Cell<_>@I.
+print residue.
+// residue: emp
+
+checkentail y::Cell<_>@L |- y::Cell<_>@I.
+// fail
+
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- x::Cell<_>@L.
+print residue.
+//expected residue: (x::Cell<_>@L);y::Cell<>.
+
+
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- y::Cell<_>@I.
+print residue.
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- y::Cell<_>.
+print residue.
+// residue emp
+
+*/
+
+/*
+checkentail x::Cell<_>*y::Cell<_> |- x::Cell<_>@I*y::Cell<_>@C.
+// expected residue x::Cell<_>
+
+// succeeded with empty res x::Cell<_>
+checkentail (x::Cell<_>@I) ; y::Cell<_> |- y::Cell<_>.
+print residue.
+
+// should succeed with residue below
+// cannot parse
+//checkentail (x::Cell<_>@I) ; y::Cell<_> |- (x::Cell<_>@I); true
+//expected residue: (x::Cell<_>@I);y::Cell<>.
+
+// should succeed with residue below
+// cannot parse
+// checkentail x::Cell<_>@I * y::Cell<_> |- (y::Cell<_>@I) ; true.
+// expected residue: x::Cell<>@I * y::Cell<>
+
+// should succeed with residue below
+// cannot parse
+// checkentail x::Cell<_>@I * y::Cell<_>  |- (x::Cell<_>@I) ; true.
+// expected residue: x::Cell<>@I * y::Cell<>
+
+// fail
+checkentail x::Cell<_>@I * y::Cell<_>  |- x::Cell<_> .
+
+// succeeded with residue x::Cell<_>@I
+checkentail x::Cell<_>@I * y::Cell<_>  |- y::Cell<_> .
+print residue.
+
+// succeeded with residue y::Cell<_>
+checkentail x::Cell<_> * y::Cell<_>  |- x::Cell<_> .
+print residue.
+
+
+pred foo<z> == self::node<1,y>@I*y::node<_,z>
+
+x::node<1,y>*y::node<2,z> |- x::foo<z>
+x::node<1,y>*y::node<2,z> |- self::node<1,y>@I*y::node<_,z>
+==> x::node<1,y> * x::foo<z>
+==> x::node<1,y> * (x::node<1,y>@I*y::node<_,z>)
+==> x::node<1,y> * (y1::node<_,z>)
+
+  requires x::foo<z>
+  ensures  x::foo<z>;
+
+
+  requires x::node<..>@I
+  ensures  x::node<..>@I
+
+
+(x::node<..>@I)@E => emp
+(x::node<..>@C)@E => x::node<..>@C
+(x::node<..>@M)@E => x::node<..>@M
+(pred<..>)@E =>
+  (post)@E
+
+x::ll<n> = x=null & n=0
+   or x::node<_,q>@I*q::ll<n-1>
+inv n>=0
+
+x::ll_I<n> = x=null & n=0
+   or x::node<_,q>@I*q::ll_I<n-1>
+inv n>=0
+
+x::ll_C<n> = x=null & n=0
+   or x::node<_,q>@C*q::ll_C<n-1>
+inv n>=0
+
+x::node<_,null> |- x::ll<n>
+
+x::node<_,null> *  x::ll<n> & n=1 
+
+x::ll<n>@I * y::ll<m>@I
+
+// @L - lending
+// @I - immutable and 100%
+// @M - immutable and 100%
+
+int length(node n)
+requires x::ll_C<n>
+ensures x::ll_C<n> & res=n
+
+requires x::ll_I<n>
+ensures x::ll_I<n> & res=n
+
+requires x::ll<n>@I
+ensures  x::ll<n>@I & res=n
+
+requires x::ll<n>@I
+ensures  res=n
+
+  ? |- x::ll<n>
+ ==> x is a linked-list of length n
+     & x has not been consumed by the entailment
+
+
+ x::ll<n> |-
+ ==> x is a linked-list of length n
+     & x has not been consumed by the entailment
+
+ x::ll<n>
+ x.next=null;
+ x.val =0;
+ t=build_rec(0,x)
+ ==> t::treelsegI<x,null,0,1>
+
+ res::treelsegI<...>
+ 
+
+ x::ll<n>@I
+
+ x::ll<n>@I |- x::ll<n>@I
+ 
+x::ll<n>@I * (res::teelsegI<x,pp,0,m> * pp::ll<m>@I)@E
+ m=0
+*/
+ m=0
+

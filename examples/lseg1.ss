@@ -43,7 +43,7 @@ bool bubble(node xs, node p)
 			flag = true; 
 
 			//if (!tmp) {
-				//if (xs.next.next != null) { // this is the coercion step
+				//if (xs.next.next != null) { // this is the lemma step
 					//--node tmp2 = xs.next.next;
 					//--xs.next.next = id(tmp2);
 					//id3(xs.next.next);

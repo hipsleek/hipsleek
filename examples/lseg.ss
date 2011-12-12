@@ -8,7 +8,7 @@ lseg<p, n> == self=p & n=0
 	inv n>=0;
 	
 
-coercion lbreak(node x, int n, int n1, int n2, node q)
+lemma lbreak(node x, int n, int n1, int n2, node q)
 	requires x::lseg<p, n> & n=n1+n2 & n1>=0 & n2>=0
 	ensures x::lseg<q, n1> * q::lseg<p, n2>;
 
@@ -24,7 +24,7 @@ coercion lbreak(node x, int n, int n1, int n2, node q)
 }
 
 /*
-coercion lmerge(node x, node y, int n1, int n2)
+lemma lmerge(node x, node y, int n1, int n2)
 	requires x::lseg<y, n1> * y::lseg<p, n2>
 	ensures x::lseg<p, n> & n=n1+n2;
 {
@@ -40,7 +40,7 @@ ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
 	inv n>=1;
 
-coercion ll_tail1(node x)
+lemma ll_tail1(node x)
 	requires x::ll_tail<tx, n>
 	ensures x::lseg<tx, n-1> * tx::node<_, null>;
 

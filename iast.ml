@@ -6,6 +6,9 @@
 
 open Globals
 open Gen.Basic
+(* open Exc.ETABLE_NFLOW *)
+open Exc.GTable
+open Perm
 
 module F = Iformula
 module P = Ipure
@@ -40,6 +43,7 @@ and data_decl = { data_name : ident;
 
 and view_decl = { view_name : ident; 
 		  mutable view_data_name : ident;
+          (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
 		  view_vars : ident list;
 		  view_labels : branch_label list;
 		  view_modes : mode list;
@@ -921,13 +925,13 @@ and look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs 
   | [] -> raise Not_found
 	    
 and look_up_proc_def_mingled_name (procs : proc_decl list) (name : string) = 
-	match procs with
-  | p :: rest ->
-        if p.proc_mingled_name = name then
-		  p
-        else
-		  look_up_proc_def_mingled_name rest name
-  | [] -> raise Not_found
+  match procs with
+    | p :: rest ->
+          if p.proc_mingled_name = name then
+		    p
+          else
+		    look_up_proc_def_mingled_name rest name
+    | [] -> raise Not_found
 
 (*
 (* takes a proc and returns the class where it is declared *)
@@ -946,33 +950,37 @@ and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = ma
         c.data_methods @ (look_up_all_methods prog cparent_decl)  
 
 (**
- * An Hoa : expand the inline fields. This is just the fixed point computation.
- * Input: A list of Iast fields. Output: A list of Iast fields without inline.
- **)
+   * An Hoa : expand the inline fields. This is just the fixed point computation.
+   * Input: A list of Iast fields. Output: A list of Iast fields without inline.
+**)
 and expand_inline_fields ddefs fls =
-	(** [Internal] An Hoa : add a prefix k to a field declaration f **)
-	let augment_field_with_prefix f k = match f with
-		| ((t,id),p,i) -> ((t,k ^ id),p,i)
-	in
-	if (List.exists is_inline_field fls) then
-		let flse = List.map (fun fld -> if (is_inline_field fld) then
-											let fn  = get_field_name fld in
-											let ft = get_field_typ fld in
-											try
-												let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
-												let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
-													fld_fs
-											with
-												| Not_found -> failwith "[expand_inline_fields] type not found!"
-										else [fld]) fls in
-		let flse = List.flatten flse in
-			expand_inline_fields ddefs flse
-	else fls
+  (** [Internal] An Hoa : add a prefix k to a field declaration f **)
+  let augment_field_with_prefix f k = match f with
+	| ((t,id),p,i) -> ((t,k ^ id),p,i)
+  in
+  if (List.exists is_inline_field fls) then
+	let flse = List.map (fun fld -> if (is_inline_field fld) then
+	  let fn  = get_field_name fld in
+	  let ft = get_field_typ fld in
+	  try
+		let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
+		let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
+		fld_fs
+	  with
+		| Not_found -> failwith "[expand_inline_fields] type not found!"
+	else [fld]) fls in
+	let flse = List.flatten flse in
+	expand_inline_fields ddefs flse
+  else fls
 
 and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
+  let pr1 = pr_list (fun (ti,_,_) -> pr_pair string_of_typ pr_id ti) in 
+  Gen.Debug.no_1 "look_up_all_fields" pr_id pr1 (fun _ -> look_up_all_fields_x prog c) c.data_name
+
+and look_up_all_fields_x (prog : prog_decl) (c : data_decl) = 
   let current_fields = c.data_fields in
-	(* An Hoa : expand the inline fields *)
-	let current_fields = expand_inline_fields prog.prog_data_decls current_fields in
+  (* An Hoa : expand the inline fields *)
+  let current_fields = expand_inline_fields prog.prog_data_decls current_fields in
   if (String.compare c.data_name "Object") = 0 then
 	[]
   else
@@ -1021,103 +1029,113 @@ and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list
   else (dl,el)
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+  Gen.Debug.no_1 "syn_data_name" pr_no pr_no
+      (fun _ -> syn_data_name_x data_decls view_decls) () 
+
+and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
   (*let vl = List.map (fun v -> v.view_name) view_decls in*)
-	(* An Hoa : Implement the equality checking *)
-	(** [Internal] replaces aliases of self by it. **)
-	let rec process_eq_self_view v = { v with view_formula = process_eq_self_sf v.view_formula }
+  (* An Hoa : Implement the equality checking *)
+  (** [Internal] replaces aliases of self by it. **)
+  (*let rec process_eq_self_view v = { v with view_formula = process_eq_self_sf v.view_formula }
 
-	(** [Internal] replaces aliases of self in an struc_formula **)
-	and process_eq_self_sf f = List.map process_eq_self_ef f
+  (** [Internal] replaces aliases of self in an struc_formula **)
+  and process_eq_self_sf f = List.map process_eq_self_ef f
 
-	(** [Internal] replaces aliases of self in an ext_formula **)
-	and process_eq_self_ef f = match f with
-		| F.ECase ecf -> let b = List.map (fun (x,y) -> (x,process_eq_self_sf y)) 
-								ecf.F.formula_case_branches in
-							F.ECase { ecf with F.formula_case_branches = b }
-		| F.EBase ebf -> let bf = process_formula ebf.F.formula_ext_base in
-						let ecnt = process_eq_self_sf ebf.F.formula_ext_continuation in
-							F.EBase { ebf with F.formula_ext_base = bf; 
-								F.formula_ext_continuation = ecnt }
-		| _ -> f (* Stay the same on the other cases. *)
+  (** [Internal] replaces aliases of self in an ext_formula **)
+  and process_eq_self_ef f = match f with
+	| F.ECase ecf -> let b = List.map (fun (x,y) -> (x,process_eq_self_sf y)) 
+		ecf.F.formula_case_branches in
+	  F.ECase { ecf with F.formula_case_branches = b }
+	| F.EBase ebf -> let bf = process_formula ebf.F.formula_ext_base in
+	  let ecnt = process_eq_self_sf ebf.F.formula_ext_continuation in
+	  F.EBase { ebf with F.formula_ext_base = bf; 
+		  F.formula_ext_continuation = ecnt }
+	| _ -> f (* Stay the same on the other cases. *)
 
-	(** [Internal] replaces aliases of self in an formula **)
-	and process_formula f = match f with
-		| F.Base fb -> F.Base { fb with 
-			F.formula_base_heap = process_pure_heap fb.F.formula_base_pure 
-													fb.F.formula_base_heap }
-		| F.Exists fe -> F.Exists { fe with 
-			F.formula_exists_heap = process_pure_heap fe.F.formula_exists_pure
-														fe.F.formula_exists_heap }
-		| F.Or fo -> let f1 = process_formula fo.F.formula_or_f1 in
-						let f2 = process_formula fo.F.formula_or_f2 in
-							F.Or { fo with F.formula_or_f1 = f1; F.formula_or_f2 = f2 }
+  (** [Internal] replaces aliases of self in an formula **)
+  and process_formula f = match f with
+	| F.Base fb -> F.Base { fb with 
+		  F.formula_base_heap = process_pure_heap fb.F.formula_base_pure 
+			  fb.F.formula_base_heap }
+	| F.Exists fe -> F.Exists { fe with 
+		  F.formula_exists_heap = process_pure_heap fe.F.formula_exists_pure
+			  fe.F.formula_exists_heap }
+	| F.Or fo -> let f1 = process_formula fo.F.formula_or_f1 in
+	  let f2 = process_formula fo.F.formula_or_f2 in
+	  F.Or { fo with F.formula_or_f1 = f1; F.formula_or_f2 = f2 }
 
-	(** [Internal] extract equalities of form self = x and replace x 
-		with self in heapreturn a new heap formula.
-	 **)
-	and process_pure_heap p h =
-		let vars = collect_eq_self p in
-		(* let _ = print_endline ("Variables equal self : " ^ (String.concat "," (List.map (fun (x,y) -> x) vars))) in *)
-			replace_self h vars
-	
-	and collect_eq_self p = match p with
-		| P.BForm (f,_) -> (let (pf, _) = f in match pf with
-			| P.Eq (e1,e2,_) -> (match e1 with
-				| P.Var ((vn,vp), _) -> (if (vn = "self" && vp = Unprimed) then
-										match e2 with
-										| P.Var ((xn,xp),_) -> [(xn,xp)]
-										| _ -> [] 
-								else match e2 with
-										| P.Var (("self",Unprimed),_) -> [(vn,vp)]
-										| _ -> [])
+  (** [Internal] extract equalities of form self = x and replace x 
+	  with self in heapreturn a new heap formula.
+  **)
+  and process_pure_heap p h =
+	let vars = collect_eq_self p in
+	(* let _ = print_endline ("Variables equal self : " ^ (String.concat "," (List.map (fun (x,y) -> x) vars))) in *)
+	replace_self h vars
+	    
+  and collect_eq_self p = match p with
+	| P.BForm (f,_) -> (let (pf, _) = f in match pf with
+		| P.Eq (e1,e2,_) -> (match e1 with
+			| P.Var ((vn,vp), _) -> (if (vn = "self" && vp = Unprimed) then
+				match e2 with
+				  | P.Var ((xn,xp),_) -> [(xn,xp)]
+				  | _ -> [] 
+			  else match e2 with
+				| P.Var (("self",Unprimed),_) -> [(vn,vp)]
 				| _ -> [])
 			| _ -> [])
-		| P.And (f1,f2,_) -> List.append (collect_eq_self f1) (collect_eq_self f2)
-		| P.Or _ | P.Not _ -> []
-		| P.Forall (_,f,_,_) | P.Exists (_,f,_,_) -> collect_eq_self f
+		| _ -> [])
+	| P.And (f1,f2,_) -> List.append (collect_eq_self f1) (collect_eq_self f2)
+	| P.Or _ | P.Not _ -> []
+	| P.Forall (_,f,_,_) | P.Exists (_,f,_,_) -> collect_eq_self f
 
-	and replace_self h vars = match h with
-		| F.Phase h1 -> F.Phase { h1 with
-			F.h_formula_phase_rd = replace_self h1.F.h_formula_phase_rd vars;
-			F.h_formula_phase_rw = replace_self h1.F.h_formula_phase_rw vars}
-		| F.Conj h1 -> F.Conj { h1 with
-			F.h_formula_conj_h1 = replace_self h1.F.h_formula_conj_h1 vars;
-			F.h_formula_conj_h2 = replace_self h1.F.h_formula_conj_h2 vars}
-		| F.Star h1 -> F.Star { h1 with
-			F.h_formula_star_h1 = replace_self h1.F.h_formula_star_h1 vars;
-			F.h_formula_star_h2 = replace_self h1.F.h_formula_star_h2 vars}
-		| F.HeapNode h1 -> F.HeapNode { h1 with
-			(* Replace the pointer with self if we detected it equals self *)
-			F.h_formula_heap_node = 
-				if List.mem h1.F.h_formula_heap_node vars then
-					("self",Unprimed)
-				else
-					 h1.F.h_formula_heap_node }
-		| F.HeapNode2 h1 ->F.HeapNode2 { h1 with
-			(* Replace the pointer with self if we detected it equals self *)
-			F.h_formula_heap2_node = 
-				if List.mem h1.F.h_formula_heap2_node vars then
-					("self",Unprimed)
-				else
-					 h1.F.h_formula_heap2_node }
-		| F.HTrue -> h
-		| F.HFalse -> h
-	in
-	(* let _ = print_endline "BEFORE REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
-	let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
-	let view_decls_org = view_decls in
-	let view_decls = List.map process_eq_self_view view_decls in
-	(* let _ = print_endline "AFTER REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
-	let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
+  and replace_self h vars = match h with
+	| F.Phase h1 -> F.Phase { h1 with
+		  F.h_formula_phase_rd = replace_self h1.F.h_formula_phase_rd vars;
+		  F.h_formula_phase_rw = replace_self h1.F.h_formula_phase_rw vars}
+	| F.Conj h1 -> F.Conj { h1 with
+		  F.h_formula_conj_h1 = replace_self h1.F.h_formula_conj_h1 vars;
+		  F.h_formula_conj_h2 = replace_self h1.F.h_formula_conj_h2 vars}
+	| F.Star h1 -> F.Star { h1 with
+		  F.h_formula_star_h1 = replace_self h1.F.h_formula_star_h1 vars;
+		  F.h_formula_star_h2 = replace_self h1.F.h_formula_star_h2 vars}
+	| F.HeapNode h1 -> F.HeapNode { h1 with
+		  (* Replace the pointer with self if we detected it equals self *)
+		  F.h_formula_heap_node = 
+			  if List.mem h1.F.h_formula_heap_node vars then
+				("self",Unprimed)
+			  else
+				h1.F.h_formula_heap_node }
+	| F.HeapNode2 h1 ->F.HeapNode2 { h1 with
+		  (* Replace the pointer with self if we detected it equals self *)
+		  F.h_formula_heap2_node = 
+			  if List.mem h1.F.h_formula_heap2_node vars then
+				("self",Unprimed)
+			  else
+				h1.F.h_formula_heap2_node }
+	| F.HTrue -> h
+	| F.HFalse -> h
+  in*)
+  (* let _ = print_endline "BEFORE REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
+	 let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
+  let view_decls_org = view_decls in
+  (*let view_decls = List.map process_eq_self_view view_decls in*)
+  (* let _ = print_endline "AFTER REPLACEMENT OF POINTERS EQUAL TO SELF: " in 
+	 let _ = List.iter (fun x -> print_endline (!print_view_decl x)) view_decls in *)
   let dl = List.map (fun v -> v.data_name) data_decls in
+  (*let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in*)
+  (*let _ = List.iter 
+    (fun (v,_,tl) -> 
+    if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
+    then report_error no_pos ("self points infinitely within definition "^v.view_name) 
+    else () )  rl in*)
+  (* Restore the original list of view_decls and continue with the previous implementation *)
+  let view_decls = view_decls_org in
   let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
-  let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
-  then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
-	(* Restore the original list of view_decls and continue with the previous implementation *)
-  	let view_decls = view_decls_org in
-	let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
-  let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
-  then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
+  (* let _ = List.iter 
+     (fun (v,_,tl) -> 
+     if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
+     then report_error no_pos ("self points infinitely within definition "^v.view_name) 
+     else () )  rl in*)
   rl
 
 and fixpt_data_name (view_ans)  =
@@ -1129,7 +1147,14 @@ and fixpt_data_name (view_ans)  =
 (* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
 
 and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
-  let fetch r = List.concat (List.map (fun id -> let (_,a,_)=List.find (fun (v,_,_)-> v.view_name=id) view_ans in a) r) in 
+  let fetch r = List.concat (List.map 
+      (fun id -> 
+          try 
+          let (_,a,_) = List.find (fun (v,_,_)-> v.view_name=id) view_ans in a
+          with Not_found -> 
+              []
+      )
+      r) in 
   let r = List.map (fun (v,a,r) -> (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
   let check (v,a1,_) (_,a2,_) c = 
     let d1=List.length a1 in
@@ -1151,27 +1176,27 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
     | vd::vds -> let vans = List.map (fun v -> (v,(create v.view_data_name),v.view_pt_by_self)) vds in
       let vl = syn_data_name dl [vd] in
       let vl = fixpt_data_name (vl@vans) in
-		(* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
+	  (* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
       let _ = update_fixpt vl in
       (List.hd view_decls).view_data_name
 
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
   List.iter (fun (v,a,tl) ->
-		(* print_endline ("update_fixpt for " ^ v.view_name);
-		print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
+	  (* print_endline ("update_fixpt for " ^ v.view_name);
+		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl 
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr x = "?" in 
-  Gen.Debug.no_1 "fixpt_data_name" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
+  Gen.Debug.no_1 "set_check_fixpt" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
   let vl = fixpt_data_name vl in
-	(* An Hoa *)
-	(* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
+  (* An Hoa *)
+  (* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
   update_fixpt vl
 
 
@@ -1421,36 +1446,36 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
 (* 		| Not_found -> false *)
 (* 	  *\) *)
 
-let sub_type t1 t2 = Globals.sub_type t1 t2
+let sub_type t1 t2 = sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
 let inbuilt_build_exc_hierarchy () =
-  let _  = Gen.ExcNumbering.add_edge top_flow "" in
-  let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
-  let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
-  let _ = (Gen.ExcNumbering.add_edge abnormal_flow c_flow) in
-  let _ = (Gen.ExcNumbering.add_edge raisable_class abnormal_flow) in
-  let _ = (Gen.ExcNumbering.add_edge "__others" abnormal_flow) in
-  let _ = (Gen.ExcNumbering.add_edge ret_flow "__others") in
-  let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
-  let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
-  let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
-  let _ = (Gen.ExcNumbering.add_edge error_flow top_flow) in
+  let _  = exlist # add_edge top_flow "" in
+  let _ = (exlist # add_edge c_flow top_flow) in
+  let _ = (exlist # add_edge "__abort" top_flow) in
+  let _ = (exlist # add_edge n_flow c_flow) in
+  let _ = (exlist # add_edge abnormal_flow c_flow) in
+  let _ = (exlist # add_edge raisable_class abnormal_flow) in
+  let _ = (exlist # add_edge "__others" abnormal_flow) in
+  let _ = (exlist # add_edge ret_flow "__others") in
+  let _ = (exlist # add_edge cont_top "__others") in
+  let _ = (exlist # add_edge brk_top "__others") in
+  let _ = (exlist # add_edge spec_flow "__others") in
+  let _ = (exlist # add_edge error_flow top_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
-  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
-  let _ = if clean then (Gen.ExcNumbering.clean_duplicates ()) in
-	if (Gen.ExcNumbering.has_cycles ()) then begin
+  let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
+  let _ = if clean then (exlist # remove_dupl ) in
+	if (exlist # has_cycles) then begin
 	  print_string ("Error: Exception hierarchy has cycles\n");
 	  failwith ("Exception hierarchy has cycles\n");
 	end 
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
-  let pr _ = Gen.ExcNumbering.string_of_exc_list 33 in
+  let pr _ = exlist # string_of in
   Gen.Debug.no_1 "build_exc_hierarchy" pr pr (fun _ -> build_exc_hierarchy clean prog) clean
 
 let rec label_e e =

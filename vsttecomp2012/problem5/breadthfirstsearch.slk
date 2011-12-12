@@ -1,0 +1,100 @@
+relation has_path(int[,] A, int n, int s, int t) ==
+	(s = t 
+	| exists(i : 0 <= i < n & has_path(A,n,s,i) & A[i,t] != 0)).
+
+relation has_bounded_length_path_via(int[,] A, int n, int s, int t, int k, int v) ==
+	(k = 0 & s = t
+	| k > 0 & (has_bounded_length_path_via(A,n,s,t,k-1,n) 
+		| exists(i : 0 <= i < v & has_exact_length_path_via(A,n,s,i,k-1,n) & A[i,t] != 0))).
+
+relation has_bounded_length_path(int[,] A, int n, int s, int t, int k) ==
+	(k = 0 & s = t 
+	| k > 0 & has_bounded_length_path_via(A,n,s,t,k,n)). 
+			// exists(i : 0 <= i < n & has_bounded_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
+
+relation has_exact_length_path_via(int[,] A, int n, int s, int t, int k, int v) ==
+	(k = 0 & s = t
+	| k > 0 & exists(i : 0 <= i < v & has_exact_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
+
+relation has_exact_length_path(int[,] A, int n, int s, int t, int k) ==
+	(k = 0 & s = t
+	| k > 0 & exists(i : 0 <= i < n & has_exact_length_path(A,n,s,i,k-1) & A[i,t] != 0)).
+
+relation shortest_distance_via(int[,] A, int n, int s, int t, int d, int v) ==
+	(s = t & d = 0 
+	| d > 0 & has_exact_length_path_via(A, n, s, t, d, v) & !(has_bounded_length_path_via(A, n, s, t, d-1, v))).
+	
+// d is the shortest distance between s and t
+relation shortest_distance(int[,] A, int n, int s, int t, int d) ==
+	(d = 0 & s = t
+	| d > 0 & shortest_distance_via(A, n, s, t, d, n)).
+	//has_exact_length_path(A, n, s, t, d) & !(has_bounded_length_path(A, n, s, t, d-1)).
+
+// Generalization of individual relations to a set of vertices
+
+// All v in V is of distance <= d from s.
+relation all_has_bounded_length_path(int[,] A, int n, int s, int d, int[] V) ==
+	forall(i : i < 0 | i >= n | 
+			V[i] = 0 & !(has_bounded_length_path(A,n,s,i,d)) |
+			V[i] != 0 & has_bounded_length_path(A,n,s,i,d)).
+			
+relation all_has_bounded_length_path_via(int[,] A, int n, int s, int d, int[] V, int v) ==
+	forall(i : i < 0 | i >= n | 
+			V[i] = 0 & !(has_bounded_length_path_via(A,n,s,i,d,v)) |
+			V[i] != 0 & has_bounded_length_path_via(A,n,s,i,d,v)).
+			
+relation some_has_bounded_length_path_via(int[,] A, int n, int s, int d, int[] V, int v, int w1, int w2) ==
+	forall(i : i < w1 |i >= w2 | 
+			V[i] = 0 & !(has_bounded_length_path_via(A,n,s,i,d,v)) |
+			V[i] != 0 & has_bounded_length_path_via(A,n,s,i,d,v)).
+
+relation all_has_shortest_distance(int[,] A, int n, int s, int d, int[] C) ==
+	forall(i : i < 0 | i >= n | 
+			C[i] = 0 & !(shortest_distance(A,n,s,i,d)) |
+			C[i] != 0 & shortest_distance(A,n,s,i,d)).
+
+relation all_has_shortest_distance_via(int[,] A, int n, int s, int k, int[] N, int v) ==
+	forall(i : i < 0 | i >= n | 
+			N[i] = 0 & !(shortest_distance_via(A,n,s,i,k,v)) |
+			N[i] != 0 & shortest_distance_via(A,n,s,i,k,v)).
+
+relation some_has_shortest_distance_via(int[,] A, int n, int s, int d, int[] N, int v, int w1, int w2) ==
+	forall(i : i < w1 | i >= w2 | 
+				N[i] = 0 & !(shortest_distance_via(A,n,s,i,d,v)) |
+				N[i] != 0 & shortest_distance_via(A,n,s,i,d,v)).
+
+// AXIOM 1
+/*checkentail has_bounded_length_path_via(A,n,s,w,d+1,v) & 
+		some_has_shortest_distance_via(A,n,s,d+1,N,v+1,0,w) & 
+		some_has_shortest_distance_via(A,n,s,d+1,N,v,w,n) & w < n |-
+		(N[w] != 0 & shortest_distance_via(A,n,s,w,d+1,v) |
+		N[w] = 0 & !(shortest_distance_via(A,n,s,w,d+1,v))).
+//		some_has_shortest_distance_via(A,n,s,d+1,N,v+1,0,w+1).
+
+checkentail has_bounded_length_path_via(A,n,s,w,d+1,v) & shortest_distance_via(A,n,s,w,d+1,v) |- shortest_distance_via(A,n,s,w,d+1,v+1).
+
+checkentail has_bounded_length_path_via(A,n,s,w,d+1,v) & !(shortest_distance_via(A,n,s,w,d+1,v)) |- !(shortest_distance_via(A,n,s,w,d+1,v+1)). */
+
+// AXIOM 1
+checkentail has_bounded_length_path_via(A,n,s,w,d+1,v) & 
+		some_has_shortest_distance_via(A,n,s,d+1,N,v+1,0,w) & 
+		some_has_shortest_distance_via(A,n,s,d+1,N,v,w,n) & 
+		0 <= w < n |- some_has_shortest_distance_via(A,n,s,d+1,N,v+1,0,w+1).
+
+// AXIOM 2
+checkentail !(shortest_distance(A,n,s,v,d)) & all_has_bounded_length_path_via(A,n,s,d+1,V,v) |- all_has_bounded_length_path_via(A,n,s,d+1,V,v+1).
+
+// AXIOM 3
+checkentail !(shortest_distance(A,n,s,v,d)) & all_has_shortest_distance_via(A,n,s,d+1,N,v) |- all_has_shortest_distance_via(A,n,s,d+1,N,v+1).
+
+// AXIOM 4
+checkentail shortest_distance(A,n,s,v,d) & A[v,w] != 0 & !(has_bounded_length_path_via(A,n,s,w,d,v)) |- shortest_distance_via(A,n,s,w,d+1,v+1).
+
+// AXIOM 5
+checkentail all_has_bounded_length_path_via(A,n,s,d,V,n) |- all_has_bounded_length_path(A,n,s,d,V).
+
+// AXIOM 6
+checkentail shortest_distance_via(A,n,s,t,d,v) |- has_bounded_length_path_via(A,n,s,t,d,v+1).
+
+// AXIOM 7
+checkentail all_has_shortest_distance_via(A,n,source,d,N,n) |- all_has_shortest_distance(A,n,source,d,N).

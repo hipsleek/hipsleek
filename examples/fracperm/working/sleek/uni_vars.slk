@@ -1,0 +1,54 @@
+/*
+
+This is the test for universal vars of a predicate definition (uni_vars)
+uni_vars of a predicate definition are defined as arguments of the predicate definition which may be related to universal variables of a universal lemmas.
+
+For example, with lseg<n,p> predicate, uni_vars=[n]. This is because n is related to n1 and n2 which are universal variables of the universal lemma "L2R".
+
+For each view, the uni_vars are devired from both its view_vars and its inner heap nodes. With mutually recursive views, uni_vars are only derived from view_vars.
+
+Before FOLDING, constraints related to uni_vars will be added to view formula.
+*/
+
+data node { int val ; node next }.
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+//uni_vars = []
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+//uni_vars = [n]
+
+pred lsegp<n,p> == self::lseg<n,p>
+     inv n>=0.
+//uni_vars = [n]
+
+pred lseg1<n,p> == self::lsegp<n,p>
+     inv n>=0.
+//uni_vars = [n]
+
+pred lseg2<n,p,m> == (exists m1,m2,m3 : self::lsegp<m1,p> & m1=m2 & m2=m3&m3=m & n=0)
+     inv m>=0 & n=0.
+//uni_vars = [m]
+
+lemma "L2R" self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0 .
+
+lemma "split1" self::cellp(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cellp(f1)<v> * self::cellp(f2)<v> & 0.0<f<=1.0.
+
+//(1)
+checkentail x::lseg<n,p> & n=3 |- x::lsegp<m,q> & m=2.
+print residue. //valid after accounting for uni_vars
+
+//(2)
+checkentail x::lseg<n,p> & n=3 |- x::lsegp<m,q> & m=3.
+print residue. //valid after accounting for uni_vars
+
+//(3)
+checkentail x::lseg<n,p> & n=3 |- x::lsegp<m,q> & m=4.
+print residue. //fail

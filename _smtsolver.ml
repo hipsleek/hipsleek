@@ -459,7 +459,11 @@ let run prover input =
  *)
 let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
-	let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
+	let _ = if !print_input then 
+      begin
+        print_string ("Generated SMT input :\n" ^ input);
+        flush stdout;
+      end in
   let output = run prover input in
 	let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in
   let res = output = "unsat" in
