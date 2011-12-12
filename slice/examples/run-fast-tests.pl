@@ -173,6 +173,7 @@ if($timings){
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip ";
+#$hip = "/home/chanhle/hg/main/sleekex/hip ";
 $sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
