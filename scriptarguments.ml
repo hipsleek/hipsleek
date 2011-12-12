@@ -183,8 +183,6 @@ let common_arguments = [
 	"<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
 	("--decrprio",Arg.Set Tpdispatcher.decr_priority , 
 	"use a decreasing priority scheme");
-	("--rl-no-pseudo-ops", Arg.Clear Redlog.no_pseudo_ops, 
-	"Do not pseudo-strengthen/weaken formulas before send to Redlog");
 	("--rl-no-ee", Arg.Set Redlog.no_elim_exists, 
 	"Do not try to eliminate existential quantifier with Redlog");
     ("--rl-no-simplify", Arg.Set Redlog.no_simplify,

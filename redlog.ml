@@ -10,7 +10,6 @@ module CP = Cpure
 
 (* options *)
 let is_presburger = ref false
-let no_pseudo_ops = ref true
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref false
@@ -533,7 +532,7 @@ let has_exists2 f0 =
   CP.fold_formula_arg f0 false (f_f, f_bf, f_e) (f_f_arg, idf2, idf2) or_list
 
 
-(* LDK: not hold when using fractional permission *)
+(* LDK: not hold in case of floating point formula *)
 (* e1 < e2 ~> e1 <= e2 -1 *)
 (* e1 > e2 ~> e1 >= e2 + 1 *)
 (* e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1  *)
@@ -575,6 +574,7 @@ let strengthen2 f0 =
   in
   CP.map_formula f0 (f_f, f_bf, nonef)
 
+(* LDK: not hold in case of floating point formula *)
 (* e1 <= e2 ~> e1 < e2 + 1 *)
 (* e1 >= e2 ~> e1 > e2 - 1 *)
 (* e1 = e2 ~> e2 - 1 < e1 < e2 + 1 *)
@@ -663,7 +663,11 @@ let rec find_bound v f0 =
   then (* do not give bound for floating point type *)
     (None,None)
   else 
-  let f0 = strengthen_formula f0 in (* replace gt,lt with gte,lte to be able to find bound *)
+  (*do not strengthen floating point formula*)
+  let f0 = if  (CP.is_float_formula f0) then f0
+      else strengthen_formula f0
+  in
+  (* replace gt,lt with gte,lte to be able to find bound *)
   match f0 with
   | CP.And (f1, f2, _) ->
       begin
@@ -1045,7 +1049,8 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
   if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
-    let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
+    (*only strengthen/weakening integer formula*)
+    let sf = if (CP.is_float_formula f) 
     then f 
     else strengthen_formula f in
     let frl = rl_of_formula sf in
@@ -1114,7 +1119,8 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
-    let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
+    (*only strengthen/weakening integer formula*)
+    let wf = if (CP.is_float_formula f) then f else weaken_formula f in
     is_valid wf imp_no
   in
   let res = 
