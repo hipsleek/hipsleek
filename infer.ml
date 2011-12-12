@@ -120,6 +120,12 @@ let get_alias_formula (f:formula) =
 
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
+let is_elem_of conj conjs = 
+  let filtered = List.filter (fun c -> Omega.imply conj c "1" 100 && Omega.imply c conj "2" 100) conjs in
+  match filtered with
+    | [] -> false
+    | _ -> true
+
 (*
  let iv = es_infer_vars in
  check if h_formula root isin iv
@@ -184,8 +190,12 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
       let r = CP.mkVar r no_pos in
       let new_p = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
         (CP.mkTrue no_pos) 
-        (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) 
-      in
+        (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) in
+      let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
+      let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
+      let new_p_conjs = CP.list_of_conjs new_p in
+      let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
+        (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
       let r = {
           match_res_lhs_node = new_h;
           match_res_lhs_rest = HTrue;
@@ -214,12 +224,6 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   (* let pr3 = pr_option (fun (a,b,c) -> (!print_svl a, pr2 b, !print_pure_f c)) in *)
   Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr_no
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq) es rhs
-
-let is_elem_of conj conjs = 
-  let filtered = List.filter (fun c -> Omega.imply conj c "1" 100 && Omega.imply c conj "2" 100) conjs in
-  match filtered with
-    | [] -> false
-    | _ -> true
 
 (* picks ctr from f that are related to vars *)
 (* may involve a weakening process *)
