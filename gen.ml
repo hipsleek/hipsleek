@@ -373,9 +373,13 @@ class ['a] stack (x_init:'a) (epr:'a->string)  =
      val mutable stk = []
      val elem_pr = epr 
        (* = (fun _ -> "elem printer not initialised!") *)
-     method push (i:'a) = stk <- i::stk
-     method get  = stk (* return entire content of stack *)
-     method override newstk  = stk <- newstk 
+     method push (i:'a) = 
+       begin
+         stk <- i::stk
+         (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
+       end
+     method get_stk  = stk (* return entire content of stack *)
+     method override_stk newstk  = stk <- newstk 
        (* override with a new stack *)
      method pop = match stk with 
        | [] -> print_string "ERROR : popping empty stack"; 
@@ -391,10 +395,12 @@ class ['a] stack (x_init:'a) (epr:'a->string)  =
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
+     method is_empty = stk == []
      method len = List.length stk
      method reverse = stk <- List.rev stk
      (* method set_pr f = elem_pr <- f *)
-     method string_of = BList.string_of_f elem_pr stk
+     (* method string_of = BList.string_of_f elem_pr stk *)
+     method string_of = Basic.pr_list elem_pr stk
    end;;
 
 class counter x_init =
@@ -494,7 +500,7 @@ struct
 
   let error msg = (print_string (msg ^"\n"); flush_all(); err "" msg)
   let print_errors () = 
-    List.iter (function x -> print_string (x ^ "\n")) error_list#get;
+    List.iter (function x -> print_string (x ^ "\n")) error_list#get_stk;
     print_string (string_of_int (error_list#len)^" errors.\n");
     print_string "The program is INVALID\n";
     exit 2
@@ -791,30 +797,32 @@ struct
     
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let stk = new stack (-1) string_of_int
+  let debug_stk = new stack (-1) string_of_int
 
   (* pop last element from call stack of ho debug *)
-  let pop_call () = stk # pop
+  let pop_call () = debug_stk # pop
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_aft_apply_with_exc (f:'a->'b) (e:'a) : 'b =
     let r = (try 
       (f e)
-    with exc -> (stk#pop; raise exc))
-    in stk#pop; r
+    with exc -> (debug_stk#pop; raise exc))
+    in debug_stk#pop; r
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
-    let h = stk#get in
+    let h = debug_stk#get_stk in
+    (* ("Length is:"^(string_of_int (List.length h))) *)
     String.concat "@" (List.map string_of_int h)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call (os:string) : (string * string) = 
     ctr#inc;
     let v = ctr#get in
-    let _ = stk#push v in
+    let _ = debug_stk#push v in
     let s = os^"@"^(string_of_int v) in
     let h = os^"@"^string_of() in
+    (* let _ = print_endline ("push_call:"^os^":"^s^":"^h) in  *)
     s,h
 end;;
 
@@ -882,7 +890,6 @@ struct
         (let _ = print_string ("\n"^h^"\n") in
         let _ = pr_args args in
         let _ = pr_lazy_res lz in
-
         let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
         flush stdout;
         raise ex)) in
@@ -1345,7 +1352,7 @@ struct
 	    if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
 	    else
 		  profiling_stack # pop;
-	    if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get) then begin
+	    if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
 		  (* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
 		  (* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
 		  (* 	print_string ("\n double accounting for "^msg^"\n") *)
@@ -1427,7 +1434,7 @@ struct
         | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
         | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
 		  else t in
-      profiling_stack#override (helper profiling_stack#get) 
+      profiling_stack#override_stk (helper profiling_stack#get_stk) 
 	else ()
 
   let add_index l = 

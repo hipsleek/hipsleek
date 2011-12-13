@@ -1086,7 +1086,7 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
-let rec pr_numbered_list_formula_trace (e:(formula*formula_trace) list) (count:int) =
+let rec pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f =
   match e with
     | [] -> ""
     | (a,b)::xs -> 
@@ -1094,16 +1094,28 @@ let rec pr_numbered_list_formula_trace (e:(formula*formula_trace) list) (count:i
             fmt_string ("<" ^ (string_of_int count) ^ ">");
             pr_formula a;
             fmt_print_newline ();
+            f b;
+            fmt_print_newline ();
+            pr_numbered_list_formula_trace_ho xs (count+1) f;
+        end
+
+let pr_numbered_list_formula_trace (e:(formula*formula_trace) list) (count:int) =
+  let f b = begin
             fmt_string "[[";
             pr_es_trace b;
-            fmt_string "]]";
-            fmt_print_newline ();
-            pr_numbered_list_formula_trace xs (count+1);
-        end
+            fmt_string "]]"
+  end in
+  pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f 
+
+let pr_numbered_list_formula_no_trace (e:(formula*formula_trace) list) (count:int) =
+  let f b = () in
+  pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f 
 
 let string_of_numbered_list_formula (e:list_formula) : string =  pr_numbered_list_formula e 1
 
 let string_of_numbered_list_formula_trace (e: (formula*formula_trace) list) : string =  pr_numbered_list_formula_trace e 1
+
+let string_of_numbered_list_formula_no_trace (e: (formula*formula_trace) list) : string =  pr_numbered_list_formula_no_trace e 1
 
 let string_of_list_f (f:'a->string) (e:'a list) : string =  
   "["^(String.concat "," (List.map f e))^"]"
@@ -1276,10 +1288,17 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
-  pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+  (* pr_vwrap "es_trace: " pr_es_trace es.es_trace; *)
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
+  pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
+(*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
+  pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
+  pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
+  (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
+  pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs; 
+  (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   fmt_close ()
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
@@ -1360,7 +1379,8 @@ let rec pr_fail_type (e:fail_type) =
     | Trivial_Reason fe -> fmt_string (" Trivial fail : "^ (string_of_failure_kind_full fe.fe_kind))
     | Basic_Reason (br,fe) -> 
           (string_of_fail_explaining fe);
-          if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") else (pr_fail_estate br)
+          if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") 
+          else (pr_fail_estate br)
     | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
@@ -2358,6 +2378,7 @@ Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cformula.print_formula := string_of_formula;;
+Cformula.print_pure_f := string_of_pure_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
 (* Cformula.print_mix_formula := string_of_mix_formula;; *)
 Cformula.print_svl := string_of_spec_var_list;;
@@ -2365,6 +2386,7 @@ Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
+Cformula.print_list_context := string_of_list_context;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
 Cformula.print_failure_kind_full := string_of_failure_kind_full;;
@@ -2372,6 +2394,7 @@ Cformula.print_fail_type := string_of_fail_type;;
 (* Cformula.print_nflow := string_of_nflow;; *)
 Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;
+Cformula.print_context := string_of_context;;
 Cformula.print_entail_state := string_of_entail_state(* _short *);;
 Redlog.print_formula := string_of_pure_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
@@ -2382,6 +2405,7 @@ Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
 Cformula.print_esc_stack := string_of_esc_stack;;
 Cformula.print_failesc_context := string_of_failesc_context;;
+Cformula.print_fail_type := string_of_fail_type;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;

@@ -232,6 +232,7 @@ let get_ptr_from_data h =
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
@@ -1623,10 +1624,15 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)
   
-and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list = 
+and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list =
+  let pr1 = !print_struc_formula in
+  let pr2 = !print_svl in
+  Gen.Debug.no_1 "f_top_level_vars_struc" pr1 pr2 f_top_level_vars_struc_x f
+
+and f_top_level_vars_struc_x (f:struc_formula) : CP.spec_var list = 
   let helper f = match f with
-  | ECase c-> List.concat (List.map (fun (_,c) -> f_top_level_vars_struc c) c.formula_case_branches)
-  | EBase b -> 	(f_top_level_vars b.formula_ext_base) @ (f_top_level_vars_struc b.formula_ext_continuation)
+  | ECase c-> List.concat (List.map (fun (_,c) -> f_top_level_vars_struc_x c) c.formula_case_branches)
+  | EBase b -> 	(f_top_level_vars b.formula_ext_base) @ (f_top_level_vars_struc_x b.formula_ext_continuation)
   | EAssume _ -> []
   | EVariance _ -> [] in
   List.concat (List.map helper f)
@@ -2208,6 +2214,9 @@ and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) =
 and normalize_replace_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_replace pos
 
+and normalize_combine_heap (f1 : formula) (f2 : h_formula) 
+      = normalize_combine_star f1 (formula_of_heap f2 no_pos) no_pos
+
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
 and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -2697,8 +2706,7 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
 
 
 
- (* co
-ntext functions *)
+ (* context functions *)
 	
   
   
@@ -2713,16 +2721,22 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
+  es_evars : CP.spec_var list; (* existential variables on RHS *)
+
+  (* WN : What is es_pure for? *)
   es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
-  es_evars : CP.spec_var list;
-  (*used by lemmas*)
-  es_ivars : CP.spec_var list; (* ivars are the variables to be instantiated (for the universal lemma application)  *)
+
+  (*used by universal LEMMAS for instantiation? *)
+  es_ivars : CP.spec_var list; 
+    (* ivars are the variables to be instantiated (for the universal lemma application)  *)
   (* es_expl_vars : CP.spec_var list; (\* vars to be explicit instantiated *\) *)
   es_ante_evars : CP.spec_var list;
   (* es_must_match : bool; *)
   (*used by late instantiation*)
-  es_gen_expl_vars: CP.spec_var list; 
-  es_gen_impl_vars: CP.spec_var list; 
+  es_gen_expl_vars: CP.spec_var list; (* explicit instantiation var*)
+  es_gen_impl_vars: CP.spec_var list; (* implicit instantiation var*)
+
+  (* to indicate if unsat check has been done for current state *)
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
   es_arith_subst : (CP.spec_var * CP.exp) list;
@@ -2734,13 +2748,16 @@ type entail_state = {
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
+
+  (* is below for VARIANCE checking *)
   es_var_measures : CP.exp list;
   es_var_label : int option;
   es_var_ctx_lhs : CP.formula;
   es_var_ctx_rhs : CP.formula;
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
   es_var_loc : loc;
-  (* for immutability *)
+
+  (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
   es_rhs_eqset : (CP.spec_var * CP.spec_var) list;
@@ -2755,8 +2772,21 @@ type entail_state = {
   es_imm_pure_stk : MCP.mix_formula list;
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
-  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
-  es_is_normalizing : bool (*normalizing process*)
+  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*) 
+  (* WN : isn't above the same as prior steps? *)
+  es_is_normalizing : bool; (*normalizing process*)
+  es_orig_vars : CP.spec_var list; (* Used to differentiate original vars from new generated vars *)
+
+  (* FOR INFERENCE *)
+  es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
+  es_infer_label: formula; 
+(*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
+(*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
+  es_infer_heap : h_formula list; (* output : pre heap inferred *)
+  es_infer_pure : CP.formula list; (* output : pre pure inferred *)
+  (* es_infer_pures : CP.formula list; *)
+  es_infer_invs : CP.formula list (* WN : what is this? *)
+
 }
 
 and context = 
@@ -2835,8 +2865,10 @@ and list_failesc_context = failesc_context list
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
+let print_list_context = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
+let print_context = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
@@ -2888,7 +2920,12 @@ let rec empty_es flowt pos =
   es_must_error = None;
   es_trace = [];
   es_is_normalizing = false;
-
+  es_orig_vars = [];
+  es_infer_vars = [];
+  es_infer_label = x;
+  es_infer_heap = []; (* HTrue; *)
+  es_infer_pure = []; (* (CP.mkTrue no_pos); *)
+  es_infer_invs = [];
 }
 
 let is_one_context (c:context) =
@@ -3427,15 +3464,53 @@ let es_simplify (e1:entail_state):entail_state =
 let es_simplify e1 = 
   let pr  = !print_entail_state in
   Gen.Debug.no_1 "es_simplify" pr pr es_simplify e1
+
+let rec collect_pre_pure ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_pure 
+  | OCtx (ctx1, ctx2) -> (collect_pre_pure ctx1) @ (collect_pre_pure ctx2) 
+
+let rec collect_pre_heap ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_heap 
+  | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
+let rec add_pre_heap ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_heap 
+  | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
+let add_infer_pure_to_ctx cp ctx =
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> Ctx {es with es_infer_pure = es.es_infer_pure@cp;}
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
+
+let add_infer_pure_to_ctx cp ctx =
+  Gen.Debug.no_1 "add_infer_pure_to_ctx"
+      (pr_list !print_pure_f) pr_no
+      (fun _ -> add_infer_pure_to_ctx cp ctx) cp
   
+(* f_ctx denotes false context *)
+let add_infer_pre f_ctx ctx =
+  let ch = collect_pre_heap f_ctx in
+  if (ch!=[]) then
+    let _ = print_endline "ERROR : non-pure heap inferred for false" in
+    report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
+  else
+    let cp = collect_pre_pure f_ctx in
+    if (cp!=[]) then add_infer_pure_to_ctx cp ctx
+    else ctx
+
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
   else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)
   (* true_ctx (mkTrueFlow ()) pos *)  (* not much point in checking
                                          for true *)
   (* else *) 
-  if isAnyFalseCtx ctx1 then ctx2
-  else if isAnyFalseCtx ctx2 then ctx1
+  if isAnyFalseCtx ctx1 then add_infer_pre ctx1 ctx2
+  else if isAnyFalseCtx ctx2 then add_infer_pre ctx2 ctx1
   else OCtx (ctx1,ctx2) 
 
 let or_context c1 c2 = mkOCtx c1 c2 no_pos   
@@ -3466,6 +3541,56 @@ let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_cont
 let mk_empty_frame () : (h_formula * int ) = 
   let hole_id = fresh_int () in
     (Hole(hole_id), hole_id)
+
+let rec empty_es flowt pos = 
+	let x = mkTrue flowt pos in
+{
+  es_formula = x;
+  es_heap = HTrue;
+  es_pure = (MCP.mkMTrue pos , []);
+  es_evars = [];
+  (* es_must_match = false; *)
+  es_ivars = [];
+  (* es_expl_vars = []; *)
+  es_ante_evars = [];
+  es_gen_expl_vars = []; 
+  es_gen_impl_vars = []; 
+  es_pp_subst = [];
+  es_unsat_flag = true;
+  es_arith_subst = [];
+  es_success_pts = [];
+  es_residue_pts  = [];
+  es_id = 0 ;
+  es_orig_ante = x;
+  es_orig_conseq = [mkETrue flowt pos] ;
+  es_rhs_eqset = [];
+  es_path_label  =[];
+  es_prior_steps  = [];
+  es_var_measures = [];
+  es_var_label = None;
+  es_var_ctx_lhs = CP.mkTrue pos;
+  es_var_ctx_rhs = CP.mkTrue pos;
+  es_var_subst = [];
+  es_var_loc = no_pos;
+  (*es_cache_no_list = [];*)
+  es_cont = [];
+  es_crt_holes = [];
+  es_hole_stk = [];
+  es_aux_xpure_1 = MCP.mkMTrue pos;
+  es_subst = ([], []);
+  es_aux_conseq = CP.mkTrue pos;
+  es_imm_pure_stk = [];
+  es_must_error = None;
+  es_trace = [];
+  es_is_normalizing = false;
+  es_orig_vars = [];
+  es_infer_vars = [];
+  es_infer_label = x;
+  es_infer_heap = []; (* HTrue; *)
+  es_infer_pure = []; (* (CP.mkTrue no_pos); *)
+  es_infer_invs = [];
+  (* es_infer_pures = []; *)
+}
 
 let mk_not_a_failure =
   Basic_Reason ({
@@ -3514,9 +3639,13 @@ let false_ctx flowt pos =
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
 
-let false_ctx_with_orig_ante f flowt pos = 
+let false_ctx_with_orig_ante es f flowt pos = 
 	let x = mkFalse flowt pos in
-	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; })
+	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; 
+        es_infer_vars = es.es_infer_vars;
+        es_infer_heap = es.es_infer_heap;
+        es_infer_pure = es.es_infer_pure;
+    })
 
 let false_es flowt pos = 
   let x =  mkFalse flowt pos in
@@ -3720,10 +3849,12 @@ and fold_context_left c_l =
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 ->
-         let t = mk_not_a_failure in
+        let t = mk_not_a_failure 
+        in
         FailCtx (Or_Reason (t1,t))
      | SuccCtx t1 ,FailCtx t2 ->
-         let t = mk_not_a_failure in
+        let t = mk_not_a_failure 
+        in
         FailCtx (Or_Reason (t,t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
@@ -3972,7 +4103,7 @@ let rec merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail li
     | (l1,b1)::z1,(l2,b2)::z2 -> 
 	if path_trace_eq l1 l2 then 
 	  let res,pt = merge_fail z1 z2 in
-      (* let fe = {fe_kind = Failure_None} in *)
+      (* let fe = {fe_kind = Failure_Bot} in *)
 	  ((l1,Or_Reason (b1,b2))::res, l1::pt)
 	else if path_trace_lt l1 l2 then 
 	  let res,pt = merge_fail z1 f2 in
@@ -6364,3 +6495,38 @@ let rec push_case_f pf sf =
     | EAssume _ -> f
   in
   List.map helper sf
+  
+
+
+(*let rec normalize_fml fml = match fml with*)
+(*  | Exists _ -> fml                       *)
+(*  | Base formula_base -> fml              *)
+(*  | Or formula_or -> (* Formula in DNF *) *)
+
+let rec init_caller context = 
+  let elim_quan ante = match ante with
+    | Exists ({formula_exists_qvars = qvars;
+    formula_exists_heap = qh;
+    formula_exists_pure = qp;
+    formula_exists_type = qt;
+    formula_exists_flow = qfl;
+    formula_exists_branches = qb;
+    formula_exists_pos = pos}) ->
+      (* eliminating existential quantifiers from the LHS *)
+      (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
+      let ws = CP.fresh_spec_vars qvars in
+      let st = List.combine qvars ws in
+      let baref = mkBase qh qp qt qfl qb pos in
+      let new_baref = subst st baref
+      in new_baref
+    | _ -> ante
+  in
+  match context with
+  | OCtx (ctx1, ctx2) -> OCtx (init_caller ctx1, init_caller ctx2)
+  | Ctx es -> Ctx ({es with es_infer_label = elim_quan es.es_formula})
+
+
+
+
+
+

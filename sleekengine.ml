@@ -11,6 +11,7 @@ open Perm
 
 module H = Hashtbl
 module I = Iast
+module Inf = Infer
 module C = Cast
 module CF = Cformula
 module CP = Cpure
@@ -392,9 +393,9 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let ante = meta_to_formula iante0 false [] stab in
   (*let _ = print_endline "1: prune ante in check entailment" in*)
   let ante = Solver.prune_preds !cprog true ante in
-  let ante = 
+  let ante =
     if (Perm.allow_perm ()) then
-      (*add default full permission to ante; 
+      (*add default full permission to ante;
         need to add type of full perm to stab *)
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
@@ -427,12 +428,12 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
   (* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *)
-  let rs1, _ = 
+  let rs1, _ =
   if not !Globals.disable_failure_explaining then
-    Solver.heap_entail_struc_init_bug_inv !cprog false false 
+    Solver.heap_entail_struc_init_bug_inv !cprog false false
         (CF.SuccCtx[ctx]) conseq no_pos None
   else
-     Solver.heap_entail_struc_init !cprog false false 
+     Solver.heap_entail_struc_init !cprog false false
         (CF.SuccCtx[ctx]) conseq no_pos None
   in
   (* let length_ctx ctx = match ctx with *)
@@ -447,6 +448,66 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     else ((not (CF.isFailCtx rs)))
   in
   (res, rs)
+
+let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let _ = residues := None in
+  let stab = H.create 103 in
+  let ante = meta_to_formula iante0 false [] stab in
+  let ante = Solver.prune_preds !cprog true ante in
+  let ante =
+    if (Perm.allow_perm ()) then
+      (*add default full permission to ante;
+        need to add type of full perm to stab *)
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
+    else ante
+  in
+  let vk = AS.fresh_proc_var_kind stab Float in
+  let _ = H.add stab (full_perm_name ()) vk in
+  let _ = flush stdout in
+  (* let csq_extra = meta_to_formula iconseq0 false [] stab in *)
+  (* let conseq_fvs = CF.fv csq_extra in *)
+  (* let _ = print_endline ("conseq vars"^(Cprinter.string_of_spec_var_list conseq_fvs)) in *)
+  let fvs = CF.fv ante in
+  (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
+  (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
+  (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
+  let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
+  let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+  let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  (* List of vars appearing in original formula *)
+  let orig_vars = CF.fv ante @ CF.struc_fv conseq in
+  (* List of vars needed for abduction process *)
+  let vars = List.map (fun v -> AS.get_spec_var_stab_infer v orig_vars no_pos) ivars in
+  (* Init context with infer_vars and orig_vars *)
+  let ctx = Inf.init_vars ctx vars orig_vars in
+
+  let _ = if !Globals.print_core 
+    then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
+        ^" "^(pr_list pr_id ivars)
+      ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
+    else () 
+  in
+  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+  let rs1, _ = 
+    if not !Globals.disable_failure_explaining then
+      Solver.heap_entail_struc_init_bug_inv !cprog false false 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+    else
+      Solver.heap_entail_struc_init !cprog false false 
+        (CF.SuccCtx[ctx]) conseq no_pos None
+  in
+  let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  residues := Some rs;
+  flush stdout;
+  let res =
+    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
+    else ((not (CF.isFailCtx rs))) in 
+  (res, rs)
+
+let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  run_infer_one_pass [] iante0 iconseq0
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
@@ -486,6 +547,22 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
+let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
+  let _ = print_entail_result valid residue num_id in
+  let rs = residue in
+  if (valid && Inf.is_inferred_pre_list_context rs) then
+    begin
+      let lh = Inf.collect_pre_heap_list_context rs in
+      let lp = Inf.collect_pre_pure_list_context rs in
+      print_endline ("Inferred Heap:"^(pr_list Cprinter.string_of_h_formula lh));    
+      print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
+    end
+    (* let pr = Inf.extract_pre_list_context residue in *)
+    (* match pr with *)
+    (*   | None -> () (\* No precondition inferred *\) *)
+    (*   | Some f -> print_endline ("Pre: "^(Cprinter.string_of_formula f)) *)
+     
+
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
@@ -496,6 +573,13 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
+  with _ -> print_exc num_id
+
+let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
+  let num_id = "Infer  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  try 
+    let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
+    print_entail_result_with_pre valid rs num_id
   with _ -> print_exc num_id
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -547,8 +631,10 @@ let process_print_command pcmd0 = match pcmd0 with
         (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
         (*       (CF.list_formula_of_list_context s))^"\n") *)
         (*print all posible outcomes and their traces with numbering*)
-        | Some s -> print_string ((Cprinter.string_of_numbered_list_formula_trace
-              (CF.list_formula_trace_of_list_context s))^"\n")
+        | Some s -> 
+               print_string (
+                  (Cprinter.string_of_numbered_list_formula_no_trace
+              (CF.list_formula_trace_of_list_context s))^"\n" )
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 
