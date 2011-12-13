@@ -2965,6 +2965,7 @@ and partial_context = (branch_fail list) * (branch_ctx list)
 (* successful partial states that have escaped through exceptions *)
 and esc_stack = ((control_path_id_strict * branch_ctx list) list)
 
+(*successful contexts include both __norm flows and concurrent flows*)
 and failesc_context = (branch_fail list) * esc_stack * (branch_ctx list)
 
 (* conjunct of context in the form of /\(f1|f2 ..s1|s2|s3) *)
@@ -4083,7 +4084,7 @@ let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  Gen.Debug.no_2 "list_failesc_context_or" 
+  Gen.Debug.ho_2 "list_failesc_context_or" 
       pr pr pr
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
 
@@ -4170,10 +4171,28 @@ and estate_of_context (ctx : context) (pos : loc) = match ctx with
 						   Err.error_text = "estate_of_context: disjunctive or fail context"}
 
 						   
+(* and flow_formula_of_ctx (ctx : context) (pos : loc) = match ctx with *)
+(*   | Ctx es -> flow_formula_of_formula es.es_formula *)
+(*   | _ -> Err.report_error {Err.error_loc = pos; *)
+(* 						   Err.error_text = "flow_of_context: disjunctive or fail context"} *)
+
 and flow_formula_of_ctx (ctx : context) (pos : loc) = match ctx with
   | Ctx es -> flow_formula_of_formula es.es_formula
-  | _ -> Err.report_error {Err.error_loc = pos;
-						   Err.error_text = "flow_of_context: disjunctive or fail context"}
+  | OCtx (ctx1,ctx2) -> 
+      let fl1 = flow_formula_of_ctx ctx1 pos in
+      let fl2 = flow_formula_of_ctx ctx2 pos in
+      if (is_eq_flow fl1.formula_flow_interval fl2.formula_flow_interval) then
+        fl1
+      else
+      Err.report_error {Err.error_loc = pos;
+						   Err.error_text = "flow_of_context: flows of disj context are not equal or fail context"}
+
+and exists_flow_formula_ctx (nf:flow_formula) (ctx : context) : bool = match ctx with
+  | Ctx es -> 
+      let flowf = flow_formula_of_formula es.es_formula in
+      (is_eq_flow nf.formula_flow_interval flowf.formula_flow_interval)
+  | OCtx (ctx1,ctx2) -> 
+      (exists_flow_formula_ctx nf ctx1) ||  (exists_flow_formula_ctx nf ctx2)
 
 and set_flow_in_ctx_override (c:context) (f:flow_formula) :context = match c with
 	| Ctx c1-> Ctx {c1 with es_formula = set_flow_in_formula_override f c1.es_formula}
@@ -4541,6 +4560,7 @@ let list_of_disjuncts f = split_conjuncts f
 let join_conjunct_opt l = match l with
   | [] -> None
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
+
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
     | [] -> None
@@ -4556,6 +4576,11 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
   Gen.Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
   join_star_conjunctions_opt_x hs
 
+let join_star_conjunctions (hs : h_formula list) : (h_formula)  =
+  let rs = join_star_conjunctions_opt hs in
+  match rs with
+    | None -> HTrue
+    | Some f -> f
 
 let split_star_conjunctions_x (f:h_formula): (h_formula list) =
   let rec helper f = 
@@ -5790,6 +5815,7 @@ let overwrite_estate_with_steps (es:entail_state) (ss:steps) =
 let add_to_estate_with_steps (es:entail_state) (ss:steps) = 
   {es with es_prior_steps = ss@es.es_prior_steps; }
 
+(*add post condition (post) into a struc_formula (f) *)
 let rec add_post post f = List.map (fun c-> match c with
   | EBase b -> 
       let fec = if (List.length b.formula_ext_continuation)>0 then 
@@ -5825,7 +5851,8 @@ let rec string_of_list_of_pair_formula ls =
 
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 (* and print_struc_formula = ref(fun (c:struc_formula) -> "Cprinter not initialized") *)
-		
+
+(*similar to split_specs*)
 and split_struc_formula f0 = split_struc_formula_a f0
 
 and split_struc_formula_debug f0 =
@@ -6239,6 +6266,7 @@ and merge_partial_h_formula f =
 		f
 
 
+(*similar to split_star_conjunctions *)
 (**
  * An Hoa : Splitting a h_formula by breaking the separation conjunction.
  **)
@@ -6248,6 +6276,7 @@ and split_star_h f = match f with
 	| _ -> [f]
 
 
+(*similar to join_star_conjunctions_opt *)
 (**
  * An Hoa : Reverse operation of split_star_h i.e. combining nodes into a h_formula.
  * TODO express using fold_left instead.
@@ -6404,6 +6433,52 @@ let rec push_case_f pf sf =
     | EAssume _ -> f
   in
   List.map helper sf
+
+(*pickup a node named "name" from a list of nodes*)
+(*is_exact = true => names are exactly matched*)
+and pick_up_node_x (ls:h_formula list) (name:ident) (is_exact:bool) :(h_formula * h_formula list) =
+  (*test whether str1 is exactly or partially the same with c2*)
+  let is_equal str1 str2 =
+    if (is_exact) then
+      ((String.compare str1 str2) == 0)
+    else
+      let ri = try  (String.rindex str1 '_') with  _ -> (String.length str1) in
+      let c_name = (String.sub str1 0 ri)  in
+      (* let _ = print_string ("pick_up_node:" ^ c_name ^ " &&"  ^ name ^ "\n\n " ) in *)
+      ((String.compare c_name name) ==0)
+  in
+  let rec helper ls =
+    match ls with
+      | [] -> HTrue,[]
+      | x::xs ->
+            match x with
+              | ViewNode ({h_formula_view_node = c})
+              | DataNode ({h_formula_data_node = c}) ->
+                    let c_str = (CP.name_of_spec_var c) in
+                    if (is_equal c_str name)
+                    then
+                      (x,xs)
+                    else
+                      let res1,res2 = helper xs in
+                      (res1,x::res2)
+              | _ ->
+                    let res1,res2 = helper xs in
+                    (res1,x::res2)
+  in helper ls
+
+(*pickup a node named "name" from a list of nodes*)
+and pick_up_node (ls:h_formula list) (name:ident) (is_exact:bool) :(h_formula * h_formula list) =
+  let rec pr xs = 
+    match xs with
+      | [] -> ""
+      | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
+  in
+  let pr2 (a,b) =
+    (!print_h_formula a) ^ "|&&&|"  ^ (pr b)
+  in
+  Gen.Debug.no_3 "pick_up_node"
+      pr (fun id -> id) string_of_bool pr2
+      pick_up_node_x ls name is_exact
 
 (*=======split_pre_post ->  ========*)
 (*TO DO: ECase*)

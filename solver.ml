@@ -7728,7 +7728,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
   (*                       ^ "\n") in *)
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
   let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
-  let head_node, rest = pick_up_node lhs_hs Globals.self in
+  let head_node, rest = CF.pick_up_node lhs_hs Globals.self false in
   let extra_opt = join_star_conjunctions_opt rest in
   let extra_heap = 
     (match (extra_opt) with
@@ -7900,45 +7900,6 @@ and apply_left_coercion_complex estate coer prog conseq ctx0 resth1 anode lhs_b 
   Gen.Debug.no_3 "apply_left_coercion_complex" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
       (fun _ _ _ -> apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_b rhs_b c1 is_folding pos) anode resth1 coer
 
-(*pickup a node named "name" from a list of nodes*)
-and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
-  let rec helper ls =
-    match ls with
-      | [] -> CF.HTrue,[]
-      | x::xs ->
-            match x with
-              | ViewNode ({h_formula_view_node = c})
-              | DataNode ({h_formula_data_node = c}) ->
-
-                    let c_str = (CP.name_of_spec_var c) in
-                    let ri = try  (String.rindex c_str '_') with  _ -> (String.length c_str) in
-                    let c_name = (String.sub c_str 0 ri)  in
-                    (* let _ = print_string ("pick_up_node:" ^ c_name ^ " &&"  ^ name ^ "\n\n " ) in *)
-                    if ((String.compare c_name name) ==0)
-                    then
-                      (x,xs)
-                    else
-                      let res1,res2 = helper xs in
-                      (res1,x::res2)
-              | _ ->
-                    let res1,res2 = helper xs in
-                    (res1,x::res2)
-  in helper ls
-
-(*pickup a node named "name" from a list of nodes*)
-and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
-  let rec pr xs = 
-    match xs with
-      | [] -> ""
-      | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
-  in
-  let pr2 (a,b) =
-    (Cprinter.string_of_h_formula a) ^ "|&&&|"  ^ (pr b)
-  in
-  Gen.Debug.no_2 "pick_up_node"
-      pr (fun id -> id) pr2
-      pick_up_node_x ls name
-
 (*normalize a formula using normalization lemma*)
 (*normaliztion lemmas are similar to complex lemma*)
 (*However, they reduce the number of nodes after each application*)
@@ -7957,7 +7918,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       let compute_extra_vars () =
         let lhs_heap, lhs_guard, _, _, _ = split_components coer_lhs in
         let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
-        let head_node, rest = pick_up_node lhs_hs Globals.self in
+        let head_node, rest = CF.pick_up_node lhs_hs Globals.self false in
         (* let head_node = List.hd lhs_hs in *)
         (* let extra_opt = join_star_conjunctions_opt (List.tl lhs_hs) in *)
         let extra_opt = join_star_conjunctions_opt rest in
@@ -8009,7 +7970,7 @@ and normalize_w_coers prog (estate:CF.entail_state) (coers:coercion_decl list) (
       let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
       let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
       (* let lhs_hs = List.rev lhs_hs in *)
-      let head_node, rest = pick_up_node lhs_hs Globals.self in
+      let head_node, rest = CF.pick_up_node lhs_hs Globals.self false in
       (* let head_node = List.hd lhs_hs in *)
       (* let extra_opt = join_star_conjunctions_opt (List.tl lhs_hs) in *)
       let extra_opt = join_star_conjunctions_opt rest in

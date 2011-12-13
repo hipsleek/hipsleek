@@ -52,7 +52,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		        let f_exp = function
 			      | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
 			      | _ -> None
-		        in 
+		        in
                 (*???*)
 		        let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
 		        (* Termination: Add source condition *)
@@ -772,6 +772,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let nctx = match v with 
 	            | Sharp_var (t,v) -> 
                     if (not is_conj) then
+                      (*===== DISJUNCTIVE FLOWs =====*)
                       let t1 = (get_sharp_flow ft) in
                         (* let _ = print_endline ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) in *)
                       let vr = if is_subset_flow t1 !raisable_flow_int then (CP.mkeRes t)
@@ -781,6 +782,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		              ctx1
                     else
                       (*===== CONJUNCTIVE FLOWs =====*)
+                      (*===== Thread FLOWs =====*)
                       let conj = match s_conj with
                         | Some c -> c
                         | None -> 
@@ -849,28 +851,201 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         (* entail pre and then post instead of both *)
                         let pre,post = CF.split_specs pre2 in
                         let _ = Debug.devel_pprint ("check_exp: Sharp: fork:" ^ ("\n ###pre= " ^ (!print_struc_formula pre) ^ "\n ###post=" ^ (!print_struc_formula post))) no_pos in
+                        (* entail pre-cond only, put post-cond into a concurrent flow *)
                         let rs_pre, prf_pre = heap_entail_struc_list_failesc_context_init prog false true sctx pre pos pid in
-                        let rs, prf = heap_entail_struc_list_failesc_context_init prog false true rs_pre post pos pid in
-                        (* TO DO NEXT: entail pre-cond only, put post-cond into a concurrent flow *)
+                        let _ = Debug.devel_pprint ("check_exp: Sharp: fork: after entailing the precondition"
+                                                    ^ ((Cprinter.string_of_list_failesc_context rs_pre)^ "\n")) pos in
 
-                        (*=============================================*)
-                        (*this can be done at astsimp.ml*)
-                        (*First, create a new var pointing to Thread(id)*)
-                        (*assume it has type Thread*)
-                        (* let fn = (fresh_ty_var_name (Globals.Named "Thread") pos.start_pos.Lexing.pos_lnum) in *)
-                        (* let vd = C.VarDecl { C.exp_var_decl_type = (Globals.Named "Thread"); *)
-                        (*                      C.exp_var_decl_name = fn; *)
-                        (*                      C.exp_var_decl_pos = pos;} in *)
+                        (* partition current flow into __norm flow and Thread flow*)
+                        (* Each succ context has to contain Thread<id> and *)
+                        (* a __norm flow, we break it into 2 flows __norm and Thread *)
+                        let fct es =
+                          let es_f = es.CF.es_formula in
+                          (* let es_pure,_ = es.CF.es_pure in *)
+                          let rec helper (f:CF.formula) = match f with
+                            | CF.Or o ->
+                                let _ = print_endline ("check_exp: Sharp: fork: this may not happen") in
+                                let ctx1 = helper o.F.formula_or_f1 in
+                                let ctx2 = helper o.F.formula_or_f2 in
+                                CF.mkOCtx ctx1 ctx2 pos
+                            | CF.Base b ->
+                                let base = b.CF.formula_base_heap in
+                                let pure = b.CF.formula_base_pure in
+                                let ls = CF.split_star_conjunctions base in
+                                (*pickup Thread node exactly name v*)
+                                let th_node, rest = CF.pick_up_node ls v true in
+                                if (CF.is_true th_node) then
+                                  (*Thread node does not exist*)
+                                  let _ = print_endline ("Warning: There should exist a Thread node") in
+                                  CF.Ctx es
+                                else
+                                  (*norm flow*)
+                                  let f1 = CF.Base {b with
+                                      CF.formula_base_heap = CF.join_star_conjunctions rest;
+                                      CF.formula_base_pure = pure;} in
+                                  let es1 = {es with CF.es_formula = f1;} in
+                                  let ctx1 = CF.Ctx es1 in
 
-                        (*=============================================*)
-                        (* let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in *)
+                                  (*Thread flow*)
+                                  let th_vars = CF.h_fv th_node in
+                                  let th_pure = MCP.find_rel_constraints pure th_vars in
+                                  let vr = (CP.mkeRes t) in
+		                          let tmp = CP.mkEqVar vr (CP.SpecVar (t, v, Primed)) pos in
+                                  let tmp1 = MCP.memoise_add_pure_N th_pure tmp in
+                                  let f2 = CF.Base {b with
+                                      CF.formula_base_heap = th_node;
+                                      CF.formula_base_pure = tmp1;} in
+                                  let es2 = {es with CF.es_formula = f2;} in
+                                  let ctx2 = CF.Ctx es2 in
+                                  (*merge with the post condition*)
+                                  (*only have 1 post-condition*)
+                                  let new_ctx2 = match (List.hd post) with
+                                    | CF.EAssume (ref_vars, post, (i,y)) ->
+                                        let rs = clear_entailment_history ctx2 in
+	                                    let rs1 = CF.compose_context_formula rs post ref_vars CF.Flow_replace pos in
+	                                    let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
+	                                    let rs3 = CF.add_path_id rs2 (pid,i) in
+                                        let rs4 = Solver.prune_ctx prog rs3 in
+                                        rs4
+                                    | _ -> 
+                                        Err.report_error { Err.error_loc = pos; 
+                                                           Err.error_text = "Expecting a post condition of EAsume" }
+                                  in
+                                  (*create Thread flow*)
+                                  let new_ctx2 = 
+                                    match ft with
+                                      | Sharp_ct nf -> 
+                                          CF.set_flow_in_ctx_override new_ctx2 nf
+                                      | Sharp_id v ->
+                                          CF.set_flow_in_ctx_override new_ctx2 (CF.get_flow_from_stack v !flow_store pos) 
+                                  in
+                                  (*Create OCtx*)
+                                  CF.mkOCtx ctx1 new_ctx2 pos
+                            | CF.Exists e ->
+                                let base = e.CF.formula_exists_heap in
+                                let pure = e.CF.formula_exists_pure in
+                                let ls = CF.split_star_conjunctions base in
+                                (*pickup Thread node exactly name v*)
+                                let th_node, rest = CF.pick_up_node ls v true in
+                                if (CF.is_true th_node) then
+                                  (*Thread node does not exist*)
+                                  let _ = print_endline ("Warning: There should exist a Thread node") in
+                                  CF.Ctx es
+                                else
+                                  (*norm flow*)
+                                  let f1 = CF.Exists {e with
+                                      CF.formula_exists_heap = CF.join_star_conjunctions rest;
+                                      CF.formula_exists_pure = pure;} in
+                                  let es1 = {es with CF.es_formula = f1;} in
+                                  let ctx1 = CF.Ctx es1 in
+                                  (*post-condition + Thread flow*)
+                                  let th_vars = CF.h_fv th_node in
+                                  let th_pure = MCP.find_rel_constraints pure th_vars in
+                                  let vr = (CP.mkeRes t) in
+		                          let tmp = CP.mkEqVar vr (CP.SpecVar (t, v, Primed)) pos in
+                                  let tmp1 = MCP.memoise_add_pure_N th_pure tmp in
+                                  let f2 = CF.Exists {e with
+                                      CF.formula_exists_heap = th_node;
+                                      CF.formula_exists_pure = tmp1;} in
+                                  let es2 = {es with CF.es_formula = f2;} in
+                                  let ctx2 = CF.Ctx es2 in
+                                  (*merge with the post condition*)
+                                  (*only have 1 post-condition*)
+                                  let new_ctx2 = match (List.hd post) with
+                                    | CF.EAssume (ref_vars, post, (i,y)) ->
+                                        let rs = clear_entailment_history ctx2 in
+	                                    let rs1 = CF.compose_context_formula rs post ref_vars CF.Flow_replace pos in
+	                                    let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
+	                                    let rs3 = CF.add_path_id rs2 (pid,i) in
+                                        let rs4 = Solver.prune_ctx prog rs3 in
+                                        rs4
+                                    | _ -> 
+                                        Err.report_error { Err.error_loc = pos; 
+                                                           Err.error_text = "Expecting a post condition of EAsume" }
+                                  in
+                                  (*create Thread flow*)
+                                  let new_ctx2 = 
+                                    match ft with
+                                      | Sharp_ct nf -> 
+                                          CF.set_flow_in_ctx_override new_ctx2 nf
+                                      | Sharp_id v ->
+                                          CF.set_flow_in_ctx_override new_ctx2 (CF.get_flow_from_stack v !flow_store pos)
+                                  in
+                                  (*Create OCtx*)
+                                  CF.mkOCtx ctx1 new_ctx2 pos
+                          in
+                          helper es_f
+                        in
+                        let rs_pre2 = CF.transform_list_failesc_context (idf,idf,fct) rs_pre in
+                        let _ = Debug.devel_pprint ("check_exp: Sharp: fork: after fork"
+                                                    ^ ((Cprinter.string_of_list_failesc_context rs_pre2)^ "\n")) pos in
+                        (*Thread flow formula*)
+                        let th_flow =
+                          match ft with
+                            | Sharp_ct nf -> 
+                                nf
+                            | Sharp_id v ->
+                                (CF.get_flow_from_stack v !flow_store pos)
+                        in
+                        (*split __norm and Thread into 2 succ states*)
+                        let func2 (fesc:CF.failesc_context):CF.failesc_context =
+                          let fail,esc,succ = fesc in
+                          let rec split_succ_states states = match states with
+                            | [] -> []
+                            | x::xs -> 
+                                let split_one_succ_state (state:CF.branch_ctx) : (CF.branch_ctx list) =
+                                  let (ptrace,ctx) = state in
+                                  (*find context with flow Thread*)
+                                  if (CF.exists_flow_formula_ctx th_flow ctx) then
+                                    begin
+                                        (*ctx with Thread flow * the rest *)
+                                        let rec helper (ls1,ls2) c = match c with
+                                          | CF.Ctx es -> 
+                                              if (CF.exists_flow_formula_ctx th_flow c) then
+                                                (c::ls1,ls2)
+                                              else
+                                                (ls1,c::ls2)
+                                          | CF.OCtx (c1,c2) -> 
+                                              (helper (helper (ls1,ls2) c1) c2) 
+                                        in
+                                        let ctx1,ctx2 = helper ([],[]) ctx in
+                                        (*succ states with Thread*)
+                                        let succ1 = List.map (fun c -> (ptrace,c)) ctx1 in
+                                        (*succ states w/o Thread*)
+                                        let succ2 = List.map (fun c -> (ptrace,c)) ctx2 in
+                                        (succ1@succ2)
+                                    end
+                                  else
+                                    begin
+                                        [state]
+                                    end
+                                in
+                                let rs1 = split_one_succ_state x in
+                                let rs2 = split_succ_states xs in
+                                (rs1@rs2)
+                          in
+                          let new_succ = split_succ_states succ in
+                          (fail,esc,new_succ)
+                        in
+                        let rec func1 (ls:CF.list_failesc_context) : CF.list_failesc_context =
+                          match ls with
+                            | [] -> []
+                            | x::xs ->
+                                let rs = func2 x in
+                                let rss = func1 xs in
+                                rs::rss
+                        in
+                        let rs_pre3 = func1 rs_pre2 in
+                        let _ = Debug.devel_pprint ("check_exp: Sharp: fork: after split flows"
+                                                    ^ ((Cprinter.string_of_list_failesc_context rs_pre3)^ "\n")) pos in
+
 				        let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                         (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
-                        let _ = PTracer.log_proof prf in
-                        let _ = print_string (("\n[fork] res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in
-                        if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
+                        let _ = PTracer.log_proof prf_pre in
+                        let _ = print_string (("\n[fork] res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs_pre3) ^ "\n") in
+                        if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs_pre3) then
                           Debug.print_info "fork procedure call" (to_print^" has failed \n") pos else () ;
-                        rs 
+                        rs_pre3
                       in
                       (*=======check_pre_post - END ========*)
                       (* Call check_pre_post with debug information *)
