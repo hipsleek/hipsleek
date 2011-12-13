@@ -14,10 +14,10 @@ let fixcalc = "fixcalc";;
 let output = "fixcalc.inp";;
 let oc = ref (open_out output);;
 
-let fmt_string x = Printf.fprintf (!oc) "%s" x
-let fmt_bool x = Printf.fprintf (!oc) "%b" x
-let fmt_int x = Printf.fprintf (!oc) "%d" x
-let fmt_float x = Printf.fprintf (!oc) "%f" x
+let fmt_string x = let _ = print_string x in Printf.fprintf (!oc) "%s" x
+let fmt_bool x = let _ = print_string (string_of_bool x) in Printf.fprintf (!oc) "%b" x
+let fmt_int x = let _ = print_string (string_of_int x) in Printf.fprintf (!oc) "%d" x
+let fmt_float x = let _ = print_string (string_of_float x) in Printf.fprintf (!oc) "%f" x
 
 let op_lt = "<" 
 let op_lte = "<=" 
@@ -155,6 +155,7 @@ let compute_inv name vars fml pf =
     pr_square fixcalc_of_spec_var vars; 
     fmt_string " -> [] -> []: ";
     list_iter " || " (fun (c,_)-> fixcalc_of_formula c) fml;
+    print_string ("\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n\n");
     Printf.fprintf (!oc) "\n};\n\nFix1:=bottomup(%s,1,SimHeur);\nFix1;\n\n" name;
     flush (!oc);
     close_out (!oc);

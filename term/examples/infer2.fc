@@ -1,0 +1,4 @@
+lp:={[n] -> [res] -> []: (n=5 && res=n) || exists (n1: (n<5 || n>5) && n1=n-1 && lp(n1,res))};
+
+Fix1:=bottomup(lp,1,SimHeur);
+Fix1;
