@@ -820,8 +820,10 @@ let start () =
   last_test_number := !test_number;
   if(check_prover_existence "mona_inter")then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
+      print_string "\n found mona_inter!";
       is_mona_running := true
   end
+  else print_string "\nWARNING: mona_inter could not be found!"
 
 let start () =
   let pr = (fun _ -> "") in

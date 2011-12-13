@@ -2,6 +2,7 @@ open Globals
 open Gen.Basic
 
 open Cpure
+open Mcpure_D
 open Slicing
 
 module AutoS = MCP_Util (Syn_Label_AuS)

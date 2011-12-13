@@ -7,7 +7,7 @@ open Exc.GTable
 open Lexing 
 open Cast 
 open Cformula
-open Slicing
+open Mcpure_D
 open Gen.Basic 
 
 module P = Cpure

@@ -4,10 +4,11 @@ open Exc.GTable
 open Printf
 open Gen.Basic
 open Gen.BList
-open Slicing
+(* open Slicing *)
 open Perm
 open Mcpure
-  
+open Mcpure_D
+ 
 module C = Cast
   
 module E = Env
