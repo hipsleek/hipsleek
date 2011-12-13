@@ -52,6 +52,7 @@ type formula_info = {
 		is_quantifier_free : bool;
 		contains_array     : bool;
         contains_list      : bool;
+        sequences          : CP.exp list; (* list of sequences (lists)  in the formula *)
 		relations          : ident list; (* list of relations that the formula mentions *)
 		axioms             : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
 	}
@@ -217,6 +218,7 @@ let default_formula_info = {
 	is_quantifier_free = true; 
 	contains_array = false; 
     contains_list = false;
+    sequences = [];
 	relations = []; 
 	axioms = []; }
 
@@ -296,15 +298,16 @@ and collect_exp_info e = match e with
 	| CP.BagUnion _
 	| CP.BagIntersect _
 	| CP.BagDiff _ -> default_formula_info (* Unsupported bag; but leave this default_formula_info instead of a fail_with *)
-	| CP.ListCons (e1, e2, _) -> 
+	| CP.ListCons (e1, e2, l) -> 
 			let ef1 = collect_exp_info e1 in
 			let ef2 = collect_exp_info e2 in
-			let ifl = combine_formula_info ef1 ef2 in ifl (*in {ifl with contains_list = true;} *)
+			let ifl = combine_formula_info ef1 ef2 in {ifl with sequences = ifl.sequences@[CP.ListCons(e1,e2,l)];}
 	| CP.ListHead (e, _) 
 	| CP.ListTail (e, _)  
 	| CP.ListLength (e, _) 
 	| CP.ListReverse (e, _) -> let ifl = collect_exp_info e in {ifl with contains_list = true;}
-	| CP.List (elist, _) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in result 
+	| CP.List (elist, l) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in 
+      {result with sequences = result.sequences@[CP.List(elist,l)];}
 	| CP.ListAppend (elist, _) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in {result with contains_list = true;}
 	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
@@ -313,6 +316,7 @@ and combine_formula_info if1 if2 =
 	is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
 	contains_array = if1.contains_array || if2.contains_array;
 	contains_list = if1.contains_list || if2.contains_list;
+    sequences = List.append if1.sequences if2.sequences;
 	relations = List.append if1.relations if2.relations;
 	axioms = List.append if1.axioms if2.axioms;}
 
@@ -325,6 +329,7 @@ and combine_formula_info_list infos =
 								(List.map (fun x -> x.contains_array) infos);
 	contains_list = List.fold_left (fun x y -> x || y) false 
 								(List.map (fun x -> x.contains_list) infos);
+	sequences = List.flatten (List.map (fun x -> x.sequences) infos);
 	relations = List.flatten (List.map (fun x -> x.relations) infos);
 	axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
 
@@ -573,10 +578,25 @@ let logic_for_formulas f1 f2 =
 	| true, false -> AUFLIA (* should I use UFNIA instead? *)
 	| false, false -> UFNIA
 
+let rec add_seq_axioms fvars seqs = match fvars with
+    | [] -> "\n"
+    | f::fs -> String.concat "\n" (List.map (fun x -> (match x , f with 
+                                  | CP.ListCons(e1, e2, l), CP.SpecVar(List t, _, _) ->  "(assert " ^ "(=>" ^    
+                                        (smt_of_b_formula ((CP.Eq((CP.mkVar f l),(CP.ListCons(e1, e2, l)), l)), None))  ^  
+                                        (smt_of_b_formula ((CP.Eq((CP.ListLength((CP.mkVar f l),l)),  
+                                            (CP.Add(CP.ListLength(e2,l),(CP.mkIConst 1 l),l)),l)), None )) ^ " ))" 
+                                  | CP.List(elist, l), CP.SpecVar(List t, _, _) ->  "(assert " ^ "(=>" ^ 
+                                        (smt_of_b_formula ((CP.Eq((CP.mkVar f l),CP.List(elist, l), l)), None)) ^  
+                                         (smt_of_b_formula ((CP.Eq((CP.ListLength((CP.mkVar f l),l)), 
+                                            (CP.mkIConst (List.length elist) l),l)), None )) ^ " ))" 
+                                  | _,_ -> ""))
+                            seqs) ^ "\n" ^(add_seq_axioms fs seqs) 
+    
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
     (*check info has list constraints*)
-    let if_seq_axioms = if info.contains_list then seq_axioms else "(define-sort Seq (T) (List T))" in 
+    let if_seq_axioms = if info.contains_list then seq_axioms else "(define-sort Seq (T) (List T))\n" in 
+    let init_seq_axioms = if info.contains_list then add_seq_axioms fvars info.sequences else "" in 
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in   
 	let smt_var_decls = String.concat "" smt_var_decls in
@@ -602,8 +622,10 @@ let to_smt_v2 ante conseq logic fvars info =
 				rel_decls ^
 			";Axioms assertions\n" ^ 
 				axiom_asserts ^
+            "; Initialization of Seq Axioms\n" ^
+                init_seq_axioms ^
 			";Antecedent\n" ^ 
-				ante_str ^
+				ante_str ^ 
 			";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
 			"(check-sat)")
 	
