@@ -384,6 +384,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
+(*
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		(*  let _ = print_string "Call [Sleekengine.run_entail_check] with\n" in *)
 		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
@@ -448,6 +449,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     else ((not (CF.isFailCtx rs)))
   in
   (res, rs)
+*)
 
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
@@ -463,7 +465,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   in
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
-  let _ = flush stdout in
+(*  let _ = flush stdout in*)
   (* let csq_extra = meta_to_formula iconseq0 false [] stab in *)
   (* let conseq_fvs = CF.fv csq_extra in *)
   (* let _ = print_endline ("conseq vars"^(Cprinter.string_of_spec_var_list conseq_fvs)) in *)
@@ -474,6 +476,16 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n") no_pos in
+  let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in
+  let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in
+  let _ = Debug.devel_pprint ("\nrun_entail_check: after normalization"
+                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+                        ^"\n\n") no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   (* List of vars appearing in original formula *)
