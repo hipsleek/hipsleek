@@ -3533,7 +3533,7 @@ and heap_entail (prog : prog_decl) (is_folding : bool)  (cl : list_context) (con
             (heap_entail_one_context prog is_folding  (List.hd cl) conseq pos)
 
 and heap_entail_one_context prog is_folding  ctx conseq pos =
-  Gen.Debug.loop_2_no "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
+  Gen.Debug.no_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
       (fun ctx conseq -> heap_entail_one_context_a prog is_folding  ctx conseq pos) ctx conseq
 
 (*   and heap_entail_one_context prog is_folding  ctx conseq pos =  *)
@@ -3548,14 +3548,14 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
       (SuccCtx [ctx], UnsatAnte)
     else if isStrictConstTrue conseq then
       (SuccCtx [ctx], TrueConseq)
-    else if isAnyFalseCtx ctx then
-      (SuccCtx [ctx], UnsatAnte)
+    (* else if isAnyFalseCtx ctx then *)
+    (*   (SuccCtx [ctx], UnsatAnte) *)
     else
       heap_entail_after_sat prog is_folding  ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
-  Gen.Debug.loop_2_no "heap_entail_after_sat"
+  Gen.Debug.no_2 "heap_entail_after_sat"
 	  (Cprinter.string_of_context)
 	  (Cprinter.string_of_formula)
 	  (fun (l,p) -> Cprinter.string_of_list_context l)
@@ -3600,9 +3600,10 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
   let pr3 = Cprinter.string_of_context in
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
-  let pr_res (ctx,proof) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)
-  ^ "\n proof = " ^ (string_of_proof proof)
-  ^"\n\n") in
+  let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
+  (* let pr_res (ctx,proof) = ("\n ctx = "^(Cprinter.string_of_list_context ctx) *)
+  (* ^ "\n proof = " ^ (string_of_proof proof) *)
+  (* ^"\n\n") in *)
   Gen.Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p *)
@@ -4765,7 +4766,7 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
       ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq));*)
     (* <<<<<<< solver.ml *)
     (* print_string "start\n";flush(stdout); let r = *)
-    heap_entail_conjunct_helper prog is_folding  ctx0 conseq rhs_matched_set pos
+    heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos
         (*in print_string "stop\n";flush(stdout);r*)
         (* check the entailment of two conjuncts  *)
         (* return value: if fst res = true, then  *)
@@ -4773,7 +4774,15 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
         (* snd res is the constraint that causes  *)
         (* the check to fail.                     *)
 
-and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
+and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
+      (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
+  let pr1 = Cprinter.string_of_context in
+  let pr2 (r,_) = Cprinter.string_of_list_context r in
+  Gen.Debug.no_1_num i "heap_entail_conjunct_helper" pr1 pr2
+      (fun _ -> heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
+      (rhs_h_matched_set:CP.spec_var list) pos) ctx0
+
+and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_conjunct_helper:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
@@ -4792,6 +4801,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 		      formula_exists_flow = qfl;
 		      formula_exists_branches = qb;
 		      formula_exists_pos = pos}) ->
+                  (* let _ = print_endline "WN# :Exists" in *)
 		          (* eliminating existential quantifiers from the LHS *)
 		          (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
 		          let ws = CP.fresh_spec_vars qvars in
@@ -4808,7 +4818,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 				      es_ante_evars = ws @ estate.es_ante_evars;
 				      es_unsat_flag = false;} in
 		          (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
-		          let rs, prf1 = heap_entail_conjunct_helper prog is_folding  new_ctx conseq rhs_h_matched_set pos in
+		          let rs, prf1 = heap_entail_conjunct_helper 2 prog is_folding  new_ctx conseq rhs_h_matched_set pos in
 		          (* --- added 11.05.2008 *)
 		          let new_rs =
 		            if !Globals.wrap_exist then
@@ -4821,7 +4831,8 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 		          let prf = mkExLeft ctx0 conseq qvars ws prf1 in
 		          (new_rs, prf)
 	        | _ -> begin
-		        match conseq with
+                 (* let _ = print_endline "WN# :_" in *)
+		         match conseq with
 		          | Exists ({formula_exists_qvars = qvars;
 			        formula_exists_heap = qh;
 			        formula_exists_pure = qp;
@@ -4835,24 +4846,27 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 		                let baref = mkBase qh qp qt qfl qb pos in
 		                let new_baref = subst st baref in
 				let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
-		                let tmp_rs, tmp_prf = heap_entail_conjunct_helper prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
+		                let tmp_rs, tmp_prf = heap_entail_conjunct_helper 1 prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
 			            (match tmp_rs with
 			              | FailCtx _ -> (tmp_rs, tmp_prf)
 			              | SuccCtx sl -> 
+                                (* let _ = print_endline ("WN#4:"^(Cprinter.string_of_list_context tmp_rs)) in *)
 			                    let prf = mkExRight ctx0 conseq qvars ws tmp_prf in
 				                (*added 09-05-2008 , by Cristian, checks that after the RHS existential elimination the newly introduced variables will no appear in the residue hence no need to quantify*)
 			                    let _ = List.map (redundant_existential_check ws) sl in
 			                    let res_ctx =
 				                  if !Globals.elim_exists then List.map elim_exists_ctx sl
 				                  else sl in
-				                (SuccCtx res_ctx, prf))
+                                let r = SuccCtx res_ctx in
+                                (* let _ = print_endline ("WN#5:"^(Cprinter.string_of_list_context r)) in *)
+				                (r, prf))
 		          | _ ->
 		                let h1, p1, fl1, br1, t1 = split_components ante in
 		                let h2, p2, fl2, br2, t2 = split_components conseq in
 			            (* let _ = print_string "pp 1\n" in*)
 			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 
 			              (* let _ = print_string ("got: "^(Cprinter.string_of_formula ante)^"|-"^(Cprinter.string_of_formula conseq)^"\n\n") in *)
-			              (SuccCtx [false_ctx fl1 pos], UnsatAnte)
+			              (SuccCtx [false_ctx_with_orig_ante estate ante fl1 pos], UnsatAnte)
 			            else					  
 			              (*  let _ = print_string "pp 2\n" in*)
 			              (* let _ = print_string ("bol : "^(string_of_bool ((CF.is_false_flow fl2.formula_flow_interval)))^"\n") in*)
@@ -4939,7 +4953,6 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 				                  (*   if  then ((\*print_string ("YES Expl inst!!\n");*\) move_lemma_expl_inst_ctx_list ctx p2) *)
 				                  (*   else ((\*print_string ("NO Expl inst!!\n");*\) ctx ) *)
 				                  (* in *)
-
                                   (* explicit instantiation
                                      this will move some constraint to the LHS*)
                                   (*LDK: 25/08/2011, also instatiate ivars*)                          
@@ -5473,6 +5486,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       | Some new_estate ->
             (* explicitly force unsat checking to be done here *)
             let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
+            (* let _ = print_endline ("WN after elim_unsat 3:"^(Cprinter.string_of_context ctx1)) in *)
             (* let ctx1 = (Ctx new_estate) in *)
             (* let ctx1 = set_unsat_flag ctx1 true in  *)
             let r1, prf = heap_entail_one_context prog is_folding ctx1 (CF.formula_of_mix_formula rhs_p pos) pos in
@@ -6966,7 +6980,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos,
           CF.mk_failure_bot ("infer_heap .. "))), NoAlias)
       | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
-
             (*      let _,lhs_p,_,_,_ = CF.split_components (estate.es_formula) in              *)
             (*      let lhs_xpure = lhs_p in                                                    *)
             (*      let rhs_xpure,_,_,_ = xpure prog conseq in                                  *)
