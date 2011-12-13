@@ -44,3 +44,12 @@ infer [p] m>6  |- p>m & m>z.
 print residue.
 //Inferred Pure:[ (z+1)<=m & m<p]
 //Should be: (exists z,m:(z+1)<=m & m<p) then fail?
+
+
+
+//Fail
+infer [q] n!=0 |- q::ll<n> .
+print residue.
+//Fail
+infer [x] n<0   |- x::ll<n>.
+print residue.

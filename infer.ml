@@ -351,6 +351,11 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         (*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
       else
         (* Simplify the pure of the residue *)
+        let args = CP.fv new_p in
+        let exists_var = CP.diff_svl args iv in
+        let new_p = CP.mkExists_with_simpl_debug Omega.simplify exists_var new_p None pos in
+      if CP.isConstTrue new_p then None
+      else
         let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
         let h, p, fl, b, t = CF.split_components new_es_formula in
         let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
@@ -371,6 +376,9 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs
       in*)      
       let lhs_simplified = simplify lhs_xpure iv in
+      let args = CP.fv lhs_simplified in 
+      let exists_var = CP.diff_svl args iv in
+      let lhs_simplified = CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos in
       let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
       if CP.isConstFalse new_p then None
       else
