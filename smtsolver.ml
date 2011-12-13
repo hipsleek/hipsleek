@@ -579,16 +579,16 @@ let logic_for_formulas f1 f2 =
 	| false, false -> UFNIA
 
 let rec add_seq_axioms fvars seqs = match fvars with
-    | [] -> "\n"
+    | [] -> ""
     | f::fs -> String.concat "\n" (List.map (fun x -> (match x , f with 
-                                  | CP.ListCons(e1, e2, l), CP.SpecVar(List t, _, _) ->  "(assert " ^ "(=>" ^    
-                                        (smt_of_b_formula ((CP.Eq((CP.mkVar f l),(CP.ListCons(e1, e2, l)), l)), None))  ^  
+                                  | CP.ListCons(e1, e2, l), CP.SpecVar(List t, _, _) ->  "(assert " ^ "(=> " ^    
+                                        (smt_of_b_formula ((CP.Eq((CP.mkVar f l),(CP.ListCons(e1, e2, l)), l)), None))  ^" "^ 
                                         (smt_of_b_formula ((CP.Eq((CP.ListLength((CP.mkVar f l),l)),  
-                                            (CP.Add(CP.ListLength(e2,l),(CP.mkIConst 1 l),l)),l)), None )) ^ " ))" 
-                                  | CP.List(elist, l), CP.SpecVar(List t, _, _) ->  "(assert " ^ "(=>" ^ 
-                                        (smt_of_b_formula ((CP.Eq((CP.mkVar f l),CP.List(elist, l), l)), None)) ^  
+                                            (CP.Add(CP.ListLength(e2,l),(CP.mkIConst 1 l),l)),l)), None )) ^ "))" 
+                                  | CP.List(elist, l), CP.SpecVar(List t, _, _) ->  "(assert " ^ "(=> " ^ 
+                                        (smt_of_b_formula ((CP.Eq((CP.mkVar f l),CP.List(elist, l), l)), None)) ^" "^ 
                                          (smt_of_b_formula ((CP.Eq((CP.ListLength((CP.mkVar f l),l)), 
-                                            (CP.mkIConst (List.length elist) l),l)), None )) ^ " ))" 
+                                            (CP.mkIConst (List.length elist) l),l)), None )) ^ "))" 
                                   | _,_ -> ""))
                             seqs) ^ "\n" ^(add_seq_axioms fs seqs) 
     
