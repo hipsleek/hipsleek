@@ -81,10 +81,15 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
+	    if(Immutable.is_lend post_cond) then
+	      	 Error.report_error
+		   {Error.error_loc = pos_spec;
+		    Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")}
+	    else
             let _ = post_pos#set (CF.pos_of_formula post_cond) in
             Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
-	        let _ = Debug.devel_pprint ("\n check_specs: EAssume: pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") no_pos in
+	        (* let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in *)
 	        if (Cformula.isAnyFalseCtx ctx1) then
 		      let _ = Debug.devel_pprint ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 				  (Cprinter.string_of_context_short ctx)) no_pos in 
@@ -322,8 +327,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		          (* let _ = print_string ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1) *)
                   (*   ^ "\n") in *)
                   let tmp_res2 = 
-		            if (not imm) then
+		            if (imm != Lend) then 
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
+    			    (* for Lend, it should not be added back *)
 		            else tmp_res1
 		          in
                   let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
@@ -432,7 +438,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_derv = false;
-		        CF.h_formula_data_imm = false;
+		        CF.h_formula_data_imm = Mutable;
 		        CF.h_formula_data_perm = None; (*LDK: deal later*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)
@@ -551,11 +557,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let _ = PTracer.log_proof prf in
 
                   (*let _ = print_string (("\nres ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
-			      
+ 
                   if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-                  rs in	        
-                
+                  rs in
                 (* Call check_pre_post with debug information *)
                 let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                   (* let _ = Cprinter.string_of_list_failesc_context in *)
@@ -820,6 +825,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
+	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
     check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin

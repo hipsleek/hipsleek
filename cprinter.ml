@@ -7,6 +7,7 @@ open Exc.GTable
 open Lexing 
 open Cast 
 open Cformula
+open Slicing
 open Gen.Basic 
 
 module P = Cpure
@@ -461,6 +462,13 @@ let string_of_spec_var x =
 	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
+let string_of_imm imm = match imm with
+  | Imm -> "@I"
+  | Lend -> "@L"
+  | _ -> "@M"
+
+
+
 
 let string_of_cperm perm =
   let perm_str = match perm with
@@ -468,15 +476,13 @@ let string_of_cperm perm =
     | Some f -> string_of_spec_var f
   in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
 
-let string_of_imm imm = 
-  if imm then "@I" else "" (*"@M"*)
 
 let string_of_derv dr = 
   if dr then "@D" else ""
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
-let pr_typed_spec_var x = fmt_string (string_of_typed_spec_var x)
+let pr_typed_spec_var x = fmt_string (string_of_spec_var x) (*(string_of_typed_spec_var x)*)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
@@ -539,7 +545,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.And _ -> true 
     | _ -> false
 
-let pure_memoised_wo_paren (e:MP.memo_pure) = false
+let pure_memoised_wo_paren (e: memo_pure) = false
 
 
 let h_formula_assoc_op (e:h_formula) : (string * h_formula list) option = 
@@ -740,12 +746,12 @@ let rec pr_pure_formula  (e:P.formula) =
 ;;
 
 let pr_prune_status st = match st with
-  | MP.Implied_N -> fmt_string "(IN)"
-  | MP.Implied_P -> fmt_string "(IP)" 
-  | MP.Implied_R -> fmt_string "(IDup)" 
+  | Implied_N -> fmt_string "(IN)"
+  | Implied_P -> fmt_string "(IP)" 
+  | Implied_R -> fmt_string "(IDup)" 
   
 let pr_memoise_constraint c = 
-  pr_b_formula c.MP.memo_formula ; pr_prune_status c.MP.memo_status
+  pr_b_formula c.memo_formula ; pr_prune_status c.memo_status
   
 let string_of_memoise_constraint c = poly_string_of_pr pr_memoise_constraint c
   
@@ -762,13 +768,13 @@ let pr_memoise_group_vb m_gr =
   fmt_cut();
   wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.MP.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.MP.memo_group_linking_vars; fmt_string "]:") (); 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.memo_group_linking_vars; fmt_string "]:") (); 
               fmt_cut ();fmt_string "  ";
-              wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
+              wrap_box ("B",1) pr_memoise c.memo_group_cons;
               fmt_cut ();fmt_string "  ";
-              wrap_box ("B",1) pr_mem_slice c.MP.memo_group_slice;
+              wrap_box ("B",1) pr_mem_slice c.memo_group_slice;
               fmt_cut ();fmt_string "  alias set:";
-              wrap_box ("B",1) fmt_string (P.EMapSV.string_of c.MP.memo_group_aset);
+              wrap_box ("B",1) fmt_string (P.EMapSV.string_of c.memo_group_aset);
               (* fmt_cut(); *)
           ) m_gr; fmt_string ")") m_gr
   (*else ()*)
@@ -1005,7 +1011,7 @@ let rec pr_formula_base e =
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
-          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
+         (*; fmt_string (" LOC: " ^ (string_of_loc pos))*)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -1039,7 +1045,7 @@ let rec pr_formula e =
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
-          (* ; fmt_string (" LOC: " ^ (string_of_loc pos)) *)
+          (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -1123,13 +1129,13 @@ let string_of_pure_formula_branches (f, l) : string =
 let string_of_memo_pure_formula_branches (f, l) : string =
   poly_string_of_pr  pr_memo_pure_formula_branches (f, l)
 
-let string_of_memo_pure_formula (f:MP.memo_pure) : string = 
+let string_of_memo_pure_formula (f: memo_pure) : string = 
   poly_string_of_pr  pr_memo_pure_formula f
 
 let string_of_memoised_group g =
   poly_string_of_pr pr_memoise_group [g]
 
-let string_of_mix_formula (f:MP.mix_formula) : string = 
+let string_of_mix_formula (f: MP.mix_formula) : string = 
   poly_string_of_pr pr_mix_formula f
 
 let rec string_of_mix_formula_list_noparen l = match l with 
@@ -1304,7 +1310,14 @@ and string_of_failure_kind e_kind=
 match e_kind with
   | Failure_May _ -> "MAY"
   | Failure_Must _ -> "MUST"
-  | Failure_None _ -> "None"
+  | Failure_Bot _ -> "Bot"
+  | Failure_Valid -> "Valid"
+
+and string_of_failure_kind_full e_kind=
+match e_kind with
+  | Failure_May s -> "MAY:" ^s
+  | Failure_Must s -> "MUST"^s
+  | Failure_Bot _ -> "Bot"
   | Failure_Valid -> "Valid"
 
 let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)
@@ -1313,7 +1326,7 @@ let string_of_fail_explaining fe=
   fmt_open_vbox 1;
   pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
   pr_vwrap "fe_name: " fmt_string (fe.fe_name);
-  pr_vwrap "fe_kind: " fmt_string (string_of_list_loc fe.fe_locs);
+  pr_vwrap "fe_locs: " fmt_string (string_of_list_loc fe.fe_locs);
 (*  fe_sugg = struc_formula *)
   fmt_close ()
 
@@ -1363,7 +1376,7 @@ let rec pr_fail_type_x (e:fail_type) =
 let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
-    | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
+    | Trivial_Reason fe -> fmt_string (" Trivial fail : "^ (string_of_failure_kind_full fe.fe_kind))
     | Basic_Reason (br,fe) -> 
           (string_of_fail_explaining fe);
           if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") 
@@ -2376,6 +2389,8 @@ Cformula.print_list_context_short := string_of_list_context_short;;
 Cformula.print_list_context := string_of_list_context;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
+Cformula.print_failure_kind_full := string_of_failure_kind_full;;
+Cformula.print_fail_type := string_of_fail_type;;
 (* Cformula.print_nflow := string_of_nflow;; *)
 Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;

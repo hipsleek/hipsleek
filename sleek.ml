@@ -237,12 +237,13 @@ let main () =
 (* let main () =  *)
 (*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
-let _ = 
-  wrap_exists_implicit_explicit := false ;
+let _ =
+   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
+    let _ = Printexc.record_backtrace !Globals.trace_failure in
     (Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)

@@ -306,22 +306,29 @@ let rec string_of_h_formula = function
 		 F.h_formula_heap_name = id;
          F.h_formula_heap_perm = perm; (*LDK*)
 		 F.h_formula_heap_arguments = pl;
+		 F.h_formula_heap_imm = imm;
 		 F.h_formula_heap_label = pi;
 		 F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
-	  ((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
+	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm))
   | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
+		  F.h_formula_heap2_imm = imm;
           F.h_formula_heap2_perm = perm; (*LDK*)
 		  F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
       string_of_formula_label_opt pi
-	      (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^ perm_str ^ "<" ^ tmp2 ^ ">")
+	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm))
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
+
+and string_of_imm imm = match imm with
+  | Imm -> "@I"
+  | Lend -> "@L"
+  | _ -> "@M"
 ;;
  
 let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "#'" | Unprimed -> "");; 

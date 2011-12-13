@@ -171,7 +171,7 @@ let compute_inv name vars fml pf =
     let new_pf = Parse_fix.parse_fix string in
 (*  print_string res;*)
 (*  print_endline (Cprinter.string_of_pure_formula new_pf ^ "a");*)
-    let check_impl = Omega.imply new_pf pf "1" 100 in
+    let check_impl = Omega.imply new_pf pf "1" 100.0 in
     if check_impl then
     begin
       Pr.fmt_string "INV:  ";

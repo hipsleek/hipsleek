@@ -385,15 +385,13 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-		(* (\* An Hoa : PRINT OUT THE INPUT *\) *)
-        (*LDK: iformula of ante and conseq*)
 		(*  let _ = print_string "Call [Sleekengine.run_entail_check] with\n" in *)
 		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
 		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
   let _ = residues := None in
   let stab = H.create 103 in
   let ante = meta_to_formula iante0 false [] stab in
-  (*--eps => prune*)
+  (*let _ = print_endline "1: prune ante in check entailment" in*)
   let ante = Solver.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
@@ -404,10 +402,11 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   in
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
-  let _ = flush stdout in
+(*  let _ = flush stdout in*)
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+  (*let _ = print_endline "2: prune conseq in check entailment" in*)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
   let _ = Debug.devel_pprint ("\nrun_entail_check:"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
@@ -521,22 +520,32 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s -> "(must) cause:"^s 
+            | Some s -> "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
+        (*should check bot with is_bot_status*)
         else ""
       in
-      print_string (num_id^": Fail. "^s^"\n")
+      print_string (num_id^": Fail."^s^"\n")
           (*if !Globals.print_err_sleek then *)
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
   else
     begin
-	  print_string (num_id^": Valid.\n")
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
-    end  
+        let s =
+        if not !Globals.disable_failure_explaining then
+          match CF.list_context_is_eq_flow residue false_flow_int with
+            | true -> "(bot)"
+            | false -> (*expect normal (OK) here*) ""
+        else ""
+        in
+        print_string (num_id^": Valid. "^s^"\n")
+        (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
+    end
+  (* with e -> *)
+  (*     let _ =  Error.process_exct(e)in *)
 
 let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
   let _ = print_entail_result valid residue num_id in

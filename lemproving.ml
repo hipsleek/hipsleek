@@ -63,7 +63,7 @@ let process_coercion_check iante iconseq (lemma_name: string)  (cprog: C.prog_de
   try 
     run_entail_check iante iconseq cprog
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason " exception in lemma proving ")) in
+      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error))) in
       (false, rs)
 
 let process_coercion_check iante0 iconseq0 (lemma_name: string)  (cprog: C.prog_decl) =
@@ -166,7 +166,7 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     let valid_l2r, rs_l2r = helper l2r check_left_coercion in
     let valid_r2l, rs_r2l = helper r2l check_right_coercion in
     let num_id = "\nEntailing lemma "^ lemma_name ^"" in
-    let empty_resid = CF.FailCtx (CF.Trivial_Reason " empty residue") in
+    let empty_resid = CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "empty residue" Globals.lemma_error)) in
     let (rs1, rs2) = match (rs_l2r, rs_r2l) with
       | (None, None) -> (empty_resid, empty_resid)
       | (None, Some rsr) -> (empty_resid, rsr)

@@ -742,6 +742,8 @@ let rec get_answer chn : string =
         | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
         | _ -> "" ^ get_answer chn
 
+let get_answer chn =
+  Gen.Debug.no_1 "get_answer" (fun _ -> "") (fun f -> f) get_answer chn
 
 let send_cmd_with_answer str =
   if!log_all_flag==true then
@@ -755,6 +757,14 @@ let send_cmd_with_answer str =
   let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !timeout in
   answ
 
+let send_cmd_with_answer str =
+  let pr = fun f -> f in
+  Gen.Debug.no_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
+
+let send_cmd_with_answer str =
+  let pr = fun f -> f in
+  Gen.Debug.no_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
+	
 (* modify mona for not sending answers *)
 let send_cmd_no_answer str =
   (* let _ = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
@@ -802,7 +812,7 @@ let set_process (proc: Globals.prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    (* let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in *)
+    let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
   else true
 
@@ -812,6 +822,10 @@ let start () =
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end
+
+let start () =
+  let pr = (fun _ -> "") in
+  Gen.Debug.no_1 "[mona.ml] start" pr pr start ()
 
 let stop () = 
   let killing_signal = 
@@ -823,7 +837,8 @@ let stop () =
   is_mona_running := false
 
 let restart reason =
-  if !is_mona_running then 
+  if !is_mona_running then
+	let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in
     Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let check_if_mona_is_alive () : bool = 
@@ -976,6 +991,12 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   stop();
   res
 
+let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
+  Gen.Debug.no_2 "[mona.ml]: write_to_file" string_of_bool
+	Cprinter.string_of_pure_formula
+	string_of_bool
+	(fun _ _ -> write_to_file is_sat_b fv f imp_no vs) is_sat_b f
+
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
@@ -1014,6 +1035,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           stop(); raise exc
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let _ = Gen.Profiling.inc_counter "stat_mona_count_imply" in
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
@@ -1033,6 +1055,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   imply ante conseq imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
+  let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;

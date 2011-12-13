@@ -10,7 +10,7 @@ module CP = Cpure
 
 (* options *)
 let is_presburger = ref false
-let no_pseudo_ops = ref true
+let no_pseudo_ops = ref false
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref false
@@ -167,6 +167,7 @@ let send_and_receive f =
 
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
+  (* let _ = print_endline ("redlog out:"^res) in *)
   if res = "true$" then
     Some true
   else if res = "false$" then
@@ -556,6 +557,12 @@ let has_exists2 f0 =
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
 
+
+ let strengthen_formula f =
+   let pr = string_of_formula in
+   Gen.Debug.no_1 "strengthen_formula"
+       pr pr
+       strengthen_formula f
 
 let strengthen2 f0 =
   let f_f f =
@@ -1140,7 +1147,9 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   res
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
-  Gen.Debug.no_2 "[Redlog] imply_no_cache" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
+  Gen.Debug.no_2 "[Redlog] imply_no_cache" 
+      (add_str "formula" string_of_formula)
+      (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) imply_no_cache f imp_no
 
 let imply ante conseq imp_no =
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
@@ -1169,7 +1178,11 @@ let imply ante conseq imp_no =
   res
 
 let imply ante conseq imp_no =
-  Gen.Debug.no_3 "[Redlog] imply" string_of_formula string_of_formula (fun c -> c) string_of_bool imply ante conseq imp_no
+  Gen.Debug.no_3 "[Redlog] imply" 
+      (add_str "ante" string_of_formula) 
+      (add_str "conseq" string_of_formula)
+      (add_str "imp_no" (fun c -> c)) 
+      string_of_bool imply ante conseq imp_no
 
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
