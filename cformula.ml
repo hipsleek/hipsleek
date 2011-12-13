@@ -2854,8 +2854,7 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
 
 
 
- (* co
-ntext functions *)
+ (* context functions *)
 	
   
   
@@ -2870,10 +2869,12 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
-  (* WN : What is this es_pure pure for? *)
-  es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
   es_evars : CP.spec_var list; (* existential variables on RHS *)
-  (*used by lemmas*)
+
+  (* WN : What is es_pure for? *)
+  es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
+
+  (*used by universal LEMMAS for instantiation? *)
   es_ivars : CP.spec_var list; 
     (* ivars are the variables to be instantiated (for the universal lemma application)  *)
   (* es_expl_vars : CP.spec_var list; (\* vars to be explicit instantiated *\) *)
@@ -2882,6 +2883,7 @@ type entail_state = {
   (*used by late instantiation*)
   es_gen_expl_vars: CP.spec_var list; (* explicit instantiation var*)
   es_gen_impl_vars: CP.spec_var list; (* implicit instantiation var*)
+
   (* to indicate if unsat check has been done for current state *)
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
@@ -2894,13 +2896,16 @@ type entail_state = {
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
+
+  (* is below for VARIANCE checking *)
   es_var_measures : CP.exp list;
   es_var_label : int option;
   es_var_ctx_lhs : CP.formula;
   es_var_ctx_rhs : CP.formula;
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
   es_var_loc : loc;
-  (* for immutability *)
+
+  (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
   es_rhs_eqset : (CP.spec_var * CP.spec_var) list;
@@ -2915,9 +2920,12 @@ type entail_state = {
   es_imm_pure_stk : MCP.mix_formula list;
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
-  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
+  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*) 
+  (* WN : isn't above the same as prior steps? *)
   es_is_normalizing : bool; (*normalizing process*)
   es_orig_vars : CP.spec_var list; (* Used to differentiate original vars from new generated vars *)
+
+  (* FOR INFERENCE *)
   es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
   es_infer_label: formula; 
 (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
@@ -2926,6 +2934,7 @@ type entail_state = {
   es_infer_pure : CP.formula list; (* output : pre pure inferred *)
   (* es_infer_pures : CP.formula list; *)
   es_infer_invs : CP.formula list (* WN : what is this? *)
+
 }
 
 and context = 
