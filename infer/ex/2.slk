@@ -111,6 +111,8 @@ New infer var is:
 //Ok
 //infer [x] true & x=y |- y::ll<n> .
 infer [n] x=null & n=0 |- x::node<_,_>.
+print residue.
+
 //OK
 //infer [q] q!=null |- q::ll<n> .
 

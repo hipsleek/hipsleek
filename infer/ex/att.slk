@@ -1,0 +1,24 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+
+// (18) fail
+// Inferred n=1
+infer [y,n] y::ll<n> |- y::node<_,null>.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=1, !(n=0 & y=null) & 0<=n]
+<1>EXISTS(q_236,flted_7_235: q_236::ll<flted_7_235>[Orig] & flted_7_235=0 & 
+n=1 &
+{FLOW,(17,18)=__norm})
+*/
+
+infer [] y::ll<n> & n=1 |- !(n=0 & y=null) & n>=0.
