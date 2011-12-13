@@ -8,9 +8,7 @@ pred ll<na> == self = null & na = 0
   inv na >= 0.
 
 
-
-// (17) fail
-// TODO : is the disj necessary?
+// (1) OK
 infer [y,n] y::ll<n> |- y::node<_,null>.
 print residue.
 /*
@@ -20,8 +18,17 @@ Inferred Pure:[ n=1, !(n=0 & y=null)]
 {FLOW,(17,18)=__norm})
 */
 
+//(2)
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+/*
+Inferred Pure:[ n=1, n!=0]
+<1>EXISTS(q_71,flted_7_70: q_71::ll<flted_7_70>[Orig] & flted_7_70=0 & n=1 &
+{FLOW,(17,18)=__norm})
+*/
 
-// (2)
+
+// (3)
 // seems OK
 infer [n] y::ll<n> |- y::node<_,b>.
 print residue.
@@ -32,7 +39,7 @@ Inferred Pure:[ n!=0]
 {FLOW,(17,18)=__norm})
 */
 
-// (3) Valid & inferred n=0
+// (4) Valid & inferred n=0
 infer [n] y=null |- y::ll<n>.  
 print residue.
 /*
@@ -41,7 +48,7 @@ Inferred Pure:[ n=0]
 <1>true & y=null & n=0 &
 */
 
-// (4) Can improve inferred to n!=1 !!
+// (5) ok
 infer [n] n=1 & y=null |- y::ll<n>.
 print residue.
 /*
@@ -51,7 +58,7 @@ Inferred Pure:[ n!=1]
 {FLOW,(17,18)=__norm}
 */
 
-// (5)
+// (6)
 infer [n] n=1 & y=null |- n=0.
 print residue.
 /*
@@ -60,7 +67,7 @@ Inferred Pure:[ n!=1]
 <1>false & false &
 */
 
-// (6) stronger RHS
+// (7) stronger RHS
 infer [n] n>0 & n>m  |- n>3.
 print residue.
 /*
@@ -70,7 +77,7 @@ Inferred Pure:[ 4<=n]
 {FLOW,(17,18)=__norm}
 */
 
-// (7) stronger RHS
+// (8) stronger RHS
 infer [n] n>0 & n>m & m>4  |- n>8.
 print residue.
 /*
@@ -80,7 +87,7 @@ Inferred Pure:[ 9<=n]
 {FLOW,(17,18)=__norm}
 */
 
-// (8) lhs & rhs -> false
+// (9) lhs & rhs -> false
 // TODO : should drop m
 // --> (exists m: m<n & 1<=n)
 infer [n] n>0 & n>m  |- false.
@@ -91,7 +98,7 @@ Inferred Pure:[ !(m<n & 1<=n)]
 <1>false & false &
 */
 
-// (9) lhs & rhs -> false
+// (10) lhs & rhs -> false
 infer [n,m] n>0 & n>m  |- false.
 print residue.
 /*
@@ -100,7 +107,7 @@ Inferred Pure:[ !(m<n & 1<=n)]
 <1>false & false &
 */
 
-// (10) lhs & rhs -> false but no n
+// (11) lhs & rhs -> false but no n
 infer [n] true  |- n=1 & n=2.
 print residue.
 /*
@@ -110,7 +117,7 @@ Infer  (10): Fail. (must) cause:(failure_code=213)  true |-  n=2 & n=1 (RHS: con
 
 */
 
-// (11) lhs & rhs -> false
+// (12) lhs & rhs -> false
 infer [n,m] n>0 & m=2  |- false.
 print residue.
 /*
@@ -119,3 +126,19 @@ Inferred Pure:[ !(m=2 & 1<=n)]
 <1>false & false &
 {FLOW,(17,18)=__norm}
 */
+
+// (13) 
+infer [p] x::node<p,q> & m>2  |- x::node<a,b> & a>m.
+print residue.
+
+// (14) 
+infer [p] m>2  |- p>m & m>4.
+print residue.
+
+// (15) 
+infer [m] m>2  |- p>m & m>4.
+print residue.
+
+// (14) 
+infer [p,m] m>2  |- p>m & m>4.
+print residue.
