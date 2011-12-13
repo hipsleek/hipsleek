@@ -7,3 +7,4 @@
 <z3iw/z3/lib/*.*>: not_hygienic
 <omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
+<mona-1.4/comp/lib/*.*>: not_hygienic
