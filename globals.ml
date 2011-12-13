@@ -435,7 +435,10 @@ let disable_multiple_specs =ref false
 (* Options for slicing *)
 let do_slicing = ref false
 let opt_imply = ref 0
+let opt_ineq = ref false
 let infer_slicing = ref false
+let multi_provers = ref false
+let is_sat_slicing = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false

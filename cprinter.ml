@@ -7,6 +7,7 @@ open Exc.GTable
 open Lexing 
 open Cast 
 open Cformula
+open Slicing
 open Gen.Basic 
 
 module P = Cpure
@@ -481,7 +482,7 @@ let string_of_derv dr =
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
-let pr_typed_spec_var x = fmt_string (string_of_typed_spec_var x)
+let pr_typed_spec_var x = fmt_string (string_of_spec_var x) (*(string_of_typed_spec_var x)*)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
@@ -544,7 +545,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.And _ -> true 
     | _ -> false
 
-let pure_memoised_wo_paren (e:MP.memo_pure) = false
+let pure_memoised_wo_paren (e: memo_pure) = false
 
 
 let h_formula_assoc_op (e:h_formula) : (string * h_formula list) option = 
@@ -745,12 +746,12 @@ let rec pr_pure_formula  (e:P.formula) =
 ;;
 
 let pr_prune_status st = match st with
-  | MP.Implied_N -> fmt_string "(IN)"
-  | MP.Implied_P -> fmt_string "(IP)" 
-  | MP.Implied_R -> fmt_string "(IDup)" 
+  | Implied_N -> fmt_string "(IN)"
+  | Implied_P -> fmt_string "(IP)" 
+  | Implied_R -> fmt_string "(IDup)" 
   
 let pr_memoise_constraint c = 
-  pr_b_formula c.MP.memo_formula ; pr_prune_status c.MP.memo_status
+  pr_b_formula c.memo_formula ; pr_prune_status c.memo_status
   
 let string_of_memoise_constraint c = poly_string_of_pr pr_memoise_constraint c
   
@@ -767,13 +768,13 @@ let pr_memoise_group_vb m_gr =
   fmt_cut();
   wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.MP.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.MP.memo_group_linking_vars; fmt_string "]:") (); 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.memo_group_linking_vars; fmt_string "]:") (); 
               fmt_cut ();fmt_string "  ";
-              wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
+              wrap_box ("B",1) pr_memoise c.memo_group_cons;
               fmt_cut ();fmt_string "  ";
-              wrap_box ("B",1) pr_mem_slice c.MP.memo_group_slice;
+              wrap_box ("B",1) pr_mem_slice c.memo_group_slice;
               fmt_cut ();fmt_string "  alias set:";
-              wrap_box ("B",1) fmt_string (P.EMapSV.string_of c.MP.memo_group_aset);
+              wrap_box ("B",1) fmt_string (P.EMapSV.string_of c.memo_group_aset);
               (* fmt_cut(); *)
           ) m_gr; fmt_string ")") m_gr
   (*else ()*)
@@ -1116,13 +1117,13 @@ let string_of_pure_formula_branches (f, l) : string =
 let string_of_memo_pure_formula_branches (f, l) : string =
   poly_string_of_pr  pr_memo_pure_formula_branches (f, l)
 
-let string_of_memo_pure_formula (f:MP.memo_pure) : string = 
+let string_of_memo_pure_formula (f: memo_pure) : string = 
   poly_string_of_pr  pr_memo_pure_formula f
 
 let string_of_memoised_group g =
   poly_string_of_pr pr_memoise_group [g]
 
-let string_of_mix_formula (f:MP.mix_formula) : string = 
+let string_of_mix_formula (f: MP.mix_formula) : string = 
   poly_string_of_pr pr_mix_formula f
 
 let rec string_of_mix_formula_list_noparen l = match l with 

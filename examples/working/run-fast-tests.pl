@@ -165,7 +165,7 @@ if($timings){
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip ";
-# changed to native hip, as byte-hip too slow
+# TODO : check if hip is n-hip, as b-hip is too slow
 # please use make native
 $sleek = "$exec_path/sleek ";
 $output_file = "log";
