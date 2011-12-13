@@ -8,6 +8,3 @@ pred ll<n> == self = null & n = 0
 //23. must-bug - cause:22  y!=null |-  y=null (must-bug).
 
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
-
-
-
