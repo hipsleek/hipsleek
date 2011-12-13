@@ -256,8 +256,8 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
 (* and called during matching of predicates *)
 and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
-    let r = List.fold_left (fun a c-> (a@ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
-    let r = List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
+    let r = List.fold_left (fun a c -> (a @ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
+    let r = List.fold_left (fun a c -> a @ (pure_ptr_equations c)) r f.memo_group_slice in
     let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
     r @ eqs in
   List.concat (List.map helper f)
@@ -372,8 +372,8 @@ and memo_f_neg (f: b_formula): b_formula =
   | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "memoized negation: unexpected constraint type"}
   in (npf,il)
         
-and memo_arith_simplify (f:memo_pure) : memo_pure = 
-  List.map (fun c-> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice}) f
+and memo_arith_simplify (f : memo_pure) : memo_pure = 
+  List.map (fun c -> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice }) f
       
 (******************************************************************************************************************
  Utilities for memoized formulas
@@ -649,8 +649,8 @@ and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
 and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
   fold_mem_lst_gen f_init with_dupl with_inv true true lst
   
-(*folds just the pruning constraints, ignores the memo_group_slice*) 
-and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice :formula = 
+(* folds just the pruning constraints, ignores the memo_group_slice *) 
+and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice : formula = 
   (*fold_mem_lst_to_lst lst false true false*)
   fold_mem_lst_gen (BForm (init_cond,None)) with_dupl with_inv with_slice true lst
       
@@ -1775,8 +1775,8 @@ let mix_of_pure f =
 	mix_of_pure f
 	  
 let pure_of_mix f = match f with
-  | OnePF f-> f
-  | MemoF f-> fold_mem_lst (mkTrue no_pos) false true f 
+  | OnePF f -> f
+  | MemoF f -> fold_mem_lst (mkTrue no_pos) false true f 
   
 let mkMFalse_no_mix = mkMFalse
   
