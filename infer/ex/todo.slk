@@ -3,6 +3,10 @@ data node {
 	node next;	
 }.
 
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
 // (1) 5.slk (9) lhs & rhs -> false
 // TODO : should drop m
 // --> not(exists m: m<n & 1<=n)
@@ -37,7 +41,7 @@ print residue.
 infer [p,m] m>6  |- p>m & m>4.
 print residue.
 //Inferred Pure:[ m<p]
-//Should be: (exists m:m<p) then fail?
+//Should be: (m<p) then succeed
 
 // (7) 
 infer [p] m>6  |- p>m & m>4.
@@ -50,3 +54,11 @@ infer [p] m>6  |- p>m & m>z.
 print residue.
 //Inferred Pure:[ (z+1)<=m & m<p]
 //Should be: (exists z,m:(z+1)<=m & m<p) then fail?
+
+//  (9) Fail
+infer [q] n!=0 |- q::ll<n> .
+print residue.
+
+// (10) Fail
+infer [x] n<0   |- x::ll<n>.
+print residue.
