@@ -2930,7 +2930,7 @@ and failure_kind =
 and fail_explaining = {
   fe_kind: failure_kind; (*may/must*)
   fe_name: string;
-  fe_locs: loc list;
+  fe_locs: int list;
   (* fe_explain: string;  *)
     (* string explaining must failure *)
   (*  fe_sugg = struc_formula *)
