@@ -13,18 +13,18 @@ Inferred Pure:[ n=0]
 
 
 Infer  (3): Valid.
-Inferred Heap:[ q::ll<inf_41>[Orig][LHSCase]]
+Inferred Heap:[ q::ll<inf_44>[Orig][LHSCase]]
 Inferred Pure:[]
-<1>true & q!=null & n=inf_41 &
+<1>true & q!=null & n=inf_44 &
 {FLOW,(17,18)=__norm}
 
 
-Infer  (4): Fail. (may) cause:(failure_code=15.3)  true |-  n_49=n (may-bug).
+Infer  (4): Fail. (may) cause:(failure_code=15.3)  true |-  n_53=n (may-bug).
 
 Infer  (5): Valid.
-Inferred Heap:[ q::ll<inf_n_63>[Orig][LHSCase]]
-Inferred Pure:[ inf_n_63=0]
-<1>true & n=0 & inf_n_63=0 &
+Inferred Heap:[ q::ll<inf_n_68>[Orig][LHSCase]]
+Inferred Pure:[ inf_n_68=0]
+<1>true & n=0 & inf_n_68=0 &
 {FLOW,(17,18)=__norm}
 
 
@@ -36,16 +36,16 @@ Inferred Pure:[ n!=0]
 
 
 Infer  (7): Valid.
-Inferred Heap:[ q::ll<inf_n_87>[Orig][LHSCase]]
-Inferred Pure:[ inf_n_87=0]
-<1>true & n=0 & inf_n_87=0 &
+Inferred Heap:[ q::ll<inf_n_94>[Orig][LHSCase]]
+Inferred Pure:[ inf_n_94=0]
+<1>true & n=0 & inf_n_94=0 &
 {FLOW,(17,18)=__norm}
 
 
 Infer  (8): Valid.
-Inferred Heap:[ q::ll<inf_n_101>[Orig][LHSCase]]
-Inferred Pure:[ inf_n_101=0]
-<1>true & n=0 & inf_n_101=0 &
+Inferred Heap:[ q::ll<inf_n_109>[Orig][LHSCase]]
+Inferred Pure:[ inf_n_109=0]
+<1>true & n=0 & inf_n_109=0 &
 {FLOW,(17,18)=__norm}
 
 

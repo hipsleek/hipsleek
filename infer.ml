@@ -61,6 +61,11 @@ let is_inferred_pre_list_context ctx =
   | FailCtx _ -> false
   | SuccCtx lst -> List.exists is_inferred_pre_ctx lst
 
+let is_inferred_pre_list_context ctx = 
+  Gen.Debug.no_1 "is_inferred_pre_list_context"
+      !print_list_context string_of_bool
+      is_inferred_pre_list_context ctx
+
 (* let rec is_inferred_pre_list_context = match ctx with *)
 (*   | Ctx estate -> is_inferred_pre estate  *)
 (*   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2) *)
@@ -148,68 +153,70 @@ let is_elem_of conj conjs =
 *)
 
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq = 
-  let iv = es.es_infer_vars in
-  let rt = get_args_h_formula rhs in
-  let lhs_als = get_alias_formula es.es_formula in
-  let lhs_aset = build_var_aset lhs_als in
-  let rhs_als = get_alias_formula conseq in
-  let rhs_aset = build_var_aset rhs_als in
-  let (b,args,inf_vars,new_h,new_iv,alias,r) = match rt with (* is rt captured by iv *)
-    | None -> false,[],[],HTrue,iv,[],[]
-    | Some (r,args,arg2,h) -> 
-          let alias = CP.EMapSV.find_equiv_all r lhs_aset in
-          (*let rt_al = [r]@alias in (* set of alias with root of rhs *)*)
-          (*let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)*)
-          (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
-          let new_iv = arg2@iv in
-          let alias = if List.mem r iv then [] else alias in
-          (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias,[r]) in
-  (*let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in*)
-  (* let _ = print_endline ("infer_heap_nodes") in *)
-  (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
-  (* let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in *)
-  (* (\* let _ = print_endline ("LHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) lhs_als)) in *\) *)
-  (* (\* let _ = print_endline ("RHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) rhs_als)) in *\) *)
-  (* let _ = print_endline ("root: "^(pr_option (fun (r,_,_,_) -> !print_sv r) rt)) in *)
-  (* let _ = print_endline ("rhs node: "^(!print_h_formula rhs)) in *)
-  (* let _ = print_endline ("renamed rhs node: "^(!print_h_formula new_h)) in *)
-  (* (\* let _ = print_endline ("heap args: "^(!print_svl args)) in *\) *)
-  (* (\* let _ = print_endline ("heap inf args: "^(!print_svl inf_vars)) in *\) *)
-  (* (\* let _ = print_endline ("heap arg aliases: "^(pr_list !print_svl args_al)) in *\) *)
-  (* let _ = print_endline ("root in iv: "^(string_of_bool b)) in *)
-  (* (\* let _ = print_endline ("RHS exist vars: "^(!print_svl es.es_evars)) in *\) *)
-  (* (\* let _ = print_endline ("RHS impl vars: "^(!print_svl es.es_gen_impl_vars)) in *\) *)
-  (* (\* let _ = print_endline ("RHS expl vars: "^(!print_svl es.es_gen_expl_vars)) in *\) *)
-  (* (\* let _ = print_endline ("imm pure stack: "^(pr_list !print_mix_formula es.es_imm_pure_stk)) in *\) *)
-  if b then 
-    begin
-      (* Take the alias as the inferred pure *)
-      let iv_al = CP.intersect iv alias in (* All relevant vars of interest *)
-      (* r certainly has one element *)
-      let r = List.hd r in
-      let r = CP.mkVar r no_pos in
-      let new_p = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
-        (CP.mkTrue no_pos) 
-        (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) in
-      let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
-      let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
-      let new_p_conjs = CP.list_of_conjs new_p in
-      let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
-        (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-      let r = {
-          match_res_lhs_node = new_h;
-          match_res_lhs_rest = HTrue;
-          match_res_holes = [];
-          match_res_type = Root;
-          match_res_rhs_node = rhs;
-          match_res_rhs_rest = rhs_rest;} in
-      let act = M_match r in
-      (
- (* WARNING : any dropping of match action must be followed by pop *)
-          (* must_action_stk # push act; *)
-      Some (new_iv,new_h,new_p))
-    end
-  else None
+  if no_infer es then None
+  else 
+    let iv = es.es_infer_vars in
+    let rt = get_args_h_formula rhs in
+    let lhs_als = get_alias_formula es.es_formula in
+    let lhs_aset = build_var_aset lhs_als in
+    let rhs_als = get_alias_formula conseq in
+    let rhs_aset = build_var_aset rhs_als in
+    let (b,args,inf_vars,new_h,new_iv,alias,r) = match rt with (* is rt captured by iv *)
+      | None -> false,[],[],HTrue,iv,[],[]
+      | Some (r,args,arg2,h) -> 
+            let alias = CP.EMapSV.find_equiv_all r lhs_aset in
+            (*let rt_al = [r]@alias in (* set of alias with root of rhs *)*)
+            (*let b = not((CP.intersect iv rt_al) == []) in (* does it intersect with iv *)*)
+            (* let new_iv = (CP.diff_svl (arg2@iv) rt_al) in *)
+            let new_iv = arg2@iv in
+            let alias = if List.mem r iv then [] else alias in
+            (List.exists (CP.eq_spec_var_aset lhs_aset r) iv,args,arg2,h,new_iv,alias,[r]) in
+    (*let args_al = List.map (fun v -> CP.EMapSV.find_equiv_all v rhs_aset) args in*)
+    (* let _ = print_endline ("infer_heap_nodes") in *)
+    (* let _ = print_endline ("infer var: "^(!print_svl iv)) in *)
+    (* let _ = print_endline ("new infer var: "^(!print_svl new_iv)) in *)
+    (* (\* let _ = print_endline ("LHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) lhs_als)) in *\) *)
+    (* (\* let _ = print_endline ("RHS aliases: "^(pr_list (pr_pair !print_sv !print_sv) rhs_als)) in *\) *)
+    (* let _ = print_endline ("root: "^(pr_option (fun (r,_,_,_) -> !print_sv r) rt)) in *)
+    (* let _ = print_endline ("rhs node: "^(!print_h_formula rhs)) in *)
+    (* let _ = print_endline ("renamed rhs node: "^(!print_h_formula new_h)) in *)
+    (* (\* let _ = print_endline ("heap args: "^(!print_svl args)) in *\) *)
+    (* (\* let _ = print_endline ("heap inf args: "^(!print_svl inf_vars)) in *\) *)
+    (* (\* let _ = print_endline ("heap arg aliases: "^(pr_list !print_svl args_al)) in *\) *)
+    (* let _ = print_endline ("root in iv: "^(string_of_bool b)) in *)
+    (* (\* let _ = print_endline ("RHS exist vars: "^(!print_svl es.es_evars)) in *\) *)
+    (* (\* let _ = print_endline ("RHS impl vars: "^(!print_svl es.es_gen_impl_vars)) in *\) *)
+    (* (\* let _ = print_endline ("RHS expl vars: "^(!print_svl es.es_gen_expl_vars)) in *\) *)
+    (* (\* let _ = print_endline ("imm pure stack: "^(pr_list !print_mix_formula es.es_imm_pure_stk)) in *\) *)
+    if b then 
+      begin
+        (* Take the alias as the inferred pure *)
+        let iv_al = CP.intersect iv alias in (* All relevant vars of interest *)
+        (* r certainly has one element *)
+        let r = List.hd r in
+        let r = CP.mkVar r no_pos in
+        let new_p = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
+            (CP.mkTrue no_pos) 
+            (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) in
+        let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
+        let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
+        let new_p_conjs = CP.list_of_conjs new_p in
+        let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
+          (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
+        let r = {
+            match_res_lhs_node = new_h;
+            match_res_lhs_rest = HTrue;
+            match_res_holes = [];
+            match_res_type = Root;
+            match_res_rhs_node = rhs;
+            match_res_rhs_rest = rhs_rest;} in
+        let act = M_match r in
+        (
+            (* WARNING : any dropping of match action must be followed by pop *)
+            (* must_action_stk # push act; *)
+            Some (new_iv,new_h,new_p))
+      end
+    else None
 
 (*
 type: Cformula.entail_state ->
@@ -292,18 +299,20 @@ let infer_lhs_contra_estate e f pos =
         find a stronger rhs to add to lhs
 *)
 let infer_lhs_rhs_pure lhs_simp rhs_simp ivars (* evars *) =
-  let fml = CP.mkAnd lhs_simp rhs_simp no_pos in
-  let check_sat = Omega.is_sat fml "0" in
-  if not(check_sat) then
-    (* lhs & rhs |- false *)
-    let f = simplify lhs_simp ivars in
-    let vf = CP.fv f in
-    let over_v = CP.intersect vf ivars in
-    if (over_v ==[]) then None
-    else Some (Redlog.negate_formula f)
+  if ivars ==[] then None
   else 
-    (* rhs -> lhs *)
-    None
+    let fml = CP.mkAnd lhs_simp rhs_simp no_pos in
+    let check_sat = Omega.is_sat fml "0" in
+    if not(check_sat) then
+      (* lhs & rhs |- false *)
+      let f = simplify lhs_simp ivars in
+      let vf = CP.fv f in
+      let over_v = CP.intersect vf ivars in
+      if (over_v ==[]) then None
+      else Some (Redlog.negate_formula f)
+    else 
+      (* rhs -> lhs *)
+      None
 
 let infer_lhs_rhs_pure lhs rhs ivars =
   let pr = !print_pure_f in
@@ -311,10 +320,10 @@ let infer_lhs_rhs_pure lhs rhs ivars =
 
 let infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos =
   let ivars = estate.es_infer_vars in
-  let lhs_xpure = MCP.pure_of_mix lhs_xpure in
-  let rhs_xpure = MCP.pure_of_mix rhs_xpure in
   if ivars == [] then None
   else 
+    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
+    let rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let lhs_simp = simplify lhs_xpure ivars in
     let rhs_simp = simplify rhs_xpure ivars in
     let r = infer_lhs_rhs_pure lhs_simp rhs_simp ivars in
@@ -351,6 +360,11 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         (*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
       else
         (* Simplify the pure of the residue *)
+        let args = CP.fv new_p in
+        let exists_var = CP.diff_svl args iv in
+        let new_p = CP.mkExists_with_simpl_debug Omega.simplify exists_var new_p None pos in
+      if CP.isConstTrue new_p then None
+      else
         let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
         let h, p, fl, b, t = CF.split_components new_es_formula in
         let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
@@ -371,6 +385,9 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs
       in*)      
       let lhs_simplified = simplify lhs_xpure iv in
+      let args = CP.fv lhs_simplified in 
+      let exists_var = CP.diff_svl args iv in
+      let lhs_simplified = CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos in
       let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
       if CP.isConstFalse new_p then None
       else
