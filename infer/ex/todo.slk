@@ -1,45 +1,51 @@
-// 5.slk (9) lhs & rhs -> false
+data node {
+	int val; 
+	node next;	
+}.
+
+// (1) 5.slk (9) lhs & rhs -> false
 // TODO : should drop m
-// --> (exists m: m<n & 1<=n)
+// --> not(exists m: m<n & 1<=n)
 infer [n] n>0 & n>m  |- false.
 print residue.
+// WHY inferred nothing!!
 
-// (13) 
+// (2) 
 infer [p] x::node<p,q> & m>2  |- x::node<a,b> & a>m.
 print residue.
-//Inferred Pure:[ 5<=m & m<p]
+//Inferred Pure:[ p=a & a<m
 
-// (14) 
+// (3) 
 infer [p] m>2  |- p>m & m>4.
 print residue.
 //Inferred Pure:[ 5<=m & m<p]
 //Should be: (exists m:5<=m & m<p) then fail
 
-// (15) 
+// (4) 
 infer [m] m>2  |- p>m & m>4.
 print residue.
 //Inferred Pure:[ 5<=m & m<p]
 //Should be: (exists p:5<=m & m<p) then fail
 
-// (14) 
+// (5) 
 infer [p,m] m>2  |- p>m & m>4.
 print residue.
 //Inferred Pure:[ 5<=m & m<p]
 
 
-// (15) 
+// (6) 
 infer [p,m] m>6  |- p>m & m>4.
 print residue.
 //Inferred Pure:[ m<p]
 //Should be: (exists m:m<p) then fail?
 
-// (15) 
+// (7) 
 infer [p] m>6  |- p>m & m>4.
 print residue.
 //Inferred Pure:[ m<p]
 //Should be: (exists m:m<p) then fail?
 
-// (15) 
+// (8) 
 infer [p] m>6  |- p>m & m>z.
 print residue.
 //Inferred Pure:[ (z+1)<=m & m<p]
