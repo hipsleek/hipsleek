@@ -4,8 +4,8 @@ open Exc.GTable
 open Printf
 open Gen.Basic
 open Gen.BList
-open Slicing
 open Perm
+open Mcpure_D
 open Mcpure
   
 module C = Cast

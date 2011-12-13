@@ -13,7 +13,7 @@ open Prooftracer
 open Gen.Basic
 open Immutable
 open Perm
-open Slicing
+open Mcpure_D
 open Mcpure
 
 module Inf = Infer
