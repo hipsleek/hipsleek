@@ -1,4 +1,23 @@
 int foo (int x)
+ case {
+  x<5 -> variance (-1)  ensures false;
+  x=5 -> variance (0) ensures res=5;
+  x>5 -> case {
+    exists(a:x=2*a)
+      -> variance (-1) ensures false;
+    !(exists(b:x=2*b))   
+      -> variance (1) [x]
+         ensures res=5; }
+  }
+{
+	if (x==5)
+		return x;
+	else 
+		return foo(x-2);
+}
+
+/*
+int foo (int x)
 	requires true
 	ensures true;
 {
@@ -7,7 +26,7 @@ int foo (int x)
 	else 
 		return foo(x-2);
 }
-
+*/
 /*
 
 Specification refinement for termination:
