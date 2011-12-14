@@ -1333,7 +1333,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let all_vars = List.map fst revmap in
 		let param_vars = Gen.BList.difference_eq (fun x y -> x = y) all_vars solved_vars in
 		(*let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
-		let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in
+		(*let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in*)
 		(*let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
 		let result = List.append result (List.map (fun x -> (x,x)) param_vars) in
 		(*let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in
@@ -1383,8 +1383,8 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let sst = List.map2 (fun x y -> List.map (fun z -> (z,x)) y) candidates replace_targets in
 		let sst = List.flatten sst in
 		let sst = List.filter (fun (x,y) -> not (CP.eq_spec_var x y)) sst in
-		(*let _ = print_endline "Replacements : " in
-		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in*)
+(*		let _ = print_endline "Replacements : " in
+		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in *)
 			(sst, strrep)
 ;;
 
@@ -1460,7 +1460,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
 	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
 	(*let _ = print_endline "\nInput equations: " in
-	let _ = print_endline input_eqns in*)
+	let _ = print_endline input_eqns in *)
 
 	(* Pipe the solve request to reduce process *)
 	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in

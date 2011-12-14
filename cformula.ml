@@ -245,6 +245,8 @@ let print_ext_formula = ref(fun (c:ext_formula) -> "printer not initialized")
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
 let print_spec_var_list = print_svl
+let print_path_trace = ref(fun (pt: path_trace) -> "printer not initialized")
+let print_list_int = ref(fun (ll: int list) -> "printer not initialized")
 
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -1534,6 +1536,58 @@ and pos_of_formula (f : formula) : loc = match f with
   (* | Or ({formula_or_pos = pos}) -> pos *)
   | Exists ({formula_exists_pos = pos}) -> pos
 
+and subst_pos_struc_formula (p:loc) (f:struc_formula): struc_formula=
+  List.map (subst_pos_ext_formula p) f
+
+and subst_pos_ext_formula (p:loc) (f:ext_formula): ext_formula=
+  match f with
+	| ECase { formula_case_branches = ppl;
+		formula_case_exists = ce;
+		formula_case_pos = l
+	} ->
+        let helper (pre, post)= (CP.subst_pos_formula p pre, subst_pos_struc_formula p post) in
+        ECase {formula_case_branches = List.map helper ppl;
+               formula_case_exists = ce;
+            formula_case_pos = p}
+	| EBase { formula_ext_explicit_inst =ispvs;
+		formula_ext_implicit_inst = espvs;
+		formula_ext_exists =svl;
+		formula_ext_base = f;
+		formula_ext_continuation = sf;
+		formula_ext_pos = l
+	} -> EBase { formula_ext_explicit_inst =ispvs;
+		formula_ext_implicit_inst = espvs;
+		formula_ext_exists =svl;
+		formula_ext_base = subst_pos_formula p f;
+		formula_ext_continuation = subst_pos_struc_formula p sf;
+		formula_ext_pos = p}
+	| EAssume (x,b,l)-> EAssume (x, subst_pos_formula p b, l)
+	| EVariance b -> EVariance {b with formula_var_pos=p}
+
+and subst_pos_formula (p:loc) (f: formula): formula=
+  match f with
+    | Base {  formula_base_heap = bhf;
+              formula_base_pure = bmf;
+              formula_base_type = bt;
+		      formula_base_flow = bff;
+              formula_base_branches = bb;
+              formula_base_label = bl;
+              formula_base_pos = _ }
+        -> Base {  formula_base_heap = bhf;
+              formula_base_pure = MCP.subst_pos_mix_formula p bmf;
+              formula_base_type = bt;
+		      formula_base_flow = bff;
+              formula_base_branches = bb;
+              formula_base_label = bl;
+              formula_base_pos = p }
+    | Or ({formula_or_f1 = f1;
+	       formula_or_f2 = f2;
+	       formula_or_pos = pos}) -> Or {formula_or_f1 = subst_pos_formula p f1;
+	                                     formula_or_f2 = subst_pos_formula p f2;
+	                                     formula_or_pos = p}
+  (* | Or ({formula_or_pos = pos}) -> pos *)
+    | Exists ef -> Exists {ef with formula_exists_pos =  p}
+
 and struc_fv (f: struc_formula) : CP.spec_var list = 
   let rec ext_fv (f:ext_formula): CP.spec_var list = match f with
 	| ECase b -> 
@@ -1717,7 +1771,7 @@ and subst_struc_pre sst (f : struc_formula) =
   (* apply_par_struc_pre s f *)
   match sst with
   | s :: rest -> subst_struc_pre rest (apply_one_struc_pre s f)
-  | [] -> f 
+  | [] -> f
 
 and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula):struc_formula = 
   let rec helper (f:ext_formula):ext_formula = match f with
@@ -2931,7 +2985,7 @@ and steps = string list
  and fail_explaining = {
      fe_kind: failure_kind; (*may/must*)
      fe_name: string;
-     fe_locs: Globals.loc list;
+     fe_locs: (*Globals.loc*) int list; (*line number*)
 (* fe_explain: string;  *)
 (* string explaining must failure *)
 (*  fe_sugg = struc_formula *)
@@ -3191,11 +3245,9 @@ let gen_land (m1,n1,e1) (m2,n2,e2) = match m1,m2 with
   | Failure_May m1, _ -> m2, n2, e2
   | _ , Failure_May m2 -> m1,n1, e1
   | Failure_Must m1, Failure_Must m2 ->
-      ( match (n1,n2) with
-        | sl_error, _ -> (Failure_Must m2, n2, e2)
-        | _ , sl_error -> (Failure_Must m1, n1, e1)
-        | _ -> Failure_Must ("land["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
-      )
+       if (n1==sl_error) then (Failure_Must m2, n2, e2)
+        else if (n2==sl_error) then (Failure_Must m1, n1, e1)
+        else Failure_Must ("land["^m1^","^m2^"]"), n1, e1 (*combine state here?*)
   | Failure_Must m1, Failure_Valid -> Failure_May ("land["^m1^",Valid]"), n1, None (*combine state here?*)
   | Failure_Valid, x  -> (m2, n2, e2)
 
@@ -3404,6 +3456,73 @@ let get_must_failure (ft:list_context) =
           (*     raise a) *)
 	| SuccCtx cs -> get_must_error_from_ctx cs
     (* | _ -> None *)
+
+(*todo: revise, pretty printer*)
+let rec get_must_failure_list_partial_context (ls:list_partial_context): (string option)=
+    (*may use lor to combine the list first*)
+    let los= List.map get_must_failure_partial_context ls in
+    (*los contains path traces*)
+    ( match (combine_helper "union\n" los "") with
+      | "" -> None
+      | s -> Some s
+    )
+
+  and combine_helper op los rs=
+    match los with
+      | [] -> rs
+      | [os] -> let tmp=
+            ( match os with
+              | None -> rs
+              | Some s -> rs ^ s
+            ) in tmp
+      | os::ss ->
+          (*os contains all failed of 1 path trace*)
+          let tmp=
+            ( match os with
+              | None -> rs
+              | Some s -> rs ^ s ^ "\n" ^ op
+            ) in
+          combine_helper op ss tmp
+
+  and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
+    let helper (pt, ft)=
+      let os = get_must_failure_ft ft in
+      match os with
+        | None -> None
+        | Some (s) ->  let spt = !print_path_trace pt in
+                    Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n    cause: " ^s)
+    in
+    match bfl with
+      | [] -> None
+      | fl -> let los= List.map helper fl in
+              ( match (combine_helper "lor\n" los "") with
+                | "" -> None
+                | s -> Some s
+              )
+
+(*currently, we do not use lor to combine traces,
+so just call get_may_falure_list_partial_context*)
+let rec get_may_failure_list_partial_context (ls:list_partial_context): (string)=
+    (*may use lor to combine the list first*)
+    let los= List.map get_may_failure_partial_context ls in
+    (*los contains path traces*)
+    combine_helper "union\n" los ""
+
+and get_may_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
+    let helper (pt, ft)=
+      let os = get_may_failure_ft ft in
+      match os with
+        | None -> None
+        | Some (s) ->  let spt = !print_path_trace pt in
+                    Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "\n    cause: " ^s)
+    in
+    match bfl with
+      | [] -> None
+      | fl -> let los= List.map helper fl in
+              ( match (combine_helper "lor\n" los "") with
+                | "" -> None
+                | s -> Some s
+              )
 
 let get_bot_status (ft:list_context) =
   match ft with
@@ -5532,7 +5651,7 @@ let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failes
   let re = fe esc_c in
   let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx) ) succ_c in
   (rf, re,rs)
-    
+
 let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
   List.map (transform_partial_context f) c
     
@@ -6240,7 +6359,7 @@ and simplify_failesc_context (ctx : failesc_context) (bv : CP.spec_var list) =
 		| (brfaillist,escstk,brctxlist) -> 
 			let newbrctxlist = List.map (fun x -> simplify_branch_context x bv) brctxlist in
 				(brfaillist,escstk,newbrctxlist)
-			
+
 and simplify_branch_context (brctx : branch_ctx) (bv : CP.spec_var list) =
 	match brctx with
 		| (pathtrc, ctx) ->
@@ -6315,7 +6434,16 @@ and simplify_heap_pure (h : h_formula) (p : MCP.mix_formula) (bv : CP.spec_var l
 	let nh = h_subst sst h in
 	let np = MCP.simplify_mix_formula (MCP.memo_subst sst p) in
 		(nh, np, strrep)
+(*
+let rec simplify_list_partial_context_w_brc (ctx : list_partial_context) (bv : CP.spec_var list) =
+	List.map (fun x -> simplify_partial_context_w_brc x bv) ctx
 
+and simplify_partial_context_w_brc (ctx : partial_context) (bv : CP.spec_var list) =
+	match ctx with
+		| (brfaillist,brctxlist) ->
+			let newbrctxlist = List.map (fun x -> simplify_branch_context x bv) brctxlist in
+				(brfaillist,newbrctxlist)
+*)
 (** An Hoa : SECTION PARTIAL STRUCTURE **)
 
 (**

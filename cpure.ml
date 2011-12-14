@@ -1359,7 +1359,75 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
+and pos_of_pformula pf: loc=
+  match pf with
+    | BConst (_, l) -> l
+    | BVar (_, l) -> l
+    | Lt (_, _, l) -> l
+    | Lte (_, _, l) -> l
+    | Gt (_, _, l) -> l
+    | Gte (_, _, l) -> l
+    | Eq (_, _, l) -> l
+    | Neq (_, _, l) -> l
+    | EqMax (_, _,_, l) -> l
+    | EqMin (_, _,_, l) -> l
+  (* bag formulas *)
+    | BagIn (_, _, l) -> l
+    | BagNotIn (_, _, l) -> l
+    | BagSub (_, _, l) -> l
+    | BagMin (_, _, l) -> l
+    | BagMax (_, _, l) -> l
+  (* list formulas *)
+    | ListIn (_, _, l) -> l
+    | ListNotIn (_, _, l) -> l
+    | ListAllN (_, _, l) -> l
+    | ListPerm (_, _, l) -> l
+    | RelForm (_, _, l) -> l
 
+and pos_of_bformula (pf, _) =  pos_of_pformula pf
+
+and pos_of_formula f rs: loc list=
+  match f with
+    | BForm (bf , _) -> rs @ [pos_of_bformula bf]
+    | And (f1, f2, l) -> let rs1 = (pos_of_formula f1 rs) in
+                         (pos_of_formula f2 rs1)
+    | Or (f1, f2, _, l)-> let rs1 = (pos_of_formula f1 rs) in
+                         (pos_of_formula f2 rs1)
+    | Not (f,_, l) -> rs @ [l]
+    | Forall (_, f,_, l) -> rs @ [l]
+    | Exists (_, f,_, l) -> rs @ [l]
+
+and subst_pos_pformula p pf= match pf with
+  | BConst (b,_) -> BConst (b,p)
+  | BVar (sv, _) -> BVar (sv, p)
+  | Lt (e1, e2, _) -> Lt (e1, e2, p)
+  | Lte (e1, e2, _) -> Lte (e1, e2, p)
+  | Gt (e1, e2, _) -> Gt (e1, e2, p)
+  | Gte (e1, e2, _) -> Gte (e1, e2, p)
+  | Eq (e1, e2, _) -> Eq (e1, e2, p)
+  | Neq (e1, e2, _) -> Neq (e1, e2, p)
+  | EqMax (e1, e2,e3, _) -> EqMax (e1, e2,e3, p)
+  | EqMin (e1, e2,e3, _) -> EqMin (e1, e2,e3, p)
+  | BagIn (sv, e, _) -> BagIn (sv, e, p)
+  | BagNotIn (sv, e, _) -> BagNotIn (sv, e, p)
+  | BagSub(e1, e2, _) -> BagSub (e1, e2, p)
+  | BagMin (sv1, sv2, _) -> BagMin (sv1, sv2, p)
+  | BagMax (sv1, sv2, _) -> BagMax (sv1, sv2, p)
+  | ListIn (e1, e2, _) -> ListIn (e1, e2, p)
+  | ListNotIn (e1, e2, _) -> ListNotIn (e1, e2, p)
+  | ListAllN (e1, e2, _) -> ListAllN (e1, e2, p)
+  | ListPerm (e1, e2, _) -> ListPerm (e1, e2, p)
+  | RelForm (id, el, _) -> RelForm (id, el, p)
+
+and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
+
+and subst_pos_formula p f = match f with
+  | BForm (bf, ofl) -> BForm (subst_pos_bformula p bf, ofl)
+  | And (f1, f2, _) ->  And (subst_pos_formula p f1, subst_pos_formula p f2, p)
+  | Or (f1, f2, ofl, _) ->  Or (subst_pos_formula p f1, subst_pos_formula p f2, ofl, p)
+  | Not (f, ofl, _) ->  Not (subst_pos_formula p f, ofl, p)
+  | Forall (sv, f, ofl, _) -> Forall (sv,subst_pos_formula p f, ofl, p)
+  | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
 
 
 and fresh_old_name (s: string):string = 
@@ -2712,13 +2780,13 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	let tmp2 = List.fold_left (fun s1 -> fun s2 -> SVarSet.union s1 s2) rele_var_set tmp1 in
 	  tmp2
   in
-	(*
+(*
 	  let _ = print_var_set rele_var_set in
 	  let _ = List.map
 	  (fun ffv -> (print_string ("\nrelevants0: f\n" ^ (mona_of_formula (fst ffv)) ^ "\n")); print_var_set (snd ffv))
 	  relevants0
 	  in
-	*)
+*)
 	(*
 	  Perform a fixpoint to select all relevant formulas.
 	*)
@@ -5690,10 +5758,30 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
-let filter_ante (ante : formula) (conseq : formula) : formula =
+(* Reference to function to solve equations in module Redlog. To be initialized in redlog.ml *)
+let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> (([],[]) : (((spec_var * spec_var) list) * ((spec_var * string) list))))
+
+(* An Hoa : Reduce the formula by removing redundant atomic formulas and variables given the list of "important" variables *)
+let rec reduce_pure (f : formula) (bv : spec_var list) =
+	(* Split f into collections of conjuction *)
+	let c = split_conjunctions f in
+	(* Pick out the term that are atomic *)
+	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c in 
+	let bf = List.fold_left  (fun a x -> 
+        match x with | BForm ((y,_),_) -> y::a
+          | _ -> a) [] bf in
+	(* Pick out equality from all atomic *)
+	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf in
+	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p) | _ -> failwith "Eq fail!") ebf in
+	let eqns = List.map (fun (e1,e2,p) -> (e1,e2)) ebf in
+	(* Solve the equation to find the substitution *)
+	let sst,strrep = !solve_equations eqns bv in
+		(sst,strrep)
+
+let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
 	let new_ante = filter_var ante fvar in
-	  new_ante
+    new_ante
 
 
 (* automatic slicing of variables *)
@@ -5794,14 +5882,32 @@ let find_may_failures imply pairs =
   let pairs = List.concat pairs in
   List.filter (fun (a,c) ->  not(imply a c)) pairs
 
+let remove_redundant (f:formula):formula =
+  let l_conj = split_conjunctions f in
+  let rec helper ls rs=
+    match ls with
+      | [] -> rs
+      | f::fs -> if List.exists (equalFormula f) fs then
+            helper fs rs
+          else (match f with
+            | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
+                  helper fs rs
+                else helper fs rs@[f]
+            | _ -> helper fs rs@[f]
+          )
+  in
+  let prun_l = helper l_conj [] in
+  join_conjunctions prun_l
+
 let find_all_failures is_sat ante cons =
 
   (* let _ = print_string ("find_all_failures: before is_sat" *)
   (*                       ^ "\n\n") in *)
-
+  (*remove duplicate, a=a*)
+  let ante = (*remove_dup_constraints*) remove_redundant ante in
   let cs= split_conjunctions cons in
   let cs = List.map (fun (_,ls) -> join_conjunctions ls) (slice_formula cs) in
-  let cand_pairs = List.map (fun c -> (filter_ante ante c,c)) cs in
+  let cand_pairs = List.map (fun c -> filter_ante ante c,c) cs in
   let (contra_list,cand_pairs) = part_contradiction is_sat cand_pairs in
   let (must_list,cand_pairs) = part_must_failures is_sat cand_pairs in
   let must_list = refine_must is_sat must_list in
@@ -5848,7 +5954,7 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
     simpl ante
   else ante 
   in
-  filter_ante n_a conseq
+   filter_ante n_a conseq
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula in
@@ -6105,27 +6211,6 @@ and remove_redundant_constraints_b f = match f with
 		let r = eqExp_f eq_spec_var e1 e2 in 
 			if r then BConst (true,no_pos) else f
 	| _ -> f
-
-(* Reference to function to solve equations in module Redlog. To be initialized in redlog.ml *)
-let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> (([],[]) : (((spec_var * spec_var) list) * ((spec_var * string) list))))
-
-(* An Hoa : Reduce the formula by removing redundant atomic formulas and variables given the list of "important" variables *)
-let rec reduce_pure (f : formula) (bv : spec_var list) =
-	(* Split f into collections of conjuction *)
-	let c = split_conjunctions f in
-	(* Pick out the term that are atomic *)
-	let bf, uf = List.partition (fun x -> match x with | BForm _ -> true | _ -> false) c in 
-	let bf = List.fold_left  (fun a x -> 
-        match x with | BForm ((y,_),_) -> y::a
-          | _ -> a) [] bf in
-	(* Pick out equality from all atomic *)
-	let ebf, obf = List.partition (fun x -> match x with | Eq _ -> true | _ -> false) bf in
-	let ebf = List.map (fun x -> match x with | Eq (e1,e2,p) -> (e1,e2,p) | _ -> failwith "Eq fail!") ebf in
-	let eqns = List.map (fun (e1,e2,p) -> (e1,e2)) ebf in
-	(* Solve the equation to find the substitution *)
-	let sst,strrep = !solve_equations eqns bv in
-		(sst,strrep)
-
 
 let compute_instantiations_x pure_f v_of_int avail_v =
   let ldisj = list_of_conjs pure_f in

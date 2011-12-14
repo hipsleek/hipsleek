@@ -137,6 +137,7 @@ and proc_decl = { proc_name : ident;
 				  proc_constructor : bool;
 				  proc_args : param list;
 				  proc_return : typ;
+               (*   mutable proc_important_vars : CP.spec_var list;*)
 				  proc_static_specs : Iformula.struc_formula;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
@@ -635,6 +636,7 @@ let mkProc id n dd c ot ags r ss ds pos bd=
 		  proc_exceptions = ot;
 		  proc_args = ags;
 		  proc_return = r;
+        (*  proc_important_vars = [];*)
 		  proc_static_specs = ss;
 		  proc_dynamic_specs = ds;
 		  proc_loc = pos;

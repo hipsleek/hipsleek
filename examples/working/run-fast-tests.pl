@@ -633,7 +633,7 @@ $output_file = "log";
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
               ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
-    "errors"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+    "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
 			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
 			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
@@ -769,7 +769,7 @@ sub sleek_process_file  {
   {
       my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
-      if ("$param" =~ "errors") {
+      if ("$param" =~ "musterr") {
           print "Starting sleek must/may errors tests:\n";
           $exempl_path_full = "$exec_path/errors";
           $err = 1;

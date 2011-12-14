@@ -592,7 +592,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
-          pr_list_op op_add f_b args
+          pr_list_op op_add f_b args; (*fmt_string (string_of_pos l.start_pos);*)
     | P.Mult (e1, e2, l) -> 
           let args = bin_op_to_list op_mult_short exp_assoc_op e in
           pr_list_op op_mult f_b  args
@@ -647,14 +647,14 @@ let rec pr_b_formula (e:P.b_formula) =
   let (pf,il) = e in
   pr_slicing_label il;
   match pf with
-    | P.BConst (b,l) -> fmt_bool b 
+    | P.BConst (b,l) -> fmt_bool b ;(* fmt_string (string_of_pos l.start_pos);*)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
     | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
     | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
-    | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
+    | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
     | P.EqMax (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
@@ -1005,7 +1005,7 @@ let rec pr_formula_base e =
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
-         (*; fmt_string (" LOC: " ^ (string_of_loc pos))*)
+        (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -1146,16 +1146,18 @@ let rec pr_struc_formula (e:struc_formula) =
 and pr_ext_formula  (e:ext_formula) =
   match e with
     | ECase { 
-          formula_case_exists =ee; formula_case_branches  =  case_list ; formula_case_pos = _} ->
+          formula_case_exists =ee; formula_case_branches  =  case_list ; formula_case_pos = p} ->
           (* fmt_string "case exists"; *)
           (* pr_seq "" pr_spec_var ee; *)
 		  fmt_string "ECase ";
+         (* fmt_string (string_of_pos p.start_pos);*)
           pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
               (fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
                   (fun () -> pr_struc_formula c2)) case_list
     | EBase { formula_ext_implicit_inst = ii; formula_ext_explicit_inst = ei; formula_ext_exists = ee; formula_ext_base = fb;
-	  formula_ext_continuation = cont; formula_ext_pos = _ } ->
+	  formula_ext_continuation = cont; formula_ext_pos = p } ->
 		  fmt_string "EBase ";
+          (* fmt_string (string_of_pos p.start_pos);*)
           fmt_open_vbox 2;
           wrap_box ("B",0) (fun fb ->
 			  if not(Gen.is_empty(ee@ii@ei)) then
@@ -1297,11 +1299,13 @@ match e_kind with
 
 let string_of_list_loc ls = String.concat ";" (List.map string_of_loc ls)
 
+let string_of_list_int ls = String.concat ";" (List.map string_of_int ls)
+
 let string_of_fail_explaining fe=
   fmt_open_vbox 1;
   pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
   pr_vwrap "fe_name: " fmt_string (fe.fe_name);
-  pr_vwrap "fe_locs: " fmt_string (string_of_list_loc fe.fe_locs);
+  pr_vwrap "fe_locs: " fmt_string (string_of_list_int(*_loc*) fe.fe_locs);
 (*  fe_sugg = struc_formula *)
   fmt_close ()
 
@@ -2376,6 +2380,8 @@ Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
 Cformula.print_esc_stack := string_of_esc_stack;;
 Cformula.print_failesc_context := string_of_failesc_context;;
+Cformula.print_path_trace := string_of_path_trace;;
+Cformula.print_list_int := string_of_list_int;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;

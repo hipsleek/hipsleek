@@ -1907,7 +1907,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_name = proc.I.proc_mingled_name;
           C.proc_args = args;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
-		  C.proc_important_vars = imp_vars; (* An Hoa *)
+		  C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
           C.proc_static_specs = final_static_specs_list;
           C.proc_dynamic_specs = final_dynamic_specs_list;
           C.proc_static_specs_with_pre =  [];
@@ -2395,7 +2395,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_assign_lhs = v;
                                     C.exp_assign_rhs = ce2;
                                     C.exp_assign_pos = pos;} in
-                                if C.is_var ce1 then (assign_e, C.void_type)
+                                if C.is_var ce1 then
+	                              (* let vsv = CP.SpecVar (te1, v, Primed) in
+                                  let _ = proc.I.proc_important_vars <- proc.I.proc_important_vars @ [vsv] in*)
+                                  (assign_e, C.void_type)
                                 else
                                   (let seq_e = C.Seq{
                                       C.exp_seq_type = C.void_type;
@@ -2640,7 +2643,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_nrecv_arguments = args;
             I.exp_call_nrecv_path_id = pi;
             I.exp_call_nrecv_pos = pos } ->
-		    (* let _ = print_string "trans_exp :: case CallNRecv\n" in *)
+		    (* let _ = print_string "trans_exp :: case CallNRecv\n" in*)
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
@@ -3144,6 +3147,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_constructor = false;
                 I.proc_args = w_formal_args;
                 I.proc_return = I.void_type;
+               (* I.proc_important_vars= [];*)
                 I.proc_static_specs = prepost;
                 I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
                 I.proc_dynamic_specs = [];
