@@ -2017,9 +2017,9 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
   Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
-  (* let pr x = "?" in *)
-  (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
-  (* Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer *)
+(* let pr x = "?" in *)
+(* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
+(* Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer *)
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -2048,29 +2048,29 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
     | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
     | _ -> 
-        (*LDK: expecting complex LHS*)
-        let hs = CF.split_star_conjunctions lhs_heap in
-        if ( (List.length hs) > 0) then
-          let head = List.hd hs in
-          match head with
-            | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
-            | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
-            | _ -> 
-                let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node \n" in 
-                ""
-        else
-          let _ = print_string "[astsimp] Warning: lhs of a coercion is neither simple or complex\n" in 
-          ""
+          (*LDK: expecting complex LHS*)
+          let hs = CF.split_star_conjunctions lhs_heap in
+          if ( (List.length hs) > 0) then
+            let head = List.hd hs in
+            match head with
+              | Cformula.ViewNode vn -> vn.Cformula.h_formula_view_name
+              | Cformula.DataNode dn -> dn.Cformula.h_formula_data_name
+              | _ -> 
+                    let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node \n" in 
+                    ""
+          else
+            let _ = print_string "[astsimp] Warning: lhs of a coercion is neither simple or complex\n" in 
+            ""
   in
   (*LDK: In the body of a coercions, there may be multiple nodes with
-  a same name with self => only add [coercion_name] to origins of the
-  first node*)
+    a same name with self => only add [coercion_name] to origins of the
+    first node*)
   let  coercion_lhs_type = (CF.type_of_formula c_lhs) in
   let c_rhs = match (coercion_lhs_type) with
     | CF.Simple -> CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name]
     | CF.Complex -> c_rhs
   in
-(*WN:TODO*)
+  (*WN:TODO*)
   (* let c_rhs = CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] in *)
 
   (* let c_rhs = CF.add_origs_to_first_node self c_rhs [coer.I.coercion_name] in *)
@@ -2230,13 +2230,13 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                       else
                         (*LDK: allow 2 views of a same name*)
                         if (name1=name2)
-                      then name1
-                      else
-                        Err.report_error
-			                {
-			                    Err.error_loc = pos;
-			                    Err.error_text = v ^ " must point to only one view";
-			                }
+                        then name1
+                        else
+                          Err.report_error
+			                  {
+			                      Err.error_loc = pos;
+			                      Err.error_text = v ^ " must point to only one view";
+			                  }
               | CF.DataNode
 		              {
 		                  CF.h_formula_data_node = p;
@@ -2853,7 +2853,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			if not (rem = "") then
 			  failwith ("[trans_exp] expect non-inline field access but still got { " ^ rem ^ " }")
 			else
-         (* ... = o.f => read_only = true *)
+              (* ... = o.f => read_only = true *)
               let r = 
 	            if (!Globals.allow_imm) then
 	              flatten_to_bind prog proc e (List.rev fs) None pid Lend true pos (* ok to have it lend instead of Imm? *)
@@ -3127,11 +3127,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_var_decl_type = ct;
                         C.exp_var_decl_name = alpha;
                         C.exp_var_decl_pos = pos; } in
-                    C.Seq {
-                        C.exp_seq_type = C.void_type;
-                        C.exp_seq_exp1 = var_decl;
-                        C.exp_seq_exp2 = init_e;
-                        C.exp_seq_pos = pos; }))
+                    match oe with 
+                      | None -> 
+                            (* WN : no automatic intialization!! *)
+                            var_decl
+                      | Some _ -> 
+                            C.Seq {
+                                C.exp_seq_type = C.void_type;
+                                C.exp_seq_exp1 = var_decl;
+                                C.exp_seq_exp2 = init_e;
+                                C.exp_seq_pos = pos; }
+                    ))
               | (v, oe, pos) :: rest ->
                     let crest = helper2 rest in
                     let ce = helper2 [ (v, oe, pos) ] in
@@ -3566,7 +3572,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_bound_var = ((Named dname), fn);
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
-		C.exp_bind_imm = imm;
+		        C.exp_bind_imm = imm;
                 C.exp_bind_read_only = read_only;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
@@ -4072,16 +4078,16 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   cf
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
-    let pr1 prog = "prog" in
-    Gen.Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_stab Cprinter.string_of_formula linearize_formula_x prog f0 stab
+  let pr1 prog = "prog" in
+  Gen.Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_stab Cprinter.string_of_formula linearize_formula_x prog f0 stab
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
-   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
+  let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
     match hargs with
       | (e, label) :: rest ->
             let e_hvars = match e with
               | IP.Var ((ve, pe), pos_e) -> 
-                  trans_var (ve, pe) stab pos_e
+                    trans_var (ve, pe) stab pos_e
               | _ -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = ("malfunction with float out exp: "^(Iprinter.string_of_formula f0)); }in
             let rest_hvars = match_exp rest pos in
             let hvars = e_hvars :: rest_hvars in
@@ -4149,10 +4155,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                 let permvar = (match perm with
                   | None -> None
                   | Some f -> 
-                      let perms = [f] in
-                      let permlabels = List.map (fun _ -> "") perms in
-                      let permvars = match_exp (List.combine perms permlabels) pos in
-                      Some (List.nth permvars 0) )
+                        let perms = [f] in
+                        let permlabels = List.map (fun _ -> "") perms in
+                        let permvars = match_exp (List.combine perms permlabels) pos in
+                        Some (List.nth permvars 0) )
                 in
 				let result_heap = CF.DataNode {
 					CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
@@ -4181,16 +4187,16 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       vdef.I.view_data_name)
                     else vdef.I.view_data_name in
                   let new_v = CP.SpecVar (Named c0, v, p) in
-                (*LDK: linearize perm permission as a spec var*)
-                let permvar = (match perm with
-                  | None -> None
-                  | Some f -> 
-                      let perms = f :: [] in
-                      let permlabels = List.map (fun _ -> "") perms in
-                      let permvars = match_exp (List.combine perms permlabels) pos in
-                      Some (List.nth permvars 0) )
-                in
-                (* let _ = print_string("permvar = " ^ (Cprinter.string_of_spec_var permvar) ^ "\n") in *)
+                  (*LDK: linearize perm permission as a spec var*)
+                  let permvar = (match perm with
+                    | None -> None
+                    | Some f -> 
+                          let perms = f :: [] in
+                          let permlabels = List.map (fun _ -> "") perms in
+                          let permvars = match_exp (List.combine perms permlabels) pos in
+                          Some (List.nth permvars 0) )
+                  in
+                  (* let _ = print_string("permvar = " ^ (Cprinter.string_of_spec_var permvar) ^ "\n") in *)
                   let new_h = CF.ViewNode {
                       CF.h_formula_view_node = new_v;
                       CF.h_formula_view_name = c;
@@ -4221,14 +4227,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 						  | x::t -> let th = collect_holes t (n+1) in 
 							(match x with 
 							  | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th ) in
-                      (*LDK: linearize perm permission as a spec var*)
-                      let permvar = match perm with 
-                        | None -> None
-                        | Some f -> 
-                            let perms = f :: [] in
-                            let permlabels = List.map (fun _ -> "") perms in
-                            let permvars = match_exp (List.combine perms permlabels) pos in
-                            Some (List.nth permvars 0) 
+                        (*LDK: linearize perm permission as a spec var*)
+                        let permvar = match perm with 
+                          | None -> None
+                          | Some f -> 
+                                let perms = f :: [] in
+                                let permlabels = List.map (fun _ -> "") perms in
+                                let permvars = match_exp (List.combine perms permlabels) pos in
+                                Some (List.nth permvars 0) 
 						in
 						let holes = collect_holes hvars 0 in
                         let new_h = CF.DataNode {
@@ -4236,9 +4242,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                             CF.h_formula_data_name = c;
 		                    CF.h_formula_data_derv = dr;
 		                    CF.h_formula_data_imm = imm;
-		                  CF.h_formula_data_perm = permvar; (*LDK*)
-                          CF.h_formula_data_origins = [];
-		                  CF.h_formula_data_original = true;
+		                    CF.h_formula_data_perm = permvar; (*LDK*)
+                            CF.h_formula_data_origins = [];
+		                    CF.h_formula_data_original = true;
 		                    CF.h_formula_data_arguments = hvars;
 							CF.h_formula_data_holes = holes; (* An Hoa : Set the hole *)
                             CF.h_formula_data_label = pi;
@@ -4396,7 +4402,7 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BagIn ((v, p), e, pos) ->
           let pe = trans_pure_exp e stab in CP.BagIn ((trans_var (v,p) stab pos), pe, pos)
     | IP.BagNotIn ((v, p), e, pos) ->
-        let pe = trans_pure_exp e stab in
+          let pe = trans_pure_exp e stab in
           CP.BagNotIn ((trans_var (v,p) stab pos), pe, pos)
     | IP.BagSub (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
@@ -4433,7 +4439,7 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
     | IP.Var ((v, p), pos) -> 
-        CP.Var ((trans_var (v,p) stab pos),pos)
+          CP.Var ((trans_var (v,p) stab pos),pos)
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
@@ -4727,15 +4733,15 @@ and gather_type_info_var_x (var : ident) stab (ex_t : spec_var_kind) pos : spec_
         let k = H.find stab var in
         (* if ex_t==UNK then k.sv_info_kind *)
         (* else *)
-          (let tmp = must_unify(* _expect *)  k.sv_info_kind ex_t stab pos in
-          (k.sv_info_kind <- tmp); tmp)
+        (let tmp = must_unify(* _expect *)  k.sv_info_kind ex_t stab pos in
+        (k.sv_info_kind <- tmp); tmp)
       with 
         | Not_found -> 
               (* if ex_t==UNK then UNK *)
               (* else *)
-                let vk = fresh_proc_var_kind stab ex_t in
-                (H.add stab var vk; vk.sv_info_kind
-                )
+              let vk = fresh_proc_var_kind stab ex_t in
+              (H.add stab var vk; vk.sv_info_kind
+              )
         | ex -> report_error pos ("gather_type_info_var : unexpected exception"^(Printexc.to_string ex))
   end
 
@@ -5850,7 +5856,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 	        {
                 IF.h_formula_heap_node = (v, p); (* ident, primed *)
                 IF.h_formula_heap_arguments = ies; (* arguments *)
-               IF.h_formula_heap_perm = perm;
+                IF.h_formula_heap_perm = perm;
                 IF.h_formula_heap_name = c; (* data/pred name *)
                 IF.h_formula_heap_pos = pos
 	        } ->
@@ -5973,8 +5979,8 @@ and get_spec_var_stab_infer_x (v : ident) fvs pos =
   then Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not found in both sides"; }
   else
     match vtyp with
-    | UNK -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
-    | t -> CP.SpecVar (t, v, Unprimed)
+      | UNK -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
+      | t -> CP.SpecVar (t, v, Unprimed)
 
 and string_of_spec_var_kind (k : spec_var_kind) =
   string_of_typ k
@@ -6087,15 +6093,15 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
             in
 	        let (new_used_names, hvars, evars, (link_f, link_f_br)) =
 	          match_exp used_names (List.combine (perm_var@b.Iformula.h_formula_heap_arguments) (perm_labels@labels)) pos in
-	      let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-          (*split perm if any*)
-          let perm_var,hvars = match b.Iformula.h_formula_heap_perm with
-            | Some _ -> (Some (List.hd hvars), List.tl hvars)
-            | None -> (None,hvars)
-          in
-	      let new_h = IF.HeapNode{ b with 
-              IF.h_formula_heap_arguments = hvars;
-              IF.h_formula_heap_perm = perm_var;}
+	        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
+            (*split perm if any*)
+            let perm_var,hvars = match b.Iformula.h_formula_heap_perm with
+              | Some _ -> (Some (List.hd hvars), List.tl hvars)
+              | None -> (None,hvars)
+            in
+	        let new_h = IF.HeapNode{ b with 
+                IF.h_formula_heap_arguments = hvars;
+                IF.h_formula_heap_perm = perm_var;}
 	        in (new_used_names, evars, new_h, (link_f, link_f_br))
       | IF.Star
 	          {
