@@ -11,7 +11,7 @@ Infer  (2): Fail.(may) cause:(failure_code=213)  p=a & 3<=m & 4<=a |-  m<a (may-
 
 Infer  (3): Valid. 
 Inferred Heap:[]
-Inferred Pure:[ 3<=m & m<p]
+Inferred Pure:[ m<p]
 <1>true & q=b & p=a & 3<=m & m<a &
 {FLOW,(17,18)=__norm}
 
@@ -43,7 +43,7 @@ Inferred Pure:[ 5<=m & m<p]
 
 Infer  (9): Valid. 
 Inferred Heap:[]
-Inferred Pure:[ 7<=m & m<p]
+Inferred Pure:[ m<p]
 <1>true & 7<=m & m<p &
 {FLOW,(17,18)=__norm}
 
@@ -94,4 +94,4 @@ Inferred Pure:[ !(n=0 & x=null) & 0<=n]
 
 
 Halting Reduce... 
-Stop Omega... 296 invocations 
+Stop Omega... 318 invocations 

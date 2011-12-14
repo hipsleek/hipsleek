@@ -36,4 +36,4 @@ Inferred Pure:[ !(n=0 & x=null) & 0<=n]
 
 
 Halting Reduce... 
-Stop Omega... 86 invocations 
+Stop Omega... 89 invocations 

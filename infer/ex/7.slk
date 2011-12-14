@@ -96,11 +96,11 @@ print residue.
 infer [x] x::ll<n>   |- x::node<a,b>.
 print residue.
 
-// (16) Fail
+// (17) Fail
 infer [n] x::ll<n>   |- x::node<a,b>.
 print residue.
 
-// (16) Fail
+// (18) Fail
 infer [x,n] x::ll<n>   |- x::node<a,b>.
 print residue.
 // TODO : possible to remove inv n>=0?

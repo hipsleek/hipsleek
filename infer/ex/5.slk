@@ -140,6 +140,6 @@ print residue.
 infer [m] m>2  |- p>m & m>4.
 print residue.
 
-// (14) 
+// (16) 
 infer [p,m] m>2  |- p>m & m>4.
 print residue.
