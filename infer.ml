@@ -159,8 +159,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
     let rt = get_args_h_formula rhs in
     let lhs_als = get_alias_formula es.es_formula in
     let lhs_aset = build_var_aset lhs_als in
-    let rhs_als = get_alias_formula conseq in
-    let rhs_aset = build_var_aset rhs_als in
+    (*let rhs_als = get_alias_formula conseq in
+    let rhs_aset = build_var_aset rhs_als in*)
     let (b,args,inf_vars,new_h,new_iv,alias,r) = match rt with (* is rt captured by iv *)
       | None -> false,[],[],HTrue,iv,[],[]
       | Some (r,args,arg2,h) -> 
@@ -192,6 +192,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
       begin
         (* Take the alias as the inferred pure *)
         let iv_al = CP.intersect iv alias in (* All relevant vars of interest *)
+        let iv_al = CP.diff_svl iv_al r in
         (* r certainly has one element *)
         let r = List.hd r in
         let r = CP.mkVar r no_pos in
@@ -367,44 +368,42 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let args = CP.fv new_p in
         let exists_var = CP.diff_svl args iv in
         let new_p = CP.mkExists_with_simpl_debug Omega.simplify exists_var new_p None pos in
-      if CP.isConstTrue new_p then None
-      else
-        let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
-        let h, p, fl, b, t = CF.split_components new_es_formula in
-        let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
-        let args = CP.fv new_p in 
-        let new_iv = (CP.diff_svl iv args) in
-        let new_estate =
-          {estate with 
-              es_formula = new_es_formula;
-              es_infer_pure = estate.es_infer_pure@[new_p];
-              es_infer_vars = new_iv
-          }
-        in
-        Some new_estate
+        if CP.isConstTrue new_p then None
+        else
+          let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
+          let h, p, fl, b, t = CF.split_components new_es_formula in
+          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
+          let args = CP.fv new_p in 
+          let new_iv = (CP.diff_svl iv args) in
+          let new_estate =
+            {estate with 
+                es_formula = new_es_formula;
+                es_infer_pure = estate.es_infer_pure@[new_p];
+                es_infer_vars = new_iv
+            }
+          in
+          Some new_estate
     else
-      (*let mkNot purefml =
-        let conjs = CP.split_conjunctions purefml in
-        let conjs = List.map (fun c -> CP.mkNot_s c) conjs in
-        List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) conjs
-      in*)      
-      let lhs_simplified = simplify lhs_xpure iv in
-      let args = CP.fv lhs_simplified in 
-      let exists_var = CP.diff_svl args iv in
-      let lhs_simplified = CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos in
-      let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
-      if CP.isConstFalse new_p then None
-      else
-        let args = CP.fv new_p in 
-        (* let new_iv = (CP.diff_svl iv args) in *)
-        let new_estate =
-          {estate with 
-              es_formula = CF.mkFalse (CF.mkNormalFlow ()) pos;
-              es_infer_pure = estate.es_infer_pure@[new_p]
-                  (* ;es_infer_vars = new_iv *)
-          }
-        in
-        Some new_estate
+      let check_sat = Omega.is_sat lhs_xpure "0" in
+      if not(check_sat) then None
+      else      
+        let lhs_simplified = simplify lhs_xpure iv in
+        let args = CP.fv lhs_simplified in 
+        let exists_var = CP.diff_svl args iv in
+        let lhs_simplified = CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos in
+        let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
+        if CP.isConstFalse new_p then None
+        else
+          let args = CP.fv new_p in 
+          (* let new_iv = (CP.diff_svl iv args) in *)
+          let new_estate =
+            {estate with 
+                es_formula = CF.mkFalse (CF.mkNormalFlow ()) pos;
+                es_infer_pure = estate.es_infer_pure@[new_p]
+                    (* ;es_infer_vars = new_iv *)
+            }
+          in
+          Some new_estate
 
 let infer_pure_m i estate lhs_xpure rhs_xpure pos =
 (* type: Cformula.entail_state ->

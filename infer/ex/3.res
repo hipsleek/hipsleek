@@ -200,4 +200,4 @@ Inferred Pure:[ b=inf_b_485 & inf_b_485!=null]
 
 
 Halting Reduce... 
-Stop Omega... 351 invocations 
+Stop Omega... 398 invocations 
