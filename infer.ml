@@ -348,11 +348,11 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
     if check_sat then
       let new_p = simplify fml iv in
       let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
-      let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
+      (*let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
       let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
       let new_p_conjs = CP.list_of_conjs new_p in
       let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
-        (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
+        (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in*)
       (* Thai: Should check if the precondition overlaps with the orig ante *)
       (* And simplify the pure in the residue *)
       if CP.isConstTrue new_p then None
