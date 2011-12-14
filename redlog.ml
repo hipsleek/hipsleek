@@ -243,6 +243,7 @@ let rec rl_of_exp e0 =
   | CP.Null _ -> "0" (* TEMP *)
   | CP.Var (v, _) -> rl_of_spec_var v
   | CP.IConst (i, _) -> string_of_int i
+  | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> string_of_float f
   | CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " + " ^ (rl_of_exp e2) ^ ")"
   | CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " - " ^ (rl_of_exp e2) ^ ")"
@@ -264,6 +265,7 @@ let rl_of_b_formula b =
       "(" ^ (rl_of_spec_var bv) ^ " > 0)"
   | CP.Lt (e1, e2, l) -> mk_bin_exp " < " e1 e2
   | CP.Lte (e1, e2, l) -> mk_bin_exp " <= " e1 e2
+  | CP.SubAnn (e1, e2, l) -> mk_bin_exp " <= " e1 e2
   | CP.Gt (e1, e2, l) -> mk_bin_exp " > " e1 e2
   | CP.Gte (e1, e2, l) -> mk_bin_exp " >= " e1 e2
   | CP.Eq (e1, e2, _) ->
@@ -1022,6 +1024,10 @@ let rec negate_formula f0 = match f0 with
   | CP.Not (f, lbl, pos) -> f
   | CP.Forall (sv, f, lbl, pos) -> CP.Exists (sv, negate_formula f, lbl, pos)
   | CP.Exists (sv, f, lbl, pos) -> CP.Forall (sv, negate_formula f, lbl, pos)
+
+let negate_formula f0 =
+  let pr = !print_formula in
+  Gen.Debug.no_1 "negate_formula" pr pr negate_formula f0
   
 let rec normalize_formula f0 = match f0 with
   | CP.BForm _ -> f0
