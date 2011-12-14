@@ -1,0 +1,7 @@
+lp1:={[n] -> [res] -> []: (n=5 && res=n) || exists (n1: (n<5 || n>5) && n1=n-2 && lp1(n1,res))};
+Fix1:=bottomup(lp1,1,SimHeur);
+Fix1;
+
+lp2:={[n] -> [] -> []: (n=6) || exists (n1: n1=n-2 && lp2(n1))};
+Fix1:=bottomup(lp2,1,SimHeur);
+Fix1;

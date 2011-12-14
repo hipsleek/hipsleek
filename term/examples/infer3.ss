@@ -25,8 +25,14 @@ Invalid given variance - Need to be refined
 		Coverage checking:
 		(x>=5 & x!=5) & x'=x-2 |- (x'>=5 & x'=5) | (x'>=5 & x'!=5): MAY (3)
 
-		Finding the remaining next reachable state (weakening the RHS to make
-		(3) valid):
+		Finding the remaining next reachable state (weakening the RHS 
+		or strengthening the LHS to make (3) valid):
+			LHS_1 = LHS & RHS
+						= x>=5 & x!=5 & x'=x-2 & x'>=5
+						= x>=7
+
+			LHS_2 = LHS \ LHS_1 = x=6 ->* x'<5
+
 			LHS \ RHS = ... (?) = x'<5
 
 2. Proving termination under the condition x<5 (= complement of the given precondition)

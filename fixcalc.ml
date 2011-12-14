@@ -185,7 +185,14 @@ let compute_inv name vars fml pf =
   end
   else pf
 
-  
+let compute_inv name vars fml pf =
+  Gen.Debug.ho_4 "compute_inv"
+  (fun id -> id)
+  (pr_list Pr.string_of_spec_var)
+  (fun fl -> pr_list (fun (f, _) -> Pr.string_of_formula f) fl)
+  (Pr.string_of_pure_formula)
+  (Pr.string_of_pure_formula)
+  compute_inv name vars fml pf
     
     
 

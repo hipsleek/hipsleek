@@ -1,4 +1,25 @@
-lp:={[n] -> [res] -> []: (n=5 && res=n) || exists (n1: (n<5 || n>5) && n1=n-1 && lp(n1,res))};
-
-Fix1:=bottomup(lp,1,SimHeur);
+lp1:={[n] -> [res] -> []: (n=5 && res=n) || exists (n1: (n<5 || n>5) && n1=n-1 && lp1(n1,res))};
+Fix1:=bottomup(lp1,1,SimHeur);
 Fix1;
+
+lp2:={[n] -> [res] -> []: (n=10 && res=1) || exists (n1,res1: (n<10 || n>10) && n1=n+1 && lp2(n1,res1) && res=2+res1)};
+Fix1:=bottomup(lp2,1,SimHeur);
+Fix1;
+
+lp3:={[n] -> [res] -> []: 
+	(n=10 && res=1) || 
+	exists (n1,res1: n<10 && n1=n+1 && lp3(n1,res1) && res=2+res1) || 
+	exists (n2: n>10 && n2=n+1 && lp3(n2,res))};
+Fix1:=bottomup(lp3,1,SimHeur);
+Fix1;
+
+#The dual condition of fixpoint is exactly the non-terminating condition
+lp4:={[n] -> [res] -> []: (n=5 && res=n) || exists (n1: (n<5 || n>5) && n1=n-1 && lp4(n1,res))};
+Fix1:=bottomup(lp4,1,SimHeur);
+Fix1;
+
+#A counter example with step >1
+lp4:={[n] -> [res] -> []: (n=5 && res=n) || exists (n1: (n<5 || n>5) && n1=n-2 && lp4(n1,res))};
+Fix1:=bottomup(lp4,1,SimHeur);
+Fix1;
+
