@@ -145,6 +145,7 @@ let op_lt = "<"
 let op_lte = "<=" 
 let op_gt = ">" 
 let op_gte = ">=" 
+let op_sub = "<:" 
 let op_eq = "=" 
 let op_neq = "!=" 
 let op_and = " & "  
@@ -595,6 +596,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Null l -> fmt_string "null"
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
+    | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -659,6 +661,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
     | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
+    | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub ; f_b e2
     | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
     | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
     | P.EqMax (e1, e2, e3, l) ->   

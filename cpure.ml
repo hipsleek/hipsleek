@@ -311,6 +311,7 @@ let rec get_exp_type (e : exp) : typ =
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ -> Int
   | FConst _ -> Float
+  | AConst _ -> AnnT
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
@@ -478,10 +479,11 @@ and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
 
 and afv (af : exp) : spec_var list =
   match af with
-  | Null _ -> []
-  | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
-  | IConst _ -> []
+  | Null _ 
+  | IConst _ 
+  | AConst _ 
   | FConst _ -> []
+  | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
@@ -797,7 +799,7 @@ and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
   match e with
-  | Null _  | Var _ | IConst _ | FConst _ -> true
+  | Null _  | Var _ | IConst _ | AConst _ | FConst _ -> true
   | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
   | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
         (* bag expressions *)
@@ -1364,28 +1366,29 @@ and name_of_type (t : typ) : ident =
 (*   | Array (et, _) -> name_of_type et ^ "[]" (\* An Hoa *\) *)
 
 and pos_of_exp (e : exp) = match e with
-  | Null pos -> pos
-  | Var (_, p) -> p
-  | IConst (_, p) -> p
-  | FConst (_, p) -> p
-  | Add (_, _, p) -> p
-  | Subtract (_, _, p) -> p
-  | Mult (_, _, p) -> p
-  | Div (_, _, p) -> p
-  | Max (_, _, p) -> p
-  | Min (_, _, p) -> p
+  | Null p 
+  | Var (_, p) 
+  | IConst (_, p) 
+  | AConst (_, p) 
+  | FConst (_, p) 
+  | Add (_, _, p) 
+  | Subtract (_, _, p) 
+  | Mult (_, _, p) 
+  | Div (_, _, p) 
+  | Max (_, _, p) 
+  | Min (_, _, p) 
         (*| BagEmpty (p) -> p*)
-  | Bag (_, p) -> p
-  | BagUnion (_, p) -> p
-  | BagIntersect (_, p) -> p
-  | BagDiff (_, _, p) -> p
-  | List (_, p) -> p
-  | ListAppend (_, p) -> p
-  | ListCons (_, _, p) -> p
-  | ListHead (_, p) -> p
-  | ListTail (_, p) -> p
-  | ListLength (_, p) -> p
-  | ListReverse (_, p) -> p
+  | Bag (_, p) 
+  | BagUnion (_, p) 
+  | BagIntersect (_, p) 
+  | BagDiff (_, _, p) 
+  | List (_, p) 
+  | ListAppend (_, p) 
+  | ListCons (_, _, p) 
+  | ListHead (_, p) 
+  | ListTail (_, p) 
+  | ListLength (_, p) 
+  | ListReverse (_, p) 
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
 and fresh_old_name (s: string):string = 
@@ -1589,7 +1592,7 @@ and subs_one sst v =
   in helper sst v
 
 and e_apply_subs sst e = match e with
-  | Null _ | IConst _ | FConst _ -> e
+  | Null _ | IConst _ | FConst _ | AConst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_subs sst a1,
 	e_apply_subs sst a2, pos)
@@ -1689,7 +1692,7 @@ and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
 (*   | RelForm (r, args, pos) -> RelForm (r, e_apply_one_list (fr, t) args, pos) (\* An Hoa *\) *)
 
 and e_apply_one (fr, t) e = match e with
-  | Null _ | IConst _ | FConst _ -> e
+  | Null _ | IConst _ | FConst _ | AConst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
 	e_apply_one (fr, t) a2, pos)
@@ -1810,9 +1813,10 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
 
 and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
-  | Null _ -> e
-  | IConst _ -> e
-  | FConst _ -> e
+  | Null _ 
+  | IConst _ 
+  | FConst _ 
+  | AConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Mult (a1, a2, pos) ->
@@ -1886,8 +1890,9 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
-  | Null _ -> e
-  | IConst _ -> e
+  | Null _ 
+  | IConst _ 
+  | AConst _ 
   | FConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -1929,9 +1934,10 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
          ((b1||b2),(r1::r2))
 
   and helper crt_var e = match e with
-    | Null _   -> (false,e)
-    | IConst _ -> (false,e)
-    | FConst _ -> (false,e)
+    | Null _   
+    | IConst _ 
+    | FConst _ 
+    | AConst _ -> (false,e)
     | Add (a1, a2, pos) -> 
           let b1, r1 = helper crt_var a1 in
           let b2, r2 = helper crt_var a2 in
@@ -2930,6 +2936,8 @@ and b_apply_one_exp (fr, t) bf =
 							e_apply_one_exp (fr, t) a2, pos)
   | Gte (a1, a2, pos) -> Gte (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
+  | SubAnn (a1, a2, pos) -> SubAnn (e_apply_one_exp (fr, t) a1,
+							  e_apply_one_exp (fr, t) a2, pos)
   | Eq (a1, a2, pos) ->
   		(*
   		if (eq_b_formula bf (mkEq (mkVar fr pos) t pos)) then
@@ -2958,7 +2966,7 @@ and b_apply_one_exp (fr, t) bf =
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
-  | Null _ | IConst _ | FConst _ -> e
+  | Null _ | IConst _ | FConst _| AConst _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
@@ -3175,7 +3183,8 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
   let is_simple e = match e with
 	| Null _ 
 	| Var _ 
-	| IConst _ -> true
+	| IConst _ 
+	| AConst _ 
     | FConst _ -> true
 	| Add (e1,e2,_)
 	| Subtract (e1,e2,_) -> false
@@ -3293,7 +3302,8 @@ and simp_mult (e : exp) :  exp =
       | _ -> (match m with | None -> x | Some e ->  Add (e, x, lg)) in
   let rec acc_mult m e0 =
     match e0 with
-      | Null _ -> e0
+      | Null _ 
+      | AConst _ -> e0
       | Var (v, l) ->
             (match m with 
               | None -> e0 
@@ -3348,8 +3358,9 @@ and simp_mult (e : exp) :  exp =
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   match e with
-    |  Null _ -> ((Some e), None)
-    |  Var _ -> ((Some e), None)
+    |  Null _ 
+    |  Var _ 
+    |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
            if v > 0 then 
              ((Some e), None)
@@ -3485,9 +3496,10 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
 
 (* TODO : must elim some multiply for MONA *)
 and purge_mult (e :  exp):  exp = match e with
-  |  Null _ -> e
-  |  Var _ -> e
-  |  IConst _ -> e
+  |  Null _ 
+  |  Var _ 
+  |  IConst _ 
+  |  AConst _ 
   | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
@@ -3640,7 +3652,8 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 	(lh, rh, qh,flag) in
   let (pf,il) = b in
   let npf = match pf with
-    |  BConst _ -> pf
+    |  BConst _ 
+    |  SubAnn _
     |  BVar _ -> pf
     |  Lt (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
@@ -3942,6 +3955,7 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 	      | BConst _
 	      | BVar _ 
 	      | BagMin _ 
+	      | SubAnn _ 
 	      | BagMax _ -> (pf,f_comb [])
 	      | Lt (e1,e2,l) ->
 		        let (ne1,r1) = helper new_arg e1 in
@@ -5333,6 +5347,7 @@ module ArithNormalizer = struct
     | Var (v, _) -> string_of_spec_var v
     | IConst (i, _) -> string_of_int i
     | FConst (f, _) -> string_of_float f
+    | AConst (f, _) -> string_of_heap_ann f
     | Add (e1, e2, _) -> (string_of_exp e1) ^ " + " ^ (string_of_exp e2)
     | Subtract (e1, e2, _) -> (string_of_exp e1) ^ " - " ^ (string_of_exp e2)
     | Mult (e1, e2, _) -> (wrap e1) ^ "*" ^ (wrap e2)
@@ -6315,6 +6330,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
     and helper (e:exp) (rhs_e:exp) :exp = match e with 
       | IConst _
       | FConst _
+      | AConst _
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
       | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
