@@ -1,0 +1,65 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [] x::node<p,q>@I |- x::node<a,b>@L.
+print residue.
+
+infer [] x::node<p,q> |- x::node<a,b>@L.
+print residue.
+
+infer [] x::node<p,q>@L |- x::node<a,b>@L.
+print residue. 
+
+
+infer [] x::node<p,q>@I |- x::node<a,b>@I.
+print residue.
+
+infer [] x::node<p,q> |- x::node<a,b>@I.
+print residue.
+
+infer [] x::node<p,q> |- x::node<a,b>@L.
+print residue.
+
+infer [] x::node<p,q> |- x::node<a,b>.
+print residue.
+
+infer [x] x::ll<n> |- x::node<a,b>.
+print residue.
+
+infer [x] x::ll<n>@I |- x::node<a,b>@I.
+print residue.
+
+infer [n] x::ll<n>@I |- x::node<a,b>@I.
+print residue.
+
+infer [n] x::ll<n> |- x::node<a,b>.
+print residue.
+
+
+infer [n] x::ll<n> |- x::node<a,b>@L.
+print residue.
+
+
+infer [n] x::ll<n>@L |- x::node<a,b>@L*b::node<_,_>@L.
+print residue.
+
+
+infer [n] x::ll<n>@L |- x::node<a,b>@L*b::node<_,_>.
+print residue.
+
+infer [] x::ll<n>@L & n>1 |- x::node<a,b>@L*b::node<_,_>@L.
+print residue.
+
+
+infer [] x::ll<n>@L & n>1 |- x::node<a,b>@L*b::node<_,_>.
+print residue.
+
+
+infer [] x::ll<n>@L & n>1 |- x::node<a,b>@L*b::node<_,_>@L.
+print residue.
