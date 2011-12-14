@@ -16,15 +16,15 @@ and ext_formula =
 	| EBase of ext_base_formula
 	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
 	| EVariance of ext_variance_formula
-    (* spec feature to induce inference *)
-(* 	| EInfer of ext_infer_formula *)
+  (* spec feature to induce inference *)
+  | EInfer of ext_infer_formula
 
-(* and ext_infer_formula = *)
-(* 	{ *)
-(* 		formula_inf_vars : ident list; *)
-(* 		formula_inf_continuation : struc_formula; *)
-(* 		formula_inf_pos : loc *)
-(* 	} *)
+and ext_infer_formula =
+  {
+    formula_inf_vars : (ident * primed) list;
+    formula_inf_continuation : struc_formula;
+    formula_inf_pos : loc
+  }
 
 and ext_case_formula =
 	{
@@ -652,8 +652,11 @@ let rec subst sst (f : formula) = match sst with
   | [] -> f 
         
 and subst_var (fr, t) (o : (ident*primed)) = if (Ipure.eq_var fr o) then t else o
-and subst_var_list ft (o : (ident*primed)) = let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
-if (List.length r)==0 then o else snd (List.hd r)
+and subst_var_list ft (o : (ident*primed)) = 
+  let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
+  match r with 
+    | [] -> o
+    | _ -> snd (List.hd r)
 
 and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
@@ -823,6 +826,13 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 			  formula_var_escape_clauses = subst_escape;
 			  formula_var_continuation = subst_continuation
 		  }
+  | EInfer b ->
+    let si = List.map (subst_var_list sst) b.formula_inf_vars in
+    let sc = subst_struc sst b.formula_inf_continuation in
+    EInfer {b with
+      formula_inf_vars = si;
+      formula_inf_continuation = sc;
+    }
   in	
   List.map helper f
 
