@@ -16,6 +16,15 @@ and ext_formula =
 	| EBase of ext_base_formula
 	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
 	| EVariance of ext_variance_formula
+    (* spec feature to induce inference *)
+(* 	| EInfer of ext_infer_formula *)
+
+(* and ext_infer_formula = *)
+(* 	{ *)
+(* 		formula_inf_vars : ident list; *)
+(* 		formula_inf_continuation : struc_formula; *)
+(* 		formula_inf_pos : loc *)
+(* 	} *)
 
 and ext_case_formula =
 	{

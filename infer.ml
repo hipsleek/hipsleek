@@ -255,8 +255,8 @@ let simplify f vars =
   Gen.Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
 
 let infer_lhs_contra lhs_xpure ivars =
-  if ivars==[] then None
-  else
+  (* if ivars==[] then None *)
+  (* else *)
     let lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let check_sat = Omega.is_sat lhs_xpure "0" in
     if not(check_sat) then None
@@ -277,17 +277,19 @@ let infer_lhs_contra f ivars =
   Gen.Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) infer_lhs_contra f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos =
-  let ivars = estate.es_infer_vars in
-  let r = infer_lhs_contra lhs_xpure ivars in
-  match r with
-    | None -> None
-    | Some pf ->
-        let new_estate =
-          {estate with 
-              es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos;
-              es_infer_pure = estate.es_infer_pure@[pf];
-          } in
-        Some new_estate
+  if no_infer estate then None
+  else
+    let ivars = estate.es_infer_vars in
+    let r = infer_lhs_contra lhs_xpure ivars in
+    match r with
+      | None -> None
+      | Some pf ->
+            let new_estate =
+              {estate with 
+                  es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos;
+                  es_infer_pure = estate.es_infer_pure@[pf];
+              } in
+            Some new_estate
 
 let infer_lhs_contra_estate e f pos =
   let pr0 = !print_entail_state in
@@ -505,7 +507,7 @@ let infer_for_unfold prog estate lhs_node pos =
 (*   if no_infer estate then estate *)
 (*   else *)
 (*     let _ = DD.devel_pprint ("\n inferring_for_unfold:"^(!print_formula estate.es_formula)^ "\n\n")  pos in *)
-(*     let inv = match lhs_node with *)
+(*     let inv = matchcntha lhs_node with *)
 (*       | ViewNode ({h_formula_view_name = c}) -> *)
 (*             let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in *)
 (*             let i = MCP.pure_of_mix (fst vdef.Cast.view_user_inv) in *)
