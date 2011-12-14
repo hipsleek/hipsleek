@@ -355,13 +355,6 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
     if check_sat then
       let new_p = simplify fml iv in
       let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
-      (*let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
-      let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
-      let new_p_conjs = CP.list_of_conjs new_p in
-      let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
-        (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in*)
-      (* Thai: Should check if the precondition overlaps with the orig ante *)
-      (* And simplify the pure in the residue *)
       if CP.isConstTrue new_p then None
         (*        else                                                    *)
         (*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
@@ -372,6 +365,13 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let new_p = CP.mkExists_with_simpl_debug Omega.simplify exists_var new_p None pos in
         if CP.isConstTrue new_p then None
         else
+          let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
+          let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
+          let new_p_conjs = CP.list_of_conjs new_p in
+          let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
+            (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
+          (* Thai: Should check if the precondition overlaps with the orig ante *)
+          (* And simplify the pure in the residue *)
           let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
           let h, p, fl, b, t = CF.split_components new_es_formula in
           let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
