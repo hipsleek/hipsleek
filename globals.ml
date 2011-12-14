@@ -49,6 +49,7 @@ and heap_ann = Lend | Imm | Mutable
 type typ =
   | UNK 
   | TVar of int
+  | AnnT
   | Bool
   | Float
   | Int
@@ -88,6 +89,17 @@ let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false
 
+let string_of_heap_ann a =
+  match a with
+    | Lend -> "L"
+    | Imm -> "I"
+    | Mutable -> "M"
+
+let int_of_heap_ann a =
+  match a with
+    | Lend -> 2
+    | Imm -> 1
+    | Mutable -> 0
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
@@ -158,6 +170,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Int           -> "int"
   | Void          -> "void"
   | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
@@ -177,6 +190,7 @@ let rec string_of_typ_alpha = function
   | Int           -> "int"
   | Void          -> "void"
   | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)

@@ -4379,6 +4379,9 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.Lte (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLte pe1 pe2 pos
+    | IP.SubAnn (e1, e2, pos) ->
+          let pe1 = trans_pure_exp e1 stab in
+          let pe2 = trans_pure_exp e2 stab in CP.SubAnn(pe1,pe2,pos)
     | IP.Gt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkGt pe1 pe2 pos
@@ -4438,6 +4441,7 @@ and trans_pure_exp_debug (e0 : IP.exp) stab : CP.exp =
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
+    | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.Var ((v, p), pos) -> 
           CP.Var ((trans_var (v,p) stab pos),pos)
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
@@ -4803,6 +4807,10 @@ and gather_type_info_exp_x a0 stab et =
     | IP.Var ((sv, sp), pos) -> 
           let t = gather_type_info_var sv stab et pos
           in t
+    | IP.AConst (_,pos) -> 
+          let t = I.ann_type in
+          let _ = must_unify_expect t et stab pos in
+          t
     | IP.IConst (_,pos) -> 
           let t = I.int_type in
           let _ = must_unify_expect t et stab pos in
@@ -5135,6 +5143,11 @@ and gather_type_info_b_formula_x prog b0 stab =
     | IP.BVar ((bv, bp), pos) ->
 	      let _ = gather_type_info_var bv stab (C.bool_type) pos in
           ()
+    | IP.SubAnn(a1,a2,pos) ->
+	      let _ = gather_type_info_exp a1 stab (Cpure.ann_type) in
+	      let _ = gather_type_info_exp a2 stab (Cpure.ann_type) in
+          ()
+
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in

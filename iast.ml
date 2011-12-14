@@ -398,6 +398,8 @@ let void_type = Void
 
 let int_type = Int
 
+let ann_type = AnnT
+
 let float_type = Float
 
 let bool_type = Bool

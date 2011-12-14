@@ -50,6 +50,7 @@ and p_formula =
   | Lte of (exp * exp * loc)
   | Gt of (exp * exp * loc)
   | Gte of (exp * exp * loc)
+  | SubAnn of (exp * exp * loc)
   | Eq of (exp * exp * loc) (* these two could be arithmetic or pointer or bag or list *)
   | Neq of (exp * exp * loc)
   | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
@@ -73,6 +74,7 @@ and exp =
   | Var of (spec_var * loc)
   | IConst of (int * loc)
   | FConst of (float * loc)
+  | AConst of (heap_ann * loc)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -375,6 +377,8 @@ let bool_type = Bool
 
 let int_type = Int
 
+let ann_type = AnnT
+
 let float_type = Float
 
 let void_type = Void
@@ -421,11 +425,12 @@ and bfv (bf : b_formula) =
   match pf with
   | BConst _ -> []
   | BVar (bv, _) -> [bv]
-  | Lt (a1, a2, _) -> combine_avars a1 a2
-  | Lte (a1, a2, _) -> combine_avars a1 a2
-  | Gt (a1, a2, _) -> combine_avars a1 a2
-  | Gte (a1, a2, _) -> combine_avars a1 a2
-  | Eq (a1, a2, _) -> combine_avars a1 a2
+  | Lt (a1, a2, _) 
+  | Lte (a1, a2, _) 
+  | Gt (a1, a2, _) 
+  | Gte (a1, a2, _) 
+  | SubAnn (a1, a2, _) 
+  | Eq (a1, a2, _) 
   | Neq (a1, a2, _) -> combine_avars a1 a2
   | EqMax (a1, a2, a3, _) ->
         let fv1 = afv a1 in
@@ -689,6 +694,10 @@ and is_int_type (t : typ) = match t with
   | Int -> true
   | _ -> false
 
+and is_ann_type (t : typ) = match t with
+  | AnnT -> true
+  | _ -> false
+
 and is_float_type (t : typ) = match t with
   | Float -> true
   | _ -> false
@@ -775,7 +784,7 @@ and trans_eq_bform (b : b_formula) : b_formula =
         
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
   match pf with
-  | BConst _  | BVar _ -> true
+  | BConst _  | BVar _ | SubAnn _ -> true
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
   | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
@@ -1055,24 +1064,6 @@ and split_conjunctions f = list_of_conjs f
   
 and join_conjunctions fl = conj_of_list fl no_pos
 
-(* List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) f *)
-  
-(*take out from ante all the leafs that are in the memoized lists*)
-(*and implied_prune_ante ante = match ante with
-  | BForm (f,_,_) -> (
-  match f with 
-  | BConst _  | BVar _ | EqMax _ | EqMin _  | BagSub _ | BagMin _ | BagMax _  | ListAllN _ | ListPerm _ -> ante
-  | ListIn _ | ListNotIn _ | BagIn _  | BagNotIn _ | Lt _ | Lte _ | Gt _ | Gte _ | Neq _ -> mkTrue no_pos
-  | Eq (e1,e2,_)  -> 
-  match e1 with 
-  | BagUnion _ -> ante 
-  | Bag _ -> ante
-  | _-> match e2 with 
-  | BagUnion _ -> ante 
-  | Bag _ -> ante
-  | _ -> mkTrue no_pos)
-  | And (f1,f2,l) -> mkAnd (implied_prune_ante f1) (implied_prune_ante f2) l
-  | Or _ | Not _  | Forall _  | Exists _ -> ante *)
 
   
 and is_member_pure (f:formula) (p:formula):bool = 
@@ -1101,6 +1092,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | (Gt(e1, e2, _), Lte(e4, e3, _))
     | (Gte(e1, e2, _), Lt(e4, e3, _))
     | (Lt(e1, e2, _), Gte(e4, e3, _))  
+    | (SubAnn(e1, e2, _), SubAnn(e3, e4, _))  
     | (Lte(e1, e2, _), Lte(e3, e4, _))
     | (Gt(e1, e2, _), Gt(e3, e4, _))
     | (Gte(e1, e2, _), Gte(e3, e4, _))
@@ -1560,6 +1552,8 @@ and b_apply_subs sst bf =
 	e_apply_subs sst a2, pos)
   | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1,
 	e_apply_subs sst a2, pos)
+  | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1,
+	e_apply_subs sst a2, pos)
   | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1,
 	e_apply_subs sst a2, pos)
   | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1,
@@ -1795,6 +1789,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
   | Lt (a1, a2, pos) -> Lt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Lte (a1, a2, pos) -> Lte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Gt (a1, a2, pos) -> Gt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | SubAnn (a1, a2, pos) -> SubAnn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Gte (a1, a2, pos) -> Gte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Eq (a1, a2, pos) -> Eq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Neq (a1, a2, pos) -> Neq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -1873,6 +1868,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   | Lte (a1, a2, pos) -> Lte (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Gt (a1, a2, pos) -> Gt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Gte (a1, a2, pos) -> Gte (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | SubAnn (a1, a2, pos) -> SubAnn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Eq (a1, a2, pos) -> Eq (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Neq (a1, a2, pos) -> Neq (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
@@ -2651,49 +2647,11 @@ and eq_exp_list aset (e1 : exp list) (e2 : exp list) : bool =
 let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp EMapSV.mkEmpty e1 e2        
 
 let eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool =  equalBFormula_aset aset b1 b2
-(*
-match (b1, b2) with
-  | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
-  | (BVar(sv1, _), BVar(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
-  | (Lte(e1, e2, _), Gt(e4, e3, _))
-  | (Gt(e1, e2, _), Lte(e4, e3, _))
-  | (Gte(e1, e2, _), Lt(e4, e3, _))
-  | (Lt(e1, e2, _), Gte(e4, e3, _))  
-  | (Lte(e1, e2, _), Lte(e3, e4, _))
-  | (Gt(e1, e2, _), Gt(e3, e4, _))
-  | (Gte(e1, e2, _), Gte(e3, e4, _))
-  | (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
-  | (Neq(e1, e2, _), Neq(e3, e4, _))
-  | (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eq_exp aset e1 e3) & (eq_exp aset e2 e4)) or ((eq_exp aset e1 e4) & (eq_exp aset e2 e3))
-  | (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
-  | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eq_exp aset e1 e4) & ((eq_exp aset e2 e5) & (eq_exp aset e3 e6)) or ((eq_exp aset e2 e6) & (eq_exp aset e3 e5))
-  | (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
-  | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq_spec_var_aset aset sv1 sv2) & (eq_exp aset e1 e2)
-  | (ListIn(e1, e2, _), ListIn(d1, d2, _))
-  | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
-  | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
-  | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
-  | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
-  | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var_aset aset sv1 sv3) & (eq_spec_var_aset aset sv2 sv4)
-  | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
-  | _ -> false
-*)
 
 let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula EMapSV.mkEmpty b1 b2
 
 
 let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2 
-(*
-match (f1, f2) with
-  | (BForm(b1,_), BForm(b2,_)) -> (eq_b_formula [] b1 b2)
-  | (Or(f1, f2, _,_), Or(f3, f4, _,_))
-  | (And(f1, f2, _), And(f3, f4, _)) ->
-  	    ((eq_pure_formula f1 f3) & (eq_pure_formula f2 f4)) or ((eq_pure_formula f1 f4) & (eq_pure_formula f2 f3))
-  | (Not(f1,_, _), Not(f2,_, _)) -> (eq_pure_formula f1 f2)
-  | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
-  | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq_spec_var sv1 sv2) & (eq_pure_formula f1 f2)
-  | _ -> false
-*)
 
 
 (**************************************************************)
@@ -4796,16 +4754,22 @@ let find_int_const_eq2  (eq:'a->'a->bool) (str:'a->string) (e:'a) (s:'a e_set) :
 let is_leq eq e1 e2 =
   match e1,e2 with
     | IConst (i1,_), IConst(i2,_) -> i1<=i2
+    | AConst (i1,_), AConst(i2,_) 
+          -> (int_of_heap_ann i1)<=(int_of_heap_ann i2)
     | _,_ -> eqExp_f eq e1 e2
 
 let is_lt eq e1 e2 =
   match e1,e2 with
     | IConst (i1,_), IConst(i2,_) -> i1<i2
+    | AConst (i1,_), AConst(i2,_) 
+          -> (int_of_heap_ann i1)<(int_of_heap_ann i2)
     | _,_ -> false
 
 let is_diff e1 e2 =
   match e1,e2 with
     | IConst (i1,_), IConst(i2,_) -> i1<>i2
+    | AConst (i1,_), AConst(i2,_) 
+          -> (int_of_heap_ann i1)<>(int_of_heap_ann i2)
     | _,_ -> false
 
 (* lhs |- e1<=e2 *)
@@ -4837,6 +4801,8 @@ let check_imply_eq eq lhs e1 e2 =
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then 1
   else helper lhs 
+
+(* TODO: SubAnn may not be properly implemented here! *)
 
 (* lhs |- e1!=e2 *)
 let check_imply_neq eq lhs e1 e2 = 
@@ -4903,6 +4869,7 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
       let (prhs,_) = rhs in
 	  match prhs with
         | BConst(true,_) -> 1
+        | SubAnn(e1,e2,_) -> check_imply_leq eq plhs e1 e2
         | Lte(e1,e2,_) -> check_imply_leq eq plhs e1 e2
         | Eq(e1,e2,_) -> check_imply_eq eq plhs e1 e2
         | Neq(e1,e2,_) -> check_imply_neq eq plhs e1 e2
@@ -5337,6 +5304,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
     | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
     | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+    | SubAnn _
     | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _
@@ -5381,6 +5349,7 @@ module ArithNormalizer = struct
       | BConst (b, _) -> (string_of_bool b)
       | BVar (bv, _) -> (string_of_spec_var bv) ^ " > 0"
       | Lt (e1, e2, _) -> build_exp e1 e2 " < "
+      | SubAnn (e1, e2, _) -> build_exp e1 e2 " <: "
       | Lte (e1, e2, _) -> build_exp e1 e2 " <= "
       | Gt (e1, e2, _) -> build_exp e1 e2 " > "
       | Gte (e1, e2, _) -> build_exp e1 e2 " >= "

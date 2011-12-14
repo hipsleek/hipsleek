@@ -20,24 +20,6 @@ let rec concatenate_string_list l c = match l with
  | h::t -> h ^ c ^ (concatenate_string_list t c)
 ;;
 
-(* (\* pretty printing for primitive types *\) *)
-(* let string_of_prim_type = function  *)
-(*   | Bool          -> "boolean " *)
-(*   | Float         -> "float " *)
-(*   | Int           -> "int " *)
-(*   | Void          -> "void " *)
-(*   | (BagT t) -> "bag("^(string_of_prim_type t) ^")" *)
-(*   | (TVar i) -> "TVar["^(string_of_int i)^"]" *)
-(*   | List          -> "list " *)
-(* ;; *)
-
-(* (\* pretty printing for types *\) *)
-(* let rec string_of_typ = function  *)
-(*   | Prim t        -> string_of_prim_type t  *)
-(*   | Named ot      -> ot ^ " " *)
-(*   | Array (t,_) -> (string_of_typ t) ^ "[]" (\* "array" *\) (\* AN HOA *\) *)
-(* ;; *)
-
 (* pretty printing for unary operators *)
 let string_of_unary_op = function 
   | OpUMinus       -> "-"
@@ -118,6 +100,7 @@ let rec string_of_formula_exp = function
   | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
   | P.Var (x, l)        -> string_of_id x
   | P.IConst (i, l)           -> string_of_int i
+  | P.AConst (i, l)           -> string_of_heap_ann i
   | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with 
 	  | P.Null _ 
@@ -186,6 +169,8 @@ let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
+  | P.SubAnn (e1,e2, l)        -> 
+        (string_of_formula_exp e1)^"<:"^(string_of_formula_exp e2)
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
