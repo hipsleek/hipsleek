@@ -265,7 +265,11 @@ let infer_lhs_contra lhs_xpure ivars =
       let vf = CP.fv f in
       let over_v = CP.intersect vf ivars in
       if (over_v ==[]) then None
-      else Some (Redlog.negate_formula f)
+      else 
+        let exists_var = CP.diff_svl vf ivars in
+        let f = CP.mkExists_with_simpl_debug Omega.simplify exists_var f None no_pos in
+        if CP.isConstTrue f then None
+        else Some (Redlog.negate_formula f)
 
 let infer_lhs_contra f ivars =
   let pr = !print_mix_formula in
