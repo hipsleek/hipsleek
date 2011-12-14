@@ -7,37 +7,21 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
-// expect v<:I
-infer [v] x::node<p,q>@v |- x::node<a,b>@I.
+checkentail @I<:@M |- false.
 print residue.
 
-// expect v<:M
-infer [v] x::node<p,q>@v |- x::node<a,b>@M.
+checkentail @L<:@I |- false.
 print residue.
 
-// expect x!=null & v<:M
-infer [x,v] x::ll<n>@v |- x::node<a,b>@M.
+checkentail v1<:v2 & v2<:v3 |- v1<:v3.
 print residue.
 
-// expect x!=null & v<:I
-infer [x,v] x::ll<n>@v |- x::node<a,b>@I.
+checkentail v=@M |- v<:@I.
 print residue.
 
-// expect n>0 & v<:I
-infer [n,v] x::ll<n>@v |- x::node<a,b>@I.
+checkentail v<:@M |- v=@M.
 print residue.
 
-// expect n>0 & v<:M
-infer [n,v] x::ll<n>@v |- x::node<a,b>@M.
+checkentail v<:@M & v!=@M |- false.
 print residue.
-
-
-// expect n>0 & v<:L
-infer [n,v] x::ll<n>@v |- x::node<a,b>@L.
-print residue.
-
-//M<:I<:L
-//M v>=2
-//I v>=1
-//L v>=0
 

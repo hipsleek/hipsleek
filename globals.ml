@@ -91,9 +91,9 @@ let is_float_type (t:typ) = match t with
 
 let string_of_heap_ann a =
   match a with
-    | Lend -> "L"
-    | Imm -> "I"
-    | Mutable -> "M"
+    | Lend -> "@L"
+    | Imm -> "@I"
+    | Mutable -> "@M"
 
 let int_of_heap_ann a =
   match a with

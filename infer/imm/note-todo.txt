@@ -1,0 +1,7 @@
+1. change parser for <: and ann constants
+
+2. double check on imply_fast method
+
+3. for every v:AnnT, add the constraint 0<=v<=2
+
+4. convert int to v:AnnT for display

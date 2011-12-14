@@ -3425,9 +3425,9 @@ and default_value (t :typ) pos : C.exp =
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
-    | NUM | UNK | Void ->
+    | NUM | UNK | Void | AnnT ->
 	      failwith
-              "default_value: void in variable declaration should have been rejected by parser"
+              "default_value: void/NUM/UNK/AnnT in variable declaration should have been rejected by parser"
     | (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->

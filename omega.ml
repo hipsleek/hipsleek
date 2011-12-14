@@ -54,6 +54,7 @@ let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
   | Var (sv, _) -> omega_of_spec_var sv
   | IConst (i, _) -> string_of_int i 
+  | AConst (i, _) -> string_of_int(int_of_heap_ann i) 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
   | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^"("^(omega_of_exp a2)^")"
   | Mult (a1, a2, l) ->
@@ -91,6 +92,7 @@ and omega_of_b_formula b =
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
   | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
+  | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   | Eq (a1, a2, _) -> begin
         if is_null a2 then	(omega_of_exp a1)^ " < 1"
         else if is_null a1 then (omega_of_exp a2) ^ " < 1"

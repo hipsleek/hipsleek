@@ -547,6 +547,7 @@ ann_heap:
   [[ `IMM  -> "I"
    | `LEND -> "L"
    | `DERV -> "D"
+   | `MUT -> "M"
    ]];
 
 ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
@@ -855,6 +856,9 @@ cexp_w :
       | lc=SELF; `LT;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
+      | lc=SELF; `SUBANN;     cl=SELF       ->
+	  let f = cexp_to_pure2 (fun c1 c2-> P.mkSubAnn c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	  set_slicing_utils_pure_double f false
       | lc=SELF; peek_try; `GT;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
@@ -955,6 +959,9 @@ cexp_w :
 
       | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
       | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+      | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
+      | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
+      | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
       | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
@@ -1815,7 +1822,11 @@ literal:
  [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos_camlp4 _loc 1 }
   | t=integer_literal -> IntLit { exp_int_lit_val = t;exp_int_lit_pos = get_pos_camlp4 _loc 1 }
   | t=real_literal -> FloatLit { exp_float_lit_val = t; exp_float_lit_pos = get_pos_camlp4 _loc 1 }
-  | `NULL -> Null (get_pos_camlp4 _loc 1) ]];
+  | `NULL -> Null (get_pos_camlp4 _loc 1) 
+  (* | `IMM -> P.AConst (Imm, (get_pos_camlp4 _loc 1))  *)
+  (* | `LEND -> P.AConst (Lend, (get_pos_camlp4 _loc 1))  *)
+  (* | `MUT -> P.AConst (Mutable, (get_pos_camlp4 _loc 1))  *)
+ ]];
 
 real_literal:[[ `FLOAT_LIT (t,_) -> t]];
 

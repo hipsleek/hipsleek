@@ -279,6 +279,12 @@ and mkGte a1 a2 pos =
   else 
 	Gte (a1, a2, pos)
 
+and mkSubAnn a1 a2 pos = 
+  if is_max_min a1 || is_max_min a2 then 
+	failwith ("max/min can only be used in equality")  
+  else 
+	SubAnn (a1, a2, pos)
+
 and mkNeq a1 a2 pos = 
   if is_max_min a1 || is_max_min a2 then 
 	failwith ("max/min can only be used in equality")  
