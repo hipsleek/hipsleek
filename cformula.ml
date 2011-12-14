@@ -2986,6 +2986,9 @@ let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer no
 let print_flow = ref(fun (c:nflow) -> "printer not initialized")
 let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
+let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
+let print_branch_ctx = ref(fun (c:branch_ctx) -> "printer not initialized")
+let print_branch_ctx_list = ref(fun (c:branch_ctx list) -> "printer not initialized")
 
 let is_one_context (c:context) =
   match c with
@@ -5381,6 +5384,9 @@ and trans_struc_formula (e: struc_formula) (arg: 'a) f f_arg f_comb : (struc_for
 let rec transform_context f (c:context):context = 
 	match c with
 	| Ctx e -> 
+        (*TO CHECK: temporarily put a guard condition here*)
+        let fl = flow_formula_of_ctx c no_pos in
+        if (is_conj_flow fl.formula_flow_interval) then c else
         (f e)
 	| OCtx (c1,c2) -> 
         mkOCtx (transform_context f c1)(transform_context f c2) no_pos
@@ -5433,12 +5439,67 @@ let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failes
   let re = fe esc_c in
   let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx) ) succ_c in
   (rf, re,rs)
+
+(*extract successfull contexts with a certain flow nf from a failesc context*)
+let extract_contexts_from_failesc_context_x nf ((fail_c,esc_c, succ_c):failesc_context) :(branch_ctx list) * (failesc_context) =
+  let rec helper (succ:branch_ctx list): (branch_ctx list) * (branch_ctx list) =
+    match succ with
+      | [] -> [],[]
+      | x::xs ->
+          let br1,br2 = helper xs in
+          let path,c = x in
+          let ff = flow_formula_of_ctx c no_pos in
+          if (is_subsume_flow nf ff.formula_flow_interval) then
+            (*extract this context*)
+            (x::br1),br2
+          else
+            br1,x::br2
+  in
+  let succ1, succ2 = helper succ_c in
+  succ1,(fail_c,esc_c, succ2)
+
+(*extract successfull contexts with a certain flow nf from a failesc context*)
+let extract_context_from_failesc_context nf ((fail_c,esc_c, succ_c):failesc_context) :(branch_ctx list) * (failesc_context) =
+  let pr = pr_pair (!print_branch_ctx_list) (!print_failesc_context) in
+  Gen.Debug.no_2 "extract_contexts_from_failesc_context"
+      string_of_flow !print_failesc_context pr
+      extract_contexts_from_failesc_context_x nf (fail_c,esc_c, succ_c)
+
+(*extract successfull contexts with a certain flow nf from a list_failesc_context*)
+let extract_context_from_list_failesc_context_x nf (l:list_failesc_context) : (branch_ctx list list) * list_failesc_context =
+  let rs = List.map (extract_context_from_failesc_context nf) l in
+  List.split rs
+
+let extract_context_from_list_failesc_context nf (l:list_failesc_context) : (branch_ctx list list) * list_failesc_context =
+  let pr1 = pr_pair (pr_list !print_branch_ctx_list) (!print_list_failesc_context) in
+  Gen.Debug.ho_2 "extract_context_from_list_failesc_context"
+      string_of_flow !print_list_failesc_context pr1
+      extract_context_from_list_failesc_context_x nf l
+
+(*add conjunctive contexts to a failesc_context*)
+let add_context_to_failesc_context (c:branch_ctx list) ((fail_c,esc_c, succ_c):failesc_context) :  failesc_context =
+  (fail_c,esc_c, succ_c@c)
+
+(*add conjunctive contexts to a list_failesc_context*)
+let add_context_to_list_failesc_context_x (cs:branch_ctx list list) (l:list_failesc_context) :  list_failesc_context =
+  let tmp = List.combine cs l in
+  let rs = List.map (fun (succ,ctx) -> add_context_to_failesc_context succ ctx) tmp in
+  rs
+
+let add_context_to_list_failesc_context (cs:branch_ctx list list) (l:list_failesc_context) :  list_failesc_context =
+  let pr1 = pr_list !print_branch_ctx_list in
+  Gen.Debug.ho_2 "add_context_to_list_failesc_context"
+  pr1 !print_list_failesc_context !print_list_failesc_context
+  add_context_to_list_failesc_context_x cs l
     
 let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
   List.map (transform_partial_context f) c
     
 let transform_list_failesc_context f (c:list_failesc_context): list_failesc_context = 
-  List.map (transform_failesc_context f) c
+  (*At present, do not normalize concurrent ctx*)
+  let conj_states,c = extract_context_from_list_failesc_context !conj_flow_int c in
+  let c = List.map (transform_failesc_context f) c in
+  add_context_to_list_failesc_context conj_states c
 
   (*use with care, it destroyes the information about exception stacks , preferably do not use except in check specs*)
 let list_failesc_to_partial (c:list_failesc_context): list_partial_context =
@@ -5612,13 +5673,19 @@ let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) : list_faile
 	let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
 	  transform_list_failesc_context (idf,idf,fct) c
 
-	  
 let normalize_max_renaming_list_partial_context f pos b ctx = 
     if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx = 
+  (*Do not normalize concurrent ctx*)
+  let conj_states,ctx = extract_context_from_list_failesc_context !conj_flow_int ctx in
+  let rs = 
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
+  in
+  let rs = add_context_to_list_failesc_context conj_states rs in
+  rs
+
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
       
@@ -5707,6 +5774,7 @@ let conv_lst (c:entail_state) (nf_lst(*: nflow list *)) =
     | [] -> None
     | x::xs -> Some (List.fold_left (fun acc_ctx y -> mkOCtx (conv c y) acc_ctx no_pos) (conv c x)  xs)
 
+(*concurrent flows are considered succ flows*)
 let rec splitter (c:context) 
     (nf(* :nflow *)) (cvar:typed_ident option)  (elim_ex_fn: context -> context)
     (* : (context option, context option) (\* caught under nf flow, escaped from nf flow*\)   *)
@@ -5717,7 +5785,10 @@ let rec splitter (c:context)
 	      let ff =(flow_formula_of_ctx c no_pos) in	
 	      if (subsume_flow nf ff.formula_flow_interval) then  (Some
             (conv_elim_res cvar b elim_ex_fn),None) (* change caught item to normal flow *)
-	      else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
+	      else if (is_conj_flow ff.formula_flow_interval) then
+            (*concurrent flows are considered succ flows*)
+            (Some c, None)
+          else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
           else (* let t_caught = intersect_flow nf
                   ff.formula_flow_interval in *)
 	        let t_escape_lst = subtract_flow_list ff.formula_flow_interval nf in
@@ -5739,6 +5810,7 @@ let rec splitter (c:context)
 	      (r1,r2) in
   helper c
 
+(*consider concurrent flows as succ flows*)
 let splitter_wrapper p c nf cvar elim_ex_fn fn_esc =
 	let r_caught,r_esc = splitter c nf cvar elim_ex_fn in
 	match (r_esc,r_caught) with
@@ -5751,6 +5823,7 @@ let splitter_wrapper p c nf cvar elim_ex_fn fn_esc =
 (* fn transforms context to list of partial context *)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
+(*consider concurrent flows as succ flows*)
 let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)   
 	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
    List.map (fun (fl,el,sl)->

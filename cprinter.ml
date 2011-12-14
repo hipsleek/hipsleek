@@ -1461,6 +1461,10 @@ let pr_successful_states e = match e with
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
 		  pr_vwrap "State:" pr_context_short fs)) e
 
+let pr_branch_ctx ((lbl,fs) as br) =
+  pr_vwrap_nocut "Label: " pr_path_trace lbl;
+  pr_vwrap "State:" pr_context_short fs
+
 let is_empty_esc_state e =
   List.for_all (fun (_,lst) -> lst==[]) e
 
@@ -1511,6 +1515,11 @@ let pr_partial_context ((l1,l2): partial_context) =
 (* 	       fmt_string " State: "; pr_context fs) l2; *)
 (*   fmt_close_box () *)
 
+let string_of_branch_ctx (br: branch_ctx): string  = 
+  poly_string_of_pr pr_branch_ctx br
+
+let string_of_branch_ctx_list (brs: branch_ctx list): string  = 
+  Gen.Basic.pr_list (string_of_branch_ctx) brs 
 
 let string_of_partial_context (ctx:partial_context): string =  poly_string_of_pr pr_partial_context ctx
 
@@ -2367,6 +2376,9 @@ Cformula.print_ext_formula := string_of_ext_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;
 Cformula.print_esc_stack := string_of_esc_stack;;
 Cformula.print_failesc_context := string_of_failesc_context;;
+Cformula.print_list_failesc_context := string_of_list_failesc_context;;
+Cformula.print_branch_ctx := string_of_branch_ctx ;;
+Cformula.print_branch_ctx_list := string_of_branch_ctx_list ;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;

@@ -58,9 +58,13 @@ void test_fork(ref int2 x,  ref int2 y)
 {
   int id;
   fork(id,inc,x); //under construction
+  dprint;
   //inc(x);
   y.val++;
-  join1(id); // not supported yet
-  assert x'::int2(f)<n1+1>;
   assert y'::int2(f)<n2+1>;
+  dprint;
+  join1(id); // not supported yet
+  dprint;
+  //assert x'::int2(f)<n1+1>;
+  //assert y'::int2(f)<n2+1>;
 }

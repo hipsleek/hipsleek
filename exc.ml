@@ -490,6 +490,7 @@ module type ETABLE =
     val empty_flow : nflow 
     val is_false_flow : nflow -> bool
     val is_empty_flow : nflow -> bool
+    val is_conj_flow : nflow -> bool
     val is_exact_flow : nflow -> nflow -> bool
       (* is fst the exact flow of snd *)
     val is_exact_flow : nflow -> nflow -> bool
@@ -572,6 +573,7 @@ struct
   let is_subsume_flow (n1,n2)(p1,p2) : bool =
     if (is_false_flow (p1,p2)) then true 
     else (n1<=p1)&&(p2<=n2)
+  let is_conj_flow (fl: nflow) : bool = is_subsume_flow !conj_flow_int fl
   let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
     if is_empty_flow(f1) then true
     else if is_empty_flow(f2) then false
@@ -795,6 +797,7 @@ struct
         true
       else
         false
+  let is_conj_flow fl: bool = is_subsume_flow !conj_flow_int fl
   (*f1 is a subset of f2*) 
   (*??? biff b/w subset and subsume*)
   (*f1 is a subset of f2 => f2 subsume f1*)
