@@ -14,12 +14,7 @@ Inferred Pure:[ b=inf_b_56 & inf_b_56!=null]
 {FLOW,(17,18)=__norm}
 
 
-Infer  (3): Valid. 
-Inferred Heap:[ y::node<inf_78,inf_b_79>@M[Orig]]
-Inferred Pure:[ a!=inf_78]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
+Infer  (3): Fail.(may) cause:15.4 no match for rhs data node: b (may-bug).
 
 Halting Reduce... 
-Stop Omega... 65 invocations 
+Stop Omega... 69 invocations 
