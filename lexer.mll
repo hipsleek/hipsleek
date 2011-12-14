@@ -147,6 +147,7 @@ module Make (Token : SleekTokenS)
    ("ho_pred",HPRED);
    ("if", IF);
 	 ("in", IN_T);
+   ("infer", INFER);
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
@@ -260,7 +261,8 @@ rule tokenizer file_name = parse
   | "&&" { ANDAND }
   | "@" { AT }
   | "@I" {IMM}
-  | "@D" {DERV}
+  | "@L" {LEND}
+  | "@D" { DERV }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }

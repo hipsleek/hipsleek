@@ -71,9 +71,9 @@ let common_arguments = [
 	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
 	"No assumption filtering.");
-	("--disable-check-lemmas", Arg.Clear Globals.check_coercions,
+	("--dlp", Arg.Clear Globals.check_coercions,
 	"Disable Lemma Proving");
-	("--enable-check-lemmas", Arg.Set Globals.check_coercions,
+	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
@@ -83,12 +83,14 @@ let common_arguments = [
     "Show gist when implication fails");
 	("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
 	"Hull precondition invariant at call sites");
-	("--sat-timeout", Arg.Set_float Globals.sat_timeout,
+	("--sat-timeout", Arg.Set_float Globals.sat_timeout_limit,
 	"Timeout for sat checking");
-	("--imply-timeout", Arg.Set_float Globals.imply_timeout,
+	("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
     "Timeout for imply checking");
 	("--log-proof", Arg.String Prooftracer.set_proof_file,
     "Log (failed) proof to file");
+    ("--trace-failure", Arg.Set Globals.trace_failure,
+    "Enable trace all failure (and exception)");
 	("--trace-all", Arg.Set Globals.trace_all,
     "Trace all proof paths");
 	("--log-cvcl", Arg.String Cvclite.set_log_file,
@@ -97,6 +99,8 @@ let common_arguments = [
 	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
+    ("--log-z3", Arg.Set Smtsolver.log_all_flag,
+	"Log all formulae sent to z3 in file allinput.z3");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
 	"Log all formulae sent to Isabelle in file allinput.thy");
 	("--log-coq", Arg.Set Coq.log_all_flag,
@@ -135,9 +139,11 @@ let common_arguments = [
 	"Stop checking on erroneous procedure");
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
-	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-3.2"; "zm"; "om";
+	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "auto" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	("-perm", Arg.Symbol (["fperm"; "cperm"; "none"], Perm.set_perm),
+	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
 	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
 	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
@@ -181,7 +187,7 @@ let common_arguments = [
 	"<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
 	("--decrprio",Arg.Set Tpdispatcher.decr_priority , 
 	"use a decreasing priority scheme");
-	("--rl-no-pseudo-ops", Arg.Set Redlog.no_pseudo_ops, 
+	("--rl-no-pseudo-ops", Arg.Clear Redlog.no_pseudo_ops, 
 	"Do not pseudo-strengthen/weaken formulas before send to Redlog");
 	("--rl-no-ee", Arg.Set Redlog.no_elim_exists, 
 	"Do not try to eliminate existential quantifier with Redlog");
@@ -231,9 +237,13 @@ let common_arguments = [
 
   (* Termination options *)
   ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
-  (* slicing *)
+
+  (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
   ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
+  ("--slc-opt-ineq", Arg.Set Globals.opt_ineq, "Enable optimal SAT checking with inequalities for forced slicing");
+  ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
+  ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
 
   (* invariant *)

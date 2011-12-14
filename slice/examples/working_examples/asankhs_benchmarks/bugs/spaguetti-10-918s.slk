@@ -1,0 +1,7 @@
+data node { int val ; node next }.
+
+pred lseg<p> == self = p
+or self::node<_,r> * r::lseg<p> & self!=p inv true.
+
+checkentail
+x1::lseg<x2> * x1::lseg<x3> * x2::lseg<x4> & x1 != x3 & x2 != x4 |- false.

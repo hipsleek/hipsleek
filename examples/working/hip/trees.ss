@@ -273,7 +273,7 @@ void delete(ref node2 x, int a)
 			if (xval == a) 
 			{
 				if (xright == null) {
-                                        assert true;
+                    assert true;
 					x = xleft; 
 				}
 				else

@@ -18,7 +18,8 @@ open Globals
 open Sleekcommons
 open Sleekengine
 open Gen.Basic
-open Exc.ETABLE_NFLOW
+(* open Exc.ETABLE_NFLOW *)
+open Exc.GTable
 
 module H = Hashtbl
 module I = Iast
@@ -55,29 +56,32 @@ let prompt = ref "SLEEK> "
 let terminator = '.'
 module M = Lexer.Make(Token.Token)
 
-let parse_file (parse) (source_file : string) =
-	let _ = print_endline "parse_file 1" in
-	try
-		let cmds = parse source_file in 
-		let _ = (List.map (fun c -> (
-							match c with
-								 | DataDef ddef -> process_data_def ddef
-								 | PredDef pdef -> process_pred_def pdef
-				                 | RelDef rdef -> process_rel_def rdef
-								 | AxiomDef adef -> process_axiom_def adef (* An Hoa : Bug detected in MUTUALLY DEPENDENT relations! *)
-								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
-								 | CaptureResidue lvar -> process_capture_residue lvar
-								 | LemmaDef ldef -> process_lemma ldef
-								 | PrintCmd pcmd -> process_print_command pcmd
-								 | LetDef (lvar, lbody) -> put_var lvar lbody
-                 | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
-								 | EmptyCmd -> ())) cmds) in ()
-	with
-	  | End_of_file ->
-		  print_string ("\n")
-    | M.Loc.Exc_located (l,t)-> 
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-      raise t)
+(*This is overriden by the below*)
+(* let parse_file (parse) (source_file : string) = *)
+(* 	(\* let _ = print_endline "parse_file 1" in *\) *)
+(* 	try *)
+(* 		let cmds = parse source_file in  *)
+(* 		let _ = (List.map (fun c -> ( *)
+(* 							match c with *)
+(* 								 | DataDef ddef -> process_data_def ddef *)
+(* 								 | PredDef pdef -> process_pred_def pdef *)
+(*				                 | RelDef rdef -> process_rel_def rdef *)
+(*								 | AxiomDef adef -> process_axiom_def adef (* An Hoa : Bug detected in MUTUALLY DEPENDENT relations! *) *)
+                 (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
+(* 								 | CaptureResidue lvar -> process_capture_residue lvar *)
+(* 								 | LemmaDef ldef -> process_lemma ldef *)
+(* 								 | PrintCmd pcmd ->  *)
+(*                                      let _ = print_string " I am here \n" in (\*LDK*\) *)
+(*                                      process_print_command pcmd *)
+(* 								 | LetDef (lvar, lbody) -> put_var lvar lbody *)
+(*                  | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s *)
+(* 								 | EmptyCmd -> ())) cmds) in () *)
+(* 	with *)
+(* 	  | End_of_file -> *)
+(* 		  print_string ("\n") *)
+(*     | M.Loc.Exc_located (l,t)->  *)
+(*       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ())); *)
+(*       raise t) *)
 
 let parse_file (parse) (source_file : string) =
   let rec parse_first (cmds:command list) : (command list)  =
@@ -93,8 +97,10 @@ let parse_file (parse) (source_file : string) =
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
       | RelDef rdef -> process_rel_def rdef
-      | AxiomDef _  (* An Hoa *)
+      | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
+      (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
 	  | LemmaDef _
+      | Infer _
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
@@ -111,12 +117,16 @@ let parse_file (parse) (source_file : string) =
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
+    | Infer _
 	  | PrintCmd _ 
       | Time _
 	  | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
-	  | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+	  | EntailCheck (iante, iconseq) -> 
+          (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
+          process_entail_check iante iconseq
+      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
 	  | PrintCmd pcmd -> process_print_command pcmd
 	  | LetDef (lvar, lbody) -> put_var lvar lbody
@@ -143,6 +153,10 @@ let parse_file (parse) (source_file : string) =
 	in ();
   convert_pred_to_cast ();
   List.iter proc_one_lemma cmds;
+  (*identify universal variables*)
+  let cviews = !cprog.C.prog_view_decls in
+  let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
+   !cprog.C.prog_view_decls <- cviews;
    List.iter proc_one_cmd cmds 
 
 
@@ -185,13 +199,13 @@ let main () =
                 if cts = "quit" || cts = "quit\n" then quit := true
                 else try
                   let cmd = parse cts in
-                  (* let _ = print_endline ("xxx_after parse"^cts) in *)
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
-                     | EntailCheck (iante, iconseq) ->  process_entail_check iante iconseq
+                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef
                      | PrintCmd pcmd -> process_print_command pcmd
@@ -223,12 +237,13 @@ let main () =
 (* let main () =  *)
 (*   Gen.Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
-let _ = 
-  wrap_exists_implicit_explicit := false ;
+let _ =
+   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
+    let _ = Printexc.record_backtrace !Globals.trace_failure in
     (Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)

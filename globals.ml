@@ -4,10 +4,14 @@
 type ident = string
 type constant_flow = string
 
+exception Illegal_Prover_Format of string
+
+let illegal_format s = raise (Illegal_Prover_Format s)
+
+
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
-	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
 
@@ -29,6 +33,8 @@ and loc = {
 and primed =
   | Primed
   | Unprimed
+
+and heap_ann = Lend | Imm | Mutable
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -77,6 +83,10 @@ let no_pos =
 				   Lexing.pos_bol = 0; 
 				   Lexing.pos_cnum = 0 } in
 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
+
+let is_float_type (t:typ) = match t with
+  | Float -> true
+  | _ -> false
 
 
 let string_of_loc (p : loc) = 
@@ -140,7 +150,7 @@ let set_entail_pos p = entail_pos := p
 (*   (\* proving_loc := None *\) *)
 
 (* pretty printing for types *)
-let rec string_of_typ = function 
+let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
@@ -238,10 +248,20 @@ let push_opt_val_rev opt v = match opt with
   | None -> None
   | Some s -> Some (v, s)
 
+let no_pos1 = { Lexing.pos_fname = "";
+				   Lexing.pos_lnum = 0;
+				   Lexing.pos_bol = 0; 
+				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
 
+let sl_error = "separation entailment"
+let logical_error = "logical bug"
+let lemma_error = "lemma"
+let undefined_error = "undefined"
+
 let eres_name = "eres"
+
 
 let self = "self"
 
@@ -333,6 +353,8 @@ let self_fold_search_flag = ref false
 
 let show_gist = ref false
 
+let trace_failure = ref false
+
 let trace_all = ref false
 
 let print_mvars = ref false
@@ -412,7 +434,10 @@ let disable_multiple_specs =ref false
 (* Options for slicing *)
 let do_slicing = ref false
 let opt_imply = ref 0
+let opt_ineq = ref false
 let infer_slicing = ref false
+let multi_provers = ref false
+let is_sat_slicing = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false
@@ -427,8 +452,8 @@ let omega_err = ref false
 
 let seq_number = ref 10
 
-let sat_timeout = ref 10.
-let imply_timeout = ref 10.
+let sat_timeout_limit = ref 2.
+let imply_timeout_limit = ref 3.
   
 (* let reporter = ref (fun _ -> raise Not_found) *)
 
@@ -578,6 +603,18 @@ let fresh_formula_cache_no  () =
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
+let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
+	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+
+let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
+;;
+
+let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
+
+let string_of_loc_by_char_num (l : loc) = 
+  Printf.sprintf "(%d-%d)"
+    l.start_pos.Lexing.pos_cnum
+    l.end_pos.Lexing.pos_cnum
 
 let seq_local_number = ref 0
 

@@ -61,22 +61,22 @@ let rec omega_of_exp e0 = match e0 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-            | _ -> 
-                Error.report_error {
-                  Error.error_loc = l;
-                  Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
-                }
+            | _ -> illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+                (* Error.report_error { *)
+                (*   Error.error_loc = l; *)
+                (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
+                (* } *)
             in rr
       in r
-  | Div (_, _, l) -> 
-      Error.report_error {
-        Error.error_loc = l;
-        Error.error_text ="[omega.ml] Divide is not supported."
-      }
+  | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
+      (* Error.report_error { *)
+      (*   Error.error_loc = l; *)
+      (*   Error.error_text ="[omega.ml] Divide is not supported." *)
+      (* } *)
   | Max _
-  | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
-  | FConst _ -> failwith ("Omega.omega_of_exp: FConst")
-  | _ -> failwith ("Omega.omega_of_exp: array, bag or list constraint")
+  | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
+  | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
+  | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint")
 (*
 (ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
 ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
@@ -115,15 +115,18 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
+  | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
  
-and omega_of_formula f  = match f with
+and omega_of_formula f  =
+  let rec helper f = 
+    match f with
   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
-  | And (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2 ) ^ ")"
-  | Or (p1, p2,_ , _) -> 	"(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
-  | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula p) ^ ")) "	
-  | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
-  | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
+  | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
+  | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+  | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	
+  | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+  | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+  in helper f
 
 
 let omegacalc = ref ("oc":string)
@@ -373,6 +376,24 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       end
   end
 
+let is_sat (pe : formula)  (sat_no : string): bool =
+  let pf = !print_pure in
+  Gen.Debug.no_1 "Omega.is_sat" pf (string_of_bool) (fun _ -> is_sat pe sat_no) pe
+
+let is_sat_with_check (pe : formula) sat_no : bool option =
+  do_with_check "" (fun x -> is_sat x sat_no) pe 
+
+let is_sat (pe : formula) sat_no : bool =
+  try
+    is_sat pe sat_no
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.is_sat on formula :"^(!print_pure pe));
+        flush stdout;
+        failwith s
+      end
+
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
@@ -417,6 +438,22 @@ let is_valid (pe : formula) timeout: bool =
         end
   end
 
+let is_valid (pe : formula) timeout: bool =
+  let pf = !print_pure in
+  Gen.Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid pe timeout) pe
+
+let is_valid_with_check (pe : formula) timeout : bool option =
+  do_with_check "" (fun x -> is_valid x timeout) pe
+
+let is_valid_with_default (pe : formula) timeout : bool =
+  do_with_check_default "" (fun x -> is_valid x timeout) pe false
+
+
+
+(* let is_valid (pe : formula) timeout : bool = *)
+(*   do_with_check_default "Omega is_valid"  *)
+(*       (fun x -> is_valid x timeout) pe false *)
+
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   (*print_endline "LOCLE: imply";*)
   incr test_number;
@@ -437,7 +474,33 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
       output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
-  
+
+let imply_with_check (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
+  do_with_check2 "" (fun a c -> imply a c imp_no timeout) ante conseq
+
+let imply (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
+  try
+    imply ante conseq imp_no timeout
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
+		print_endline ("and conseq Formula :"^(!print_pure conseq));
+        flush stdout;
+        failwith s
+      end
+
+let is_valid (pe : formula) timeout : bool =
+  try
+    is_valid pe timeout
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline ("Apply Omega.is_CCvalid on Formula :"^(!print_pure pe));
+        flush stdout;
+        failwith s
+      end
+
 let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 | ConstRel b ->
     if b then
@@ -456,7 +519,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
         tmp2
     in
     if List.length aelist0 != List.length vars_list0 then
-      failwith ("match_var: numbers of arguments do not match")
+      illegal_format ("match_var: numbers of arguments do not match")
     else
       match_helper vars_list0 aelist0 f0
 | UnionRel (r1, r2) ->
@@ -518,6 +581,16 @@ let simplify (pe : formula) : formula =
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
   Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
+
+
+(* let simplify_with_check (pe : formula) : formula option = *)
+(*   do_with_check "Omega simplify" simplify pe *)
+
+let simplify (pe : formula) : formula =
+  match (do_with_check "" simplify pe)
+  with 
+    | None -> pe
+    | Some f -> f
 
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)

@@ -16,30 +16,29 @@ void m1 (ref int i, e1 z) throws e1
 	ensures 
         eres::e4<> & i>0 & i'=2 & flow e4 
         or eres::e1<> & i>0 & i'=i & flow e1
-        or z::e1<> & i<=0 & i'=3 & flow __norm
+        or z::e1<> & i<=0 & i'=i & flow __norm
         ;//'
-{  dprint;
+{   
 	try{
-      //i=i+1;
-      dprint;
 		if (i>0) 
           { //assume false;
             try {
             raise z; //new e1();
+            dprint;
             } catch (e2 v)
             {
               raise v;
             };
-        dprint;
+            dprint;
           }
 	}catch (e2 v){
 		i=2;
-		dprint;
 		raise new e4();
         dprint;
 	};
-    //dprint;
+    assume false;
 	i=3;
+    dprint;
 }
 
 

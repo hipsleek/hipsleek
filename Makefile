@@ -18,7 +18,7 @@ OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: native decidez.vo
+all: byte decidez.vo
 #gui
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
@@ -37,19 +37,23 @@ xml/xml-light.cma:
 
 hip.byte: xml
 	@ocamlbuild $(OB_FLAGS) main.byte
-	cp -u _build/main.byte p-hip
+	cp -u _build/main.byte hip
+	cp -u _build/main.byte b-hip
 
 hip.native: xml
 	@ocamlbuild $(OB_FLAGS) main.native
 	cp -u _build/main.native hip
+	cp -u _build/main.native n-hip
 
 sleek.byte: xml
 	@ocamlbuild $(OB_FLAGS) sleek.byte
-	cp -u _build/sleek.byte p-sleek
+	cp -u _build/sleek.byte sleek
+	cp -u _build/sleek.byte b-sleek
 
 sleek.native: xml
 	@ocamlbuild $(OB_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
+	cp -u _build/sleek.native n-sleek
 
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte

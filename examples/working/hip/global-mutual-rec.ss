@@ -11,7 +11,7 @@ void decrease1(int t)
 		n--;
 	
 	  decrease2(t-1);
-		assume false;
+
    }
 }
 

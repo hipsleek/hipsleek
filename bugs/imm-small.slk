@@ -5,50 +5,53 @@ data node {
 
 pred Cell<i> == self::node<i,_> 
 inv self!=null.
+// M <: I <: L
+/*
+// fail
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- x::Cell<_>@I.
 
-// should fail but valid
-// parser problem?
  checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@C.
 
 // should valid
 // parser problem?
- checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@I.
  checkentail (x::Cell<_>@I) ; y::Cell<_> |- x::Cell<_>@I; true.
 //expected residue: (x::Cell<_>@I);y::Cell<>.
 
-//should valid
-checkentail (x::Cell<_>@I) ; y::Cell<_> |- y::Cell<_>@C.
-print residue.
-// expecting empty residue
+checkentail y::Cell<_>@I |- y::Cell<_>.
+// fail
 
+
+checkentail y::Cell<_>@L |- y::Cell<_>@L.
 //should valid
-checkentail (x::Cell<_>@I) ; y::Cell<_> |- y::Cell<_>@I.
 checkentail (x::Cell<_>@I) ; y::Cell<_> |- y::Cell<_>@I; true.
 print residue.
-// expecting empty residue
+// residue: y::Cell<_>@L
 
+checkentail y::Cell<_> |- y::Cell<_>@I.
+print residue.
+// residue: emp
+
+checkentail y::Cell<_>@L |- y::Cell<_>@I.
+// fail
+
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- x::Cell<_>@L.
+print residue.
+//expected residue: (x::Cell<_>@L);y::Cell<>.
+
+
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- y::Cell<_>@I.
+print residue.
+checkentail (x::Cell<_>@L) ; y::Cell<_> |- y::Cell<_>.
+print residue.
+// residue emp
+
+*/
+
+/*
 checkentail x::Cell<_>*y::Cell<_> |- x::Cell<_>@I*y::Cell<_>@C.
 // expected residue x::Cell<_>
 
-// M <: C <: I
-
-checkentail y::Cell<_>@C |- y::Cell<_>@I.
-// residue: y::Cell<_>@C
-
-checkentail y::Cell<_>@M |- y::Cell<_>@I.
-// residue: y::Cell<_>@M
-
-checkentail y::Cell<_>@M |- y::Cell<_>@C.
-// residue: emp
-
-checkentail y::Cell<_>@I |- y::Cell<_>@C.
-// fail
-
-checkentail x::Cell<_>@I*y::Cell<_>@I |- x::Cell<_>@I*y::Cell<_>@C.
-// expected residue x::Cell<_>@I
-
-
-// succeeded with empty res x::Cell<_>idue
+// succeeded with empty res x::Cell<_>
 checkentail (x::Cell<_>@I) ; y::Cell<_> |- y::Cell<_>.
 print residue.
 
@@ -117,8 +120,6 @@ x::node<_,null> |- x::ll<n>
 
 x::node<_,null> *  x::ll<n> & n=1 
 
-
-
 x::ll<n>@I * y::ll<m>@I
 
 // @L - lending
@@ -161,5 +162,7 @@ ensures  res=n
  x::ll<n>@I |- x::ll<n>@I
  
 x::ll<n>@I * (res::teelsegI<x,pp,0,m> * pp::ll<m>@I)@E
+ m=0
+*/
  m=0
 

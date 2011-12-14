@@ -20,18 +20,21 @@ Source.c
 	
 <div id="nav" class="scroll-pane">
 	<ul>
-		<li id="nav-sum"><span>Summary</span>
+		<li id="nav-sum"><a>Summary</a>
+		</li>
+		<li id="nav-def"><span>Definitions</span>
+			<ul id="nav-def-list">
+				<li><span id="nav-def-data">Data</span></li>
+				<li><span id="nav-def-view">Views</span></li>
+				<li><span id="nav-def-rels">Relations</span></li>
+			</ul>
+		</li>
+		<li id="nav-thm"><span>Theorems</span>
+			<ul id="nav-thm-list">
+			</ul>
 		</li>
 		<li id="nav-proc"><span>Procedures</span>
 			<ul id="nav-proc-list">
-			</ul>
-		</li>
-		<li id="nav-defs"><span>Definitions</span>
-			<ul id="nav-defs-list">
-			</ul>
-		</li>
-		<li id="nav-lms"><span>Theorems</span>
-			<ul id="nav-lms-list">
 			</ul>
 		</li>
 	</ul>
@@ -40,10 +43,12 @@ Source.c
 <div id="content_src_container">
 	<div id="content" class="scroll-pane">
 		<!-- dynamically loaded based on user interaction via the navigation -->
+<!--
 		<div id="content-sum"></div>
 		<ul id="content-proc"></ul>
 		<div id="content-defs"></div>
 		<div id="content-lms"></div>
+-->
 	</div>
 
 	<div id="srclink" class="scroll-pane">
@@ -55,7 +60,7 @@ Source.c
 <script type="text/javascript">
 //$SETUP_SCRIPT
 $(document).ready(setup);
-$(function(){ $('.scroll-pane').jScrollPane(); });
+//$(function(){ $('.scroll-pane').jScrollPane(); });
 </script>
 </body>
 </html>
