@@ -3,4 +3,4 @@ Starting Omega...oc
 Infer  (1): Fail.(may) cause:(failure_code=15.3)  true |-  y!=null (may-bug).
 
 Halting Reduce... 
-Stop Omega... 16 invocations 
+Stop Omega... 17 invocations 

@@ -12,7 +12,19 @@ Inferred Pure:[ a!=inf_35]
 {FLOW,(17,18)=__norm}
 
 
-Infer  (3): Fail.(may) cause:(failure_code=213)  c=i |-  0<c (may-bug).
+Infer  (3): Valid. 
+Inferred Heap:[]
+Inferred Pure:[ 1<=i]
+<1>true & i=c & 1<=c &
+{FLOW,(17,18)=__norm}
+
+
+Infer  (4): Valid. 
+Inferred Heap:[]
+Inferred Pure:[ !(n=0 & x=null) & 0<=n]
+<1>EXISTS(flted_7_65: b::ll<flted_7_65>@M[Orig] & flted_7_65+1=n &
+{FLOW,(17,18)=__norm})
+
 
 Halting Reduce... 
-Stop Omega... 43 invocations 
+Stop Omega... 56 invocations 

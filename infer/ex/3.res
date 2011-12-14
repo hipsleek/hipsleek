@@ -180,8 +180,8 @@ Inferred Pure:[ b=inf_411, inf_m_415=0 - 1]
 
 Infer  (28): Valid. 
 Inferred Heap:[ y::node<inf_436,inf_437>@M[Orig], b::ll<inf_m_441>@M[Orig][LHSCase]]
-Inferred Pure:[ b=inf_437, inf_m_441=0 - 1]
-<1>true & m=0 - 1 & inf_436=a & inf_437=b & inf_m_441=0 - 1 &
+Inferred Pure:[ b=inf_437, inf_m_441=0 - 1 & m=0 - 1]
+<1>true & inf_436=a & inf_437=b & inf_m_441=0 - 1 & m=0 - 1 &
 {FLOW,(17,18)=__norm}
 
 
@@ -194,10 +194,10 @@ Inferred Pure:[ b=inf_b_462]
 
 Infer  (30): Valid. 
 Inferred Heap:[ y::node<inf_484,inf_b_485>@M[Orig], b::ll<inf_490>@M[Orig][LHSCase]]
-Inferred Pure:[ b=inf_b_485]
+Inferred Pure:[ b=inf_b_485 & inf_b_485!=null]
 <1>true & inf_484=a & inf_490=m & inf_b_485=b & b!=null &
 {FLOW,(17,18)=__norm}
 
 
 Halting Reduce... 
-Stop Omega... 356 invocations 
+Stop Omega... 351 invocations 

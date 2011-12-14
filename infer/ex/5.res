@@ -84,7 +84,7 @@ Inferred Pure:[ !(m=2 & 1<=n)]
 {FLOW,(17,18)=__norm}
 
 
-Infer  (13): Fail.(may) cause:(failure_code=213)  2<m & a=p |-  m<a (may-bug).
+Infer  (13): Fail.(may) cause:(failure_code=213)  p=a & 3<=m & 4<=a |-  m<a (may-bug).
 
 Infer  (14): Fail.(may) cause:(failure_code=213)  3<=m & 6<=p |-  4<m;  3<=m & 6<=p |-  m<p (may-bug).
 
@@ -98,4 +98,4 @@ Inferred Pure:[ 5<=m & m<p]
 
 
 Halting Reduce... 
-Stop Omega... 221 invocations 
+Stop Omega... 198 invocations 

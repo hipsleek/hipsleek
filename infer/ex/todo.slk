@@ -36,4 +36,10 @@ TODO Thai : should we not infer c>0?
 Infer  (3): Fail.(may) cause:(failure_code=213)  c=i |-  0<c (may-bug).
 */
 
+// (4) 
+infer [x,n] x::ll<n>   |- x::node<a,b>.
+print residue.
+// TODO : possible to remove inv n>=0?
+//Inferred Pure:[ !(n=0 & x=null) & 0<=n]
+
 
