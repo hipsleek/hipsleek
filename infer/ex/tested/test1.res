@@ -88,4 +88,4 @@ Inferred Pure:[ y!=null]
 
 
 Halting Reduce... 
-Stop Omega... 154 invocations 
+Stop Omega... 163 invocations 

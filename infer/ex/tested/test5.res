@@ -31,4 +31,4 @@ Message: y is not found in both sides
  exception in Infer  (5) check
 : no residue 
 Halting Reduce... 
-Stop Omega... 87 invocations 
+Stop Omega... 90 invocations 

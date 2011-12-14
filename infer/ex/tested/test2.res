@@ -37,15 +37,15 @@ Inferred Pure:[ n!=0]
 
 Infer  (7): Valid. 
 Inferred Heap:[ q::ll<inf_n_98>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_98=0 & n=0]
-<1>true & inf_n_98=0 & n=0 &
+Inferred Pure:[ inf_n_98=0]
+<1>true & n=0 & inf_n_98=0 &
 {FLOW,(17,18)=__norm}
 
 
 Infer  (8): Valid. 
 Inferred Heap:[ q::ll<inf_n_117>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_117=0 & n=0]
-<1>true & inf_n_117=0 & n=0 &
+Inferred Pure:[ inf_n_117=0]
+<1>true & n=0 & inf_n_117=0 &
 {FLOW,(17,18)=__norm}
 
 
@@ -57,4 +57,4 @@ Inferred Pure:[ n=0]
 
 
 Halting Reduce... 
-Stop Omega... 101 invocations 
+Stop Omega... 109 invocations 
