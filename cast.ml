@@ -1350,6 +1350,7 @@ let rec check_proper_return cret_type exc_list f =
 	| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
 	| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 	| F.EVariance b -> ()
+ | F.EInfer b -> ()
   in
   List.iter helper f
 

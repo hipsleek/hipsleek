@@ -401,6 +401,9 @@ let rec string_of_ext_formula = function
 		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
 		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
 		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
+  | Iformula.EInfer {Iformula.formula_inf_continuation = continuation;} ->
+    let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
+    "EInfer "^string_of_continuation
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c ->

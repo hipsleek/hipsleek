@@ -1219,6 +1219,13 @@ and pr_ext_formula  (e:ext_formula) =
 			  wrap_box ("B",0) pr_struc_formula cont;
             end;
           fmt_close();
+    | EInfer {formula_inf_continuation = cont;} -> 
+      if not(Gen.is_empty(cont)) then
+        begin
+        fmt_cut();
+        wrap_box ("B",0) pr_struc_formula cont;
+        end;
+      fmt_close();
 ;;
 
 let string_of_ext_formula (e:ext_formula) : string =  poly_string_of_pr  pr_ext_formula e
@@ -2331,6 +2338,7 @@ let rec html_of_ext_formula f = match f with
 							formula_var_measures = measures;
 							formula_var_escape_clauses = escape_clauses;
 							formula_var_continuation = cont; } -> ""
+  | EInfer _ -> ""
 
 and html_of_struc_formula f = 
 	if f==[] then "[]" else 
