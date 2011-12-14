@@ -542,7 +542,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
                       (* Termination: Add a false entail state for 
                        * unreachable recursive call if variance exists *)
-                      var_checked_list := !var_checked_list @ [(
+                      Term.var_checked_list := !Term.var_checked_list @ [(
               {(CF.false_es CF.mkFalseFlow pos) with 
                   CF.es_var_label = Some (-1); 
                   CF.es_var_loc = pos; }, 
@@ -964,133 +964,20 @@ let check_proc_wrapper_map_net prog (proc,num) =
     end else
       raise e
 
-
-let rec equalpf_a f1 f2 =
-  let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
-                Tpdispatcher.suppress_imply_output () end in
-  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
-  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
-  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
-  r1 & r2
-
-and equalpf f1 f2 = Gen.Debug.no_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
-
-and comparepf_a f1 f2 =
-  let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
-                Tpdispatcher.suppress_imply_output () end in
-  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
-  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
-  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
-  if (r1 & r2) then 0
-  else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
-	
-and comparepf f1 f2 = Gen.Debug.no_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
-
-module FComp = 
-struct
-  type t = CP.formula
-  let compare = comparepf
-  let hash = Hashtbl.hash
-  let equal = equalpf
-end
-
-module IG = Graph.Persistent.Digraph.Concrete(FComp)
-module IGO = Graph.Oper.P(IG)
-module IGN = Graph.Oper.Neighbourhood(IG)
-module IGC = Graph.Components.Make(IG)
-module IGP = Graph.Path.Check(IG)
-
-module IComp = 
-struct
-  type t = int
-  let compare = compare
-  let hash = Hashtbl.hash
-  let equal = (=)
-end
-
-module GS = Graph.Persistent.Digraph.Concrete(IComp)
-module GSO = Graph.Oper.P(GS)
-module GSN = Graph.Oper.Neighbourhood(GS)
-module GSC = Graph.Components.Make(GS)
-module GSP = Graph.Path.Check(GS)
-
-(* Termination: Create state transition graph *)
-let build_state_trans_graph ls =
-  (*print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.variance_graph) ^ "\n");*)
-  let gr = IG.empty in
-  let g = List.fold_left (fun g (f1,f2) ->
-    let ng1 = IG.add_vertex g f1 in
-	  let ng2 = IG.add_vertex ng1 f2 in
-	  let ng3 = IG.add_edge ng2 f1 f2 in
-	ng3) gr ls in
-  g
-
-let scc_numbering g =
-  let scc_list = IGC.scc_list g in
-  let scc_list = snd (List.fold_left (fun (n,rs) l -> (n+1, rs @ [(n,l)])) (0,[]) scc_list) in
-  let mem e ls = List.exists (fun e1 -> equalpf e e1) ls in
-  let meml ls1 ls2 = List.exists (fun e -> mem e ls2) ls1 in
-
-  let scc_graph = GS.empty in
-  let scc_graph = List.fold_left (fun sg (n,_) -> GS.add_vertex sg n) scc_graph scc_list in
-  let scc_graph = List.fold_left (fun sg (n,l) ->
-	  let neighbours = IGN.list_from_vertices g l in
-	  List.fold_left (fun nsg (n1,l1) -> if (meml l1 neighbours) then GS.add_edge nsg n n1 else nsg) sg scc_list 
-  ) scc_graph scc_list in
-
-  let (nscc, fscc) = GSC.scc scc_graph in
-  (*fun v -> List.fold_left (fun rs (n,l) -> if (mem v l) then (fscc n) else rs) 0 scc_list*)
-  fun v -> 
-    try
-      let (n, _) = List.find (fun (_, l) -> mem v l) scc_list in
-      fscc n
-    with
-      | Not_found -> 0
-
-let variance_numbering ls g =
-  if !Globals.term_auto_number then
-    let f = scc_numbering g in
-    let nf = fun v -> if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
-    let helper ele =
-	    let (es,e) = ele in
-	    let nes = {es with CF.es_var_label =
-		    let user_defined_var_label_lhs = es.CF.es_var_label in
-		    match user_defined_var_label_lhs with
-		      | None -> Some (nf es.CF.es_var_ctx_lhs)
-		      | Some i -> 
-              if (i = 0 || i = -1) then user_defined_var_label_lhs
-			        else Some (nf es.CF.es_var_ctx_lhs)} in
-	    let ne = {e with CF.formula_var_label =
-		    let user_defined_var_label_rhs = e.CF.formula_var_label in
-		    match user_defined_var_label_rhs with
-		      | None -> Some (nf es.CF.es_var_ctx_rhs)
-		      | Some i -> 
-              if (i = 0 || i = -1) then user_defined_var_label_rhs
-			        else Some (nf es.CF.es_var_ctx_rhs)}
-	    in (nes,ne)
-    in List.map (fun e -> helper e) ls
-  else ls
-		
 let check_prog (prog : prog_decl) =
 	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
-    if !Globals.check_coercions then 
-      begin
+  if !Globals.check_coercions then 
+    begin
       print_string "Checking lemmas... ";
       (* ignore (check_coercion prog); *)
       check_coercion prog;
       print_string "DONE.\n"
-      end;
-    ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	let g = build_state_trans_graph !Solver.variance_graph in
-	let cl = variance_numbering !Solver.var_checked_list g in
-  if (List.length cl) != 0 then
-    let _ = if !print_proof then begin Prooftracer.push_term (); end in
-    let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
-    if !print_proof then begin Prooftracer.pop_div (); end 
-  else () 
-	    
+    end;
+  ignore (List.map (check_data prog) prog.prog_data_decls);
+  ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
+  Term.termination_check prog
+
+
 (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
   let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
   let num_list = numbers (List.length filtered_proc) in
