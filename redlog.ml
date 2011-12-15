@@ -13,7 +13,7 @@ let is_presburger = ref false
 let no_pseudo_ops = ref false
 let no_elim_exists = ref false
 let no_simplify = ref false
-let no_cache = ref false
+let no_cache = ref true
 let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
@@ -369,7 +369,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
 
 let rec is_linear_exp exp = 
   match exp with
-  | CP.Null _ | CP.Var _ | CP.IConst _ -> true
+  | CP.Null _ | CP.Var _ | CP.IConst _ | CP.AConst _ -> true
   | CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) -> (is_linear_exp e1) && (is_linear_exp e2)
   | CP.Mult (e1, e2, _) -> 
       let res = match e1 with
@@ -391,7 +391,7 @@ let is_linear_bformula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst _ -> true
-  | CP.BVar _ -> true
+  | CP.BVar _ | CP.SubAnn _ -> true
   | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
   | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
   | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _)
