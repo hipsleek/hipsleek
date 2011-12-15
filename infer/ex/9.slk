@@ -1,0 +1,3 @@
+infer [i] ip=i-r & r=1 |- ip>=0.
+
+infer [i] ip=i-r & 1<=r<=2 |- ip>=0.

@@ -8,7 +8,7 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
-int head(node x)
+int hd1(node x)
  infer [x] 
  requires true
  ensures true; //'
@@ -20,7 +20,7 @@ int head(node x)
   return x.val;
 }
 
-int head(node x)
+int hd2(node x)
  infer [x] 
  requires x::ll<n>
  ensures true; //'
@@ -32,8 +32,20 @@ int head(node x)
   return x.val;
 }
 
-int head(node x)
+int hd3(node x)
  infer [n] 
+ requires x::ll<n>
+ ensures true; //'
+/*
+   requires x::ll<n> & n>0
+   ensures  x::ll<n> 
+*/
+{
+  return x.val;
+}
+
+int hd4(node x)
+ infer [] 
  requires x::ll<n>
  ensures true; //'
 /*
