@@ -1039,6 +1039,7 @@ let is_sat f sat_no =
       fst (is_sat_no_cache f sat_no)
     else
       try
+        (*Be careful: incorrect fstring can result in errors because of caching*)
         let res = Hashtbl.find !sat_cache fstring in
         incr cached_count;
         log DEBUG "Cached.";
@@ -1046,7 +1047,8 @@ let is_sat f sat_no =
       with Not_found -> 
         let res, time = is_sat_no_cache f sat_no in
         let _ = if time > cache_threshold then
-          Hashtbl.add !sat_cache fstring res 
+              let _ = log DEBUG "Caching."in
+              Hashtbl.add !sat_cache fstring res 
         in res
   in
   log DEBUG (if res then "SAT" else "UNSAT");
@@ -1124,6 +1126,7 @@ let imply ante conseq imp_no =
       fst (imply_no_cache f imp_no)
     else
       try
+        (*Be careful: incorrect fstring can result in errors because of caching*)
         let res = Hashtbl.find !impl_cache fstring in
         incr cached_count;
         log DEBUG "Cached.";
@@ -1131,6 +1134,7 @@ let imply ante conseq imp_no =
       with Not_found ->
           let res, time = imply_no_cache f imp_no in
           let _ = if time > cache_threshold then
+                let _ = log DEBUG "Caching."in
                 Hashtbl.add !impl_cache fstring res
           in res
   in
