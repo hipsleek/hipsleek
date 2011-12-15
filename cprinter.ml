@@ -1219,7 +1219,17 @@ and pr_ext_formula  (e:ext_formula) =
 			  wrap_box ("B",0) pr_struc_formula cont;
             end;
           fmt_close();
-    | EInfer {formula_inf_continuation = cont;} -> 
+    | EInfer {formula_inf_vars = lvars;
+      formula_inf_continuation = cont;} ->
+      let rec string_of_ident_list l c = match l with 
+        | [] -> ""
+        | h::[] -> h 
+        | h::t -> h ^ c ^ (string_of_ident_list t c) in
+      let str_ident_list l = string_of_ident_list l "," in
+      let str_ident_list l = "["^(string_of_ident_list l ",")^"]" in
+      let string_of_inf_vars = str_ident_list (List.map (fun v -> fst v) lvars) in
+      fmt_open_vbox 2;
+      fmt_string ("EInfer "^string_of_inf_vars);
       if not(Gen.is_empty(cont)) then
         begin
         fmt_cut();
@@ -2338,7 +2348,7 @@ let rec html_of_ext_formula f = match f with
 							formula_var_measures = measures;
 							formula_var_escape_clauses = escape_clauses;
 							formula_var_continuation = cont; } -> ""
-  | EInfer _ -> ""
+ | EInfer _ -> ""
 
 and html_of_struc_formula f = 
 	if f==[] then "[]" else 

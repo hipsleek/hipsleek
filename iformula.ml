@@ -16,8 +16,8 @@ and ext_formula =
 	| EBase of ext_base_formula
 	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
 	| EVariance of ext_variance_formula
-  (* spec feature to induce inference *)
-  | EInfer of ext_infer_formula
+ (* spec feature to induce inference *)
+ | EInfer of ext_infer_formula
 
 and ext_infer_formula =
   {
@@ -866,6 +866,7 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 										formula_var_continuation = rename_bound_var_struc_formula b.formula_var_continuation;
 									})
   | EInfer b -> EInfer {b with
+    (* Need to check again *)
     formula_inf_continuation = rename_bound_var_struc_formula b.formula_inf_continuation;}
 			in
 	List.map helper f
@@ -1627,7 +1628,7 @@ and break_ext_formula (f : ext_formula) : P.b_formula list list =
 	| EBase bf -> [List.concat ((break_formula bf.formula_ext_base) @ (break_struc_formula bf.formula_ext_continuation))]
 	| EAssume (af, _) -> break_formula af
 	| EVariance _ -> []
- | EInfer _ -> []
+ | EInfer bf -> break_struc_formula bf.formula_inf_continuation
 
 and break_struc_formula (f : struc_formula) : P.b_formula list list =
   List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f

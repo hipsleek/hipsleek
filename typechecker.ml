@@ -80,8 +80,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
 			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
-    | Cformula.EInfer b ->
+   | Cformula.EInfer b ->
       Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+      (* Need to check again *)
       let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
         Cformula.es_infer_vars = List.map (fun (i,p) -> CP.SpecVar (UNK,i,p)) b.Cformula.formula_inf_vars}) ctx in
       check_specs_a prog proc nctx b.Cformula.formula_inf_continuation e0

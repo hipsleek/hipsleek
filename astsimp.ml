@@ -533,7 +533,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 		  (fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
 	| Iformula.EVariance b -> List.fold_left 
 		  (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
-  | Iformula.EInfer b -> List.fold_left 
+ | Iformula.EInfer b -> List.fold_left 
     (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_inf_continuation
 
   in
@@ -3838,7 +3838,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
 	      
 	      let _ = List.map (case_coverage_x instant) r2 in true
 	| Cformula.EVariance b -> case_coverage_x instant b.Cformula.formula_var_continuation
-  | Cformula.EInfer b -> case_coverage_x instant b.Cformula.formula_inf_continuation
+    | Cformula.EInfer b -> case_coverage_x instant b.Cformula.formula_inf_continuation
   in
   let _ = List.map (ext_case_coverage instant) f in true
 
