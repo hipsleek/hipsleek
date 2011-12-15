@@ -3592,6 +3592,7 @@ let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_con
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
 
 let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
+
 let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c) ] ) 
 
 let rec is_empty_esc_stack (e:esc_stack) : bool = match e with
@@ -4345,6 +4346,14 @@ and formula_of_context ctx0 = match ctx0 with
   | Ctx es -> 
       let mix_f,_ = es.es_pure in
       add_mix_formula_to_formula mix_f es.es_formula
+
+and formula_only_of_context ctx0 = match ctx0 with
+  | OCtx (c1, c2) ->
+	  let f1 = formula_only_of_context c1 in
+	  let f2 = formula_only_of_context c2 in
+		mkOr f1 f2 no_pos
+  | Ctx es -> 
+      es.es_formula
 
 (*LDK: add es_pure into residue*)
 and formula_trace_of_context ctx0 = match ctx0 with

@@ -481,13 +481,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  exp_scall_pos = pos}) ->
 		      begin
                 let mn_str = Cast.unmingle_name mn in
-                (*Currently implement FORK as a raise*)
-                (*=========================*)
-                (*=======Join==============*)
-                (*=========================*)
-                if (mn_str=Globals.join_name) then
-                  ctx
-                else
+                if not (mn_str=Globals.join_name) then
                 (*=========================*)
                 (*=== NORMAL METHOD CALL ==*)
                 (*=========================*)
@@ -614,6 +608,187 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* print_endline "OK.\n" *)
                       end in 
                 res
+                else
+                begin
+                    (*Currently implement FORK as a raise*)
+                    (*=========================*)
+                    (*=======Join==============*)
+                    (*=========================*)
+                    let _ = print_endline ("check_exp: SCall: join:" ^ (Cprinter.string_of_exp e0)) in
+                    let _ = proving_loc#set pos in
+	                let proc = look_up_proc_def pos prog.prog_proc_decls mn in
+	                let farg_types, farg_names = List.split proc.proc_args in
+	                let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+	                let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+                    
+                    (* Internal function to check pre/post condition of JOIN*)
+	                let check_pre_post (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
+                      let primed_vars  = List.map (fun v -> CP.to_primed v) actual_spec_vars in
+	                  let thread_node = CF.DataNode ({
+                          CF.h_formula_data_node = CP.SpecVar (Named Globals.thread_name, Globals.eres_name, Unprimed);
+                          CF.h_formula_data_name = Globals.thread_name;
+		                  CF.h_formula_data_derv = false;
+		                  CF.h_formula_data_imm = false;
+		                  CF.h_formula_data_perm = None; (*LDK: full perm*)
+			              CF.h_formula_data_origins = []; (*deal later ???*)
+			              CF.h_formula_data_original = true; (*deal later ???*)
+
+                          CF.h_formula_data_arguments = primed_vars;
+				          CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
+                          CF.h_formula_data_remaining_branches = None;
+                          CF.h_formula_data_pruning_conditions = [];
+                          CF.h_formula_data_label = None;
+                          CF.h_formula_data_pos = pos}) in
+                      let thread_heap =  CF.formula_of_heap thread_node pos in
+                      let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in
+                      (*for each concurrent branch*)
+                      let process_one_branch (((ptrace,c) as succ) : CF.branch_ctx) =
+                        let init_esc = [((0,""),[])] in
+                        (*create a list_failesc_context with only one failesc_context*)
+                        let lfe = [CF.mk_failesc_context c [] init_esc] in
+	                    let rs, prf = heap_entail_list_failesc_context_init prog false lfe thread_heap pos pid in
+                        let rs = CF.clear_entailment_history_failesc_list rs in
+                        (*select the only one failesc_context*)
+                        let one_failesc = List.hd rs in
+	                    if (not(CF.isSuccessFailescCtx one_failesc)) then 
+                          (*Fail to find the Thread<id>*)
+                          (false,one_failesc)
+                        else
+                          (true,one_failesc)
+                      in
+                      (*for each pair of pre/post*)
+                      (* let process_one (succ_list : CF.branch_ctx list) = *)
+                      (*   let rs = List.map (process_one_branch) succ_list in *)
+                      (*   try *)
+                      (*       let _,failesc = List.find (fun (b,f) -> b) rs in *)
+                      (*       let _,_,ls = failesc in *)
+                      (*       let (trace,c) = List.hd ls in *)
+                      (*       let merging_f = CF.formula_only_of_context c in *)
+                      (*       let fct es = *)
+                      (*         CF.Ctx {es with CF.es_formula = CF.normalize_combine es.CF.es_formula merging_f pos} *)
+                      (*       in *)
+                      (*       let new_failesc = CF.transform_failesc_context (idf,idf,fct) failesc in *)
+                      (*       (\*merge concurrent flow with Thread<id> into succ flows*\) *)
+                      (*       succ_list *)
+                      (*   with Not_found ->  *)
+                      (*     (\*Thread<id> does not exists -> failure*\) *)
+                      (*       succ_list *)
+                      (* in *)
+                      (*For a set of concurrent branches vs its failesc*)
+                      let process_one_one (succ_list: CF.branch_ctx list) (((f,e,s) as l):CF.failesc_context) : CF.failesc_context =
+                        let rs = List.map (process_one_branch) succ_list in
+                        try
+                            (*pickup the concurrent branch that succeeded
+                            and merge it with all other succ branches in failesc*)
+                            let _,failesc = List.find (fun (b,f) -> b) rs in
+                            let _,_,ls = failesc in
+                            let (trace,c) = List.hd ls in
+                            let merging_f = CF.formula_only_of_context c in
+                            let fct es =
+                              CF.Ctx {es with CF.es_formula = CF.normalize_combine es.CF.es_formula merging_f pos}
+                            in
+                            (*merge norm flows (tmp_failesc) with the concurrent flow merging_f*)
+                            let new_f,new_e,new_s = CF.transform_failesc_context (idf,idf,fct) l in
+                            (*select all other concurrent branches that failed
+                            and add them to succ branches to be join later*)
+                            (*a pair of concurrent branches before and after join*)
+                            let pair = List.combine succ_list rs in
+                            (*filter out those that failed because thread id is not matched*)
+                            let rest_pair = List.filter (fun (bf,(isSucc,f)) -> not isSucc) pair in
+                            let rest, _ = List.split rest_pair in
+                            (new_f,new_e,new_s@rest)
+                        with Not_found -> 
+                            (*Concurrency failures ???*)
+                          (*Thread<id> does not exists -> failure*)
+                            (*convert of succ branches into failure branches*)
+                            (* let fun1 (t,c) = *)
+                            (*   let failure_type = CF.Basic_Reason { *)
+                            (*       CF.fe_kind = CF.Failure_Must "Thread<id> does not exists"; *)
+                            (*       CF.fe_name = "concurrency error"; *)
+                            (*       fe_locs =[pos];} in *)
+                            (*   (t,) *)
+                            (* let new_fail = List.map fun1 s in *)
+                            (*at this point, all failesc in rs are not SuccesFailesc*)
+
+                            (* let msg = "Currency error" in *)
+                            (* let estate = CF.empty_es CF.mkFalseFlow pos in (\*false es*\) *)
+                            (* (\*TO CHECK: what is a correct way to handle concurrency errors*\) *)
+                            (* let fail_ctx = CF.mkFailContext msg estate conseq pid pos in *)
+                            let _,fail_ls = List.split rs in
+                            let fail_branches = List.map (fun (f,e,s) -> List.hd f) fail_ls in
+                            l
+                      in
+                      let tmp = List.combine conj_states sctx in
+                      let rs = List.map (fun (a,b) -> process_one_one a b) tmp in
+                      sctx
+
+                      (* let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in *)
+                      (* let pre2 = CF.subst_struc_pre st2 renamed_spec in *)
+                      (* let new_spec = (Cprinter.string_of_struc_formula pre2) in *)
+                      (* let _ = *)
+                      (*   if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then *)
+                      (*     (\* Termination: Add a false entail state for *)
+                      (*      * unreachable recursive call if variance exists *\) *)
+                      (*     var_checked_list := !var_checked_list @ [( *)
+                      (*         {(CF.false_es CF.mkFalseFlow pos) with CF.es_var_label = Some (-1); CF.es_var_loc = pos}, *)
+                      (*         CF.empty_ext_variance_formula)]; *)
+                      (* in *)
+
+                      (* (\* TODO: call the entailment checking function in solver.ml *\) *)
+                      (* let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (\*!log_spec*\) in *)
+                      (* let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in *)
+                      (* Debug.devel_pprint (to_print^"\n") pos; *)
+				      (* (\* An Hoa : output the context and new spec before checking pre-condition *\) *)
+				      (* let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in *)
+
+
+                      (* (\*need a pre/post specification for join*\) *)
+                      (* (\*look into all concurrent context to pickup *)
+                      (*   the one with eres::Thread<id>, add the residue to *)
+                      (*   all other contexts *)
+                      (* *\) *)
+
+                      (* (\*extract concurrent contexts*\) *)
+                      (* let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in *)
+                      (* let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in *)
+                      (* (\*add concurrent contexts*\) *)
+                      (* let rs = CF.add_context_to_list_failesc_context conj_states rs in *)
+				      (* let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in *)
+                      (* (\* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *\) *)
+                      (* let _ = PTracer.log_proof prf in *)
+                      (* let _ = print_string (("\n[SCall] res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
+                      (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then *)
+                      (*   Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ; *)
+                      (* rs *)
+                    in
+                    (* Call check_pre_post with debug information of JOIN *)
+                    (* Note: join does not have pre/post spec*)
+                    let check_pre_post (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
+                      (* let _ = Cprinter.string_of_list_failesc_context in *)
+                      let pr2 = Cprinter.summary_list_failesc_context in
+                      Gen.Debug.loop_1_no "check_pre_post" pr2 pr2 (fun _ ->  check_pre_post sctx should_output_html) sctx in
+				    let _ = if !print_proof then Prooftracer.start_compound_object () in
+                    let scall_pre_cond_pushed = if !print_proof then
+                          begin
+                              Tpdispatcher.push_suppress_imply_output_state ();
+                              Tpdispatcher.unsuppress_imply_output ();
+            				  Prooftracer.push_pre e0;
+                          (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
+                          end else false in
+                    let res = if (CF.isFailListFailescCtx ctx) then
+				          let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
+                          ctx 
+                        else check_pre_post ctx scall_pre_cond_pushed
+                    in
+				    let _ = if !print_proof then Prooftracer.add_pre e0 in
+                    let _ = if !print_proof && scall_pre_cond_pushed then 
+                          begin
+                              Prooftracer.pop_div ();
+                              Tpdispatcher.restore_suppress_imply_output_state ();
+                          (* print_endline "OK.\n" *)
+                          end in 
+                    res
+                end
               end
         | Seq ({exp_seq_type = te2;
           exp_seq_exp1 = e1;

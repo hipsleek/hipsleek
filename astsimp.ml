@@ -2654,6 +2654,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_recv_path_id = pi;
                 I.exp_call_recv_pos = pos; } in helper call_recv)
             else if (mn=Globals.fork_name) then
+              (*============================*)
+              (*========== FORK ============*)
+              (*===========================*)
               (*fork is a generic functions. Its arguments can vary*)
               (*fork has at least tid and a method*)
               if (List.length args <2) then
@@ -2731,35 +2734,20 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 else 
                   Err.report_error { Err.error_loc = pos; 
                                      Err.error_text = "fork: can not raise not conjunctive object" }
-                (* in *)
-                (* let _ = print_endline ("trans_exp: I.CallNRecv : fork"  *)
-                (*                        ^ "\n ### ie = " ^ (Iprinter.string_of_exp ie) *)
-                (*                        ^ "\n ### new_e = " ^ (Cprinter.string_of_exp new_e)) *)
-                (* in *)
-
-                (* let ret_ct  = Globals.Void in *)
-                (* let positions = List.map I.get_exp_pos args in *)
-                (* let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in *)
-                (* let call_e = C.SCall { *)
-                (*     C.exp_scall_type = ret_ct; *)
-                (*     C.exp_scall_method_name = mingled_mn; *)
-                (*     C.exp_scall_arguments = arg_vars; *)
-				(*     C.exp_scall_is_rec = false; (\* default value - it will be set later in trans_prog *\) *)
-                (*     C.exp_scall_pos = pos; *)
-                (*     C.exp_scall_path_id = pi; } in *)
-                (* let seq_1 = C.mkSeq ret_ct init_seq call_e pos in *)
-                (* ((C.Block { *)
-                (*     C.exp_block_type = ret_ct; *)
-                (*     C.exp_block_body = seq_1; *)
-                (*     C.exp_block_local_vars = local_vars; *)
-                (*     C.exp_block_pos = pos; }),ret_ct) *)
-              (* Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");} *)
             (*END FORK*)
             (*Begin normal method call*)
             else (try 
               let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
               if ( != ) (List.length args) (List.length pdef.I.proc_args) then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
+              else if (mn=Globals.join_name) &&  ((List.length args) != 1) then
+                (*This check may be redundant*)
+                (*============================*)
+                (*========== JOIN >>>=========*)
+                (*===========================*)
+                (*join is a special function. Its arguments are fixed to only 1*)
+                Err.report_error { Err.error_loc = pos; Err.error_text = "join has other than one argument"; }
+              (*======== <<<<JOIN ==========*)
               else
                 (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
                 if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
