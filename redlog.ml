@@ -42,7 +42,12 @@ let prompt_regexp = Str.regexp "^[0-9]+:$"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
+let print_b_formula = ref (fun (c:CP.b_formula) -> "cpure printer has not been initialized")
+let print_p_formula = ref (fun (c:CP.p_formula) -> "cpure printer has not been initialized")
+let print_exp = ref (fun (c:CP.exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:CP.formula) -> "cpure printer has not been initialized")
+let print_svl = ref (fun (c:CP.spec_var list) -> "cpure printer has not been initialized")
+let print_sv = ref (fun (c:CP.spec_var) -> "cpure printer has not been initialized")
 
 
 (**********************
@@ -308,63 +313,12 @@ let rec rl_of_formula f0 =
 (***********************************
  pretty printer for pure formula
  **********************************)
- 
-let rec string_of_exp e0 =
-  let need_parentheses e = match e with
-    | CP.Add _ | CP.Subtract _ -> true
-    | _ -> false
-  in let wrap e =
-    if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
-    else (string_of_exp e)
-  in
-  match e0 with
-  | CP.Null _ -> "null"
-  | CP.Var (v, _) -> rl_of_spec_var v
-  | CP.IConst (i, _) -> string_of_int i
-  | CP.FConst (f, _) -> string_of_float f
-  | CP.Add (e1, e2, _) -> (string_of_exp e1) ^ "+" ^ (string_of_exp e2)
-  | CP.Subtract (e1, e2, _) -> (string_of_exp e1) ^ "-" ^ (string_of_exp e2)
-  | CP.Mult (e1, e2, _) -> (wrap e1) ^ "*" ^ (wrap e2)
-  | CP.Div (e1, e2, _) -> (wrap e1) ^ "/" ^ (wrap e2)
-  | CP.Max (e1, e2, _) -> "max(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
-  | CP.Min (e1, e2, _) -> "min(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
-  | _ -> "???"
-  
-let string_of_b_formula bf = 
-  let build_exp e1 e2 op =
-    (string_of_exp e1) ^ op ^ (string_of_exp e2)
-  in let (pf,_) = bf in match pf with
-    | CP.BConst (b, _) -> (string_of_bool b)
-    | CP.BVar (bv, _) -> (rl_of_spec_var bv) ^ " > 0"
-    | CP.Lt (e1, e2, _) -> build_exp e1 e2 " < "
-    | CP.Lte (e1, e2, _) -> build_exp e1 e2 " <= "
-    | CP.Gt (e1, e2, _) -> build_exp e1 e2 " > "
-    | CP.Gte (e1, e2, _) -> build_exp e1 e2 " >= "
-    | CP.Eq (e1, e2, _) -> build_exp e1 e2 " = "
-    | CP.Neq (e1, e2, _) -> build_exp e1 e2 " != "
-    | CP.EqMax (e1, e2, e3, _) ->
-        (string_of_exp e1) ^ " = max(" ^ (string_of_exp e2) ^ "," ^ (string_of_exp e3) ^ ")"
-    | CP.EqMin (e1, e2, e3, _) ->
-        (string_of_exp e1) ^ " = min(" ^ (string_of_exp e2) ^ "," ^ (string_of_exp e3) ^ ")"
-    | _ -> "???"
+let string_of_exp e0 = !print_exp e0 
 
-let rec string_of_formula f0 = match f0 with
-  | CP.BForm (b, _) -> string_of_b_formula b
-  | CP.And (f1, f2, _) -> 
-      let wrap f = match f with
-        | CP.Or _ | CP.BForm _ -> "(" ^ (string_of_formula f) ^ ")"
-        | _ -> string_of_formula f
-      in
-      (wrap f1) ^ " and " ^ (wrap f2)
-  | CP.Or (f1, f2, _, _) -> 
-      let wrap f = match f with
-        | CP.And _ | CP.BForm _ -> "(" ^ (string_of_formula f) ^ ")"
-        | _ -> string_of_formula f
-      in
-      (wrap f1) ^ " or " ^ (wrap f2)
-  | CP.Not (f1, _, _) -> "not(" ^ (string_of_formula f1) ^ ")"
-  | CP.Forall (sv, f1, _, _) -> "all(" ^ (rl_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
-  | CP.Exists (sv, f1, _, _) -> "ex(" ^ (rl_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
+let string_of_b_formula bf = !print_b_formula bf
+  
+let string_of_formula f0 = !print_formula f0
+
   
 let simplify_var_name (e: CP.formula) : CP.formula =
   let shorten_sv (CP.SpecVar (typ, name, prm)) vnames =
