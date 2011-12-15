@@ -12,11 +12,11 @@ infer [v] x::node<p,q>@v |- x::node<a,b>@I.
 print residue.
 
 // expect v<:@M
-infer [v] x::node<p,q>@v |- x::node<a,b>@M.
+infer [v] x::node<p,q>@v |- x::node<a,b>.
 print residue.
 
 // expect x!=null & v<:@M
-infer [x,v] x::ll<n>@v |- x::node<a,b>@M.
+infer [x,v] x::ll<n>@v |- x::node<a,b>.
 print residue.
 
 // expect x!=null & v<:@I
@@ -28,7 +28,7 @@ infer [n,v] x::ll<n>@v |- x::node<a,b>@I.
 print residue.
 
 // expect n>0 & v<:@M
-infer [n,v] x::ll<n>@v |- x::node<a,b>@M.
+infer [n,v] x::ll<n>@v |- x::node<a,b>.
 print residue.
 
 

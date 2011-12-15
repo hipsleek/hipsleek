@@ -9,9 +9,9 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 // Cristina: why isn't explicit @M supported?
-//infer [] x::node<p,q>@M |- x::node<a,b>@I.
-//print residue.
-
+// expect v<:@I
+infer [v] x::node<p,q>@v |- x::node<a,b>@M.
+print residue.
 
 // Cristina: why is the message not about mismatched annotation?
 infer [] x::ll<n>@L & n>1 |- x::node<a,b>@L*b::node<_,_>.

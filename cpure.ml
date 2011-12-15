@@ -6385,3 +6385,12 @@ let compute_instantiations pure_f v_of_int avail_v =
   let pr3 = pr_list (pr_pair !print_sv !print_formula) in
   Gen.Debug.no_3  "compute_instantiations" pr1 pr2 pr2 pr3 (fun _ _ _ -> compute_instantiations_x pure_f v_of_int avail_v) pure_f v_of_int avail_v
 
+let rec add_ann_constraints vrs f = 
+  match vrs with
+    | v :: r -> 
+          let c1 = BForm((Lte(IConst(0, no_pos), Var(v,no_pos), no_pos), None), None) in
+          let c2 = BForm((Lte(Var(v,no_pos), IConst(2, no_pos), no_pos), None), None) in
+          let c12 = mkAnd c1 c2 no_pos in
+          let rf = add_ann_constraints r f in
+          mkAnd c12  rf no_pos
+    | [] -> f

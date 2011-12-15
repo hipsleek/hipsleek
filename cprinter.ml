@@ -514,6 +514,7 @@ let exp_wo_paren (e:P.exp) =
   match e with
     | P.Null _ 
     | P.Var _ 
+    | P.AConst _ 
     | P.IConst _ 
     | P.FConst _ | P.Max _ |   P.Min _ | P.BagUnion _ | P.BagIntersect _ 
  -> true
