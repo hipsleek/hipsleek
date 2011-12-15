@@ -1,4 +1,3 @@
-
 open Globals
 open Cast
 open Cformula
@@ -7,6 +6,7 @@ open Gen
 
 module CP = Cpure
 module CF = Cformula
+module TP = Tpdispatcher
 
 let variance_graph = ref []
 let var_checked_list = ref []
@@ -15,27 +15,34 @@ let update_graph vg vc =
   variance_graph := !variance_graph @ [vg];
   var_checked_list := !var_checked_list @ [vc]
 
-
 let rec equalpf_a f1 f2 =
-  let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
-                Tpdispatcher.suppress_imply_output () end in
-  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
-  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
-  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
+  let _ = begin 
+    TP.push_suppress_imply_output_state ();
+    TP.suppress_imply_output () 
+  end in
+  let r1,_,_ = TP.imply f1 f2 "" false None in
+  let r2,_,_ = TP.imply f2 f1 "" false None in
+  let _ = begin TP.restore_suppress_imply_output_state () end in
   r1 & r2
 
-and equalpf f1 f2 = Gen.Debug.no_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
+and equalpf f1 f2 = 
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_2 "equalpf" pr pr string_of_bool equalpf_a f1 f2
 
 and comparepf_a f1 f2 =
-  let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
-                Tpdispatcher.suppress_imply_output () end in
-  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
-  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
-  let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end in
+  let _ = begin 
+    TP.push_suppress_imply_output_state ();
+    TP.suppress_imply_output () 
+  end in
+  let r1,_,_ = TP.imply f1 f2 "" false None in
+  let r2,_,_ = TP.imply f2 f1 "" false None in
+  let _ = begin TP.restore_suppress_imply_output_state () end in
   if (r1 & r2) then 0
   else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
 	
-and comparepf f1 f2 = Gen.Debug.no_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
+and comparepf f1 f2 =
+  let pr = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_2 "comparepf" pr pr string_of_int comparepf_a f1 f2
 
 module FComp = 
 struct
@@ -255,5 +262,38 @@ let termination_check prog =
     let _ = if !Globals.print_proof then begin Prooftracer.push_term (); end in
     let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
     if !Globals.print_proof then begin Prooftracer.pop_div (); end 
-  else () 
+  else ()
+
+
+(* Termination: Add function name into names of 
+ * its variables to distinguish them - 
+ * For a better output *)
+let term_rename_var (f: CP.formula) (mn: Globals.ident) : CP.formula =
+  let f_formula = fun f -> None in
+	let f_b_formula (pf, il) = match pf with
+    | CP.BVar (CP.SpecVar (t, i, p), loc) -> 
+        Some ((CP.BVar ((CP.SpecVar (t, i^"_"^mn, p)), loc)), il)
+    | _ -> None
+	in
+	let f_exp = function
+    | CP.Var (CP.SpecVar (t,i,p), loc) -> 
+        Some (CP.Var ((CP.SpecVar (t, i^"_"^mn, p)), loc))
+    | _ -> None
+	in
+  CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) f
+
+let term_add_source_condition (sc: CP.formula) (mn: Globals.ident) (ctx: CF.context) pos : CF.context =  
+  let n_sc = term_rename_var sc mn in
+  (* Termination: Add source condition - 
+   * The precondition of the initial states *)
+	CF.transform_context (fun es ->
+    CF.Ctx { es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs n_sc pos }) ctx
+
+let term_add_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context =
+  CF.transform_context (fun es -> CF.Ctx { es with
+    CF.es_var_measures = List.map (fun (e, b) -> e) v.CF.formula_var_measures;
+		CF.es_var_label = v.CF.formula_var_label }) ctx 
+
+
+
 

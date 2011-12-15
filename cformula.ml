@@ -212,6 +212,7 @@ let empty_ext_variance_formula =
 		formula_var_pos = no_pos;
 	}
 
+(* Termination: Check existence of variance specs *)
 let rec has_variance_struc struc_f =
   List.exists (fun ef -> has_variance_ext ef) struc_f
   
@@ -223,6 +224,30 @@ and has_variance_ext ext_f =
         has_variance_struc cont
     | EAssume _ -> false
     | EVariance _ -> true
+
+(* Termination: Extract pure parts from formula *)
+let rec pure_of_formula (f: formula) : CP.formula =
+  match f with
+  | Base 
+      { formula_base_pure = p;
+        formula_base_label = lbl;
+        formula_base_pos = pos } ->
+      MCP.pure_of_mix p
+  | Or 
+      { formula_or_f1 = f1;
+        formula_or_f2 = f2;
+        formula_or_pos = pos } ->
+      let f1 = pure_of_formula f1 in
+      let f2 = pure_of_formula f2 in
+      CP.mkOr f1 f2 None pos
+  | Exists 
+      { formula_exists_qvars = sl;
+        formula_exists_pure = p;
+        formula_exists_label = lbl;
+        formula_exists_pos = pos } ->
+      let p = MCP.pure_of_mix p in
+      CP.mkExists sl p lbl pos
+      
 
 (* generalized to data and view *)
 let get_ptr_from_data h =
@@ -2749,7 +2774,7 @@ type entail_state = {
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
 
-  (* is below for VARIANCE checking *)
+  (* For VARIANCE checking *)
   es_var_measures : CP.exp list;
   es_var_label : int option;
   es_var_ctx_lhs : CP.formula;

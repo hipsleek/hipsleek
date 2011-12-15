@@ -29,95 +29,89 @@ let parallelize num =
 
 let rec check_specs prog proc ctx spec_list e0 = 
   check_specs_a prog proc ctx spec_list e0
-      (*Gen.Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
+  (*Gen.Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*)
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
       
 (* assumes the pre, and starts the symbolic execution*)
 and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = 
-  let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
+  let rec do_spec_verification (spec: Cformula.ext_formula) : bool = 
     (*let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
     let pos_spec = CF.pos_of_struc_formula [spec] in
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
-	  | Cformula.ECase b ->
-		  List.for_all (fun (c1, c2) ->
-        (* Termination: Add function name into names of its variables *)
-		    let mn = Cast.unmingle_name (proc.Cast.proc_name) in
-		    let f_formula = fun f -> None in
-		    let f_b_formula (pf, il) = match pf with
-			    | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il)
-			    | _ -> None
-		    in
-                (*???*)
-		    let f_exp = function
-			    | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
-			    | _ -> None
-		    in
-                (*???*)
-		    let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in
-		    (* Termination: Add source condition *)
-		    let nctx = CF.transform_context (fun es ->
-			    CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in
-
-		        (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+	  | Cformula.ECase b -> List.for_all (fun (c1, c2) ->
+		    (* Termination: Add source condition - 
+         * The precondition of the initial states *)
+        let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+		    let nctx = Term.term_add_source_condition c1 mn ctx pos_spec in
+        (* End of termination's utility *)
 		        
 		    let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		    let r = check_specs_a prog proc nctx c2 e0 in
 		    (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 		    r) b.Cformula.formula_case_branches
 	  | Cformula.EBase b ->
-          Debug.devel_pprint ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
-	        let nctx = 
-	          if !Globals.max_renaming 
-	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) (*apply normalize_es into ctx.es_state*)
-	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
-			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
-	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
-	        let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
-	        r
-	  | Cformula.EVariance b ->
-			  let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
-          CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
-			    CF.es_var_label = b.CF.formula_var_label}) ctx in
-		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
-	  | Cformula.EAssume (x,post_cond,post_label) ->
-	    if(Immutable.is_lend post_cond) then
-	      	 Error.report_error
-		   {Error.error_loc = pos_spec;
-		    Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")}
-	    else
-            let _ = post_pos#set (CF.pos_of_formula post_cond) in
-            Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+        Debug.devel_pprint ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+
+        (* Termination: Add source condition - 
+         * The precondition of the initial states *)
+        let sc = CF.pure_of_formula b.CF.formula_ext_base in
+        let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+        let ctx = Term.term_add_source_condition sc mn ctx pos_spec in
+        (* End of termination's utility *)
+
+	      let nctx = 
+          if !Globals.max_renaming 
+          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) (*apply normalize_es into ctx.es_state*)
+	        else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) 
+        in
+			  let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in
+	      let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
+	      let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
+	      r
+	  | Cformula.EVariance v ->
+        (* Termination: Add termination measure into context *)
+        let nctx = Term.term_add_measure v ctx in
+			  check_specs_a prog proc nctx v.Cformula.formula_var_continuation e0
+	  | Cformula.EAssume (x, post_cond, post_label) ->
+        if (Immutable.is_lend post_cond) then
+          Error.report_error
+          { Error.error_loc = pos_spec;
+		        Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n") }
+        else
+          let _ = post_pos#set (CF.pos_of_formula post_cond) in
+          Debug.devel_pprint ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
-	        (* let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in *)
+	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^
+            "\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
 	        if (Cformula.isAnyFalseCtx ctx1) then
-		      let _ = Debug.devel_pprint ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
-				  (Cprinter.string_of_context_short ctx)) no_pos in 
-		      true
+		        let _ = Debug.devel_pprint ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
+				    (Cprinter.string_of_context_short ctx)) no_pos in 
+            true
 	        else
-		      let _ = Gen.Profiling.push_time ("method "^proc.proc_name) in
-		      try 
-		        let r = 
-		          flow_store := [];
-		          let ctx1 = CF.set_flow_in_context_override
-			        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
-		          let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
-                  (* need to add initial esc_stack *)
-                  let init_esc = [((0,""),[])] in
-		          let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in 
-			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
+		        let _ = Gen.Profiling.push_time ("method "^proc.proc_name) in
+		        try 
+		          let r = 
+		            flow_store := [];
+		            let ctx1 = CF.set_flow_in_context_override
+			            { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
+		            let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
+                (* need to add initial esc_stack *)
+                let init_esc = [((0,""),[])] in
+		            let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in 
+			          let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 	              (* let _ = print_string ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
-			      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
+			          let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
 	              (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
-			      if (CF.isFailListPartialCtx res_ctx) then false
-			      else
-			        let tmp_ctx = check_post prog proc res_ctx post_cond (Cformula.pos_of_formula post_cond) post_label in
-			        (CF.isSuccessListPartialCtx tmp_ctx) 
-		        in
-		        let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-		        r
-		      with _ as e -> 
+			          if (CF.isFailListPartialCtx res_ctx) then false
+			          else
+			            let tmp_ctx = check_post prog proc res_ctx post_cond (Cformula.pos_of_formula post_cond) post_label in
+			            (CF.isSuccessListPartialCtx tmp_ctx) 
+		          in
+		          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
+		          r
+		        with _ as e -> 
 		          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in	
   (* let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
