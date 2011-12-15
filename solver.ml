@@ -4099,9 +4099,9 @@ and heap_entail_split_rhs_phases_x
 	      (* entail the pure part *)
 	      match res_ctx with
 	        | SuccCtx (cl) ->
-	              (* let _ = print_string("************************************************************************\n") in *)
-	              (* let _ = print_string("[heap_n_pure_entail]: entail the pure part: p =" ^ (Cprinter.string_of_mix_formula p) ^ "\n") in *)
-	              (* let _ = print_string("************************************************************************\n") in *)
+	              let _ = print_string("************************************************************************\n") in
+	              let _ = print_string("[heap_n_pure_entail]: entail the pure part: p =" ^ (Cprinter.string_of_mix_formula p) ^ "\n") in
+	              let _ = print_string("************************************************************************\n") in
 	              let res = List.map (fun c -> 
 		              let new_conseq, aux_conseq_from_fold = 
 		                (match c with 
@@ -4224,17 +4224,16 @@ and heap_n_pure_entail_x
       (drop_read_phase : bool)
       pos : (list_context * proof) =
 
-  (* let _  = print_string("*************************************************\n") in *)
-  (* let _ = print_string("entailing the heap first:\n") in *)
-  (* let _  = print_string("*************************************************\n") in *)
+  let _  = print_string("*************************************************\n") in
+  let _ = print_string("entailing the heap h = " ^ (Cprinter.string_of_h_formula h) ^ "\n") in
+  let _  = print_string("*************************************************\n") in
   let entail_h_ctx, entail_h_prf = heap_entail_split_lhs_phases prog is_folding  ctx0 (func h (MCP.mkMTrue pos)) (consume_heap_h_formula h) pos in
   match entail_h_ctx with
     | FailCtx _ -> (entail_h_ctx, entail_h_prf)
     | SuccCtx(cl) ->
-	      (* let _  = print_string("*************************************************\n") in *)
-	      (* let _ = print_string("entailing the pure:\n") in *)
-	      (* let _  = print_string("*************************************************\n") in *)
-		  (* let _ = print_string("entail the pure: p = " ^ (Cprinter.string_of_mix_formula p) ^ "\n") in*)
+	      let _  = print_string("*************************************************\n") in
+	      let _ = print_string("entailing the pure p = " ^ (Cprinter.string_of_mix_formula p) ^ "\n") in
+	      let _  = print_string("*************************************************\n") in
           let entail_p = List.map 
 	        (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl  
           in
@@ -4270,9 +4269,9 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
 
 and heap_entail_rhs_read_phase prog is_folding  ctx0 h1 h2 h3 func pos =
   (* entail the read phase heap *)
-  (* let _ = print_string("************************************************************************\n") in *)
-  (* let _ = print_string("split_rhs: entail rd phase h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
-  (* let _ = print_string("************************************************************************\n") in   *)
+  let _ = print_string("************************************************************************\n") in
+  let _ = print_string("split_rhs: entail rd phase h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
+  let _ = print_string("************************************************************************\n") in
   let new_conseq =
     if (is_true h2 && is_true h3) then
       func h1 (MCP.mkMTrue pos) 
@@ -4287,9 +4286,9 @@ and heap_entail_rhs_write_phase prog is_folding  after_rd_ctx after_rd_prf conse
     | FailCtx _ -> (after_rd_ctx, after_rd_prf)
     | SuccCtx (cl) -> 
           (* entail the write phase *)
-          (* let _ = print_string("************************************************************************\n") in *)
-          (* let _ = print_string("split_rhs: entail wr phase h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in *)
-          (* let _ = print_string("************************************************************************\n") in *)
+          let _ = print_string("************************************************************************\n") in
+          let _ = print_string("split_rhs: entail wr phase h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in
+          let _ = print_string("************************************************************************\n") in
           (* let drop_read_phase =  *)
 	  (*       if (consume_heap_h_formula h2) or (consume_heap_h_formula h3) *)
 	  (*       then true *)
@@ -4321,9 +4320,9 @@ and heap_entail_rhs_nested_phase prog is_folding  after_wr_ctx after_wr_prfs con
 	          | HTrue -> 
 	                (after_wr_ctx, after_wr_prfs)
 	          | _ ->
-	                (* let _ = print_string("************************************************************************\n") in *)
-	                (* let _ = print_string("entail rhs h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
-	                (* let _ = print_string("************************************************************************\n") in *)
+	                let _ = print_string("************************************************************************\n") in
+	                let _ = print_string("entail rhs h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in
+	                let _ = print_string("************************************************************************\n") in
 	                if (CF.contains_phase h3) then
 		              let after_nested_phase = List.map (fun c -> heap_entail_split_rhs_phases prog is_folding  c (func h3 (MCP.mkMTrue pos)) drop_read_phase pos) cl in
 		              let after_nested_phase_ctx, after_nested_phase_prfs = List.split after_nested_phase in
@@ -4488,9 +4487,9 @@ and heap_entail_split_lhs_phases_x
 	      let rd_ctx = CF.set_context_formula ctx0 lhs_rd in
 	      Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                             \ncall heap_entail_conjunct with lhs = reading phase\n") pos;
-	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
-	      (* let _ = print_string("split_lhs: entail using h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
-	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
+	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
+	      let _ = print_string("split_lhs: entail using h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
+	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
 
 
 	      let (with_rd_ctx, with_rd_prf) = heap_entail_conjunct prog is_folding  rd_ctx conseq [] pos in
@@ -4517,9 +4516,9 @@ and heap_entail_split_lhs_phases_x
 	      Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                             \ncall heap_entail_conjunct with lhs = writing phase\n") pos;
 
-	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
-	      (* let _ = print_string("split_lhs: entail using h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in *)
-	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
+	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
+	      let _ = print_string("split_lhs: entail using h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in
+	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
 
 
 	      let (with_wr_ctx, with_wr_prf) = heap_entail_conjunct prog is_folding  wr_ctx conseq []  pos in
@@ -4565,7 +4564,10 @@ and heap_entail_split_lhs_phases_x
 			                (* h3 = true and hence it wont help *)
 			                (with_wr_ctx, with_wr_prf)
 		              | _ ->
-				         heap_entail_with_cont  prog is_folding  ctx0 conseq ft h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos
+				let _ = print_string("*******************************************") in
+				let _ = print_string("entailment uses the continuation\n") in
+				let _ = print_string("*******************************************") in
+			         heap_entail_with_cont  prog is_folding  ctx0 conseq ft h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos
 
 	      in
 	      (* union of states *)

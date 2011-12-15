@@ -205,6 +205,7 @@ let peek_try =
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
+         | [GT,_;MUT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;LEND,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
@@ -544,10 +545,11 @@ inv:
    |`INV; h=ho_fct_header -> (P.mkTrue no_pos, [])]];
  
 ann_heap: 
-  [[ `IMM  -> "I"
+  [[
+    `MUT -> "M"
+   | `IMM  -> "I"
    | `LEND -> "L"
    | `DERV -> "D"
-   | `MUT -> "M"
    ]];
 
 ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
