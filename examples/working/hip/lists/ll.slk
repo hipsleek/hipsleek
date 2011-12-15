@@ -7,24 +7,25 @@ data node {
 pred ll<L1:seq(int),n:int> == self = null & L1 = [||]
 	or self::node<v, r> * r::ll<L2,n> & L1 = v:::L2. //bug with v+n works with z3
 
-checkentail x::node<a,y>*y::node<b,null> |- x::ll<L,_>.
+//checkentail x::node<a,y>*y::node<b,null> |- x::ll<L,_>.
 //checkentail x::node<a,y>*y::node<b,null> |- [m] x::ll<L,_> & length(L,m) & m=2. 
-checkentail x::node<a,y>*y::node<b,null> |- x::ll<L,_> & len(L)= 2.  // this syntax uses seqaxioms.smt2
+//checkentail x::node<a,y>*y::node<b,null> |- x::ll<L,_> & len(L)= 2.  // this syntax uses seqaxioms.smt2
 //checkentail x::node<a,y>*y::node<b,null> |- [m] x::ll<L,_> & length(L,m) & m!=2. // unsound if valid!
-checkentail x::node<a,y>*y::node<b,null> |- x::ll<L,_> & len(L)!= 2. // unsound if valid!
+//checkentail x::node<a,y>*y::node<b,null> |- x::ll<L,_> & len(L)!= 2. // unsound if valid!
 //checkentail x::node<a,null> |- [m] x::ll<L,_> & length(L,m) & m=1. 
-checkentail x::node<a,null> |- x::ll<L,_> & len(L) = 1. 
+//checkentail x::node<a,null> |- x::ll<L,_> & len(L) = 1. 
 //checkentail x::node<a,null> |- [m] x::ll<L,_> & length(L,m) & m>0.  
-checkentail x::node<a,null> |- x::ll<L,_> & len(L) > 0. 
+//checkentail x::node<a,null> |- x::ll<L,_> & len(L) > 0. 
 //checkentail x::node<a,null> |- x::ll<L,_> & length(L,1). 
-checkentail x::node<a,null> |- x::ll<L,_> & len(L) = 1. 
+//checkentail x::node<a,null> |- x::ll<L,_> & len(L) = 1. 
 //checkentail x::node<a,null> |- (exists m: x::ll<L,_> & length(L,m) & m>2). 
-checkentail x::node<a,null> |- x::ll<L,_> & len(L) > 2. 
-checkentail x::node<a,null> |- x::ll<L,_>.
-checkentail L1 = [|1|] & L3 = [|2,3|] |- true. // parsed as L1=[|1|] & L3=1 & L3=2 ! fixed
+//checkentail x::node<a,null> |- x::ll<L,_> & len(L) > 2. 
+//checkentail x::node<a,null> |- x::ll<L,_> & exists(v: exists(L2: L = v:::L2 & len(L) > 1)).
+//checkentail L1 = [|1|] & L3 = [|2,3|] |- true. // parsed as L1=[|1|] & L3=1 & L3=2 ! fixed
 //checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- append(L1,L2,L3).
-//checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- app(L1,L2) = L3.
-//checkentail s1 = [|1|] & s2 = [||] & s3 = [|1|] |- app(s2,s1) = app(s3,s1).
+checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- app(L1,L2) = L3.
+checkentail L1=1:::L2 & L2=[|2|] & L3=[|1,2,2|] |- app(L1,L2) = L3.
+checkentail s1 = [|1|] & s2 = [||] & s3 = [|1|] |- app(s2,s1) = app(s3,s1).
 //checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- rev(app(s1,s2)) = rev(s3).
 //checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- rev(app(s1,s2)) = s3.
 //checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- app(rev(s3),s2) = app(s2,s1,s2).
