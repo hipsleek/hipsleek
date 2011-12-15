@@ -234,9 +234,8 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_prior_steps= es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
 	es_var_label = es.es_var_label;
-	es_var_ctx_lhs = es.es_var_ctx_lhs(*;
-	es_var_ctx_rhs = es.es_var_ctx_rhs;
-	es_var_subst = es.es_var_subst*)
+	es_var_ctx_lhs = es.es_var_ctx_lhs;
+	es_var_init_ctx = es.es_var_init_ctx;
   } 
 
 let clear_entailment_history (ctx : context) : context =  

@@ -2779,6 +2779,7 @@ type entail_state = {
   es_var_label : int option;
   es_var_ctx_lhs : CP.formula;
   es_var_ctx_rhs : CP.formula;
+  es_var_init_ctx : formula; (* Initial context of a method - before symbolic execution *)
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
   es_var_loc : loc;
 
@@ -2932,8 +2933,9 @@ let rec empty_es flowt pos =
   es_var_label = None;
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
+  es_var_init_ctx = x;
   es_var_subst = [];
-   es_var_loc = no_pos;
+  es_var_loc = no_pos;
   (*es_cache_no_list = [];*)
   es_cont = [];
   es_crt_holes = [];
@@ -3595,6 +3597,7 @@ let rec empty_es flowt pos =
   es_var_label = None;
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
+  es_var_init_ctx = x;
   es_var_subst = [];
   es_var_loc = no_pos;
   (*es_cache_no_list = [];*)
@@ -5744,10 +5747,10 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
 	es_var_label = es.es_var_label;
-	es_var_ctx_lhs = es.es_var_ctx_lhs(*;
-	es_var_ctx_rhs = es.es_var_ctx_rhs;
-	es_var_subst = es.es_var_subst*)
+	es_var_ctx_lhs = es.es_var_ctx_lhs;
+	es_var_init_ctx = es.es_var_init_ctx;
   } 
+	
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
   

@@ -294,6 +294,16 @@ let term_add_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context
     CF.es_var_measures = List.map (fun (e, b) -> e) v.CF.formula_var_measures;
 		CF.es_var_label = v.CF.formula_var_label }) ctx 
 
+let term_add_init_ctx (ctx: CF.context) : CF.context =
+  CF.transform_context (fun es -> CF.Ctx 
+  {es with CF.es_var_init_ctx = es.CF.es_formula }) ctx
 
-
+let rec term_strip_variance ls = 
+  match ls with
+    | [] -> []
+    | spec::rest -> match spec with
+      | CF.EVariance e -> (term_strip_variance e.CF.formula_var_continuation)@(term_strip_variance rest)
+      | CF.EBase b -> (CF.EBase {b with CF.formula_ext_continuation = term_strip_variance b.CF.formula_ext_continuation})::(term_strip_variance rest)
+      | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, term_strip_variance sf)) c.CF.formula_case_branches})::(term_strip_variance rest)
+      | _ -> spec::(term_strip_variance rest)
 

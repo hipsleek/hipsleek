@@ -1266,6 +1266,7 @@ let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
   pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure; 
+  (*pr_vwrap "es_orig_ante: " pr_formula  es.es_orig_ante; *)
   (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
@@ -1291,6 +1292,7 @@ let pr_estate (es : entail_state) =
   (* pr_vwrap "es_trace: " pr_es_trace es.es_trace; *)
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
+  pr_vwrap "es_var_init_ctx: " pr_formula  es.es_var_init_ctx; 
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
