@@ -591,30 +591,27 @@ let rec add_seq_axioms fvars seqs kfvars = match fvars with
                                                (CP.Add(CP.ListLength(e2,l),(CP.mkIConst 1 l),l)),l)), None ) in
                                       let expvars = CP.fv (CP.BForm(f1,None)) in
                                       let (_,evars) = List.partition (fun c -> List.mem c kfvars) expvars in
-                                      "(assert " ^  
-                                      (smt_of_b_formula ((CP.Eq(CP.ListAppend(CP.ListCons(e1,e2,l)::[(CP.mkVar f no_pos)], no_pos),
-                                      CP.ListCons(e1,CP.ListAppend(e2::[(CP.mkVar f no_pos)],l),no_pos),l)),None)) ^")\n"^
-                                      "(assert " ^ 
-                                      if evars == []
-                                      then "(=> " ^ (smt_of_b_formula f1)  ^" "^ (smt_of_b_formula f2) ^ "))"  
-                                      else smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None))) (CP.BForm(f2,None)) None l) None l)
-                                           ^ ")"
+                                      let appf1 = ((CP.Eq(CP.ListAppend(CP.ListCons(e1,e2,l)::[(CP.mkVar f no_pos)], no_pos),
+                                      CP.ListCons(e1,CP.ListAppend(e2::[(CP.mkVar f no_pos)],l),no_pos),l)),None) in
+                                      if evars == []  
+                                      then  "(assert " ^   (smt_of_b_formula appf1) ^")\n"^
+                                            "(assert (=> " ^ (smt_of_b_formula f1)  ^" "^ (smt_of_b_formula f2) ^ "))"                                                                          else "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.BForm(appf1,None)) None l)) ^")\n"^
+                                           "(assert "^ (smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None)))
+                                               (CP.BForm(f2,None)) None l) None l)) ^ ")"
                                   | CP.List(elist, l), CP.SpecVar(List t, _, _) ->  
                                       let f1 =  ((CP.Eq((CP.mkVar f l),CP.List(elist, l), l)), None) in
                                       let f2 = ((CP.Eq((CP.ListLength((CP.mkVar f l),l)), 
                                           (CP.mkIConst (List.length elist) l),l)), None ) in
                                       let expvars = CP.fv (CP.BForm(f1,None)) in
                                       let (_,evars) = List.partition (fun c -> List.mem c kfvars) expvars in
-                                      "(assert " ^  
-                                      (smt_of_b_formula (CP.Eq(CP.ListAppend(CP.List(elist,l)::[(CP.mkVar f no_pos)], no_pos),
-                                      CP.List(elist@[CP.ListAppend([(CP.mkVar f no_pos)],l)], no_pos),l),None)) ^ ")\n"^
-                                      (*CP.List((List.tl (List.rev elist)) @ 
-                                      [CP.ListAppend((List.nth elist ((List.length elist) - 1))::[(CP.mkVar f no_pos)],no_pos)],l),l),None))^")\n"^ *)
-                                      "(assert " ^ 
+                                      let appf1 = (CP.Eq(CP.ListAppend(CP.List(elist,l)::[(CP.mkVar f no_pos)], no_pos),
+                                      CP.List(elist@[CP.ListAppend([(CP.mkVar f no_pos)],l)], no_pos),l),None) in
                                       if evars == [] 
-                                      then "(=> " ^ (smt_of_b_formula f1) ^" "^ (smt_of_b_formula f2) ^ "))"
-                                      else smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None))) (CP.BForm(f2,None)) None l) None l)
-                                           ^ ")"
+                                      then  "(assert " ^  (smt_of_b_formula appf1) ^ ")\n"^
+                                            "(assert (=> " ^ (smt_of_b_formula f1) ^" "^ (smt_of_b_formula f2) ^ "))"
+                                      else "(assert "^ (smt_of_formula (CP.mkExists evars (CP.BForm(appf1, None)) None l)) ^")\n" ^
+                                           "(assert " ^ (smt_of_formula (CP.mkExists evars (CP.mkOr (CP.mkNot_s (CP.BForm(f1,None))) 
+                                               (CP.BForm(f2,None)) None l) None l)) ^ ")"
                                   | _,_ -> ""))
                             seqs) ^ "\n" ^(add_seq_axioms fs seqs kfvars) 
     
