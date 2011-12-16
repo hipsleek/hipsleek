@@ -2951,7 +2951,7 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
-let rec empty_es flowt pos = 
+let empty_es flowt pos = 
 	let x = mkTrue flowt pos in
 {
   es_formula = x;
@@ -3614,55 +3614,55 @@ let mk_empty_frame () : (h_formula * int ) =
   let hole_id = fresh_int () in
     (Hole(hole_id), hole_id)
 
-let rec empty_es flowt pos = 
-	let x = mkTrue flowt pos in
-{
-  es_formula = x;
-  es_heap = HTrue;
-  es_pure = (MCP.mkMTrue pos , []);
-  es_evars = [];
-  (* es_must_match = false; *)
-  es_ivars = [];
-  (* es_expl_vars = []; *)
-  es_ante_evars = [];
-  es_gen_expl_vars = []; 
-  es_gen_impl_vars = []; 
-  es_pp_subst = [];
-  es_unsat_flag = true;
-  es_arith_subst = [];
-  es_success_pts = [];
-  es_residue_pts  = [];
-  es_id = 0 ;
-  es_orig_ante = x;
-  es_orig_conseq = [mkETrue flowt pos] ;
-  es_rhs_eqset = [];
-  es_path_label  =[];
-  es_prior_steps  = [];
-  es_var_measures = [];
-  es_var_label = None;
-  es_var_ctx_lhs = CP.mkTrue pos;
-  es_var_ctx_rhs = CP.mkTrue pos;
-  es_var_subst = [];
-  es_var_loc = no_pos;
-  (*es_cache_no_list = [];*)
-  es_cont = [];
-  es_crt_holes = [];
-  es_hole_stk = [];
-  es_aux_xpure_1 = MCP.mkMTrue pos;
-  es_subst = ([], []);
-  es_aux_conseq = CP.mkTrue pos;
-  es_imm_pure_stk = [];
-  es_must_error = None;
-  es_trace = [];
-  es_is_normalizing = false;
-  es_orig_vars = [];
-  es_infer_vars = [];
-  es_infer_label = x;
-  es_infer_heap = []; (* HTrue; *)
-  es_infer_pure = []; (* (CP.mkTrue no_pos); *)
-  es_infer_invs = [];
-  (* es_infer_pures = []; *)
-}
+(* let rec empty_es flowt pos =  *)
+(* 	let x = mkTrue flowt pos in *)
+(* { *)
+(*   es_formula = x; *)
+(*   es_heap = HTrue; *)
+(*   es_pure = (MCP.mkMTrue pos , []); *)
+(*   es_evars = []; *)
+(*   (\* es_must_match = false; *\) *)
+(*   es_ivars = []; *)
+(*   (\* es_expl_vars = []; *\) *)
+(*   es_ante_evars = []; *)
+(*   es_gen_expl_vars = [];  *)
+(*   es_gen_impl_vars = [];  *)
+(*   es_pp_subst = []; *)
+(*   es_unsat_flag = true; *)
+(*   es_arith_subst = []; *)
+(*   es_success_pts = []; *)
+(*   es_residue_pts  = []; *)
+(*   es_id = 0 ; *)
+(*   es_orig_ante = x; *)
+(*   es_orig_conseq = [mkETrue flowt pos] ; *)
+(*   es_rhs_eqset = []; *)
+(*   es_path_label  =[]; *)
+(*   es_prior_steps  = []; *)
+(*   es_var_measures = []; *)
+(*   es_var_label = None; *)
+(*   es_var_ctx_lhs = CP.mkTrue pos; *)
+(*   es_var_ctx_rhs = CP.mkTrue pos; *)
+(*   es_var_subst = []; *)
+(*   es_var_loc = no_pos; *)
+(*   (\*es_cache_no_list = [];*\) *)
+(*   es_cont = []; *)
+(*   es_crt_holes = []; *)
+(*   es_hole_stk = []; *)
+(*   es_aux_xpure_1 = MCP.mkMTrue pos; *)
+(*   es_subst = ([], []); *)
+(*   es_aux_conseq = CP.mkTrue pos; *)
+(*   es_imm_pure_stk = []; *)
+(*   es_must_error = None; *)
+(*   es_trace = []; *)
+(*   es_is_normalizing = false; *)
+(*   es_orig_vars = []; *)
+(*   es_infer_vars = []; *)
+(*   es_infer_label = x; *)
+(*   es_infer_heap = []; (\* HTrue; *\) *)
+(*   es_infer_pure = []; (\* (CP.mkTrue no_pos); *\) *)
+(*   es_infer_invs = []; *)
+(*   (\* es_infer_pures = []; *\) *)
+(* } *)
 
 let mk_not_a_failure =
   Basic_Reason ({
@@ -5804,8 +5804,11 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
 	es_var_label = es.es_var_label;
- es_infer_vars = es.es_infer_vars;
-	es_var_ctx_lhs = es.es_var_ctx_lhs(*;
+	es_var_ctx_lhs = es.es_var_ctx_lhs;
+    es_infer_vars = es.es_infer_vars;
+    es_infer_heap = es.es_infer_heap;
+    es_infer_pure = es.es_infer_pure;
+(*;
 	es_var_ctx_rhs = es.es_var_ctx_rhs;
 	es_var_subst = es.es_var_subst*)
   } 

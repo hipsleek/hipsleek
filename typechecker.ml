@@ -118,6 +118,13 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	              (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
+                    let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
+                    let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
+                    if (List.length lh)+(List.length lp) > 0 then 
+                      begin
+                      print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ;
+                      print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)) 
+                      end;
 			        let tmp_ctx = check_post prog proc res_ctx post_cond (Cformula.pos_of_formula post_cond) post_label in
 			        (CF.isSuccessListPartialCtx tmp_ctx) 
 		        in
@@ -132,7 +139,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 and check_exp prog proc ctx e0 label =
   let pr_pn x = x.proc_name in
   let pr = Cprinter.string_of_list_failesc_context in
-  Gen.Debug.loop_2_no "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
+  Gen.Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 

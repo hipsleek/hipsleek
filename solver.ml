@@ -230,18 +230,18 @@ let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a ->
    *)
   end
   
-let clear_entailment_history_es (es :entail_state) :context = 
-  Ctx {(empty_es (mkTrueFlow ()) no_pos) with 
-    es_formula = filter_formula_memo es.es_formula false;
-	es_path_label = es.es_path_label;
-	es_prior_steps= es.es_prior_steps;
-	es_var_measures = es.es_var_measures;
-	es_var_label = es.es_var_label;
- es_infer_vars = es.es_infer_vars;
-	es_var_ctx_lhs = es.es_var_ctx_lhs(*;
-	es_var_ctx_rhs = es.es_var_ctx_rhs;
-	es_var_subst = es.es_var_subst*)
-  } 
+(* let clear_entailment_history_es (es :entail_state) :context =  *)
+(*   Ctx {(empty_es (mkTrueFlow ()) no_pos) with  *)
+(*     es_formula = filter_formula_memo es.es_formula false; *)
+(* 	es_path_label = es.es_path_label; *)
+(* 	es_prior_steps= es.es_prior_steps; *)
+(* 	es_var_measures = es.es_var_measures; *)
+(* 	es_var_label = es.es_var_label; *)
+(*     es_infer_vars = es.es_infer_vars; *)
+(* 	es_var_ctx_lhs = es.es_var_ctx_lhs(\*; *)
+(* 	es_var_ctx_rhs = es.es_var_ctx_rhs; *)
+(* 	es_var_subst = es.es_var_subst*\) *)
+(*   }  *)
 
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
@@ -5842,7 +5842,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     let lhs_name,lhs_arg,lhs_var = get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let _ = Gen.Profiling.push_time "empty_predicate_testing" in
     let lhs_vd = (look_up_view_def_raw prog.prog_view_decls lhs_name) in
-    let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) pos) with es_formula = ante;
+    let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) pos) with 
+        es_formula = ante;
         es_heap = estate.es_heap;
         es_evars = estate.es_evars;
         es_gen_expl_vars = estate.es_gen_expl_vars; 
@@ -5853,7 +5854,9 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_path_label = estate.es_path_label;
 		es_var_measures = estate.es_var_measures;
 		es_var_label = estate.es_var_label;
-  es_infer_vars = estate.es_infer_vars;
+        es_infer_vars = estate.es_infer_vars;
+        es_infer_heap = estate.es_infer_heap;
+        es_infer_pure = estate.es_infer_pure;
 		es_var_ctx_lhs = estate.es_var_ctx_lhs;
 		es_var_ctx_rhs = estate.es_var_ctx_rhs;
 		es_var_subst = estate.es_var_subst
@@ -5992,8 +5995,12 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_prior_steps = estate.es_prior_steps;
                  es_path_label = estate.es_path_label;
                  es_infer_vars = estate.es_infer_vars;
-		         es_var_measures = estate.es_var_measures;
-		         es_var_label = estate.es_var_label} in
+        es_infer_heap = estate.es_infer_heap;
+        es_infer_pure = estate.es_infer_pure;
+        (* WN Check : do we need to restore infer_heap/pure
+           here *)
+		es_var_measures = estate.es_var_measures;
+		es_var_label = estate.es_var_label} in
              (*to eliminate redundant case analysis, we check whether 
                current antecedent implies the base case condition that 
                we want to do case analysis
@@ -6697,7 +6704,9 @@ and do_fold_old prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 	  es_orig_conseq = estate.es_orig_conseq;
 	  es_prior_steps = estate.es_prior_steps;
       es_path_label = estate.es_path_label;
-   es_infer_vars = estate.es_infer_vars;
+      es_infer_vars = estate.es_infer_vars;
+        es_infer_heap = estate.es_infer_heap;
+        es_infer_pure = estate.es_infer_pure;
 	  es_var_measures = estate.es_var_measures;
 	  es_var_label = estate.es_var_label;
 	  es_var_ctx_lhs = estate.es_var_ctx_lhs;

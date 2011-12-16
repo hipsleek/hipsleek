@@ -1436,12 +1436,18 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [e.es_formula]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
+  let pr (f,iv,ih,ip) =
+    pr_formula_wrap f;
+    pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
+    pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
+    pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip
+  in 
   let pr_disj ls = 
-    if (List.length ls == 1) then pr_formula (List.hd ls)
-    else pr_seq "or" pr_formula_wrap ls in
-   (pr_disj (f ctx))
+    if (List.length ls == 1) then pr (List.hd ls)
+    else pr_seq "or" pr ls in
+  (pr_disj (f ctx))
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with

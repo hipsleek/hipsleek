@@ -77,10 +77,19 @@ let collect_pre_heap_list_context ctx =
   | FailCtx _ -> []
   | SuccCtx lst -> List.concat (List.map collect_pre_heap lst)
 
+let collect_pre_heap_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_heap c) cl))  ctx in
+  List.concat r
+
+
 let collect_pre_pure_list_context ctx = 
   match ctx with
   | FailCtx _ -> []
   | SuccCtx lst -> List.concat (List.map collect_pre_pure lst)
+
+let collect_pre_pure_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_pure c) cl))  ctx in
+  List.concat r
 
 let rec init_vars ctx infer_vars orig_vars = match ctx with
   | Ctx estate -> Ctx {estate with es_infer_vars = infer_vars; es_orig_vars = orig_vars}
