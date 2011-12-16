@@ -6,7 +6,7 @@ data node {
 // expect v<:@I
 
 
-checkentail x::node<p,q>@I |- x::node<a,b>@L.
+infer [v] x::node<p,q>@v |- x::node<a,b>@L.
 print residue.
 
 checkentail x::node<p,q>@L |- x::node<a,b>@L.

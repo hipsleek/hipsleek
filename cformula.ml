@@ -206,6 +206,21 @@ approx_formula_and_a2 : approx_formula }
 (* utility functions *)
 
 
+let isLend(a : ann) : bool = 
+  match a with
+    | ConstAnn(Lend) -> true
+    | _ -> false
+
+and isMutable(a : ann) : bool = 
+  match a with
+    | ConstAnn(Mutable) -> true
+    | _ -> false
+
+and isImm(a : ann) : bool = 
+  match a with
+    | ConstAnn(Imm) -> true
+    | _ -> false
+
 let fv_ann (a:ann) = match a with
   | ConstAnn _ -> []
   | PolyAnn v -> [v]

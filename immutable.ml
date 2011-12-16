@@ -102,8 +102,8 @@ and consume_heap (f : formula) : bool =  match f with
         (consume_heap f1) or (consume_heap f2)
             
 and consume_heap_h_formula (f : h_formula) : bool =  match f with
-  | DataNode (h1) -> (h1.h_formula_data_imm == ConstAnn(Mutable)) || (h1.h_formula_data_imm == ConstAnn(Imm))
-  | ViewNode (h1) -> (h1.h_formula_view_imm == ConstAnn(Mutable)) || (h1.h_formula_view_imm == ConstAnn(Imm))
+  | DataNode (h1) -> ((isMutable h1.h_formula_data_imm) || (isImm h1.h_formula_data_imm))
+  | ViewNode (h1) -> ((isMutable h1.h_formula_view_imm) || (isImm h1.h_formula_view_imm))
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos})
@@ -139,12 +139,12 @@ and is_lend_h_formula_debug f =
 
 and is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
-        if (h1.h_formula_data_imm == ConstAnn(Lend)) then
+        if (isLend h1.h_formula_data_imm) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
         else
           false
   | ViewNode (h1) ->
-        if (h1.h_formula_view_imm == ConstAnn(Lend)) then
+        if (isLend h1.h_formula_view_imm) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
@@ -245,10 +245,10 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
 	 }) ->
 	normalize_h_formula_rd_phase h 
   | IF.HeapNode2 hf -> 
-  if ((get_imm h) == ConstAnn(Lend)) then
-    begin h
-      end
-  else
+    (let annv = get_imm h in
+    match annv with
+      | ConstAnn(Lend) -> h
+      | _ ->								 
     begin
   	(* write phase *)
       if (wr_phase) then h
@@ -257,13 +257,12 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   		  IF.h_formula_phase_rw = h;
   		  IF.h_formula_phase_pos = no_pos;
   		 })
-    end
+    end)
   | IF.HeapNode hf ->  
-    if ((get_imm h) == ConstAnn(Lend)) then
-      (* let _ = print_string("[Cris]: read phase for " ^ (Iprinter.string_of_h_formula h) ^ "\n") in *)
-      begin h
-      end
-    else
+    (let annv = get_imm h in
+    match annv with
+      | ConstAnn(Lend) -> h
+      | _ ->							   
       begin
     	(* write phase *)
     	if (wr_phase) then h
@@ -272,7 +271,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
     		    IF.h_formula_phase_rw = h;
     		    IF.h_formula_phase_pos = no_pos;
     		   })
-      end
+      end)
   | _ ->  IF.Phase { IF.h_formula_phase_rd = IF.HTrue;
 	  	 IF.h_formula_phase_rw = h;
 	  	 IF.h_formula_phase_pos = no_pos }
@@ -312,8 +311,8 @@ and validate_rd_phase (h : IF.h_formula) : bool = match h with
 	 IF.h_formula_conj_h2 = h2;
 	 IF.h_formula_conj_pos = pos}) -> (validate_rd_phase h1) && (validate_rd_phase h2)
   | IF.Phase _ -> false (* Shouldn't have phases inside the reading phase *)
-  | IF.HeapNode2 hf -> (hf.IF.h_formula_heap2_imm == IF.ConstAnn(Lend)) 
-  | IF.HeapNode hf -> (hf.IF.h_formula_heap_imm == IF.ConstAnn(Lend))
+  | IF.HeapNode2 hf -> (IF.isLend hf.IF.h_formula_heap2_imm) 
+  | IF.HeapNode hf -> (IF.isLend hf.IF.h_formula_heap_imm)
   | _ -> true
 
 and insert_wr_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula = 
@@ -467,8 +466,8 @@ and subtype (imm1 : ann) (imm2 : ann) : bool =
 and subtype_x (imm1 : ann) (imm2 : ann) : bool = 
     match imm1 with
       | ConstAnn(Mutable) -> true
-      | ConstAnn(Imm) -> (imm2==ConstAnn(Imm) || imm2==ConstAnn(Lend))
-      | ConstAnn(Lend) -> (imm2==ConstAnn(Lend))
+      | ConstAnn(Imm) -> (isImm imm2) || (isLend imm2)
+      | ConstAnn(Lend) -> (isLend imm2)
       | _ -> false
   
 (* utilities for handling lhs heap state continuation *)
@@ -613,7 +612,6 @@ and get_imm (f : h_formula) : ann =  match f with
   | DataNode (h1) -> h1.h_formula_data_imm
   | ViewNode (h1) -> h1.h_formula_view_imm
   | _ -> ConstAnn(Mutable) (* we shouldn't get here *)
-
 
 
 

@@ -1602,3 +1602,18 @@ and break_ext_formula (f : ext_formula) : P.b_formula list list =
 
 and break_struc_formula (f : struc_formula) : P.b_formula list list =
   List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f
+
+let isLend(a : ann) : bool = 
+  match a with
+    | ConstAnn(Lend) -> true
+    | _ -> false
+
+and isMutable(a : ann) : bool = 
+  match a with
+    | ConstAnn(Mutable) -> true
+    | _ -> false
+
+and isImm(a : ann) : bool = 
+  match a with
+    | ConstAnn(Imm) -> true
+    | _ -> false

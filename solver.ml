@@ -2204,7 +2204,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let renamed_view_formula = rename_struc_bound_vars form in
 	          (****)  
               let renamed_view_formula = 
-	      if (imm == ConstAnn(Imm) || imm == ConstAnn(Lend)) then 
+	      if (isImm imm) || (isLend imm) then 
 	        propagate_imm_struc_formula renamed_view_formula imm
 	            else
 	              renamed_view_formula
@@ -4269,9 +4269,9 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
 
 and heap_entail_rhs_read_phase prog is_folding  ctx0 h1 h2 h3 func pos =
   (* entail the read phase heap *)
-  let _ = print_string("************************************************************************\n") in
-  let _ = print_string("split_rhs: entail rd phase h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
-  let _ = print_string("************************************************************************\n") in
+  (* let _ = print_string("************************************************************************\n") in *)
+  (* let _ = print_string("split_rhs: entail rd phase h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
+  (* let _ = print_string("************************************************************************\n") in *)
   let new_conseq =
     if (is_true h2 && is_true h3) then
       func h1 (MCP.mkMTrue pos) 
@@ -4286,9 +4286,9 @@ and heap_entail_rhs_write_phase prog is_folding  after_rd_ctx after_rd_prf conse
     | FailCtx _ -> (after_rd_ctx, after_rd_prf)
     | SuccCtx (cl) -> 
           (* entail the write phase *)
-          let _ = print_string("************************************************************************\n") in
-          let _ = print_string("split_rhs: entail wr phase h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in
-          let _ = print_string("************************************************************************\n") in
+          (* let _ = print_string("************************************************************************\n") in *)
+          (* let _ = print_string("split_rhs: entail wr phase h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in *)
+          (* let _ = print_string("************************************************************************\n") in *)
           (* let drop_read_phase =  *)
 	  (*       if (consume_heap_h_formula h2) or (consume_heap_h_formula h3) *)
 	  (*       then true *)
@@ -4320,9 +4320,9 @@ and heap_entail_rhs_nested_phase prog is_folding  after_wr_ctx after_wr_prfs con
 	          | HTrue -> 
 	                (after_wr_ctx, after_wr_prfs)
 	          | _ ->
-	                let _ = print_string("************************************************************************\n") in
-	                let _ = print_string("entail rhs h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in
-	                let _ = print_string("************************************************************************\n") in
+	                (* let _ = print_string("************************************************************************\n") in *)
+	                (* let _ = print_string("entail rhs h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
+	                (* let _ = print_string("************************************************************************\n") in *)
 	                if (CF.contains_phase h3) then
 		              let after_nested_phase = List.map (fun c -> heap_entail_split_rhs_phases prog is_folding  c (func h3 (MCP.mkMTrue pos)) drop_read_phase pos) cl in
 		              let after_nested_phase_ctx, after_nested_phase_prfs = List.split after_nested_phase in
@@ -4487,9 +4487,9 @@ and heap_entail_split_lhs_phases_x
 	      let rd_ctx = CF.set_context_formula ctx0 lhs_rd in
 	      Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                             \ncall heap_entail_conjunct with lhs = reading phase\n") pos;
-	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
-	      let _ = print_string("split_lhs: entail using h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
-	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
+	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
+	      (* let _ = print_string("split_lhs: entail using h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
+	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
 
 
 	      let (with_rd_ctx, with_rd_prf) = heap_entail_conjunct prog is_folding  rd_ctx conseq [] pos in
@@ -4516,9 +4516,9 @@ and heap_entail_split_lhs_phases_x
 	      Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                             \ncall heap_entail_conjunct with lhs = writing phase\n") pos;
 
-	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
-	      let _ = print_string("split_lhs: entail using h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in
-	      let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
+	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
+	      (* let _ = print_string("split_lhs: entail using h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in *)
+	      (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
 
 
 	      let (with_wr_ctx, with_wr_prf) = heap_entail_conjunct prog is_folding  wr_ctx conseq []  pos in
@@ -4564,9 +4564,9 @@ and heap_entail_split_lhs_phases_x
 			                (* h3 = true and hence it wont help *)
 			                (with_wr_ctx, with_wr_prf)
 		              | _ ->
-				let _ = print_string("*******************************************") in
-				let _ = print_string("entailment uses the continuation\n") in
-				let _ = print_string("*******************************************") in
+				(* let _ = print_string("*******************************************") in *)
+				(* let _ = print_string("entailment uses the continuation\n") in *)
+				(* let _ = print_string("*******************************************") in *)
 			         heap_entail_with_cont  prog is_folding  ctx0 conseq ft h1 h2 h3 with_wr_ctx with_wr_prf func drop_read_phase pos
 
 	      in
@@ -6206,7 +6206,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	        (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
             (* only add the consumed node if the node matched on the rhs is mutable *)
             let new_consumed = 
-      if ((get_imm r_node) != ConstAnn(Lend))
+      if not(isLend (get_imm r_node))
               then (*let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in*) mkStarH l_node estate.es_heap pos 
               else (* An Hoa : put l_node to the consumed heap portion if the matching leaves no remainder of l_node *)
 		        (*match rem_l_node with 
