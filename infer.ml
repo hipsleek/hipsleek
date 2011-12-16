@@ -389,6 +389,17 @@ let infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos =
 (*  | Forall (s,f,l,p) -> Forall (s, split_up_and_combine f, l, p)                                   *)
 (*  | Exists (s,f,l,p) -> Exists (s, split_up_and_combine f, l, p)                                   *)
 
+let rec simplify_disjs pf lhs = 
+  let helper fml lhs_p = 
+    let new_fml = CP.mkAnd fml lhs_p no_pos in
+    if Omega.is_sat new_fml "0" then fml else CP.mkFalse no_pos
+  in 
+  match pf with
+  | BForm _
+  | And _ -> helper pf lhs
+  | Or (f1,f2,l,p) -> Or (simplify_disjs f1 lhs, simplify_disjs f2 lhs, l, p)
+  | _ -> pf
+
 let infer_pure_m estate lhs_xpure rhs_xpure pos =
   if no_infer estate then None
   else
@@ -402,13 +413,25 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
       let new_p = simplify fml iv in
       let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
       if CP.isConstTrue new_p then None
-        (*        else                                                    *)
-        (*        if Omega.imply lhs_xpure new_p "0" 100 then None        *)
       else
         let args = CP.fv new_p in
         let quan_var = CP.diff_svl args iv in
-        let new_p = CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos in
-        if CP.isConstTrue new_p then None
+(*        let new_p = CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos in*)
+        let new_p = Omega.simplify (CP.mkForall quan_var 
+          (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
+        let new_p = Omega.simplify (simplify_disjs new_p lhs_xpure) in
+        let args = CP.fv new_p in
+        let new_p =
+          if CP.intersect args iv == [] then
+            let new_p = simplify (CP.mkAnd fml new_p pos) iv in
+            let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
+            let args = CP.fv new_p in
+            let quan_var = CP.diff_svl args iv in
+            CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos
+          else
+            simplify new_p iv
+        in
+        if CP.isConstTrue new_p || CP.isConstFalse new_p then None
         else
 (*      let new_p = simplify fml iv in                                                        *)
 (*      let new_p = simplify (CP.mkAnd new_p invariants pos) iv in                            *)

@@ -9,8 +9,8 @@ Infer  (2): Fail.(may) cause:15.4 no match for rhs data node: b (may-bug).
 
 Infer  (3): Valid. 
 Inferred Heap:[ y::node<inf_51,inf_b_52>@M[Orig], b::ll<inf_57>@M[Orig][LHSCase]]
-Inferred Pure:[ b=inf_b_52 & inf_b_52!=null]
-<1>true & inf_51=a & inf_57=m & inf_b_52=b & b!=null &
+Inferred Pure:[ inf_b_52=b]
+<1>true & inf_51=a & inf_57=m & b=inf_b_52 & inf_b_52!=null &
 {FLOW,(17,18)=__norm}
 
 
@@ -36,4 +36,4 @@ Inferred Pure:[ !(n=0 & x=null) & 0<=n]
 
 
 Halting Reduce... 
-Stop Omega... 89 invocations 
+Stop Omega... 101 invocations 
