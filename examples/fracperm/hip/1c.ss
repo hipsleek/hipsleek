@@ -1,7 +1,5 @@
 /* fork(id,method_name,single argument) */
 
-class e1 extends __Exc{}
-
 data cell {
   int val;
 }
@@ -14,18 +12,16 @@ void inc(cell x)
 }
 
 
-/* ================= */
-/* ==== 1 thread === */
-/* ================= */
-
 int test(cell x, cell y)
   requires x::cell<i>* y::cell<j>
-  ensures y::cell<j+1> & res=z
-      or x::cell<i+1> & thread=z & flow norm; //'
+  ensures  x::cell<i+1> 
+       and y::cell<j+1> & thread=res & flow __norm ; //'
 {
   /* {id'=id & x'=x & flow __norm} */
   int id;
   fork(id,inc,x);
+  inc(y);
+  dprint;
   return id;
   /* {id'=id & x'=x & flow __norm */
   /* and eres::thread<id'> & id'=id & x'=x+1 & flow thread;} */
@@ -34,12 +30,11 @@ int test(cell x, cell y)
 int main() 
   requires true
   ensures res=2;
-{ cell x=new cell(0);
+{ 
+  cell x=new cell(0);
   cell y=new cell(0);
-  dprint;
   int id;
-  id = test(x);
-  dprint;
+  id = test(x,y);
   join(id);
   return x.val+y.val;
 }
