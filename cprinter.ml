@@ -1221,13 +1221,6 @@ and pr_ext_formula  (e:ext_formula) =
           fmt_close();
     | EInfer {formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
-      (* let rec string_of_ident_list l c = match l with  *)
-      (*   | [] -> "" *)
-      (*   | h::[] -> h  *)
-      (*   | h::t -> h ^ c ^ (string_of_ident_list t c) in *)
-      (* let str_ident_list l = string_of_ident_list l "," in *)
-      (* let str_ident_list l = "["^(string_of_ident_list l ",")^"]" in *)
-      (* let string_of_inf_vars = str_ident_list (List.map (fun v -> fst v) lvars) in *)
       fmt_open_vbox 2;
       fmt_string ("EInfer "^string_of_spec_var_list lvars);
       if not(Gen.is_empty(cont)) then

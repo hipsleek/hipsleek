@@ -3889,12 +3889,12 @@ and trans_var_safe (ve, pe) stab pos =
       let ve_info = H.find stab ve
       in
       (match ve_info.sv_info_kind with
-        | UNK ->
-              Err.report_error
-                  {
-                      Err.error_loc = pos;
-                      Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";
-                  }
+        | UNK -> CP.SpecVar (UNK, ve, pe)
+(*              Err.report_error                                                                                                                       *)
+(*                  {                                                                                                                                  *)
+(*                      Err.error_loc = pos;                                                                                                           *)
+(*                      Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";*)
+(*                  }                                                                                                                                  *)
         | t -> CP.SpecVar (t, ve, pe)
 
       )
@@ -3968,9 +3968,9 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
             let nc = trans_struc_formula_hlp b.Iformula.formula_ext_continuation 
               (fvars @ (fst (List.split(Iformula.heap_fv b.Iformula.formula_ext_base))))in
             let nb = trans_formula prog quantify fvars false b.Iformula.formula_ext_base stab false in
-            let ex_inst = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_explicit_inst in
-            let ext_impl = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_implicit_inst in
-            let ext_exis = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_exists in
+            let ex_inst = List.map (fun c-> trans_var_safe c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_explicit_inst in
+            let ext_impl = List.map (fun c-> trans_var_safe c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_implicit_inst in
+            let ext_exis = List.map (fun c-> trans_var_safe c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_exists in
             Cformula.EBase {
                 Cformula.formula_ext_explicit_inst = ex_inst;
                 Cformula.formula_ext_implicit_inst = ext_impl;
@@ -4114,7 +4114,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
       | (e, label) :: rest ->
             let e_hvars = match e with
               | IP.Var ((ve, pe), pos_e) -> 
-                    trans_var (ve, pe) stab pos_e
+                    trans_var_safe (ve, pe) stab pos_e
               | _ -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = ("malfunction with float out exp: "^(Iprinter.string_of_formula f0)); }in
             let rest_hvars = match_exp rest pos in
             let hvars = e_hvars :: rest_hvars in
@@ -4364,7 +4364,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           } in 
 	      let nh,np,nt,nfl,nb = linearize_base base pos in
           let np = memoise_add_pure_N (mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb pos 
+	      CF.mkExists (List.map (fun c-> trans_var_safe c stab pos) qvars) nh np nt nfl nb pos 
 	          
 
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
