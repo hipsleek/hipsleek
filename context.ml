@@ -312,7 +312,7 @@ and view_mater_match_x prog c vs1 aset imm f =
   (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
   try
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
-    if (imm == Lend) then
+    if (imm == ConstAnn(Lend)) then
       let hole_no = Globals.fresh_int() in
       [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
     else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
@@ -321,7 +321,7 @@ and view_mater_match_x prog c vs1 aset imm f =
           if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
           else
             if List.exists (fun v -> CP.mem v aset) vs1 then
-              if (imm == Lend) then
+              if (imm == ConstAnn(Lend)) then
                 let hole_no = Globals.fresh_int() in 
                 [(Hole hole_no, f, [(f, hole_no)], WArg)]
               else [(HTrue, f, [], WArg)]
@@ -356,7 +356,7 @@ and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr (c,_) = string_of_coercion c in
   Gen.Debug.no_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
-and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
+and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
   let coercs = prog.prog_left_coercions in
   (* let _ = print_string ("coerc_mater_match_x:" *)
@@ -377,7 +377,7 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f
   (*         let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in *)
   (*         (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a *)
   (*       with  _ ->  a) [] pos_coercs in *)
-  if (imm == Lend) then [] else res
+  if (imm == ConstAnn(Lend)) then [] else res
 
 and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in
@@ -406,7 +406,7 @@ and spatial_ctx_extract p f a i rn rr =
   Gen.Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i rn rr ) f i a rn 
 
-and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : heap_ann) rhs_node rhs_rest : match_res list  =
+and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with
     | HTrue 
     | HFalse -> []
@@ -417,7 +417,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	 imm = imm annotation on the RHS *) 
       let subtyp = subtype imm1 imm in
           if ((CP.mem p1 aset) && (subtyp)) then 
-            if (imm == Lend) then (* not consuming the node *)
+            if (imm == ConstAnn(Lend)) then (* not consuming the node *)
               let hole_no = Globals.fresh_int() in 
               [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
@@ -432,7 +432,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           if (subtype imm1 imm) then
             (if (CP.mem p1 aset) then
           (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-              if (imm == Lend) then
+              if (imm == ConstAnn(Lend)) then
 		(* let _ = print_string("imm = Lend " ^ "\n") in *)
                 let hole_no = Globals.fresh_int() in
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)

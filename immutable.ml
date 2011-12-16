@@ -102,8 +102,8 @@ and consume_heap (f : formula) : bool =  match f with
         (consume_heap f1) or (consume_heap f2)
             
 and consume_heap_h_formula (f : h_formula) : bool =  match f with
-  | DataNode (h1) -> (h1.h_formula_data_imm == Mutable) || (h1.h_formula_data_imm == Imm)
-  | ViewNode (h1) -> (h1.h_formula_view_imm == Mutable) || (h1.h_formula_view_imm == Imm)
+  | DataNode (h1) -> (h1.h_formula_data_imm == ConstAnn(Mutable)) || (h1.h_formula_data_imm == ConstAnn(Imm))
+  | ViewNode (h1) -> (h1.h_formula_view_imm == ConstAnn(Mutable)) || (h1.h_formula_view_imm == ConstAnn(Imm))
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos})
@@ -139,12 +139,12 @@ and is_lend_h_formula_debug f =
 
 and is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
-        if (h1.h_formula_data_imm == Lend) then
+        if (h1.h_formula_data_imm == ConstAnn(Lend)) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
         else
           false
   | ViewNode (h1) ->
-        if (h1.h_formula_view_imm == Lend) then
+        if (h1.h_formula_view_imm == ConstAnn(Lend)) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
@@ -175,17 +175,27 @@ and contains_phase_debug (f : h_formula) : bool =
 (* KR: check there is only @L *)
 (* KR & KR ==> KR ; (KR ; true) *)
 
-let rec normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
+let rec iformula_ann_to_cformula_ann (iann : IF.ann) : CF.ann = 
+  match iann with
+    | IF.ConstAnn(x) -> CF.ConstAnn(x)
+    | IF.PolyAnn((id,p), l) -> 
+      CF.PolyAnn(CP.SpecVar (AnnT, id, p))
+
+and normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   Gen.Debug.no_1 "normalize_h_formula"
     (IP.string_of_h_formula)
     (IP.string_of_h_formula)
     (fun _ -> normalize_h_formula_x h wr_phase) h
 
 and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
-  let get_imm (h : IF.h_formula) : heap_ann = match h with
-    |  IF.HeapNode2 hf -> hf.IF.h_formula_heap2_imm
-    |  IF.HeapNode hf -> hf.IF.h_formula_heap_imm
-    | _ -> failwith ("Error in  normalize_h_formula\n")
+  let get_imm (h : IF.h_formula) : ann = 
+    let iann =
+      match h with
+	|  IF.HeapNode2 hf -> hf.IF.h_formula_heap2_imm
+	|  IF.HeapNode hf -> hf.IF.h_formula_heap_imm
+	| _ -> failwith ("Error in  normalize_h_formula\n")
+    in
+    (iformula_ann_to_cformula_ann iann)
   in
   let rec extract_inner_phase f = match f with
     | IF.Phase _ -> (IF.HTrue, f)
@@ -235,7 +245,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
 	 }) ->
 	normalize_h_formula_rd_phase h 
   | IF.HeapNode2 hf -> 
-  if ((get_imm h) == Lend) then
+  if ((get_imm h) == ConstAnn(Lend)) then
     begin h
       end
   else
@@ -249,7 +259,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   		 })
     end
   | IF.HeapNode hf ->  
-    if ((get_imm h) == Lend) then
+    if ((get_imm h) == ConstAnn(Lend)) then
       (* let _ = print_string("[Cris]: read phase for " ^ (Iprinter.string_of_h_formula h) ^ "\n") in *)
       begin h
       end
@@ -302,8 +312,8 @@ and validate_rd_phase (h : IF.h_formula) : bool = match h with
 	 IF.h_formula_conj_h2 = h2;
 	 IF.h_formula_conj_pos = pos}) -> (validate_rd_phase h1) && (validate_rd_phase h2)
   | IF.Phase _ -> false (* Shouldn't have phases inside the reading phase *)
-  | IF.HeapNode2 hf -> (hf.IF.h_formula_heap2_imm == Lend) 
-  | IF.HeapNode hf -> (hf.IF.h_formula_heap_imm == Lend)
+  | IF.HeapNode2 hf -> (hf.IF.h_formula_heap2_imm == IF.ConstAnn(Lend)) 
+  | IF.HeapNode hf -> (hf.IF.h_formula_heap_imm == IF.ConstAnn(Lend))
   | _ -> true
 
 and insert_wr_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula = 
@@ -400,7 +410,7 @@ and insert_rd_phase (f : IF.h_formula) (rd_phase : IF.h_formula) : IF.h_formula 
 		})
 
 
-and propagate_imm_struc_formula e (imm : heap_ann)  =
+and propagate_imm_struc_formula e (imm : ann)  =
   let f_e_f e = None  in
   let f_f e = None in
   let f_h_f f = Some (propagate_imm_h_formula f imm) in
@@ -413,7 +423,7 @@ and propagate_imm_struc_formula e (imm : heap_ann)  =
     transform_struc_formula f e
 
 
-and propagate_imm_formula (f : formula) (imm : heap_ann) : formula = match f with
+and propagate_imm_formula (f : formula) (imm : ann) : formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
 	    let rf1 = propagate_imm_formula f1 imm in
 	    let rf2 = propagate_imm_formula f2 imm in
@@ -426,7 +436,7 @@ and propagate_imm_formula (f : formula) (imm : heap_ann) : formula = match f wit
         let f1_heap = propagate_imm_h_formula f1.formula_exists_heap imm in
         Exists({f1 with formula_exists_heap = f1_heap})
 
-and propagate_imm_h_formula (f : h_formula) (imm : heap_ann) : h_formula = 
+and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula = 
   match f with
     | ViewNode f1 -> ViewNode({f1 with h_formula_view_imm = imm})
     | DataNode f1 -> DataNode({f1 with h_formula_data_imm = imm})
@@ -447,19 +457,19 @@ and propagate_imm_h_formula (f : h_formula) (imm : heap_ann) : h_formula =
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L *)
 
-and subtype (imm1 : heap_ann) (imm2 : heap_ann) : bool = 
+and subtype (imm1 : ann) (imm2 : ann) : bool = 
     Gen.Debug.no_2 "subtype" 
       (Cprinter.string_of_imm) 
       (Cprinter.string_of_imm) 
       string_of_bool 
       (fun _ _ -> subtype_x imm1 imm2) imm1 imm2  
 
-and subtype_x (imm1 : heap_ann) (imm2 : heap_ann) : bool = 
+and subtype_x (imm1 : ann) (imm2 : ann) : bool = 
     match imm1 with
-      | Mutable -> true
-      | Imm -> (imm2==Imm || imm2==Lend)
-      | Lend -> (imm2==Lend)
-    (* not(imm2==Imm) or (imm1==Imm) *)
+      | ConstAnn(Mutable) -> true
+      | ConstAnn(Imm) -> (imm2==ConstAnn(Imm) || imm2==ConstAnn(Lend))
+      | ConstAnn(Lend) -> (imm2==ConstAnn(Lend))
+      | _ -> false
   
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =
@@ -599,10 +609,10 @@ and apply_subs_h_formula crt_holes (h : h_formula) : h_formula =
 	      h_formula_phase_pos = pos})
     | _ -> h
 
-and get_imm (f : h_formula) : heap_ann =  match f with
+and get_imm (f : h_formula) : ann =  match f with
   | DataNode (h1) -> h1.h_formula_data_imm
   | ViewNode (h1) -> h1.h_formula_view_imm
-  | _ -> Mutable (* we shouldn't get here *)
+  | _ -> ConstAnn(Mutable) (* we shouldn't get here *)
 
 
 

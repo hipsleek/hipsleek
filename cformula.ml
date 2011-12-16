@@ -13,6 +13,8 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
+type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
+
 type typed_ident = (typ * ident)
 
 and formula_type = 
@@ -150,7 +152,7 @@ h_formula_phase_pos : loc }
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
 						h_formula_data_derv : bool;
-                        h_formula_data_imm : heap_ann;
+                        h_formula_data_imm : ann;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
@@ -165,7 +167,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
-                        h_formula_view_imm : heap_ann;
+                        h_formula_view_imm : ann;
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;

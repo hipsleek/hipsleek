@@ -4164,7 +4164,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 					CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 					CF.h_formula_data_name = rootptr_type_name;
 		            CF.h_formula_data_derv = dr;
-					CF.h_formula_data_imm = imm;
+					CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
 		            CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
 		            CF.h_formula_data_original = true; (*??? temporarily*)
@@ -4201,7 +4201,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       CF.h_formula_view_node = new_v;
                       CF.h_formula_view_name = c;
 		              CF.h_formula_view_derv = dr;
-		              CF.h_formula_view_imm = imm;
+		              CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
 		              CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                       CF.h_formula_view_arguments = hvars;
                       CF.h_formula_view_modes = vdef.I.view_modes;
@@ -4241,7 +4241,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                             CF.h_formula_data_node = new_v;
                             CF.h_formula_data_name = c;
 		                    CF.h_formula_data_derv = dr;
-		                    CF.h_formula_data_imm = imm;
+		                    CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
 		                    CF.h_formula_data_perm = permvar; (*LDK*)
                             CF.h_formula_data_origins = [];
 		                    CF.h_formula_data_original = true;

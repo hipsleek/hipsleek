@@ -2204,7 +2204,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let renamed_view_formula = rename_struc_bound_vars form in
 	          (****)  
               let renamed_view_formula = 
-	      if (imm == Imm || imm == Lend) then 
+	      if (imm == ConstAnn(Imm) || imm == ConstAnn(Lend)) then 
 	        propagate_imm_struc_formula renamed_view_formula imm
 	            else
 	              renamed_view_formula
@@ -6206,7 +6206,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	        (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
             (* only add the consumed node if the node matched on the rhs is mutable *)
             let new_consumed = 
-      if ((get_imm r_node) != Lend)
+      if ((get_imm r_node) != ConstAnn(Lend))
               then (*let _ = print_string("add to history " ^ (Cprinter.string_of_h_formula r_node) ^ "\n") in*) mkStarH l_node estate.es_heap pos 
               else (* An Hoa : put l_node to the consumed heap portion if the matching leaves no remainder of l_node *)
 		        (*match rem_l_node with 

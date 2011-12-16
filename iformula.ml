@@ -9,6 +9,8 @@ open Exc.GTable
 open Perm
 module P = Ipure
 
+type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
+
 type struc_formula = ext_formula list
 
 and ext_formula = 
@@ -153,7 +155,7 @@ and h_formula_phase = { h_formula_phase_rd : h_formula;
 and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_name : ident;
 		       h_formula_heap_derv : bool; 
-		       h_formula_heap_imm : heap_ann;
+		       h_formula_heap_imm : ann;
 		       h_formula_heap_full : bool;
 		       h_formula_heap_with_inv : bool;
 		       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
@@ -165,7 +167,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_name : ident;
 			h_formula_heap2_derv : bool;
-			h_formula_heap2_imm : heap_ann;
+			h_formula_heap2_imm : ann;
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
 		    h_formula_heap2_perm : iperm; (*LDK: fractional permission*)

@@ -463,10 +463,12 @@ let string_of_spec_var x =
 	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
+
 let string_of_imm imm = match imm with
-  | Imm -> "@I"
-  | Lend -> "@L"
-  | _ -> "@M"
+  | ConstAnn(Imm) -> "@I"
+  | ConstAnn(Lend) -> "@L"
+  | ConstAnn(Mutable) -> "@M"
+  | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 
 

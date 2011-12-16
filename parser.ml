@@ -205,6 +205,7 @@ let peek_try =
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
+         | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;LEND,_] -> raise Stream.Failure 
@@ -437,10 +438,15 @@ and set_slicing_utils_pure_double_x f il =
 	| Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
   else f
 
-and get_heap_ann annl : heap_ann = 
-  if (List.exists (fun x -> (String.compare x "I")==0) annl) then Imm
-  else if (List.exists (fun x -> (String.compare x "L")==0) annl) then Lend
-  else Mutable
+and get_heap_ann annl : Iformula.ann = 
+  match annl with
+    | (Some a) :: r -> a
+    | None :: r -> get_heap_ann r
+    | None :: [] ->  Iformula.ConstAnn(Mutable)
+    | [] ->  Iformula.ConstAnn(Mutable)
+  (* if (List.exists (fun x -> (String.compare x "I")==0) annl) then ConstAnn(Imm) *)
+  (* else if (List.exists (fun x -> (String.compare x "L")==0) annl) then ConstAnn(Lend) *)
+  (* else Mutable *)
 				   
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
@@ -546,10 +552,11 @@ inv:
  
 ann_heap: 
   [[
-    `MUT -> "M"
-   | `IMM  -> "I"
-   | `LEND -> "L"
-   | `DERV -> "D"
+    `MUT -> Some (Iformula.ConstAnn(Mutable))
+   | `IMM  -> Some (Iformula.ConstAnn(Imm))
+   | `LEND -> Some (Iformula.ConstAnn(Lend))
+   | `AT; t=cid  -> Some (Iformula.PolyAnn(t, get_pos_camlp4 _loc 1))
+   | `DERV -> None
    ]];
 
 ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
@@ -765,15 +772,15 @@ simple_heap_constr:
   | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
   let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c id dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2))
+      | ([],t) -> F.mkHeapNode2 c id dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> (*F.mkHeapNode ("",Primed) "" false Mutable false false false [] None  (get_pos_camlp4 _loc 1)*)
     let frac = if (Perm.allow_perm ()) then 
           full_iperm ()
         else 
           empty_iperm ()
     in
-	F.mkHeapNode ("",Primed) "" false (*dr*) Mutable false false false frac [] None  (get_pos_camlp4 _loc 1)
+	F.mkHeapNode ("",Primed) "" false (*dr*) (Iformula.ConstAnn(Mutable)) false false false frac [] None  (get_pos_camlp4 _loc 1)
 	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
 	  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
@@ -783,8 +790,8 @@ simple_heap_constr:
         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2))
   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2))
+      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
   ]];
 
 (*LDK: parse optional fractional permission, default = 1.0*)

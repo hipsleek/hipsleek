@@ -304,9 +304,15 @@ let rec string_of_h_formula = function
   | F.HFalse                        -> "false"
 
 and string_of_imm imm = match imm with
-  | Imm -> "@I"
-  | Lend -> "@L"
-  | _ -> "@M"
+  | Iformula.ConstAnn(Imm) -> "@I"
+  | Iformula.ConstAnn(Lend) -> "@L"
+  | Iformula.ConstAnn(Mutable) -> "@M"
+  | Iformula.PolyAnn(v, _) -> "@" ^ (string_of_var v)
+
+(* and string_of_imm imm = match imm with *)
+(*   | Imm -> "@I" *)
+(*   | Lend -> "@L" *)
+(*   | _ -> "@M" *)
 ;;
  
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
