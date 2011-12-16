@@ -20,6 +20,7 @@ int hd1(node x)
   return x.val;
 }
 
+
 int hd2(node x)
  infer [x] 
  requires x::ll<n>

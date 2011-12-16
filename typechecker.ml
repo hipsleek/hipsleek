@@ -87,7 +87,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
       (*print_endline ("\nCTX: " ^ Cprinter.string_of_context ctx);*)
       let orig_vars = CF.struc_fv spec_list in
       (*print_endline ("\nORIGVARS: " ^ Cprinter.string_of_typed_spec_var_list orig_vars);*)
-      let vars = List.map (fun (i,p) -> AS.get_spec_var_stab_infer_with_prime (i,p) orig_vars no_pos) b.Cformula.formula_inf_vars in
+      let vars = (* List.map (fun (i,p) -> AS.get_spec_var_stab_infer_with_prime (i,p) orig_vars no_pos) *) b.Cformula.formula_inf_vars in
       (*print_endline ("\nFML: " ^ Cprinter.string_of_ext_formula spec);*)
       (*print_endline ("\nVARS: " ^ Cprinter.string_of_typed_spec_var_list vars);*)
       let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_infer_vars = vars}) ctx in

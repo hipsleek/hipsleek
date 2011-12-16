@@ -53,7 +53,7 @@ and ext_formula =
 
 and ext_infer_formula =
   {
-    formula_inf_vars : (ident * primed) list;
+    formula_inf_vars : Cpure.spec_var list;
     formula_inf_continuation : struc_formula;
     formula_inf_pos : loc
   }
