@@ -36,7 +36,7 @@ let rec check_specs prog proc ctx spec_list e0 =
 (* assumes the pre, and starts the symbolic execution*)
 and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = 
   let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
-    (*let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
+    let _ = print_endline ("check_spec: do_spec_verification: \n ### spec: " ^ Cprinter.string_of_ext_formula spec) in
     let pos_spec = CF.pos_of_struc_formula [spec] in
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
@@ -107,7 +107,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
 			        let tmp_ctx = check_post prog proc res_ctx post_cond (Cformula.pos_of_formula post_cond) post_label in
-			        (CF.isSuccessListPartialCtx tmp_ctx) 
+			        (CF.isSuccessListPartialCtx tmp_ctx)
 		        in
 		        let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
 		        r
@@ -115,6 +115,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in	
   (* let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
+  let _ = print_endline ("\ncheck_specs: \n ### spec_list: \n" ^ (Cprinter.string_of_struc_formula spec_list) ^ "\n") in
   List.for_all do_spec_verification spec_list
 
 and check_exp prog proc ctx e0 label =
@@ -202,6 +203,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) -> begin
             let ctx1 = check_exp prog proc ctx rhs post_start_label in
+            (* let _ = print_endline ("check_exp: Assign: " ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
             let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
 	        let fct c1 = 
 	          if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
@@ -211,11 +213,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let ctx1 = (CF.Ctx c1) in
                 let _ = CF.must_consistent_context "assign 1a" ctx1  in
                 (* TODO : eps bug below *)
+                (* let _ = print_endline ("check_exp: Assign: before compose" ^ (Cprinter.string_of_context_short ctx1)) in *)
 	            let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] CF.Flow_combine pos in
                 let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in
+                (* let _ = print_endline ("check_exp: Assign: before push_exists_ctx" ^ (Cprinter.string_of_context_short tmp_ctx1)) in *)
 	            let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
                 let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in
+                (* let _ = print_endline ("check_exp: Assign: before elim_exists_ctx" ^ (Cprinter.string_of_context_short tmp_ctx2)) in *)
 	            let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
+                (* let _ = print_endline ("check_exp: Assign: after elim_exists_ctx" ^ (Cprinter.string_of_context_short resctx)) in *)
                 let _ = CF.must_consistent_context "assign 4" resctx  in
 		        resctx 
 	          else (CF.Ctx c1) in
@@ -573,7 +579,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
                   (*extract concurrent contexts*)
                   (* let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in *)
+                  (* let _ = print_string (("\n check_exp: SCall: before entail") ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in *)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
+                  (* let _ = print_string (("\n check_exp: SCall: after entail") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   (*add concurrent contexts*)
                   (* let rs = CF.add_context_to_list_failesc_context conj_states rs in *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
@@ -818,7 +826,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_var_pos = pos}) -> 
               begin
                 let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
-                CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
+                CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
               end
         | VarDecl _ -> ctx (* nothing to do *)
         | Unit pos -> ctx
@@ -1313,9 +1321,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
 			    let init_form = nox in
 			    let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
-          (*add default full permission = 1.0 to ante; 
-            need to add type of full perm to stab
-          *)
+                (*add default full permission = 1.0 to ante; 
+                  need to add type of full perm to stab
+                *)
                 let init_form =
                   if (Perm.allow_perm ()) then
                     CF.add_mix_formula_to_formula (full_perm_constraint ()) init_form

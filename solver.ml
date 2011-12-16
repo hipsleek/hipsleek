@@ -2717,6 +2717,7 @@ and filter_set (cl : list_context) : list_context =
     | SuccCtx l -> if Gen.is_empty l then cl else SuccCtx [(List.hd l)]
 	    (* setup the labeling in conseq and the fail context in cl *)
 
+(*a' -> CF.formula or CF.struc_formula*)
 and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
       (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
 	  (f: prog_decl->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof))
@@ -2781,6 +2782,8 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
         context_list_proofs = prf_l; } in
     (result, proof)
 
+(*conseq is either CF.formula or CF.struc_formula*)
+(* f is parameterized *)
 and heap_entail_struc_list_failesc_context (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
       (conseq) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =           
   let pr1 = Cprinter.string_of_list_failesc_context in
@@ -2789,6 +2792,8 @@ and heap_entail_struc_list_failesc_context (prog : prog_decl) (is_folding : bool
       (fun _ -> heap_entail_struc_list_failesc_context_x prog is_folding  has_post cl 
           (conseq) pos pid f to_string) cl
 
+(* conseq is either CF.formula or CF.struc_formula *)
+(* f is parameterized *)
 and heap_entail_struc_list_failesc_context_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
       (conseq) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =           
   (* print_string ("\ncalling struct_list_partial_context .."^string_of_int(List.length cl)); *)
@@ -2855,7 +2860,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 		(* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
         (*WN :fixing incorrect handling of esc_stack by adding a skeletal structure*)
         let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
-		let res = match list_context_res with
+		let res : list_failesc_context = match list_context_res with
 		  | FailCtx t -> [([(lbl,t)],esc_skeletal,[])]
 		  | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls in
 		(res, prf)) succ_branches in
@@ -3131,6 +3136,7 @@ and heap_entail_conjunct_lhs_struc_x
 	            let ws = CP.fresh_spec_vars base_exists in
 	            let st = List.combine base_exists ws in
 	            let new_struc = subst_struc st [(EBase {b with formula_ext_exists = []})]in
+                (*move existential vars in the RHS to LHS*)
 	            let new_ctx = push_exists_context ws ctx11 in
 	            let nc, np = inner_entailer 4 new_ctx new_struc in 
 	            (nc, (mkEexStep ctx11 [f] np))
@@ -3163,12 +3169,12 @@ and heap_entail_conjunct_lhs_struc_x
 		      if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	          else
 	            let rs = clear_entailment_history ctx11 in
-	            (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
+	            (* let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in *)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
-	            (*let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
+	            (* let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in *)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
-                (*let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in*)
+                (* let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in *)
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
 	            ((SuccCtx [rs4]),TrueConseq)
@@ -3610,6 +3616,10 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
           if !Globals.use_set then
 	        let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding  ctx_L f1 pos in
 	        let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding  ctx_R f2 pos in
+            let _ = print_endline ("heap_entail_conjunct_lhs: conseq with Or :" 
+                                   ^"\n ###rs1 = " ^ (Cprinter.string_of_list_context rs1) 
+                                   ^"\n ###rs2 = " ^ (Cprinter.string_of_list_context rs2)
+                                   ^"\n ###rs1 Or rs2 = " ^ (Cprinter.string_of_list_context (fold_context_left [rs1;rs2]))) in
 	        ((fold_context_left [rs1;rs2]),( mkOrRight ctx conseq [prf1; prf2]))		  
           else
 	        let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding  ctx_L f1 pos in
@@ -5292,8 +5302,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 			| _ -> a) [] r_succ_match)@estate.es_success_pts;
 		  es_unsat_flag = false;} in
 	  let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
-	  Debug.devel_pprint ("heap_entail_empty_heap: folding: formula is valid") pos;
-	  Debug.devel_pprint ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
+	  Debug.devel_pprint ("heap_entail_empty_rhs_heap: folding: formula is valid") pos;
+	  Debug.devel_pprint ("heap_entail_empty_rhs_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
 	  (*let _ = print_string ("An Hoa :: heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx) ^ "\n") in*)
 	  (SuccCtx[res_ctx], prf)
 	end
@@ -5309,8 +5319,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
 		  es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 			| Some s1,Some s2 -> (s1,s2)::a
 			| _ -> a) [] r_succ_match)@estate.es_success_pts;} in
-	  Debug.devel_pprint ("heap_entail_empty_heap: formula is valid") pos;
-	  Debug.devel_pprint ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
+	  Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is valid") pos;
+	  Debug.devel_pprint ("heap_entail_empty_rhs_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
    	  (*let _ = print_string ("An Hoa :: heap_entail_empty_heap :: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx) ^ "\n") in*)
 	  (SuccCtx[res_ctx], prf)
 	end
@@ -8444,7 +8454,7 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context)(conseq:struc_formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
   let _ = set_entail_pos pos in
-  Debug.devel_pprint ("heap_entail_init struc_list_failesc_context_init:"
+  Debug.devel_pprint ("heap_entail_struc_list_failesc_context_init:"
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
   ^"\n") pos; 

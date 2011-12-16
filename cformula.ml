@@ -5396,8 +5396,8 @@ let rec transform_context f (c:context):context =
 	match c with
 	| Ctx e -> 
         (*TO CHECK: temporarily put a guard condition here*)
-        let fl = flow_formula_of_ctx c no_pos in
-        if (is_conj_flow fl.formula_flow_interval) then c else
+        (* let fl = flow_formula_of_ctx c no_pos in *)
+        (* if (is_conj_flow fl.formula_flow_interval) then c else *)
         (f e)
 	| OCtx (c1,c2) -> 
         mkOCtx (transform_context f c1)(transform_context f c2) no_pos
