@@ -3547,6 +3547,11 @@ let rec collect_pre_heap ctx =
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
+let rec collect_formula ctx = 
+  match ctx with
+  | Ctx estate -> [estate.es_formula]
+  | OCtx (ctx1, ctx2) -> (collect_formula ctx1) @ (collect_formula ctx2) 
+
 let rec add_pre_heap ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_heap 

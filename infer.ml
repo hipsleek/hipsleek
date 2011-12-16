@@ -71,16 +71,23 @@ let is_inferred_pre_list_context ctx =
 (*   | Ctx estate -> is_inferred_pre estate  *)
 (*   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2) *)
 
-
 let collect_pre_heap_list_context ctx = 
   match ctx with
   | FailCtx _ -> []
   | SuccCtx lst -> List.concat (List.map collect_pre_heap lst)
 
+let collect_formula_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx lst -> List.concat (List.map collect_formula lst)
+
 let collect_pre_heap_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_heap c) cl))  ctx in
   List.concat r
 
+let collect_formula_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_formula c) cl))  ctx in
+  List.concat r
 
 let collect_pre_pure_list_context ctx = 
   match ctx with
