@@ -1,11 +1,11 @@
 void foo1(ref int i)
  infer [i] // infer better pre/post
  requires true
- ensures true; //'
+ ensures i'=i-1; //'
 /*
   expecting 
    requires i>0
-   ensures i'=i+1;
+   ensures i'=i-1;
 */
 {
   i = i-1;
@@ -32,7 +32,7 @@ void foo1a(ref int i)
 void foo2(ref int i)
   infer [i]
   requires true
-  ensures true;
+  ensures i-2<=i'<=i-1;
 /* expecting
  requires i>1
  ensures i-2<=i'<=i-1; //'

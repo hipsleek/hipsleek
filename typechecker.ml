@@ -12,6 +12,8 @@ module TP = Tpdispatcher
 module PTracer = Prooftracer
 module I = Iast
 module LP = Lemproving
+module Inf = Infer
+module AS = Astsimp
 
 let log_spec = ref ""
   (* checking expression *)
@@ -82,10 +84,16 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
    | Cformula.EInfer b ->
       Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
-      (* Need to check again *)
-      let nctx = CF.transform_context (fun es -> CF.Ctx {es with 
-        Cformula.es_infer_vars = List.map (fun (i,p) -> CP.SpecVar (UNK,i,p)) b.Cformula.formula_inf_vars}) ctx in
-      check_specs_a prog proc nctx b.Cformula.formula_inf_continuation e0
+      (*print_endline ("\nCTX: " ^ Cprinter.string_of_context ctx);*)
+      let orig_vars = CF.struc_fv spec_list in
+      (*print_endline ("\nORIGVARS: " ^ Cprinter.string_of_typed_spec_var_list orig_vars);*)
+      let vars = List.map (fun (i,p) -> AS.get_spec_var_stab_infer_with_prime (i,p) orig_vars no_pos) b.Cformula.formula_inf_vars in
+      (*print_endline ("\nFML: " ^ Cprinter.string_of_ext_formula spec);*)
+      (*print_endline ("\nVARS: " ^ Cprinter.string_of_typed_spec_var_list vars);*)
+      let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_infer_vars = vars}) ctx in
+(*                Inf.init_vars ctx vars orig_vars in*)
+      (*print_endline ("\nNEWCTX: " ^ Cprinter.string_of_context nctx);*)
+      check_specs_a prog proc nctx b.CF.formula_inf_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
 	    if(Immutable.is_lend post_cond) then
 	      	 Error.report_error
