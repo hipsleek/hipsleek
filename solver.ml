@@ -3569,7 +3569,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 		  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 		  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
           let rs1, prf1 = heap_entail_after_sat prog is_folding
-            c1 conseq pos (CF.add_to_steps ss "left OR 1 on ante") in  
+           c1 conseq pos (CF.add_to_steps ss "left OR 1 on ante") in  
           let rs2, prf2 = heap_entail_after_sat prog is_folding
             c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
 	      (*let _ = print_string("\nheap_entail_after_sat fail o1: " ^(string_of_bool (isFailCtx rs1))) in
@@ -3661,7 +3661,9 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 			Context.match_res_holes = [] ;
 			Context.match_res_type = Context.Root;
 			Context.match_res_rhs_node = x;
-			Context.match_res_rhs_rest = x} in
+			Context.match_res_rhs_rest = x;
+            (* Context.match_res_add_constr = CP.mkTrue no_pos; *)
+            } in
 			Context.M_unfold (mr,1)
 		  with
 			| Not_found -> generate_action t eset
@@ -6059,25 +6061,29 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	  (Cprinter.string_of_h_formula r_node)) pos;
     (* Debug.devel_pprint ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate)) pos; *)
     (* Debug.devel_pprint ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs)) pos; *)
-    let l_args, l_node_name, l_perm = match l_node with
+    let l_args, l_node_name, l_perm, l_ann = match l_node with
       | DataNode {h_formula_data_name = l_node_name;
         h_formula_data_perm = perm;
+        h_formula_data_imm = ann;
         h_formula_data_arguments = l_args}
       | ViewNode {h_formula_view_name = l_node_name;
         h_formula_view_perm = perm;
+        h_formula_view_imm = ann;
         h_formula_view_arguments = l_args} ->
-            (l_args, l_node_name,perm)
+            (l_args, l_node_name,perm,ann)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
-    let r_args, r_node_name, r_var, r_perm = match r_node with
+    let r_args, r_node_name, r_var, r_perm, r_ann = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
         h_formula_data_perm = perm;
+        h_formula_data_imm = ann;
         h_formula_data_arguments = r_args;
         h_formula_data_node = r_var}
       | ViewNode {h_formula_view_name = r_node_name;
         h_formula_view_perm = perm;
+        h_formula_view_imm = ann;
         h_formula_view_arguments = r_args;
         h_formula_view_node = r_var} ->
-            (r_args, r_node_name, r_var,perm)
+            (r_args, r_node_name, r_var,perm,ann)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in     
 
 	(* An Hoa : found out that the current design of do_match 
@@ -6086,6 +6092,15 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	   the remaining part, we need to update l_h and r_h with 
 	   the remaining of the l_node and r_node after matching 
 	   (respectively. *)
+    let (r,op) = subtype_ann_gen l_ann r_ann in
+    if r==false 
+    then 
+       (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Imm annotation mismatches" estate (CF.formula_of_heap HFalse pos) None pos, 
+  CF.mk_failure_must "911 : mismatched annotation" Globals.sl_error)), NoAlias)
+    else 
+      let rhs = (match op with 
+        | None -> rhs
+        | Some bf -> Cformula.add_pure_formula_to_formula bf rhs) in
     let l_h,l_p,l_fl,l_b,l_t = split_components estate.es_formula in
     let r_h,r_p,r_fl,r_b,r_t = split_components rhs in
 	(* An Hoa : match l_node and r_node and push the remain to l_h, r_h *)

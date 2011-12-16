@@ -415,8 +415,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  h_formula_data_imm = imm1}) ->
       (* imm1 = imm annotation on the LHS
 	 imm = imm annotation on the RHS *) 
-      let subtyp = subtype imm1 imm in
-          if ((CP.mem p1 aset) && (subtyp)) then 
+      (* let subtyp = subtype_ann imm1 imm in *)
+          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
             if (isLend imm) then (* not consuming the node *)
               let hole_no = Globals.fresh_int() in 
               [((Hole hole_no), f, [(f, hole_no)], Root)]
@@ -429,7 +429,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  h_formula_view_perm = perm1;
 	  h_formula_view_arguments = vs1;
 	  h_formula_view_name = c}) ->
-          if (subtype imm1 imm) then
+          (* if (subtype_ann imm1 imm) then *)
             (if (CP.mem p1 aset) then
           (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
               if (isLend imm) then
@@ -446,7 +446,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                 the choice of lemmas (coercions)*)
               vmm@cmm
             )
-          else []
+          (* else [] *)
     | Star ({h_formula_star_h1 = f1;
 	  h_formula_star_h2 = f2;
 	  h_formula_star_pos = pos}) ->

@@ -1861,6 +1861,9 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
   let res = List.map helper f in
   res
 
+and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula =
+  add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
+
 (*LDK : add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_formula  (f1_mix: MCP.mix_formula) (f2_f:formula) : formula =
   Gen.Debug.no_2 "add_mix_formula_to_formula_x" !print_mix_formula !print_formula

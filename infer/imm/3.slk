@@ -7,35 +7,47 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
-// expect v<:@I
+// (1) expect v<:@I
 infer [v] x::node<p,q>@v |- x::node<a,b>@I.
 print residue.
 
-
-// expect v<:@M
+// (2) expect v<:@M
 infer [v] x::node<p,q>@v |- x::node<a,b>.
 print residue.
 
-// expect x!=null & v<:@M
+// (3) expect x!=null & v<:@M
 infer [x,v] x::ll<n>@v |- x::node<a,b>.
 print residue.
 
-// expect x!=null & v<:@I
+// (4) expect x!=null & v<:@I
 infer [x,v] x::ll<n>@v |- x::node<a,b>@I.
 print residue.
 
-// expect n>0 & v<:@I
+// (5) expect n>0 & v<:@I
 infer [n,v] x::ll<n>@v |- x::node<a,b>@I.
 print residue.
+/*
+TODO : why is there a disjunction?
+Inferred Heap:[]
+Inferred Pure:[ n=1 & v<=1 | v<=1 & 2<=n, n!=0]
+*/
 
-// expect n>0 & v<:@M
+// (6) expect n>0 & v<:@M
 infer [n,v] x::ll<n>@v |- x::node<a,b>.
 print residue.
 
-
-// expect n>0 & v<:@L
+// (7) expect n>0 & v<:@L
 infer [n,v] x::ll<n>@v |- x::node<a,b>@L.
 print residue.
+
+// (8) expect n>0 & v<:@I
+infer [n] x::ll<n> |- x::node<a,b>.
+print residue.
+
+// (9) mismatched imm annotations
+infer [] x::ll<n>@L & n>1 |- x::node<a,b>@L*b::node<_,_>.
+print residue.
+
 
 //M<:I<:L
 //M v>=2

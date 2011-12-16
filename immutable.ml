@@ -456,20 +456,35 @@ and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula =
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L *)
 
-and subtype (imm1 : ann) (imm2 : ann) : bool = 
-    Gen.Debug.no_2 "subtype" 
+and subtype_ann (imm1 : ann) (imm2 : ann) : bool = 
+    Gen.Debug.no_2 "subtype_ann" 
       (Cprinter.string_of_imm) 
       (Cprinter.string_of_imm) 
       string_of_bool 
-      (fun _ _ -> subtype_x imm1 imm2) imm1 imm2  
+      (fun _ _ -> subtype_ann_x imm1 imm2) imm1 imm2  
 
-and subtype_x (imm1 : ann) (imm2 : ann) : bool = 
-    match imm1 with
-      | ConstAnn(Mutable) -> true
-      | ConstAnn(Imm) -> (isImm imm2) || (isLend imm2)
-      | ConstAnn(Lend) -> (isLend imm2)
-      | _ -> false
+(* bool denotes possible subyping *)
+and subtype_ann_x (imm1 : ann) (imm2 : ann) : bool =
+  let (r,op) = subtype_ann_gen imm1 imm2 in r
   
+and subtype_ann_gen (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) =
+  let (f,op) = 
+   match imm1 with
+    | PolyAnn v1 ->
+          (match imm2 with
+            | PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
+            | ConstAnn k2 -> 
+                  (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+          )
+    | ConstAnn k1 ->
+          (match imm2 with
+            | PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
+             | ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
+          ) 
+  in match op with
+    | None -> (f,None)
+    | Some (l,r) -> (f, Some (CP.BForm((CP.SubAnn(l,r,no_pos),None),None)) )
+
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =
   match ctx with
