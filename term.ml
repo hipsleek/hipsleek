@@ -1,55 +1,133 @@
 open Globals
-open Cast
-open Cformula
-open Cprinter
 open Gen
+open Cprinter
 
 module CP = Cpure
 module CF = Cformula
 module TP = Tpdispatcher
+module PT = Prooftracer
+module CPr = Cprinter
+
+type transition = int * int
+
+type term_reason =
+  (* For MayTerm *)
+  | Invalid_Measure (* The variance is not well-founded *)
+  | Invalid_Transition of transition (* Transition from a lower label to a higher one *)
+  | Valid_Transition of transition
+  (* For Term *)
+  | Valid_Measure (* The variance is well-founded *)
+  | Base_Case_Entered (* Program state without loop *)
+  (* For NonTerm*)
+  | Infinite_Loop_Entered (* Transition to an infinite loop *)
+  | Infinite_Loop
+
+(* The termination can only be determined when 
+ * a base case or an infinite loop is reached *)  
+type term_status =
+  | Term of term_reason
+  | NonTerm of term_reason
+  | MayTerm of term_reason
+  | Unreachable of CF.formula (* Original context causes unreachable *)
+
+type term_res = transition option * term_status
+
+type term_res_table = (loc, term_res list) Hashtbl.t
 
 let variance_graph = ref []
 let var_checked_list = ref []
+
+(* Printing Utilities *)
+let pr_transition (trans: transition) =
+  let (src, dst) = trans in
+  fmt_string "Transition ";
+  pr_int src; fmt_string "->"; pr_int dst
+
+let string_of_transition (trans: transition) = 
+  poly_string_of_pr pr_transition trans
+
+let pr_term_reason = function
+  | Invalid_Measure -> fmt_string "The given variance is not well-founded."
+  | Invalid_Transition _ -> fmt_string "The transition is not valid."
+  | Valid_Transition _ -> fmt_string "The transition is valid."
+  | Valid_Measure -> fmt_string "The given variance is well-founded."
+  | Base_Case_Entered -> fmt_string "The base case is reached."
+  | Infinite_Loop_Entered -> fmt_string "An infinite loop is entered."
+  | Infinite_Loop -> fmt_string "An infinite loop."
+
+let string_of_term_reason (reason: term_reason) =
+  poly_string_of_pr pr_term_reason reason
+
+let pr_term_status = function
+  | Term reason -> fmt_string "Terminating: "; pr_term_reason reason
+  | NonTerm reason -> fmt_string "Non-terminating: "; pr_term_reason reason
+  | MayTerm reason -> fmt_string "May-terminating: "; pr_term_reason reason
+  | Unreachable f -> fmt_string "Unreachable state with the context "; pr_formula f
+
+let string_of_term_status = poly_string_of_pr pr_term_status
+
+let pr_opt_transition = function
+  | None -> fmt_string ""
+  | Some trans -> pr_transition trans
+
+let pr_term_res (trans, status) =
+  (*
+  fmt_open_vbox 0;
+  pr_vwrap "" pr_opt_transition trans;
+  pr_vwrap "" pr_term_status status
+  *)
+  pr_opt_transition trans; 
+  fmt_string ": ";
+  pr_term_status status
+
+let string_of_term_res = poly_string_of_pr pr_term_res
+
+let pr_term_res_tbl_ele (pos, term_res_list) = 
+  (*fmt_open_vbox 0;*)
+  pr_vwrap "Result of termination checking at " 
+    (fun p -> fmt_string (string_of_loc p)) pos;
+  fmt_string "\n";
+  pr_list_vbox_wrap "\n" pr_term_res term_res_list
+
+let pr_term_res_tbl tbl_res = 
+  Hashtbl.iter (fun pos res -> pr_term_res_tbl_ele (pos, res)) tbl_res
+
+(* End of Printing Utilities *)
 
 let update_graph vg vc = 
   variance_graph := !variance_graph @ [vg];
   var_checked_list := !var_checked_list @ [vc]
 
-let rec equalpf_a f1 f2 =
-  let _ = begin 
+let equal_pf f1 f2 =
+  (*let _ = begin 
     TP.push_suppress_imply_output_state ();
     TP.suppress_imply_output () 
-  end in
+  end in*)
   let r1,_,_ = TP.imply f1 f2 "" false None in
   let r2,_,_ = TP.imply f2 f1 "" false None in
-  let _ = begin TP.restore_suppress_imply_output_state () end in
+  (*let _ = begin TP.restore_suppress_imply_output_state () end in*)
   r1 & r2
 
-and equalpf f1 f2 = 
-  let pr = Cprinter.string_of_pure_formula in
-  Gen.Debug.no_2 "equalpf" pr pr string_of_bool equalpf_a f1 f2
+let equal_pf f1 f2 = 
+  let pr = CPr.string_of_pure_formula in
+  Gen.Debug.no_2 "equalpf" pr pr string_of_bool equal_pf f1 f2
 
-and comparepf_a f1 f2 =
-  let _ = begin 
-    TP.push_suppress_imply_output_state ();
-    TP.suppress_imply_output () 
-  end in
-  let r1,_,_ = TP.imply f1 f2 "" false None in
-  let r2,_,_ = TP.imply f2 f1 "" false None in
-  let _ = begin TP.restore_suppress_imply_output_state () end in
-  if (r1 & r2) then 0
-  else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
+let compare_pf f1 f2 =
+  if (equal_pf f1 f2) then 0
+  else
+    let pr = CPr.string_of_pure_formula in 
+    compare (pr f1) (pr f2)
 	
-and comparepf f1 f2 =
-  let pr = Cprinter.string_of_pure_formula in
-  Gen.Debug.no_2 "comparepf" pr pr string_of_int comparepf_a f1 f2
+let compare_pf f1 f2 =
+  let pr = CPr.string_of_pure_formula in
+  Gen.Debug.no_2 "comparepf" pr pr string_of_int compare_pf f1 f2
 
 module FComp = 
 struct
   type t = CP.formula
-  let compare = comparepf
+  let compare = compare_pf
   let hash = Hashtbl.hash
-  let equal = equalpf
+  let equal = equal_pf
 end
 
 module IG = Graph.Persistent.Digraph.Concrete(FComp)
@@ -87,7 +165,7 @@ let build_state_trans_graph ls =
 let scc_numbering g =
   let scc_list = IGC.scc_list g in
   let scc_list = snd (List.fold_left (fun (n,rs) l -> (n+1, rs @ [(n,l)])) (0,[]) scc_list) in
-  let mem e ls = List.exists (fun e1 -> equalpf e e1) ls in
+  let mem e ls = List.exists (fun e1 -> equal_pf e e1) ls in
   let meml ls1 ls2 = List.exists (fun e -> mem e ls2) ls1 in
 
   let scc_graph = GS.empty in
@@ -130,141 +208,6 @@ let variance_numbering ls g =
     in List.map (fun e -> helper e) ls
   else ls
 
-let rec heap_entail_variance
-	  (prog : prog_decl) 
-	  (es : entail_state) 
-	  (e : ext_variance_formula) =
-  let pr1 = Cprinter.string_of_entail_state in
-  let pr2 e = pr_list (pr_pair Cprinter.string_of_formula_exp (pr_option Cprinter.string_of_formula_exp)) e.formula_var_measures in
-  Gen.Debug.no_2 "heap_entail_variance" pr1 pr2 pr_no (fun _ _ -> heap_entail_variance_x prog es e) es e
-
-and heap_entail_variance_x
-	  (prog : prog_decl) 
-	  (es : entail_state) 
-	  (e : ext_variance_formula) = ()
-(*
-  (*let loc = e.formula_var_pos in*)
-  let loc = es.es_var_loc in
-  let ctx = (CF.Ctx es) in
-
-  if CF.isAnyFalseCtx ctx then (* Unreachable state *)
-    let _ = Debug.print_info "Termination" "Unreachable state" loc in
-    let _ = if !print_proof then 
-      Prooftracer.push_term_checking loc false;
-      Prooftracer.push_pop_term_unreachable_context es.CF.es_var_ctx_lhs;
-      Prooftracer.pop_div () in
-	  ()
-  else
-	let _ = if !print_proof then Prooftracer.push_term_checking loc true in
-	let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e ->
-		let str = Cprinter.string_of_formula_exp e in
-		if rs = "" then str else rs ^ ", " ^ str) "" el) ^ "]" in
-
-  	let _ = Debug.print_info "Termination" 
-	  ("Transition from state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ 
-		  " to state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) loc in
-
-	let var_label_rhs = match e.formula_var_label with
-	  | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
-	  | Some i -> i
-  	in
-
-	let var_label_lhs = match es.es_var_label with
-	  | None -> report_error no_pos ("Termination: error with auto-numbering variance label - the variance does not have a label \n")
-	  | Some i -> i
-	in
-	
-    (*if (var_label_lhs = var_label_rhs && var_label_rhs > 0) then*) (* Case 1: In loop *)
-    if (var_label_lhs = var_label_rhs) then 
-	  let _ = print_string ("Termination: loop at state (" ^ (string_of_int var_label_lhs) ^ ") " ^ 
-		  (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) in
-	  let lhs_measures = es.es_var_measures in
-	  let rhs_measures = e.formula_var_measures in
-	  let rec binding lhs_m rhs_m =
-		if ((List.length lhs_m) != (List.length rhs_m)) then
-		  report_error no_pos ("Termination: variance checking: LHS does not match RHS \n")
-		else match lhs_m with
-		  | [] -> []
-		  | h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
-	  let binding_measures = binding lhs_measures rhs_measures in
-	  
-	  let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m1>=lb1 & m2>n2 & m2>=lb2 *) 
-		let (_, term_formula) = List.fold_right (fun (l,r) (flag,res) ->
-			let lower_bound = match (snd r) with
-			  | None -> report_error no_pos ("Termination: variance checking: error with lower bound in termination checking \n")
-			  | Some exp -> exp in
-			let boundedness_checking_formula = CP.BForm ((CP.mkGte l lower_bound loc, None), None) in
-			let lexico_ranking_formula = 
-			  if flag then CP.BForm ((CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None), None)
-			  else CP.BForm ((CP.mkEq l (fst r) loc, None), None) in
-			let f = CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc in	
-			(false, CP.mkAnd f res loc)) lst_measures (true, CP.mkTrue loc)
-		in
-		(*let _ = print_string ("\nTermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
-        let _ = if !print_proof then Prooftracer.push_entail_variance (es.CF.es_formula, term_formula) in     
-		(*let _ = begin Tpdispatcher.push_suppress_imply_output_state ();
-         * Tpdispatcher.suppress_imply_output () end in*)
-		let (rs, _) = (heap_entail_conjunct_lhs_struc prog false false ctx [mkEBase term_formula loc] no_pos None) in
-		(*let _ = begin Tpdispatcher.restore_suppress_imply_output_state () end
-         * in*)
-        let _ = if !print_proof then Prooftracer.pop_div(); in 
-        
-	  	let res = not (CF.isFailCtx rs) in
-		(*let _ = if !print_proof then Prooftracer.push_pop_entail_variance
-         * (es.CF.es_formula, term_formula, res) in*)
-		res
-	  in
-
-	  let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
-		List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
-	  in
-	  (*
-		let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
-		if (List.exists (fun (rs, prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
-	  *)
-	  let res = List.exists (fun lm -> fun_check_term lm) lexico_measures in
-	  
-	  let _ = if !print_proof then Prooftracer.push_pop_entail_variance_res res in
-	  let _ = if !print_proof then begin Prooftracer.pop_div (); end in
-	  
-	  if res then
-		Debug.print_info "Termination" 
-			    ("Checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
-	  else
-	    Debug.print_info "Termination" 
-			    ("Checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc
-    
-    (*
-	else if (var_label_lhs = var_label_rhs && var_label_rhs = 0) then (* Case 2: Base case *)
-	  Debug.print_info "Termination" ("terminating state " ^ (string_of_int var_label_lhs)) loc
-	else if (var_label_lhs = var_label_rhs && var_label_rhs = -1) then (* Case 3: Non-terminating cases *)
-	  Debug.print_info "Termination" ("non-terminating state ") loc
-	  *)
-    else if (var_label_lhs > var_label_rhs) then (* Case 4: Loop transition: state transition at boundary of loop *)
-	  (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
-      if (var_label_rhs > 0) then
-	      Debug.print_info "Termination" ("Transition from variance " ^ (string_of_int var_label_lhs) ^ 
-		      " to " ^ (string_of_int var_label_rhs) ^ " : safe") loc
-      else if (var_label_rhs == 0) then
-        Debug.print_info "Termination" ("Terminating state " ^ (string_of_int var_label_rhs)) loc
-      else 
-        Debug.print_info "Termination" ("Non-terminating state " ^ (string_of_int var_label_rhs)) loc
-
-	else (* Case 5: Reverved loop transtion: might lead to non-terminating case *)
-	    Debug.print_info "Termination" ("Transition from variance " ^ (string_of_int var_label_lhs) ^ 
-		  " to " ^ (string_of_int var_label_rhs) ^ " : invalid") loc
-*)
-
-let termination_check prog = 
-  let g = build_state_trans_graph !variance_graph in
-	let cl = variance_numbering !var_checked_list g in
-  if (List.length cl) != 0 then
-    let _ = if !Globals.print_proof then begin Prooftracer.push_term (); end in
-    let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
-    if !Globals.print_proof then begin Prooftracer.pop_div (); end 
-  else ()
-
-
 (* Termination: Add function name into names of 
  * its variables to distinguish them - 
  * For a better output *)
@@ -282,6 +225,7 @@ let term_rename_var (f: CP.formula) (mn: Globals.ident) : CP.formula =
 	in
   CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) f
 
+(* Update context with information of termination checking *)  
 let term_add_source_condition (sc: CP.formula) (mn: Globals.ident) (ctx: CF.context) pos : CF.context =  
   let n_sc = term_rename_var sc mn in
   (* Termination: Add source condition - 
@@ -289,7 +233,7 @@ let term_add_source_condition (sc: CP.formula) (mn: Globals.ident) (ctx: CF.cont
 	CF.transform_context (fun es ->
     CF.Ctx { es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs n_sc pos }) ctx
 
-let term_add_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context =
+let term_add_var_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx { es with
     CF.es_var_measures = List.map (fun (e, b) -> e) v.CF.formula_var_measures;
 		CF.es_var_label = v.CF.formula_var_label }) ctx 
@@ -297,6 +241,14 @@ let term_add_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context
 let term_add_init_ctx (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx 
   {es with CF.es_var_init_ctx = es.CF.es_formula }) ctx
+
+let term_add_var_subst fr_vars to_vars mn sctx pos =
+  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
+  let id = fun x -> x in
+  let fs = fun es -> 	CF.Ctx { es with
+    CF.es_var_subst = es.CF.es_var_subst @ var_subst;
+		CF.es_var_loc = pos } in
+  CF.transform_list_failesc_context (id, id, fs) sctx
 
 let rec term_strip_variance ls = 
   match ls with
@@ -307,3 +259,121 @@ let rec term_strip_variance ls =
       | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, term_strip_variance sf)) c.CF.formula_case_branches})::(term_strip_variance rest)
       | _ -> spec::(term_strip_variance rest)
 
+let term_add_unreachable_state pos =
+  (* Termination: Add a false entail state for * 
+   * unreachable recursive call if variance exists *)
+	var_checked_list := !var_checked_list @ 
+    [({ (CF.false_es CF.mkFalseFlow pos) with
+          CF.es_var_label = Some (-1); CF.es_var_loc = pos; },
+		  CF.empty_ext_variance_formula)]
+
+(* Checking the well-foundedness of the loop variance *)    
+let term_check_loop_variance (src: CF.entail_state) (dst: CF.ext_variance_formula) f_imply trans pos : term_res = 
+  let src_measures = src.CF.es_var_measures in
+  let dst_measures = dst.CF.formula_var_measures in
+
+  (* To handle the lexicographical order *)
+	let binding_measures = 
+    try List.map2 (fun s d -> (s, d)) src_measures dst_measures
+    with _ -> report_error pos ("Termination: Well-foundedness checking: 
+                                Variances of the state transition do not match \n")
+  in
+
+  (* To check the well-foundedness of the lexicographical order *)
+  let fun_check_term lst_measures = (* [(s1,d1),(s2,d2)] -> s1=d1 & s1>=lb1 & s2>d2 & s2>=lb2 *) 
+		let (_, term_formula) = List.fold_right (fun (s,d) (flag,res) ->
+			let lb = match (snd d) with
+			  | None -> report_error pos ("Termination: Well-foundedness checking:
+                                    Lower bound is not found \n")
+			  | Some exp -> exp in
+			let boundedness_checking_formula = CP.BForm ((CP.mkGte s lb pos, None), None) in (* s>=lb*)
+			let lexico_ranking_formula = 
+			  if flag then CP.BForm ((CP.mkGt (CP.mkSubtract s (fst d) pos) (CP.mkIConst 0 pos) pos, None), None) (* s>d *)
+			  else CP.BForm ((CP.mkEq s (fst d) pos, None), None) in (* s=d *)
+			let f = CP.mkAnd lexico_ranking_formula boundedness_checking_formula pos in	
+			(false, CP.mkAnd f res pos)) lst_measures (true, CP.mkTrue pos)
+		in
+		
+    let (rs, _) = f_imply src term_formula pos in
+      (*heap_entail_conjunct_lhs_struc prog false false (CF.Ctx src) [mkEBase term_formula loc] pos None in*)
+	  let res = not (CF.isFailCtx rs) in res
+	in
+
+  (* To create input for fun_check_term from the binding measure *)
+	let lexico_measures = (* [(s1,d1),(s2,d2)] -> [[(s1,d1)],[(s1,d1),(s2,d2)]] *)
+		List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
+	in
+
+  let res = List.exists (fun lm -> fun_check_term lm) lexico_measures in
+	  
+  (* A valid measure can ensure the termination *)
+  (* In case of an invalid measure, the result 
+   * should be MayTerm *)
+	if res then (trans, Term Valid_Measure) else (trans, MayTerm Invalid_Measure)
+
+let tem_tbl_res_update (tbl_res: term_res_table ref) pos tres =
+  let res = 
+    try Hashtbl.find !tbl_res pos
+    with _ -> []
+  in 
+  Hashtbl.replace !tbl_res pos (res@[tres])
+  (*try
+    let res = Hashtbl.find !tbl_res pos in
+    Hashtbl.replace !tbl_res pos res@[tres]
+  with 
+    | Not_found -> Hashtbl.add !tbl_res pos [tres]*)
+
+let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
+  f_imply (tbl_res: term_res_table ref) : term_res =
+  let pos = es.CF.es_var_loc in
+  let ctx = (CF.Ctx es) in
+
+  if CF.isAnyFalseCtx ctx then (* Unreachable state *)
+    (None, Unreachable es.CF.es_orig_ante)
+  else (* State transition *)
+    let label_err = ("Termination: The variance label is not provided or cannot be inferred.") in
+    let var_label_dst = match e.CF.formula_var_label with
+	    | None -> report_error pos label_err 	    
+      | Some i -> i
+  	in
+
+	  let var_label_src = match es.CF.es_var_label with
+      | None -> report_error pos label_err
+	    | Some i -> i
+	  in
+
+    let trans = Some (var_label_src, var_label_dst) in
+
+    let res = 
+      (* Case 1: In loop - 
+       * The well-foundedness of the variance need to be checked *)
+      if (var_label_src = var_label_dst && var_label_dst > 0) then
+        term_check_loop_variance es e f_imply trans pos
+      (* Case 2: Base case reached *)
+      else if (var_label_src > var_label_dst && var_label_dst = 0) then
+        (trans, Term Base_Case_Entered)
+      (* Case 3: Infinite loop is entered *)
+      else if (var_label_src > var_label_dst && var_label_dst = -1) then
+        (trans, NonTerm Infinite_Loop_Entered)
+      (* Case 4: In an infinite loop *)
+      else if (var_label_src = var_label_dst && var_label_dst = -1) then
+        (trans, NonTerm Infinite_Loop)
+      (* Case 5: A valid transition *)
+      else if (var_label_src > var_label_dst && var_label_dst > 0) then
+        (trans, MayTerm (Valid_Transition (var_label_src, var_label_dst)))
+      (* Case 6: An invalid transition *)
+      else if (var_label_src < var_label_dst) then
+        (trans, MayTerm (Invalid_Transition (var_label_src, var_label_dst)))
+      else
+        (trans, NonTerm Infinite_Loop)
+    in
+    tem_tbl_res_update tbl_res pos res; res
+
+	
+let termination_check f_imply =
+  let g = build_state_trans_graph !variance_graph in
+	let cl = variance_numbering !var_checked_list g in
+  let tbl_res = ref (Hashtbl.create 100) in
+  let term_res = List.map (fun (es, e) -> term_check_transition es e f_imply tbl_res) cl in
+  (*List.iter (fun r -> pr_term_res r) term_res;*)
+  pr_term_res_tbl !tbl_res

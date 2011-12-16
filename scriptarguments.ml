@@ -236,7 +236,7 @@ let common_arguments = [
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
   (* Termination options *)
-  ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
+  ("--term_auto" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");

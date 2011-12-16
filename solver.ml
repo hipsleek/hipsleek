@@ -3196,8 +3196,8 @@ and heap_entail_conjunct_lhs_struc_x
   (*       (filter_set tmp, prf) *)
   (*     end in *)
 
-let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
-	Gen.Debug.no_2 "helper_inner"
+	let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
+		Gen.Debug.no_2 "helper_inner"
 	    Cprinter.string_of_context
 	    Cprinter.string_of_ext_formula
 	    (fun (lc, _) -> Cprinter.string_of_list_context lc)
@@ -3309,39 +3309,40 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
 	            ((SuccCtx [rs4]),TrueConseq)
-	    | EVariance e ->
-              let es = match ctx11 with
-                | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
-                | Ctx es -> es in 
-              let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
-              let t = List.map (fun (_, v, mn) ->
-                  let CP.SpecVar (t, i, p) = v in
-                  let nid = i ^ "_" ^ mn in
-                  CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
+	    	| EVariance e ->
+					let _ = print_string ("inner_entailer: ctx: " ^ (Cprinter.string_of_context ctx11) ^ "\n") in
+          let es = match ctx11 with
+						| OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
+            | Ctx es -> es in
+					let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
+          let t = List.map (fun (_, v, mn) ->
+						let CP.SpecVar (t, i, p) = v in
+            let nid = i ^ "_" ^ mn in
+            CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
 
-              let normalize_ctx_rhs =
-                let rec filter pformula =
-                  match pformula with
-                    | CP.And (f1, f2, pos) ->
-                          let nf2 = CP.subst_avoid_capture f t f2 in
-                          let nf1 = filter f1 in
-                          if (CP.equalFormula f2 nf2) then nf1
-                          else CP.mkAnd nf1 nf2 pos
-                    | _ ->
-                          let nf = CP.subst_avoid_capture f t pformula in
-                          if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
-                          else nf
-                in filter es.es_var_ctx_rhs
-              in
+          let normalize_ctx_rhs =
+						let rec filter pformula =
+							match pformula with
+								| CP.And (f1, f2, pos) ->
+									let nf2 = CP.subst_avoid_capture f t f2 in
+                  let nf1 = filter f1 in
+                  if (CP.equalFormula f2 nf2) then nf1
+                  else CP.mkAnd nf1 nf2 pos
+                | _ ->
+									let nf = CP.subst_avoid_capture f t pformula in
+                  if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
+                  else nf
+            in filter es.es_var_ctx_rhs
+          in
 
-              (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
-                let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
+          (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
+          let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
 
-              let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
+          let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
 
-              Term.variance_graph := !Term.variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
-              Term.var_checked_list := !Term.var_checked_list @ [(nes, e)];
-              inner_entailer 7 ctx11 e.Cformula.formula_var_continuation
+          Term.variance_graph := !Term.variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
+          Term.var_checked_list := !Term.var_checked_list @ [(nes, e)];
+          inner_entailer 7 ctx11 e.Cformula.formula_var_continuation
     end 
 
   and inner_entailer i (ctx22 : context) (conseq : struc_formula): list_context * proof =

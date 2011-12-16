@@ -8,7 +8,7 @@ open Lexing
 open Cast 
 open Cformula
 open Mcpure_D
-open Gen.Basic 
+open Gen.Basic
 
 module P = Cpure
 module MP = Mcpure
@@ -459,23 +459,20 @@ let string_of_spec_var x =
     | P.SpecVar (t, id, p) ->
 		(* An Hoa : handle printing of holes *)
 		let real_id = if (id.[0] = '#') then "#" else id in
-	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
-        | Primed -> "'"
-        | Unprimed -> "" )
+	  real_id (* ^":"^(string_of_typ t) *) ^ (match p with
+      | Primed -> "'"
+      | Unprimed -> "" )
+
 let string_of_imm imm = match imm with
   | Imm -> "@I"
   | Lend -> "@L"
   | _ -> "@M"
-
-
-
 
 let string_of_cperm perm =
   let perm_str = match perm with
     | None -> ""
     | Some f -> string_of_spec_var f
   in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
-
 
 let string_of_derv dr = 
   if dr then "@D" else ""
@@ -515,7 +512,7 @@ let exp_wo_paren (e:P.exp) =
     | P.Var _ 
     | P.IConst _ 
     | P.FConst _ | P.Max _ |   P.Min _ | P.BagUnion _ | P.BagIntersect _ 
- -> true
+      -> true
     | _ -> false
 
 let b_formula_assoc_op (e:P.b_formula) : (string * P.exp list) option = None
@@ -2427,4 +2424,5 @@ print_coerc_decl_list := string_of_coerc_decl_list;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Smtsolver.print_ty_sv := string_of_typed_spec_var;;
-Coq.print_p_f_f := string_of_pure_formula ;;
+Coq.print_p_f_f := string_of_pure_formula;;
+

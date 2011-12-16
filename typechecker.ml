@@ -77,7 +77,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 				r
 		| Cformula.EVariance v ->
 		(* Termination: Add termination measure into context *)
-				let nctx = Term.term_add_measure v ctx in
+				let nctx = Term.term_add_var_measure v ctx in
 				check_specs_a prog proc nctx v.Cformula.formula_var_continuation e0
 		| Cformula.EAssume (x, post_cond, post_label) ->
 				if (Immutable.is_lend post_cond) then
@@ -521,18 +521,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 						(* 0 l in let _ = print_string ("New mn: " ^ new_mn ^ "\n") in             *)
 						
 						(* Termination: Cache the subst for output pretty printing *)
-						let sctx = if not ir then sctx else
-								let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
-								List.map (fun fctx ->
-									let (lb, estk, lbctx) = fctx in
-									let nlbctx = List.map (fun bctx ->
-										let (pt, ctx) = bctx in
-										let nctx = CF.transform_context (fun es ->
-											CF.Ctx { es with
-												CF.es_var_subst = es.CF.es_var_subst @ var_subst;
-												CF.es_var_loc = pos }) ctx in (pt, nctx)) lbctx in
-								(lb, estk, nlbctx)) sctx
-						in
+						let sctx = if not ir then sctx else Term.term_add_var_subst fr_vars to_vars mn sctx pos in
 						
 						let renamed_spec = CF.subst_struc st1 renamed_spec in
 						let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
@@ -545,15 +534,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 								"Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": "
 								^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
 						let _ = Debug.devel_pprint (str_debug_variance) pos in
-						let _ =
-							if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then
-								(* Termination: Add a false entail state for * unreachable recursive call  *)
-								(* if variance exists                                                      *)
-								Term.var_checked_list := !Term.var_checked_list @ [(
-									{ (CF.false_es CF.mkFalseFlow pos) with
-										CF.es_var_label = Some (-1);
-										CF.es_var_loc = pos; },
-									CF.empty_ext_variance_formula)];
+						let _ = if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then 
+              (* Unreachable state encountered *)
+              Term.term_add_unreachable_state pos  
 						in
 						
 						(* TODO: call the entailment checking function in solver.ml *)
@@ -991,23 +974,8 @@ let check_prog (prog : prog_decl) =
 		end;
 	ignore (List.map (check_data prog) prog.prog_data_decls);
 	ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	Term.termination_check prog
+  let f_imply = fun src term_formula pos ->
+    Solver.heap_entail_conjunct_lhs_struc prog false false (CF.Ctx src) 
+      [CF.mkEBase term_formula pos] pos None in
+	Term.termination_check f_imply
 
-(* let rec numbers num = if num = 1 then [0] else (numbers                 *)
-(* (num-1))@[(num-1)]in let filtered_proc = (List.filter (fun p ->         *)
-(* p.proc_body <> None) prog.prog_proc_decls) in let num_list = numbers    *)
-(* (List.length filtered_proc) in let prog_proc_decls_num = if !sort_input *)
-(* then List.map2 (fun a b -> (a,b)) (List.sort compare_proc_decl          *)
-(* filtered_proc) num_list else List.map2 (fun a b -> (a,b)) filtered_proc *)
-(* num_list in if (!num_para = 0) then ignore(Paralib1.map_para init_files *)
-(* (check_proc_wrapper_map prog) prog_proc_decls_num) else if (!num_para > *)
-(* 1) then if !Tpdispatcher.external_prover then                           *)
-(* ignore(Paralib1v2.map_para_net init_files (check_proc_wrapper_map_net   *)
-(* prog) prog_proc_decls_num !num_para) else ignore(Paralib1v2.map_para    *)
-(* init_files (check_proc_wrapper_map prog) prog_proc_decls_num !num_para) *)
-(* else if (!num_para = 1) then begin ignore (List.map (check_proc_wrapper *)
-(* prog) prog.prog_proc_decls); if !webserver then Net.IO.write_job_web    *)
-(* (!Tpdispatcher.Netprover.out_ch) (-1) "" "" 1 else () end else ()       *)
-
-let check_prog (prog : prog_decl) =
-	Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog

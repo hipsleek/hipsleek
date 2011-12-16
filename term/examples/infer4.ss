@@ -5,7 +5,7 @@ int foo (int x)
   x=5 -> variance (0) ensures res=5;
   x>5 -> case {
     exists(a:x=2*a)
-      -> variance (-1) ensures false;
+      -> variance (2) ensures false;
     !(exists(b:x=2*b))   
       -> variance (1) [x]
          ensures res=5; }
