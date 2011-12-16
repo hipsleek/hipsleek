@@ -13,6 +13,8 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
+type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
+
 type typed_ident = (typ * ident)
 
 and formula_type = 
@@ -157,7 +159,7 @@ h_formula_phase_pos : loc }
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
 						h_formula_data_derv : bool;
-                        h_formula_data_imm : heap_ann;
+                        h_formula_data_imm : ann;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
                         (*added to support fractional splitting of data nodes*)
                         h_formula_data_origins : ident list;
@@ -172,7 +174,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
-                        h_formula_view_imm : heap_ann;
+                        h_formula_view_imm : ann;
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
@@ -209,6 +211,26 @@ and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
 (* utility functions *)
+
+
+let isLend(a : ann) : bool = 
+  match a with
+    | ConstAnn(Lend) -> true
+    | _ -> false
+
+and isMutable(a : ann) : bool = 
+  match a with
+    | ConstAnn(Mutable) -> true
+    | _ -> false
+
+and isImm(a : ann) : bool = 
+  match a with
+    | ConstAnn(Imm) -> true
+    | _ -> false
+
+let fv_ann (a:ann) = match a with
+  | ConstAnn _ -> []
+  | PolyAnn v -> [v]
 
 let empty_ext_variance_formula =
 	{
@@ -946,11 +968,13 @@ and fv_simple_formula (f:formula) =
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
-        perm_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
+        let ann_vars = fv_ann (h.h_formula_data_imm)  in
+        perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
     | ViewNode h -> 
         let perm = h.h_formula_view_perm in
         let perm_vars = fv_cperm perm in
-        perm_vars@(h.h_formula_view_node::h.h_formula_view_arguments)
+        let ann_vars = fv_ann (h.h_formula_view_imm)  in
+        perm_vars@ann_vars@(h.h_formula_view_node::h.h_formula_view_arguments)
     | _ -> []
 
 (*LDK: don't count perm var as free vars in a coercion*)
@@ -1626,11 +1650,14 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v;
                h_formula_data_perm = perm;
+               h_formula_data_imm = ann;
                h_formula_data_arguments = vs})
   | ViewNode ({h_formula_view_node = v; 
                h_formula_view_perm = perm; 
+               h_formula_view_imm = ann;
 	           h_formula_view_arguments = vs}) -> 
       let pvars = fv_cperm perm in
+      let avars = fv_ann ann in
       let pvars = 
         if pvars==[] then 
           pvars 
@@ -1638,7 +1665,7 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
           let var = List.hd pvars in
           if (List.mem var vs) then [] else pvars
       in
-      let vs=pvars@vs in
+      let vs=avars@pvars@vs in
       if List.mem v vs then vs else v :: vs
   | HTrue | HFalse | Hole _ -> []
 
@@ -1867,6 +1894,9 @@ and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formu
   in
   let res = List.map helper f in
   res
+
+and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula =
+  add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
 
 (*LDK : add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_formula  (f1_mix: MCP.mix_formula) (f2_f:formula) : formula =

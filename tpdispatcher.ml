@@ -35,9 +35,9 @@ type tp_type =
 
 let test_db = false
 
-(* let tp = ref OmegaCalc *)
+let tp = ref OmegaCalc
 (* let tp = ref OZ *)
-let tp = ref Redlog
+(* let tp = ref Redlog *)
 
 let proof_no = ref 0
 let provers_process = ref None
@@ -559,7 +559,8 @@ let rec is_array_exp e = match e with
 											| Some true -> Some true
 											| _ -> is_array_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) -> Some true
-    | CP.FConst _ | CP.IConst _ | CP.Var _ | CP.Null _ -> Some false
+    | CP.AConst _ | CP.FConst _ | CP.IConst _ 
+    | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
 
   (* Method checking whether a formula contains list constraints *)
@@ -589,7 +590,7 @@ let rec is_list_exp e = match e with
 											| Some true -> Some true
 											| _ -> is_list_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) -> Some false
-    | CP.Null _ 
+    | CP.Null _ | CP.AConst _
     | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
     (* | _ -> Some false *)
 	  
@@ -877,6 +878,9 @@ let disj_cnt a c s =
   else ()
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
+  let vrs = Cpure.fv f in
+  let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
+  let f = Cpure.add_ann_constraints imm_vrs f in
   let _ = disj_cnt f None "sat_no_cache" in
   let _ = Gen.Profiling.push_time "tp_is_sat_no_cache" in
   let res = 
@@ -1323,7 +1327,24 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 					suppress_imply_output_stack := t;
 				end
 
-let tp_imply_no_cache ante conseq imp_no timeout process =	
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  (* let rec add_ann_constraints vrs f =  *)
+  (*   match vrs with *)
+  (*     | v :: r ->  *)
+  (*           let c1 = CP.BForm((CP.Lte(CP.IConst(0, no_pos), CP.Var(v,no_pos), no_pos), None), None) in *)
+  (*           let c2 = CP.BForm((CP.Lte(CP.Var(v,no_pos), CP.IConst(2, no_pos), no_pos), None), None) in *)
+  (*           let c12 = CP.mkAnd c1 c2 no_pos in *)
+  (*           let rf = add_ann_constraints r f in *)
+  (*           CP.mkAnd c12  rf no_pos *)
+  (*     | [] -> f *)
+  (* in *)
+
+  let vrs = Cpure.fv ante in
+  let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
+  let ante = CP.add_ann_constraints imm_vrs ante in
+  (* let _ = print_endline("new ante  = " ^ (Cprinter.string_of_pure_formula ante) ) in *)
+  (* let _ = print_endline (Cprinter.string_of_typed_spec_var_list vrs) in *)
+
 	let _ = if should_output () then
 		begin
 			reset_generated_prover_input ();

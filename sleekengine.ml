@@ -519,6 +519,12 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
     else ((not (CF.isFailCtx rs))) in 
   (res, rs)
 
+let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  let pr1 = pr_list pr_id in
+  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  Gen.Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
+
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   run_infer_one_pass [] iante0 iconseq0
 
@@ -589,7 +595,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   with _ -> print_exc num_id
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
-  let num_id = "Infer  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  let num_id = "Entail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
     print_entail_result_with_pre valid rs num_id

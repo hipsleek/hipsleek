@@ -145,6 +145,7 @@ let op_lt = "<"
 let op_lte = "<=" 
 let op_gt = ">" 
 let op_gte = ">=" 
+let op_sub = "<:" 
 let op_eq = "=" 
 let op_neq = "!=" 
 let op_and = " & "  
@@ -462,10 +463,12 @@ let string_of_spec_var x =
 	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
+
 let string_of_imm imm = match imm with
-  | Imm -> "@I"
-  | Lend -> "@L"
-  | _ -> "@M"
+  | ConstAnn(Imm) -> "@I"
+  | ConstAnn(Lend) -> "@L"
+  | ConstAnn(Mutable) -> "@M"
+  | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 
 
@@ -513,6 +516,7 @@ let exp_wo_paren (e:P.exp) =
   match e with
     | P.Null _ 
     | P.Var _ 
+    | P.AConst _ 
     | P.IConst _ 
     | P.FConst _ | P.Max _ |   P.Min _ | P.BagUnion _ | P.BagIntersect _ 
  -> true
@@ -595,6 +599,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Null l -> fmt_string "null"
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
+    | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -659,6 +664,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
     | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
+    | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub ; f_b e2
     | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
     | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
     | P.EqMax (e1, e2, e3, l) ->   
@@ -2437,3 +2443,8 @@ Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Smtsolver.print_ty_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;
+Redlog.print_b_formula := string_of_b_formula;;
+Redlog.print_exp := string_of_formula_exp;;
+Redlog.print_formula := string_of_pure_formula;;
+Redlog.print_svl := string_of_spec_var_list;;
+Redlog.print_sv := string_of_spec_var;;

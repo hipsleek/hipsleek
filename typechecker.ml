@@ -277,7 +277,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;
 			    CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
-			    CF.h_formula_data_imm = imm;
+			    CF.h_formula_data_imm = CF.ConstAnn(imm);
 			    CF.h_formula_data_perm = Some fresh_frac; (*LDK: belong to HIP, deal later ???*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)
@@ -445,7 +445,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_derv = false;
-		        CF.h_formula_data_imm = Mutable;
+		        CF.h_formula_data_imm = CF.ConstAnn(Mutable);
 		        CF.h_formula_data_perm = None; (*LDK: deal later*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)

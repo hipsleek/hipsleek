@@ -3432,9 +3432,9 @@ and default_value (t :typ) pos : C.exp =
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
-    | NUM | UNK | Void ->
+    | NUM | UNK | Void | AnnT ->
 	      failwith
-              "default_value: void in variable declaration should have been rejected by parser"
+              "default_value: void/NUM/UNK/AnnT in variable declaration should have been rejected by parser"
     | (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->
@@ -4191,7 +4191,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 					CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
 					CF.h_formula_data_name = rootptr_type_name;
 		            CF.h_formula_data_derv = dr;
-					CF.h_formula_data_imm = imm;
+					CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
 		            CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
 		            CF.h_formula_data_original = true; (*??? temporarily*)
@@ -4228,7 +4228,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                       CF.h_formula_view_node = new_v;
                       CF.h_formula_view_name = c;
 		              CF.h_formula_view_derv = dr;
-		              CF.h_formula_view_imm = imm;
+		              CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
 		              CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                       CF.h_formula_view_arguments = hvars;
                       CF.h_formula_view_modes = vdef.I.view_modes;
@@ -4268,7 +4268,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                             CF.h_formula_data_node = new_v;
                             CF.h_formula_data_name = c;
 		                    CF.h_formula_data_derv = dr;
-		                    CF.h_formula_data_imm = imm;
+		                    CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
 		                    CF.h_formula_data_perm = permvar; (*LDK*)
                             CF.h_formula_data_origins = [];
 		                    CF.h_formula_data_original = true;
@@ -4406,6 +4406,9 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.Lte (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLte pe1 pe2 pos
+    | IP.SubAnn (e1, e2, pos) ->
+          let pe1 = trans_pure_exp e1 stab in
+          let pe2 = trans_pure_exp e2 stab in CP.SubAnn(pe1,pe2,pos)
     | IP.Gt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkGt pe1 pe2 pos
@@ -4465,6 +4468,7 @@ and trans_pure_exp_debug (e0 : IP.exp) stab : CP.exp =
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
+    | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.Var ((v, p), pos) -> 
           CP.Var ((trans_var (v,p) stab pos),pos)
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
@@ -4839,6 +4843,10 @@ and gather_type_info_exp_x a0 stab et =
     | IP.Var ((sv, sp), pos) -> 
           let t = gather_type_info_var sv stab et pos
           in t
+    | IP.AConst (_,pos) -> 
+          let t = I.ann_type in
+          let _ = must_unify_expect t et stab pos in
+          t
     | IP.IConst (_,pos) -> 
           let t = I.int_type in
           let _ = must_unify_expect t et stab pos in
@@ -5171,6 +5179,11 @@ and gather_type_info_b_formula_x prog b0 stab =
     | IP.BVar ((bv, bp), pos) ->
 	      let _ = gather_type_info_var bv stab (C.bool_type) pos in
           ()
+    | IP.SubAnn(a1,a2,pos) ->
+	      let _ = gather_type_info_exp a1 stab (Cpure.ann_type) in
+	      let _ = gather_type_info_exp a2 stab (Cpure.ann_type) in
+          ()
+
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in
