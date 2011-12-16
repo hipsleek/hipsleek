@@ -494,8 +494,9 @@ and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 
 		Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
 		Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation}
   | Iformula.EVariance b -> Iformula.EVariance {b with
-		Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation
-	}
+		Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation}  
+  | Iformula.EInfer b -> Iformula.EInfer {b with
+  Iformula.formula_inf_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_inf_continuation}
 
 and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula = 
   List.map (convert_ext2 prog ) f0 
@@ -532,6 +533,9 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 		  (fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
 	| Iformula.EVariance b -> List.fold_left 
 		  (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
+ | Iformula.EInfer b -> List.fold_left 
+    (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_inf_continuation
+
   in
   
   let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
@@ -1829,8 +1833,9 @@ and set_pre_flow_x f =
           Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow_x c2))) b.Cformula.formula_case_branches;}
     | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,((* Cformula.substitute_flow_in_f !norm_flow_int !top_flow_int  *)b2),b3)
 	| Cformula.EVariance b -> Cformula.EVariance {b with
-		  Cformula.formula_var_continuation = set_pre_flow_x b.Cformula.formula_var_continuation
-	  }
+		  Cformula.formula_var_continuation = set_pre_flow_x b.Cformula.formula_var_continuation}
+    | Cformula.EInfer b -> Cformula.EInfer {b with
+      Cformula.formula_inf_continuation = set_pre_flow_x b.Cformula.formula_inf_continuation}
   in
   List.map helper f
 
@@ -1849,6 +1854,7 @@ and check_valid_flows (f:Iformula.struc_formula) =
     | Iformula.ECase b-> (List.iter (fun d-> check_valid_flows (snd d)) b.Iformula.formula_case_branches)
     | Iformula.EAssume (b,_)-> check_valid_flows_f b
 	| Iformula.EVariance b -> check_valid_flows b.Iformula.formula_var_continuation
+    | Iformula.EInfer b -> check_valid_flows b.Iformula.formula_inf_continuation
   in
   (* if f==[] then print_endline "Empty Spec detected" else *)
   List.iter helper f
@@ -1997,6 +2003,7 @@ and collect_important_vars_in_spec (spec : Cformula.struc_formula) : (CP.spec_va
             (*									let _ = print_endline ("formula = " ^ (Cprinter.string_of_formula fa)) in     *)
             (*										vars*)
   	  | CF.EVariance _ -> []
+     | CF.EInfer _ -> []
 	        (** An Hoa : end helper **)
   in
   List.fold_left (fun x y -> List.append x (helper y)) [] spec 
@@ -3831,6 +3838,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
 	      
 	      let _ = List.map (case_coverage_x instant) r2 in true
 	| Cformula.EVariance b -> case_coverage_x instant b.Cformula.formula_var_continuation
+    | Cformula.EInfer b -> case_coverage_x instant b.Cformula.formula_inf_continuation
   in
   let _ = List.map (ext_case_coverage instant) f in true
 
@@ -3881,12 +3889,12 @@ and trans_var_safe (ve, pe) stab pos =
       let ve_info = H.find stab ve
       in
       (match ve_info.sv_info_kind with
-        | UNK ->
-              Err.report_error
-                  {
-                      Err.error_loc = pos;
-                      Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";
-                  }
+        | UNK -> CP.SpecVar (UNK, ve, pe)
+(*              Err.report_error                                                                                                                       *)
+(*                  {                                                                                                                                  *)
+(*                      Err.error_loc = pos;                                                                                                           *)
+(*                      Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";*)
+(*                  }                                                                                                                                  *)
         | t -> CP.SpecVar (t, ve, pe)
 
       )
@@ -3915,6 +3923,8 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 		| Cformula.EVariance b -> Cformula.EVariance {b with
 			  Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
 		  }
+  | Cformula.EInfer b -> Cformula.EInfer {b with
+    Cformula.formula_inf_continuation = inner_add_pre pf branches b.Cformula.formula_inf_continuation;}
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
          
@@ -3958,9 +3968,9 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
             let nc = trans_struc_formula_hlp b.Iformula.formula_ext_continuation 
               (fvars @ (fst (List.split(Iformula.heap_fv b.Iformula.formula_ext_base))))in
             let nb = trans_formula prog quantify fvars false b.Iformula.formula_ext_base stab false in
-            let ex_inst = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_explicit_inst in
-            let ext_impl = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_implicit_inst in
-            let ext_exis = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_exists in
+            let ex_inst = List.map (fun c-> trans_var_safe c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_explicit_inst in
+            let ext_impl = List.map (fun c-> trans_var_safe c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_implicit_inst in
+            let ext_exis = List.map (fun c-> trans_var_safe c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_exists in
             Cformula.EBase {
                 Cformula.formula_ext_explicit_inst = ex_inst;
                 Cformula.formula_ext_implicit_inst = ext_impl;
@@ -3977,6 +3987,23 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
 			Cformula.formula_var_continuation = trans_struc_formula_hlp b.Iformula.formula_var_continuation fvars;
 			Cformula.formula_var_pos = b.Iformula.formula_var_pos
 		}
+      | Iformula.EInfer b -> 
+            (* TODO : check iv - fvars = {} *)
+            let pos = b.Iformula.formula_inf_pos in
+            let ivs = b.Iformula.formula_inf_vars in
+            (* let _ = print_endline ("EI fvars:"^(pr_list pr_id fvars)) in *)
+            (* let _ = print_endline ("EI infer vars:"^(pr_list (fun (i,_) -> i)  ivs)) in *)
+            let ct = trans_struc_formula_hlp b.Iformula.formula_inf_continuation fvars in
+            let new_ivs = List.map (fun (i,p) -> get_spec_var_ident stab i p) ivs in
+            let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
+            if ivs_unk!=[] then 
+              Err.report_error { Err.error_loc = pos; 
+              Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
+             else 
+        Cformula.EInfer {
+        Cformula.formula_inf_vars = new_ivs;
+        Cformula.formula_inf_continuation = ct;
+        Cformula.formula_inf_pos = b.Iformula.formula_inf_pos}
 	in  
     let r = List.map (fun c-> trans_ext_formula c stab) f0 in
     r in
@@ -4087,7 +4114,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
       | (e, label) :: rest ->
             let e_hvars = match e with
               | IP.Var ((ve, pe), pos_e) -> 
-                    trans_var (ve, pe) stab pos_e
+                    trans_var_safe (ve, pe) stab pos_e
               | _ -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = ("malfunction with float out exp: "^(Iprinter.string_of_formula f0)); }in
             let rest_hvars = match_exp rest pos in
             let hvars = e_hvars :: rest_hvars in
@@ -4337,7 +4364,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           } in 
 	      let nh,np,nt,nfl,nb = linearize_base base pos in
           let np = memoise_add_pure_N (mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb pos 
+	      CF.mkExists (List.map (fun c-> trans_var_safe c stab pos) qvars) nh np nt nfl nb pos 
 	          
 
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
@@ -4727,6 +4754,15 @@ and gather_type_info_var (var : ident) stab (ex_t : typ) pos : typ =
 (*       else false *)
 (*     else false *)
 (*   else false *)
+
+
+and get_spec_var_ident stab (var : ident) p =
+      try
+        let k = H.find stab var in
+               CP.SpecVar(k.sv_info_kind,var,p)
+      with 
+        | Not_found -> CP.SpecVar(UNK,var,p)
+ 
 
 and gather_type_info_var_x (var : ident) stab (ex_t : spec_var_kind) pos : spec_var_kind =
   begin
@@ -5538,6 +5574,7 @@ and gather_type_info_struc_f_x prog (f0:Iformula.struc_formula) stab =
               b.Iformula.formula_var_measures in
 		    let _ = List.map (fun f -> gather_type_info_pure prog f stab) b.Iformula.formula_var_escape_clauses in
 		    let _ = inner_collector b.Iformula.formula_var_continuation in ()
+      | Iformula.EInfer b -> let _ = inner_collector b.Iformula.formula_inf_continuation in ()
     in
     let _ = List.map helper f0 in 
     () in
@@ -5551,180 +5588,6 @@ and gather_type_info_struc_f_x prog (f0:Iformula.struc_formula) stab =
     (* check_shallow_var := true *)
   end
       
-(* and collect_type_info_heap prog (h0 : IF.h_formula) stab = *)
-(*   match h0 with *)
-(*     | IF.Star *)
-(* 	        { *)
-(*                 IF.h_formula_star_h1 = h1; *)
-(*                 IF.h_formula_star_h2 = h2; *)
-(*                 IF.h_formula_star_pos = pos *)
-(* 	        }  *)
-(*     | IF.Conj *)
-(* 	        { *)
-(*                 IF.h_formula_conj_h1 = h1; *)
-(*                 IF.h_formula_conj_h2 = h2; *)
-(*                 IF.h_formula_conj_pos = pos *)
-(* 	        }  *)
-(*     | IF.Phase *)
-(* 	        { *)
-(*                 IF.h_formula_phase_rd = h1; *)
-(*                 IF.h_formula_phase_rw = h2; *)
-(*                 IF.h_formula_phase_pos = pos *)
-(* 	        } -> *)
-(* 	      (collect_type_info_heap prog h1 stab; *)
-(* 	      collect_type_info_heap prog h2 stab) *)
-(*     | IF.HeapNode2 h2 -> *)
-(* 	      let h = node2_to_node prog h2 in *)
-(* 	      let fh = IF.HeapNode h in collect_type_info_heap prog fh stab *)
-(*     | IF.HeapNode *)
-(* 	        { *)
-(*                 IF.h_formula_heap_node = (v, p); *)
-(*                 IF.h_formula_heap_name = c; *)
-(*                 IF.h_formula_heap_arguments = ies; *)
-(*                 IF.h_formula_heap_pos = pos *)
-(* 	        } -> *)
-(* 	      let dname = *)
-(*             (try *)
-(*               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c *)
-(*               in *)
-(* 	          let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types prog vdef in *)
-(* 	          (\*let _ = print_string ("\n searching for: "^c^" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^"-\n") in*\) *)
-(*               (if not (Gen.is_empty vdef.I.view_typed_vars) *)
-(* 		      then *)
-(*                 (let rec helper exps tvars = *)
-(*                   match (exps, tvars) with *)
-(*                     | ([], []) -> [] *)
-(*                     | (e :: rest1, t :: rest2) -> *)
-(* 			              let tmp = helper rest1 rest2 *)
-(* 			              in *)
-(*                           (match e with *)
-(* 				            | IP.Var ((v, p), pos) -> ((fst t), v) :: tmp *)
-(* 				            | _ -> tmp) *)
-(*                     | _ -> *)
-(* 			              Err.report_error *)
-(*                               { *)
-(*                                   Err.error_loc = pos; *)
-(*                                   Err.error_text = *)
-(* 				                      "number of arguments for view " ^ *)
-(* 				                          (c ^ " does not match"); *)
-(*                               } in *)
-(*                 let tmp = helper ies vdef.I.view_typed_vars *)
-(*                 in *)
-(*                 ignore *)
-(*                     (List.map *)
-(*                         (fun (t, n) -> *)
-(*                             collect_type_info_var n stab (t) pos) *)
-(*                         tmp)) *)
-(* 		      else (); *)
-(* 		      vdef.I.view_data_name) *)
-(*             with *)
-(*               | Not_found -> *)
-(* 		            (try *)
-(*                       (ignore (I.look_up_data_def_raw prog.I.prog_data_decls c); c) *)
-(* 		            with *)
-(* 		              | Not_found -> *)
-(* 			                (\*let _ = print_string (Iprinter.string_of_program prog) in*\) *)
-(* 			                Err.report_error *)
-(* 			                    { *)
-(* 			                        Err.error_loc = pos; *)
-(* 			                        Err.error_text = c ^ " is neither a data nor view name"; *)
-(* 			                    })) in *)
-(* 	      let check_ie st ie t = *)
-(*             ((match t with *)
-(*               | Bool -> *)
-(* 		            if IP.is_var ie *)
-(* 		            then *)
-(*                       collect_type_info_var (IP.name_of_var ie) st *)
-(*                           (C.bool_type) (IP.pos_of_exp ie) *)
-(* 		            else *)
-(*                       Err.report_error *)
-(*                           { *)
-(* 			                  Err.error_loc = IP.pos_of_exp ie; *)
-(* 			                  Err.error_text = "expecting type bool"; *)
-(*                           } *)
-(*               | Int -> collect_type_info_arith ie st (C.int_type) *)
-(*               | Float -> collect_type_info_arith ie st (C.float_type) *)
-(*               | Named _ -> collect_type_info_pointer ie (t) st *)
-(* 			  | Array et -> collect_type_info_arith ie st ( (Array et)) *)
-(*               | _ -> ()); (\* An Hoa BUG DETECTED Replace (et) by ((CP.Array et)) TODO : add a collect_type_info_array instead *\) *)
-(*             st) *)
-(* 	      in *)
-(* 	      (\*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*\) *)
-(*           (if not (dname = "") *)
-(*           then collect_type_info_var v stab ( (Named dname)) pos *)
-(*           else (); *)
-(*           (try *)
-(*             let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in *)
-(*             let fields = I.look_up_all_fields prog ddef *)
-(*             in (\* An Hoa : Temp printing *\) *)
-(* 		    if (List.length ies) = (List.length fields) *)
-(* 		    then *)
-(*               (let typs = *)
-(*                 List.map (fun f -> trans_type prog (I.get_field_typ f) pos) *)
-(*                     fields in *)
-(*               let _ = List.fold_left2 check_ie stab ies typs in ()) *)
-(* 		    else *)
-(*               Err.report_error *)
-(*                   { *)
-(*                       Err.error_loc = pos; *)
-(*                       Err.error_text = *)
-(* 			              "number of arguments for data " ^ *)
-(*                               (c ^ " does not match") (\* ^ " : " ^ (string_of_int (List.length ies)) ^ " =/= " ^ (string_of_int (List.length fields)) *\); *)
-(*                   } *)
-(*           with *)
-(*             | Not_found -> *)
-(* 		          (try *)
-(*                     let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c *)
-(*                     in *)
-(*                     if (List.length ies) = (List.length vdef.I.view_vars) *)
-(*                     then *)
-(* 			          (let mk_eq v ie = *)
-(*                         let pos = IP.pos_of_exp ie *)
-(*                         in IP.mkEqExp (IP.Var ((v, Unprimed), pos)) ie pos in *)
-(* 			          let all_eqns = List.map2 mk_eq vdef.I.view_vars ies in *)
-(* 			          let tmp_form = *)
-(*                         List.fold_left (fun f1 f2 -> IP.mkAnd f1 f2 pos) *)
-(*                             (IP.mkTrue pos) all_eqns *)
-(* 			          in collect_type_info_pure prog tmp_form stab) *)
-(*                     else *)
-(* 			          Err.report_error *)
-(* 			              { *)
-(*                               Err.error_loc = pos; *)
-(*                               Err.error_text = *)
-(*                                   "number of arguments for view " ^ *)
-(* 				                      (c ^ " does not match"); *)
-(* 			              } *)
-(* 		          with *)
-(* 		            | Not_found -> *)
-(* 			              report_error pos *)
-(* 			                  (c ^ " is neither a view nor data declaration")))) *)
-(*     | IF.HTrue | IF.HFalse -> () *)
-
-(* and check_ie_x ie t stab = *)
-(*   (match t with *)
-(*     | Bool -> *)
-(* 		  if IP.is_var ie *)
-(* 		  then *)
-(*             gather_type_info_var (IP.name_of_var ie) stab *)
-(*                 (C.bool_type) (IP.pos_of_exp ie) *)
-(* 		  else *)
-(*             Err.report_error *)
-(*                 { *)
-(* 			        Err.error_loc = IP.pos_of_exp ie; *)
-(* 			        Err.error_text = "expecting type bool"; *)
-(*                 } *)
-(*     | Int -> gather_type_info_exp ie stab (C.int_type) *)
-(*     | Float -> gather_type_info_exp ie stab (C.float_type) *)
-(*     | Named _ -> gather_type_info_exp ie stab t   *)
-(* 	| Array et -> gather_type_info_exp ie stab ( (Array et)) *)
-(*     | _ ->  Err.report_error *)
-(*           { *)
-(* 			  Err.error_loc = IP.pos_of_exp ie; *)
-(* 			  Err.error_text = "check_ie : unexpected type "^(string_of_typ t); *)
-(*           } )  *)
-(* and check_ie ie t stab = *)
-(*   Gen.Debug.no_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ *)
-(*       (fun _ _ _ -> check_ie_x ie t stab) ie t stab *)
 
 and try_unify_data_type_args prog c ddef v ies stab pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
@@ -5986,6 +5849,23 @@ and get_spec_var_stab_infer_x (v : ident) fvs pos =
 	  | [] -> (Void,false)
 	  | [sv] -> (CP.type_of_spec_var sv,true)
 	  | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "could not find a coherent "^v^" type"}
+  in
+  let vtyp, check = get_var_type v fvs in
+  if check = false
+  then Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not found in both sides"; }
+  else
+    match vtyp with
+      | UNK -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
+      | t -> CP.SpecVar (t, v, Unprimed)
+
+and get_spec_var_stab_infer_with_prime (v, p) fvs pos =
+  let get_var_type v fv_list: (typ * bool) = 
+    let res_list = CP.remove_dups_svl (List.filter 
+      (fun c -> v = CP.name_of_spec_var c & p = CP.primed_of_spec_var c) fv_list) in
+    match res_list with
+      | [] -> (Void,false)
+      | [sv] -> (CP.type_of_spec_var sv,true)
+      | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "could not find a coherent "^v^" type"}
   in
   let vtyp, check = get_var_type v fvs in
   if check = false
@@ -6317,6 +6197,8 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
 	  | Iformula.EVariance b -> (Iformula.EVariance ({b with
 			Iformula.formula_var_continuation = fst (helper h b.Iformula.formula_var_continuation strad_vs)
 		}), [])
+      | Iformula.EInfer b -> (Iformula.EInfer ({b with
+        Iformula.formula_inf_continuation = fst (helper h b.Iformula.formula_inf_continuation strad_vs)}), [])
 	in
     if (List.length f0)=0 then
 	  ([],[])
@@ -6601,6 +6483,7 @@ and check_eprim_in_struc_formula s f =
           check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
     | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
     | IF.EVariance b -> check_eprim_in_struc_formula s b.IF.formula_var_continuation
+    | IF.EInfer b -> check_eprim_in_struc_formula s b.IF.formula_inf_continuation
   in
   List.iter helper f
 
@@ -7698,6 +7581,9 @@ and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure
 		  let e_var_list = List.fold_left (fun rs f -> rs@(Cpure.fv f)) [] b.Cformula.formula_var_escape_clauses in
 		  let new_cont, c_var_list = move_instantiations b.Cformula.formula_var_continuation in
 		  (Cformula.EVariance {b with Cformula.formula_var_continuation = new_cont}, (m_var_list@e_var_list@c_var_list))
+    | Cformula.EInfer b ->
+      let new_cont, c_var_list = move_instantiations b.Cformula.formula_inf_continuation in
+      (Cformula.EInfer {b with Cformula.formula_inf_continuation = new_cont}, c_var_list)
   in
   let forms, vars = List.split (List.map helper f) in
   (forms, (List.concat vars))

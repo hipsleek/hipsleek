@@ -1001,6 +1001,7 @@ and collect_ext (f:Iformula.ext_formula):ident list = match f with
   | Iformula.ECase b-> List.concat (List.map (fun (c1,c2) -> collect_struc c2) b.Iformula.formula_case_branches)
   | Iformula.EBase b-> (collect_formula b.Iformula.formula_ext_base)@ (collect_struc b.Iformula.formula_ext_continuation)
   | Iformula.EVariance b -> collect_struc b.F.formula_var_continuation
+  | Iformula.EInfer b -> collect_struc b.F.formula_inf_continuation
 
 and collect_formula (f0 : F.formula) : ident list = 
   let rec helper (h0 : F.h_formula) = match h0 with
@@ -1224,6 +1225,7 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formu
 	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
 		  [(data_name_of_view_x view_decls b.Iformula.formula_ext_continuation)])
 	| Iformula.EVariance b -> data_name_of_view view_decls b.F.formula_var_continuation
+ | Iformula.EInfer b -> data_name_of_view view_decls b.F.formula_inf_continuation
   in
   handle_list_res (List.map data_name_in_ext f0) 
 

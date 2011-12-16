@@ -8,7 +8,7 @@ llf<v,n> == self = null & n = 0
   or self::node<v, q> * q::llf<_,n-1> 
   inv n >= 0;
 
-int head(node x)
+int hd(node x)
   infer [n] 
   requires x::llf<v,n>
   ensures true; //'

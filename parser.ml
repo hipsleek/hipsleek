@@ -1018,9 +1018,7 @@ checkentail_cmd:
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    match il with
-      | None -> ([], t, b)
-      | Some idl -> (idl, t, b)
+    let il = un_option il [] in (il,t,b)
   ]];
 
 captureresidue_cmd:
@@ -1316,7 +1314,14 @@ opt_spec_list: [[t = LIST0 spec -> t]];
 spec_list : [[t= LIST1 spec -> t ]];
 
 spec: 
-  [[ `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+  [[ 
+    `INFER; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
+     Iformula.EInfer {
+       Iformula.formula_inf_vars = ivl;
+       Iformula.formula_inf_continuation = [s];
+       Iformula.formula_inf_pos = get_pos_camlp4 _loc 1;
+     }
+  | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
 		 Iformula.EBase {
 			 Iformula.formula_ext_explicit_inst =cl;
 			 Iformula.formula_ext_implicit_inst = [];
@@ -1347,6 +1352,8 @@ spec:
 					Iformula.formula_var_escape_clauses = ec;
 					Iformula.formula_var_continuation = [s];
 					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];
+
+opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 
 opt_var_label: [[t=OPT var_label -> t]];
 

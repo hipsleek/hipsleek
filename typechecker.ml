@@ -12,6 +12,8 @@ module TP = Tpdispatcher
 module PTracer = Prooftracer
 module I = Iast
 module LP = Lemproving
+module Inf = Infer
+module AS = Astsimp
 
 let log_spec = ref ""
   (* checking expression *)
@@ -80,6 +82,11 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
 			    Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
+   | Cformula.EInfer b ->
+      Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+      let vars = b.Cformula.formula_inf_vars in
+      let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_infer_vars = vars}) ctx in
+      check_specs_a prog proc nctx b.CF.formula_inf_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
 	    if(Immutable.is_lend post_cond) then
 	      	 Error.report_error
@@ -484,6 +491,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       | [] -> []
                       | spec::rest -> match spec with
                           | Cformula.EVariance e -> (strip_variance e.Cformula.formula_var_continuation)@(strip_variance rest)
+                          | Cformula.EInfer e -> (strip_variance e.Cformula.formula_inf_continuation)@(strip_variance rest)
                           | Cformula.EBase b -> (Cformula.EBase {b with Cformula.formula_ext_continuation = strip_variance b.Cformula.formula_ext_continuation})::(strip_variance rest)
                           | Cformula.ECase c -> (Cformula.ECase {c with Cformula.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.Cformula.formula_case_branches})::(strip_variance rest)
                           | _ -> spec::(strip_variance rest)

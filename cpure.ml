@@ -113,6 +113,9 @@ and rounding_func =
   | Floor
 
 
+let primed_of_spec_var (sv : spec_var) : primed = match sv with
+  | SpecVar (_, _, p) -> p 
+
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 

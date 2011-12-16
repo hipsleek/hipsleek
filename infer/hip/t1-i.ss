@@ -5,7 +5,7 @@ void foo1(ref int i)
 /*
   expecting 
    requires i>0
-   ensures i'=i+1;
+   ensures i'=i-1;
 */
 {
   i = i-1;

@@ -18,15 +18,15 @@ and ext_formula =
 	| EBase of ext_base_formula
 	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
 	| EVariance of ext_variance_formula
-    (* spec feature to induce inference *)
-(* 	| EInfer of ext_infer_formula *)
+ (* spec feature to induce inference *)
+ | EInfer of ext_infer_formula
 
-(* and ext_infer_formula = *)
-(* 	{ *)
-(* 		formula_inf_vars : ident list; *)
-(* 		formula_inf_continuation : struc_formula; *)
-(* 		formula_inf_pos : loc *)
-(* 	} *)
+and ext_infer_formula =
+  {
+    formula_inf_vars : (ident * primed) list;
+    formula_inf_continuation : struc_formula;
+    formula_inf_pos : loc
+  }
 
 and ext_case_formula =
 	{
@@ -396,6 +396,7 @@ if (List.length f0)==0 then no_pos
 	| EBase b -> b.formula_ext_pos
 	| EAssume (b,_) -> pos_of_formula b
 	| EVariance b -> b.formula_var_pos
+ | EInfer b -> b.formula_inf_pos
 
 and flow_of_formula f1 = match f1 with
   | Base b-> Some b.formula_base_flow
@@ -499,6 +500,7 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 											a@ (struc_hp_fv c2)) [] b.formula_case_branches
 							| EAssume (b,_)-> heap_fv b
 							| EVariance b -> struc_hp_fv b.formula_var_continuation
+       | EInfer b -> struc_hp_fv b.formula_inf_continuation
 							) in
 						List.concat (List.map helper f)
 
@@ -533,20 +535,26 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
 			let fv_co = struc_free_vars b.formula_var_continuation with_inst in
 			Gen.BList.remove_dups_eq (=) (fv_ex@fv_ec@fv_co)
+  | EInfer b ->
+    let fvc = struc_free_vars b.formula_inf_continuation with_inst in
+    Gen.BList.remove_dups_eq (=) fvc
 	in Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f0))
  
 and struc_split_fv_debug f0 wi =
   Gen.Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
       (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
 
-and struc_split_fv f0 wi = struc_split_fv_a f0 wi
+and struc_split_fv f0 wi =
+  Gen.Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
+      (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
+
 
 and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
 	let helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
 					let prc,psc = struc_split_fv_a b.formula_ext_continuation with_inst in
-          let rm = (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
+     let rm = (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
 					(Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) (fvb@prc) rm),(Gen.BList.difference_eq (=) psc rm))
 		| ECase b -> 
 				let prl,psl = List.fold_left (fun (a1,a2) (c1,c2)-> 
@@ -562,7 +570,9 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
 											| None -> res@(Ipure.afv expr)
 											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
 			  (Gen.BList.remove_dups_eq (=) prc@fv_ec@fv_ex, Gen.BList.remove_dups_eq (=) psc)
-			
+		| EInfer b ->
+    let prc, psc = struc_split_fv_a b.formula_inf_continuation with_inst in
+    (Gen.BList.remove_dups_eq (=) prc, Gen.BList.remove_dups_eq (=) psc)
 	in
   let vl = List.map helper f0 in
   let prl, pcl = List.split vl in
@@ -654,8 +664,11 @@ let rec subst sst (f : formula) = match sst with
   | [] -> f 
         
 and subst_var (fr, t) (o : (ident*primed)) = if (Ipure.eq_var fr o) then t else o
-and subst_var_list ft (o : (ident*primed)) = let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
-if (List.length r)==0 then o else snd (List.hd r)
+and subst_var_list ft (o : (ident*primed)) = 
+  let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
+  match r with 
+    | [] -> o
+    | _ -> snd (List.hd r)
 
 and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
@@ -825,6 +838,13 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 			  formula_var_escape_clauses = subst_escape;
 			  formula_var_continuation = subst_continuation
 		  }
+  | EInfer b ->
+    let si = List.map (subst_var_list sst) b.formula_inf_vars in
+    let sc = subst_struc sst b.formula_inf_continuation in
+    EInfer {b with
+      formula_inf_vars = si;
+      formula_inf_continuation = sc;
+    }
   in	
   List.map helper f
 
@@ -847,6 +867,9 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = rename_bound_var_struc_formula b.formula_var_continuation;
 									})
+  | EInfer b -> EInfer {b with
+    (* Need to check again *)
+    formula_inf_continuation = rename_bound_var_struc_formula b.formula_inf_continuation;}
 			in
 	List.map helper f
 
@@ -973,6 +996,8 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = float_out_exps_from_heap_struc b.formula_var_continuation;
 									})
+    | EInfer b -> EInfer ({b with 
+      formula_inf_continuation = float_out_exps_from_heap_struc b.formula_inf_continuation;})
 	in	
     List.map helper f
       
@@ -1515,6 +1540,8 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula =
 					formula_var_escape_clauses = fo_escape_clause;
 					formula_var_continuation = float_out_struc_min_max b.formula_var_continuation;
 				})
+  | EInfer b -> EInfer {b with
+    formula_inf_continuation = float_out_struc_min_max b.formula_inf_continuation;}
 	in
 	List.map helper f0
 		
@@ -1525,6 +1552,7 @@ and view_node_types_struc (f:struc_formula):ident list =
 	| EBase b -> (view_node_types b.formula_ext_base)@(view_node_types_struc b.formula_ext_continuation)
 	| EAssume (b,_) -> view_node_types b
 	| EVariance b -> view_node_types_struc b.formula_var_continuation
+ | EInfer b -> view_node_types_struc b.formula_inf_continuation
 	in
 	Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f))
 		
@@ -1553,6 +1581,7 @@ and has_top_flow_struc (f:struc_formula) =
 		| ECase b->   List.iter (fun (_,b1)-> (has_top_flow_struc b1)) b.formula_case_branches
 		| EAssume (b,_)-> (has_top_flow b)
 		| EVariance b -> has_top_flow_struc b.formula_var_continuation
+  | EInfer b -> has_top_flow_struc b.formula_inf_continuation
 		in
 List.iter helper f
 
@@ -1579,6 +1608,8 @@ let rec helper f = match f with
 		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = subst_flow_of_struc_formula fr t b.formula_var_continuation;
 								   })
+  | EInfer b -> EInfer {b with
+    formula_inf_continuation = subst_flow_of_struc_formula fr t b.formula_inf_continuation;}
 in
 List.map helper f 
 
@@ -1599,6 +1630,7 @@ and break_ext_formula (f : ext_formula) : P.b_formula list list =
 	| EBase bf -> [List.concat ((break_formula bf.formula_ext_base) @ (break_struc_formula bf.formula_ext_continuation))]
 	| EAssume (af, _) -> break_formula af
 	| EVariance _ -> []
+ | EInfer bf -> break_struc_formula bf.formula_inf_continuation
 
 and break_struc_formula (f : struc_formula) : P.b_formula list list =
   List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f

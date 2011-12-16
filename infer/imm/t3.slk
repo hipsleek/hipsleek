@@ -1,0 +1,35 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+// (1) expect n>0 & v<:@I
+// Inferred Pure:[ n!=0]
+infer [n] x::ll<n> |- x::node<a,b> .
+print residue.
+
+// TODO why a disjunction here? xpure1?
+// (2) 
+// Inferred Pure:[ n!=0, n=1 & 1<=c | 2<=n & 1<=c]
+infer [n,c] x::ll<n> |- x::node<a,b> & c>0.
+print residue.
+
+
+// TODO : why fail
+// (3) expect n>0 & v<:@I
+// Fail.(may) cause:(failure_code=213)
+infer [n] x::ll<n> |- x::node<a,b> & a>0.
+print residue.
+
+
+
+
+
+
+
+
