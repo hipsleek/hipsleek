@@ -145,7 +145,7 @@ let op_lt = "<"
 let op_lte = "<=" 
 let op_gt = ">" 
 let op_gte = ">=" 
-let op_sub = "<:" 
+let op_sub_ann = "<:" 
 let op_eq = "=" 
 let op_neq = "!=" 
 let op_and = " & "  
@@ -664,7 +664,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
     | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
-    | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub ; f_b e2
+    | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
     | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
     | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
     | P.EqMax (e1, e2, e3, l) ->   
