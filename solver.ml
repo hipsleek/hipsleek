@@ -4224,16 +4224,16 @@ and heap_n_pure_entail_x
       (drop_read_phase : bool)
       pos : (list_context * proof) =
 
-  let _  = print_string("*************************************************\n") in
-  let _ = print_string("entailing the heap h = " ^ (Cprinter.string_of_h_formula h) ^ "\n") in
-  let _  = print_string("*************************************************\n") in
+  (* let _  = print_string("*************************************************\n") in *)
+  (* let _ = print_string("entailing the heap h = " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
+  (* let _  = print_string("*************************************************\n") in *)
   let entail_h_ctx, entail_h_prf = heap_entail_split_lhs_phases prog is_folding  ctx0 (func h (MCP.mkMTrue pos)) (consume_heap_h_formula h) pos in
   match entail_h_ctx with
     | FailCtx _ -> (entail_h_ctx, entail_h_prf)
     | SuccCtx(cl) ->
-	      let _  = print_string("*************************************************\n") in
-	      let _ = print_string("entailing the pure p = " ^ (Cprinter.string_of_mix_formula p) ^ "\n") in
-	      let _  = print_string("*************************************************\n") in
+	      (* let _  = print_string("*************************************************\n") in *)
+	      (* let _ = print_string("entailing the pure p = " ^ (Cprinter.string_of_mix_formula p) ^ "\n") in *)
+	      (* let _  = print_string("*************************************************\n") in *)
           let entail_p = List.map 
 	        (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl  
           in

@@ -1,0 +1,18 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+// expect v<:@I
+
+
+checkentail x::node<p,q>@I |- x::node<a,b>@L.
+print residue.
+
+checkentail x::node<p,q>@L |- x::node<a,b>@L.
+print residue.
+
+checkentail x::node<p,q>@I |- x::node<a,b>@I.
+print residue.
+
+

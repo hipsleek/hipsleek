@@ -205,6 +205,11 @@ approx_formula_and_a2 : approx_formula }
 
 (* utility functions *)
 
+
+let fv_ann (a:ann) = match a with
+  | ConstAnn _ -> []
+  | PolyAnn v -> [v]
+
 let empty_ext_variance_formula =
 	{
 		formula_var_label = None;
@@ -936,11 +941,13 @@ and fv_simple_formula (f:formula) =
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
-        perm_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
+        let ann_vars = fv_ann (h.h_formula_data_imm)  in
+        perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
     | ViewNode h -> 
         let perm = h.h_formula_view_perm in
         let perm_vars = fv_cperm perm in
-        perm_vars@(h.h_formula_view_node::h.h_formula_view_arguments)
+        let ann_vars = fv_ann (h.h_formula_view_imm)  in
+        perm_vars@ann_vars@(h.h_formula_view_node::h.h_formula_view_arguments)
     | _ -> []
 
 (*LDK: don't count perm var as free vars in a coercion*)
@@ -1607,11 +1614,14 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v;
                h_formula_data_perm = perm;
+               h_formula_data_imm = ann;
                h_formula_data_arguments = vs})
   | ViewNode ({h_formula_view_node = v; 
                h_formula_view_perm = perm; 
+               h_formula_view_imm = ann;
 	           h_formula_view_arguments = vs}) -> 
       let pvars = fv_cperm perm in
+      let avars = fv_ann ann in
       let pvars = 
         if pvars==[] then 
           pvars 
@@ -1619,7 +1629,7 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
           let var = List.hd pvars in
           if (List.mem var vs) then [] else pvars
       in
-      let vs=pvars@vs in
+      let vs=avars@pvars@vs in
       if List.mem v vs then vs else v :: vs
   | HTrue | HFalse | Hole _ -> []
 
