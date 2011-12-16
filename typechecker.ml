@@ -141,9 +141,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Unfold ({exp_unfold_var = sv;
           exp_unfold_pos = pos}) -> 
             (*Dot not unfold concurrent flows*)
-            let conj_states,ctx = CF.extract_context_from_list_failesc_context !conj_flow_int ctx in
+            (* let conj_states,ctx = CF.extract_context_from_list_failesc_context !conj_flow_int ctx in *)
             let new_ctx = unfold_failesc_context (prog,None) ctx sv true pos in
-            let new_ctx = CF.add_context_to_list_failesc_context conj_states new_ctx in
+            (* let new_ctx = CF.add_context_to_list_failesc_context conj_states new_ctx in *)
             new_ctx
 	              (* for code *)
         | Assert ({ exp_assert_asserted_formula = c1_o;
@@ -171,9 +171,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
                       Debug.devel_pprint(*print_info "assert"*) to_print pos;
                       (*Do not assert on concurrent flows*)
-                      let conj_states,ts = CF.extract_context_from_list_failesc_context !conj_flow_int ts in
+                      (* let conj_states,ts = CF.extract_context_from_list_failesc_context !conj_flow_int ts in *)
                       let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 pos None in
-                      let rs = CF.add_context_to_list_failesc_context conj_states rs in
+                      (* let rs = CF.add_context_to_list_failesc_context conj_states rs in *)
                       let _ = PTracer.log_proof prf in                    
                       Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
                       if CF.isSuccessListFailescCtx rs then 
@@ -243,7 +243,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_read_only = read_only;
 		  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> begin
-
+            Debug.devel_pprint ("check_exp: Bind: begin: " ^ (Cprinter.string_of_list_failesc_context ctx) ^ "\n") pos;
             (* Debug.devel_pprint ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n") pos; *)
 	        (* let _ = print_endline ("bind: ctx :\n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
 	        let _ = proving_loc#set pos in
@@ -311,14 +311,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			if (Gen.is_empty unfolded) then unfolded
 			else 
               (*extract concurrent ctx*)
-              let conj_states,tmp_ctx = CF.extract_context_from_list_failesc_context !conj_flow_int unfolded in
-	          let rs_prim, prf = heap_entail_list_failesc_context_init prog false tmp_ctx vheap pos pid in
-	          (* let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap pos pid in *)
+              (* let conj_states,tmp_ctx = CF.extract_context_from_list_failesc_context !conj_flow_int unfolded in *)
+		      (* let _ = print_endline ("check_exp: Bind: before proving:\n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
+	          (* let rs_prim, prf = heap_entail_list_failesc_context_init prog false tmp_ctx vheap pos pid in *)
+		      (* let _ = print_endline ("check_exp: Bind: after proving:\n" ^ (Cprinter.string_of_list_failesc_context rs_prim)) in *)
+	          let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap pos pid in
               let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	          let _ = PTracer.log_proof prf in
 	          let rs = CF.clear_entailment_history_failesc_list rs_prim in
               (*add concurrent ctx*)
-              let rs = CF.add_context_to_list_failesc_context conj_states rs in
+              (* let rs = CF.add_context_to_list_failesc_context conj_states rs in *)
               let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
 	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
                 begin
@@ -330,6 +332,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 end
               else 
                 begin
+                    Debug.devel_pprint ("check_exp: Bind: Proving binding successully: " ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") pos;
                   let tmp_res1 = check_exp prog proc rs body post_start_label in 
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
 		          (* let _ = print_string ("bind: tmp_res1:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res1) *)
@@ -348,6 +351,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*     ^ "\n") in *)
 		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                   let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
+                  Debug.devel_pprint ("check_exp: Bind successully: " ^ (Cprinter.string_of_list_failesc_context res) ^ "\n") pos;
                   res
 	                  
                 end
@@ -568,14 +572,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				  (* An Hoa : output the context and new spec before checking pre-condition *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
                   (*extract concurrent contexts*)
-                  let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in
+                  (* let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in *)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
                   (*add concurrent contexts*)
-                  let rs = CF.add_context_to_list_failesc_context conj_states rs in
+                  (* let rs = CF.add_context_to_list_failesc_context conj_states rs in *)
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
-                  let _ = print_string (("\n[SCall] res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in
+                  (* let _ = print_string (("\n[SCall] res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                   if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
                   rs 
@@ -640,7 +644,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           CF.h_formula_data_label = None;
                           CF.h_formula_data_pos = pos}) in
                       let thread_heap =  CF.formula_of_heap thread_node pos in
-                      let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in
+                      (* let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in *)
                       (*for each concurrent branch*)
                       let process_one_branch (((ptrace,c) as succ) : CF.branch_ctx) =
                         let init_esc = [((0,""),[])] in
@@ -718,8 +722,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             let fail_branches = List.map (fun (f,e,s) -> List.hd f) fail_ls in
                             l
                       in
-                      let tmp = List.combine conj_states sctx in
-                      let rs = List.map (fun (a,b) -> process_one_one a b) tmp in
+                      (*TO CHECK*)
+                      (* let tmp = List.combine conj_states sctx in *)
+                      (* let rs = List.map (fun (a,b) -> process_one_one a b) tmp in *)
                       sctx
 
                       (* let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in *)
@@ -825,9 +830,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_conj = s_conj;
           exp_sharp_path_id = pid;
           exp_sharp_pos = pos})	-> 
-	          let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in
-	          let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in
-	          let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in
+	          (* let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
+	          (* let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
+	          (* let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
               if (not is_conj) then
               (*=====+++++++++++++++++++=====*)
               (*===== DISJUNCTIVE FLOWs =====*)
@@ -939,10 +944,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             let pre,post = CF.split_specs pre2 in
                             let _ = Debug.devel_pprint ("check_exp: Sharp: fork:" ^ ("\n ###pre= " ^ (!print_struc_formula pre) ^ "\n ###post=" ^ (!print_struc_formula post))) no_pos in
                             (* entail pre-cond only, put post-cond into a concurrent flow *)                  (*extract concurrent contexts*)
-                            let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in
+                            (* let conj_states,sctx = CF.extract_context_from_list_failesc_context !conj_flow_int sctx in *)
                             let rs_pre, prf_pre = heap_entail_struc_list_failesc_context_init prog false true sctx pre pos pid in
                   (*add concurrent contexts*)
-                            let rs_pre = CF.add_context_to_list_failesc_context conj_states rs_pre in
+                            (* let rs_pre = CF.add_context_to_list_failesc_context conj_states rs_pre in *)
                             let _ = Debug.devel_pprint ("check_exp: Sharp: fork: after entailing the precondition"
                                                         ^ ((Cprinter.string_of_list_failesc_context rs_pre)^ "\n")) pos in
 

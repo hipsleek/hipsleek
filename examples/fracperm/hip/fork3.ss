@@ -57,8 +57,12 @@ void test_fork(ref int2 x,  ref int2 y)
      ensures x'::int2(f)<n1+1> * y'::int2(f)<n2+1>; //'
 {
   int id;
+  id=2;
   fork(id,inc,x); //under construction
-  //dprint;
+  int id1;
+  id1=id;
+  id = 3;
+  dprint;
   //inc(x);
   y.val++;
   //assert y'::int2(f)<n2+1>;

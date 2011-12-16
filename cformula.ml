@@ -2957,6 +2957,8 @@ and branch_fail = path_trace * fail_type
 
 and branch_ctx =  path_trace * context
 
+and branch_ctx_with_conc =  path_trace * context * (context list)
+
 (* disjunction of state with failures and partial success *)
 (* a state is successful if it has empty branch_fail *)
 and partial_context = (branch_fail list) * (branch_ctx list)  
@@ -4088,7 +4090,7 @@ let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
-  Gen.Debug.ho_2 "list_failesc_context_or" 
+  Gen.Debug.no_2 "list_failesc_context_or" 
       pr pr pr
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
 
@@ -5506,9 +5508,10 @@ let transform_list_partial_context f (c:list_partial_context):list_partial_conte
     
 let transform_list_failesc_context f (c:list_failesc_context): list_failesc_context = 
   (*At present, do not normalize concurrent ctx*)
-  let conj_states,c = extract_context_from_list_failesc_context !conj_flow_int c in
+  (* let conj_states,c = extract_context_from_list_failesc_context !conj_flow_int c in *)
   let c = List.map (transform_failesc_context f) c in
-  add_context_to_list_failesc_context conj_states c
+  (* add_context_to_list_failesc_context conj_states c *)
+  c
 
   (*use with care, it destroyes the information about exception stacks , preferably do not use except in check specs*)
 let list_failesc_to_partial (c:list_failesc_context): list_partial_context =
@@ -5687,12 +5690,12 @@ let normalize_max_renaming_list_partial_context f pos b ctx =
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx = 
   (*Do not normalize concurrent ctx*)
-  let conj_states,ctx = extract_context_from_list_failesc_context !conj_flow_int ctx in
+  (* let conj_states,ctx = extract_context_from_list_failesc_context !conj_flow_int ctx in *)
   let rs = 
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
   in
-  let rs = add_context_to_list_failesc_context conj_states rs in
+  (* let rs = add_context_to_list_failesc_context conj_states rs in *)
   rs
 
 let normalize_max_renaming_list_failesc_context f pos b ctx =
