@@ -62,6 +62,14 @@ and formula_exists = { formula_exists_qvars : (ident * primed) list;
                        formula_exists_branches : (branch_label * P.formula) list;
                        formula_exists_pos : loc }
 
+and one_formula = {
+    formula_heap : h_formula;
+    formula_pure : P.formula;
+    formula_branches : (branch_label * P.formula) list;
+    formula_thread : ident option;
+    formula_pos : loc
+}
+
 and flow_formula = constant_flow				   
     
 and formula_or = { formula_or_f1 : formula;

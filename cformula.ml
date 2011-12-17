@@ -126,8 +126,8 @@ and flow_store = {
 and one_formula = {
     formula_heap : h_formula;
     formula_pure : MCP.mix_formula;
-    formula_type : t_formula; (* a collection ot subtype information *)
     formula_branches : (branch_label * CP.formula) list;
+    formula_thread : CP.spec_var;
     formula_label : formula_label option;
     formula_pos : loc
 }
