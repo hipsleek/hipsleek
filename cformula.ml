@@ -1,3 +1,4 @@
+
 (*
   Created 21-Feb-2006
 
@@ -1611,6 +1612,7 @@ and pos_of_formula (f : formula) : loc = match f with
   (* | Or ({formula_or_pos = pos}) -> pos *)
   | Exists ({formula_exists_pos = pos}) -> pos
 
+
 and struc_fv (f: struc_formula) : CP.spec_var list = 
   let rec ext_fv (f:ext_formula): CP.spec_var list = match f with
 	| ECase b -> 
@@ -2983,6 +2985,14 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
+let es_fv (es:entail_state) : CP.spec_var list =
+  (fv es.es_formula)@(h_fv es.es_heap)
+
+let rec context_fv (c:context) : CP.spec_var list =
+  match c with
+    | Ctx es ->  es_fv es
+    | OCtx (c1,c2) -> (context_fv c1)@(context_fv c2)
+
 let empty_es flowt pos = 
 	let x = mkTrue flowt pos in
 {
@@ -3578,6 +3588,11 @@ let rec collect_pre_heap ctx =
   match ctx with
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
+let rec collect_infer_vars ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_vars 
+  | OCtx (ctx1, ctx2) -> (collect_infer_vars ctx1) @ (collect_infer_vars ctx2) 
 
 let rec collect_formula ctx = 
   match ctx with

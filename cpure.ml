@@ -28,6 +28,9 @@ let is_hole_spec_var sv = match sv with
 let is_self_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = self
 
+let is_res_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n = res_name
+
 
 type formula =
   | BForm of (b_formula * (formula_label option))
@@ -241,6 +244,8 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    v1 = v2 & p1 = p2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
+
+let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
 
 (*LDK: check constant TRUE conjuncts of equalities, i.e. v=v *)
 let is_true_conj_eq (f1:formula) : bool =

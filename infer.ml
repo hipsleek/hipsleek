@@ -76,6 +76,11 @@ let collect_pre_heap_list_context ctx =
   | FailCtx _ -> []
   | SuccCtx lst -> List.concat (List.map collect_pre_heap lst)
 
+let collect_infer_vars_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx lst -> List.concat (List.map collect_infer_vars lst)
+
 let collect_formula_list_context ctx = 
   match ctx with
   | FailCtx _ -> []
@@ -83,6 +88,10 @@ let collect_formula_list_context ctx =
 
 let collect_pre_heap_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_heap c) cl))  ctx in
+  List.concat r
+
+let collect_infer_vars_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_infer_vars c) cl))  ctx in
   List.concat r
 
 let collect_formula_list_partial_context (ctx:list_partial_context) =
