@@ -1284,8 +1284,8 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_wrap_test "es_var_measures: " Gen.is_empty (pr_seq "" pr_formula_exp) es.es_var_measures;
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
-                                                    | None -> "None"
-                                                    | Some i -> string_of_int i)) es.es_var_label;
+                                                    | None, _ -> "None"
+                                                    | Some i, _ -> string_of_int i)) es.es_var_label;
   (* pr_vwrap "es_trace: " pr_es_trace es.es_trace; *)
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;

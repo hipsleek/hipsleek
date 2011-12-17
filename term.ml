@@ -34,9 +34,6 @@ type term_res = transition option * term_status
 
 type term_res_table = (loc, term_res list) Hashtbl.t
 
-let variance_graph = ref []
-let var_checked_list = ref []
-
 (* Printing Utilities *)
 let pr_transition (trans: transition) =
   let (src, dst) = trans in
@@ -95,6 +92,9 @@ let pr_term_res_tbl tbl_res =
 (* End of Printing Utilities *)
 
 (* For automatic numbering *)
+let variance_graph = ref []
+let var_checked_list = ref []
+
 let term_collect_info (es: CF.entail_state) (v: CF.ext_variance_formula) =
   variance_graph := !variance_graph @ [(es.CF.es_var_ctx_lhs, es.CF.es_var_ctx_rhs)];
   var_checked_list := !var_checked_list @ [(es, v)]
@@ -103,10 +103,6 @@ let term_is_unreachable (es: CF.entail_state) : bool =
   CF.isAnyFalseCtx (CF.Ctx es) 
 
 let equal_pf f1 f2 =
-  (*let _ = begin 
-    TP.push_suppress_imply_output_state ();
-    TP.suppress_imply_output () 
-  end in*)
   let r1,_,_ = TP.imply f1 f2 "" false None in
   let r2,_,_ = TP.imply f2 f1 "" false None in
   (*let _ = begin TP.restore_suppress_imply_output_state () end in*)
@@ -202,22 +198,22 @@ let variance_numbering ls g =
 	      let nes = { es with CF.es_var_label =
 		      let user_defined_var_label_lhs = es.CF.es_var_label in
 		      match user_defined_var_label_lhs with
-		       | None -> Some (nf es.CF.es_var_ctx_lhs)
-		       | Some i -> 
+		        | None, pos -> (Some (nf es.CF.es_var_ctx_lhs), pos)
+		        | Some i, pos -> 
               if (i = 0 || i = -1) then user_defined_var_label_lhs
-			        else Some (nf es.CF.es_var_ctx_lhs) } 
+			        else (Some (nf es.CF.es_var_ctx_lhs), pos) } 
         in
-        (*let _ = print_string ("e: " ^ (CPr.string_of_ext_formula (CF.EVariance e)) ^ "\n") in*)
 	      let ne = {e with CF.formula_var_label =
 		      let user_defined_var_label_rhs = e.CF.formula_var_label in
 		      match user_defined_var_label_rhs with
-		      | None -> Some (nf es.CF.es_var_ctx_rhs)
-		      | Some i -> 
+		        | None -> Some (nf es.CF.es_var_ctx_rhs)
+		        | Some i -> 
               if (i = 0 || i = -1) then user_defined_var_label_rhs
 			        else Some (nf es.CF.es_var_ctx_rhs)}
 	      in (nes,ne)
     in List.map (fun e -> helper e) ls
   else ls
+(* End of automatic numbering stuff *)
 
 (* Termination: Add function name into names of 
  * its variables to distinguish them - 
@@ -262,7 +258,7 @@ let term_add_target_condition (tc: CP.formula) (ctx: CF.context) pos : CF.contex
 let term_add_var_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx { es with
     CF.es_var_measures = List.map (fun (e, b) -> e) v.CF.formula_var_measures;
-		CF.es_var_label = v.CF.formula_var_label }) ctx 
+		CF.es_var_label = (v.CF.formula_var_label, v.CF.formula_var_pos) }) ctx 
 
 let term_add_init_ctx (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx 
@@ -290,7 +286,7 @@ let term_add_unreachable_state pos =
    * unreachable recursive call if variance exists *)
 	var_checked_list := !var_checked_list @ 
     [({ (CF.false_es CF.mkFalseFlow pos) with
-          CF.es_var_label = Some (-1); CF.es_var_loc = pos; },
+          CF.es_var_label = (Some (-1), no_pos); CF.es_var_loc = pos; },
 		  CF.empty_ext_variance_formula)]
 
 (* Checking the well-foundedness of the loop variance *)    
@@ -301,16 +297,16 @@ let term_check_loop_variance (src: CF.entail_state) (dst: CF.ext_variance_formul
   (* To handle the lexicographical order *)
 	let binding_measures = 
     try List.map2 (fun s d -> (s, d)) src_measures dst_measures
-    with _ -> report_error pos ("Termination: Well-foundedness checking: 
-                                Variances of the state transition do not match \n")
+    with _ -> report_error pos ("Termination: Well-foundedness checking: " ^ 
+                                "Variances of the state transition do not match \n")
   in
 
   (* To check the well-foundedness of the lexicographical order *)
   let fun_check_term lst_measures = (* [(s1,d1),(s2,d2)] -> s1=d1 & s1>=lb1 & s2>d2 & s2>=lb2 *) 
 		let (_, term_formula) = List.fold_right (fun (s,d) (flag,res) ->
 			let lb = match (snd d) with
-			  | None -> report_error pos ("Termination: Well-foundedness checking:
-                                    Lower bound is not found \n")
+			  | None -> report_error pos ("Termination: Well-foundedness checking: " ^
+                                    "Lower bound is not found \n")
 			  | Some exp -> exp in
 			let boundedness_checking_formula = CP.BForm ((CP.mkGte s lb pos, None), None) in (* s>=lb*)
 			let lexico_ranking_formula = 
@@ -343,28 +339,24 @@ let tem_tbl_res_update (tbl_res: term_res_table ref) pos tres =
     with _ -> []
   in 
   Hashtbl.replace !tbl_res pos (res@[tres])
-  (*try
-    let res = Hashtbl.find !tbl_res pos in
-    Hashtbl.replace !tbl_res pos res@[tres]
-  with 
-    | Not_found -> Hashtbl.add !tbl_res pos [tres]*)
 
 let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
   f_imply (tbl_res: term_res_table ref) : term_res =
-  let pos = es.CF.es_var_loc in
+  let f_pos = es.CF.es_var_loc in (* Loc of the recursive function call *)
+  let v_pos = e.CF.formula_var_pos in (* Loc of the variance *)
 
   if (term_is_unreachable es) then (* Unreachable state *)
     (None, Unreachable es.CF.es_orig_ante)
   else (* State transition *)
     let label_err = ("Termination: The variance label is not provided or cannot be inferred.") in
     let var_label_dst = match e.CF.formula_var_label with
-	    | None -> report_error pos label_err 	    
+	    | None -> report_error v_pos label_err 	    
       | Some i -> i
   	in
 
 	  let var_label_src = match es.CF.es_var_label with
-      | None -> report_error pos label_err
-	    | Some i -> i
+      | None, pos -> report_error pos label_err
+	    | Some i, _ -> i
 	  in
 
     let trans = Some (var_label_src, var_label_dst) in
@@ -373,7 +365,7 @@ let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
       (* Case 1: In loop - 
        * The well-foundedness of the variance need to be checked *)
       if (var_label_src = var_label_dst && var_label_dst > 0) then
-        term_check_loop_variance es e f_imply trans pos
+        term_check_loop_variance es e f_imply trans f_pos
       (* Case 2: Base case reached *)
       else if (var_label_src > var_label_dst && var_label_dst = 0) then
         (trans, Term Base_Case_Entered)
@@ -392,7 +384,7 @@ let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
       else
         (trans, NonTerm Infinite_Loop)
     in
-    tem_tbl_res_update tbl_res pos res; res
+    tem_tbl_res_update tbl_res f_pos res; res
 
 	
 let termination_check f_imply =

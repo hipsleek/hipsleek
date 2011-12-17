@@ -53,8 +53,8 @@ and ext_formula =
 
 and ext_case_formula =
 	{
-		formula_case_branches : (Cpure.formula * struc_formula ) list;
-		formula_case_exists : Cpure.spec_var list; (*should be absolete, to be removed *)
+		formula_case_branches : (Cpure.formula * struc_formula) list;
+		formula_case_exists : Cpure.spec_var list; (* should be absolete, to be removed *)
 		formula_case_pos : loc 		
 	}
 
@@ -2776,12 +2776,12 @@ type entail_state = {
 
   (* For VARIANCE checking *)
   es_var_measures : CP.exp list;
-  es_var_label : int option;
+  es_var_label : int option * loc; (* Variance label with its position *)
   es_var_ctx_lhs : CP.formula;
   es_var_ctx_rhs : CP.formula;
   es_var_src_ctx : formula; (* Initial context of a method - before symbolic execution *)
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
-  es_var_loc : loc;
+  es_var_loc : loc; (* Location of the recursive function call *)
 
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
@@ -2930,7 +2930,7 @@ let rec empty_es flowt pos =
   es_path_label  =[];
   es_prior_steps  = [];
   es_var_measures = [];
-  es_var_label = None;
+  es_var_label = (None, no_pos);
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
   es_var_src_ctx = x;
@@ -3594,7 +3594,7 @@ let rec empty_es flowt pos =
   es_path_label  =[];
   es_prior_steps  = [];
   es_var_measures = [];
-  es_var_label = None;
+  es_var_label = (None, no_pos);
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
   es_var_src_ctx = x;
