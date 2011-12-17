@@ -1,11 +1,11 @@
-
+// Termination checking does not run
 void loop(ref int x, ref int y, int N)
- case {
-  x>N -> ensures "l1":x'=x & y'=y;
+case {
+  x>N -> variance (0) ensures "l1": x'=x & y'=y;
   x<=N -> requires x+y>0
-          // variance ?
-          ensures "l2":N-x'<0;
- }
+          variance (1) [N-x]
+          ensures "l2": N-x'<0;
+}
 {
   if (x<=N) {
     bool b;
@@ -16,11 +16,12 @@ void loop(ref int x, ref int y, int N)
       //assume x'>=2*x+y;
       //assume y'>=y+1;
       //dprint;
-
-       loop(x,y,N);
+      update1(x,y);
+      loop(x,y,N);
     } else {
-      assume x'>=x+1;
-	  assume y'=y;
+      //assume x'>=x+1;
+	  //assume y'=y;
+	  update2(x);
       loop(x,y,N);
     }
   }
@@ -29,3 +30,13 @@ void loop(ref int x, ref int y, int N)
 bool randBool()
   requires true
   ensures true;
+  
+// update x,y to x'>=2*x+y & y'>=y+1;
+void update1(ref int x, ref int y)
+  requires true
+  ensures x'>=2*x+y & y'>=y+1;
+
+// update x to x'>=x+1;
+void update2(ref int x)
+  requires true
+  ensures x'>=x+1;
