@@ -2,4 +2,5 @@ infer [i] ip=i-r & 1<=r<=2 |- ip>=0.
 print residue.
 // oc simplified : {i-2 <= ip < i & r=i-ip & i>=2}
 //   above seems easier to read ..
-// obtained : i=ip+r & 1<=r & ((0 - ip)+2)<=r & r<=2 
+// obtained : <1>true & ip+r=i & 1<=r & r<=2 & 2<=i & {FLOW,(17,18)=__norm}
+

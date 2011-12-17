@@ -421,8 +421,8 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           (* Thai: Should check if the precondition overlaps with the orig ante *)
           (* And simplify the pure in the residue *)
           let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
-          let h, p, fl, b, t = CF.split_components new_es_formula in
-          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
+(*          let h, p, fl, b, t = CF.split_components new_es_formula in                                                 *)
+(*          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in*)
           let args = CP.fv new_p in 
           let new_iv = CP.diff_svl iv args in
           let new_estate =

@@ -6170,7 +6170,7 @@ let mkEBase (pf:CP.formula) loc : ext_formula =
 	formula_ext_continuation = [];
 	formula_ext_pos = loc;
   }	
-  
+
 let propagate_perm_struc_formula_x e (permvar:cperm_var)=
   let f_e_f e = None  in
   let f_f e = Some (propagate_perm_formula e permvar) in
@@ -6616,27 +6616,27 @@ let rec push_case_f pf sf =
 (*  | Base formula_base -> fml              *)
 (*  | Or formula_or -> (* Formula in DNF *) *)
 
-let rec init_caller context = 
-  let elim_quan ante = match ante with
-    | Exists ({formula_exists_qvars = qvars;
-    formula_exists_heap = qh;
-    formula_exists_pure = qp;
-    formula_exists_type = qt;
-    formula_exists_flow = qfl;
-    formula_exists_branches = qb;
-    formula_exists_pos = pos}) ->
-      (* eliminating existential quantifiers from the LHS *)
-      (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
-      let ws = CP.fresh_spec_vars qvars in
-      let st = List.combine qvars ws in
-      let baref = mkBase qh qp qt qfl qb pos in
-      let new_baref = subst st baref
-      in new_baref
-    | _ -> ante
-  in
-  match context with
-  | OCtx (ctx1, ctx2) -> OCtx (init_caller ctx1, init_caller ctx2)
-  | Ctx es -> Ctx ({es with es_infer_label = elim_quan es.es_formula})
+(*let rec init_caller context =                                                                     *)
+(*  let elim_quan ante = match ante with                                                            *)
+(*    | Exists ({formula_exists_qvars = qvars;                                                      *)
+(*    formula_exists_heap = qh;                                                                     *)
+(*    formula_exists_pure = qp;                                                                     *)
+(*    formula_exists_type = qt;                                                                     *)
+(*    formula_exists_flow = qfl;                                                                    *)
+(*    formula_exists_branches = qb;                                                                 *)
+(*    formula_exists_pos = pos}) ->                                                                 *)
+(*      (* eliminating existential quantifiers from the LHS *)                                      *)
+(*      (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)*)
+(*      let ws = CP.fresh_spec_vars qvars in                                                        *)
+(*      let st = List.combine qvars ws in                                                           *)
+(*      let baref = mkBase qh qp qt qfl qb pos in                                                   *)
+(*      let new_baref = subst st baref                                                              *)
+(*      in new_baref                                                                                *)
+(*    | _ -> ante                                                                                   *)
+(*  in                                                                                              *)
+(*  match context with                                                                              *)
+(*  | OCtx (ctx1, ctx2) -> OCtx (init_caller ctx1, init_caller ctx2)                                *)
+(*  | Ctx es -> Ctx ({es with es_infer_label = elim_quan es.es_formula})                            *)
 
 (* this normalization removes EInfer from specs *)
 let rec norm_specs (sp:struc_formula) : struc_formula =
