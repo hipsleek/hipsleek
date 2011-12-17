@@ -235,7 +235,7 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_var_measures = es.es_var_measures;
 	es_var_label = es.es_var_label;
 	es_var_ctx_lhs = es.es_var_ctx_lhs;
-	es_var_init_ctx = es.es_var_init_ctx;
+	es_var_src_ctx = es.es_var_src_ctx;
   } 
 
 let clear_entailment_history (ctx : context) : context =  
@@ -3203,13 +3203,13 @@ and heap_entail_conjunct_lhs_struc_x
 	    (fun (lc, _) -> Cprinter.string_of_list_context lc)
 	    helper_inner_x ctx11 f
 
-  and helper_inner_x (ctx11 : context) (f:ext_formula) : list_context * proof = 
+  and helper_inner_x (ctx11: context) (f: ext_formula) : list_context * proof = 
     begin
       match f with
-        | ECase b   -> 
-	          (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
-              (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
-              let ctx = add_to_context_num 1 ctx11 "case rule" in
+        | ECase b ->
+            (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
+            (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
+            let ctx = add_to_context_num 1 ctx11 "case rule" in
 	          if (List.length b.formula_case_exists)>0 then 
 	            let ws = CP.fresh_spec_vars b.formula_case_exists in
 	            let st = List.combine b.formula_case_exists ws in
@@ -3217,38 +3217,35 @@ and heap_entail_conjunct_lhs_struc_x
 	            let new_ctx = push_exists_context ws ctx in
 	            let nc,np = inner_entailer 1 new_ctx new_struc in 
 	            (nc, (mkEexStep ctx [f] np))
-	          else if (List.length b.formula_case_branches )=0 then ((SuccCtx [ctx]),TrueConseq)
+	          else if (List.length b.formula_case_branches)=0 then ((SuccCtx [ctx]),TrueConseq)
 	          else 
 	            let rec helper l = match l with
 	              | [] -> None
 	              | (p,e)::t -> 
 		                let tt = (syn_imply ctx p) in
 		                (*print_string ("\n -------------:\n"^(Cprinter.string_of_context ctx)^"\n\n"^
-		                  (Cprinter.string_of_pure_formula p)^"\n\n"^(string_of_bool tt)^"\n") ;*)
+		                (Cprinter.string_of_pure_formula p)^"\n\n"^(string_of_bool tt)^"\n") ;*)
 		                if tt then Some (p,e) else helper t in
-			    
-			    (* Find the branch whose condition is satisfied by the current context *)
-			    (* Because these conditions are disjoint, the context can only statisfy at most one condition *)
+			        
+              (* Find the branch whose condition is satisfied by the current context *)
+			        (* Because these conditions are disjoint, the context can only statisfy at most one condition *)
 	            let r = helper b.formula_case_branches in
 	            let r = match r with
 	              | None -> begin
 		              List.map (fun (c1, c2) -> 
 			              let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
-                          (*this unsat check is essential for completeness of result*)
-				          if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
-				          else
-					        (* Termination: add target condition *)
-					        let n_ctx = CF.transform_context (
-					            fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx in
-
-					        (*let _ = print_string ("\nhelper_inner: ECase 1: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)					
+                    (* This unsat check is essential for completeness of result *)
+				            if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx], UnsatAnte)
+				            else
+					          (* Termination: add target condition *)
+                    let n_ctx = Term.term_add_target_condition c1 n_ctx pos in 
 					        
-					        let n_ctx = prune_ctx prog n_ctx in
-					        inner_entailer 2 n_ctx c2) b.formula_case_branches 
-				    end
+					          let n_ctx = prune_ctx prog n_ctx in
+					          inner_entailer 2 n_ctx c2) b.formula_case_branches 
+				          end
 	              | Some (p, e) -> begin
-				      let n_ctx = CF.transform_context (
-				          fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
+				          let n_ctx = CF.transform_context (
+				            fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
 
 				      (*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
 				      
@@ -3257,92 +3254,70 @@ and heap_entail_conjunct_lhs_struc_x
                 let rez1 = List.fold_left (fun a c -> or_list_context (*list_context_union*) a c) (List.hd rez1) (List.tl rez1) in
 	            (rez1, (mkCaseStep ctx [f] rez2))
         | EBase ({
-		      formula_ext_explicit_inst = expl_inst;
-		      formula_ext_implicit_inst = impl_inst;
-		      formula_ext_exists = base_exists;
-		      formula_ext_base = formula_base;
-		      formula_ext_continuation = formula_cont;
-		      formula_ext_pos = struc_pos;
-		  } as b) -> 
+		        formula_ext_explicit_inst = expl_inst;
+		        formula_ext_implicit_inst = impl_inst;
+		        formula_ext_exists = base_exists;
+		        formula_ext_base = formula_base;
+		        formula_ext_continuation = formula_cont;
+		        formula_ext_pos = struc_pos;
+		      } as b) -> 
               if (List.length base_exists) > 0 then 
-	            let ws = CP.fresh_spec_vars base_exists in
-	            let st = List.combine base_exists ws in
-	            let new_struc = subst_struc st [(EBase {b with formula_ext_exists = []})]in
-	            let new_ctx = push_exists_context ws ctx11 in
-	            let nc, np = inner_entailer 4 new_ctx new_struc in 
-	            (nc, (mkEexStep ctx11 [f] np))
-	          else 
-			    (*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
-                
-	            let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
-	            let n_ctx_list, prf = heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding)   n_ctx formula_base pos in
-			    (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)
-	            let n_ctx_list = pop_expl_impl_context expl_inst impl_inst n_ctx_list in
-			    (match n_ctx_list with
-	              | FailCtx _ -> (n_ctx_list, prf)
-	              | SuccCtx sc ->
+	              let ws = CP.fresh_spec_vars base_exists in
+	              let st = List.combine base_exists ws in
+	              let new_struc = subst_struc st [(EBase {b with formula_ext_exists = []})]in
+	              let new_ctx = push_exists_context ws ctx11 in
+	              let nc, np = inner_entailer 4 new_ctx new_struc in 
+	              (nc, (mkEexStep ctx11 [f] np))
+	            else 
+	              let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
+                (* Termination: add target condition *)
+                let tc = CF.pure_of_formula formula_base in
+                let n_ctx = Term.term_add_target_condition tc n_ctx struc_pos in
+
+	              let n_ctx_list, prf = heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding) n_ctx formula_base pos in
+			          (*let n_ctx_list = List.filter (fun c -> not (isFalseCtx c)) n_ctx_list in*)
+	              let n_ctx_list = pop_expl_impl_context expl_inst impl_inst n_ctx_list in
+			          (match n_ctx_list with
+	                | FailCtx _ -> (n_ctx_list, prf)
+	                | SuccCtx sc ->
 		                if (List.length formula_cont)>0 then
-                          let res, n_rpf = heap_entail_struc prog is_folding has_post n_ctx_list formula_cont pos pid in
-                          (* let res, n_rpf = List.split (List.map (fun c->inner_entailer 5 c formula_cont) sc) in *)
-                          (* let res = fold_context_left res in *)
-                          let res = if !wrap_exists_implicit_explicit
-					      then push_exists_list_context (expl_inst@impl_inst) res 
-					      else res in
-				          (res, n_rpf) (* (mkBaseStep ctx11 [f] prf (mkCaseStep ctx11 [f] n_rpf)) *)
+                      let res, n_rpf = heap_entail_struc prog is_folding has_post n_ctx_list formula_cont pos pid in
+                      (* let res, n_rpf = List.split (List.map (fun c->inner_entailer 5 c formula_cont) sc) in *)
+                      (* let res = fold_context_left res in *)
+                      let res = if !wrap_exists_implicit_explicit
+					              then push_exists_list_context (expl_inst@impl_inst) res 
+					              else res in
+				              (res, n_rpf) (* (mkBaseStep ctx11 [f] prf (mkCaseStep ctx11 [f] n_rpf)) *)
 		                else	 
-                          let res = if !wrap_exists_implicit_explicit
-					      then push_exists_list_context (expl_inst@impl_inst) n_ctx_list 
-		                  else n_ctx_list in
+                      let res = if !wrap_exists_implicit_explicit
+					              then push_exists_list_context (expl_inst@impl_inst) n_ctx_list 
+		                    else n_ctx_list in
 		                  (*let _ = print_string ("\nresidue: "^(Cprinter.string_of_context_list res)^"\n  "^(string_of_bool (isFalseCtx (List.hd res)))^"\n") in*)
-				          (res,prf)
+				              (res,prf)
                 )
         | EAssume (ref_vars, post, (i,y)) ->
 		      if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	          else
 	            let rs = clear_entailment_history ctx11 in
 	            (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
-                (* TOCHECK : why compose_context fail to set unsat_flag? *)
+              (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	            let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
 	            (*let _ = print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
 	            let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
-                (*let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in*)
+              (*let _ = print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in*)
 	            let rs3 = add_path_id rs2 (pid,i) in
-                let rs4 = prune_ctx prog rs3 in
+              let rs4 = prune_ctx prog rs3 in
 	            ((SuccCtx [rs4]),TrueConseq)
-	    	| EVariance e ->
-					let _ = print_string ("inner_entailer: ctx: " ^ (Cprinter.string_of_context ctx11) ^ "\n") in
-          let es = match ctx11 with
-						| OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
-            | Ctx es -> es in
-					let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
-          let t = List.map (fun (_, v, mn) ->
-						let CP.SpecVar (t, i, p) = v in
-            let nid = i ^ "_" ^ mn in
-            CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
-
-          let normalize_ctx_rhs =
-						let rec filter pformula =
-							match pformula with
-								| CP.And (f1, f2, pos) ->
-									let nf2 = CP.subst_avoid_capture f t f2 in
-                  let nf1 = filter f1 in
-                  if (CP.equalFormula f2 nf2) then nf1
-                  else CP.mkAnd nf1 nf2 pos
-                | _ ->
-									let nf = CP.subst_avoid_capture f t pformula in
-                  if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
-                  else nf
-            in filter es.es_var_ctx_rhs
-          in
-
-          (*let _ = print_string ("\nhelper_inner: es_var_ctx_rhs: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in
-          let _ = print_string ("\nhelper_inner: : normalize_ctx_rhs" ^ (Cprinter.string_of_pure_formula normalize_ctx_rhs) ^ "\n") in*)
-
-          let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
-
-          Term.variance_graph := !Term.variance_graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
-          Term.var_checked_list := !Term.var_checked_list @ [(nes, e)];
-          inner_entailer 7 ctx11 e.Cformula.formula_var_continuation
+	    	| EVariance v ->
+					  (*let _ = print_string ("inner_entailer: ctx: " ^ (Cprinter.string_of_context ctx11) ^ "\n") in*)
+            let es = match ctx11 with
+						  | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
+              | Ctx es -> es in
+					  
+            let nes = Term.term_normalize_target_condition es in
+            let _ = Term.term_collect_info nes v in
+            
+            inner_entailer 7 ctx11 v.Cformula.formula_var_continuation
     end 
 
   and inner_entailer i (ctx22 : context) (conseq : struc_formula): list_context * proof =
@@ -3445,7 +3420,7 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
     (* else if isAnyFalseCtx ctx then *)
     (*   (SuccCtx [ctx], UnsatAnte) *)
     else
-      heap_entail_after_sat prog is_folding  ctx conseq pos ([])
+      heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =

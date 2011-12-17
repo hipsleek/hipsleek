@@ -47,7 +47,7 @@ let string_of_transition (trans: transition) =
   poly_string_of_pr pr_transition trans
 
 let pr_term_reason = function
-  | Invalid_Measure -> fmt_string "The given variance is not well-founded."
+  | Invalid_Measure -> fmt_string "The variance is not given or The given variance is not well-founded."
   | Invalid_Transition _ -> fmt_string "The transition is not valid."
   | Valid_Transition _ -> fmt_string "The transition is valid."
   | Valid_Measure -> fmt_string "The given variance is well-founded."
@@ -94,9 +94,13 @@ let pr_term_res_tbl tbl_res =
 
 (* End of Printing Utilities *)
 
-let update_graph vg vc = 
-  variance_graph := !variance_graph @ [vg];
-  var_checked_list := !var_checked_list @ [vc]
+(* For automatic numbering *)
+let term_collect_info (es: CF.entail_state) (v: CF.ext_variance_formula) =
+  variance_graph := !variance_graph @ [(es.CF.es_var_ctx_lhs, es.CF.es_var_ctx_rhs)];
+  var_checked_list := !var_checked_list @ [(es, v)]
+
+let term_is_unreachable (es: CF.entail_state) : bool =
+  CF.isAnyFalseCtx (CF.Ctx es) 
 
 let equal_pf f1 f2 =
   (*let _ = begin 
@@ -110,7 +114,7 @@ let equal_pf f1 f2 =
 
 let equal_pf f1 f2 = 
   let pr = CPr.string_of_pure_formula in
-  Gen.Debug.no_2 "equalpf" pr pr string_of_bool equal_pf f1 f2
+  Gen.Debug.no_2 "equal_pf" pr pr string_of_bool equal_pf f1 f2
 
 let compare_pf f1 f2 =
   if (equal_pf f1 f2) then 0
@@ -120,7 +124,7 @@ let compare_pf f1 f2 =
 	
 let compare_pf f1 f2 =
   let pr = CPr.string_of_pure_formula in
-  Gen.Debug.no_2 "comparepf" pr pr string_of_int compare_pf f1 f2
+  Gen.Debug.no_2 "compare_pf" pr pr string_of_int compare_pf f1 f2
 
 module FComp = 
 struct
@@ -150,10 +154,11 @@ module GSN = Graph.Oper.Neighbourhood(GS)
 module GSC = Graph.Components.Make(GS)
 module GSP = Graph.Path.Check(GS)
 
-(* Termination: Create state transition graph *)
+(* Termination: Create state transition graph from specification *)
 let build_state_trans_graph ls =
-  (*print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.variance_graph) ^ "\n");*)
+  (*print_string ("\ncall graph:\n" ^
+	  (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (CPr.string_of_pure_formula f1)
+    ^ " ->" ^ (CPr.string_of_pure_formula f2)) "" !variance_graph) ^ "\n");*)
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
     let ng1 = IG.add_vertex g f1 in
@@ -164,6 +169,7 @@ let build_state_trans_graph ls =
 
 let scc_numbering g =
   let scc_list = IGC.scc_list g in
+  (*let _ = print_string (pr_list (fun l -> pr_list (CPr.string_of_pure_formula) l) scc_list) in*)
   let scc_list = snd (List.fold_left (fun (n,rs) l -> (n+1, rs @ [(n,l)])) (0,[]) scc_list) in
   let mem e ls = List.exists (fun e1 -> equal_pf e e1) ls in
   let meml ls1 ls2 = List.exists (fun e -> mem e ls2) ls1 in
@@ -187,43 +193,59 @@ let scc_numbering g =
 let variance_numbering ls g =
   if !Globals.term_auto_number then
     let f = scc_numbering g in
-    let nf = fun v -> if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
+    let nf = fun v ->  
+      if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
     let helper ele =
 	    let (es,e) = ele in
-	    let nes = {es with CF.es_var_label =
-		    let user_defined_var_label_lhs = es.CF.es_var_label in
-		    match user_defined_var_label_lhs with
-		      | None -> Some (nf es.CF.es_var_ctx_lhs)
-		      | Some i -> 
+      if (term_is_unreachable es) then ele
+      else 
+	      let nes = { es with CF.es_var_label =
+		      let user_defined_var_label_lhs = es.CF.es_var_label in
+		      match user_defined_var_label_lhs with
+		       | None -> Some (nf es.CF.es_var_ctx_lhs)
+		       | Some i -> 
               if (i = 0 || i = -1) then user_defined_var_label_lhs
-			        else Some (nf es.CF.es_var_ctx_lhs)} in
-	    let ne = {e with CF.formula_var_label =
-		    let user_defined_var_label_rhs = e.CF.formula_var_label in
-		    match user_defined_var_label_rhs with
+			        else Some (nf es.CF.es_var_ctx_lhs) } 
+        in
+        (*let _ = print_string ("e: " ^ (CPr.string_of_ext_formula (CF.EVariance e)) ^ "\n") in*)
+	      let ne = {e with CF.formula_var_label =
+		      let user_defined_var_label_rhs = e.CF.formula_var_label in
+		      match user_defined_var_label_rhs with
 		      | None -> Some (nf es.CF.es_var_ctx_rhs)
 		      | Some i -> 
               if (i = 0 || i = -1) then user_defined_var_label_rhs
 			        else Some (nf es.CF.es_var_ctx_rhs)}
-	    in (nes,ne)
+	      in (nes,ne)
     in List.map (fun e -> helper e) ls
   else ls
 
 (* Termination: Add function name into names of 
  * its variables to distinguish them - 
- * For a better output *)
-let term_rename_var (f: CP.formula) (mn: Globals.ident) : CP.formula =
-  let f_formula = fun f -> None in
-	let f_b_formula (pf, il) = match pf with
-    | CP.BVar (CP.SpecVar (t, i, p), loc) -> 
-        Some ((CP.BVar ((CP.SpecVar (t, i^"_"^mn, p)), loc)), il)
-    | _ -> None
-	in
-	let f_exp = function
-    | CP.Var (CP.SpecVar (t,i,p), loc) -> 
-        Some (CP.Var ((CP.SpecVar (t, i^"_"^mn, p)), loc))
-    | _ -> None
-	in
-  CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) f
+ * For a better output 
+ * Not capture bounded variables *)
+let term_rename_var (pf: CP.formula) (mn: Globals.ident) : CP.formula =
+  let f = CP.fv pf in
+  let t = List.map (fun (CP.SpecVar (t, i, p)) -> (CP.SpecVar (t, i^"_"^mn, p))) f in
+  CP.subst_avoid_capture f t pf
+
+(* To filter the constraints of un-interested variables *)
+let term_filter (pf: CP.formula) (sv: CP.spec_var list) : CP.formula =
+  let cons_l = CP.list_of_conjs pf in
+  let f_l = List.filter (fun f -> Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) sv) cons_l in
+  CP.conj_of_list f_l (CP.pos_of_formula pf)
+
+(* To normalize the target condition *)
+(* To build correct transition graph 
+ * based on specification *)
+let term_normalize_target_condition (es: CF.entail_state) : CF.entail_state =
+  let f = List.map (fun (v, _, _) -> v) es.CF.es_var_subst in
+  let t = List.map (fun (_, v, mn) ->
+    let CP.SpecVar (t, i, p) = v in
+    let nid = i ^ "_" ^ mn in
+    CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst 
+  in
+  let normalized_ctx_rhs = term_filter (CP.subst_avoid_capture f t es.CF.es_var_ctx_rhs) t in
+  {es with CF.es_var_ctx_rhs = normalized_ctx_rhs} 
 
 (* Update context with information of termination checking *)  
 let term_add_source_condition (sc: CP.formula) (mn: Globals.ident) (ctx: CF.context) pos : CF.context =  
@@ -233,6 +255,10 @@ let term_add_source_condition (sc: CP.formula) (mn: Globals.ident) (ctx: CF.cont
 	CF.transform_context (fun es ->
     CF.Ctx { es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs n_sc pos }) ctx
 
+let term_add_target_condition (tc: CP.formula) (ctx: CF.context) pos : CF.context =  
+  CF.transform_context (fun es -> 
+    CF.Ctx { es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs tc pos }) ctx
+
 let term_add_var_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx { es with
     CF.es_var_measures = List.map (fun (e, b) -> e) v.CF.formula_var_measures;
@@ -240,7 +266,7 @@ let term_add_var_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.con
 
 let term_add_init_ctx (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx 
-  {es with CF.es_var_init_ctx = es.CF.es_formula }) ctx
+  {es with CF.es_var_src_ctx = es.CF.es_formula }) ctx
 
 let term_add_var_subst fr_vars to_vars mn sctx pos =
   let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
@@ -326,9 +352,8 @@ let tem_tbl_res_update (tbl_res: term_res_table ref) pos tres =
 let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
   f_imply (tbl_res: term_res_table ref) : term_res =
   let pos = es.CF.es_var_loc in
-  let ctx = (CF.Ctx es) in
 
-  if CF.isAnyFalseCtx ctx then (* Unreachable state *)
+  if (term_is_unreachable es) then (* Unreachable state *)
     (None, Unreachable es.CF.es_orig_ante)
   else (* State transition *)
     let label_err = ("Termination: The variance label is not provided or cannot be inferred.") in

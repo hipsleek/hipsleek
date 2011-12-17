@@ -1396,6 +1396,41 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   | ArrayAt (_, _, p) -> p (* An Hoa *)
 
+and pos_of_b_formula (b: b_formula) = 
+	let (p, _) = b in
+	match p with
+	| BConst (_, p) -> p
+  | BVar (_, p) -> p
+  | Lt (_, _, p) -> p
+  | Lte (_, _, p) -> p
+  | Gt (_, _, p) -> p
+  | Gte (_, _, p) -> p
+  | Eq (_, _, p) -> p
+  | Neq (_, _, p) -> p
+  | EqMax (_, _, _, p) -> p
+  | EqMin (_, _, _, p) -> p
+	  (* bag formulas *)
+  | BagIn (_, _, p) -> p
+  | BagNotIn (_, _, p) -> p
+  | BagSub (_, _, p) -> p
+  | BagMin (_, _, p) -> p
+  | BagMax (_, _, p) -> p
+	  (* list formulas *)
+  | ListIn (_, _, p) -> p
+  | ListNotIn (_, _, p) -> p
+  | ListAllN (_, _, p) -> p
+  | ListPerm (_, _, p) -> p
+  | RelForm (_, _, p) -> p
+
+and pos_of_formula (f: formula) =
+	match f with
+	| BForm (b, _) -> pos_of_b_formula b
+  | And (_, _, p) -> p
+  | Or (_, _, _, p) -> p
+  | Not (_, _, p) -> p
+  | Forall (_, _, _, p) -> p
+  | Exists (_, _, _, p) -> p
+
 and fresh_old_name (s: string):string = 
   let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in

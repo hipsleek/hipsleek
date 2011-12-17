@@ -1,5 +1,5 @@
 int foo (int x)
-
+/*
  case {
   x<5 -> variance (-1)  ensures false;
   x=5 -> variance (0) ensures res=5;
@@ -10,9 +10,22 @@ int foo (int x)
       -> variance (1) [x]
          ensures res=5; }
   }
+*/
+
+ case {
+  x<5 -> variance (-1) ensures false;
+  x=5 -> variance (0) ensures res=5;
+  x>5 -> case {
+    exists(a:x=2*a)
+      -> variance ensures false;
+    !(exists(b:x=2*b))   
+      -> variance [x]
+         ensures res=5; }
+	}
 
 /*
 requires x>=5
+variance
 ensures res=5;
 */
 {

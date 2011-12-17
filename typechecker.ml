@@ -45,22 +45,20 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);
 		match spec with
 		| Cformula.ECase b -> List.for_all (fun (c1, c2) ->
-						(* Termination: Add source condition - * The precondition of the initial   *)
-						(* states                                                                  *)
-								let mn = Cast.unmingle_name (proc.Cast.proc_name) in
-								let nctx = Term.term_add_source_condition c1 mn ctx pos_spec in
-								(* End of termination's utility *)
+        (* Termination: Add source condition - The precondition of the initial state *)
+        let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+				let nctx = Term.term_add_source_condition c1 mn ctx pos_spec in
+				(* End of termination's utility *)
 								
-								let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
-								let r = check_specs_a prog proc nctx c2 e0 in
-								(* let _ = Debug.devel_pprint ("\nProving done... Result: " ^      *)
-								(* (string_of_bool r) ^ "\n") pos_spec in                          *)
-								r) b.Cformula.formula_case_branches
+				let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
+				let r = check_specs_a prog proc nctx c2 e0 in
+				(* let _ = Debug.devel_pprint ("\nProving done... Result: " ^      *)
+				(* (string_of_bool r) ^ "\n") pos_spec in                          *)
+				r) b.Cformula.formula_case_branches
 		| Cformula.EBase b ->
 				Debug.devel_pprint ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 				
-				(* Termination: Add source condition - * The precondition of the initial   *)
-				(* states                                                                  *)
+				(* Termination: Add source condition - The precondition of the initial states *)
 				let sc = CF.pure_of_formula b.CF.formula_ext_base in
 				let mn = Cast.unmingle_name (proc.Cast.proc_name) in
 				let ctx = Term.term_add_source_condition sc mn ctx pos_spec in
@@ -76,7 +74,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 				let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
 				r
 		| Cformula.EVariance v ->
-		(* Termination: Add termination measure into context *)
+		    (* Termination: Add termination measure into context *)
 				let nctx = Term.term_add_var_measure v ctx in
 				check_specs_a prog proc nctx v.Cformula.formula_var_continuation e0
 		| Cformula.EAssume (x, post_cond, post_label) ->
@@ -103,8 +101,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 										{ CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } ctx1 in
 								(* Termination: store the initial context of a method *)
 								let ctx1 = Term.term_add_init_ctx ctx1 in
-								let _ = print_string ("EAssume: ctx: " ^
-											(Cprinter.string_of_context ctx1) ^ "\n") in
+								(*let _ = print_string ("EAssume: ctx: " ^ (Cprinter.string_of_context ctx1) ^ "\n") in*)
 								let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
 								(* need to add initial esc_stack *)
 								let init_esc = [((0,""),[])] in
@@ -976,6 +973,7 @@ let check_prog (prog : prog_decl) =
 	ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
   let f_imply = fun src term_formula pos ->
     Solver.heap_entail_conjunct_lhs_struc prog false false (CF.Ctx src) 
-      [CF.mkEBase term_formula pos] pos None in
+      [CF.mkEBase term_formula pos] pos None 
+  in
 	Term.termination_check f_imply
 

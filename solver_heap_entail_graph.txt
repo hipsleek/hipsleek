@@ -1,6 +1,6 @@
 Difference between failesc_context and partial_context ?
 
-checkexp_a --> check_pre_post
+check_exp_a --> check_pre_post
 	heap_entail_struc_list_failesc_context_init
 		heap_entail_failesc_prefix_init
 			heap_entail_struc_list_failesc_context
