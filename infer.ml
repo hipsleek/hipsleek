@@ -424,7 +424,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           let h, p, fl, b, t = CF.split_components new_es_formula in
           let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in
           let args = CP.fv new_p in 
-          let new_iv = (CP.diff_svl iv args) in
+          let new_iv = CP.diff_svl iv args in
           let new_estate =
             {estate with 
                 es_formula = new_es_formula;

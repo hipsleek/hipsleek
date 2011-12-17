@@ -6949,22 +6949,22 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (* NO inference for base-case fold *)
               (* Removal of all vars seems to be strong *)
               (* Maybe only the root of view_node *)
-              let rt = Inf.get_args_h_formula rhs_node in
-              let rt = match rt with
-                | None -> []
-                | Some (r,args,_,_) -> 
-                      let lhs_als = Inf.get_alias_formula estate.es_formula in
-                      let lhs_aset = Inf.build_var_aset lhs_als in
-                      (* Alias of r *)
-                      let alias = CP.EMapSV.find_equiv_all r lhs_aset in
-                      let h,_,_,_,_ = CF.split_components estate.es_formula in
-                      (* Args of viewnodes whose roots are alias of r *)
-                      let arg_other = Inf.get_all_args alias h in
-                      (* Alias of args *)
-                      let alias_all = List.concat (List.map (fun a -> CP.EMapSV.find_equiv_all a lhs_aset) args) in
-                      (* All the args related to the viewnode of interest *)
-                      [r] @ args @ alias @ alias_all @ arg_other
-              in 
+(*              let rt = Inf.get_args_h_formula rhs_node in                                                          *)
+(*              let rt = match rt with                                                                               *)
+(*                | None -> []                                                                                       *)
+(*                | Some (r,args,_,_) ->                                                                             *)
+(*                      let lhs_als = Inf.get_alias_formula estate.es_formula in                                     *)
+(*                      let lhs_aset = Inf.build_var_aset lhs_als in                                                 *)
+(*                      (* Alias of r *)                                                                             *)
+(*                      let alias = CP.EMapSV.find_equiv_all r lhs_aset in                                           *)
+(*                      let h,_,_,_,_ = CF.split_components estate.es_formula in                                     *)
+(*                      (* Args of viewnodes whose roots are alias of r *)                                           *)
+(*                      let arg_other = Inf.get_all_args alias h in                                                  *)
+(*                      (* Alias of args *)                                                                          *)
+(*                      let alias_all = List.concat (List.map (fun a -> CP.EMapSV.find_equiv_all a lhs_aset) args) in*)
+(*                      (* All the args related to the viewnode of interest *)                                       *)
+(*                      [r] @ args @ alias @ alias_all @ arg_other                                                   *)
+(*              in                                                                                                   *)
               (* moved into do_base_fold *)
             (* let (estate,iv) = Inf.remove_infer_vars_all estate (\* rt *\)in *)
               let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
