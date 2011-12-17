@@ -23,8 +23,8 @@ Infer  (4): Fail.(may) cause:15.4 no match for rhs data node: q (may-bug).
 
 Infer  (5): Valid. 
 Inferred Heap:[ q::ll<inf_n_68>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_68=n]
-<1>true & inf_n_68=0 & n=0 &
+Inferred Pure:[ inf_n_68=0]
+<1>true & n=0 & inf_n_68=0 &
 {FLOW,(17,18)=__norm}
 
 
@@ -37,15 +37,15 @@ Inferred Pure:[ n!=0]
 
 Infer  (7): Valid. 
 Inferred Heap:[ q::ll<inf_n_98>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_98=n]
-<1>true & inf_n_98=0 & n=0 &
+Inferred Pure:[ inf_n_98=0]
+<1>true & n=0 & inf_n_98=0 &
 {FLOW,(17,18)=__norm}
 
 
 Infer  (8): Valid. 
 Inferred Heap:[ q::ll<inf_n_117>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_117=n]
-<1>true & inf_n_117=0 & n=0 &
+Inferred Pure:[ inf_n_117=0]
+<1>true & n=0 & inf_n_117=0 &
 {FLOW,(17,18)=__norm}
 
 
@@ -56,5 +56,4 @@ Inferred Pure:[ n=0]
 {FLOW,(17,18)=__norm}
 
 
-Halting Reduce... 
-Stop Omega... 136 invocations 
+Stop Omega... 116 invocations 

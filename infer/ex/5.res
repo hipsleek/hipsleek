@@ -84,11 +84,11 @@ Inferred Pure:[ !(m=2 & 1<=n)]
 {FLOW,(17,18)=__norm}
 
 
-Infer  (13): Fail.(may) cause:(failure_code=213)  2<m & a=p |-  m<a (may-bug).
+Infer  (13): Fail.(may) cause:(failure_code=213)  p=a & 3<=m & 4<=a |-  m<a (may-bug).
 
-Infer  (14): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
+Infer  (14): Fail.(may) cause:(failure_code=213)  3<=m & 6<=p |-  4<m;  3<=m & 6<=p |-  m<p (may-bug).
 
-Infer  (15): Fail.(may) cause:(failure_code=213)  2<m |-  4<m;  2<m |-  m<p (may-bug).
+Infer  (15): Fail.(may) cause:(failure_code=213)  5<=m |-  m<p (may-bug).
 
 Infer  (16): Valid. 
 Inferred Heap:[]
@@ -97,5 +97,4 @@ Inferred Pure:[ 5<=m & m<p]
 {FLOW,(17,18)=__norm}
 
 
-Halting Reduce... 
-Stop Omega... 288 invocations 
+Stop Omega... 244 invocations 

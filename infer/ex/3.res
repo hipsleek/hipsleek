@@ -199,5 +199,4 @@ Inferred Pure:[ inf_b_485=b]
 {FLOW,(17,18)=__norm}
 
 
-Halting Reduce... 
-Stop Omega... 561 invocations 
+Stop Omega... 445 invocations 

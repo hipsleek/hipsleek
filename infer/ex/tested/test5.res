@@ -14,7 +14,7 @@ Inferred Pure:[ n!=0]
 {FLOW,(17,18)=__norm}
 
 
-Infer  (3): Fail.(may) cause:(failure_code=213)  true |-  inf_b_73=b;  true |-  inf_flted_19_76=null (may-bug).
+Infer  (3): Fail.(may) cause:(failure_code=213)  true |-  inf_b_73=b (may-bug).
 
 Infer  (4): Valid. 
 Inferred Heap:[ x::node<inf_Anon_117,inf_b_118>@M[Orig], y::node<inf_Anon_120,inf_flted_29_121>@M[Orig]]
@@ -30,5 +30,4 @@ ERROR: at _0_0
 Message: y is not found in both sides
  exception in Infer  (5) check
 : no residue 
-Halting Reduce... 
-Stop Omega... 107 invocations 
+Stop Omega... 94 invocations 

@@ -87,5 +87,4 @@ Inferred Pure:[ y!=null]
 {FLOW,(17,18)=__norm}
 
 
-Halting Reduce... 
-Stop Omega... 185 invocations 
+Stop Omega... 164 invocations 

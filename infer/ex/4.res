@@ -16,5 +16,4 @@ Inferred Pure:[ inf_b_56=b]
 
 Infer  (3): Fail.(may) cause:15.4 no match for rhs data node: b (may-bug).
 
-Halting Reduce... 
-Stop Omega... 88 invocations 
+Stop Omega... 82 invocations 

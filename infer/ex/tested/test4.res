@@ -7,5 +7,4 @@ ERROR: at _0_0
 Message: t is not found in both sides
  exception in Infer  (2) check
 : no residue 
-Halting Reduce... 
 Stop Omega... 16 invocations 
