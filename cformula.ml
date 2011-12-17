@@ -1645,7 +1645,66 @@ and struc_post_fv (f:struc_formula):Cpure.spec_var list =
  | EInfer b -> struc_post_fv b.formula_inf_continuation
   in	
   List.fold_left (fun a c-> a@(helper c)) [] f
-	  
+
+and heap_of (f:formula) : h_formula list = match f with
+  | Or ({formula_or_f1 = f1; 
+	formula_or_f2 = f2}) -> (heap_of f1)@(heap_of f2)
+  | Base ({formula_base_heap = h; 
+	formula_base_pure = p;
+	formula_base_branches = br;
+	formula_base_type = t}) -> [h]
+  | Exists ({formula_exists_qvars = qvars; 
+	formula_exists_heap = h; 
+	formula_exists_pure = p; 
+	formula_exists_type = t;
+	formula_exists_flow = fl;
+	formula_exists_branches = br;
+    formula_exists_label = lbl;
+	formula_exists_pos = pos}) -> [h]
+
+and fv_heap_of (f:formula) = 
+  let hl=heap_of f in
+  List.concat (List.map h_fv hl)
+
+and mk_Star f1 f2 p = 
+  if f1==HTrue then f2
+  else if f2==HTrue then f1
+  else Star {h_formula_star_h1=f1; h_formula_star_h2=f2; h_formula_star_pos=p}
+
+and mk_Conj f1 f2 p = 
+  if f1==HTrue then f2
+  else if f2==HTrue then f1
+  else Conj {h_formula_conj_h1=f1; h_formula_conj_h2=f2; h_formula_conj_pos=p}
+
+and remove_h_lend (f:h_formula) : h_formula = 
+  match f with
+    | Star b -> 
+        let new_f1 = remove_h_lend b.h_formula_star_h1 in
+        let new_f2 = remove_h_lend b.h_formula_star_h2 in
+        let pos = b.h_formula_star_pos in
+        mk_Star new_f1 new_f2 pos
+    | Conj b -> 
+        let new_f1 = remove_h_lend b.h_formula_conj_h1 in
+        let new_f2 = remove_h_lend b.h_formula_conj_h2 in
+        let pos = b.h_formula_conj_pos in
+        mk_Conj new_f1 new_f2 pos
+    | DataNode {h_formula_data_imm = i} 
+    | ViewNode {h_formula_view_imm = i} ->
+          if isLend i then HTrue else f
+    | _ -> f
+
+and remove_lend (f:formula) : formula = match f with
+  | Or b -> 
+        let new_f1 = remove_lend b.formula_or_f1 in
+        let new_f2 = remove_lend b.formula_or_f2 in
+        Or {b with formula_or_f1=new_f1; formula_or_f2=new_f2}
+  | Base b -> 
+        let old_h = b.formula_base_heap in
+        Base {b with formula_base_heap = remove_h_lend old_h}
+  | Exists b -> 
+        let old_h = b.formula_exists_heap in
+        Exists {b with formula_exists_heap = remove_h_lend old_h}
+
 and fv (f : formula) : CP.spec_var list = match f with
   | Or ({formula_or_f1 = f1; 
 	formula_or_f2 = f2}) -> CP.remove_dups_svl (fv f1 @ fv f2)

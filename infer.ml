@@ -129,20 +129,55 @@ let extract_pre_list_context x =
   (* print_endline (!print_list_context x); *)
   None*)
 
+let to_unprimed_data_root aset h =
+  let r = h.h_formula_data_node in
+  if CP.is_primed r then
+    let alias = CP.EMapSV.find_equiv_all r aset in
+    let alias = List.filter (CP.is_unprimed) alias in
+    (match alias with
+      | [] -> h
+      | (ur::_) -> {h with h_formula_data_node = ur})
+  else h
+
+let to_unprimed_view_root aset h =
+  let r = h.h_formula_view_node in
+  if CP.is_primed r then
+    let alias = CP.EMapSV.find_equiv_all r aset in
+    let alias = List.filter (CP.is_unprimed) alias in
+    (match alias with
+      | [] -> h
+      | ur::_ -> {h with h_formula_view_node = ur})
+  else h
+
 (* get exactly one root of h_formula *)
-let get_args_h_formula (h:h_formula) =
+let get_args_h_formula aset (h:h_formula) =
   match h with
     | DataNode h -> 
+          let h = to_unprimed_data_root aset h in
+          let root = h.h_formula_data_node in
           let arg = h.h_formula_data_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-         Some (h.h_formula_data_node, arg,new_arg, 
+         Some (root, arg,new_arg, 
          DataNode {h with h_formula_data_arguments=new_arg;})
     | ViewNode h -> 
+          let h = to_unprimed_view_root aset h in
+          let root = h.h_formula_view_node in
           let arg = h.h_formula_view_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-          Some (h.h_formula_view_node, arg,new_arg,
+          Some (root, arg,new_arg,
           ViewNode {h with h_formula_view_arguments=new_arg;} )
     | _ -> None
+
+(*
+type: Cformula.h_formula ->
+  (Cformula.CP.spec_var * Cformula.CP.spec_var list * CP.spec_var list *
+   Cformula.h_formula)
+  option
+*)
+let get_args_h_formula aset (h:h_formula) =
+  let pr1 = !print_h_formula in
+  let pr2 = pr_option (pr_quad !print_sv !print_svl !print_svl pr1) in
+  Gen.Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
   let (h, p, fl, b, t) = split_components f in
@@ -182,9 +217,9 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   if no_infer es then None
   else 
     let iv = es.es_infer_vars in
-    let rt = get_args_h_formula rhs in
     let lhs_als = get_alias_formula es.es_formula in
     let lhs_aset = build_var_aset lhs_als in
+    let rt = get_args_h_formula lhs_aset rhs in
     (*let rhs_als = get_alias_formula conseq in
     let rhs_aset = build_var_aset rhs_als in*)
     let (b,args,inf_vars,new_h,new_iv,alias,r) = match rt with (* is rt captured by iv *)
@@ -251,14 +286,13 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
 type: Cformula.entail_state ->
   Cformula.h_formula ->
   Cformula.h_formula ->
-  Cformula.formula ->
-  (Cformula.CP.spec_var list * Cformula.h_formula * CP.formula) option
+  'a -> (Cformula.CP.spec_var list * Cformula.h_formula * CP.formula) option
 *)
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq = 
   let pr1 = !print_entail_state in
   let pr2 = !print_h_formula in
-  (* let pr3 = pr_option (fun (a,b,c) -> (!print_svl a, pr2 b, !print_pure_f c)) in *)
-  Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr_no
+  let pr3 = pr_option (pr_triple !print_svl pr2 !print_pure_f) in
+  Gen.Debug.ho_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq) es rhs
 
 (* picks ctr from f that are related to vars *)

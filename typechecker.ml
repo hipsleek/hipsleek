@@ -147,9 +147,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 and check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
       CF.struc_formula * (CF.formula list) * bool =
   let pr1 = Cprinter.string_of_struc_formula in
-  let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in
+  (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
   let pr2 s = "nothing" in
-  let pr3 = pr_triple pr1n pr2 string_of_bool in
+  let pr3 = pr_triple pr1 pr2 string_of_bool in
   Gen.Debug.ho_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0) spec_list
 
@@ -157,7 +157,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       CF.struc_formula * (CF.formula list) * bool =
   let r = List.map (do_spec_verify_infer prog proc ctx e0) spec_list in
   let (sl,pl,bl) = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@[b1],a2@[b2],a3@[b3])) ([],[],[]) r in
-  (sl, pl, List.for_all pr_id bl)
+  (CF.norm_specs sl, pl, List.for_all pr_id bl)
 
 and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) e0 (spec: CF.ext_formula): (CF.ext_formula * CF.formula *bool) =
   let rec helper (spec: CF.ext_formula) :  CF.ext_formula * CF.formula * bool =
@@ -225,7 +225,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		    let (c,pre,f) = check_specs_infer_a prog proc nctx b.CF.formula_inf_continuation e0 in
 (*      print_endline ("FML2: " ^ Cprinter.string_of_formula pre);*)
 	        (CF.EInfer {b with CF.formula_inf_continuation = c}, CF.formula_of_heap CF.HTrue no_pos, f) 
-	  | CF.EAssume (x,post_cond,post_label) ->
+	  | CF.EAssume (var_ref,post_cond,post_label) ->
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error
 		          {Error.error_loc = pos_spec;
@@ -283,10 +283,16 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                  let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
                  (* add infer_vars *)
                  let pre_vars = CP.remove_dups_svl (pre_vars @ (Inf.collect_infer_vars_list_partial_context res_ctx)) in
+                 (* drop @L heap nodes from flist *)
+                 let flist = List.map CF.remove_lend flist in
                  let post_vars = List.concat (List.map CF.fv flist) in
-                 let post_vars = CP.diff_svl post_vars pre_vars in
+                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
+                 (* ref parameters *)
+                 let vr = List.map CP.to_primed var_ref in
+                 let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@vr) in
                  (* filter out res *)
                  let post_vars = List.filter (fun v -> not(CP.is_res_spec_var v)) post_vars in
+                 let post_vars = CP.remove_dups_svl post_vars in
                  let _ = print_endline ("Pre Vars :"^Cprinter.string_of_spec_var_list pre_vars) in
                  let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
                  let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos) 
@@ -294,7 +300,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                  let h, p, fl, b, t = CF.split_components post_fml in
                  let p = CP.mkExists_with_simpl_debug Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
                  let post_fml = Cformula.mkBase h (MCP.mix_of_pure p) t fl b no_pos in
-                 let inferred_post = CF.EAssume (CP.remove_dups_svl (x(* @post_vars *)),post_fml,post_label) in
+                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
                  (inferred_post, i_pre)
                else (spec,CF.formula_of_heap CF.HTrue no_pos)
              in (new_spec_post, pre, res)
