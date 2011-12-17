@@ -91,6 +91,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
 		      (* formula_base_imm : bool; *)
+                      formula_base_and : one_formula list; (*to capture concurrent flows*)
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_label : formula_label option;
@@ -109,6 +110,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_pure : MCP.mix_formula;
                         formula_exists_type : t_formula;
 			(* formula_exists_imm : bool; *)
+                        formula_exists_and : one_formula list;
                         formula_exists_flow : flow_formula;
                         formula_exists_branches : (branch_label * CP.formula) list;
                         formula_exists_label : formula_label option;
@@ -120,6 +122,30 @@ and flow_store = {
 	formula_store_name : ident;
 	formula_store_value : flow_formula;		
 }
+
+and one_formula = {
+    formula_heap : h_formula;
+    formula_pure : MCP.mix_formula;
+    formula_type : t_formula; (* a collection ot subtype information *)
+    formula_branches : (branch_label * CP.formula) list;
+    formula_label : formula_label option;
+    formula_pos : loc
+}
+
+(* and formula_nbase = {   *)
+(*     formula_nbase_main : one_formula; *)
+(*     formula_nbase_and : one_formula list; *)
+(*     formula_nbase_flow : flow_formula; *)
+(*     formula_nbase_pos : loc  *)
+(* } *)
+
+(* and formula_nexists = {   *)
+(*     formula_nexists_qvars : CP.spec_var list; *)
+(*     formula_nexists_main : one_formula; *)
+(*     formula_nexists_and : one_formula list; *)
+(*     formula_nexists_flow : flow_formula; *)
+(*     formula_nexists_pos : loc  *)
+(* } *)
 	
 and flow_treatment = 
   | Flow_combine
@@ -233,7 +259,7 @@ let get_ptr_from_data h =
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
-let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
+(* let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized") *)
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
 let print_mix_formula = print_mix_f
@@ -830,6 +856,7 @@ and mkTrue (flowt: flow_formula) pos = Base ({formula_base_heap = HTrue;
 formula_base_pure = MCP.mkMTrue pos; 
 formula_base_type = TypeTrue; 
 (* formula_base_imm = false; *)
+formula_base_and = [];
 formula_base_flow = flowt (*(mkTrueFlow ())*);
 formula_base_branches = [];
 formula_base_label = None;
@@ -841,6 +868,7 @@ and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse;
 formula_base_pure = MCP.mkMFalse pos; 
 formula_base_type = TypeFalse;
 (* formula_base_imm = false; *)
+formula_base_and = [];
 formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
 formula_base_branches = [];
 formula_base_label = None;
@@ -888,6 +916,7 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
 	formula_base_pure = p; 
 	formula_base_type = t;
 	(* formula_base_imm = contains_immutable_h_formula h; *)
+    formula_base_and = []; (*TO CHECK: need a new method to make this field*)
 	formula_base_flow = fl;
     formula_base_branches = b;
     formula_base_label = lbl;
@@ -1055,6 +1084,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
   formula_base_pure = p;
   formula_base_type = t;
   (* formula_base_imm = contains_immutable_h_formula h; *)
+  formula_base_and = []; (*TO CHECK: add new info*)
   formula_base_flow = fl;
   formula_base_branches = b;
   formula_base_label = lbl;
@@ -1068,6 +1098,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
 	formula_exists_pure = p;
 	formula_exists_type = t;
 	(* formula_exists_imm = contains_immutable_h_formula h; *)
+    formula_exists_and = []; (*TO CHECK: add new info*)
 	formula_exists_flow = fl;
     formula_exists_branches = b;
     formula_exists_label = lbl;
@@ -1569,6 +1600,7 @@ and fv (f : formula) : CP.spec_var list = match f with
   | Base ({formula_base_heap = h; 
 	formula_base_pure = p;
 	formula_base_branches = br;
+    formula_base_and = a; (*TO CHECK*)
 	formula_base_type = t}) -> 
       br_fv br (h_fv h @ MCP.mfv p)
   | Exists ({formula_exists_qvars = qvars; 
@@ -1576,6 +1608,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 	formula_exists_pure = p; 
 	formula_exists_type = t;
 	(* formula_exists_imm = imm; *)
+    formula_exists_and = a; (*TO CHECK*)
 	formula_exists_flow = fl;
 	formula_exists_branches = br;
     formula_exists_label = lbl;
@@ -1584,6 +1617,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 		formula_base_pure = p; 
 		formula_base_type = t;
 		(* formula_base_imm = imm; *)
+        formula_base_and = a; (*TO CHECK*)
 		formula_base_flow = fl;
         formula_base_branches = br;
         formula_base_label = lbl;
@@ -1842,6 +1876,7 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
 			   formula_base_pure = qp;
 			   formula_base_type = tconstr;
 			   (* formula_exists_imm = imm; *)
+               formula_base_and = a; (*TO CHECK*)
 			   formula_base_flow = fl;
 			   formula_base_branches = b;
 			   formula_base_label = lbl;
@@ -1853,6 +1888,7 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
 			       formula_base_pure = qp1;
 			       formula_base_type = tconstr;
 			       (* formula_exists_imm = imm; *)
+                   formula_base_and = a; (*TO CHECK*)
 			       formula_base_flow = fl;
 			       formula_base_branches = b;
 			       formula_base_label = lbl;
@@ -1865,6 +1901,7 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
 			   formula_exists_pure = qp;
 			   formula_exists_type = tconstr;
 			   (* formula_exists_imm = imm; *)
+               formula_exists_and = a; (*TO CHECK*)
 			   formula_exists_flow = fl;
 			   formula_exists_branches = b;
 			   formula_exists_label = lbl;
@@ -1877,6 +1914,7 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
 			       formula_exists_pure = qp1;
 			       formula_exists_type = tconstr;
 			       (* formula_exists_imm = imm; *)
+                   formula_exists_and = a; (*TO CHECK*)
 			       formula_exists_flow = fl;
 			       formula_exists_branches = b;
 			       formula_exists_label = lbl;
@@ -1919,6 +1957,7 @@ and subst_x sst (f : formula) =
 					formula_base_pure = p; 
 					formula_base_type = t;
 					(* formula_base_imm = imm; *)
+                    formula_base_and = a; (*TO CHECK*)
 					formula_base_flow = fl;
 					formula_base_branches = b;
 					formula_base_label = lbl;
@@ -1927,6 +1966,7 @@ and subst_x sst (f : formula) =
 					formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst p); 
 					formula_base_type = t;
 					(* formula_base_imm = imm; *)
+                    formula_base_and = a; (*TO CHECK : TO DO: subst*)
 					formula_base_flow = fl;
 					formula_base_label = lbl;
 					formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
@@ -1936,6 +1976,7 @@ and subst_x sst (f : formula) =
 						formula_exists_pure = qp; 
 						formula_exists_type = tconstr;
 						(* formula_exists_imm = imm; *)
+                        formula_exists_and = a; (*TO CHECK*)
 						formula_exists_flow = fl;
 						formula_exists_branches = b;
 						formula_exists_label = lbl;
@@ -1950,6 +1991,7 @@ and subst_x sst (f : formula) =
 									formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
 									formula_exists_type = tconstr;
 									(* formula_exists_imm = imm; *)
+                                    formula_exists_and = a; (*TO CHECK : TO DO: subst*)
 									formula_exists_flow = fl;
 									formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_subs sst p1)) b;
 									formula_exists_label = lbl;
@@ -2060,6 +2102,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 	formula_base_pure = p; 
 	formula_base_type = t;
 	(* formula_base_imm = imm; *)
+    formula_base_and = a; (*TO CHECK*)
 	formula_base_flow = fl;
     formula_base_branches = b;
     formula_base_label = lbl;
@@ -2068,6 +2111,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p); 
 		formula_base_type = t;
 		(* formula_base_imm = imm; *)
+        formula_base_and = a; (*TO CHECK : TO DO: apply_one*)
 		formula_base_flow = fl;
         formula_base_label = lbl;
         formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
@@ -2077,6 +2121,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 	formula_exists_pure = qp; 
 	formula_exists_type = tconstr;
 	(* formula_exists_imm = imm; *)
+    formula_exists_and = a; (*TO CHECK*)
 	formula_exists_flow = fl;
     formula_exists_branches = b;
     formula_exists_label = lbl;
@@ -2087,6 +2132,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp); 
 		formula_exists_type = tconstr;
 		(* formula_exists_imm = imm; *)
+        formula_exists_and = a; (*TO CHECK: apply_one*)
 		formula_exists_flow = fl;
         formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
         formula_exists_label = lbl;
@@ -4456,12 +4502,14 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 		   formula_base_type = t;
 		   (* formula_base_imm = imm; *)
        formula_base_branches = b;
+       formula_base_and = a; (*TO CHECK*)
 		   formula_base_flow = fl;
        formula_base_label = lbl;
 		   formula_base_pos = pos}) -> 
     Base ({formula_base_heap = h; 
 			formula_base_pure = MCP.memo_apply_one_exp s p;
 			(* formula_base_imm = imm; *)
+            formula_base_and = a; (*TO CHECK: apply_one_exp*)
 			formula_base_flow = fl;
      	(* TODO: solve this *)
 		 	(*formula_base_pure = CP.elim_idents (CP.apply_one_exp s p);*) (* substitute + easy simplification - eliminate identities where LHS identic to RHS *)
@@ -4475,6 +4523,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 			 formula_exists_type = tconstr;
 			 (* formula_exists_imm = imm; *)
        formula_exists_branches = b;
+       formula_exists_and = a; (*TO CHECK*)
 			 formula_exists_flow = fl;
        formula_exists_label = lbl;
 			 formula_exists_pos = pos}) -> 
@@ -4485,6 +4534,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 					formula_exists_pure = MCP.memo_apply_one_exp s qp; 
 					formula_exists_type = tconstr;
 					(* formula_exists_imm = imm; *)
+                    formula_exists_and = a; (*TO CHECK: apply_one_exp*)
 					formula_exists_flow = fl;
           formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one_exp s p1)) b;
           formula_exists_label = lbl;
@@ -6089,6 +6139,7 @@ let extr_rhs_b (e:formula) =
   formula_base_pure = p1;
   formula_base_type = t1;
   formula_base_branches = br1;
+  formula_base_and = []; (*TO CHECK*)
   formula_base_flow = fl1;
   formula_base_label = None;
   formula_base_pos = no_pos } in
@@ -6101,6 +6152,7 @@ and extr_lhs_b (es:entail_state) =
   formula_base_pure = p1;
   formula_base_type = t1;
   formula_base_branches = br1;
+  formula_base_and = []; (*TO CHECK*)
   formula_base_flow = fl1;
   formula_base_label = None;
   formula_base_pos = no_pos } in

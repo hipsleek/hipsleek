@@ -1546,6 +1546,7 @@ and expand_all_preds prog f0 do_unsat: formula =
       end
     | Base ({formula_base_heap = h;
 	  formula_base_pure = p;
+      formula_base_and = a; (*TO CHECK: ???*)
 	  formula_base_pos =pos}) -> begin
         let proots = find_pred_roots_heap h in 
         let ef0 = List.fold_left (fun f -> fun v -> unfold_nth 3 (prog,None) f v do_unsat 0 pos ) f0 proots in
@@ -1556,6 +1557,7 @@ and expand_all_preds prog f0 do_unsat: formula =
 	  formula_exists_pure = qp;
 	  formula_exists_flow = fl;
       (* formula_exists_imm = imm; *)
+      formula_exists_and = a; (*TO CHECK*)
 	  formula_exists_label = lbl;
 	  formula_exists_pos = pos}) -> begin
         let proots = find_pred_roots_heap qh in
@@ -1563,6 +1565,7 @@ and expand_all_preds prog f0 do_unsat: formula =
 		formula_base_pure = qp;
 		formula_base_type = TypeTrue;
 	    (* formula_base_imm = imm; *)
+        formula_base_and = a; (*TO CHECK: ???*)
 		formula_base_flow = fl;
 		formula_base_branches = [];
 		formula_base_label = lbl;
@@ -3571,6 +3574,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	let b = { formula_base_heap = HTrue;
     formula_base_pure = Mcpure.mkMTrue no_pos;
     formula_base_type = TypeTrue; 
+    formula_base_and = []; (*TO CHECK: ???*)
     formula_base_flow = mkTrueFlow ();
     formula_base_branches = []; 
     formula_base_label = None;
@@ -4792,6 +4796,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_pure = p1;
 					              formula_base_type = t1;
 					              (* formula_base_imm = contains_immutable_h_formula h1; *)
+                                  formula_base_and = []; (*TO CHECK: ???*)
 					              formula_base_flow = fl1;
 					              formula_base_branches = br1;
 					              formula_base_label = None;
@@ -4830,6 +4835,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_type = t1;
 					              (* formula_base_imm = contains_immutable_h_formula h1; *)
 					              formula_base_branches = br1;
+                                  formula_base_and = []; (*TO CHECK: ???*)
 					              formula_base_flow = fl1;
 					              formula_base_label = None;
 					              formula_base_pos = pos } in
@@ -4837,6 +4843,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool)  (ctx0 : 
 					              formula_base_pure = p2;
 					              formula_base_type = t2;
 					              (* formula_base_imm = contains_immutable_h_formula h2; *)
+                                  formula_base_and = []; (*TO CHECK: ???*)
 					              formula_base_flow = fl2;
 					              formula_base_branches = br2;
 					              formula_base_label = None;
@@ -6311,6 +6318,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
     formula_base_type = rhs_t;
     (* formula_base_imm = contains_immutable_h_formula resth2; *)
     formula_base_branches = rhs_br;
+    formula_base_and = []; (*TO CHECK: ???*)
     formula_base_flow = rhs_fl;		
     formula_base_label = None;   
     formula_base_pos = pos } in
