@@ -1228,7 +1228,7 @@ and pr_ext_formula  (e:ext_formula) =
     | EInfer {formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
       fmt_open_vbox 2;
-      fmt_string ("EInfer "^string_of_spec_var_list lvars);
+      fmt_string ("EInfer ["^string_of_spec_var_list lvars^"]");
       if not(Gen.is_empty(cont)) then
         begin
         fmt_cut();

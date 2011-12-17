@@ -146,6 +146,14 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 
 and check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
       CF.struc_formula * bool =
+  let pr1 = Cprinter.string_of_struc_formula in
+  let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in
+  let pr2 = pr_pair pr1n string_of_bool in
+  Gen.Debug.ho_1 "check_specs_infer" pr1 pr2
+      (fun _ -> check_specs_infer_a prog proc ctx spec_list e0) spec_list
+
+and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
+      CF.struc_formula * bool =
   let r = List.map (do_spec_verify_infer prog proc ctx e0) spec_list in
   let (sl,bl) = List.split r in
   (sl, List.for_all pr_id bl)
@@ -175,7 +183,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 			          CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in (*???*)
 		          (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
-		          let (new_c2,f) = check_specs_infer prog proc nctx c2 e0 in
+		          let (new_c2,f) = check_specs_infer_a prog proc nctx c2 e0 in
 		          (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 		          ((c1,new_c2),f)) b.CF.formula_case_branches in
             let (cbl,fl) = List.split r in
@@ -189,20 +197,20 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	          then (CF.transform_context (CF.normalize_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	          else (CF.transform_context (CF.normalize_clash_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) in
 			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
-	        let (c,r) = check_specs_infer prog proc nctx b.CF.formula_ext_continuation e0 in
+	        let (c,r) = check_specs_infer_a prog proc nctx b.CF.formula_ext_continuation e0 in
 	        let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
 	        (CF.EBase {b with CF.formula_ext_continuation = c}, r) 
 	  | CF.EVariance b ->
             Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
 			    CF.es_var_label = b.CF.formula_var_label}) ctx in
-		    let (c,f) = check_specs_infer prog proc nctx b.CF.formula_var_continuation e0 in
+		    let (c,f) = check_specs_infer_a prog proc nctx b.CF.formula_var_continuation e0 in
 	        (CF.EVariance {b with CF.formula_var_continuation = c}, f) 
       | CF.EInfer b ->
             Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
             let vars = b.CF.formula_inf_vars in
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars}) ctx in
-		    let (c,f) = check_specs_infer prog proc nctx b.CF.formula_inf_continuation e0 in
+		    let (c,f) = check_specs_infer_a prog proc nctx b.CF.formula_inf_continuation e0 in
 	        (CF.EInfer {b with CF.formula_inf_continuation = c}, f) 
 	  | CF.EAssume (x,post_cond,post_label) ->
 	        if(Immutable.is_lend post_cond) then
