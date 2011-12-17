@@ -287,8 +287,15 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
              in (new_spec_post, pre, res)
 		           in
 		          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-(*            print_endline ("FML1: " ^ Cprinter.string_of_formula inferred_pre);*)
 		          (spec_and_inferred_post,inferred_pre,r)
+                  (* if (lh==[] & lp==[]) then 		           *)
+                  (*   (spec,r) *)
+                  (* else  *)
+                  (*   let hf = List.fold_left (fun a b ->  *)
+                  (*       if a==CF.HTrue then b  *)
+                  (*       else CF.Star {CF.h_formula_star_h1=a; CF.h_formula_star_h2=b; CF.h_formula_star_pos=no_pos}) CF.HTrue lh in *)
+                  (*   let pf = CP.conj_of_list lp no_pos in *)
+                  (*   (CF.mk_ebase_inferred_pre hf pf [spec],r) *)
 		        with _ as e -> 
 		            let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in helper spec

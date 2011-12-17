@@ -107,6 +107,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_label : formula_label option;
                       formula_base_pos : loc }
 
+
 and mem_formula = { 
   mem_formula_mset : CP.DisjSetSV.dpart ; (* list of disjoint vars *)
 }
@@ -213,6 +214,7 @@ and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
 (* utility functions *)
+
 
 
 let isLend(a : ann) : bool = 
@@ -391,6 +393,23 @@ and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula=
   let mix_f = MCP.OnePF p in
   formula_of_mix_formula mix_f pos 
 
+and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula= 
+  mkBase_w_lbl h p TypeTrue (mkNormalFlow()) [] no_pos None
+
+and mk_ebase f ct pos =
+  let bf = {
+      formula_ext_explicit_inst =[];
+      formula_ext_implicit_inst =[];
+      formula_ext_exists =[];
+      formula_ext_base = f;
+      formula_ext_continuation = ct;
+      formula_ext_pos = pos;
+  } in EBase bf
+
+and mk_ebase_inferred_pre (h:h_formula) (p:CP.formula) ct =
+  let f = mkBase_simp h (MCP.mix_of_pure p) in
+  mk_ebase f ct no_pos 
+
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
   else  MCP.memoise_add_pure_P (MCP.mkMTrue pos) p  in
@@ -469,6 +488,16 @@ and isConstETrue f =
           
 and isConstEFalse f = 
   List.for_all isConstDFalse f
+
+
+and isConstTrueFormula f =
+    match f with
+      | Base b -> (b.formula_base_heap==HTrue) &&
+            (MCP.isConstMTrue b.formula_base_pure) &&
+            (b.formula_base_branches==[])
+      | Exists _ -> false
+      | Or b -> false
+
 
 (* and isConstETrue f =  *)
 (*   if (List.length f)<>1 then false *)
@@ -908,7 +937,7 @@ and mkOr f1 f2 pos =
   else if isAnyConstFalse f2 then f1
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
-        
+
 and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) lbl: formula= 
   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then 
 	mkFalse fl pos
@@ -920,9 +949,10 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
     formula_base_branches = b;
     formula_base_label = lbl;
 	formula_base_pos = pos})
+
 and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
   mkBase_w_lbl h p t fl b pos None
-      
+
 
 and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
@@ -6648,13 +6678,21 @@ and norm_ext_spec (sp:ext_formula): ext_formula =
           let r = List.map (fun (p,s)->(p,norm_specs s)) b.formula_case_branches in
           ECase {b with formula_case_branches = r}
     | EBase b -> 
+          (* eliminate EBase if it is just true without existential *)
+          let vl = b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst @ b.formula_ext_exists in
           let r = norm_specs b.formula_ext_continuation in
-          EBase {b with formula_ext_continuation = r}
+          let base = b.formula_ext_base in
+          if (isConstTrueFormula base) && vl==[] then
+            match r with
+              | [x] -> x
+              | _ -> EBase {b with formula_ext_continuation = r}
+          else  EBase {b with formula_ext_continuation = r}
     | EAssume(svl,f,fl) -> sp
     | EVariance b -> 
           let r = norm_specs b.formula_var_continuation in
           EVariance {b with formula_var_continuation = r}
     | EInfer b -> 
+          (* eliminate EInfer where possible *)
           let r = norm_specs b.formula_inf_continuation in
           (match r with
             | [f] -> f
