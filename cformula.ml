@@ -87,6 +87,7 @@ and formula =
 
 and list_formula = formula list
 
+
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
@@ -119,6 +120,30 @@ and flow_formula = {  formula_flow_interval : nflow;
 and flow_store = {
 	formula_store_name : ident;
 	formula_store_value : flow_formula;		
+}
+
+and one_formula = {
+    formula_heap : h_formula;
+    formula_pure : MCP.mix_formula;
+    formula_type : t_formula; (* a collection ot subtype information *)
+    formula_branches : (branch_label * CP.formula) list;
+    formula_label : formula_label option;
+    formula_pos : loc
+}
+
+and formula_nbase = {  
+    formula_nbase_main : one_formula;
+    formula_nbase_and : one_formula list;
+    formula_nbase_flow : flow_formula;
+    formula_nbase_pos : loc 
+}
+
+and formula_nexists = {  
+    formula_nexists_qvars : CP.spec_var list;
+    formula_nexists_main : one_formula;
+    formula_nexists_and : one_formula list;
+    formula_nexists_flow : flow_formula;
+    formula_nexists_pos : loc 
 }
 	
 and flow_treatment = 
