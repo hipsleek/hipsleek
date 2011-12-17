@@ -57,6 +57,8 @@ and ext_infer_formula =
   {
     formula_inf_vars : Cpure.spec_var list;
     formula_inf_continuation : struc_formula;
+    (* TODO : can we change this to ext_formula instead *)
+    (* formula_inf_continuation : ext_formula; *)
     formula_inf_pos : loc
   }
 
@@ -85,7 +87,7 @@ and ext_variance_formula =
 		formula_var_label : int option;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
 		formula_var_escape_clauses : Cpure.formula list;
-	  formula_var_continuation : struc_formula;
+	    formula_var_continuation : struc_formula;
 		formula_var_pos : loc
 	}
 
@@ -6636,7 +6638,29 @@ let rec init_caller context =
   | OCtx (ctx1, ctx2) -> OCtx (init_caller ctx1, init_caller ctx2)
   | Ctx es -> Ctx ({es with es_infer_label = elim_quan es.es_formula})
 
+(* this normalization removes EInfer from specs *)
+let rec norm_specs (sp:struc_formula) : struc_formula =
+  List.map (norm_ext_spec) sp
 
+and norm_ext_spec (sp:ext_formula): ext_formula =
+  match sp with
+    | ECase b -> 
+          let r = List.map (fun (p,s)->(p,norm_specs s)) b.formula_case_branches in
+          ECase {b with formula_case_branches = r}
+    | EBase b -> 
+          let r = norm_specs b.formula_ext_continuation in
+          EBase {b with formula_ext_continuation = r}
+    | EAssume(svl,f,fl) -> sp
+    | EVariance b -> 
+          let r = norm_specs b.formula_var_continuation in
+          EVariance {b with formula_var_continuation = r}
+    | EInfer b -> 
+          let r = norm_specs b.formula_inf_continuation in
+          (match r with
+            | [f] -> f
+            | _ ->  EInfer {b with formula_inf_continuation = r})
+
+  
 
 
 
