@@ -219,15 +219,18 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
 			    CF.es_var_label = b.CF.formula_var_label}) ctx in
-		    let (c,_,f) = check_specs_infer_a prog proc nctx b.CF.formula_var_continuation e0 in
-	        (CF.EVariance {b with CF.formula_var_continuation = c}, [], f) 
+		    let (c,pre,f) = check_specs_infer_a prog proc nctx b.CF.formula_var_continuation e0 in
+	        (CF.EVariance {b with CF.formula_var_continuation = c}, pre, f) 
       | CF.EInfer b ->
             Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
             let vars = b.CF.formula_inf_vars in
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars}) ctx in
-		    let (c,_,f) = check_specs_infer_a prog proc nctx b.CF.formula_inf_continuation e0 in
+		    let (c,pre,f) = check_specs_infer_a prog proc nctx b.CF.formula_inf_continuation e0 in
             (*      print_endline ("FML2: " ^ Cprinter.string_of_formula pre);*)
-	        (CF.EInfer {b with CF.formula_inf_continuation = c}, [], f) 
+            (* TODO : should convert to EBase if pre!=[] *)
+            (match c with
+              | [a] -> (a,pre,f)
+              | _ -> (CF.EInfer {b with CF.formula_inf_continuation = c}, pre, f)) 
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error
