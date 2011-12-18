@@ -3308,6 +3308,7 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
 	            ((SuccCtx [rs4]),TrueConseq)
+        | EInfer e -> inner_entailer 8 ctx11 e.Cformula.formula_inf_continuation
 	    | EVariance e ->
               let es = match ctx11 with
                 | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
@@ -7068,7 +7069,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                                                                          (*   CF.mk_failure_may (" Inferred heap made contradiction"))), NoAlias)  *)
                 | None ->
                       let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
-                      let rhs_xpure,_,_,_ = xpure prog conseq in
+(*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
                       (* let r = Inf.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
                       (* Thai: change back to Inf.infer_pure *)
                       let r = Inf.infer_lhs_contra_estate estate lhs_xpure pos in
@@ -8838,6 +8839,7 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	    | EAssume _ -> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(combine_struc c2 [f2])))
 			      b.formula_case_branches})
 		| EVariance e -> ECase {b with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f2] c2))) b.formula_case_branches)}
+  | EInfer _ -> ECase {b with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f2] c2))) b.formula_case_branches)}
 	  in r	
     | EBase b -> let r = match f2 with
 	    | ECase d ->
@@ -8853,21 +8855,32 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	          }
 	    | EAssume _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
 		| EVariance _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
+  | EInfer _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
 	  in r																												  
     | EAssume (x1,b, (y1',y2') )-> let r = match f2 with
 	    | ECase d -> combine_ext_struc f2 f1
 	    | EBase d -> combine_ext_struc f2 f1 
 	    | EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
 		| EVariance e -> combine_ext_struc f2 f1
+  | EInfer _ -> combine_ext_struc f2 f1
 	  in r
 	| EVariance e -> let r = match f2 with
 		| ECase c -> ECase {c with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) c.formula_case_branches)}
 		| EBase _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
 		| EAssume _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
+  | EInfer _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
 		| EVariance e2 -> EVariance ({e with formula_var_measures = e.formula_var_measures@e2.formula_var_measures;
 			  formula_var_escape_clauses = e.formula_var_escape_clauses@e2.formula_var_escape_clauses; (* [ec1,ec2] means ec1 or ec2 *)
 			  formula_var_continuation = combine_struc e.formula_var_continuation e2.formula_var_continuation}) 
 	  in r
+ | EInfer e -> let r = match f2 with
+  | ECase c -> ECase {c with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) c.formula_case_branches)}
+  | EBase _ -> EInfer ({e with formula_inf_continuation = combine_struc e.formula_inf_continuation [f2]})
+  | EAssume _ -> EInfer ({e with formula_inf_continuation = combine_struc e.formula_inf_continuation [f2]})
+  | EVariance _ -> EInfer ({e with formula_inf_continuation = combine_struc e.formula_inf_continuation [f2]})
+  | EInfer e2 -> EInfer ({e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
+     formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}) 
+      in r
   in
   List.fold_left (fun b c1->b@(List.map (fun c2->(combine_ext_struc c1 c2)) f2)) [] f1
 

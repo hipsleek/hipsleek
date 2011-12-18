@@ -268,16 +268,16 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         let new_p_conjs = CP.list_of_conjs new_p in
         let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
           (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-        let r = {
-            match_res_lhs_node = new_h;
-            match_res_lhs_rest = HTrue;
-            match_res_holes = [];
-            match_res_type = Root;
-            match_res_rhs_node = rhs;
-            match_res_rhs_rest = rhs_rest;
-            (* match_res_add_constr = CP.mkTrue no_pos; *)
-        } in
-        let act = M_match r in
+(*        let r = {                                         *)
+(*            match_res_lhs_node = new_h;                   *)
+(*            match_res_lhs_rest = HTrue;                   *)
+(*            match_res_holes = [];                         *)
+(*            match_res_type = Root;                        *)
+(*            match_res_rhs_node = rhs;                     *)
+(*            match_res_rhs_rest = rhs_rest;                *)
+(*            (* match_res_add_constr = CP.mkTrue no_pos; *)*)
+(*        } in                                              *)
+(*        let act = M_match r in                            *)
         (
             (* WARNING : any dropping of match action must be followed by pop *)
             (* must_action_stk # push act; *)
@@ -490,7 +490,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
         if CP.isConstFalse new_p then None
         else
-          let args = CP.fv new_p in 
+(*          let args = CP.fv new_p in *)
           (* let new_iv = (CP.diff_svl iv args) in *)
           let new_estate =
             {estate with 
