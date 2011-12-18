@@ -185,8 +185,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		          (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		          let (new_c2,pre,f) = check_specs_infer_a prog proc nctx c2 e0 in
-            (* Thai: Need to generate EBase from pre if necessary *)
-            (* let new_c2 = List.map (fun c -> c+pre) new_c2 in *)            
+                  (* Thai: Need to generate EBase from pre if necessary *)
+                  (* let new_c2 = List.map (fun c -> c+pre) new_c2 in *)            
 		          (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 		          ((c1,new_c2),f)) b.CF.formula_case_branches in
             let (cbl,fl) = List.split r in
@@ -202,19 +202,19 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 			(* let _ = print_string ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *)
 	        let (c,pre,r) = check_specs_infer_a prog proc nctx b.CF.formula_ext_continuation e0 in
 	        let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
-(*         print_endline ("FML: " ^ Cprinter.string_of_formula pre);*)
-         let base = b.CF.formula_ext_base in
-         let pos = b.CF.formula_ext_pos in
-         let base = begin
-           match pre with
-           | [] -> base
-           | [p] -> if p = CF.formula_of_heap CF.HTrue no_pos then base
-             else CF.normalize 1 base p pos
-           | _ -> report_error pos ("Spec has more than 2 pres but only 1 post")
-           end 
-         in 
+            (*         print_endline ("FML: " ^ Cprinter.string_of_formula pre);*)
+            let base = b.CF.formula_ext_base in
+            let pos = b.CF.formula_ext_pos in
+            let base = begin
+              match pre with
+                | [] -> base
+                | [p] -> if p = CF.formula_of_heap CF.HTrue no_pos then base
+                  else CF.normalize 1 base p pos
+                | _ -> report_error pos ("Spec has more than 2 pres but only 1 post")
+            end 
+            in 
 	        (CF.EBase {b with CF.formula_ext_base = base; CF.formula_ext_continuation = c}, 
-           CF.formula_of_heap CF.HTrue no_pos, r) 
+            CF.formula_of_heap CF.HTrue no_pos, r) 
 	  | CF.EVariance b ->
             Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
@@ -226,7 +226,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let vars = b.CF.formula_inf_vars in
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars}) ctx in
 		    let (c,_,f) = check_specs_infer_a prog proc nctx b.CF.formula_inf_continuation e0 in
-(*      print_endline ("FML2: " ^ Cprinter.string_of_formula pre);*)
+            (*      print_endline ("FML2: " ^ Cprinter.string_of_formula pre);*)
 	        (CF.EInfer {b with CF.formula_inf_continuation = c}, CF.formula_of_heap CF.HTrue no_pos, f) 
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
 	        if(Immutable.is_lend post_cond) then
@@ -259,64 +259,73 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 			        if (CF.isFailListPartialCtx res_ctx) then (spec, CF.formula_of_heap CF.HTrue no_pos, false)
 			        else
-             let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
-             let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
+                      let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
+                      let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
+                      let iv = CF.collect_infer_vars ctx in
 			          let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
-             let res = CF.isSuccessListPartialCtx tmp_ctx in
-             let new_spec_post, pre = 
-               if res then
-                 let flist = Inf.collect_formula_list_partial_context tmp_ctx in
-                 let i_pre =
-                   if (List.length lh)+(List.length lp) > 0 then (
-                     print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ;
-                     print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
-                     (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*)
-                     let fml = List.fold_left CF.normalize_combine_heap (CF.formula_of_heap CF.HTrue no_pos) lh in
-                     let fml = List.fold_left (fun f p -> CF.normalize 1 fml p no_pos) 
-                       fml (List.map (fun p -> CF.formula_of_pure_formula p no_pos) lp)
-                     in fml
-                   )
-                   else
-                     (*print_endline " ";*)
-                     CF.formula_of_heap CF.HTrue no_pos
-                 in
-	                (*print_endline ("Residual Post : "^(pr_list Cprinter.string_of_formula flist));*)
-                 let pre_vars = CF.context_fv ctx in
-                 (* filter out is_prime *)
-                 let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
-                 (* add infer_vars *)
-                 let pre_vars = CP.remove_dups_svl (pre_vars @ (Inf.collect_infer_vars_list_partial_context res_ctx)) in
-                 (* drop @L heap nodes from flist *)
-                 let flist = List.map CF.remove_lend flist in
-                 let post_vars = List.concat (List.map CF.fv flist) in
-                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
-                 (* ref parameters *)
-                 let vr = List.map CP.to_primed var_ref in
-                 let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@vr) in
-                 (* filter out res *)
-                 let post_vars = List.filter (fun v -> not(CP.is_res_spec_var v)) post_vars in
-                 let post_vars = CP.remove_dups_svl post_vars in
-                 let _ = print_endline ("Pre Vars :"^Cprinter.string_of_spec_var_list pre_vars) in
-                 let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
-                 let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos) 
-                   (CF.formula_of_heap CF.HTrue no_pos) (flist@[post_cond]) in
-                 let post_fml = CF.simplify_post post_fml post_vars in
-                 print_endline ("Residual Post : "^(Cprinter.string_of_formula post_fml));
-                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
-                 (inferred_post, i_pre)
-               else (spec,CF.formula_of_heap CF.HTrue no_pos)
-             in (new_spec_post, pre, res)
-		           in
+                      let res = CF.isSuccessListPartialCtx tmp_ctx in
+                      let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
+                      let infer_post_flag = infer_pre_flag || (List.length iv)>0  in
+                      let new_spec_post, pre = 
+                        if res then
+                          let flist = Inf.collect_formula_list_partial_context tmp_ctx in
+                          let i_pre =
+                            if infer_pre_flag then (
+                                print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ;
+                                print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
+                                (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*)
+                                let fml = List.fold_left CF.normalize_combine_heap (CF.formula_of_heap CF.HTrue no_pos) lh in
+                                let fml = List.fold_left (fun f p -> CF.normalize 1 fml p no_pos) 
+                                  fml (List.map (fun p -> CF.formula_of_pure_formula p no_pos) lp)
+                                in fml
+                            )
+                            else
+                              (*print_endline " ";*)
+                              CF.formula_of_heap CF.HTrue no_pos
+                          in
+                          let i_post =
+                            if not(infer_post_flag) then spec
+                            else 
+                              begin
+	                            (*print_endline ("Residual Post : "^(pr_list Cprinter.string_of_formula flist));*)
+                                let pre_vars = CF.context_fv ctx in
+                                (* filter out is_prime *)
+                                let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
+                                (* add infer_vars *)
+                                let pre_vars = CP.remove_dups_svl (pre_vars @ (Inf.collect_infer_vars_list_partial_context res_ctx)) in
+                                (* drop @L heap nodes from flist *)
+                                let flist = List.map CF.remove_lend flist in
+                                let post_vars = List.concat (List.map CF.fv flist) in
+                                let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
+                                (* ref parameters *)
+                                let vr = List.map CP.to_primed var_ref in
+                                let post_vars = CP.diff_svl post_vars (pre_vars@heap_vars@vr) in
+                                (* filter out res *)
+                                let post_vars = List.filter (fun v -> not(CP.is_res_spec_var v)) post_vars in
+                                let post_vars = CP.remove_dups_svl post_vars in
+                                let _ = print_endline ("Pre Vars :"^Cprinter.string_of_spec_var_list pre_vars) in
+                                let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
+                                let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos) 
+                                  (CF.formula_of_heap CF.HTrue no_pos) (flist@[post_cond]) in
+                                let post_fml = CF.simplify_post post_fml post_vars in
+                                print_endline ("Residual Post : "^(Cprinter.string_of_formula post_fml));
+                                let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
+                                inferred_post
+                              end in
+                          (i_post, i_pre)
+                        else (spec,CF.formula_of_heap CF.HTrue no_pos)
+                      in (new_spec_post, pre, res)
+		          in
 		          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
 		          (spec_and_inferred_post,inferred_pre,r)
-                  (* if (lh==[] & lp==[]) then 		           *)
-                  (*   (spec,r) *)
-                  (* else  *)
-                  (*   let hf = List.fold_left (fun a b ->  *)
-                  (*       if a==CF.HTrue then b  *)
-                  (*       else CF.Star {CF.h_formula_star_h1=a; CF.h_formula_star_h2=b; CF.h_formula_star_pos=no_pos}) CF.HTrue lh in *)
-                  (*   let pf = CP.conj_of_list lp no_pos in *)
-                  (*   (CF.mk_ebase_inferred_pre hf pf [spec],r) *)
+                      (* if (lh==[] & lp==[]) then 		           *)
+                      (*   (spec,r) *)
+                      (* else  *)
+                      (*   let hf = List.fold_left (fun a b ->  *)
+                      (*       if a==CF.HTrue then b  *)
+                      (*       else CF.Star {CF.h_formula_star_h1=a; CF.h_formula_star_h2=b; CF.h_formula_star_pos=no_pos}) CF.HTrue lh in *)
+                      (*   let pf = CP.conj_of_list lp no_pos in *)
+                      (*   (CF.mk_ebase_inferred_pre hf pf [spec],r) *)
 		        with _ as e -> 
 		            let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in helper spec
