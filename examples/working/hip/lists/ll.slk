@@ -25,10 +25,11 @@ checkentail L1 = [|1|] & L3 = [|2,3|] |- true. // parsed as L1=[|1|] & L3=1 & L3
 //checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- append(L1,L2,L3).
 checkentail L1=[|1|] & L2=[|2|] & L3=[|1,2|] |- app(L1,L2) = L3.
 checkentail L1=1:::L2 & L2=[|2|] & L3=[|1,2,2|] |- app(L1,L2) = L3.
+checkentail L1=2:::L2 & L2=[|2|] & L3=[|2,2,2|] |- app(L1,L2) = rev(L3).
 checkentail s1 = [|1|] & s2 = [||] & s3 = [|1|] |- app(s2,s1) = app(s3,s1).
 checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- rev(app(s1,s2)) = rev(s3).
 checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- rev(app(s1,s2)) = s3.
-//checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- app(rev(s3),s2) = app(s2,s1,s2).
+checkentail s1 = [|1|] & s2 = [|2|] & s3 = [|1,2|] |- app(rev(s3),s2) = app(s2,s1,s2).
 
 //checkentail L1_806=L2_799 & v_797=v_812 & L2_807=(v_812:int) ::: L2_814 & L2_814=L2 & 
 //L_825!=[||] & L1=v_797 ::: L2_799 & L1!=[||] & L_825 = app(rev(L1_806), L2_807) |-  L_825=app(rev(L1),L2).
