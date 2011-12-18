@@ -1,7 +1,7 @@
 
 Processing file "t1-i.ss"
 Parsing t1-i.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home2/loris/hg/sl_infer/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -13,10 +13,6 @@ Proving precondition in method bnd$int for spec:
          EAssume 13::
            true & true & {FLOW,(20,21)=__norm} has failed 
 
-OLD SPECS PRE:  EInfer []
-   EBase true & true & {FLOW,(20,21)=__norm}
-           EAssume 10::ref [i]
-             true & true & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer []
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 10::ref [i]
@@ -31,26 +27,19 @@ Inferred Pure:[ 2<=i]
 Residual Post : [ true & 1<=r_24' & r_24'<=2 & i'+r_24'=i & 2<=i & {FLOW,(20,21)=__norm}]
 Pre Vars :[i]
 Exists Post Vars :[r_24']
-OLD SPECS PRE:  EInfer [i]
-   EBase true & true & {FLOW,(20,21)=__norm}
-           EAssume 7::ref [i]
-             true & true & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [i]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 7::ref [i]
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 2<=i & {FLOW,(20,21)=__norm}
          EAssume 7::ref [i]
-           true & (i - 2)<=i' & i'<i & 2<=i & {FLOW,(20,21)=__norm}
+           true & 1<=r_24' & r_24'<=2 & i'+r_24'=i & 2<=i &
+           {FLOW,(20,21)=__norm}
 
 Procedure foo2$int SUCCESS
 Checking procedure foo1a$int... Residual Post : [ true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}]
 Pre Vars :[i]
 Exists Post Vars :[]
-OLD SPECS PRE:  EInfer []
-   EBase true & 0<i & {FLOW,(20,21)=__norm}
-           EAssume 4::ref [i]
-             true & true & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer []
    EBase true & 0<i & {FLOW,(20,21)=__norm}
            EAssume 4::ref [i]
@@ -66,10 +55,6 @@ Inferred Pure:[ 1<=i]
 Residual Post : [ true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}]
 Pre Vars :[i]
 Exists Post Vars :[]
-OLD SPECS PRE:  EInfer [i]
-   EBase true & true & {FLOW,(20,21)=__norm}
-           EAssume 1::ref [i]
-             true & true & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [i]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 1::ref [i]
@@ -79,9 +64,9 @@ NEW SPECS:  EBase true & 1<=i & {FLOW,(20,21)=__norm}
            true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1$int SUCCESS
-Stop Omega... 72 invocations 
+Stop Omega... 71 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.392023 second(s)
-	Time spent in main process: 0.300018 second(s)
-	Time spent in child processes: 0.092005 second(s)
+Total verification time: 0.292016 second(s)
+	Time spent in main process: 0.144008 second(s)
+	Time spent in child processes: 0.148008 second(s)
