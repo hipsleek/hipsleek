@@ -26,3 +26,12 @@ NEW SPECS:  EBase true & 2<=i & {FLOW,(20,21)=__norm}
            true & 1<=r_24' & r_24'<=2 & i'+r_24'=i & 2<=i &
            {FLOW,(20,21)=__norm}
  */
+
+
+void bnd(int i)
+ requires i>=0
+ ensures true;
+
+void ass(ref int r)
+ requires true
+ ensures 1<=r'<=2;

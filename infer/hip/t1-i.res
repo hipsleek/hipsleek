@@ -1,7 +1,7 @@
 
 Processing file "t1-i.ss"
 Parsing t1-i.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -24,22 +24,21 @@ Procedure foo2a$int result FAIL-1
 Checking procedure foo2$int... 
 Inferred Heap:[]
 Inferred Pure:[ 2<=i]
-Residual Post : [ true & 1<=r_24' & r_24'<=2 & i'+r_24'=i & 2<=i & {FLOW,(20,21)=__norm}]
 Pre Vars :[i]
 Exists Post Vars :[r_24']
+Residual Post :  true & (i - 2)<=i' & i'<i & 2<=i & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [i]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 7::ref [i]
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 2<=i & {FLOW,(20,21)=__norm}
          EAssume 7::ref [i]
-           true & 1<=r_24' & r_24'<=2 & i'+r_24'=i & 2<=i &
-           {FLOW,(20,21)=__norm}
+           true & (i - 2)<=i' & i'<i & 2<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo2$int SUCCESS
-Checking procedure foo1a$int... Residual Post : [ true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}]
-Pre Vars :[i]
+Checking procedure foo1a$int... Pre Vars :[i]
 Exists Post Vars :[]
+Residual Post :  true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer []
    EBase true & 0<i & {FLOW,(20,21)=__norm}
            EAssume 4::ref [i]
@@ -52,9 +51,9 @@ Procedure foo1a$int SUCCESS
 Checking procedure foo1$int... 
 Inferred Heap:[]
 Inferred Pure:[ 1<=i]
-Residual Post : [ true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}]
 Pre Vars :[i]
 Exists Post Vars :[]
+Residual Post :  true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [i]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 1::ref [i]
@@ -64,9 +63,9 @@ NEW SPECS:  EBase true & 1<=i & {FLOW,(20,21)=__norm}
            true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1$int SUCCESS
-Stop Omega... 71 invocations 
+Stop Omega... 72 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.292016 second(s)
-	Time spent in main process: 0.144008 second(s)
-	Time spent in child processes: 0.148008 second(s)
+Total verification time: 0.832051 second(s)
+	Time spent in main process: 0.64804 second(s)
+	Time spent in child processes: 0.184011 second(s)

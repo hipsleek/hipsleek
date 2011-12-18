@@ -1,7 +1,7 @@
 
 Processing file "todo.ss"
 Parsing todo.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -13,21 +13,20 @@ Successful States:
  Label: 
  State:true & 1<i & 1<=r_20' & r_20'<=2 & i'+r_20'=i & {FLOW,(20,21)=__norm}
  ]
-Residual Post : [ true & 1<i & 1<=r_20' & r_20'<=2 & i'+r_20'=i & {FLOW,(20,21)=__norm}]
 Pre Vars :[i]
 Exists Post Vars :[r_20']
+Residual Post :  true & (i - 2)<=i' & i'<i & 2<=i & {FLOW,(20,21)=__norm}
 OLD SPECS:  EBase true & 1<i & {FLOW,(20,21)=__norm}
          EAssume 1::ref [i]
            true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 1<i & {FLOW,(20,21)=__norm}
          EAssume 1::ref [i]
-           true & 1<i & 1<=r_20' & r_20'<=2 & i'+r_20'=i &
-           {FLOW,(20,21)=__norm}
+           true & (i - 2)<=i' & i'<i & 2<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo2$int SUCCESS
-Stop Omega... 32 invocations 
+Stop Omega... 33 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.276016 second(s)
-	Time spent in main process: 0.16801 second(s)
-	Time spent in child processes: 0.108006 second(s)
+Total verification time: 0.344021 second(s)
+	Time spent in main process: 0.276017 second(s)
+	Time spent in child processes: 0.068004 second(s)

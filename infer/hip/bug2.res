@@ -1,6 +1,6 @@
 
-Processing file "bug1.ss"
-Parsing bug1.ss ...
+Processing file "bug2.ss"
+Parsing bug2.ss ...
 Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
@@ -23,6 +23,6 @@ Procedure foo2$int SUCCESS
 Stop Omega... 48 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.35602 second(s)
-	Time spent in main process: 0.272016 second(s)
-	Time spent in child processes: 0.084004 second(s)
+Total verification time: 0.300017 second(s)
+	Time spent in main process: 0.232014 second(s)
+	Time spent in child processes: 0.068003 second(s)
