@@ -1,7 +1,7 @@
 
 Processing file "bug2.ss"
 Parsing bug2.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home2/loris/hg/sl_infer/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -23,6 +23,6 @@ Procedure foo2$int SUCCESS
 Stop Omega... 48 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.296018 second(s)
-	Time spent in main process: 0.232014 second(s)
-	Time spent in child processes: 0.064004 second(s)
+Total verification time: 0.228012 second(s)
+	Time spent in main process: 0.124007 second(s)
+	Time spent in child processes: 0.104005 second(s)

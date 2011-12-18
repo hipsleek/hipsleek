@@ -1,7 +1,7 @@
 
 Processing file "t3-i.ss"
 Parsing t3-i.ss ...
-Parsing ../../prelude.ss ...
+Parsing /home2/loris/hg/sl_infer/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -28,6 +28,6 @@ Procedure hd$node SUCCESS
 Stop Omega... 45 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.296017 second(s)
-	Time spent in main process: 0.236014 second(s)
-	Time spent in child processes: 0.060003 second(s)
+Total verification time: 0.268016 second(s)
+	Time spent in main process: 0.152009 second(s)
+	Time spent in child processes: 0.116007 second(s)
