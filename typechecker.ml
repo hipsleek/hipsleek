@@ -280,6 +280,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
                       let infer_post_flag = infer_pre_flag || (List.length iv)>0 in
+                      (* let infer_post_flag = false in *)
                       let new_spec_post, pre =
                         if res then
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
@@ -302,7 +303,6 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                             if not(infer_post_flag) then spec
                             else
                               begin
-	                            (*print_endline ("Residual Post : "^(pr_list Cprinter.string_of_formula flist));*)
                                 let pre_vars = CF.context_fv ctx in
                                 (* filter out is_prime *)
                                 let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
@@ -310,6 +310,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let pre_vars = CP.remove_dups_svl (pre_vars @ (Inf.collect_infer_vars_list_partial_context res_ctx)) in
                                 (* drop @L heap nodes from flist *)
                                 let flist = List.map CF.remove_lend flist in
+                                (* TODO: flist denotes a disjunction! see ll-b.ss *)
                                 let post_vars = List.concat (List.map CF.fv flist) in
                                 let heap_vars = List.concat (List.map (fun f -> CF.fv_heap_of f) flist) in
                                 (* ref parameters *)
@@ -323,7 +324,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos)
                                   (CF.formula_of_heap CF.HTrue no_pos) (flist@[post_cond]) in
                                 let post_fml = CF.simplify_post post_fml post_vars in
-                                print_endline ("Residual Post : "^(Cprinter.string_of_formula post_fml));
+	                            print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist));
+                                print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml));
                                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
                                 inferred_post
                               end in

@@ -3308,7 +3308,16 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
 	            let rs3 = add_path_id rs2 (pid,i) in
                 let rs4 = prune_ctx prog rs3 in
 	            ((SuccCtx [rs4]),TrueConseq)
-        | EInfer e -> inner_entailer 8 ctx11 e.Cformula.formula_inf_continuation
+        | EInfer e -> 
+              (* ignores any EInfer on the RHS *) 
+              (* assumes each EInfer contains exactly one continuation *)
+              (* TODO : change the syntax of EInfer? *)
+              let c=e.Cformula.formula_inf_continuation in
+              begin
+              match c with
+                | [a] -> helper_inner_x ctx11 a
+                | _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : EInfer is not well-formed \n")
+              end
 	    | EVariance e ->
               let es = match ctx11 with
                 | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
@@ -3318,7 +3327,6 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
                   let CP.SpecVar (t, i, p) = v in
                   let nid = i ^ "_" ^ mn in
                   CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
-
               let normalize_ctx_rhs =
                 let rec filter pformula =
                   match pformula with
