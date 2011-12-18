@@ -269,7 +269,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
-                      let infer_post_flag = true in
+                      (* Fail with some tests *)
+                      let infer_post_flag = infer_pre_flag || (List.length iv)>0 in
                       let new_spec_post, pre =
                         if res then
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
