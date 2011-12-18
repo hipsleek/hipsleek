@@ -6783,5 +6783,43 @@ let rec simplify_post post_fml post_vars = match post_fml with
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl b no_pos in
     post_fml
 
+let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
+  match sp with
+    | ECase b -> report_error b.formula_case_pos ("Not supported nested case analysis")
+    | EBase b -> sp
+    | EAssume(svl,f,fl) -> 
+      if pre=formula_of_heap HTrue no_pos then sp
+      else
+        EBase {formula_ext_explicit_inst = [];
+		      formula_ext_implicit_inst = [];
+		      formula_ext_exists = [];
+		      formula_ext_base = pre;
+		      formula_ext_continuation = [sp];
+		      formula_ext_pos = no_pos
+        }
+    | EVariance b -> 
+          let c = b.formula_var_continuation in
+          let c =
+            begin
+            match c with
+            | [] -> sp
+            | [hd] -> hd
+            | _ -> report_error b.formula_var_pos ("Not supported nested case analysis")
+            end
+          in          
+          let r = merge_ext_pre c pre in
+          EVariance {b with formula_var_continuation = [r]}
+    | EInfer b ->
+          let c = b.formula_inf_continuation in
+          let c =
+            begin
+            match c with
+            | [] -> sp
+            | [hd] -> hd
+            | _ -> report_error b.formula_inf_pos ("Not supported nested case analysis")
+            end          
+          in
+          let r = merge_ext_pre c pre in
+          EInfer {b with formula_inf_continuation = [r]}
 
 
