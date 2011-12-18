@@ -1087,8 +1087,11 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 
 and add_pre_to_cprog cprog = 
   {cprog with C.prog_proc_decls = List.map (fun c-> 
-	  {c with  Cast.proc_static_specs_with_pre = add_pre(*_debug*) cprog c.Cast.proc_static_specs;
-          (*Cast.proc_dynamic_specs = add_pre cprog c.Cast.proc_dynamic_specs;*)}
+      let ns = add_pre(*_debug*) cprog c.Cast.proc_static_specs in
+      let _ = c.Cast.proc_stk_of_static_specs # push ns in
+      c
+	  (* {c with  Cast.proc_static_specs_with_pre = add_pre(\*_debug*\) cprog c.Cast.proc_static_specs; *)
+      (*     (\*Cast.proc_dynamic_specs = add_pre cprog c.Cast.proc_dynamic_specs;*\)} *)
   ) cprog.C.prog_proc_decls;}	
 
 and sat_warnings cprog = 
@@ -1962,7 +1965,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 		  C.proc_important_vars = imp_vars; (* An Hoa *)
           C.proc_static_specs = final_static_specs_list;
           C.proc_dynamic_specs = final_dynamic_specs_list;
-          C.proc_static_specs_with_pre =  [];
+          (* C.proc_static_specs_with_pre =  []; *)
           C.proc_stk_of_static_specs = new Gen.stack_noinit Cprinter.string_of_struc_formula;
           C.proc_by_name_params = by_names;
           C.proc_body = body;
