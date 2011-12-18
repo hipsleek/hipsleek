@@ -185,7 +185,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		          (*let _ = print_string ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		          let (new_c2,pre,f) = check_specs_infer_a prog proc nctx c2 e0 in
-            (* Thai: Need to think more *)
+            (* Thai: Need to generate EBase from pre if necessary *)
             (* let new_c2 = List.map (fun c -> c+pre) new_c2 in *)            
 		          (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 		          ((c1,new_c2),f)) b.CF.formula_case_branches in
@@ -203,15 +203,18 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	        let (c,pre,r) = check_specs_infer_a prog proc nctx b.CF.formula_ext_continuation e0 in
 	        let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in
 (*         print_endline ("FML: " ^ Cprinter.string_of_formula pre);*)
+         let base = b.CF.formula_ext_base in
+         let pos = b.CF.formula_ext_pos in
          let base = begin
            match pre with
-           | [] -> b.CF.formula_ext_base
-           | [p] -> CF.normalize 1 b.CF.formula_ext_base p b.CF.formula_ext_pos
-           | _ -> report_error b.CF.formula_ext_pos ("Spec has more than 2 preconditions")
+           | [] -> base
+           | [p] -> if p = CF.formula_of_heap CF.HTrue no_pos then base
+             else CF.normalize 1 base p pos
+           | _ -> report_error pos ("Spec has more than 2 pres but only 1 post")
            end 
          in 
-	        (CF.EBase {b with CF.formula_ext_base = base; 
-         CF.formula_ext_continuation = c}, CF.formula_of_heap CF.HTrue no_pos, r) 
+	        (CF.EBase {b with CF.formula_ext_base = base; CF.formula_ext_continuation = c}, 
+           CF.formula_of_heap CF.HTrue no_pos, r) 
 	  | CF.EVariance b ->
             Debug.devel_pprint ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures;
@@ -277,7 +280,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                      (*print_endline " ";*)
                      CF.formula_of_heap CF.HTrue no_pos
                  in
-	                print_endline ("Residual Post : "^(pr_list Cprinter.string_of_formula flist));
+	                (*print_endline ("Residual Post : "^(pr_list Cprinter.string_of_formula flist));*)
                  let pre_vars = CF.context_fv ctx in
                  (* filter out is_prime *)
                  let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
@@ -297,9 +300,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                  let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
                  let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos) 
                    (CF.formula_of_heap CF.HTrue no_pos) (flist@[post_cond]) in
-                 (*let h, p, fl, b, t = CF.split_components post_fml in
-                 let p = CP.mkExists_with_simpl_debug Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
-                 let post_fml = Cformula.mkBase h (MCP.mix_of_pure p) t fl b no_pos in*)
+                 let post_fml = CF.simplify_post post_fml post_vars in
+                 print_endline ("Residual Post : "^(Cprinter.string_of_formula post_fml));
                  let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
                  (inferred_post, i_pre)
                else (spec,CF.formula_of_heap CF.HTrue no_pos)

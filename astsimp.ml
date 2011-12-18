@@ -4003,7 +4003,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
         Cformula.EInfer {
         Cformula.formula_inf_vars = new_ivs;
         Cformula.formula_inf_continuation = ct;
-        Cformula.formula_inf_pos = b.Iformula.formula_inf_pos}
+        Cformula.formula_inf_pos = pos}
 	in  
     let r = List.map (fun c-> trans_ext_formula c stab) f0 in
     r in
