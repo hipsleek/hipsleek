@@ -187,8 +187,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		          let (new_c2,pre,f) = check_specs_infer_a prog proc nctx c2 e0 in
                   (* Thai: Need to generate EBase from pre if necessary *)
-                  let check = List.exists (fun p -> p!=(CF.formula_of_heap CF.HTrue no_pos)) pre in
-                  let new_c2 = if check then List.map2 CF.merge_ext_pre new_c2 pre else new_c2 in
+                  let new_c2 = if pre!=[] then List.map2 CF.merge_ext_pre new_c2 pre else new_c2 in
 		          (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 		          ((c1,new_c2),f)) b.CF.formula_case_branches in
             let (cbl,fl) = List.split r in
@@ -269,7 +268,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                       let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
-                      let infer_post_flag = true in
+                      let infer_post_flag = infer_pre_flag || ((List.length iv) > 0) in
                       let new_spec_post, pre =
                         if res then
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
