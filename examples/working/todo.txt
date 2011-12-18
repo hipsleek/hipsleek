@@ -1,0 +1,16 @@
+BUGS with hip --eps
+
+Total number of errors: 13 in files:
+ error at: avl-orig-2.ss get_max
+error at: avl-orig-2.ss insert
+error at: avl-orig3.ss get_max
+error at: avl-orig3.ss insert
+error at: bubble.ss bubble
+error at: selection.ss delete_min
+error at: rb.ss is_red
+error at: rb.ss is_black
+error at: rb.ss del_6
+error at: rb.ss del_6r
+error at: rb.ss del_5
+error at: rb.ss del_5r
+error at: rb.ss remove_min
