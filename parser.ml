@@ -205,6 +205,8 @@ let peek_try =
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
+         | [GT,_;AT,_] -> raise Stream.Failure 
+         | [GT,_;MUT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;LEND,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
@@ -436,10 +438,15 @@ and set_slicing_utils_pure_double_x f il =
 	| Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
   else f
 
-and get_heap_ann annl : heap_ann = 
-  if (List.exists (fun x -> (String.compare x "I")==0) annl) then Imm
-  else if (List.exists (fun x -> (String.compare x "L")==0) annl) then Lend
-  else Mutable
+and get_heap_ann annl : Iformula.ann = 
+  match annl with
+    | (Some a) :: r -> a
+    | None :: r -> get_heap_ann r
+    | None :: [] ->  Iformula.ConstAnn(Mutable)
+    | [] ->  Iformula.ConstAnn(Mutable)
+  (* if (List.exists (fun x -> (String.compare x "I")==0) annl) then ConstAnn(Imm) *)
+  (* else if (List.exists (fun x -> (String.compare x "L")==0) annl) then ConstAnn(Lend) *)
+  (* else Mutable *)
 				   
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
@@ -544,9 +551,12 @@ inv:
    |`INV; h=ho_fct_header -> (P.mkTrue no_pos, [])]];
  
 ann_heap: 
-  [[ `IMM  -> "I"
-   | `LEND -> "L"
-   | `DERV -> "D"
+  [[
+    `MUT -> Some (Iformula.ConstAnn(Mutable))
+   | `IMM  -> Some (Iformula.ConstAnn(Imm))
+   | `LEND -> Some (Iformula.ConstAnn(Lend))
+   | `AT; t=cid  -> Some (Iformula.PolyAnn(t, get_pos_camlp4 _loc 1))
+   | `DERV -> None
    ]];
 
 ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
@@ -762,15 +772,15 @@ simple_heap_constr:
   | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
   let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c id dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2))
+      | ([],t) -> F.mkHeapNode2 c id dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> (*F.mkHeapNode ("",Primed) "" false Mutable false false false [] None  (get_pos_camlp4 _loc 1)*)
     let frac = if (Perm.allow_perm ()) then 
           full_iperm ()
         else 
           empty_iperm ()
     in
-	F.mkHeapNode ("",Primed) "" false (*dr*) Mutable false false false frac [] None  (get_pos_camlp4 _loc 1)
+	F.mkHeapNode ("",Primed) "" false (*dr*) (Iformula.ConstAnn(Mutable)) false false false frac [] None  (get_pos_camlp4 _loc 1)
 	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
 	  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
@@ -780,8 +790,8 @@ simple_heap_constr:
         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2))
   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr Mutable false false false frac t ofl (get_pos_camlp4 _loc 2))
+      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
   ]];
 
 (*LDK: parse optional fractional permission, default = 1.0*)
@@ -854,6 +864,9 @@ cexp_w :
 		set_slicing_utils_pure_double f false
       | lc=SELF; `LT;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+	  set_slicing_utils_pure_double f false
+      | lc=SELF; `SUBANN;     cl=SELF       ->
+	  let f = cexp_to_pure2 (fun c1 c2-> P.mkSubAnn c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
       | lc=SELF; peek_try; `GT;     cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
@@ -955,6 +968,9 @@ cexp_w :
 
       | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
       | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+      | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
+      | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
+      | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
       | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
@@ -1002,9 +1018,7 @@ checkentail_cmd:
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    match il with
-      | None -> ([], t, b)
-      | Some idl -> (idl, t, b)
+    let il = un_option il [] in (il,t,b)
   ]];
 
 captureresidue_cmd:
@@ -1300,7 +1314,14 @@ opt_spec_list: [[t = LIST0 spec -> t]];
 spec_list : [[t= LIST1 spec -> t ]];
 
 spec: 
-  [[ `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+  [[ 
+    `INFER; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
+     Iformula.EInfer {
+       Iformula.formula_inf_vars = ivl;
+       Iformula.formula_inf_continuation = [s];
+       Iformula.formula_inf_pos = get_pos_camlp4 _loc 1;
+     }
+  | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
 		 Iformula.EBase {
 			 Iformula.formula_ext_explicit_inst =cl;
 			 Iformula.formula_ext_implicit_inst = [];
@@ -1331,6 +1352,8 @@ spec:
 					Iformula.formula_var_escape_clauses = ec;
 					Iformula.formula_var_continuation = [s];
 					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];
+
+opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 
 opt_var_label: [[t=OPT var_label -> t]];
 
@@ -1815,7 +1838,11 @@ literal:
  [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos_camlp4 _loc 1 }
   | t=integer_literal -> IntLit { exp_int_lit_val = t;exp_int_lit_pos = get_pos_camlp4 _loc 1 }
   | t=real_literal -> FloatLit { exp_float_lit_val = t; exp_float_lit_pos = get_pos_camlp4 _loc 1 }
-  | `NULL -> Null (get_pos_camlp4 _loc 1) ]];
+  | `NULL -> Null (get_pos_camlp4 _loc 1) 
+  (* | `IMM -> P.AConst (Imm, (get_pos_camlp4 _loc 1))  *)
+  (* | `LEND -> P.AConst (Lend, (get_pos_camlp4 _loc 1))  *)
+  (* | `MUT -> P.AConst (Mutable, (get_pos_camlp4 _loc 1))  *)
+ ]];
 
 real_literal:[[ `FLOAT_LIT (t,_) -> t]];
 

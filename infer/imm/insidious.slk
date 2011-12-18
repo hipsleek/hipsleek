@@ -1,0 +1,26 @@
+// TODO non-deterministic with redlog
+
+// (1)
+checkentail @I<:@M |- false.
+print residue.
+
+// (2)
+checkentail @L<:@I |- false.
+print residue.
+
+// (3)
+checkentail v1<:v2 & v2<:v3 |- v1<:v3.
+print residue.
+
+// (4)
+checkentail v=@M |- v<:@I.
+print residue.
+
+// (5)
+checkentail v<:@M |- v=@M.
+print residue.
+
+// (6)
+checkentail v<:@M & v!=@M |- false.
+print residue.
+

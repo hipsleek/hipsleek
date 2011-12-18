@@ -111,8 +111,10 @@ print residue.
 infer [y,n] y::ll<n> |- y::node<_,null>.
 print residue.
 /*
+TODO : n=1 actually subsumes n>=0 & !(n=0 & y=null)
+TODO : can it be removed if we have a post-processing ..
 Inferred Heap:[]
-Inferred Pure:[ n=1, !(n=0 & y=null) & 0<=n]
+Inferred Pure:[ !(n=0 & y=null) & 0<=n, n=1]
 <1>EXISTS(q_236,flted_7_235: q_236::ll<flted_7_235>[Orig] & flted_7_235=0 & 
 n=1 &
 {FLOW,(17,18)=__norm})

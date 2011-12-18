@@ -145,6 +145,7 @@ let op_lt = "<"
 let op_lte = "<=" 
 let op_gt = ">" 
 let op_gte = ">=" 
+let op_sub_ann = "<:" 
 let op_eq = "=" 
 let op_neq = "!=" 
 let op_and = " & "  
@@ -462,10 +463,12 @@ let string_of_spec_var x =
 	real_id (* ^":"^(string_of_typ t) *) ^ (match p with
         | Primed -> "'"
         | Unprimed -> "" )
+
 let string_of_imm imm = match imm with
-  | Imm -> "@I"
-  | Lend -> "@L"
-  | _ -> "@M"
+  | ConstAnn(Imm) -> "@I"
+  | ConstAnn(Lend) -> "@L"
+  | ConstAnn(Mutable) -> "@M"
+  | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 
 
@@ -513,6 +516,7 @@ let exp_wo_paren (e:P.exp) =
   match e with
     | P.Null _ 
     | P.Var _ 
+    | P.AConst _ 
     | P.IConst _ 
     | P.FConst _ | P.Max _ |   P.Min _ | P.BagUnion _ | P.BagIntersect _ 
  -> true
@@ -595,6 +599,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Null l -> fmt_string "null"
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
     | P.IConst (i, l) -> fmt_int i
+    | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -659,6 +664,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
     | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
+    | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
     | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
     | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
     | P.EqMax (e1, e2, e3, l) ->   
@@ -1219,6 +1225,16 @@ and pr_ext_formula  (e:ext_formula) =
 			  wrap_box ("B",0) pr_struc_formula cont;
             end;
           fmt_close();
+    | EInfer {formula_inf_vars = lvars;
+      formula_inf_continuation = cont;} ->
+      fmt_open_vbox 2;
+      fmt_string ("EInfer ["^string_of_spec_var_list lvars^"]");
+      if not(Gen.is_empty(cont)) then
+        begin
+        fmt_cut();
+        wrap_box ("B",0) pr_struc_formula cont;
+        end;
+      fmt_close();
 ;;
 
 let string_of_ext_formula (e:ext_formula) : string =  poly_string_of_pr  pr_ext_formula e
@@ -1420,12 +1436,18 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [e.es_formula]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
+  let pr (f,iv,ih,ip) =
+    pr_formula_wrap f;
+    pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
+    pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
+    pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip
+  in 
   let pr_disj ls = 
-    if (List.length ls == 1) then pr_formula (List.hd ls)
-    else pr_seq "or" pr_formula_wrap ls in
-   (pr_disj (f ctx))
+    if (List.length ls == 1) then pr (List.hd ls)
+    else pr_seq "or" pr ls in
+  (pr_disj (f ctx))
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
@@ -2112,6 +2134,7 @@ let html_op_intersect = " &cap; "
 let html_op_diff = " \\ " 
 let html_op_lt = " &lt; " 
 let html_op_lte = " &le; " 
+let html_op_subann = " <: " 
 let html_op_gt = " &gt; " 
 let html_op_gte = " &ge; " 
 let html_op_eq = " = " 
@@ -2152,6 +2175,7 @@ let rec html_of_formula_exp e =
     | P.Var (x, l) -> html_of_spec_var x
     | P.IConst (i, l) -> string_of_int i
     | P.FConst (f, l) -> string_of_float f
+    | P.AConst (f, l) -> string_of_heap_ann f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           String.concat html_op_add (List.map html_of_formula_exp args)
@@ -2191,6 +2215,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.BVar (x, l) -> html_of_spec_var x
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)
     | P.Lte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lte ^ (html_of_formula_exp e2)
+    | P.SubAnn (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subann ^ (html_of_formula_exp e2)
     | P.Gt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gt ^ (html_of_formula_exp e2)
     | P.Gte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gte ^ (html_of_formula_exp e2)
     | P.Eq (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_eq ^ (html_of_formula_exp e2)
@@ -2331,6 +2356,7 @@ let rec html_of_ext_formula f = match f with
 							formula_var_measures = measures;
 							formula_var_escape_clauses = escape_clauses;
 							formula_var_continuation = cont; } -> ""
+ | EInfer _ -> ""
 
 and html_of_struc_formula f = 
 	if f==[] then "[]" else 
@@ -2426,3 +2452,8 @@ Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
 Smtsolver.print_ty_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;
+Redlog.print_b_formula := string_of_b_formula;;
+Redlog.print_exp := string_of_formula_exp;;
+Redlog.print_formula := string_of_pure_formula;;
+Redlog.print_svl := string_of_spec_var_list;;
+Redlog.print_sv := string_of_spec_var;;

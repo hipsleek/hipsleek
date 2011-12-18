@@ -24,12 +24,12 @@ let mona_pred_file_alternative_path = "/usr/local/lib/"
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 
-
 (* pretty printing for primitive types *)
 let rec mona_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
+  | AnnT          -> "AnnT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
@@ -532,6 +532,7 @@ and mona_of_b_formula_x b f vs =
             (* CP.Lte *)   
             (*| CP.Lte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
               | CP.Lte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
+      | CP.SubAnn (a1, a2, _) -> (equation a1 a2 f "lessEq" "<=" vs)
       | CP.Lte (a1, a2, _) -> (equation a1 a2 f "lessEq" "<=" vs)
             (* CP.Gt *)   
             (*| CP.Gt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
@@ -718,6 +719,7 @@ and print_b_formula b f = match b with
   | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ",pconst(0))" 
   | CP.Lt (a1, a2, _) -> (mona_of_exp a1 f) ^ "<" ^ (mona_of_exp a2 f)
   | CP.Lte (a1, a2, _) -> (mona_of_exp a1 f) ^ "<=" ^ (mona_of_exp a2 f)
+  | CP.SubAnn (a1, a2, _) -> (mona_of_exp a1 f) ^ "<=" ^ (mona_of_exp a2 f)
   | CP.Gt (a1, a2, _) -> (mona_of_exp a1 f) ^ ">" ^ (mona_of_exp a2 f)
   | CP.Gte (a1, a2, _) -> (mona_of_exp a1 f) ^ ">=" ^ (mona_of_exp a2 f)
   | CP.Neq(a1, a2, _) -> (mona_of_exp a1 f) ^ "~=" ^ (mona_of_exp a2 f)
