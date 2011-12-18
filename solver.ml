@@ -1163,7 +1163,10 @@ and prune_pred_struc_x prog (simp_b:bool) f =
         | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_b b.formula_ext_base;
               formula_ext_continuation = prune_pred_struc_x prog simp_b b.formula_ext_continuation}
         | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l)
-        | EVariance v -> EVariance v
+        | EVariance b -> EVariance {b with 
+              formula_var_continuation = prune_pred_struc_x prog simp_b b.formula_var_continuation}
+        | EInfer b -> EInfer {b with 
+              formula_inf_continuation = prune_pred_struc_x prog simp_b b.formula_inf_continuation}
   in    
   (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
   List.map helper f

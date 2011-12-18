@@ -629,12 +629,24 @@ and to_var (e : exp) : spec_var =
   | Var (sv, _) -> sv
   | _ -> failwith ("to_var: argument is not a variable")
 
-and can_be_aliased (e : exp) : bool =
+and can_be_aliased_aux_x with_null (e : exp) : bool =
   match e with
-  | Var _ | Null _ -> true
+  | Var _ -> true
         (* null is necessary in this case: p=null & q=null.
            If null is not considered, p=q is not inferred. *)
+  | Null _ -> with_null
   | _ -> false
+
+
+and can_be_aliased_aux with_null (e : exp) : bool =
+  let pr1 = string_of_bool in
+  let pr2 = !print_exp in
+  Gen.Debug.no_2 "can_be_aliased_aux" pr1 pr2 pr1 can_be_aliased_aux_x with_null e
+
+and can_be_aliased (e : exp) : bool =
+  can_be_aliased_aux true e
+        (* null is necessary in this case: p=null & q=null.
+           If null is not considered, p=q is not inferred. *)
 
 and get_alias (e : exp) : spec_var =
   match e with

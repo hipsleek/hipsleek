@@ -13,28 +13,75 @@ Proving precondition in method bnd$int for spec:
          EAssume 13::
            true & true & {FLOW,(20,21)=__norm} has failed 
 
+OLD SPECS PRE:  EInfer []
+   EBase true & true & {FLOW,(20,21)=__norm}
+           EAssume 10::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+OLD SPECS:  EInfer []
+   EBase true & true & {FLOW,(20,21)=__norm}
+           EAssume 10::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+NEW SPECS:  EAssume 10::ref [i]
+   true & true & {FLOW,(20,21)=__norm}
 
 Procedure foo2a$int result FAIL-1
 Checking procedure foo2$int... 
 Inferred Heap:[]
 Inferred Pure:[ 2<=i]
-Residual Post : [ true & i=i'+r_24' & 1<=r_24' & ((0 - i')+2)<=r_24' & r_24'<=2 &
-{FLOW,(20,21)=__norm}]
+Residual Post : [ true & 1<=r_24' & r_24'<=2 & i'+r_24'=i & 2<=i & {FLOW,(20,21)=__norm}]
+Pre Vars :[i]
+Exists Post Vars :[r_24']
+OLD SPECS PRE:  EInfer [i]
+   EBase true & true & {FLOW,(20,21)=__norm}
+           EAssume 7::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+OLD SPECS:  EInfer [i]
+   EBase true & true & {FLOW,(20,21)=__norm}
+           EAssume 7::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+NEW SPECS:  EBase true & 2<=i & {FLOW,(20,21)=__norm}
+         EAssume 7::ref [i]
+           true & (i - 2)<=i' & i'<i & 2<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo2$int SUCCESS
-Checking procedure foo1a$int...  
-Residual Post : [ true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}]
+Checking procedure foo1a$int... Residual Post : [ true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}]
+Pre Vars :[i]
+Exists Post Vars :[]
+OLD SPECS PRE:  EInfer []
+   EBase true & 0<i & {FLOW,(20,21)=__norm}
+           EAssume 4::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+OLD SPECS:  EInfer []
+   EBase true & 0<i & {FLOW,(20,21)=__norm}
+           EAssume 4::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+NEW SPECS:  EBase true & 0<i & {FLOW,(20,21)=__norm}
+         EAssume 4::ref [i]
+           true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1a$int SUCCESS
 Checking procedure foo1$int... 
 Inferred Heap:[]
 Inferred Pure:[ 1<=i]
-Residual Post : [ true & i=i'+1 & 0<=i' & {FLOW,(20,21)=__norm}]
+Residual Post : [ true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}]
+Pre Vars :[i]
+Exists Post Vars :[]
+OLD SPECS PRE:  EInfer [i]
+   EBase true & true & {FLOW,(20,21)=__norm}
+           EAssume 1::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+OLD SPECS:  EInfer [i]
+   EBase true & true & {FLOW,(20,21)=__norm}
+           EAssume 1::ref [i]
+             true & true & {FLOW,(20,21)=__norm}
+NEW SPECS:  EBase true & 1<=i & {FLOW,(20,21)=__norm}
+         EAssume 1::ref [i]
+           true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1$int SUCCESS
-Stop Omega... 83 invocations 
+Stop Omega... 72 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.98806 second(s)
-	Time spent in main process: 0.760046 second(s)
-	Time spent in child processes: 0.228014 second(s)
+Total verification time: 0.392023 second(s)
+	Time spent in main process: 0.300018 second(s)
+	Time spent in child processes: 0.092005 second(s)

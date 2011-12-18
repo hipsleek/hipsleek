@@ -150,7 +150,7 @@ and check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (
   (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
   let pr2 s = "nothing" in
   let pr3 = pr_triple pr1 pr2 string_of_bool in
-  Gen.Debug.ho_1 "check_specs_infer" pr1 pr3
+  Gen.Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx spec_list e0) spec_list
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
@@ -1000,8 +1000,18 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 				  Prooftracer.start_compound_object ();
 				end
 			    in
-			    let pp, exc = try (* catch exception to close the section appropriately *)
-				  (check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body, None) with | _ as e -> (false, Some e) in
+			    let pp, exc = 
+                  try (* catch exception to close the section appropriately *)
+                    let (new_spec,_,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body in
+                    (* pre has already been incorporated into new_spec *)
+                    (* let old_sp_pre = Cprinter.string_of_struc_formula proc.proc_static_specs_with_pre in *)
+                    let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
+                    let new_sp = Cprinter.string_of_struc_formula new_spec in
+                    (* let _ = print_endline ("OLD SPECS PRE: "^old_sp_pre) in *)
+                    let _ = print_endline ("OLD SPECS: "^old_sp) in
+                    let _ = print_endline ("NEW SPECS: "^new_sp) in
+				    (f, None) 
+                  with | _ as e -> (false, Some e) in
 		        let _ = if !print_proof then begin
 				  Prooftracer.pop_div ();
 				  Prooftracer.add_proc proc pp;

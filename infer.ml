@@ -184,6 +184,9 @@ let get_alias_formula (f:CF.formula) =
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
+(* let get_alias_formula (f:CF.formula) = *)
+(*   Gen.Debug.no_1 "get_alias_formula" !print_formula !print_pure_f get_alias_formula f *)
+
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
 let is_elem_of conj conjs = 
@@ -292,7 +295,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
   let pr1 = !print_entail_state in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_triple !print_svl pr2 !print_pure_f) in
-  Gen.Debug.ho_2 "infer_heap_nodes" pr1 pr2 pr3
+  Gen.Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq) es rhs
 
 (* picks ctr from f that are related to vars *)
