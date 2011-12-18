@@ -144,8 +144,11 @@ let parallelize num =
 (* (\* let _ = print_string ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *\) *)
 (* List.for_all do_spec_verification spec_list *)
 
+let pre_ctr = new Gen.counter 0
+
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : 
       CF.struc_formula * (CF.formula list) * bool =
+  let _ = pre_ctr # reset in
   let pr1 = Cprinter.string_of_struc_formula in
   (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
   let pr2 s = "nothing" in
@@ -187,7 +190,13 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 		          let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 		          let (new_c2,pre,f) = check_specs_infer_a prog proc nctx c2 e0 in
                   (* Thai: Need to generate EBase from pre if necessary *)
-                  let new_c2 = if pre!=[] then List.map2 CF.merge_ext_pre new_c2 pre else new_c2 in
+                  let new_c2 = 
+                    if pre!=[] then 
+                      begin
+                        pre_ctr # inc ;
+                        List.map2 CF.merge_ext_pre new_c2 pre 
+                      end
+                    else new_c2 in
 		          (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 		          ((c1,new_c2),f)) b.CF.formula_case_branches in
             let (cbl,fl) = List.split r in
@@ -209,7 +218,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let base = begin
               match pre with
                 | [] -> base
-                | [p] -> CF.normalize 1 base p pos
+                | [p] -> (pre_ctr # inc; CF.normalize 1 base p pos)
                 | _ -> report_error pos ("Spec has more than 2 pres but only 1 post")
             end 
             in 
@@ -223,6 +232,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
       | CF.EInfer b ->
             Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
             let vars = b.CF.formula_inf_vars in
+            (if vars!=[] then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars}) ctx in
 		    let (c,pre,f) = check_specs_infer_a prog proc nctx b.CF.formula_inf_continuation e0 in
             (*      print_endline ("FML2: " ^ Cprinter.string_of_formula pre);*)
@@ -1020,10 +1030,16 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                   try (* catch exception to close the section appropriately *)
                     (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
                     let (new_spec,_,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body in
-                    let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
-                    let new_sp = Cprinter.string_of_struc_formula new_spec in
-                    let _ = print_endline ("OLD SPECS: "^old_sp) in
-                    let _ = print_endline ("NEW SPECS: "^new_sp) in
+                    if (pre_ctr # get> 0) 
+                    then
+                      begin
+                        let new_spec = Astsimp.add_pre prog new_spec in
+                        let _ = proc.proc_stk_of_static_specs # push new_spec in
+                        let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
+                        let new_sp = Cprinter.string_of_struc_formula new_spec in
+                        print_endline ("OLD SPECS: "^old_sp);
+                        print_endline ("NEW SPECS: "^new_sp) 
+                      end;
 				    (f, None) 
                   with | _ as e -> (false, Some e) in
 		        let _ = if !print_proof then begin
