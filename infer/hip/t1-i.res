@@ -36,13 +36,16 @@ NEW SPECS:  EBase true & 2<=i & {FLOW,(20,21)=__norm}
            true & (i - 2)<=i' & i'<i & 2<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo2$int SUCCESS
-Checking procedure foo1a$int... OLD SPECS:  EInfer []
+Checking procedure foo1a$int... Pre Vars :[i]
+Exists Post Vars :[]
+Residual Post :  true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}
+OLD SPECS:  EInfer []
    EBase true & 0<i & {FLOW,(20,21)=__norm}
            EAssume 4::ref [i]
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 0<i & {FLOW,(20,21)=__norm}
          EAssume 4::ref [i]
-           true & true & {FLOW,(20,21)=__norm}
+           true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1a$int SUCCESS
 Checking procedure foo1$int... 
@@ -63,6 +66,6 @@ Procedure foo1$int SUCCESS
 Stop Omega... 72 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.25 second(s)
+Total verification time: 0.24 second(s)
 	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.03 second(s)
+	Time spent in child processes: 0.02 second(s)
