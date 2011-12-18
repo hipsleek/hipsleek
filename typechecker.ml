@@ -297,9 +297,9 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                  let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
                  let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos) 
                    (CF.formula_of_heap CF.HTrue no_pos) (flist@[post_cond]) in
-                 let h, p, fl, b, t = CF.split_components post_fml in
+                 (*let h, p, fl, b, t = CF.split_components post_fml in
                  let p = CP.mkExists_with_simpl_debug Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
-                 let post_fml = Cformula.mkBase h (MCP.mix_of_pure p) t fl b no_pos in
+                 let post_fml = Cformula.mkBase h (MCP.mix_of_pure p) t fl b no_pos in*)
                  let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
                  (inferred_post, i_pre)
                else (spec,CF.formula_of_heap CF.HTrue no_pos)
