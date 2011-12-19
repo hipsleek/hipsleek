@@ -285,8 +285,8 @@ and get_unreachable_condition_failesc_ctx (ctx: CF.failesc_context) : CF.formula
 and get_unreachable_condition_context (ctx: CF.context) : CF.formula list =
   match ctx with
   | CF.Ctx es -> es.CF.es_var_unreachable_ctx
-  | CF.OCtx (c1, c2) -> (get_unreachable_condition_context c1) @
-                     (get_unreachable_condition_context c2)  
+  | CF.OCtx (c1, c2) -> 
+      (get_unreachable_condition_context c1) @ (get_unreachable_condition_context c2)  
 
 let term_add_unreachable_state (ctx: CF.list_failesc_context) pos =
   (* Termination: Add a false entail state for * 
@@ -306,7 +306,8 @@ let rec term_strip_variance ls =
           term_strip_variance b.CF.formula_ext_continuation})::(term_strip_variance rest)
       | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = 
           List.map (fun (cpf, sf) -> (cpf, term_strip_variance sf)) c.CF.formula_case_branches})::(term_strip_variance rest)
-      | CF.EInfer i -> spec::(term_strip_variance rest)
+      | CF.EInfer i -> spec::(term_strip_variance rest) (* TODO: What if formula_inf_continuation is an EVAriance? *)
+      | _ -> spec::(term_strip_variance rest)
 
 (* Checking the well-foundedness of the loop variance *)    
 let term_check_loop_variance (src: CF.entail_state) (dst: CF.ext_variance_formula) f_imply trans pos : term_res = 

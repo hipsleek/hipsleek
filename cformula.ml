@@ -3733,7 +3733,17 @@ let mkOCtx ctx1 ctx2 pos =
   else if isAnyFalseCtx ctx2 then add_infer_pre ctx2 ctx1
   else OCtx (ctx1,ctx2) 
 
-let or_context c1 c2 = mkOCtx c1 c2 no_pos   
+let or_context c1 c2 = mkOCtx c1 c2 no_pos  
+
+(* Termination *)
+(* To determine whether a false context should be simplified or not *)      
+let term_should_simplify_false_ctx (ctx: context) : bool =
+  match ctx with
+  | Ctx es -> es.es_var_unreachable_ctx = []
+  | _ -> false
+
+let term_should_simplify_false_ctx ((_, ctx): branch_ctx) : bool =
+  term_should_simplify_false_ctx ctx
 
 let rec context_simplify (c:context):context  = match c with
   | Ctx e -> Ctx ((*es_simplify*) e)
@@ -3746,7 +3756,11 @@ let list_context_simplify (l : list_context) : list_context = match l with
   | SuccCtx sc -> SuccCtx (List.map context_simplify sc)
 
 let failesc_context_simplify ((l,a,cs) : failesc_context) : failesc_context = 
-  let cs = List.filter (fun x -> not(isAnyFalseBranchCtx x)) cs in
+  (* Termination: Keep false contexts which contain 
+   * the information of unreachable conditions *)
+  let cs = List.filter (fun x -> 
+    not (isAnyFalseBranchCtx x) || 
+    not (term_should_simplify_false_ctx x)) cs in
   let newcs = List.map (fun (p,c) -> (p,context_simplify c)) cs in
   (l,a,newcs)
 
@@ -5960,9 +5974,11 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_var_label = es.es_var_label;
 	es_var_src_ctx = es.es_var_src_ctx;
 	es_var_orig_ctx = es.es_var_orig_ctx;
-    es_infer_vars = es.es_infer_vars;
-    es_infer_heap = es.es_infer_heap;
-    es_infer_pure = es.es_infer_pure;
+  es_var_unreachable_ctx = es.es_var_unreachable_ctx;
+  es_var_loc = es.es_var_loc;
+  es_infer_vars = es.es_infer_vars;
+  es_infer_heap = es.es_infer_heap;
+  es_infer_pure = es.es_infer_pure;
   } 
 	
 let clear_entailment_history (ctx : context) : context =  

@@ -350,7 +350,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 and check_exp prog proc ctx e0 label =
   let pr_pn x = x.proc_name in
   let pr = Cprinter.string_of_list_failesc_context in
-  Gen.Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
+  Gen.Debug.ho_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
 
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
@@ -593,12 +593,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
 	        let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
 	        Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx)) pos;
-          print_string ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx));
-	        let else_ctx = combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+          let else_ctx = combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
 	        Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx)) pos;
-          print_string ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx));
-	        let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
+          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
 	        let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
+          (*print_string ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx1));
+          print_string ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx1));*)
 	        let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
 	        let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
 	        let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
@@ -751,8 +751,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 						      let _ = if not (CF.isNonFalseListFailescCtx sctx) & ir & (CF.has_variance_struc stripped_spec) then 
                     (* Unreachable state encountered *)
                     (*let _ = print_string ("Recursive call at " ^ (Cprinter.string_of_pos pos) ^ ": unreachable") in*)
-                    let _ = print_string ("unreachable context: " ^
-                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in
+                    let _ = print_string ("unreachable context: " ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in
                     Term.term_add_unreachable_state sctx pos  
 						      in
                   
