@@ -193,8 +193,8 @@ let common_arguments = [
 	"Do not try to eliminate existential quantifier with Redlog");
     ("--rl-no-simplify", Arg.Set Redlog.no_simplify,
     "Do not try to simplify non-linear formulas with Redlog");
-    ("--rl-no-cache", Arg.Set Redlog.no_cache,
-    "Do not use cache for unsatisfiability and implication's checking with Redlog");
+    ("--rl-cache", Arg.Clear Redlog.no_cache,
+    "Use cache for unsatisfiability and implication's checking with Redlog");
 	("--rl-timeout", Arg.Set_float Redlog.timeout, 
 	"Set timeout (in seconds) for is_sat or imply with Redlog");
 	("--failure-analysis",Arg.Set Globals.failure_analysis, 

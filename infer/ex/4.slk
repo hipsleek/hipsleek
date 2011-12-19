@@ -52,3 +52,13 @@ Inferred Heap:[ y::node<inf_365,inf_b_366>[Orig]]
 Inferred Pure:[]
 <1>false & false & {FLOW,(17,18)=__norm}
 */
+
+infer [y] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+TODO : should not infer a!=inf_78
+Infer  (3): Valid. 
+Inferred Heap:[ y::node<inf_78,inf_b_79>@M[Orig]]
+Inferred Pure:[ a!=inf_78]
+*/
+

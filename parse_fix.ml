@@ -3,8 +3,7 @@ open Cpure
 open Globals
 open Lexing
 
-let pos = {pos_fname = ""; pos_lnum = 0; pos_bol = 0; pos_cnum = 0};;
-let loc = {start_pos = pos; mid_pos = pos; end_pos = pos};;
+let loc = no_pos;;
 
 let typ = ref "";;
 
@@ -19,41 +18,42 @@ let exp = Gram.Entry.mk "exp";;
 let specvar = Gram.Entry.mk "specvar";;
 
 EXTEND Gram
-GLOBAL: expression formula pformula exp specvar ;
+GLOBAL: expression formula pformula exp specvar;
   expression:
-	  [ "expression" NONA
+	 [ "expression" NONA
 		  [ OPT "("; x = formula; OPT ")" -> typ := "node"; x ]
 		];
 
   formula:
-	  [ "formula" LEFTA
+	 [ "formula" LEFTA
 		  [ x = SELF; "&&"; y = SELF -> And (x, y, loc) 
-			| x = pformula -> BForm ((x, None), None) ]			
+			 | x = pformula -> BForm ((x, None), None) ]			
 		];
 
   pformula:
-    [ "pformula" LEFTA
-		  [ "self"; "<="; INT -> Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+  [ "pformula" LEFTA
+		 [ "self"; "<="; INT -> Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
 			| "self"; ">="; INT -> Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
 			| INT; ">="; "self" -> Eq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
-      | INT; "<="; "self" -> Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
+   | INT; "<="; "self" -> Neq (Var(SpecVar(Named (!typ), self, Unprimed), loc), Null loc, loc)
 			|	x = exp; "<"; y = exp -> Gt (y, x, loc) 
 			| x = exp; "<="; y = exp -> Gte (y, x, loc) 
-      | x = exp; ">"; y = exp -> Lt (y, x, loc) 
-      | x = exp; ">="; y = exp -> Lte (y, x, loc) 
-      | x = exp; "="; y = exp -> Eq (x, y, loc) ]
+   | x = exp; ">"; y = exp -> Lt (y, x, loc) 
+   | x = exp; ">="; y = exp -> Lte (y, x, loc) 
+   | x = exp; "="; y = exp -> Eq (x, y, loc) 
+   ]
 		]; 
       
   exp:
-    [ "exp" LEFTA
-      [ x = specvar -> Var (x, loc) 
-			| x = INT -> IConst (int_of_string x, loc) ]
-    ]; 
+   [ "exp" LEFTA
+     [ x = specvar -> Var (x, loc) 
+			  | x = INT -> IConst (int_of_string x, loc) 
+     ]
+   ]; 
 		
 	specvar:
-	  [ "specvar" NONA
-		  [ x = LIDENT -> SpecVar (Int, x, Unprimed) 			
-			]
+	 [ "specvar" NONA
+		  [ x = LIDENT -> SpecVar (Int, x, Unprimed)]
 		]; 
 
 END

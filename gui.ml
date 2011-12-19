@@ -545,7 +545,8 @@ end
 	       end
 	     | Some ppid -> begin
 		 (* print_string (Cprinter.string_of_formula_label ppid (("CALL at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) ^ "\n\n"));flush stdout; *)
-		 ignore (List.map (w#add_obl ItemScall ("CALL method " ^ mn ^ " at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc proc1.proc_static_specs_with_pre pos ppid crt_paths) spec_iter_list);
+		 ignore (List.map (w#add_obl ItemScall ("CALL method " ^ mn ^ " at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) 
+             proc (* proc1.proc_static_specs_with_pre *) (proc1.proc_stk_of_static_specs # top) pos ppid crt_paths) spec_iter_list);
 		 crt_paths 
 	       end
 		 (* in () *)

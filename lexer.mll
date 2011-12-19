@@ -263,6 +263,7 @@ rule tokenizer file_name = parse
   | "@I" {IMM}
   | "@L" {LEND}
   | "@D" { DERV }
+  | "@M" { MUT }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
@@ -307,6 +308,7 @@ rule tokenizer file_name = parse
   | '\'' { PRIME }
   | ';' { SEMICOLON }
   | '*' { STAR }
+  | "<:" { SUBANN }
   | '/' { DIV }
   | ident as idstr 
 	  {

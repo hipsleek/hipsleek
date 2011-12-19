@@ -108,6 +108,7 @@ Inferred Pure:[ !(m<n & 1<=n)]
 */
 
 // (11) lhs & rhs -> false but no n
+// TODO Loc : should not be a must failure 
 infer [n] true  |- n=1 & n=2.
 print residue.
 /*
@@ -139,6 +140,6 @@ print residue.
 infer [m] m>2  |- p>m & m>4.
 print residue.
 
-// (14) 
+// (16) 
 infer [p,m] m>2  |- p>m & m>4.
 print residue.

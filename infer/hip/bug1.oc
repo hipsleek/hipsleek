@@ -1,0 +1,9 @@
+A:={[ip,i,r]: ip=i-r & 1<=r<=2 };
+B:={[ip,i,r]: i>=2};
+C:=A intersection B;
+A;C;
+D:={[ip,i,r]: i=ip+r & 1<=r & ((0 - ip)+2)<=r & r<=2};
+A subset D;
+D subset A; 
+C subset D;
+D subset C; 
