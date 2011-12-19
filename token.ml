@@ -41,7 +41,7 @@ type sleek_token =
   | SEMICOLON 
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
-  | INFER | SUBANN
+  | INFER | SUBANN | PRE | POST
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
   
@@ -80,6 +80,10 @@ module Token = struct
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" | TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | INLIST -> "inlist" | HEAD -> "head"
     | INFER -> "infer"
+    | PRE -> "@pre"
+    | MUT -> "@M"
+    | POST -> "@post"
+    | SUBANN -> "<:"
     
   let print ppf x = pp_print_string ppf (to_string x)
 

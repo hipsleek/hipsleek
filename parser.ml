@@ -438,12 +438,12 @@ and set_slicing_utils_pure_double_x f il =
 	| Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
   else f
 
-and get_heap_ann annl : Iformula.ann = 
+and get_heap_ann annl : F.ann = 
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | None :: [] ->  Iformula.ConstAnn(Mutable)
-    | [] ->  Iformula.ConstAnn(Mutable)
+    (* | None :: [] ->  F.ConstAnn(Mutable) *)
+    | [] ->  F.ConstAnn(Mutable)
   (* if (List.exists (fun x -> (String.compare x "I")==0) annl) then ConstAnn(Imm) *)
   (* else if (List.exists (fun x -> (String.compare x "L")==0) annl) then ConstAnn(Lend) *)
   (* else Mutable *)
@@ -549,13 +549,21 @@ derv : [[ `DERV -> true ]];
 inv: 
   [[`INV; pc=pure_constr; ob=opt_branches -> (pc,ob)
    |`INV; h=ho_fct_header -> (P.mkTrue no_pos, [])]];
+
+opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
  
+infer_post : 
+  [[
+    `PRE -> false
+   | `POST  -> true
+   ]];
+
 ann_heap: 
   [[
-    `MUT -> Some (Iformula.ConstAnn(Mutable))
-   | `IMM  -> Some (Iformula.ConstAnn(Imm))
-   | `LEND -> Some (Iformula.ConstAnn(Lend))
-   | `AT; t=cid  -> Some (Iformula.PolyAnn(t, get_pos_camlp4 _loc 1))
+    `MUT -> Some (F.ConstAnn(Mutable))
+   | `IMM  -> Some (F.ConstAnn(Imm))
+   | `LEND -> Some (F.ConstAnn(Lend))
+   | `AT; t=cid  -> Some (F.PolyAnn(t, get_pos_camlp4 _loc 1))
    | `DERV -> None
    ]];
 
@@ -654,7 +662,7 @@ sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
 
 formulas:
   [[ ec=extended_l     ->(ec,false)
-	 | dc=disjunctive_constr  -> ((Iformula.formula_to_struc_formula dc),true)]];
+	 | dc=disjunctive_constr  -> ((F.formula_to_struc_formula dc),true)]];
    
 extended_l:
   [[ peek_extended; `OSQUARE; h=extended_constr ; `ORWORD; t=LIST1 extended_constr SEP `ORWORD; `CSQUARE -> h::t 
@@ -662,10 +670,10 @@ extended_l:
    
 extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
-      Iformula.ECase {
-          Iformula.formula_case_branches = il;
-          Iformula.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> Iformula.mkEBase sl [] [] oc (un_option rc [])(get_pos_camlp4 _loc 2)]];	
+      F.ECase {
+          F.formula_case_branches = il;
+          F.formula_case_pos = (get_pos_camlp4 _loc 3) }
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc (un_option rc [])(get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
@@ -772,15 +780,15 @@ simple_heap_constr:
   | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
   let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c id dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
+      | ([],t) -> F.mkHeapNode2 c id dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
   | t = ho_fct_header -> (*F.mkHeapNode ("",Primed) "" false Mutable false false false [] None  (get_pos_camlp4 _loc 1)*)
     let frac = if (Perm.allow_perm ()) then 
           full_iperm ()
         else 
           empty_iperm ()
     in
-	F.mkHeapNode ("",Primed) "" false (*dr*) (Iformula.ConstAnn(Mutable)) false false false frac [] None  (get_pos_camlp4 _loc 1)
+	F.mkHeapNode ("",Primed) "" false (*dr*) (F.ConstAnn(Mutable)) false false false frac [] None  (get_pos_camlp4 _loc 1)
 	(* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label ->
 	  let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
@@ -790,8 +798,8 @@ simple_heap_constr:
         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2))
   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
-      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (Iformula.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
+      | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
   ]];
 
 (*LDK: parse optional fractional permission, default = 1.0*)
@@ -1315,43 +1323,44 @@ spec_list : [[t= LIST1 spec -> t ]];
 
 spec: 
   [[ 
-    `INFER; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
-     Iformula.EInfer {
-       Iformula.formula_inf_vars = ivl;
-       Iformula.formula_inf_continuation = [s];
-       Iformula.formula_inf_pos = get_pos_camlp4 _loc 1;
+    `INFER; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
+     F.EInfer {
+       F.formula_inf_post = postf; 
+       F.formula_inf_vars = ivl;
+       F.formula_inf_continuation = s;
+       F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
   | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
-		 Iformula.EBase {
-			 Iformula.formula_ext_explicit_inst =cl;
-			 Iformula.formula_ext_implicit_inst = [];
-			 Iformula.formula_ext_exists = [];
-			 Iformula.formula_ext_base = (F.subst_stub_flow n_flow dc);
-			 Iformula.formula_ext_continuation = [s];
-			 Iformula.formula_ext_pos = (get_pos_camlp4 _loc 1)}
+		 F.EBase {
+			 F.formula_ext_explicit_inst =cl;
+			 F.formula_ext_implicit_inst = [];
+			 F.formula_ext_exists = [];
+			 F.formula_ext_base = (F.subst_stub_flow n_flow dc);
+			 F.formula_ext_continuation = [s];
+			 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
 	 | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
-	    	Iformula.EBase {
-	    	 Iformula.formula_ext_explicit_inst =cl;
-	    	 Iformula.formula_ext_implicit_inst = [];
-	    	 Iformula.formula_ext_exists = [];
-	    	 Iformula.formula_ext_base =  (F.subst_stub_flow n_flow dc);
-	    	 Iformula.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
+	    	F.EBase {
+	    	 F.formula_ext_explicit_inst =cl;
+	    	 F.formula_ext_implicit_inst = [];
+	    	 F.formula_ext_exists = [];
+	    	 F.formula_ext_base =  (F.subst_stub_flow n_flow dc);
+	    	 F.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
 	    																					else sl;
-	    	 Iformula.formula_ext_pos = (get_pos_camlp4 _loc 1)}
+	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
        
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      Iformula.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
+      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
-			Iformula.ECase {
-						Iformula.formula_case_branches = bl; 
-						Iformula.formula_case_pos = get_pos_camlp4 _loc 1; }
+			F.ECase {
+						F.formula_case_branches = bl; 
+						F.formula_case_pos = get_pos_camlp4 _loc 1; }
 	 | `VARIANCE; il=opt_var_label; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
-			Iformula.EVariance {
-					Iformula.formula_var_label = il;
-					Iformula.formula_var_measures = m;
-					Iformula.formula_var_escape_clauses = ec;
-					Iformula.formula_var_continuation = [s];
-					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];
+			F.EVariance {
+					F.formula_var_label = il;
+					F.formula_var_measures = m;
+					F.formula_var_escape_clauses = ec;
+					F.formula_var_continuation = [s];
+					F.formula_var_pos = get_pos_camlp4 _loc 1;}]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 

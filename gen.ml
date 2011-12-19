@@ -48,6 +48,8 @@ struct
     | None -> "None"
     | Some v -> "Some("^(f v)^")"
 
+  let pr_opt = pr_option 
+
   let pr_opt_int = pr_option string_of_int
 
   let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"

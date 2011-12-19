@@ -35,6 +35,7 @@ let rec coq_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
+  | AnnT          -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
@@ -85,6 +86,7 @@ and coq_of_exp e0 =
   | CP.Null _ -> "0"
   | CP.Var (sv, _) -> coq_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
+  | CP.AConst (i, _) -> string_of_heap_ann i
   | CP.FConst (f, _) -> 
 			illegal_format "coq_of_exp : float cannot be handled"
         (* failwith ("coq.coq_of_exp: float can never appear here") *)
@@ -149,6 +151,7 @@ and coq_of_b_formula b =
   | CP.BConst (c, _) -> if c then "True" else "False"
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
+  | CP.SubAnn (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
   | CP.Gt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " > " ^ (coq_of_exp a2) ^ ")"
   | CP.Gte (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " >= " ^ (coq_of_exp a2) ^ ")"

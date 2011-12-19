@@ -116,6 +116,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 					(* Arithmetic *)
 				  | Lt (e1, e2, _)
 				  | Lte (e1, e2, _)
+				  | SubAnn (e1, e2, _)
 				  | Gt (e1, e2, _)
 				  | Gte (e1, e2, _)
 					(* Equality and disequality *)
@@ -232,7 +233,7 @@ and to_fo (svs : spec_var list) var_map : bool =
 *)
 and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Null _ 
-  | IConst _ -> false
+  | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Add (e1, e2, _)
@@ -425,7 +426,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 		  else helper2 mkEq e1 e2 pos
 	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
 	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
-	  | Lte (e1, e2, pos) -> helper2 mkLte e1 e2 pos
+	  | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
 	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
 	  | ListIn _

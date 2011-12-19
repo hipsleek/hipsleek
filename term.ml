@@ -306,9 +306,7 @@ let rec term_strip_variance ls =
           term_strip_variance b.CF.formula_ext_continuation})::(term_strip_variance rest)
       | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = 
           List.map (fun (cpf, sf) -> (cpf, term_strip_variance sf)) c.CF.formula_case_branches})::(term_strip_variance rest)
-      | CF.EInfer i -> (CF.EInfer {i with CF.formula_inf_continuation =
-          term_strip_variance i.CF.formula_inf_continuation})::(term_strip_variance rest)
-      | _ -> spec::(term_strip_variance rest)
+      | CF.EInfer i -> spec::(term_strip_variance rest)
 
 (* Checking the well-foundedness of the loop variance *)    
 let term_check_loop_variance (src: CF.entail_state) (dst: CF.ext_variance_formula) f_imply trans pos : term_res = 

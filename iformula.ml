@@ -23,8 +23,9 @@ and ext_formula =
 
 and ext_infer_formula =
   {
+    formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_vars : (ident * primed) list;
-    formula_inf_continuation : struc_formula;
+    formula_inf_continuation : ext_formula;
     formula_inf_pos : loc
   }
 
@@ -500,7 +501,7 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 											a@ (struc_hp_fv c2)) [] b.formula_case_branches
 							| EAssume (b,_)-> heap_fv b
 							| EVariance b -> struc_hp_fv b.formula_var_continuation
-       | EInfer b -> struc_hp_fv b.formula_inf_continuation
+       | EInfer b -> helper b.formula_inf_continuation
 							) in
 						List.concat (List.map helper f)
 
@@ -517,7 +518,7 @@ and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 	| Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
 and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list= 
-	let helper f = match f with
+	let rec helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
 					let fvc = struc_free_vars b.formula_ext_continuation with_inst in
@@ -536,7 +537,7 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 			let fv_co = struc_free_vars b.formula_var_continuation with_inst in
 			Gen.BList.remove_dups_eq (=) (fv_ex@fv_ec@fv_co)
   | EInfer b ->
-    let fvc = struc_free_vars b.formula_inf_continuation with_inst in
+    let fvc = helper b.formula_inf_continuation in
     Gen.BList.remove_dups_eq (=) fvc
 	in Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f0))
  
@@ -550,7 +551,7 @@ and struc_split_fv f0 wi =
 
 
 and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
-	let helper f = match f with
+	let rec helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
 					let prc,psc = struc_split_fv_a b.formula_ext_continuation with_inst in
@@ -571,7 +572,7 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
 											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
 			  (Gen.BList.remove_dups_eq (=) prc@fv_ec@fv_ex, Gen.BList.remove_dups_eq (=) psc)
 		| EInfer b ->
-    let prc, psc = struc_split_fv_a b.formula_inf_continuation with_inst in
+    let prc, psc = helper b.formula_inf_continuation in
     (Gen.BList.remove_dups_eq (=) prc, Gen.BList.remove_dups_eq (=) psc)
 	in
   let vl = List.map helper f0 in
@@ -840,7 +841,7 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 		  }
   | EInfer b ->
     let si = List.map (subst_var_list sst) b.formula_inf_vars in
-    let sc = subst_struc sst b.formula_inf_continuation in
+    let sc = helper b.formula_inf_continuation in
     EInfer {b with
       formula_inf_vars = si;
       formula_inf_continuation = sc;
@@ -869,7 +870,7 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 									})
   | EInfer b -> EInfer {b with
     (* Need to check again *)
-    formula_inf_continuation = rename_bound_var_struc_formula b.formula_inf_continuation;}
+    formula_inf_continuation = helper b.formula_inf_continuation;}
 			in
 	List.map helper f
 
@@ -997,7 +998,7 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 										formula_var_continuation = float_out_exps_from_heap_struc b.formula_var_continuation;
 									})
     | EInfer b -> EInfer ({b with 
-      formula_inf_continuation = float_out_exps_from_heap_struc b.formula_inf_continuation;})
+      formula_inf_continuation = helper b.formula_inf_continuation;})
 	in	
     List.map helper f
       
@@ -1541,18 +1542,18 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula =
 					formula_var_continuation = float_out_struc_min_max b.formula_var_continuation;
 				})
   | EInfer b -> EInfer {b with
-    formula_inf_continuation = float_out_struc_min_max b.formula_inf_continuation;}
+    formula_inf_continuation = helper b.formula_inf_continuation;}
 	in
 	List.map helper f0
 		
 
 and view_node_types_struc (f:struc_formula):ident list = 
-	let helper (f:ext_formula):ident list = match f with
+	let rec helper (f:ext_formula):ident list = match f with
 	| ECase b -> List.concat (List.map (fun (c1,c2)-> view_node_types_struc c2) b.formula_case_branches)
 	| EBase b -> (view_node_types b.formula_ext_base)@(view_node_types_struc b.formula_ext_continuation)
 	| EAssume (b,_) -> view_node_types b
 	| EVariance b -> view_node_types_struc b.formula_var_continuation
- | EInfer b -> view_node_types_struc b.formula_inf_continuation
+ | EInfer b -> helper b.formula_inf_continuation
 	in
 	Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f))
 		
@@ -1581,7 +1582,7 @@ and has_top_flow_struc (f:struc_formula) =
 		| ECase b->   List.iter (fun (_,b1)-> (has_top_flow_struc b1)) b.formula_case_branches
 		| EAssume (b,_)-> (has_top_flow b)
 		| EVariance b -> has_top_flow_struc b.formula_var_continuation
-  | EInfer b -> has_top_flow_struc b.formula_inf_continuation
+  | EInfer b -> helper b.formula_inf_continuation
 		in
 List.iter helper f
 
@@ -1609,7 +1610,7 @@ let rec helper f = match f with
 										formula_var_continuation = subst_flow_of_struc_formula fr t b.formula_var_continuation;
 								   })
   | EInfer b -> EInfer {b with
-    formula_inf_continuation = subst_flow_of_struc_formula fr t b.formula_inf_continuation;}
+    formula_inf_continuation = helper b.formula_inf_continuation;}
 in
 List.map helper f 
 
@@ -1630,7 +1631,7 @@ and break_ext_formula (f : ext_formula) : P.b_formula list list =
 	| EBase bf -> [List.concat ((break_formula bf.formula_ext_base) @ (break_struc_formula bf.formula_ext_continuation))]
 	| EAssume (af, _) -> break_formula af
 	| EVariance _ -> []
- | EInfer bf -> break_struc_formula bf.formula_inf_continuation
+ | EInfer bf -> break_ext_formula bf.formula_inf_continuation
 
 and break_struc_formula (f : struc_formula) : P.b_formula list list =
   List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f
