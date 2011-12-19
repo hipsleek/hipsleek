@@ -327,6 +327,10 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   | IP.ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
   | _ -> []
 
+and convert_anonym_to_exist_one_formula (f0 : IF.one_formula) : ( ((ident * primed) list) * IF.one_formula) =
+  let tmp1 = look_for_anonymous_h_formula f0.IF.formula_heap in
+  (tmp1,f0)
+
 and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
   match f0 with
   | (* - added 17.04.2008 - in case the formula contains anonymous vars ->   *)
@@ -342,9 +346,14 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         IF.formula_base_pure = p0;
         IF.formula_base_branches = br0;
 		IF.formula_base_flow = fl0;
+		IF.formula_base_and = a0;
         IF.formula_base_pos = l0
       } -> (*as f*)
-      let tmp1 = look_for_anonymous_h_formula h0
+      let tmp1 = look_for_anonymous_h_formula h0 in
+      let tmp = List.map convert_anonym_to_exist_one_formula a0 in
+      let vars,a1 = List.split tmp in
+      let vars = List.concat vars in
+      let tmp1=tmp1@vars
       in
         if ( != ) (List.length tmp1) 0
         then
@@ -355,6 +364,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_pure = p0;
               IF.formula_exists_flow = fl0;
               IF.formula_exists_branches = br0;
+              IF.formula_exists_and = a1;
               IF.formula_exists_pos = l0;
             }
         else f0
@@ -2035,7 +2045,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let (qvars, form) = IF.split_quantifiers coer.I.coercion_head in 
   let c_hd0, c_guard0, c_fl0, c_b0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
-  let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) c_fl0 c_b0 no_pos in
+  let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) c_fl0 c_b0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   let fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@rhs_fnames) in
@@ -2097,7 +2107,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 (* let _ = print_string ("\n Astsimp.ml 4: head:" ^ (Cprinter.string_of_formula new_head_norm)) in *)
                 {c with
                     C.coercion_type = Iast.Right;
-                    C.coercion_head = CF.mkBase c_hd (MCP.mkMTrue no_pos) c_t c_fl c_b no_pos;
+                    C.coercion_head = CF.mkBase c_hd (MCP.mkMTrue no_pos) c_t c_fl c_b [] no_pos; (*TO CHECK*)
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
                     C.coercion_univ_vars = [];} in
@@ -3926,6 +3936,11 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
+  let helper_one_formula (f:IF.one_formula)  =
+    if sep_collect then 
+      (gather_type_info_pure prog (IF.flatten_branches f.IF.formula_pure f.IF.formula_branches) stab;
+       gather_type_info_heap prog f.IF.formula_heap stab) else ()
+  in
   let rec helper f0 =
     match f0 with
       | IF.Or { 
@@ -3939,6 +3954,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_pure = p;
             IF.formula_base_flow = fl;
             IF.formula_base_branches = br;
+            IF.formula_base_and = a;
             IF.formula_base_pos = pos} ->(
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then 
@@ -3946,6 +3962,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
               gather_type_info_heap prog h stab) else () in 					
             let ch = linearize_formula prog f0 stab in					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
+            let _ = List.map helper_one_formula a in
             let _ = 
               if sep_collect then (
                   if quantify then
@@ -3962,15 +3979,18 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_pure = p;
             IF.formula_exists_flow = fl;
             IF.formula_exists_branches = br;
+            IF.formula_exists_and = a;
             IF.formula_exists_pos = pos} -> (
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then (gather_type_info_pure prog (IF.flatten_branches p br) stab;
             gather_type_info_heap prog h stab) else () in 
+            let _ = List.map helper_one_formula a in
             let f1 = IF.Base {
                 IF.formula_base_heap = h;
                 IF.formula_base_pure = p;
                 IF.formula_base_flow = fl;
                 IF.formula_base_branches = br;
+                IF.formula_base_and = a;
                 IF.formula_base_pos = pos; } in
             let ch = linearize_formula prog f1 stab in
             let qsvars = List.map (fun qv -> trans_var qv stab pos) qvars in
@@ -4210,12 +4230,46 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     res
 
   in
-  
+  let linearize_one_formula f pos = 
+    let h = f.IF.formula_heap in
+    let p = f.IF.formula_pure in
+    let br = f.IF.formula_branches in
+    let id = f.IF.formula_thread in
+    let pos = f.IF.formula_pos in
+    let (new_h, type_f) = linearize_heap h pos in
+    let new_p = trans_pure_formula p stab in
+    let new_p = Cpure.arith_simplify 5 new_p in
+    let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
+    let id_var = (match id with
+      | None -> 
+          (*look for an thread id*)
+          let thread_var = Cpure.SpecVar (Globals.thread_typ, Globals.thread_name,Globals.Unprimed) in
+          (*find all spec_var which is equal to "thread"*)
+          let vv = MCP.find_closure_mix_formula thread_var mix_p in 
+          let vv = Gen.BList.difference_eq CP.eq_spec_var vv [thread_var] in
+          if (vv==[]) then
+            Error.report_error {Error.error_loc = pos;Error.error_text = "linearize_one_formula: could not find thread id"}
+          else
+            let v = List.hd vv in
+            v
+      | Some (ve,pe) -> (trans_var (ve, pe) stab pos))
+    in
+    let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
+    let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify 6 f)) new_br in
+    let new_f = { CF.formula_heap = new_h;
+                  CF.formula_pure = mix_p;
+                  CF.formula_branches = new_br;
+                  CF.formula_thread = id_var;
+                  CF.formula_label = None;
+                  CF.formula_pos = pos} in
+    (new_f,type_f)
+  in
   let linearize_base base pos =
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
     let br = base.IF.formula_base_branches in
     let fl = base.IF.formula_base_flow in
+    let a = base.IF.formula_base_and in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
@@ -4223,7 +4277,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let new_fl = trans_flow_formula fl pos in
     let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
     let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify 6 f)) new_br in
-    (new_h, new_p, type_f, new_fl, new_br) in
+    let new_a,_ = List.split (List.map (fun f -> linearize_one_formula f pos) a) in
+    (new_h, new_p, type_f, new_fl, new_br, new_a) in
   match f0 with
     | IF.Or {
           IF.formula_or_f1 = f1;
@@ -4234,26 +4289,28 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           let result = CF.mkOr lf1 lf2 pos in result
     | IF.Base base ->
           let pos = base.Iformula.formula_base_pos in
-          let nh,np,nt,nfl,nb = (linearize_base base pos) in
+          let nh,np,nt,nfl,nb,na = (linearize_base base pos) in
           let np = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) np)  in
-          CF.mkBase nh np nt nfl nb pos
+          CF.mkBase nh np nt nfl nb na pos
     | IF.Exists {
           IF.formula_exists_heap = h; 
           IF.formula_exists_pure = p;
           IF.formula_exists_branches = br;
           IF.formula_exists_flow = fl;
           IF.formula_exists_qvars = qvars;
+          IF.formula_exists_and = a;
           IF.formula_exists_pos = pos} ->
           let base ={
               IF.formula_base_heap = h;
               IF.formula_base_pure = p;
               IF.formula_base_flow = fl;
               IF.formula_base_branches = br;
+              IF.formula_base_and = a;
               IF.formula_base_pos = pos;
           } in 
-	      let nh,np,nt,nfl,nb = linearize_base base pos in
+	      let nh,np,nt,nfl,nb,na = linearize_base base pos in
           let np = MCP.memoise_add_pure_N (MCP.mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb pos 
+	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb na pos 
 	          
 
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
@@ -6066,7 +6123,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
       let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
       let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in       
       (to_evars,to_expl))in
-    let result = Iformula.mkExists tmp_evars new_h new_p fl new_br pos in
+    let result = Iformula.mkExists tmp_evars new_h new_p fl new_br [] pos in
     let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
     if not (Gen.is_empty tmp_evars)  then 
       Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos

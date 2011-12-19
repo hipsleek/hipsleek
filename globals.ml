@@ -256,6 +256,10 @@ let self = "self"
 
 let this = "this"
 
+let thread_name = "thread"  (*special thread id*)
+
+let thread_typ = Int  (*special thread id*)
+
 let is_self_ident id = self=id
 
 

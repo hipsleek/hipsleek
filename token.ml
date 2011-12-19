@@ -23,7 +23,7 @@ type sleek_token =
 	| LEMMA | LET
   | MAX | MIN 
   | NEW | NOTIN | NULL
-  | OFF | ON | ORWORD
+  | OFF | ON | ORWORD | ANDWORD
 	| PRED | DPRINT | PRINT
 	| REF |REL | REQUIRES | RES of string | RETURN
 	| SELFT of string | SPLIT | SUBSET | STATIC
@@ -65,7 +65,7 @@ module Token = struct
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
     | LEMMA ->"lemma" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | PRED ->"pred" | DPRINT ->"dprint" |PRINT -> "print" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | DPRINT ->"dprint" |PRINT -> "print" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
