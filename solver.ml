@@ -235,8 +235,8 @@ let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a ->
 (* 	es_var_measures = es.es_var_measures; *)
 (* 	es_var_label = es.es_var_label; *)
 (*     es_infer_vars = es.es_infer_vars; *)
-(* 	es_var_ctx_lhs = es.es_var_ctx_lhs(\*; *)
-(* 	es_var_ctx_rhs = es.es_var_ctx_rhs; *)
+(* 	es_var_src_ctx = es.es_var_src_ctx(\*; *)
+(* 	es_var_dst_ctx = es.es_var_dst_ctx; *)
 (* 	es_var_subst = es.es_var_subst*\) *)
 (*   }  *)
 
@@ -1562,9 +1562,13 @@ and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP
 
 and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_state) : context = 
   let r1,r2 = combine_and es.es_formula f in  
-  if (reset_flag) then if r2 then (Ctx {es with es_formula = r1;es_unsat_flag =false;})
-  else Ctx {es with es_formula = r1;}
-  else Ctx {es with es_formula = r1;}
+	let orig_ctx = es.es_formula in
+  if (reset_flag) then if r2 then (Ctx {es with 
+    es_formula = r1; 
+    es_unsat_flag = false; 
+    es_var_unreachable_ctx = [orig_ctx];})
+  else Ctx {es with es_formula = r1; es_var_unreachable_ctx = [orig_ctx];}
+  else Ctx {es with es_formula = r1; es_var_unreachable_ctx = [orig_ctx];}
 
 and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context = 
   let r = transform_list_context ((combine_es_and prog f true),(fun c->c)) ctx in
@@ -2620,11 +2624,11 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   let f = es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
-  if not b then Ctx{es with es_unsat_flag = true } else 
-	false_ctx_with_orig_ante es f (flow_formula_of_formula es.es_formula) no_pos
-    (*let fctx = false_ctx (flow_formula_of_formula es.es_formula) no_pos in
+  if not b then Ctx { es with es_unsat_flag = true } 
+	else false_ctx_with_orig_ante es f (flow_formula_of_formula es.es_formula) no_pos
+  (*let fctx = false_ctx (flow_formula_of_formula es.es_formula) no_pos in
     CF.transform_context (fun e -> CF.Ctx 
-      {e with CF.es_var_ctx_lhs = es.CF.es_var_ctx_lhs}) fctx*)
+    {e with CF.es_var_src_ctx = es.CF.es_var_src_ctx}) fctx*)
 
 and elim_unsat_ctx_now (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
   let rec helper c = match c with
@@ -3250,7 +3254,7 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
 				          end
 	              | Some (p, e) -> begin
 				          let n_ctx = CF.transform_context (
-				            fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs p pos}) ctx  in
+				            fun es -> CF.Ctx {es with CF.es_var_dst_ctx = CP.mkAnd es.CF.es_var_dst_ctx p pos}) ctx  in
 
 				      (*let _ = print_string ("\nhelper_inner: ECase 2: n_ctx: " ^ (Cprinter.string_of_context n_ctx) ^ "\n") in*)
 				      
@@ -5727,8 +5731,8 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_path_label = estate.es_path_label;
 		es_var_measures = estate.es_var_measures;
 		es_var_label = estate.es_var_label;
-		es_var_ctx_lhs = estate.es_var_ctx_lhs;
-		es_var_ctx_rhs = estate.es_var_ctx_rhs;
+		es_var_src_ctx = estate.es_var_src_ctx;
+		es_var_dst_ctx = estate.es_var_dst_ctx;
 		es_var_subst = estate.es_var_subst;
 		es_infer_vars = estate.es_infer_vars;
         es_infer_heap = estate.es_infer_heap;
@@ -6582,8 +6586,8 @@ and do_fold_old prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
       es_infer_pure = estate.es_infer_pure;
 	  es_var_measures = estate.es_var_measures;
 	  es_var_label = estate.es_var_label;
-	  es_var_ctx_lhs = estate.es_var_ctx_lhs;
-	  es_var_ctx_rhs = estate.es_var_ctx_rhs;
+	  es_var_src_ctx = estate.es_var_src_ctx;
+	  es_var_dst_ctx = estate.es_var_dst_ctx;
 	  es_var_subst = estate.es_var_subst;
 	  es_trace = estate.es_trace} in
   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
@@ -6597,8 +6601,8 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 	  es_ivars  = [];
       es_pp_subst = [];
       es_arith_subst = [];
-      es_var_ctx_lhs = CP.mkTrue pos;
-      es_var_ctx_rhs = CP.mkTrue pos;
+      es_var_src_ctx = CP.mkTrue pos;
+      es_var_dst_ctx = CP.mkTrue pos;
       es_var_subst = [];
       es_cont = [];
       es_crt_holes = [];

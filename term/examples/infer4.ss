@@ -25,14 +25,18 @@ int foo (int x)
 */
 /*
 requires x>=5
-variance
-ensures res=5;
+variance (1) [x]
+ensures res=5 | false;
 */
 {
-	if (x==5)
+	if (x==5) {
+		dprint;
 		return x;
-	else 
+	}
+	else {
+		dprint;
 		return foo(x-2);
+	}
 }
 
 /*

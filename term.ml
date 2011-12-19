@@ -28,7 +28,7 @@ type term_status =
   | Term of term_reason
   | NonTerm of term_reason
   | MayTerm of term_reason
-  | Unreachable of CF.formula (* Original context causes unreachable *)
+  | Unreachable of CF.formula list (* Original context causes unreachable *)
 
 type term_res = transition option * term_status
 
@@ -59,7 +59,8 @@ let pr_term_status = function
   | Term reason -> fmt_string "Terminating: "; pr_term_reason reason
   | NonTerm reason -> fmt_string "Non-terminating: "; pr_term_reason reason
   | MayTerm reason -> fmt_string "May-terminating: "; pr_term_reason reason
-  | Unreachable f -> fmt_string "Unreachable state with the context "; pr_formula f
+  | Unreachable f -> fmt_string "Unreachable state with the context "; 
+      pr_wrap_test "" Gen.is_empty (pr_seq "" pr_formula) f
 
 let string_of_term_status = poly_string_of_pr pr_term_status
 
@@ -83,7 +84,6 @@ let pr_term_res_tbl_ele (pos, term_res_list) =
   (*fmt_open_vbox 0;*)
   pr_vwrap "Result of termination checking at " 
     (fun p -> fmt_string (string_of_loc p)) pos;
-  fmt_string "\n";
   pr_list_vbox_wrap "\n" pr_term_res term_res_list
 
 let pr_term_res_tbl tbl_res = 
@@ -96,7 +96,7 @@ let variance_graph = ref []
 let var_checked_list = ref []
 
 let term_collect_info (es: CF.entail_state) (v: CF.ext_variance_formula) =
-  variance_graph := !variance_graph @ [(es.CF.es_var_ctx_lhs, es.CF.es_var_ctx_rhs)];
+  variance_graph := !variance_graph @ [(es.CF.es_var_src_ctx, es.CF.es_var_dst_ctx)];
   var_checked_list := !var_checked_list @ [(es, v)]
 
 let term_is_unreachable (es: CF.entail_state) : bool =
@@ -152,9 +152,10 @@ module GSP = Graph.Path.Check(GS)
 
 (* Termination: Create state transition graph from specification *)
 let build_state_trans_graph ls =
-  print_string ("\ncall graph:\n" ^
-	  (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (CPr.string_of_pure_formula f1)
-    ^ " ->" ^ (CPr.string_of_pure_formula f2)) "" !variance_graph) ^ "\n");
+  (*print_string ("\ncall graph:\n" ^
+	  (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ 
+    (CPr.string_of_pure_formula f1) ^ " ->" ^ (CPr.string_of_pure_formula f2)) 
+    "" !variance_graph) ^ "\n");*)
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
     let ng1 = IG.add_vertex g f1 in
@@ -198,18 +199,18 @@ let variance_numbering ls g =
 	      let nes = { es with CF.es_var_label =
 		      let user_defined_var_label_lhs = es.CF.es_var_label in
 		      match user_defined_var_label_lhs with
-		        | None, pos -> (Some (nf es.CF.es_var_ctx_lhs), pos)
+		        | None, pos -> (Some (nf es.CF.es_var_src_ctx), pos)
 		        | Some i, pos -> 
               if (i = 0 || i = -1) then user_defined_var_label_lhs
-			        else (Some (nf es.CF.es_var_ctx_lhs), pos) } 
+			        else (Some (nf es.CF.es_var_src_ctx), pos) } 
         in
 	      let ne = {e with CF.formula_var_label =
 		      let user_defined_var_label_rhs = e.CF.formula_var_label in
 		      match user_defined_var_label_rhs with
-		        | None -> Some (nf es.CF.es_var_ctx_rhs)
+		        | None -> Some (nf es.CF.es_var_dst_ctx)
 		        | Some i -> 
               if (i = 0 || i = -1) then user_defined_var_label_rhs
-			        else Some (nf es.CF.es_var_ctx_rhs)}
+			        else Some (nf es.CF.es_var_dst_ctx)}
 	      in (nes,ne)
     in List.map (fun e -> helper e) ls
   else ls
@@ -240,8 +241,8 @@ let term_normalize_target_condition (es: CF.entail_state) : CF.entail_state =
     let nid = i ^ "_" ^ mn in
     CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst 
   in
-  let normalized_ctx_rhs = term_filter (CP.subst_avoid_capture f t es.CF.es_var_ctx_rhs) t in
-  {es with CF.es_var_ctx_rhs = normalized_ctx_rhs} 
+  let normalized_ctx_rhs = term_filter (CP.subst_avoid_capture f t es.CF.es_var_dst_ctx) t in
+  {es with CF.es_var_dst_ctx = normalized_ctx_rhs} 
 
 (* Update context with information of termination checking *)  
 let term_add_source_condition (sc: CP.formula) (mn: Globals.ident) (ctx: CF.context) pos : CF.context =  
@@ -249,11 +250,11 @@ let term_add_source_condition (sc: CP.formula) (mn: Globals.ident) (ctx: CF.cont
   (* Termination: Add source condition - 
    * The precondition of the initial states *)
 	CF.transform_context (fun es ->
-    CF.Ctx { es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs n_sc pos }) ctx
+    CF.Ctx { es with CF.es_var_src_ctx = CP.mkAnd es.CF.es_var_src_ctx n_sc pos }) ctx
 
 let term_add_target_condition (tc: CP.formula) (ctx: CF.context) pos : CF.context =  
   CF.transform_context (fun es -> 
-    CF.Ctx { es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs tc pos }) ctx
+    CF.Ctx { es with CF.es_var_dst_ctx = CP.mkAnd es.CF.es_var_dst_ctx tc pos }) ctx
 
 let term_add_var_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx { es with
@@ -262,7 +263,7 @@ let term_add_var_measure (v: CF.ext_variance_formula) (ctx: CF.context) : CF.con
 
 let term_add_init_ctx (ctx: CF.context) : CF.context =
   CF.transform_context (fun es -> CF.Ctx 
-  {es with CF.es_var_src_ctx = es.CF.es_formula }) ctx
+  {es with CF.es_var_orig_ctx = es.CF.es_formula }) ctx
 
 let term_add_var_subst fr_vars to_vars mn sctx pos =
   let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
@@ -272,34 +273,54 @@ let term_add_var_subst fr_vars to_vars mn sctx pos =
 		CF.es_var_loc = pos } in
   CF.transform_list_failesc_context (id, id, fs) sctx
 
+(* To get unreachable context *)
+let rec term_get_unreachable_condition (ctx: CF.list_failesc_context) : CF.formula list =
+  List.concat (List.map (fun fctx -> 
+    get_unreachable_condition_failesc_ctx fctx) ctx)
+
+and get_unreachable_condition_failesc_ctx (ctx: CF.failesc_context) : CF.formula list = 
+  let (_, _, bctx) = ctx in
+  List.concat (List.map (fun (_, c) -> get_unreachable_condition_context c) bctx)
+
+and get_unreachable_condition_context (ctx: CF.context) : CF.formula list =
+  match ctx with
+  | CF.Ctx es -> es.CF.es_var_unreachable_ctx
+  | CF.OCtx (c1, c2) -> (get_unreachable_condition_context c1) @
+                     (get_unreachable_condition_context c2)  
+
+let term_add_unreachable_state (ctx: CF.list_failesc_context) pos =
+  (* Termination: Add a false entail state for * 
+   * unreachable recursive call if variance exists *)
+	var_checked_list := !var_checked_list @ 
+    [({ (CF.false_es CF.mkFalseFlow pos) with
+          CF.es_var_loc = pos;
+          CF.es_var_unreachable_ctx = term_get_unreachable_condition ctx; },
+		  CF.empty_ext_variance_formula)]
+
 let rec term_strip_variance ls = 
   match ls with
     | [] -> []
     | spec::rest -> match spec with
       | CF.EVariance e -> (term_strip_variance e.CF.formula_var_continuation)@(term_strip_variance rest)
-      | CF.EBase b -> (CF.EBase {b with CF.formula_ext_continuation = term_strip_variance b.CF.formula_ext_continuation})::(term_strip_variance rest)
-      | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, term_strip_variance sf)) c.CF.formula_case_branches})::(term_strip_variance rest)
+      | CF.EBase b -> (CF.EBase {b with CF.formula_ext_continuation = 
+          term_strip_variance b.CF.formula_ext_continuation})::(term_strip_variance rest)
+      | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = 
+          List.map (fun (cpf, sf) -> (cpf, term_strip_variance sf)) c.CF.formula_case_branches})::(term_strip_variance rest)
+      | CF.EInfer i -> (CF.EInfer {i with CF.formula_inf_continuation =
+          term_strip_variance i.CF.formula_inf_continuation})::(term_strip_variance rest)
       | _ -> spec::(term_strip_variance rest)
-
-let term_add_unreachable_state pos =
-  (* Termination: Add a false entail state for * 
-   * unreachable recursive call if variance exists *)
-	var_checked_list := !var_checked_list @ 
-    [({ (CF.false_es CF.mkFalseFlow pos) with
-          CF.es_var_label = (Some (-1), no_pos); CF.es_var_loc = pos; },
-		  CF.empty_ext_variance_formula)]
 
 (* Checking the well-foundedness of the loop variance *)    
 let term_check_loop_variance (src: CF.entail_state) (dst: CF.ext_variance_formula) f_imply trans pos : term_res = 
   let src_measures = src.CF.es_var_measures in
   let dst_measures = dst.CF.formula_var_measures in
-
+  (*
   let _ = print_string ("es: " ^ (CPr.string_of_entail_state src) ^ "\n") in
   let _ = print_string ("var: " ^ (CPr.string_of_ext_formula (CF.EVariance dst)) ^ "\n") in
   let _ = print_string ("src: " ^ (pr_list CPr.string_of_formula_exp src_measures) ^ "\n") in
   let _ = print_string ("dst: " ^ (pr_list (fun (e, _) ->
     CPr.string_of_formula_exp e)dst_measures) ^ "\n") in
-
+  *)
   (* To handle the lexicographical order *)
 	let binding_measures = 
     try List.map2 (fun s d -> (s, d)) src_measures dst_measures
@@ -350,24 +371,24 @@ let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
   f_imply (tbl_res: term_res_table ref) : term_res =
   let f_pos = es.CF.es_var_loc in (* Loc of the recursive function call *)
   let v_pos = e.CF.formula_var_pos in (* Loc of the variance *)
+  
+  let res = 
+    if (term_is_unreachable es) then (* Unreachable state *)
+      (None, Unreachable es.CF.es_var_unreachable_ctx)
+    else (* State transition *)
+      let label_err = ("Termination: The variance label is not provided or cannot be inferred.") in
+      let var_label_dst = match e.CF.formula_var_label with
+	      | None -> report_error v_pos label_err 	    
+        | Some i -> i
+  	  in
 
-  if (term_is_unreachable es) then (* Unreachable state *)
-    (None, Unreachable es.CF.es_orig_ante)
-  else (* State transition *)
-    let label_err = ("Termination: The variance label is not provided or cannot be inferred.") in
-    let var_label_dst = match e.CF.formula_var_label with
-	    | None -> report_error v_pos label_err 	    
-      | Some i -> i
-  	in
+	    let var_label_src = match es.CF.es_var_label with
+        | None, pos -> report_error pos label_err
+	      | Some i, _ -> i
+	    in
 
-	  let var_label_src = match es.CF.es_var_label with
-      | None, pos -> report_error pos label_err
-	    | Some i, _ -> i
-	  in
+      let trans = Some (var_label_src, var_label_dst) in
 
-    let trans = Some (var_label_src, var_label_dst) in
-
-    let res = 
       (* Case 1: In loop - 
        * The well-foundedness of the variance need to be checked *)
       if (var_label_src = var_label_dst && var_label_dst > 0) then
@@ -389,8 +410,8 @@ let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
         (trans, MayTerm (Invalid_Transition (var_label_src, var_label_dst)))
       else
         (trans, NonTerm Infinite_Loop)
-    in
-    tem_tbl_res_update tbl_res f_pos res; res
+  in
+  tem_tbl_res_update tbl_res f_pos res; res
 
 	
 let termination_check f_imply =

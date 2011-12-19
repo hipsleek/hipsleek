@@ -2939,10 +2939,11 @@ type entail_state = {
   (* For VARIANCE checking *)
   es_var_measures : CP.exp list;
   es_var_label : int option * loc; (* Variance label with its position *)
-  es_var_ctx_lhs : CP.formula;
-  es_var_ctx_rhs : CP.formula;
-  es_var_src_ctx : formula; (* Initial context of a method - before symbolic execution *)
+  es_var_src_ctx : CP.formula;
+  es_var_dst_ctx : CP.formula;
+  es_var_orig_ctx : formula; (* Initial context of a method - before symbolic execution *)
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
+	es_var_unreachable_ctx : formula list; (* Context in which the recursive call becomes unreachable *)
   es_var_loc : loc; (* Location of the recursive function call *)
 
   (* for IMMUTABILITY *)
@@ -3101,9 +3102,10 @@ let empty_es flowt pos =
   es_prior_steps  = [];
   es_var_measures = [];
   es_var_label = (None, no_pos);
-  es_var_ctx_lhs = CP.mkTrue pos;
-  es_var_ctx_rhs = CP.mkTrue pos;
-  es_var_src_ctx = x;
+  es_var_src_ctx = CP.mkTrue pos;
+  es_var_dst_ctx = CP.mkTrue pos;
+  es_var_orig_ctx = x;
+	es_var_unreachable_ctx = [];
   es_var_subst = [];
   es_var_loc = no_pos;
   (*es_cache_no_list = [];*)
@@ -3775,9 +3777,10 @@ let rec empty_es flowt pos =
   es_prior_steps  = [];
   es_var_measures = [];
   es_var_label = (None, no_pos);
-  es_var_ctx_lhs = CP.mkTrue pos;
-  es_var_ctx_rhs = CP.mkTrue pos;
-  es_var_src_ctx = x;
+  es_var_src_ctx = CP.mkTrue pos;
+  es_var_dst_ctx = CP.mkTrue pos;
+  es_var_orig_ctx = x;
+	es_var_unreachable_ctx = [];
   es_var_subst = [];
   es_var_loc = no_pos;
   (*es_cache_no_list = [];*)
@@ -3849,7 +3852,10 @@ let false_ctx flowt pos =
 
 let false_ctx_with_orig_ante es f flowt pos = 
 	let x = mkFalse flowt pos in
-	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = f; 
+	Ctx ({(empty_es flowt pos) with 
+		    es_formula = x;  
+				es_orig_ante = f;
+				es_var_unreachable_ctx = es.es_var_unreachable_ctx; 
         es_infer_vars = es.es_infer_vars;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
@@ -5010,7 +5016,7 @@ and plug_ref_vars (f0:struc_formula) (w:Cpure.spec_var list):struc_formula =
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(plug_ref_vars c2 w))) b.formula_case_branches;}
 	| EBase b -> EBase {b with formula_ext_continuation = plug_ref_vars b.formula_ext_continuation w}
 	| EVariance b -> EVariance {b with formula_var_continuation = plug_ref_vars b.formula_var_continuation w}
-    | EInfer b -> EInfer {b with formula_inf_continuation = plug_ref_vars b.formula_inf_continuation w}
+  | EInfer b -> EInfer {b with formula_inf_continuation = plug_ref_vars b.formula_inf_continuation w}
 	in 
 	List.map helper f0
 
@@ -5939,8 +5945,8 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
 	es_var_label = es.es_var_label;
-	es_var_ctx_lhs = es.es_var_ctx_lhs;
 	es_var_src_ctx = es.es_var_src_ctx;
+	es_var_orig_ctx = es.es_var_orig_ctx;
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
     es_infer_pure = es.es_infer_pure;
@@ -6473,8 +6479,8 @@ and simplify_context (ctx : context) (bv : CP.spec_var list) =
 				  es_prior_steps = espriorsteps;
 				  es_var_measures = esvarmeasures;
 				  es_var_label = esvarlabel;
-				  es_var_ctx_lhs = esvarctxlhs;
-				  es_var_ctx_rhs = esvarctxrhs;
+				  es_var_src_ctx = esvarctxlhs;
+				  es_var_dst_ctx = esvarctxrhs;
 				  es_var_subst = esvarsubst;
 				  es_rhs_eqset = esrhseqset;
 				  es_cont = escont;
