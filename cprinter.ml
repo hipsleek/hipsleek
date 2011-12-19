@@ -1232,11 +1232,8 @@ and pr_ext_formula  (e:ext_formula) =
           let ps =if (lvars==[] && postf) then "@post " else "" in
       fmt_open_vbox 2;
       fmt_string ("EInfer "^ps^"["^string_of_spec_var_list lvars^"]");
-      if not(Gen.is_empty(cont)) then
-        begin
-        fmt_cut();
-        wrap_box ("B",0) pr_struc_formula cont;
-        end;
+      fmt_cut();
+      wrap_box ("B",0) pr_ext_formula cont;
       fmt_close();
 ;;
 

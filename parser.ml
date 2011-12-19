@@ -1327,7 +1327,7 @@ spec:
      F.EInfer {
        F.formula_inf_post = postf; 
        F.formula_inf_vars = ivl;
-       F.formula_inf_continuation = [s];
+       F.formula_inf_continuation = s;
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
   | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->

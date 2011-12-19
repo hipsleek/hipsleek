@@ -496,7 +496,7 @@ and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 
   | Iformula.EVariance b -> Iformula.EVariance {b with
 		Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation}  
   | Iformula.EInfer b -> Iformula.EInfer {b with
-  Iformula.formula_inf_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_inf_continuation}
+  Iformula.formula_inf_continuation = convert_ext2 prog b.Iformula.formula_inf_continuation}
 
 and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula = 
   List.map (convert_ext2 prog ) f0 
@@ -533,8 +533,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 		  (fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
 	| Iformula.EVariance b -> List.fold_left 
 		  (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
- | Iformula.EInfer b -> List.fold_left 
-    (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_inf_continuation
+ | Iformula.EInfer b -> gen_name_pairs_ext vname b.Iformula.formula_inf_continuation
 
   in
   
@@ -1828,7 +1827,7 @@ and set_pre_flow f =
 and set_pre_flow_x f = 
   let nf = {	Cformula.formula_flow_interval = !norm_flow_int;
   Cformula.formula_flow_link =None} in
-  let helper f0 = match f0 with
+  let rec helper f0 = match f0 with
     | Cformula.EBase b-> Cformula.EBase {b with
 		  Cformula.formula_ext_base = Cformula.set_flow_in_formula_override nf b.Cformula.formula_ext_base;
 		  Cformula.formula_ext_continuation = set_pre_flow_x b.Cformula.formula_ext_continuation}
@@ -1838,7 +1837,7 @@ and set_pre_flow_x f =
 	| Cformula.EVariance b -> Cformula.EVariance {b with
 		  Cformula.formula_var_continuation = set_pre_flow_x b.Cformula.formula_var_continuation}
     | Cformula.EInfer b -> Cformula.EInfer {b with
-      Cformula.formula_inf_continuation = set_pre_flow_x b.Cformula.formula_inf_continuation}
+      Cformula.formula_inf_continuation = helper b.Cformula.formula_inf_continuation}
   in
   List.map helper f
 
@@ -1852,12 +1851,12 @@ and check_valid_flows (f:Iformula.struc_formula) =
 	      Error.report_error {Error.error_loc = b.Iformula.formula_exists_pos;Error.error_text = "undefined flow type "^b.Iformula.formula_exists_flow;}
     | Iformula.Or b-> (check_valid_flows_f b.Iformula.formula_or_f1);(check_valid_flows_f b.Iformula.formula_or_f2)
   in
-  let helper f0 = match f0 with
+  let rec helper f0 = match f0 with
     | Iformula.EBase b-> (check_valid_flows_f b.Iformula.formula_ext_base); check_valid_flows b.Iformula.formula_ext_continuation
     | Iformula.ECase b-> (List.iter (fun d-> check_valid_flows (snd d)) b.Iformula.formula_case_branches)
     | Iformula.EAssume (b,_)-> check_valid_flows_f b
 	| Iformula.EVariance b -> check_valid_flows b.Iformula.formula_var_continuation
-    | Iformula.EInfer b -> check_valid_flows b.Iformula.formula_inf_continuation
+    | Iformula.EInfer b -> helper b.Iformula.formula_inf_continuation
   in
   (* if f==[] then print_endline "Empty Spec detected" else *)
   List.iter helper f
@@ -1979,7 +1978,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	to prove the final correctness. **)
 and collect_important_vars_in_spec (spec : Cformula.struc_formula) : (CP.spec_var list) =
   (** An Hoa : Internal function to collect important variables in the an ext_formula **)	
-  let helper f =
+  let rec helper f =
 	match f with
 	  | CF.ECase ({CF.formula_case_branches = branches;
 		CF.formula_case_exists = vars;
@@ -3842,7 +3841,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): boo
 	      
 	      let _ = List.map (case_coverage_x instant) r2 in true
 	| Cformula.EVariance b -> case_coverage_x instant b.Cformula.formula_var_continuation
-    | Cformula.EInfer b -> case_coverage_x instant b.Cformula.formula_inf_continuation
+    | Cformula.EInfer b -> ext_case_coverage instant b.Cformula.formula_inf_continuation
   in
   let _ = List.map (ext_case_coverage instant) f in true
 
@@ -3928,7 +3927,7 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 			  Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
 		  }
   | Cformula.EInfer b -> Cformula.EInfer {b with
-    Cformula.formula_inf_continuation = inner_add_pre pf branches b.Cformula.formula_inf_continuation;}
+    Cformula.formula_inf_continuation = helper pf branches b.Cformula.formula_inf_continuation;}
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
          
@@ -3997,7 +3996,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
             let ivs = b.Iformula.formula_inf_vars in
             (* let _ = print_endline ("EI fvars:"^(pr_list pr_id fvars)) in *)
             (* let _ = print_endline ("EI infer vars:"^(pr_list (fun (i,_) -> i)  ivs)) in *)
-            let ct = trans_struc_formula_hlp b.Iformula.formula_inf_continuation fvars in
+            let ct = trans_ext_formula b.Iformula.formula_inf_continuation stab in
             let new_ivs = List.map (fun (i,p) -> get_spec_var_ident stab i p) ivs in
             let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
             if ivs_unk!=[] then 
@@ -5579,7 +5578,7 @@ and gather_type_info_struc_f_x prog (f0:Iformula.struc_formula) stab =
               b.Iformula.formula_var_measures in
 		    let _ = List.map (fun f -> gather_type_info_pure prog f stab) b.Iformula.formula_var_escape_clauses in
 		    let _ = inner_collector b.Iformula.formula_var_continuation in ()
-      | Iformula.EInfer b -> let _ = inner_collector b.Iformula.formula_inf_continuation in ()
+      | Iformula.EInfer b -> let _ = helper b.Iformula.formula_inf_continuation in ()
     in
     let _ = List.map helper f0 in 
     () in
@@ -6149,7 +6148,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
   (* let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula  nf)^"\n") in *)
   (*convert anonym to exists*)
   let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula) strad_vs :Iformula.struc_formula* ((ident*primed)list) = 
-    let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
+    let rec helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
       | Iformula.EAssume (b,y)-> 
             let onb = convert_anonym_to_exist b in
             let hp = (Gen.BList.remove_dups_eq (=)(h@p))in
@@ -6203,7 +6202,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
 			Iformula.formula_var_continuation = fst (helper h b.Iformula.formula_var_continuation strad_vs)
 		}), [])
       | Iformula.EInfer b -> (Iformula.EInfer ({b with
-        Iformula.formula_inf_continuation = fst (helper h b.Iformula.formula_inf_continuation strad_vs)}), [])
+        Iformula.formula_inf_continuation = fst (helper1 b.Iformula.formula_inf_continuation)}), [])
 	in
     if (List.length f0)=0 then
 	  ([],[])
@@ -6480,7 +6479,7 @@ and check_eprim_in_formula s f = match f with
   | IF.Exists e-> err_prim_l_vars s e.IF.formula_exists_qvars e.IF.formula_exists_pos
         
 and check_eprim_in_struc_formula s f = 
-  let helper f = match f with
+  let rec helper f = match f with
     | IF.ECase b-> List.iter (fun (_,c2)-> check_eprim_in_struc_formula s c2) b.IF.formula_case_branches
     | IF.EBase b-> 
           (err_prim_l_vars s b.IF.formula_ext_exists b.IF.formula_ext_pos; 
@@ -6488,7 +6487,7 @@ and check_eprim_in_struc_formula s f =
           check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
     | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
     | IF.EVariance b -> check_eprim_in_struc_formula s b.IF.formula_var_continuation
-    | IF.EInfer b -> check_eprim_in_struc_formula s b.IF.formula_inf_continuation
+    | IF.EInfer b -> helper b.IF.formula_inf_continuation
   in
   List.iter helper f
 
@@ -7587,7 +7586,7 @@ and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure
 		  let new_cont, c_var_list = move_instantiations b.Cformula.formula_var_continuation in
 		  (Cformula.EVariance {b with Cformula.formula_var_continuation = new_cont}, (m_var_list@e_var_list@c_var_list))
     | Cformula.EInfer b ->
-      let new_cont, c_var_list = move_instantiations b.Cformula.formula_inf_continuation in
+      let new_cont, c_var_list = helper b.Cformula.formula_inf_continuation in
       (Cformula.EInfer {b with Cformula.formula_inf_continuation = new_cont}, c_var_list)
   in
   let forms, vars = List.split (List.map helper f) in

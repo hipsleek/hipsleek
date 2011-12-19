@@ -1166,7 +1166,7 @@ and prune_pred_struc_x prog (simp_b:bool) f =
         | EVariance b -> EVariance {b with 
               formula_var_continuation = prune_pred_struc_x prog simp_b b.formula_var_continuation}
         | EInfer b -> EInfer {b with 
-              formula_inf_continuation = prune_pred_struc_x prog simp_b b.formula_inf_continuation}
+              formula_inf_continuation = helper b.formula_inf_continuation}
   in    
   (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
   List.map helper f
@@ -3313,11 +3313,7 @@ let rec helper_inner (ctx11: context) (f: ext_formula) : list_context * proof =
               (* assumes each EInfer contains exactly one continuation *)
               (* TODO : change the syntax of EInfer? *)
               let c=e.Cformula.formula_inf_continuation in
-              begin
-              match c with
-                | [a] -> helper_inner_x ctx11 a
-                | _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : EInfer is not well-formed \n")
-              end
+              helper_inner_x ctx11 c
 	    | EVariance e ->
               let es = match ctx11 with
                 | OCtx _ -> report_error no_pos ("heap_entail_conjunct_lhs_struc : OCtx encountered \n")
@@ -8883,11 +8879,11 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	  in r
  | EInfer e -> let r = match f2 with
   | ECase c -> ECase {c with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) c.formula_case_branches)}
-  | EBase _ -> EInfer ({e with formula_inf_continuation = combine_struc e.formula_inf_continuation [f2]})
-  | EAssume _ -> EInfer ({e with formula_inf_continuation = combine_struc e.formula_inf_continuation [f2]})
-  | EVariance _ -> EInfer ({e with formula_inf_continuation = combine_struc e.formula_inf_continuation [f2]})
+  | EBase _ -> EInfer ({e with formula_inf_continuation = combine_ext_struc e.formula_inf_continuation f2})
+  | EAssume _ -> EInfer ({e with formula_inf_continuation = combine_ext_struc e.formula_inf_continuation f2})
+  | EVariance _ -> EInfer ({e with formula_inf_continuation = combine_ext_struc e.formula_inf_continuation f2})
   | EInfer e2 -> EInfer ({e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
-     formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}) 
+     formula_inf_continuation = combine_ext_struc e.formula_inf_continuation e2.formula_inf_continuation}) 
       in r
   in
   List.fold_left (fun b c1->b@(List.map (fun c2->(combine_ext_struc c1 c2)) f2)) [] f1
