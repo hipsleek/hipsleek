@@ -152,9 +152,9 @@ module GSP = Graph.Path.Check(GS)
 
 (* Termination: Create state transition graph from specification *)
 let build_state_trans_graph ls =
-  (*print_string ("\ncall graph:\n" ^
+  print_string ("\ncall graph:\n" ^
 	  (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (CPr.string_of_pure_formula f1)
-    ^ " ->" ^ (CPr.string_of_pure_formula f2)) "" !variance_graph) ^ "\n");*)
+    ^ " ->" ^ (CPr.string_of_pure_formula f2)) "" !variance_graph) ^ "\n");
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
     let ng1 = IG.add_vertex g f1 in
@@ -293,6 +293,12 @@ let term_add_unreachable_state pos =
 let term_check_loop_variance (src: CF.entail_state) (dst: CF.ext_variance_formula) f_imply trans pos : term_res = 
   let src_measures = src.CF.es_var_measures in
   let dst_measures = dst.CF.formula_var_measures in
+
+  let _ = print_string ("es: " ^ (CPr.string_of_entail_state src) ^ "\n") in
+  let _ = print_string ("var: " ^ (CPr.string_of_ext_formula (CF.EVariance dst)) ^ "\n") in
+  let _ = print_string ("src: " ^ (pr_list CPr.string_of_formula_exp src_measures) ^ "\n") in
+  let _ = print_string ("dst: " ^ (pr_list (fun (e, _) ->
+    CPr.string_of_formula_exp e)dst_measures) ^ "\n") in
 
   (* To handle the lexicographical order *)
 	let binding_measures = 

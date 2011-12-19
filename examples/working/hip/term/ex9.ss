@@ -1,4 +1,3 @@
-// Termination checking does not run
 void loop(ref int x, ref int y, int N)
 case {
   x>N -> variance (0) ensures "l1": x'=x & y'=y;
