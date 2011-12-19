@@ -235,12 +235,9 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let vars = b.CF.formula_inf_vars in
             (if vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars;CF.es_infer_post = postf}) ctx in
-		    let (c,pre,f) = check_specs_infer_a prog proc nctx b.CF.formula_inf_continuation e0 in
-            (*      print_endline ("FML2: " ^ Cprinter.string_of_formula pre);*)
+            let (c,pre,f) = do_spec_verify_infer prog proc nctx e0 b.CF.formula_inf_continuation in
             (* TODO : should convert to EBase if pre!=[] *)
-            (match c with
-              | [a] -> (a,pre,f)
-              | _ -> (CF.EInfer {b with CF.formula_inf_continuation = c}, pre, f)) 
+            (c,pre,f)
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error
@@ -712,7 +709,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       | [] -> []
                       | spec::rest -> match spec with
                           | CF.EVariance e -> (strip_variance e.CF.formula_var_continuation)@(strip_variance rest)
-                          | CF.EInfer e -> (strip_variance e.CF.formula_inf_continuation)@(strip_variance rest)
+                          | CF.EInfer e -> (strip_variance [e.CF.formula_inf_continuation])@(strip_variance rest)
                           | CF.EBase b -> (CF.EBase {b with CF.formula_ext_continuation = strip_variance b.CF.formula_ext_continuation})::(strip_variance rest)
                           | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.CF.formula_case_branches})::(strip_variance rest)
                           | _ -> spec::(strip_variance rest)
@@ -1038,7 +1035,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     if (pre_ctr # get> 0) 
                     then
                       begin
-                        let new_spec = Astsimp.add_pre prog new_spec in
+                        let new_spec = AS.add_pre prog new_spec in
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
