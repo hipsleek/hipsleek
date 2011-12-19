@@ -395,7 +395,7 @@ let rec string_of_ext_formula = function
  | Iformula.EInfer {Iformula.formula_inf_vars = lvars;
    Iformula.formula_inf_post = postf;
    Iformula.formula_inf_continuation = continuation;} ->
-          let ps =if (lvars==[] && postf) then "post " else "" in
+          let ps =if (lvars==[] && postf) then "@post " else "" in
     let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
     let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
     "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation

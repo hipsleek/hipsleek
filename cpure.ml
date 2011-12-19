@@ -28,6 +28,9 @@ let is_hole_spec_var sv = match sv with
 let is_self_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = self
 
+let is_res_spec_var sv = match sv with
+	| SpecVar (_,n,_) -> n = res_name
+
 
 type formula =
   | BForm of (b_formula * (formula_label option))
@@ -241,6 +244,8 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    v1 = v2 & p1 = p2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
+
+let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
 
 (*LDK: check constant TRUE conjuncts of equalities, i.e. v=v *)
 let is_true_conj_eq (f1:formula) : bool =
@@ -624,12 +629,24 @@ and to_var (e : exp) : spec_var =
   | Var (sv, _) -> sv
   | _ -> failwith ("to_var: argument is not a variable")
 
-and can_be_aliased (e : exp) : bool =
+and can_be_aliased_aux_x with_null (e : exp) : bool =
   match e with
-  | Var _ | Null _ -> true
+  | Var _ -> true
         (* null is necessary in this case: p=null & q=null.
            If null is not considered, p=q is not inferred. *)
+  | Null _ -> with_null
   | _ -> false
+
+
+and can_be_aliased_aux with_null (e : exp) : bool =
+  let pr1 = string_of_bool in
+  let pr2 = !print_exp in
+  Gen.Debug.no_2 "can_be_aliased_aux" pr1 pr2 pr1 can_be_aliased_aux_x with_null e
+
+and can_be_aliased (e : exp) : bool =
+  can_be_aliased_aux true e
+        (* null is necessary in this case: p=null & q=null.
+           If null is not considered, p=q is not inferred. *)
 
 and get_alias (e : exp) : spec_var =
   match e with
@@ -3889,6 +3906,7 @@ let rec transform_exp f e  =
 	    | Null _ 
 	    | Var _ 
 	    | IConst _
+	    | AConst _
 	    | FConst _ -> e
 	    | Add (e1,e2,l) ->
 	          let ne1 = transform_exp f e1 in
@@ -4051,6 +4069,7 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		| BConst _
 		| BVar _ 
 		| BagMin _ 
+        | SubAnn _
 		| BagMax _ -> pf
 		| Lt (e1,e2,l) ->
 		  let ne1 = transform_exp f_exp e1 in
@@ -4282,6 +4301,7 @@ let rec get_head e = match e with
     | Var (v,_) -> name_of_spec_var v
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
+    | AConst (f,_) -> string_of_heap_ann f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
@@ -4334,7 +4354,7 @@ and norm_exp (e:exp) =
   (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
-    | Null _ | IConst _ | FConst _ -> e
+    | Null _ | IConst _ | FConst _ | AConst _ -> e
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
@@ -4428,7 +4448,7 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
         | BConst _ | BVar _ | EqMax _ 
         | EqMin _ |  BagSub _ | BagMin _ 
-        | BagMax _ | ListAllN _ | ListPerm _
+        | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _
 	    | RelForm _ -> pf (* An hoa *)
     in (npf, il)
 
@@ -6381,6 +6401,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
         |h::t-> [h] in
   let l_r = List.concat (List.map (compute_one [] leqs) v_of_int) in
   List.map (fun (v,e) -> (v,BForm ((Eq (Var (v,no_pos),e,no_pos), None),None))) l_r 
+
 
 let compute_instantiations pure_f v_of_int avail_v =
   let pr1 = !print_formula in

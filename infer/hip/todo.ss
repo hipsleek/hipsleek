@@ -1,4 +1,5 @@
 void foo2(ref int i)
+//infer [i]
  requires i>1
  ensures true;
 {

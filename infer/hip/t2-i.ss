@@ -8,6 +8,19 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
+int hd0(ref node x)
+ infer [x] 
+ requires true
+ ensures true; //'
+/*
+   requires x::node<inf1,inf2>
+   ensures res=inf1;
+*/
+{
+  x = x.next;
+  return x.val;
+}
+
 int hd1(node x)
  infer [x] 
  requires true

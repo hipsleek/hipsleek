@@ -107,9 +107,12 @@ and proc_decl = {
 		proc_return : typ;
 		proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
-    proc_static_specs_with_pre : Cformula.struc_formula;
+    (* proc_static_specs_with_pre : Cformula.struc_formula; *)
+    (* this puts invariant of pre into the post-condition *)
     proc_dynamic_specs : Cformula.struc_formula;
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
+    (* stack of static specs inferred *)
+    proc_stk_of_static_specs : Cformula.struc_formula Gen.stack_noinit;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     proc_file : string;

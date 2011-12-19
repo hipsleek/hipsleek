@@ -54,6 +54,8 @@ struct
 
   let pr_triple f1 f2 f3 (x,y,z) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^")"
 
+  let pr_quad f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^","^(f4 z2)^")"
+
   let pr_lst f xs = String.concat "," (List.map f xs)
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"
@@ -400,6 +402,36 @@ class ['a] stack (x_init:'a) (epr:'a->string)  =
      method reverse = stk <- List.rev stk
      (* method set_pr f = elem_pr <- f *)
      (* method string_of = BList.string_of_f elem_pr stk *)
+     method string_of = Basic.pr_list elem_pr stk
+   end;;
+
+class ['a] stack_noinit (epr:'a->string)  =
+   object 
+     val mutable stk = []
+     val elem_pr = epr 
+       (* = (fun _ -> "elem printer not initialised!") *)
+     method push (i:'a) = 
+       begin
+         stk <- i::stk
+         (* ;print_endline ("push new len:"^string_of_int(List.length stk)) *)
+       end
+     method get_stk  = stk (* return entire content of stack *)
+     method override_stk newstk  = stk <- newstk 
+       (* override with a new stack *)
+     method pop = match stk with 
+       | [] -> print_string "ERROR : popping empty stack"; 
+               raise Stack_Error
+       | x::xs -> stk <- xs
+     method top : 'a = match stk with 
+       | [] -> print_string "ERROR : top of empty stack"; 
+               raise Stack_Error
+       | x::xs -> x
+     method pop_no_exc = match stk with 
+       | [] -> () 
+       | x::xs -> stk <- xs
+     method is_empty = stk == []
+     method len = List.length stk
+     method reverse = stk <- List.rev stk
      method string_of = Basic.pr_list elem_pr stk
    end;;
 

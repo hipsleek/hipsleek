@@ -21,8 +21,11 @@ let print_mg_f = ref (fun (c: memoised_group) -> "printing not initialized")
 let print_mc_f = ref (fun (c: memoised_constraint) -> "printing not initialized")
 let print_sv_f = ref (fun (c: spec_var) -> "spec_var printing not initialized")
 let print_sv_l_f = ref (fun (c: spec_var list) -> "spec_var list printing not initialized")
+let print_sv = print_sv_f 
+let print_svl = print_svl 
 let print_bf_f = ref (fun (c: b_formula) -> "b_formula printing not initialized")
 let print_p_f_f = ref (fun (c: formula) -> "formula printing not initialized")
+let print_pure_f = print_p_f_f 
 let print_exp_f = ref(fun (c: exp) -> "exp printing not initialized") 
 (* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
 
@@ -236,21 +239,32 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
   let pr2 = !print_mp_f in
   Gen.Debug.no_2 "m_apply_par" pr1 pr2 pr2 m_apply_par_x sst f
 
-and b_f_ptr_equations f =
+and b_f_ptr_equations_aux with_null f =
   let (pf, _) = f in
   match pf with
   | Eq (e1, e2, _) ->
-      let b = can_be_aliased e1 && can_be_aliased e2 in
+      let b = can_be_aliased_aux with_null e1 && can_be_aliased_aux with_null e2 in
       if not b then [] else [(get_alias e1, get_alias e2)]
   | _ -> [] 
-        
+
+and b_f_ptr_equations f = b_f_ptr_equations_aux true f
+
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
+  pure_ptr_equations_aux true f
+
+and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
-    | BForm (bf,_) -> b_f_ptr_equations bf
+    | BForm (bf,_) -> b_f_ptr_equations_aux with_null bf
     | _ -> [] in 
   prep_f f
-      
+
+and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list = 
+  let pr1 = string_of_bool in
+  let pr2 = !print_pure_f in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Gen.Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
+
 (* use_with_null_const for below *)
 (* assume that f is a satisfiable conjunct *) 
 (* returns a list of ptr eqns v1=v2 that can be found in memo_pure *)
@@ -258,7 +272,7 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
 and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c -> (a @ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
-    let r = List.fold_left (fun a c -> a @ (pure_ptr_equations c)) r f.memo_group_slice in
+    let r = List.fold_left (fun a c -> a @ (pure_ptr_equations_aux with_null c)) r f.memo_group_slice in
     let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
     r @ eqs in
   List.concat (List.map helper f)
@@ -1082,6 +1096,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | Var (v,_) -> name_of_spec_var v
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
+    | AConst (f,_) -> string_of_heap_ann f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
@@ -1109,12 +1124,12 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	      if (disc<>(-1)) then ([e],[])
 	      else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
 	      (lp1@lp2,ln1@ln2) 
-    | Null _ | Var _ | IConst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
+    | Null _ | Var _ | IConst _ | AConst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
 	| ArrayAt _ -> ([e],[]) (* An Hoa *) in
   
   let rec norm_expr e = match e with
-    | Null _ | Var _ | IConst _ | FConst _ -> e
+    | Null _ | Var _ | IConst _ | FConst _ | AConst _ -> e
     | Add (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Subtract (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Mult (e1,e2,l) -> cons_lsts e (-1) (fun c-> Mult c) (fun d-> (*print_string "called \n";*) Div d) (IConst (1,l))
@@ -1869,7 +1884,7 @@ let memo_pure_push_exists_lhs qv f = match f with
 	
 let ptr_equations_aux with_null f = match f with
   | MemoF f -> ptr_equations_aux_mp with_null f
-  | OnePF f -> pure_ptr_equations f
+  | OnePF f -> pure_ptr_equations_aux with_null f
  
 (* type: mix_formula -> (Cpure.EMapSV.elem * Cpure.EMapSV.elem) list *)
  let ptr_equations_with_null f = ptr_equations_aux true f
@@ -1882,11 +1897,11 @@ let ptr_equations_aux with_null f = match f with
 
 let ptr_equations_without_null f = ptr_equations_aux false f
 
-let ptr_equations_without_null_debug f = 
+let ptr_equations_without_null f = 
    let pr1 = !print_mix_f in
    let pr_elem = Cpure.SV.string_of in
    let pr2 = pr_list (pr_pair pr_elem pr_elem) in
-   Gen.Debug.no_1 "ptr_equations_without_null" pr1 pr2 ptr_equations_with_null f
+   Gen.Debug.no_1 "ptr_equations_without_null" pr1 pr2 ptr_equations_without_null f
 
  let filter_useless_memo_pure sim_f b fv f = match f with
   | MemoF f -> MemoF (filter_useless_memo_pure sim_f b fv f)
