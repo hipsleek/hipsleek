@@ -71,6 +71,7 @@ let rec smt_of_typ t =
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
 		| Int -> "Int"
+		| AnnT -> "Int"
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
@@ -94,6 +95,7 @@ let rec smt_of_exp a =
 	| CP.Null _ -> "0"
 	| CP.Var (sv, _) -> smt_of_spec_var sv
 	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
+	| CP.AConst (i, _) -> string_of_heap_ann i
 	| CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
 	| CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
 	| CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
@@ -123,6 +125,7 @@ let rec smt_of_b_formula b =
 	| CP.BConst (c, _) -> if c then "true" else "false"
 	| CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
 	| CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+	| CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
 	| CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
 	| CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
 	| CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -239,7 +242,7 @@ and collect_combine_formula_info_raw f1 f2 =
 
 and collect_bformula_info b = match b with
 	| CP.BConst _ | CP.BVar _ -> default_formula_info
-	| CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.Gt (e1,e2,_) 
+	| CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.SubAnn (e1,e2,_) | CP.Gt (e1,e2,_) 
 	| CP.Gte (e1,e2,_) | CP.Eq (e1,e2,_) | CP.Neq (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
@@ -266,7 +269,7 @@ and collect_bformula_info b = match b with
 				combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
-	| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ -> default_formula_info
+	| CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
 	| CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in

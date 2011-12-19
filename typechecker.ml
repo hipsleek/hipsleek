@@ -231,7 +231,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	        (CF.EVariance {b with CF.formula_var_continuation = c}, pre, f) 
       | CF.EInfer b ->
             Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
-            let postf = b.Cformula.formula_inf_post in
+            let postf = b.CF.formula_inf_post in
             let vars = b.CF.formula_inf_vars in
             (if vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars;CF.es_infer_post = postf}) ctx in
@@ -728,7 +728,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           | CF.EVariance e -> (strip_variance e.CF.formula_var_continuation)@(strip_variance rest)
                           | CF.EInfer e -> (strip_variance [e.CF.formula_inf_continuation])@(strip_variance rest)
                           | CF.EBase b -> (CF.EBase {b with CF.formula_ext_continuation = strip_variance b.CF.formula_ext_continuation})::(strip_variance rest)
-                          | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.Cformula.formula_case_branches})::(strip_variance rest)
+                          | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.CF.formula_case_branches})::(strip_variance rest)
                           | _ -> spec::(strip_variance rest)
                     in strip_variance org_spec
                   in
@@ -736,13 +736,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* org_spec -> stripped_spec *)
 	              (* free vars = linking vars that appear both in pre and are not formal arguments *)
                   let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
-                    (Gen.BList.difference_eq CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*))
-                        (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
+                    (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
+                        (CF.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
                   (* free vars get to be substituted by fresh vars *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                   let renamed_spec = 
-                    if !Globals.max_renaming then (Cformula.rename_struc_bound_vars stripped_spec(*org_spec*))
-                    else (Cformula.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context sctx))
+                    if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))
+                    else (CF.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context sctx))
                   in
                   let st1 = List.combine pre_free_vars pre_free_vars_fresh in
                   (*let _ = print_string (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
@@ -1052,7 +1052,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     if (pre_ctr # get> 0) 
                     then
                       begin
-                        let new_spec = Astsimp.add_pre prog new_spec in
+                        let new_spec = AS.add_pre prog new_spec in
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in

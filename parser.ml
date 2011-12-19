@@ -442,7 +442,7 @@ and get_heap_ann annl : F.ann =
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | None :: [] ->  F.ConstAnn(Mutable)
+    (* | None :: [] ->  F.ConstAnn(Mutable) *)
     | [] ->  F.ConstAnn(Mutable)
   (* if (List.exists (fun x -> (String.compare x "I")==0) annl) then ConstAnn(Imm) *)
   (* else if (List.exists (fun x -> (String.compare x "L")==0) annl) then ConstAnn(Lend) *)
