@@ -338,10 +338,13 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let post_vars = CP.remove_dups_svl post_vars in
                                 let _ = print_endline ("Pre Vars :"^Cprinter.string_of_spec_var_list pre_vars) in
                                 let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
-                                let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos)
-                                  (CF.formula_of_heap CF.HTrue no_pos) (flist@[post_cond]) in
+                                let post_fml = if flist!=[] then 
+                                    let tmp = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 no_pos) 
+                                      (List.hd flist) (List.tl flist) in
+                                    CF.normalize 1 tmp post_cond no_pos
+                                  else post_cond in
                                 let post_fml = CF.simplify_post post_fml post_vars in
-	                            print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist));
+                                print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist));
                                 print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml));
                                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
                                 inferred_post
