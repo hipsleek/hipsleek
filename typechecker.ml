@@ -237,7 +237,24 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars;CF.es_infer_post = postf}) ctx in
             let (c,pre,f) = do_spec_verify_infer prog proc nctx e0 b.CF.formula_inf_continuation in
             (* TODO : should convert to EBase if pre!=[] *)
-            (c,pre,f)
+            let pos = b.Cformula.formula_inf_pos in
+            let new_c = if pre=[] then c else
+                begin
+                match c with
+                | CF.EBase _ -> c
+                | CF.EAssume _ -> CF.EBase {
+                    CF.formula_ext_explicit_inst = [];
+                    CF.formula_ext_implicit_inst = [];
+                    CF.formula_ext_exists = [];
+                    CF.formula_ext_base = (match pre with 
+                      | [a] -> a 
+                      | _ -> report_error pos ("Spec has more than 2 pres but only 1 post"));
+                    CF.formula_ext_continuation = [c];
+                    CF.formula_ext_pos = pos;
+                  }
+                | _ -> report_error pos ("Temporarily not supported: EVariance and ECase")
+                end
+            in (new_c,[],f)                
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error

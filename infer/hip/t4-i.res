@@ -16,8 +16,10 @@ Final Residual Post :  true & x=x' & res=inf_val_14_497 & {FLOW,(20,21)=__norm}
 OLD SPECS:  EInfer [x]
    EAssume 1::ref [x]
      true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EAssume 1::ref [x]
-   true & x=x' & res=inf_val_14_497 & {FLOW,(20,21)=__norm}
+NEW SPECS:  EBase x::node<inf_val_14_497,inf_next_14_498>@L[Orig] & true &
+       {FLOW,(1,23)=__flow}
+         EAssume 1::ref [x]
+           true & x=x' & res=inf_val_14_497 & {FLOW,(20,21)=__norm}
 
 Procedure hd0$node SUCCESS
 Stop Omega... 32 invocations 
