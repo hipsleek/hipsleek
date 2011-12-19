@@ -15,9 +15,9 @@ Inferred Pure:[]
 
 
 Entail  (3): Valid. 
-Inferred Heap:[ y::ll<inf_55>@M[Orig][LHSCase]]
+Inferred Heap:[ y::ll<inf_53>@M[Orig][LHSCase]]
 Inferred Pure:[]
-<1>true & n=inf_55 &
+<1>true & n=inf_53 &
 {FLOW,(17,18)=__norm}
 
 
@@ -52,9 +52,9 @@ Inferred Pure:[ n!=1]
 
 
 Entail  (10): Valid. 
-Inferred Heap:[ y::ll<inf_118>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_118=0]
-<1>true & n=inf_118 & inf_118=0 &
+Inferred Heap:[ y::ll<inf_115>@M[Orig][LHSCase]]
+Inferred Pure:[ inf_115=0]
+<1>true & n=inf_115 & inf_115=0 &
 {FLOW,(17,18)=__norm}
 
 
@@ -68,7 +68,7 @@ Inferred Pure:[ x!=null]
 Entail  (12): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ n!=0, n=1]
-<1>EXISTS(q_155,flted_7_153: q_155::ll<flted_7_153>@M[Orig] & flted_7_153+
+<1>EXISTS(q_150,flted_7_148: q_150::ll<flted_7_148>@M[Orig] & flted_7_148+
 1=n & n=1 &
 {FLOW,(17,18)=__norm})
 
@@ -76,7 +76,7 @@ Inferred Pure:[ n!=0, n=1]
 Entail  (13): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ n!=0]
-<1>EXISTS(flted_7_179: b::ll<flted_7_179>@M[Orig] & flted_7_179+1=n &
+<1>EXISTS(flted_7_174: b::ll<flted_7_174>@M[Orig] & flted_7_174+1=n &
 {FLOW,(17,18)=__norm})
 
 
@@ -101,13 +101,13 @@ Inferred Pure:[ y=null]
 {FLOW,(17,18)=__norm}
 
 
-Entail  (17): Fail.(may) cause:(failure_code=213)  flted_7_216+1=n & (q_218=null & flted_7_216=0 | q_218!=null & 
-1<=flted_7_216) |-  q_218=null (may-bug).
+Entail  (17): Fail.(may) cause:(failure_code=213)  flted_7_211+1=n & (q_213=null & flted_7_211=0 | q_213!=null & 
+1<=flted_7_211) |-  q_213=null (may-bug).
 
 Entail  (18): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ !(n=0 & y=null) & 0<=n, n=1]
-<1>EXISTS(q_248,flted_7_246: q_248::ll<flted_7_246>@M[Orig] & flted_7_246+
+<1>EXISTS(q_243,flted_7_241: q_243::ll<flted_7_241>@M[Orig] & flted_7_241+
 1=n & n=1 &
 {FLOW,(17,18)=__norm})
 
@@ -115,7 +115,7 @@ Inferred Pure:[ !(n=0 & y=null) & 0<=n, n=1]
 Entail  (19): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ n!=0, n=1]
-<1>EXISTS(q_278,flted_7_276: q_278::ll<flted_7_276>@M[Orig] & flted_7_276+
+<1>EXISTS(q_273,flted_7_271: q_273::ll<flted_7_271>@M[Orig] & flted_7_271+
 1=n & n=1 &
 {FLOW,(17,18)=__norm})
 
@@ -130,14 +130,14 @@ Inferred Pure:[ x!=null]
 Entail  (21): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ x!=null]
-<1>EXISTS(flted_7_308: b::ll<flted_7_308>@M[Orig] & flted_7_308+1=n &
+<1>EXISTS(flted_7_303: b::ll<flted_7_303>@M[Orig] & flted_7_303+1=n &
 {FLOW,(17,18)=__norm})
 
 
 Entail  (22): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ n!=0, n=1]
-<1>EXISTS(q_335,flted_7_333: q_335::ll<flted_7_333>@M[Orig] & flted_7_333+
+<1>EXISTS(q_330,flted_7_328: q_330::ll<flted_7_328>@M[Orig] & flted_7_328+
 1=n & n=1 &
 {FLOW,(17,18)=__norm})
 
@@ -152,51 +152,51 @@ Inferred Pure:[ n=0]
 Entail  (24): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ n!=0]
-<1>EXISTS(flted_7_363: b::ll<flted_7_363>@M[Orig] & flted_7_363+1=n &
+<1>EXISTS(flted_7_358: b::ll<flted_7_358>@M[Orig] & flted_7_358+1=n &
 {FLOW,(17,18)=__norm})
 
 
 Entail  (25): Valid. 
-Inferred Heap:[ y::node<inf_372,inf_373>@M[Orig], y::node<inf_Anon_374,inf_Anon_375>@M[Orig]]
+Inferred Heap:[ y::node<inf_367,inf_368>@M[Orig], y::node<inf_Anon_369,inf_Anon_370>@M[Orig]]
 Inferred Pure:[]
-<1>true & a=inf_372 & b=inf_373 & Anon_21=inf_Anon_374 & 
-Anon_22=inf_Anon_375 &
+<1>true & a=inf_367 & b=inf_368 & Anon_21=inf_Anon_369 & 
+Anon_22=inf_Anon_370 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (26): Valid. 
-Inferred Heap:[ y::node<inf_381,inf_382>@M[Orig], y::ll<inf_385>@M[Orig][LHSCase]]
+Inferred Heap:[ y::node<inf_376,inf_377>@M[Orig], y::ll<inf_378>@M[Orig][LHSCase]]
 Inferred Pure:[]
-<1>true & a=inf_381 & b=inf_382 & m=inf_385 &
+<1>true & a=inf_376 & b=inf_377 & m=inf_378 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (27): Valid. 
-Inferred Heap:[ y::node<inf_398,inf_399>@M[Orig], b::ll<inf_m_402>@M[Orig][LHSCase]]
-Inferred Pure:[ b=inf_399, inf_m_402=0 - 1]
-<1>true & m+1=0 & a=inf_398 & b=inf_399 & inf_m_402=0 - 1 &
+Inferred Heap:[ y::node<inf_389,inf_390>@M[Orig], b::ll<inf_m_391>@M[Orig][LHSCase]]
+Inferred Pure:[ b=inf_390, inf_m_391=0 - 1]
+<1>true & m+1=0 & a=inf_389 & b=inf_390 & inf_m_391=0 - 1 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (28): Valid. 
-Inferred Heap:[ y::node<inf_422,inf_423>@M[Orig], b::ll<inf_m_426>@M[Orig][LHSCase]]
-Inferred Pure:[ b=inf_423, inf_m_426=0 - 1]
-<1>true & m+1=0 & a=inf_422 & b=inf_423 & inf_m_426=0 - 1 &
+Inferred Heap:[ y::node<inf_409,inf_410>@M[Orig], b::ll<inf_m_411>@M[Orig][LHSCase]]
+Inferred Pure:[ b=inf_410, inf_m_411=0 - 1]
+<1>true & m+1=0 & a=inf_409 & b=inf_410 & inf_m_411=0 - 1 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (29): Valid. 
-Inferred Heap:[ y::node<inf_445,inf_b_446>@M[Orig], b::ll<inf_450>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_b_446=b]
-<1>true & a=inf_445 & m=inf_450 & inf_b_446=b &
+Inferred Heap:[ y::node<inf_428,inf_b_429>@M[Orig], b::ll<inf_431>@M[Orig][LHSCase]]
+Inferred Pure:[ inf_b_429=b]
+<1>true & a=inf_428 & m=inf_431 & inf_b_429=b &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (30): Valid. 
-Inferred Heap:[ y::node<inf_466,inf_b_467>@M[Orig], b::ll<inf_471>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_b_467=b]
-<1>true & b!=null & a=inf_466 & m=inf_471 & inf_b_467=b &
+Inferred Heap:[ y::node<inf_445,inf_b_446>@M[Orig], b::ll<inf_448>@M[Orig][LHSCase]]
+Inferred Pure:[ inf_b_446=b]
+<1>true & b!=null & a=inf_445 & m=inf_448 & inf_b_446=b &
 {FLOW,(17,18)=__norm}
 
 
-Stop Omega... 430 invocations 
+Stop Omega... 398 invocations 
