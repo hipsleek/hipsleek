@@ -12,5 +12,7 @@ echo "======= 6 ======"
 diff 6.res 6.n
 echo "======= 7 ======"
 diff 7.res 7.n
+echo "======= 8 ======"
+diff 8.res 8.n
 echo "======= todo ======"
 diff todo.res todo.n

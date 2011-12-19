@@ -121,11 +121,12 @@ let rec pr_action_res pr_mr a = match a with
   | M_unfold (e,i) -> pr_mr e; fmt_string ("=>Unfold "^(string_of_int i))
   | M_base_case_unfold e -> pr_mr e; fmt_string "=>BaseCaseUnfold"
   | M_base_case_fold e -> pr_mr e; fmt_string "=>BaseCaseFold"
-  | M_rd_lemma e -> pr_mr e; fmt_string "=>RightDistrLemma"
+  | M_rd_lemma e -> pr_mr e; fmt_string "=>RD_Lemma"
   | M_lemma (e,s) -> pr_mr e; fmt_string ("=>"^(match s with | None -> "AnyLemma" | Some c-> "Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo: "^s)
-  | M_infer_heap (h,_) -> fmt_string ("InferHeap: "^(string_of_h_formula h))
+  | M_infer_heap p -> let pr = string_of_h_formula in
+    fmt_string ("InferHeap: "^(pr_pair pr pr p))
   | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData: "^(string_of_h_formula h))
   | Cond_action l -> pr_seq_nocut "=>COND:" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "=>SEQ:" (pr_action_wt_res pr_mr) l
@@ -767,11 +768,45 @@ and process_matches_x prog lhs_h is_normalizing ((l:match_res list),(rhs_node,rh
         (*     match_res_rhs_rest = rhs_rest; *)
         (* }) in *)
         (* temp removal of infer-heap and base-case fold *)
-        (-1, (Cond_action [ (* ri; *) r; r0]))
-      else r0
+        (-1, (Cond_action [ ri; r; r0]))
+      else (-1, Cond_action [ ri; r0])
         (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
     | x::[] -> process_one_match prog is_normalizing x 
     | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
+
+and choose_closest a ys =
+  let similar m o =
+    (m.match_res_lhs_node == o.match_res_lhs_node)
+        && (m.match_res_rhs_node == o.match_res_rhs_node) in
+  let rec find m ys = 
+    match ys with
+      | [] -> None
+      | (_,x)::xs ->
+            begin
+            let r =(find_a m x) in
+            match r with
+              | None -> find m xs
+              | Some a -> r
+            end 
+  and find_a m x = 
+    match x with
+      | M_match o ->
+            if similar m o then Some x
+            else None
+      | Cond_action awl 
+      | Seq_action awl
+      | Search_action awl
+          -> (find m awl)
+      | _ -> None in
+  match a with
+    | M_match m -> find m ys
+    | _ -> None
+  
+and choose_match f ys =
+  match f with
+    | None -> None
+    | Some a -> choose_closest a ys
+
 
 and sort_wt (ys: action_wt list) : action list =
   let pr = pr_list string_of_action_wt_res_simpl in
@@ -802,6 +837,13 @@ and sort_wt_x (ys: action_wt list) : action list =
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
+
+and sort_wt_match opt (ys: action_wt list) : action list =
+  match (choose_match opt ys) with
+    | None -> sort_wt ys
+    | Some a -> 
+          (* let _ = print_endline "WN : Found a must_action_stk match" in  *)
+          [a]
 
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
@@ -897,12 +939,12 @@ and pick_unfold_only ((w,a):action_wt) : action_wt list =
 (* and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) = *)
 
 and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos :action =
-  if not(must_action_stk # is_empty) then
-    begin
-      let a = must_action_stk # top in
-      must_action_stk # pop; a
-    end
-  else
+  let opt = 
+   if not(must_action_stk # is_empty) then
+     let a = must_action_stk # top in
+      (must_action_stk # pop; Some a)
+   else None
+  in
     let r = List.map (fun (c1,c2)-> (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
     (* match r with  *)
     (*   | [] -> M_Nothing_to_do "no nodes to match" *)
@@ -914,7 +956,7 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normali
       | [] -> M_Nothing_to_do "no nodes on RHS"
       | xs -> 
             (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-            let ys = sort_wt r in 
+            let ys = sort_wt_match opt r in 
             List.hd (ys)
    (*  match ys with
         | [(_, act)] -> act

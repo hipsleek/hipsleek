@@ -32,7 +32,9 @@ let remove_infer_vars_partial estate rt =
 
 let rec restore_infer_vars_ctx iv ctx = 
   match ctx with
-  | Ctx estate -> Ctx {estate with es_infer_vars=iv;}
+  | Ctx estate -> 
+        if iv==[] then ctx
+        else Ctx {estate with es_infer_vars=iv;}
   | OCtx (ctx1, ctx2) -> OCtx (restore_infer_vars_ctx iv ctx1, restore_infer_vars_ctx iv ctx2)
 
 let restore_infer_vars iv cl =
@@ -263,24 +265,24 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         let new_p = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
             (CP.mkTrue no_pos) 
             (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) in
+        let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
         let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
         let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
         let new_p_conjs = CP.list_of_conjs new_p in
         let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
           (List.filter (fun c -> not (is_elem_of c ante_conjs)) new_p_conjs) in
-(*        let r = {                                         *)
-(*            match_res_lhs_node = new_h;                   *)
-(*            match_res_lhs_rest = HTrue;                   *)
-(*            match_res_holes = [];                         *)
-(*            match_res_type = Root;                        *)
-(*            match_res_rhs_node = rhs;                     *)
-(*            match_res_rhs_rest = rhs_rest;                *)
-(*            (* match_res_add_constr = CP.mkTrue no_pos; *)*)
-(*        } in                                              *)
-(*        let act = M_match r in                            *)
+       let r = {
+           match_res_lhs_node = new_h;
+           match_res_lhs_rest = lhs_h;
+           match_res_holes = [];
+           match_res_type = Root;
+           match_res_rhs_node = rhs;
+           match_res_rhs_rest = rhs_rest;
+       } in
+       let act = M_match r in
         (
             (* WARNING : any dropping of match action must be followed by pop *)
-            (* must_action_stk # push act; *)
+            must_action_stk # push act;
             Some (new_iv,new_h,new_p))
       end
     else None
