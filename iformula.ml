@@ -23,6 +23,7 @@ and ext_formula =
 
 and ext_infer_formula =
   {
+    formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_vars : (ident * primed) list;
     formula_inf_continuation : struc_formula;
     formula_inf_pos : loc

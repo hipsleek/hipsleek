@@ -1225,10 +1225,13 @@ and pr_ext_formula  (e:ext_formula) =
 			  wrap_box ("B",0) pr_struc_formula cont;
             end;
           fmt_close();
-    | EInfer {formula_inf_vars = lvars;
+    | EInfer {
+      formula_inf_post = postf;
+      formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
+          let ps =if (lvars==[] && postf) then "post " else "" in
       fmt_open_vbox 2;
-      fmt_string ("EInfer "^string_of_spec_var_list lvars);
+      fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
       if not(Gen.is_empty(cont)) then
         begin
         fmt_cut();

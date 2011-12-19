@@ -55,6 +55,7 @@ and ext_formula =
 
 and ext_infer_formula =
   {
+    formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_vars : Cpure.spec_var list;
     formula_inf_continuation : struc_formula;
     formula_inf_pos : loc
@@ -2850,6 +2851,8 @@ type entail_state = {
   es_orig_vars : CP.spec_var list; (* Used to differentiate original vars from new generated vars *)
 
   (* FOR INFERENCE *)
+  (* input flag to indicate if post-condition is to be inferred *)
+  es_infer_post : bool; 
   es_infer_vars : CP.spec_var list; (*input vars where inference expected*)
   es_infer_label: formula; 
 (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
@@ -2993,6 +2996,7 @@ let rec empty_es flowt pos =
   es_trace = [];
   es_is_normalizing = false;
   es_orig_vars = [];
+  es_infer_post = false;
   es_infer_vars = [];
   es_infer_label = x;
   es_infer_heap = []; (* HTrue; *)
@@ -3614,55 +3618,56 @@ let mk_empty_frame () : (h_formula * int ) =
   let hole_id = fresh_int () in
     (Hole(hole_id), hole_id)
 
-let rec empty_es flowt pos = 
-	let x = mkTrue flowt pos in
-{
-  es_formula = x;
-  es_heap = HTrue;
-  es_pure = (MCP.mkMTrue pos , []);
-  es_evars = [];
-  (* es_must_match = false; *)
-  es_ivars = [];
-  (* es_expl_vars = []; *)
-  es_ante_evars = [];
-  es_gen_expl_vars = []; 
-  es_gen_impl_vars = []; 
-  es_pp_subst = [];
-  es_unsat_flag = true;
-  es_arith_subst = [];
-  es_success_pts = [];
-  es_residue_pts  = [];
-  es_id = 0 ;
-  es_orig_ante = x;
-  es_orig_conseq = [mkETrue flowt pos] ;
-  es_rhs_eqset = [];
-  es_path_label  =[];
-  es_prior_steps  = [];
-  es_var_measures = [];
-  es_var_label = None;
-  es_var_ctx_lhs = CP.mkTrue pos;
-  es_var_ctx_rhs = CP.mkTrue pos;
-  es_var_subst = [];
-  es_var_loc = no_pos;
-  (*es_cache_no_list = [];*)
-  es_cont = [];
-  es_crt_holes = [];
-  es_hole_stk = [];
-  es_aux_xpure_1 = MCP.mkMTrue pos;
-  es_subst = ([], []);
-  es_aux_conseq = CP.mkTrue pos;
-  es_imm_pure_stk = [];
-  es_must_error = None;
-  es_trace = [];
-  es_is_normalizing = false;
-  es_orig_vars = [];
-  es_infer_vars = [];
-  es_infer_label = x;
-  es_infer_heap = []; (* HTrue; *)
-  es_infer_pure = []; (* (CP.mkTrue no_pos); *)
-  es_infer_invs = [];
-  (* es_infer_pures = []; *)
-}
+(* let rec empty_es flowt pos =  *)
+(* 	let x = mkTrue flowt pos in *)
+(* { *)
+(*   es_formula = x; *)
+(*   es_heap = HTrue; *)
+(*   es_pure = (MCP.mkMTrue pos , []); *)
+(*   es_evars = []; *)
+(*   (\* es_must_match = false; *\) *)
+(*   es_ivars = []; *)
+(*   (\* es_expl_vars = []; *\) *)
+(*   es_ante_evars = []; *)
+(*   es_gen_expl_vars = [];  *)
+(*   es_gen_impl_vars = [];  *)
+(*   es_pp_subst = []; *)
+(*   es_unsat_flag = true; *)
+(*   es_arith_subst = []; *)
+(*   es_success_pts = []; *)
+(*   es_residue_pts  = []; *)
+(*   es_id = 0 ; *)
+(*   es_orig_ante = x; *)
+(*   es_orig_conseq = [mkETrue flowt pos] ; *)
+(*   es_rhs_eqset = []; *)
+(*   es_path_label  =[]; *)
+(*   es_prior_steps  = []; *)
+(*   es_var_measures = []; *)
+(*   es_var_label = None; *)
+(*   es_var_ctx_lhs = CP.mkTrue pos; *)
+(*   es_var_ctx_rhs = CP.mkTrue pos; *)
+(*   es_var_subst = []; *)
+(*   es_var_loc = no_pos; *)
+(*   (\*es_cache_no_list = [];*\) *)
+(*   es_cont = []; *)
+(*   es_crt_holes = []; *)
+(*   es_hole_stk = []; *)
+(*   es_aux_xpure_1 = MCP.mkMTrue pos; *)
+(*   es_subst = ([], []); *)
+(*   es_aux_conseq = CP.mkTrue pos; *)
+(*   es_imm_pure_stk = []; *)
+(*   es_must_error = None; *)
+(*   es_trace = []; *)
+(*   es_is_normalizing = false; *)
+(*   es_orig_vars = []; *)
+(*   es_infer_post = false; *)
+(*   es_infer_vars = []; *)
+(*   es_infer_label = x; *)
+(*   es_infer_heap = []; (\* HTrue; *\) *)
+(*   es_infer_pure = []; (\* (CP.mkTrue no_pos); *\) *)
+(*   es_infer_invs = []; *)
+(*   (\* es_infer_pures = []; *\) *)
+(* } *)
 
 let mk_not_a_failure =
   Basic_Reason ({

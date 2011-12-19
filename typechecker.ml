@@ -84,8 +84,11 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
    | Cformula.EInfer b ->
       Debug.devel_pprint ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n") no_pos;
+      let postf = b.Cformula.formula_inf_post in
       let vars = b.Cformula.formula_inf_vars in
-      let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_infer_vars = vars}) ctx in
+      let nctx = CF.transform_context (fun es -> 
+          CF.Ctx {es with Cformula.es_infer_vars = vars;
+          Cformula.es_infer_post = postf}) ctx in
       check_specs_a prog proc nctx b.CF.formula_inf_continuation e0
 	  | Cformula.EAssume (x,post_cond,post_label) ->
 	    if(Immutable.is_lend post_cond) then

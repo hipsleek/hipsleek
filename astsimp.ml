@@ -4001,6 +4001,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
               Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
              else 
         Cformula.EInfer {
+        Cformula.formula_inf_post = b.Iformula.formula_inf_post;
         Cformula.formula_inf_vars = new_ivs;
         Cformula.formula_inf_continuation = ct;
         Cformula.formula_inf_pos = b.Iformula.formula_inf_pos}

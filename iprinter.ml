@@ -393,10 +393,12 @@ let rec string_of_ext_formula = function
 		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
 		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
  | Iformula.EInfer {Iformula.formula_inf_vars = lvars;
+   Iformula.formula_inf_post = postf;
    Iformula.formula_inf_continuation = continuation;} ->
+          let ps =if (lvars==[] && postf) then "post " else "" in
     let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
     let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
-    "EInfer "^string_of_inf_vars^ " "^string_of_continuation
+    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c ->
