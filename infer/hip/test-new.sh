@@ -4,6 +4,7 @@
 ../../hip t4-i.ss > t4-i.n
 ../../hip t5-i.ss > t5-i.n
 ../../hip t6-i.ss > t6-i.n
+../../hip t8-i.ss > t8-i.n
 ../../hip t1.ss > t1.n
 ../../hip todo.ss > todo.n
 ../../hip bug1.ss > bug1.n 
