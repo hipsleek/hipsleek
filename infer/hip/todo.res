@@ -1,7 +1,7 @@
 
 Processing file "todo.ss"
 Parsing todo.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -18,6 +18,6 @@ Procedure foo2$int SUCCESS
 Stop Omega... 32 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.056002 second(s)
-	Time spent in main process: 0.040002 second(s)
+Total verification time: 0.152008 second(s)
+	Time spent in main process: 0.136008 second(s)
 	Time spent in child processes: 0.016 second(s)
