@@ -237,7 +237,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars;CF.es_infer_post = postf}) ctx in
             let (c,pre,f) = do_spec_verify_infer prog proc nctx e0 b.CF.formula_inf_continuation in
             (* TODO : should convert to EBase if pre!=[] *)
-            let pos = b.Cformula.formula_inf_pos in
+            let pos = b.CF.formula_inf_pos in
             let new_c = if pre=[] then c else
                 begin
                 match c with
@@ -1311,8 +1311,8 @@ let variance_numbering ls g =
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
   else ls
-		
-let check_prog (prog : prog_decl) =
+
+let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
 	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
     if !Globals.check_coercions then 
       begin
@@ -1321,10 +1321,43 @@ let check_prog (prog : prog_decl) =
       check_coercion prog;
       print_string "DONE.\n"
       end;
+    let proc_ordered_by_user = prog.prog_proc_decls in
+    let iproc_main = iprog.I.prog_proc_decls in
+    let iproc_main_names = List.map (fun proc -> proc.I.proc_name) iproc_main in
+    let is_sub name1 name2 = 
+      if String.length name1 >= String.length name2 then false 
+      else 
+        let n = String.length name1 in
+        name1 = (String.sub name2 0 n) && String.get name2 n = '$'
+    in
+    let proc_top, proc_base = 
+      List.partition (fun proc -> List.exists (fun n -> is_sub n proc.proc_name) iproc_main_names) proc_ordered_by_user in
+(*    let _ = Printf.printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; Printf.printf "\n")) !call_graph; Printf.printf "**********\n" in*)
+    let call_hierachy = List.concat !call_graph in    
+    let call_hierachy = List.filter (fun c -> List.mem c iproc_main_names) call_hierachy in
+    let proc_top_names = List.map (fun p -> p.proc_name) proc_top in
+    let get_name n names = List.find (fun x -> is_sub n x) names in
+    let call_hierachy = List.map (fun n -> get_name n proc_top_names) call_hierachy in 
+    (*let _ = List.iter (fun n -> print_endline n) call_hierachy in*)
+    let mk_index list_names =
+      let rec make_enum a b = if a > b then [] else a::(make_enum (a + 1) b) in
+      let list_index = (make_enum 0 ((List.length list_names) - 1)) in
+      List.combine list_names list_index      
+    in
+    let cal_index name list = 
+      try List.assoc name list 
+      with _ -> report_error no_pos ("Error in cal_index")
+    in
+    let call_hierachy = mk_index call_hierachy in
+    let sort_by_call procs calls =
+      List.fast_sort (fun proc1 proc2 -> (cal_index proc1.proc_name call_hierachy)-
+        (cal_index proc2.proc_name call_hierachy)) proc_top in
+    let proc_top = sort_by_call proc_top call_hierachy in
+    let proc_ordered_by_call = proc_top @ proc_base in
     ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	let g = build_state_trans_graph !Solver.variance_graph in
-	let cl = variance_numbering !Solver.var_checked_list g in
+    ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call);
+    let g = build_state_trans_graph !Solver.variance_graph in
+    let cl = variance_numbering !Solver.var_checked_list g in
     if (List.length cl) != 0 then
       let _ = if !print_proof then begin Prooftracer.push_term (); end in
       let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
@@ -1352,5 +1385,5 @@ let check_prog (prog : prog_decl) =
   else
   () *)
 
-let check_prog (prog : prog_decl) =
-  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+let check_prog (prog : prog_decl) iprog =
+  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog

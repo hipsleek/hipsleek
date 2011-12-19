@@ -7632,6 +7632,7 @@ and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
 and mark_recursive_call (ip: Iast.prog_decl) (cp: Cast.prog_decl) : Cast.prog_decl =
   let cg = IastUtil.callgraph_of_prog ip in
   let scc_list = List.rev (IastUtil.IGC.scc_list cg) in
+  call_graph := scc_list; (* To keep time of making call hierachy for inference *)
   (* let _ = printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list; printf "**********\n" in *)
   irf_traverse_prog ip cp scc_list
 
