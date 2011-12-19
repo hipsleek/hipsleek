@@ -16,8 +16,7 @@ let no_infer estate = (estate.es_infer_vars == [])
  
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
-  if (iv==[]) then (estate,iv)
-  else ({estate with es_infer_vars=[];}, iv) 
+   ({estate with es_infer_vars=[];}, iv) 
 
 let remove_infer_vars_partial estate rt =
   let iv = estate.es_infer_vars in
@@ -29,6 +28,28 @@ let remove_infer_vars_partial estate rt =
   let pr2 = !print_svl in
   Gen.Debug.no_2 "remove_infer_vars_partial" pr1 pr2 (pr_pair pr1 pr2) 
       remove_infer_vars_partial estate rt 
+
+let rec remove_infer_vars_all_ctx ctx =
+  match ctx with
+  | Ctx estate -> 
+        let (es,_) = remove_infer_vars_all estate in
+        Ctx es
+  | OCtx (ctx1, ctx2) -> OCtx (remove_infer_vars_all_ctx ctx1, remove_infer_vars_all_ctx ctx2)
+
+let remove_infer_vars_all_partial_context (a,pc) = 
+  (a,List.map (fun (b,c) -> (b,remove_infer_vars_all_ctx c)) pc)
+
+let remove_infer_vars_all_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> ctx
+  | SuccCtx lst -> SuccCtx (List.map remove_infer_vars_all_ctx lst)
+
+let remove_infer_vars_all_list_partial_context lpc = 
+  List.map remove_infer_vars_all_partial_context lpc
+
+(* let collect_pre_heap_list_partial_context (ctx:list_partial_context) = *)
+(*   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_pre_heap c) cl))  ctx in *)
+(*   List.concat r *)
 
 let rec restore_infer_vars_ctx iv ctx = 
   match ctx with

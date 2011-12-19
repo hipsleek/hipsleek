@@ -289,13 +289,15 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	    	        else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
-                      let iv = CF.collect_infer_vars ctx in
+                      let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
+                      (* no abductive inference for post-condition *)
+                      let res_ctx = Inf.remove_infer_vars_all_list_partial_context res_ctx in
+                      (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
                       let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
-                      let infer_post_flag = infer_pre_flag || (List.length iv)>0 in
                       let infer_post_flag = postf in
                       (* let infer_post_flag = false in *)
                       let new_spec_post, pre =
@@ -323,8 +325,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let pre_vars = CF.context_fv ctx in
                                 (* filter out is_prime *)
                                 let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
-                                (* add infer_vars *)
-                                let pre_vars = CP.remove_dups_svl (pre_vars @ (Inf.collect_infer_vars_list_partial_context res_ctx)) in
+                                (* (\* add infer_vars *\) *)
+                                let pre_vars = CP.remove_dups_svl (pre_vars @ post_iv) in
                                 (* drop @L heap nodes from flist *)
                                 let flist = List.map CF.remove_lend flist in
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)

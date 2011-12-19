@@ -17,7 +17,7 @@ ll<n> == self = null & n = 0
 
 /* append two singly linked lists */
 void append2(node x, node y)
-  infer [x,n1]
+  infer [n1]
   requires x::ll<n1> * y::ll<n2>
   ensures x::ll<m> & m=n1+n2;
 {    
@@ -26,4 +26,8 @@ void append2(node x, node y)
 	else
            append2(x.next, y);
 }
+
+// why are there 4 branches?
+// Inferred Pure:[ n1!=0, n1!=0, n1!=0, n1!=0]
+
 
