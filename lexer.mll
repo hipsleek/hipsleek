@@ -264,6 +264,8 @@ rule tokenizer file_name = parse
   | "@L" {LEND}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@pre" { PRE }
+  | "@post" { POST }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
