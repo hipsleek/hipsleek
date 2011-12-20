@@ -953,9 +953,13 @@ and need_break_continue lb ne non_generated_label :bool =
 				r
 						
    
-and prepare_labels (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
+and prepare_labels_x (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
 	| None -> fct
 	| Some e-> {fct with I.proc_body = Some (while_labelling e)}
+
+and prepare_labels (fct: I.proc_decl): I.proc_decl =
+  let pr = Iprinter.string_of_proc_decl in
+  Gen.Debug.no_1 "prepare_labels" pr pr prepare_labels_x fct 
 
 and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
@@ -1851,8 +1855,12 @@ and check_valid_flows (f:IF.struc_formula) =
   List.iter helper f
       
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
-  let pr x = if (x.I.proc_static_specs==[]) then "Empty Spec "^x.I.proc_name else x.I.proc_name in
-  let pr2 x = if (x.C.proc_static_specs==[]) then "Empty Spec"^x.C.proc_name else x.C.proc_name in
+  let pr x = 
+    if (x.I.proc_static_specs==[]) then "Empty Spec "^x.I.proc_name 
+    else (add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs) in
+  let pr2 x = 
+    if (x.C.proc_static_specs==[]) then "Empty Spec"^x.C.proc_name
+    else (add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs) in
   Gen.Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
       
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
@@ -3929,7 +3937,9 @@ and add_pre_debug prog f =
 and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : IF.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): CF.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+  Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list 
+      (add_str "Input Struc:" Iprinter.string_of_struc_formula) 
+      (add_str "Output Struc:" Cprinter.string_of_struc_formula)
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) 
       stab (* type table *)
@@ -6647,7 +6657,12 @@ and case_normalize_data prog (f:Iast.data_decl):Iast.data_decl =
   let h = List.map (fun f -> (I.get_field_name f,Unprimed) ) f.Iast.data_fields in  
   {f with Iast.data_invs = List.map (case_normalize_formula prog h) f.Iast.data_invs}
 
-and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl = 
+and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
+  let pr = Iprinter.string_of_proc_decl in
+  Gen.Debug.no_1 "case_normalize_proc" pr pr
+      (fun _ -> case_normalize_proc_x prog f) f
+
+and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl = 
   let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
   let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
   let gl_proc_args = gl_v@ f.Iast.proc_args in
@@ -7632,6 +7647,7 @@ and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
 and mark_recursive_call (ip: Iast.prog_decl) (cp: Cast.prog_decl) : Cast.prog_decl =
   let cg = IastUtil.callgraph_of_prog ip in
   let scc_list = List.rev (IastUtil.IGC.scc_list cg) in
+  call_graph := scc_list; (* To keep time of making call hierachy for inference *)
   (* let _ = printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list; printf "**********\n" in *)
   irf_traverse_prog ip cp scc_list
 

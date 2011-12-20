@@ -1755,6 +1755,7 @@ let label_proc proc = {proc with
 		match proc.proc_body with  
 			| None -> None 
 			| Some s -> Some (label_exp s);}
+
 let label_procs_prog prog = {prog with
 	prog_data_decls = List.map (fun c->{ c with data_methods = List.map label_proc c.data_methods}) prog.prog_data_decls;	
 	prog_proc_decls = List.map label_proc prog.prog_proc_decls;

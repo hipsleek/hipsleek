@@ -237,7 +237,24 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
             let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars;CF.es_infer_post = postf}) ctx in
             let (c,pre,f) = do_spec_verify_infer prog proc nctx e0 b.CF.formula_inf_continuation in
             (* TODO : should convert to EBase if pre!=[] *)
-            (c,pre,f)
+            let pos = b.CF.formula_inf_pos in
+            let new_c = if pre=[] then c else
+                begin
+                match c with
+                | CF.EBase _ -> c
+                | CF.EAssume _ -> CF.EBase {
+                    CF.formula_ext_explicit_inst = [];
+                    CF.formula_ext_implicit_inst = [];
+                    CF.formula_ext_exists = [];
+                    CF.formula_ext_base = (match pre with 
+                      | [a] -> a 
+                      | _ -> report_error pos ("Spec has more than 2 pres but only 1 post"));
+                    CF.formula_ext_continuation = [c];
+                    CF.formula_ext_pos = pos;
+                  }
+                | _ -> report_error pos ("Temporarily not supported: EVariance and ECase")
+                end
+            in (new_c,[],f)                
 	  | CF.EAssume (var_ref,post_cond,post_label) ->
 	        if(Immutable.is_lend post_cond) then
 	      	  Error.report_error
@@ -272,13 +289,15 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
 	    	        else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
-                      let iv = CF.collect_infer_vars ctx in
+                      let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
+                      (* no abductive inference for post-condition *)
+                      let res_ctx = Inf.remove_infer_vars_all_list_partial_context res_ctx in
+                      (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
                       let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       let infer_pre_flag = (List.length lh)+(List.length lp) > 0 in
                       (* Fail with some tests *)
-                      let infer_post_flag = infer_pre_flag || (List.length iv)>0 in
                       let infer_post_flag = postf in
                       (* let infer_post_flag = false in *)
                       let new_spec_post, pre =
@@ -306,8 +325,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let pre_vars = CF.context_fv ctx in
                                 (* filter out is_prime *)
                                 let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
-                                (* add infer_vars *)
-                                let pre_vars = CP.remove_dups_svl (pre_vars @ (Inf.collect_infer_vars_list_partial_context res_ctx)) in
+                                (* (\* add infer_vars *\) *)
+                                let pre_vars = CP.remove_dups_svl (pre_vars @ post_iv) in
                                 (* drop @L heap nodes from flist *)
                                 let flist = List.map CF.remove_lend flist in
                                 (* TODO: flist denotes a disjunction! see ll-b.ss *)
@@ -321,10 +340,13 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let post_vars = CP.remove_dups_svl post_vars in
                                 let _ = print_endline ("Pre Vars :"^Cprinter.string_of_spec_var_list pre_vars) in
                                 let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
-                                let post_fml = List.fold_left (fun f1 f2 -> CF.normalize 1 f1 f2 no_pos)
-                                  (CF.formula_of_heap CF.HTrue no_pos) (flist@[post_cond]) in
+                                let post_fml = if flist!=[] then 
+                                    let tmp = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 no_pos) 
+                                      (List.hd flist) (List.tl flist) in
+                                    CF.normalize 1 tmp post_cond no_pos
+                                  else post_cond in
                                 let post_fml = CF.simplify_post post_fml post_vars in
-	                            print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist));
+                                print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist));
                                 print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml));
                                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
                                 inferred_post
@@ -1294,8 +1316,8 @@ let variance_numbering ls g =
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
   else ls
-		
-let check_prog (prog : prog_decl) =
+
+let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
 	let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
     if !Globals.check_coercions then 
       begin
@@ -1304,10 +1326,45 @@ let check_prog (prog : prog_decl) =
       check_coercion prog;
       print_string "DONE.\n"
       end;
+    let proc_ordered_by_user = prog.prog_proc_decls in
+    let iproc_main = iprog.I.prog_proc_decls in
+    let iproc_main_names = List.map (fun proc -> proc.I.proc_name) iproc_main in
+    let is_sub name1 name2 = 
+      if String.length name1 >= String.length name2 then false 
+      else 
+        let n = String.length name1 in
+        name1 = (String.sub name2 0 n) && String.get name2 n = '$'
+    in
+    let proc_top, proc_base = 
+      List.partition (fun proc -> List.exists (fun n -> is_sub n proc.proc_name) iproc_main_names) proc_ordered_by_user in
+(*    let _ = Printf.printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; Printf.printf "\n")) !call_graph; Printf.printf "**********\n" in*)
+    let call_hierachy = List.concat !call_graph in    
+    let call_hierachy = List.filter (fun c -> List.mem c iproc_main_names) call_hierachy in
+    let proc_top_names = List.map (fun p -> p.proc_name) proc_top in
+    let get_name n names = List.find (fun x -> is_sub n x) names in
+    let call_hierachy = List.map (fun n -> get_name n proc_top_names) call_hierachy in 
+    (*let _ = List.iter (fun n -> print_endline n) call_hierachy in*)
+    let mk_index list_names =
+      let rec make_enum a b = if a > b then [] else a::(make_enum (a + 1) b) in
+      let list_index = (make_enum 0 ((List.length list_names) - 1)) in
+      List.combine list_names list_index      
+    in
+    let cal_index name list = 
+      if not(List.mem name call_hierachy) then 0
+      else
+        try List.assoc name list 
+        with _ -> report_error no_pos ("Error in cal_index")
+    in
+    let new_call_hierachy = mk_index call_hierachy in
+    let sort_by_call procs calls =
+      List.fast_sort (fun proc1 proc2 -> (cal_index proc1.proc_name calls)-
+        (cal_index proc2.proc_name calls)) proc_top in
+    let proc_top = sort_by_call proc_top new_call_hierachy in
+    let proc_ordered_by_call = proc_top @ proc_base in
     ignore (List.map (check_data prog) prog.prog_data_decls);
-    ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	let g = build_state_trans_graph !Solver.variance_graph in
-	let cl = variance_numbering !Solver.var_checked_list g in
+    ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call);
+    let g = build_state_trans_graph !Solver.variance_graph in
+    let cl = variance_numbering !Solver.var_checked_list g in
     if (List.length cl) != 0 then
       let _ = if !print_proof then begin Prooftracer.push_term (); end in
       let _ = List.iter (fun (es,e) -> heap_entail_variance prog es e) cl in
@@ -1335,5 +1392,5 @@ let check_prog (prog : prog_decl) =
   else
   () *)
 
-let check_prog (prog : prog_decl) =
-  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+let check_prog (prog : prog_decl) iprog =
+  Gen.Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog

@@ -46,7 +46,7 @@ and struc_formula = ext_formula list
 and ext_formula = 
   | ECase of ext_case_formula
   | EBase of ext_base_formula
-  | EAssume of ((Cpure.spec_var list) *formula* formula_label)
+  | EAssume of ((Cpure.spec_var list) * formula * formula_label)
   | EVariance of ext_variance_formula
   | EInfer of ext_infer_formula
   (*  struct_formula *)

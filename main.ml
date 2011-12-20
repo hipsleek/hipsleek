@@ -178,7 +178,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog cprog prog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
