@@ -1650,3 +1650,16 @@ and isImm(a : ann) : bool =
   match a with
     | ConstAnn(Imm) -> true
     | _ -> false
+
+let eq_var (sv1 : (ident * primed)) (sv2 : (ident * primed)) = match (sv1, sv2) with
+  | ((v1, p1), (v2, p2)) -> v1 = v2 & p1 = p2
+
+let diff_svl vl rl = Gen.BList.difference_eq eq_var vl rl
+
+let rec prune_exists fml infer_vars = match fml with
+  | Base _ -> fml
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} -> 
+    mkOr (prune_exists f1 infer_vars) (prune_exists f2 infer_vars) pos
+  | Exists fml_ex ->
+    let new_vars = diff_svl fml_ex.formula_exists_qvars infer_vars in
+    Exists {fml_ex with formula_exists_qvars = new_vars}

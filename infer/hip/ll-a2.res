@@ -1,7 +1,7 @@
 
 Processing file "ll-a2.ss"
 Parsing ll-a2.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing /home/thaitm/hg-repository/new/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -24,6 +24,6 @@ Procedure append2$node~node SUCCESS
 Stop Omega... 76 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.108005 second(s)
-	Time spent in main process: 0.076004 second(s)
-	Time spent in child processes: 0.032001 second(s)
+Total verification time: 0.14 second(s)
+	Time spent in main process: 0.1 second(s)
+	Time spent in child processes: 0.04 second(s)

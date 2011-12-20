@@ -1636,7 +1636,31 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
     let continuation_fv = ext_fv b.formula_inf_continuation in
     Gen.BList.remove_dups_eq (=) continuation_fv
   in CP.remove_dups_svl (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
-	     
+
+and struc_fv_infer (f: struc_formula) : CP.spec_var list = 
+  let rec ext_fv (f:ext_formula): CP.spec_var list = match f with
+    | ECase b -> 
+      Gen.BList.difference_eq CP.eq_spec_var
+      (CP.remove_dups_svl (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv_infer c2) ) b.formula_case_branches)))
+      b.formula_case_exists
+    | EBase b -> 
+      let e = struc_fv_infer b.formula_ext_continuation in
+      let be = fv b.formula_ext_base in
+      Gen.BList.difference_eq CP.eq_spec_var (CP.remove_dups_svl (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)              
+    | EAssume (x,b,_) -> fv b
+    | EVariance b ->
+      let measures_fv = (List.concat (List.map (fun (expr, bound) -> match bound with
+        | None -> (CP.afv expr)
+        | Some b_expr -> (CP.afv expr)@(CP.afv b_expr)) b.formula_var_measures)) in
+          let escapes_fv = (List.concat (List.map (fun f -> CP.fv f) b.formula_var_escape_clauses)) in
+          let continuation_fv = struc_fv_infer b.formula_var_continuation in
+          Gen.BList.remove_dups_eq (=) (measures_fv@escapes_fv@continuation_fv)
+    | EInfer b -> 
+      let infer_vars = b.formula_inf_vars in
+      let continuation_fv = ext_fv b.formula_inf_continuation in
+      CP.diff_svl (Gen.BList.remove_dups_eq (=) continuation_fv) infer_vars
+  in CP.remove_dups_svl (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
+
 and struc_post_fv (f:struc_formula):Cpure.spec_var list =
   let rec helper (f:ext_formula): Cpure.spec_var list = match f with
 	| ECase b-> List.fold_left (fun a (_,c2)-> a@(struc_post_fv c2)) [] b.formula_case_branches

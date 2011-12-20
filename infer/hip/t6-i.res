@@ -1,7 +1,7 @@
 
 Processing file "t6-i.ss"
 Parsing t6-i.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing /home/thaitm/hg-repository/new/sleekex/prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
@@ -32,6 +32,6 @@ Procedure hdtl$node SUCCESS
 Stop Omega... 41 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.056002 second(s)
-	Time spent in main process: 0.040002 second(s)
-	Time spent in child processes: 0.016 second(s)
+Total verification time: 0.09 second(s)
+	Time spent in main process: 0.07 second(s)
+	Time spent in child processes: 0.02 second(s)
