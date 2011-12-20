@@ -14,7 +14,7 @@ Final Residual Post :  q_530::ll<flted_14_528>@M[Orig] * x::node<Anon_529,y>@M[O
 flted_14_528=0 & n1=1 & q_530=null & {FLOW,(20,21)=__norm}
 
 Inferred Heap:[]
-Inferred Pure:[ n1!=0 | n1=1, n1!=0 | n1=1]
+Inferred Pure:[ n1!=0, n1!=0]
 Pre Vars :[x,y,n1]
 Exists Post Vars :[v_bool_27_506']
 Initial Residual Post : [ x::node<Anon_555,q_556>@M[Orig] * q_556::ll<flted_14_554>@M[Orig] &
@@ -41,7 +41,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1](ex)x::ll<n1>@M[Orig][LHSCase] & true &
                           n1=1 & q_530=null & n1=1 & 0<=n1 &
                           {FLOW,(20,21)=__norm}
                 ;
-                n1!=1 -> EBase true & (n1!=0 | n1=1) & {FLOW,(1,23)=__flow}
+                n1!=1 -> EBase true & n1!=0 & {FLOW,(1,23)=__flow}
                                  EAssume 2::
                                    x::node<Anon_555,q_556>@M[Orig] * 
                                    q_556::ll<flted_14_554>@M[Orig] &
@@ -53,9 +53,9 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1](ex)x::ll<n1>@M[Orig][LHSCase] & true &
                 }
 
 Procedure appif$node~node SUCCESS
-Stop Omega... 61 invocations 
+Stop Omega... 62 invocations 
 2 false contexts at: ( (30,11)  (27,1) )
 
-Total verification time: 0.08 second(s)
-	Time spent in main process: 0.06 second(s)
-	Time spent in child processes: 0.02 second(s)
+Total verification time: 0.1 second(s)
+	Time spent in main process: 0.07 second(s)
+	Time spent in child processes: 0.03 second(s)

@@ -38,9 +38,9 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1](ex)x::ll<n1>@M[Orig][LHSCase] & n1!=0 
            
 
 Procedure appif$node~node SUCCESS
-Stop Omega... 54 invocations 
+Stop Omega... 55 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.08 second(s)
-	Time spent in main process: 0.06 second(s)
+Total verification time: 0.09 second(s)
+	Time spent in main process: 0.07 second(s)
 	Time spent in child processes: 0.02 second(s)

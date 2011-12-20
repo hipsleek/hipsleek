@@ -335,6 +335,11 @@ let filter_var f vars =
   let pr = !print_pure_f in
   Gen.Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
 
+let simplify_helper f = match f with
+  | BForm ((Neq _,_),_) -> f
+  | Not _ -> f
+  | _ -> Omega.simplify f
+
 (* TODO : this simplify could be improved *)
 let simplify f vars = Omega.simplify (filter_var (Omega.simplify f) vars)
 let simplify_contra f vars = filter_var f vars
@@ -356,7 +361,7 @@ let infer_lhs_contra lhs_xpure ivars =
       if (over_v ==[]) then None
       else 
         let exists_var = CP.diff_svl vf ivars in
-        let f = CP.mkExists_with_simpl_debug Omega.simplify exists_var f None no_pos in
+        let f = simplify_helper (CP.mkExists_with_simpl_debug Omega.simplify exists_var f None no_pos) in
         if CP.isConstTrue f then None
         else Some (Redlog.negate_formula f)
 
@@ -476,7 +481,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
             let new_p = simplify (CP.mkAnd new_p invariants pos) iv in
             let args = CP.fv new_p in
             let quan_var = CP.diff_svl args iv in
-            CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos
+            Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify quan_var new_p None pos)
           else
             simplify new_p iv
         in
@@ -509,7 +514,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         let lhs_simplified = simplify lhs_xpure iv in
         let args = CP.fv lhs_simplified in 
         let exists_var = CP.diff_svl args iv in
-        let lhs_simplified = CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos in
+        let lhs_simplified = simplify_helper (CP.mkExists_with_simpl_debug Omega.simplify exists_var lhs_simplified None pos) in
         let new_p = simplify_contra (CP.mkAnd (CP.mkNot_s lhs_simplified) invariants pos) iv in
         if CP.isConstFalse new_p then None
         else

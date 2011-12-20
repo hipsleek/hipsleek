@@ -35,4 +35,4 @@ Inferred Pure:[ !(n=0 & x=null) & 0<=n]
 {FLOW,(17,18)=__norm})
 
 
-Stop Omega... 94 invocations 
+Stop Omega... 97 invocations 

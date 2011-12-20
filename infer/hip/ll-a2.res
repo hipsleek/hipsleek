@@ -21,7 +21,7 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1; n2](ex)x::ll<n1>@M[Orig][LHSCase] *
            0<=n1 & 0<=n2 & {FLOW,(20,21)=__norm})
 
 Procedure append2$node~node SUCCESS
-Stop Omega... 76 invocations 
+Stop Omega... 77 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.14 second(s)
