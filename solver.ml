@@ -8842,7 +8842,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context)(conseq:struc_formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
   let pr = Cprinter.string_of_list_failesc_context in
-  Gen.Debug.ho_1 "heap_entail_struc_list_failesc_context_init"
+  Gen.Debug.no_1 "heap_entail_struc_list_failesc_context_init"
   pr (fun (cl, _) -> pr cl)
   (fun _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq
   pos pid) cl

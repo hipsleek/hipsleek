@@ -1,0 +1,28 @@
+data node { int val; node next; }.
+
+pred ll1<n> == 
+	self=null & n=0 or
+	self::node<_, r> * r::ll1<n-1>
+	inv n>=0.
+
+pred ll2<s> ==
+	self=null & s=0 or
+	self::node<v, r> * r::ll2<s1> & s=s1+v & v>=1
+	inv true.
+
+
+infer [n] n!=0 |- n>=0.
+
+infer [v] s=s1+v |- s>s1.
+
+infer [n] x::ll1<n> & x!=null |- false.
+
+infer [n] x::ll1<n> |- x!=null.
+
+infer [n] x::ll1<n> |- x=null.
+
+infer [n] x!=null |- x::ll1<n>.
+
+infer [s] x::ll2<s> |- x!=null.
+
+infer [s] x::ll2<s> |- x=null.
