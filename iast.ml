@@ -141,6 +141,7 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_exceptions : ident list;
 				  proc_body : exp option;
+      proc_is_main : bool;
           proc_file : string;
 				  proc_loc : loc }
 
@@ -640,6 +641,7 @@ let mkProc id n dd c ot ags r ss ds pos bd=
 		  proc_static_specs = ss;
 		  proc_dynamic_specs = ds;
 		  proc_loc = pos;
+    proc_is_main = true;
       proc_file = !input_file_name;
 		  proc_body = bd }	
 
@@ -1750,15 +1752,16 @@ let rec label_exp e = match e with
 			exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some s-> Some (label_exp s);}  
 *)
 	
-let label_proc proc = {proc with
+let label_proc keep proc = {proc with 
+ proc_is_main = if keep then proc.proc_is_main else false;
 	proc_body = 
 		match proc.proc_body with  
 			| None -> None 
 			| Some s -> Some (label_exp s);}
 
-let label_procs_prog prog = {prog with
-	prog_data_decls = List.map (fun c->{ c with data_methods = List.map label_proc c.data_methods}) prog.prog_data_decls;	
-	prog_proc_decls = List.map label_proc prog.prog_proc_decls;
+let label_procs_prog prog keep = {prog with
+	prog_data_decls = List.map (fun c->{ c with data_methods = List.map (label_proc keep) c.data_methods}) prog.prog_data_decls;	
+	prog_proc_decls = List.map (label_proc keep) prog.prog_proc_decls;
 	}
 (************************************************************************************
  * Use to support pragma declaration in system

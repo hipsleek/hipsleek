@@ -8,44 +8,44 @@ Inferred Pure:[]
 
 
 Entail  (2): Valid. 
-Inferred Heap:[ y::ll<inf_36>@M[Orig][LHSCase]]
+Inferred Heap:[ y::ll<inf_33>@M[Orig][LHSCase]]
 Inferred Pure:[]
-<1>true & n=inf_36 &
+<1>true & n=inf_33 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (3): Valid. 
-Inferred Heap:[ y::node<inf_46,inf_47>@M[Orig], b::node<inf_48,inf_49>@M[Orig]]
-Inferred Pure:[ b=inf_47]
-<1>true & a=inf_46 & b=inf_47 & c=inf_48 & d=inf_49 &
+Inferred Heap:[ y::node<inf_40,inf_41>@M[Orig], b::node<inf_42,inf_43>@M[Orig]]
+Inferred Pure:[ b=inf_41]
+<1>true & a=inf_40 & b=inf_41 & c=inf_42 & d=inf_43 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (4): Valid. 
-Inferred Heap:[ y::node<inf_55,inf_56>@M[Orig], b::ll<inf_60>@M[Orig][LHSCase]]
-Inferred Pure:[ b=inf_56]
-<1>true & a=inf_55 & b=inf_56 & m=inf_60 &
+Inferred Heap:[ y::node<inf_49,inf_50>@M[Orig], b::ll<inf_51>@M[Orig][LHSCase]]
+Inferred Pure:[ b=inf_50]
+<1>true & a=inf_49 & b=inf_50 & m=inf_51 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (5): Valid. 
-Inferred Heap:[ y::ll<inf_70>@M[Orig][LHSCase]]
+Inferred Heap:[ y::ll<inf_55>@M[Orig][LHSCase]]
 Inferred Pure:[]
-<1>true & x=y & n=inf_70 &
+<1>true & x=y & n=inf_55 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (6): Valid. 
-Inferred Heap:[ y::ll<inf_n_84>@M[Orig][LHSCase]]
-Inferred Pure:[ inf_n_84=0]
-<1>true & n=0 & y=x & inf_n_84=0 &
+Inferred Heap:[ y::ll<inf_n_63>@M[Orig][LHSCase]]
+Inferred Pure:[ inf_n_63=0]
+<1>true & n=0 & x=y & inf_n_63=0 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (7): Valid. 
-Inferred Heap:[ x::ll<inf_99>@M[Orig][LHSCase]]
+Inferred Heap:[ x::ll<inf_72>@M[Orig][LHSCase]]
 Inferred Pure:[]
-<1>true & x=y & n=inf_99 &
+<1>true & x=y & n=inf_72 &
 {FLOW,(17,18)=__norm}
 
 
@@ -55,16 +55,16 @@ Entail  (8): Valid.
 
 
 Entail  (9): Valid. 
-Inferred Heap:[ y::node<inf_a_120,inf_flted_43_121>@M[Orig]]
-Inferred Pure:[ inf_flted_43_121=null & 1<=inf_a_120]
-<1>true & inf_flted_43_121=null & 1<=inf_a_120 &
+Inferred Heap:[ y::node<inf_a_90,inf_flted_43_91>@M[Orig]]
+Inferred Pure:[ inf_flted_43_91=null & 1<=inf_a_90]
+<1>true & inf_flted_43_91=null & 1<=inf_a_90 &
 {FLOW,(17,18)=__norm}
 
 
 Entail  (10): Valid. 
 Inferred Heap:[]
 Inferred Pure:[ 1<=aa]
-<1>EXISTS(flted_47_147: true & flted_47_147=null & 1<=aa &
+<1>EXISTS(flted_47_117: true & flted_47_117=null & 1<=aa &
 {FLOW,(17,18)=__norm})
 
 
@@ -87,4 +87,4 @@ Inferred Pure:[ y!=null]
 {FLOW,(17,18)=__norm}
 
 
-Stop Omega... 164 invocations 
+Stop Omega... 137 invocations 

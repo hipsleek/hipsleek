@@ -115,6 +115,8 @@ and proc_decl = {
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack_noinit;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
+    proc_call_order : int;
+    proc_is_main : bool;
     proc_file : string;
     proc_loc : loc; }
 

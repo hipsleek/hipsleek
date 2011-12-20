@@ -1,19 +1,11 @@
 
 Processing file "t2-i.ss"
 Parsing t2-i.ss ...
-Parsing /home2/loris/hg/sl_infer/prelude.ss ...
+Parsing ../../prelude.ss ...
 Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
-Checking procedure hd0$node... 
-Inferred Heap:[ x::node<inf_val_20_542,inf_next_20_543>@L[Orig], inf_next_20_543::node<inf_val_21_548,inf_next_21_549>@L[Orig]]
-Inferred Pure:[]
-Pre Vars :[inf_val_21_548,inf_next_21_549,inf_val_20_542,inf_next_20_543,x]
-Exists Post Vars :[v_int_21_531']
-Initial Residual Post : [ true & x'=inf_next_20_543 & v_int_21_531'=inf_val_21_548 & 
-res=v_int_21_531' & {FLOW,(20,21)=__norm}]
-Final Residual Post :  true & inf_next_20_543=x' & res=inf_val_21_548 & {FLOW,(20,21)=__norm}
-OLD SPECS:  EInfer [x]
+Checking procedure hd0$node... OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 1::ref [x]
              true & true & {FLOW,(20,21)=__norm}
@@ -25,15 +17,7 @@ NEW SPECS:  EBase x::node<inf_val_20_542,inf_next_20_543>@L[Orig] *
            {FLOW,(20,21)=__norm}
 
 Procedure hd0$node SUCCESS
-Checking procedure hd1$node... 
-Inferred Heap:[ x::node<inf_val_33_554,inf_next_33_555>@L[Orig]]
-Inferred Pure:[]
-Pre Vars :[inf_val_33_554,inf_next_33_555,x]
-Exists Post Vars :[v_int_33_523']
-Initial Residual Post : [ true & v_int_33_523'=inf_val_33_554 & res=v_int_33_523' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  true & res=inf_val_33_554 & {FLOW,(20,21)=__norm}
-OLD SPECS:  EInfer [x]
+Checking procedure hd1$node... OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 3::
              true & true & {FLOW,(20,21)=__norm}
@@ -43,17 +27,7 @@ NEW SPECS:  EBase x::node<inf_val_33_554,inf_next_33_555>@L[Orig] & true &
            true & res=inf_val_33_554 & {FLOW,(20,21)=__norm}
 
 Procedure hd1$node SUCCESS
-Checking procedure hd2$node... 
-Inferred Heap:[]
-Inferred Pure:[ x!=null]
-Pre Vars :[n,x]
-Exists Post Vars :[v_int_46_517']
-Initial Residual Post : [ x::node<Anon_574,q_575>@M[Orig] * q_575::ll<flted_8_573>@M[Orig] &
-flted_8_573+1=n & v_int_46_517'=Anon_574 & res=v_int_46_517' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  x::node<Anon_574,q_575>@M[Orig] * q_575::ll<flted_8_573>@M[Orig] &
-n=flted_8_573+1 & res=Anon_574 & {FLOW,(20,21)=__norm}
-OLD SPECS:  EInfer [x]
+Checking procedure hd2$node... OLD SPECS:  EInfer [x]
    EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
          {FLOW,(20,21)=__norm}
            EAssume 4::
@@ -61,21 +35,11 @@ OLD SPECS:  EInfer [x]
 NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & x!=null &
        {FLOW,(20,21)=__norm}
          EAssume 4::
-           x::node<Anon_574,q_575>@M[Orig] * q_575::ll<flted_8_573>@M[Orig] &
-           n=flted_8_573+1 & res=Anon_574 & 0<=n & {FLOW,(20,21)=__norm}
+           x::node<Anon_572,q_573>@M[Orig] * q_573::ll<flted_8_571>@M[Orig] &
+           n=flted_8_571+1 & res=Anon_572 & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd2$node SUCCESS
-Checking procedure hd3$node... 
-Inferred Heap:[]
-Inferred Pure:[ n!=0]
-Pre Vars :[x,n]
-Exists Post Vars :[v_int_58_510']
-Initial Residual Post : [ x::node<Anon_594,q_595>@M[Orig] * q_595::ll<flted_8_593>@M[Orig] &
-flted_8_593+1=n & v_int_58_510'=Anon_594 & res=v_int_58_510' &
-{FLOW,(20,21)=__norm}]
-Final Residual Post :  x::node<Anon_594,q_595>@M[Orig] * q_595::ll<flted_8_593>@M[Orig] &
-n=flted_8_593+1 & res=Anon_594 & {FLOW,(20,21)=__norm}
-OLD SPECS:  EInfer [n]
+Checking procedure hd3$node... OLD SPECS:  EInfer [n]
    EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
          {FLOW,(20,21)=__norm}
            EAssume 5::
@@ -83,8 +47,8 @@ OLD SPECS:  EInfer [n]
 NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & n!=0 &
        {FLOW,(20,21)=__norm}
          EAssume 5::
-           x::node<Anon_594,q_595>@M[Orig] * q_595::ll<flted_8_593>@M[Orig] &
-           n=flted_8_593+1 & res=Anon_594 & 0<=n & {FLOW,(20,21)=__norm}
+           x::node<Anon_590,q_591>@M[Orig] * q_591::ll<flted_8_589>@M[Orig] &
+           n=flted_8_589+1 & res=Anon_590 & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd3$node SUCCESS
 Checking procedure hd4$node... 
@@ -120,9 +84,9 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
            true & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd4$node result FAIL-1
-Stop Omega... 73 invocations 
+Stop Omega... 72 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.080004 second(s)
-	Time spent in main process: 0.056003 second(s)
-	Time spent in child processes: 0.024001 second(s)
+Total verification time: 0.792048 second(s)
+	Time spent in main process: 0.624039 second(s)
+	Time spent in child processes: 0.168009 second(s)

@@ -305,8 +305,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
                           let i_pre =
                             if infer_pre_flag then (
-                                print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ;
-                                print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
+                                (* print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ; *)
+                                (* print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)); *)
                                 (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*)
                                 let fml = List.fold_left CF.normalize_combine_heap (CF.formula_of_heap CF.HTrue no_pos) lh in
                                 let fml = List.fold_left (fun f p -> CF.normalize 1 fml p no_pos)
@@ -338,16 +338,16 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 (* filter out res *)
                                 let post_vars = List.filter (fun v -> not(CP.is_res_spec_var v)) post_vars in
                                 let post_vars = CP.remove_dups_svl post_vars in
-                                let _ = print_endline ("Pre Vars :"^Cprinter.string_of_spec_var_list pre_vars) in
-                                let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in
+                                (* let _ = print_endline ("Pre Vars :"^Cprinter.string_of_spec_var_list pre_vars) in *)
+                                (* let _ = print_endline ("Exists Post Vars :"^Cprinter.string_of_spec_var_list post_vars) in *)
                                 let post_fml = if flist!=[] then 
                                     let tmp = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 no_pos) 
                                       (List.hd flist) (List.tl flist) in
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
                                 let post_fml = CF.simplify_post post_fml post_vars in
-                                print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist));
-                                print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml));
+                                (* print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist)); *)
+                                (* print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml)); *)
                                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
                                 inferred_post
                               end in
@@ -1326,41 +1326,46 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
       check_coercion prog;
       print_string "DONE.\n"
       end;
+    (* List of procs with user-given order *)
     let proc_ordered_by_user = prog.prog_proc_decls in
-    let iproc_main = iprog.I.prog_proc_decls in
-    let iproc_main_names = List.map (fun proc -> proc.I.proc_name) iproc_main in
-    let is_sub name1 name2 = 
-      if String.length name1 >= String.length name2 then false 
-      else 
-        let n = String.length name1 in
-        name1 = (String.sub name2 0 n) && String.get name2 n = '$'
-    in
+    let iproc_main_names = List.map (fun p -> p.I.proc_name) iprog.I.prog_proc_decls in
+    (*    let _ = List.iter (fun p -> print_endline (string_of_bool p.proc_is_main)) proc_ordered_by_user in     *)
+    (*    let _ = List.iter (fun p -> print_endline (string_of_bool p.I.proc_is_main)) iprog.I.prog_proc_decls in*)
+    
+    let is_sub name1 name2 = if String.length name1 >= String.length name2 then false 
+      else let n = String.length name1 in name1 = (String.sub name2 0 n) && String.get name2 n = '$' in
+    
     let proc_top, proc_base = 
-      List.partition (fun proc -> List.exists (fun n -> is_sub n proc.proc_name) iproc_main_names) proc_ordered_by_user in
-(*    let _ = Printf.printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; Printf.printf "\n")) !call_graph; Printf.printf "**********\n" in*)
+      List.partition (fun proc -> proc.proc_is_main) proc_ordered_by_user in
+    (*    let _ = Printf.printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; Printf.printf "\n")) !call_graph; Printf.printf "**********\n" in*)
+    
     let call_hierachy = List.concat !call_graph in    
     let call_hierachy = List.filter (fun c -> List.mem c iproc_main_names) call_hierachy in
     let proc_top_names = List.map (fun p -> p.proc_name) proc_top in
     let get_name n names = List.find (fun x -> is_sub n x) names in
-    let call_hierachy = List.map (fun n -> get_name n proc_top_names) call_hierachy in 
+    let call_hierachy = List.map (fun n -> get_name n proc_top_names) call_hierachy in
     (*let _ = List.iter (fun n -> print_endline n) call_hierachy in*)
+    (*let _ = List.iter (fun n -> print_endline n) proc_top_names in*)
+    
     let mk_index list_names =
       let rec make_enum a b = if a > b then [] else a::(make_enum (a + 1) b) in
-      let list_index = (make_enum 0 ((List.length list_names) - 1)) in
-      List.combine list_names list_index      
+      let list_index = make_enum 0 ((List.length list_names) - 1) in
+      List.combine list_names list_index
     in
-    let cal_index name list = 
+    let cal_index name list =
       if not(List.mem name call_hierachy) then 0
       else
-        try List.assoc name list 
+        try List.assoc name list
         with _ -> report_error no_pos ("Error in cal_index")
     in
     let new_call_hierachy = mk_index call_hierachy in
-    let sort_by_call procs calls =
-      List.fast_sort (fun proc1 proc2 -> (cal_index proc1.proc_name calls)-
-        (cal_index proc2.proc_name calls)) proc_top in
-    let proc_top = sort_by_call proc_top new_call_hierachy in
+    
+    let proc_top = List.map (fun p -> {p with proc_call_order = (cal_index p.proc_name new_call_hierachy)}) proc_top in
+    let sort_by_call procs =
+      List.fast_sort (fun proc1 proc2 -> proc1.proc_call_order - proc2.proc_call_order) procs in
+    let proc_top = sort_by_call proc_top in
     let proc_ordered_by_call = proc_top @ proc_base in
+    
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call);
     let g = build_state_trans_graph !Solver.variance_graph in

@@ -1012,6 +1012,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 	  (* exlist # compute_hierarchy; *)
       (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
 	  let prims,prim_rels = gen_primitives prog0 in
+   let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
 	  (* let prims,prim_rels = ([],[]) in *)
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
 		  (* AN HOA : adjoint the program with primitive relations *)
@@ -1949,7 +1950,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let final_dynamic_specs_list = dynamic_specs_list in
     let _ = 
       let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
-    let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args) in
+    let ffv = Gen.BList.difference_eq cmp (CF.struc_fv_infer final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args) in
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
@@ -1965,6 +1966,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_stk_of_static_specs = new Gen.stack_noinit Cprinter.string_of_struc_formula;
           C.proc_by_name_params = by_names;
           C.proc_body = body;
+          C.proc_call_order = 0;
+          C.proc_is_main = proc.I.proc_is_main;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;} in 
 	  (E.pop_scope (); cproc))))
@@ -3207,6 +3210,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
                 I.proc_dynamic_specs = [];
                 I.proc_body = Some w_body;
+                I.proc_is_main = proc.I.proc_is_main;
                 I.proc_file = proc.I.proc_file;
                 I.proc_loc = pos; } in
             let temp_call =  I.CallNRecv {
@@ -6146,7 +6150,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
   let nf = IF.rename_bound_var_struc_formula nf in
   (* let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula  nf)^"\n") in *)
   (*convert anonym to exists*)
-  let rec helper (h:(ident*primed) list)(f0:IF.struc_formula) strad_vs :IF.struc_formula* ((ident*primed)list) = 
+  let rec helper (h:(ident*primed) list)(f0:IF.struc_formula) strad_vs vars :IF.struc_formula* ((ident*primed)list) = 
     let rec helper1 (f:IF.ext_formula):IF.ext_formula * ((ident*primed)list) = match f with
       | IF.EAssume (b,y)-> 
             let onb = convert_anonym_to_exist b in
@@ -6154,11 +6158,13 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
             let nb,nh,_ = case_normalize_renamed_formula prog hp strad_vs onb in
             let nb = ilinearize_formula nb hp in
             let vars_list = IF.all_fv nb in
+(*            print_endline ("VARS2: " ^ Cprinter.str_ident_list (List.map (fun t -> fst t) vars));*)
+            let nb = IF.prune_exists nb vars in (* Remove exists_vars included in infer_vars *) 
 	        (IF.EAssume (nb,y),(Gen.BList.difference_eq (=) vars_list p)) 
       | IF.ECase b->
             let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
                 let r12 = Gen.BList.intersect_eq (=) (Ipure.fv c1) h in
-                let r21,r22 = helper h c2 strad_vs in
+                let r21,r22 = helper h c2 strad_vs vars in
                 (((c1,r21)::a1),r12::r22::a2)
             ) ([],[]) b.IF.formula_case_branches in				
             (IF.ECase ({
@@ -6182,7 +6188,7 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
               Error.report_error {Error.error_loc = b.IF.formula_ext_pos; Error.error_text = "should not have prime vars"} else () in
             let _ = if (List.length (Gen.BList.intersect_eq (=) (all_expl@posib_impl) p))>0 then 	
               Error.report_error {Error.error_loc = b.IF.formula_ext_pos; Error.error_text = "post variables should not appear here"} else () in
-            let nc,h2 = helper h1prm b.IF.formula_ext_continuation new_strad_vs in	
+            let nc,h2 = helper h1prm b.IF.formula_ext_continuation new_strad_vs vars in	
             let implvar = (*if lax_implicit then *) Gen.BList.difference_eq (=) (IF.unbound_heap_fv onb) all_vars (*else Gen.BList.difference_eq (=) h2 all_vars*) in
             (*let nb,ex = ilinearize_formula nb (h@implvar@all_expl) in*)
             (*let h3 = Gen.BList.difference_eq (=) h3 ex in*)
@@ -6198,17 +6204,21 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
             (*let _ = print_string ("\n normalized: "^(Iprinter.string_of_ext_formula (fst r))^"\n before: "^(Iprinter.string_of_ext_formula f)^"\n") in*)
             r
 	  | IF.EVariance b -> (IF.EVariance ({b with
-			IF.formula_var_continuation = fst (helper h b.IF.formula_var_continuation strad_vs)
+			IF.formula_var_continuation = fst (helper h b.IF.formula_var_continuation strad_vs vars)
 		}), [])
-      | IF.EInfer b -> (IF.EInfer ({b with
-        IF.formula_inf_continuation = fst (helper1 b.IF.formula_inf_continuation)}), [])
+      | IF.EInfer b -> 
+        let infer_vars = b.IF.formula_inf_vars in
+(*        print_endline ("VARS: " ^ Cprinter.str_ident_list (List.map (fun t -> fst t) infer_vars));*)
+        (IF.EInfer ({b with
+        (* Tricky thing *)
+        IF.formula_inf_continuation = List.hd (fst (helper h [b.IF.formula_inf_continuation] strad_vs infer_vars))}), [])
 	in
     if (List.length f0)=0 then
 	  ([],[])
     else
 	  let ll1,ll2 = List.split (List.map helper1 f0) in
 	  (ll1, (Gen.BList.remove_dups_eq (=) (List.concat ll2))) in	
-  (helper h nf strad_vs) 
+  (helper h nf strad_vs []) 
       
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in

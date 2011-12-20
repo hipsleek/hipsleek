@@ -6888,7 +6888,17 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap_node" estate (Base rhs_b) None pos,
     CF.mk_failure_bot ("Disabled Infer heap and pure 2"))), NoAlias) 
   else
-    let r = Inf.infer_heap_nodes estate rhs rhs_rest conseq in 
+    (* TODO : this part is repeated in no_rhs_match; should optimize *)
+    let lhs_xpure,_,_,_ = xpure prog estate.es_formula in
+    let rhs_xpure,_,_,_ = xpure prog (formula_of_heap rhs no_pos) in
+    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
+    let rhs_xpure = MCP.pure_of_mix rhs_xpure in
+    let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
+    let check_sat = Omega.is_sat fml "13" in
+    (* check if there is a contraction with the RHS heap *)
+    let r = 
+      if check_sat then Inf.infer_heap_nodes estate rhs rhs_rest conseq
+      else None in 
     begin
       match r with
         | Some (new_iv,new_rn,new_p) -> 

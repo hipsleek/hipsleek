@@ -10,14 +10,20 @@ pred ll<n> == self = null & n = 0
 // (1)
 infer [n] x=null & n=0 |- x::node<_,_>.
 print residue.
+//inferred pure: [n!=0; n!=0]
+
 
 // (2)
 infer [x] x=null |- x::node<_,null>.
 print residue.
+//inferred heap: [x::node<inf_Anon_43,inf_flted_15_44>@M[Orig]]
+//inferred pure: [n!=0; n!=0]
 
 // (3)
 infer [x] x=null |- x::node<_,b>.
 print residue.
+//inferred heap: [x::node<inf_Anon_49,inf_50>@M[Orig]]
+//inferred pure: [x!=null; x!=null]
 
 // (4)
 infer [x] x::ll<n> |- x::node<_,b>.

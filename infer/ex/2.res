@@ -1,31 +1,19 @@
 Starting Reduce... 
 Starting Omega...oc
 Entail  (1): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ n!=0]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [n!=0]
 
 Entail  (2): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ x!=null]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [x!=null]
 
 Entail  (3): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ x!=null]
-<1>false & false &
-{FLOW,(17,18)=__norm}
-
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [x!=null]
 
 Entail  (4): Valid. 
-Inferred Heap:[]
-Inferred Pure:[ x!=null]
-<1>EXISTS(flted_7_69: b::ll<flted_7_69>@M[Orig] & flted_7_69+1=n &
-{FLOW,(17,18)=__norm})
+<1>EXISTS(flted_7_61: b::ll<flted_7_61>@M[Orig] & flted_7_61+1=n & {FLOW,(17,18)=__norm})
+inferred pure: [x!=null]
 
-
-Stop Omega... 45 invocations 
+Stop Omega... 32 invocations 

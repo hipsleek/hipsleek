@@ -1488,9 +1488,14 @@ let pr_list_context_short (ctx:list_context) =
     | SuccCtx sc -> pr_context_list_short sc
     
 let pr_entail_state_short e = 
+  fmt_open_vbox 1;
   (pr_seq "" pr_spec_var) e.es_ante_evars;
-  pr_formula_wrap e.es_formula
-    
+  pr_formula_wrap e.es_formula;
+  pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
+(*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
+  pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
+  pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
+  fmt_close_box()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 
@@ -2445,6 +2450,7 @@ Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;
 Cformula.print_context := string_of_context;;
 Cformula.print_entail_state := string_of_entail_state(* _short *);;
+Cformula.print_entail_state_short := string_of_entail_state_short;;
 Redlog.print_formula := string_of_pure_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
