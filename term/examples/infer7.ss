@@ -89,7 +89,7 @@ the constraints (1), (2) and (3) to be satisfied.
 			 (2) x::ll2<s> & x!=null |- s >= l_bnd
 					 Infer [s] x::ll2<s> |- x!=null ==> s>=1 | s<=-1
 			 (3) x::ll2<s> & x=null  |- s >= l_bnd
-					 Infer [s] x::ll2<s> |- x=null ==> Fail
+					 Infer [s] x::ll2<s> |- x=null ==> Fail (It should be s=0)
 			 ==> l_bnd = 0
 
 */

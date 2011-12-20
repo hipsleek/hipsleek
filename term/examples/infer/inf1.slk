@@ -26,3 +26,18 @@ infer [n] x!=null |- x::ll1<n>.
 infer [s] x::ll2<s> |- x!=null.
 
 infer [s] x::ll2<s> |- x=null.
+
+infer [y] x=0 |- x>=y.
+
+//checkentail x!=0 |- x>=y & y<=0.
+
+infer [x] x!=0 & y<=0 |- x>=y.
+
+infer [lb] n=0 |- -n>=lb.
+
+infer [n] n!=0 & lb<=0 |- -n>=lb.
+
+infer [x] x>=1 & y=x-1 |- y>=1.
+
+infer [x] x>=1 & y=x-2 |- y>=1.
+
