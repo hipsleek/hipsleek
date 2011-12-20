@@ -5152,7 +5152,8 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
                 | [] -> rs
                 | l::ls -> get_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum])
             in
-            let ll = Gen.Basic.remove_dups (get_line_number (List.concat locs) []) in
+            (*shoudl use ll in future*)
+           (* let ll = Gen.Basic.remove_dups (get_line_number (List.concat locs) []) in*)
               let msg = "(failure_code="^failure_code ^ ") " ^
                 (String.concat "; " strs) ^ " ("  ^ failure_string ^ ")." in
               let fe = match fk with
@@ -6978,7 +6979,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                 let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
                                 (r1,prf)
                           | None ->
-                                (
+                                (let process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos=
                                     (* TODO : obtain xpure0 of RHS
                                        (i) check if it is unsat, or
                                        (ii) check if negated term implied by LHS
@@ -7012,8 +7013,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                       (*change to must flow*)
                                       let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                                               !error_flow_int estate.CF.es_formula} in
-                                      (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                      CF.mk_failure_must s Globals.sl_error)), NoAlias)
+                                      (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                                      CF.mk_failure_must s Globals.logical_error), NoAlias)
                                     else
                                       begin
                                         (*check disj memset*)
@@ -7035,15 +7036,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                         let rhs_neq_nulls = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
                                         let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure rhs_disj_set_p in
                                         let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
-                                        let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
+                                         let rhs_mix_p_withlsNull_imm = if !allow_imm && (estate.es_imm_pure_stk!=[])
+                                             then MCP.memoise_add_pure_N rhs_mix_p_withlsNull  (MCP.pure_of_mix (List.hd estate.es_imm_pure_stk))
+                                             else rhs_mix_p_withlsNull
+                                         in
+                                         let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull_imm in
                                         (*contradiction on RHS?*)
                                         if not(TP.is_sat_sub_no rhs_p r) then
                                           (*contradiction on RHS*)
                                           let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
                                           let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                                                   !error_flow_int estate.CF.es_formula} in
-                                          (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
-                                          mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") sl_error)), NoAlias)
+                                          (Basic_Reason (mkFailContext msg new_estate (Base rhs_b) None pos,
+                                          mk_failure_must ("15.2 " ^ msg ^ " (must-bug).") logical_error), NoAlias)
                                         else
                                           let lhs_p = MCP.pure_of_mix lhs_b.formula_base_pure in
                                           (*
@@ -7062,15 +7067,33 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                                       | CF.Failure_Valid -> estate.es_formula
                                             } in
                                             let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
-                                            (build_and_failures "15.3" sl_error (contra_list, must_list, may_list) fc_template, UnsatConseq)
+                                            let olc = build_and_failures "15.3 no match for rhs data node: "
+                                              Globals.logical_error (contra_list, must_list, may_list) fc_template in
+                                            let lc =
+                                              ( match olc with
+                                                | FailCtx ft -> ft
+                                                | SuccCtx _ -> report_error no_pos "solver.ml:M_unmatched_rhs_data_node"
+                                              )
+                                            in (lc,Failure)
                                           else
+                                            (*err2.slk 17*)
                                             let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
                                               ^ " (may-bug)."in
                                             let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                                                     !top_flow_int estate.CF.es_formula} in
-                                            (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                                            CF.mk_failure_may s logical_error)), NoAlias)
+                                             (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                                            CF.mk_failure_may s logical_error), NoAlias)
                                       end
+                                 in
+            (*****************************************************************************)
+                                 let s = "15.5 no match for rhs data node: " ^
+                                   (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in
+                                 let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
+                                         !error_flow_int estate.CF.es_formula} in
+                                 let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
+                                                                   CF.mk_failure_must s Globals.sl_error) in
+                                 let (res_lc, prf) = process_unmatched_rhs_data_node prog estate conseq rhs lhs_b rhs_b rhs_h_matched_set pos in
+                                 (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
                                 )
                       end
                           (*          end*)
