@@ -10,3 +10,6 @@
 ../../hip bug1.ss > bug1.res
 ../../hip bug2.ss > bug2.res
 ../../hip bugt5.ss > bugt5.res
+../../hip ll-a2.ss > ll-a2.res
+../../hip ll-b.ss > ll-b.res
+../../hip ll-c.ss > ll-c.res

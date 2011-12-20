@@ -22,3 +22,9 @@ echo "======= bug2 ======"
 diff bug2.res bug2.n
 echo "======= bug5t ======"
 diff bugt5.res bugt5.n
+echo "======= ll-a2 ======"
+diff ll-a2.res ll-a2.n
+echo "======= ll-b ======"
+diff ll-b.res ll-b.n
+echo "======= ll-c ======"
+diff ll-c.res ll-c.n

@@ -10,5 +10,7 @@
 ../../hip bug1.ss > bug1.n 
 ../../hip bug2.ss > bug2.n 
 ../../hip bugt5.ss > bugt5.n 
-
+../../hip ll-a2.ss > ll-a2.n
+../../hip ll-b.ss > ll-b.n
+../../hip ll-c.ss > ll-c.n
 
