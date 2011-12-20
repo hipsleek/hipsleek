@@ -193,8 +193,8 @@ let common_arguments = [
 	"Do not try to eliminate existential quantifier with Redlog");
     ("--rl-no-simplify", Arg.Set Redlog.no_simplify,
     "Do not try to simplify non-linear formulas with Redlog");
-    ("--rl-no-cache", Arg.Set Redlog.no_cache,
-    "Do not use cache for unsatisfiability and implication's checking with Redlog");
+    ("--rl-cache", Arg.Clear Redlog.no_cache,
+    "Use cache for unsatisfiability and implication's checking with Redlog");
 	("--rl-timeout", Arg.Set_float Redlog.timeout, 
 	"Set timeout (in seconds) for is_sat or imply with Redlog");
 	("--failure-analysis",Arg.Set Globals.failure_analysis, 
@@ -237,9 +237,13 @@ let common_arguments = [
 
   (* Termination options *)
   ("--auto-numbering" , Arg.Set Globals.term_auto_number, "turn on automatic numbering for transition states");
-  (* slicing *)
+
+  (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
   ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
+  ("--slc-opt-ineq", Arg.Set Globals.opt_ineq, "Enable optimal SAT checking with inequalities for forced slicing");
+  ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
+  ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
 
   (* invariant *)

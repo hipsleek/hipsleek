@@ -64,10 +64,11 @@ bool isCombS(anode t)
 anode reduction (anode t)
 
 requires (exists k: t::ks<n> & n=2*k & k>=0)
-ensures res::anode<1,null,null>;
+  ensures res::anode<1,null,null>; // K
 
 requires (exists k: t::ks<n> & n=2*k+1 & k>=0)
-ensures res::anode<0,f,a> * f::anode<1,null,null> * a::anode<1,null,null>;
+ensures res::anode<0,f,a> * f::anode<1,null,null> 
+  * a::anode<1,null,null>; // K K
 
 {
  anode val1, val2, val11, val2c;

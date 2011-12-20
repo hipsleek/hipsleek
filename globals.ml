@@ -12,7 +12,6 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
-	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
 
@@ -35,6 +34,8 @@ and primed =
   | Primed
   | Unprimed
 
+and heap_ann = Lend | Imm | Mutable
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -48,6 +49,7 @@ and primed =
 type typ =
   | UNK 
   | TVar of int
+  | AnnT
   | Bool
   | Float
   | Int
@@ -87,6 +89,17 @@ let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false
 
+let string_of_heap_ann a =
+  match a with
+    | Lend -> "@L"
+    | Imm -> "@I"
+    | Mutable -> "@M"
+
+let int_of_heap_ann a =
+  match a with
+    | Lend -> 2
+    | Imm -> 1
+    | Mutable -> 0
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
@@ -157,6 +170,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Int           -> "int"
   | Void          -> "void"
   | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
@@ -176,6 +190,7 @@ let rec string_of_typ_alpha = function
   | Int           -> "int"
   | Void          -> "void"
   | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -304,7 +319,7 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref false
+let allow_imm = ref true
 
 let ann_derv = ref false
 
@@ -433,7 +448,10 @@ let disable_multiple_specs =ref false
 (* Options for slicing *)
 let do_slicing = ref false
 let opt_imply = ref 0
+let opt_ineq = ref false
 let infer_slicing = ref false
+let multi_provers = ref false
+let is_sat_slicing = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false

@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|hip_imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -164,8 +164,8 @@ if($timings){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/n-hip ";
-# changed to native hip, as byte-hip too slow
+$hip = "$exec_path/hip ";
+# TODO : check if hip is n-hip, as b-hip is too slow
 # please use make native
 $sleek = "$exec_path/sleek ";
 $output_file = "log";
@@ -321,11 +321,8 @@ $output_file = "log";
          "div_with_remainder", "SUCCESS"],
         ["append_imm.ss", 1,  " --imm ", "append", "SUCCESS"],
         ["kara.ss",1,  " --imm ", "karatsuba_mult","SUCCESS"],
-        ["kara-imm.ss",1,   " --imm ", "karatsuba_mult","SUCCESS"],
         ["kara-imm-star.ss",1,  " --imm " , "karatsuba_mult","SUCCESS"],
-        ["kara-tight.ss",1,   " --imm ", "karatsuba_mult","SUCCESS"],
-        ["kara-tight-imm.ss",1,  " --imm ", "karatsuba_mult","SUCCESS"],
-        ["kara-tight-imm-star.ss",1,   " --imm ", "karatsuba_mult","SUCCESS"],
+        ["kara-imm-conj.ss",1,  "--imm", "karatsuba_mult","SUCCESS"],
         ["ll_imm.ss", 6,  " --imm ", "length", "SUCCESS",
          "append", "SUCCESS",
          "get_next", "SUCCESS",
@@ -628,6 +625,7 @@ $output_file = "log";
                       ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+    "infer"=>[["infer1.slk", "", "", "Valid."]],
     "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
