@@ -1350,14 +1350,16 @@ let check_prog (prog : prog_decl) (iprog : I.prog_decl) =
       List.combine list_names list_index      
     in
     let cal_index name list = 
-      try List.assoc name list 
-      with _ -> report_error no_pos ("Error in cal_index")
+      if not(List.mem name call_hierachy) then 0
+      else
+        try List.assoc name list 
+        with _ -> report_error no_pos ("Error in cal_index")
     in
-    let call_hierachy = mk_index call_hierachy in
+    let new_call_hierachy = mk_index call_hierachy in
     let sort_by_call procs calls =
-      List.fast_sort (fun proc1 proc2 -> (cal_index proc1.proc_name call_hierachy)-
-        (cal_index proc2.proc_name call_hierachy)) proc_top in
-    let proc_top = sort_by_call proc_top call_hierachy in
+      List.fast_sort (fun proc1 proc2 -> (cal_index proc1.proc_name calls)-
+        (cal_index proc2.proc_name calls)) proc_top in
+    let proc_top = sort_by_call proc_top new_call_hierachy in
     let proc_ordered_by_call = proc_top @ proc_base in
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) proc_ordered_by_call);
