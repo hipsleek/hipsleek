@@ -566,20 +566,6 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
-let print_entail_result_with_pre (valid: bool) (residue: CF.list_context) (num_id: string) =
-  let _ = print_entail_result valid residue num_id in
-  let rs = residue in
-  if (valid && Inf.is_inferred_pre_list_context rs) then
-    begin
-      let lh = Inf.collect_pre_heap_list_context rs in
-      let lp = Inf.collect_pre_pure_list_context rs in
-      print_endline ("Inferred Heap:"^(pr_list Cprinter.string_of_h_formula lh));    
-      print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp));
-    end
-    (* let pr = Inf.extract_pre_list_context residue in *)
-    (* match pr with *)
-    (*   | None -> () (\* No precondition inferred *\) *)
-    (*   | Some f -> print_endline ("Pre: "^(Cprinter.string_of_formula f)) *)
      
 
 let print_exc (check_id: string) =
@@ -598,7 +584,7 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
   let num_id = "Entail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
-    print_entail_result_with_pre valid rs num_id
+    print_entail_result valid rs num_id
   with _ -> print_exc num_id
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =

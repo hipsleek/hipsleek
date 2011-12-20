@@ -378,7 +378,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos =
                   es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos;
                   es_infer_pure = estate.es_infer_pure@[pf];
               } in
-            Some new_estate
+            Some (new_estate,pf)
 
 let infer_lhs_contra_estate e f pos =
   let pr0 = !print_entail_state in
@@ -393,44 +393,44 @@ let infer_lhs_contra_estate e f pos =
    (ii) rhs --> lhs (rhs is stronger)
         find a stronger rhs to add to lhs
 *)
-let infer_lhs_rhs_pure lhs_simp rhs_simp ivars (* evars *) =
-  if ivars ==[] then None
-  else 
-    let fml = CP.mkAnd lhs_simp rhs_simp no_pos in
-    let check_sat = Omega.is_sat fml "0" in
-    if not(check_sat) then
-      (* lhs & rhs |- false *)
-      let f = simplify lhs_simp ivars in
-      let vf = CP.fv f in
-      let over_v = CP.intersect vf ivars in
-      if (over_v ==[]) then None
-      else Some (Redlog.negate_formula f)
-    else 
-      (* rhs -> lhs *)
-      None
+(* let infer_lhs_rhs_pure lhs_simp rhs_simp ivars (\* evars *\) = *)
+(*   if ivars ==[] then None *)
+(*   else  *)
+(*     let fml = CP.mkAnd lhs_simp rhs_simp no_pos in *)
+(*     let check_sat = Omega.is_sat fml "0" in *)
+(*     if not(check_sat) then *)
+(*       (\* lhs & rhs |- false *\) *)
+(*       let f = simplify lhs_simp ivars in *)
+(*       let vf = CP.fv f in *)
+(*       let over_v = CP.intersect vf ivars in *)
+(*       if (over_v ==[]) then None *)
+(*       else Some (Redlog.negate_formula f) *)
+(*     else  *)
+(*       (\* rhs -> lhs *\) *)
+(*       None *)
 
-let infer_lhs_rhs_pure lhs rhs ivars =
-  let pr = !print_pure_f in
-  Gen.Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars
+(* let infer_lhs_rhs_pure lhs rhs ivars = *)
+(*   let pr = !print_pure_f in *)
+(*   Gen.Debug.no_3 "infer_lhs_rhs_pure" pr pr !print_svl (pr_option pr) infer_lhs_rhs_pure lhs rhs ivars *)
 
-let infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos =
-  let ivars = estate.es_infer_vars in
-  if ivars == [] then None
-  else 
-    let lhs_xpure = MCP.pure_of_mix lhs_xpure in
-    let rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    let lhs_simp = simplify lhs_xpure ivars in
-    let rhs_simp = simplify rhs_xpure ivars in
-    let r = infer_lhs_rhs_pure lhs_simp rhs_simp ivars in
-    match r with
-      | None -> None
-      | Some pf ->
-            let new_estate =
-              {estate with 
-                  es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos;
-                  es_infer_pure = estate.es_infer_pure@[pf];
-              } in
-            Some new_estate
+(* let infer_lhs_rhs_pure_es estate lhs_xpure rhs_xpure pos = *)
+(*   let ivars = estate.es_infer_vars in *)
+(*   if ivars == [] then None *)
+(*   else  *)
+(*     let lhs_xpure = MCP.pure_of_mix lhs_xpure in *)
+(*     let rhs_xpure = MCP.pure_of_mix rhs_xpure in *)
+(*     let lhs_simp = simplify lhs_xpure ivars in *)
+(*     let rhs_simp = simplify rhs_xpure ivars in *)
+(*     let r = infer_lhs_rhs_pure lhs_simp rhs_simp ivars in *)
+(*     match r with *)
+(*       | None -> None *)
+(*       | Some pf -> *)
+(*             let new_estate = *)
+(*               {estate with  *)
+(*                   es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula pf pos) pos; *)
+(*                   es_infer_pure = estate.es_infer_pure@[pf]; *)
+(*               } in *)
+(*             Some new_estate *)
 
 let rec simplify_disjs pf lhs rhs = 
   let helper fml lhs_p rhs_p = 
@@ -497,11 +497,11 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           let new_estate =
             {estate with 
                 es_formula = new_es_formula;
-                es_infer_pure = estate.es_infer_pure@[new_p];
+                (* es_infer_pure = estate.es_infer_pure@[new_p]; *)
                 es_infer_vars = new_iv
             }
           in
-          Some new_estate
+          Some (new_estate,new_p)
     else
       let check_sat = Omega.is_sat lhs_xpure "0" in
       if not(check_sat) then None
@@ -522,7 +522,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
                     (* ;es_infer_vars = new_iv *)
             }
           in
-          Some new_estate
+          Some (new_estate,new_p)
 
 let infer_pure_m i estate lhs_xpure rhs_xpure pos =
 (* type: Cformula.entail_state ->
@@ -531,7 +531,7 @@ let infer_pure_m i estate lhs_xpure rhs_xpure pos =
 *)
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state in 
-      Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option pr2) 
+      Gen.Debug.no_3_num i "infer_pure_m" pr2 pr1 pr1 (pr_option (pr_pair pr2 pr_no)) 
       (fun _ _ _ -> infer_pure_m estate lhs_xpure rhs_xpure pos) estate lhs_xpure rhs_xpure   
 
 let infer_empty_rhs estate lhs_p rhs_p pos =

@@ -282,6 +282,14 @@ let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
   else (fmt_cut (); fmt_string hdr; (wrap_box ("B",0) f x))
 
+(** if f e  is not true print with a cut in front of  hdr*)    
+let pr_wrap (f: 'a -> unit) (x:'a) =
+  begin
+  fmt_open_hbox();
+  f x;
+  fmt_close_box()
+  end
+
 (** if f e  is not true print without cut in front of  hdr*)      
 let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
@@ -1092,36 +1100,41 @@ let pr_es_trace (trace:string list) : unit =
   let s = List.fold_left (fun str x -> x ^ " ==> " ^ str) "" trace in
   fmt_string s
 
-let rec pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f =
+let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
     | [] -> ""
-    | (a,b)::xs -> 
+    | (ctx,(a,b))::xs -> 
         begin
-            fmt_string ("<" ^ (string_of_int count) ^ ">");
-            pr_formula a;
-            fmt_print_newline ();
-            f b;
-            fmt_print_newline ();
-            pr_numbered_list_formula_trace_ho xs (count+1) f;
+          let lh = collect_pre_heap ctx in
+          let lp = collect_pre_pure ctx in
+          fmt_open_vbox 0;
+          pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
+          pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
+          pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
+          f b;
+          fmt_print_newline ();
+          fmt_close_box ();
+          pr_numbered_list_formula_trace_ho xs (count+1) f;
         end
 
-let pr_numbered_list_formula_trace (e:(formula*formula_trace) list) (count:int) =
+let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) (count:int) =
   let f b = begin
             fmt_string "[[";
             pr_es_trace b;
             fmt_string "]]"
   end in
-  pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f 
+  pr_numbered_list_formula_trace_ho (e) (count:int) f 
 
-let pr_numbered_list_formula_no_trace (e:(formula*formula_trace) list) (count:int) =
+let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =
   let f b = () in
-  pr_numbered_list_formula_trace_ho (e:(formula*formula_trace) list) (count:int) f 
+  pr_numbered_list_formula_trace_ho e (count:int) f 
 
 let string_of_numbered_list_formula (e:list_formula) : string =  pr_numbered_list_formula e 1
 
-let string_of_numbered_list_formula_trace (e: (formula*formula_trace) list) : string =  pr_numbered_list_formula_trace e 1
+let string_of_numbered_list_formula_trace (e: (context * (formula*formula_trace)) list) : string =  pr_numbered_list_formula_trace e 1
 
-let string_of_numbered_list_formula_no_trace (e: (formula*formula_trace) list) : string =  pr_numbered_list_formula_no_trace e 1
+let string_of_numbered_list_formula_no_trace (e: (context * (formula*formula_trace)) list) : string =  
+  pr_numbered_list_formula_no_trace e 1
 
 let string_of_list_f (f:'a->string) (e:'a list) : string =  
   "["^(String.concat "," (List.map f e))^"]"
@@ -1439,10 +1452,12 @@ let pr_context_short (ctx : context) =
     | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,iv,ih,ip) =
+    fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
-    pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip
+    pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
+    fmt_close_box();
   in 
   let pr_disj ls = 
     if (List.length ls == 1) then pr (List.hd ls)
@@ -1451,12 +1466,20 @@ let pr_context_short (ctx : context) =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [e.es_formula]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
+  let pr (f,iv,ih,ip) =
+    fmt_open_vbox 0;
+    pr_formula_wrap f;
+    pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
+    pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
+    pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
+    fmt_close_box();
+  in 
   let lls = List.map f ctx in
   let pr_disj ls = 
-    if (List.length ls == 1) then pr_formula (List.hd ls)
-  else pr_seq "or" pr_formula_wrap ls in
+    if (List.length ls == 1) then pr (List.hd ls)
+  else pr_seq "or" pr(* _formula_wrap *) ls in
    pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
     
 let pr_list_context_short (ctx:list_context) =

@@ -3683,7 +3683,30 @@ let add_infer_pure_to_ctx cp ctx =
   Gen.Debug.no_1 "add_infer_pure_to_ctx"
       (pr_list !print_pure_f) pr_no
       (fun _ -> add_infer_pure_to_ctx cp ctx) cp
-  
+
+let add_infer_heap_to_ctx cp ctx =
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> Ctx {es with es_infer_heap = es.es_infer_heap@cp;}
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
+
+let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
+  match l with
+    | FailCtx _-> l
+    | SuccCtx sc -> SuccCtx (List.map (add_infer_pure_to_ctx cp) sc)
+
+let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
+  let pr = !print_list_context_short in
+  Gen.Debug.no_2 "add_infer_pure_to_list_context"
+      (pr_list !print_pure_f) pr pr
+      add_infer_pure_to_list_context cp l
+
+let add_infer_heap_to_list_context cp (l : list_context) : list_context  = 
+  match l with
+    | FailCtx _-> l
+    | SuccCtx sc -> SuccCtx (List.map (add_infer_heap_to_ctx cp) sc)
+
 (* f_ctx denotes false context *)
 let add_infer_pre f_ctx ctx =
   let ch = collect_pre_heap f_ctx in
@@ -4644,9 +4667,9 @@ and list_formula_of_list_context (ctx : list_context) : list_formula =  match ct
   | FailCtx _ -> []
   | SuccCtx ls -> List.map (formula_of_context) ls
 
-and list_formula_trace_of_list_context (ctx : list_context) : (formula*formula_trace) list =  match ctx with
+and list_formula_trace_of_list_context (ctx : list_context) : (context * (formula*formula_trace)) list =  match ctx with
   | FailCtx _ -> []
-  | SuccCtx ls -> List.map (formula_trace_of_context) ls
+  | SuccCtx ls -> List.map (fun c -> (c,formula_trace_of_context c)) ls
 
 (* filter out partial failure first *)
 and list_formula_of_list_partial_context (ls : list_partial_context) : list_formula =  
