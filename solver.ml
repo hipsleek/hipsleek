@@ -13,8 +13,9 @@ open Prooftracer
 open Gen.Basic
 open Immutable
 open Perm
-open Mcpure_D
+(* open Slicing *)
 open Mcpure
+open Mcpure_D
 
 module CP = Cpure
 module PR = Cprinter

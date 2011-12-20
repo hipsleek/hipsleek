@@ -6,8 +6,9 @@
 open Globals
 open Gen.Basic
 open Mcpure
-open Cpure
 open Mcpure_D
+open Cpure
+(* open Slicing *)
 
 module CP = Cpure
 module MCP = Mcpure
