@@ -19,7 +19,7 @@ ll<n> == self = null & n = 0
 void append2(node x, node y)
   infer [n1]
   requires x::ll<n1> * y::ll<n2>
-  ensures x::ll<m> & m=n1+n2;
+  ensures x::ll<m>;
 {    
 	if (x.next == null) 
            x.next = y;
@@ -30,16 +30,17 @@ void append2(node x, node y)
 // why are there 4 branches?
 // Inferred Pure:[ n1!=0, n1!=0, n1!=0, n1!=0]
 /*
-NEW SPECS:  EBase exists (Expl)(Impl)[n1; n2](ex)x::ll<n1>@M[Orig][LHSCase] *
+NEW SPECS:  EBase exists (Expl)(Impl)[n1; n2](ex)x::ll<n1>@M[Orig][LHSCase] * 
        y::ll<n2>@M[Orig][LHSCase] & n1!=0 & {FLOW,(20,21)=__norm}
          EAssume 1::
            
-           q_540::ll<flted_14_538>@M[Orig] * x::ll<m_591>@M[Orig][LHSCase] &
-           n2=(m_591 - flted_14_538) - 1 & n1=flted_14_538+1 & q_540=null & 
-           0<=n1 & 0<=n2 & {FLOW,(20,21)=__norm}
-           or x::ll<m_592>@M[Orig][LHSCase] & n2=(m_592 - flted_14_538) -
-              1 & n1=flted_14_538+1 & 0<=flted_14_538 & flted_14_538<m_592 & 
-              q_540!=null & 0<=n1 & 0<=n2 & {FLOW,(20,21)=__norm}
+           q_538::ll<flted_14_536>@M[Orig] * x::ll<m_589>@M[Orig][LHSCase] &
+           n1=flted_14_536+1 & q_538=null & 0<=n1 & 0<=n2 &
+           {FLOW,(20,21)=__norm}
+           or x::ll<m_590>@M[Orig][LHSCase] & flted_14_536=n1 - 1 & 
+              q_538!=null & 0<=n2 & 1<=n1 & 0<=n1 & 0<=n2 &
+              {FLOW,(20,21)=__norm}
+ 
 */
 
 

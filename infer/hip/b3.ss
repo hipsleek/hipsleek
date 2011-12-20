@@ -16,8 +16,7 @@ void hd(node x)
   infer [n1] 
   requires x::ll<n1>
   ensures x::ll<m> & m>1; 
-  //ensures x::ll<m> & m=n1;
-  //ensures x::ll<m> & m>0;
+  // OK to fail
 {    
   int v;
   v = x.val;
