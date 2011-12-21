@@ -6869,4 +6869,3 @@ let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
           let r = merge_ext_pre c pre in
           EInfer {b with formula_inf_continuation = r}
 
-

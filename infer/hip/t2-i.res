@@ -21,10 +21,10 @@ Checking procedure hd1$node... OLD SPECS:  EInfer [x]
    EBase true & true & {FLOW,(20,21)=__norm}
            EAssume 3::
              true & true & {FLOW,(20,21)=__norm}
-NEW SPECS:  EBase x::node<inf_val_33_554,inf_next_33_555>@L[Orig] & true &
+NEW SPECS:  EBase x::node<inf_val_33_562,inf_next_33_563>@L[Orig] & true &
        {FLOW,(20,21)=__norm}
          EAssume 3::
-           true & res=inf_val_33_554 & {FLOW,(20,21)=__norm}
+           true & res=inf_val_33_562 & {FLOW,(20,21)=__norm}
 
 Procedure hd1$node SUCCESS
 Checking procedure hd2$node... OLD SPECS:  EInfer [x]
@@ -35,8 +35,8 @@ Checking procedure hd2$node... OLD SPECS:  EInfer [x]
 NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & x!=null &
        {FLOW,(20,21)=__norm}
          EAssume 4::
-           x::node<Anon_572,q_573>@M[Orig] * q_573::ll<flted_8_571>@M[Orig] &
-           n=flted_8_571+1 & res=Anon_572 & 0<=n & {FLOW,(20,21)=__norm}
+           x::node<Anon_584,q_585>@M[Orig] * q_585::ll<flted_8_583>@M[Orig] &
+           n=flted_8_583+1 & res=Anon_584 & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd2$node SUCCESS
 Checking procedure hd3$node... OLD SPECS:  EInfer [n]
@@ -47,8 +47,8 @@ Checking procedure hd3$node... OLD SPECS:  EInfer [n]
 NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & n!=0 &
        {FLOW,(20,21)=__norm}
          EAssume 5::
-           x::node<Anon_590,q_591>@M[Orig] * q_591::ll<flted_8_589>@M[Orig] &
-           n=flted_8_589+1 & res=Anon_590 & 0<=n & {FLOW,(20,21)=__norm}
+           x::node<Anon_622,q_623>@M[Orig] * q_623::ll<flted_8_621>@M[Orig] &
+           n=flted_8_621+1 & res=Anon_622 & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd3$node SUCCESS
 Checking procedure hd4$node... 
@@ -84,9 +84,9 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n](ex)x::ll<n>@M[Orig][LHSCase] & true &
            true & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd4$node result FAIL-1
-Stop Omega... 72 invocations 
+Stop Omega... 107 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.26 second(s)
-	Time spent in main process: 0.24 second(s)
+Total verification time: 0.37 second(s)
+	Time spent in main process: 0.35 second(s)
 	Time spent in child processes: 0.02 second(s)

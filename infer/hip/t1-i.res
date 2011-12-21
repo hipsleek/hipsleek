@@ -57,9 +57,9 @@ NEW SPECS:  EAssume 13::ref [i]
    true & true & {FLOW,(20,21)=__norm}
 
 Procedure foo2a$int result FAIL-1
-Stop Omega... 72 invocations 
+Stop Omega... 90 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.23 second(s)
-	Time spent in main process: 0.21 second(s)
+Total verification time: 0.28 second(s)
+	Time spent in main process: 0.26 second(s)
 	Time spent in child processes: 0.02 second(s)

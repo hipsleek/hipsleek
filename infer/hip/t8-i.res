@@ -32,9 +32,9 @@ NEW SPECS:  EBase true & 0<i & {FLOW,(20,21)=__norm}
            true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1b$int SUCCESS
-Stop Omega... 57 invocations 
+Stop Omega... 67 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.19 second(s)
-	Time spent in main process: 0.17 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.21 second(s)
 	Time spent in child processes: 0.02 second(s)

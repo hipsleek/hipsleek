@@ -9218,3 +9218,10 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
     (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
   end
 
+let rec verify_pre_is_sat prog fml = match fml with
+  | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
+  | Base b -> let fml,_,_,_ = xpure prog fml in Omega.is_sat (MCP.pure_of_mix fml) "14"
+  | Exists e ->
+    let fml = normalize_combine_heap 
+      (formula_of_mix_formula e.formula_exists_pure no_pos) e.formula_exists_heap
+    in verify_pre_is_sat prog fml

@@ -20,9 +20,9 @@ NEW SPECS:  EBase x::node<inf_Anon_527,inf_528>@L[Orig] *
            true & x'=inf_528 & res=inf_533 & {FLOW,(20,21)=__norm}
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 43 invocations 
+Stop Omega... 46 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.2 second(s)
-	Time spent in main process: 0.19 second(s)
-	Time spent in child processes: 0.01 second(s)
+Total verification time: 0.25 second(s)
+	Time spent in main process: 0.23 second(s)
+	Time spent in child processes: 0.02 second(s)

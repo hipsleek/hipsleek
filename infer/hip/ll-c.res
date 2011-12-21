@@ -34,10 +34,37 @@ NEW SPECS:  EBase exists (Expl)(Impl)[n1](ex)x::ll<n1>@M[Orig][LHSCase] & true &
                 
                 }
 
-Procedure appif$node~node SUCCESS
-Stop Omega... 63 invocations 
+( [(59::,0 ); (59::,0 )]) ::0: 0: Postcondition cannot be derived from context
+
+
+(Cause of PostCond Failure)::0: 0:  List of Partial Context: [PC(1, 0)]
+Failed States:
+[
+ Label: [(59::,0 ); (59::,0 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: (failure_code=15.3)  true |-  q_530!=null (may-bug).
+                  fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
+ ]
+Successful States:
+
+
+Context of Verification Failure: File "",Line:0,Col:0
+Last Proving Location: File "ll-c.ss",Line:30,Col:11
+
+ERROR: at _0_0 
+Message: Post condition cannot be derived by the system.
+ 
+Procedure appif$node~node FAIL-2
+
+ExceptionFailure("Post condition cannot be derived by the system.")Occurred!
+
+Error(s) detected when checking procedure appif$node~node
+Stop Omega... 74 invocations 
 2 false contexts at: ( (30,11)  (27,1) )
 
-Total verification time: 0.24 second(s)
-	Time spent in main process: 0.22 second(s)
+Total verification time: 0.51 second(s)
+	Time spent in main process: 0.49 second(s)
 	Time spent in child processes: 0.02 second(s)
