@@ -10,3 +10,5 @@ pred ll<n> == self = null & n = 0
 infer [q] q=null |- q::ll<n> .
 print residue.
 
+infer [] q=null |- q::ll<n> .
+print residue.
