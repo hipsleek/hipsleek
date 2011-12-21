@@ -114,6 +114,24 @@ let pr_simpl_match_res (c:match_res):unit =
 (*   fmt_string "\n RHS "; pr_h_formula c.match_res_rhs_node; *)
 (*   fmt_string ")" *)
 
+let rec pr_action_name a = match a with
+  | Undefined_action e -> fmt_string "Undefined_action"
+  | M_match e -> fmt_string "Match"
+  | M_fold e -> fmt_string "Fold"
+  | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
+  | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
+  | M_base_case_fold e -> fmt_string "BaseCaseFold"
+  | M_rd_lemma e -> fmt_string "RD_Lemma"
+  | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "Lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
+  | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
+  | M_infer_heap p -> fmt_string ("InferHeap")
+  | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData")
+  | Cond_action l -> fmt_string "COND"
+  | Seq_action l -> fmt_string "SEQ"
+  | Search_action l -> fmt_string "SEARCH"
+  | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
+
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
   | M_match e -> pr_mr e; fmt_string "=>Match"
@@ -138,6 +156,8 @@ let rec pr_action_res pr_mr a = match a with
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
+
+let string_of_action_name (e:action) = poly_string_of_pr pr_action_name e
 
 let string_of_action_res_simpl (e:action) = poly_string_of_pr (pr_action_res pr_simpl_match_res) e
 

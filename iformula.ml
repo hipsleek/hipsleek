@@ -686,11 +686,13 @@ let split_components (f : formula) =  match f with
     | Base ({formula_base_heap = h; 
 	  formula_base_pure = p; 
       formula_base_branches = b;
-	  formula_base_flow =fl }) -> (h, p, fl, b)
+      formula_base_and = a;
+	  formula_base_flow =fl }) -> (h, p, fl, b, a)
     | Exists ({formula_exists_heap = h; 
 	  formula_exists_pure = p; 
 	  formula_exists_flow = fl;
-      formula_exists_branches = br }) -> (h, p, fl, br)
+	  formula_exists_and = a;
+      formula_exists_branches = br }) -> (h, p, fl, br, a)
     | _ -> failwith ("split_components: don't expect OR")
 
 let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match f with

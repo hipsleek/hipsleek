@@ -1005,6 +1005,24 @@ let rec string_of_sharp_flow sf = match sf with
   | Sharp_ct ff -> "#"^(string_of_flow_formula "" ff)
   | Sharp_id id -> "#"^id
 
+let pr_one_formula (f:one_formula) = 
+  let h,p,br,th,lb,pos = split_one_formula f in
+  fmt_string ("[["); pr_spec_var; fmt_string ("]]");
+  pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,br)
+
+let string_of_one_formula f = poly_string_of_pr  pr_one_formula f
+
+let rec pr_one_formula_list (ls:one_formula list) = 
+  match ls with
+    | [] -> ()
+    | f::fs ->
+        pr_one_formula f;
+        if (fs==[]) then ()
+        else 
+          fmt_string ("and "); pr_one_formula_list fs
+
+let string_of_one_formula_list ls = poly_string_of_pr  pr_one_formula_list ls
+
 let rec pr_formula_base e =
   match e with
     | ({formula_base_heap = h;
@@ -1012,12 +1030,17 @@ let rec pr_formula_base e =
 	  formula_base_branches = b;
 	  formula_base_type = t;
 	  formula_base_flow = fl;
+	  formula_base_and = a;
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
          (*; fmt_string (" LOC: " ^ (string_of_loc pos))*)
+          ;if (a==[]) then ()
+          else
+            fmt_string ("and "); pr_one_formula_list a
+
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -1044,6 +1067,7 @@ let rec pr_formula e =
 	  formula_exists_branches = b;
 	  formula_exists_type = t;
 	  formula_exists_flow = fl;
+	  formula_exists_and = a;
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
@@ -1052,6 +1076,10 @@ let rec pr_formula e =
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
           (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
+          ;if (a==[]) then ()
+          else
+            fmt_string ("and "); pr_one_formula_list a
+
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -1304,7 +1332,7 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
-  (* pr_vwrap "es_trace: " pr_es_trace es.es_trace; *)
+  pr_vwrap "es_trace: " pr_es_trace es.es_trace;
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;

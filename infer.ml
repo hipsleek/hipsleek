@@ -203,7 +203,7 @@ let get_args_h_formula aset (h:h_formula) =
   Gen.Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, fl, b, t) = split_components f in
+  let (h, p, fl, b, t, a) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -286,8 +286,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq =
         let new_p = Omega.simplify (List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) 
             (CP.mkTrue no_pos) 
             (List.map (fun a -> CP.BForm (CP.mkEq_b (CP.mkVar a no_pos) r no_pos, None)) iv_al)) in
-        let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
-        let _,ante_pure,_,_,_ = CF.split_components es.es_orig_ante in
+        let lhs_h,_,_,_,_,_ = CF.split_components es.es_formula in
+        let _,ante_pure,_,_,_,_ = CF.split_components es.es_orig_ante in
         let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
         let new_p_conjs = CP.list_of_conjs new_p in
         let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos)
@@ -482,7 +482,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
         in
         if CP.isConstTrue new_p || CP.isConstFalse new_p then None
         else
-          let _,ante_pure,_,_,_ = CF.split_components estate.es_orig_ante in
+          let _,ante_pure,_,_,_,_ = CF.split_components estate.es_orig_ante in
           let ante_conjs = CP.list_of_conjs (MCP.pure_of_mix ante_pure) in
           let new_p_conjs = CP.list_of_conjs new_p in
           let new_p = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos)
@@ -490,7 +490,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           (* Thai: Should check if the precondition overlaps with the orig ante *)
           (* And simplify the pure in the residue *)
           let new_es_formula = normalize 0 estate.es_formula (CF.formula_of_pure_formula new_p pos) pos in
-(*          let h, p, fl, b, t = CF.split_components new_es_formula in                                                 *)
+(*          let h, p, fl, b, t,_ = CF.split_components new_es_formula in                                                 *)
 (*          let new_es_formula = Cformula.mkBase h (MCP.mix_of_pure (Omega.simplify (MCP.pure_of_mix p))) t fl b pos in*)
           let args = CP.fv new_p in 
           let new_iv = CP.diff_svl iv args in

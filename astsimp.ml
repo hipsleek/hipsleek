@@ -2050,7 +2050,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
-    let h, p, _,_, _ = CF.split_components c_lhs in
+    let h, p, _,_, _, _ = CF.split_components c_lhs in
     let pvars =mfv p in
     let hvars = CF.h_fv h in
     let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
@@ -2060,7 +2060,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
   (*LDK: TODO: check for interraction with lemma proving*)
   (*pass lhs_heap into add_origs *)
-  let lhs_heap ,_,_,_, _  = CF.split_components c_lhs in
+  let lhs_heap ,_,_,_, _,_  = CF.split_components c_lhs in
   let lhs_view_name = match lhs_heap with
     | CF.ViewNode vn -> vn.CF.h_formula_view_name
     | CF.DataNode dn -> dn.CF.h_formula_data_name
@@ -2104,7 +2104,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* let c_body_norm = CF.struc_to_formula cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers coer.I.coercion_head in 
-  let c_hd0, c_guard0, c_fl0, c_b0 = IF.split_components form in
+  let c_hd0, c_guard0, c_fl0, c_b0, c_a0  = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
   let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) c_fl0 c_b0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
@@ -2159,16 +2159,16 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
             (* | [] -> {c with C.coercion_type = Iast.Right} *) 
             (* move LHS guard to RHS regardless of universal lemma *)
           | v -> 
-                let c_hd, c_guard ,c_fl ,c_b ,c_t = CF.split_components c.C.coercion_head in
+                let c_hd, c_guard ,c_fl ,c_b ,c_t,c_a = CF.split_components c.C.coercion_head in
                 let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
                 (* let (qvars, form) = CF.split_quantifiers c_head_norm in  *)
-                (* let c_hd0, c_guard0 ,c_fl0 ,c_b0 ,c_t0 = CF.split_components c_head_norm in *)
+                (* let c_hd0, c_guard0 ,c_fl0 ,c_b0 ,c_t0, c_a0 = CF.split_components c_head_norm in *)
                 (* let new_head_norm =  CF.mkExists qvars c_hd0 (mkMTrue no_pos) c_t0 c_fl0 c_b0 no_pos in *)
                 (* let _ = print_string ("\n Astsimp.ml 4: head:" ^ (Cprinter.string_of_formula new_head_norm)) in *)
                 {c with
                     C.coercion_type = Iast.Right;
-                    C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_t c_fl c_b no_pos;
+                    C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_t c_fl c_b c_a no_pos;
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
                     C.coercion_univ_vars = [];} in
@@ -7096,7 +7096,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
   (* let split_one_branch (vl:CP.spec_var list) (uinvl:CP.b_formula list) ((b0,lbl):(CF.formula * Globals.formula_label))  *)
   (*         : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) = *)
-  (*     let h,p,_,b,_ = CF.split_components b0 in *)
+  (*     let h,p,_,b,_,_ = CF.split_components b0 in *)
   (*     let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in *)
   (*     let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in *)
   (*     let xp = fold_mem_lst fbr true true cm in *)
@@ -7120,7 +7120,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (* TODO : obtain propagated constraints & keep only stronger constraint *)
   let split_one_branch (vl:CP.spec_var list) (uinvl:CP.b_formula list) ((b0,lbl):(CF.formula * Globals.formula_label)) 
         : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
-    let h,p,_,b,_ = CF.split_components b0 in
+    let h,p,_,b,_,_ = CF.split_components b0 in
     let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in
     let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
     let xp = fold_mem_lst fbr true true cm in
@@ -7297,7 +7297,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (*actual case inference*)
   (* let guard_list = List.map (fun (c,lbl)->  *)
   (*     let pures1,ba =  *)
-  (*   	  let h,p,_,b,_ = CF.split_components c in *)
+  (*   	  let h,p,_,b,_,_ = CF.split_components c in *)
   (*         (\*let (cm,br) = (Solver.xpure_heap cp h 0) in *\) *)
   (*         let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in *)
   (*         let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in *)
@@ -7410,7 +7410,7 @@ and coerc_spec prog is_l c =
         else (c.C.coercion_body, c.C.coercion_head,c.C.coercion_body_view)in
         let v_def = C.look_up_view_def no_pos prog.C.prog_view_decls h_v in
         let v_invs = v_def.C.view_prune_invariants in
-        let h_h, _, _, _, _ = CF.split_components h_f in
+        let h_h, _, _, _, _,_ = CF.split_components h_f in
         let to_vars = find_h_args h_h in 
         let subst_vars = List.combine v_def.C.view_vars to_vars in
         let fvs = Gen.BList.intersect_eq (=) (CF.fv h_f) (CF.fv b_f) in  

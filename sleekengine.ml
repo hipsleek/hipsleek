@@ -588,14 +588,14 @@ let print_exc (check_id: string) =
   print_string ("exception in " ^ check_id ^ " check\n")
 
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let num_id = "Entail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
+  let num_id = "\nEntail ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
   with _ -> print_exc num_id
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
-  let num_id = "Entail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  let num_id = "\nEntail  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
     print_entail_result_with_pre valid rs num_id
@@ -652,7 +652,7 @@ let process_print_command pcmd0 = match pcmd0 with
         (*print all posible outcomes and their traces with numbering*)
         | Some s -> 
                print_string (
-                  (Cprinter.string_of_numbered_list_formula_no_trace
+                  (Cprinter.string_of_numbered_list_formula_trace
               (CF.list_formula_trace_of_list_context s))^"\n" )
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
