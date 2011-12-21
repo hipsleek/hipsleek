@@ -9,6 +9,7 @@ open Exc.GTable
 open Perm
 module P = Ipure
 
+type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
 
 type struc_formula = ext_formula list
 
@@ -17,7 +18,16 @@ and ext_formula =
 	| EBase of ext_base_formula
 	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
 	| EVariance of ext_variance_formula
+ (* spec feature to induce inference *)
+ | EInfer of ext_infer_formula
 
+and ext_infer_formula =
+  {
+    formula_inf_post : bool; (* true if post to be inferred *)
+    formula_inf_vars : (ident * primed) list;
+    formula_inf_continuation : ext_formula;
+    formula_inf_pos : loc
+  }
 
 and ext_case_formula =
 	{
@@ -156,7 +166,7 @@ and h_formula_phase = { h_formula_phase_rd : h_formula;
 and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_name : ident;
 		       h_formula_heap_derv : bool; 
-		       h_formula_heap_imm : bool; 
+		       h_formula_heap_imm : ann;
 		       h_formula_heap_full : bool;
 		       h_formula_heap_with_inv : bool;
 		       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
@@ -168,7 +178,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_name : ident;
 			h_formula_heap2_derv : bool;
-			h_formula_heap2_imm : bool;
+			h_formula_heap2_imm : ann;
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
 		    h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
@@ -385,10 +395,10 @@ and mkConj f1 f2 pos = match f1 with
 and mkPhase f1 f2 pos = 
   match f1 with
   | HFalse -> HFalse
-  | HTrue -> f2
+  (* | HTrue -> f2 *)
   | _ -> match f2 with
 	  | HFalse -> HFalse
-	  | HTrue -> f1
+	  (* | HTrue -> f1 *)
 	  | _ -> Phase { h_formula_phase_rd = f1;
 					h_formula_phase_rw = f2;
 					h_formula_phase_pos = pos }
@@ -431,6 +441,7 @@ if (List.length f0)==0 then no_pos
 	| EBase b -> b.formula_ext_pos
 	| EAssume (b,_) -> pos_of_formula b
 	| EVariance b -> b.formula_var_pos
+ | EInfer b -> b.formula_inf_pos
 
 and flow_of_formula f1 = match f1 with
   | Base b-> Some b.formula_base_flow
@@ -534,6 +545,7 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 											a@ (struc_hp_fv c2)) [] b.formula_case_branches
 							| EAssume (b,_)-> heap_fv b
 							| EVariance b -> struc_hp_fv b.formula_var_continuation
+       | EInfer b -> helper b.formula_inf_continuation
 							) in
 						List.concat (List.map helper f)
 
@@ -550,7 +562,7 @@ and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 	| Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
 and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list= 
-	let helper f = match f with
+	let rec helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
 					let fvc = struc_free_vars b.formula_ext_continuation with_inst in
@@ -568,20 +580,26 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
 			let fv_co = struc_free_vars b.formula_var_continuation with_inst in
 			Gen.BList.remove_dups_eq (=) (fv_ex@fv_ec@fv_co)
+  | EInfer b ->
+    let fvc = helper b.formula_inf_continuation in
+    Gen.BList.remove_dups_eq (=) fvc
 	in Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f0))
  
 and struc_split_fv_debug f0 wi =
   Gen.Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
       (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
 
-and struc_split_fv f0 wi = struc_split_fv_a f0 wi
+and struc_split_fv f0 wi =
+  Gen.Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
+      (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
+
 
 and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
-	let helper f = match f with
+	let rec helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
 					let prc,psc = struc_split_fv_a b.formula_ext_continuation with_inst in
-          let rm = (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
+     let rm = (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
 					(Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) (fvb@prc) rm),(Gen.BList.difference_eq (=) psc rm))
 		| ECase b -> 
 				let prl,psl = List.fold_left (fun (a1,a2) (c1,c2)-> 
@@ -597,7 +615,9 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
 											| None -> res@(Ipure.afv expr)
 											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
 			  (Gen.BList.remove_dups_eq (=) prc@fv_ec@fv_ex, Gen.BList.remove_dups_eq (=) psc)
-			
+		| EInfer b ->
+    let prc, psc = helper b.formula_inf_continuation in
+    (Gen.BList.remove_dups_eq (=) prc, Gen.BList.remove_dups_eq (=) psc)
 	in
   let vl = List.map helper f0 in
   let prl, pcl = List.split vl in
@@ -692,8 +712,11 @@ let rec subst sst (f : formula) = match sst with
   | [] -> f 
         
 and subst_var (fr, t) (o : (ident*primed)) = if (Ipure.eq_var fr o) then t else o
-and subst_var_list ft (o : (ident*primed)) = let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
-if (List.length r)==0 then o else snd (List.hd r)
+and subst_var_list ft (o : (ident*primed)) = 
+  let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
+  match r with 
+    | [] -> o
+    | _ -> snd (List.hd r)
 
 and split_one_formula (f : one_formula) =
     f.formula_heap,
@@ -886,6 +909,13 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 			  formula_var_escape_clauses = subst_escape;
 			  formula_var_continuation = subst_continuation
 		  }
+  | EInfer b ->
+    let si = List.map (subst_var_list sst) b.formula_inf_vars in
+    let sc = helper b.formula_inf_continuation in
+    EInfer {b with
+      formula_inf_vars = si;
+      formula_inf_continuation = sc;
+    }
   in	
   List.map helper f
 
@@ -908,6 +938,9 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = rename_bound_var_struc_formula b.formula_var_continuation;
 									})
+  | EInfer b -> EInfer {b with
+    (* Need to check again *)
+    formula_inf_continuation = helper b.formula_inf_continuation;}
 			in
 	List.map helper f
 
@@ -1051,6 +1084,8 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = float_out_exps_from_heap_struc b.formula_var_continuation;
 									})
+    | EInfer b -> EInfer ({b with 
+      formula_inf_continuation = helper b.formula_inf_continuation;})
 	in	
     List.map helper f
 
@@ -1606,16 +1641,19 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula =
 					formula_var_escape_clauses = fo_escape_clause;
 					formula_var_continuation = float_out_struc_min_max b.formula_var_continuation;
 				})
+  | EInfer b -> EInfer {b with
+    formula_inf_continuation = helper b.formula_inf_continuation;}
 	in
 	List.map helper f0
 		
 
 and view_node_types_struc (f:struc_formula):ident list = 
-	let helper (f:ext_formula):ident list = match f with
+	let rec helper (f:ext_formula):ident list = match f with
 	| ECase b -> List.concat (List.map (fun (c1,c2)-> view_node_types_struc c2) b.formula_case_branches)
 	| EBase b -> (view_node_types b.formula_ext_base)@(view_node_types_struc b.formula_ext_continuation)
 	| EAssume (b,_) -> view_node_types b
 	| EVariance b -> view_node_types_struc b.formula_var_continuation
+ | EInfer b -> helper b.formula_inf_continuation
 	in
 	Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f))
 		
@@ -1644,6 +1682,7 @@ and has_top_flow_struc (f:struc_formula) =
 		| ECase b->   List.iter (fun (_,b1)-> (has_top_flow_struc b1)) b.formula_case_branches
 		| EAssume (b,_)-> (has_top_flow b)
 		| EVariance b -> has_top_flow_struc b.formula_var_continuation
+  | EInfer b -> helper b.formula_inf_continuation
 		in
 List.iter helper f
 
@@ -1670,171 +1709,14 @@ let rec helper f = match f with
 		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = subst_flow_of_struc_formula fr t b.formula_var_continuation;
 								   })
+  | EInfer b -> EInfer {b with
+    formula_inf_continuation = helper b.formula_inf_continuation;}
 in
 List.map helper f 
 
 
 and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
       
-(* normalization of the heap formula *)
-(* emp & emp * K == K *)
-
-(* D@I@NE & emp * K *)
-(* D@I & D@W    * K *)
-(* D@I & D@I@NE * K@W *)
-
-
-(* @NE = non-empty *)
-(* @I = all immutable *)
-(* @W = at least one W *)
-
-(* KI = KI*KI *)
-
-
-let rec normalize_h_formula (h : h_formula) : h_formula = match h with
-  | Phase({h_formula_phase_rd = h1;
-	 h_formula_phase_rw = h2;
-	 h_formula_phase_pos = pos
-	  }) ->
-      (* conj in read phase -> split into two separate read phases *)
-      let rd_phase = normalize_h_formula_rd_phase h1 in
-      let wr_phase = normalize_h_formula h2 in 
-      let res = insert_wr_phase rd_phase wr_phase in
-	res
-  | Star({h_formula_star_h1 = h1;
-	  h_formula_star_h2 = h2;
-	  h_formula_star_pos = pos
-	 }) ->
-      Star({h_formula_star_h1 = h1;
-	  h_formula_star_h2 = normalize_h_formula h2;
-	  h_formula_star_pos = pos
-	 }) 
-  | Conj({h_formula_conj_h1 = h1;
-	 h_formula_conj_h2 = h2;
-	 h_formula_conj_pos = pos
-	 }) ->
-	normalize_h_formula_rd_phase h
-  | _ -> h
-    
-and contains_phase (h : h_formula) : bool = match h with
-  | Phase _ -> true
-  | Conj ({h_formula_conj_h1 = h1;
-	   h_formula_conj_h2 = h2;
-	   h_formula_conj_pos = pos;
-    }) 
-  | Star ({h_formula_star_h1 = h1;
-	 h_formula_star_h2 = h2;
-	 h_formula_star_pos = pos}) ->
-      (contains_phase h1) or (contains_phase h2)
-  | _ -> false
-
-and normalize_h_formula_rd_phase (h : h_formula) : h_formula = match h with
-  | Conj({h_formula_conj_h1 = h1;
-	 h_formula_conj_h2 = h2;
-	 h_formula_conj_pos = pos}) ->
-      (* conj in read phase -> split into two separate read phases *)
-      let conj1 = normalize_h_formula_rd_phase h1 in
-	insert_rd_phase conj1 h2 
-  | Phase _ -> failwith "Shouldn't have phases inside the reading phase\n"
-  | _ -> Phase({h_formula_phase_rd = h;
-		h_formula_phase_rw = HTrue;
-		h_formula_phase_pos = no_pos;
-	       })
-
-
-and insert_wr_phase (f : h_formula) (wr_phase : h_formula) : h_formula = 
-  match f with
-    | Phase ({h_formula_phase_rd = h1;
-	     h_formula_phase_rw = h2;
-	     h_formula_phase_pos = pos}) ->
-	let new_h2 = 
-	  match h2 with
-	    | HTrue -> wr_phase (* insert the new phase *)
-	    | Star({h_formula_star_h1 = h1_star;
-		    h_formula_star_h2 = h2_star;
-		    h_formula_star_pos = pos_star
-		   }) ->
-		(* when insert_wr_phase is called, f represents a reading phase ->
-		   all the writing phases whould be emp *)
-		if (contains_phase h2_star) then
-		  (* insert in the nested phase *)
-		  Star({
-			h_formula_star_h1 = h1_star;
-			h_formula_star_h2 = insert_wr_phase h2_star wr_phase;
-			h_formula_star_pos = pos_star
-		       })
-		else failwith ("[iformula.ml] : should contain phase\n")
-		  
-	    | _ -> Star({
-			h_formula_star_h1 = h2;
-			h_formula_star_h2 = wr_phase;
-			h_formula_star_pos = pos
-		       })
-	in
-	  (* reconstruct the phase *)
-	  Phase({h_formula_phase_rd = h1;
-		 h_formula_phase_rw = new_h2;
-		h_formula_phase_pos = pos})
-    | _ -> failwith ("[iformula.ml] : There should be a phase at this point\n")
-
-
-and insert_rd_phase (f : h_formula) (rd_phase : h_formula) : h_formula = 
-  match f with
-    | Phase ({h_formula_phase_rd = h1;
-	     h_formula_phase_rw = h2;
-	     h_formula_phase_pos = pos}) ->
-	let new_h2 = 
-	(match h2 with
-	   | HTrue -> 
-	       (* construct the new phase *)
-		let new_phase = Phase({h_formula_phase_rd = rd_phase; 
-				  h_formula_phase_rw = HTrue;
-				  h_formula_phase_pos = pos})
-		in
-		  (* input the new phase *)
-		Star({h_formula_star_h1 = HTrue;
-		      h_formula_star_h2 = new_phase;
-		      h_formula_star_pos = pos})
-	   | Conj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n") (* the write phase does not contain conj *)	     
-	   | Star ({h_formula_star_h1 = h1_star;
-		    h_formula_star_h2 = h2_star;
-		    h_formula_star_pos = pos_star
-		   }) ->
-	       let new_phase = insert_rd_phase h2_star rd_phase in
-	       Star({h_formula_star_h1 = h1_star;
-		     h_formula_star_h2 = new_phase;
-		     h_formula_star_pos = pos_star})
-	   | _ ->
-		let new_phase = Phase({h_formula_phase_rd = rd_phase; 
-				  h_formula_phase_rw = HTrue;
-				  h_formula_phase_pos = pos})
-		in
-		Star({h_formula_star_h1 = h2;
-		      h_formula_star_h2 = new_phase;
-		      h_formula_star_pos = pos})
-	)
-	in
-	  Phase({
-		  h_formula_phase_rd = h1;
-		  h_formula_phase_rw = new_h2;
-		  h_formula_phase_pos = pos;
-		})
-    | Conj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n")	     
-    | _ -> 
-		let new_phase = Phase({h_formula_phase_rd = rd_phase; 
-				  h_formula_phase_rw = HTrue;
-				  h_formula_phase_pos = no_pos})
-		in
-		let new_star = Star({h_formula_star_h1 = HTrue;
-		      h_formula_star_h2 = new_phase;
-		      h_formula_star_pos = no_pos})
-		in 
-		Phase({
-		  h_formula_phase_rd = f;
-		  h_formula_phase_rw = new_star;
-		  h_formula_phase_pos = no_pos;
-		})
-
 let rec break_formula (f : formula) : P.b_formula list list =
   match f with
 	| Base bf -> [P.break_pure_formula bf.formula_base_pure]
@@ -1849,6 +1731,22 @@ and break_ext_formula (f : ext_formula) : P.b_formula list list =
 	| EBase bf -> [List.concat ((break_formula bf.formula_ext_base) @ (break_struc_formula bf.formula_ext_continuation))]
 	| EAssume (af, _) -> break_formula af
 	| EVariance _ -> []
+ | EInfer bf -> break_ext_formula bf.formula_inf_continuation
 
 and break_struc_formula (f : struc_formula) : P.b_formula list list =
   List.fold_left (fun a ef -> a @ (break_ext_formula ef)) [] f
+
+let isLend(a : ann) : bool = 
+  match a with
+    | ConstAnn(Lend) -> true
+    | _ -> false
+
+and isMutable(a : ann) : bool = 
+  match a with
+    | ConstAnn(Mutable) -> true
+    | _ -> false
+
+and isImm(a : ann) : bool = 
+  match a with
+    | ConstAnn(Imm) -> true
+    | _ -> false

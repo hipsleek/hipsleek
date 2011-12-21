@@ -1,0 +1,17 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+// expect v<:@I
+infer [v] x::node<p,q>@v |- x::node<a,b>@L.
+print residue.
+
+infer [v] x::node<p,q>@v |- x::node<a,b>@v.
+print residue.
+
+infer [v] x::node<p,q>@v |- x::node<a,b>@M.
+print residue.
+
+infer [v] x::node<p,q>@v |- x::node<a,b>@I.
+print residue.

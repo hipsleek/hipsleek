@@ -107,9 +107,12 @@ and proc_decl = {
 		proc_return : typ;
 		proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
-    proc_static_specs_with_pre : Cformula.struc_formula;
+    (* proc_static_specs_with_pre : Cformula.struc_formula; *)
+    (* this puts invariant of pre into the post-condition *)
     proc_dynamic_specs : Cformula.struc_formula;
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
+    (* stack of static specs inferred *)
+    proc_stk_of_static_specs : Cformula.struc_formula Gen.stack_noinit;
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     proc_file : string;
@@ -191,7 +194,7 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    exp_bind_imm : bool;
+    exp_bind_imm : heap_ann;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
@@ -382,6 +385,7 @@ let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been in
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_spec_var_list = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
@@ -1349,6 +1353,7 @@ let rec check_proper_return cret_type exc_list f =
 	| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
 	| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 	| F.EVariance b -> ()
+ | F.EInfer b -> ()
   in
   List.iter helper f
 

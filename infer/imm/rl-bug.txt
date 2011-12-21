@@ -1,0 +1,18 @@
+
+There is an insidious bug due to redlog prover
+that is non-deterministic. For entailment (5) in
+infer/imm/insidious.slk; it gave two different
+results depending on the run/executions:
+
+Entail (5): Valid. (bot)
+<1>false & false &
+{FLOW,(-1,0)=__false}
+
+Entail (5): Fail.(may) cause:(failure_code=213)  v<:(@M) |-  v=@M (may-bug).
+
+
+This bug need to be fixed or we will have a very
+unstable verification system with redlog. Could it be
+due to timeout or abort from redlog, this is being interpreted
+as a "false" during unsat checking.
+

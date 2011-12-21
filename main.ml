@@ -178,7 +178,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog cprog prog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -235,6 +235,10 @@ let main1 () =
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
+  let _ = Printexc.record_backtrace !Globals.trace_failure in
+  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
+
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
       Globals.procs_verified := ["f3"];

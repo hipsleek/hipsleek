@@ -6,13 +6,13 @@ pred ll<n> == self = null & n = 0
 
 // testing unfolding
 
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::node<_,_>@I).
+checkentail (y::ll<n>@L); x::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  |- (y::node<_,_>@L).
 // y; x * (t; z)
 print residue.
 //1. Valid.
 
 
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- y::node<_,_>. 
+checkentail (y::ll<n>@L); x::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  |- y::node<_,_>. 
 //print residue.
 //2. Fail.
 

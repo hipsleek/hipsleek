@@ -20,24 +20,6 @@ let rec concatenate_string_list l c = match l with
  | h::t -> h ^ c ^ (concatenate_string_list t c)
 ;;
 
-(* (\* pretty printing for primitive types *\) *)
-(* let string_of_prim_type = function  *)
-(*   | Bool          -> "boolean " *)
-(*   | Float         -> "float " *)
-(*   | Int           -> "int " *)
-(*   | Void          -> "void " *)
-(*   | (BagT t) -> "bag("^(string_of_prim_type t) ^")" *)
-(*   | (TVar i) -> "TVar["^(string_of_int i)^"]" *)
-(*   | List          -> "list " *)
-(* ;; *)
-
-(* (\* pretty printing for types *\) *)
-(* let rec string_of_typ = function  *)
-(*   | Prim t        -> string_of_prim_type t  *)
-(*   | Named ot      -> ot ^ " " *)
-(*   | Array (t,_) -> (string_of_typ t) ^ "[]" (\* "array" *\) (\* AN HOA *\) *)
-(* ;; *)
-
 (* pretty printing for unary operators *)
 let string_of_unary_op = function 
   | OpUMinus       -> "-"
@@ -79,7 +61,7 @@ let string_of_assign_op = function
 
 let string_of_primed = function 
 	| Unprimed -> ""
-	| Primed -> "#'";;
+	| Primed -> "'";;
 
 (* function used to decide if parentrhesis are needed or not *)
 let need_parenthesis = function 
@@ -97,7 +79,7 @@ let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
-let string_of_var (c1,c2) = c1^(match c2 with | Primed -> "#'"| _ -> "");;
+let string_of_var (c1,c2) = c1^(string_of_primed c2);;
 
 let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
 
@@ -109,38 +91,39 @@ let rec string_of_typed_var_list l = match l with
   | h::[] -> (string_of_typed_var h) 
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
 
+let string_of_id (id,p) = id ^ (string_of_primed p)
+;;
+
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l                  -> "null"
   | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
-  | P.Var (x, l)        -> (match x with 
-															|(id, p) -> id ^ (match p with 
-																									| Primed    -> "#'" 
-																									| Unprimed  -> "" ))
+  | P.Var (x, l)        -> string_of_id x
   | P.IConst (i, l)           -> string_of_int i
+  | P.AConst (i, l)           -> string_of_heap_ann i
   | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with 
-																	| P.Null _ 
-																	| P.Var _ 
-																	| P.IConst _ 
-																	| P.Max _ 
-																	| P.Min _   -> (string_of_formula_exp e1) ^ "+"   			      
-																	| _  -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
-			^ (match e2 with 
-					 | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
-					 | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
+	  | P.Null _ 
+	  | P.Var _ 
+	  | P.IConst _ 
+	  | P.Max _ 
+	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"   			      
+	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
+		^ (match e2 with 
+		  | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
+		  | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
   | P.Subtract (e1, e2, l)    -> if need_parenthesis e1
     then 
       if need_parenthesis e2
       then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
-		  else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
+	  else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
     else 
-			(string_of_formula_exp e1) 
-			^ "-" ^ (string_of_formula_exp e2)										    
+	  (string_of_formula_exp e1) 
+	  ^ "-" ^ (string_of_formula_exp e2)										    
   | P.Mult (e1, e2, _) ->
-      "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
+        "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Div (e1, e2, _) ->
-      "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
+        "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
   | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
@@ -151,21 +134,21 @@ let rec string_of_formula_exp = function
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
   | P.ArrayAt ((a, p), i, _)     ->  
-          (* An Hoa : print the array access *)
-          a ^ (match p with 
-                | Primed -> "'["
-                | Unprimed -> "[") 
-          ^ (string_of_formula_exp_list i) ^ "]"
+        (* An Hoa : print the array access *)
+        a ^ (match p with 
+          | Primed -> "'["
+          | Unprimed -> "[") 
+        ^ (string_of_formula_exp_list i) ^ "]"
   | P.Bag (el, l)		-> "Bag("^(string_of_formula_exp_list el) ^ ")"
   | P.BagUnion (el, l)		-> "BagUnion("^(string_of_formula_exp_list el) ^ ")"
   | P.BagIntersect (el, l)		-> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
   | P.BagDiff (e1, e2, l)         -> "BagDiff(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
- (* | _ -> "bag constraint"   *)
+        (* | _ -> "bag constraint"   *)
 
-  (* | Bag of (exp list * loc) *)
-  (* | BagUnion of (exp list * loc) *)
-  (* | BagIntersect of (exp list * loc) *)
-  (* | BagDiff of (exp * exp * loc) *)
+(* | Bag of (exp list * loc) *)
+(* | BagUnion of (exp list * loc) *)
+(* | BagIntersect of (exp list * loc) *)
+(* | BagDiff of (exp * exp * loc) *)
 
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
@@ -173,10 +156,7 @@ and string_of_formula_exp_list l = match l with
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
 ;;
-let string_of_id (id,p) = id ^ (match p with 
-      | Primed    -> "#'" 
-      | Unprimed  -> "" )
-;;
+
    
 (* pretty printing for boolean constraints *)
 let string_of_slicing_label sl =
@@ -189,10 +169,8 @@ let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
-(* (match x with  *)
-(*     |(id, p) -> id ^ (match p with  *)
-(*       | Primed    -> "#'"  *)
-(*       | Unprimed  -> "" )) *)
+  | P.SubAnn (e1,e2, l)        -> 
+        (string_of_formula_exp e1)^"<:"^(string_of_formula_exp e2)
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
@@ -251,12 +229,10 @@ let rec string_of_pure_formula = function
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.Or (f1, f2,lbl, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
   | P.Not (f,lbl, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
-  | P.Forall (x, f,lbl, l)            -> "all " ^ (match x with (id, p) -> id ^ (match p with 
-    | Primed    -> "#'"
-    | Unprimed  -> "")) ^ " (" ^ (string_of_pure_formula f) ^ ")"
-  | P.Exists (x, f,lbl, l)            -> "ex " ^ (match x with (id, p) -> id ^ (match p with 
-    | Primed    -> "#'"
-    | Unprimed  -> "")) ^ " (" ^ (string_of_pure_formula f) ^ ")"
+  | P.Forall (x, f,lbl, l)            -> "all " ^ (string_of_id x)
+        ^ " (" ^ (string_of_pure_formula f) ^ ")"
+  | P.Exists (x, f,lbl, l)            -> "ex " ^ (string_of_id x)
+        ^ " (" ^ (string_of_pure_formula f) ^ ")"
 ;;    
 
 let is_bool_f = function 
@@ -306,25 +282,40 @@ let rec string_of_h_formula = function
 		 F.h_formula_heap_name = id;
          F.h_formula_heap_perm = perm; (*LDK*)
 		 F.h_formula_heap_arguments = pl;
+		 F.h_formula_heap_imm = imm;
 		 F.h_formula_heap_label = pi;
 		 F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
-	  ((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
-  | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
+      ((string_of_id x)
+    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm))
+  | F.HeapNode2 ({F.h_formula_heap2_node = xid   ;
 		  F.h_formula_heap2_name = id;
 		  F.h_formula_heap2_label = pi;
+		  F.h_formula_heap2_imm = imm;
           F.h_formula_heap2_perm = perm; (*LDK*)
 		  F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
       string_of_formula_label_opt pi
-	      (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^ perm_str ^ "<" ^ tmp2 ^ ">")
+          ((string_of_id xid)
+      ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm))
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
+
+and string_of_imm imm = match imm with
+  | Iformula.ConstAnn(Imm) -> "@I"
+  | Iformula.ConstAnn(Lend) -> "@L"
+  | Iformula.ConstAnn(Mutable) -> "@M"
+  | Iformula.PolyAnn(v, _) -> "@" ^ (string_of_var v)
+
+(* and string_of_imm imm = match imm with *)
+(*   | Imm -> "@I" *)
+(*   | Lend -> "@L" *)
+(*   | _ -> "@M" *)
 ;;
  
-let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "#'" | Unprimed -> "");; 
+(* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
 let string_of_one_formula (f:F.one_formula) =
   let h,p,br,th,pos = F.split_one_formula f in
@@ -425,6 +416,13 @@ let rec string_of_ext_formula = function
 		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
 		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
 		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
+ | Iformula.EInfer {Iformula.formula_inf_vars = lvars;
+   Iformula.formula_inf_post = postf;
+   Iformula.formula_inf_continuation = continuation;} ->
+          let ps =if (lvars==[] && postf) then "@post " else "" in
+    let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
+    let string_of_continuation = string_of_ext_formula continuation in
+    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c ->
@@ -442,8 +440,8 @@ let rec string_of_spec = function
 			srequires_base = fb;
 			srequires_continuation = cont;
 			}	 ->
-				(*let l1 = List.fold_left (fun a c -> a^ ","^(string_of_identifier c)) "" ev in*)
-				let l2 = List.fold_left (fun a c -> a^ (string_of_identifier c)) "" ei in
+				(*let l1 = List.fold_left (fun a c -> a^ ","^(string_of_id c)) "" ev in*)
+				let l2 = List.fold_left (fun a c -> a^ (string_of_id c)) "" ei in
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a  c1-> a^"\n"^string_of_spec c1) "{" cont)^"}\n" in
 				(*"["^l1^"],"*)"["^l2^"]"^b^" "^c

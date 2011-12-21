@@ -12,7 +12,6 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 
 type bformula_label = int
-	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
 
@@ -35,6 +34,8 @@ and primed =
   | Primed
   | Unprimed
 
+and heap_ann = Lend | Imm | Mutable
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)
@@ -48,6 +49,7 @@ and primed =
 type typ =
   | UNK 
   | TVar of int
+  | AnnT
   | Bool
   | Float
   | Int
@@ -87,6 +89,17 @@ let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false
 
+let string_of_heap_ann a =
+  match a with
+    | Lend -> "@L"
+    | Imm -> "@I"
+    | Mutable -> "@M"
+
+let int_of_heap_ann a =
+  match a with
+    | Lend -> 2
+    | Imm -> 1
+    | Mutable -> 0
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "File \"%s\",Line:%d,Col:%d"
@@ -157,6 +170,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Int           -> "int"
   | Void          -> "void"
   | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
@@ -176,6 +190,7 @@ let rec string_of_typ_alpha = function
   | Int           -> "int"
   | Void          -> "void"
   | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -247,10 +262,20 @@ let push_opt_val_rev opt v = match opt with
   | None -> None
   | Some s -> Some (v, s)
 
+let no_pos1 = { Lexing.pos_fname = "";
+				   Lexing.pos_lnum = 0;
+				   Lexing.pos_bol = 0; 
+				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
 
+let sl_error = "separation entailment"
+let logical_error = "logical bug"
+let lemma_error = "lemma"
+let undefined_error = "undefined"
+
 let eres_name = "eres"
+
 
 let self = "self"
 
@@ -298,7 +323,7 @@ let elim_unsat = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref false
+let allow_imm = ref true
 
 let ann_derv = ref false
 
@@ -345,6 +370,8 @@ let num_self_fold_search = ref 0
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
+
+let trace_failure = ref false
 
 let trace_all = ref false
 
@@ -425,10 +452,16 @@ let disable_multiple_specs =ref false
 (* Options for slicing *)
 let do_slicing = ref false
 let opt_imply = ref 0
+let opt_ineq = ref false
 let infer_slicing = ref false
+let multi_provers = ref false
+let is_sat_slicing = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+
+(* Inference *)
+let call_graph : ((string list) list) ref = ref [[]]
 
 let add_count (t: int ref) = 
 	t := !t+1
@@ -591,6 +624,18 @@ let fresh_formula_cache_no  () =
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
+let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
+	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+
+let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
+;;
+
+let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
+
+let string_of_loc_by_char_num (l : loc) = 
+  Printf.sprintf "(%d-%d)"
+    l.start_pos.Lexing.pos_cnum
+    l.end_pos.Lexing.pos_cnum
 
 let seq_local_number = ref 0
 

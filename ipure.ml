@@ -21,6 +21,8 @@ and b_formula = p_formula * ((bool * int * (exp list)) option)
 and p_formula = 
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
+    (* Ann Subtyping v1 <: v2 *)
+  | SubAnn of (exp * exp * loc) 
   | Lt of (exp * exp * loc)
   | Lte of (exp * exp * loc)
   | Gt of (exp * exp * loc)
@@ -50,6 +52,7 @@ and exp =
 	  (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   | FConst of (float * loc)
+  | AConst of (heap_ann * loc)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
@@ -106,11 +109,10 @@ and bfv (bf : b_formula) =
   match pf with
   | BConst _ -> []
   | BVar (bv, _) -> [bv]
-  | Lt (a1, a2, _) -> combine_avars a1 a2
-  | Lte (a1, a2, _) -> combine_avars a1 a2
-  | Gt (a1, a2, _) -> combine_avars a1 a2
-  | Gte (a1, a2, _) -> combine_avars a1 a2
-  | Eq (a1, a2, _) -> combine_avars a1 a2
+  | Lt (a1, a2, _) | Lte (a1, a2, _) 
+  | Gt (a1, a2, _) | Gte (a1, a2, _) 
+  | SubAnn (a1, a2, _) 
+  | Eq (a1, a2, _) 
   | Neq (a1, a2, _) -> combine_avars a1 a2
   | EqMax (a1, a2, a3, _) -> 
 	  let fv1 = afv a1 in
@@ -157,10 +159,11 @@ and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
 
 and afv (af : exp) : (ident * primed) list = match af with
-  | Null _ -> []
   | Var (sv, _) -> let id = fst sv in
 						if (id.[0] = '#') then [] else [sv]
-  | IConst _ -> []
+  | Null _ 
+  | AConst _ 
+  | IConst _ 
   | FConst _ -> []
   | Ann_Exp (e,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
@@ -275,6 +278,12 @@ and mkGte a1 a2 pos =
 	failwith ("max/min can only be used in equality")  
   else 
 	Gte (a1, a2, pos)
+
+and mkSubAnn a1 a2 pos = 
+  if is_max_min a1 || is_max_min a2 then 
+	failwith ("max/min can only be used in equality")  
+  else 
+	SubAnn (a1, a2, pos)
 
 and mkNeq a1 a2 pos = 
   if is_max_min a1 || is_max_min a2 then 
@@ -422,7 +431,7 @@ and build_relation relop alist10 alist20 pos =
 and pos_of_formula (f : formula) = match f with 
 	| BForm ((pf,_),_) -> begin match pf with
 		  | BConst (_,p) | BVar (_,p)
-		  | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
+		  | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | SubAnn (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
 		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
 			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
@@ -432,10 +441,11 @@ and pos_of_formula (f : formula) = match f with
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
 
 and pos_of_exp (e : exp) = match e with
-  | Null pos -> pos
-  | Var (_, p) -> p
-  | IConst (_, p) -> p
-  | FConst (_, p) -> p
+  | Null p 
+  | Var (_, p) 
+  | IConst (_, p) 
+  | FConst (_, p) 
+  | AConst (_, p) -> p
   | Ann_Exp (e,_) -> pos_of_exp e
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
@@ -511,6 +521,8 @@ and b_apply_one (fr, t) bf =
 							e_apply_one (fr, t) a2, pos)
   | Gte (a1, a2, pos) -> Gte (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
+  | SubAnn (a1, a2, pos) -> SubAnn (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
   | Eq (a1, a2, pos) -> Eq (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
   | Neq (a1, a2, pos) -> Neq (e_apply_one (fr, t) a1,
@@ -537,8 +549,9 @@ and b_apply_one (fr, t) bf =
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
-  | Null _ | IConst _ -> e
-  | FConst _ -> e
+  | Null _ | IConst _ 
+  | FConst _ 
+  | AConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one p a1,
@@ -631,6 +644,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | Lte (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | Gt (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | Gte (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | SubAnn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | Eq (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | Neq (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | EqMax (b1, b2, b3, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2) @ (look_for_anonymous_exp b3)
@@ -673,6 +687,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| Lte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Gt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Gte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+	| SubAnn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Eq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Neq (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| EqMax (e1, e2, e3, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls @ find_lexp_exp e3 ls
@@ -694,6 +709,7 @@ and find_lexp_exp (e: exp) ls =
 	| Null _
 	| Var _
 	| IConst _
+	| AConst _
 	| FConst _ -> []
     | Ann_Exp(e,_) -> find_lexp_exp e ls
 	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -725,10 +741,37 @@ let rec break_pure_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_pure_formula f
 	| Exists (_, f, _, _) -> break_pure_formula f
 
+let rec contain_vars_exp (expr : exp) : bool =
+  match expr with
+  | Null _ 
+  | Var _ 
+  | IConst _ 
+  | AConst _ 
+  | FConst _ -> false
+  | Ann_Exp (exp,_) -> (contain_vars_exp exp)
+  | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Div (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagUnion (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagIntersect (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | BagDiff (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | List (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | ListCons (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | ListHead (exp, _) -> contain_vars_exp exp
+  | ListTail (exp, _) -> contain_vars_exp exp
+  | ListLength (exp, _) -> contain_vars_exp exp
+  | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
+  | ListReverse (exp, _) -> contain_vars_exp exp
+  | ArrayAt _ -> true 
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
-  | Null _ -> (e, None)
-  | Var _ -> (e, None)
-  | IConst _ -> (e, None)
+  | Null _ 
+  | Var _ 
+  | IConst _ 
+  | AConst _ 
   | FConst _ -> (e, None)
   | Ann_Exp (e,_) -> float_out_exp_min_max e
   | Add (e1, e2, l) ->
@@ -938,6 +981,7 @@ and float_out_pure_min_max (p : formula) : formula =
 				  | Null _
 				  | IConst _
                   | FConst _
+                  | AConst _
 				  | Var _ ->
 						let ne1 , np1 = float_out_exp_min_max v1 in
 						let ne2 , np2 = float_out_exp_min_max v2 in
@@ -951,7 +995,7 @@ and float_out_pure_min_max (p : formula) : formula =
 			  | Max(v1, v2, v3) -> let r2 = match e2 with
 				  | Null _
 				  | IConst _
-                  | FConst _
+                  | AConst _
 				  | Var _ ->
 						let ne1 , np1 = float_out_exp_min_max v1 in
 						let ne2 , np2 = float_out_exp_min_max v2 in
@@ -966,6 +1010,7 @@ and float_out_pure_min_max (p : formula) : formula =
 			  | Null _
 			  | IConst _
               | FConst _
+              | AConst _
 			  | Var _ -> let r2 = match e2 with
 				  | Min (v1, v2, v3) ->
 						let ne1 , np1 = float_out_exp_min_max v1 in
@@ -1027,7 +1072,8 @@ and float_out_pure_min_max (p : formula) : formula =
 			let ne2, np2 = float_out_exp_min_max e2 in
 			let t = BForm ((BagSub (ne1, ne2, l), il), lbl) in
 			add_exists t np1 np2 l
-	  | BagMin _ -> BForm (b,lbl)
+	  | SubAnn _
+	  | BagMin _ 
 	  | BagMax _ -> BForm (b,lbl)	
 	  | ListIn (e1, e2, l) -> 
 			let ne1, np1 = float_out_exp_min_max e1 in

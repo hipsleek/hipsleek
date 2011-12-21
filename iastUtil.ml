@@ -1251,6 +1251,7 @@ let pre_process_of_iprog iprims prog =
 
 let pre_process_of_iprog iprims prog = 
   let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
+  (* let pr x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in *)
   Gen.Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
 
 

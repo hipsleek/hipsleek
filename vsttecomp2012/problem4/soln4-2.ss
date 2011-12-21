@@ -53,6 +53,7 @@ universal
  (i) x=null
  (ii) x::tsleg<p,f,d,_> 
  (iii) x::negtlseg<p,f,d,_> 
+
  can we show its universality?, namely
  true |- (i) \/ (ii) \/ (iii)
 */

@@ -58,7 +58,7 @@ int count_rest(node rest, node h)
 
 //	requires rest::cll<p, n> & h = p 
 //	ensures rest::cll<p, n> & res = n; 
-	requires rest::cll<p, n>@I & h = p 
+	requires rest::cll<p, n>@L & h = p 
 	ensures  res = n; 
 
 {
@@ -79,7 +79,7 @@ int count(node x)
 	
 //	requires x::hd<n>
 //	ensures x::hd<n> & res = n; 
-	requires x::hd<n>@I
+	requires x::hd<n>@L
 	ensures res = n; 
 	
 {
@@ -105,7 +105,7 @@ void delete(ref node x)
     requires x::node<v,r>
     case {
       x=r -> ensures x::node<v,r> & x'=null; // x is a leak!
-      x!=r -> requires r::node<w,q>@I
+      x!=r -> requires r::node<w,q>@L
               ensures x'::node<v,q>; // r is a leak!
      }
 {

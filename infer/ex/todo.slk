@@ -1,0 +1,57 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+// (1) 
+// TODO Loc : should not be a must failure 
+infer [n] true  |- n=1 & n=2.
+print residue.
+/*
+
+Infer  (10): Fail. (must) cause:(failure_code=213)  true |-  n=2 & n=1 (RHS: contradiction).
+<1>true & true &
+{FLOW,(1,2)=__Error}
+*/
+
+// (2) 
+infer [y] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+Infer  (2): Fail.(may) cause:15.4 no match for rhs data node: b (may-bug).
+*/
+
+// (3) 
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+Inferred Heap:[ y::node<inf_51,inf_b_52>@M[Orig], b::ll<inf_57>@M[Orig][LHSCase]]
+Inferred Pure:[ b=inf_b_52 & inf_b_52!=null]
+*/
+
+// (4) 
+infer [b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+Inferred Pure:[ b=null]
+*/
+
+// (5)
+infer [i] c=i  |- c>0.
+print residue.
+/*
+Inferred Pure:[ 1<=i]
+*/
+
+// (6) 
+infer [x,n] x::ll<n>   |- x::node<a,b>.
+print residue.
+// TODO : possible to remove inv n>=0?
+//Inferred Pure:[ !(n=0 & x=null) & 0<=n]
+
+

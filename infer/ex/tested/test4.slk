@@ -1,0 +1,24 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+infer [] n=0 & x=y  |- y::ll<n>.
+print residue.
+
+infer [t] n=0 & x=y  |- y::ll<n>.
+print residue.
+/*
+can we have a better error message than:
+
+ERROR: at File "infer/ex/tested/test4.slk",Line:14,Col:24 
+Message: type table does not contain an entry for t' in ; (n_35 int); (n int); (x node); (y node); (TVar__33 int); (TVar__34 node); (TVar__37 int)
+, could it be an unused var?
+*/
+
+
