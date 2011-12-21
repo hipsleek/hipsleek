@@ -2074,9 +2074,10 @@ let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list =
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
     match vv with
       | (v1,v2)::xs -> 
-          let v3 = if (List.mem v1 vs) then Some v2
-              else if (List.mem v2 vs) then Some v1
-              else None 
+          let v3 = if (List.exists (fun v -> eq_spec_var v v1) vs) then Some v2
+              else if (List.exists (fun v -> eq_spec_var v v2) vs) then Some v1
+              else 
+                None 
           in
           (match v3 with
             | None -> helper vs xs
@@ -2087,6 +2088,10 @@ let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list =
 
 let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = 
   let vv= ptr_equations_with_null f in
+  let t1,t2 = List.split vv in
+  (* let _ = print_endline ("find_closure_mix_formula: "  *)
+  (*                        ^ " ### t1 = " ^ (!print_sv_l_f t1)  *)
+  (*                        ^ " ### t2 = " ^ (!print_sv_l_f t2)) in *)
   find_closure v vv
 
 let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list = 

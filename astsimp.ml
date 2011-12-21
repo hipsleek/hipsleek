@@ -1052,6 +1052,7 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 		  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
+		  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
 		  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 		  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 		  let cprocs = !loop_procs @ cprocs1 in
@@ -1877,6 +1878,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (* An Hoa *)
   (*let _ = print_endline ("trans_proc_x : " ^ proc.I.proc_name) in*)
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
+  (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": begin : specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
   let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
   if not (Gen.is_empty dup_names) then
     (let p = List.hd dup_names in
@@ -1914,8 +1916,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     (ignore (List.map add_param all_args);
 	let _ = H.add stab res_name { sv_info_kind = cret_type;id = fresh_int () } in
 	let _ = H.add stab eres_name { sv_info_kind = Named raisable_class ;id = fresh_int () } in
+	let _ = H.add stab thread_name { sv_info_kind = thread_typ;id = fresh_int () } in
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
+    (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
 	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
 	let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
@@ -1959,7 +1963,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let final_dynamic_specs_list = dynamic_specs_list in
     let _ = 
       let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
-    let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((cret_type,res_name)::(Named raisable_class,eres_name)::args) in
+    let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((thread_typ,thread_name)::(cret_type,res_name)::(Named raisable_class,eres_name)::args) in
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
@@ -4074,9 +4078,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let _ = if sep_collect then 
               (gather_type_info_pure prog (IF.flatten_branches p br) stab;
               gather_type_info_heap prog h stab) else () in 					
+            let _ = List.map helper_one_formula a in
             let ch = linearize_formula prog f0 stab in					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
-            let _ = List.map helper_one_formula a in
             let _ = 
               if sep_collect then (
                   if quantify then
@@ -4096,6 +4100,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_and = a;
             IF.formula_exists_pos = pos} -> (
             let rl = res_retrieve stab clean_res fl in
+            (* let _ = print_endline ("trans_formula: Exists: before sep_collect:" *)
+            (*                        ^ " ### stab = " ^ (string_of_stab stab )) in *)
             let _ = if sep_collect then (gather_type_info_pure prog (IF.flatten_branches p br) stab;
             gather_type_info_heap prog h stab) else () in 
             let _ = List.map helper_one_formula a in
@@ -4106,6 +4112,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_branches = br;
                 IF.formula_base_and = a;
                 IF.formula_base_pos = pos; } in
+            (* let _ = print_endline ("trans_formula: Exists: before linearize:" *)
+            (*                        ^ " ### stab = " ^ (string_of_stab stab )) in *)
             let ch = linearize_formula prog f1 stab in
             let qsvars = List.map (fun qv -> trans_var qv stab pos) qvars in
             let ch = CF.push_exists qsvars ch in
@@ -4344,7 +4352,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     res
 
   in
-  let linearize_one_formula f pos = 
+  let linearize_one_formula_x f pos = 
     let h = f.IF.formula_heap in
     let p = f.IF.formula_pure in
     let br = f.IF.formula_branches in
@@ -4360,11 +4368,15 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           let thread_var = Cpure.SpecVar (Globals.thread_typ, Globals.thread_name,Globals.Unprimed) in
           (*find all spec_var which is equal to "thread"*)
           let vv = MCP.find_closure_mix_formula thread_var mix_p in 
-          let vv = Gen.BList.difference_eq CP.eq_spec_var vv [thread_var] in
-          if (vv==[]) then
+          let vv1 = Gen.BList.difference_eq CP.eq_spec_var vv [thread_var] in
+          (* let _ = print_endline ("linearize_one_formula:" *)
+          (*                        ^ "\n ### mix_p = " ^ (Cprinter.string_of_mix_formula mix_p) *)
+          (*                        ^ "\n ### vv = " ^ (Cprinter.string_of_spec_var_list vv) *)
+          (*                        ^ "\n ### vv1 = " ^ (Cprinter.string_of_spec_var_list vv1)) in *)
+          if (vv1==[]) then
             Error.report_error {Error.error_loc = pos;Error.error_text = "linearize_one_formula: could not find thread id"}
           else
-            let v = List.hd vv in
+            let v = List.hd vv1 in
             v
       | Some (ve,pe) -> (trans_var (ve, pe) stab pos))
     in
@@ -4377,6 +4389,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                   CF.formula_label = None;
                   CF.formula_pos = pos} in
     (new_f,type_f)
+  in
+  let linearize_one_formula f pos =
+    let pr (a,b) = Cprinter.string_of_one_formula a in
+    Gen.Debug.no_1 "linearize_one_formula" 
+        Iprinter.string_of_one_formula pr
+        (fun _ -> linearize_one_formula_x f pos) f
   in
   let linearize_base base pos =
     let h = base.IF.formula_base_heap in
@@ -5555,6 +5573,13 @@ and gather_type_info_formula prog f0 stab filter_res =
       (fun _ _ _ -> gather_type_info_formula_x prog f0 stab filter_res)
       f0 stab filter_res
 
+and gather_type_info_one_formula prog (f : IF.one_formula) stab filter_res =
+  (
+      gather_type_info_heap prog f.IF.formula_heap stab;
+      gather_type_info_pure prog f.IF.formula_pure stab;
+      ignore (List.map (fun (c1,c2) -> gather_type_info_pure prog c2 stab) f.IF.formula_branches)
+  )
+
 and gather_type_info_formula_x prog f0 stab filter_res = 
   (* let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in 
      let _ = print_string ("stab: " ^ (string_of_stab stab) ^ "\n") in *)
@@ -5569,10 +5594,12 @@ and gather_type_info_formula_x prog f0 stab filter_res =
 	  gather_type_info_formula_x prog b.IF.formula_or_f2 stab filter_res)
     | IF.Exists b -> 
 	      let rl = res_retrieve stab filter_res b.IF.formula_exists_flow in
+          let _ = List.map (fun f -> gather_type_info_one_formula prog f stab filter_res) b.IF.formula_exists_and in
 	      (helper b.IF.formula_exists_pure b.IF.formula_exists_branches b.IF.formula_exists_heap);	
 	      (res_replace stab rl filter_res b.IF.formula_exists_flow) 
     | IF.Base b ->
 	      let rl = res_retrieve stab filter_res b.IF.formula_base_flow in
+          let _ = List.map (fun f -> gather_type_info_one_formula prog f stab filter_res) b.IF.formula_base_and in
 	      (helper b.IF.formula_base_pure b.IF.formula_base_branches b.IF.formula_base_heap);
 	      (res_replace stab rl filter_res b.IF.formula_base_flow) 
 
@@ -6115,18 +6142,51 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
       (string_of_ident_list idents) in
     Gen.Debug.no_2 "linearize_heap" pr0 pr1 pr2 
         (fun _ _ -> linearize_heap used_names f) used_names f  in
-  let normalize_base heap cp fl new_br evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
+  let rec normalize_base heap cp fl new_br a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("normalize_base: heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
+    let func (f:IF.one_formula) =
+      (*Note: f.formula_thread should appear in f.formula_pure*)
+      normalize_base f.IF.formula_heap 
+          f.IF.formula_pure
+          top_flow
+          f.IF.formula_branches
+          []
+          []
+          f.IF.formula_pos
+    in
+    let tmp_a = List.map func a in
+    let rec split3 ls = match ls with
+      | [] -> [],[],[]
+      | (x1,x2,x3)::xs -> 
+          let ls1,ls2,ls3 = split3 xs in
+          (x1::ls1,x2::ls2,x3::ls3)
+    in
+    let new_a, used_vars_a,to_expl_a = split3 tmp_a in
+    let rec func2 (fs: (IF.formula * IF.one_formula) list) =
+      match fs with
+        | [] -> []
+        | (f1,f2):: xs ->
+            let rs = func2 xs in
+            let f = IF.one_formula_of_formula f1 in
+            let f1 = {f with IF.formula_thread = f2.IF.formula_thread} in
+            f1::rs
+    in
+    let tmp = List.combine new_a a in
+    let new_a = func2 tmp in
+    let used_vars_a = List.concat used_vars_a in
+    let to_expl_a = List.concat to_expl_a in
     let heap = Immutable.normalize_h_formula heap false in 
     let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
     let new_p = Ipure.mkAnd cp link_f pos in
     let new_br = IP.merge_branches new_br link_f_br in
+    let nu = nu@used_vars_a in
+    let posib_expl = posib_expl@to_expl_a in
     let tmp_evars, to_expl =
       (let init_evars = (h_evars@evs) in
       let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
       let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in       
       (to_evars,to_expl))in
-    let result = IF.mkExists tmp_evars new_h new_p fl new_br [] pos in
+    let result = IF.mkExists tmp_evars new_h new_p fl new_br new_a pos in
     let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
     if not (Gen.is_empty tmp_evars)  then 
       Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos
@@ -6143,12 +6203,14 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
           b.IF.formula_base_pure 
               b.IF.formula_base_flow
               b.IF.formula_base_branches 
+              b.IF.formula_base_and
               []
               b.IF.formula_base_pos
     | IF.Exists b-> normalize_base b.IF.formula_exists_heap 
           b.IF.formula_exists_pure
               b.IF.formula_exists_flow
               b.IF.formula_exists_branches 
+              b.IF.formula_exists_and
               b.IF.formula_exists_qvars 
               b.IF.formula_exists_pos in
   helper f    

@@ -338,11 +338,11 @@ let rec string_of_formula = function
 				  F.formula_base_flow = fl;
 				  F.formula_base_and = a;
 				  F.formula_base_pos = l}) ->
-      let sa = if a==[] then "" else "\nand " in
-      let sa = sa ^ string_of_one_formula_list a in
+      let sa = if a == [] then "" else "\nand " in
+      let sa = sa ^ (string_of_one_formula_list a) in
       let rs = 
 	  if hf = F.HTrue then 
-		((string_of_pure_formula pf)^" FLOW "^fl^")")
+		((string_of_pure_formula pf)^" FLOW "^fl)
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)

@@ -123,7 +123,9 @@ let process_source_full source =
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
+    (* let _ = print_endline ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
+    (* let _ = print_endline ("process_source_full: after --pip") in *)
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
     (* let ptime1 = Unix.times () in

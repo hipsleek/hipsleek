@@ -230,15 +230,28 @@ and formula_of_pure_with_flow p f a pos = mkBase HTrue p f [] a pos
 and one_formula_of_formula f =
   match f with
     | Base b ->
-        one_formula_of_base_formula b
+        one_formula_of_formula_base b
+    | Exists b ->
+        one_formula_of_formula_exists b
     | _ ->
         Error.report_error	{Error.error_loc = no_pos; Error.error_text = "expected base formula, not found"} 
 
-and one_formula_of_base_formula b =
+and one_formula_of_formula_base b =
   let h= b.formula_base_heap in
   let p = b.formula_base_pure in
   let br = b.formula_base_branches in
   let pos = b.formula_base_pos in
+  {formula_heap = h;
+   formula_pure = p;
+   formula_branches = br;
+   formula_thread = None;
+   formula_pos = pos}
+
+and one_formula_of_formula_exists b =
+  let h= b.formula_exists_heap in
+  let p = b.formula_exists_pure in
+  let br = b.formula_exists_branches in
+  let pos = b.formula_exists_pos in
   {formula_heap = h;
    formula_pure = p;
    formula_branches = br;

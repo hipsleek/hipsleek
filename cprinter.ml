@@ -1007,7 +1007,7 @@ let rec string_of_sharp_flow sf = match sf with
 
 let pr_one_formula (f:one_formula) = 
   let h,p,br,th,lb,pos = split_one_formula f in
-  fmt_string ("[["); pr_spec_var; fmt_string ("]]");
+  fmt_string (" ["); (pr_spec_var th); fmt_string ("] ");
   pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,br)
 
 let string_of_one_formula f = poly_string_of_pr  pr_one_formula f
@@ -1019,7 +1019,7 @@ let rec pr_one_formula_list (ls:one_formula list) =
         pr_one_formula f;
         if (fs==[]) then ()
         else 
-          fmt_string ("and "); pr_one_formula_list fs
+          fmt_string ("\nand "); pr_one_formula_list fs
 
 let string_of_one_formula_list ls = poly_string_of_pr  pr_one_formula_list ls
 
