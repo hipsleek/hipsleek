@@ -4156,9 +4156,12 @@ and heap_entail_split_rhs_phases_x
 		                    | Ctx(estate) -> 
 		                          subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p), 
 		                          subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq))
-		                    | OCtx _ -> report_error no_pos ("Disunctive context\n"))
+		                    | OCtx _ -> report_error no_pos ("Disjunctive context\n"))
 		                in 
 		                let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
+                        let _ = print_endline ("**********************************") in
+                        let _ = print_endline ("heap_split_rhs new_conseq :"^(Cprinter.string_of_formula new_conseq)) in
+                        let _ = print_endline ("**********************************") in
 		                heap_entail_conjunct prog is_folding  c new_conseq []  pos) cl 
 	                in
 	                let res_ctx, res_prf = List.split res in
@@ -4291,15 +4294,21 @@ and heap_n_pure_entail_x
           (entail_p_ctx, entail_p_prf)
 
 and one_ctx_entail prog is_folding  c conseq func p pos : (list_context * proof) =
-  Gen.Debug.no_3 "one_ctx_entail" (Cprinter.string_of_context) Cprinter.string_of_formula Cprinter.string_of_mix_formula
-      (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK") 
+  Gen.Debug.ho_3 "one_ctx_entail" (Cprinter.string_of_context_short) Cprinter.string_of_formula Cprinter.string_of_mix_formula
+      (* (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  *)
+      (fun (lc,_) -> Cprinter.string_of_list_context_short lc)
       (fun ctx0 conseq p ->  one_ctx_entail_x prog is_folding ctx0 conseq func p pos) c conseq p
 
 and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proof) = 
   (match c with 
     | Ctx(estate) -> 
+          (* TODO : es_aux_conseq is an input here *)
           let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p) in
-          let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq)) in
+          let aux_c = estate.es_aux_conseq in
+          let _ = print_endline ("*********************************") in
+          let _ = print_endline ("input aux_conseq:"^(Cprinter.string_of_pure_formula aux_c)) in
+          let _ = print_endline ("*********************************") in
+          let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure aux_c)) in
           let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
 		  (*  let _ = print_string("context = " ^ (Cprinter.string_of_context c) ^ "\n") in		  
 		      let _ = print_string("new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in*)

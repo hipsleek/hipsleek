@@ -1449,11 +1449,12 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
+    | Ctx e -> [(e.es_formula,e.es_aux_conseq,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,iv,ih,ip) =
+  let pr (f,ac,iv,ih,ip) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
+    pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();
     pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
@@ -1466,11 +1467,12 @@ let pr_context_short (ctx : context) =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
+    | Ctx e -> [(e.es_formula,e.es_aux_conseq,e.es_infer_vars,e.es_infer_heap,e.es_infer_pure)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,iv,ih,ip) =
+  let pr (f,ac,iv,ih,ip) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
+    pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();
     pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
