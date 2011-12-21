@@ -9269,9 +9269,10 @@ let rec simplify_post post_fml post_vars prog = match post_fml with
     Or {formula_or_f1 = simplify_post f1 post_vars prog; 
         formula_or_f2 = simplify_post f2 post_vars prog; 
         formula_or_pos = pos}
-  | _ -> 
+  | _ ->
     let h, p, fl, b, t = split_components post_fml in
-    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos) in
+    let p = MCP.pure_of_mix p in
+    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify post_vars p None no_pos) in
     let h,rm_vars = simplify_heap h p prog in
     let rm_vars = CP.diff_svl rm_vars (h_fv h) in
     let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify rm_vars p None no_pos) in

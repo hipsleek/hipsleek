@@ -325,6 +325,8 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                 let pre_vars = CF.context_fv ctx in
                                 (* filter out is_prime *)
                                 let pre_vars = List.filter (fun v -> not(CP.is_primed v)) pre_vars in
+                                (* add vars of pre *)
+                                let pre_vars = pre_vars @ (if i_pre = [] then [] else CF.fv (List.hd i_pre)) in
                                 (* (\* add infer_vars *\) *)
                                 let pre_vars = CP.remove_dups_svl (pre_vars @ post_iv) in
                                 (* drop @L heap nodes from flist *)
