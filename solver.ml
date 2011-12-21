@@ -9225,3 +9225,60 @@ let rec verify_pre_is_sat prog fml = match fml with
     let fml = normalize_combine_heap 
       (formula_of_mix_formula e.formula_exists_pure no_pos) e.formula_exists_heap
     in verify_pre_is_sat prog fml
+
+let rec simplify_heap_x h p prog = match h with
+  | Star {h_formula_star_h1 = h1;
+    h_formula_star_h2 = h2;
+    h_formula_star_pos = pos} -> 
+    let h1,vars1 = simplify_heap h1 p prog in
+    let h2,vars2 = simplify_heap h2 p prog in
+    (mkStarH h1 h2 pos, vars1 @ vars2)
+  | Conj {h_formula_conj_h1 = h1;
+    h_formula_conj_h2 = h2;
+    h_formula_conj_pos = pos} -> 
+    let h1,vars1 = simplify_heap h1 p prog in
+    let h2,vars2 = simplify_heap h2 p prog in
+    (mkConjH h1 h2 pos, vars1 @ vars2)
+  | Phase { h_formula_phase_rd = h1;
+    h_formula_phase_rw = h2;
+    h_formula_phase_pos = pos} -> 
+    let h1,vars1 = simplify_heap h1 p prog in
+    let h2,vars2 = simplify_heap h2 p prog in
+    (mkPhaseH h1 h2 pos, vars1 @ vars2)
+  | ViewNode v ->
+    let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
+    let pure_h = MCP.pure_of_mix mix_h in
+    let disjs = CP.list_of_disjs pure_h in
+    let res = List.filter (fun d -> Omega.is_sat (CP.mkAnd d p no_pos) "15") disjs in
+    begin
+      match res with
+        | [] -> (HFalse,[])
+        | hd::[] -> (HTrue,v.h_formula_view_node::v.h_formula_view_arguments)
+        | _ -> (h,[])
+    end 
+  | _ -> (h,[])
+
+and simplify_heap h p prog =
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = Cprinter.string_of_pure_formula in
+  Gen.Debug.no_2 "simplify_heap" pr pr2 pr 
+      (fun _ _ -> simplify_heap_x h p prog) h p
+
+let rec simplify_post post_fml post_vars prog = match post_fml with
+  | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} -> 
+    Or {formula_or_f1 = simplify_post f1 post_vars prog; 
+        formula_or_f2 = simplify_post f2 post_vars prog; 
+        formula_or_pos = pos}
+  | _ -> 
+    let h, p, fl, b, t = split_components post_fml in
+    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos) in
+    let h,rm_vars = simplify_heap h p prog in
+    let rm_vars = CP.diff_svl rm_vars (h_fv h) in
+    let p = Omega.simplify (CP.mkExists_with_simpl_debug Omega.simplify rm_vars p None no_pos) in
+    let post_fml = mkBase h (MCP.mix_of_pure p) t fl b no_pos in
+    post_fml
+
+
+
+
+

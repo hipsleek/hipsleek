@@ -11,7 +11,7 @@ Checking procedure foo1$int... OLD SPECS:  EInfer [i]
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 1<=i & {FLOW,(20,21)=__norm}
          EAssume 1::ref [i]
-           true & i'+1=i & 1<=i & {FLOW,(20,21)=__norm}
+           true & i'=i - 1 & 1<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1$int SUCCESS
 Checking procedure foo1a$int... OLD SPECS:  EInfer [i]
@@ -29,10 +29,10 @@ Checking procedure foo1b$int... OLD SPECS:  EInfer @post []
              true & true & {FLOW,(20,21)=__norm}
 NEW SPECS:  EBase true & 0<i & {FLOW,(20,21)=__norm}
          EAssume 7::ref [i]
-           true & 0<i & i'+1=i & {FLOW,(20,21)=__norm}
+           true & i'=i - 1 & 1<=i & {FLOW,(20,21)=__norm}
 
 Procedure foo1b$int SUCCESS
-Stop Omega... 67 invocations 
+Stop Omega... 71 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.23 second(s)

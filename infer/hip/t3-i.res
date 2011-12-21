@@ -15,12 +15,12 @@ NEW SPECS:  EBase exists (Expl)(Impl)[v; n](ex)x::llf<v,n>@M[Orig][LHSCase] & n!
          EAssume 1::
            x::node<v_530,q_532>@M[Orig] * 
            q_532::llf<Anon_533,flted_8_531>@M[Orig] & n=flted_8_531+1 & 
-           v_530=v & res=v & 0<=n & {FLOW,(20,21)=__norm}
+           v=res & v_530=res & 0<=n & {FLOW,(20,21)=__norm}
 
 Procedure hd$node SUCCESS
-Stop Omega... 61 invocations 
+Stop Omega... 65 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.22 second(s)
-	Time spent in main process: 0.2 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.21 second(s)
 	Time spent in child processes: 0.02 second(s)

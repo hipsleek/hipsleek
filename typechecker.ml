@@ -345,7 +345,7 @@ and do_spec_verify_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
                                       (List.hd flist) (List.tl flist) in
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
-                                let post_fml = CF.simplify_post post_fml post_vars in
+                                let post_fml = Solver.simplify_post post_fml post_vars prog in
                                 (* print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist)); *)
                                 (* print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml)); *)
                                 let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in

@@ -6827,17 +6827,6 @@ and norm_ext_spec (sp:ext_formula): ext_formula =
           let r = norm_ext_spec b.formula_inf_continuation in
           r
 
-let rec simplify_post post_fml post_vars = match post_fml with
-  | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} -> 
-    Or {formula_or_f1 = simplify_post f1 post_vars; 
-        formula_or_f2 = simplify_post f2 post_vars; 
-        formula_or_pos = pos}
-  | _ -> 
-    let h, p, fl, b, t = split_components post_fml in
-    let p = CP.mkExists_with_simpl_debug Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
-    let post_fml = mkBase h (MCP.mix_of_pure p) t fl b no_pos in
-    post_fml
-
 let rec merge_ext_pre (sp:ext_formula) (pre:formula): ext_formula =
   match sp with
     | ECase b -> report_error b.formula_case_pos ("Not supported nested case analysis")

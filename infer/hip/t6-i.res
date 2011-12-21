@@ -20,7 +20,7 @@ NEW SPECS:  EBase x::node<inf_Anon_527,inf_528>@L[Orig] *
            true & x'=inf_528 & res=inf_533 & {FLOW,(20,21)=__norm}
 
 Procedure hdtl$node SUCCESS
-Stop Omega... 46 invocations 
+Stop Omega... 48 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.25 second(s)
