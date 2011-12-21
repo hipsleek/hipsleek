@@ -7,8 +7,9 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
-// (4)
-infer [x] x::ll<n> |- x::node<_,b>.
+infer [p] x::node<1,p> |- x::ll<n> .
 print residue.
 
+infer [p] x::node<1,r>*r::node<a,p> |- x::node<1,x2>*x2::ll<m> & m>3.
+print residue.
 
