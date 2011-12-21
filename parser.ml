@@ -605,70 +605,39 @@ impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
 (* seem _loc 2 is empty *)
 disjunctive_constr:
   [ "disj_or" LEFTA
-    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]    
+    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]
+  |  [ dc=SELF; `ANDWORD; oc=SELF   -> dc]
   |  [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
    [ cc=core_constr_and             -> cc
-   | `EXISTS; ocl= cid_list; `COLON; cc= core_constr   -> 
+   | `EXISTS; ocl= cid_list; `COLON; cc= core_constr_and   -> 
 	  (match cc with
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
-               F.formula_base_branches = b;
-               F.formula_base_and = a}) -> F.mkExists ocl h p fl b a (get_pos_camlp4 _loc 1)
+               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b [] (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
   
    ]
   ];
 
-(* core_constr: *)
-(*   [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches; fa= opt_and_constr   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc fa (get_pos_camlp4 _loc 1)) *)
-(*    | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches; fa= opt_and_constr -> F.mkBase hc pc fc fb fa (get_pos_camlp4 _loc 2) *)
-(*    ]]; *)
+core_constr_and : [[ ls=core_constr_conjunctions ->
+    let main = List.hd ls in
+    let formula_and = List.tl ls in
+    let formula_and = List.map (F.one_formula_of_formula) formula_and in
+    let main = F.add_formula_and formula_and main in
+    main
+ ]];
+
+core_constr_conjunctions: [ "core_constr_and" LEFTA
+                   [ f1 = SELF; `ANDWORD; f2 = SELF -> f1@f2]
+                   | [f1 = core_constr -> [f1]]
+                  ];
 
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches  -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc [] (get_pos_camlp4 _loc 1))
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches -> F.mkBase hc pc fc fb [] (get_pos_camlp4 _loc 2)
+  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc [] (get_pos_camlp4 _loc 1))
+   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb [] (get_pos_camlp4 _loc 2)
    ]];
-
-core_constr_and: [[ ls=core_constr_and_pre -> 
-    match ls with
-      | [] -> report_error (get_pos_camlp4 _loc 1) "expected core_constr, not found"
-      | x::xs -> 
-          match x with
-            | F.Base b -> 
-                let h= b.F.formula_base_heap in
-                let p = b.F.formula_base_pure in
-                let fl = b.F.formula_base_flow in
-                let br = b.F.formula_base_branches in
-                let pos = b.F.formula_base_pos in
-                let func f = 
-                  match f with
-                    | F.Base b -> b
-                    | _ -> report_error (get_pos_camlp4 _loc 1) "expected base formula, not found" in
-                let a = List.map (fun f -> F.one_formula_of_base_formula (func f)) xs in
-                F.mkBase h p fl br a pos
-            | _ -> report_error (get_pos_camlp4 _loc 1) "expected base formula, not found"
-  ]];
-
-core_constr_and_pre:
-  [ "core_constr_and" LEFTA
-    [dc=SELF; `ANDWORD; oc=SELF -> dc@oc]
-  | [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
-  | "ore_constr_base"
-    [ cc = core_constr -> [cc]
-    ]
-  ];
-
-(* and_constr for current threads *)
-(* opt_and_constr: [[f= OPT and_constraints ->  *)
-(*     match f with *)
-(*       | None -> [] *)
-(*       | Some f -> f]]; *)
-
-(* and_constraints: [[ f = one_and_constr; fs = SELF -> (f::fs) ]]; *)
-
-(* one_and_constr: [[ `ANDWORD; hc= opt_heap_constr; pc= pure_constr ; br= opt_branches -> F.mkOneFormula hc pc br None (get_pos_camlp4 _loc 1)]]; *)
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
@@ -1217,9 +1186,8 @@ global_var_decl:
   [[ `GLOBAL; lvt=local_variable_type; vd=variable_declarators; `SEMICOLON -> mkGlobalVarDecl lvt vd (get_pos_camlp4 _loc 1)]];
 
 (**************** Class ******************)
-
 class_decl:
-  [[ `CLASS; `IDENTIFIER id; par=OPT extends; `OBRACE; ml=member_list_opt; `CBRACE ->
+  [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
 		let t1 = List.map (fun (t, p) -> (t, p, false)) t1 in
@@ -1233,7 +1201,16 @@ class_decl:
 
 extends: [[`EXTENDS; `IDENTIFIER id -> id]];
 
-member_list_opt: [[t = LIST0 member SEP `SEMICOLON -> t]];
+class_body:
+      [[`OBRACE; fl=member_list; `CBRACE   ->  fl
+      | `OBRACE; `CBRACE                             -> []] ];
+
+one_member:
+ [[ m= member; `SEMICOLON -> m
+  | m = member -> m]];
+
+member_list: [[m = one_member; fl=member_list -> m::fl
+             | m=one_member -> [m]]];
 
 member:
  [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2) 

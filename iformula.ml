@@ -217,6 +217,13 @@ and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f [] [] pos
 
 and formula_of_pure_with_flow p f a pos = mkBase HTrue p f [] a pos
 
+and one_formula_of_formula f =
+  match f with
+    | Base b ->
+        one_formula_of_base_formula b
+    | _ ->
+        Error.report_error	{Error.error_loc = no_pos; Error.error_text = "expected base formula, not found"} 
+
 and one_formula_of_base_formula b =
   let h= b.formula_base_heap in
   let p = b.formula_base_pure in
@@ -227,6 +234,12 @@ and one_formula_of_base_formula b =
    formula_branches = br;
    formula_thread = None;
    formula_pos = pos}
+
+and add_formula_and (a: one_formula list) (f:formula) : formula =
+  match f with
+    | Or o -> mkOr (add_formula_and a o.formula_or_f1) (add_formula_and a o.formula_or_f2) o.formula_or_pos
+    | Base b -> Base { b with formula_base_and = a@b.formula_base_and}
+    | Exists e -> Exists {e with formula_exists_and = a@e.formula_exists_and}
 
 and isConstFalse f0 = match f0 with
   | Base f -> begin

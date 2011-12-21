@@ -326,12 +326,30 @@ let rec string_of_h_formula = function
  
 let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "#'" | Unprimed -> "");; 
 
+let string_of_one_formula (f:F.one_formula) =
+  let h,p,br,th,pos = F.split_one_formula f in
+  let sh = string_of_h_formula h in
+  let sp = string_of_pure_formula p in
+  let sth = match th with
+    | None -> ("thread = None")
+    | Some (v,_) ->("thread = " ^ v)  in
+  ( "(" ^ sth^ ")" 
+    ^ "*" ^ "(" ^ sh ^ ")" 
+    ^ "*" ^ "(" ^ sp ^ ")" )
+
+let rec string_of_one_formula_list (f:F.one_formula list) =
+  String.concat "\nand" (List.map string_of_one_formula f)
+
 (* pretty printing for formulae *) 
 let rec string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
 				  F.formula_base_pure = pf;
 				  F.formula_base_flow = fl;
-				  F.formula_base_pos = l}) ->  
+				  F.formula_base_and = a;
+				  F.formula_base_pos = l}) ->
+      let sa = if a==[] then "" else "\nand " in
+      let sa = sa ^ string_of_one_formula_list a in
+      let rs = 
 	  if hf = F.HTrue then 
 		((string_of_pure_formula pf)^" FLOW "^fl^")")
       else if hf = F.HFalse then 
@@ -342,6 +360,7 @@ let rec string_of_formula = function
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
             else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+      in rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
 				F.formula_or_f2 = f2;
 				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
@@ -352,7 +371,11 @@ let rec string_of_formula = function
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
 					F.formula_exists_heap = hf;
 					F.formula_exists_flow = fl;
+					F.formula_exists_and = a;
 					F.formula_exists_pure = pf}) ->
+      let sa = if a==[] then "" else "\nand " in
+      let sa = sa ^ string_of_one_formula_list a in
+      let rs=
 	  "(EX " ^ (string_of_var_list qvars) ^ " . "
 	  ^ (if hf = F.HTrue then 
 		   ("true & ")^string_of_pure_formula pf
@@ -365,6 +388,7 @@ let rec string_of_formula = function
 			 (if s = "" then  (string_of_h_formula hf)
               else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))
 	  ^ ")"
+      in rs^sa
 ;;
 
 let rec string_of_ext_formula = function

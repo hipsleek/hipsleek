@@ -165,6 +165,7 @@ module Make (Token : SleekTokenS)
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
+	 ("and", ANDWORD);
    ("perm",PERM);
 	 ("pred", PRED);
      ("print", PRINT);
