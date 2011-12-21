@@ -23,6 +23,6 @@ Procedure hdtl$node SUCCESS
 Stop Omega... 43 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.364021 second(s)
-	Time spent in main process: 0.280016 second(s)
-	Time spent in child processes: 0.084005 second(s)
+Total verification time: 0.2 second(s)
+	Time spent in main process: 0.19 second(s)
+	Time spent in child processes: 0.01 second(s)

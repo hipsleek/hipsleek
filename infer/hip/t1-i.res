@@ -60,6 +60,6 @@ Procedure foo2a$int result FAIL-1
 Stop Omega... 72 invocations 
 0 false contexts at: ()
 
-Total verification time: 1.016062 second(s)
-	Time spent in main process: 0.760047 second(s)
-	Time spent in child processes: 0.256015 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.21 second(s)
+	Time spent in child processes: 0.02 second(s)

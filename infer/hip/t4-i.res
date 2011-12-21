@@ -17,6 +17,6 @@ Procedure hd0$node SUCCESS
 Stop Omega... 33 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.384023 second(s)
-	Time spent in main process: 0.296018 second(s)
-	Time spent in child processes: 0.088005 second(s)
+Total verification time: 0.16 second(s)
+	Time spent in main process: 0.15 second(s)
+	Time spent in child processes: 0.01 second(s)

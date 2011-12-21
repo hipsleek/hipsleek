@@ -87,6 +87,6 @@ Procedure hd4$node result FAIL-1
 Stop Omega... 72 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.792048 second(s)
-	Time spent in main process: 0.624039 second(s)
-	Time spent in child processes: 0.168009 second(s)
+Total verification time: 0.26 second(s)
+	Time spent in main process: 0.24 second(s)
+	Time spent in child processes: 0.02 second(s)

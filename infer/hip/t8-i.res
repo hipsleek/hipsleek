@@ -35,6 +35,6 @@ Procedure foo1b$int SUCCESS
 Stop Omega... 57 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.376022 second(s)
-	Time spent in main process: 0.268016 second(s)
-	Time spent in child processes: 0.108006 second(s)
+Total verification time: 0.19 second(s)
+	Time spent in main process: 0.17 second(s)
+	Time spent in child processes: 0.02 second(s)
