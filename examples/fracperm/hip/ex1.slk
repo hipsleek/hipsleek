@@ -5,12 +5,13 @@ data cell {
 //(1)
 //from ex1.ss
 checkentail  y::cell<j+1> & re=z 
-             and x::cell<i+1> & thread=z
+             and x::cell<i+1> & thread=z & z=z1
              |- y::cell<j+1> & re=z 
-                and x::cell<i+1> & thread=z.
+                and p::cell<i+1> & thread=z.
 print residue.
 //valid
 
+/*
 //(2)
 //from ex1.ss
 checkentail y::cell<j+1> & id=z 
@@ -28,9 +29,10 @@ checkentail y::cell<j+1> & id=id1
                 and x'::cell<i+1> & thread=v).
 print residue.
 // how to pickup the right thread
-
 checkentail y::cell<j+1> & id=id1
             and x::cell<i+1> & thread=id1
             and z::cell<k+1> & thread=id2
             |- y::cell<v>.
 print residue.
+
+*/

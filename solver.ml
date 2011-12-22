@@ -1754,15 +1754,19 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
 	formula_base_pure = p;
 	formula_base_branches = b;
 	formula_base_flow = fl;
+	formula_base_and = a;
 	formula_base_pos = pos}) -> 
         (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-        unfold_baref prog h p fl v pos b [] already_unsat uf
+        let uf = unfold_baref prog h p fl v pos b [] already_unsat uf in
+        let uf = add_formula_and a uf in (*preserve a*)
+        uf
   | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
         let rf = rename_bound_vars f in
         let qvars, baref = split_quantifiers rf in
         let h, p, fl, b, t, a = split_components baref in
         (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
         let uf = unfold_baref prog h p fl v pos b qvars already_unsat uf in
+        let uf = add_formula_and a uf in (*preserve a*)
         uf
   | Or ({formula_or_f1 = f1;
 	formula_or_f2 = f2;
@@ -1867,7 +1871,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 	                if flag 
 	                then  
                       (* perform base-case unfold *)
-                      CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_branches_fl base br fl [] no_pos) (*TO CHECK*)
+                      CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_branches_fl base br fl [] no_pos) (*TO CHECK: done*)
 	                else formula_of_heap f pos
           else
 	        formula_of_heap_fl f fl pos
@@ -1875,7 +1879,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 	  h_formula_star_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_star uf1 uf2 pos
+          normalize_combine_star uf1 uf2 pos (*TO CHECK*)
     | Conj ({h_formula_conj_h1 = f1;
 	  h_formula_conj_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
@@ -2378,6 +2382,7 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
   let type2 = base2.formula_base_type in
   let branches2 = base2.formula_base_branches in
   let flow2 = base2.formula_base_flow in
+  let a2 = base2.formula_base_and in
   let rec process_one_x (ss:CF.steps) fold_rs1 = match fold_rs1 with
     | OCtx (c1, c2) ->
 	      let tmp1, prf1 = process_one_x (add_to_steps ss "left OR 4 in ante") c1 in
@@ -2390,8 +2395,8 @@ and process_fold_result_x ivars prog is_folding estate (fold_rs0:list_context) p
           let e_pure = MCP.fold_mem_lst (CP.mkTrue pos) true true (fst fold_es.es_pure) in
 	      let (to_ante, to_ante_br), (to_conseq, to_conseq_br), new_evars = 
             split_universal (e_pure, snd fold_es.es_pure) fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
-	      let tmp_conseq = mkBase resth2 pure2 type2 flow2 branches2 [] pos in (*TO CHECK*)
-	      let new_conseq = normalize 6 tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure_N to_conseq pos)) pos in
+	      let tmp_conseq = mkBase resth2 pure2 type2 flow2 branches2 a2 pos in (*TO CHECK: done*)
+	      let new_conseq = normalize 6 tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure_N to_conseq pos)) pos in (*TO CHECK: done*)
 	      let new_ante = normalize 7 fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure_N to_ante pos)) pos in
           let new_ante = filter_formula_memo new_ante false in
 	      let new_consumed = fold_es.es_heap in
@@ -3900,7 +3905,8 @@ and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context
 	    es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars;
 	    es_ante_evars = es.es_ante_evars @ es.es_evars;
 	    es_formula = nf;
-	    es_unsat_flag = false; } in
+	    es_unsat_flag = false; } 
+  in
   transform_list_context (fct,(fun c->c)) ctx
 
 (* from a list containing equaltions of the form vi = wi -> obtain two lists [vi]  and [wi] *)
@@ -4988,7 +4994,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 				                  let b1 = { formula_base_heap = h1;
 					              formula_base_pure = p1;
 					              formula_base_type = t1;
-                                  formula_base_and = []; (*TO CHECK: ???*)
+                                  formula_base_and = a1; (*TO CHECK: ???*)
 					              formula_base_flow = fl1;
 					              formula_base_branches = br1;
 					              formula_base_label = None;
@@ -6119,8 +6125,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   Debug.devel_pprint ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node)) pos;
-    (* Debug.devel_pprint ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate)) pos; *)
-    (* Debug.devel_pprint ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs)) pos; *)
+    Debug.devel_pprint ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate)) pos;
+    Debug.devel_pprint ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs)) pos;
     let l_args, l_node_name, l_perm, l_ann = match l_node with
       | DataNode {h_formula_data_name = l_node_name;
         h_formula_data_perm = perm;
@@ -7082,7 +7088,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
 		    if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
             else
-              let new_estate = {estate with es_formula = Base{lhs_b with formula_base_heap = lhs_rest}} in
+              (*add formula_*_and*)
+              let _,_,_,_,_,es_f_a = split_components estate.es_formula in
+              let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in
+              let new_es_formula = add_formula_and es_f_a new_es_formula in
+              let new_estate = {estate with es_formula = new_es_formula} in
 			  (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
 			    if it succeeds and the flag from to_be_proven is true then make current context false*)
               let rhs_p = match to_be_proven with

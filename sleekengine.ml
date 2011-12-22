@@ -452,6 +452,10 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
+  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+                              ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
+                              ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
+                              ^"\n\n") no_pos in
   let ante = meta_to_formula iante0 false [] stab in
   let ante = Solver.prune_preds !cprog true ante in
   let ante =

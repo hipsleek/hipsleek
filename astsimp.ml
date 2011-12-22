@@ -4055,7 +4055,7 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let helper_one_formula (f:IF.one_formula)  =
-    if sep_collect then 
+    if sep_collect then
       (gather_type_info_pure prog (IF.flatten_branches f.IF.formula_pure f.IF.formula_branches) stab;
        gather_type_info_heap prog f.IF.formula_heap stab) else ()
   in
@@ -4364,6 +4364,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
     let id_var = (match id with
       | None -> 
+          (*May be redundant*)
+          (*this lookup should be done when float_out_thread*)
+          (*Here, try it the second chance*)
           (*look for an thread id*)
           let thread_var = Cpure.SpecVar (Globals.thread_typ, Globals.thread_name,Globals.Unprimed) in
           (*find all spec_var which is equal to "thread"*)
@@ -5575,6 +5578,12 @@ and gather_type_info_formula prog f0 stab filter_res =
 
 and gather_type_info_one_formula prog (f : IF.one_formula) stab filter_res =
   (
+      (match f.IF.formula_thread with
+        | None -> ()
+        | Some (v,pr) -> 
+            let _ = gather_type_info_var v stab thread_typ f.IF.formula_pos in
+            ()
+      );
       gather_type_info_heap prog f.IF.formula_heap stab;
       gather_type_info_pure prog f.IF.formula_pure stab;
       ignore (List.map (fun (c1,c2) -> gather_type_info_pure prog c2 stab) f.IF.formula_branches)
@@ -6225,6 +6234,8 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula):IF.formu
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
   (* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let f = IF.float_out_thread f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_exps_from_heap f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -6255,6 +6266,8 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
     IF.push_exists need_quant f in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
   let nf = convert_struc2 prog f in
+  (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0.5 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
+  let nf = IF.float_out_thread_struc_formula f in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 1 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
   let nf = IF.float_out_exps_from_heap_struc nf in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 2 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)

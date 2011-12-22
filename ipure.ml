@@ -741,6 +741,16 @@ let rec break_pure_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_pure_formula f
 	| Exists (_, f, _, _) -> break_pure_formula f
 
+let rec list_of_conjs (f: formula) : formula list =
+  match f with
+	| And (f1, f2, _) -> (list_of_conjs f1) @ (list_of_conjs f2)
+    | _ -> [f]
+
+let rec conj_of_list (fs:formula list) : formula =
+  match fs with
+    | [] -> mkTrue no_pos
+    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
+
 let rec contain_vars_exp (expr : exp) : bool =
   match expr with
   | Null _ 
@@ -1110,4 +1120,5 @@ and float_out_pure_min_max (p : formula) : formula =
   	| Not (f1,lbl, l) -> Not((float_out_pure_min_max f1), lbl, l)
   	| Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)
   	| Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
+
 

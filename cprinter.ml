@@ -387,7 +387,8 @@ let pr_fn_args op f xs = match xs with
 let pr_list_op sep f xs = pr_args None (Some "A") "" "" "" sep f xs
   
   (** print infix form : x1 op .. op xn *)
-let pr_list_op_vbox sep f xs = pr_args (Some ("V",0)) (Some "B") "" "" "" sep f xs
+let pr_list_op_vbox sep f xs = 
+  pr_args (Some ("V",0)) (Some "B") "" "" "" sep f xs
 
 (**a list with a cut before separator *)  
 let pr_list_op_none sep f xs = pr_args None (Some "B") "" "" "" sep f xs
@@ -1007,19 +1008,28 @@ let rec string_of_sharp_flow sf = match sf with
 
 let pr_one_formula (f:one_formula) = 
   let h,p,br,th,lb,pos = split_one_formula f in
-  fmt_string (" ["); (pr_spec_var th); fmt_string ("] ");
+  fmt_string (" <thread="); (pr_spec_var th); fmt_string ("> ");
   pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,br)
 
 let string_of_one_formula f = poly_string_of_pr  pr_one_formula f
 
-let rec pr_one_formula_list (ls:one_formula list) = 
-  match ls with
-    | [] -> ()
-    | f::fs ->
-        pr_one_formula f;
-        if (fs==[]) then ()
-        else 
-          fmt_string ("\nand "); pr_one_formula_list fs
+let pr_one_formula_wrap e = (wrap_box ("H",1) pr_one_formula) e
+
+let rec pr_one_formula_list (ls:one_formula list) =
+  let pr_conj ls = 
+    if (List.length ls == 1) then pr_one_formula (List.hd ls)
+   else pr_list_op_vbox "AND" pr_one_formula_wrap ls 
+  in fmt_cut(); pr_conj ls
+  
+
+   (* pr_seq_vbox "" (wrap_box ("H",1) pr_conj) ls *)
+  (* match ls with *)
+  (*   | [] -> () *)
+  (*   | f::fs -> *)
+  (*       pr_one_formula f; *)
+  (*       if (fs==[]) then () *)
+  (*       else  *)
+  (*         fmt_string ("\nand "); pr_one_formula_list fs *)
 
 let string_of_one_formula_list ls = poly_string_of_pr  pr_one_formula_list ls
 
@@ -1039,7 +1049,7 @@ let rec pr_formula_base e =
          (*; fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
           else
-            fmt_string ("and "); pr_one_formula_list a
+            fmt_string (" AND "); pr_one_formula_list a
 
 
 let rec pr_formula e =
@@ -1485,7 +1495,8 @@ let pr_context_list_short (ctx : context list) =
   let lls = List.map f ctx in
   let pr_disj ls = 
     if (List.length ls == 1) then pr_formula (List.hd ls)
-  else pr_seq "or" pr_formula_wrap ls in
+    else pr_seq "or" pr_formula_wrap ls 
+  in
    pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
     
 let pr_list_context_short (ctx:list_context) =

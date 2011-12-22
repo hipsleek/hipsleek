@@ -324,7 +324,7 @@ let string_of_one_formula (f:F.one_formula) =
   let sth = match th with
     | None -> ("thread = None")
     | Some (v,_) ->("thread = " ^ v)  in
-  ( "(" ^ sth^ ")" 
+  ( "<" ^ sth^ ">" 
     ^ "*" ^ "(" ^ sh ^ ")" 
     ^ "*" ^ "(" ^ sp ^ ")" )
 
@@ -782,6 +782,7 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
+Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;

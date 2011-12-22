@@ -204,6 +204,7 @@ and string_of_spec_var = function
     | Primed   -> "'"
     | Unprimed -> "")
 
+let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 
@@ -1765,3 +1766,95 @@ and isImm(a : ann) : bool =
   match a with
     | ConstAnn(Imm) -> true
     | _ -> false
+
+(*find thread id for each one_formula*)
+(*remove thread = id and add id into  formula_thread*)
+let float_out_thread_one_formula_x (f : one_formula) : one_formula =
+  let p = f.formula_pure in
+  let ps = P.list_of_conjs p in
+  (*look for a formula with thread=id*)
+  let helper (f:P.formula) =
+    match f with
+      | P.BForm (bf, _) ->
+          let p,_ = bf in
+          (match p with
+            | P.Eq (e1,e2,pos) ->
+                (match e1 with
+                  | P.Var ((id,_),_) ->
+                      (if ((String.compare id thread_name) == 0) then
+                        (match e2 with
+                          | P.Var ((tid,pr),pos_e2) ->
+                              (Some (tid,pr),f)
+                          | _ ->
+                              Error.report_error {Error.error_loc = no_pos; Error.error_text = "Not found: expecting a thread id var"})
+                       else (None,f))
+                  | _ -> (None,f))
+            | _ -> (None,f))
+      | _ -> (None,f)
+  in
+  let has_thread (f:P.formula) : bool =
+    let res1,res2 = helper f in
+    match res1 with
+      | None -> false
+      | Some _ -> true
+  in
+  let ps1, ps2 = List.partition has_thread ps in
+  let n = List.length ps1 in
+  if (n==0) then
+    Error.report_error {Error.error_loc = no_pos; Error.error_text = "could not find a thread id"}
+ else if (n>1) then (*conservative. Do not check for their equalities*)
+   Error.report_error {Error.error_loc = no_pos; Error.error_text = "more than one thread id found"}
+ else (*n=1*)
+  let new_p = P.conj_of_list ps2 in
+  let thread_f = List.hd ps1 in
+  let thread_id,_ = helper thread_f in
+  {f with formula_pure = new_p; formula_thread = thread_id}
+
+let float_out_thread_one_formula (f : one_formula) : one_formula =
+  Gen.Debug.no_1  "float_out_thread_one_formula"
+      !print_one_formula !print_one_formula
+      float_out_thread_one_formula_x f
+
+(*find thread id for each one_formula*)  
+let float_out_thread_x (f : formula) : formula =
+  let rec helper f =
+  match f with
+  | Base b ->
+      let new_a = List.map float_out_thread_one_formula b.formula_base_and in
+      Base {b with formula_base_and = new_a}
+  | Exists e ->
+      let new_a = List.map float_out_thread_one_formula e.formula_exists_and in
+      Exists {e with formula_exists_and = new_a}
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+      let new_f1 = helper f1 in
+      let new_f2 = helper f2 in
+      let res = mkOr new_f1 new_f2 pos in
+      res
+  in helper f
+
+let float_out_thread (f : formula) : formula =
+  Gen.Debug.no_1 "float_out_thread" 
+      !print_formula !print_formula 
+      float_out_thread_x f
+
+
+let rec float_out_thread_struc_formula_x (f:struc_formula):struc_formula = 
+  let rec helper (f:ext_formula):ext_formula = match f with
+    | EAssume (b,tag) -> EAssume ((float_out_thread b),tag)
+    | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
+    | EBase b-> 	EBase {b with
+				 formula_ext_base = float_out_thread b.formula_ext_base;
+				 formula_ext_continuation =  float_out_thread_struc_formula_x b.formula_ext_continuation;
+				}
+	| EVariance b -> EVariance { b with
+		formula_var_continuation = float_out_thread_struc_formula_x b.formula_var_continuation;
+	}
+    | EInfer b -> EInfer ({b with 
+      formula_inf_continuation = helper b.formula_inf_continuation;})
+	in	
+    List.map helper f
+
+let float_out_thread_struc_formula (f:struc_formula):struc_formula = 
+  Gen.Debug.no_1 "float_out_thread_struc_formula"
+      !print_struc_formula !print_struc_formula
+      float_out_thread_struc_formula_x f

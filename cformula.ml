@@ -827,6 +827,12 @@ and one_formula_of_formula (f : formula) (tid: CP.spec_var): one_formula =
         mkOneFormula h p b tid lbl pos
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "one_formula_of_formula: disjunctive form"} )
 
+and add_formula_and (a: one_formula list) (f:formula) : formula =
+  match f with
+    | Or o -> mkOr (add_formula_and a o.formula_or_f1) (add_formula_and a o.formula_or_f2) o.formula_or_pos
+    | Base b -> Base { b with formula_base_and = a@b.formula_base_and}
+    | Exists e -> Exists {e with formula_exists_and = a@e.formula_exists_and}
+
 and formula_of_one_formula (f : one_formula) : formula =
   Base {formula_base_heap = f.formula_heap;
         formula_base_pure = f.formula_pure;
@@ -1116,7 +1122,8 @@ and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
-  mkBase h p t fl b [] pos (*TO CHECK: how about a1,a2*)
+  let a = a1@a2 in (*assuming merging a1 and a2*)
+  mkBase h p t fl b a pos (*TO CHECK: how about a1,a2: DONE*)
 
 and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
   if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
@@ -1169,7 +1176,8 @@ and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
-  mkBase h p t fl b [] pos (*TO CHECK: how about a1,a2*)
+  let a = a1@a2 in (*combine a1 and a2: assuming merging a1 and a2*)
+  mkBase h p t fl b a pos (*TO CHECK: how about a1,a2: DONE*)
 
 and contains_phase (f : h_formula) : bool =  match f with
   | DataNode (h1) -> false
@@ -1194,7 +1202,8 @@ and mkConj_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
-  mkBase h p t fl b [] pos (*TO CHECK: how about a1,a2*)
+  let a = a1@a2 in (*assume merging a1 and a2*)
+  mkBase h p t fl b a pos (*TO CHECK: how about a1,a2: DONE*)
 	  
 and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, b1, t1, a1 = split_components f1 in
@@ -1204,7 +1213,8 @@ and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
-  mkBase h p t fl b [] pos (*TO CHECK: how about a1,a2*)
+  let a = a1@a2 in (*assume merging a1 and a2*)
+  mkBase h p t fl b a pos (*TO CHECK: how about a1,a2: DONE*)
       
 and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.mix_formula) b2 (pos : loc):formula = 
   if (isAnyConstFalse f1) then f1
