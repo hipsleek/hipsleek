@@ -11,6 +11,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 module CF = Cformula
+module TP = Tpdispatcher
 
 let no_infer estate = (estate.es_infer_vars == [])
  
@@ -216,7 +217,8 @@ let get_alias_formula (f:CF.formula) =
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
 let is_elem_of conj conjs = 
-  let filtered = List.filter (fun c -> Omega.imply conj c "1" 100 && Omega.imply c conj "2" 100) conjs in
+  let fst = fun (a,b,c) -> a in
+  let filtered = List.filter (fun c -> fst(TP.imply conj c "1" false None) && fst(TP.imply c conj "2" false None)) conjs in
   match filtered with
     | [] -> false
     | _ -> true
@@ -330,7 +332,7 @@ let rec filter_var f vars = match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
   | _ -> 
-        if Omega.is_sat f "0" 
+        if TP.is_sat f "0" false
         then CP.filter_var f vars 
         else CP.mkFalse no_pos
 
@@ -355,7 +357,7 @@ let infer_lhs_contra lhs_xpure ivars =
   (* if ivars==[] then None *)
   (* else *)
     let lhs_xpure = MCP.pure_of_mix lhs_xpure in
-    let check_sat = Omega.is_sat lhs_xpure "0" in
+    let check_sat = TP.is_sat lhs_xpure "0" false in
     if not(check_sat) then None
     else 
       let f = simplify_contra lhs_xpure ivars in
@@ -443,7 +445,7 @@ let infer_lhs_contra_estate e f pos =
 let rec simplify_disjs pf lhs rhs = 
   let helper fml lhs_p rhs_p = 
     let new_fml = CP.mkAnd (CP.mkAnd fml lhs_p no_pos) rhs_p no_pos in
-    if Omega.is_sat new_fml "0" then 
+    if TP.is_sat new_fml "0" false then 
       let args = CP.fv new_fml in
       let iv = CP.fv fml in
       let quan_var = CP.diff_svl args iv in
@@ -462,7 +464,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
     let lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
-    let check_sat = Omega.is_sat fml "0" in
+    let check_sat = TP.is_sat fml "0" false in
     let iv = estate.es_infer_vars in
     let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in
     if check_sat then
@@ -511,7 +513,7 @@ let infer_pure_m estate lhs_xpure rhs_xpure pos =
           in
           Some (new_estate,new_p)
     else
-      let check_sat = Omega.is_sat lhs_xpure "0" in
+      let check_sat = TP.is_sat lhs_xpure "0" false in
       if not(check_sat) then None
       else      
         let lhs_simplified = simplify lhs_xpure iv in

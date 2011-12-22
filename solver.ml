@@ -4802,7 +4802,7 @@ and heap_entail_split_lhs_phases_x
 
 and heap_entail_conjunct (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Gen.Debug.loop_3_no "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  Gen.Debug.loop_3 "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
 
@@ -6902,7 +6902,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     let lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
-    let check_sat = Omega.is_sat fml "13" in
+    let check_sat = TP.is_sat fml "13" false in
     (* check if there is a contraction with the RHS heap *)
     let r = 
       if check_sat then Inf.infer_heap_nodes estate rhs rhs_rest conseq
@@ -6922,7 +6922,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
               in
               let fml,_,_,_ = xpure prog new_estate.es_formula in
               let fml = MCP.pure_of_mix fml in
-              if Omega.is_sat fml "0" then
+              if TP.is_sat fml "0" false then
                 let ctx1 = (Ctx new_estate) in
 			    let ctx1 = set_unsat_flag ctx1 true in
 			    let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq pos in
@@ -9228,7 +9228,7 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
 
 let rec verify_pre_is_sat prog fml = match fml with
   | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
-  | Base b -> let fml,_,_,_ = xpure prog fml in Omega.is_sat (MCP.pure_of_mix fml) "14"
+  | Base b -> let fml,_,_,_ = xpure prog fml in TP.is_sat (MCP.pure_of_mix fml) "14" false
   | Exists e ->
     let fml = normalize_combine_heap 
       (formula_of_mix_formula e.formula_exists_pure no_pos) e.formula_exists_heap
@@ -9257,7 +9257,7 @@ let rec simplify_heap_x h p prog = match h with
     let mix_h,_,_,_ = xpure prog (formula_of_heap h no_pos) in
     let pure_h = MCP.pure_of_mix mix_h in
     let disjs = CP.list_of_disjs pure_h in
-    let res = List.filter (fun d -> Omega.is_sat (CP.mkAnd d p no_pos) "15") disjs in
+    let res = List.filter (fun d -> TP.is_sat (CP.mkAnd d p no_pos) "15" false) disjs in
     begin
       match res with
         | [] -> (HFalse,[])
