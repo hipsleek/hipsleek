@@ -1,20 +1,22 @@
 open Globals
 open Gen
 open Cprinter
+open Cpure
 
 module CP = Cpure
 module CF = Cformula
 module TP = Tpdispatcher
 module PT = Prooftracer
 module CPr = Cprinter
+module MCP = Mcpure
 
-type transition = int * int
+type lbl_trans = int * int
 
 type term_reason =
   (* For MayTerm *)
   | Invalid_Measure (* The variance is not well-founded *)
-  | Invalid_Transition of transition (* Transition from a lower label to a higher one *)
-  | Valid_Transition of transition
+  | Invalid_Transition of lbl_trans (* Transition from a lower label to a higher one *)
+  | Valid_Transition of lbl_trans
   (* For Term *)
   | Valid_Measure (* The variance is well-founded *)
   | Base_Case_Entered (* Program state without loop *)
@@ -30,18 +32,23 @@ type term_status =
   | MayTerm of term_reason
   | Unreachable of CF.formula list (* Original context causes unreachable *)
 
-type term_res = transition option * term_status
+type term_res = lbl_trans option * term_status
 
 type term_res_table = (loc, term_res list) Hashtbl.t
 
+(* State transition with the corresponding context *)
+type prog_state = ident * CP.spec_var list 
+
+type state_trans = prog_state * prog_state * CF.formula 
+
 (* Printing Utilities *)
-let pr_transition (trans: transition) =
+let pr_lbl_trans (trans: lbl_trans) =
   let (src, dst) = trans in
   fmt_string "Transition ";
   pr_int src; fmt_string "->"; pr_int dst
 
-let string_of_transition (trans: transition) = 
-  poly_string_of_pr pr_transition trans
+let string_of_lbl_trans (trans: lbl_trans) = 
+  poly_string_of_pr pr_lbl_trans trans
 
 let pr_term_reason = function
   | Invalid_Measure -> fmt_string "The variance is not given or The given variance is not well-founded."
@@ -64,17 +71,12 @@ let pr_term_status = function
 
 let string_of_term_status = poly_string_of_pr pr_term_status
 
-let pr_opt_transition = function
+let pr_opt_lbl_trans = function
   | None -> fmt_string ""
-  | Some trans -> pr_transition trans
+  | Some trans -> pr_lbl_trans trans
 
 let pr_term_res (trans, status) =
-  (*
-  fmt_open_vbox 0;
-  pr_vwrap "" pr_opt_transition trans;
-  pr_vwrap "" pr_term_status status
-  *)
-  pr_opt_transition trans; 
+  pr_opt_lbl_trans trans; 
   fmt_string ": ";
   pr_term_status status
 
@@ -88,6 +90,27 @@ let pr_term_res_tbl_ele (pos, term_res_list) =
 
 let pr_term_res_tbl tbl_res = 
   Hashtbl.iter (fun pos res -> pr_term_res_tbl_ele (pos, res)) tbl_res
+
+let pr_prog_state (s: prog_state) =
+  pr_pair_aux pr_ident pr_list_of_spec_var s
+
+let pr_state_trans (trans: state_trans) =
+  let (f, t, ctx) = trans in
+  fmt_string "(";
+  pr_prog_state f;
+  fmt_string "->";
+  pr_prog_state t;
+  fmt_string "),\n";
+  pr_formula ctx
+
+let pr_trans_cache (cache: state_trans list) =
+  pr_list_op "\n---\n" pr_state_trans cache
+
+let string_of_prog_state = poly_string_of_pr pr_prog_state
+
+let string_of_state_trans = poly_string_of_pr pr_state_trans
+
+let string_of_trans_cache = poly_string_of_pr pr_trans_cache
 
 (* End of Printing Utilities *)
 
@@ -306,8 +329,35 @@ let rec term_strip_variance ls =
           term_strip_variance b.CF.formula_ext_continuation})::(term_strip_variance rest)
       | CF.ECase c -> (CF.ECase {c with CF.formula_case_branches = 
           List.map (fun (cpf, sf) -> (cpf, term_strip_variance sf)) c.CF.formula_case_branches})::(term_strip_variance rest)
-      | CF.EInfer i -> spec::(term_strip_variance rest) (* TODO: What if formula_inf_continuation is an EVAriance? *)
+      | CF.EInfer i -> spec::(term_strip_variance rest) 
+        (* TODO: What if formula_inf_continuation is an EVariance? *)
       | _ -> spec::(term_strip_variance rest)
+
+(* Variance inference *)
+(* To track the program state transition *)
+let trans_cache = ref []
+
+let term_add_trans_cache (f: prog_state) (t: prog_state) (ctx: CF.formula) =
+  trans_cache := !trans_cache @ [(f, t, ctx)]
+
+(* To get relation of the formal arguments and the actual arguments *)
+let term_get_rel_from_pure_ctx (sv: CP.spec_var list) (ctx: MCP.mix_formula) : CP.formula list = 
+  let p_ctx = MCP.pure_of_mix ctx in
+  let l_cons = CP.split_conjunctions p_ctx in
+
+  let rec get_rel_fv (sv: CP.spec_var list) (fl: (CP.spec_var list * CP.formula) list) : CP.formula list = 
+    let rel_f1, non_rel_f = List.partition (fun (v, _) -> 
+      Gen.BList.overlap_eq eq_spec_var sv v) fl in
+    if rel_f1 = [] then []
+    else
+      let n_sv = List.fold_left (fun a (v,_) -> a @ v) sv rel_f1 in
+      let rel_f2 = get_rel_fv n_sv non_rel_f in
+      List.fold_left (fun a (_,f) -> a @ [f]) rel_f2 rel_f1
+  in 
+
+  let rel_cons = get_rel_fv sv (List.map (fun f -> (CP.fv f, f)) l_cons) in
+  rel_cons
+
 
 (* Checking the well-foundedness of the loop variance *)    
 let term_check_loop_variance (src: CF.entail_state) (dst: CF.ext_variance_formula) f_imply trans pos : term_res = 
@@ -412,11 +462,11 @@ let term_check_transition (es: CF.entail_state) (e: CF.ext_variance_formula)
   in
   tem_tbl_res_update tbl_res f_pos res; res
 
-	
 let termination_check f_imply =
   let g = build_state_trans_graph !variance_graph in
 	let cl = variance_numbering !var_checked_list g in
   let tbl_res = ref (Hashtbl.create 100) in
   let term_res = List.map (fun (es, e) -> term_check_transition es e f_imply tbl_res) cl in
   (*List.iter (fun r -> pr_term_res r) term_res;*)
-  pr_term_res_tbl !tbl_res
+  pr_term_res_tbl !tbl_res;
+  pr_trans_cache !trans_cache

@@ -3,8 +3,10 @@ int f_1 (int n)
 {
 	if (n==0) 
 		return 0;
-	else
+	else {
+		dprint;
 		return f_1(n-1);
+	}
 }
 
 /*
@@ -66,8 +68,11 @@ int f_3 (int n)
 {
 	if (n==0)
 		return 0;
-	else
-		return f_3(n-2);
+	else {
+		int z = 2;
+		int y = 1-(n-z);
+		return f_3(y);
+	}
 }
 
 /*

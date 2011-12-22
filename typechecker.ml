@@ -723,19 +723,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*let _ = print_string (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
                   let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
                   let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
+                  
+                  (* Termination: 
+                    * Cache the subst for output pretty printing 
+                    * Cache the program state transition *)
+						      let sctx = if not ir then sctx else 
+                    let _ = Term.term_add_trans_cache (proc.Cast.proc_name, farg_spec_vars) (mn, actual_spec_vars)
+                      (CF.formula_of_list_failesc_context sctx) in
+                    Term.term_add_var_subst fr_vars to_vars mn sctx pos in
 
-                  (*let l = (String.index mn '$') in
-                    let new_mn = String.create l in
-			        let _ = print_string ("mn: " ^ mn ^ "\n") in
-			        let _ = String.blit mn 0 new_mn 0 l in
-			        let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
-
-                  (* Termination: Cache the subst for output pretty printing *)
-						      let sctx = if not ir then sctx else Term.term_add_var_subst fr_vars to_vars mn sctx pos in
-
-                  (*let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
+                  let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                     (Cprinter.string_of_pos pos) ^ "\n" ^
-                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in*)
+                    (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in
                   let renamed_spec = CF.subst_struc st1 renamed_spec in
                   let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
                   let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in

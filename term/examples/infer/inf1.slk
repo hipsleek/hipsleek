@@ -41,3 +41,4 @@ infer [x] x>=1 & y=x-1 |- y>=1.
 
 infer [x] x>=1 & y=x-2 |- y>=1.
 
+infer [n,x] x::ll1<n> |- x!=null.
